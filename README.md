@@ -6,7 +6,7 @@ This repository contains the code for the DAIAD@home web client
 
 In order to build the project maven is required.
 
-    mvn package
+`mvn package`
 
 ## Configuration
 
@@ -23,10 +23,14 @@ Moreover, the application expects two tables in HBASE, namely swm and meter, for
 
 ## Running
 
-Using the spring-boot maven plugin
+### Using the spring-boot maven plugin ###
 
     mvn spring-boot:run
  
-or as a java application
+### Running as a java application ###
 
     java -jar target/web-home-0.0.1-SNAPSHOT.jar
+
+### Deploy as a WAR file ###
+
+In order to deploy the application as a web application archive file, edit `pom.xml` and change packaging to war and  uncomment the declaration for dependency `spring-boot-starter-tomcat`.
