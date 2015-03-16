@@ -14,7 +14,7 @@ Configure application by updating settings in `application.settings`. At least t
 
 * hbase.zookeeper.quorum: The HBASE zookeeper quorum expressed as a comma separated list of IP addresses or host names.
 
-Moreover, the application expects two tables in HBASE, namely swm and meter, for storing smart water meter and Amphiro device data. Each table has a single column family named m. The names of the tables and column family can be changed by the following parameters:
+Moreover, the application expects two tables in HBASE, namely `swm` and `meter`, for storing smart water meter and Amphiro device data. Each table has a single column family named `m`. The names of the tables and column family can be changed by the following parameters:
 
 * hbase.data.swm.table: The HBASE table for storing smart water meter data
 * hbase.data.amphiro.table: The HBASE table for storing Amphiro device data
@@ -33,4 +33,4 @@ Moreover, the application expects two tables in HBASE, namely swm and meter, for
 
 ### Deploy as a WAR file ###
 
-In order to deploy the application as a web application archive file, edit `pom.xml` and change packaging to war and  uncomment the declaration for dependency `spring-boot-starter-tomcat`.
+In order to deploy the application as a web application archive file, edit `pom.xml` and change packaging to `war` and  uncomment the declaration for dependency `spring-boot-starter-tomcat`.
