@@ -206,7 +206,7 @@ function login() {
 					$.ajax(
 							{
 								type : "GET",
-								url : '/csrf',
+								url : 'csrf',
 								dataType : 'html',
 								contentType : "application/json",
 								beforeSend : function(xhr) {
@@ -255,7 +255,7 @@ function loadMostRecentMeterValue() {
 			.ajax(
 					{
 						type : "POST",
-						url : '/swm/current',
+						url : 'swm/current',
 						dataType : 'json',
 						data : JSON.stringify(query),
 						contentType : "application/json",
@@ -525,7 +525,7 @@ function refreshData() {
 	$.ajax(
 			{
 				type : "POST",
-				url : '/showers',
+				url : 'showers',
 				dataType : 'json',
 				data : JSON.stringify(query),
 				contentType : "application/json",
@@ -563,7 +563,7 @@ function loadSmartMeterData() {
 	$.ajax(
 			{
 				type : "POST",
-				url : '/swm/history',
+				url : 'swm/history',
 				dataType : 'json',
 				data : JSON.stringify(query),
 				contentType : "application/json",
@@ -701,7 +701,7 @@ function renderShowerTable(data) {
 					$.ajax(
 							{
 								type : "POST",
-								url : '/shower',
+								url : 'shower',
 								dataType : 'json',
 								data : JSON.stringify(query),
 								contentType : "application/json",
@@ -716,7 +716,7 @@ function renderShowerTable(data) {
 					}).fail(function(jqXHR, textStatus, errorThrown) {
 						switch (jqXHR.status) {
 						case 403:
-							window.location.href = '/login';
+							window.location.href = 'login';
 							break;
 						}
 					}).always(function() {
@@ -1244,7 +1244,7 @@ function getConsumption(done, fail, always) {
 
 	var options = {
 		type : "POST",
-		url : '/query',
+		url : 'query',
 		dataType : 'json',
 		data : JSON.stringify(query),
 		contentType : "application/json",
