@@ -1,5 +1,3 @@
-# home-web
-DAIAD@home web client
 # README
 
 This repository contains the code for the DAIAD@home web client
