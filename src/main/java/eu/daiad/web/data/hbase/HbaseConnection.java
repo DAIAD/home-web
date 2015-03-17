@@ -706,10 +706,10 @@ public class HbaseConnection {
 			break;
 		}
 
-		DateTime now = new DateTime();
-		long timestampNow = now.plusDays(1).getMillis();
-		if (timestampNow < endDate.getMillis()) {
-			endDate = now.plusDays(1);
+		DateTime timeThreshold = (new DateTime()).plusDays(1);
+		long timestampThreshold = timeThreshold.getMillis();
+		if (timestampThreshold < endDate.getMillis()) {
+			endDate = timeThreshold;
 		}
 
 		try {
@@ -756,9 +756,12 @@ public class HbaseConnection {
 
 					if (offset != entryOffset) {
 						if ((point != null)
-								&& (point.timestamp <= timestampNow)) {
+								&& (point.timestamp <= timestampThreshold)) {
 							data.add(point);
-							logger.info(String.format("%s %s %s %s %s", new DateTime(point.timestamp), point.showerId, point.showerTime, point.volume, point.energy));
+							logger.info(String.format("%s %s %s %s %s",
+									new DateTime(point.timestamp),
+									point.showerId, point.showerTime,
+									point.volume, point.energy));
 						}
 						offset = entryOffset;
 						point = new DataPoint();
@@ -781,10 +784,11 @@ public class HbaseConnection {
 						point.temperature = Bytes.toFloat(entry.getValue());
 					}
 				}
-				//if ((point != null) && (point.timestamp <= timestampNow)) {
-				if (point != null) {
+				if ((point != null) && (point.timestamp <= timestampThreshold)) {
 					data.add(point);
-					logger.info(String.format("%s %s %s %s %s", new DateTime(point.timestamp), point.showerId, point.showerTime, point.volume, point.energy));
+					logger.info(String.format("%s %s %s %s %s", new DateTime(
+							point.timestamp), point.showerId, point.showerTime,
+							point.volume, point.energy));
 				}
 			}
 			scanner.close();
