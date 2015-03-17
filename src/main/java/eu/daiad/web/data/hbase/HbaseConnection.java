@@ -773,6 +773,8 @@ public class HbaseConnection {
 							3 + length);
 					String columnQualifier = Bytes.toString(slice);
 					if (columnQualifier.equals("si")) {
+						logger.info(String.format("%s %s",
+								new DateTime(point.timestamp), Bytes.toLong(entry.getValue())));
 						point.showerId = Bytes.toLong(entry.getValue());
 					} else if (columnQualifier.equals("st")) {
 						point.showerTime = Bytes.toInt(entry.getValue());
