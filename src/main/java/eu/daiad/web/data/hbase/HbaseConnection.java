@@ -165,6 +165,11 @@ public class HbaseConnection {
 						this.appendLength(Bytes.toBytes("e")));
 				p.addColumn(columnFamily, column, Bytes.toBytes(m.energy));
 
+				logger.info(String.format("%s %s %s %s %s",
+						new DateTime(m.timestamp),
+						m.showerId, m.showerTime,
+						m.volume, m.energy));
+				
 				table.put(p);
 			}
 			table.close();
