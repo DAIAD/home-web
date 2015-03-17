@@ -736,7 +736,8 @@ public class HbaseConnection {
 			scan.addFamily(columnFamily);
 			scan.setStartRow(this.getRowKey(applicationKeyHash, deviceIdHash,
 					startDate));
-			//scan.setStopRow(this.getRowKey(applicationKeyHash, deviceIdHash, endDate));
+			scan.setStopRow(this.getRowKey(applicationKeyHash, deviceIdHash,
+					endDate));
 
 			ResultScanner scanner = table.getScanner(scan);
 
@@ -757,6 +758,7 @@ public class HbaseConnection {
 						if ((point != null)
 								&& (point.timestamp <= timestampNow)) {
 							data.add(point);
+							logger.info(String.format("%s %s %s %s %s", new DateTime(point.timestamp), point.showerId, point.showerTime, point.volume, point.energy));
 						}
 						offset = entryOffset;
 						point = new DataPoint();
@@ -779,8 +781,10 @@ public class HbaseConnection {
 						point.temperature = Bytes.toFloat(entry.getValue());
 					}
 				}
-				if ((point != null) && (point.timestamp <= timestampNow)) {
+				//if ((point != null) && (point.timestamp <= timestampNow)) {
+				if (point != null) {
 					data.add(point);
+					logger.info(String.format("%s %s %s %s %s", new DateTime(point.timestamp), point.showerId, point.showerTime, point.volume, point.energy));
 				}
 			}
 			scanner.close();
