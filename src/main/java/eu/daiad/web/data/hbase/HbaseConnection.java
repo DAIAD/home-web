@@ -736,8 +736,7 @@ public class HbaseConnection {
 			scan.addFamily(columnFamily);
 			scan.setStartRow(this.getRowKey(applicationKeyHash, deviceIdHash,
 					startDate));
-			scan.setStopRow(this.getRowKey(applicationKeyHash, deviceIdHash,
-					endDate));
+			//scan.setStopRow(this.getRowKey(applicationKeyHash, deviceIdHash, endDate));
 
 			ResultScanner scanner = table.getScanner(scan);
 
