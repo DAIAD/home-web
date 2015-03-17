@@ -6,7 +6,7 @@
 	<groupId>eu.daiad</groupId>
 	<artifactId>web-home</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-    <packaging>war</packaging>
+    <packaging>jar</packaging>
 
 	<properties>
 		<java-version>1.7</java-version>

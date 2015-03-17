@@ -707,9 +707,9 @@ public class HbaseConnection {
 		}
 
 		DateTime now = new DateTime();
-		long timestampNow = now.getMillis();
+		long timestampNow = now.plusDays(1).getMillis();
 		if (timestampNow < endDate.getMillis()) {
-			endDate = now.plusHours(1);
+			endDate = now.plusDays(1);
 		}
 
 		try {
