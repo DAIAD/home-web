@@ -1,37 +1,38 @@
 package eu.daiad.web.model;
 
 import java.util.UUID;
-import java.util.ArrayList;
 
-public class MeasurementCollection {
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-	private UUID applicationKey;
+@JsonTypeInfo(  
+    use = JsonTypeInfo.Id.NAME,  
+    include = JsonTypeInfo.As.EXISTING_PROPERTY,  
+    property = "type")   
+@JsonSubTypes({  
+	@Type(value = DeviceMeasurementCollection.class, name = "AMPHIRO"),
+	@Type(value = MeterMeasurementCollection.class, name = "METER")
+})
+public class MeasurementCollection extends AuthenticatedRequest {
+
+	private EnumDeviceType type;
 	
-	private UUID deviceId;
-	
-	private ArrayList<Measurement> measurements;
-	
-	public void setApplicationKey(UUID value) {
-		this.applicationKey = value;
+	private UUID userKey;
+
+	public void setUserKey(UUID value) {
+		this.userKey = value;
 	}
 	
-	public UUID getApplicationKey() {
-		return this.applicationKey;
+	public UUID getUserKey() {
+		return this.userKey;
 	}
 	
-	public void setDeviceId(UUID value) {
-		this.deviceId = value;
+	public EnumDeviceType getType() {
+		return this.type;
 	}
 	
-	public UUID getDeviceId() {
-		return this.deviceId;
-	}
-	
-	public void setMeasurements(ArrayList<Measurement> value) {
-		this.measurements = value;
-	}
-	
-	public ArrayList<Measurement> getMeasurements() {
-		return this.measurements;
+	public void setType(EnumDeviceType value) {
+		this.type = value;
 	}
 }

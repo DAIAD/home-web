@@ -3,10 +3,12 @@ package eu.daiad.web.security;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.ServletException;
@@ -21,9 +23,6 @@ import eu.daiad.web.security.model.*;
 public class RESTAuthenticationSuccessHandler extends
 		SimpleUrlAuthenticationSuccessHandler {
 
-	@Value("${custom.security.user.name}")
-	private String username;
-	
 	private final Log logger = LogFactory.getLog(this.getClass());
 
 	private boolean isAjaxRequest(HttpServletRequest request) {
@@ -37,6 +36,8 @@ public class RESTAuthenticationSuccessHandler extends
 	protected static final String RESPONSE_PARAM_NAME = "X-CSRF-PARAM";
 	protected static final String RESPONSE_TOKEN_NAME = "X-CSRF-TOKEN";
 
+	public static final String DEFAULT_CSRF_TOKEN_ATTR_NAME = HttpSessionCsrfTokenRepository.class.getName().concat(".CSRF_TOKEN");
+	
 	@Override
 	public void onAuthenticationSuccess(HttpServletRequest request,
 			HttpServletResponse response, Authentication authentication)
@@ -49,16 +50,22 @@ public class RESTAuthenticationSuccessHandler extends
 				return;
 			}
 			try {
+				String username = "";
+				
+				Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+				if (!(auth instanceof AnonymousAuthenticationToken)) {
+					username = ((DaiadUser) auth.getPrincipal()).getFirstname();
+				}
+				
 				LoginStatus status = new LoginStatus(true, username);
 
-				CsrfToken token = (CsrfToken) request
-						.getAttribute(REQUEST_ATTRIBUTE_NAME);
-				if (token != null) {
-					response.setHeader(RESPONSE_HEADER_NAME,
-							token.getHeaderName());
-					response.setHeader(RESPONSE_PARAM_NAME,
-							token.getParameterName());
-					response.setHeader(RESPONSE_TOKEN_NAME, token.getToken());
+				CsrfToken sessionToken = (CsrfToken) request.getSession().getAttribute(DEFAULT_CSRF_TOKEN_ATTR_NAME);			
+				CsrfToken requestToken = (CsrfToken) request.getAttribute(REQUEST_ATTRIBUTE_NAME);
+
+				if ((requestToken != null) || (sessionToken !=null)) {
+					response.setHeader(RESPONSE_HEADER_NAME, requestToken.getHeaderName());
+					response.setHeader(RESPONSE_PARAM_NAME,	requestToken.getParameterName());
+					response.setHeader(RESPONSE_TOKEN_NAME, (sessionToken == null ? requestToken.getToken() : sessionToken.getToken()));
 				}
 
 				ObjectMapper mapper = new ObjectMapper();

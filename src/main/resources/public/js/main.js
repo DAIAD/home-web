@@ -186,7 +186,7 @@ function login() {
 	var url = $('.form-login').attr('action');
 
 	var data = {
-		email : $('#email').val(),
+		username : $('#username').val(),
 		password : $('#password').val(),
 		_csrf : $('meta[name=_csrf]').attr('content')
 	};
@@ -201,31 +201,16 @@ function login() {
 							.attr('content'));
 				}
 			}).done(
-			function(data) {
-				if (data.loggedIn) {
-					$.ajax(
-							{
-								type : "GET",
-								url : 'csrf',
-								dataType : 'html',
-								contentType : "application/json",
-								beforeSend : function(xhr) {
-									xhr
-											.setRequestHeader('X-CSRF-TOKEN',
-													$('meta[name=_csrf]').attr(
-															'content'));
-								}
-							}).done(function(crsf) {
-						$('meta[name=_csrf]').attr('content', crsf);
-						$('input[name=_csrf]').val(crsf);
+			function(data, textStatus, request) {
+				if (data.connected) {
+					var crsf = request.getResponseHeader('X-CSRF-TOKEN');
 
-						initialize();
-					}).fail(function(jqXHR, textStatus, errorThrown) {
-
-					}).always(function() {
-						resumeUI();
-					});
-
+					$('meta[name=_csrf]').attr('content', crsf);
+					$('input[name=_csrf]').val(crsf);
+		
+					$('#firstname').html(data.firstname);
+					
+					initialize();
 				} else {
 					$('#password').val('');
 
@@ -306,7 +291,7 @@ function initialize() {
 	$('.form-login').hide();
 
 	$('#label-meter-image, #label-meter-value').show();
-	$('#label-username').show();
+	$('#label-firstname').show();
 	$('#logout-section').show();
 	$('#action-menu').show();
 
@@ -435,7 +420,7 @@ function initialize() {
 							jQuery('#logout-form').submit();
 						});
 
-						$('#label-username').find('a').click(function(e) {
+						$('#label-firstname').find('a').click(function(e) {
 							e.preventDefault();
 							$('#tabs a[href="#profile"]').tab('show');
 

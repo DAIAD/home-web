@@ -20,6 +20,7 @@ public class SimpleCORSFilter implements Filter {
 
 	private Pattern allowedMethods = Pattern
 			.compile("^(GET|POST|OPTIONS|DELETE)$");
+	
 	private RegexRequestMatcher apiMatcher = new RegexRequestMatcher(
 			"/api/v1/.*", null);
 
@@ -27,9 +28,9 @@ public class SimpleCORSFilter implements Filter {
 	public void doFilter(ServletRequest req, ServletResponse res,
 			FilterChain chain) throws IOException, ServletException {
 		HttpServletResponse response = (HttpServletResponse) res;
-		HttpServletRequest httpReq = (HttpServletRequest) req;
+		HttpServletRequest request = (HttpServletRequest) req;
 		
-		if (allowedMethods.matcher(httpReq.getMethod()).matches() && apiMatcher.matches(httpReq)) {
+		if (allowedMethods.matcher(request.getMethod()).matches() && apiMatcher.matches(request)) {
 			response.setHeader("Access-Control-Allow-Origin", "*");
 			response.setHeader("Access-Control-Allow-Methods",
 					"POST, GET, OPTIONS, DELETE");

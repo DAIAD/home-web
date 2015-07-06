@@ -2,25 +2,25 @@ package eu.daiad.web.security.model;
 
 public class LoginStatus {
 
-	private final boolean loggedIn;
+	private final boolean connected;
 
-	private final String username;
+	private final String firstname;
 
 	public LoginStatus() {
-		this.loggedIn = false;
-		this.username = null;
+		this.connected = false;
+		this.firstname = null;
 	}
 
-	public LoginStatus(boolean loggedIn, String username) {
-		this.loggedIn = loggedIn;
-		this.username = username;
+	public LoginStatus(boolean connected, String firstname) {
+		this.connected = connected;
+		this.firstname = firstname;
 	}
 
-	public boolean isLoggedIn() {
-		return loggedIn;
+	public boolean isConnected() {
+		return connected;
 	}
 
-	public String getUsername() {
-		return username;
+	public String getFirstname() {
+		return firstname;
 	}
 }

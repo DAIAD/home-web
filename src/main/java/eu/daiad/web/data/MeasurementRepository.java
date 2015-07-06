@@ -1,5 +1,6 @@
-package eu.daiad.web.data.hbase;
+package eu.daiad.web.data;
 
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,17 +27,19 @@ import org.joda.time.Days;
 import org.apache.commons.logging.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Repository;
 
 import eu.daiad.web.model.DataPoint;
 import eu.daiad.web.model.DataSeries;
 import eu.daiad.web.model.DayIntervalDataPointCollection;
 import eu.daiad.web.model.HourlyDataPoints;
 import eu.daiad.web.model.Measurement;
-import eu.daiad.web.model.MeasurementCollection;
+import eu.daiad.web.model.DeviceMeasurementCollection;
 import eu.daiad.web.model.MeasurementQuery;
 import eu.daiad.web.model.MeasurementResult;
+import eu.daiad.web.model.Session;
 import eu.daiad.web.model.Shower;
 import eu.daiad.web.model.ShowerCollectionQuery;
 import eu.daiad.web.model.ShowerCollectionResult;
@@ -47,16 +50,20 @@ import eu.daiad.web.model.SmartMeterCollectionResult;
 import eu.daiad.web.model.SmartMeterDataPoint;
 import eu.daiad.web.model.SmartMeterIntervalQuery;
 import eu.daiad.web.model.SmartMeterMeasurement;
-import eu.daiad.web.model.SmartMeterMeasurementCollection;
+import eu.daiad.web.model.MeterMeasurementCollection;
 import eu.daiad.web.model.SmartMeterQuery;
 import eu.daiad.web.model.SmartMeterResult;
 import eu.daiad.web.model.TemporalConstants;
 
-@Service()
+@Repository()
 @Scope("prototype")
-public class HbaseConnection {
+@PropertySource("${hbase.properties}")
+public class MeasurementRepository {
 
 	private String quorum;
+
+	@Value("${hbase.data.time.partitions}")
+	private short timePartitions;
 
 	private String amphiroTableName;
 
@@ -78,10 +85,11 @@ public class HbaseConnection {
 		}
 	}
 
-	private static final Log logger = LogFactory.getLog(HbaseConnection.class);
+	private static final Log logger = LogFactory
+			.getLog(MeasurementRepository.class);
 
 	@Autowired
-	public HbaseConnection(
+	public MeasurementRepository(
 			@Value("${hbase.zookeeper.quorum}") String quorum,
 			@Value("${hbase.data.amphiro.table}") String amphiroTableName,
 			@Value("${hbase.data.swm.table}") String smartMeterTableName,
@@ -92,17 +100,199 @@ public class HbaseConnection {
 		this.columnFamilyName = columnFamilyName;
 	}
 
-	public void storeDataAmphiro(MeasurementCollection data) {
+	private void storeDataAmhiroSessionByUser(Connection connection,
+			DeviceMeasurementCollection data) throws Exception {
+		Table table = null;
 		try {
-			Configuration config = HBaseConfiguration.create();
-
-			config.set("hbase.zookeeper.quorum", this.quorum);
-
-			Connection connection = ConnectionFactory.createConnection(config);
-
+			if ((data == null) || (data.getSessions() == null)) {
+				return;
+			}
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
-			Table table = connection.getTable(TableName
+			table = connection.getTable(TableName
+					.valueOf("daiad:device-sessions-by-user"));
+			byte[] columnFamily = Bytes.toBytes("cf");
+
+			for (int i = 0; i < data.getSessions().size(); i++) {
+				Session s = data.getSessions().get(i);
+
+				byte[] userKey = data.getUserKey().toString().getBytes("UTF-8");
+				byte[] userKeyHash = md.digest(userKey);
+
+				byte[] deviceKey = data.getDeviceKey().toString()
+						.getBytes("UTF-8");
+				byte[] deviceKeyHash = md.digest(deviceKey);
+
+				byte[] timestampBytes = Bytes.toBytes(s.getTimestamp()
+						.getMillis());
+				if (timestampBytes.length != 8) {
+					throw new RuntimeException("Invalid byte array length!");
+				}
+
+				byte[] showerIdBytes = Bytes.toBytes(s.getShowerId());
+
+				byte[] rowKey = new byte[userKeyHash.length
+						+ deviceKeyHash.length + timestampBytes.length
+						+ showerIdBytes.length];
+
+				System.arraycopy(userKeyHash, 0, rowKey, 0, userKeyHash.length);
+				System.arraycopy(deviceKeyHash, 0, rowKey, userKeyHash.length,
+						deviceKeyHash.length);
+				System.arraycopy(timestampBytes, 0, rowKey,
+						(userKeyHash.length + deviceKeyHash.length),
+						timestampBytes.length);
+				System.arraycopy(showerIdBytes, 0, rowKey, (userKeyHash.length
+						+ deviceKeyHash.length + timestampBytes.length),
+						showerIdBytes.length);
+
+				Put put = new Put(rowKey);
+
+				byte[] column = Bytes.toBytes("measure:t");
+				put.addColumn(columnFamily, column,
+						Bytes.toBytes(s.getTemperature()));
+
+				column = Bytes.toBytes("measure:v");
+				put.addColumn(columnFamily, column,
+						Bytes.toBytes(s.getVolume()));
+
+				column = Bytes.toBytes("measure:f");
+				put.addColumn(columnFamily, column, Bytes.toBytes(s.getFlow()));
+
+				column = Bytes.toBytes("measure:e");
+				put.addColumn(columnFamily, column,
+						Bytes.toBytes(s.getEnergy()));
+
+				column = Bytes.toBytes("measure:d");
+				put.addColumn(columnFamily, column,
+						Bytes.toBytes(s.getDuration()));
+
+				for (int p = 0, count = s.getProperties().size(); p < count; p++) {
+					column = Bytes.toBytes(s.getProperties().get(p).getKey());
+					put.addColumn(columnFamily, column, s.getProperties()
+							.get(p).getValue().getBytes(StandardCharsets.UTF_8));
+				}
+
+				table.put(put);
+			}
+		} finally {
+			if (table != null) {
+				table.close();
+			}
+		}
+	}
+
+	private void storeDataAmhiroSessionByTime(Connection connection,
+			DeviceMeasurementCollection data) throws Exception {
+		Table table = null;
+		try {
+			if ((data == null) || (data.getSessions() == null)) {
+				return;
+			}
+			MessageDigest md = MessageDigest.getInstance("MD5");
+
+			table = connection.getTable(TableName
+					.valueOf("daiad:device-sessions-by-time"));
+			byte[] columnFamily = Bytes.toBytes("cf");
+
+			for (int i = 0; i < data.getSessions().size(); i++) {
+				Session s = data.getSessions().get(i);
+
+				short partition = (short) (s.getTimestamp().getMillis() % this.timePartitions);
+				byte[] partitionBytes = Bytes.toBytes(partition);
+
+				byte[] userKey = data.getUserKey().toString().getBytes("UTF-8");
+				byte[] userKeyHash = md.digest(userKey);
+
+				byte[] deviceKey = data.getDeviceKey().toString()
+						.getBytes("UTF-8");
+				byte[] deviceKeyHash = md.digest(deviceKey);
+
+				byte[] timestampBytes = Bytes.toBytes(s.getTimestamp()
+						.getMillis());
+				if (timestampBytes.length != 8) {
+					throw new RuntimeException("Invalid byte array length!");
+				}
+
+				byte[] showerIdBytes = Bytes.toBytes(s.getShowerId());
+
+				byte[] rowKey = new byte[partitionBytes.length + 
+				                         timestampBytes.length +
+				                         userKeyHash.length + 
+				                         deviceKeyHash.length + 
+				                         showerIdBytes.length];
+
+				System.arraycopy(partitionBytes, 
+								 0, 
+								 rowKey,
+								 0,			
+								 partitionBytes.length);
+				System.arraycopy(timestampBytes,
+								 0,
+								 rowKey,
+								 partitionBytes.length,
+								 timestampBytes.length);
+				System.arraycopy(userKeyHash, 
+								 0, 
+								 rowKey, 
+								 (partitionBytes.length + timestampBytes.length),
+								 userKeyHash.length);
+				System.arraycopy(deviceKeyHash, 
+								 0, 
+								 rowKey,
+								 (partitionBytes.length + timestampBytes.length + userKeyHash.length),
+								 deviceKeyHash.length);
+				System.arraycopy(showerIdBytes,
+								 0,
+								 rowKey,
+								 (partitionBytes.length + timestampBytes.length + userKeyHash.length + deviceKeyHash.length),
+								 showerIdBytes.length);
+
+				Put put = new Put(rowKey);
+
+				byte[] column = Bytes.toBytes("measure:t");
+				put.addColumn(columnFamily, column,
+						Bytes.toBytes(s.getTemperature()));
+
+				column = Bytes.toBytes("measure:v");
+				put.addColumn(columnFamily, column,
+						Bytes.toBytes(s.getVolume()));
+
+				column = Bytes.toBytes("measure:f");
+				put.addColumn(columnFamily, column, Bytes.toBytes(s.getFlow()));
+
+				column = Bytes.toBytes("measure:e");
+				put.addColumn(columnFamily, column,
+						Bytes.toBytes(s.getEnergy()));
+
+				column = Bytes.toBytes("measure:d");
+				put.addColumn(columnFamily, column,
+						Bytes.toBytes(s.getDuration()));
+
+				for (int p = 0, count = s.getProperties().size(); p < count; p++) {
+					column = Bytes.toBytes(s.getProperties().get(p).getKey());
+					put.addColumn(columnFamily, column, s.getProperties()
+							.get(p).getValue().getBytes(StandardCharsets.UTF_8));
+				}
+
+				table.put(put);
+			}
+		} finally {
+			if (table != null) {
+				table.close();
+			}
+		}
+	}
+
+	private void storeDataAmhiroMeasurements(Connection connection,
+			DeviceMeasurementCollection data) throws Exception {
+		Table table = null;
+		try {
+			if ((data == null) || (data.getMeasurements() == null)) {
+				return;
+			}
+			MessageDigest md = MessageDigest.getInstance("MD5");
+
+			table = connection.getTable(TableName
 					.valueOf(this.amphiroTableName));
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
@@ -113,11 +303,11 @@ public class HbaseConnection {
 					continue;
 				}
 
-				byte[] applicationKey = data.getApplicationKey().toString()
+				byte[] applicationKey = data.getUserKey().toString()
 						.getBytes("UTF-8");
 				byte[] applicationKeyHash = md.digest(applicationKey);
 
-				byte[] deviceId = data.getDeviceId().toString()
+				byte[] deviceId = data.getDeviceKey().toString()
 						.getBytes("UTF-8");
 				byte[] deviceIdHash = md.digest(deviceId);
 
@@ -165,14 +355,31 @@ public class HbaseConnection {
 						this.appendLength(Bytes.toBytes("e")));
 				p.addColumn(columnFamily, column, Bytes.toBytes(m.energy));
 
-				logger.info(String.format("%s %s %s %s %s",
-						new DateTime(m.timestamp),
-						m.showerId, m.showerTime,
-						m.volume, m.energy));
-				
 				table.put(p);
 			}
-			table.close();
+		} finally {
+			if (table != null) {
+				table.close();
+			}
+		}
+	}
+
+	public void storeDataAmphiro(DeviceMeasurementCollection data) {
+		Connection connection = null;
+		try {
+			if ((data == null) || (data.getMeasurements() == null)) {
+				return;
+			}
+			Configuration config = HBaseConfiguration.create();
+			config.set("hbase.zookeeper.quorum", this.quorum);
+
+			connection = ConnectionFactory.createConnection(config);
+
+			this.storeDataAmhiroSessionByUser(connection, data);
+			this.storeDataAmhiroSessionByTime(connection, data);
+
+			this.storeDataAmhiroMeasurements(connection, data);
+
 			connection.close();
 		} catch (RuntimeException ex) {
 			logger.error("Malformed data found.");
@@ -180,10 +387,18 @@ public class HbaseConnection {
 		} catch (Exception ex) {
 			logger.error("Unhandled exception has occured.");
 			logger.error(ex);
+		} finally {
+			try {
+				if ((connection != null) && (!connection.isClosed())) {
+					connection.close();
+				}
+			} catch (Exception ex) {
+				logger.error(ex);
+			}
 		}
 	}
 
-	public void storeDataSmartMeter(SmartMeterMeasurementCollection data) {
+	public void storeDataSmartMeter(MeterMeasurementCollection data) {
 		try {
 			Configuration config = HBaseConfiguration.create();
 
@@ -197,11 +412,11 @@ public class HbaseConnection {
 					.valueOf(this.smartMeterTableName));
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
-			byte[] applicationKey = data.getApplicationKey().toString()
+			byte[] applicationKey = data.getUserKey().toString()
 					.getBytes("UTF-8");
 			byte[] applicationKeyHash = md.digest(applicationKey);
 
-			byte[] deviceId = data.getDeviceId().toString().getBytes("UTF-8");
+			byte[] deviceId = data.getDeviceKey().toString().getBytes("UTF-8");
 			byte[] deviceIdHash = md.digest(deviceId);
 
 			for (int i = 0; i < data.getMeasurements().size(); i++) {
@@ -763,10 +978,6 @@ public class HbaseConnection {
 						if ((point != null)
 								&& (point.timestamp <= timestampThreshold)) {
 							data.add(point);
-							logger.info(String.format("%s %s %s %s %s",
-									new DateTime(point.timestamp),
-									point.showerId, point.showerTime,
-									point.volume, point.energy));
 						}
 						offset = entryOffset;
 						point = new DataPoint();
@@ -778,8 +989,6 @@ public class HbaseConnection {
 							3 + length);
 					String columnQualifier = Bytes.toString(slice);
 					if (columnQualifier.equals("si")) {
-						logger.info(String.format("%s %s",
-								new DateTime(point.timestamp), Bytes.toLong(entry.getValue())));
 						point.showerId = Bytes.toLong(entry.getValue());
 					} else if (columnQualifier.equals("st")) {
 						point.showerTime = Bytes.toInt(entry.getValue());
@@ -793,9 +1002,6 @@ public class HbaseConnection {
 				}
 				if ((point != null) && (point.timestamp <= timestampThreshold)) {
 					data.add(point);
-					logger.info(String.format("%s %s %s %s %s", new DateTime(
-							point.timestamp), point.showerId, point.showerTime,
-							point.volume, point.energy));
 				}
 			}
 			scanner.close();

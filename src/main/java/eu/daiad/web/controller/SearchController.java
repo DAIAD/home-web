@@ -13,19 +13,22 @@ import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.security.access.annotation.Secured;
 
 import eu.daiad.web.model.*;
-import eu.daiad.web.data.hbase.*;
+import eu.daiad.web.security.Authenticator;
+import eu.daiad.web.data.*;
 
 @RestController
-public class DataCollectionController {
+public class SearchController {
 
 	private static final int ERROR_PARSING_FAILED = 1;
-	private static final int ERROR_UNKNOWN = 2;
+	private static final int ERROR_UNKNOWN = 3;
 
-	private static final Log logger = LogFactory
-			.getLog(DataCollectionController.class);
+	private static final Log logger = LogFactory.getLog(SearchController.class);
 
 	@Autowired
-	private HbaseConnection hbase;
+	private MeasurementRepository hbase;
+
+	@Autowired
+	private Authenticator authenticator;
 
 	@InitBinder
 	protected void initBinder(WebDataBinder binder) {
@@ -34,48 +37,6 @@ public class DataCollectionController {
 		dateFormat.setLenient(false);
 		binder.registerCustomEditor(Date.class, new CustomDateEditor(
 				dateFormat, false));
-	}
-
-	@RequestMapping(value = "/api/v1/amphiro", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse insert(@RequestBody MeasurementCollection data,
-			BindingResult results) {
-
-		try {
-			if (results.hasErrors()) {
-				// TODO: Add logging
-				return new RestResponse(ERROR_PARSING_FAILED,
-						"Input parsing has failed.");
-			} else {
-				hbase.storeDataAmphiro(data);
-				return new RestResponse();
-			}
-		} catch (Exception ex) {
-			logger.error("Failed to insert measurement data.");
-			logger.error(ex);
-		}
-		return new RestResponse(ERROR_UNKNOWN,
-				"Unhandled exception has occured.");
-	}
-	
-	@RequestMapping(value = "/api/v1/swm", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse insert(@RequestBody SmartMeterMeasurementCollection data,
-			BindingResult results) {
-
-		try {
-			if (results.hasErrors()) {
-				// TODO: Add logging
-				return new RestResponse(ERROR_PARSING_FAILED,
-						"Input parsing has failed.");
-			} else {
-				hbase.storeDataSmartMeter(data);
-				return new RestResponse();
-			}
-		} catch (Exception ex) {
-			logger.error("Failed to insert measurement data.");
-			logger.error(ex);
-		}
-		return new RestResponse(ERROR_UNKNOWN,
-				"Unhandled exception has occured.");
 	}
 
 	@RequestMapping(value = "/swm/current", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
@@ -100,11 +61,11 @@ public class DataCollectionController {
 		return new SmartMeterResult(ERROR_UNKNOWN,
 				"Unhandled exception has occured.");
 	}
-	
+
 	@RequestMapping(value = "/swm/history", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("USER")
-	public SmartMeterCollectionResult query(@RequestBody SmartMeterIntervalQuery query,
-			BindingResult results) {
+	public SmartMeterCollectionResult query(
+			@RequestBody SmartMeterIntervalQuery query, BindingResult results) {
 		try {
 			if (results.hasErrors()) {
 				// TODO: Add logging
@@ -123,7 +84,7 @@ public class DataCollectionController {
 		return new SmartMeterCollectionResult(ERROR_UNKNOWN,
 				"Unhandled exception has occured.");
 	}
-	
+
 	@RequestMapping(value = "/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("USER")
 	public MeasurementResult query(@RequestBody MeasurementQuery query,
