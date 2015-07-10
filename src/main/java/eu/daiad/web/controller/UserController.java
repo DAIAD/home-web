@@ -67,7 +67,7 @@ public class UserController {
 		        return response;
 			}
 		} catch (Exception ex) {
-			logger.error(ex);
+			logger.error("Unhandled exception has occurred.", ex);
 		}
 		return new UserRegistrationResponse(ERROR_UNKNOWN,
 				"Unhandled exception has occured.");

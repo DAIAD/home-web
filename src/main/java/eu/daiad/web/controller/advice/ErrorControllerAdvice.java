@@ -6,6 +6,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import eu.daiad.web.model.AccessDeniedException;
+import eu.daiad.web.model.ResourceNotFoundException;
+
 @ControllerAdvice(annotations = Controller.class)
 public class ErrorControllerAdvice {
 
@@ -13,10 +16,14 @@ public class ErrorControllerAdvice {
 			.getLog(ErrorControllerAdvice.class);
 
 	@ExceptionHandler(Exception.class)
-	public String handleIOException(Exception ex) {
-		logger.error("Unhandled exception has occured in Controller class.");
-		logger.error(ex);
+	public String handleException(Exception ex) {
+		logger.error("Unhandled exception has occured in Controller class.", ex);
 
+		if(ex instanceof ResourceNotFoundException) {
+			return "notfound";
+		} else if(ex instanceof AccessDeniedException) {
+			return "denied";
+		}
 		return "error";
 	}
 

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 
@@ -31,15 +32,18 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Repository;
 
+import eu.daiad.web.model.AmphiroDevice;
 import eu.daiad.web.model.DataPoint;
 import eu.daiad.web.model.DataSeries;
 import eu.daiad.web.model.DayIntervalDataPointCollection;
+import eu.daiad.web.model.ExportData;
+import eu.daiad.web.model.ExtendedSessionData;
 import eu.daiad.web.model.HourlyDataPoints;
 import eu.daiad.web.model.Measurement;
 import eu.daiad.web.model.DeviceMeasurementCollection;
 import eu.daiad.web.model.MeasurementQuery;
 import eu.daiad.web.model.MeasurementResult;
-import eu.daiad.web.model.Session;
+import eu.daiad.web.model.SessionData;
 import eu.daiad.web.model.Shower;
 import eu.daiad.web.model.ShowerCollectionQuery;
 import eu.daiad.web.model.ShowerCollectionResult;
@@ -54,6 +58,7 @@ import eu.daiad.web.model.MeterMeasurementCollection;
 import eu.daiad.web.model.SmartMeterQuery;
 import eu.daiad.web.model.SmartMeterResult;
 import eu.daiad.web.model.TemporalConstants;
+import eu.daiad.web.security.model.DaiadUser;
 
 @Repository()
 @Scope("prototype")
@@ -71,20 +76,6 @@ public class MeasurementRepository {
 
 	private String columnFamilyName;
 
-	public enum ValueType {
-		Short(1), Integer(2), Long(3), Float(4), Double(5), String(6);
-
-		private int value;
-
-		private ValueType(int value) {
-			this.value = value;
-		}
-
-		public int getValue() {
-			return this.value;
-		}
-	}
-
 	private static final Log logger = LogFactory
 			.getLog(MeasurementRepository.class);
 
@@ -100,7 +91,160 @@ public class MeasurementRepository {
 		this.columnFamilyName = columnFamilyName;
 	}
 
-	private void storeDataAmhiroSessionByUser(Connection connection,
+	public List<ExtendedSessionData> exportDataAmhiroSession(ExportData data) throws Exception {
+		ArrayList<ExtendedSessionData> sessions = new ArrayList<ExtendedSessionData>();
+		
+		Connection connection = null;
+		Table table = null;
+		ResultScanner scanner = null;
+		
+		try {
+			if (data != null) {		
+				Configuration config = HBaseConfiguration.create();
+				config.set("hbase.zookeeper.quorum", this.quorum);
+	
+				connection = ConnectionFactory.createConnection(config);
+				
+				table = connection.getTable(TableName
+						.valueOf("daiad:device-sessions-by-time"));
+				byte[] columnFamily = Bytes.toBytes("cf");
+				
+				for(short p = 0; p < timePartitions; p++) {
+					Scan scan = new Scan();
+					scan.addFamily(columnFamily);
+	
+					byte[] partitionBytes = Bytes.toBytes(p);
+	
+					long from = data.getFrom().getMillis() / 1000;
+					from = from - (from % 86400);			
+					byte[] fromBytes = Bytes.toBytes(from);
+					
+					long to = data.getTo().getMillis() / 1000;
+					to = to - (to % 86400);
+					byte[] toBytes = Bytes.toBytes(to);
+					
+					// Scanner row key prefix start
+					byte[] rowKey = new byte[partitionBytes.length + 
+					                         fromBytes.length];
+	
+					System.arraycopy(partitionBytes, 
+									 0, 
+									 rowKey,
+									 0,			
+									 partitionBytes.length);
+					System.arraycopy(fromBytes,
+									 0,
+									 rowKey,
+									 partitionBytes.length,
+									 fromBytes.length);
+	
+					scan.setStartRow(rowKey);
+					
+					// Scanner row key prefix end
+					rowKey = new byte[partitionBytes.length + 
+					                         toBytes.length];
+	
+					System.arraycopy(partitionBytes, 
+									 0, 
+									 rowKey,
+									 0,			
+									 partitionBytes.length);
+					System.arraycopy(toBytes,
+									 0,
+									 rowKey,
+									 partitionBytes.length,
+									 toBytes.length);
+					
+					scan.setStopRow(rowKey); 
+				    
+					scanner = table.getScanner(scan);
+	
+					for (Result r = scanner.next(); r != null; r = scanner.next()) {
+						NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
+										
+						if(map!=null) {
+							ExtendedSessionData session = new ExtendedSessionData();
+							
+							rowKey = r.getRow();
+							
+							long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 2, 10));
+							long showerId = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 42, 50));
+
+							session.setShowerId(showerId);
+
+							for (Entry<byte[], byte[]> entry : map.entrySet()) {
+								String qualifier = Bytes.toString(entry.getKey());
+		
+					        	switch(qualifier) {
+					        		// User data
+					        		case "u:key":
+					        			session.getUser().setKey(new String(entry.getValue(), StandardCharsets.UTF_8));
+					        			break;
+					        		case "u:username":
+					        			session.getUser().setUsername(new String(entry.getValue(), StandardCharsets.UTF_8));
+					        			break;
+					        		case "u:postal":
+					        			session.getUser().setPostalCode(new String(entry.getValue(), StandardCharsets.UTF_8));
+					        			break;
+					        		// Device data
+					        		case "d:id":
+					        			session.getDevice().setId(new String(entry.getValue(), StandardCharsets.UTF_8));
+					        			break;
+					        		case "d:key":
+					        			session.getDevice().setKey(new String(entry.getValue(), StandardCharsets.UTF_8));
+					        			break;
+					        		case "d:name":
+					        			session.getDevice().setName(new String(entry.getValue(), StandardCharsets.UTF_8));
+					        			break;
+					        		// Measurement data
+					        		case "m:offset":
+					        			int offset = Bytes.toInt(entry.getValue());
+					        			DateTime timestamp = new DateTime((timeBucket + (long) offset) * 1000L);
+					        			session.setTimestamp(timestamp);
+				        				break;
+				        			case "m:t":
+				        				session.setTemperature(Bytes.toFloat(entry.getValue()));
+				        				break;
+			        				case "m:v":
+				        				session.setVolume(Bytes.toFloat(entry.getValue()));
+				        				break;
+			        				case "m:f":
+				        				session.setFlow(Bytes.toFloat(entry.getValue()));
+				        				break;
+			        				case "m:e":
+				        				session.setEnergy(Bytes.toFloat(entry.getValue()));
+				        				break;
+			        				case "m:d":
+				        				session.setDuration(Bytes.toInt(entry.getValue()));
+				        				break;
+				        			default:
+				        				session.addProperty(qualifier, new String(entry.getValue(), StandardCharsets.UTF_8));
+				        				break;
+					        	}					        	
+							}
+							sessions.add(session);
+						}
+					}
+					
+					scanner.close();
+				}
+			}
+		} finally {
+			if(scanner != null) {
+				scanner.close();
+			}
+			if(table != null) {
+				table.close();
+			}
+			if((connection != null) && (!connection.isClosed())) {
+				connection.close();
+			}
+		}
+		
+		return sessions;
+	}
+
+	private void storeDataAmhiroSessionByUser(Connection connection, DaiadUser user, AmphiroDevice device,
 			DeviceMeasurementCollection data) throws Exception {
 		Table table = null;
 		try {
@@ -114,7 +258,7 @@ public class MeasurementRepository {
 			byte[] columnFamily = Bytes.toBytes("cf");
 
 			for (int i = 0; i < data.getSessions().size(); i++) {
-				Session s = data.getSessions().get(i);
+				SessionData s = data.getSessions().get(i);
 
 				byte[] userKey = data.getUserKey().toString().getBytes("UTF-8");
 				byte[] userKeyHash = md.digest(userKey);
@@ -123,46 +267,75 @@ public class MeasurementRepository {
 						.getBytes("UTF-8");
 				byte[] deviceKeyHash = md.digest(deviceKey);
 
-				byte[] timestampBytes = Bytes.toBytes(s.getTimestamp()
-						.getMillis());
-				if (timestampBytes.length != 8) {
+				long timestamp = s.getTimestamp().getMillis() / 1000;
+				long offset = timestamp % 86400;
+				long timeBucket = timestamp - offset;
+				
+				byte[] timeBucketBytes = Bytes.toBytes(timeBucket);
+				if (timeBucketBytes.length != 8) {
 					throw new RuntimeException("Invalid byte array length!");
 				}
 
 				byte[] showerIdBytes = Bytes.toBytes(s.getShowerId());
 
 				byte[] rowKey = new byte[userKeyHash.length
-						+ deviceKeyHash.length + timestampBytes.length
+						+ deviceKeyHash.length + timeBucketBytes.length
 						+ showerIdBytes.length];
 
 				System.arraycopy(userKeyHash, 0, rowKey, 0, userKeyHash.length);
 				System.arraycopy(deviceKeyHash, 0, rowKey, userKeyHash.length,
 						deviceKeyHash.length);
-				System.arraycopy(timestampBytes, 0, rowKey,
+				System.arraycopy(timeBucketBytes, 0, rowKey,
 						(userKeyHash.length + deviceKeyHash.length),
-						timestampBytes.length);
+						timeBucketBytes.length);
 				System.arraycopy(showerIdBytes, 0, rowKey, (userKeyHash.length
-						+ deviceKeyHash.length + timestampBytes.length),
+						+ deviceKeyHash.length + timeBucketBytes.length),
 						showerIdBytes.length);
 
 				Put put = new Put(rowKey);
-
-				byte[] column = Bytes.toBytes("measure:t");
+				byte[] column;
+				
+				// Add user data
+				column = Bytes.toBytes("u:key");
+				put.addColumn(columnFamily, column, user.getKey().toString().getBytes(StandardCharsets.UTF_8));
+				
+				column = Bytes.toBytes("u:username");
+				put.addColumn(columnFamily, column, user.getUsername().getBytes(StandardCharsets.UTF_8));
+				
+				column = Bytes.toBytes("u:postal");
+				put.addColumn(columnFamily, column, user.getPostalCode().getBytes(StandardCharsets.UTF_8));
+				
+				// Add device data
+				column = Bytes.toBytes("d:id");
+				put.addColumn(columnFamily, column, device.getDeviceId().getBytes(StandardCharsets.UTF_8));
+				
+				column = Bytes.toBytes("d:key");
+				put.addColumn(columnFamily, column, device.getKey().toString().getBytes(StandardCharsets.UTF_8));
+				
+				column = Bytes.toBytes("d:name");
+				put.addColumn(columnFamily, column, device.getName().getBytes(StandardCharsets.UTF_8));
+				
+				// Add measurement data
+				column = Bytes.toBytes("m:offset");
+				put.addColumn(columnFamily, column,
+						Bytes.toBytes((int) offset));
+				
+				column = Bytes.toBytes("m:t");
 				put.addColumn(columnFamily, column,
 						Bytes.toBytes(s.getTemperature()));
 
-				column = Bytes.toBytes("measure:v");
+				column = Bytes.toBytes("m:v");
 				put.addColumn(columnFamily, column,
 						Bytes.toBytes(s.getVolume()));
 
-				column = Bytes.toBytes("measure:f");
+				column = Bytes.toBytes("m:f");
 				put.addColumn(columnFamily, column, Bytes.toBytes(s.getFlow()));
 
-				column = Bytes.toBytes("measure:e");
+				column = Bytes.toBytes("m:e");
 				put.addColumn(columnFamily, column,
 						Bytes.toBytes(s.getEnergy()));
 
-				column = Bytes.toBytes("measure:d");
+				column = Bytes.toBytes("m:d");
 				put.addColumn(columnFamily, column,
 						Bytes.toBytes(s.getDuration()));
 
@@ -181,7 +354,7 @@ public class MeasurementRepository {
 		}
 	}
 
-	private void storeDataAmhiroSessionByTime(Connection connection,
+	private void storeDataAmhiroSessionByTime(Connection connection, DaiadUser user, AmphiroDevice device,
 			DeviceMeasurementCollection data) throws Exception {
 		Table table = null;
 		try {
@@ -195,7 +368,7 @@ public class MeasurementRepository {
 			byte[] columnFamily = Bytes.toBytes("cf");
 
 			for (int i = 0; i < data.getSessions().size(); i++) {
-				Session s = data.getSessions().get(i);
+				SessionData s = data.getSessions().get(i);
 
 				short partition = (short) (s.getTimestamp().getMillis() % this.timePartitions);
 				byte[] partitionBytes = Bytes.toBytes(partition);
@@ -207,16 +380,19 @@ public class MeasurementRepository {
 						.getBytes("UTF-8");
 				byte[] deviceKeyHash = md.digest(deviceKey);
 
-				byte[] timestampBytes = Bytes.toBytes(s.getTimestamp()
-						.getMillis());
-				if (timestampBytes.length != 8) {
+				long timestamp = s.getTimestamp().getMillis() / 1000;
+				long offset = timestamp % 86400;
+				long timeBucket = timestamp - offset;
+				
+				byte[] timeBucketBytes = Bytes.toBytes(timeBucket);
+				if (timeBucketBytes.length != 8) {
 					throw new RuntimeException("Invalid byte array length!");
 				}
 
 				byte[] showerIdBytes = Bytes.toBytes(s.getShowerId());
 
 				byte[] rowKey = new byte[partitionBytes.length + 
-				                         timestampBytes.length +
+				                         timeBucketBytes.length +
 				                         userKeyHash.length + 
 				                         deviceKeyHash.length + 
 				                         showerIdBytes.length];
@@ -226,45 +402,73 @@ public class MeasurementRepository {
 								 rowKey,
 								 0,			
 								 partitionBytes.length);
-				System.arraycopy(timestampBytes,
+				System.arraycopy(timeBucketBytes,
 								 0,
 								 rowKey,
 								 partitionBytes.length,
-								 timestampBytes.length);
+								 timeBucketBytes.length);
 				System.arraycopy(userKeyHash, 
 								 0, 
 								 rowKey, 
-								 (partitionBytes.length + timestampBytes.length),
+								 (partitionBytes.length + timeBucketBytes.length),
 								 userKeyHash.length);
 				System.arraycopy(deviceKeyHash, 
 								 0, 
 								 rowKey,
-								 (partitionBytes.length + timestampBytes.length + userKeyHash.length),
+								 (partitionBytes.length + timeBucketBytes.length + userKeyHash.length),
 								 deviceKeyHash.length);
 				System.arraycopy(showerIdBytes,
 								 0,
 								 rowKey,
-								 (partitionBytes.length + timestampBytes.length + userKeyHash.length + deviceKeyHash.length),
+								 (partitionBytes.length + timeBucketBytes.length + userKeyHash.length + deviceKeyHash.length),
 								 showerIdBytes.length);
 
 				Put put = new Put(rowKey);
 
-				byte[] column = Bytes.toBytes("measure:t");
+				byte[] column;
+				
+				// Add user data
+				column = Bytes.toBytes("u:key");
+				put.addColumn(columnFamily, column, user.getKey().toString().getBytes(StandardCharsets.UTF_8));
+				
+				column = Bytes.toBytes("u:username");
+				put.addColumn(columnFamily, column, user.getUsername().getBytes(StandardCharsets.UTF_8));
+				
+				column = Bytes.toBytes("u:postal");
+				put.addColumn(columnFamily, column, user.getPostalCode().getBytes(StandardCharsets.UTF_8));
+				
+				// Add device data
+				column = Bytes.toBytes("d:id");
+				put.addColumn(columnFamily, column, device.getDeviceId().getBytes(StandardCharsets.UTF_8));
+				
+				column = Bytes.toBytes("d:key");
+				put.addColumn(columnFamily, column, device.getKey().toString().getBytes(StandardCharsets.UTF_8));
+				
+				column = Bytes.toBytes("d:name");
+				put.addColumn(columnFamily, column, device.getName().getBytes(StandardCharsets.UTF_8));
+				
+				// Add measurement data
+				
+				column = Bytes.toBytes("m:offset");
+				put.addColumn(columnFamily, column,
+						Bytes.toBytes((int) offset));
+				
+				column = Bytes.toBytes("m:t");
 				put.addColumn(columnFamily, column,
 						Bytes.toBytes(s.getTemperature()));
 
-				column = Bytes.toBytes("measure:v");
+				column = Bytes.toBytes("m:v");
 				put.addColumn(columnFamily, column,
 						Bytes.toBytes(s.getVolume()));
 
-				column = Bytes.toBytes("measure:f");
+				column = Bytes.toBytes("m:f");
 				put.addColumn(columnFamily, column, Bytes.toBytes(s.getFlow()));
 
-				column = Bytes.toBytes("measure:e");
+				column = Bytes.toBytes("m:e");
 				put.addColumn(columnFamily, column,
 						Bytes.toBytes(s.getEnergy()));
 
-				column = Bytes.toBytes("measure:d");
+				column = Bytes.toBytes("m:d");
 				put.addColumn(columnFamily, column,
 						Bytes.toBytes(s.getDuration()));
 
@@ -283,7 +487,7 @@ public class MeasurementRepository {
 		}
 	}
 
-	private void storeDataAmhiroMeasurements(Connection connection,
+	private void storeDataAmhiroMeasurements(Connection connection, DaiadUser user, AmphiroDevice device,
 			DeviceMeasurementCollection data) throws Exception {
 		Table table = null;
 		try {
@@ -364,7 +568,7 @@ public class MeasurementRepository {
 		}
 	}
 
-	public void storeDataAmphiro(DeviceMeasurementCollection data) {
+	public void storeDataAmphiro(DaiadUser user, AmphiroDevice device, DeviceMeasurementCollection data) {
 		Connection connection = null;
 		try {
 			if ((data == null) || (data.getMeasurements() == null)) {
@@ -375,25 +579,23 @@ public class MeasurementRepository {
 
 			connection = ConnectionFactory.createConnection(config);
 
-			this.storeDataAmhiroSessionByUser(connection, data);
-			this.storeDataAmhiroSessionByTime(connection, data);
+			this.storeDataAmhiroSessionByUser(connection, user, device, data);
+			this.storeDataAmhiroSessionByTime(connection, user, device, data);
 
-			this.storeDataAmhiroMeasurements(connection, data);
+			this.storeDataAmhiroMeasurements(connection, user, device, data);
 
 			connection.close();
 		} catch (RuntimeException ex) {
-			logger.error("Malformed data found.");
-			logger.error(ex);
+			logger.error("Malformed data found.", ex);
 		} catch (Exception ex) {
-			logger.error("Unhandled exception has occured.");
-			logger.error(ex);
+			logger.error("Unhandled exception has occured.", ex);
 		} finally {
 			try {
 				if ((connection != null) && (!connection.isClosed())) {
 					connection.close();
 				}
 			} catch (Exception ex) {
-				logger.error(ex);
+				logger.error("Unhandled exception has occurred.", ex);
 			}
 		}
 	}
@@ -462,11 +664,9 @@ public class MeasurementRepository {
 			table.close();
 			connection.close();
 		} catch (RuntimeException ex) {
-			logger.error("Malformed data found.");
-			logger.error(ex);
+			logger.error("Malformed data found.", ex);
 		} catch (Exception ex) {
-			logger.error("Unhandled exception has occured.");
-			logger.error(ex);
+			logger.error("Unhandled exception has occured.", ex);
 		}
 	}
 
@@ -649,8 +849,7 @@ public class MeasurementRepository {
 
 			return data;
 		} catch (Exception ex) {
-			logger.error("Unhandled exception has occured.");
-			logger.error(ex);
+			logger.error("Unhandled exception has occured.", ex);
 		}
 
 		return null;
@@ -756,8 +955,7 @@ public class MeasurementRepository {
 
 			return data;
 		} catch (Exception ex) {
-			logger.error("Unhandled exception has occured.");
-			logger.error(ex);
+			logger.error("Unhandled exception has occured.", ex);
 		}
 
 		return null;
@@ -886,8 +1084,7 @@ public class MeasurementRepository {
 
 			return data;
 		} catch (Exception ex) {
-			logger.error("Unhandled exception has occured.");
-			logger.error(ex);
+			logger.error("Unhandled exception has occured.", ex);
 		}
 
 		return null;
@@ -1020,8 +1217,7 @@ public class MeasurementRepository {
 
 			return data;
 		} catch (Exception ex) {
-			logger.error("Unhandled exception has occured.");
-			logger.error(ex);
+			logger.error("Unhandled exception has occured.", ex);
 		}
 
 		return null;
@@ -1140,11 +1336,9 @@ public class MeasurementRepository {
 
 			return data;
 		} catch (Exception ex) {
-			logger.error("Unhandled exception has occured.");
-			logger.error(ex);
+			logger.error("Unhandled exception has occured.", ex);
 		}
 
 		return null;
 	}
-
 }

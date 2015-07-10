@@ -63,7 +63,7 @@ public class DeviceController {
 		        
 	        return response;
 		} catch (Exception ex) {
-			logger.error(ex);
+			logger.error("Unhandled exception has occurred.", ex);
 		}
 		return new DeviceRegistrationResponse(ERROR_UNKNOWN,
 				"Unhandled exception has occured.");

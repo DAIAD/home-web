@@ -55,8 +55,7 @@ public class SearchController {
 				return data;
 			}
 		} catch (Exception ex) {
-			logger.error("Failed to insert measurement data.");
-			logger.error(ex);
+			logger.error("Failed to insert measurement data.", ex);
 		}
 		return new SmartMeterResult(ERROR_UNKNOWN,
 				"Unhandled exception has occured.");
@@ -78,8 +77,7 @@ public class SearchController {
 				return data;
 			}
 		} catch (Exception ex) {
-			logger.error("Failed to insert measurement data.");
-			logger.error(ex);
+			logger.error("Failed to insert measurement data.", ex);
 		}
 		return new SmartMeterCollectionResult(ERROR_UNKNOWN,
 				"Unhandled exception has occured.");
@@ -101,8 +99,7 @@ public class SearchController {
 				return data;
 			}
 		} catch (Exception ex) {
-			logger.error("Failed to insert measurement data.");
-			logger.error(ex);
+			logger.error("Failed to insert measurement data.", ex);
 		}
 		return new MeasurementResult(ERROR_UNKNOWN,
 				"Unhandled exception has occured.");
@@ -125,8 +122,7 @@ public class SearchController {
 				return data;
 			}
 		} catch (Exception ex) {
-			logger.error("Failed to insert measurement data.");
-			logger.error(ex);
+			logger.error("Failed to insert measurement data.", ex);
 		}
 		return new ShowerCollectionResult(ERROR_UNKNOWN,
 				"Unhandled exception has occured.");
@@ -150,8 +146,7 @@ public class SearchController {
 				return data;
 			}
 		} catch (Exception ex) {
-			logger.error("Failed to insert measurement data.");
-			logger.error(ex);
+			logger.error("Failed to insert measurement data.", ex);
 		}
 		return new ShowerResult(ERROR_UNKNOWN,
 				"Unhandled exception has occured.");

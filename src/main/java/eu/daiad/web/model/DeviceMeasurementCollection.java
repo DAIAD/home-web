@@ -7,7 +7,7 @@ public class DeviceMeasurementCollection extends MeasurementCollection {
 
 	private UUID deviceKey;
 	
-	private ArrayList<Session> sessions;
+	private ArrayList<SessionData> sessions;
 	
 	private ArrayList<Measurement> measurements;
 
@@ -19,11 +19,11 @@ public class DeviceMeasurementCollection extends MeasurementCollection {
 		return this.deviceKey;
 	}
 	
-	public void setSessions(ArrayList<Session> value) {
+	public void setSessions(ArrayList<SessionData> value) {
 		this.sessions = value;
 	}
 	
-	public ArrayList<Session> getSessions() {
+	public ArrayList<SessionData> getSessions() {
 		return this.sessions;
 	}
 

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import org.joda.time.DateTime;
 
-public class Session {
+public class SessionData {
 
 	private ArrayList<KeyValuePair> properties;
 	
@@ -84,5 +84,21 @@ public class Session {
 	
 	public void setProperties(ArrayList<KeyValuePair> value) {
 		this.properties = value;
+	}
+	
+	public void addProperty(String key, String value) {
+		if(properties == null) {
+			properties = new ArrayList<KeyValuePair>();
+		}
+		properties.add(new KeyValuePair(key, value));
+	}
+	
+	public String getPropertyByKey(String key) {
+		for(int i=0;i<this.properties.size();i++) {
+			if(this.properties.get(i).getKey().equals(key)) {
+				return this.properties.get(i).getValue();
+			}
+		}
+		return null;
 	}
 }
