@@ -106,12 +106,12 @@ public class UserRepository {
 			p.addColumn(columnFamily, column, postalCode.getBytes(StandardCharsets.UTF_8));
 			
 			column = Bytes.toBytes("roles");
-			p.addColumn(columnFamily, column, "USER".getBytes(StandardCharsets.UTF_8));
+			p.addColumn(columnFamily, column, "ROLE_USER".getBytes(StandardCharsets.UTF_8));
 
 			table.put(p);
 
 	        List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
-	        authorities.add(new SimpleGrantedAuthority("USER"));
+	        authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
 	        
 			DaiadUser user = new DaiadUser(userKey, username, encoder.encode(password), authorities);
 			user.setFirstname(firstname);

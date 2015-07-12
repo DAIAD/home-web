@@ -49,13 +49,12 @@ public class DataWebApiController {
 	}
 	
 	@RequestMapping(value = "/data/export", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured("USER")
+	@Secured({"ROLE_BATCH"})
 	public DownloadResponse export(@RequestBody ExportData data,
 			BindingResult results) {
 
 		try {
 			if (results.hasErrors()) {
-				// TODO: Add logging
 				return new DownloadResponse(ERROR_PARSING_FAILED,
 						"Input parsing has failed.");
 			}
@@ -79,8 +78,8 @@ public class DataWebApiController {
 				"Unhandled exception has occured.");
 	}
 
-	@RequestMapping(value = "/data/download/{token}", method = RequestMethod.GET, produces = "application/zip")
-	@Secured("USER")
+	@RequestMapping(value = "/data/download/{token}", method = RequestMethod.GET)
+	@Secured({"ROLE_BATCH"})
 	public ResponseEntity<InputStreamResource> download(@PathVariable("token") String token) {
 		try {
 			File path = new File(temporaryPath);

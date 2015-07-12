@@ -7,7 +7,7 @@ import org.springframework.boot.context.web.SpringBootServletInitializer;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 
 @SpringBootApplication
-@EnableGlobalMethodSecurity
+@EnableGlobalMethodSecurity(securedEnabled=true)
 public class Application extends SpringBootServletInitializer {
 
     @Override

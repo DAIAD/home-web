@@ -6,6 +6,7 @@ import java.util.Date;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
@@ -65,7 +66,6 @@ public class DataRestApiController {
 
 		try {
 			if (results.hasErrors()) {
-				// TODO: Add logging
 				return new RestResponse(ERROR_PARSING_FAILED,
 						"Input parsing has failed.");
 			}
@@ -113,7 +113,6 @@ public class DataRestApiController {
 
 		try {
 			if (results.hasErrors()) {
-				// TODO: Add logging
 				return new DownloadResponse(ERROR_PARSING_FAILED,
 						"Input parsing has failed.");
 			}
@@ -148,7 +147,6 @@ public class DataRestApiController {
 			BindingResult results) throws ResourceNotFoundException, AccessDeniedException {
 		try {
 			if (results.hasErrors()) {
-				// TODO: Add logging
 				throw new HttpMessageNotReadableException("Input parsing has failed.");
 			}
 			

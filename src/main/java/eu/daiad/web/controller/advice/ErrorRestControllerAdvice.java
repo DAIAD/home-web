@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.AccessDeniedException;
 
-import eu.daiad.web.model.AccessDeniedException;
 import eu.daiad.web.model.ResourceNotFoundException;
 import eu.daiad.web.model.RestResponse;
 

@@ -1,5 +1,7 @@
 package eu.daiad.web.security;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -12,6 +14,8 @@ import eu.daiad.web.data.UserRepository;
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
  
+	private static final Log logger = LogFactory.getLog(CustomUserDetailsService.class);
+	
     @Autowired
     private UserRepository repository;
  
@@ -20,7 +24,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     	try {
     		return repository.getUserByName(username);
     	} catch(Exception ex) {
-    		// TODO : Add error handling
+    		logger.error(String.format("Failed to load user [%s].", username), ex);
     	}
     	
     	return null;

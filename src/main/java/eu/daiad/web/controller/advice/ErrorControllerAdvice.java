@@ -5,8 +5,8 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.security.access.AccessDeniedException;
 
-import eu.daiad.web.model.AccessDeniedException;
 import eu.daiad.web.model.ResourceNotFoundException;
 
 @ControllerAdvice(annotations = Controller.class)

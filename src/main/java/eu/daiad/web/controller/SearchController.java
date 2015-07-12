@@ -40,7 +40,7 @@ public class SearchController {
 	}
 
 	@RequestMapping(value = "/swm/current", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured("USER")
+	@Secured("ROLE_USER")
 	public SmartMeterResult query(@RequestBody SmartMeterQuery query,
 			BindingResult results) {
 		try {
@@ -62,7 +62,7 @@ public class SearchController {
 	}
 
 	@RequestMapping(value = "/swm/history", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured("USER")
+	@Secured("ROLE_USER")
 	public SmartMeterCollectionResult query(
 			@RequestBody SmartMeterIntervalQuery query, BindingResult results) {
 		try {
@@ -84,7 +84,7 @@ public class SearchController {
 	}
 
 	@RequestMapping(value = "/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured("USER")
+	@Secured("ROLE_USER")
 	public MeasurementResult query(@RequestBody MeasurementQuery query,
 			BindingResult results) {
 		try {
@@ -106,7 +106,7 @@ public class SearchController {
 	}
 
 	@RequestMapping(value = "/showers", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured("USER")
+	@Secured("ROLE_USER")
 	public ShowerCollectionResult query(
 			@RequestBody ShowerCollectionQuery query, BindingResult results) {
 		try {
@@ -130,7 +130,7 @@ public class SearchController {
 	}
 
 	@RequestMapping(value = "/shower", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured("USER")
+	@Secured("ROLE_USER")
 	public ShowerResult query(@RequestBody ShowerQuery query,
 			BindingResult results) {
 		try {
