@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -33,6 +35,21 @@ public class ExportService {
 	private MeasurementRepository storage;
 	
 	public String export(ExportData data) throws ExportException {
+    	HashMap<String, String> properties = new HashMap<String, String>();
+    	properties.put("settings.device.name", "Device name");
+    	properties.put("settings.device.calibrate", "Calibrate");
+    	properties.put("settings.unit", "Unit");
+    	properties.put("settings.currency", "currency");
+    	properties.put("settings.alarm", "Alarm");
+    	properties.put("settings.water.cost", "Water cost");
+    	properties.put("settings.water.temperature-cold", "Cold water temperature");
+    	properties.put("settings.energy.heating", "Heating system");
+    	properties.put("settings.energy.efficiency", "Efficiency");
+    	properties.put("settings.energy.cost", "Energy cost");
+    	properties.put("settings.energy.solar", "Share of solar");
+    	properties.put("settings.shower.estimate-per-week", "Estimates showers per week");
+    	properties.put("settings.shower.time-between-shower", "Time between showers");
+    	
 		try {
 			File path = new File(temporaryPath);
 	
@@ -50,6 +67,7 @@ public class ExportService {
 			
 			String token =  UUID.randomUUID().toString();
 			
+			File txtFile = new File(path, token + ".txt");
 			File csvFile = new File(path, token + ".csv");
 			File zipFile = new File(path, token + ".zip");
 			
@@ -103,29 +121,66 @@ public class ExportService {
 			writer.flush();
 			writer.close();
 			
+			writer = new PrintWriter(txtFile, StandardCharsets.UTF_8.toString());
+			writer.format("%s\n%s\n%s\n%s\n%s\n%s\n",
+					  "User unique Id (Database)",
+					  "User name (email)",
+					  "User postal code",
+					  "Device unique Id (Mobile Application)",
+					  "Device unique Id (Database)",
+					  "Device name (optional)");
+
+			writer.format("%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
+						  "Date & Time data received",
+						  "Shower Id",
+						  "Duration",
+						  "Temperature",
+						  "Volume",
+						  "Flow",
+						  "Energy");
+			
+			if(data.getProperties().size() != 0) {
+				Iterator<String> iter = data.getProperties().iterator();
+			    while (iter.hasNext()) {
+			    	writer.format("%s\n", properties.get(iter.next()));
+			    }
+			}
+			writer.format("%s\n", "Real time / historical (true / false)");
+			writer.flush();
+			writer.close();
+			
 			// Compress file
 			byte[] buffer = new byte[4096];
 			
 			FileOutputStream fos = new FileOutputStream(zipFile);
 			ZipOutputStream zos = new ZipOutputStream(fos);
+
+			int len;
+			
 			ZipEntry ze= new ZipEntry("export.csv");
 			zos.putNextEntry(ze);
 			FileInputStream in = new FileInputStream(csvFile);
-	
-			int len;
 			while ((len = in.read(buffer)) > 0) {
 				zos.write(buffer, 0, len);
 			}
-			
-			in.close();
-			
+			in.close();		
 			zos.flush();
 			zos.closeEntry();
 	
+			ze= new ZipEntry("readme.txt");
+			zos.putNextEntry(ze);
+			in = new FileInputStream(txtFile);
+			while ((len = in.read(buffer)) > 0) {
+				zos.write(buffer, 0, len);
+			}
+			in.close();		
+			zos.flush();
+			zos.closeEntry();
+			
 			zos.close();
 	
 			csvFile.delete();
-			
+			txtFile.delete();
 			return token;
 		} catch(ExportException ex) {
 			throw ex;
