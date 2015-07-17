@@ -97,6 +97,7 @@ public class ExportService {
 				        }
 				    }
 				}
+				writer.format("\t%s", (session.isHistory() ? "true" : "false"));
 				writer.print("\n");
 			}
 			writer.flush();

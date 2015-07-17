@@ -231,6 +231,11 @@ public class MeasurementRepository {
 									session.setDuration(Bytes.toInt(entry
 											.getValue()));
 									break;
+								// General data
+								case "r:h":
+									session.setHistory(Bytes.toBoolean(entry
+											.getValue()));
+									break;
 								default:
 									session.addProperty(qualifier, new String(
 											entry.getValue(),
@@ -238,6 +243,7 @@ public class MeasurementRepository {
 									break;
 								}
 							}
+
 							sessions.add(session);
 						}
 					}
@@ -360,6 +366,10 @@ public class MeasurementRepository {
 				column = Bytes.toBytes("m:d");
 				put.addColumn(columnFamily, column,
 						Bytes.toBytes(s.getDuration()));
+				
+				column = Bytes.toBytes("r:h");
+				put.addColumn(columnFamily, column,
+						Bytes.toBytes(s.isHistory()));
 
 				for (int p = 0, count = s.getProperties().size(); p < count; p++) {
 					column = Bytes.toBytes(s.getProperties().get(p).getKey());
@@ -489,6 +499,10 @@ public class MeasurementRepository {
 				column = Bytes.toBytes("m:d");
 				put.addColumn(columnFamily, column,
 						Bytes.toBytes(s.getDuration()));
+
+				column = Bytes.toBytes("r:h");
+				put.addColumn(columnFamily, column,
+						Bytes.toBytes(s.isHistory()));
 
 				for (int p = 0, count = s.getProperties().size(); p < count; p++) {
 					column = Bytes.toBytes(s.getProperties().get(p).getKey());

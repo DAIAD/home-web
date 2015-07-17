@@ -55,7 +55,7 @@ public class ErrorController extends BasicErrorController {
 			case NOT_FOUND:
 				return new ModelAndView("notfound");
 			case UNAUTHORIZED: case FORBIDDEN: case METHOD_NOT_ALLOWED:
-				if(path.equals("/logout")) {
+				if((path!=null) && (path.equals("/logout"))) {
 					return new ModelAndView("redirect:");
 				}
 				return new ModelAndView("denied");

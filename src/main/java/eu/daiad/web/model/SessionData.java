@@ -19,7 +19,9 @@ public class SessionData {
     private float energy;
 
     private int duration;
-       
+      
+    private boolean history;
+    
     private DateTime timestamp;
     
     public long getShowerId() {
@@ -78,6 +80,14 @@ public class SessionData {
 		this.timestamp = timestamp;
 	}
    
+	public boolean isHistory() {
+		return history;
+	}
+
+	public void setHistory(boolean history) {
+		this.history = history;
+	}
+
 	public ArrayList<KeyValuePair> getProperties() {
 		return this.properties;
 	}
