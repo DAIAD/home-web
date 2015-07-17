@@ -11,7 +11,10 @@ public class Credentials {
 	}
 
 	public String getUsername() {
-		return this.username;
+		if(this.username == null) {
+			return "";
+		}
+		return this.username.trim();
 	}
 	
 	public void setPassword(String value) {
@@ -19,6 +22,9 @@ public class Credentials {
 	}
 
 	public String getPassword() {
+		if(this.password == null) {
+			return "";
+		}
 		return this.password;
 	}
 }

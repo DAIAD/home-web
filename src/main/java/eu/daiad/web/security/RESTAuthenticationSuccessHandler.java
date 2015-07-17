@@ -26,6 +26,10 @@ public class RESTAuthenticationSuccessHandler extends
 	private final Log logger = LogFactory.getLog(this.getClass());
 
 	private boolean isAjaxRequest(HttpServletRequest request) {
+		if (request.getMethod().equals("POST") && "application/json".equals(request.getHeader("Content-Type"))) {
+			return true;
+		}
+		
 		String requestedWith = request.getHeader("X-Requested-With");
 		return requestedWith != null ? "XMLHttpRequest".equals(requestedWith)
 				: false;

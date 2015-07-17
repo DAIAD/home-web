@@ -1,5 +1,9 @@
 @CHARSET "UTF-8";
 
+body {
+    padding: 0px !important;
+}
+
 table.shower {
 	
 }

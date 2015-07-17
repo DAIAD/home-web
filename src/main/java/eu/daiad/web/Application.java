@@ -9,13 +9,13 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 @SpringBootApplication
 @EnableGlobalMethodSecurity(securedEnabled=true)
 public class Application extends SpringBootServletInitializer {
-
+    
     @Override
-    protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+    protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {	
         return application.sources(Application.class);
     }
     
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {	
 		SpringApplication.run(Application.class, args);
 	}
 

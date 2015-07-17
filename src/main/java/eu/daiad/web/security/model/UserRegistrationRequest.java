@@ -25,6 +25,8 @@ public class UserRegistrationRequest {
     
     private String country;
 
+    private String timezone;
+    
     private String postalCode;
 	
     public EnumGender getGender() {
@@ -63,6 +65,14 @@ public class UserRegistrationRequest {
 		this.postalCode = postalCode;
 	}
     
+	public String getTimezone() {
+		return timezone;
+	}
+
+	public void setTimezone(String timezone) {
+		this.timezone = timezone;
+	}
+
 	public void setUsername(String value) {
 		this.username = value;
 	}

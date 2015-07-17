@@ -8,6 +8,7 @@ import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.SpringSecurityCoreVersion;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 
 import eu.daiad.web.model.EnumGender;
@@ -30,6 +31,8 @@ public class DaiadUser extends User {
 
     private String postalCode;
 
+    private String timezone;
+    
 	public DaiadUser(UUID key, String username, String password) {
 		super(username, password, new ArrayList<GrantedAuthority>());
 		
@@ -86,12 +89,28 @@ public class DaiadUser extends User {
 		this.country = country;
 	}
 
+	public String getTimezone() {
+		return timezone;
+	}
+
+	public void setTimezone(String timezone) {
+		this.timezone = timezone;
+	}
+	
 	public String getPostalCode() {
 		return postalCode;
 	}
 
 	public void setPostalCode(String postalCode) {
 		this.postalCode = postalCode;
+	}
+	
+	public boolean hasRole(String role) {
+		return this.getAuthorities().contains(new SimpleGrantedAuthority(role));
+	}
+	
+	public boolean hasRole(EnumRole role) {
+		return this.getAuthorities().contains(new SimpleGrantedAuthority(role.toString()));
 	}
 
 	@Override

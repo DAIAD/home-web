@@ -91,160 +91,177 @@ public class MeasurementRepository {
 		this.columnFamilyName = columnFamilyName;
 	}
 
-	public List<ExtendedSessionData> exportDataAmhiroSession(ExportData data) throws Exception {
+	public List<ExtendedSessionData> exportDataAmhiroSession(ExportData data)
+			throws Exception {
 		ArrayList<ExtendedSessionData> sessions = new ArrayList<ExtendedSessionData>();
-		
+
 		Connection connection = null;
 		Table table = null;
 		ResultScanner scanner = null;
-		
+
 		try {
-			if (data != null) {		
+			if (data != null) {
 				Configuration config = HBaseConfiguration.create();
 				config.set("hbase.zookeeper.quorum", this.quorum);
-	
+
 				connection = ConnectionFactory.createConnection(config);
-				
+
 				table = connection.getTable(TableName
 						.valueOf("daiad:device-sessions-by-time"));
 				byte[] columnFamily = Bytes.toBytes("cf");
-				
-				for(short p = 0; p < timePartitions; p++) {
+
+				DateTime fromDate = data.getFrom();
+				DateTime toDate = data.getTo().plusDays(1);
+
+				for (short p = 0; p < timePartitions; p++) {
 					Scan scan = new Scan();
 					scan.addFamily(columnFamily);
-	
+
 					byte[] partitionBytes = Bytes.toBytes(p);
-	
-					long from = data.getFrom().getMillis() / 1000;
-					from = from - (from % 86400);			
+
+					long from = fromDate.getMillis() / 1000;
+					from = from - (from % 86400);
 					byte[] fromBytes = Bytes.toBytes(from);
-					
-					long to = data.getTo().getMillis() / 1000;
+
+					long to = toDate.getMillis() / 1000;
 					to = to - (to % 86400);
 					byte[] toBytes = Bytes.toBytes(to);
-					
+
 					// Scanner row key prefix start
-					byte[] rowKey = new byte[partitionBytes.length + 
-					                         fromBytes.length];
-	
-					System.arraycopy(partitionBytes, 
-									 0, 
-									 rowKey,
-									 0,			
-									 partitionBytes.length);
-					System.arraycopy(fromBytes,
-									 0,
-									 rowKey,
-									 partitionBytes.length,
-									 fromBytes.length);
-	
+					byte[] rowKey = new byte[partitionBytes.length
+							+ fromBytes.length];
+
+					System.arraycopy(partitionBytes, 0, rowKey, 0,
+							partitionBytes.length);
+					System.arraycopy(fromBytes, 0, rowKey,
+							partitionBytes.length, fromBytes.length);
+
 					scan.setStartRow(rowKey);
-					
+
 					// Scanner row key prefix end
-					rowKey = new byte[partitionBytes.length + 
-					                         toBytes.length];
-	
-					System.arraycopy(partitionBytes, 
-									 0, 
-									 rowKey,
-									 0,			
-									 partitionBytes.length);
-					System.arraycopy(toBytes,
-									 0,
-									 rowKey,
-									 partitionBytes.length,
-									 toBytes.length);
-					
-					scan.setStopRow(rowKey); 
-				    
+					rowKey = new byte[partitionBytes.length + toBytes.length];
+
+					System.arraycopy(partitionBytes, 0, rowKey, 0,
+							partitionBytes.length);
+					System.arraycopy(toBytes, 0, rowKey, partitionBytes.length,
+							toBytes.length);
+
+					scan.setStopRow(rowKey);
+
 					scanner = table.getScanner(scan);
-	
-					for (Result r = scanner.next(); r != null; r = scanner.next()) {
-						NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
-										
-						if(map!=null) {
+
+					for (Result r = scanner.next(); r != null; r = scanner
+							.next()) {
+						NavigableMap<byte[], byte[]> map = r
+								.getFamilyMap(columnFamily);
+
+						if (map != null) {
 							ExtendedSessionData session = new ExtendedSessionData();
-							
+
 							rowKey = r.getRow();
-							
-							long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 2, 10));
-							long showerId = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 42, 50));
+
+							long timeBucket = Bytes.toLong(Arrays.copyOfRange(
+									r.getRow(), 2, 10));
+							long showerId = Bytes.toLong(Arrays.copyOfRange(
+									r.getRow(), 42, 50));
 
 							session.setShowerId(showerId);
 
 							for (Entry<byte[], byte[]> entry : map.entrySet()) {
-								String qualifier = Bytes.toString(entry.getKey());
-		
-					        	switch(qualifier) {
-					        		// User data
-					        		case "u:key":
-					        			session.getUser().setKey(new String(entry.getValue(), StandardCharsets.UTF_8));
-					        			break;
-					        		case "u:username":
-					        			session.getUser().setUsername(new String(entry.getValue(), StandardCharsets.UTF_8));
-					        			break;
-					        		case "u:postal":
-					        			session.getUser().setPostalCode(new String(entry.getValue(), StandardCharsets.UTF_8));
-					        			break;
-					        		// Device data
-					        		case "d:id":
-					        			session.getDevice().setId(new String(entry.getValue(), StandardCharsets.UTF_8));
-					        			break;
-					        		case "d:key":
-					        			session.getDevice().setKey(new String(entry.getValue(), StandardCharsets.UTF_8));
-					        			break;
-					        		case "d:name":
-					        			session.getDevice().setName(new String(entry.getValue(), StandardCharsets.UTF_8));
-					        			break;
-					        		// Measurement data
-					        		case "m:offset":
-					        			int offset = Bytes.toInt(entry.getValue());
-					        			DateTime timestamp = new DateTime((timeBucket + (long) offset) * 1000L);
-					        			session.setTimestamp(timestamp);
-				        				break;
-				        			case "m:t":
-				        				session.setTemperature(Bytes.toFloat(entry.getValue()));
-				        				break;
-			        				case "m:v":
-				        				session.setVolume(Bytes.toFloat(entry.getValue()));
-				        				break;
-			        				case "m:f":
-				        				session.setFlow(Bytes.toFloat(entry.getValue()));
-				        				break;
-			        				case "m:e":
-				        				session.setEnergy(Bytes.toFloat(entry.getValue()));
-				        				break;
-			        				case "m:d":
-				        				session.setDuration(Bytes.toInt(entry.getValue()));
-				        				break;
-				        			default:
-				        				session.addProperty(qualifier, new String(entry.getValue(), StandardCharsets.UTF_8));
-				        				break;
-					        	}					        	
+								String qualifier = Bytes.toString(entry
+										.getKey());
+
+								switch (qualifier) {
+								// User data
+								case "u:key":
+									session.getUser().setKey(
+											new String(entry.getValue(),
+													StandardCharsets.UTF_8));
+									break;
+								case "u:username":
+									session.getUser().setUsername(
+											new String(entry.getValue(),
+													StandardCharsets.UTF_8));
+									break;
+								case "u:postal":
+									session.getUser().setPostalCode(
+											new String(entry.getValue(),
+													StandardCharsets.UTF_8));
+									break;
+								// Device data
+								case "d:id":
+									session.getDevice().setId(
+											new String(entry.getValue(),
+													StandardCharsets.UTF_8));
+									break;
+								case "d:key":
+									session.getDevice().setKey(
+											new String(entry.getValue(),
+													StandardCharsets.UTF_8));
+									break;
+								case "d:name":
+									session.getDevice().setName(
+											new String(entry.getValue(),
+													StandardCharsets.UTF_8));
+									break;
+								// Measurement data
+								case "m:offset":
+									int offset = Bytes.toInt(entry.getValue());
+									DateTime timestamp = new DateTime(
+											(timeBucket + (long) offset) * 1000L);
+									session.setTimestamp(timestamp);
+									break;
+								case "m:t":
+									session.setTemperature(Bytes.toFloat(entry
+											.getValue()));
+									break;
+								case "m:v":
+									session.setVolume(Bytes.toFloat(entry
+											.getValue()));
+									break;
+								case "m:f":
+									session.setFlow(Bytes.toFloat(entry
+											.getValue()));
+									break;
+								case "m:e":
+									session.setEnergy(Bytes.toFloat(entry
+											.getValue()));
+									break;
+								case "m:d":
+									session.setDuration(Bytes.toInt(entry
+											.getValue()));
+									break;
+								default:
+									session.addProperty(qualifier, new String(
+											entry.getValue(),
+											StandardCharsets.UTF_8));
+									break;
+								}
 							}
 							sessions.add(session);
 						}
 					}
-					
+
 					scanner.close();
 				}
 			}
 		} finally {
-			if(scanner != null) {
+			if (scanner != null) {
 				scanner.close();
 			}
-			if(table != null) {
+			if (table != null) {
 				table.close();
 			}
-			if((connection != null) && (!connection.isClosed())) {
+			if ((connection != null) && (!connection.isClosed())) {
 				connection.close();
 			}
 		}
-		
+
 		return sessions;
 	}
 
-	private void storeDataAmhiroSessionByUser(Connection connection, DaiadUser user, AmphiroDevice device,
+	private void storeDataAmhiroSessionByUser(Connection connection,
+			DaiadUser user, AmphiroDevice device,
 			DeviceMeasurementCollection data) throws Exception {
 		Table table = null;
 		try {
@@ -270,7 +287,7 @@ public class MeasurementRepository {
 				long timestamp = s.getTimestamp().getMillis() / 1000;
 				long offset = timestamp % 86400;
 				long timeBucket = timestamp - offset;
-				
+
 				byte[] timeBucketBytes = Bytes.toBytes(timeBucket);
 				if (timeBucketBytes.length != 8) {
 					throw new RuntimeException("Invalid byte array length!");
@@ -294,32 +311,37 @@ public class MeasurementRepository {
 
 				Put put = new Put(rowKey);
 				byte[] column;
-				
+
 				// Add user data
 				column = Bytes.toBytes("u:key");
-				put.addColumn(columnFamily, column, user.getKey().toString().getBytes(StandardCharsets.UTF_8));
-				
+				put.addColumn(columnFamily, column, user.getKey().toString()
+						.getBytes(StandardCharsets.UTF_8));
+
 				column = Bytes.toBytes("u:username");
-				put.addColumn(columnFamily, column, user.getUsername().getBytes(StandardCharsets.UTF_8));
-				
+				put.addColumn(columnFamily, column, user.getUsername()
+						.getBytes(StandardCharsets.UTF_8));
+
 				column = Bytes.toBytes("u:postal");
-				put.addColumn(columnFamily, column, user.getPostalCode().getBytes(StandardCharsets.UTF_8));
-				
+				put.addColumn(columnFamily, column, user.getPostalCode()
+						.getBytes(StandardCharsets.UTF_8));
+
 				// Add device data
 				column = Bytes.toBytes("d:id");
-				put.addColumn(columnFamily, column, device.getDeviceId().getBytes(StandardCharsets.UTF_8));
-				
+				put.addColumn(columnFamily, column, device.getDeviceId()
+						.getBytes(StandardCharsets.UTF_8));
+
 				column = Bytes.toBytes("d:key");
-				put.addColumn(columnFamily, column, device.getKey().toString().getBytes(StandardCharsets.UTF_8));
-				
+				put.addColumn(columnFamily, column, device.getKey().toString()
+						.getBytes(StandardCharsets.UTF_8));
+
 				column = Bytes.toBytes("d:name");
-				put.addColumn(columnFamily, column, device.getName().getBytes(StandardCharsets.UTF_8));
-				
+				put.addColumn(columnFamily, column,
+						device.getName().getBytes(StandardCharsets.UTF_8));
+
 				// Add measurement data
 				column = Bytes.toBytes("m:offset");
-				put.addColumn(columnFamily, column,
-						Bytes.toBytes((int) offset));
-				
+				put.addColumn(columnFamily, column, Bytes.toBytes((int) offset));
+
 				column = Bytes.toBytes("m:t");
 				put.addColumn(columnFamily, column,
 						Bytes.toBytes(s.getTemperature()));
@@ -354,7 +376,8 @@ public class MeasurementRepository {
 		}
 	}
 
-	private void storeDataAmhiroSessionByTime(Connection connection, DaiadUser user, AmphiroDevice device,
+	private void storeDataAmhiroSessionByTime(Connection connection,
+			DaiadUser user, AmphiroDevice device,
 			DeviceMeasurementCollection data) throws Exception {
 		Table table = null;
 		try {
@@ -383,7 +406,7 @@ public class MeasurementRepository {
 				long timestamp = s.getTimestamp().getMillis() / 1000;
 				long offset = timestamp % 86400;
 				long timeBucket = timestamp - offset;
-				
+
 				byte[] timeBucketBytes = Bytes.toBytes(timeBucket);
 				if (timeBucketBytes.length != 8) {
 					throw new RuntimeException("Invalid byte array length!");
@@ -391,68 +414,63 @@ public class MeasurementRepository {
 
 				byte[] showerIdBytes = Bytes.toBytes(s.getShowerId());
 
-				byte[] rowKey = new byte[partitionBytes.length + 
-				                         timeBucketBytes.length +
-				                         userKeyHash.length + 
-				                         deviceKeyHash.length + 
-				                         showerIdBytes.length];
+				byte[] rowKey = new byte[partitionBytes.length
+						+ timeBucketBytes.length + userKeyHash.length
+						+ deviceKeyHash.length + showerIdBytes.length];
 
-				System.arraycopy(partitionBytes, 
-								 0, 
-								 rowKey,
-								 0,			
-								 partitionBytes.length);
-				System.arraycopy(timeBucketBytes,
-								 0,
-								 rowKey,
-								 partitionBytes.length,
-								 timeBucketBytes.length);
-				System.arraycopy(userKeyHash, 
-								 0, 
-								 rowKey, 
-								 (partitionBytes.length + timeBucketBytes.length),
-								 userKeyHash.length);
-				System.arraycopy(deviceKeyHash, 
-								 0, 
-								 rowKey,
-								 (partitionBytes.length + timeBucketBytes.length + userKeyHash.length),
-								 deviceKeyHash.length);
-				System.arraycopy(showerIdBytes,
-								 0,
-								 rowKey,
-								 (partitionBytes.length + timeBucketBytes.length + userKeyHash.length + deviceKeyHash.length),
-								 showerIdBytes.length);
+				System.arraycopy(partitionBytes, 0, rowKey, 0,
+						partitionBytes.length);
+				System.arraycopy(timeBucketBytes, 0, rowKey,
+						partitionBytes.length, timeBucketBytes.length);
+				System.arraycopy(userKeyHash, 0, rowKey,
+						(partitionBytes.length + timeBucketBytes.length),
+						userKeyHash.length);
+				System.arraycopy(
+						deviceKeyHash,
+						0,
+						rowKey,
+						(partitionBytes.length + timeBucketBytes.length + userKeyHash.length),
+						deviceKeyHash.length);
+				System.arraycopy(showerIdBytes, 0, rowKey,
+						(partitionBytes.length + timeBucketBytes.length
+								+ userKeyHash.length + deviceKeyHash.length),
+						showerIdBytes.length);
 
 				Put put = new Put(rowKey);
 
 				byte[] column;
-				
+
 				// Add user data
 				column = Bytes.toBytes("u:key");
-				put.addColumn(columnFamily, column, user.getKey().toString().getBytes(StandardCharsets.UTF_8));
-				
+				put.addColumn(columnFamily, column, user.getKey().toString()
+						.getBytes(StandardCharsets.UTF_8));
+
 				column = Bytes.toBytes("u:username");
-				put.addColumn(columnFamily, column, user.getUsername().getBytes(StandardCharsets.UTF_8));
-				
+				put.addColumn(columnFamily, column, user.getUsername()
+						.getBytes(StandardCharsets.UTF_8));
+
 				column = Bytes.toBytes("u:postal");
-				put.addColumn(columnFamily, column, user.getPostalCode().getBytes(StandardCharsets.UTF_8));
-				
+				put.addColumn(columnFamily, column, user.getPostalCode()
+						.getBytes(StandardCharsets.UTF_8));
+
 				// Add device data
 				column = Bytes.toBytes("d:id");
-				put.addColumn(columnFamily, column, device.getDeviceId().getBytes(StandardCharsets.UTF_8));
-				
+				put.addColumn(columnFamily, column, device.getDeviceId()
+						.getBytes(StandardCharsets.UTF_8));
+
 				column = Bytes.toBytes("d:key");
-				put.addColumn(columnFamily, column, device.getKey().toString().getBytes(StandardCharsets.UTF_8));
-				
+				put.addColumn(columnFamily, column, device.getKey().toString()
+						.getBytes(StandardCharsets.UTF_8));
+
 				column = Bytes.toBytes("d:name");
-				put.addColumn(columnFamily, column, device.getName().getBytes(StandardCharsets.UTF_8));
-				
-				// Add measurement data
-				
-				column = Bytes.toBytes("m:offset");
 				put.addColumn(columnFamily, column,
-						Bytes.toBytes((int) offset));
-				
+						device.getName().getBytes(StandardCharsets.UTF_8));
+
+				// Add measurement data
+
+				column = Bytes.toBytes("m:offset");
+				put.addColumn(columnFamily, column, Bytes.toBytes((int) offset));
+
 				column = Bytes.toBytes("m:t");
 				put.addColumn(columnFamily, column,
 						Bytes.toBytes(s.getTemperature()));
@@ -487,7 +505,8 @@ public class MeasurementRepository {
 		}
 	}
 
-	private void storeDataAmhiroMeasurements(Connection connection, DaiadUser user, AmphiroDevice device,
+	private void storeDataAmhiroMeasurements(Connection connection,
+			DaiadUser user, AmphiroDevice device,
 			DeviceMeasurementCollection data) throws Exception {
 		Table table = null;
 		try {
@@ -568,10 +587,11 @@ public class MeasurementRepository {
 		}
 	}
 
-	public void storeDataAmphiro(DaiadUser user, AmphiroDevice device, DeviceMeasurementCollection data) {
+	public void storeDataAmphiro(DaiadUser user, AmphiroDevice device,
+			DeviceMeasurementCollection data) {
 		Connection connection = null;
 		try {
-			if ((data == null) || (data.getMeasurements() == null)) {
+			if (data == null) {
 				return;
 			}
 			Configuration config = HBaseConfiguration.create();

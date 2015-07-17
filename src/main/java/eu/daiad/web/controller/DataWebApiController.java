@@ -49,10 +49,12 @@ public class DataWebApiController {
 	}
 	
 	@RequestMapping(value = "/data/export", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured({"ROLE_BATCH"})
+	@ResponseBody
+	@Secured({"ROLE_ADMIN"})
 	public DownloadResponse export(@RequestBody ExportData data,
 			BindingResult results) {
-
+		String errorMessage = null;
+		
 		try {
 			if (results.hasErrors()) {
 				return new DownloadResponse(ERROR_PARSING_FAILED,
@@ -71,15 +73,18 @@ public class DataWebApiController {
 				
 			return new DownloadResponse(ERROR_TYPE_NOT_SUPPORTED,
 					String.format("Export type [%s] is not supported.",  data.getType().toString()));
+		} catch (ExportException eEx) {
+			logger.error("Failed to export data.", eEx);
+			errorMessage = eEx.getMessage();
 		} catch (Exception ex) {
-			logger.error("Failed to insert measurement data.", ex);
+			logger.error("Unhandled exception has occured.", ex);
 		}
 		return new DownloadResponse(ERROR_UNKNOWN,
-				"Unhandled exception has occured.");
+				(errorMessage == null ? "Unhandled exception has occured." : errorMessage));
 	}
 
 	@RequestMapping(value = "/data/download/{token}", method = RequestMethod.GET)
-	@Secured({"ROLE_BATCH"})
+	@Secured({"ROLE_ADMIN"})
 	public ResponseEntity<InputStreamResource> download(@PathVariable("token") String token) {
 		try {
 			File path = new File(temporaryPath);

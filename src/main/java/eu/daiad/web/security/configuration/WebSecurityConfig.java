@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -20,63 +21,70 @@ import eu.daiad.web.security.*;
 @Configuration
 @Order(SecurityProperties.ACCESS_OVERRIDE_ORDER)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
-	
+
 	@Autowired
 	private RESTAuthenticationSuccessHandler authenticationSuccessHandler;
 
 	@Autowired
 	private RESTAuthenticationFailureHandler authenticationFailureHandler;
-	
+
 	@Autowired
 	private CustomAuthenticationProvider provider;
-	
+
 	@Override
 	protected void configure(AuthenticationManagerBuilder auth)
 			throws Exception {
 		auth.authenticationProvider(provider);
 	}
 
+	@Autowired
+	private AuthenticationManager authManager;
+
+	/*
+	 * @Autowired private FilterChainProxy chain;
+	 */
+
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http.authorizeRequests().antMatchers("/libs/**").permitAll();
-
-		http.authorizeRequests().antMatchers("/").permitAll();
-
-		http.authorizeRequests().antMatchers("/login").permitAll();
-
-		http.authorizeRequests().antMatchers("/api/**").permitAll();
+		http.authorizeRequests().antMatchers("/", "/login", "/libs/**", "/api/**")
+				.permitAll();
 		
 		http.csrf().requireCsrfProtectionMatcher(new RequestMatcher() {
-	        private Pattern allowedMethods = Pattern.compile("^(GET|HEAD|TRACE|OPTIONS)$");
-	        private RegexRequestMatcher apiMatcher = new RegexRequestMatcher("/api/v1/.*", null);
+			private Pattern allowedMethods = Pattern
+					.compile("^(GET|HEAD|TRACE|OPTIONS)$");
+			private RegexRequestMatcher apiMatcher = new RegexRequestMatcher(
+					"/api/v1/.*", null);
 
-	        @Override
-	        public boolean matches(HttpServletRequest request) {
-	            // No CSRF due to allowedMethod
-	            if(allowedMethods.matcher(request.getMethod()).matches())
-	                return false;
+			@Override
+			public boolean matches(HttpServletRequest request) {
+				// No CSRF due to allowedMethod
+				if (allowedMethods.matcher(request.getMethod()).matches())
+					return false;
 
-	            // No CSRF due to API call
-	            if(apiMatcher.matches(request))
-	                return false;
+				// No CSRF due to API call
+				if (apiMatcher.matches(request))
+					return false;
 
-	            // CSRF for everything else that is not an API call or an allowedMethod
-	            return true;
-	        }
-	    });
-		
+				// CSRF for everything else that is not an API call or an
+				// allowedMethod
+				return true;
+			}
+		});
+
 		http.authorizeRequests().anyRequest().fullyAuthenticated();
 
 		http.formLogin().loginPage("/login").usernameParameter("username")
-				.failureUrl("/login?error").defaultSuccessUrl("/");
+				.passwordParameter("password").failureUrl("/login?error")
+				.defaultSuccessUrl("/")
+				.successHandler(authenticationSuccessHandler)
+				.failureHandler(authenticationFailureHandler);
 
-		http.formLogin().successHandler(authenticationSuccessHandler);
-		http.formLogin().failureHandler(authenticationFailureHandler);
-		
 		http.logout().logoutUrl("/logout").logoutSuccessUrl("/");
 
 		http.exceptionHandling().accessDeniedPage("/login?error");
 
-		http.addFilterAfter(new CsrfTokenResponseHeaderBindingFilter(), CsrfFilter.class);
+	
+		http.addFilterAfter(new CsrfTokenResponseHeaderBindingFilter(),
+				CsrfFilter.class);
 	}
 }

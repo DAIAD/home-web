@@ -193,9 +193,7 @@ public class DeviceRepository {
 						break;
 				}
 			}
-
-        	System.out.print(device);
-        	
+       	
 			return device;
 		} finally {
 			if(scanner != null) {

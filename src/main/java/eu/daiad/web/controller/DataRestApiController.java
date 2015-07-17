@@ -30,7 +30,8 @@ public class DataRestApiController {
 	private static final int ERROR_PARSING_FAILED = 1;
 	private static final int ERROR_AUTH_FAILED = 2;
 	private static final int ERROR_TYPE_NOT_SUPPORTED = 3;
-	
+	private static final int ERROR_PERMISSION_DENIED = 4;
+
 	private static final int ERROR_UNKNOWN = 100;
 
 	private static final Log logger = LogFactory
@@ -63,17 +64,21 @@ public class DataRestApiController {
 	@RequestMapping(value = "/api/v1/data/storage", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse insert(@RequestBody MeasurementCollection data,
 			BindingResult results) {
-
 		try {
+		
 			if (results.hasErrors()) {
 				return new RestResponse(ERROR_PARSING_FAILED,
 						"Input parsing has failed.");
 			}
-			
+		
 			DaiadUser user = this.authenticator.authenticateAndGetUser(data.getCredentials());
 			if(user == null) {
 				return new RestResponse(ERROR_AUTH_FAILED,
 							"Authentication has failed.");
+			}
+			if(!user.hasRole("ROLE_USER")) {
+				return new RestResponse(ERROR_PERMISSION_DENIED,
+						"Unauthhorized request.");
 			}
 			
 			switch(data.getType()) {
@@ -116,11 +121,15 @@ public class DataRestApiController {
 				return new DownloadResponse(ERROR_PARSING_FAILED,
 						"Input parsing has failed.");
 			}
-			
+		
 			DaiadUser user = this.authenticator.authenticateAndGetUser(data.getCredentials());
 			if(user == null) {
 				return new DownloadResponse(ERROR_AUTH_FAILED,
 							"Authentication has failed.");
+			}
+			if(!user.hasRole("ROLE_ADMIN")) {
+				return new DownloadResponse(ERROR_PERMISSION_DENIED,
+						"Unauthhorized request.");
 			}
 			
 			switch(data.getType()) {
@@ -153,6 +162,9 @@ public class DataRestApiController {
 			DaiadUser user = this.authenticator.authenticateAndGetUser(data.getCredentials());
 			if(user == null) {
 				throw new AccessDeniedException("Authentication has failed.");
+			}
+			if(!user.hasRole("ROLE_ADMIN")) {
+				throw new AccessDeniedException("Unauthhorized request.");
 			}
 			
 			File path = new File(temporaryPath);

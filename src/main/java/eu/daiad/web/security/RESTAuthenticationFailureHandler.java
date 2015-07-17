@@ -20,6 +20,10 @@ public class RESTAuthenticationFailureHandler extends
 	private final Log logger = LogFactory.getLog(this.getClass());
 
 	private boolean isAjaxRequest(HttpServletRequest request) {
+		if (request.getMethod().equals("POST") && "application/json".equals(request.getHeader("Content-Type"))) {
+			return true;
+		}
+		
 		String requestedWith = request.getHeader("X-Requested-With");
 		return requestedWith != null ? "XMLHttpRequest".equals(requestedWith)
 				: false;
@@ -37,7 +41,7 @@ public class RESTAuthenticationFailureHandler extends
 			try {
 				response.setContentType("text/x-json;charset=UTF-8");
 				response.setHeader("Cache-Control", "no-cache");
-				response.sendError(HttpStatus.FORBIDDEN.value(), "Session has expired.");		
+				response.sendError(HttpStatus.FORBIDDEN.value(), "Authentication has failed.");		
 			} catch (Exception e) {
 				logger.debug(e.getMessage());
 			}
