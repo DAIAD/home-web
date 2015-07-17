@@ -178,18 +178,22 @@ public class UserRepository {
 			p.addColumn(columnFamily, column,
 					firstname.getBytes(StandardCharsets.UTF_8));
 			column = Bytes.toBytes("lastname");
-
 			p.addColumn(columnFamily, column,
 					lastname.getBytes(StandardCharsets.UTF_8));
+			
 			column = Bytes.toBytes("gender");
 			p.addColumn(columnFamily, column, Bytes.toBytes(gender.getValue()));
-			column = Bytes.toBytes("birthdate");
 
-			p.addColumn(columnFamily, column,
-					Bytes.toBytes(birthdate.getMillis()));
+			if(birthdate != null) {
+				column = Bytes.toBytes("birthdate");
+				p.addColumn(columnFamily, column,
+						Bytes.toBytes(birthdate.getMillis()));
+			}
+
 			column = Bytes.toBytes("country");
 			p.addColumn(columnFamily, column,
 					country.getBytes(StandardCharsets.UTF_8));
+
 			column = Bytes.toBytes("postalCode");
 			p.addColumn(columnFamily, column,
 					postalCode.getBytes(StandardCharsets.UTF_8));
