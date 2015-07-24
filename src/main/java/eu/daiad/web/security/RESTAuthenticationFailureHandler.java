@@ -2,10 +2,13 @@ package eu.daiad.web.security;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
+
+import eu.daiad.web.security.model.LoginStatus;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -41,7 +44,10 @@ public class RESTAuthenticationFailureHandler extends
 			try {
 				response.setContentType("text/x-json;charset=UTF-8");
 				response.setHeader("Cache-Control", "no-cache");
-				response.sendError(HttpStatus.FORBIDDEN.value(), "Authentication has failed.");		
+				response.setStatus(HttpStatus.FORBIDDEN.value());
+										
+				ObjectMapper mapper = new ObjectMapper();
+				response.getWriter().print(mapper.writeValueAsString(new LoginStatus()));
 			} catch (Exception e) {
 				logger.debug(e.getMessage());
 			}

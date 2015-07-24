@@ -5,7 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -39,7 +39,7 @@ public class ExportService {
     	properties.put("settings.device.name", "Device name");
     	properties.put("settings.device.calibrate", "Calibrate");
     	properties.put("settings.unit", "Unit");
-    	properties.put("settings.currency", "currency");
+    	properties.put("settings.currency", "Currency");
     	properties.put("settings.alarm", "Alarm");
     	properties.put("settings.water.cost", "Water cost");
     	properties.put("settings.water.temperature-cold", "Cold water temperature");

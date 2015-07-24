@@ -3,6 +3,7 @@ package eu.daiad.web.security;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -78,6 +79,7 @@ public class RESTAuthenticationSuccessHandler extends
 
 				response.setContentType("text/x-json;charset=UTF-8");
 				response.setHeader("Cache-Control", "no-cache");
+				response.setStatus(HttpStatus.OK.value());
 
 				response.getWriter().print(output);
 			} catch (Exception e) {

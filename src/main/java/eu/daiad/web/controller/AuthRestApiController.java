@@ -12,7 +12,7 @@ import eu.daiad.web.model.Credentials;
 import eu.daiad.web.security.Authenticator;
 
 @RestController
-public class AuthController {
+public class AuthRestApiController {
 
 	private static final int ERROR_PARSING_FAILED = 1;
 	
@@ -21,7 +21,7 @@ public class AuthController {
 	private static final int ERROR_UNKNOWN = 100;
 
 	private static final Log logger = LogFactory
-			.getLog(AuthController.class);
+			.getLog(AuthRestApiController.class);
 
     @Autowired
     private Authenticator authenticator;

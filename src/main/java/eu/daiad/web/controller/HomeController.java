@@ -7,9 +7,6 @@ import java.util.Set;
 import org.joda.time.DateTimeZone;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -22,18 +19,13 @@ import eu.daiad.web.security.model.EnumRole;
 public class HomeController {
 	
     @RequestMapping("/")
-    public String index(Model model, @AuthenticationPrincipal User activeUser) {
-    	DaiadUser user = null;
-        
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (!(auth instanceof AnonymousAuthenticationToken)) {
-            user = ((DaiadUser) auth.getPrincipal());
-        }
+    public String index(Model model, @AuthenticationPrincipal User user) {
+    	DaiadUser daiadUser = (DaiadUser) user;
 
-        if(user != null) {
-        	model.addAttribute("firstname", user.getFirstname());
+        if(daiadUser != null) {
+        	model.addAttribute("firstname", daiadUser.getFirstname());
         	
-            if(user.hasRole(EnumRole.ROLE_ADMIN)){
+            if(daiadUser.hasRole(EnumRole.ROLE_ADMIN)){
     			Set<String> zones = DateTimeZone.getAvailableIDs();
     			ArrayList<String> europe = new ArrayList<String>();
     			
@@ -46,13 +38,13 @@ public class HomeController {
 			    }
 			    
             	model.addAttribute("timezones", europe.toArray());
-            	model.addAttribute("userTimeZone", user.getTimezone());
+            	model.addAttribute("userTimeZone", daiadUser.getTimezone());
             	
             	ArrayList<String[]> properties = new ArrayList<String[]>();
             	properties.add(new String[] {"Device name", "settings.device.name"});
             	properties.add(new String[] {"Calibrate", "settings.device.calibrate"});
             	properties.add(new String[] {"Unit", "settings.unit"});
-            	properties.add(new String[] {"currency", "settings.currency"});
+            	properties.add(new String[] {"Currency", "settings.currency"});
             	properties.add(new String[] {"Alarm", "settings.alarm"});
             	properties.add(new String[] {"Water cost", "settings.water.cost"});
             	properties.add(new String[] {"Cold water temperature", "settings.water.temperature-cold"});
@@ -73,5 +65,17 @@ public class HomeController {
         return "default";
     }
     
-    
+	
+    @RequestMapping(value = "/login", method = RequestMethod.GET)
+    public String login(Model model, @AuthenticationPrincipal User user) {
+    	DaiadUser daiadUser = (DaiadUser) user;
+
+        if((daiadUser != null) && (daiadUser.hasRole(EnumRole.ROLE_USER))) {
+        	model.addAttribute("firstname", daiadUser.getFirstname());
+
+            return "redirect:/";
+        } 
+        
+        return "login";
+    }   
 }
