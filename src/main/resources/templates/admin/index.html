@@ -17,7 +17,7 @@
 <link href="libs/bootstrap-datepicker/css/bootstrap-datepicker.min.css"
 	rel="stylesheet" />
 <link href="libs/bootstrap-select/css/bootstrap-select.min.css"
-    rel="stylesheet" />
+	rel="stylesheet" />
 <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
 <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
 <!--[if lt IE 9]>
@@ -44,39 +44,50 @@
 						src="images/daiad-transparent.png" /></a>
 				</div>
 				<div id="navbar" class="navbar-collapse collapse">
-					<p class="navbar-text navbar-right"
-						style="margin: 10px 0 0;" id="logout-section">
-						<button id="logout" type="submit"
+					<p class="navbar-text navbar-right" style="margin: 10px 0 0;"
+						id="logout-section">
+						<button id="action-logout" type="submit"
 							class="btn btn-primary action-logout">Sign out</button>
 					</p>
 					<p id="label-firstname" class="navbar-text navbar-right"
 						style="padding-right: 15px; margin-top: 18px;">
-						Signed in as <a href="#" id="firstname" class="navbar-link" th:text="${firstname}"></a>
+						Signed in as <a href="#" id="firstname" class="navbar-link"
+							th:text="${firstname}"></a>
 					</p>
 				</div>
 			</div>
 		</div>
 	</nav>
 	<div role="page" id="page-home">
-		<div class="container" style="text-align: center; padding-top: 70px; min-height: 500px;">
+		<div class="container"
+			style="text-align: center; padding-top: 70px; min-height: 500px;">
 			<ul class="nav nav-tabs" role="tablist" id="tabs"
 				style="margin-left: 40px; margin-right: 35px; margin-bottom: 20px;">
-				<li role="presentation" class="active"><a href="#home"
-					aria-controls="home" role="tab" data-toggle="tab">Tools</a></li>
+				<li role="presentation" class="active"><a href="#users"
+					aria-controls="users" role="tab" data-toggle="tab">User
+						Management</a></li>
+				<li role="presentation" class=""><a href="#tasks"
+					aria-controls="tasks" role="tab" data-toggle="tab">Task
+						Management</a></li>
+				<li role="presentation" class=""><a href="#export"
+					aria-controls="export" role="tab" data-toggle="tab">Data Export</a></li>
 			</ul>
 			<div class="tab-content">
-				<div role="tabpanel" class="tab-pane active" id="home"
+				<div role="tabpanel" class="tab-pane active" id="users"
+					style="padding-top: 10px;"></div>
+				<div role="tabpanel" class="tab-pane" id="tasks"
+					style="padding-top: 10px;"></div>
+				<div role="tabpanel" class="tab-pane" id="export"
 					style="padding-top: 10px;">
 
 					<div class="clearfix"
 						style="padding-bottom: 25px; text-align: left; padding-left: 40px;">
 						<div style="width: 250px; float: left;">
-                        <select id="export-timezone">
-                            <option th:each="timezone : ${timezones}" 
-                                    th:value="${timezone}" 
-                                    th:text="${timezone}"
-                                    th:selected="${ timezone==userTimeZone } "></option>
-                            </select>
+							<select id="export-timezone">
+								<option th:each="timezone : ${timezones}" th:value="${timezone}"
+									th:text="${timezone}"
+									th:selected="${ timezone==userTimeZone } "></option>
+							</select>
 						</div>
 						<div style="width: 250px; float: left;">
 							<div>
@@ -88,41 +99,39 @@
 								</div>
 							</div>
 						</div>
-                        <div style="width: 250px; float: left;">
-                            <div>
-                                <div class="input-group date" style="width: 230px;">
-                                    <input id="export-to" type="text"
-                                        class="form-control datetime-interval" /><span
-                                        class="input-group-addon"><i
-                                        class="glyphicon glyphicon-th"></i></span>
-                                </div>
-                            </div>
-                        </div>
-                        <div style="width: 250px; float: left;">
-                        <button id="export" type="submit"
-                            class="btn btn-primary action-export">Export</button>
-                        </div>
+						<div style="width: 250px; float: left;">
+							<div>
+								<div class="input-group date" style="width: 230px;">
+									<input id="export-to" type="text"
+										class="form-control datetime-interval" /><span
+										class="input-group-addon"><i
+										class="glyphicon glyphicon-th"></i></span>
+								</div>
+							</div>
+						</div>
+						<div style="width: 250px; float: left;">
+							<button id="action-export" type="submit"
+								class="btn btn-primary action-export">Export</button>
+						</div>
 					</div>
-            
-                    <div class="clearfix"
-                        style="padding-bottom: 25px; text-align: left; padding-left: 40px; max-width: 800px;">
-                        <div th:each="property : ${properties}" 
-                             style="float: left; width: 200px; text-align: left; padding: 2px 0px 4px 0px;">
-						      <input  class="export-property"
-						              type="checkbox" 
-						              th:text="${property[0]}" 
-						              th:value="${property[1]}"
-						              checked="checked"></input>
-			             </div>
-				    </div>
-				    <div class="clearfix" id="error-panel"
-                        style="padding-bottom: 25px; text-align: left; padding-left: 40px; max-width: 855px; display:none;">
-				        <div class="alert alert-danger" role="alert">
-                            <span class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
-                                <span id="error-text"></span>
-                            </div>
-				    </div>
-                </div>
+
+					<div class="clearfix"
+						style="padding-bottom: 25px; text-align: left; padding-left: 40px; max-width: 800px;">
+						<div th:each="property : ${properties}"
+							style="float: left; width: 200px; text-align: left; padding: 2px 0px 4px 0px;">
+							<input class="export-property" type="checkbox"
+								th:text="${property[0]}" th:value="${property[1]}"
+								checked="checked"></input>
+						</div>
+					</div>
+					<div class="clearfix" id="error-panel"
+						style="padding-bottom: 25px; text-align: left; padding-left: 40px; max-width: 855px; display: none;">
+						<div class="alert alert-danger" role="alert">
+							<span class="glyphicon glyphicon-remove-circle"
+								aria-hidden="true"></span> <span id="error-text"></span>
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
 		<div class="container"
@@ -140,14 +149,13 @@
 
 	<div style="display: none;">
 		<form id="logout-form" th:action="@{/logout}" method="post">
-			<input id="logout" type="submit" value="Sign Out" />
 		</form>
 	</div>
 
 	<script src="libs/jquery/jquery-2.1.3.min.js"></script>
 	<script src="libs/bootstrap/js/bootstrap.min.js"></script>
 	<script src="libs/bootstrap-datepicker/js/bootstrap-datepicker.min.js"></script>
-    <script src="libs/bootstrap-select/js/bootstrap-select.min.js"></script>
+	<script src="libs/bootstrap-select/js/bootstrap-select.min.js"></script>
 
 	<script src="js/admin/main.js"></script>
 </body>

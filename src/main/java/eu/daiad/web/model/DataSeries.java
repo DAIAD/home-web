@@ -5,16 +5,20 @@ import java.util.UUID;
 
 public class DataSeries {
 
-	private UUID deviceId;
+	private UUID deviceKey;
 	
 	private ArrayList<DataPoint> points;
 	
-	public void setDeviceId(UUID value) {
-		this.deviceId = value;
+	public DataSeries() {
+		this.points = new ArrayList<DataPoint>();
 	}
 	
-	public UUID getDeviceId() {
-		return this.deviceId;
+	public void setDeviceKey(UUID value) {
+		this.deviceKey = value;
+	}
+	
+	public UUID getDeviceKey() {
+		return this.deviceKey;
 	}
 	
 	public void setPoints(ArrayList<DataPoint> value) {

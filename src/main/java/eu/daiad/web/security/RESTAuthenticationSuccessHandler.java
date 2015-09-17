@@ -59,7 +59,7 @@ public class RESTAuthenticationSuccessHandler extends
 				
 				Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 				if (!(auth instanceof AnonymousAuthenticationToken)) {
-					username = ((DaiadUser) auth.getPrincipal()).getFirstname();
+					username = ((ApplicationUser) auth.getPrincipal()).getFirstname();
 				}
 				
 				LoginStatus status = new LoginStatus(true, username);

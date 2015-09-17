@@ -1,50 +1,35 @@
 package eu.daiad.web.model;
 
-import java.util.ArrayList;
-
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import eu.daiad.web.util.DeviceTypeDeserializer;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type")
+@JsonSubTypes({
+		@Type(value = AmphiroDeviceRegistrationRequest.class, name = "AMPHIRO"),
+		@Type(value = MeterDeviceRegistrationRequest.class, name = "METER") })
 public class DeviceRegistrationRequest extends AuthenticatedRequest {
 
 	@JsonDeserialize(using = DeviceTypeDeserializer.class)
 	private EnumDeviceType type;
-	
+
 	private String deviceId;
-	
-	private String name;
-	
-	public String getName() {
-		return name;
-	}
 
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	private ArrayList<KeyValuePair> properties;
-	
 	public String getDeviceId() {
 		return this.deviceId;
 	}
-	
+
 	public void setDeviceId(String value) {
 		this.deviceId = value;
-	}
-
-	public ArrayList<KeyValuePair> getProperties() {
-		return this.properties;
-	}
-	
-	public void setProperties(ArrayList<KeyValuePair> value) {
-		this.properties = value;
 	}
 
 	public EnumDeviceType getType() {
 		return this.type;
 	}
-	
+
 	public void setType(EnumDeviceType value) {
 		this.type = value;
 	}

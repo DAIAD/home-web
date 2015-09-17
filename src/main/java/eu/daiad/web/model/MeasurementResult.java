@@ -8,6 +8,8 @@ public class MeasurementResult extends RestResponse {
 
 	public MeasurementResult() {
 		super();
+		
+		this.series = new ArrayList<DataSeries>();
 	}
 
 	public MeasurementResult(int code, String description) {

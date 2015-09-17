@@ -1,7 +1,5 @@
 package eu.daiad.web;
 
-import java.text.SimpleDateFormat;
-
 import org.springframework.boot.autoconfigure.web.ErrorAttributes;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,15 +18,14 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 	public ErrorController errorController(ErrorAttributes errorAttributes) {
 		return new ErrorController(errorAttributes);
 	}
-	
+
 	@Bean
 	public Jackson2ObjectMapperBuilder objectMapperBuilder() {
-	    Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
-	    
-	    builder.dateFormat(new SimpleDateFormat("yyyy-MM-dd"));
-	    builder.modules(new JodaModule());
-	    
-	    return builder;
+		Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
+
+		builder.modules(new JodaModule());
+
+		return builder;
 	}
 
 	@Override

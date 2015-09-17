@@ -1,53 +1,54 @@
 package eu.daiad.web.model;
 
-import java.util.Date;
 import java.util.UUID;
 
+import org.joda.time.DateTime;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.format.annotation.DateTimeFormat.ISO;
 
 public class ShowerCollectionQuery {
 
-	private UUID applicationKey;
+	private UUID userKey;
 
-	private UUID deviceId;
+	private UUID deviceKey[];
 
-	@DateTimeFormat(pattern = "yyyy-MM-dd hh:mm:ss")
-	private Date startDate;
+	@DateTimeFormat(iso = ISO.DATE)
+	private DateTime startDate;
 
-	@DateTimeFormat(pattern = "yyyy-MM-dd hh:mm:ss")
-	private Date endDate;
+	@DateTimeFormat(iso = ISO.DATE)
+	private DateTime endDate;
 	
     private int granularity = TemporalConstants.NONE;
     
-	public void setApplicationKey(UUID value) {
-		this.applicationKey = value;
+	public UUID getUserKey() {
+		return userKey;
 	}
 
-	public UUID getApplicationKey() {
-		return this.applicationKey;
+	public void setUserKey(UUID userKey) {
+		this.userKey = userKey;
 	}
 
-	public void setDeviceId(UUID value) {
-		this.deviceId = value;
+	public UUID[] getDeviceKey() {
+		return deviceKey;
 	}
 
-	public UUID getDeviceId() {
-		return this.deviceId;
+	public void setDeviceKey(UUID[] deviceKey) {
+		this.deviceKey = deviceKey;
 	}
 
-	public void setStartDate(Date value) {
+	public void setStartDate(DateTime value) {
 		this.startDate = value;
 	}
 
-	public Date getStartDate() {
+	public DateTime getStartDate() {
 		return this.startDate;
 	}
 
-	public void setEndDate(Date value) {
+	public void setEndDate(DateTime value) {
 		this.endDate = value;
 	}
 
-	public Date getEndDate() {
+	public DateTime getEndDate() {
 		return this.endDate;
 	}
 	

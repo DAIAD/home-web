@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
+import java.util.UUID;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -36,6 +37,7 @@ import eu.daiad.web.model.AmphiroDevice;
 import eu.daiad.web.model.DataPoint;
 import eu.daiad.web.model.DataSeries;
 import eu.daiad.web.model.DayIntervalDataPointCollection;
+import eu.daiad.web.model.DeviceSessionCollection;
 import eu.daiad.web.model.ExportData;
 import eu.daiad.web.model.ExtendedSessionData;
 import eu.daiad.web.model.HourlyDataPoints;
@@ -43,6 +45,7 @@ import eu.daiad.web.model.Measurement;
 import eu.daiad.web.model.DeviceMeasurementCollection;
 import eu.daiad.web.model.MeasurementQuery;
 import eu.daiad.web.model.MeasurementResult;
+import eu.daiad.web.model.SessionCollectionResult;
 import eu.daiad.web.model.SessionData;
 import eu.daiad.web.model.Shower;
 import eu.daiad.web.model.ShowerCollectionQuery;
@@ -50,45 +53,59 @@ import eu.daiad.web.model.ShowerCollectionResult;
 import eu.daiad.web.model.ShowerDetails;
 import eu.daiad.web.model.ShowerQuery;
 import eu.daiad.web.model.ShowerResult;
-import eu.daiad.web.model.SmartMeterCollectionResult;
+import eu.daiad.web.model.SmartMeterDataSeriesCollectionResult;
 import eu.daiad.web.model.SmartMeterDataPoint;
 import eu.daiad.web.model.SmartMeterIntervalQuery;
 import eu.daiad.web.model.SmartMeterMeasurement;
 import eu.daiad.web.model.MeterMeasurementCollection;
 import eu.daiad.web.model.SmartMeterQuery;
-import eu.daiad.web.model.SmartMeterResult;
+import eu.daiad.web.model.SmartMeterStatusCollectionResult;
 import eu.daiad.web.model.TemporalConstants;
-import eu.daiad.web.security.model.DaiadUser;
+import eu.daiad.web.model.WaterMeterDataSeries;
+import eu.daiad.web.model.WaterMeterStatus;
+import eu.daiad.web.security.model.ApplicationUser;
 
 @Repository()
 @Scope("prototype")
 @PropertySource("${hbase.properties}")
 public class MeasurementRepository {
 
+	private enum EnumTimeInterval {
+		UNDEFINED(0), HOUR(3600), DAY(86400);
+
+		private final int value;
+
+		private EnumTimeInterval(int value) {
+			this.value = value;
+		}
+
+		public int getValue() {
+			return this.value;
+		}
+	}
+
 	private String quorum;
 
 	@Value("${hbase.data.time.partitions}")
 	private short timePartitions;
 
-	private String amphiroTableName;
+	private String amphiroTableMeasurements = "daiad:amphiro-measurements";
 
-	private String smartMeterTableName;
+	private String amphiroTableSessionByTime = "daiad:amphiro-sessions-by-time";
 
-	private String columnFamilyName;
+	private String amphiroTableSessionByUser = "daiad:amphiro-sessions-by-user";
+
+	private String meterTableMeasurements = "daiad:meter-measurements";
+
+	private String columnFamilyName = "cf";
 
 	private static final Log logger = LogFactory
 			.getLog(MeasurementRepository.class);
 
 	@Autowired
 	public MeasurementRepository(
-			@Value("${hbase.zookeeper.quorum}") String quorum,
-			@Value("${hbase.data.amphiro.table}") String amphiroTableName,
-			@Value("${hbase.data.swm.table}") String smartMeterTableName,
-			@Value("${hbase.data.amphiro.column-family}") String columnFamilyName) {
+			@Value("${hbase.zookeeper.quorum}") String quorum) {
 		this.quorum = quorum;
-		this.amphiroTableName = amphiroTableName;
-		this.smartMeterTableName = smartMeterTableName;
-		this.columnFamilyName = columnFamilyName;
 	}
 
 	public List<ExtendedSessionData> exportDataAmhiroSession(ExportData data)
@@ -107,8 +124,8 @@ public class MeasurementRepository {
 				connection = ConnectionFactory.createConnection(config);
 
 				table = connection.getTable(TableName
-						.valueOf("daiad:device-sessions-by-time"));
-				byte[] columnFamily = Bytes.toBytes("cf");
+						.valueOf(this.amphiroTableSessionByTime));
+				byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 				DateTime fromDate = data.getFrom();
 				DateTime toDate = data.getTo().plusDays(1);
@@ -267,7 +284,7 @@ public class MeasurementRepository {
 	}
 
 	private void storeDataAmhiroSessionByUser(Connection connection,
-			DaiadUser user, AmphiroDevice device,
+			ApplicationUser user, AmphiroDevice device,
 			DeviceMeasurementCollection data) throws Exception {
 		Table table = null;
 		try {
@@ -277,8 +294,8 @@ public class MeasurementRepository {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
 			table = connection.getTable(TableName
-					.valueOf("daiad:device-sessions-by-user"));
-			byte[] columnFamily = Bytes.toBytes("cf");
+					.valueOf(this.amphiroTableSessionByUser));
+			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			for (int i = 0; i < data.getSessions().size(); i++) {
 				SessionData s = data.getSessions().get(i);
@@ -318,33 +335,6 @@ public class MeasurementRepository {
 				Put put = new Put(rowKey);
 				byte[] column;
 
-				// Add user data
-				column = Bytes.toBytes("u:key");
-				put.addColumn(columnFamily, column, user.getKey().toString()
-						.getBytes(StandardCharsets.UTF_8));
-
-				column = Bytes.toBytes("u:username");
-				put.addColumn(columnFamily, column, user.getUsername()
-						.getBytes(StandardCharsets.UTF_8));
-
-				column = Bytes.toBytes("u:postal");
-				put.addColumn(columnFamily, column, user.getPostalCode()
-						.getBytes(StandardCharsets.UTF_8));
-
-				// Add device data
-				column = Bytes.toBytes("d:id");
-				put.addColumn(columnFamily, column, device.getDeviceId()
-						.getBytes(StandardCharsets.UTF_8));
-
-				column = Bytes.toBytes("d:key");
-				put.addColumn(columnFamily, column, device.getKey().toString()
-						.getBytes(StandardCharsets.UTF_8));
-
-				column = Bytes.toBytes("d:name");
-				put.addColumn(columnFamily, column,
-						device.getName().getBytes(StandardCharsets.UTF_8));
-
-				// Add measurement data
 				column = Bytes.toBytes("m:offset");
 				put.addColumn(columnFamily, column, Bytes.toBytes((int) offset));
 
@@ -366,16 +356,10 @@ public class MeasurementRepository {
 				column = Bytes.toBytes("m:d");
 				put.addColumn(columnFamily, column,
 						Bytes.toBytes(s.getDuration()));
-				
+
 				column = Bytes.toBytes("r:h");
 				put.addColumn(columnFamily, column,
 						Bytes.toBytes(s.isHistory()));
-
-				for (int p = 0, count = s.getProperties().size(); p < count; p++) {
-					column = Bytes.toBytes(s.getProperties().get(p).getKey());
-					put.addColumn(columnFamily, column, s.getProperties()
-							.get(p).getValue().getBytes(StandardCharsets.UTF_8));
-				}
 
 				table.put(put);
 			}
@@ -387,7 +371,7 @@ public class MeasurementRepository {
 	}
 
 	private void storeDataAmhiroSessionByTime(Connection connection,
-			DaiadUser user, AmphiroDevice device,
+			ApplicationUser user, AmphiroDevice device,
 			DeviceMeasurementCollection data) throws Exception {
 		Table table = null;
 		try {
@@ -397,8 +381,8 @@ public class MeasurementRepository {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
 			table = connection.getTable(TableName
-					.valueOf("daiad:device-sessions-by-time"));
-			byte[] columnFamily = Bytes.toBytes("cf");
+					.valueOf(this.amphiroTableSessionByTime));
+			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			for (int i = 0; i < data.getSessions().size(); i++) {
 				SessionData s = data.getSessions().get(i);
@@ -520,7 +504,7 @@ public class MeasurementRepository {
 	}
 
 	private void storeDataAmhiroMeasurements(Connection connection,
-			DaiadUser user, AmphiroDevice device,
+			ApplicationUser user, AmphiroDevice device,
 			DeviceMeasurementCollection data) throws Exception {
 		Table table = null;
 		try {
@@ -530,7 +514,7 @@ public class MeasurementRepository {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
 			table = connection.getTable(TableName
-					.valueOf(this.amphiroTableName));
+					.valueOf(this.amphiroTableMeasurements));
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			for (int i = 0; i < data.getMeasurements().size(); i++) {
@@ -540,13 +524,12 @@ public class MeasurementRepository {
 					continue;
 				}
 
-				byte[] applicationKey = data.getUserKey().toString()
-						.getBytes("UTF-8");
-				byte[] applicationKeyHash = md.digest(applicationKey);
+				byte[] userKey = data.getUserKey().toString().getBytes("UTF-8");
+				byte[] userKeyHash = md.digest(userKey);
 
-				byte[] deviceId = data.getDeviceKey().toString()
+				byte[] deviceKey = data.getDeviceKey().toString()
 						.getBytes("UTF-8");
-				byte[] deviceIdHash = md.digest(deviceId);
+				byte[] deviceKeyHash = md.digest(deviceKey);
 
 				m.timestamp = m.timestamp / 1000;
 
@@ -563,14 +546,13 @@ public class MeasurementRepository {
 					throw new RuntimeException("Invalid byte array length!");
 				}
 
-				byte[] rowKey = new byte[applicationKeyHash.length
-						+ deviceIdHash.length + timeBucketBytes.length];
-				System.arraycopy(applicationKeyHash, 0, rowKey, 0,
-						applicationKeyHash.length);
-				System.arraycopy(deviceIdHash, 0, rowKey,
-						applicationKeyHash.length, deviceIdHash.length);
+				byte[] rowKey = new byte[userKeyHash.length
+						+ deviceKeyHash.length + timeBucketBytes.length];
+				System.arraycopy(userKeyHash, 0, rowKey, 0, userKeyHash.length);
+				System.arraycopy(deviceKeyHash, 0, rowKey, userKeyHash.length,
+						deviceKeyHash.length);
 				System.arraycopy(timeBucketBytes, 0, rowKey,
-						(applicationKeyHash.length + deviceIdHash.length),
+						(userKeyHash.length + deviceKeyHash.length),
 						timeBucketBytes.length);
 
 				Put p = new Put(rowKey);
@@ -601,7 +583,7 @@ public class MeasurementRepository {
 		}
 	}
 
-	public void storeDataAmphiro(DaiadUser user, AmphiroDevice device,
+	public void storeDataAmphiro(ApplicationUser user, AmphiroDevice device,
 			DeviceMeasurementCollection data) {
 		Connection connection = null;
 		try {
@@ -645,15 +627,14 @@ public class MeasurementRepository {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
 			Table table = connection.getTable(TableName
-					.valueOf(this.smartMeterTableName));
+					.valueOf(this.meterTableMeasurements));
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
-			byte[] applicationKey = data.getUserKey().toString()
-					.getBytes("UTF-8");
-			byte[] applicationKeyHash = md.digest(applicationKey);
+			byte[] userKey = data.getUserKey().toString().getBytes("UTF-8");
+			byte[] userKeyHash = md.digest(userKey);
 
-			byte[] deviceId = data.getDeviceKey().toString().getBytes("UTF-8");
-			byte[] deviceIdHash = md.digest(deviceId);
+			byte[] deviceKey = data.getDeviceKey().toString().getBytes("UTF-8");
+			byte[] deviceKeyHash = md.digest(deviceKey);
 
 			for (int i = 0; i < data.getMeasurements().size(); i++) {
 				SmartMeterMeasurement m = data.getMeasurements().get(i);
@@ -677,14 +658,13 @@ public class MeasurementRepository {
 					throw new RuntimeException("Invalid byte array length!");
 				}
 
-				byte[] rowKey = new byte[applicationKeyHash.length
-						+ deviceIdHash.length + timeBucketBytes.length];
-				System.arraycopy(applicationKeyHash, 0, rowKey, 0,
-						applicationKeyHash.length);
-				System.arraycopy(deviceIdHash, 0, rowKey,
-						applicationKeyHash.length, deviceIdHash.length);
+				byte[] rowKey = new byte[userKeyHash.length
+						+ deviceKeyHash.length + timeBucketBytes.length];
+				System.arraycopy(userKeyHash, 0, rowKey, 0, userKeyHash.length);
+				System.arraycopy(deviceKeyHash, 0, rowKey, userKeyHash.length,
+						deviceKeyHash.length);
 				System.arraycopy(timeBucketBytes, 0, rowKey,
-						(applicationKeyHash.length + deviceIdHash.length),
+						(userKeyHash.length + deviceKeyHash.length),
 						timeBucketBytes.length);
 
 				Put p = new Put(rowKey);
@@ -704,23 +684,48 @@ public class MeasurementRepository {
 		}
 	}
 
-	private byte[] getRowKey(byte[] application, byte[] device, DateTime date)
-			throws Exception {
-		return this.getRowKey(application, device, date.getMillis());
+	private byte[] getUserDeviceHourRowKey(byte[] userKeyHash,
+			byte[] deviceKeyHash, DateTime date) throws Exception {
+		return this.getUserDeviceTimeRowKey(userKeyHash, deviceKeyHash,
+				date.getMillis(), EnumTimeInterval.HOUR);
 	}
 
-	private byte[] getRowKey(byte[] application, byte[] device, long date)
+	private byte[] getUserDeviceDayRowKey(byte[] userKeyHash,
+			byte[] deviceKeyHash, DateTime date) throws Exception {
+		return this.getUserDeviceTimeRowKey(userKeyHash, deviceKeyHash,
+				date.getMillis(), EnumTimeInterval.DAY);
+	}
+
+	private byte[] getUserDeviceTimeRowKey(byte[] userKeyHash,
+			byte[] deviceKeyHash, long date, EnumTimeInterval interval)
 			throws Exception {
+
+		long intervalInSeconds = EnumTimeInterval.HOUR.getValue();
+		switch (interval) {
+		case HOUR:
+			intervalInSeconds = interval.getValue();
+			break;
+		case DAY:
+			intervalInSeconds = interval.getValue();
+			break;
+		default:
+			throw new RuntimeException(
+					String.format("Time interval [%s] is not supported.",
+							interval.toString()));
+		}
+
 		long timestamp = date / 1000;
-		long timeSlice = timestamp % 3600;
+		long timeSlice = timestamp % intervalInSeconds;
 		long timeBucket = timestamp - timeSlice;
 		byte[] timeBucketBytes = Bytes.toBytes(timeBucket);
 
-		byte[] rowKey = new byte[application.length + device.length + 8];
-		System.arraycopy(application, 0, rowKey, 0, application.length);
-		System.arraycopy(device, 0, rowKey, application.length, device.length);
+		byte[] rowKey = new byte[userKeyHash.length + deviceKeyHash.length + 8];
+		System.arraycopy(userKeyHash, 0, rowKey, 0, userKeyHash.length);
+		System.arraycopy(deviceKeyHash, 0, rowKey, userKeyHash.length,
+				deviceKeyHash.length);
 		System.arraycopy(timeBucketBytes, 0, rowKey,
-				(device.length + device.length), timeBucketBytes.length);
+				(deviceKeyHash.length + deviceKeyHash.length),
+				timeBucketBytes.length);
 
 		return rowKey;
 	}
@@ -771,7 +776,6 @@ public class MeasurementRepository {
 							.getMaximumValue(), 23, 59, 59);
 			break;
 		}
-		data.setSeries(new ArrayList<DataSeries>());
 
 		try {
 			Configuration config = HBaseConfiguration.create();
@@ -783,209 +787,111 @@ public class MeasurementRepository {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
 			Table table = connection.getTable(TableName
-					.valueOf(this.amphiroTableName));
-			byte[] columnFamily = Bytes.toBytes("m");
+					.valueOf(this.amphiroTableMeasurements));
+			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
-			byte[] applicationKey = query.getApplicationKey().toString()
-					.getBytes("UTF-8");
-			byte[] applicationKeyHash = md.digest(applicationKey);
+			byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
+			byte[] userKeyHash = md.digest(userKey);
 
-			byte[] deviceId = query.getDeviceId().toString().getBytes("UTF-8");
-			byte[] deviceIdHash = md.digest(deviceId);
+			UUID deviceKeys[] = query.getDeviceKey();
 
-			Scan scan = new Scan();
-			scan.addFamily(columnFamily);
-			scan.setStartRow(this.getRowKey(applicationKeyHash, deviceIdHash,
-					startDate));
-			scan.setStopRow(this.getRowKey(applicationKeyHash, deviceIdHash,
-					endDate));
+			for (int deviceIndex = 0; deviceIndex < deviceKeys.length; deviceIndex++) {
+				byte[] deviceKey = deviceKeys[deviceIndex].toString().getBytes(
+						"UTF-8");
+				byte[] deviceKeyHash = md.digest(deviceKey);
 
-			ResultScanner scanner = table.getScanner(scan);
+				Scan scan = new Scan();
+				scan.addFamily(columnFamily);
+				scan.setStartRow(this.getUserDeviceHourRowKey(userKeyHash,
+						deviceKeyHash, startDate));
+				scan.setStopRow(this.getUserDeviceHourRowKey(userKeyHash,
+						deviceKeyHash, endDate));
 
-			DataSeries series = new DataSeries();
-			series.setDeviceId(query.getDeviceId());
-			series.setPoints(new ArrayList<DataPoint>());
+				ResultScanner scanner = table.getScanner(scan);
 
-			data.getSeries().add(series);
+				DataSeries series = new DataSeries();
+				series.setDeviceKey(deviceKeys[deviceIndex]);
 
-			for (Result r = scanner.next(); r != null; r = scanner.next()) {
-				NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
+				data.getSeries().add(series);
 
-				long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(),
-						32, 40));
+				for (Result r = scanner.next(); r != null; r = scanner.next()) {
+					NavigableMap<byte[], byte[]> map = r
+							.getFamilyMap(columnFamily);
 
-				HourlyDataPoints hourlyPoints = new HourlyDataPoints();
+					long timeBucket = Bytes.toLong(Arrays.copyOfRange(
+							r.getRow(), 32, 40));
 
-				short offset = -1;
-				DataPoint point = null;
+					HourlyDataPoints hourlyPoints = new HourlyDataPoints();
 
-				for (Entry<byte[], byte[]> entry : map.entrySet()) {
-					short entryOffset = Bytes.toShort(Arrays.copyOfRange(
-							entry.getKey(), 0, 2));
+					short offset = -1;
+					DataPoint point = null;
 
-					if (offset != entryOffset) {
-						if (point != null) {
-							hourlyPoints.add(point);
+					for (Entry<byte[], byte[]> entry : map.entrySet()) {
+						short entryOffset = Bytes.toShort(Arrays.copyOfRange(
+								entry.getKey(), 0, 2));
+
+						if (offset != entryOffset) {
+							if (point != null) {
+								hourlyPoints.add(point);
+							}
+							offset = entryOffset;
+							point = new DataPoint();
+							point.timestamp = (timeBucket + (long) offset) * 1000L;
 						}
-						offset = entryOffset;
-						point = new DataPoint();
-						point.timestamp = (timeBucket + (long) offset) * 1000L;
+
+						int length = (int) Arrays.copyOfRange(entry.getKey(),
+								2, 3)[0];
+						byte[] slice = Arrays.copyOfRange(entry.getKey(), 3,
+								3 + length);
+						String columnQualifier = Bytes.toString(slice);
+						if (columnQualifier.equals("v")) {
+							point.volume = Bytes.toFloat(entry.getValue());
+						} else if (columnQualifier.equals("e")) {
+							point.energy = Bytes.toFloat(entry.getValue());
+						} else if (columnQualifier.equals("t")) {
+							point.temperature = Bytes.toFloat(entry.getValue());
+						}
 					}
-
-					int length = (int) Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
-					byte[] slice = Arrays.copyOfRange(entry.getKey(), 3,
-							3 + length);
-					String columnQualifier = Bytes.toString(slice);
-					if (columnQualifier.equals("v")) {
-						point.volume = Bytes.toFloat(entry.getValue());
-					} else if (columnQualifier.equals("e")) {
-						point.energy = Bytes.toFloat(entry.getValue());
-					} else if (columnQualifier.equals("t")) {
-						point.temperature = Bytes.toFloat(entry.getValue());
+					if (point != null) {
+						hourlyPoints.add(point);
 					}
+					series.getPoints().add(hourlyPoints.average());
 				}
-				if (point != null) {
-					hourlyPoints.add(point);
-				}
-				series.getPoints().add(hourlyPoints.average());
-			}
-			scanner.close();
-			table.close();
-			connection.close();
+				scanner.close();
 
-			// Second level of aggregation
-			switch (query.getGranularity()) {
-			case TemporalConstants.MONTHLY:
-			case TemporalConstants.WEEKLY:
-			case TemporalConstants.NONE:
-				int numberOfDays = Days.daysBetween(startDate.toLocalDate(),
-						endDate.toLocalDate()).getDays();
+				// Second level of aggregation
+				switch (query.getGranularity()) {
+				case TemporalConstants.MONTHLY:
+				case TemporalConstants.WEEKLY:
+				case TemporalConstants.NONE:
+					int numberOfDays = Days.daysBetween(
+							startDate.toLocalDate(), endDate.toLocalDate())
+							.getDays();
 
-				if (numberOfDays > 0) {
-					DayIntervalDataPointCollection interval = new DayIntervalDataPointCollection();
+					if (numberOfDays > 0) {
+						DayIntervalDataPointCollection interval = new DayIntervalDataPointCollection();
 
-					interval.addAll(series.getPoints());
+						interval.addAll(series.getPoints());
 
-					series.setPoints(interval.getPoints());
-				}
-				break;
-			}
-			Collections.sort(series.getPoints(), new Comparator<DataPoint>() {
-
-				public int compare(DataPoint o1, DataPoint o2) {
-					if (o1.timestamp <= o2.timestamp) {
-						return -1;
-					} else {
-						return 1;
+						series.setPoints(interval.getPoints());
 					}
-				}
-			});
-
-			return data;
-		} catch (Exception ex) {
-			logger.error("Unhandled exception has occured.", ex);
-		}
-
-		return null;
-	}
-
-	public SmartMeterResult query(SmartMeterQuery query) {
-		SmartMeterResult data = new SmartMeterResult();
-		data.setDeviceId(query.getDeviceId());
-
-		SmartMeterDataPoint value1 = new SmartMeterDataPoint();
-		SmartMeterDataPoint value2 = new SmartMeterDataPoint();
-
-		long lastTimeBucket = 0;
-		int bucketCount = 0;
-		int valueCount = 0;
-
-		try {
-			Configuration config = HBaseConfiguration.create();
-
-			config.set("hbase.zookeeper.quorum", this.quorum);
-
-			Connection connection = ConnectionFactory.createConnection(config);
-
-			MessageDigest md = MessageDigest.getInstance("MD5");
-
-			Table table = connection.getTable(TableName
-					.valueOf(this.smartMeterTableName));
-			byte[] columnFamily = Bytes.toBytes("m");
-
-			byte[] applicationKey = query.getApplicationKey().toString()
-					.getBytes("UTF-8");
-			byte[] applicationKeyHash = md.digest(applicationKey);
-
-			byte[] deviceId = query.getDeviceId().getBytes("UTF-8");
-			byte[] deviceIdHash = md.digest(deviceId);
-
-			DateTime maxDate = new DateTime();
-
-			Scan scan = new Scan();
-			scan.addFamily(columnFamily);
-			scan.setStartRow(this.getRowKey(applicationKeyHash, deviceIdHash,
-					Long.MAX_VALUE - maxDate.getMillis()));
-			scan.setCaching(1);
-
-			ResultScanner scanner = table.getScanner(scan);
-
-			for (Result r = scanner.next(); r != null; r = scanner.next()) {
-				if (bucketCount > 2) {
 					break;
 				}
+				Collections.sort(series.getPoints(),
+						new Comparator<DataPoint>() {
 
-				NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
-
-				long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(),
-						32, 40));
-				if (lastTimeBucket != timeBucket) {
-					bucketCount++;
-				}
-				lastTimeBucket = timeBucket;
-
-				for (Entry<byte[], byte[]> entry : map.entrySet()) {
-					short offset = Bytes.toShort(Arrays.copyOfRange(
-							entry.getKey(), 0, 2));
-
-					long timestamp = Long.MAX_VALUE
-							- ((timeBucket + (long) offset) * 1000L);
-
-					int length = (int) Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
-					byte[] slice = Arrays.copyOfRange(entry.getKey(), 3,
-							3 + length);
-					String columnQualifier = Bytes.toString(slice);
-					if (columnQualifier.equals("v")) {
-						valueCount++;
-						if (value1.timestamp < timestamp) {
-							value2.timestamp = value1.timestamp;
-							value2.volume = value1.volume;
-
-							value1.timestamp = timestamp;
-							value1.volume = Bytes.toFloat(entry.getValue());
-						} else if (value2.timestamp < timestamp) {
-							value2.timestamp = timestamp;
-							value2.volume = Bytes.toFloat(entry.getValue());
-						}
-					}
-				}
+							public int compare(DataPoint o1, DataPoint o2) {
+								if (o1.timestamp <= o2.timestamp) {
+									return -1;
+								} else {
+									return 1;
+								}
+							}
+						});
 			}
 
-			scanner.close();
 			table.close();
 			connection.close();
-
-			switch (valueCount) {
-			case 0:
-				// No value found
-				break;
-			case 1:
-				data.setValue1(value1);
-				data.setValue2(value1);
-			default:
-				data.setValue1(value1);
-				data.setValue2(value2);
-			}
 
 			return data;
 		} catch (Exception ex) {
@@ -995,7 +901,125 @@ public class MeasurementRepository {
 		return null;
 	}
 
-	public SmartMeterCollectionResult query(SmartMeterIntervalQuery query) {
+	public SmartMeterStatusCollectionResult query(SmartMeterQuery query) {
+		SmartMeterStatusCollectionResult data = new SmartMeterStatusCollectionResult();
+
+		try {
+			Configuration config = HBaseConfiguration.create();
+
+			config.set("hbase.zookeeper.quorum", this.quorum);
+
+			Connection connection = ConnectionFactory.createConnection(config);
+
+			MessageDigest md = MessageDigest.getInstance("MD5");
+
+			Table table = connection.getTable(TableName
+					.valueOf(this.meterTableMeasurements));
+			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+
+			byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
+			byte[] userKeyHash = md.digest(userKey);
+
+			UUID deviceKeys[] = query.getDeviceKey();
+			for (int deviceIndex = 0; deviceIndex < deviceKeys.length; deviceIndex++) {
+				byte[] deviceKey = deviceKeys[deviceIndex].toString().getBytes(
+						"UTF-8");
+				byte[] deviceKeyHash = md.digest(deviceKey);
+
+				DateTime maxDate = new DateTime();
+
+				Scan scan = new Scan();
+				scan.addFamily(columnFamily);
+				scan.setStartRow(this.getUserDeviceTimeRowKey(userKeyHash,
+						deviceKeyHash, (Long.MAX_VALUE - maxDate.getMillis()),
+						EnumTimeInterval.HOUR));
+				scan.setCaching(1);
+
+				ResultScanner scanner = table.getScanner(scan);
+
+				WaterMeterStatus status = new WaterMeterStatus();
+				status.setDeviceKey(deviceKeys[deviceIndex]);
+
+				SmartMeterDataPoint value1 = new SmartMeterDataPoint();
+				SmartMeterDataPoint value2 = new SmartMeterDataPoint();
+
+				long lastTimeBucket = 0;
+				int bucketCount = 0;
+				int valueCount = 0;
+
+				for (Result r = scanner.next(); r != null; r = scanner.next()) {
+					if (bucketCount > 2) {
+						break;
+					}
+
+					NavigableMap<byte[], byte[]> map = r
+							.getFamilyMap(columnFamily);
+
+					long timeBucket = Bytes.toLong(Arrays.copyOfRange(
+							r.getRow(), 32, 40));
+					if (lastTimeBucket != timeBucket) {
+						bucketCount++;
+					}
+					lastTimeBucket = timeBucket;
+
+					for (Entry<byte[], byte[]> entry : map.entrySet()) {
+						short offset = Bytes.toShort(Arrays.copyOfRange(
+								entry.getKey(), 0, 2));
+
+						long timestamp = Long.MAX_VALUE
+								- ((timeBucket + (long) offset) * 1000L);
+
+						int length = (int) Arrays.copyOfRange(entry.getKey(),
+								2, 3)[0];
+						byte[] slice = Arrays.copyOfRange(entry.getKey(), 3,
+								3 + length);
+						String columnQualifier = Bytes.toString(slice);
+						if (columnQualifier.equals("v")) {
+							valueCount++;
+							if (value1.timestamp < timestamp) {
+								value2.timestamp = value1.timestamp;
+								value2.volume = value1.volume;
+
+								value1.timestamp = timestamp;
+								value1.volume = Bytes.toFloat(entry.getValue());
+							} else if (value2.timestamp < timestamp) {
+								value2.timestamp = timestamp;
+								value2.volume = Bytes.toFloat(entry.getValue());
+							}
+						}
+					}
+				}
+
+				scanner.close();
+
+				switch (valueCount) {
+				case 0:
+					// No value found
+					break;
+				case 1:
+					status.setValue1(value1);
+					status.setValue2(value1);
+					data.getDevices().add(status);
+				default:
+					status.setValue1(value1);
+					status.setValue2(value2);
+					data.getDevices().add(status);
+				}
+			}
+
+			table.close();
+			connection.close();
+
+			return data;
+		} catch (Exception ex) {
+			logger.error("Unhandled exception has occured.", ex);
+		}
+
+		return null;
+	}
+
+	public SmartMeterDataSeriesCollectionResult query(
+			SmartMeterIntervalQuery query) {
 		DateTime startDate = new DateTime(query.getStartDate());
 		DateTime endDate = new DateTime(query.getEndDate());
 
@@ -1024,7 +1048,7 @@ public class MeasurementRepository {
 							.getMaximumValue(), 23, 59, 59);
 			break;
 		default:
-			return new SmartMeterCollectionResult(-1,
+			return new SmartMeterDataSeriesCollectionResult(-1,
 					"Granularity level not supported.");
 		}
 
@@ -1033,10 +1057,8 @@ public class MeasurementRepository {
 			endDate = now.plusHours(1);
 		}
 
-		SmartMeterCollectionResult data = new SmartMeterCollectionResult(
-				startDate.getMillis(), endDate.getMillis());
+		SmartMeterDataSeriesCollectionResult data = new SmartMeterDataSeriesCollectionResult();
 
-		data.setDeviceId(query.getDeviceId());
 		try {
 			Configuration config = HBaseConfiguration.create();
 
@@ -1047,74 +1069,87 @@ public class MeasurementRepository {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
 			Table table = connection.getTable(TableName
-					.valueOf(this.smartMeterTableName));
-			byte[] columnFamily = Bytes.toBytes("m");
+					.valueOf(this.meterTableMeasurements));
+			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
-			byte[] applicationKey = query.getApplicationKey().toString()
-					.getBytes("UTF-8");
-			byte[] applicationKeyHash = md.digest(applicationKey);
+			byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
+			byte[] userKeyHash = md.digest(userKey);
 
-			byte[] deviceId = query.getDeviceId().getBytes("UTF-8");
-			byte[] deviceIdHash = md.digest(deviceId);
+			UUID deviceKeys[] = query.getDeviceKey();
+			for (int deviceIndex = 0; deviceIndex < deviceKeys.length; deviceIndex++) {
+				byte[] deviceKey = deviceKeys[deviceIndex].toString().getBytes(
+						"UTF-8");
+				byte[] deviceKeyHash = md.digest(deviceKey);
 
-			Scan scan = new Scan();
-			scan.addFamily(columnFamily);
-			scan.setStartRow(this.getRowKey(applicationKeyHash, deviceIdHash,
-					Long.MAX_VALUE - endDate.getMillis()));
+				Scan scan = new Scan();
+				scan.addFamily(columnFamily);
+				scan.setStartRow(this.getUserDeviceTimeRowKey(userKeyHash,
+						deviceKeyHash, (Long.MAX_VALUE - endDate.getMillis()),
+						EnumTimeInterval.HOUR));
 
-			ResultScanner scanner = table.getScanner(scan);
+				ResultScanner scanner = table.getScanner(scan);
 
-			boolean isScanCompleted = false;
+				boolean isScanCompleted = false;
 
-			for (Result r = scanner.next(); r != null; r = scanner.next()) {
-				NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
+				WaterMeterDataSeries series = new WaterMeterDataSeries(
+						startDate.getMillis(), endDate.getMillis());
+				series.setDeviceKey(deviceKeys[deviceIndex]);
+				data.getSeries().add(series);
 
-				long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(),
-						32, 40));
+				for (Result r = scanner.next(); r != null; r = scanner.next()) {
+					NavigableMap<byte[], byte[]> map = r
+							.getFamilyMap(columnFamily);
 
-				for (Entry<byte[], byte[]> entry : map.entrySet()) {
-					short offset = Bytes.toShort(Arrays.copyOfRange(
-							entry.getKey(), 0, 2));
+					long timeBucket = Bytes.toLong(Arrays.copyOfRange(
+							r.getRow(), 32, 40));
 
-					long timestamp = Long.MAX_VALUE
-							- ((timeBucket + (long) offset) * 1000L);
+					for (Entry<byte[], byte[]> entry : map.entrySet()) {
+						short offset = Bytes.toShort(Arrays.copyOfRange(
+								entry.getKey(), 0, 2));
 
-					int length = (int) Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
-					byte[] slice = Arrays.copyOfRange(entry.getKey(), 3,
-							3 + length);
+						long timestamp = Long.MAX_VALUE
+								- ((timeBucket + (long) offset) * 1000L);
 
-					String columnQualifier = Bytes.toString(slice);
-					if (columnQualifier.equals("v")) {
-						float volume = Bytes.toFloat(entry.getValue());
-						data.add(timestamp, volume);
-						if (startDate.getMillis() > timestamp) {
-							// Fetch just the one measurement after the end of
-							// the interval
-							isScanCompleted = true;
-							break;
-						}
-					}
-				}
-				if (isScanCompleted) {
-					break;
-				}
-			}
-			scanner.close();
-			table.close();
-			connection.close();
+						int length = (int) Arrays.copyOfRange(entry.getKey(),
+								2, 3)[0];
+						byte[] slice = Arrays.copyOfRange(entry.getKey(), 3,
+								3 + length);
 
-			Collections.sort(data.getValues(),
-					new Comparator<SmartMeterDataPoint>() {
-
-						public int compare(SmartMeterDataPoint o1,
-								SmartMeterDataPoint o2) {
-							if (o1.timestamp <= o2.timestamp) {
-								return -1;
-							} else {
-								return 1;
+						String columnQualifier = Bytes.toString(slice);
+						if (columnQualifier.equals("v")) {
+							float volume = Bytes.toFloat(entry.getValue());
+							series.add(timestamp, volume);
+							if (startDate.getMillis() > timestamp) {
+								// Fetch just the one measurement after the end
+								// of
+								// the interval
+								isScanCompleted = true;
+								break;
 							}
 						}
-					});
+					}
+					if (isScanCompleted) {
+						break;
+					}
+				}
+				scanner.close();
+
+				Collections.sort(series.getValues(),
+						new Comparator<SmartMeterDataPoint>() {
+
+							public int compare(SmartMeterDataPoint o1,
+									SmartMeterDataPoint o2) {
+								if (o1.timestamp <= o2.timestamp) {
+									return -1;
+								} else {
+									return 1;
+								}
+							}
+						});
+			}
+
+			table.close();
+			connection.close();
 
 			return data;
 		} catch (Exception ex) {
@@ -1124,7 +1159,171 @@ public class MeasurementRepository {
 		return null;
 	}
 
-	public ShowerCollectionResult query(ShowerCollectionQuery query) {
+	public SessionCollectionResult searchAmphiroSessions(
+			ShowerCollectionQuery query) {
+		SessionCollectionResult data = new SessionCollectionResult();
+
+		DateTime startDate = new DateTime(query.getStartDate());
+		DateTime endDate = new DateTime(query.getEndDate());
+
+		switch (query.getGranularity()) {
+		case TemporalConstants.DAILY:
+			startDate = new DateTime(startDate.getYear(),
+					startDate.getMonthOfYear(), startDate.getDayOfMonth(), 0,
+					0, 0);
+			endDate = new DateTime(startDate.getYear(),
+					startDate.getMonthOfYear(), startDate.getDayOfMonth(), 0,
+					0, 0).plusDays(1);
+			break;
+		case TemporalConstants.WEEKLY:
+			DateTime monday = startDate.withDayOfWeek(DateTimeConstants.MONDAY);
+			DateTime sunday = startDate.withDayOfWeek(DateTimeConstants.SUNDAY);
+			startDate = new DateTime(monday.getYear(), monday.getMonthOfYear(),
+					monday.getDayOfMonth(), 0, 0, 0);
+			endDate = new DateTime(sunday.getYear(), sunday.getMonthOfYear(),
+					sunday.getDayOfMonth(), 0, 0, 0).plusDays(1);
+			break;
+		case TemporalConstants.MONTHLY:
+			startDate = new DateTime(startDate.getYear(),
+					startDate.getMonthOfYear(), 1, 0, 0, 0);
+			endDate = new DateTime(startDate.getYear(),
+					startDate.getMonthOfYear(), startDate.dayOfMonth()
+							.getMaximumValue(), 0, 0, 0).plusDays(1);
+			;
+			break;
+		}
+
+		DateTime timeThreshold = (new DateTime()).plusDays(1);
+		long timestampThreshold = timeThreshold.getMillis();
+		if (timestampThreshold < endDate.getMillis()) {
+			endDate = timeThreshold;
+		}
+
+		try {
+			Configuration config = HBaseConfiguration.create();
+
+			config.set("hbase.zookeeper.quorum", this.quorum);
+
+			Connection connection = ConnectionFactory.createConnection(config);
+
+			MessageDigest md = MessageDigest.getInstance("MD5");
+
+			Table table = connection.getTable(TableName
+					.valueOf(this.amphiroTableSessionByUser));
+			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+
+			byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
+			byte[] userKeyHash = md.digest(userKey);
+
+			UUID deviceKeys[] = query.getDeviceKey();
+
+			for (int deviceIndex = 0; deviceIndex < deviceKeys.length; deviceIndex++) {
+				DeviceSessionCollection sessions = new DeviceSessionCollection();
+				sessions.setDeviceKey(deviceKeys[deviceIndex]);
+
+				data.getDevices().add(sessions);
+
+				byte[] deviceKey = deviceKeys[deviceIndex].toString().getBytes(
+						"UTF-8");
+				byte[] deviceKeyHash = md.digest(deviceKey);
+
+				Scan scan = new Scan();
+				scan.addFamily(columnFamily);
+				scan.setStartRow(this.getUserDeviceDayRowKey(userKeyHash,
+						deviceKeyHash, startDate));
+				scan.setStopRow(this.getUserDeviceDayRowKey(userKeyHash,
+						deviceKeyHash, endDate));
+
+				ResultScanner scanner = table.getScanner(scan);
+
+				for (Result r = scanner.next(); r != null; r = scanner.next()) {
+					NavigableMap<byte[], byte[]> map = r
+							.getFamilyMap(columnFamily);
+
+					long timeBucket = Bytes.toLong(Arrays.copyOfRange(
+							r.getRow(), 32, 40));
+
+					SessionData session = new SessionData();
+					session.setShowerId(Bytes.toLong(Arrays.copyOfRange(
+							r.getRow(), 40, 48)));
+
+					for (Entry<byte[], byte[]> entry : map.entrySet()) {
+
+						String qualifier = Bytes.toString(entry.getKey());
+
+						switch (qualifier) {
+						case "m:offset":
+							int offset = Bytes.toInt(entry.getValue());
+							session.setTimestamp(new DateTime(
+									(timeBucket + (long) offset) * 1000L));
+							break;
+						case "m:t":
+							session.setTemperature(Bytes.toFloat(entry
+									.getValue()));
+							break;
+						case "m:v":
+							session.setVolume(Bytes.toFloat(entry.getValue()));
+							break;
+						case "m:f":
+							session.setFlow(Bytes.toFloat(entry.getValue()));
+							break;
+						case "m:e":
+							session.setEnergy(Bytes.toFloat(entry.getValue()));
+							break;
+						case "m:d":
+							session.setDuration(Bytes.toInt(entry.getValue()));
+							break;
+						// General data
+						case "r:h":
+							session.setHistory(Bytes.toBoolean(entry.getValue()));
+							break;
+						}
+					}
+
+					if (session.getTimestamp().getMillis() <= timestampThreshold) {
+						sessions.getSessions().add(session);
+					}
+				}
+
+				scanner.close();
+
+				if (sessions.getSessions().size() > 0) {
+					Collections.sort(sessions.getSessions(),
+							new Comparator<SessionData>() {
+								public int compare(SessionData o1,
+										SessionData o2) {
+									if (o1.getTimestamp().getMillis() < o2
+											.getTimestamp().getMillis()) {
+										return -1;
+									} else if (o1.getTimestamp().getMillis() > o2
+											.getTimestamp().getMillis()) {
+										return 1;
+									} else {
+										if (o1.getShowerId() <= o2
+												.getShowerId()) {
+											return -1;
+										} else {
+											return 1;
+										}
+									}
+								}
+							});
+				}
+			}
+
+			table.close();
+			connection.close();
+
+			return data;
+		} catch (Exception ex) {
+			logger.error("Unhandled exception has occured.", ex);
+		}
+
+		return null;
+	}
+
+	public ShowerCollectionResult searchAmphiroSessionMeasurements(
+			ShowerCollectionQuery query) {
 		ShowerCollectionResult data = new ShowerCollectionResult();
 
 		DateTime startDate = new DateTime(query.getStartDate());
@@ -1173,82 +1372,88 @@ public class MeasurementRepository {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
 			Table table = connection.getTable(TableName
-					.valueOf(this.amphiroTableName));
-			byte[] columnFamily = Bytes.toBytes("m");
+					.valueOf(this.amphiroTableMeasurements));
+			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
-			byte[] applicationKey = query.getApplicationKey().toString()
-					.getBytes("UTF-8");
-			byte[] applicationKeyHash = md.digest(applicationKey);
+			byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
+			byte[] userKeyHash = md.digest(userKey);
 
-			byte[] deviceId = query.getDeviceId().toString().getBytes("UTF-8");
-			byte[] deviceIdHash = md.digest(deviceId);
+			UUID deviceKeys[] = query.getDeviceKey();
 
-			Scan scan = new Scan();
-			scan.addFamily(columnFamily);
-			scan.setStartRow(this.getRowKey(applicationKeyHash, deviceIdHash,
-					startDate));
-			scan.setStopRow(this.getRowKey(applicationKeyHash, deviceIdHash,
-					endDate));
+			for (int deviceIndex = 0; deviceIndex < deviceKeys.length; deviceIndex++) {
+				byte[] deviceKey = deviceKeys[deviceIndex].toString().getBytes(
+						"UTF-8");
+				byte[] deviceKeyHash = md.digest(deviceKey);
 
-			ResultScanner scanner = table.getScanner(scan);
+				Scan scan = new Scan();
+				scan.addFamily(columnFamily);
+				scan.setStartRow(this.getUserDeviceHourRowKey(userKeyHash,
+						deviceKeyHash, startDate));
+				scan.setStopRow(this.getUserDeviceHourRowKey(userKeyHash,
+						deviceKeyHash, endDate));
 
-			for (Result r = scanner.next(); r != null; r = scanner.next()) {
-				NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
+				ResultScanner scanner = table.getScanner(scan);
 
-				long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(),
-						32, 40));
+				for (Result r = scanner.next(); r != null; r = scanner.next()) {
+					NavigableMap<byte[], byte[]> map = r
+							.getFamilyMap(columnFamily);
 
-				short offset = -1;
-				DataPoint point = null;
+					long timeBucket = Bytes.toLong(Arrays.copyOfRange(
+							r.getRow(), 32, 40));
 
-				for (Entry<byte[], byte[]> entry : map.entrySet()) {
-					short entryOffset = Bytes.toShort(Arrays.copyOfRange(
-							entry.getKey(), 0, 2));
+					short offset = -1;
+					DataPoint point = null;
 
-					if (offset != entryOffset) {
-						if ((point != null)
-								&& (point.timestamp <= timestampThreshold)) {
-							data.add(point);
+					for (Entry<byte[], byte[]> entry : map.entrySet()) {
+						short entryOffset = Bytes.toShort(Arrays.copyOfRange(
+								entry.getKey(), 0, 2));
+
+						if (offset != entryOffset) {
+							if ((point != null)
+									&& (point.timestamp <= timestampThreshold)) {
+								data.add(deviceKeys[deviceIndex], point);
+							}
+							offset = entryOffset;
+							point = new DataPoint();
+							point.timestamp = (timeBucket + (long) offset) * 1000L;
 						}
-						offset = entryOffset;
-						point = new DataPoint();
-						point.timestamp = (timeBucket + (long) offset) * 1000L;
-					}
 
-					int length = (int) Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
-					byte[] slice = Arrays.copyOfRange(entry.getKey(), 3,
-							3 + length);
-					String columnQualifier = Bytes.toString(slice);
-					if (columnQualifier.equals("si")) {
-						point.showerId = Bytes.toLong(entry.getValue());
-					} else if (columnQualifier.equals("st")) {
-						point.showerTime = Bytes.toInt(entry.getValue());
-					} else if (columnQualifier.equals("v")) {
-						point.volume = Bytes.toFloat(entry.getValue());
-					} else if (columnQualifier.equals("e")) {
-						point.energy = Bytes.toFloat(entry.getValue());
-					} else if (columnQualifier.equals("t")) {
-						point.temperature = Bytes.toFloat(entry.getValue());
+						int length = (int) Arrays.copyOfRange(entry.getKey(),
+								2, 3)[0];
+						byte[] slice = Arrays.copyOfRange(entry.getKey(), 3,
+								3 + length);
+						String columnQualifier = Bytes.toString(slice);
+						if (columnQualifier.equals("si")) {
+							point.showerId = Bytes.toLong(entry.getValue());
+						} else if (columnQualifier.equals("st")) {
+							point.showerTime = Bytes.toInt(entry.getValue());
+						} else if (columnQualifier.equals("v")) {
+							point.volume = Bytes.toFloat(entry.getValue());
+						} else if (columnQualifier.equals("e")) {
+							point.energy = Bytes.toFloat(entry.getValue());
+						} else if (columnQualifier.equals("t")) {
+							point.temperature = Bytes.toFloat(entry.getValue());
+						}
+					}
+					if ((point != null)
+							&& (point.timestamp <= timestampThreshold)) {
+						data.add(deviceKeys[deviceIndex], point);
 					}
 				}
-				if ((point != null) && (point.timestamp <= timestampThreshold)) {
-					data.add(point);
-				}
+				scanner.close();
+				table.close();
+				connection.close();
+
+				Collections.sort(data.getShowers(), new Comparator<Shower>() {
+					public int compare(Shower o1, Shower o2) {
+						if (o1.getTimestamp() <= o2.getTimestamp()) {
+							return -1;
+						} else {
+							return 1;
+						}
+					}
+				});
 			}
-			scanner.close();
-			table.close();
-			connection.close();
-
-			Collections.sort(data.getShowers(), new Comparator<Shower>() {
-				public int compare(Shower o1, Shower o2) {
-					if (o1.getTimestamp() <= o2.getTimestamp()) {
-						return -1;
-					} else {
-						return 1;
-					}
-				}
-			});
-
 			return data;
 		} catch (Exception ex) {
 			logger.error("Unhandled exception has occured.", ex);
@@ -1257,7 +1462,7 @@ public class MeasurementRepository {
 		return null;
 	}
 
-	public ShowerResult query(ShowerQuery query) {
+	public ShowerResult getAmphiroSession(ShowerQuery query) {
 		ShowerResult data = new ShowerResult();
 
 		DateTime startDate = new DateTime(query.getStartDate());
@@ -1278,22 +1483,22 @@ public class MeasurementRepository {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
 			Table table = connection.getTable(TableName
-					.valueOf(this.amphiroTableName));
-			byte[] columnFamily = Bytes.toBytes("m");
+					.valueOf(this.amphiroTableMeasurements));
+			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
-			byte[] applicationKey = query.getApplicationKey().toString()
+			byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
+			byte[] userKeyKey = md.digest(userKey);
+
+			byte[] deviceKey = query.getDeviceKey().toString()
 					.getBytes("UTF-8");
-			byte[] applicationKeyHash = md.digest(applicationKey);
-
-			byte[] deviceId = query.getDeviceId().toString().getBytes("UTF-8");
-			byte[] deviceIdHash = md.digest(deviceId);
+			byte[] deviceKeyHash = md.digest(deviceKey);
 
 			Scan scan = new Scan();
 			scan.addFamily(columnFamily);
-			scan.setStartRow(this.getRowKey(applicationKeyHash, deviceIdHash,
-					startDate));
-			scan.setStopRow(this.getRowKey(applicationKeyHash, deviceIdHash,
-					endDate));
+			scan.setStartRow(this.getUserDeviceHourRowKey(userKeyKey,
+					deviceKeyHash, startDate));
+			scan.setStopRow(this.getUserDeviceHourRowKey(userKeyKey,
+					deviceKeyHash, endDate));
 
 			ResultScanner scanner = table.getScanner(scan);
 
@@ -1317,7 +1522,8 @@ public class MeasurementRepository {
 						if ((point != null)
 								&& (point.showerId == query.getShowerId())) {
 							if (shower == null) {
-								shower = new ShowerDetails(point.showerId);
+								shower = new ShowerDetails(
+										query.getDeviceKey(), point.showerId);
 							}
 							shower.add(point);
 						}
@@ -1344,7 +1550,131 @@ public class MeasurementRepository {
 				}
 				if ((point != null) && (point.showerId == query.getShowerId())) {
 					if (shower == null) {
-						shower = new ShowerDetails(point.showerId);
+						shower = new ShowerDetails(query.getDeviceKey(),
+								point.showerId);
+					}
+					shower.add(point);
+				}
+			}
+			
+			if ((shower != null) && (shower.getMeasurements() != null)) {
+				Collections.sort(shower.getMeasurements(),
+						new Comparator<DataPoint>() {
+
+							public int compare(DataPoint o1, DataPoint o2) {
+								if (o1.showerTime <= o2.showerTime) {
+									return -1;
+								} else {
+									return 1;
+								}
+							}
+						});
+			}
+			
+			scanner.close();
+			table.close();
+			connection.close();
+
+			data.setShower(shower);
+
+			return data;
+		} catch (Exception ex) {
+			logger.error("Unhandled exception has occured.", ex);
+		}
+
+		return null;
+	}
+
+	public ShowerResult getAmphiroSessionMeasurements(ShowerQuery query) {
+		ShowerResult data = new ShowerResult();
+
+		DateTime startDate = new DateTime(query.getStartDate());
+		DateTime endDate = new DateTime(query.getEndDate()).plusDays(1);
+
+		startDate = new DateTime(startDate.getYear(),
+				startDate.getMonthOfYear(), startDate.getDayOfMonth(), 0, 0, 0);
+		endDate = new DateTime(endDate.getYear(), endDate.getMonthOfYear(),
+				endDate.getDayOfMonth(), 0, 0, 0).plusDays(1);
+
+		try {
+			Configuration config = HBaseConfiguration.create();
+
+			config.set("hbase.zookeeper.quorum", this.quorum);
+
+			Connection connection = ConnectionFactory.createConnection(config);
+
+			MessageDigest md = MessageDigest.getInstance("MD5");
+
+			Table table = connection.getTable(TableName
+					.valueOf(this.amphiroTableMeasurements));
+			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+
+			byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
+			byte[] userKeyKey = md.digest(userKey);
+
+			byte[] deviceKey = query.getDeviceKey().toString()
+					.getBytes("UTF-8");
+			byte[] deviceKeyHash = md.digest(deviceKey);
+
+			Scan scan = new Scan();
+			scan.addFamily(columnFamily);
+			scan.setStartRow(this.getUserDeviceHourRowKey(userKeyKey,
+					deviceKeyHash, startDate));
+			scan.setStopRow(this.getUserDeviceHourRowKey(userKeyKey,
+					deviceKeyHash, endDate));
+
+			ResultScanner scanner = table.getScanner(scan);
+
+			ShowerDetails shower = null;
+
+			for (Result r = scanner.next(); r != null; r = scanner.next()) {
+				NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
+
+				long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(),
+						32, 40));
+
+				short offset = -1;
+
+				DataPoint point = null;
+
+				for (Entry<byte[], byte[]> entry : map.entrySet()) {
+					short entryOffset = Bytes.toShort(Arrays.copyOfRange(
+							entry.getKey(), 0, 2));
+
+					if (offset != entryOffset) {
+						if ((point != null)
+								&& (point.showerId == query.getShowerId())) {
+							if (shower == null) {
+								shower = new ShowerDetails(
+										query.getDeviceKey(), point.showerId);
+							}
+							shower.add(point);
+						}
+						offset = entryOffset;
+						point = new DataPoint();
+						point.timestamp = (timeBucket + (long) offset) * 1000L;
+					}
+
+					int length = (int) Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
+					byte[] slice = Arrays.copyOfRange(entry.getKey(), 3,
+							3 + length);
+					String columnQualifier = Bytes.toString(slice);
+					if (columnQualifier.equals("si")) {
+						point.showerId = Bytes.toLong(entry.getValue());
+					} else if (columnQualifier.equals("st")) {
+						point.showerTime = Bytes.toInt(entry.getValue());
+					} else if (columnQualifier.equals("v")) {
+						point.volume = Bytes.toFloat(entry.getValue());
+					} else if (columnQualifier.equals("e")) {
+						point.energy = Bytes.toFloat(entry.getValue());
+					} else if (columnQualifier.equals("t")) {
+						point.temperature = Bytes.toFloat(entry.getValue());
+					}
+				}
+				if ((point != null) && (point.showerId == query.getShowerId())) {
+					if (shower == null) {
+						shower = new ShowerDetails(query.getDeviceKey(),
+								point.showerId);
 					}
 					shower.add(point);
 				}
@@ -1375,4 +1705,5 @@ public class MeasurementRepository {
 
 		return null;
 	}
+
 }

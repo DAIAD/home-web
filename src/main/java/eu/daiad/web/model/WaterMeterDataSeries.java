@@ -1,14 +1,35 @@
 package eu.daiad.web.model;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 import org.joda.time.DateTime;
 
-public class SmartMeterCollectionResult extends RestResponse {
+public class WaterMeterDataSeries {
+
+	private UUID deviceKey;
+
+	private SmartMeterDataPoint reference = null;
 
 	private ArrayList<SmartMeterDataPoint> values = new ArrayList<SmartMeterDataPoint>();
 
-	private SmartMeterDataPoint reference = null;
+	private long minTimestamp;
+
+	private long maxTimestamp;
+
+	public WaterMeterDataSeries(long minTimestamp, long maxTimestamp) {
+		this.minTimestamp = minTimestamp;
+		this.maxTimestamp = maxTimestamp;
+	}
+
+
+	public UUID getDeviceKey() {
+		return deviceKey;
+	}
+
+	public void setDeviceKey(UUID deviceKey) {
+		this.deviceKey = deviceKey;
+	}
 
 	public SmartMeterDataPoint getReference() {
 		return reference;
@@ -20,30 +41,6 @@ public class SmartMeterCollectionResult extends RestResponse {
 
 	public long getMaxTimestamp() {
 		return maxTimestamp;
-	}
-
-	private String deviceId;
-
-	private long minTimestamp;
-
-	private long maxTimestamp;
-
-	public String getDeviceId() {
-		return deviceId;
-	}
-
-	public void setDeviceId(String deviceId) {
-		this.deviceId = deviceId;
-	}
-
-	public SmartMeterCollectionResult(long minTimestamp, long maxTimestamp) {
-		super();
-		this.minTimestamp = minTimestamp;
-		this.maxTimestamp = maxTimestamp;
-	}
-
-	public SmartMeterCollectionResult(int code, String description) {
-		super(code, description);
 	}
 
 	public ArrayList<SmartMeterDataPoint> getValues() {

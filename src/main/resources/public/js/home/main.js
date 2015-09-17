@@ -14,15 +14,10 @@ var model = {
 	format : {
 		date : null
 	},
-	applicationKey : 'c11f91c3-579b-48e8-afbd-988bf517ebdc',
-	devices : [ {
-		name : 'Amphiro 1',
-		id : 'ddc847df-c0c5-4cff-ba12-11ede01356c5',
-	} ],
-	meterId : 'C12FA152770',
+	profile : null,
 	data : {
+		sessions : null,
 		shower : null,
-		showers : null,
 		meters : null
 	},
 	dimensions : {
@@ -40,8 +35,8 @@ var model = {
 		dailyChildCount : null,
 		deviceAndMeter : null,
 		deviceAndMeter : null,
-		deviceAndMeterMeasurements : null,
-		deviceAndMeterConsumtpion : null,
+		deviceAndMeterMeasurements : [],
+		deviceAndMeterConsumtpion : [],
 		monthlyBudget : null
 	},
 	refresh : {
@@ -62,9 +57,8 @@ var model = {
 	},
 	reload : {
 		timeout : null,
-		interval : 60000
+		interval : 300000
 	}
-
 };
 
 function getActiveTab() {
@@ -123,7 +117,7 @@ function kwhToWatt(duration, energyKwh) {
 
 function refreshDashboardTab() {
 	// Show/Hide charts
-	if (model.data.showers.count == 0) {
+	if (model.data.sessions.devices.count == 0) {
 		$('#all-graphs').hide();
 		$('#all-graphs-empty').show();
 	} else {
@@ -164,15 +158,31 @@ function setIntervalDates(date) {
 
 	var endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
 
-	model.interval = [ dateFormat(startDate) + ' 00:00:00',
-			dateFormat(endDate) + ' 23:59:59' ];
+	model.interval = [ dateFormat(startDate), dateFormat(endDate) ];
 }
 
 $(function() {
 	model.format.date = d3.time.format('%d/%m/%Y %H:%M');
 
 	if (typeof logged !== 'undefined') {
-		initialize();
+		$.ajax(
+				{
+					type : "GET",
+					url : 'action/profile',
+					beforeSend : function(xhr) {
+						xhr.setRequestHeader('X-CSRF-TOKEN', $(
+								'meta[name=_csrf]').attr('content'));
+					}
+				}).done(function(data, textStatus, request) {
+
+			updateCsrfToken(request.getResponseHeader('X-CSRF-TOKEN'));
+
+			model.profile = data.profile;
+
+			initialize();
+		}).always(function() {
+			resumeUI();
+		});
 	} else {
 		$('#page-main').fadeIn(500);
 	}
@@ -181,6 +191,11 @@ $(function() {
 		login();
 	});
 });
+
+function updateCsrfToken(token) {
+	$('meta[name=_csrf]').attr('content', token);
+	$('input[name=_csrf]').val(token);
+}
 
 function login() {
 	var url = $('.form-login').attr('action');
@@ -203,14 +218,30 @@ function login() {
 			}).done(
 			function(data, textStatus, request) {
 				if (data.connected) {
-					var crsf = request.getResponseHeader('X-CSRF-TOKEN');
+					updateCsrfToken(request.getResponseHeader('X-CSRF-TOKEN'));
 
-					$('meta[name=_csrf]').attr('content', crsf);
-					$('input[name=_csrf]').val(crsf);
-		
-					$('#firstname').html(data.firstname);
-					
-					initialize();
+					$.ajax(
+							{
+								type : "GET",
+								url : 'action/profile',
+								data : data,
+								beforeSend : function(xhr) {
+									xhr
+											.setRequestHeader('X-CSRF-TOKEN',
+													$('meta[name=_csrf]').attr(
+															'content'));
+								}
+							}).done(
+							function(data, textStatus, request) {
+								updateCsrfToken(request
+										.getResponseHeader('X-CSRF-TOKEN'));
+
+								$('#firstname').html(data.firstname);
+
+								initialize();
+							}).always(function() {
+						resumeUI();
+					});
 				} else {
 					$('#password').val('');
 
@@ -229,10 +260,91 @@ function login() {
 	});
 }
 
+function getSmartWaterMeterByKey(deviceKey) {
+	if ((model.profile) && (model.profile.devices)) {
+		var devices = model.profile.devices;
+		for (var d = 0, count = devices.length; d < count; d++) {
+			if ((devices[d].type == 'METER')
+					&& (devices[d].deviceKey == deviceKey)) {
+				return devices[d];
+			}
+		}
+	}
+	return null;
+}
+
+function getSmartWaterMeterKeys() {
+	var keys = [];
+	if ((model.profile) && (model.profile.devices)) {
+		var devices = model.profile.devices;
+		for (var d = 0, count = devices.length; d < count; d++) {
+			if (devices[d].type == 'METER') {
+				keys.push(devices[d].deviceKey);
+			}
+		}
+	}
+	return keys;
+}
+
+function getAmphiroDeviceKeys() {
+	var keys = [];
+
+	if ((model.profile) && (model.profile.devices)) {
+		var devices = model.profile.devices;
+		for (var d = 0, count = devices.length; d < count; d++) {
+			if (devices[d].type == 'AMPHIRO') {
+				keys.push(devices[d].deviceKey);
+			}
+		}
+	}
+
+	return keys;
+}
+
+function getAmphiroDevices() {
+	var amphiroDevices = [];
+	if ((model.profile) && (model.profile.devices)) {
+		var devices = model.profile.devices;
+		for (var d = 0, count = devices.length; d < count; d++) {
+			if (devices[d].type == 'AMPHIRO') {
+				amphiroDevices.push(devices[d]);
+			}
+		}
+	}
+	return amphiroDevices;
+}
+
+function getAmphiroDeviceByKey(deviceKey) {
+	if ((model.profile) && (model.profile.devices)) {
+		var devices = model.profile.devices;
+		for (var d = 0, count = devices.length; d < count; d++) {
+			if ((devices[d].type == 'AMPHIRO')
+					&& (devices[d].deviceKey == deviceKey)) {
+				return devices[d];
+			}
+		}
+	}
+
+	return null;
+}
+
+function getMeterDevices() {
+	var meterDevices = [];
+	if ((model.profile) && (model.profile.devices)) {
+		var devices = model.profile.devices;
+		for (var d = 0, count = devices.length; d < count; d++) {
+			if (devices[d].type == 'METER') {
+				meterDevices.push(devices[d]);
+			}
+		}
+	}
+	return meterDevices;
+}
+
 function loadMostRecentMeterValue() {
 	var query = {
-		applicationKey : model.applicationKey,
-		deviceId : model.meterId,
+		userKey : model.profile.key,
+		deviceKey : getSmartWaterMeterKeys(),
 		_csrf : $('meta[name=_csrf]').attr('content')
 	};
 
@@ -240,7 +352,7 @@ function loadMostRecentMeterValue() {
 			.ajax(
 					{
 						type : "POST",
-						url : 'swm/current',
+						url : 'action/meter/current',
 						dataType : 'json',
 						data : JSON.stringify(query),
 						contentType : "application/json",
@@ -251,23 +363,26 @@ function loadMostRecentMeterValue() {
 					})
 			.done(
 					function(data) {
-						if ((data.success) && (data.value1)) {
+						if ((data.success) && (data.devices)
+								&& (data.devices.length > 0)
+								&& (data.devices[0].value1)) {
+
 							var html = '<a id="smart-meter-value-link" tabindex="0" class="btn btn-lg btn-info" '
 									+ 'role="button" data-html="true" data-toggle="popover" data-trigger="focus" '
 									+ ' data-placement="bottom" title="Smart Water Meter" '
 									+ 'data-content="<p>Reference Id: <b>'
-									+ data.deviceId
+									+ getSmartWaterMeterByKey(data.devices[0].deviceKey).deviceId
 									+ '</b></p><p>Last updated on: <b>'
 									+ model.format.date(new Date(
-											data.value1.timestamp))
+											data.devices[0].value1.timestamp))
 									+ '</b></p>';
-							if (data.value2) {
+							if (data.devices[0].value2) {
 								html += '<p>Consumption increased by: <b>'
-										+ (data.value1.volume - data.value2.volume)
+										+ (data.devices[0].value1.volume - data.devices[0].value2.volume)
 										+ '</b></p>';
 							}
 							html += '" style="padding: 4px;">'
-									+ data.value1.volume + '</a>';
+									+ data.devices[0].value1.volume + '</a>';
 
 							$('#label-meter-value').html(html);
 							$('#smart-meter-value-link').popover();
@@ -287,7 +402,55 @@ function loadMostRecentMeterValue() {
 			});
 }
 
+function getDevices() {
+	if ((model.profile) && (model.profile.devices)) {
+		return model.profile.devices;
+	}
+	return [];
+}
+
+function refreshDevices() {
+	var content = [ '' ];
+	var devices = getDevices();
+
+	for (var i = 0; i < devices.length; i++) {
+		var device = devices[i];
+		switch (device.type) {
+		case 'AMPHIRO':
+			content.push('<div class="panel panel-default">');
+			content.push('<div class="panel-heading">Mobile App</div>');
+			content.push('<div class="panel-body">');
+			content.push('<img src="images/Multiple Devices-50.png" />');
+			content.push('<p>Device</p>');
+			content.push('<p>');
+			content.push('<b>' + device.name + '</b>');
+			content.push('</p>');
+			content.push('</div>');
+			content.push('</div>');
+			break;
+		case 'METER':
+			content.push('<div class="panel panel-default">');
+			content.push('<div class="panel-heading">Smart Meter</div>');
+			content.push('<div class="panel-body">');
+			content.push('<img src="images/Electrical Sensor-50.png" />');
+			content.push('<p>Reference Id</p>');
+			content.push('<p>');
+			content.push('<b>' + device.deviceId + '</b>');
+			content.push('</p>');
+			content.push('</div>');
+			content.push('</div>');
+			break;
+		}
+	}
+
+	$('#device-list').html(content.join(''));
+}
+
 function initialize() {
+	refreshDevices();
+
+	$('#firstname').html(model.profile.firstname);
+
 	$('.form-login').hide();
 
 	$('#label-meter-image, #label-meter-value').show();
@@ -497,8 +660,8 @@ function refreshData() {
 	loadMostRecentMeterValue();
 
 	var query = {
-		applicationKey : model.applicationKey,
-		deviceId : model.devices[0].id,
+		userKey : model.profile.key,
+		deviceKey : getAmphiroDeviceKeys(),
 		startDate : model.interval[0],
 		endDate : model.interval[1],
 		granularity : 3,
@@ -510,7 +673,7 @@ function refreshData() {
 	$.ajax(
 			{
 				type : "POST",
-				url : 'showers',
+				url : '/action/device/session/query',
 				dataType : 'json',
 				data : JSON.stringify(query),
 				contentType : "application/json",
@@ -536,8 +699,8 @@ function refreshData() {
 
 function loadSmartMeterData() {
 	var query = {
-		applicationKey : model.applicationKey,
-		deviceId : model.meterId,
+		userKey : model.profile.key,
+		deviceKey : getSmartWaterMeterKeys(),
 		startDate : model.interval[0],
 		endDate : model.interval[1],
 		granularity : 3,
@@ -548,7 +711,7 @@ function loadSmartMeterData() {
 	$.ajax(
 			{
 				type : "POST",
-				url : 'swm/history',
+				url : 'action/meter/history',
 				dataType : 'json',
 				data : JSON.stringify(query),
 				contentType : "application/json",
@@ -573,34 +736,39 @@ function loadSmartMeterData() {
 }
 
 function renderMostRecentShower() {
-	if (model.data.showers.count == 0) {
+	var session = null;
+	for (var i = 0; i < model.data.sessions.devices.length; i++) {
+		var items = model.data.sessions.devices[i].sessions;
+		for (var s = items.length - 1; s >= 0; s--) {
+			if (items[s].volume > 0) {
+				if (session == null) {
+					session = items[s];
+				} else if (items[s].timestamp > session.timestamp) {
+					session = items[s];
+				}
+				break;
+			}
+		}
+	}
+
+	if (session == null) {
 		$('#shower-data').hide();
 		$('#shower-not-found').show();
 	} else {
 		$('#shower-not-found').hide();
 
-		var points = model.data.showers.records;
+		var advice = computeShowerCostAndRecommend(session.volume,
+				session.energyKwh, session.temperature, session.duration);
 
-		var shower = null;
-		for (var s = points.length - 1; s >= 0; s--) {
-			if (points[s].volume > 0) {
-				shower = points[s];
-				break;
-			}
-		}
-
-		var advice = computeShowerCostAndRecommend(shower.volume,
-				shower.energyKwh, shower.temperature, shower.duration);
-
-		$('#shower-date').html(model.format.date(new Date(shower.timestamp)));
+		$('#shower-date').html(model.format.date(new Date(session.timestamp)));
 		$('#shower-duration').html(
-				Math.floor(shower.duration / 60).toFixed(0) + ' mins '
-						+ (shower.duration % 60).toFixed(0) + ' secs');
-		$('#shower-volume').html(shower.volume.toFixed(2) + ' lt');
+				Math.floor(session.duration / 60).toFixed(0) + ' mins '
+						+ (session.duration % 60).toFixed(0) + ' secs');
+		$('#shower-volume').html(session.volume.toFixed(2) + ' lt');
 
-		$('#shower-energy').html(shower.energyKwh.toFixed(2) + ' kWh');
+		$('#shower-energy').html(session.energyKwh.toFixed(2) + ' kWh');
 		$('#shower-temperature').html(
-				shower.temperature.toFixed(1) + ' &#8451;');
+				session.temperature.toFixed(1) + ' &#8451;');
 		$('#shower-cost').html(advice.cost.toFixed(2) + ' €');
 
 		$('#shower-data').show();
@@ -627,39 +795,63 @@ function renderMostRecentShower() {
 	}
 }
 
-function renderShowerTable(data) {
+function renderShowerTable() {
 	$('#shower-history').find('tr.shower-row').remove();
 
-	var showers = model.data.showers.records;
+	var sessions = [];
+	for (var i = 0; i < model.data.sessions.devices.length; i++) {
+		if (model.data.sessions.devices[i].sessions) {
+			sessions = sessions.concat(model.data.sessions.devices[i].sessions);
+		}
+	}
 
-	if (model.data.showers.count == 0) {
+	if (sessions == 0) {
 		$('#shower-table').hide();
 		$('#shower-table-empty').show();
 	} else {
 		$('#shower-table-empty').hide();
 
-		for (var i = showers.length - 1, count = 0; i >= count; i--) {
-			var shower = showers[i];
-			if (shower.volume > 0) {
+		sessions.sort(function(a, b) {
+			if (a.timestamp < b.timestamp) {
+				return -1;
+			} else if (a.timestamp > b.timestamp) {
+				return 1;
+			}
+			if (a.showerId <= b.showerId) {
+				return -1;
+			}
+			return 1;
+		});
+
+		for (var i = sessions.length - 1, count = 0; i >= count; i--) {
+			var session = sessions[i];
+
+			if (session.volume > 0) {
 				var row = [];
 				row.push('<tr class="shower-row">');
 
-				row.push('<td>' + model.format.date(new Date(shower.timestamp))
+				var device = getAmphiroDeviceByKey(session.deviceKey);
+
+				row.push('<td>' + device.name + '</td>');
+				row.push('<td>'
+						+ model.format.date(new Date(session.timestamp))
 						+ '</td>');
-				row.push('<td>' + Math.floor(shower.duration / 60).toFixed(0)
-						+ ' mins ' + (shower.duration % 60).toFixed(0)
+				row.push('<td>' + Math.floor(session.duration / 60).toFixed(0)
+						+ ' mins ' + (session.duration % 60).toFixed(0)
 						+ ' secs</td>');
-				row.push('<td>' + shower.volume.toFixed(2) + ' lt</td>');
-				row.push('<td>' + shower.energyKwh.toFixed(2) + ' kWh</td>');
-				row.push('<td>' + shower.temperature.toFixed(1)
+				row.push('<td>' + session.volume.toFixed(2) + ' lt</td>');
+				row.push('<td>' + session.energyKwh.toFixed(2) + ' kWh</td>');
+				row.push('<td>' + session.temperature.toFixed(1)
 						+ ' &#8451;</td>');
 				row.push('<td>'
-						+ computeShowerCostAndRecommend(shower.volume,
-								shower.energyKwh, shower.temperature,
-								shower.duration).cost.toFixed(2) + ' €</td>');
+						+ computeShowerCostAndRecommend(session.volume,
+								session.energyKwh, session.temperature,
+								session.duration).cost.toFixed(2) + ' €</td>');
 				row
-						.push('<td><img class="shower-chart" data-id="'
-								+ shower.id
+						.push('<td style="padding: 2px 0px !important;"><img class="shower-chart" data-id="'
+								+ session.showerId
+								+ '" data-key="'
+								+ session.deviceKey
 								+ '" src="images/Combo Chart-25.png" style="cursor: pointer;"/></td>');
 				row.push('</tr>');
 
@@ -671,11 +863,12 @@ function renderShowerTable(data) {
 
 		$('img.shower-chart').click(
 				function(e) {
+					var self = this;
 					suspendUI();
 
 					var query = {
-						applicationKey : model.applicationKey,
-						deviceId : model.devices[0].id,
+						userKey : model.profile.key,
+						deviceKey : $(this).data('key'),
 						startDate : model.interval[0],
 						endDate : model.interval[1],
 						granularity : 3,
@@ -686,7 +879,7 @@ function renderShowerTable(data) {
 					$.ajax(
 							{
 								type : "POST",
-								url : 'shower',
+								url : '/action/device/session',
 								dataType : 'json',
 								data : JSON.stringify(query),
 								contentType : "application/json",
@@ -697,7 +890,9 @@ function renderShowerTable(data) {
 															'content'));
 								}
 							}).done(function(data) {
-						renderShowerDetailAndChart(data);
+						if (!renderShowerDetailAndChart(data)) {
+							jQuery(self).css('opacity', 0.3);
+						}
 					}).fail(function(jqXHR, textStatus, errorThrown) {
 						switch (jqXHR.status) {
 						case 403:
@@ -707,160 +902,183 @@ function renderShowerTable(data) {
 					}).always(function() {
 						resumeUI();
 					});
-					$('#chartDetailsModal').modal('show');
 				});
 	}
 }
 
 function renderShowerDetailAndChart(data) {
-	var showerCompositeChart = null;
-	var showerTimeSeries = null;
-
 	var shower = data.shower;
 
-	transformShower(shower);
+	if (shower) {
+		$('#chartDetailsModal').modal('show');
 
-	var advice = computeShowerCostAndRecommend(shower.volume, shower.energyKwh,
-			shower.temperature, shower.duration);
+		var showerCompositeChart = null;
+		var showerTimeSeries = null;
 
-	$('#shower-detail-date')
-			.html(model.format.date(new Date(shower.timestamp)));
-	$('#shower-detail-duration').html(
-			Math.floor(shower.duration / 60).toFixed(0) + ' mins '
-					+ (shower.duration % 60).toFixed(0) + ' secs');
-	$('#shower-detail-volume').html(shower.volume.toFixed(2) + ' lt');
-	$('#shower-detail-energy').html(shower.energyKwh.toFixed(2) + ' kWh');
-	$('#shower-detail-temperature').html(
-			shower.temperature.toFixed(1) + ' &#8451;');
-	$('#shower-detail-cost').html(advice.cost.toFixed(2) + ' €');
+		transformShower(shower);
 
-	$('#shower-detail-data').show();
+		var advice = computeShowerCostAndRecommend(shower.volume,
+				shower.energyKwh, shower.temperature, shower.duration);
 
-	if (advice.text) {
-		$('#shower-detail-advice').find('span').removeClass(
-				'label-success label-warning label-danger').html(advice.text);
-		switch (advice.level) {
-		case -1:
-			$('#shower-detail-advice').find('span').addClass('label-danger');
-			break;
-		case 0:
-			$('#shower-detail-advice').find('span').addClass('label-warning');
-			break;
-		case 1:
-			$('#shower-detail-advice').find('span').addClass('label-success');
-			break;
-		}
-		$('#shower-detail-advice').show();
-	} else {
-		$('#shower-detail-advice').hide();
-	}
+		$('#shower-detail-date').html(
+				model.format.date(new Date(shower.timestamp)));
+		$('#shower-detail-duration').html(
+				Math.floor(shower.duration / 60).toFixed(0) + ' mins '
+						+ (shower.duration % 60).toFixed(0) + ' secs');
+		$('#shower-detail-volume').html(shower.volume.toFixed(2) + ' lt');
+		$('#shower-detail-energy').html(shower.energyKwh.toFixed(2) + ' kWh');
+		$('#shower-detail-temperature').html(
+				shower.temperature.toFixed(1) + ' &#8451;');
+		$('#shower-detail-cost').html(advice.cost.toFixed(2) + ' €');
 
-	var redraw = false;
+		$('#shower-detail-data').show();
 
-	// Transform data
-	var points = shower.measurements;
-
-	var offset = points[0].showerTime;
-	points.forEach(function(d) {
-		d.showerTime -= offset - 1;
-	});
-
-	var minShowerTime = points[0].showerTime;
-	var maxShowerTime = points[points.length - 1].showerTime;
-
-	var count = points.length
-	var lastPoint = points[0];
-	for (var d = minShowerTime; d <= maxShowerTime; d++) {
-		var exists = false;
-		for (var m = 0; m < count; m++) {
-			if (points[m].showerTime == d) {
-				exists = true;
-				lastPoint = points[m];
+		if (advice.text) {
+			$('#shower-detail-advice').find('span').removeClass(
+					'label-success label-warning label-danger').html(
+					advice.text);
+			switch (advice.level) {
+			case -1:
+				$('#shower-detail-advice').find('span')
+						.addClass('label-danger');
+				break;
+			case 0:
+				$('#shower-detail-advice').find('span').addClass(
+						'label-warning');
+				break;
+			case 1:
+				$('#shower-detail-advice').find('span').addClass(
+						'label-success');
 				break;
 			}
+			$('#shower-detail-advice').show();
+		} else {
+			$('#shower-detail-advice').hide();
 		}
-		if (!exists) {
-			lastPoint = {
-				dayOfMonth : lastPoint.dayOfMonth,
-				energy : 0.0,
-				showerId : lastPoint.showerId,
-				showerTime : d,
-				temperature : 0.0,
-				timestamp : lastPoint.timestamp + 1000,
-				volume : 0.0,
-			}
-			points.push(lastPoint);
-		}
-	}
 
-	if (showerTimeSeries) {
-		showerTimeSeries.remove();
-		showerTimeSeries.add(points);
+		var redraw = false;
 
-		redraw = true;
-	} else {
-		showerTimeSeries = crossfilter(points);
-	}
+		// Transform data
+		var points = shower.measurements;
 
-	if (!redraw) {
-		var showerConsumption = showerTimeSeries.dimension(function(d) {
-			return d.showerTime;
+		var offset = points[0].showerTime;
+		points.forEach(function(d) {
+			d.showerTime -= offset - 1;
 		});
 
-		var showerVolumeGroup = showerConsumption.group().reduceSum(
-				function(d) {
-					return d.volume;
-				});
+		var minShowerTime = points[0].showerTime;
+		var maxShowerTime = points[points.length - 1].showerTime;
 
-		var showerEnergyGroup = showerConsumption.group().reduceSum(
-				function(d) {
-					return d.energyKwh;
-				});
+		var count = points.length
+		var lastPoint = points[0];
+		for (var d = minShowerTime; d <= maxShowerTime; d++) {
+			var exists = false;
+			for (var m = 0; m < count; m++) {
+				if (points[m].showerTime == d) {
+					exists = true;
+					lastPoint = points[m];
+					break;
+				}
+			}
+			if (!exists) {
+				lastPoint = {
+					dayOfMonth : lastPoint.dayOfMonth,
+					energy : 0.0,
+					showerId : lastPoint.showerId,
+					showerTime : d,
+					temperature : 0.0,
+					timestamp : lastPoint.timestamp + 1000,
+					volume : 0.0,
+				}
+				points.push(lastPoint);
+			}
+		}
 
-		showerCompositeChart = dc.compositeChart('#shower-details', 'details');
+		if (showerTimeSeries) {
+			showerTimeSeries.remove();
+			showerTimeSeries.add(points);
 
-		var dateFormat = d3.time.format('%d/%m/%Y');
-		var numberFormat = d3.format('.2f');
+			redraw = true;
+		} else {
+			showerTimeSeries = crossfilter(points);
+		}
 
-		showerCompositeChart.width(null).height(null).transitionDuration(1000)
-				.elasticX(false).elasticY(true).renderHorizontalGridLines(true)
-				.brushOn(false).rightYAxisLabel('Energy (kWh)').x(
-						d3.scale.linear().domain(
-								[ 0, maxShowerTime - minShowerTime + 2 ]))
+		if (!redraw) {
+			var showerConsumption = showerTimeSeries.dimension(function(d) {
+				return d.showerTime;
+			});
 
-				.yAxisLabel("Volume (lt)").legend(
-						dc.legend().x(80).y(20).itemHeight(13).gap(5))
-				.renderHorizontalGridLines(true).title(function(d) {
-					var value = d.value;
-					if (isNaN(value)) {
-						value = 0;
-					}
-					return value;
-				}).compose(
-						[
-								dc.barChart(showerCompositeChart).width(null)
-										.height(null).transitionDuration(1000)
-										.centerBar(true).gap(1).colors(
-												'#3182bd').dimension(
-												showerConsumption).group(
-												showerVolumeGroup, 'Volume'),
-								dc.lineChart(showerCompositeChart).dimension(
-										showerConsumption).group(
-										showerEnergyGroup, 'Energy').dashStyle(
-										[ 5, 5 ]).colors('#6baed6')
-										.useRightYAxis(true) ]).brushOn(false);
+			var showerVolumeGroup = showerConsumption.group().reduceSum(
+					function(d) {
+						return d.volume;
+					});
 
-	} else {
-		redraw = true;
+			var showerEnergyGroup = showerConsumption.group().reduceSum(
+					function(d) {
+						return d.energyKwh;
+					});
+
+			showerCompositeChart = dc.compositeChart('#shower-details',
+					'details');
+
+			var dateFormat = d3.time.format('%d/%m/%Y');
+			var numberFormat = d3.format('.2f');
+
+			showerCompositeChart
+					.width(null)
+					.height(null)
+					.transitionDuration(1000)
+					.elasticX(false)
+					.elasticY(true)
+					.renderHorizontalGridLines(true)
+					.brushOn(false)
+					.rightYAxisLabel('Energy (kWh)')
+					.x(
+							d3.scale.linear().domain(
+									[ 0, maxShowerTime - minShowerTime + 2 ]))
+
+					.yAxisLabel("Volume (lt)")
+					.legend(dc.legend().x(80).y(20).itemHeight(13).gap(5))
+					.renderHorizontalGridLines(true)
+					.title(function(d) {
+						var value = d.value;
+						if (isNaN(value)) {
+							value = 0;
+						}
+						return value;
+					})
+					.compose(
+							[
+									dc.barChart(showerCompositeChart).width(
+											null).height(null)
+											.transitionDuration(1000)
+											.centerBar(true).gap(1).colors(
+													'#3182bd').dimension(
+													showerConsumption)
+											.group(showerVolumeGroup, 'Volume'),
+									dc.lineChart(showerCompositeChart)
+											.dimension(showerConsumption)
+											.group(showerEnergyGroup, 'Energy')
+											.dashStyle([ 5, 5 ]).colors(
+													'#6baed6').useRightYAxis(
+													true) ]).brushOn(false);
+
+		} else {
+			redraw = true;
+		}
+
+		$('#chartDetailsModal').modal('show');
+
+		showerCompositeChart.resetSvg();
+
+		setTimeout(function() {
+			dc.renderAll('details');
+		}, 500);
+
+		return true;
 	}
 
-	$('#chartDetailsModal').modal('show');
-
-	showerCompositeChart.resetSvg();
-
-	setTimeout(function() {
-		dc.renderAll('details');
-	}, 500);
+	return false;
 }
 
 function computeShowerCostAndRecommend(volume, energyKwh, temperature, duration) {
@@ -930,6 +1148,7 @@ function updateBudget() {
 }
 
 function renderDashboardCharts() {
+	return;
 	var points = model.data.showers.records;
 	var minDate = model.data.showers.minDate;
 	var maxDate = model.data.showers.maxDate;
@@ -1169,29 +1388,41 @@ function renderAnalysisCharts() {
 	model.charts.deviceAndMeter = dc.compositeChart('#swm-shower-combined',
 			'analysis');
 
-	model.charts.deviceAndMeterMeasurement = dc.lineChart(
-			model.charts.deviceAndMeter, 'analysis').width(null).renderArea(
-			true).height(null).dimension(model.dimensions.dailyMeasurements)
-			.group(model.groups.dailyMeterGroup, model.meterId).valueAccessor(
-					function(d) {
-						return d.value;
-					}).title(function(d) {
-				return dateFormat(d.key) + '\n' + numberFormat(d.value);
-			});
+	model.charts.deviceAndMeterMeasurement = [];
 
-	model.charts.deviceAndMeterConsumtpion = dc.lineChart(
-			model.charts.deviceAndMeter, 'analysis').width(null).renderArea(
-			true).height(null).dimension(model.dimensions.dailyConsumption)
-			.group(model.groups.dailyConsumptionGroup, model.devices[0].name)
-			.valueAccessor(function(d) {
-				return d.value.volumeAvg * d.value.count
-			}).title(
-					function(d) {
-						return dateFormat(d.key)
-								+ '\n'
-								+ numberFormat(d.value.volumeAvg
-										* d.value.count);
-					});
+	var meterDevices = getMeterDevices();
+	for (var i = 0; i < meterDevices.length; i++) {
+		model.charts.deviceAndMeterMeasurement.push(dc.lineChart(
+				model.charts.deviceAndMeter, 'analysis').width(null)
+				.renderArea(true).height(null).dimension(
+						model.dimensions.dailyMeasurements).group(
+						model.groups.dailyMeterGroup, meterDevices[i].deviceId)
+				.valueAccessor(function(d) {
+					return d.value;
+				}).title(function(d) {
+					return dateFormat(d.key) + '\n' + numberFormat(d.value);
+				}));
+	}
+
+	model.charts.deviceAndMeterConsumtpion = [];
+
+	var devices = getAmphiroDevices();
+	for (var i = 0; i < devices.length; i++) {
+		model.charts.deviceAndMeterConsumtpion.push(dc.lineChart(
+				model.charts.deviceAndMeter, 'analysis').width(null)
+				.renderArea(true).height(null).dimension(
+						model.dimensions.dailyConsumption).group(
+						model.groups.dailyConsumptionGroup, devices[i].name)
+				.valueAccessor(function(d) {
+					return d.value.volumeAvg * d.value.count
+				}).title(
+						function(d) {
+							return dateFormat(d.key)
+									+ '\n'
+									+ numberFormat(d.value.volumeAvg
+											* d.value.count);
+						}));
+	}
 
 	minDate = new Date(points[0].date.getFullYear(), points[0].date.getMonth(),
 			1);
@@ -1210,15 +1441,17 @@ function renderAnalysisCharts() {
 		return xAxisDateFormat(v);
 	});
 
-	model.charts.deviceAndMeter.compose([
-			model.charts.deviceAndMeterConsumtpion,
-			model.charts.deviceAndMeterMeasurement ]);
+	var items = [];
+	items.concat(model.charts.deviceAndMeterConsumtpion);
+	items = items.concat(model.charts.deviceAndMeterMeasurement);
+
+	model.charts.deviceAndMeter.compose(items);
 }
 
 function getConsumption(done, fail, always) {
 	var query = {
-		applicationKey : model.applicationKey,
-		deviceId : model.devices[0].id,
+		userKey : model.profile.key,
+		deviceKey : getAmphiroDeviceKeys(),
 		startDate : model.interval[0],
 		endDate : model.interval[1],
 		granularity : 3,
@@ -1229,7 +1462,7 @@ function getConsumption(done, fail, always) {
 
 	var options = {
 		type : "POST",
-		url : 'query',
+		url : '/action/device/measurement/query',
 		dataType : 'json',
 		data : JSON.stringify(query),
 		contentType : "application/json",
@@ -1264,6 +1497,23 @@ function prepareAjaxRequest(options) {
 	};
 }
 
+function transformSession(device, s) {
+	s.dt = new Date(s.timestamp);
+	s.dd = new Date(s.dt.getFullYear(), s.dt.getMonth(), s.dt.getDate());
+	s.dayOfMonth = s.dt.getDate();
+	s.deviceKey = device.deviceKey;
+
+	if (model.cost.estimateEnergy) {
+		s.energyKwh = estimateKwhForWaterHeating(s.volume, s.temperature);
+		s.energy = kwhToWatt(s.duration, s.energyKwh);
+	} else {
+		s.energyKwh = wattToKwh(s.duration, s.energy);
+	}
+
+	s.cost = estimateShowerCost(s.volume, s.energyKwh, s.duration,
+			s.temperature);
+}
+
 function transformShower(d) {
 	d.dt = new Date(d.timestamp);
 	d.dd = new Date(d.dt.getFullYear(), d.dt.getMonth(), d.dt.getDate());
@@ -1280,116 +1530,135 @@ function transformShower(d) {
 }
 
 function transformShowerData(data) {
-	var records = data.showers || [];
-	var count = records.length;
+	var device = null;
+	model.data.sessions = {
+		devices : []
+	};
 
-	records.forEach(function(d) {
-		transformShower(d);
-	});
+	for (var i = 0; i < data.devices.length; i++) {
+		device = data.devices[i];
 
-	var now = new Date();
-	var minDate = records.length > 0 ? new Date(records[0].dd.getFullYear(),
-			records[0].dd.getMonth(), 1) : new Date(now.getFullYear(), now
-			.getMonth(), 1);
+		var sessions = device.sessions || [];
+		var count = sessions.length;
 
-	var maxDate = records.length > 0 ? new Date(records[records.length - 1].dd
-			.getFullYear(), records[records.length - 1].dd.getMonth() + 1, 0)
-			: new Date(now.getFullYear(), now.getMonth() + 1, 0);
+		sessions.forEach(function(s) {
+			transformSession(device, s);
+		});
 
-	var minDay = minDate.getDate();
-	var maxDay = maxDate.getDate();
+		var now = new Date();
+		var minDate = sessions.length > 0 ? new Date(sessions[0].dd
+				.getFullYear(), sessions[0].dd.getMonth(), 1) : new Date(now
+				.getFullYear(), now.getMonth(), 1);
 
-	var count = records.length
-	for (var d = minDay; d <= maxDay; d++) {
-		var exists = false;
-		for (var m = 0; m < count; m++) {
-			if (records[m].dayOfMonth == d) {
-				exists = true;
-				break;
+		var maxDate = sessions.length > 0 ? new Date(
+				sessions[sessions.length - 1].dd.getFullYear(),
+				sessions[sessions.length - 1].dd.getMonth() + 1, 0) : new Date(
+				now.getFullYear(), now.getMonth() + 1, 0);
+
+		var minDay = minDate.getDate();
+		var maxDay = maxDate.getDate();
+
+		for (var d = minDay; d <= maxDay; d++) {
+			var exists = false;
+			for (var sessionIndex = 0; sessionIndex < count; sessionIndex++) {
+				if (sessions[sessionIndex].dayOfMonth == d) {
+					exists = true;
+					break;
+				}
+			}
+			if (!exists) {
+				var date = new Date(minDate.getFullYear(), minDate.getMonth(),
+						d);
+				sessions.push({
+					properties : null,
+					showerId : 0,
+					volume : 0.0,
+					flow : 0.0,
+					energy : 0.0,
+					energyKwh : 0.0,
+					temperature : 0.0,
+					history : true,
+					timestamp : date.getTime(),
+					duration : 0,
+					dd : date,
+					date : model.format.date(date),
+					dayOfMonth : d,
+					cost : 0,
+					deviceKey : device.deviceKey
+				});
 			}
 		}
-		if (!exists) {
-			var date = new Date(minDate.getFullYear(), minDate.getMonth(), d);
-			records.push({
-				id : 0,
-				timestamp : date.getTime(),
-				volume : 0.0,
-				energy : 0.0,
-				energyKwh : 0.0,
-				temperature : 0.0,
-				duration : 0,
-				dd : date,
-				date : model.format.date(date),
-				dayOfMonth : d,
-				cost : 0
-			});
-		}
-	}
 
-	model.data.showers = {
-		count : count,
-		records : records,
-		minDate : minDate,
-		maxDate : maxDate
-	};
+		model.data.sessions.devices.push({
+			count : count,
+			deviceKey : device.deviceKey,
+			sessions : sessions,
+			minDate : minDate,
+			maxDate : maxDate
+		});
+	}
 }
 
 function transformSmartMeterData(data) {
-	var points = data.values;
-	var count = data.values.length;
+	if ((data.series) && (data.series.length > 0)) {
+		var points = data.series[0].values;
+		var count = points.length;
 
-	points.forEach(function(d) {
-		d.date = new Date(d.timestamp);
-	});
+		points.forEach(function(d) {
+			d.date = new Date(d.timestamp);
+		});
 
-	for (var i = points.length - 1; i > 0; i--) {
-		points[i].volume -= points[i - 1].volume;
-	}
-	if ((count > 0) && (data.reference)) {
-		points[0].volume -= data.reference.volume;
-	}
+		for (var i = points.length - 1; i > 0; i--) {
+			points[i].volume -= points[i - 1].volume;
+		}
+		if ((count > 0) && (data.reference)) {
+			points[0].volume -= data.reference.volume;
+		}
 
-	var now = new Date();
+		var now = new Date();
 
-	var minDate = points.length > 0 ? new Date(points[0].date.getFullYear(),
-			points[0].date.getMonth(), 1) : new Date(now.getFullYear(), now
-			.getMonth(), 1);
+		var minDate = points.length > 0 ? new Date(
+				points[0].date.getFullYear(), points[0].date.getMonth(), 1)
+				: new Date(now.getFullYear(), now.getMonth(), 1);
 
-	var maxDate = points.length > 0 ? new Date(points[points.length - 1].date
-			.getFullYear(), points[points.length - 1].date.getMonth() + 1, 0)
-			: new Date(now.getFullYear(), now.getMonth() + 1, 0);
+		var maxDate = points.length > 0 ? new Date(
+				points[points.length - 1].date.getFullYear(),
+				points[points.length - 1].date.getMonth() + 1, 0) : new Date(
+				now.getFullYear(), now.getMonth() + 1, 0);
 
-	var minDay = minDate.getDate();
-	var maxDay = maxDate.getDate();
+		var minDay = minDate.getDate();
+		var maxDay = maxDate.getDate();
 
-	for (var d = minDay; d <= maxDay; d++) {
-		var exists = false;
-		for (var m = 0; m < count; m++) {
-			if (points[m].dayOfMonth == d) {
-				exists = true;
-				break;
+		for (var d = minDay; d <= maxDay; d++) {
+			var exists = false;
+			for (var m = 0; m < count; m++) {
+				if (points[m].dayOfMonth == d) {
+					exists = true;
+					break;
+				}
+			}
+			if (!exists) {
+				var date = new Date(minDate.getFullYear(), minDate.getMonth(),
+						d);
+				points.push({
+					volume : 0.0,
+					date : date,
+					timestamp : date.getTime(),
+					dayOfMonth : d
+				});
 			}
 		}
-		if (!exists) {
-			var date = new Date(minDate.getFullYear(), minDate.getMonth(), d);
-			points.push({
-				volume : 0.0,
-				date : date,
-				timestamp : date.getTime(),
-				dayOfMonth : d
-			});
-		}
-	}
-	points.sort(function compare(a, b) {
-		if (a.dayOfMonth < b.dayOfMonth)
-			return -1;
-		if (a.dayOfMonth > b.dayOfMonth)
-			return 1;
-		return 0;
-	});
+		points.sort(function compare(a, b) {
+			if (a.dayOfMonth < b.dayOfMonth)
+				return -1;
+			if (a.dayOfMonth > b.dayOfMonth)
+				return 1;
+			return 0;
+		});
 
-	if ((count > 0) && (!data.reference)) {
-		points[0].volume = 0;
+		if ((count > 0) && (!data.reference)) {
+			points[0].volume = 0;
+		}
+		model.data.meters = points;
 	}
-	model.data.meters = points;
 }

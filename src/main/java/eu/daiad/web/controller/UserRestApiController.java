@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.data.UserRepository;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.security.Authenticator;
-import eu.daiad.web.security.model.DaiadUser;
+import eu.daiad.web.security.AuthenticationService;
+import eu.daiad.web.security.model.ApplicationUser;
 import eu.daiad.web.security.model.EnumRole;
 import eu.daiad.web.security.model.PasswordChangeRequest;
 import eu.daiad.web.security.model.RoleUpdateRequest;
@@ -41,7 +41,7 @@ public class UserRestApiController {
 			.getLog(UserRestApiController.class);
 
     @Autowired
-    private Authenticator authenticator;
+    private AuthenticationService authenticator;
     
     @Autowired
     private UserRepository repository;
@@ -84,7 +84,7 @@ public class UserRestApiController {
 					data.setTimezone("Europe/Athens");
 				}
 
-				DaiadUser user = repository.createUser(data.getUsername(),
+				ApplicationUser user = repository.createUser(data.getUsername(),
 												  	   data.getPassword(),
 												  	   data.getFirstname(),
 												  	   data.getLastname(),
@@ -115,7 +115,7 @@ public class UserRestApiController {
 				return new RestResponse(ERROR_PARSING_FAILED,
 						"Invalid credentials.");
 			} else {
-				DaiadUser user = this.authenticator.authenticateAndGetUser(data.getCredentials());
+				ApplicationUser user = this.authenticator.authenticateAndGetUser(data.getCredentials());
 				if(user == null) {
 					return new RestResponse(ERROR_AUTH_FAILED,
 								"Authentication has failed.");
@@ -149,7 +149,7 @@ public class UserRestApiController {
 				return new RestResponse(ERROR_PARSING_FAILED,
 						"Invalid credentials.");
 			} else {
-				DaiadUser admin = this.authenticator.authenticateAndGetUser(data.getCredentials());
+				ApplicationUser admin = this.authenticator.authenticateAndGetUser(data.getCredentials());
 				if(admin == null) {
 					return new RestResponse(ERROR_AUTH_FAILED,
 								"Authentication has failed.");
@@ -158,7 +158,7 @@ public class UserRestApiController {
 					return new RestResponse(ERROR_PERMISSION_DENIED,
 							"Unauthhorized request.");
 				}
-				DaiadUser user = this.repository.getUserByName(data.getUsername());
+				ApplicationUser user = this.repository.getUserByName(data.getUsername());
 				if(user == null) {
 					return new RestResponse(ERROR_USER_NOT_FOUND,
 								"User does not exists.");
@@ -187,7 +187,7 @@ public class UserRestApiController {
 				return new RestResponse(ERROR_PARSING_FAILED,
 						"Invalid credentials.");
 			} else {
-				DaiadUser admin = this.authenticator.authenticateAndGetUser(data.getCredentials());
+				ApplicationUser admin = this.authenticator.authenticateAndGetUser(data.getCredentials());
 				if(admin == null) {
 					return new RestResponse(ERROR_AUTH_FAILED,
 								"Authentication has failed.");
@@ -196,7 +196,7 @@ public class UserRestApiController {
 					return new RestResponse(ERROR_PERMISSION_DENIED,
 							"Unauthhorized request.");
 				}
-				DaiadUser user = this.repository.getUserByName(data.getUsername());
+				ApplicationUser user = this.repository.getUserByName(data.getUsername());
 				if(user == null) {
 					return new RestResponse(ERROR_USER_NOT_FOUND,
 								"User does not exists.");

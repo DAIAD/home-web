@@ -3,13 +3,14 @@ package eu.daiad.web.model;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.UUID;
 
 public class ShowerDetails extends Shower {
 
 	private ArrayList<DataPoint> points;
 
-	public ShowerDetails(long id) {
-		super(id);
+	public ShowerDetails(UUID deviceKey, long id) {
+		super(deviceKey, id);
 
 		this.points = new ArrayList<DataPoint>();
 	}

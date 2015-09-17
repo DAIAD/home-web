@@ -11,7 +11,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 
-import eu.daiad.web.security.model.DaiadUser;
+import eu.daiad.web.security.model.ApplicationUser;
 import eu.daiad.web.security.model.EnumRole;
 
 
@@ -20,7 +20,7 @@ public class HomeController {
 	
     @RequestMapping("/")
     public String index(Model model, @AuthenticationPrincipal User user) {
-    	DaiadUser daiadUser = (DaiadUser) user;
+    	ApplicationUser daiadUser = (ApplicationUser) user;
 
         if(daiadUser != null) {
         	model.addAttribute("firstname", daiadUser.getFirstname());
@@ -68,7 +68,7 @@ public class HomeController {
 	
     @RequestMapping(value = "/login", method = RequestMethod.GET)
     public String login(Model model, @AuthenticationPrincipal User user) {
-    	DaiadUser daiadUser = (DaiadUser) user;
+    	ApplicationUser daiadUser = (ApplicationUser) user;
 
         if((daiadUser != null) && (daiadUser.hasRole(EnumRole.ROLE_USER))) {
         	model.addAttribute("firstname", daiadUser.getFirstname());

@@ -1,19 +1,14 @@
 package eu.daiad.web.controller;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.*;
-import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.security.access.annotation.Secured;
 
 import eu.daiad.web.model.*;
-import eu.daiad.web.security.Authenticator;
+import eu.daiad.web.security.AuthenticationService;
 import eu.daiad.web.data.*;
 
 @RestController
@@ -25,65 +20,56 @@ public class SearchController {
 	private static final Log logger = LogFactory.getLog(SearchController.class);
 
 	@Autowired
-	private MeasurementRepository hbase;
+	private MeasurementRepository measurementRepository;
 
 	@Autowired
-	private Authenticator authenticator;
+	private AuthenticationService authenticator;
 
-	@InitBinder
-	protected void initBinder(WebDataBinder binder) {
-		SimpleDateFormat dateFormat = new SimpleDateFormat(
-				"yyyy-MM-dd hh:mm:ss");
-		dateFormat.setLenient(false);
-		binder.registerCustomEditor(Date.class, new CustomDateEditor(
-				dateFormat, false));
-	}
-
-	@RequestMapping(value = "/swm/current", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	@RequestMapping(value = "/action/meter/current", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public SmartMeterResult query(@RequestBody SmartMeterQuery query,
+	public SmartMeterStatusCollectionResult query(@RequestBody SmartMeterQuery query,
 			BindingResult results) {
 		try {
 			if (results.hasErrors()) {
 				// TODO: Add logging
-				return new SmartMeterResult(ERROR_PARSING_FAILED,
+				return new SmartMeterStatusCollectionResult(ERROR_PARSING_FAILED,
 						"Input parsing has failed.");
 			} else {
 				// TODO: Return series, not response object
-				SmartMeterResult data = hbase.query(query);
+				SmartMeterStatusCollectionResult data = measurementRepository.query(query);
 
 				return data;
 			}
 		} catch (Exception ex) {
 			logger.error("Failed to insert measurement data.", ex);
 		}
-		return new SmartMeterResult(ERROR_UNKNOWN,
+		return new SmartMeterStatusCollectionResult(ERROR_UNKNOWN,
 				"Unhandled exception has occured.");
 	}
 
-	@RequestMapping(value = "/swm/history", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	@RequestMapping(value = "/action/meter/history", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public SmartMeterCollectionResult query(
+	public SmartMeterDataSeriesCollectionResult query(
 			@RequestBody SmartMeterIntervalQuery query, BindingResult results) {
 		try {
 			if (results.hasErrors()) {
 				// TODO: Add logging
-				return new SmartMeterCollectionResult(ERROR_PARSING_FAILED,
+				return new SmartMeterDataSeriesCollectionResult(ERROR_PARSING_FAILED,
 						"Input parsing has failed.");
 			} else {
 				// TODO: Return series, not response object
-				SmartMeterCollectionResult data = hbase.query(query);
+				SmartMeterDataSeriesCollectionResult data = measurementRepository.query(query);
 
 				return data;
 			}
 		} catch (Exception ex) {
 			logger.error("Failed to insert measurement data.", ex);
 		}
-		return new SmartMeterCollectionResult(ERROR_UNKNOWN,
+		return new SmartMeterDataSeriesCollectionResult(ERROR_UNKNOWN,
 				"Unhandled exception has occured.");
 	}
 
-	@RequestMapping(value = "/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	@RequestMapping(value = "/action/device/measurement/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
 	public MeasurementResult query(@RequestBody MeasurementQuery query,
 			BindingResult results) {
@@ -94,7 +80,7 @@ public class SearchController {
 						"Input parsing has failed.");
 			} else {
 				// TODO: Return series, not response object
-				MeasurementResult data = hbase.query(query);
+				MeasurementResult data = measurementRepository.query(query);
 
 				return data;
 			}
@@ -105,31 +91,31 @@ public class SearchController {
 				"Unhandled exception has occured.");
 	}
 
-	@RequestMapping(value = "/showers", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	@RequestMapping(value = "/action/device/session/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public ShowerCollectionResult query(
+	public SessionCollectionResult searchAmphiroSessions(
 			@RequestBody ShowerCollectionQuery query, BindingResult results) {
 		try {
 
 			if (results.hasErrors()) {
 				// TODO: Add logging
-				return new ShowerCollectionResult(ERROR_PARSING_FAILED,
+				return new SessionCollectionResult(ERROR_PARSING_FAILED,
 						"Input parsing has failed.");
 			} else {
 				// TODO: Return series, not response object
-				ShowerCollectionResult data = hbase.query(query);
+				SessionCollectionResult data = measurementRepository.searchAmphiroSessions(query);
 
 				return data;
 			}
 		} catch (Exception ex) {
 			logger.error("Failed to insert measurement data.", ex);
 		}
-		return new ShowerCollectionResult(ERROR_UNKNOWN,
+		return new SessionCollectionResult(ERROR_UNKNOWN,
 				"Unhandled exception has occured.");
 
 	}
 
-	@RequestMapping(value = "/shower", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	@RequestMapping(value = "/action/device/session", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
 	public ShowerResult query(@RequestBody ShowerQuery query,
 			BindingResult results) {
@@ -141,7 +127,7 @@ public class SearchController {
 						"Input parsing has failed.");
 			} else {
 				// TODO: Return series, not response object
-				ShowerResult data = hbase.query(query);
+				ShowerResult data = measurementRepository.getAmphiroSession(query);
 
 				return data;
 			}

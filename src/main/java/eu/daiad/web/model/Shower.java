@@ -1,10 +1,12 @@
 package eu.daiad.web.model;
 
-import java.util.Date;
+import java.util.UUID;
 
 import org.joda.time.DateTime;
 
 public class Shower {
+
+	private UUID deviceKey;
 
 	private long id;
 
@@ -23,24 +25,33 @@ public class Shower {
 	private int minShowerTime = Integer.MAX_VALUE;
 
 	private int maxShowerTime = Integer.MIN_VALUE;
-	
+
 	private int count = 0;
-	
-	public Shower(long id) {
+
+	public Shower(UUID deviceKey, long id) {
+		this.deviceKey = deviceKey;
 		this.id = id;
+	}
+
+	public UUID getDeviceKey() {
+		return deviceKey;
+	}
+
+	public void setDeviceKey(UUID deviceKey) {
+		this.deviceKey = deviceKey;
 	}
 
 	public long getId() {
 		return this.id;
 	}
 
-	public Date getDate() {
+	public DateTime getDate() {
 		if (this.count == 0) {
 			return null;
 		}
-		return new Date(this.timestamp);
+		return new DateTime(this.timestamp);
 	}
-	
+
 	public long getTimestamp() {
 		if (this.count == 0) {
 			return Long.MIN_VALUE;
@@ -61,10 +72,10 @@ public class Shower {
 	}
 
 	public long getDuration() {
-		return (this.count == 0 ? 0 : (this.maxShowerTime
-				- this.minShowerTime + 1));
+		return (this.count == 0 ? 0
+				: (this.maxShowerTime - this.minShowerTime + 1));
 	}
-	
+
 	public int getDayOfMonth() {
 		return new DateTime(this.timestamp).getDayOfMonth();
 	}
@@ -88,7 +99,7 @@ public class Shower {
 				/ (this.count + 1);
 
 		this.count++;
-		
+
 		if (this.timestamp > point.timestamp) {
 			this.timestamp = point.timestamp;
 		}

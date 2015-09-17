@@ -33,7 +33,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
 
 import eu.daiad.web.model.EnumGender;
-import eu.daiad.web.security.model.DaiadUser;
+import eu.daiad.web.security.model.ApplicationUser;
 import eu.daiad.web.security.model.EnumRole;
 
 @Repository()
@@ -130,7 +130,7 @@ public class UserRepository {
 		}
 	}
 
-	public DaiadUser createUser(String username, String password,
+	public ApplicationUser createUser(String username, String password,
 			String firstname, String lastname, EnumGender gender,
 			DateTime birthdate, String country, String postalCode, String timezone)
 			throws Exception {
@@ -211,7 +211,7 @@ public class UserRepository {
 			List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
 			authorities.add(new SimpleGrantedAuthority(EnumRole.ROLE_USER.toString()));
 
-			DaiadUser user = new DaiadUser(userKey, username,
+			ApplicationUser user = new ApplicationUser(userKey, username,
 					encoder.encode(password), authorities);
 			user.setFirstname(firstname);
 			user.setLastname(lastname);
@@ -273,7 +273,7 @@ public class UserRepository {
 		Table table = null;
 
 		try {
-			DaiadUser user = this.getUserByName(username);
+			ApplicationUser user = this.getUserByName(username);
 
 			ArrayList<EnumRole> roles = new ArrayList<EnumRole>();
 			Iterator<GrantedAuthority> it = user.getAuthorities().iterator();
@@ -317,7 +317,7 @@ public class UserRepository {
 			}
 		}
 	}
-	public DaiadUser getUserByName(String username) throws Exception {
+	public ApplicationUser getUserByName(String username) throws Exception {
 		Connection connection = null;
 		Table table = null;
 
@@ -406,7 +406,7 @@ public class UserRepository {
 			table.close();
 			connection.close();
 
-			DaiadUser user = new DaiadUser(id, username, password, authorities);
+			ApplicationUser user = new ApplicationUser(id, username, password, authorities);
 			user.setFirstname(firstname);
 			user.setLastname(lastname);
 			user.setBirthdate(birthdate);

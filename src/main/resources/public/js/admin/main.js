@@ -46,7 +46,7 @@ $(function() {
 							.getMonth() + 1,
 					0));
 
-	jQuery('#logout').click(function(e) {
+	jQuery('#action-logout').click(function(e) {
 		jQuery('#logout-form').submit();
 	});
 
@@ -62,7 +62,7 @@ $(function() {
         $('[data-id="export-timezone"]').blur();
     });
 	
-	jQuery('#export').click(function(e) {
+	jQuery('#action-export').click(function(e) {
 		if(!model.suspendEvents) {
 			exportData();
 		}

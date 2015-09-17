@@ -1,7 +1,5 @@
 package eu.daiad.web.model;
 
-import java.util.Date;
-
 import org.joda.time.DateTime;
 
 public class DailyDataPoints {
@@ -17,16 +15,6 @@ public class DailyDataPoints {
 
 		this.point.timestamp = new DateTime(arg.getYear(),
 				arg.getMonthOfYear(), arg.getDayOfMonth(), 0, 0, 0).getMillis();
-	}
-
-	public DailyDataPoints(Date date) {
-		DateTime arg = new DateTime(date);
-
-		this.point = new DataPoint();
-
-		this.point.timestamp = new DateTime(arg.getYear(),
-				arg.getMonthOfYear(), arg.getDayOfMonth(), 0, 0, 0).getMillis();
-
 	}
 
 	public DailyDataPoints(DateTime date) {

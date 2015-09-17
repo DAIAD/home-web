@@ -4,24 +4,24 @@ import java.util.UUID;
 
 public class SmartMeterQuery {
 
-	private UUID applicationKey;
+	private UUID userKey;
 
-	private String deviceId;
+	private UUID deviceKey[];
 
-
-	public void setApplicationKey(UUID value) {
-		this.applicationKey = value;
+	public UUID getUserKey() {
+		return userKey;
 	}
 
-	public UUID getApplicationKey() {
-		return this.applicationKey;
+	public void setUserKey(UUID userKey) {
+		this.userKey = userKey;
 	}
 
-	public void setDeviceId(String value) {
-		this.deviceId = value;
+	public UUID[] getDeviceKey() {
+		return deviceKey;
 	}
 
-	public String getDeviceId() {
-		return this.deviceId;
+	public void setDeviceKey(UUID deviceKey[]) {
+		this.deviceKey = deviceKey;
 	}
+
 }

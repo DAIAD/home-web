@@ -1,35 +1,35 @@
 package eu.daiad.web.model;
 
-import java.util.Date;
-
+import org.joda.time.DateTime;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.format.annotation.DateTimeFormat.ISO;
 
 public class SmartMeterIntervalQuery extends SmartMeterQuery {
 
-    private int granularity = TemporalConstants.NONE;
-    
-	@DateTimeFormat(pattern = "yyyy-MM-dd hh:mm:ss")
-	private Date startDate;
+	@DateTimeFormat(iso = ISO.DATE)
+	private DateTime startDate;
 
-	@DateTimeFormat(pattern = "yyyy-MM-dd hh:mm:ss")
-	private Date endDate;
+	@DateTimeFormat(iso = ISO.DATE)
+	private DateTime endDate;
 
-	public void setStartDate(Date value) {
+	private int granularity = TemporalConstants.NONE;
+
+	public void setStartDate(DateTime value) {
 		this.startDate = value;
 	}
 
-	public Date getStartDate() {
+	public DateTime getStartDate() {
 		return this.startDate;
 	}
 
-	public void setEndDate(Date value) {
+	public void setEndDate(DateTime value) {
 		this.endDate = value;
 	}
 
-	public Date getEndDate() {
+	public DateTime getEndDate() {
 		return this.endDate;
 	}
-	
+
 	public void setGranularity(int value) {
 		this.granularity = value;
 	}

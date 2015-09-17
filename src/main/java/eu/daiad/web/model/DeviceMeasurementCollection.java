@@ -1,24 +1,13 @@
 package eu.daiad.web.model;
 
 import java.util.ArrayList;
-import java.util.UUID;
 
 public class DeviceMeasurementCollection extends MeasurementCollection {
 
-	private UUID deviceKey;
-	
 	private ArrayList<SessionData> sessions;
 	
 	private ArrayList<Measurement> measurements;
 
-	public void setDeviceKey(UUID value) {
-		this.deviceKey = value;
-	}
-	
-	public UUID getDeviceKey() {
-		return this.deviceKey;
-	}
-	
 	public void setSessions(ArrayList<SessionData> value) {
 		this.sessions = value;
 	}

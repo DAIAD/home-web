@@ -1,6 +1,7 @@
 package eu.daiad.web.model;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class ShowerCollectionResult extends RestResponse {
 
@@ -24,16 +25,16 @@ public class ShowerCollectionResult extends RestResponse {
 		this.add(shower);
 	}
 
-	public void add(DataPoint point) {
+	public void add(UUID deviceKey,DataPoint point) {
 		Shower shower = null;
 		for (int i = 0, count = this.showers.size(); i < count; i++) {
-			if (this.showers.get(i).getId() == point.showerId) {
+			if ((this.showers.get(i).getId() == point.showerId) && (this.showers.get(i).getDeviceKey().equals(deviceKey))) {
 				shower = this.showers.get(i);
 				break;
 			}
 		}
 		if (shower == null) {
-			shower = new Shower(point.showerId);
+			shower = new Shower(deviceKey, point.showerId);
 			this.showers.add(shower);
 		}
 		shower.add(point);
