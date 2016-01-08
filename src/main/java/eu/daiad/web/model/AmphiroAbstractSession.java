@@ -1,8 +1,12 @@
 package eu.daiad.web.model;
 
-public class AmphiroAbstractDataPoint {
+import org.joda.time.DateTime;
+
+public class AmphiroAbstractSession {
 
 	protected long timestamp;
+
+	protected int duration;
 
 	protected float temperature;
 
@@ -10,8 +14,22 @@ public class AmphiroAbstractDataPoint {
 
 	protected float energy;
 
+	protected float flow;
+
 	public long getTimestamp() {
 		return timestamp;
+	}
+
+	public DateTime getDate() {
+		return new DateTime(this.timestamp);
+	}
+
+	public int getDuration() {
+		return duration;
+	}
+
+	public void setDuration(int duration) {
+		this.duration = duration;
 	}
 
 	public float getTemperature() {
@@ -37,5 +55,13 @@ public class AmphiroAbstractDataPoint {
 	public void setEnergy(float energy) {
 		this.energy = energy;
 	}
-	
+
+	public float getFlow() {
+		return flow;
+	}
+
+	public void setFlow(float flow) {
+		this.flow = flow;
+	}
+
 }

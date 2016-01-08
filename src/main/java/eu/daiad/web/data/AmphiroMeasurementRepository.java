@@ -33,6 +33,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Repository;
 
 import eu.daiad.web.model.AmphiroAbstractDataPoint;
+import eu.daiad.web.model.AmphiroAbstractSession;
 import eu.daiad.web.model.AmphiroDataPoint;
 import eu.daiad.web.model.AmphiroDataSeries;
 import eu.daiad.web.model.AmphiroDevice;
@@ -905,10 +906,7 @@ public class AmphiroMeasurementRepository {
 			UUID deviceKeys[] = query.getDeviceKey();
 
 			for (int deviceIndex = 0; deviceIndex < deviceKeys.length; deviceIndex++) {
-				AmphiroSessionCollection sessions = new AmphiroSessionCollection();
-				sessions.setDeviceKey(deviceKeys[deviceIndex]);
-
-				data.getDevices().add(sessions);
+				ArrayList<AmphiroSession> sessions = new ArrayList<AmphiroSession>();
 
 				byte[] deviceKey = deviceKeys[deviceIndex].toString().getBytes(
 						"UTF-8");
@@ -967,32 +965,32 @@ public class AmphiroMeasurementRepository {
 
 					if ((session.getTimestamp() >= startDate.getMillis())
 							&& (session.getTimestamp() <= endDate.getMillis())) {
-						sessions.getSessions().add(session);
+						sessions.add(session);
 					}
 				}
 
 				scanner.close();
 
-				if (sessions.getSessions().size() > 0) {
-					Collections.sort(sessions.getSessions(),
-							new Comparator<AmphiroSession>() {
-								public int compare(AmphiroSession o1,
-										AmphiroSession o2) {
-									if (o1.getTimestamp() < o2.getTimestamp()) {
+				AmphiroSessionCollection collection = new AmphiroSessionCollection(
+						deviceKeys[deviceIndex], query.getGranularity());
+
+				collection.addSessions(sessions);
+
+				if (collection.getSessions().size() > 0) {
+					Collections.sort(collection.getSessions(),
+							new Comparator<AmphiroAbstractSession>() {
+								public int compare(AmphiroAbstractSession o1,
+										AmphiroAbstractSession o2) {
+									if (o1.getTimestamp() <= o2.getTimestamp()) {
 										return -1;
-									} else if (o1.getTimestamp() > o2
-											.getTimestamp()) {
-										return 1;
 									} else {
-										if (o1.getId() <= o2.getId()) {
-											return -1;
-										} else {
-											return 1;
-										}
+										return 1;
 									}
 								}
 							});
 				}
+
+				data.getDevices().add(collection);
 			}
 
 			table.close();

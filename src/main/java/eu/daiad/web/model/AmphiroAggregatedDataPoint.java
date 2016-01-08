@@ -5,7 +5,7 @@ public class AmphiroAggregatedDataPoint  extends AmphiroAbstractDataPoint{
 	private int count = 0;
 	
 	public AmphiroAggregatedDataPoint(long timestamp) {
-		this.setTimestamp(timestamp);
+		this.timestamp = timestamp;
 	}
 	
 	public void addPoint(AmphiroAbstractDataPoint point) {	
@@ -22,4 +22,5 @@ public class AmphiroAggregatedDataPoint  extends AmphiroAbstractDataPoint{
 	public int getCount() {
 		return count;
 	}
+	
 }

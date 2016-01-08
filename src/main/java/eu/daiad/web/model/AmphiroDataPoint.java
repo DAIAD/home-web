@@ -31,5 +31,9 @@ public class AmphiroDataPoint extends AmphiroAbstractDataPoint {
 	public void setHistory(boolean history) {
 		this.history = history;
 	}
+	
+	public void setTimestamp(long timestamp) {
+		this.timestamp = timestamp;
+	}
 
 }
