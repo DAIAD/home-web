@@ -26,5 +26,5 @@ public class ErrorControllerAdvice {
 		}
 		return "error";
 	}
-
+	
 }

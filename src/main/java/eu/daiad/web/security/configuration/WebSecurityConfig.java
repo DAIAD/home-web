@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -37,23 +36,18 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 		auth.authenticationProvider(provider);
 	}
 
-	@Autowired
-	private AuthenticationManager authManager;
-
-	/*
-	 * @Autowired private FilterChainProxy chain;
-	 */
-
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
+		// Allow anonymous access to selected requests
 		http.authorizeRequests().antMatchers("/", "/login", "/libs/**", "/api/**")
 				.permitAll();
 		
+		// Disable CSRF for API requests
 		http.csrf().requireCsrfProtectionMatcher(new RequestMatcher() {
-			private Pattern allowedMethods = Pattern
-					.compile("^(GET|HEAD|TRACE|OPTIONS)$");
-			private RegexRequestMatcher apiMatcher = new RegexRequestMatcher(
-					"/api/v1/.*", null);
+			
+			private Pattern allowedMethods = Pattern.compile("^(GET|HEAD|TRACE|OPTIONS)$");
+			
+			private RegexRequestMatcher apiMatcher = new RegexRequestMatcher("/api/v1/.*", null);
 
 			@Override
 			public boolean matches(HttpServletRequest request) {
@@ -65,26 +59,31 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 				if (apiMatcher.matches(request))
 					return false;
 
-				// CSRF for everything else that is not an API call or an
-				// allowedMethod
+				// Apply CSRF for everything else that is not an API call or 
+				// the request method does not match allowedMethod pattern
 				return true;
 			}
 		});
 
+		// Require authorization for all requests except for the aforementioned exceptions
 		http.authorizeRequests().anyRequest().fullyAuthenticated();
 
-		http.formLogin().loginPage("/login").usernameParameter("username")
-				.passwordParameter("password").failureUrl("/login?error")
-				.defaultSuccessUrl("/")
-				.successHandler(authenticationSuccessHandler)
-				.failureHandler(authenticationFailureHandler);
+		// Configure form based authentication for the web application
+		http.formLogin()
+			.loginPage("/login")
+			.usernameParameter("username")
+			.passwordParameter("password")
+			.failureUrl("/login?error")
+			.defaultSuccessUrl("/")
+			.successHandler(authenticationSuccessHandler)
+			.failureHandler(authenticationFailureHandler);
 
+		// Configure logout page for the web application
 		http.logout().logoutUrl("/logout").logoutSuccessUrl("/");
 
 		http.exceptionHandling().accessDeniedPage("/login?error");
 
-	
-		http.addFilterAfter(new CsrfTokenResponseHeaderBindingFilter(),
-				CsrfFilter.class);
+		// Refresh CSRF token 
+		http.addFilterAfter(new CsrfTokenResponseHeaderBindingFilter(), CsrfFilter.class);
 	}
 }

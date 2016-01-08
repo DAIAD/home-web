@@ -2,15 +2,17 @@ package eu.daiad.web.security.model;
 
 import eu.daiad.web.model.RestResponse;
 
-public class UserRegistrationResponse extends RestResponse {
+public class AuthenticationResponse  extends RestResponse {
 
 	private String userKey;
-	
-	public UserRegistrationResponse() {
+
+	public AuthenticationResponse(String userKey) {
 		super();
+		
+		this.userKey = userKey;
 	}
 
-	public UserRegistrationResponse(int code, String description) {
+	public AuthenticationResponse(int code, String description) {
 		super(code, description);
 	}
 	

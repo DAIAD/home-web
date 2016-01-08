@@ -11,8 +11,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 public class Application extends SpringBootServletInitializer {
     
     @Override
-    protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {	
-        return application.sources(Application.class);
+    protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {	
+        return builder.sources(Application.class);
     }
     
 	public static void main(String[] args) throws Exception {	

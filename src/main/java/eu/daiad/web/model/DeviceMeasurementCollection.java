@@ -1,31 +1,51 @@
 package eu.daiad.web.model;
 
-import java.util.ArrayList;
+import java.util.UUID;
 
-public class DeviceMeasurementCollection extends MeasurementCollection {
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-	private ArrayList<SessionData> sessions;
-	
-	private ArrayList<Measurement> measurements;
+import eu.daiad.web.util.DeviceTypeDeserializer;
 
-	public void setSessions(ArrayList<SessionData> value) {
-		this.sessions = value;
-	}
-	
-	public ArrayList<SessionData> getSessions() {
-		return this.sessions;
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type")
+@JsonSubTypes({
+		@Type(value = AmphiroMeasurementCollection.class, name = "AMPHIRO"),
+		@Type(value = WaterMeterMeasurementCollection.class, name = "METER") })
+public class DeviceMeasurementCollection extends AuthenticatedRequest {
+
+	@JsonDeserialize(using = DeviceTypeDeserializer.class)
+	private EnumDeviceType type;
+
+	@JsonIgnore
+	private UUID userKey;
+
+	private UUID deviceKey;
+
+	public void setUserKey(UUID value) {
+		this.userKey = value;
 	}
 
-	public void setMeasurements(ArrayList<Measurement> value) {
-		this.measurements = value;
+	public UUID getUserKey() {
+		return this.userKey;
 	}
-	
-	public ArrayList<Measurement> getMeasurements() {
-		return this.measurements;
+
+	public UUID getDeviceKey() {
+		return deviceKey;
 	}
-	
-	@Override public EnumDeviceType getType() {
-		return EnumDeviceType.AMPHIRO;
+
+	public void setDeviceKey(UUID deviceKey) {
+		this.deviceKey = deviceKey;
+	}
+
+	public EnumDeviceType getType() {
+		return this.type;
+	}
+
+	public void setType(EnumDeviceType value) {
+		this.type = value;
 	}
 
 }

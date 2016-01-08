@@ -18,10 +18,7 @@ public abstract class Device {
 	public Device(UUID key, String id, ArrayList<KeyValuePair> properties) {
 		this.id = id;
 		this.key = key;
-		this.properties = properties;
-		if (this.properties == null) {
-			this.properties = new ArrayList<KeyValuePair>();
-		}
+		this.setProperties(properties);
 	}
 
 	public UUID getKey() {
@@ -38,10 +35,11 @@ public abstract class Device {
 		return this.properties;
 	}
 
-	public void setProperties(ArrayList<KeyValuePair> value) {
-		this.properties = value;
-		if (this.properties == null) {
+	public void setProperties(ArrayList<KeyValuePair> properties) {
+		if (properties == null) {
 			this.properties = new ArrayList<KeyValuePair>();
+		} else {
+			this.properties = properties;
 		}
 	}
 

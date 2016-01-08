@@ -1,8 +1,13 @@
 package eu.daiad.web.security;
 
+import java.io.IOException;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -12,13 +17,10 @@ import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
-
-import eu.daiad.web.security.model.*;
+import eu.daiad.web.security.model.ApplicationUser;
+import eu.daiad.web.security.model.LoginStatus;
 
 @Component
 public class RESTAuthenticationSuccessHandler extends
@@ -37,6 +39,7 @@ public class RESTAuthenticationSuccessHandler extends
 	}
 
 	protected static final String REQUEST_ATTRIBUTE_NAME = "_csrf";
+
 	protected static final String RESPONSE_HEADER_NAME = "X-CSRF-HEADER";
 	protected static final String RESPONSE_PARAM_NAME = "X-CSRF-PARAM";
 	protected static final String RESPONSE_TOKEN_NAME = "X-CSRF-TOKEN";
@@ -67,21 +70,20 @@ public class RESTAuthenticationSuccessHandler extends
 				CsrfToken sessionToken = (CsrfToken) request.getSession().getAttribute(DEFAULT_CSRF_TOKEN_ATTR_NAME);			
 				CsrfToken requestToken = (CsrfToken) request.getAttribute(REQUEST_ATTRIBUTE_NAME);
 
-				if ((requestToken != null) || (sessionToken !=null)) {
-					response.setHeader(RESPONSE_HEADER_NAME, requestToken.getHeaderName());
-					response.setHeader(RESPONSE_PARAM_NAME,	requestToken.getParameterName());
-					response.setHeader(RESPONSE_TOKEN_NAME, (sessionToken == null ? requestToken.getToken() : sessionToken.getToken()));
+				CsrfToken token = (sessionToken == null ? requestToken : sessionToken);
+
+				if (token != null) {
+					response.setHeader(RESPONSE_HEADER_NAME, token.getHeaderName());
+					response.setHeader(RESPONSE_PARAM_NAME,	token.getParameterName());
+					response.setHeader(RESPONSE_TOKEN_NAME, token.getToken());
 				}
 
-				ObjectMapper mapper = new ObjectMapper();
-
-				String output = mapper.writeValueAsString(status);
-
-				response.setContentType("text/x-json;charset=UTF-8");
+				response.setContentType("application/json;charset=UTF-8");
 				response.setHeader("Cache-Control", "no-cache");
 				response.setStatus(HttpStatus.OK.value());
 
-				response.getWriter().print(output);
+				ObjectMapper mapper = new ObjectMapper();
+				response.getWriter().print(mapper.writeValueAsString(status));
 			} catch (Exception e) {
 				logger.debug(e.getMessage());
 			}

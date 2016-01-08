@@ -1,6 +1,6 @@
 package eu.daiad.web.model;
 
-public class ExtendedSessionData extends SessionData {
+public class ExtendedSessionData extends AmphiroSession {
 
 	private SessionUserData user;
 	

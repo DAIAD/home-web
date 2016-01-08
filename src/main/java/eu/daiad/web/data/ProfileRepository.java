@@ -25,24 +25,24 @@ public class ProfileRepository {
 	public Profile getProfileByUsername(String username) throws Exception {
 		ApplicationUser user = this.userRepository.getUserByName(username);
 
-		ArrayList<Device> devices = this.deviceRepository.getUserDevices(user
-				.getKey());
-		
+		ArrayList<Device> devices = this.deviceRepository.getUserDevices(
+				user.getKey(), null);
+
 		Profile profile = new Profile();
-		
+
 		profile.setKey(user.getKey());
 		profile.setFirstname(user.getFirstname());
 		profile.setLastname(user.getLastname());
 		profile.setTimezone(user.getTimezone());
 		profile.setCountry(user.getCountry());
 		profile.setPostalCode(user.getPostalCode());
-		
+
 		ArrayList<DeviceRegistration> registrations = new ArrayList<DeviceRegistration>();
-		for(Iterator<Device> d = devices.iterator(); d.hasNext(); ) {
-		    registrations.add(d.next().toDeviceRegistration());
+		for (Iterator<Device> d = devices.iterator(); d.hasNext();) {
+			registrations.add(d.next().toDeviceRegistration());
 		}
 		profile.setDevices(registrations);
-		
+
 		return profile;
 	}
 }

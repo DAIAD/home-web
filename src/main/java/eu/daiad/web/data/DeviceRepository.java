@@ -2,11 +2,12 @@ package eu.daiad.web.data;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.util.Map.Entry;
 import java.util.ArrayList;
+import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.UUID;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Repository;
 
 import eu.daiad.web.model.AmphiroDevice;
 import eu.daiad.web.model.Device;
+import eu.daiad.web.model.DeviceRegistrationQuery;
 import eu.daiad.web.model.EnumDeviceType;
 import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.WaterMeterDevice;
@@ -387,7 +389,8 @@ public class DeviceRepository {
 		}
 	}
 
-	public ArrayList<Device> getUserDevices(UUID userKey) throws Exception {
+	public ArrayList<Device> getUserDevices(UUID userKey,
+			DeviceRegistrationQuery query) throws Exception {
 		ArrayList<Device> devices = new ArrayList<Device>();
 
 		Connection connection = null;
@@ -411,6 +414,8 @@ public class DeviceRepository {
 			Filter prefixFilter = new PrefixFilter(rowKey);
 			scan.setFilter(prefixFilter);
 
+			Device device = null;
+
 			String deviceId = null;
 			UUID deviceKey = null;
 			String name = null;
@@ -419,6 +424,8 @@ public class DeviceRepository {
 			scanner = table.getScanner(scan);
 			for (Result r = scanner.next(); r != null; r = scanner.next()) {
 				NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
+
+				device = null;
 
 				deviceId = null;
 				deviceKey = null;
@@ -455,16 +462,31 @@ public class DeviceRepository {
 				if (deviceKey != null) {
 					switch (type) {
 					case METER:
-						devices.add(new WaterMeterDevice(deviceKey, deviceId,
-								properties));
+						device = new WaterMeterDevice(deviceKey, deviceId,
+								properties);
 						break;
 					case AMPHIRO:
-						devices.add(new AmphiroDevice(deviceKey, deviceId,
-								name, properties));
+						device = new AmphiroDevice(deviceKey, deviceId, name,
+								properties);
 						break;
 					case UNDEFINED:
 						break;
 					}
+					if (device == null) {
+						continue;
+					}
+					if (query != null) {
+						if ((!StringUtils.isBlank(query.getDeviceId()))
+								&& (!query.getDeviceId().equals(
+										device.getDeviceId()))) {
+							continue;
+						}
+						if ((query.getType() != EnumDeviceType.UNDEFINED)
+								&& (query.getType() != device.getType())) {
+							continue;
+						}
+					}
+					devices.add(device);
 				}
 			}
 

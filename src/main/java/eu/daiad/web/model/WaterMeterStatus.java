@@ -5,10 +5,12 @@ import java.util.UUID;
 public class WaterMeterStatus {
 
 	private UUID deviceKey;
-	
-	private SmartMeterDataPoint value1;
 
-	private SmartMeterDataPoint value2;
+	private long timestamp;
+	
+	private float volume;
+
+	private float variation;
 
 	public UUID getDeviceKey() {
 		return deviceKey;
@@ -18,20 +20,29 @@ public class WaterMeterStatus {
 		this.deviceKey = deviceKey;
 	}
 
-	public SmartMeterDataPoint getValue1() {
-		return value1;
+	public float getVariation() {
+		return variation;
 	}
 
-	public void setValue1(SmartMeterDataPoint value) {
-		this.value1 = value;
+	public void setVariation(float variation) {
+		this.variation = variation;
 	}
 
-	public SmartMeterDataPoint getValue2() {
-		return value2;
+	public long getTimestamp() {
+		return timestamp;
 	}
 
-	public void setValue2(SmartMeterDataPoint value) {
-		this.value2 = value;
+	public void setTimestamp(long timestamp) {
+		this.timestamp = timestamp;
 	}
-	
+
+	public float getVolume() {
+		return volume;
+	}
+
+	public void setVolume(float volume) {
+		this.volume = volume;
+	}
+
+
 }
