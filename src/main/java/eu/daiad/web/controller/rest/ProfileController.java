@@ -12,8 +12,8 @@ import eu.daiad.web.data.ProfileRepository;
 import eu.daiad.web.model.Credentials;
 import eu.daiad.web.model.Error;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.UpdateProfileRequest;
-import eu.daiad.web.model.ViewProfileResponse;
+import eu.daiad.web.model.profile.UpdateProfileRequest;
+import eu.daiad.web.model.profile.ViewProfileResponse;
 import eu.daiad.web.security.AuthenticationService;
 import eu.daiad.web.security.model.ApplicationUser;
 

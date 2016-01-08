@@ -21,9 +21,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import eu.daiad.web.data.AmphiroMeasurementRepository;
-import eu.daiad.web.model.ExportData;
 import eu.daiad.web.model.ExportException;
-import eu.daiad.web.model.ExtendedSessionData;
+import eu.daiad.web.model.export.ExportData;
+import eu.daiad.web.model.export.ExtendedSessionData;
 
 @Service
 public class ExportService implements IExportService  {

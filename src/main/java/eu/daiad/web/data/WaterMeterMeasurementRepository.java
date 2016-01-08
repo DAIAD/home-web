@@ -29,16 +29,16 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Repository;
 
-import eu.daiad.web.model.WaterMeterMeasurementCollection;
-import eu.daiad.web.model.WaterMeterDataPoint;
-import eu.daiad.web.model.WaterMeterMeasurementQueryResult;
-import eu.daiad.web.model.WaterMeterMeasurementQuery;
-import eu.daiad.web.model.WaterMeterMeasurement;
-import eu.daiad.web.model.WaterMeterStatusQuery;
-import eu.daiad.web.model.WaterMeterStatusQueryResult;
 import eu.daiad.web.model.TemporalConstants;
-import eu.daiad.web.model.WaterMeterDataSeries;
-import eu.daiad.web.model.WaterMeterStatus;
+import eu.daiad.web.model.meter.WaterMeterDataPoint;
+import eu.daiad.web.model.meter.WaterMeterDataSeries;
+import eu.daiad.web.model.meter.WaterMeterMeasurement;
+import eu.daiad.web.model.meter.WaterMeterMeasurementCollection;
+import eu.daiad.web.model.meter.WaterMeterMeasurementQuery;
+import eu.daiad.web.model.meter.WaterMeterMeasurementQueryResult;
+import eu.daiad.web.model.meter.WaterMeterStatus;
+import eu.daiad.web.model.meter.WaterMeterStatusQuery;
+import eu.daiad.web.model.meter.WaterMeterStatusQueryResult;
 
 @Repository()
 @Scope("prototype")

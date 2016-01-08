@@ -11,15 +11,15 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.data.DeviceRepository;
-import eu.daiad.web.model.AmphiroDeviceRegistrationRequest;
-import eu.daiad.web.model.Device;
-import eu.daiad.web.model.DeviceRegistrationQueryResult;
-import eu.daiad.web.model.DeviceRegistrationQuery;
-import eu.daiad.web.model.DeviceRegistrationRequest;
-import eu.daiad.web.model.DeviceRegistrationResponse;
 import eu.daiad.web.model.Error;
-import eu.daiad.web.model.MeterDeviceRegistrationRequest;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.device.AmphiroDeviceRegistrationRequest;
+import eu.daiad.web.model.device.Device;
+import eu.daiad.web.model.device.DeviceRegistrationQuery;
+import eu.daiad.web.model.device.DeviceRegistrationQueryResult;
+import eu.daiad.web.model.device.DeviceRegistrationRequest;
+import eu.daiad.web.model.device.DeviceRegistrationResponse;
+import eu.daiad.web.model.device.WaterMeterDeviceRegistrationRequest;
 import eu.daiad.web.security.AuthenticationService;
 import eu.daiad.web.security.model.ApplicationUser;
 
@@ -64,8 +64,8 @@ public class DeviceController {
 				}
 				break;
 			case METER:
-				if (data instanceof MeterDeviceRegistrationRequest) {
-					MeterDeviceRegistrationRequest meterData = (MeterDeviceRegistrationRequest) data;
+				if (data instanceof WaterMeterDeviceRegistrationRequest) {
+					WaterMeterDeviceRegistrationRequest meterData = (WaterMeterDeviceRegistrationRequest) data;
 					device = repository.createMeterDevice(user.getKey(),
 							meterData.getDeviceId(), meterData.getProperties());
 				}

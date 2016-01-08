@@ -7,9 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Repository;
 
-import eu.daiad.web.model.Device;
-import eu.daiad.web.model.DeviceRegistration;
-import eu.daiad.web.model.Profile;
+import eu.daiad.web.model.device.Device;
+import eu.daiad.web.model.device.DeviceRegistration;
+import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.security.model.ApplicationUser;
 
 @Repository()

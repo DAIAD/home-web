@@ -12,17 +12,17 @@ import org.springframework.web.bind.annotation.RestController;
 import eu.daiad.web.data.AmphiroMeasurementRepository;
 import eu.daiad.web.data.WaterMeterMeasurementRepository;
 import eu.daiad.web.model.Error;
-import eu.daiad.web.model.AmphiroMeasurementQuery;
-import eu.daiad.web.model.AmphiroMeasurementQueryResult;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.AmphiroSessionCollectionQueryResult;
-import eu.daiad.web.model.AmphiroSessionCollectionQuery;
-import eu.daiad.web.model.AmphiroSessionQuery;
-import eu.daiad.web.model.AmphiroSessionQueryResult;
-import eu.daiad.web.model.WaterMeterMeasurementQueryResult;
-import eu.daiad.web.model.WaterMeterMeasurementQuery;
-import eu.daiad.web.model.WaterMeterStatusQuery;
-import eu.daiad.web.model.WaterMeterStatusQueryResult;
+import eu.daiad.web.model.amphiro.AmphiroMeasurementQuery;
+import eu.daiad.web.model.amphiro.AmphiroMeasurementQueryResult;
+import eu.daiad.web.model.amphiro.AmphiroSessionCollectionQuery;
+import eu.daiad.web.model.amphiro.AmphiroSessionCollectionQueryResult;
+import eu.daiad.web.model.amphiro.AmphiroSessionQuery;
+import eu.daiad.web.model.amphiro.AmphiroSessionQueryResult;
+import eu.daiad.web.model.meter.WaterMeterMeasurementQuery;
+import eu.daiad.web.model.meter.WaterMeterMeasurementQueryResult;
+import eu.daiad.web.model.meter.WaterMeterStatusQuery;
+import eu.daiad.web.model.meter.WaterMeterStatusQueryResult;
 import eu.daiad.web.security.AuthenticationService;
 
 @RestController

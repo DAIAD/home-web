@@ -16,6 +16,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import eu.daiad.web.model.*;
+import eu.daiad.web.model.export.DownloadFileResponse;
+import eu.daiad.web.model.export.ExportData;
 import eu.daiad.web.service.IExportService;
 
 @Controller
@@ -38,13 +40,13 @@ public class DataController {
 	@RequestMapping(value = "/data/export", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@ResponseBody
 	@Secured({ "ROLE_ADMIN" })
-	public DownloadResponse export(@RequestBody ExportData data,
+	public DownloadFileResponse export(@RequestBody ExportData data,
 			BindingResult results) {
 		String errorMessage = null;
 
 		try {
 			if (results.hasErrors()) {
-				return new DownloadResponse(ERROR_PARSING_FAILED,
+				return new DownloadFileResponse(ERROR_PARSING_FAILED,
 						"Input parsing has failed.");
 			}
 
@@ -53,12 +55,12 @@ public class DataController {
 				String token = this.exportService.export(data);
 
 				// Create response
-				return new DownloadResponse(token.toString());
+				return new DownloadFileResponse(token.toString());
 			default:
 				break;
 			}
 
-			return new DownloadResponse(ERROR_TYPE_NOT_SUPPORTED,
+			return new DownloadFileResponse(ERROR_TYPE_NOT_SUPPORTED,
 					String.format("Export type [%s] is not supported.", data
 							.getType().toString()));
 		} catch (ExportException eEx) {
@@ -67,7 +69,7 @@ public class DataController {
 		} catch (Exception ex) {
 			logger.error("Unhandled exception has occured.", ex);
 		}
-		return new DownloadResponse(ERROR_UNKNOWN,
+		return new DownloadFileResponse(ERROR_UNKNOWN,
 				(errorMessage == null ? "Unhandled exception has occured."
 						: errorMessage));
 	}

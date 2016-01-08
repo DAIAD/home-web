@@ -27,12 +27,12 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Repository;
 
-import eu.daiad.web.model.AmphiroDevice;
-import eu.daiad.web.model.Device;
-import eu.daiad.web.model.DeviceRegistrationQuery;
-import eu.daiad.web.model.EnumDeviceType;
 import eu.daiad.web.model.KeyValuePair;
-import eu.daiad.web.model.WaterMeterDevice;
+import eu.daiad.web.model.device.AmphiroDevice;
+import eu.daiad.web.model.device.Device;
+import eu.daiad.web.model.device.DeviceRegistrationQuery;
+import eu.daiad.web.model.device.EnumDeviceType;
+import eu.daiad.web.model.device.WaterMeterDevice;
 
 @Repository()
 @Scope("prototype")

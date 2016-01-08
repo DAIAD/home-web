@@ -1,7 +1,7 @@
 package eu.daiad.web.service;
 
-import eu.daiad.web.model.ExportData;
 import eu.daiad.web.model.ExportException;
+import eu.daiad.web.model.export.ExportData;
 
 public interface IExportService {
 

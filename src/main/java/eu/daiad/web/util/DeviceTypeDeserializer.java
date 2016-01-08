@@ -7,7 +7,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
-import eu.daiad.web.model.EnumDeviceType;
+import eu.daiad.web.model.device.EnumDeviceType;
 
 
 public class DeviceTypeDeserializer extends JsonDeserializer<EnumDeviceType> {
