@@ -346,6 +346,12 @@ public class AmphiroMeasurementRepository {
 				put.addColumn(columnFamily, column,
 						Bytes.toBytes(s.isHistory()));
 
+				for (int p = 0, count = s.getProperties().size(); p < count; p++) {
+					column = Bytes.toBytes(s.getProperties().get(p).getKey());
+					put.addColumn(columnFamily, column, s.getProperties()
+							.get(p).getValue().getBytes(StandardCharsets.UTF_8));
+				}
+				
 				table.put(put);
 			}
 		} finally {
@@ -446,7 +452,6 @@ public class AmphiroMeasurementRepository {
 						device.getName().getBytes(StandardCharsets.UTF_8));
 
 				// Add measurement data
-
 				column = Bytes.toBytes("m:offset");
 				put.addColumn(columnFamily, column, Bytes.toBytes((int) offset));
 
@@ -960,6 +965,11 @@ public class AmphiroMeasurementRepository {
 						case "r:h":
 							session.setHistory(Bytes.toBoolean(entry.getValue()));
 							break;
+						default:
+							session.addProperty(qualifier,
+									new String(entry.getValue(),
+											StandardCharsets.UTF_8));
+							break;
 						}
 					}
 
@@ -1025,7 +1035,7 @@ public class AmphiroMeasurementRepository {
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
-			byte[] userKeyKey = md.digest(userKey);
+			byte[] userKeyHash = md.digest(userKey);
 
 			byte[] deviceKey = query.getDeviceKey().toString()
 					.getBytes("UTF-8");
@@ -1033,14 +1043,12 @@ public class AmphiroMeasurementRepository {
 
 			Scan scan = new Scan();
 			scan.addFamily(columnFamily);
-			scan.setStartRow(this.getUserDeviceHourRowKey(userKeyKey,
+			scan.setStartRow(this.getUserDeviceDayRowKey(userKeyHash,
 					deviceKeyHash, startDate));
-			scan.setStopRow(this.getUserDeviceHourRowKey(userKeyKey,
+			scan.setStopRow(this.getUserDeviceDayRowKey(userKeyHash,
 					deviceKeyHash, endDate));
 
 			ResultScanner scanner = table.getScanner(scan);
-
-			AmphiroSessionDetails session = null;
 
 			for (Result r = scanner.next(); r != null; r = scanner.next()) {
 				NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
@@ -1048,89 +1056,56 @@ public class AmphiroMeasurementRepository {
 				long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(),
 						32, 40));
 
-				short offset = -1;
-
-				AmphiroMeasurement measurement = null;
+				AmphiroSessionDetails session = new AmphiroSessionDetails();
+				session.setId(Bytes.toLong(Arrays.copyOfRange(r.getRow(), 40,
+						48)));
 
 				for (Entry<byte[], byte[]> entry : map.entrySet()) {
-					short entryOffset = Bytes.toShort(Arrays.copyOfRange(
-							entry.getKey(), 0, 2));
 
-					if (offset != entryOffset) {
-						if ((measurement != null)
-								&& (measurement.getSessionId() == query
-										.getSessionId())) {
-							if (session == null) {
-								session = new AmphiroSessionDetails();
-								session.setId(measurement.getSessionId());
-							}
-							session.add(measurement);
-						}
-						offset = entryOffset;
-						measurement = new AmphiroMeasurement();
-						measurement
-								.setTimestamp((timeBucket + (long) offset) * 1000L);
-					}
-
-					int length = (int) Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
-					byte[] slice = Arrays.copyOfRange(entry.getKey(), 3,
-							3 + length);
-					String qualifier = Bytes.toString(slice);
+					String qualifier = Bytes.toString(entry.getKey());
 
 					switch (qualifier) {
-					case "h":
-						measurement
-								.setHistory(Bytes.toBoolean(entry.getValue()));
+					case "m:offset":
+						int offset = Bytes.toInt(entry.getValue());
+						session.setTimestamp((timeBucket + (long) offset) * 1000L);
 						break;
-					case "v":
-						measurement.setVolume(Bytes.toFloat(entry.getValue()));
+					case "m:t":
+						session.setTemperature(Bytes.toFloat(entry.getValue()));
 						break;
-					case "e":
-						measurement.setEnergy(Bytes.toFloat(entry.getValue()));
+					case "m:v":
+						session.setVolume(Bytes.toFloat(entry.getValue()));
 						break;
-					case "t":
-						measurement.setTemperature(Bytes.toFloat(entry
-								.getValue()));
+					case "m:f":
+						session.setFlow(Bytes.toFloat(entry.getValue()));
 						break;
-					case "s":
-						measurement
-								.setSessionId(Bytes.toLong(entry.getValue()));
+					case "m:e":
+						session.setEnergy(Bytes.toFloat(entry.getValue()));
 						break;
-					case "i":
-						measurement.setIndex(Bytes.toInt(entry.getValue()));
+					case "m:d":
+						session.setDuration(Bytes.toInt(entry.getValue()));
+						break;
+					case "r:h":
+						session.setHistory(Bytes.toBoolean(entry.getValue()));
+						break;
+					default:
+						session.addProperty(qualifier,
+								new String(entry.getValue(),
+										StandardCharsets.UTF_8));
 						break;
 					}
-
 				}
-				if ((measurement != null)
-						&& (measurement.getSessionId() == query.getSessionId())) {
-					if (session == null) {
-						session = new AmphiroSessionDetails();
-					}
-					session.add(measurement);
+
+				if ((session.getTimestamp() >= startDate.getMillis())
+						&& (session.getTimestamp() <= endDate.getMillis())
+						&& (session.getId() == query.getSessionId())) {
+					data.setSession(session);
+					break;
 				}
-			}
-
-			if ((session != null) && (session.getMeasurements() != null)) {
-				Collections.sort(session.getMeasurements(),
-						new Comparator<AmphiroMeasurement>() {
-
-							public int compare(AmphiroMeasurement o1,
-									AmphiroMeasurement o2) {
-								if (o1.getIndex() <= o2.getIndex()) {
-									return -1;
-								} else {
-									return 1;
-								}
-							}
-						});
 			}
 
 			scanner.close();
 			table.close();
 			connection.close();
-
-			data.setSession(session);
 
 			return data;
 		} catch (Exception ex) {

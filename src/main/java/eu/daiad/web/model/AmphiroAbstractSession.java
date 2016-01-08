@@ -2,6 +2,8 @@ package eu.daiad.web.model;
 
 import org.joda.time.DateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class AmphiroAbstractSession {
 
 	protected long timestamp;
@@ -20,6 +22,7 @@ public class AmphiroAbstractSession {
 		return timestamp;
 	}
 
+	@JsonIgnore
 	public DateTime getDate() {
 		return new DateTime(this.timestamp);
 	}
