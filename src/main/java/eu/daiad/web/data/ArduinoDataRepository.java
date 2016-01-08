@@ -9,7 +9,7 @@ import java.util.Comparator;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -22,8 +22,6 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
-
-import org.apache.commons.logging.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
@@ -63,9 +61,6 @@ public class ArduinoDataRepository {
 
 	private Table table = null;
 
-	@Value("${arduino.device.default}")
-	private String defaultArduinoDeviceKey;
-
 	private static final Log logger = LogFactory
 			.getLog(ArduinoDataRepository.class);
 
@@ -90,10 +85,6 @@ public class ArduinoDataRepository {
 			table = connection.getTable(TableName
 					.valueOf(this.arduinoTableMeasurements));
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
-
-			if (StringUtils.isBlank(deviceKey)) {
-				deviceKey = defaultArduinoDeviceKey;
-			}
 
 			byte[] deviceKeyBytes = deviceKey.getBytes("UTF-8");
 			byte[] deviceKeyHash = md.digest(deviceKeyBytes);
@@ -223,8 +214,17 @@ public class ArduinoDataRepository {
 
 			Scan scan = new Scan();
 			scan.addFamily(columnFamily);
-			scan.setStartRow(this.getDeviceTimeRowKey(deviceKeyHash,
-					query.getTimestampEnd(), EnumTimeInterval.HOUR));
+
+			byte[] startRow = this.getDeviceTimeRowKey(deviceKeyHash,
+					query.getTimestampEnd(), EnumTimeInterval.HOUR);
+
+			scan.setStartRow(startRow);
+
+			byte[] stopRow = new byte[startRow.length + 1];
+			System.arraycopy(this.getDeviceTimeRowKey(deviceKeyHash,
+					query.getTimestampStart(), EnumTimeInterval.HOUR), 0, stopRow, 0, startRow.length);
+			
+			scan.setStopRow(stopRow);
 
 			ResultScanner scanner = table.getScanner(scan);
 
@@ -246,8 +246,8 @@ public class ArduinoDataRepository {
 					byte[] slice = Arrays.copyOfRange(entry.getKey(), 3,
 							3 + length);
 
-					String columnQualifier = Bytes.toString(slice);
-					if (columnQualifier.equals("v")) {
+					String qualifier = Bytes.toString(slice);
+					if (qualifier.equals("v")) {
 						if (timestamp < query.getTimestampStart()) {
 							isScanCompleted = true;
 							break;
@@ -269,7 +269,8 @@ public class ArduinoDataRepository {
 			Collections.sort(data.getMeasurements(),
 					new Comparator<ArduinoMeasurement>() {
 
-						public int compare(ArduinoMeasurement o1, ArduinoMeasurement o2) {
+						public int compare(ArduinoMeasurement o1,
+								ArduinoMeasurement o2) {
 							if (o1.getTimestamp() <= o2.getTimestamp()) {
 								return -1;
 							} else {
