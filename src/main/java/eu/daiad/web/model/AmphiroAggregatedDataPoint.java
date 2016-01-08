@@ -11,7 +11,6 @@ public class AmphiroAggregatedDataPoint  extends AmphiroAbstractDataPoint{
 	public void addPoint(AmphiroAbstractDataPoint point) {	
 		this.volume += point.getVolume();
 		this.energy += point.getEnergy();
-		this.volume += point.getVolume();
 		
 		this.temperature = this.temperature * this.count + point.getTemperature();
 		
