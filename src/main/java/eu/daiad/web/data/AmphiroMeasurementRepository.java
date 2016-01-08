@@ -351,7 +351,7 @@ public class AmphiroMeasurementRepository {
 					put.addColumn(columnFamily, column, s.getProperties()
 							.get(p).getValue().getBytes(StandardCharsets.UTF_8));
 				}
-				
+
 				table.put(put);
 			}
 		} finally {
@@ -1098,6 +1098,10 @@ public class AmphiroMeasurementRepository {
 				if ((session.getTimestamp() >= startDate.getMillis())
 						&& (session.getTimestamp() <= endDate.getMillis())
 						&& (session.getId() == query.getSessionId())) {
+
+					session.setMeasurements(this.getSessionMeasurements(query,
+							connection));
+
 					data.setSession(session);
 					break;
 				}
@@ -1115,9 +1119,9 @@ public class AmphiroMeasurementRepository {
 		return null;
 	}
 
-	public AmphiroSessionQueryResult getSessionMeasurements(
-			AmphiroSessionQuery query) {
-		AmphiroSessionQueryResult data = new AmphiroSessionQueryResult();
+	private ArrayList<AmphiroMeasurement> getSessionMeasurements(
+			AmphiroSessionQuery query, Connection connection) {
+		ArrayList<AmphiroMeasurement> measurements = new ArrayList<AmphiroMeasurement>();
 
 		DateTime startDate = new DateTime(query.getStartDate());
 		DateTime endDate = new DateTime(query.getEndDate()).plusDays(1);
@@ -1128,12 +1132,6 @@ public class AmphiroMeasurementRepository {
 				endDate.getDayOfMonth(), 0, 0, 0).plusDays(1);
 
 		try {
-			Configuration config = HBaseConfiguration.create();
-
-			config.set("hbase.zookeeper.quorum", this.quorum);
-
-			Connection connection = ConnectionFactory.createConnection(config);
-
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
 			Table table = connection.getTable(TableName
@@ -1156,8 +1154,6 @@ public class AmphiroMeasurementRepository {
 
 			ResultScanner scanner = table.getScanner(scan);
 
-			AmphiroSessionDetails session = null;
-
 			for (Result r = scanner.next(); r != null; r = scanner.next()) {
 				NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
 
@@ -1176,10 +1172,7 @@ public class AmphiroMeasurementRepository {
 						if ((measurement != null)
 								&& (measurement.getSessionId() == query
 										.getSessionId())) {
-							if (session == null) {
-								session = new AmphiroSessionDetails();
-							}
-							session.add(measurement);
+							measurements.add(measurement);
 						}
 						offset = entryOffset;
 						measurement = new AmphiroMeasurement();
@@ -1219,33 +1212,14 @@ public class AmphiroMeasurementRepository {
 				}
 				if ((measurement != null)
 						&& (measurement.getSessionId() == query.getSessionId())) {
-					if (session == null) {
-						session = new AmphiroSessionDetails();
-					}
-					session.add(measurement);
+					measurements.add(measurement);
 				}
 			}
 
-			Collections.sort(session.getMeasurements(),
-					new Comparator<AmphiroMeasurement>() {
-
-						public int compare(AmphiroMeasurement o1,
-								AmphiroMeasurement o2) {
-							if (o1.getIndex() <= o2.getIndex()) {
-								return -1;
-							} else {
-								return 1;
-							}
-						}
-					});
-
 			scanner.close();
 			table.close();
-			connection.close();
 
-			data.setSession(session);
-
-			return data;
+			return measurements;
 		} catch (Exception ex) {
 			logger.error("Unhandled exception has occured.", ex);
 		}

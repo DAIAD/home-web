@@ -34,4 +34,12 @@ public class AmphiroSessionDetails extends AmphiroSession {
 
 		return this.measurements;
 	}
+
+	public void setMeasurements(ArrayList<AmphiroMeasurement> measurements) {
+		if (measurements == null) {
+			new ArrayList<AmphiroMeasurement>();
+		} else {
+			this.measurements = measurements;
+		}
+	}
 }
