@@ -14,5 +14,4 @@ public class DownloadFileRequest extends AuthenticatedRequest {
 		this.token = token;
 	}
 	
-	
 }

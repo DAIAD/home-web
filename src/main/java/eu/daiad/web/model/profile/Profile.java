@@ -12,13 +12,21 @@ public class Profile {
 	private String firstname;
 
 	private String lastname;
+	
+	private String email;
+	
+	private byte[] photo;
 
 	private String timezone;
 
 	private String country;
 
 	private String postalCode;
+	
+	private long lastSyncTimestamp;
 
+	private ProfileHousehold household;
+	
 	private ArrayList<DeviceRegistration> devices;
 
 	public Profile() {
@@ -82,5 +90,37 @@ public class Profile {
 		if (this.devices == null) {
 			this.devices = new ArrayList<DeviceRegistration>();
 		}
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public byte[] getPhoto() {
+		return photo;
+	}
+
+	public void setPhoto(byte[] photo) {
+		this.photo = photo;
+	}
+
+	public long getLastSyncTimestamp() {
+		return lastSyncTimestamp;
+	}
+
+	public void setLastSyncTimestamp(long lastSyncTimestamp) {
+		this.lastSyncTimestamp = lastSyncTimestamp;
+	}
+
+	public ProfileHousehold getHousehold() {
+		return household;
+	}
+
+	public void setHousehold(ProfileHousehold household) {
+		this.household = household;
 	}
 }
