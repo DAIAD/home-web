@@ -59,7 +59,7 @@ public class ErrorRestControllerAdvice {
 		HttpHeaders headers = new HttpHeaders();
 	    headers.setContentType(MediaType.APPLICATION_JSON);
 
-	    HttpStatus status = HttpStatus.BAD_REQUEST;
+	    HttpStatus status = HttpStatus.OK;
 	    
         if (mostSpecificCause != null) {
             return new ResponseEntity<RestResponse>(new RestResponse(Error.ERROR_PARSE_FAILED, mostSpecificCause.getMessage()), headers, status);

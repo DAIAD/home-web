@@ -1,5 +1,7 @@
 package eu.daiad.web.model.arduino;
 
+import com.fasterxml.jackson.annotation.JsonSetter;
+
 public class ArduinoIntervalQuery {
 
 	String deviceKey;
@@ -20,6 +22,7 @@ public class ArduinoIntervalQuery {
 		return timestampStart;
 	}
 
+	@JsonSetter("start")
 	public void setTimestampStart(long timestampStart) {
 		this.timestampStart = timestampStart;
 	}
@@ -28,6 +31,7 @@ public class ArduinoIntervalQuery {
 		return timestampEnd;
 	}
 
+	@JsonSetter("end")
 	public void setTimestampEnd(long timestampEnd) {
 		this.timestampEnd = timestampEnd;
 	}

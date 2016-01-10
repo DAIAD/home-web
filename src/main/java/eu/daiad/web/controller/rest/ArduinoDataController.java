@@ -30,7 +30,7 @@ public class ArduinoDataController {
 	@Autowired
 	private ArduinoDataRepository arduinoDataRepository;
 
-	@RequestMapping(value = "/api/v1/arduino/store", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	@RequestMapping(value = "/api/v1/arduino/store", method = RequestMethod.POST, consumes = "text/plain", produces = "text/plain")
 	public ResponseEntity<String> storeData(@RequestBody String data) {
 
 		String message = "";
