@@ -71,7 +71,7 @@ function loadLocale(locale) {
 	    var request = {
 	        type : 'GET',
 	        dataType: 'json',
-	        url : '/assets/js/src/utility/i18n/' + locale + '.js',
+	        url : '/assets/js/build/utility/i18n/' + locale + '.js',
 	        beforeSend : function(xhr) {
 	            xhr.setRequestHeader('X-CSRF-TOKEN', $('meta[name=_csrf]').attr(
 	                    'content'));
