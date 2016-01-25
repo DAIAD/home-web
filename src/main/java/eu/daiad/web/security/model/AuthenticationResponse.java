@@ -1,26 +1,28 @@
 package eu.daiad.web.security.model;
 
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.profile.Profile;
 
-public class AuthenticationResponse  extends RestResponse {
+public class AuthenticationResponse extends RestResponse {
 
-	private String userKey;
+	private Profile profile;
 
-	public AuthenticationResponse(String userKey) {
+	public AuthenticationResponse(Profile profile) {
 		super();
-		
-		this.userKey = userKey;
+
+		this.profile = profile;
 	}
 
 	public AuthenticationResponse(int code, String description) {
 		super(code, description);
 	}
-	
-    public String getUserKey() {
-    	return this.userKey;
-    }
-    
-    public void setUserKey(String value) {
-    	this.userKey = value;
-    }
+
+	public Profile getProfile() {
+		return profile;
+	}
+
+	public void setProfile(Profile profile) {
+		this.profile = profile;
+	}
+
 }

@@ -1,0 +1,12 @@
+{
+  "presets": [
+        "es2015",
+        "react"
+  ],
+  "plugins": [
+    ["react-intl", {
+        "messagesDir": "src/main/resources/public/assets/js/src/utility/i18n/",
+        "enforceDescriptions": false
+    }]
+  ]
+}

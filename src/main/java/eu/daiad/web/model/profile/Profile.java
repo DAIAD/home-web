@@ -21,12 +21,6 @@ public class Profile {
 
 	private String country;
 
-	private String postalCode;
-	
-	private long lastSyncTimestamp;
-
-	private ProfileHousehold household;
-	
 	private ArrayList<DeviceRegistration> devices;
 
 	public Profile() {
@@ -73,14 +67,6 @@ public class Profile {
 		this.country = country;
 	}
 
-	public String getPostalCode() {
-		return postalCode;
-	}
-
-	public void setPostalCode(String postalCode) {
-		this.postalCode = postalCode;
-	}
-
 	public ArrayList<DeviceRegistration> getDevices() {
 		return devices;
 	}
@@ -108,19 +94,4 @@ public class Profile {
 		this.photo = photo;
 	}
 
-	public long getLastSyncTimestamp() {
-		return lastSyncTimestamp;
-	}
-
-	public void setLastSyncTimestamp(long lastSyncTimestamp) {
-		this.lastSyncTimestamp = lastSyncTimestamp;
-	}
-
-	public ProfileHousehold getHousehold() {
-		return household;
-	}
-
-	public void setHousehold(ProfileHousehold household) {
-		this.household = household;
-	}
 }

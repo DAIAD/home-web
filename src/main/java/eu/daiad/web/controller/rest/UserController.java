@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import eu.daiad.web.data.UserRepository;
-import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.data.IUserRepository;
 import eu.daiad.web.model.Error;
+import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.security.AuthenticationService;
 import eu.daiad.web.security.model.ApplicationUser;
 import eu.daiad.web.security.model.EnumRole;
@@ -38,11 +38,10 @@ public class UserController {
 	private AuthenticationService authenticator;
 
 	@Autowired
-	private UserRepository repository;
+	private IUserRepository repository;
 
 	@RequestMapping(value = "/api/v1/user/register", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse register(
-			@RequestBody UserRegistrationRequest data) {
+	public RestResponse register(@RequestBody UserRegistrationRequest data) {
 
 		try {
 			if (repository.getUserByName(data.getUsername()) != null) {

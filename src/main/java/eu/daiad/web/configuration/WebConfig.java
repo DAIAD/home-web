@@ -1,6 +1,7 @@
 package eu.daiad.web.configuration;
 
 import org.springframework.boot.autoconfigure.web.ErrorAttributes;
+import org.springframework.boot.autoconfigure.web.ErrorProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
@@ -15,16 +16,17 @@ import eu.daiad.web.controller.ErrorController;
 public class WebConfig extends WebMvcConfigurerAdapter {
 
 	@Bean
-	public ErrorController errorController(ErrorAttributes errorAttributes) {
+	public ErrorController errorController(ErrorAttributes errorAttributes,
+			ErrorProperties errorProperties) {
 		// Override default implementation for ErrorController
-		return new ErrorController(errorAttributes);
+		return new ErrorController(errorAttributes, errorProperties);
 	}
 
 	@Bean
 	public Jackson2ObjectMapperBuilder objectMapperBuilder() {
 		Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
 
-		// Add support for parsing date/time using Joda-Time
+		// Add additional modules to JSON parser
 		builder.modules(new JodaModule());
 
 		return builder;
@@ -32,6 +34,9 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
 	@Override
 	public void addViewControllers(ViewControllerRegistry registry) {
-		registry.addViewController("/login").setViewName("login");
+		// Add error pages
+		registry.addViewController("/error/403").setViewName("error/403");
+		registry.addViewController("/error/404").setViewName("error/404");
+		registry.addViewController("/error/500").setViewName("error/500");
 	}
 }

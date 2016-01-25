@@ -17,7 +17,7 @@ import eu.daiad.web.security.model.ApplicationUser;
 public class ProfileRepository {
 
 	@Autowired
-	private UserRepository userRepository;
+	private IUserRepository userRepository;
 
 	@Autowired
 	private DeviceRepository deviceRepository;
@@ -35,7 +35,6 @@ public class ProfileRepository {
 		profile.setLastname(user.getLastname());
 		profile.setTimezone(user.getTimezone());
 		profile.setCountry(user.getCountry());
-		profile.setPostalCode(user.getPostalCode());
 
 		ArrayList<DeviceRegistration> registrations = new ArrayList<DeviceRegistration>();
 		for (Iterator<Device> d = devices.iterator(); d.hasNext();) {

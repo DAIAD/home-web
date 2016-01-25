@@ -8,8 +8,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -19,8 +19,10 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import eu.daiad.web.data.ProfileRepository;
+import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.security.model.ApplicationUser;
-import eu.daiad.web.security.model.LoginStatus;
+import eu.daiad.web.security.model.AuthenticationResponse;
 
 @Component
 public class RESTAuthenticationSuccessHandler extends
@@ -29,10 +31,11 @@ public class RESTAuthenticationSuccessHandler extends
 	private final Log logger = LogFactory.getLog(this.getClass());
 
 	private boolean isAjaxRequest(HttpServletRequest request) {
-		if (request.getMethod().equals("POST") && "application/json".equals(request.getHeader("Content-Type"))) {
+		if (request.getMethod().equals("POST")
+				&& "application/json".equals(request.getHeader("Content-Type"))) {
 			return true;
 		}
-		
+
 		String requestedWith = request.getHeader("X-Requested-With");
 		return requestedWith != null ? "XMLHttpRequest".equals(requestedWith)
 				: false;
@@ -44,8 +47,12 @@ public class RESTAuthenticationSuccessHandler extends
 	protected static final String RESPONSE_PARAM_NAME = "X-CSRF-PARAM";
 	protected static final String RESPONSE_TOKEN_NAME = "X-CSRF-TOKEN";
 
-	public static final String DEFAULT_CSRF_TOKEN_ATTR_NAME = HttpSessionCsrfTokenRepository.class.getName().concat(".CSRF_TOKEN");
-	
+	protected static final String DEFAULT_CSRF_TOKEN_ATTR_NAME = HttpSessionCsrfTokenRepository.class
+			.getName().concat(".CSRF_TOKEN");
+
+	@Autowired
+	private ProfileRepository profileRepository;
+
 	@Override
 	public void onAuthenticationSuccess(HttpServletRequest request,
 			HttpServletResponse response, Authentication authentication)
@@ -58,23 +65,29 @@ public class RESTAuthenticationSuccessHandler extends
 				return;
 			}
 			try {
-				String username = "";
-				
-				Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-				if (!(auth instanceof AnonymousAuthenticationToken)) {
-					username = ((ApplicationUser) auth.getPrincipal()).getFirstname();
-				}
-				
-				LoginStatus status = new LoginStatus(true, username);
 
-				CsrfToken sessionToken = (CsrfToken) request.getSession().getAttribute(DEFAULT_CSRF_TOKEN_ATTR_NAME);			
-				CsrfToken requestToken = (CsrfToken) request.getAttribute(REQUEST_ATTRIBUTE_NAME);
+				Authentication auth = SecurityContextHolder.getContext()
+						.getAuthentication();
 
-				CsrfToken token = (sessionToken == null ? requestToken : sessionToken);
+				ApplicationUser user = (ApplicationUser) auth.getPrincipal();
+
+				Profile profile = profileRepository.getProfileByUsername(user.getUsername());
+				
+				AuthenticationResponse authenticationResponse = new AuthenticationResponse(profile);
+
+				CsrfToken sessionToken = (CsrfToken) request.getSession()
+						.getAttribute(DEFAULT_CSRF_TOKEN_ATTR_NAME);
+				CsrfToken requestToken = (CsrfToken) request
+						.getAttribute(REQUEST_ATTRIBUTE_NAME);
+
+				CsrfToken token = (sessionToken == null ? requestToken
+						: sessionToken);
 
 				if (token != null) {
-					response.setHeader(RESPONSE_HEADER_NAME, token.getHeaderName());
-					response.setHeader(RESPONSE_PARAM_NAME,	token.getParameterName());
+					response.setHeader(RESPONSE_HEADER_NAME,
+							token.getHeaderName());
+					response.setHeader(RESPONSE_PARAM_NAME,
+							token.getParameterName());
 					response.setHeader(RESPONSE_TOKEN_NAME, token.getToken());
 				}
 
@@ -83,7 +96,8 @@ public class RESTAuthenticationSuccessHandler extends
 				response.setStatus(HttpStatus.OK.value());
 
 				ObjectMapper mapper = new ObjectMapper();
-				response.getWriter().print(mapper.writeValueAsString(status));
+				response.getWriter().print(
+						mapper.writeValueAsString(authenticationResponse));
 			} catch (Exception e) {
 				logger.debug(e.getMessage());
 			}

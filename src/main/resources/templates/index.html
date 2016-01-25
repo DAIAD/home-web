@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org"
+	xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4"
+	lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    
+    <title>DAIAD</title>
+
+    <link href="assets/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="assets/css/site.css" rel="stylesheet" />
+</head>
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container">
+            <div>
+                <div class="navbar-header" style="margin-top: -15px;">
+                    <a class="navbar-brand" href="#"><img alt="DAIAD"
+                        src="assets/images/daiad-transparent.png" /></a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div>
+        <div class="jumbotron">
+            <div class="container" style="text-align: justify;">
+                <h2>Open Water Management - from droplets of participation to
+                    streams of knowledge</h2>
+                <p>It's time to change the way we monitor water. In DAIAD we
+                    believe that in order to drive innovation, accelerate the adoption
+                    of efficient water use and reuse, and induce sustainable changes in
+                    water consumption at a larger scale, we must empower consumers. Our
+                    vision is to enable all consumers to self-monitor their water
+                    consumption through low-cost sensing technologies, independently
+                    from their water provider, to monitor every drop of water we
+                    consume in our residencies, turn this information into actionable
+                    knowledge, and promote sustainable water consumption. But how are
+                    we going to achieve this?</p>
+                <p>
+                    <a class="btn btn-primary btn-lg" href="http://daiad.eu"
+                        role="button">Learn more &raquo;</a>
+                </p>
+            </div>
+        </div>
+
+        <div class="container" style="text-align: center;">
+            <!-- Example row of columns -->
+            <div class="row">
+                <div class="col-md-4">
+                    <h2>@Home</h2>
+
+                    <p>
+                        <img alt="" src="assets/images/Plumbing-100.png" />
+                    </p>
+                    <p>
+                        <a class="btn btn-default" th:href="@{/home/}"
+                            role="button">Sign in &raquo;</a>
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <h2 style="opacity: 0.5;">@Commons</h2>
+                    <p>
+                        <img alt="" src="assets/images/Collaboration-100.png" style="opacity: 0.5;" />
+                    </p>
+                    <p>
+                        <a class="btn btn-default disabled" href="#"
+                            role="button">Sign in &raquo;</a>
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <h2>@Utility</h2>
+                    <p>
+                        <img alt="" src="assets/images/Area Chart-100.png" />
+                    </p>
+                    <p>
+                        <a class="btn btn-default" th:href="@{/utility/}"
+                            role="button">Sign in &raquo;</a>
+                    </p>
+                </div>
+            </div>
+            <hr />
+            <footer>
+                <div class="container">
+                    <p>&copy;DAIAD 2015</p>
+                </div>
+            </footer>
+        </div>
+    </div>
+</body>
+</html>

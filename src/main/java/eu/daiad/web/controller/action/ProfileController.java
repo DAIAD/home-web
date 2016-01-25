@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.data.ProfileRepository;
 import eu.daiad.web.model.Error;
+import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.profile.ViewProfileResponse;
 import eu.daiad.web.security.model.ApplicationUser;
 
@@ -25,7 +26,7 @@ public class ProfileController {
 
 	@RequestMapping(value = "/action/profile", method = RequestMethod.GET, produces = "application/json")
 	@Secured("ROLE_USER")
-	public ViewProfileResponse getProfile() {
+	public RestResponse getProfile() {
 		try {
 			ApplicationUser user = (ApplicationUser) SecurityContextHolder
 					.getContext().getAuthentication().getPrincipal();
@@ -39,7 +40,7 @@ public class ProfileController {
 		} catch (Exception ex) {
 			logger.error("Failed to load profile.", ex);
 		}
-		return new ViewProfileResponse(Error.ERROR_UNKNOWN,
+		return new RestResponse(Error.ERROR_UNKNOWN,
 				"An unhandled exception has occurred.");
 	}
 

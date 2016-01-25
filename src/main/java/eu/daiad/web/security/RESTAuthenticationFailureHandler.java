@@ -15,7 +15,8 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import eu.daiad.web.security.model.LoginStatus;
+import eu.daiad.web.model.Error;
+import eu.daiad.web.model.RestResponse;
 
 @Component
 public class RESTAuthenticationFailureHandler extends
@@ -50,7 +51,9 @@ public class RESTAuthenticationFailureHandler extends
 
 				ObjectMapper mapper = new ObjectMapper();
 				response.getWriter().print(
-						mapper.writeValueAsString(new LoginStatus()));
+						mapper.writeValueAsString(new RestResponse(
+								Error.ERROR_AUTH_FAILED,
+								"Authentication has failed.")));
 			} catch (Exception e) {
 				logger.debug(e.getMessage());
 			}
