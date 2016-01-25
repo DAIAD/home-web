@@ -14,7 +14,7 @@ var ContentRoot = React.createClass({
 
 	render: function() {
 		var content = null;
-		
+
 		if(UserStore.isAuthenticated()) {
 			content = <SectionCollection isAuthenticated = { this.props.isAuthenticated } />;
 		}
@@ -26,13 +26,13 @@ var ContentRoot = React.createClass({
 							<a className="navbar-brand" href="#" style={{ padding: 0, margin: 0}}>
 								<img alt="DAIAD" src="../assets/images/daiad-transparent.png" />
 							</a>
-						</div>		
+						</div>
 						<div style={{ float: 'right', marginTop: 8, marginLeft: 10}}>
 							<LocaleSwitcher />
 						</div>
 						<div style={{ float: 'right'}}>
 							<div className="navbar-header" style={{marginTop: 0}}>
-								<LoginForm 	action="login" 
+								<LoginForm 	action="login"
 											isAuthenticated = { this.props.isAuthenticated } />
 							</div>
 							<div id="navbar" className="navbar-collapse collapse">

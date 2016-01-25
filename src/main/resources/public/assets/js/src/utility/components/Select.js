@@ -8,7 +8,7 @@ var Select = require('bootstrap-select');
 
 var ReactBootstrapSelect = React.createClass({
 	displayName: 'ReactBootstrapSelect',
-	
+
 	getInitialState: function () {
 		return {
 			open: false
@@ -20,17 +20,17 @@ var ReactBootstrapSelect = React.createClass({
 		var select = $(ReactDOM.findDOMNode(this)).find('div.bootstrap-select');
 		select.toggleClass('open', this.state.open);
 	},
-	
+
 	componentWillUnmount: function () {
 		var select = $(ReactDOM.findDOMNode(this)).find('select');
 		$(select).selectpicker('destroy');
 	},
-	
+
 	componentDidMount: function () {
 		var select = $(ReactDOM.findDOMNode(this)).find('select');
 		$(select).selectpicker();
 	},
-  
+
 	render: function () {
 		return (
 			<BootStrap.Input {...this.props} type='select' />

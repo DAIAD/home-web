@@ -24,34 +24,34 @@ var UtilityApp = React.createClass({
 		};
 	},
 
-	componentWillMount : function() {	
+	componentWillMount : function() {
 		UtilityActions.setLocale(this.props.locale);
-		
+
 		if(this.props.reload) {
 			this.setState({ loading : true });
-			
+
 			UtilityActions.refreshProfile();
 		}
 	},
-	
+
 	componentDidMount: function() {
 		UserStore.addLoginListener(this._onLogin);
 		UserStore.addLogoutListener(this._onLogout);
-		
+
 		UserStore.addProfileRefreshListener(this._onProfileRefresh);
-		
+
 		LocaleStore.addLocaleChangeListener(this._onLocaleChange);
 	},
 
 	componentWillUnmount: function() {
 		UserStore.removeLoginListener(this._onLogin);
 		UserStore.removeLogoutListener(this._onLogout);
-		
+
 		UserStore.removeProfileRefreshListener(this._onProfileRefresh);
-		
+
 		LocaleStore.removeLocaleChangeListener(this._onLocaleChange);
 	},
-	
+
 	render: function() {
 		if((LocaleStore.isLoaded()) && (!this.state.loading)) {
 			return (
@@ -60,7 +60,7 @@ var UtilityApp = React.createClass({
 					<ContentRoot locale = { this.state.locale } isAuthenticated = { this.state.isAuthenticated } />
 				</ReactIntl.IntlProvider>
 			);
-		} else {		
+		} else {
 			return null;
 		}
 	},
@@ -68,26 +68,26 @@ var UtilityApp = React.createClass({
 	_onLocaleChange: function(args) {
 		this.setState({ locale : LocaleStore.getLocale()});
 	},
-	
+
 	_onLogin: function(args) {
-		this.setState({ 
+		this.setState({
 			isAuthenticated : UserStore.isAuthenticated()
 		});
 	},
-	
+
 	_onLogout: function() {
-		this.setState({ 
+		this.setState({
 			isAuthenticated : false
 		});
 	},
-	
+
 	_onProfileRefresh: function() {
-		this.setState({ 
+		this.setState({
 			loading : false,
 			isAuthenticated : UserStore.isAuthenticated()
 		});
 	}
-	
+
 });
 
 module.exports = UtilityApp;

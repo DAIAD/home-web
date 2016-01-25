@@ -26,21 +26,12 @@ function flattenMessages(nestedMessages, prefix) {
     }, {});
 }
 
-var messages = {
-	LoginForm : {
-		login : {
-			failure : 'Authentication has failed. Please try again.'
-		}
-	},
-	hello: 'Hello {name}'
-};
-
 var _model = {
 	locale: 'en',
 	data: {
 		en: {
 			isLoaded: false,
-			messages: flattenMessages(messages)	
+			messages: {}
 		},
 		el: {
 			isLoaded: false,

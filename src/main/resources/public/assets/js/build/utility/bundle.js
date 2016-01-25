@@ -51594,7 +51594,7 @@ var ContentRoot = React.createClass({displayName: "ContentRoot",
 
 	render: function() {
 		var content = null;
-		
+
 		if(UserStore.isAuthenticated()) {
 			content = React.createElement(SectionCollection, {isAuthenticated:  this.props.isAuthenticated});
 		}
@@ -51606,7 +51606,7 @@ var ContentRoot = React.createClass({displayName: "ContentRoot",
 							React.createElement("a", {className: "navbar-brand", href: "#", style: { padding: 0, margin: 0}}, 
 								React.createElement("img", {alt: "DAIAD", src: "../assets/images/daiad-transparent.png"})
 							)
-						), 		
+						), 
 						React.createElement("div", {style: { float: 'right', marginTop: 8, marginLeft: 10}}, 
 							React.createElement(LocaleSwitcher, null)
 						), 
@@ -51656,7 +51656,7 @@ var LocaleSwitcher = React.createClass({displayName: "LocaleSwitcher",
 
 	render: function() {
 		var _t = this.props.intl.formatMessage;
-		
+
 		var options = LocaleStore.getLocales().map(function(locale) {
 			var translationKey = 'locale.' + locale;
 			return (
@@ -51665,7 +51665,7 @@ var LocaleSwitcher = React.createClass({displayName: "LocaleSwitcher",
 				)
 			);
 		});
-		
+
 		return (
 			React.createElement(Select, {defaultValue: LocaleStore.getLocale(), onChange: onChangeHandler.bind(this), "data-width": "110px"}, 
 				options
@@ -51684,7 +51684,7 @@ var FormattedMessage = require('react-intl').FormattedMessage;
 var Modal = require('react-bootstrap').Modal;
 var Button = require('react-bootstrap').Button;
 
-//Stores
+// Stores
 var UserStore = require('../stores/UserStore');
 
 // Actions
@@ -51692,13 +51692,13 @@ var UtilityActions = require('../actions/UtilityActions');
 
 function login(event) {
 	event.preventDefault();
-	
+
 	UtilityActions.login(this.refs.username.value, this.refs.password.value);
 }
 
 function logout(event) {
 	event.preventDefault();
-	
+
 	UtilityActions.logout();
 }
 
@@ -51717,8 +51717,10 @@ var LoginForm = React.createClass({displayName: "LoginForm",
 	componentWillUnmount: function() {
 		UserStore.removeLoginListener(this._onLogin);
 	},
-	
+
 	render: function() {
+		var _t = this.props.intl.formatMessage;
+
 		var children = [];
 		if(this.props.isAuthenticated) {
 			children.push(
@@ -51728,7 +51730,9 @@ var LoginForm = React.createClass({displayName: "LoginForm",
 			   				type: "submit", 
 			   				className: "btn btn-primary", 
 	   						style: { width: 80, height: 33}, 
-		   					onClick: logout.bind(this)}, "Sign out")
+		   					onClick: logout.bind(this)}, 
+			   			React.createElement(FormattedMessage, {id: "LoginForm.button.signout"})
+   					)
 		   		)
 	   		);
 		} else {
@@ -51736,19 +51740,23 @@ var LoginForm = React.createClass({displayName: "LoginForm",
 				React.createElement("form", {key: "login", className: "navbar-form navbar-right form-login", action: this.props.action}, 
 					React.createElement("div", {className: "form-group", style: { marginRight: 10}}, 
 						React.createElement("input", {id: "username", name: "username", type: "text", ref: "username", 
-							placeholder: "Username", className: "form-control"})
+							placeholder: _t({ id: 'LoginForm.placehoder.username'}), className: "form-control"})
 					), 
 					React.createElement("div", {className: "form-group", style: { marginRight: 10}}, 
 						React.createElement("input", {id: "password", name: "password", type: "password", ref: "password", 
-							placeholder: "Password", className: "form-control"})
+							placeholder: _t({ id: 'LoginForm.placehoder.password'}), className: "form-control"})
 					), 
-					React.createElement("button", {type: "submit", className: "btn btn-primary action-login", onClick: login.bind(this), 
-						style: {width: 80, height: 33, marginTop: -1}}, "Sign in")
+					React.createElement("button", {type: "submit", 
+							className: "btn btn-primary action-login", 
+							onClick: login.bind(this), 
+							style: {width: 80, height: 33, marginTop: -1}}, 
+						React.createElement(FormattedMessage, {id: "LoginForm.button.signin"})
+					)
 				)
 			);
 		}
-		
-		if(this.state.isModalOpen) {		 
+
+		if(this.state.isModalOpen) {
 			children.push(
 				React.createElement(Modal, {key: "modal", show: true, onHide: this.close}, 
 					React.createElement(Modal.Header, {closeButton: true}, 
@@ -51773,17 +51781,17 @@ var LoginForm = React.createClass({displayName: "LoginForm",
    			)
 		);
 	},
-	
+
 	close: function() {
 		this.setState({ isModalOpen: false });
 	},
-	
+
 	_onLogin: function(args) {
 		this.setState({
 	    	isModalOpen: !args.success
 	    });
 	},
-	
+
 	_onLogout: function() {
 		this.setState({
 	    	isModalOpen: false
@@ -51810,24 +51818,26 @@ var SectionCollection = React.createClass({displayName: "SectionCollection",
 			key: 1
     	};
 	},
-	
+
 	selectSection:function(key) {
 		this.setState({key:key});
   	},
-  
-  	render: function() {	 
+
+  	render: function() {
+  		var _t = this.props.intl.formatMessage;
+
   		return (
   			React.createElement("div", {style: { padding: 10, marginLeft: 'auto', marginRight: 'auto', maxWidth: 1157}}, 
 		 	React.createElement(Bootstrap.Tabs, {activeKey: this.state.key, onSelect: this.selectSection}, 
-		        React.createElement(Bootstrap.Tab, {eventKey: 1, title: "Dashboard"}), 
-		        React.createElement(Bootstrap.Tab, {eventKey: 2, title: "Analytics"}), 
-		        React.createElement(Bootstrap.Tab, {eventKey: 3, title: "Forecasting"}), 
-		        React.createElement(Bootstrap.Tab, {eventKey: 4, title: "Demographics"}), 
-		        React.createElement(Bootstrap.Tab, {eventKey: 5, title: "Search"}), 
-		        React.createElement(Bootstrap.Tab, {eventKey: 6, title: "Alerts / Notifications"}), 
-		        React.createElement(Bootstrap.Tab, {eventKey: 7, title: "Settings"}), 
-		        React.createElement(Bootstrap.Tab, {eventKey: 8, title: "Reporting"}), 
-		        React.createElement(Bootstrap.Tab, {eventKey: 9, title: "Export"})
+		        React.createElement(Bootstrap.Tab, {eventKey: 1, title: _t({ id: 'Section.Dashboard'})}), 
+		        React.createElement(Bootstrap.Tab, {eventKey: 2, title: _t({ id: 'Section.Analytics'})}), 
+		        React.createElement(Bootstrap.Tab, {eventKey: 3, title: _t({ id: 'Section.Forecasting'})}), 
+		        React.createElement(Bootstrap.Tab, {eventKey: 4, title: _t({ id: 'Section.Demographics'})}), 
+		        React.createElement(Bootstrap.Tab, {eventKey: 5, title: _t({ id: 'Section.Search'})}), 
+		        React.createElement(Bootstrap.Tab, {eventKey: 6, title: _t({ id: 'Section.Alerts_Notifications'})}), 
+		        React.createElement(Bootstrap.Tab, {eventKey: 7, title: _t({ id: 'Section.Settings'})}), 
+		        React.createElement(Bootstrap.Tab, {eventKey: 8, title: _t({ id: 'Section.Reporting'})}), 
+		        React.createElement(Bootstrap.Tab, {eventKey: 9, title: _t({ id: 'Section.Export'})})
 		    )
 		    )
  		);
@@ -51847,7 +51857,7 @@ var Select = require('bootstrap-select');
 
 var ReactBootstrapSelect = React.createClass({
 	displayName: 'ReactBootstrapSelect',
-	
+
 	getInitialState: function () {
 		return {
 			open: false
@@ -51859,17 +51869,17 @@ var ReactBootstrapSelect = React.createClass({
 		var select = $(ReactDOM.findDOMNode(this)).find('div.bootstrap-select');
 		select.toggleClass('open', this.state.open);
 	},
-	
+
 	componentWillUnmount: function () {
 		var select = $(ReactDOM.findDOMNode(this)).find('select');
 		$(select).selectpicker('destroy');
 	},
-	
+
 	componentDidMount: function () {
 		var select = $(ReactDOM.findDOMNode(this)).find('select');
 		$(select).selectpicker();
 	},
-  
+
 	render: function () {
 		return (
 			React.createElement(BootStrap.Input, React.__spread({},  this.props, {type: "select"}))
@@ -51906,34 +51916,34 @@ var UtilityApp = React.createClass({displayName: "UtilityApp",
 		};
 	},
 
-	componentWillMount : function() {	
+	componentWillMount : function() {
 		UtilityActions.setLocale(this.props.locale);
-		
+
 		if(this.props.reload) {
 			this.setState({ loading : true });
-			
+
 			UtilityActions.refreshProfile();
 		}
 	},
-	
+
 	componentDidMount: function() {
 		UserStore.addLoginListener(this._onLogin);
 		UserStore.addLogoutListener(this._onLogout);
-		
+
 		UserStore.addProfileRefreshListener(this._onProfileRefresh);
-		
+
 		LocaleStore.addLocaleChangeListener(this._onLocaleChange);
 	},
 
 	componentWillUnmount: function() {
 		UserStore.removeLoginListener(this._onLogin);
 		UserStore.removeLogoutListener(this._onLogout);
-		
+
 		UserStore.removeProfileRefreshListener(this._onProfileRefresh);
-		
+
 		LocaleStore.removeLocaleChangeListener(this._onLocaleChange);
 	},
-	
+
 	render: function() {
 		if((LocaleStore.isLoaded()) && (!this.state.loading)) {
 			return (
@@ -51942,7 +51952,7 @@ var UtilityApp = React.createClass({displayName: "UtilityApp",
 					React.createElement(ContentRoot, {locale:  this.state.locale, isAuthenticated:  this.state.isAuthenticated})
 				)
 			);
-		} else {		
+		} else {
 			return null;
 		}
 	},
@@ -51950,26 +51960,26 @@ var UtilityApp = React.createClass({displayName: "UtilityApp",
 	_onLocaleChange: function(args) {
 		this.setState({ locale : LocaleStore.getLocale()});
 	},
-	
+
 	_onLogin: function(args) {
-		this.setState({ 
+		this.setState({
 			isAuthenticated : UserStore.isAuthenticated()
 		});
 	},
-	
+
 	_onLogout: function() {
-		this.setState({ 
+		this.setState({
 			isAuthenticated : false
 		});
 	},
-	
+
 	_onProfileRefresh: function() {
-		this.setState({ 
+		this.setState({
 			loading : false,
 			isAuthenticated : UserStore.isAuthenticated()
 		});
 	}
-	
+
 });
 
 module.exports = UtilityApp;
@@ -52035,21 +52045,12 @@ function flattenMessages(nestedMessages, prefix) {
     }, {});
 }
 
-var messages = {
-	LoginForm : {
-		login : {
-			failure : 'Authentication has failed. Please try again.'
-		}
-	},
-	hello: 'Hello {name}'
-};
-
 var _model = {
 	locale: 'en',
 	data: {
 		en: {
 			isLoaded: false,
-			messages: flattenMessages(messages)	
+			messages: {}
 		},
 		el: {
 			isLoaded: false,

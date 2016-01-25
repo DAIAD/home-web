@@ -5,7 +5,7 @@ var FormattedMessage = require('react-intl').FormattedMessage;
 var Modal = require('react-bootstrap').Modal;
 var Button = require('react-bootstrap').Button;
 
-//Stores
+// Stores
 var UserStore = require('../stores/UserStore');
 
 // Actions
@@ -13,13 +13,13 @@ var UtilityActions = require('../actions/UtilityActions');
 
 function login(event) {
 	event.preventDefault();
-	
+
 	UtilityActions.login(this.refs.username.value, this.refs.password.value);
 }
 
 function logout(event) {
 	event.preventDefault();
-	
+
 	UtilityActions.logout();
 }
 
@@ -38,38 +38,46 @@ var LoginForm = React.createClass({
 	componentWillUnmount: function() {
 		UserStore.removeLoginListener(this._onLogin);
 	},
-	
+
 	render: function() {
+		var _t = this.props.intl.formatMessage;
+
 		var children = [];
 		if(this.props.isAuthenticated) {
 			children.push(
 				<p key="logout"	className="navbar-text navbar-right"
 					style={{marginTop: 8, marginBottom: 0, paddingRight: 15 }} >
-			   		<button id="logout" 
-			   				type="submit" 
-			   				className="btn btn-primary" 
+			   		<button id="logout"
+			   				type="submit"
+			   				className="btn btn-primary"
 	   						style={{ width: 80, height: 33 }}
-		   					onClick={logout.bind(this)}>Sign out</button>
+		   					onClick={logout.bind(this)}>
+			   			<FormattedMessage id="LoginForm.button.signout" />
+   					</button>
 		   		</p>
 	   		);
 		} else {
 			children.push(
 				<form key="login" className="navbar-form navbar-right form-login" action={this.props.action}>
 					<div className="form-group" style={{ marginRight: 10}}>
-						<input id="username" name="username" type="text" ref="username" 
-							placeholder="Username" className="form-control" />
+						<input id="username" name="username" type="text" ref="username"
+							placeholder={_t({ id: 'LoginForm.placehoder.username'})} className="form-control" />
 					</div>
 					<div className="form-group" style={{ marginRight: 10}}>
-						<input id="password" name="password" type="password" ref="password" 
-							placeholder="Password" className="form-control" />
+						<input id="password" name="password" type="password" ref="password"
+							placeholder={_t({ id: 'LoginForm.placehoder.password'})} className="form-control" />
 					</div>
-					<button type="submit" className="btn btn-primary action-login" onClick={login.bind(this)} 
-						style={{width: 80, height: 33, marginTop: -1}}>Sign in</button>
+					<button type="submit"
+							className="btn btn-primary action-login"
+							onClick={login.bind(this)}
+							style={{width: 80, height: 33, marginTop: -1}}>
+						<FormattedMessage id="LoginForm.button.signin" />
+					</button>
 				</form>
 			);
 		}
-		
-		if(this.state.isModalOpen) {		 
+
+		if(this.state.isModalOpen) {
 			children.push(
 				<Modal key="modal" show={true} onHide={this.close}>
 					<Modal.Header closeButton>
@@ -94,17 +102,17 @@ var LoginForm = React.createClass({
    			</div>
 		);
 	},
-	
+
 	close: function() {
 		this.setState({ isModalOpen: false });
 	},
-	
+
 	_onLogin: function(args) {
 		this.setState({
 	    	isModalOpen: !args.success
 	    });
 	},
-	
+
 	_onLogout: function() {
 		this.setState({
 	    	isModalOpen: false

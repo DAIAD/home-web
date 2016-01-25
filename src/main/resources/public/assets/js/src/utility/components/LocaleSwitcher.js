@@ -23,7 +23,7 @@ var LocaleSwitcher = React.createClass({
 
 	render: function() {
 		var _t = this.props.intl.formatMessage;
-		
+
 		var options = LocaleStore.getLocales().map(function(locale) {
 			var translationKey = 'locale.' + locale;
 			return (
@@ -32,7 +32,7 @@ var LocaleSwitcher = React.createClass({
 				</option>
 			);
 		});
-		
+
 		return (
 			<Select defaultValue={LocaleStore.getLocale()} onChange={onChangeHandler.bind(this)}  data-width='110px'>
 				{options}
