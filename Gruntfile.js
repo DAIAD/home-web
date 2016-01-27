@@ -33,6 +33,9 @@ module.exports = function (grunt) {
 				browserifyOptions: {
 					debug: false
 				},
+				exclude: [
+				  'echarts'
+				],
 				transform: [
 					[
 						"reactify",
@@ -44,6 +47,8 @@ module.exports = function (grunt) {
 						{
 							"NODE_ENV": "production"
 						}
+					], [
+						"browserify-shim"
 					]
 				]
 			},
@@ -80,6 +85,15 @@ module.exports = function (grunt) {
                 }
             }
         },
+        concat: {
+			utility: {
+				src: [
+					'node_modules/echarts/dist/echarts.min.js',
+					'src/main/resources/public/assets/js/build/utility/bundle.min.js'
+				],
+				dest: 'src/main/resources/public/assets/js/build/utility/bundle.min.js',
+			},
+		},
         sync: {
 			debug: {
 				files: [{
@@ -117,6 +131,18 @@ module.exports = function (grunt) {
 					filter: 'isFile'
 				}, {
 					expand: true,
+					cwd: 'bower_components/leaflet/dist/',
+					src: ['**/*'],
+					dest: 'src/main/resources/public/assets/lib/leaflet/',
+					filter: 'isFile'
+				}, {
+					expand: true,
+					cwd: 'bower_components/echarts/dist/',
+					src: ['**/*'],
+					dest: 'src/main/resources/public/assets/lib/echarts/',
+					filter: 'isFile'
+				}, {
+					expand: true,
 					cwd: 'src/main/resources/public/assets/js/src/utility/i18n/',
 					src: ['*.js'],
 					dest: 'src/main/resources/public/assets/js/build/utility/i18n/',
@@ -147,14 +173,15 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-browserify');
     grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-sync');
     grunt.loadNpmTasks('grunt-contrib-watch');
 
     grunt.loadNpmTasks('grunt-jsxhint');
 
     // Default task(s).
-    grunt.registerTask('build', ['clean', 'jshint', 'browserify', 'uglify', 'sync:utility']);
+    grunt.registerTask('build', ['clean', 'jshint', 'browserify', 'uglify', 'concat', 'sync:utility']);
 
-	grunt.registerTask('develop', ['clean', 'jshint', 'browserify', 'sync:debug', 'watch']);
+	grunt.registerTask('develop', ['clean', 'jshint', 'browserify', 'sync:utility', 'sync:debug', 'watch']);
 
 };

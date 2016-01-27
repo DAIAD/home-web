@@ -1,12 +1,8 @@
-// Dependencies
 var React = require('react');
 var ReactDOM = require('react-dom');
-
 var injectIntl = require('react-intl').injectIntl;
 var FormattedMessage = require('react-intl').FormattedMessage;
-
 var Bootstrap = require('react-bootstrap');
-
 
 var SectionCollection = React.createClass({
 	getInitialState() {

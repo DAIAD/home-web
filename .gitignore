@@ -20,3 +20,5 @@ jspm_packages
 *.tar.gz
 *.zip
 *.rar
+
+application-*.properties

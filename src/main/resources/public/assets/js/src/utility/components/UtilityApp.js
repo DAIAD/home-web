@@ -1,19 +1,13 @@
-// Dependencies
 var React = require('react');
 var ReactDOM = require('react-dom');
 var ReactIntl = require('react-intl');
+var ContentRoot = require('./ContentRoot');
 
-// Stores
 var UserStore = require('../stores/UserStore');
 var LocaleStore = require('../stores/LocaleStore');
 
-// Components
-var ContentRoot = require('./ContentRoot');
-
-// Actions
 var UtilityActions = require('../actions/UtilityActions');
 
-// UtilityApp
 var UtilityApp = React.createClass({
 
 	getInitialState: function() {

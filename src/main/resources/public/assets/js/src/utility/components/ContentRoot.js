@@ -1,14 +1,13 @@
-// Dependencies
 var React = require('react');
 var ReactDOM = require('react-dom');
-
 var injectIntl = require('react-intl').injectIntl;
 
-//Components
+var UserStore = require('../stores/UserStore');
+
 var LoginForm = require('./LoginForm');
 var LocaleSwitcher = require('./LocaleSwitcher');
-var UserStore = require('../stores/UserStore');
 var SectionCollection = require('./SectionCollection');
+var LeafletMap = require('./LeafletMap');
 
 var ContentRoot = React.createClass({
 
@@ -18,6 +17,7 @@ var ContentRoot = React.createClass({
 		if(UserStore.isAuthenticated()) {
 			content = <SectionCollection isAuthenticated = { this.props.isAuthenticated } />;
 		}
+
 		return (
 			<div>
 				<nav className="navbar navbar-default navbar-fixed-top">
