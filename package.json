@@ -15,11 +15,26 @@
     "object-assign": "~4.0.1",
     "keymirror": "~0.1.1",
     "jquery": "~2.2.0",
+		"echarts": "^3.0.0",
     "react-intl": "^2.0.0-beta-2",
-    "bootstrap-select": "~1.9.4"
+		"react-router": "^1.0.3",
+		"history": "^1.17.0"
   },
+	"browserify": {
+		"transform": [
+			[
+				"reactify",
+				{
+					"es6":true
+				}
+			]
+		],
+		"insertGlobals":true,
+		"debug":true
+	},
   "scripts": {
-    "build": "grunt build"
+    "build": "grunt build",
+		"watch": "watchify -o src/main/resources/public/assets/js/build/home/bundle.js -d src/main/resources/public/assets/js/src/home/main.js -v"
   },
   "devDependencies": {
     "bower": "~1.7.2",

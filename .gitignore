@@ -13,6 +13,7 @@ target/
 node
 node_modules
 npm-debug.log
+src/main/resources/config
 
 bower_components
 jspm_packages
