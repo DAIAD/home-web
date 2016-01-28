@@ -43,7 +43,8 @@ import eu.daiad.web.model.meter.WaterMeterStatusQueryResult;
 @Repository()
 @Scope("prototype")
 @PropertySource("${hbase.properties}")
-public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurementRepository {
+public class HBaseWaterMeterMeasurementRepository implements
+		IWaterMeterMeasurementRepository {
 
 	private enum EnumTimeInterval {
 		UNDEFINED(0), HOUR(3600), DAY(86400);
@@ -61,9 +62,13 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 
 	private String quorum;
 
-	private String meterTableMeasurements = "daiad:meter-measurements";
+	private String meterTableMeasurementByUser = "daiad:meter-measurements-by-time";
+	private String meterTableMeasurementByTime = "daiad:meter-measurements-by-user";
 
 	private String columnFamilyName = "cf";
+
+	@Value("${hbase.data.time.partitions}")
+	private short timePartitions;
 
 	private static final Log logger = LogFactory
 			.getLog(HBaseWaterMeterMeasurementRepository.class);
@@ -76,21 +81,43 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 
 	@Override
 	public void storeData(WaterMeterMeasurementCollection data) {
+		Connection connection = null;
 		try {
-			if ((data == null) || (data.getMeasurements() == null)) {
+			if ((data == null) || (data.getMeasurements() == null)
+					|| (data.getMeasurements().size() == 0)) {
 				return;
 			}
-
 			Configuration config = HBaseConfiguration.create();
-
 			config.set("hbase.zookeeper.quorum", this.quorum);
 
-			Connection connection = ConnectionFactory.createConnection(config);
+			connection = ConnectionFactory.createConnection(config);
 
+			this.storeDataByUser(connection, data);
+			this.storeDataByTime(connection, data);
+
+			connection.close();
+		} catch (RuntimeException ex) {
+			logger.error("Malformed data found.", ex);
+		} catch (Exception ex) {
+			logger.error("Unhandled exception has occured.", ex);
+		} finally {
+			try {
+				if ((connection != null) && (!connection.isClosed())) {
+					connection.close();
+				}
+			} catch (Exception ex) {
+				logger.error("Unhandled exception has occurred.", ex);
+			}
+		}
+	}
+
+	private void storeDataByUser(Connection connection,
+			WaterMeterMeasurementCollection data) {
+		try {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
 			Table table = connection.getTable(TableName
-					.valueOf(this.meterTableMeasurements));
+					.valueOf(this.meterTableMeasurementByUser));
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			byte[] userKey = data.getUserKey().toString().getBytes("UTF-8");
@@ -139,7 +166,79 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 				table.put(p);
 			}
 			table.close();
-			connection.close();
+		} catch (RuntimeException ex) {
+			logger.error("Malformed data found.", ex);
+		} catch (Exception ex) {
+			logger.error("Unhandled exception has occured.", ex);
+		}
+	}
+
+	private void storeDataByTime(Connection connection,
+			WaterMeterMeasurementCollection data) {
+		try {
+			MessageDigest md = MessageDigest.getInstance("MD5");
+
+			Table table = connection.getTable(TableName
+					.valueOf(this.meterTableMeasurementByTime));
+			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+
+			byte[] userKey = data.getUserKey().toString().getBytes("UTF-8");
+			byte[] userKeyHash = md.digest(userKey);
+
+			byte[] deviceKey = data.getDeviceKey().toString().getBytes("UTF-8");
+			byte[] deviceKeyHash = md.digest(deviceKey);
+
+			for (int i = 0; i < data.getMeasurements().size(); i++) {
+				WaterMeterMeasurement m = data.getMeasurements().get(i);
+
+				if (m.getVolume() <= 0) {
+					continue;
+				}
+				short partition = (short) (m.getTimestamp() % this.timePartitions);
+				byte[] partitionBytes = Bytes.toBytes(partition);
+
+				long timestamp = (Long.MAX_VALUE - m.getTimestamp()) / 1000;
+
+				long timeSlice = timestamp % 3600;
+				byte[] timeSliceBytes = Bytes.toBytes((short) timeSlice);
+				if (timeSliceBytes.length != 2) {
+					throw new RuntimeException("Invalid byte array length!");
+				}
+
+				long timeBucket = timestamp - timeSlice;
+
+				byte[] timeBucketBytes = Bytes.toBytes(timeBucket);
+				if (timeBucketBytes.length != 8) {
+					throw new RuntimeException("Invalid byte array length!");
+				}
+
+				byte[] rowKey = new byte[partitionBytes.length
+						+ timeBucketBytes.length + userKeyHash.length
+						+ deviceKeyHash.length];
+
+				System.arraycopy(partitionBytes, 0, rowKey, 0,
+						partitionBytes.length);
+				System.arraycopy(timeBucketBytes, 0, rowKey,
+						partitionBytes.length, timeBucketBytes.length);
+				System.arraycopy(userKeyHash, 0, rowKey,
+						(partitionBytes.length + timeBucketBytes.length),
+						userKeyHash.length);
+				System.arraycopy(
+						deviceKeyHash,
+						0,
+						rowKey,
+						(partitionBytes.length + timeBucketBytes.length + userKeyHash.length),
+						deviceKeyHash.length);
+
+				Put p = new Put(rowKey);
+
+				byte[] column = this.concatenate(timeSliceBytes,
+						this.appendLength(Bytes.toBytes("v")));
+				p.addColumn(columnFamily, column, Bytes.toBytes(m.getVolume()));
+
+				table.put(p);
+			}
+			table.close();
 		} catch (RuntimeException ex) {
 			logger.error("Malformed data found.", ex);
 		} catch (Exception ex) {
@@ -210,7 +309,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
 			Table table = connection.getTable(TableName
-					.valueOf(this.meterTableMeasurements));
+					.valueOf(this.meterTableMeasurementByUser));
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
@@ -389,7 +488,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
 			Table table = connection.getTable(TableName
-					.valueOf(this.meterTableMeasurements));
+					.valueOf(this.meterTableMeasurementByUser));
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
@@ -414,7 +513,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 				WaterMeterDataSeries series = new WaterMeterDataSeries(
 						queryStartDate.getMillis(), queryEndDate.getMillis(),
 						query.getGranularity());
-				
+
 				series.setDeviceKey(deviceKeys[deviceIndex]);
 				data.getSeries().add(series);
 
