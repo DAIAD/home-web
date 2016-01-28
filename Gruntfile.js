@@ -46,6 +46,9 @@ module.exports = function (grunt) {
 				browserifyOptions: {
 					debug: false
 				},
+				exclude: [
+					//'echarts'
+				],
 				transform: [
 					[
 						"reactify",
@@ -97,27 +100,44 @@ module.exports = function (grunt) {
 				}
 			}
 		},
-        uglify: {
-            options: {
-                banner: '/* <%= pkg.description %> version <%= pkg.version %> <%= grunt.template.today("yyyy-mm-dd") %> */\n',
-                sourceMap: true
-            },
-            utility: {
-                files: {
-                    'src/main/resources/public/assets/js/build/utility/bundle.min.js': [
-						'src/main/resources/public/assets/js/build/utility/bundle.js'
-					]
-                }
-						}
-						/*home: {
-                files: {
-                    'src/main/resources/public/assets/js/build/home/bundle.min.js': [
-										'src/main/resources/public/assets/js/build/home/bundle.js'
-								]
-                }
-								}
-								*/
-        },
+		//uglify: {
+		//       options: {
+		//           banner: '/* <%= pkg.description %> version <%= pkg.version %> <%= grunt.template.today("yyyy-mm-dd") %> */\n',
+			//          sourceMap: true
+				//    },
+				//      utility: {
+				//        files: {
+				//            'src/main/resources/public/assets/js/build/utility/bundle.min.js': [
+				//			'src/main/resources/public/assets/js/build/utility/bundle.js'
+				//		]
+				//        }
+				//			},
+				//			home: {
+				//       files: {
+				//           'src/main/resources/public/assets/js/build/home/bundle.min.js': [
+				//						'src/main/resources/public/assets/js/build/home/bundle.js'
+				//				]
+				//       }
+				//				}
+				//},
+				
+				concat: {
+					utility: {
+						src: [
+							'node_modules/echarts/dist/echarts.min.js',
+							'src/main/resources/public/assets/js/build/utility/bundle.min.js'
+						],
+						dest: 'src/main/resources/public/assets/js/build/utility/bundle.min.js',
+					},
+					home: {
+						src: [
+							'node_modules/echarts/dist/echarts.min.js',
+							'src/main/resources/public/assets/js/build/home/bundle.js'
+						],
+						dest: 'src/main/resources/public/assets/js/build/home/bundle.js',
+						},
+				},
+	
         sync: {
 					debug: {
 						files: [{
@@ -195,6 +215,7 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-browserify');
     grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-sync');
     grunt.loadNpmTasks('grunt-contrib-watch');
 
@@ -203,6 +224,8 @@ module.exports = function (grunt) {
     // Default task(s).
     grunt.registerTask('build', ['clean', 'jshint', 'browserify', 'uglify', 'sync:utility']);
 
-		grunt.registerTask('develop', ['clean', 'jshint', 'browserify', 'sync:debug', 'watch']);
+		grunt.registerTask('develop', ['clean', 'jshint', 'browserify', 'concat', 'sync:debug', 'watch']);
 
 };
+
+

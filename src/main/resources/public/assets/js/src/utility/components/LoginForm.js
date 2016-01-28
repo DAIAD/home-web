@@ -1,14 +1,12 @@
-// Dependencies
 var React = require('react');
 var injectIntl = require('react-intl').injectIntl;
 var FormattedMessage = require('react-intl').FormattedMessage;
+
 var Modal = require('react-bootstrap').Modal;
 var Button = require('react-bootstrap').Button;
 
-// Stores
 var UserStore = require('../stores/UserStore');
 
-// Actions
 var UtilityActions = require('../actions/UtilityActions');
 
 function login(event) {
@@ -82,7 +80,7 @@ var LoginForm = React.createClass({
 				<Modal key="modal" show={true} onHide={this.close}>
 					<Modal.Header closeButton>
 				    	<Modal.Title>
-							<img alt="DAIAD" src="images/daiad-transparent.png" />
+							<img alt="DAIAD" src="../assets/images/daiad-transparent.png" />
 						</Modal.Title>
 					</Modal.Header>
 					<Modal.Body>

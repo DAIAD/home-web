@@ -65,6 +65,7 @@
 
 /* Common */
 
+/* Generic */
 body {
   background: #fff;
 	color: #666;
@@ -324,6 +325,7 @@ header{
 /* Content */
 
 /* Sections */
+
 .main-section section{
 }
 section[class^="section-"]{
@@ -401,4 +403,27 @@ footer{
 
 .chartContainer{
 	min-height: 700px;
+}
+
+/* React BootStrap Tabs */
+.nav-tabs>li>a {
+	border-radius: 0px;
+}
+
+.nav-tabs>li>a:hover {
+	border-color: transparent;
+	border-top-color: #337ab7;
+	border-bottom-color: #ddd;
+	background: #fff;
+}
+
+.nav-tabs>li>a:focus {
+	outline: none;
+	border-top-color: #337ab7;
+}
+
+/* React Components */
+.mixin {
+	width: 100%;
+	height: 100%;
 }

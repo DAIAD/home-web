@@ -1,18 +1,11 @@
-// Dependencies
 var React = require('react');
-
+var injectIntl = require('react-intl').injectIntl;
 var Bootstrap = require('react-bootstrap');
 
-var Select = require('./Select');
+Bootstrap.Select = require('./Select');
 
-var injectIntl = require('react-intl').injectIntl;
-
-// Components
-
-// Stores
 var LocaleStore = require('../stores/LocaleStore');
 
-// Actions
 var UtilityActions = require('../actions/UtilityActions');
 
 var onChangeHandler =  function(event) {
@@ -34,9 +27,9 @@ var LocaleSwitcher = React.createClass({
 		});
 
 		return (
-			<Select defaultValue={LocaleStore.getLocale()} onChange={onChangeHandler.bind(this)}  data-width='110px'>
+			<Bootstrap.Select defaultValue={LocaleStore.getLocale()} onChange={onChangeHandler.bind(this)}  data-width='110px'>
 				{options}
-			</Select>
+			</Bootstrap.Select>
 		);
 	}
 });
