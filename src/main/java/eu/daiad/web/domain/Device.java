@@ -1,10 +1,13 @@
 package eu.daiad.web.domain;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -12,10 +15,13 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Type;
+
+import eu.daiad.web.model.device.EnumDeviceType;
 
 @Entity(name = "device")
 @Table(schema = "public", name = "device")
@@ -32,6 +38,10 @@ public class Device {
 	@JoinColumn(name = "account_id", nullable = false)
 	private Account account;
 
+	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
+	@JoinColumn(name = "device_id")
+	private Set<DeviceProperty> properties = new HashSet<DeviceProperty>();
+	
 	@Column()
 	@Type(type = "pg-uuid")
 	private UUID key = UUID.randomUUID();
@@ -50,6 +60,14 @@ public class Device {
 
 	public UUID getKey() {
 		return key;
+	}
+
+	public Set<DeviceProperty> getProperties() {
+		return properties;
+	}
+	
+	public EnumDeviceType getType() {
+		return EnumDeviceType.UNDEFINED;
 	}
 
 }

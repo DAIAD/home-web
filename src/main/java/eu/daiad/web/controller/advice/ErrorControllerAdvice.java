@@ -20,11 +20,11 @@ public class ErrorControllerAdvice {
 		logger.error("Unhandled exception has occured in Controller class.", ex);
 
 		if(ex instanceof ResourceNotFoundException) {
-			return "notfound";
+			return "error/404";
 		} else if(ex instanceof AccessDeniedException) {
-			return "denied";
+			return "error/403";
 		}
-		return "error";
+		return "error/500";
 	}
 	
 }

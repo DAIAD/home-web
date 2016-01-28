@@ -1,4 +1,4 @@
-package eu.daiad.web.security.model;
+package eu.daiad.web.model;
 
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.profile.Profile;

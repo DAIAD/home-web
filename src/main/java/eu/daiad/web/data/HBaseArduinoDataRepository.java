@@ -35,7 +35,7 @@ import eu.daiad.web.model.arduino.ArduinoMeasurement;
 @Repository()
 @Scope("prototype")
 @PropertySource("${hbase.properties}")
-public class ArduinoDataRepository {
+public class HBaseArduinoDataRepository implements IArduinoDataRepository {
 
 	private enum EnumTimeInterval {
 		UNDEFINED(0), HOUR(3600), DAY(86400);
@@ -62,14 +62,15 @@ public class ArduinoDataRepository {
 	private Table table = null;
 
 	private static final Log logger = LogFactory
-			.getLog(ArduinoDataRepository.class);
+			.getLog(HBaseArduinoDataRepository.class);
 
 	@Autowired
-	public ArduinoDataRepository(
+	public HBaseArduinoDataRepository(
 			@Value("${hbase.zookeeper.quorum}") String quorum) {
 		this.quorum = quorum;
 	}
 
+	@Override
 	public void storeData(String deviceKey, ArrayList<ArduinoMeasurement> data)
 			throws Exception {
 
@@ -189,6 +190,7 @@ public class ArduinoDataRepository {
 		return concat;
 	}
 
+	@Override
 	public ArduinoIntervalQueryResult searchData(ArduinoIntervalQuery query)
 			throws Exception {
 		ArduinoIntervalQueryResult data = new ArduinoIntervalQueryResult();

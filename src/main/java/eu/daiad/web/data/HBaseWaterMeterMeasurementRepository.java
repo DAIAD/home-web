@@ -43,7 +43,7 @@ import eu.daiad.web.model.meter.WaterMeterStatusQueryResult;
 @Repository()
 @Scope("prototype")
 @PropertySource("${hbase.properties}")
-public class WaterMeterMeasurementRepository {
+public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurementRepository {
 
 	private enum EnumTimeInterval {
 		UNDEFINED(0), HOUR(3600), DAY(86400);
@@ -66,14 +66,15 @@ public class WaterMeterMeasurementRepository {
 	private String columnFamilyName = "cf";
 
 	private static final Log logger = LogFactory
-			.getLog(WaterMeterMeasurementRepository.class);
+			.getLog(HBaseWaterMeterMeasurementRepository.class);
 
 	@Autowired
-	public WaterMeterMeasurementRepository(
+	public HBaseWaterMeterMeasurementRepository(
 			@Value("${hbase.zookeeper.quorum}") String quorum) {
 		this.quorum = quorum;
 	}
 
+	@Override
 	public void storeData(WaterMeterMeasurementCollection data) {
 		try {
 			if ((data == null) || (data.getMeasurements() == null)) {
@@ -195,6 +196,7 @@ public class WaterMeterMeasurementRepository {
 		return concat;
 	}
 
+	@Override
 	public WaterMeterStatusQueryResult getStatus(WaterMeterStatusQuery query) {
 		WaterMeterStatusQueryResult data = new WaterMeterStatusQueryResult();
 
@@ -316,6 +318,7 @@ public class WaterMeterMeasurementRepository {
 		return null;
 	}
 
+	@Override
 	public WaterMeterMeasurementQueryResult searchMeasurements(
 			WaterMeterMeasurementQuery query) {
 		DateTime startDate = new DateTime(query.getStartDate());

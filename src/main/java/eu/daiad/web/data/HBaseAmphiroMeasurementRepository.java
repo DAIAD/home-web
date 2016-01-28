@@ -32,6 +32,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Repository;
 
+import eu.daiad.web.model.ApplicationUser;
 import eu.daiad.web.model.TemporalConstants;
 import eu.daiad.web.model.amphiro.AmphiroAbstractDataPoint;
 import eu.daiad.web.model.amphiro.AmphiroAbstractSession;
@@ -49,14 +50,14 @@ import eu.daiad.web.model.amphiro.AmphiroSessionDetails;
 import eu.daiad.web.model.amphiro.AmphiroSessionQuery;
 import eu.daiad.web.model.amphiro.AmphiroSessionQueryResult;
 import eu.daiad.web.model.device.AmphiroDevice;
-import eu.daiad.web.model.export.ExportData;
+import eu.daiad.web.model.export.ExportDataRequest;
 import eu.daiad.web.model.export.ExtendedSessionData;
-import eu.daiad.web.security.model.ApplicationUser;
 
 @Repository()
 @Scope("prototype")
 @PropertySource("${hbase.properties}")
-public class AmphiroMeasurementRepository {
+public class HBaseAmphiroMeasurementRepository implements
+		IAmphiroMeasurementRepository {
 
 	private enum EnumTimeInterval {
 		UNDEFINED(0), HOUR(3600), DAY(86400);
@@ -86,15 +87,16 @@ public class AmphiroMeasurementRepository {
 	private String columnFamilyName = "cf";
 
 	private static final Log logger = LogFactory
-			.getLog(AmphiroMeasurementRepository.class);
+			.getLog(HBaseAmphiroMeasurementRepository.class);
 
 	@Autowired
-	public AmphiroMeasurementRepository(
+	public HBaseAmphiroMeasurementRepository(
 			@Value("${hbase.zookeeper.quorum}") String quorum) {
 		this.quorum = quorum;
 	}
 
-	public List<ExtendedSessionData> exportSessions(ExportData data)
+	@Override
+	public List<ExtendedSessionData> exportSessions(ExportDataRequest data)
 			throws Exception {
 		ArrayList<ExtendedSessionData> sessions = new ArrayList<ExtendedSessionData>();
 
@@ -211,7 +213,7 @@ public class AmphiroMeasurementRepository {
 								case "m:offset":
 									int offset = Bytes.toInt(entry.getValue());
 
-									session.setTimestamp((timeBucket + (long) offset) * 1000L);
+									session.setTimestamp((timeBucket + offset) * 1000L);
 									break;
 								case "m:t":
 									session.setTemperature(Bytes.toFloat(entry
@@ -440,7 +442,7 @@ public class AmphiroMeasurementRepository {
 
 				// Add device data
 				column = Bytes.toBytes("d:id");
-				put.addColumn(columnFamily, column, device.getDeviceId()
+				put.addColumn(columnFamily, column, device.getMacAddress()
 						.getBytes(StandardCharsets.UTF_8));
 
 				column = Bytes.toBytes("d:key");
@@ -493,6 +495,43 @@ public class AmphiroMeasurementRepository {
 		}
 	}
 
+	private void preProcessMeasurements(
+			ArrayList<AmphiroMeasurement> measurements) {
+		if (measurements.size() > 1) {
+			Collections.sort(measurements,
+					new Comparator<AmphiroMeasurement>() {
+
+						@Override
+						public int compare(AmphiroMeasurement m1,
+								AmphiroMeasurement m2) {
+							if (m1.getSessionId() <= m2.getSessionId()) {
+								if (m1.getIndex() <= m2.getIndex()) {
+									return -1;
+								} else {
+									return 1;
+								}
+							} else {
+								return 1;
+							}
+						}
+					});
+
+			for (int i = measurements.size() - 1; i > 0; i--) {
+				if (measurements.get(i).getSessionId() == measurements.get(
+						i - 1).getSessionId()) {
+					// Set volume
+					float diff = measurements.get(i).getVolume()
+							- measurements.get(i - 1).getVolume();
+					measurements.get(i).setVolume((float)Math.round(diff * 1000f) / 1000f);
+					// Set energy
+					diff = measurements.get(i).getEnergy()
+							- measurements.get(i - 1).getEnergy();
+					measurements.get(i).setEnergy((float)Math.round(diff * 1000f) / 1000f);
+				}
+			}
+		}
+	}
+
 	private void storeMeasurements(Connection connection, ApplicationUser user,
 			AmphiroDevice device, AmphiroMeasurementCollection data)
 			throws Exception {
@@ -501,6 +540,8 @@ public class AmphiroMeasurementRepository {
 			if ((data == null) || (data.getMeasurements() == null)) {
 				return;
 			}
+			this.preProcessMeasurements(data.getMeasurements());
+
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
 			table = connection.getTable(TableName
@@ -578,6 +619,7 @@ public class AmphiroMeasurementRepository {
 		}
 	}
 
+	@Override
 	public void storeData(ApplicationUser user, AmphiroDevice device,
 			AmphiroMeasurementCollection data) {
 		Connection connection = null;
@@ -672,6 +714,7 @@ public class AmphiroMeasurementRepository {
 		return concat;
 	}
 
+	@Override
 	public AmphiroMeasurementQueryResult searchMeasurements(
 			AmphiroMeasurementQuery query) {
 		AmphiroMeasurementQueryResult data = new AmphiroMeasurementQueryResult();
@@ -780,11 +823,10 @@ public class AmphiroMeasurementRepository {
 							}
 							offset = entryOffset;
 							point = new AmphiroDataPoint();
-							point.setTimestamp((timeBucket + (long) offset) * 1000L);
+							point.setTimestamp((timeBucket + offset) * 1000L);
 						}
 
-						int length = (int) Arrays.copyOfRange(entry.getKey(),
-								2, 3)[0];
+						int length = Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
 						byte[] slice = Arrays.copyOfRange(entry.getKey(), 3,
 								3 + length);
 						String qualifier = Bytes.toString(slice);
@@ -821,6 +863,7 @@ public class AmphiroMeasurementRepository {
 				Collections.sort(series.getPoints(),
 						new Comparator<AmphiroAbstractDataPoint>() {
 
+							@Override
 							public int compare(AmphiroAbstractDataPoint o1,
 									AmphiroAbstractDataPoint o2) {
 								if (o1.getTimestamp() <= o2.getTimestamp()) {
@@ -843,6 +886,7 @@ public class AmphiroMeasurementRepository {
 		return null;
 	}
 
+	@Override
 	public AmphiroSessionCollectionQueryResult searchSessions(
 			AmphiroSessionCollectionQuery query) {
 		AmphiroSessionCollectionQueryResult data = new AmphiroSessionCollectionQueryResult();
@@ -944,7 +988,7 @@ public class AmphiroMeasurementRepository {
 						switch (qualifier) {
 						case "m:offset":
 							int offset = Bytes.toInt(entry.getValue());
-							session.setTimestamp((timeBucket + (long) offset) * 1000L);
+							session.setTimestamp((timeBucket + offset) * 1000L);
 							break;
 						case "m:t":
 							session.setTemperature(Bytes.toFloat(entry
@@ -989,6 +1033,7 @@ public class AmphiroMeasurementRepository {
 				if (collection.getSessions().size() > 0) {
 					Collections.sort(collection.getSessions(),
 							new Comparator<AmphiroAbstractSession>() {
+								@Override
 								public int compare(AmphiroAbstractSession o1,
 										AmphiroAbstractSession o2) {
 									if (o1.getTimestamp() <= o2.getTimestamp()) {
@@ -1014,6 +1059,7 @@ public class AmphiroMeasurementRepository {
 		return null;
 	}
 
+	@Override
 	public AmphiroSessionQueryResult getSession(AmphiroSessionQuery query) {
 		AmphiroSessionQueryResult data = new AmphiroSessionQueryResult();
 
@@ -1067,7 +1113,7 @@ public class AmphiroMeasurementRepository {
 					switch (qualifier) {
 					case "m:offset":
 						int offset = Bytes.toInt(entry.getValue());
-						session.setTimestamp((timeBucket + (long) offset) * 1000L);
+						session.setTimestamp((timeBucket + offset) * 1000L);
 						break;
 					case "m:t":
 						session.setTemperature(Bytes.toFloat(entry.getValue()));
@@ -1176,11 +1222,10 @@ public class AmphiroMeasurementRepository {
 						}
 						offset = entryOffset;
 						measurement = new AmphiroMeasurement();
-						measurement
-								.setTimestamp((timeBucket + (long) offset) * 1000L);
+						measurement.setTimestamp((timeBucket + offset) * 1000L);
 					}
 
-					int length = (int) Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
+					int length = Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
 					byte[] slice = Arrays.copyOfRange(entry.getKey(), 3,
 							3 + length);
 

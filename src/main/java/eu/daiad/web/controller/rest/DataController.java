@@ -9,11 +9,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import eu.daiad.web.data.AmphiroMeasurementRepository;
-import eu.daiad.web.data.DeviceRepository;
-import eu.daiad.web.data.WaterMeterMeasurementRepository;
-import eu.daiad.web.model.Error;
+import eu.daiad.web.data.IAmphiroMeasurementRepository;
+import eu.daiad.web.data.IDeviceRepository;
+import eu.daiad.web.data.IWaterMeterMeasurementRepository;
+import eu.daiad.web.model.ApplicationUser;
 import eu.daiad.web.model.DeviceMeasurementCollection;
+import eu.daiad.web.model.Error;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.amphiro.AmphiroMeasurementCollection;
 import eu.daiad.web.model.device.AmphiroDevice;
@@ -21,8 +22,6 @@ import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.meter.WaterMeterMeasurementCollection;
 import eu.daiad.web.security.AuthenticationService;
-import eu.daiad.web.security.model.ApplicationUser;
-import eu.daiad.web.service.IExportService;
 
 @RestController("RestDataController")
 public class DataController {
@@ -36,16 +35,13 @@ public class DataController {
 	private String temporaryPath;
 
 	@Autowired
-	private AmphiroMeasurementRepository amphiroMeasurementRepository;
+	private IAmphiroMeasurementRepository amphiroMeasurementRepository;
 
 	@Autowired
-	private WaterMeterMeasurementRepository waterMeterMeasurementRepository;
+	private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
 
 	@Autowired
-	private IExportService exportService;
-
-	@Autowired
-	private DeviceRepository deviceRepository;
+	private IDeviceRepository deviceRepository;
 
 	@Autowired
 	private AuthenticationService authenticator;
@@ -67,7 +63,7 @@ public class DataController {
 			data.setUserKey(user.getKey());
 
 			Device device = this.deviceRepository.getUserDeviceByKey(
-					data.getDeviceKey(), data.getUserKey());
+					data.getUserKey(), data.getDeviceKey());
 
 			if (device == null) {
 				return new RestResponse(ERROR_DEVICE_NOT_FOUND,

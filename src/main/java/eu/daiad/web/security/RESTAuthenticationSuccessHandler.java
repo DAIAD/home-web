@@ -19,10 +19,10 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import eu.daiad.web.data.ProfileRepository;
+import eu.daiad.web.data.IProfileRepository;
+import eu.daiad.web.model.ApplicationUser;
+import eu.daiad.web.model.AuthenticationResponse;
 import eu.daiad.web.model.profile.Profile;
-import eu.daiad.web.security.model.ApplicationUser;
-import eu.daiad.web.security.model.AuthenticationResponse;
 
 @Component
 public class RESTAuthenticationSuccessHandler extends
@@ -51,7 +51,7 @@ public class RESTAuthenticationSuccessHandler extends
 			.getName().concat(".CSRF_TOKEN");
 
 	@Autowired
-	private ProfileRepository profileRepository;
+	private IProfileRepository profileRepository;
 
 	@Override
 	public void onAuthenticationSuccess(HttpServletRequest request,
@@ -71,9 +71,11 @@ public class RESTAuthenticationSuccessHandler extends
 
 				ApplicationUser user = (ApplicationUser) auth.getPrincipal();
 
-				Profile profile = profileRepository.getProfileByUsername(user.getUsername());
-				
-				AuthenticationResponse authenticationResponse = new AuthenticationResponse(profile);
+				Profile profile = profileRepository.getProfileByUsername(user
+						.getUsername());
+
+				AuthenticationResponse authenticationResponse = new AuthenticationResponse(
+						profile);
 
 				CsrfToken sessionToken = (CsrfToken) request.getSession()
 						.getAttribute(DEFAULT_CSRF_TOKEN_ATTR_NAME);

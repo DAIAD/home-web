@@ -9,8 +9,6 @@ public abstract class DeviceRegistration {
 
 	private UUID deviceKey;
 
-	private String deviceId;
-
 	private ArrayList<KeyValuePair> properties;
 
 	public DeviceRegistration() {
@@ -23,14 +21,6 @@ public abstract class DeviceRegistration {
 
 	public void setDeviceKey(UUID deviceKey) {
 		this.deviceKey = deviceKey;
-	}
-
-	public String getDeviceId() {
-		return deviceId;
-	}
-
-	public void setDeviceId(String deviceId) {
-		this.deviceId = deviceId;
 	}
 
 	public ArrayList<KeyValuePair> getProperties() {

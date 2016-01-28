@@ -1,4 +1,4 @@
-package eu.daiad.web.security.configuration;
+package eu.daiad.web.configuration;
 
 import java.util.regex.Pattern;
 
@@ -26,7 +26,7 @@ import eu.daiad.web.security.RESTLogoutSuccessHandler;
 
 @Configuration
 @Order(SecurityProperties.ACCESS_OVERRIDE_ORDER)
-public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Bean
 	protected ErrorProperties errorProperties() {

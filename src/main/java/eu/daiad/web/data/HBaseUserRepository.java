@@ -32,9 +32,10 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
 
+import eu.daiad.web.model.ApplicationUser;
 import eu.daiad.web.model.EnumGender;
-import eu.daiad.web.security.model.ApplicationUser;
-import eu.daiad.web.security.model.EnumRole;
+import eu.daiad.web.model.EnumRole;
+import eu.daiad.web.model.user.Account;
 
 @Repository()
 @Scope("prototype")
@@ -137,18 +138,15 @@ public class HBaseUserRepository implements IUserRepository {
 	}
 
 	@Override
-	public ApplicationUser createUser(String username, String password,
-			String firstname, String lastname, EnumGender gender,
-			DateTime birthdate, String country, String postalCode,
-			String timezone) throws Exception {
+	public UUID createUser(Account account) throws Exception {
 		Connection connection = null;
 		Table table = null;
 
 		try {
-			if (username.equals(this.defaultAdminUsername)) {
+			if (account.getUsername().equals(this.defaultAdminUsername)) {
 				throw new Exception("Username is reserved.");
 			}
-			if (this.getUserByName(username) != null) {
+			if (this.getUserByName(account.getUsername()) != null) {
 				throw new Exception("User already exists.");
 			}
 			BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
@@ -166,7 +164,7 @@ public class HBaseUserRepository implements IUserRepository {
 			byte[] columnFamily = Bytes.toBytes(this.columnFamily);
 
 			byte[] rowKey = md
-					.digest(username.getBytes(StandardCharsets.UTF_8));
+					.digest(account.getUsername().getBytes(StandardCharsets.UTF_8));
 
 			Put p = new Put(rowKey);
 
@@ -176,38 +174,38 @@ public class HBaseUserRepository implements IUserRepository {
 
 			column = Bytes.toBytes("username");
 			p.addColumn(columnFamily, column,
-					username.getBytes(StandardCharsets.UTF_8));
+					account.getUsername().getBytes(StandardCharsets.UTF_8));
 			column = Bytes.toBytes("password");
-			p.addColumn(columnFamily, column, encoder.encode(password)
+			p.addColumn(columnFamily, column, encoder.encode(account.getPassword())
 					.getBytes(StandardCharsets.UTF_8));
 
 			column = Bytes.toBytes("firstname");
 			p.addColumn(columnFamily, column,
-					firstname.getBytes(StandardCharsets.UTF_8));
+					account.getFirstname().getBytes(StandardCharsets.UTF_8));
 			column = Bytes.toBytes("lastname");
 			p.addColumn(columnFamily, column,
-					lastname.getBytes(StandardCharsets.UTF_8));
+					account.getLastname().getBytes(StandardCharsets.UTF_8));
 
 			column = Bytes.toBytes("gender");
-			p.addColumn(columnFamily, column, Bytes.toBytes(gender.getValue()));
+			p.addColumn(columnFamily, column, Bytes.toBytes(account.getGender().getValue()));
 
-			if (birthdate != null) {
+			if (account.getBirthdate() != null) {
 				column = Bytes.toBytes("birthdate");
 				p.addColumn(columnFamily, column,
-						Bytes.toBytes(birthdate.getMillis()));
+						Bytes.toBytes(account.getBirthdate().getMillis()));
 			}
 
 			column = Bytes.toBytes("country");
 			p.addColumn(columnFamily, column,
-					country.getBytes(StandardCharsets.UTF_8));
+					account.getCountry().getBytes(StandardCharsets.UTF_8));
 
 			column = Bytes.toBytes("postalCode");
 			p.addColumn(columnFamily, column,
-					postalCode.getBytes(StandardCharsets.UTF_8));
+					account.getPostalCode().getBytes(StandardCharsets.UTF_8));
 
 			column = Bytes.toBytes("timezone");
 			p.addColumn(columnFamily, column,
-					timezone.getBytes(StandardCharsets.UTF_8));
+					account.getTimezone().getBytes(StandardCharsets.UTF_8));
 
 			column = Bytes.toBytes("roles");
 			p.addColumn(columnFamily, column, EnumRole.ROLE_USER.toString()
@@ -219,16 +217,7 @@ public class HBaseUserRepository implements IUserRepository {
 			authorities.add(new SimpleGrantedAuthority(EnumRole.ROLE_USER
 					.toString()));
 
-			ApplicationUser user = new ApplicationUser(userKey, username,
-					encoder.encode(password), authorities);
-			user.setFirstname(firstname);
-			user.setLastname(lastname);
-			user.setBirthdate(birthdate);
-			user.setCountry(country);
-			user.setGender(gender);
-			user.setPostalCode(postalCode);
-
-			return user;
+			return userKey;
 		} finally {
 			if (table != null) {
 				table.close();

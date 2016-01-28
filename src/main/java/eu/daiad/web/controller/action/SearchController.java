@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import eu.daiad.web.data.AmphiroMeasurementRepository;
-import eu.daiad.web.data.WaterMeterMeasurementRepository;
+import eu.daiad.web.data.IAmphiroMeasurementRepository;
+import eu.daiad.web.data.IWaterMeterMeasurementRepository;
 import eu.daiad.web.model.Error;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.amphiro.AmphiroMeasurementQuery;
@@ -31,10 +31,10 @@ public class SearchController {
 	private static final Log logger = LogFactory.getLog(SearchController.class);
 
 	@Autowired
-	private AmphiroMeasurementRepository amphiroMeasurementRepository;
+	private IAmphiroMeasurementRepository amphiroMeasurementRepository;
 
 	@Autowired
-	private WaterMeterMeasurementRepository waterMeterMeasurementRepository;
+	private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
 
 	@Autowired
 	private AuthenticationService authenticator;
@@ -89,7 +89,6 @@ public class SearchController {
 	public RestResponse searchAmphiroSessions(
 			@RequestBody AmphiroSessionCollectionQuery query) {
 		try {
-			// TODO: Return series, not response object
 			AmphiroSessionCollectionQueryResult data = amphiroMeasurementRepository
 					.searchSessions(query);
 
@@ -106,7 +105,6 @@ public class SearchController {
 	@Secured("ROLE_USER")
 	public RestResponse query(@RequestBody AmphiroSessionQuery query) {
 		try {
-			// TODO: Return series, not response object
 			AmphiroSessionQueryResult data = amphiroMeasurementRepository.getSession(query);
 
 			return data;

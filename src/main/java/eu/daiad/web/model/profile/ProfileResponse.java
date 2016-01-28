@@ -2,14 +2,14 @@ package eu.daiad.web.model.profile;
 
 import eu.daiad.web.model.RestResponse;
 
-public class ViewProfileResponse extends RestResponse {
+public class ProfileResponse extends RestResponse {
 
 	private Profile profile;
 
-	public ViewProfileResponse() {
+	public ProfileResponse() {
 	}
 
-	public ViewProfileResponse(int code, String description) {
+	public ProfileResponse(int code, String description) {
 		super(code, description);
 	}
 	

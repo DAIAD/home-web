@@ -9,6 +9,8 @@ public class Profile {
 
 	private UUID key;
 
+	private String username;
+	
 	private String firstname;
 
 	private String lastname;
@@ -92,6 +94,14 @@ public class Profile {
 
 	public void setPhoto(byte[] photo) {
 		this.photo = photo;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
 	}
 
 }

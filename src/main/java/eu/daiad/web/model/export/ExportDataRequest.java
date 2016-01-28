@@ -5,27 +5,28 @@ import java.util.ArrayList;
 import org.joda.time.DateTime;
 
 import eu.daiad.web.model.AuthenticatedRequest;
-import eu.daiad.web.model.EnumExportDataType;
 
-public class ExportData extends AuthenticatedRequest {
+public class ExportDataRequest extends AuthenticatedRequest {
 
-	private EnumExportDataType type;
-	
+	private EnumExportDataSource type;
+
+	// TODO: Convert to Unix Time Stamp
 	private DateTime from;
-	
+
+	// TODO: Convert to Unix Time Stamp
 	private DateTime to;
 
 	private String username;
-	
+
 	private ArrayList<String> properties;
-	
+
 	private String timezone;
-	
-	public EnumExportDataType getType() {
+
+	public EnumExportDataSource getType() {
 		return type;
 	}
 
-	public void setType(EnumExportDataType type) {
+	public void setType(EnumExportDataSource type) {
 		this.type = type;
 	}
 
@@ -60,7 +61,7 @@ public class ExportData extends AuthenticatedRequest {
 	public void setProperties(ArrayList<String> properties) {
 		this.properties = properties;
 	}
-	
+
 	public String getTimezone() {
 		return timezone;
 	}
@@ -68,7 +69,7 @@ public class ExportData extends AuthenticatedRequest {
 	public void setTimezone(String timezone) {
 		this.timezone = timezone;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "ExportData [type=" + type + ", from=" + from + ", to=" + to

@@ -1,4 +1,4 @@
-package eu.daiad.web.security.model;
+package eu.daiad.web.model;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -8,14 +8,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import eu.daiad.web.data.ProfileRepository;
+import eu.daiad.web.data.IProfileRepository;
+import eu.daiad.web.model.ApplicationUser;
 import eu.daiad.web.model.Credentials;
 import eu.daiad.web.model.Error;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.profile.UpdateProfileRequest;
-import eu.daiad.web.model.profile.ViewProfileResponse;
+import eu.daiad.web.model.profile.ProfileResponse;
 import eu.daiad.web.security.AuthenticationService;
-import eu.daiad.web.security.model.ApplicationUser;
 
 @RestController("RestProfileController")
 public class ProfileController {
@@ -27,7 +27,7 @@ public class ProfileController {
 	private AuthenticationService authenticationService;
 
 	@Autowired
-	private ProfileRepository profileRepository;
+	private IProfileRepository profileRepository;
 
 	@RequestMapping(value = "/api/v1/profile/load", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse loadProfile(@RequestBody Credentials data) {
@@ -43,7 +43,7 @@ public class ProfileController {
 		} catch (Exception ex) {
 			logger.error("Failed to load profile", ex);
 		}
-		return new ViewProfileResponse(Error.ERROR_UNKNOWN,
+		return new ProfileResponse(Error.ERROR_UNKNOWN,
 				"An unhandled exception has occurred");
 	}
 
@@ -61,7 +61,7 @@ public class ProfileController {
 		} catch (Exception ex) {
 			logger.error("Failed to save profile", ex);
 		}
-		return new ViewProfileResponse(Error.ERROR_UNKNOWN,
+		return new ProfileResponse(Error.ERROR_UNKNOWN,
 				"An unhandled exception has occurred");
 	}
 
