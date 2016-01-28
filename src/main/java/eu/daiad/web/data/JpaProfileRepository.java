@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import eu.daiad.web.model.ApplicationUser;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistration;
+import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.profile.Profile;
 
 @Repository()
@@ -30,7 +31,7 @@ public class JpaProfileRepository implements IProfileRepository {
 		ApplicationUser user = this.userRepository.getUserByName(username);
 
 		ArrayList<Device> devices = this.deviceRepository.getUserDevices(
-				user.getKey(), null);
+				user.getKey(), new DeviceRegistrationQuery());
 
 		Profile profile = new Profile();
 
