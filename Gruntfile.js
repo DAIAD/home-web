@@ -113,31 +113,31 @@ module.exports = function (grunt) {
 			utility: {
 				files: [{
 					expand: true,
-					cwd: 'bower_components/jquery/dist/',
+					cwd: 'node_modules/jquery/dist/',
 					src: ['**/*'],
 					dest: 'src/main/resources/public/assets/lib/jquery/',
 					filter: 'isFile'
 				},{
 					expand: true,
-					cwd: 'bower_components/bootstrap/dist/',
+					cwd: 'node_modules/bootstrap/dist/',
 					src: ['**/*'],
 					dest: 'src/main/resources/public/assets/lib/bootstrap/',
 					filter: 'isFile'
 				}, {
 					expand: true,
-					cwd: 'bower_components/bootstrap-select/dist/',
+					cwd: 'node_modules/bootstrap-select/dist/',
 					src: ['**/*'],
 					dest: 'src/main/resources/public/assets/lib/bootstrap-select/',
 					filter: 'isFile'
 				}, {
 					expand: true,
-					cwd: 'bower_components/leaflet/dist/',
+					cwd: 'node_modules/leaflet/dist/',
 					src: ['**/*'],
 					dest: 'src/main/resources/public/assets/lib/leaflet/',
 					filter: 'isFile'
 				}, {
 					expand: true,
-					cwd: 'bower_components/echarts/dist/',
+					cwd: 'node_modules/echarts/dist/',
 					src: ['**/*'],
 					dest: 'src/main/resources/public/assets/lib/echarts/',
 					filter: 'isFile'
