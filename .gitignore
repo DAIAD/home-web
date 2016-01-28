@@ -1,5 +1,7 @@
 logs/
 target/
+build/
+lib/
 
 **/*.*~
 **/*.~
