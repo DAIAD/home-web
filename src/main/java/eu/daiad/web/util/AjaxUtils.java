@@ -1,6 +1,6 @@
 package eu.daiad.web.util;
 
-import org.springframework.web.context.request.WebRequest;
+import javax.servlet.http.HttpServletRequest;
 
 public final class AjaxUtils {
 
@@ -8,11 +8,14 @@ public final class AjaxUtils {
 
 	}
 
-	public static boolean isAjaxRequest(WebRequest req) {
-		String requestedWith = req.getHeader("X-Requested-With");
+	public static boolean isAjaxRequest(HttpServletRequest request) {
+		if (request.getMethod().equals("POST")
+				&& "application/json".equals(request.getHeader("Content-Type"))) {
+			return true;
+		}
 
+		String requestedWith = request.getHeader("X-Requested-With");
 		return requestedWith != null ? "XMLHttpRequest".equals(requestedWith)
 				: false;
 	}
-
 }

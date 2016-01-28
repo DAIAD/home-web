@@ -14,7 +14,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,33 +21,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.daiad.web.data.IProfileRepository;
 import eu.daiad.web.model.ApplicationUser;
 import eu.daiad.web.model.AuthenticationResponse;
+import eu.daiad.web.model.CsrfConstants;
 import eu.daiad.web.model.profile.Profile;
+import eu.daiad.web.util.AjaxUtils;
 
 @Component
 public class RESTAuthenticationSuccessHandler extends
 		SimpleUrlAuthenticationSuccessHandler {
 
 	private final Log logger = LogFactory.getLog(this.getClass());
-
-	private boolean isAjaxRequest(HttpServletRequest request) {
-		if (request.getMethod().equals("POST")
-				&& "application/json".equals(request.getHeader("Content-Type"))) {
-			return true;
-		}
-
-		String requestedWith = request.getHeader("X-Requested-With");
-		return requestedWith != null ? "XMLHttpRequest".equals(requestedWith)
-				: false;
-	}
-
-	protected static final String REQUEST_ATTRIBUTE_NAME = "_csrf";
-
-	protected static final String RESPONSE_HEADER_NAME = "X-CSRF-HEADER";
-	protected static final String RESPONSE_PARAM_NAME = "X-CSRF-PARAM";
-	protected static final String RESPONSE_TOKEN_NAME = "X-CSRF-TOKEN";
-
-	protected static final String DEFAULT_CSRF_TOKEN_ATTR_NAME = HttpSessionCsrfTokenRepository.class
-			.getName().concat(".CSRF_TOKEN");
 
 	@Autowired
 	private IProfileRepository profileRepository;
@@ -59,7 +40,7 @@ public class RESTAuthenticationSuccessHandler extends
 			throws IOException, ServletException {
 		clearAuthenticationAttributes(request);
 
-		if (this.isAjaxRequest(request)) {
+		if (AjaxUtils.isAjaxRequest(request)) {
 			if (response.isCommitted()) {
 				logger.debug("Response has already been committed. Unable to send JSON response.");
 				return;
@@ -78,19 +59,21 @@ public class RESTAuthenticationSuccessHandler extends
 						profile);
 
 				CsrfToken sessionToken = (CsrfToken) request.getSession()
-						.getAttribute(DEFAULT_CSRF_TOKEN_ATTR_NAME);
+						.getAttribute(
+								CsrfConstants.DEFAULT_CSRF_TOKEN_ATTR_NAME);
 				CsrfToken requestToken = (CsrfToken) request
-						.getAttribute(REQUEST_ATTRIBUTE_NAME);
+						.getAttribute(CsrfConstants.REQUEST_ATTRIBUTE_NAME);
 
 				CsrfToken token = (sessionToken == null ? requestToken
 						: sessionToken);
 
 				if (token != null) {
-					response.setHeader(RESPONSE_HEADER_NAME,
+					response.setHeader(CsrfConstants.RESPONSE_HEADER_NAME,
 							token.getHeaderName());
-					response.setHeader(RESPONSE_PARAM_NAME,
+					response.setHeader(CsrfConstants.RESPONSE_PARAM_NAME,
 							token.getParameterName());
-					response.setHeader(RESPONSE_TOKEN_NAME, token.getToken());
+					response.setHeader(CsrfConstants.RESPONSE_TOKEN_NAME,
+							token.getToken());
 				}
 
 				response.setContentType("application/json;charset=UTF-8");

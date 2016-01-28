@@ -118,11 +118,11 @@ public class JpaUserRepository implements IUserRepository {
 					account.getRoles().add(assignedRole);
 				}
 				this.entityManager.persist(account);
-			}
 
-			logger.warn(String
-					.format("Default administrator user has been crearted. User name : %s. Password : %s",
-							this.defaultAdminUsername, password));
+				logger.warn(String
+						.format("Default administrator user has been crearted. User name : %s. Password : %s",
+								this.defaultAdminUsername, password));
+			}
 		} catch (Exception ex) {
 			logger.error(ex);
 

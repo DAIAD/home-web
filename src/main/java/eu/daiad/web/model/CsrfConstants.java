@@ -1,6 +1,11 @@
 package eu.daiad.web.model;
 
+import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
+
 public class CsrfConstants {
+
+	public static final String DEFAULT_CSRF_TOKEN_ATTR_NAME = HttpSessionCsrfTokenRepository.class
+			.getName().concat(".CSRF_TOKEN");
 
 	public static final String REQUEST_ATTRIBUTE_NAME = "_csrf";
 

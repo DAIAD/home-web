@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import eu.daiad.web.model.Error;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.util.AjaxUtils;
 
 @Component
 public class RESTAuthenticationFailureHandler extends
@@ -24,22 +25,11 @@ public class RESTAuthenticationFailureHandler extends
 
 	private final Log logger = LogFactory.getLog(this.getClass());
 
-	private boolean isAjaxRequest(HttpServletRequest request) {
-		if (request.getMethod().equals("POST")
-				&& "application/json".equals(request.getHeader("Content-Type"))) {
-			return true;
-		}
-
-		String requestedWith = request.getHeader("X-Requested-With");
-		return requestedWith != null ? "XMLHttpRequest".equals(requestedWith)
-				: false;
-	}
-
 	@Override
 	public void onAuthenticationFailure(HttpServletRequest request,
 			HttpServletResponse response, AuthenticationException exception)
 			throws IOException, ServletException {
-		if (this.isAjaxRequest(request)) {
+		if (AjaxUtils.isAjaxRequest(request)) {
 			if (response.isCommitted()) {
 				logger.debug("Response has already been committed. Unable to send JSON response.");
 				return;
@@ -57,7 +47,6 @@ public class RESTAuthenticationFailureHandler extends
 			} catch (Exception e) {
 				logger.debug(e.getMessage());
 			}
-
 		} else {
 			super.onAuthenticationFailure(request, response, exception);
 		}
