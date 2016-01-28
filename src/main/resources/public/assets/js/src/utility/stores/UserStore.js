@@ -92,7 +92,7 @@ function logout() {
 			break;
 		}
 		
-		_model.user = null;
+		_model.profile = null;
 		
 		UserStore.emitLogout();
 	});
