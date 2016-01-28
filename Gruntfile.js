@@ -1,3 +1,5 @@
+
+
 module.exports = function (grunt) {
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
@@ -11,9 +13,8 @@ module.exports = function (grunt) {
 					'src/main/resources/public/assets/js/build/utility/*.js.map',
 					'src/main/resources/public/assets/js/build/utility/*.min.js',
 					'src/main/resources/public/assets/js/build/utility/*.min.js.map'
-								],
-
-						},
+				]
+            },
 					home: {
                 src: [
 					'src/main/resources/public/assets/js/build/home/*.js',
@@ -33,7 +34,7 @@ module.exports = function (grunt) {
             utility: [
 				'src/main/resources/public/assets/js/src/utility/**/*.js',
 				'!src/main/resources/public/assets/js/src/utility/i18n/**/*.js'
-						],
+            ],
 					home: [
 				'src/main/resources/public/assets/js/src/home/**/*.js',
 				'!src/main/resources/public/assets/js/src/home/i18n/**/*.js'
@@ -47,7 +48,7 @@ module.exports = function (grunt) {
 					debug: false
 				},
 				exclude: [
-					//'echarts'
+				  'echarts'
 				],
 				transform: [
 					[
@@ -60,6 +61,8 @@ module.exports = function (grunt) {
 						{
 							"NODE_ENV": "production"
 						}
+					], [
+						"browserify-shim"
 					]
 				]
 			},
@@ -89,7 +92,7 @@ module.exports = function (grunt) {
 					]
 				}
 			},
-		home: {
+			home: {
 				options: {
 					strict: false
 				},
@@ -98,90 +101,103 @@ module.exports = function (grunt) {
 						'src/main/resources/public/assets/js/build/home.js'
 					]
 				}
+
 			}
 		},
-		//uglify: {
-		//       options: {
-		//           banner: '/* <%= pkg.description %> version <%= pkg.version %> <%= grunt.template.today("yyyy-mm-dd") %> */\n',
-			//          sourceMap: true
-				//    },
-				//      utility: {
-				//        files: {
-				//            'src/main/resources/public/assets/js/build/utility/bundle.min.js': [
-				//			'src/main/resources/public/assets/js/build/utility/bundle.js'
-				//		]
-				//        }
-				//			},
-				//			home: {
-				//       files: {
-				//           'src/main/resources/public/assets/js/build/home/bundle.min.js': [
-				//						'src/main/resources/public/assets/js/build/home/bundle.js'
-				//				]
-				//       }
-				//				}
-				//},
-				
-				concat: {
-					utility: {
+        uglify: {
+            options: {
+                banner: '/* <%= pkg.description %> version <%= pkg.version %> <%= grunt.template.today("yyyy-mm-dd") %> */\n',
+                sourceMap: true
+            },
+            utility: {
+                files: {
+                    'src/main/resources/public/assets/js/build/utility/bundle.min.js': [
+						'src/main/resources/public/assets/js/build/utility/bundle.js'
+					]
+                }
+            },
+						home: {
+				       files: {
+				           'src/main/resources/public/assets/js/build/home/bundle.min.js': [
+										'src/main/resources/public/assets/js/build/home/bundle.js'
+								]
+				       }
+						}
+
+        },
+        concat: {
+			utility: {
+				src: [
+					'node_modules/echarts/dist/echarts.min.js',
+					'src/main/resources/public/assets/js/build/utility/bundle.min.js'
+				],
+				dest: 'src/main/resources/public/assets/js/build/utility/bundle.min.js',
+			},
+			home: {
 						src: [
 							'node_modules/echarts/dist/echarts.min.js',
-							'src/main/resources/public/assets/js/build/utility/bundle.min.js'
+							'src/main/resources/public/assets/js/build/home/bundle.min.js'
 						],
-						dest: 'src/main/resources/public/assets/js/build/utility/bundle.min.js',
-					},
-					home: {
-						src: [
-							'node_modules/echarts/dist/echarts.min.js',
-							'src/main/resources/public/assets/js/build/home/bundle.js'
-						],
-						dest: 'src/main/resources/public/assets/js/build/home/bundle.js',
+						dest: 'src/main/resources/public/assets/js/build/home/bundle.min.js',
 						},
 				},
-	
+
         sync: {
-					debug: {
-						files: [{
-							expand: true,
-							cwd: 'src/main/resources/public/assets/js/build/',
-							src: ['**/*.js', '**/*.map'],
-							dest: 'target/classes/public/assets/js/build/',
-							filter: 'isFile'
-						}, {
-							expand: true,
-							cwd: 'src/main/resources/public/assets/js/src/utility/i18n/',
-							src: ['*.js'],
-							dest: 'target/classes/public/assets/js/build/utility/i18n/',
-							filter: 'isFile'
-						}]
-					},
-					utility: {
-						files: [{
-							expand: true,
-							cwd: 'bower_components/jquery/dist/',
-							src: ['**/*'],
-							dest: 'src/main/resources/public/assets/lib/jquery/',
-							filter: 'isFile'
-						},{
-							expand: true,
-							cwd: 'bower_components/bootstrap/dist/',
-							src: ['**/*'],
-							dest: 'src/main/resources/public/assets/lib/bootstrap/',
-							filter: 'isFile'
-						}, {
-							expand: true,
-							cwd: 'bower_components/bootstrap-select/dist/',
-							src: ['**/*'],
-							dest: 'src/main/resources/public/assets/lib/bootstrap-select/',
-							filter: 'isFile'
-						}, {
-							expand: true,
-							cwd: 'src/main/resources/public/assets/js/src/utility/i18n/',
-							src: ['*.js'],
-							dest: 'src/main/resources/public/assets/js/build/utility/i18n/',
-							filter: 'isFile'
-						}]
-					},
-					home: {
+			debug: {
+				files: [{
+					expand: true,
+					cwd: 'src/main/resources/public/assets/js/build/',
+					src: ['**/*.js', '**/*.map'],
+					dest: 'target/classes/public/assets/js/build/',
+					filter: 'isFile'
+				}, {
+					expand: true,
+					cwd: 'src/main/resources/public/assets/js/src/utility/i18n/',
+					src: ['*.js'],
+					dest: 'target/classes/public/assets/js/build/utility/i18n/',
+					filter: 'isFile'
+				}]
+			},
+			utility: {
+				files: [{
+					expand: true,
+					cwd: 'bower_components/jquery/dist/',
+					src: ['**/*'],
+					dest: 'src/main/resources/public/assets/lib/jquery/',
+					filter: 'isFile'
+				},{
+					expand: true,
+					cwd: 'bower_components/bootstrap/dist/',
+					src: ['**/*'],
+					dest: 'src/main/resources/public/assets/lib/bootstrap/',
+					filter: 'isFile'
+				}, {
+					expand: true,
+					cwd: 'bower_components/bootstrap-select/dist/',
+					src: ['**/*'],
+					dest: 'src/main/resources/public/assets/lib/bootstrap-select/',
+					filter: 'isFile'
+				}, {
+					expand: true,
+					cwd: 'bower_components/leaflet/dist/',
+					src: ['**/*'],
+					dest: 'src/main/resources/public/assets/lib/leaflet/',
+					filter: 'isFile'
+				}, {
+					expand: true,
+					cwd: 'bower_components/echarts/dist/',
+					src: ['**/*'],
+					dest: 'src/main/resources/public/assets/lib/echarts/',
+					filter: 'isFile'
+				}, {
+					expand: true,
+					cwd: 'src/main/resources/public/assets/js/src/utility/i18n/',
+					src: ['*.js'],
+					dest: 'src/main/resources/public/assets/js/build/utility/i18n/',
+					filter: 'isFile'
+				}]
+			},
+			home: {
 						files: [{
 							expand: true,
 							cwd: 'src/main/resources/public/assets/js/src/home/i18n/',
@@ -200,8 +216,7 @@ module.exports = function (grunt) {
 					'src/main/resources/public/assets/js/src/**/*.js'
 				],
 				tasks: ['jshint', 'sync']
-			},
-
+			}
 		}
     });
 
@@ -222,10 +237,8 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-jsxhint');
 
     // Default task(s).
-    grunt.registerTask('build', ['clean', 'jshint', 'browserify', 'uglify', 'sync:utility']);
+    grunt.registerTask('build', ['clean', 'jshint', 'browserify', 'uglify', 'concat', 'sync:utility']);
 
-		grunt.registerTask('develop', ['clean', 'jshint', 'browserify', 'concat', 'sync:debug', 'watch']);
+	grunt.registerTask('develop', ['clean', 'jshint', 'browserify', 'sync:home', 'sync:utility', 'sync:debug', 'watch']);
 
 };
-
-

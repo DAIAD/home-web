@@ -14,7 +14,8 @@
 
     <link href="../assets/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
     <link href="../assets/lib/bootstrap-select/css/bootstrap-select.min.css" rel="stylesheet" />
-    <link href="../assets/css/site.css" rel="stylesheet" />
+		<link href="../assets/lib/leaflet/leaflet.css" rel="stylesheet" />
+    <link href="../assets/css/home.css" rel="stylesheet" />
 		
 		<script th:inline="javascript">
         var properties = {
@@ -28,6 +29,8 @@
 	<div id="app"></div>
 	<script th:if="${@environment.getActiveProfiles()[0] == 'production'}"
 		src="../assets/js/build/home/bundle.min.js"></script>
+	<script th:if="${@environment.getActiveProfiles()[0] == 'development'}"
+		src="../assets/lib/echarts/echarts.min.js"></script>
 	<script th:if="${@environment.getActiveProfiles()[0] == 'development'}"
 		src="../assets/js/build/home/bundle.js"></script>
 </body>
