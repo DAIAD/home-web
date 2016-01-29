@@ -2,6 +2,7 @@ package eu.daiad.web.controller.rest;
 
 import java.util.Iterator;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -15,15 +16,16 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.data.IUserRepository;
+import eu.daiad.web.model.ApplicationUser;
+import eu.daiad.web.model.EnumRole;
 import eu.daiad.web.model.Error;
+import eu.daiad.web.model.PasswordChangeRequest;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.RoleUpdateRequest;
+import eu.daiad.web.model.user.Account;
+import eu.daiad.web.model.user.UserRegistrationRequest;
+import eu.daiad.web.model.user.UserRegistrationResponse;
 import eu.daiad.web.security.AuthenticationService;
-import eu.daiad.web.security.model.ApplicationUser;
-import eu.daiad.web.security.model.EnumRole;
-import eu.daiad.web.security.model.PasswordChangeRequest;
-import eu.daiad.web.security.model.RoleUpdateRequest;
-import eu.daiad.web.security.model.UserRegistrationRequest;
-import eu.daiad.web.security.model.UserRegistrationResponse;
 
 @RestController("RestUserController")
 public class UserController {
@@ -41,19 +43,21 @@ public class UserController {
 	private IUserRepository repository;
 
 	@RequestMapping(value = "/api/v1/user/register", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse register(@RequestBody UserRegistrationRequest data) {
+	public RestResponse register(@RequestBody UserRegistrationRequest request) {
 
 		try {
-			if (repository.getUserByName(data.getUsername()) != null) {
+			Account account = request.getAccount();
+
+			if (repository.getUserByName(account.getUsername()) != null) {
 				return new RestResponse(ERROR_USERNAME_UNAVAILABLE,
 						"Username is unavailable");
 			}
 
 			Set<String> zones = DateTimeZone.getAvailableIDs();
-			if ((!StringUtils.isBlank(data.getCountry()))
-					&& ((data.getTimezone() == null) || (!zones.contains(data
-							.getTimezone())))) {
-				String country = data.getCountry().toUpperCase();
+			if ((!StringUtils.isBlank(account.getCountry()))
+					&& ((account.getTimezone() == null) || (!zones
+							.contains(account.getTimezone())))) {
+				String country = account.getCountry().toUpperCase();
 
 				Iterator<String> it = zones.iterator();
 				while (it.hasNext()) {
@@ -61,30 +65,25 @@ public class UserController {
 					String[] parts = StringUtils.split(zone, "/");
 					if ((parts.length == 1)
 							&& (parts[0].toUpperCase().equals(country))) {
-						data.setTimezone(zone);
+						account.setTimezone(zone);
 						break;
 					}
 					if ((parts.length == 2)
 							&& (parts[1].toUpperCase().equals(country))) {
-						data.setTimezone(zone);
+						account.setTimezone(zone);
 						break;
 					}
 				}
 			}
 
-			if (data.getTimezone() == null) {
-				data.setTimezone("Europe/Athens");
+			if (account.getTimezone() == null) {
+				account.setTimezone("Europe/Athens");
 			}
 
-			ApplicationUser user = repository
-					.createUser(data.getUsername(), data.getPassword(),
-							data.getFirstname(), data.getLastname(),
-							data.getGender(), data.getBirthdate(),
-							data.getCountry(), data.getPostalCode(),
-							data.getTimezone());
+			UUID key = repository.createUser(account);
 
 			UserRegistrationResponse response = new UserRegistrationResponse();
-			response.setUserKey(user.getKey().toString());
+			response.setUserKey(key.toString());
 
 			return response;
 		} catch (Exception ex) {

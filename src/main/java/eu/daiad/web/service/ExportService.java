@@ -20,9 +20,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import eu.daiad.web.data.AmphiroMeasurementRepository;
+import eu.daiad.web.data.IAmphiroMeasurementRepository;
 import eu.daiad.web.model.ExportException;
-import eu.daiad.web.model.export.ExportData;
+import eu.daiad.web.model.export.ExportDataRequest;
 import eu.daiad.web.model.export.ExtendedSessionData;
 
 @Service
@@ -32,10 +32,10 @@ public class ExportService implements IExportService  {
 	private String temporaryPath;
 
 	@Autowired
-	private AmphiroMeasurementRepository amphiroMeasurementRepository;
+	private IAmphiroMeasurementRepository amphiroMeasurementRepository;
 	
 	@Override
-	public String export(ExportData data) throws ExportException {
+	public String export(ExportDataRequest data) throws ExportException {
     	HashMap<String, String> properties = new HashMap<String, String>();
     	properties.put("settings.device.name", "Device name");
     	properties.put("settings.device.calibrate", "Calibrate");

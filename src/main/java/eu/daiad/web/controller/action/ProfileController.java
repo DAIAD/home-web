@@ -9,11 +9,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import eu.daiad.web.data.ProfileRepository;
+import eu.daiad.web.data.IProfileRepository;
+import eu.daiad.web.model.ApplicationUser;
 import eu.daiad.web.model.Error;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.profile.ViewProfileResponse;
-import eu.daiad.web.security.model.ApplicationUser;
+import eu.daiad.web.model.profile.ProfileResponse;
 
 @RestController
 public class ProfileController {
@@ -22,7 +22,7 @@ public class ProfileController {
 			.getLog(ProfileController.class);
 
 	@Autowired
-	private ProfileRepository profileRepository;
+	private IProfileRepository profileRepository;
 
 	@RequestMapping(value = "/action/profile", method = RequestMethod.GET, produces = "application/json")
 	@Secured("ROLE_USER")
@@ -31,7 +31,7 @@ public class ProfileController {
 			ApplicationUser user = (ApplicationUser) SecurityContextHolder
 					.getContext().getAuthentication().getPrincipal();
 
-			ViewProfileResponse response = new ViewProfileResponse();
+			ProfileResponse response = new ProfileResponse();
 
 			response.setProfile(profileRepository.getProfileByUsername(user
 					.getUsername()));

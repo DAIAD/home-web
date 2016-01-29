@@ -9,9 +9,16 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.WebAttributes;
 import org.springframework.security.web.access.AccessDeniedHandler;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import eu.daiad.web.model.Error;
+import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.util.AjaxUtils;
 
 public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
@@ -30,17 +37,39 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 			ServletException {
 		if (!response.isCommitted()) {
 			if (errorPage != null) {
-				// Put exception into request scope (perhaps of use to a view)
-				request.setAttribute(WebAttributes.ACCESS_DENIED_403,
-						accessDeniedException);
+				if (AjaxUtils.isAjaxRequest(request)) {
+					response.setContentType("application/json;charset=UTF-8");
+					response.setHeader("Cache-Control", "no-cache");
 
-				// Set the 403 status code.
-				response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+					ObjectMapper mapper = new ObjectMapper();
 
-				// forward to error page.
-				RequestDispatcher dispatcher = request
-						.getRequestDispatcher(errorPage);
-				dispatcher.forward(request, response);
+					if (request.getRequestURI().equals("/logout")) {
+						response.setStatus(HttpStatus.OK.value());
+
+						response.getWriter().print(
+								mapper.writeValueAsString(new RestResponse()));
+					} else {
+						response.setStatus(HttpStatus.FORBIDDEN.value());
+
+						response.getWriter().print(
+								mapper.writeValueAsString(new RestResponse(
+										Error.ERROR_AUTH_FAILED,
+										"Authentication has failed.")));
+					}
+				} else {
+					// Put exception into request scope (perhaps of use to a
+					// view)
+					request.setAttribute(WebAttributes.ACCESS_DENIED_403,
+							accessDeniedException);
+
+					// Set the 403 status code.
+					response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+
+					// forward to error page.
+					RequestDispatcher dispatcher = request
+							.getRequestDispatcher(errorPage);
+					dispatcher.forward(request, response);
+				}
 			} else {
 				response.sendError(HttpServletResponse.SC_FORBIDDEN,
 						accessDeniedException.getMessage());

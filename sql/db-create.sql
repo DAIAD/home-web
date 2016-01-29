@@ -29,7 +29,7 @@ CREATE TABLE account (
     utility_id integer,
     key uuid,
     firstname character varying(40),
-    lastname character varying(70),
+    lastname character varying(70),   
     email character varying(100),
     created_on timestamp without time zone,
     last_login_success timestamp without time zone,
@@ -37,9 +37,14 @@ CREATE TABLE account (
     failed_login_attempts integer,
     change_password_on_login boolean DEFAULT false NOT NULL,
     locked boolean DEFAULT true NOT NULL,
+    username character varying(100) NOT NULL,    
     password character varying(100),
-    salt character varying(100),
     photo bytea,
+	timezone character varying(50),
+	country character varying(50),
+	postal_code character varying(10),
+	birthdate timestamp without time zone,
+	gender character varying(12),    
     CONSTRAINT pk_account PRIMARY KEY (id),
     CONSTRAINT fk_utility FOREIGN KEY (utility_id)
         REFERENCES public.utility (id) MATCH SIMPLE
@@ -102,6 +107,23 @@ CREATE TABLE public.device
             ON UPDATE CASCADE ON DELETE CASCADE
 );
 
+CREATE SEQUENCE device_property_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ CREATE TABLE device_property (
+    id integer NOT NULL DEFAULT nextval('device_property_id_seq'::regclass),
+    device_id integer,
+    key character varying(50),
+    value character varying,
+    CONSTRAINT pk_device_property PRIMARY KEY (id),
+    CONSTRAINT fk_device_property_device FOREIGN KEY (device_id)
+        REFERENCES public.device (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE CASCADE
+);
 
 -- amphiro
 CREATE TABLE public.device_amphiro

@@ -1,21 +1,19 @@
 package eu.daiad.web.model.device;
 
-import java.util.ArrayList;
 
-import eu.daiad.web.model.KeyValuePair;
+public class WaterMeterDeviceRegistrationRequest extends
+		DeviceRegistrationRequest {
 
-public class WaterMeterDeviceRegistrationRequest extends DeviceRegistrationRequest {
+	private String serial;
 
-	private ArrayList<KeyValuePair> properties;
-
-	public ArrayList<KeyValuePair> getProperties() {
-		return this.properties;
+	public String getSerial() {
+		return serial;
 	}
 
-	public void setProperties(ArrayList<KeyValuePair> value) {
-		this.properties = value;
+	public void setSerial(String serial) {
+		this.serial = serial;
 	}
-
+	
 	@Override
 	public EnumDeviceType getType() {
 		return EnumDeviceType.METER;

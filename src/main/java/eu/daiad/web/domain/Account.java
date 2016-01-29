@@ -8,6 +8,8 @@ import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -21,6 +23,8 @@ import javax.persistence.Table;
 import org.apache.commons.net.util.Base64;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
+
+import eu.daiad.web.model.EnumGender;
 
 @Entity(name = "account")
 @Table(schema = "public", name = "account")
@@ -36,7 +40,7 @@ public class Account {
 	@JoinColumn(name = "utility_id", nullable = false)
 	private Utility utility;
 
-	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
 	@JoinColumn(name = "account_id")
 	private Set<AccountRole> roles = new HashSet<AccountRole>();
 
@@ -79,11 +83,29 @@ public class Account {
 	private boolean locked;
 
 	@Basic()
+	private String username;
+	
+	@Basic()
 	private String password;
 
 	@Column()
 	@Type(type = "pg-uuid")
 	private UUID key = UUID.randomUUID();
+
+	@Basic()
+	private String timezone;
+
+	@Basic()
+	private String country;
+
+	@Column(name = "postal_code")
+	private String postalCode;
+
+	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+	private DateTime birthdate;
+
+	@Enumerated(EnumType.STRING)
+	private EnumGender gender;
 
 	public int getId() {
 		return id;
@@ -202,6 +224,54 @@ public class Account {
 
 	public Set<AccountRole> getRoles() {
 		return roles;
+	}
+
+	public String getTimezone() {
+		return timezone;
+	}
+
+	public void setTimezone(String timezone) {
+		this.timezone = timezone;
+	}
+
+	public String getCountry() {
+		return country;
+	}
+
+	public void setCountry(String country) {
+		this.country = country;
+	}
+
+	public String getPostalCode() {
+		return postalCode;
+	}
+
+	public void setPostalCode(String postalCode) {
+		this.postalCode = postalCode;
+	}
+
+	public DateTime getBirthdate() {
+		return birthdate;
+	}
+
+	public void setBirthdate(DateTime birthdate) {
+		this.birthdate = birthdate;
+	}
+
+	public EnumGender getGender() {
+		return gender;
+	}
+
+	public void setGender(EnumGender gender) {
+		this.gender = gender;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
 	}
 
 }

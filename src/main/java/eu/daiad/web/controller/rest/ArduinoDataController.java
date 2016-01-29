@@ -15,10 +15,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import eu.daiad.web.data.ArduinoDataRepository;
+import eu.daiad.web.data.IArduinoDataRepository;
 import eu.daiad.web.model.Error;
+import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.arduino.ArduinoIntervalQuery;
-import eu.daiad.web.model.arduino.ArduinoIntervalQueryResult;
 import eu.daiad.web.model.arduino.ArduinoMeasurement;
 
 @RestController("RestArduinoDataController")
@@ -28,7 +28,7 @@ public class ArduinoDataController {
 			.getLog(ArduinoDataController.class);
 
 	@Autowired
-	private ArduinoDataRepository arduinoDataRepository;
+	private IArduinoDataRepository arduinoDataRepository;
 
 	@RequestMapping(value = "/api/v1/arduino/store", method = RequestMethod.POST, consumes = "text/plain", produces = "text/plain")
 	public ResponseEntity<String> storeData(@RequestBody String data) {
@@ -74,8 +74,7 @@ public class ArduinoDataController {
 	}
 
 	@RequestMapping(value = "/api/v1/arduino/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public ArduinoIntervalQueryResult loadData(
-			@RequestBody ArduinoIntervalQuery query) {
+	public RestResponse loadData(@RequestBody ArduinoIntervalQuery query) {
 		try {
 			return this.arduinoDataRepository.searchData(query);
 		} catch (Exception ex) {
@@ -83,7 +82,6 @@ public class ArduinoDataController {
 
 		}
 
-		return new ArduinoIntervalQueryResult(Error.ERROR_UNKNOWN,
-				"Failed to load data");
+		return new RestResponse(Error.ERROR_UNKNOWN, "Failed to load data");
 	}
 }

@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 public class SimpleCORSFilter implements Filter {
 
 	private Pattern allowedMethods = Pattern
-			.compile("^(GET|POST|OPTIONS|DELETE)$");
+			.compile("^(GET|POST|OPTIONS)$");
 	
 	private RegexRequestMatcher apiMatcher = new RegexRequestMatcher(
 			"/api/v1/.*", null);
@@ -33,7 +33,7 @@ public class SimpleCORSFilter implements Filter {
 		if (allowedMethods.matcher(request.getMethod()).matches() && apiMatcher.matches(request)) {
 			response.setHeader("Access-Control-Allow-Origin", "*");
 			response.setHeader("Access-Control-Allow-Methods",
-					"POST, GET, OPTIONS, DELETE");
+					"GET, POST, OPTIONS");
 			response.setHeader("Access-Control-Max-Age", "3600");
 			response.setHeader("Access-Control-Allow-Headers",
 					"x-requested-with,content-type");
@@ -41,9 +41,11 @@ public class SimpleCORSFilter implements Filter {
 		chain.doFilter(req, res);
 	}
 
+	@Override
 	public void init(FilterConfig filterConfig) {
 	}
 
+	@Override
 	public void destroy() {
 	}
 

@@ -5,6 +5,8 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
+import eu.daiad.web.model.device.EnumDeviceType;
+
 @Entity(name = "device_amphiro")
 @Table(schema = "public", name = "device_amphiro")
 public class DeviceAmphiro extends Device {
@@ -29,5 +31,9 @@ public class DeviceAmphiro extends Device {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+	
+	public EnumDeviceType getType() {
+		return EnumDeviceType.AMPHIRO;
 	}
 }

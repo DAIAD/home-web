@@ -9,28 +9,20 @@ public abstract class Device {
 
 	private UUID key;
 
-	private String id;
-
-	public Device(UUID key, String id) {
-		this.id = id;
+	private ArrayList<KeyValuePair> properties;
+	
+	public Device(UUID key) {
 		this.key = key;
 		this.properties = new ArrayList<KeyValuePair>();
 	}
 
-	public Device(UUID key, String id, ArrayList<KeyValuePair> properties) {
-		this.id = id;
+	public Device(UUID key, ArrayList<KeyValuePair> properties) {
 		this.key = key;
 		this.setProperties(properties);
 	}
 
 	public UUID getKey() {
 		return key;
-	}
-
-	private ArrayList<KeyValuePair> properties;
-
-	public String getDeviceId() {
-		return this.id;
 	}
 
 	public ArrayList<KeyValuePair> getProperties() {
@@ -51,7 +43,7 @@ public abstract class Device {
 
 	@Override
 	public String toString() {
-		return "Device [id=" + id + ", key=" + key + ", properties="
+		return "Device [key=" + key + ", properties="
 				+ properties + "]";
 	}
 }

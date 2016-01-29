@@ -1,19 +1,16 @@
 package eu.daiad.web.data;
 
-import org.joda.time.DateTime;
+import java.util.UUID;
 
-import eu.daiad.web.model.EnumGender;
-import eu.daiad.web.security.model.ApplicationUser;
-import eu.daiad.web.security.model.EnumRole;
+import eu.daiad.web.model.ApplicationUser;
+import eu.daiad.web.model.EnumRole;
+import eu.daiad.web.model.user.Account;
 
 public interface IUserRepository {
 
 	void createDefaultUser();
 
-	ApplicationUser createUser(String username, String password,
-			String firstname, String lastname, EnumGender gender,
-			DateTime birthdate, String country, String postalCode,
-			String timezone) throws Exception;
+	UUID createUser(Account user) throws Exception;
 
 	void setPassword(String username, String password) throws Exception;
 

@@ -1,6 +1,7 @@
 package eu.daiad.web.controller.rest;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -10,7 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import eu.daiad.web.data.DeviceRepository;
+import eu.daiad.web.data.IDeviceRepository;
+import eu.daiad.web.model.ApplicationUser;
 import eu.daiad.web.model.Error;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.device.AmphiroDeviceRegistrationRequest;
@@ -21,7 +23,6 @@ import eu.daiad.web.model.device.DeviceRegistrationRequest;
 import eu.daiad.web.model.device.DeviceRegistrationResponse;
 import eu.daiad.web.model.device.WaterMeterDeviceRegistrationRequest;
 import eu.daiad.web.security.AuthenticationService;
-import eu.daiad.web.security.model.ApplicationUser;
 
 @RestController("RestDeviceController")
 public class DeviceController {
@@ -34,10 +35,11 @@ public class DeviceController {
 	private AuthenticationService authenticationService;
 
 	@Autowired
-	private DeviceRepository repository;
+	private IDeviceRepository repository;
 
 	@RequestMapping(value = "/api/v1/device/register", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse register(@RequestBody DeviceRegistrationRequest data) {
+		UUID deviceKey = null;
 
 		try {
 			ApplicationUser user = this.authenticationService
@@ -47,27 +49,41 @@ public class DeviceController {
 						"Authentication has failed.");
 			}
 
-			Device device = repository.getUserDeviceById(data.getDeviceId(),
-					user.getKey());
-			if (device != null) {
-				return new RestResponse(ERROR_DEVICE_EXISTS, String.format(
-						"Device [%s] already exists.", data.getDeviceId()));
-			}
-
 			switch (data.getType()) {
 			case AMPHIRO:
 				if (data instanceof AmphiroDeviceRegistrationRequest) {
 					AmphiroDeviceRegistrationRequest amphiroData = (AmphiroDeviceRegistrationRequest) data;
-					device = repository.createAmphiroDevice(user.getKey(),
-							amphiroData.getDeviceId(), amphiroData.getName(),
+
+					Device device = repository
+							.getUserAmphiroDeviceByMacAddress(user.getKey(),
+									amphiroData.getMacAddress());
+
+					if (device != null) {
+						return new RestResponse(ERROR_DEVICE_EXISTS,
+								String.format("Device [%s] already exists.",
+										amphiroData.getMacAddress()));
+					}
+
+					deviceKey = repository.createAmphiroDevice(user.getKey(),
+							amphiroData.getName(), amphiroData.getMacAddress(),
 							amphiroData.getProperties());
 				}
 				break;
 			case METER:
 				if (data instanceof WaterMeterDeviceRegistrationRequest) {
 					WaterMeterDeviceRegistrationRequest meterData = (WaterMeterDeviceRegistrationRequest) data;
-					device = repository.createMeterDevice(user.getKey(),
-							meterData.getDeviceId(), meterData.getProperties());
+
+					Device device = repository.getUserWaterMeterDeviceBySerial(
+							user.getKey(), meterData.getSerial());
+
+					if (device != null) {
+						return new RestResponse(ERROR_DEVICE_EXISTS,
+								String.format("Device [%s] already exists.",
+										meterData.getSerial()));
+					}
+
+					deviceKey = repository.createMeterDevice(user.getKey(),
+							meterData.getSerial(), meterData.getProperties());
 				}
 				break;
 			default:
@@ -75,7 +91,7 @@ public class DeviceController {
 			}
 
 			DeviceRegistrationResponse response = new DeviceRegistrationResponse();
-			response.setDeviceKey(device.getKey().toString());
+			response.setDeviceKey(deviceKey.toString());
 
 			return response;
 		} catch (Exception ex) {

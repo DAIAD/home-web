@@ -3,6 +3,7 @@ package eu.daiad.web.domain;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -37,8 +38,8 @@ public class AccountRole {
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime assignedOn = new DateTime();
 	
-	@ManyToOne(cascade = { CascadeType.ALL })
-	@JoinColumn(name = "assigned_by", nullable = false)
+	@ManyToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+	@JoinColumn(name = "assigned_by", nullable = true)
 	private Account assignedBy;
 
 	public Account getOwner() {

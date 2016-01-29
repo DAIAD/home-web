@@ -29,6 +29,6 @@ public class CustomUserDetailsService implements UserDetailsService {
 					ex);
 		}
 
-		return null;
+		throw new UsernameNotFoundException(String.format("User [%s] was not found", username));
 	}
 }

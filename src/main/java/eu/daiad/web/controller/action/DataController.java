@@ -4,20 +4,26 @@ import java.io.File;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.stereotype.Controller;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.beans.factory.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-import eu.daiad.web.model.*;
+import eu.daiad.web.model.ExportException;
+import eu.daiad.web.model.ResourceNotFoundException;
 import eu.daiad.web.model.export.DownloadFileResponse;
-import eu.daiad.web.model.export.ExportData;
+import eu.daiad.web.model.export.ExportDataRequest;
 import eu.daiad.web.service.IExportService;
 
 @Controller
@@ -28,8 +34,7 @@ public class DataController {
 
 	private static final int ERROR_UNKNOWN = 100;
 
-	private static final Log logger = LogFactory
-			.getLog(DataController.class);
+	private static final Log logger = LogFactory.getLog(DataController.class);
 
 	@Value("${tmp.folder}")
 	private String temporaryPath;
@@ -37,10 +42,10 @@ public class DataController {
 	@Autowired
 	private IExportService exportService;
 
-	@RequestMapping(value = "/data/export", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	@RequestMapping(value = "/action/data/export", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@ResponseBody
 	@Secured({ "ROLE_ADMIN" })
-	public DownloadFileResponse export(@RequestBody ExportData data,
+	public DownloadFileResponse export(@RequestBody ExportDataRequest data,
 			BindingResult results) {
 		String errorMessage = null;
 
@@ -74,7 +79,7 @@ public class DataController {
 						: errorMessage));
 	}
 
-	@RequestMapping(value = "/data/download/{token}", method = RequestMethod.GET)
+	@RequestMapping(value = "/action/data/download/{token}", method = RequestMethod.GET)
 	@Secured({ "ROLE_ADMIN" })
 	public ResponseEntity<InputStreamResource> download(
 			@PathVariable("token") String token) {

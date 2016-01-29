@@ -6,8 +6,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import eu.daiad.web.security.model.ApplicationUser;
-import eu.daiad.web.security.model.EnumRole;
+import eu.daiad.web.model.ApplicationUser;
+import eu.daiad.web.model.EnumRole;
 
 @Controller
 public class HomeController {
@@ -47,11 +47,10 @@ public class HomeController {
 		if (daiadUser == null) {
 			model.addAttribute("reload", false);
 		} else {
-			model.addAttribute("reload", true);
-
 			if (!daiadUser.hasRole(EnumRole.ROLE_ADMIN)) {
 				return "redirect:/error/403";
 			}
+			model.addAttribute("reload", true);
 		}
 
 		return "utility/default";
