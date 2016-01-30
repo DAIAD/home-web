@@ -27,7 +27,7 @@ public class HomeController {
 		return "index";
 	}
 
-	@RequestMapping("/home/")
+	@RequestMapping("/home/**")
 	public String home(Model model, @AuthenticationPrincipal User user) {
 		ApplicationUser daiadUser = (ApplicationUser) user;
 
@@ -40,7 +40,7 @@ public class HomeController {
 		return "home/default";
 	}
 
-	@RequestMapping("/utility/")
+	@RequestMapping("/utility/**")
 	public String utility(Model model, @AuthenticationPrincipal User user) {
 		ApplicationUser daiadUser = (ApplicationUser) user;
 
