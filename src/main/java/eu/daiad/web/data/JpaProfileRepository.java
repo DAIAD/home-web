@@ -9,11 +9,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Repository;
 
-import eu.daiad.web.model.ApplicationUser;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistration;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.profile.Profile;
+import eu.daiad.web.model.security.AuthenticatedUser;
 
 @Repository()
 @Transactional()
@@ -28,10 +28,9 @@ public class JpaProfileRepository implements IProfileRepository {
 
 	@Override
 	public Profile getProfileByUsername(String username) throws Exception {
-		ApplicationUser user = this.userRepository.getUserByName(username);
+		AuthenticatedUser user = this.userRepository.getUserByName(username);
 
-		ArrayList<Device> devices = this.deviceRepository.getUserDevices(
-				user.getKey(), new DeviceRegistrationQuery());
+		ArrayList<Device> devices = this.deviceRepository.getUserDevices(user.getKey(), new DeviceRegistrationQuery());
 
 		Profile profile = new Profile();
 

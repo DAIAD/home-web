@@ -42,7 +42,7 @@ public class RESTAuthenticationFailureHandler extends
 				ObjectMapper mapper = new ObjectMapper();
 				response.getWriter().print(
 						mapper.writeValueAsString(new RestResponse(
-								Error.ERROR_AUTH_FAILED,
+								Error.ERROR_AUTHENTICATION,
 								"Authentication has failed.")));
 			} catch (Exception e) {
 				logger.debug(e.getMessage());

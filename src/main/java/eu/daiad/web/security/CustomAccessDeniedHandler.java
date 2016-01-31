@@ -53,7 +53,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
 						response.getWriter().print(
 								mapper.writeValueAsString(new RestResponse(
-										Error.ERROR_AUTH_FAILED,
+										Error.ERROR_AUTHENTICATION,
 										"Authentication has failed.")));
 					}
 				} else {

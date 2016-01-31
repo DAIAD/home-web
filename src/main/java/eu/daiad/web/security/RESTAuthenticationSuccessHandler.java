@@ -19,15 +19,14 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import eu.daiad.web.data.IProfileRepository;
-import eu.daiad.web.model.ApplicationUser;
 import eu.daiad.web.model.AuthenticationResponse;
 import eu.daiad.web.model.CsrfConstants;
 import eu.daiad.web.model.profile.Profile;
+import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.util.AjaxUtils;
 
 @Component
-public class RESTAuthenticationSuccessHandler extends
-		SimpleUrlAuthenticationSuccessHandler {
+public class RESTAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
 	private final Log logger = LogFactory.getLog(this.getClass());
 
@@ -35,9 +34,8 @@ public class RESTAuthenticationSuccessHandler extends
 	private IProfileRepository profileRepository;
 
 	@Override
-	public void onAuthenticationSuccess(HttpServletRequest request,
-			HttpServletResponse response, Authentication authentication)
-			throws IOException, ServletException {
+	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
+					Authentication authentication) throws IOException, ServletException {
 		clearAuthenticationAttributes(request);
 
 		if (AjaxUtils.isAjaxRequest(request)) {
@@ -47,33 +45,24 @@ public class RESTAuthenticationSuccessHandler extends
 			}
 			try {
 
-				Authentication auth = SecurityContextHolder.getContext()
-						.getAuthentication();
+				Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-				ApplicationUser user = (ApplicationUser) auth.getPrincipal();
+				AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
-				Profile profile = profileRepository.getProfileByUsername(user
-						.getUsername());
+				Profile profile = profileRepository.getProfileByUsername(user.getUsername());
 
-				AuthenticationResponse authenticationResponse = new AuthenticationResponse(
-						profile);
+				AuthenticationResponse authenticationResponse = new AuthenticationResponse(profile);
 
-				CsrfToken sessionToken = (CsrfToken) request.getSession()
-						.getAttribute(
+				CsrfToken sessionToken = (CsrfToken) request.getSession().getAttribute(
 								CsrfConstants.DEFAULT_CSRF_TOKEN_ATTR_NAME);
-				CsrfToken requestToken = (CsrfToken) request
-						.getAttribute(CsrfConstants.REQUEST_ATTRIBUTE_NAME);
+				CsrfToken requestToken = (CsrfToken) request.getAttribute(CsrfConstants.REQUEST_ATTRIBUTE_NAME);
 
-				CsrfToken token = (sessionToken == null ? requestToken
-						: sessionToken);
+				CsrfToken token = (sessionToken == null ? requestToken : sessionToken);
 
 				if (token != null) {
-					response.setHeader(CsrfConstants.RESPONSE_HEADER_NAME,
-							token.getHeaderName());
-					response.setHeader(CsrfConstants.RESPONSE_PARAM_NAME,
-							token.getParameterName());
-					response.setHeader(CsrfConstants.RESPONSE_TOKEN_NAME,
-							token.getToken());
+					response.setHeader(CsrfConstants.RESPONSE_HEADER_NAME, token.getHeaderName());
+					response.setHeader(CsrfConstants.RESPONSE_PARAM_NAME, token.getParameterName());
+					response.setHeader(CsrfConstants.RESPONSE_TOKEN_NAME, token.getToken());
 				}
 
 				response.setContentType("application/json;charset=UTF-8");
@@ -81,8 +70,7 @@ public class RESTAuthenticationSuccessHandler extends
 				response.setStatus(HttpStatus.OK.value());
 
 				ObjectMapper mapper = new ObjectMapper();
-				response.getWriter().print(
-						mapper.writeValueAsString(authenticationResponse));
+				response.getWriter().print(mapper.writeValueAsString(authenticationResponse));
 			} catch (Exception e) {
 				logger.debug(e.getMessage());
 			}

@@ -23,23 +23,18 @@ public class ErrorController extends BasicErrorController {
 
 	private final ErrorAttributes errorAttributes;
 
-	public ErrorController(ErrorAttributes errorAttributes,
-			ErrorProperties errorProperties) {
+	public ErrorController(ErrorAttributes errorAttributes, ErrorProperties errorProperties) {
 		super(errorAttributes, errorProperties);
 		this.errorAttributes = errorAttributes;
 	}
 
-	protected Map<String, Object> getErrorAttributes(
-			HttpServletRequest request, boolean includeStackTrace) {
-		RequestAttributes requestAttributes = new ServletRequestAttributes(
-				request);
-		return this.errorAttributes.getErrorAttributes(requestAttributes,
-				includeStackTrace);
+	protected Map<String, Object> getErrorAttributes(HttpServletRequest request, boolean includeStackTrace) {
+		RequestAttributes requestAttributes = new ServletRequestAttributes(request);
+		return this.errorAttributes.getErrorAttributes(requestAttributes, includeStackTrace);
 	}
 
 	protected HttpStatus getStatus(HttpServletRequest request) {
-		Integer statusCode = (Integer) request
-				.getAttribute("javax.servlet.error.status_code");
+		Integer statusCode = (Integer) request.getAttribute("javax.servlet.error.status_code");
 		if (statusCode == null) {
 			return HttpStatus.INTERNAL_SERVER_ERROR;
 		}
@@ -52,8 +47,7 @@ public class ErrorController extends BasicErrorController {
 
 	@Override
 	@RequestMapping(produces = "text/html")
-	public ModelAndView errorHtml(HttpServletRequest request,
-			HttpServletResponse response) {
+	public ModelAndView errorHtml(HttpServletRequest request, HttpServletResponse response) {
 		HttpStatus status = this.getStatus(request);
 
 		String path = (String) getErrorAttributes(request, false).get("path");

@@ -1,4 +1,4 @@
-package eu.daiad.web.model;
+package eu.daiad.web.model.security;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,7 +13,7 @@ import org.springframework.security.core.userdetails.User;
 
 import eu.daiad.web.model.EnumGender;
 
-public class ApplicationUser extends User {
+public class AuthenticatedUser extends User {
 
 	private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
 
@@ -33,14 +33,14 @@ public class ApplicationUser extends User {
 
 	private String timezone;
 
-	public ApplicationUser(UUID key, String username, String password) {
+	public AuthenticatedUser(UUID key, String username, String password) {
 		super(username, password, new ArrayList<GrantedAuthority>());
 
 		this.key = key;
 	}
 
-	public ApplicationUser(UUID key, String username, String password,
-			Collection<? extends GrantedAuthority> authorities) {
+	public AuthenticatedUser(UUID key, String username, String password,
+					Collection<? extends GrantedAuthority> authorities) {
 		super(username, password, authorities);
 
 		this.key = key;
@@ -111,8 +111,7 @@ public class ApplicationUser extends User {
 	}
 
 	public boolean hasRole(EnumRole role) {
-		return this.getAuthorities().contains(
-				new SimpleGrantedAuthority(role.toString()));
+		return this.getAuthorities().contains(new SimpleGrantedAuthority(role.toString()));
 	}
 
 	@Override
@@ -122,10 +121,8 @@ public class ApplicationUser extends User {
 		for (int index = 0, count = authorities.length; index < count; index++) {
 			roles.add(((GrantedAuthority) authorities[index]).getAuthority());
 		}
-		return "DaiadUser [key=" + key + ", username=" + this.getUsername()
-				+ ", firstname=" + firstname + ", lastname=" + lastname
-				+ ", gender=" + gender + ", birthdate=" + birthdate
-				+ ", country=" + country + ", postalCode=" + postalCode
-				+ ", roles=" + StringUtils.join(roles, ",") + "]";
+		return "DaiadUser [key=" + key + ", username=" + this.getUsername() + ", firstname=" + firstname
+						+ ", lastname=" + lastname + ", gender=" + gender + ", birthdate=" + birthdate + ", country="
+						+ country + ", postalCode=" + postalCode + ", roles=" + StringUtils.join(roles, ",") + "]";
 	}
 }

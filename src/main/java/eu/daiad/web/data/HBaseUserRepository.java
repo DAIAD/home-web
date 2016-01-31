@@ -32,9 +32,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
 
-import eu.daiad.web.model.ApplicationUser;
 import eu.daiad.web.model.EnumGender;
-import eu.daiad.web.model.EnumRole;
+import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.user.Account;
 
 @Repository()
@@ -42,8 +42,7 @@ import eu.daiad.web.model.user.Account;
 @PropertySource("${hbase.properties}")
 public class HBaseUserRepository implements IUserRepository {
 
-	private static final Log logger = LogFactory
-			.getLog(HBaseUserRepository.class);
+	private static final Log logger = LogFactory.getLog(HBaseUserRepository.class);
 
 	private String quorum;
 
@@ -53,8 +52,7 @@ public class HBaseUserRepository implements IUserRepository {
 
 	private final String defaultAdminUsername = "Administrator";
 
-	private final EnumRole[] defaultAdminRoles = { EnumRole.ROLE_USER,
-			EnumRole.ROLE_ADMIN };
+	private final EnumRole[] defaultAdminRoles = { EnumRole.ROLE_USER, EnumRole.ROLE_ADMIN };
 
 	@Autowired
 	public HBaseUserRepository(@Value("${hbase.zookeeper.quorum}") String quorum) {
@@ -85,41 +83,30 @@ public class HBaseUserRepository implements IUserRepository {
 			table = connection.getTable(TableName.valueOf(this.userTable));
 
 			byte[] columnFamily = Bytes.toBytes(this.columnFamily);
-			byte[] rowKey = md.digest(this.defaultAdminUsername
-					.getBytes(StandardCharsets.UTF_8));
+			byte[] rowKey = md.digest(this.defaultAdminUsername.getBytes(StandardCharsets.UTF_8));
 
 			Put p = new Put(rowKey);
 
 			byte[] column = Bytes.toBytes("key");
-			p.addColumn(columnFamily, column, UUID.randomUUID().toString()
-					.getBytes(StandardCharsets.UTF_8));
+			p.addColumn(columnFamily, column, UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8));
 
 			column = Bytes.toBytes("username");
-			p.addColumn(columnFamily, column,
-					this.defaultAdminUsername.getBytes(StandardCharsets.UTF_8));
+			p.addColumn(columnFamily, column, this.defaultAdminUsername.getBytes(StandardCharsets.UTF_8));
 			column = Bytes.toBytes("password");
-			p.addColumn(columnFamily, column, encoder.encode(password)
-					.getBytes(StandardCharsets.UTF_8));
+			p.addColumn(columnFamily, column, encoder.encode(password).getBytes(StandardCharsets.UTF_8));
 
 			column = Bytes.toBytes("firstname");
-			p.addColumn(columnFamily, column,
-					"Administrator".getBytes(StandardCharsets.UTF_8));
+			p.addColumn(columnFamily, column, "Administrator".getBytes(StandardCharsets.UTF_8));
 
 			column = Bytes.toBytes("timezone");
-			p.addColumn(columnFamily, column,
-					"Europe/Athens".getBytes(StandardCharsets.UTF_8));
+			p.addColumn(columnFamily, column, "Europe/Athens".getBytes(StandardCharsets.UTF_8));
 
 			column = Bytes.toBytes("roles");
-			p.addColumn(
-					columnFamily,
-					column,
-					StringUtils.join(defaultAdminRoles, ",").getBytes(
-							StandardCharsets.UTF_8));
+			p.addColumn(columnFamily, column, StringUtils.join(defaultAdminRoles, ",").getBytes(StandardCharsets.UTF_8));
 
 			table.put(p);
 
-			logger.warn(String
-					.format("Default administrator user has been crearted. User name : %s. Password : %s",
+			logger.warn(String.format("Default administrator user has been crearted. User name : %s. Password : %s",
 							this.defaultAdminUsername, password));
 		} catch (Exception ex) {
 			logger.error("Failed to create default administartor user.", ex);
@@ -163,59 +150,47 @@ public class HBaseUserRepository implements IUserRepository {
 			table = connection.getTable(TableName.valueOf(this.userTable));
 			byte[] columnFamily = Bytes.toBytes(this.columnFamily);
 
-			byte[] rowKey = md
-					.digest(account.getUsername().getBytes(StandardCharsets.UTF_8));
+			byte[] rowKey = md.digest(account.getUsername().getBytes(StandardCharsets.UTF_8));
 
 			Put p = new Put(rowKey);
 
 			byte[] column = Bytes.toBytes("key");
-			p.addColumn(columnFamily, column,
-					userKey.toString().getBytes(StandardCharsets.UTF_8));
+			p.addColumn(columnFamily, column, userKey.toString().getBytes(StandardCharsets.UTF_8));
 
 			column = Bytes.toBytes("username");
-			p.addColumn(columnFamily, column,
-					account.getUsername().getBytes(StandardCharsets.UTF_8));
+			p.addColumn(columnFamily, column, account.getUsername().getBytes(StandardCharsets.UTF_8));
 			column = Bytes.toBytes("password");
-			p.addColumn(columnFamily, column, encoder.encode(account.getPassword())
-					.getBytes(StandardCharsets.UTF_8));
+			p.addColumn(columnFamily, column, encoder.encode(account.getPassword()).getBytes(StandardCharsets.UTF_8));
 
 			column = Bytes.toBytes("firstname");
-			p.addColumn(columnFamily, column,
-					account.getFirstname().getBytes(StandardCharsets.UTF_8));
+			p.addColumn(columnFamily, column, account.getFirstname().getBytes(StandardCharsets.UTF_8));
 			column = Bytes.toBytes("lastname");
-			p.addColumn(columnFamily, column,
-					account.getLastname().getBytes(StandardCharsets.UTF_8));
+			p.addColumn(columnFamily, column, account.getLastname().getBytes(StandardCharsets.UTF_8));
 
 			column = Bytes.toBytes("gender");
 			p.addColumn(columnFamily, column, Bytes.toBytes(account.getGender().getValue()));
 
 			if (account.getBirthdate() != null) {
 				column = Bytes.toBytes("birthdate");
-				p.addColumn(columnFamily, column,
-						Bytes.toBytes(account.getBirthdate().getMillis()));
+				p.addColumn(columnFamily, column, Bytes.toBytes(account.getBirthdate().getMillis()));
 			}
 
 			column = Bytes.toBytes("country");
-			p.addColumn(columnFamily, column,
-					account.getCountry().getBytes(StandardCharsets.UTF_8));
+			p.addColumn(columnFamily, column, account.getCountry().getBytes(StandardCharsets.UTF_8));
 
 			column = Bytes.toBytes("postalCode");
-			p.addColumn(columnFamily, column,
-					account.getPostalCode().getBytes(StandardCharsets.UTF_8));
+			p.addColumn(columnFamily, column, account.getPostalCode().getBytes(StandardCharsets.UTF_8));
 
 			column = Bytes.toBytes("timezone");
-			p.addColumn(columnFamily, column,
-					account.getTimezone().getBytes(StandardCharsets.UTF_8));
+			p.addColumn(columnFamily, column, account.getTimezone().getBytes(StandardCharsets.UTF_8));
 
 			column = Bytes.toBytes("roles");
-			p.addColumn(columnFamily, column, EnumRole.ROLE_USER.toString()
-					.getBytes(StandardCharsets.UTF_8));
+			p.addColumn(columnFamily, column, EnumRole.ROLE_USER.toString().getBytes(StandardCharsets.UTF_8));
 
 			table.put(p);
 
 			List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
-			authorities.add(new SimpleGrantedAuthority(EnumRole.ROLE_USER
-					.toString()));
+			authorities.add(new SimpleGrantedAuthority(EnumRole.ROLE_USER.toString()));
 
 			return userKey;
 		} finally {
@@ -246,14 +221,12 @@ public class HBaseUserRepository implements IUserRepository {
 			table = connection.getTable(TableName.valueOf(this.userTable));
 			byte[] columnFamily = Bytes.toBytes(this.columnFamily);
 
-			byte[] rowKey = md
-					.digest(username.getBytes(StandardCharsets.UTF_8));
+			byte[] rowKey = md.digest(username.getBytes(StandardCharsets.UTF_8));
 
 			Put p = new Put(rowKey);
 
 			byte[] column = Bytes.toBytes("password");
-			p.addColumn(columnFamily, column, encoder.encode(password)
-					.getBytes(StandardCharsets.UTF_8));
+			p.addColumn(columnFamily, column, encoder.encode(password).getBytes(StandardCharsets.UTF_8));
 
 			table.put(p);
 		} finally {
@@ -267,13 +240,12 @@ public class HBaseUserRepository implements IUserRepository {
 	}
 
 	@Override
-	public void setRole(String username, EnumRole role, boolean set)
-			throws Exception {
+	public void setRole(String username, EnumRole role, boolean set) throws Exception {
 		Connection connection = null;
 		Table table = null;
 
 		try {
-			ApplicationUser user = this.getUserByName(username);
+			AuthenticatedUser user = this.getUserByName(username);
 
 			ArrayList<EnumRole> roles = new ArrayList<EnumRole>();
 			Iterator<GrantedAuthority> it = user.getAuthorities().iterator();
@@ -298,14 +270,12 @@ public class HBaseUserRepository implements IUserRepository {
 			table = connection.getTable(TableName.valueOf(this.userTable));
 			byte[] columnFamily = Bytes.toBytes(this.columnFamily);
 
-			byte[] rowKey = md
-					.digest(username.getBytes(StandardCharsets.UTF_8));
+			byte[] rowKey = md.digest(username.getBytes(StandardCharsets.UTF_8));
 
 			Put p = new Put(rowKey);
 
 			byte[] column = Bytes.toBytes("roles");
-			p.addColumn(columnFamily, column, StringUtils.join(roles, ",")
-					.getBytes(StandardCharsets.UTF_8));
+			p.addColumn(columnFamily, column, StringUtils.join(roles, ",").getBytes(StandardCharsets.UTF_8));
 
 			table.put(p);
 		} finally {
@@ -319,7 +289,7 @@ public class HBaseUserRepository implements IUserRepository {
 	}
 
 	@Override
-	public ApplicationUser getUserByName(String username) throws Exception {
+	public AuthenticatedUser getUserByName(String username) throws Exception {
 		Connection connection = null;
 		Table table = null;
 
@@ -360,46 +330,36 @@ public class HBaseUserRepository implements IUserRepository {
 
 				switch (qualifier) {
 				case "key":
-					id = UUID.fromString(new String(entry.getValue(),
-							StandardCharsets.UTF_8));
+					id = UUID.fromString(new String(entry.getValue(), StandardCharsets.UTF_8));
 					break;
 				case "firstname":
-					firstname = new String(entry.getValue(),
-							StandardCharsets.UTF_8);
+					firstname = new String(entry.getValue(), StandardCharsets.UTF_8);
 					break;
 				case "lastname":
-					lastname = new String(entry.getValue(),
-							StandardCharsets.UTF_8);
+					lastname = new String(entry.getValue(), StandardCharsets.UTF_8);
 					break;
 				case "country":
-					country = new String(entry.getValue(),
-							StandardCharsets.UTF_8);
+					country = new String(entry.getValue(), StandardCharsets.UTF_8);
 					break;
 				case "postalCode":
-					postalCode = new String(entry.getValue(),
-							StandardCharsets.UTF_8);
+					postalCode = new String(entry.getValue(), StandardCharsets.UTF_8);
 					break;
 				case "birthdate":
 					birthdate = new DateTime(Bytes.toLong(entry.getValue()));
 					break;
 				case "gender":
-					gender = EnumGender.fromInteger(Bytes.toInt(entry
-							.getValue()));
+					gender = EnumGender.fromInteger(Bytes.toInt(entry.getValue()));
 					break;
 				case "password":
-					password = new String(entry.getValue(),
-							StandardCharsets.UTF_8);
+					password = new String(entry.getValue(), StandardCharsets.UTF_8);
 					break;
 				case "timezone":
-					timezone = new String(entry.getValue(),
-							StandardCharsets.UTF_8);
+					timezone = new String(entry.getValue(), StandardCharsets.UTF_8);
 					break;
 				case "roles":
-					String[] roles = (new String(entry.getValue(),
-							StandardCharsets.UTF_8)).split(",");
+					String[] roles = (new String(entry.getValue(), StandardCharsets.UTF_8)).split(",");
 					for (int index = 0, count = roles.length; index < count; index++) {
-						authorities
-								.add(new SimpleGrantedAuthority(roles[index]));
+						authorities.add(new SimpleGrantedAuthority(roles[index]));
 					}
 					break;
 				}
@@ -408,8 +368,7 @@ public class HBaseUserRepository implements IUserRepository {
 			table.close();
 			connection.close();
 
-			ApplicationUser user = new ApplicationUser(id, username, password,
-					authorities);
+			AuthenticatedUser user = new AuthenticatedUser(id, username, password, authorities);
 			user.setFirstname(firstname);
 			user.setLastname(lastname);
 			user.setBirthdate(birthdate);

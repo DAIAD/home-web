@@ -403,7 +403,7 @@ CREATE TABLE static_recommendation  (
     index integer NOT NULL,
     category_id integer NOT NULL,
     locale character(2),
-    title character varying(100),
+    title character varying,
     description character varying,
     image_binary bytea,
     image_link character varying(200),

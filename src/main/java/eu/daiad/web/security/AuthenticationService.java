@@ -6,8 +6,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import eu.daiad.web.model.ApplicationUser;
 import eu.daiad.web.model.Credentials;
+import eu.daiad.web.model.security.AuthenticatedUser;
 
 @Service
 public class AuthenticationService {
@@ -35,7 +35,7 @@ public class AuthenticationService {
 		return true;
 	}
 
-	public ApplicationUser authenticateAndGetUser(Credentials credentials) {
+	public AuthenticatedUser authenticateAndGetUser(Credentials credentials) {
 		if (credentials == null) {
 			return null;
 		}
@@ -43,7 +43,7 @@ public class AuthenticationService {
 				credentials.getPassword());
 	}
 
-	public ApplicationUser authenticateAndGetUser(String username,
+	public AuthenticatedUser authenticateAndGetUser(String username,
 			String password) {
 		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
@@ -53,6 +53,6 @@ public class AuthenticationService {
 			return null;
 		}
 
-		return (ApplicationUser) user;
+		return (AuthenticatedUser) user;
 	}
 }
