@@ -34,7 +34,7 @@ function login(username, password) {
 
 	var request = {
 		type : "POST",
-		url : '/login',
+		url : '/login?application=home',
 		data : data,
 		beforeSend : function(xhr) {
 			xhr.setRequestHeader('X-CSRF-TOKEN', $('meta[name=_csrf]').attr(
