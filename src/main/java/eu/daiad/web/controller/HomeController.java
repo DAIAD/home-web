@@ -27,7 +27,7 @@ public class HomeController {
 		return "index";
 	}
 
-	@RequestMapping("/home/")
+	@RequestMapping("/home/**")
 	public String home(Model model, @AuthenticationPrincipal User user) {
 		ApplicationUser daiadUser = (ApplicationUser) user;
 
