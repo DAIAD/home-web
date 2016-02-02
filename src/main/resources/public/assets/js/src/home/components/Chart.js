@@ -1,59 +1,40 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
+var PortalMixin = require('./PortalMixin');
+var echarts = require('echarts');
 
-var ChartOptions = require('./ChartOptions');
+var Chart = React.createClass({
 
-var echarts  = require('echarts');
-//var scatter = require('echarts').chart.scatter;
-
-
-var EChart = React.createClass({
-	displayName: 'Echart',
-
-	getDefaultProps: function() {
-		//var echartSeriesArray = this._makeDataSeries(seriesArray);
-		return {
-			width: 700,
-			height: 400,
-		};
-	},
-	componentDidMount: function() {
-		this._initChart();
-	},
-	componentWillUnmount: function() {
-		this._destroyChart();
-	},
-	shouldComponentUpdate: function(nextProps, nextState) {
-		return false;
-	},
-	componentWillReceiveProps: function(nextProps) {
-		this._updateChart(nextProps);
-	},
+	mixins: [PortalMixin],
+	
 	render: function() {
-		return <div 
-			className="chartContainer"
-			style= {{
-				'height': this.props.height,
-				'width': this.props.width
-			}} 
-			/>;
+		return (
+			<div 
+				{...this.props} />
+		);
 	},
-	_initChart: function() {
-		this.chart = echarts.init(ReactDOM.findDOMNode(this));
-		
-		this.chart.setOption(ChartOptions);
-		this._updateChart(this.props);
-	},
-	_updateChart: function(nextProps) {
-		if (!nextProps) {
-			return null;
+
+	componentDidMount: function() {
+		this._chart = echarts.init(document.getElementById(this.getId())); 
+		if(this.props.options) {
+			this._chart.setOption(this.props.options);
 		}
-		this.chart.setOption(nextProps);
 	},
-	_destroyChart: function() {
-		this.chart.dispose();
+	
+	componentWillReceiveProps : function(nextProps) {
+		if((this._chart) && (nextProps.options)) {
+			this._chart.setOption(nextProps.options);
+		}
 	},
+
+	componentWillUnmount : function() {
+		this._chart.dispose();
+	},
+	
+	getChart: function() {
+		return this._chart;
+	}
 
 });
 
-module.exports = EChart;
+module.exports = Chart;
