@@ -152,11 +152,9 @@ function profileUpdate(profile) {
 						'content'));
 			}
 		};
-		//_model.profile = assign({}, profile);	
-		_model.profile = profile;
+		_model.profile = assign({}, profile);	
+		//_model.profile = profile;
 		UserStore.emitProfileUpdate();
-		console.log('updating profile...');
-		console.log(profile);
 		//TODO: API Call not ready
 		/*
 		$.ajax(request).done(function(data, textStatus, request) {
@@ -198,7 +196,8 @@ var UserStore = assign({}, events.EventEmitter.prototype, {
 		//TODO
 		//Why do i need to do this?
 		//otherwise _model.profile is mutable 
-		return assign({}, _model.profile);
+		//return assign({}, _model.profile);
+		return _model.profile;
 	},
 	addLoginListener : function(callback) {
 		this.on(LOGIN_EVENT, callback);

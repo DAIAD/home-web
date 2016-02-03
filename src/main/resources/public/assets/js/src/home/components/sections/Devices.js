@@ -1,5 +1,6 @@
 var React = require('react');
 var bs = require('react-bootstrap');
+var assign = require('object-assign');
 
 var UserStore = require('../../stores/UserStore');
 
@@ -11,11 +12,6 @@ function capitalize(word) {
 }
 
 var Device = React.createClass({
-	/*getInitialState: function() {
-		return {
-			name: this.props.name 
-		};
-		},*/
 	render: function() {
 		return (
 			<div className="col-xs-5" >
@@ -48,64 +44,47 @@ var Device = React.createClass({
 		);
 	},
 	_onChange: function() {
-		/*this.setState({
-			name: this.refs.name.getValue()
-			});
-			*/
 		this.props.handleSetName(this.props.deviceKey, this.refs.name.getValue());
 	},
-	_onClick: function() {
-		return;
-	}
 });
 
 var DevicesForm = React.createClass({
 	getInitialState: function() {
 		return {
-			profile: UserStore.getProfile() 
+			devices:this.props.profile.devices 
 		};
 	},
 	handleSetName: function(deviceKey, name) {
-		var profile = this.state.profile;
-		if (!deviceKey.length || !name.length){
+		if (!deviceKey || !name){
 			return;
 		}
-		var self = this;
-		
-		profile.devices.forEach(function(device, i) {
+
+		this.props.profile.devices.forEach(function(device, i) {
 			if (deviceKey === device.deviceKey) {
+				var devices = this.props.profile.devices;
 				device.name = name;
-				profile.devices[i] = device;
+				devices[i] = device;
 				
-				self.setState({
-					profile: profile
+				this.setState({
+					devices: devices
 				});
 			}
-		});
-		//TODO: bind(this) doesnt work
-		//.bind(this);
+		}.bind(this));
 
 	},
 	_onSubmit: function(e) {
 		e.preventDefault();
-		HomeActions.updateProfile(this.state.profile);
+		var profile = assign({}, this.props.profile);
+		profile.devices = this.state.devices;
+		HomeActions.updateProfile(profile);
 	},
-	//_onChange: function() {
-	//		var profile = this.state.profile;
-		//profile.firstname = this.refs.firstname.getValue();
-		//profile.lastname = this.refs.lastname.getValue();
-	//	this.setState({
-	//		profile: profile
-	//	});
-	//},
 	render: function() {
-		var profile = UserStore.getProfile();
 		var handleSetName = this.handleSetName;
 		return (
 			<form>
 				<bs.Accordion className="col-xs-10">
 					{
-						profile.devices.map(function(device, i){
+						this.props.profile.devices.map(function(device, i){
 							return (
 								<bs.Panel key={device.deviceKey}
 									header={device.name || device.deviceKey}
@@ -121,15 +100,16 @@ var DevicesForm = React.createClass({
 		);
 	}
 });
-var Devices = React.createClass({
+
+var DevicesSection = React.createClass({
 	render: function() {
 		return (
 			<div className="section-devices">
 				<h3>Devices</h3>
-				<DevicesForm />	
+				<DevicesForm profile={UserStore.getProfile()}/>	
 			</div>
 		);
 	}
 });
 
-module.exports = Devices;
+module.exports = DevicesSection;

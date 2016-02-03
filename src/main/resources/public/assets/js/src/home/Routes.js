@@ -34,6 +34,7 @@ module.exports =
 					<Route path="tips" component={Tips} />
 				</Route>
 				<Route path="/settings" component={Settings} >
+					<IndexRoute component={Devices} />
 					<Route path="profile" component={Profile} />
 					<Route path="devices" component={Devices} />
 				</Route>
