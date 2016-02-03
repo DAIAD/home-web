@@ -34,7 +34,16 @@ var HomeActions = {
 			action : HomeConstants.PROFILE_REFRESH,
 			data : {}
 		});
-	}
+	},
+
+	updateProfile: function(profile) {
+		AppDispatcher.dispatch({
+			action : HomeConstants.PROFILE_UPDATE,
+			data : {
+				profile: profile
+			}
+		});
+	},
 
 };
 

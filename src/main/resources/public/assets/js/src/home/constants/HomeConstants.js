@@ -3,10 +3,10 @@ var keyMirror = require('keymirror');
 var constants = keyMirror({
 	USER_LOGIN : null,
 	USER_LOGOUT : null,
-
 	LOCALE_CHANGE : null,
+	PROFILE_REFRESH : null,
+	PROFILE_UPDATE: null,
 
-	PROFILE_REFRESH : null
 });
 constants.STATIC = "/assets/artwork/";
 

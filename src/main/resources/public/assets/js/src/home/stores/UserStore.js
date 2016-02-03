@@ -11,6 +11,7 @@ var LOGIN_EVENT = 'LOGIN';
 var LOGOUT_EVENT = 'LOGOUT';
 
 var PROFILE_REFRESH = 'PROFILE_REFRESH';
+var PROFILE_UPDATE = 'PROFILE_UPDATE';
 
 var _model = {
 	profile : null
@@ -138,6 +139,53 @@ function profileRefresh() {
 		});	
 }
 
+function profileUpdate(profile) {
+	var data = {
+			_csrf : $('meta[name=_csrf]').attr('content')
+		};
+
+		var request = {
+			type : "GET",
+			url : '/action/profile_update',
+			beforeSend : function(xhr) {
+				xhr.setRequestHeader('X-CSRF-TOKEN', $('meta[name=_csrf]').attr(
+						'content'));
+			}
+		};
+		//_model.profile = assign({}, profile);	
+		_model.profile = profile;
+		UserStore.emitProfileUpdate();
+		console.log('updating profile...');
+		console.log(profile);
+		//TODO: API Call not ready
+		/*
+		$.ajax(request).done(function(data, textStatus, request) {
+			updateCsrfToken(request.getResponseHeader('X-CSRF-TOKEN'));
+			
+			if(data.success) {
+				_model.profile = data.profile;
+				
+			} else {
+				_model.profile = null;
+				
+			}
+
+			//UserStore.emitProfileRefresh();
+		}).fail(function(jqXHR, textStatus, errorThrown) {
+			updateCsrfToken(jqXHR.getResponseHeader('X-CSRF-TOKEN'));
+			
+			switch (jqXHR.status) {
+			case 403:
+				break;
+			}
+			
+			_model.profile = null;
+		
+			//UserStore.emitProfileRefresh();
+			});	
+			profileRefresh();
+			*/
+}
 var UserStore = assign({}, events.EventEmitter.prototype, {
 
 	isAuthenticated : function() {
@@ -147,7 +195,10 @@ var UserStore = assign({}, events.EventEmitter.prototype, {
 		return false;
 	},
 	getProfile: function() {
-		return _model.profile;
+		//TODO
+		//Why do i need to do this?
+		//otherwise _model.profile is mutable 
+		return assign({}, _model.profile);
 	},
 	addLoginListener : function(callback) {
 		this.on(LOGIN_EVENT, callback);
@@ -172,7 +223,15 @@ var UserStore = assign({}, events.EventEmitter.prototype, {
 	removeProfileRefreshListener : function(callback) {
 		this.removeListener(PROFILE_REFRESH, callback);
 	},
-	
+
+	addProfileUpdateListener : function(callback) {
+		this.on(PROFILE_UPDATE, callback);
+	},
+
+	removeProfileUpdateListener : function(callback) {
+		this.removeListener(PROFILE_UPDATE, callback);
+	},
+
 	emitLogin: function(args) {
 		this.emit(LOGIN_EVENT, args);
 	},
@@ -183,27 +242,38 @@ var UserStore = assign({}, events.EventEmitter.prototype, {
 	
 	emitProfileRefresh: function() {
 		this.emit(PROFILE_REFRESH);
-	}
+	},
+
+	emitProfileUpdate: function() {
+		this.emit(PROFILE_UPDATE);
+	},
 	
 	
 });
 
 AppDispatcher.register(function(message) {
-	switch (message.action) {
-	case HomeConstants.USER_LOGIN:
-		login(message.data.username, message.data.password);
-		break;
+	var action = message.action;
 
-	case HomeConstants.USER_LOGOUT:
-		logout();
-		break;
-	
-	case HomeConstants.PROFILE_REFRESH:
-		profileRefresh();
-		break;
-	default:
-		break;
-	}
+	switch (action) {
+		case HomeConstants.USER_LOGIN:
+			login(message.data.username, message.data.password);
+			break;
+
+		case HomeConstants.USER_LOGOUT:
+			logout();
+			break;
+		
+		case HomeConstants.PROFILE_REFRESH:
+			profileRefresh();
+			break;
+
+		case HomeConstants.PROFILE_UPDATE:
+			profileUpdate(message.data.profile);
+			break;
+
+		default:
+			break;
+		}
 });
 
 module.exports = UserStore;
