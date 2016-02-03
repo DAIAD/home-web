@@ -1,3 +1,5 @@
+
+
 module.exports = function (grunt) {
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
@@ -12,6 +14,14 @@ module.exports = function (grunt) {
 					'src/main/resources/public/assets/js/build/utility/*.min.js',
 					'src/main/resources/public/assets/js/build/utility/*.min.js.map'
 				]
+            },
+					home: {
+                src: [
+					'src/main/resources/public/assets/js/build/home/*.js',
+					'src/main/resources/public/assets/js/build/home/*.js.map',
+					'src/main/resources/public/assets/js/build/home/*.min.js',
+					'src/main/resources/public/assets/js/build/home/*.min.js.map'
+								],
             }
         },
         jshint: {
@@ -24,6 +34,10 @@ module.exports = function (grunt) {
             utility: [
 				'src/main/resources/public/assets/js/src/utility/**/*.js',
 				'!src/main/resources/public/assets/js/src/utility/i18n/**/*.js'
+            ],
+					home: [
+				'src/main/resources/public/assets/js/src/home/**/*.js',
+				'!src/main/resources/public/assets/js/src/home/i18n/**/*.js'
             ]
         },
 		browserify: {
@@ -58,6 +72,13 @@ module.exports = function (grunt) {
 						'src/main/resources/public/assets/js/src/utility/main.js'
 					]
 				}
+			},
+			home: {
+				files: {
+					'src/main/resources/public/assets/js/build/home/bundle.js': [
+						'src/main/resources/public/assets/js/src/home/main.js'
+					]
+				}
 			}
 		},
 		exorcise: {
@@ -70,6 +91,17 @@ module.exports = function (grunt) {
 						'src/main/resources/public/assets/js/build/utility.js'
 					]
 				}
+			},
+			home: {
+				options: {
+					strict: false
+				},
+				files: {
+					'src/main/resources/public/assets/js/build/home/bundle.js.map': [
+						'src/main/resources/public/assets/js/build/home.js'
+					]
+				}
+
 			}
 		},
         uglify: {
@@ -83,7 +115,15 @@ module.exports = function (grunt) {
 						'src/main/resources/public/assets/js/build/utility/bundle.js'
 					]
                 }
-            }
+            },
+						home: {
+				       files: {
+				           'src/main/resources/public/assets/js/build/home/bundle.min.js': [
+										'src/main/resources/public/assets/js/build/home/bundle.js'
+								]
+				       }
+						}
+
         },
         concat: {
 			utility: {
@@ -93,7 +133,15 @@ module.exports = function (grunt) {
 				],
 				dest: 'src/main/resources/public/assets/js/build/utility/bundle.min.js',
 			},
-		},
+			home: {
+						src: [
+							'node_modules/echarts/dist/echarts.min.js',
+							'src/main/resources/public/assets/js/build/home/bundle.min.js'
+						],
+						dest: 'src/main/resources/public/assets/js/build/home/bundle.min.js',
+						},
+				},
+
         sync: {
 			debug: {
 				files: [{
@@ -148,7 +196,16 @@ module.exports = function (grunt) {
 					dest: 'src/main/resources/public/assets/js/build/utility/i18n/',
 					filter: 'isFile'
 				}]
-			}
+			},
+			home: {
+						files: [{
+							expand: true,
+							cwd: 'src/main/resources/public/assets/js/src/home/i18n/',
+							src: ['*.js'],
+							dest: 'src/main/resources/public/assets/js/build/home/i18n/',
+							filter: 'isFile'
+						}]
+					}
 		},
 		watch: {
 			options: {
@@ -182,6 +239,6 @@ module.exports = function (grunt) {
     // Default task(s).
     grunt.registerTask('build', ['clean', 'jshint', 'browserify', 'uglify', 'concat', 'sync:utility']);
 
-	grunt.registerTask('develop', ['clean', 'jshint', 'browserify', 'sync:utility', 'sync:debug', 'watch']);
+	grunt.registerTask('develop', ['clean', 'jshint', 'browserify', 'sync:home', 'sync:utility', 'sync:debug', 'watch']);
 
 };
