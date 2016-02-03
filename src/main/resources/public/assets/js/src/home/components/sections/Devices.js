@@ -12,11 +12,16 @@ function capitalize(word) {
 }
 
 var Device = React.createClass({
+	getInitialState: function() {
+		return {
+			name:this.props.name 
+		};
+	},	
 	render: function() {
 		return (
 			<div className="col-xs-5" >
 				
-				<bs.Input type="text" label="Device Name" value={this.props.name} onChange={this._onChange} ref="name" />
+				<bs.Input type="text" label="Device Name" value={this.state.name} onChange={this._onChange} ref="name" />
 				<bs.Input type="text" label="Device Key" value={this.props.deviceKey} readOnly={true} />
 					{(() => {
 						if (this.props.type === 'AMPHIRO') {
@@ -40,46 +45,48 @@ var Device = React.createClass({
 									);
 								})
 						}
+						<bs.ButtonInput style={{marginTop: "20px"}} type="submit" value="Submit" onClick={this._onSubmit} />
 			</div>
 		);
 	},
+	_onSubmit: function(e) {
+		e.preventDefault();
+		var deviceKey = this.props.deviceKey;
+		var name = this.refs.name.getValue();
+
+		var profile = assign({}, this.props.profile);
+
+		this.props.profile.devices.forEach(function(device, i) {
+			if (deviceKey === device.deviceKey) {
+				device.name = name;
+				profile.devices[i] = device;
+			}
+		}.bind(this));
+
+		HomeActions.updateProfile(profile);
+	},
 	_onChange: function() {
-		this.props.handleSetName(this.props.deviceKey, this.refs.name.getValue());
+		this.setState({
+			name: this.refs.name.getValue()
+		});
 	},
 });
 
 var DevicesForm = React.createClass({
 	getInitialState: function() {
 		return {
-			devices:this.props.profile.devices 
+			changed:true
 		};
 	},
-	handleSetName: function(deviceKey, name) {
-		if (!deviceKey || !name){
-			return;
-		}
-
-		this.props.profile.devices.forEach(function(device, i) {
-			if (deviceKey === device.deviceKey) {
-				var devices = this.props.profile.devices;
-				device.name = name;
-				devices[i] = device;
-				
-				this.setState({
-					devices: devices
-				});
-			}
-		}.bind(this));
-
+	componentDidMount: function() {
+		UserStore.addProfileUpdateListener(this._onUpdate);
 	},
-	_onSubmit: function(e) {
-		e.preventDefault();
-		var profile = assign({}, this.props.profile);
-		profile.devices = this.state.devices;
-		HomeActions.updateProfile(profile);
+	componentWillUnmount: function() {
+		UserStore.removeProfileUpdateListener(this._onUpdate);
 	},
 	render: function() {
 		var handleSetName = this.handleSetName;
+		var profile = this.props.profile;
 		return (
 			<form>
 				<bs.Accordion className="col-xs-10">
@@ -89,15 +96,19 @@ var DevicesForm = React.createClass({
 								<bs.Panel key={device.deviceKey}
 									header={device.name || device.deviceKey}
 									eventKey={i}>
-									<Device {...device} handleSetName={handleSetName} />
+									<Device {...device} profile={profile}/>
 								</bs.Panel>
 								);
 						})
 					}
-				<bs.ButtonInput style={{marginTop: "20px"}} type="submit" value="Submit" onClick={this._onSubmit} />
 				</bs.Accordion>
 			</form>
 		);
+	},
+	_onUpdate: function() {
+		this.setState({
+			changed: true
+		});
 	}
 });
 
