@@ -5,20 +5,20 @@ import eu.daiad.web.model.RestResponse;
 public class DeviceRegistrationResponse extends RestResponse {
 
 	private String deviceKey;
-	
+
 	public DeviceRegistrationResponse() {
 		super();
 	}
 
-	public DeviceRegistrationResponse(int code, String description) {
+	public DeviceRegistrationResponse(String code, String description) {
 		super(code, description);
 	}
-	
-    public String getDeviceKey() {
-    	return this.deviceKey;
-    }
-    
-    public void setDeviceKey(String value) {
-    	this.deviceKey = value;
-    }
+
+	public String getDeviceKey() {
+		return this.deviceKey;
+	}
+
+	public void setDeviceKey(String value) {
+		this.deviceKey = value;
+	}
 }

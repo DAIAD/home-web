@@ -1,7 +1,16 @@
 package eu.daiad.web.model.security;
 
+import eu.daiad.web.model.EnumValueDescription;
+
 public enum EnumRole {
-	ROLE_NONE, ROLE_USER, ROLE_ADMIN;
+	@EnumValueDescription("Allows access to DAIAD@Home for the current user")
+	ROLE_USER,
+
+	@EnumValueDescription("Allows restricted access to DAIAD@Utility")
+	ROLE_SUPERUSER,
+
+	@EnumValueDescription("Allows access to DAIAD@Utility and all users that belong to it")
+	ROLE_ADMIN;
 
 	public static EnumRole fromString(String value) {
 		for (EnumRole item : EnumRole.values()) {
@@ -9,7 +18,8 @@ public enum EnumRole {
 				return item;
 			}
 		}
-		return EnumRole.ROLE_NONE;
+
+		return null;
 	}
 
 }

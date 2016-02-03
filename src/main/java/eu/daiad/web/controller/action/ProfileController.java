@@ -9,14 +9,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.data.IProfileRepository;
-import eu.daiad.web.model.Error;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.profile.ProfileResponse;
 import eu.daiad.web.model.security.AuthenticatedUser;
 
 @RestController
-public class ProfileController {
+public class ProfileController extends BaseController {
 
 	private static final Log logger = LogFactory.getLog(ProfileController.class);
 
@@ -26,16 +27,17 @@ public class ProfileController {
 	@RequestMapping(value = "/action/profile", method = RequestMethod.GET, produces = "application/json")
 	@Secured("ROLE_USER")
 	public RestResponse getProfile(@AuthenticationPrincipal AuthenticatedUser user) {
+		ProfileResponse response = new ProfileResponse();
+
 		try {
-			ProfileResponse response = new ProfileResponse();
-
 			response.setProfile(profileRepository.getProfileByUsername(user.getUsername()));
+		} catch (ApplicationException ex) {
+			logger.error(ex);
 
-			return response;
-		} catch (Exception ex) {
-			logger.error("Failed to load profile.", ex);
+			response.add(this.getError(ex));
 		}
-		return new RestResponse(Error.ERROR_UNKNOWN, "An unhandled exception has occurred.");
+
+		return response;
 	}
 
 }

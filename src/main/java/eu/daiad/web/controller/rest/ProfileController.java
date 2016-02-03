@@ -8,17 +8,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.data.IProfileRepository;
 import eu.daiad.web.model.Credentials;
-import eu.daiad.web.model.Error;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.profile.ProfileResponse;
+import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.profile.UpdateProfileRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.security.AuthenticationService;
 
 @RestController("RestProfileController")
-public class ProfileController {
+public class ProfileController extends BaseController {
 
 	private static final Log logger = LogFactory.getLog(ProfileController.class);
 
@@ -30,32 +31,42 @@ public class ProfileController {
 
 	@RequestMapping(value = "/api/v1/profile/load", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse loadProfile(@RequestBody Credentials data) {
+		RestResponse response = new RestResponse();
+
 		try {
 			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(data);
 			if (user == null) {
-				return new RestResponse(Error.ERROR_AUTHENTICATION, "Authentication has failed");
+				throw new ApplicationException(SharedErrorCode.AUTHENTICATION);
 			}
 
 			return new RestResponse();
-		} catch (Exception ex) {
-			logger.error("Failed to load profile", ex);
+		} catch (ApplicationException ex) {
+			logger.error(ex);
+
+			response.add(this.getError(ex));
 		}
-		return new ProfileResponse(Error.ERROR_UNKNOWN, "An unhandled exception has occurred");
+
+		return response;
 	}
 
 	@RequestMapping(value = "/api/v1/profile/save", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse saveProfile(@RequestBody UpdateProfileRequest data) {
+		RestResponse response = new RestResponse();
+
 		try {
 			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(data.getCredentials());
 			if (user == null) {
-				return new RestResponse(Error.ERROR_AUTHENTICATION, "Authentication has failed");
+				throw new ApplicationException(SharedErrorCode.AUTHENTICATION);
 			}
 
 			return new RestResponse();
-		} catch (Exception ex) {
-			logger.error("Failed to save profile", ex);
+		} catch (ApplicationException ex) {
+			logger.error(ex);
+
+			response.add(this.getError(ex));
 		}
-		return new ProfileResponse(Error.ERROR_UNKNOWN, "An unhandled exception has occurred");
+
+		return response;
 	}
 
 }

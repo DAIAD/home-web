@@ -30,6 +30,9 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Repository;
 
 import eu.daiad.web.model.TemporalConstants;
+import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.DataErrorCode;
+import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.meter.WaterMeterDataPoint;
 import eu.daiad.web.model.meter.WaterMeterDataSeries;
 import eu.daiad.web.model.meter.WaterMeterMeasurement;
@@ -43,8 +46,9 @@ import eu.daiad.web.model.meter.WaterMeterStatusQueryResult;
 @Repository()
 @Scope("prototype")
 @PropertySource("${hbase.properties}")
-public class HBaseWaterMeterMeasurementRepository implements
-		IWaterMeterMeasurementRepository {
+public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurementRepository {
+
+	private final String ERROR_RELEASE_RESOURCES = "Failed to release resources";
 
 	private enum EnumTimeInterval {
 		UNDEFINED(0), HOUR(3600), DAY(86400);
@@ -70,21 +74,19 @@ public class HBaseWaterMeterMeasurementRepository implements
 	@Value("${hbase.data.time.partitions}")
 	private short timePartitions;
 
-	private static final Log logger = LogFactory
-			.getLog(HBaseWaterMeterMeasurementRepository.class);
+	private static final Log logger = LogFactory.getLog(HBaseWaterMeterMeasurementRepository.class);
 
 	@Autowired
-	public HBaseWaterMeterMeasurementRepository(
-			@Value("${hbase.zookeeper.quorum}") String quorum) {
+	public HBaseWaterMeterMeasurementRepository(@Value("${hbase.zookeeper.quorum}") String quorum) {
 		this.quorum = quorum;
 	}
 
 	@Override
 	public void storeData(WaterMeterMeasurementCollection data) {
 		Connection connection = null;
+
 		try {
-			if ((data == null) || (data.getMeasurements() == null)
-					|| (data.getMeasurements().size() == 0)) {
+			if ((data == null) || (data.getMeasurements() == null) || (data.getMeasurements().size() == 0)) {
 				return;
 			}
 			Configuration config = HBaseConfiguration.create();
@@ -94,30 +96,27 @@ public class HBaseWaterMeterMeasurementRepository implements
 
 			this.storeDataByUser(connection, data);
 			this.storeDataByTime(connection, data);
-
-			connection.close();
-		} catch (RuntimeException ex) {
-			logger.error("Malformed data found.", ex);
 		} catch (Exception ex) {
-			logger.error("Unhandled exception has occured.", ex);
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if ((connection != null) && (!connection.isClosed())) {
 					connection.close();
 				}
 			} catch (Exception ex) {
-				logger.error("Unhandled exception has occurred.", ex);
+				logger.error(ERROR_RELEASE_RESOURCES, ex);
 			}
 		}
 	}
 
-	private void storeDataByUser(Connection connection,
-			WaterMeterMeasurementCollection data) {
+	@SuppressWarnings("resource")
+	private void storeDataByUser(Connection connection, WaterMeterMeasurementCollection data) {
+		Table table = null;
+
 		try {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
-			Table table = connection.getTable(TableName
-					.valueOf(this.meterTableMeasurementByUser));
+			table = connection.getTable(TableName.valueOf(this.meterTableMeasurementByUser));
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			byte[] userKey = data.getUserKey().toString().getBytes("UTF-8");
@@ -148,38 +147,40 @@ public class HBaseWaterMeterMeasurementRepository implements
 					throw new RuntimeException("Invalid byte array length!");
 				}
 
-				byte[] rowKey = new byte[userKeyHash.length
-						+ deviceKeyHash.length + timeBucketBytes.length];
+				byte[] rowKey = new byte[userKeyHash.length + deviceKeyHash.length + timeBucketBytes.length];
 				System.arraycopy(userKeyHash, 0, rowKey, 0, userKeyHash.length);
-				System.arraycopy(deviceKeyHash, 0, rowKey, userKeyHash.length,
-						deviceKeyHash.length);
-				System.arraycopy(timeBucketBytes, 0, rowKey,
-						(userKeyHash.length + deviceKeyHash.length),
-						timeBucketBytes.length);
+				System.arraycopy(deviceKeyHash, 0, rowKey, userKeyHash.length, deviceKeyHash.length);
+				System.arraycopy(timeBucketBytes, 0, rowKey, (userKeyHash.length + deviceKeyHash.length),
+								timeBucketBytes.length);
 
 				Put p = new Put(rowKey);
 
-				byte[] column = this.concatenate(timeSliceBytes,
-						this.appendLength(Bytes.toBytes("v")));
+				byte[] column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("v")));
 				p.addColumn(columnFamily, column, Bytes.toBytes(m.getVolume()));
 
 				table.put(p);
 			}
-			table.close();
-		} catch (RuntimeException ex) {
-			logger.error("Malformed data found.", ex);
 		} catch (Exception ex) {
-			logger.error("Unhandled exception has occured.", ex);
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		} finally {
+			try {
+				if (table != null) {
+					table.close();
+				}
+			} catch (Exception ex) {
+				logger.error(ERROR_RELEASE_RESOURCES, ex);
+			}
 		}
 	}
 
-	private void storeDataByTime(Connection connection,
-			WaterMeterMeasurementCollection data) {
+	@SuppressWarnings("resource")
+	private void storeDataByTime(Connection connection, WaterMeterMeasurementCollection data) {
+		Table table = null;
+
 		try {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
-			Table table = connection.getTable(TableName
-					.valueOf(this.meterTableMeasurementByTime));
+			table = connection.getTable(TableName.valueOf(this.meterTableMeasurementByTime));
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			byte[] userKey = data.getUserKey().toString().getBytes("UTF-8");
@@ -212,43 +213,39 @@ public class HBaseWaterMeterMeasurementRepository implements
 					throw new RuntimeException("Invalid byte array length!");
 				}
 
-				byte[] rowKey = new byte[partitionBytes.length
-						+ timeBucketBytes.length + userKeyHash.length
-						+ deviceKeyHash.length];
+				byte[] rowKey = new byte[partitionBytes.length + timeBucketBytes.length + userKeyHash.length
+								+ deviceKeyHash.length];
 
-				System.arraycopy(partitionBytes, 0, rowKey, 0,
-						partitionBytes.length);
-				System.arraycopy(timeBucketBytes, 0, rowKey,
-						partitionBytes.length, timeBucketBytes.length);
-				System.arraycopy(userKeyHash, 0, rowKey,
-						(partitionBytes.length + timeBucketBytes.length),
-						userKeyHash.length);
-				System.arraycopy(
-						deviceKeyHash,
-						0,
-						rowKey,
-						(partitionBytes.length + timeBucketBytes.length + userKeyHash.length),
-						deviceKeyHash.length);
+				System.arraycopy(partitionBytes, 0, rowKey, 0, partitionBytes.length);
+				System.arraycopy(timeBucketBytes, 0, rowKey, partitionBytes.length, timeBucketBytes.length);
+				System.arraycopy(userKeyHash, 0, rowKey, (partitionBytes.length + timeBucketBytes.length),
+								userKeyHash.length);
+				System.arraycopy(deviceKeyHash, 0, rowKey,
+								(partitionBytes.length + timeBucketBytes.length + userKeyHash.length),
+								deviceKeyHash.length);
 
 				Put p = new Put(rowKey);
 
-				byte[] column = this.concatenate(timeSliceBytes,
-						this.appendLength(Bytes.toBytes("v")));
+				byte[] column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("v")));
 				p.addColumn(columnFamily, column, Bytes.toBytes(m.getVolume()));
 
 				table.put(p);
 			}
-			table.close();
-		} catch (RuntimeException ex) {
-			logger.error("Malformed data found.", ex);
 		} catch (Exception ex) {
-			logger.error("Unhandled exception has occured.", ex);
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		} finally {
+			try {
+				if (table != null) {
+					table.close();
+				}
+			} catch (Exception ex) {
+				logger.error(ERROR_RELEASE_RESOURCES, ex);
+			}
 		}
 	}
 
-	private byte[] getUserDeviceTimeRowKey(byte[] userKeyHash,
-			byte[] deviceKeyHash, long date, EnumTimeInterval interval)
-			throws Exception {
+	private byte[] getUserDeviceTimeRowKey(byte[] userKeyHash, byte[] deviceKeyHash, long date,
+					EnumTimeInterval interval) throws Exception {
 
 		long intervalInSeconds = EnumTimeInterval.HOUR.getValue();
 		switch (interval) {
@@ -259,9 +256,7 @@ public class HBaseWaterMeterMeasurementRepository implements
 			intervalInSeconds = interval.getValue();
 			break;
 		default:
-			throw new RuntimeException(
-					String.format("Time interval [%s] is not supported.",
-							interval.toString()));
+			throw new RuntimeException(String.format("Time interval [%s] is not supported.", interval.toString()));
 		}
 
 		long timestamp = date / 1000;
@@ -271,11 +266,9 @@ public class HBaseWaterMeterMeasurementRepository implements
 
 		byte[] rowKey = new byte[userKeyHash.length + deviceKeyHash.length + 8];
 		System.arraycopy(userKeyHash, 0, rowKey, 0, userKeyHash.length);
-		System.arraycopy(deviceKeyHash, 0, rowKey, userKeyHash.length,
-				deviceKeyHash.length);
-		System.arraycopy(timeBucketBytes, 0, rowKey,
-				(deviceKeyHash.length + deviceKeyHash.length),
-				timeBucketBytes.length);
+		System.arraycopy(deviceKeyHash, 0, rowKey, userKeyHash.length, deviceKeyHash.length);
+		System.arraycopy(timeBucketBytes, 0, rowKey, (deviceKeyHash.length + deviceKeyHash.length),
+						timeBucketBytes.length);
 
 		return rowKey;
 	}
@@ -298,18 +291,20 @@ public class HBaseWaterMeterMeasurementRepository implements
 	@Override
 	public WaterMeterStatusQueryResult getStatus(WaterMeterStatusQuery query) {
 		WaterMeterStatusQueryResult data = new WaterMeterStatusQueryResult();
+		Connection connection = null;
+		Table table = null;
+		ResultScanner scanner = null;
 
 		try {
 			Configuration config = HBaseConfiguration.create();
 
 			config.set("hbase.zookeeper.quorum", this.quorum);
 
-			Connection connection = ConnectionFactory.createConnection(config);
+			connection = ConnectionFactory.createConnection(config);
 
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
-			Table table = connection.getTable(TableName
-					.valueOf(this.meterTableMeasurementByUser));
+			table = connection.getTable(TableName.valueOf(this.meterTableMeasurementByUser));
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
@@ -317,20 +312,18 @@ public class HBaseWaterMeterMeasurementRepository implements
 
 			UUID deviceKeys[] = query.getDeviceKey();
 			for (int deviceIndex = 0; deviceIndex < deviceKeys.length; deviceIndex++) {
-				byte[] deviceKey = deviceKeys[deviceIndex].toString().getBytes(
-						"UTF-8");
+				byte[] deviceKey = deviceKeys[deviceIndex].toString().getBytes("UTF-8");
 				byte[] deviceKeyHash = md.digest(deviceKey);
 
 				DateTime maxDate = new DateTime();
 
 				Scan scan = new Scan();
 				scan.addFamily(columnFamily);
-				scan.setStartRow(this.getUserDeviceTimeRowKey(userKeyHash,
-						deviceKeyHash, (Long.MAX_VALUE - maxDate.getMillis()),
-						EnumTimeInterval.HOUR));
+				scan.setStartRow(this.getUserDeviceTimeRowKey(userKeyHash, deviceKeyHash,
+								(Long.MAX_VALUE - maxDate.getMillis()), EnumTimeInterval.HOUR));
 				scan.setCaching(2);
 
-				ResultScanner scanner = table.getScanner(scan);
+				scanner = table.getScanner(scan);
 
 				long lastTimeBucket = 0;
 				int bucketCount = 0;
@@ -345,27 +338,21 @@ public class HBaseWaterMeterMeasurementRepository implements
 						break;
 					}
 
-					NavigableMap<byte[], byte[]> map = r
-							.getFamilyMap(columnFamily);
+					NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
 
-					long timeBucket = Bytes.toLong(Arrays.copyOfRange(
-							r.getRow(), 32, 40));
+					long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 32, 40));
 					if (lastTimeBucket != timeBucket) {
 						bucketCount++;
 					}
 					lastTimeBucket = timeBucket;
 
 					for (Entry<byte[], byte[]> entry : map.entrySet()) {
-						short offset = Bytes.toShort(Arrays.copyOfRange(
-								entry.getKey(), 0, 2));
+						short offset = Bytes.toShort(Arrays.copyOfRange(entry.getKey(), 0, 2));
 
-						long timestamp = Long.MAX_VALUE
-								- ((timeBucket + (long) offset) * 1000L);
+						long timestamp = Long.MAX_VALUE - ((timeBucket + (long) offset) * 1000L);
 
-						int length = (int) Arrays.copyOfRange(entry.getKey(),
-								2, 3)[0];
-						byte[] slice = Arrays.copyOfRange(entry.getKey(), 3,
-								3 + length);
+						int length = (int) Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
+						byte[] slice = Arrays.copyOfRange(entry.getKey(), 3, 3 + length);
 						String columnQualifier = Bytes.toString(slice);
 						if (columnQualifier.equals("v")) {
 							valueCount++;
@@ -382,8 +369,6 @@ public class HBaseWaterMeterMeasurementRepository implements
 						}
 					}
 				}
-
-				scanner.close();
 
 				switch (valueCount) {
 				case 0:
@@ -406,20 +391,32 @@ public class HBaseWaterMeterMeasurementRepository implements
 				}
 			}
 
-			table.close();
-			connection.close();
-
 			return data;
 		} catch (Exception ex) {
-			logger.error("Unhandled exception has occured.", ex);
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		} finally {
+			try {
+				if (scanner != null) {
+					scanner.close();
+				}
+				if (table != null) {
+					table.close();
+				}
+				if ((connection != null) && (!connection.isClosed())) {
+					connection.close();
+				}
+			} catch (Exception ex) {
+				logger.error(ERROR_RELEASE_RESOURCES, ex);
+			}
 		}
-
-		return null;
 	}
 
 	@Override
-	public WaterMeterMeasurementQueryResult searchMeasurements(
-			WaterMeterMeasurementQuery query) {
+	public WaterMeterMeasurementQueryResult searchMeasurements(WaterMeterMeasurementQuery query) {
+		Connection connection = null;
+		Table table = null;
+		ResultScanner scanner = null;
+
 		DateTime startDate = new DateTime(query.getStartDate());
 		DateTime endDate = new DateTime(query.getEndDate());
 
@@ -429,40 +426,34 @@ public class HBaseWaterMeterMeasurementRepository implements
 			// measurement level
 			break;
 		case TemporalConstants.HOUR:
-			startDate = new DateTime(startDate.getYear(),
-					startDate.getMonthOfYear(), startDate.getDayOfMonth(),
-					startDate.getHourOfDay(), 0, 0);
-			endDate = new DateTime(endDate.getYear(), endDate.getMonthOfYear(),
-					endDate.getDayOfMonth(), endDate.getHourOfDay(), 59, 59);
+			startDate = new DateTime(startDate.getYear(), startDate.getMonthOfYear(), startDate.getDayOfMonth(),
+							startDate.getHourOfDay(), 0, 0);
+			endDate = new DateTime(endDate.getYear(), endDate.getMonthOfYear(), endDate.getDayOfMonth(),
+							endDate.getHourOfDay(), 59, 59);
 			break;
 		case TemporalConstants.DAY:
-			startDate = new DateTime(startDate.getYear(),
-					startDate.getMonthOfYear(), startDate.getDayOfMonth(), 0,
-					0, 0);
-			endDate = new DateTime(endDate.getYear(), endDate.getMonthOfYear(),
-					endDate.getDayOfMonth(), 23, 59, 59);
+			startDate = new DateTime(startDate.getYear(), startDate.getMonthOfYear(), startDate.getDayOfMonth(), 0, 0,
+							0);
+			endDate = new DateTime(endDate.getYear(), endDate.getMonthOfYear(), endDate.getDayOfMonth(), 23, 59, 59);
 			break;
 		case TemporalConstants.WEEK:
 			DateTime monday = startDate.withDayOfWeek(DateTimeConstants.MONDAY);
 			DateTime sunday = endDate.withDayOfWeek(DateTimeConstants.SUNDAY);
-			startDate = new DateTime(monday.getYear(), monday.getMonthOfYear(),
-					monday.getDayOfMonth(), 0, 0, 0);
-			endDate = new DateTime(sunday.getYear(), sunday.getMonthOfYear(),
-					sunday.getDayOfMonth(), 23, 59, 59);
+			startDate = new DateTime(monday.getYear(), monday.getMonthOfYear(), monday.getDayOfMonth(), 0, 0, 0);
+			endDate = new DateTime(sunday.getYear(), sunday.getMonthOfYear(), sunday.getDayOfMonth(), 23, 59, 59);
 			break;
 		case TemporalConstants.MONTH:
-			startDate = new DateTime(startDate.getYear(),
-					startDate.getMonthOfYear(), 1, 0, 0, 0);
-			endDate = new DateTime(endDate.getYear(), endDate.getMonthOfYear(),
-					endDate.dayOfMonth().getMaximumValue(), 23, 59, 59);
+			startDate = new DateTime(startDate.getYear(), startDate.getMonthOfYear(), 1, 0, 0, 0);
+			endDate = new DateTime(endDate.getYear(), endDate.getMonthOfYear(), endDate.dayOfMonth().getMaximumValue(),
+							23, 59, 59);
 			break;
 		case TemporalConstants.YEAR:
 			startDate = new DateTime(startDate.getYear(), 1, 1, 0, 0, 0);
 			endDate = new DateTime(endDate.getYear(), 12, 31, 23, 59, 59);
 			break;
 		default:
-			return new WaterMeterMeasurementQueryResult(-1,
-					"Granularity level not supported.");
+			throw new ApplicationException(DataErrorCode.TIME_GRANULARITY_NOT_SUPPORTED).set("level",
+							query.getGranularity());
 		}
 
 		DateTime queryStartDate = startDate;
@@ -483,12 +474,11 @@ public class HBaseWaterMeterMeasurementRepository implements
 
 			config.set("hbase.zookeeper.quorum", this.quorum);
 
-			Connection connection = ConnectionFactory.createConnection(config);
+			connection = ConnectionFactory.createConnection(config);
 
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
-			Table table = connection.getTable(TableName
-					.valueOf(this.meterTableMeasurementByUser));
+			table = connection.getTable(TableName.valueOf(this.meterTableMeasurementByUser));
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
@@ -496,45 +486,36 @@ public class HBaseWaterMeterMeasurementRepository implements
 
 			UUID deviceKeys[] = query.getDeviceKey();
 			for (int deviceIndex = 0; deviceIndex < deviceKeys.length; deviceIndex++) {
-				byte[] deviceKey = deviceKeys[deviceIndex].toString().getBytes(
-						"UTF-8");
+				byte[] deviceKey = deviceKeys[deviceIndex].toString().getBytes("UTF-8");
 				byte[] deviceKeyHash = md.digest(deviceKey);
 
 				Scan scan = new Scan();
 				scan.addFamily(columnFamily);
-				scan.setStartRow(this.getUserDeviceTimeRowKey(userKeyHash,
-						deviceKeyHash, (Long.MAX_VALUE - endDate.getMillis()),
-						EnumTimeInterval.HOUR));
+				scan.setStartRow(this.getUserDeviceTimeRowKey(userKeyHash, deviceKeyHash,
+								(Long.MAX_VALUE - endDate.getMillis()), EnumTimeInterval.HOUR));
 
-				ResultScanner scanner = table.getScanner(scan);
+				scanner = table.getScanner(scan);
 
 				boolean stopScanner = false;
 
-				WaterMeterDataSeries series = new WaterMeterDataSeries(
-						queryStartDate.getMillis(), queryEndDate.getMillis(),
-						query.getGranularity());
+				WaterMeterDataSeries series = new WaterMeterDataSeries(queryStartDate.getMillis(),
+								queryEndDate.getMillis(), query.getGranularity());
 
 				series.setDeviceKey(deviceKeys[deviceIndex]);
 				data.getSeries().add(series);
 
 				for (Result r = scanner.next(); r != null; r = scanner.next()) {
-					NavigableMap<byte[], byte[]> map = r
-							.getFamilyMap(columnFamily);
+					NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
 
-					long timeBucket = Bytes.toLong(Arrays.copyOfRange(
-							r.getRow(), 32, 40));
+					long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 32, 40));
 
 					for (Entry<byte[], byte[]> entry : map.entrySet()) {
-						short offset = Bytes.toShort(Arrays.copyOfRange(
-								entry.getKey(), 0, 2));
+						short offset = Bytes.toShort(Arrays.copyOfRange(entry.getKey(), 0, 2));
 
-						long timestamp = Long.MAX_VALUE
-								- ((timeBucket + (long) offset) * 1000L);
+						long timestamp = Long.MAX_VALUE - ((timeBucket + (long) offset) * 1000L);
 
-						int length = (int) Arrays.copyOfRange(entry.getKey(),
-								2, 3)[0];
-						byte[] slice = Arrays.copyOfRange(entry.getKey(), 3,
-								3 + length);
+						int length = (int) Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
+						byte[] slice = Arrays.copyOfRange(entry.getKey(), 3, 3 + length);
 
 						String columnQualifier = Bytes.toString(slice);
 						if (columnQualifier.equals("v")) {
@@ -550,31 +531,36 @@ public class HBaseWaterMeterMeasurementRepository implements
 						break;
 					}
 				}
-				scanner.close();
 
-				Collections.sort(series.getValues(),
-						new Comparator<WaterMeterDataPoint>() {
-
-							public int compare(WaterMeterDataPoint o1,
-									WaterMeterDataPoint o2) {
-								if (o1.timestamp <= o2.timestamp) {
-									return -1;
-								} else {
-									return 1;
-								}
-							}
-						});
+				Collections.sort(series.getValues(), new Comparator<WaterMeterDataPoint>() {
+					public int compare(WaterMeterDataPoint o1, WaterMeterDataPoint o2) {
+						if (o1.timestamp <= o2.timestamp) {
+							return -1;
+						} else {
+							return 1;
+						}
+					}
+				});
 			}
-
-			table.close();
-			connection.close();
 
 			return data;
 		} catch (Exception ex) {
-			logger.error("Unhandled exception has occured.", ex);
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		} finally {
+			try {
+				if (scanner != null) {
+					scanner.close();
+				}
+				if (table != null) {
+					table.close();
+				}
+				if ((connection != null) && (!connection.isClosed())) {
+					connection.close();
+				}
+			} catch (Exception ex) {
+				logger.error(ERROR_RELEASE_RESOURCES, ex);
+			}
 		}
-
-		return null;
 	}
 
 }

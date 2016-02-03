@@ -10,7 +10,7 @@ public class AmphiroSessionQueryResult extends RestResponse {
 		super();
 	}
 
-	public AmphiroSessionQueryResult(int code, String description) {
+	public AmphiroSessionQueryResult(String code, String description) {
 		super(code, description);
 	}
 
@@ -21,6 +21,5 @@ public class AmphiroSessionQueryResult extends RestResponse {
 	public void setSession(AmphiroSessionDetails session) {
 		this.session = session;
 	}
-
 
 }

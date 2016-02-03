@@ -12,6 +12,8 @@ import org.springframework.stereotype.Repository;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistration;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
+import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.security.AuthenticatedUser;
 
@@ -27,26 +29,31 @@ public class JpaProfileRepository implements IProfileRepository {
 	private IDeviceRepository deviceRepository;
 
 	@Override
-	public Profile getProfileByUsername(String username) throws Exception {
-		AuthenticatedUser user = this.userRepository.getUserByName(username);
+	public Profile getProfileByUsername(String username) throws ApplicationException {
+		try {
+			AuthenticatedUser user = this.userRepository.getUserByName(username);
 
-		ArrayList<Device> devices = this.deviceRepository.getUserDevices(user.getKey(), new DeviceRegistrationQuery());
+			ArrayList<Device> devices = this.deviceRepository.getUserDevices(user.getKey(),
+							new DeviceRegistrationQuery());
 
-		Profile profile = new Profile();
+			Profile profile = new Profile();
 
-		profile.setKey(user.getKey());
-		profile.setUsername(user.getUsername());
-		profile.setFirstname(user.getFirstname());
-		profile.setLastname(user.getLastname());
-		profile.setTimezone(user.getTimezone());
-		profile.setCountry(user.getCountry());
+			profile.setKey(user.getKey());
+			profile.setUsername(user.getUsername());
+			profile.setFirstname(user.getFirstname());
+			profile.setLastname(user.getLastname());
+			profile.setTimezone(user.getTimezone());
+			profile.setCountry(user.getCountry());
 
-		ArrayList<DeviceRegistration> registrations = new ArrayList<DeviceRegistration>();
-		for (Iterator<Device> d = devices.iterator(); d.hasNext();) {
-			registrations.add(d.next().toDeviceRegistration());
+			ArrayList<DeviceRegistration> registrations = new ArrayList<DeviceRegistration>();
+			for (Iterator<Device> d = devices.iterator(); d.hasNext();) {
+				registrations.add(d.next().toDeviceRegistration());
+			}
+			profile.setDevices(registrations);
+
+			return profile;
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
 		}
-		profile.setDevices(registrations);
-
-		return profile;
 	}
 }
