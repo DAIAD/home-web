@@ -73,11 +73,6 @@ var Device = React.createClass({
 });
 
 var DevicesForm = React.createClass({
-	getInitialState: function() {
-		return {
-			changed:true
-		};
-	},
 	componentDidMount: function() {
 		UserStore.addProfileUpdateListener(this._onUpdate);
 	},
@@ -106,9 +101,7 @@ var DevicesForm = React.createClass({
 		);
 	},
 	_onUpdate: function() {
-		this.setState({
-			changed: true
-		});
+		this.forceUpdate();
 	}
 });
 
