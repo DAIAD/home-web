@@ -7,12 +7,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.data.IProfileRepository;
-import eu.daiad.web.model.ApplicationUser;
 import eu.daiad.web.model.AuthenticationResponse;
 import eu.daiad.web.model.Credentials;
 import eu.daiad.web.model.Error;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.profile.Profile;
+import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.security.AuthenticationService;
 
 @RestController("RestAuthenticationController")
@@ -26,17 +26,14 @@ public class AuthenticationController {
 
 	@RequestMapping(value = "/api/v1/auth/login", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse login(@RequestBody Credentials data) throws Exception {
-		ApplicationUser user = this.authenticationService
-				.authenticateAndGetUser(data);
+		AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(data);
 
 		if (user != null) {
-			Profile profile = profileRepository.getProfileByUsername(user
-					.getUsername());
+			Profile profile = profileRepository.getProfileByUsername(user.getUsername());
 
 			return new AuthenticationResponse(profile);
 		} else {
-			return new RestResponse(Error.ERROR_AUTH_FAILED,
-					"Authentication has failed");
+			return new RestResponse(Error.ERROR_AUTHENTICATION, "Authentication has failed");
 		}
 	}
 

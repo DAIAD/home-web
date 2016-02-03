@@ -1,7 +1,8 @@
-package eu.daiad.web.model;
+package eu.daiad.web.model.security;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import eu.daiad.web.model.AuthenticatedRequest;
 import eu.daiad.web.util.RoleTypeDeserializer;
 
 public class RoleUpdateRequest extends AuthenticatedRequest {

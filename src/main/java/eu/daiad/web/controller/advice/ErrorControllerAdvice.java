@@ -12,8 +12,7 @@ import eu.daiad.web.model.ResourceNotFoundException;
 @ControllerAdvice(annotations = Controller.class)
 public class ErrorControllerAdvice {
 
-	private static final Log logger = LogFactory
-			.getLog(ErrorControllerAdvice.class);
+	private static final Log logger = LogFactory.getLog(ErrorControllerAdvice.class);
 
 	@ExceptionHandler(Exception.class)
 	public String handleException(Exception ex) {

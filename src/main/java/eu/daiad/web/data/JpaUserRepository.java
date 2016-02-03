@@ -26,8 +26,8 @@ import org.springframework.stereotype.Repository;
 import eu.daiad.web.domain.AccountRole;
 import eu.daiad.web.domain.Role;
 import eu.daiad.web.domain.Utility;
-import eu.daiad.web.model.ApplicationUser;
-import eu.daiad.web.model.EnumRole;
+import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.user.Account;
 
 @Primary
@@ -36,8 +36,7 @@ import eu.daiad.web.model.user.Account;
 @Scope("prototype")
 public class JpaUserRepository implements IUserRepository {
 
-	private static final Log logger = LogFactory
-			.getLog(JpaUserRepository.class);
+	private static final Log logger = LogFactory.getLog(JpaUserRepository.class);
 
 	@Autowired
 	private ApplicationContext ctx;
@@ -47,8 +46,7 @@ public class JpaUserRepository implements IUserRepository {
 
 	private final String defaultAdminUsername = "Administrator";
 
-	private final EnumRole[] defaultAdminRoles = { EnumRole.ROLE_USER,
-			EnumRole.ROLE_ADMIN };
+	private final EnumRole[] defaultAdminRoles = { EnumRole.ROLE_USER, EnumRole.ROLE_ADMIN };
 
 	@Override
 	@Transactional
@@ -58,10 +56,8 @@ public class JpaUserRepository implements IUserRepository {
 
 		try {
 			TypedQuery<eu.daiad.web.domain.Account> query = entityManager
-					.createQuery(
-							"select a from account a where a.username = :username",
-							eu.daiad.web.domain.Account.class)
-					.setFirstResult(0).setMaxResults(1);
+							.createQuery("select a from account a where a.username = :username",
+											eu.daiad.web.domain.Account.class).setFirstResult(0).setMaxResults(1);
 			query.setParameter("username", this.defaultAdminUsername);
 
 			List<eu.daiad.web.domain.Account> result = query.getResultList();
@@ -70,8 +66,7 @@ public class JpaUserRepository implements IUserRepository {
 				utility.setName("DAIAD");
 				utility.setDescription("Default DAIAD Utility");
 
-				Resource resource = ctx
-						.getResource("classpath:public/assets/images/daiad-transparent.png");
+				Resource resource = ctx.getResource("classpath:public/assets/images/daiad-transparent.png");
 				InputStream stream = resource.getInputStream();
 				utility.setLogo(IOUtils.toByteArray(stream));
 				stream.close();
@@ -86,9 +81,8 @@ public class JpaUserRepository implements IUserRepository {
 				for (EnumRole r : this.defaultAdminRoles) {
 					Role userRole = null;
 
-					TypedQuery<Role> roleQuery = entityManager.createQuery(
-							"select r from role r where r.name = :name",
-							Role.class);
+					TypedQuery<Role> roleQuery = entityManager.createQuery("select r from role r where r.name = :name",
+									Role.class);
 					roleQuery.setParameter("name", r.toString());
 
 					List<Role> roles = roleQuery.getResultList();
@@ -119,8 +113,8 @@ public class JpaUserRepository implements IUserRepository {
 				}
 				this.entityManager.persist(account);
 
-				logger.warn(String
-						.format("Default administrator user has been crearted. User name : %s. Password : %s",
+				logger.warn(String.format(
+								"Default administrator user has been crearted. User name : %s. Password : %s",
 								this.defaultAdminUsername, password));
 			}
 		} catch (Exception ex) {
@@ -142,10 +136,8 @@ public class JpaUserRepository implements IUserRepository {
 				throw new Exception("User already exists.");
 			}
 
-			TypedQuery<eu.daiad.web.domain.Utility> query = entityManager
-					.createQuery(
-							"select u from utility u where u.name = :name",
-							eu.daiad.web.domain.Utility.class);
+			TypedQuery<eu.daiad.web.domain.Utility> query = entityManager.createQuery(
+							"select u from utility u where u.name = :name", eu.daiad.web.domain.Utility.class);
 			query.setParameter("name", "DAIAD");
 
 			Utility utility = query.getSingleResult();
@@ -169,8 +161,8 @@ public class JpaUserRepository implements IUserRepository {
 			account.setUtility(utility);
 
 			Role role = null;
-			TypedQuery<Role> roleQuery = entityManager.createQuery(
-					"select r from role r where r.name = :name", Role.class);
+			TypedQuery<Role> roleQuery = entityManager.createQuery("select r from role r where r.name = :name",
+							Role.class);
 			roleQuery.setParameter("name", EnumRole.ROLE_USER.toString());
 
 			role = roleQuery.getSingleResult();
@@ -198,21 +190,18 @@ public class JpaUserRepository implements IUserRepository {
 	}
 
 	@Override
-	public void setRole(String username, EnumRole role, boolean set)
-			throws Exception {
+	public void setRole(String username, EnumRole role, boolean set) throws Exception {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public ApplicationUser getUserByName(String username) throws Exception {
-		ApplicationUser user = null;
+	public AuthenticatedUser getUserByName(String username) throws Exception {
+		AuthenticatedUser user = null;
 
 		TypedQuery<eu.daiad.web.domain.Account> query = entityManager
-				.createQuery(
-						"select a from account a where a.username = :username",
-						eu.daiad.web.domain.Account.class).setFirstResult(0)
-				.setMaxResults(1);
+						.createQuery("select a from account a where a.username = :username",
+										eu.daiad.web.domain.Account.class).setFirstResult(0).setMaxResults(1);
 		query.setParameter("username", username);
 
 		List<eu.daiad.web.domain.Account> result = query.getResultList();
@@ -221,11 +210,9 @@ public class JpaUserRepository implements IUserRepository {
 
 			List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
 			for (AccountRole r : account.getRoles()) {
-				authorities.add(new SimpleGrantedAuthority(r.getRole()
-						.getName()));
+				authorities.add(new SimpleGrantedAuthority(r.getRole().getName()));
 			}
-			user = new ApplicationUser(account.getKey(), account.getUsername(),
-					account.getPassword(), authorities);
+			user = new AuthenticatedUser(account.getKey(), account.getUsername(), account.getPassword(), authorities);
 
 			user.setBirthdate(account.getBirthdate());
 			user.setCountry(account.getCountry());

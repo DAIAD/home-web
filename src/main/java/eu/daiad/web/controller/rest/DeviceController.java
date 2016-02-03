@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.data.IDeviceRepository;
-import eu.daiad.web.model.ApplicationUser;
 import eu.daiad.web.model.Error;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.device.AmphiroDeviceRegistrationRequest;
@@ -22,6 +21,7 @@ import eu.daiad.web.model.device.DeviceRegistrationQueryResult;
 import eu.daiad.web.model.device.DeviceRegistrationRequest;
 import eu.daiad.web.model.device.DeviceRegistrationResponse;
 import eu.daiad.web.model.device.WaterMeterDeviceRegistrationRequest;
+import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.security.AuthenticationService;
 
 @RestController("RestDeviceController")
@@ -42,11 +42,9 @@ public class DeviceController {
 		UUID deviceKey = null;
 
 		try {
-			ApplicationUser user = this.authenticationService
-					.authenticateAndGetUser(data.getCredentials());
+			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(data.getCredentials());
 			if (user == null) {
-				return new RestResponse(Error.ERROR_AUTH_FAILED,
-						"Authentication has failed.");
+				return new RestResponse(Error.ERROR_AUTHENTICATION, "Authentication has failed.");
 			}
 
 			switch (data.getType()) {
@@ -54,36 +52,31 @@ public class DeviceController {
 				if (data instanceof AmphiroDeviceRegistrationRequest) {
 					AmphiroDeviceRegistrationRequest amphiroData = (AmphiroDeviceRegistrationRequest) data;
 
-					Device device = repository
-							.getUserAmphiroDeviceByMacAddress(user.getKey(),
+					Device device = repository.getUserAmphiroDeviceByMacAddress(user.getKey(),
 									amphiroData.getMacAddress());
 
 					if (device != null) {
-						return new RestResponse(ERROR_DEVICE_EXISTS,
-								String.format("Device [%s] already exists.",
+						return new RestResponse(ERROR_DEVICE_EXISTS, String.format("Device [%s] already exists.",
 										amphiroData.getMacAddress()));
 					}
 
-					deviceKey = repository.createAmphiroDevice(user.getKey(),
-							amphiroData.getName(), amphiroData.getMacAddress(),
-							amphiroData.getProperties());
+					deviceKey = repository.createAmphiroDevice(user.getKey(), amphiroData.getName(),
+									amphiroData.getMacAddress(), amphiroData.getProperties());
 				}
 				break;
 			case METER:
 				if (data instanceof WaterMeterDeviceRegistrationRequest) {
 					WaterMeterDeviceRegistrationRequest meterData = (WaterMeterDeviceRegistrationRequest) data;
 
-					Device device = repository.getUserWaterMeterDeviceBySerial(
-							user.getKey(), meterData.getSerial());
+					Device device = repository.getUserWaterMeterDeviceBySerial(user.getKey(), meterData.getSerial());
 
 					if (device != null) {
-						return new RestResponse(ERROR_DEVICE_EXISTS,
-								String.format("Device [%s] already exists.",
+						return new RestResponse(ERROR_DEVICE_EXISTS, String.format("Device [%s] already exists.",
 										meterData.getSerial()));
 					}
 
-					deviceKey = repository.createMeterDevice(user.getKey(),
-							meterData.getSerial(), meterData.getProperties());
+					deviceKey = repository.createMeterDevice(user.getKey(), meterData.getSerial(),
+									meterData.getProperties());
 				}
 				break;
 			default:
@@ -97,23 +90,19 @@ public class DeviceController {
 		} catch (Exception ex) {
 			logger.error("An unhandled exception has occurred", ex);
 		}
-		return new RestResponse(Error.ERROR_UNKNOWN,
-				"An unhandled exception has occurred");
+		return new RestResponse(Error.ERROR_UNKNOWN, "An unhandled exception has occurred");
 	}
 
 	@RequestMapping(value = "/api/v1/device/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse list(@RequestBody DeviceRegistrationQuery query) {
 
 		try {
-			ApplicationUser user = this.authenticationService
-					.authenticateAndGetUser(query.getCredentials());
+			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(query.getCredentials());
 			if (user == null) {
-				return new RestResponse(Error.ERROR_AUTH_FAILED,
-						"Authentication has failed.");
+				return new RestResponse(Error.ERROR_AUTHENTICATION, "Authentication has failed.");
 			}
 
-			ArrayList<Device> devices = repository.getUserDevices(
-					user.getKey(), query);
+			ArrayList<Device> devices = repository.getUserDevices(user.getKey(), query);
 
 			DeviceRegistrationQueryResult response = new DeviceRegistrationQueryResult();
 			response.setDevices(devices);
@@ -122,7 +111,6 @@ public class DeviceController {
 		} catch (Exception ex) {
 			logger.error("An unhandled exception has occurred", ex);
 		}
-		return new RestResponse(Error.ERROR_UNKNOWN,
-				"An unhandled exception has occurred");
+		return new RestResponse(Error.ERROR_UNKNOWN, "An unhandled exception has occurred");
 	}
 }

@@ -56,7 +56,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		// Allow anonymous access to selected requests
 		http.authorizeRequests()
 				.antMatchers("/", "/login", "/logout", "/error/**", "/home/**",
-						"/utility/", "/assets/**", "/api/**").permitAll();
+						"/utility/**", "/assets/**", "/api/**").permitAll();
 
 		// Disable CSRF for API requests
 		http.csrf().requireCsrfProtectionMatcher(new RequestMatcher() {

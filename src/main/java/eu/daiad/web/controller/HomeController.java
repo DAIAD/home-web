@@ -1,23 +1,20 @@
 package eu.daiad.web.controller;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import eu.daiad.web.model.ApplicationUser;
-import eu.daiad.web.model.EnumRole;
+import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.security.EnumRole;
 
 @Controller
 public class HomeController {
 
 	@RequestMapping("/")
-	public String index(Model model, @AuthenticationPrincipal User user) {
-		ApplicationUser daiadUser = (ApplicationUser) user;
-
-		if (daiadUser != null) {
-			if (daiadUser.hasRole(EnumRole.ROLE_ADMIN)) {
+	public String index(Model model, @AuthenticationPrincipal AuthenticatedUser user) {
+		if (user != null) {
+			if (user.hasRole(EnumRole.ROLE_ADMIN)) {
 				return "redirect:/utility/";
 			}
 
@@ -28,10 +25,8 @@ public class HomeController {
 	}
 
 	@RequestMapping("/home/**")
-	public String home(Model model, @AuthenticationPrincipal User user) {
-		ApplicationUser daiadUser = (ApplicationUser) user;
-
-		if (daiadUser == null) {
+	public String home(Model model, @AuthenticationPrincipal AuthenticatedUser user) {
+		if (user == null) {
 			model.addAttribute("reload", false);
 		} else {
 			model.addAttribute("reload", true);
@@ -40,14 +35,12 @@ public class HomeController {
 		return "home/default";
 	}
 
-	@RequestMapping("/utility/")
-	public String utility(Model model, @AuthenticationPrincipal User user) {
-		ApplicationUser daiadUser = (ApplicationUser) user;
-
-		if (daiadUser == null) {
+	@RequestMapping("/utility/**")
+	public String utility(Model model, @AuthenticationPrincipal AuthenticatedUser user) {
+		if (user == null) {
 			model.addAttribute("reload", false);
 		} else {
-			if (!daiadUser.hasRole(EnumRole.ROLE_ADMIN)) {
+			if (!user.hasRole(EnumRole.ROLE_ADMIN)) {
 				return "redirect:/error/403";
 			}
 			model.addAttribute("reload", true);

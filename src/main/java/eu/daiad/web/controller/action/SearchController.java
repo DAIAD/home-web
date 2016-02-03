@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -23,6 +24,7 @@ import eu.daiad.web.model.meter.WaterMeterMeasurementQuery;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQueryResult;
 import eu.daiad.web.model.meter.WaterMeterStatusQuery;
 import eu.daiad.web.model.meter.WaterMeterStatusQueryResult;
+import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.security.AuthenticationService;
 
 @RestController
@@ -39,80 +41,83 @@ public class SearchController {
 	@Autowired
 	private AuthenticationService authenticator;
 
-	@RequestMapping(value = "/action/meter/current", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	@RequestMapping(value = "/action/meter/status", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public RestResponse query(@RequestBody WaterMeterStatusQuery query) {
+	public RestResponse query(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody WaterMeterStatusQuery query) {
 		try {
-			WaterMeterStatusQueryResult data = waterMeterMeasurementRepository
-					.getStatus(query);
+			query.setUserKey(user.getKey());
+
+			WaterMeterStatusQueryResult data = waterMeterMeasurementRepository.getStatus(query);
 
 			return data;
 		} catch (Exception ex) {
 			logger.error("Failed to insert measurement data.", ex);
 		}
-		return new RestResponse(Error.ERROR_UNKNOWN,
-				"An unhandled exception has occurred");
+		return new RestResponse(Error.ERROR_UNKNOWN, "An unhandled exception has occurred");
 	}
 
 	@RequestMapping(value = "/action/meter/history", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public RestResponse query(@RequestBody WaterMeterMeasurementQuery query) {
+	public RestResponse query(@AuthenticationPrincipal AuthenticatedUser user,
+					@RequestBody WaterMeterMeasurementQuery query) {
 		try {
-			WaterMeterMeasurementQueryResult data = waterMeterMeasurementRepository
-					.searchMeasurements(query);
+			query.setUserKey(user.getKey());
+
+			WaterMeterMeasurementQueryResult data = waterMeterMeasurementRepository.searchMeasurements(query);
 
 			return data;
 		} catch (Exception ex) {
 			logger.error("Failed to insert measurement data.", ex);
 		}
-		return new RestResponse(Error.ERROR_UNKNOWN,
-				"An unhandled exception has occurred");
+		return new RestResponse(Error.ERROR_UNKNOWN, "An unhandled exception has occurred");
 	}
 
 	@RequestMapping(value = "/action/device/measurement/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public RestResponse query(@RequestBody AmphiroMeasurementQuery query) {
+	public RestResponse query(@AuthenticationPrincipal AuthenticatedUser user,
+					@RequestBody AmphiroMeasurementQuery query) {
 		try {
-			// TODO: Return series, not response object
+			query.setUserKey(user.getKey());
+
 			AmphiroMeasurementQueryResult data = amphiroMeasurementRepository.searchMeasurements(query);
 
 			return data;
 		} catch (Exception ex) {
 			logger.error("Failed to insert measurement data.", ex);
 		}
-		return new RestResponse(Error.ERROR_UNKNOWN,
-				"An unhandled exception has occurred");
+		return new RestResponse(Error.ERROR_UNKNOWN, "An unhandled exception has occurred");
 	}
 
 	@RequestMapping(value = "/action/device/session/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public RestResponse searchAmphiroSessions(
-			@RequestBody AmphiroSessionCollectionQuery query) {
+	public RestResponse searchAmphiroSessions(@AuthenticationPrincipal AuthenticatedUser user,
+					@RequestBody AmphiroSessionCollectionQuery query) {
 		try {
-			AmphiroSessionCollectionQueryResult data = amphiroMeasurementRepository
-					.searchSessions(query);
+			query.setUserKey(user.getKey());
+
+			AmphiroSessionCollectionQueryResult data = amphiroMeasurementRepository.searchSessions(query);
 
 			return data;
 		} catch (Exception ex) {
 			logger.error("Failed to insert measurement data.", ex);
 		}
-		return new RestResponse(Error.ERROR_UNKNOWN,
-				"An unhandled exception has occurred");
+		return new RestResponse(Error.ERROR_UNKNOWN, "An unhandled exception has occurred");
 
 	}
 
 	@RequestMapping(value = "/action/device/session", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public RestResponse query(@RequestBody AmphiroSessionQuery query) {
+	public RestResponse query(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody AmphiroSessionQuery query) {
 		try {
+			query.setUserKey(user.getKey());
+
 			AmphiroSessionQueryResult data = amphiroMeasurementRepository.getSession(query);
 
 			return data;
 		} catch (Exception ex) {
 			logger.error("Failed to insert measurement data.", ex);
 		}
-		return new RestResponse(Error.ERROR_UNKNOWN,
-				"An unhandled exception has occurred");
+		return new RestResponse(Error.ERROR_UNKNOWN, "An unhandled exception has occurred");
 
 	}
 }

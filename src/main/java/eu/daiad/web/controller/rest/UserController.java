@@ -16,12 +16,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.data.IUserRepository;
-import eu.daiad.web.model.ApplicationUser;
-import eu.daiad.web.model.EnumRole;
 import eu.daiad.web.model.Error;
 import eu.daiad.web.model.PasswordChangeRequest;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.RoleUpdateRequest;
+import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.security.EnumRole;
+import eu.daiad.web.model.security.RoleUpdateRequest;
 import eu.daiad.web.model.user.Account;
 import eu.daiad.web.model.user.UserRegistrationRequest;
 import eu.daiad.web.model.user.UserRegistrationResponse;
@@ -49,27 +49,23 @@ public class UserController {
 			Account account = request.getAccount();
 
 			if (repository.getUserByName(account.getUsername()) != null) {
-				return new RestResponse(ERROR_USERNAME_UNAVAILABLE,
-						"Username is unavailable");
+				return new RestResponse(ERROR_USERNAME_UNAVAILABLE, "Username is unavailable");
 			}
 
 			Set<String> zones = DateTimeZone.getAvailableIDs();
 			if ((!StringUtils.isBlank(account.getCountry()))
-					&& ((account.getTimezone() == null) || (!zones
-							.contains(account.getTimezone())))) {
+							&& ((account.getTimezone() == null) || (!zones.contains(account.getTimezone())))) {
 				String country = account.getCountry().toUpperCase();
 
 				Iterator<String> it = zones.iterator();
 				while (it.hasNext()) {
 					String zone = (String) it.next();
 					String[] parts = StringUtils.split(zone, "/");
-					if ((parts.length == 1)
-							&& (parts[0].toUpperCase().equals(country))) {
+					if ((parts.length == 1) && (parts[0].toUpperCase().equals(country))) {
 						account.setTimezone(zone);
 						break;
 					}
-					if ((parts.length == 2)
-							&& (parts[1].toUpperCase().equals(country))) {
+					if ((parts.length == 2) && (parts[1].toUpperCase().equals(country))) {
 						account.setTimezone(zone);
 						break;
 					}
@@ -89,65 +85,50 @@ public class UserController {
 		} catch (Exception ex) {
 			logger.error("An unhandled exception has occurred", ex);
 		}
-		return new RestResponse(Error.ERROR_UNKNOWN,
-				"An unhandled exception has occurred");
+		return new RestResponse(Error.ERROR_UNKNOWN, "An unhandled exception has occurred");
 	}
 
 	@RequestMapping(value = "/api/v1/user/password", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse changePassword(@RequestBody PasswordChangeRequest data,
-			BindingResult results) {
+	public RestResponse changePassword(@RequestBody PasswordChangeRequest data, BindingResult results) {
 
 		try {
-			ApplicationUser user = this.authenticator
-					.authenticateAndGetUser(data.getCredentials());
+			AuthenticatedUser user = this.authenticator.authenticateAndGetUser(data.getCredentials());
 			if (user == null) {
-				return new RestResponse(Error.ERROR_AUTH_FAILED,
-						"Authentication has failed");
+				return new RestResponse(Error.ERROR_AUTHENTICATION, "Authentication has failed");
 			}
 			if (!user.hasRole("ROLE_USER")) {
-				return new RestResponse(Error.ERROR_FORBIDDEN,
-						"Unauthhorized request");
+				return new RestResponse(Error.ERROR_FORBIDDEN, "Unauthhorized request");
 			}
 			if (StringUtils.isBlank(data.getPassword())) {
-				return new RestResponse(ERROR_INVALID_PASSWORD,
-						"Invalid password.");
+				return new RestResponse(ERROR_INVALID_PASSWORD, "Invalid password.");
 			}
 
-			repository.setPassword(data.getCredentials().getUsername(),
-					data.getPassword());
+			repository.setPassword(data.getCredentials().getUsername(), data.getPassword());
 
 			return new RestResponse();
 		} catch (Exception ex) {
 			logger.error("An unhandled exception has occurred", ex);
 		}
-		return new UserRegistrationResponse(Error.ERROR_UNKNOWN,
-				"An unhandled exception has occurred");
+		return new UserRegistrationResponse(Error.ERROR_UNKNOWN, "An unhandled exception has occurred");
 	}
 
 	@RequestMapping(value = "/api/v1/user/role/grant", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse addRole(@RequestBody RoleUpdateRequest data,
-			BindingResult results) {
+	public RestResponse addRole(@RequestBody RoleUpdateRequest data, BindingResult results) {
 
 		try {
-			ApplicationUser admin = this.authenticator
-					.authenticateAndGetUser(data.getCredentials());
+			AuthenticatedUser admin = this.authenticator.authenticateAndGetUser(data.getCredentials());
 			if (admin == null) {
-				return new RestResponse(Error.ERROR_AUTH_FAILED,
-						"Authentication has failed.");
+				return new RestResponse(Error.ERROR_AUTHENTICATION, "Authentication has failed.");
 			}
 			if (!admin.hasRole("ROLE_ADMIN")) {
-				return new RestResponse(Error.ERROR_FORBIDDEN,
-						"Unauthhorized request.");
+				return new RestResponse(Error.ERROR_FORBIDDEN, "Unauthhorized request.");
 			}
-			ApplicationUser user = this.repository.getUserByName(data
-					.getUsername());
+			AuthenticatedUser user = this.repository.getUserByName(data.getUsername());
 			if (user == null) {
-				return new RestResponse(ERROR_USER_NOT_FOUND,
-						"User does not exists.");
+				return new RestResponse(ERROR_USER_NOT_FOUND, "User does not exists.");
 			}
 			if (data.getRole() == EnumRole.ROLE_NONE) {
-				logger.warn(String.format("Role [%s] does not exists.", data
-						.getRole().toString()));
+				logger.warn(String.format("Role [%s] does not exists.", data.getRole().toString()));
 			} else {
 				repository.setRole(data.getUsername(), data.getRole(), true);
 			}
@@ -156,34 +137,26 @@ public class UserController {
 		} catch (Exception ex) {
 			logger.error("An unhandled exception has occurred", ex);
 		}
-		return new UserRegistrationResponse(Error.ERROR_UNKNOWN,
-				"An unhandled exception has occurred");
+		return new UserRegistrationResponse(Error.ERROR_UNKNOWN, "An unhandled exception has occurred");
 	}
 
 	@RequestMapping(value = "/api/v1/user/role/revoke", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse revokeRole(@RequestBody RoleUpdateRequest data,
-			BindingResult results) {
+	public RestResponse revokeRole(@RequestBody RoleUpdateRequest data, BindingResult results) {
 
 		try {
-			ApplicationUser admin = this.authenticator
-					.authenticateAndGetUser(data.getCredentials());
+			AuthenticatedUser admin = this.authenticator.authenticateAndGetUser(data.getCredentials());
 			if (admin == null) {
-				return new RestResponse(Error.ERROR_AUTH_FAILED,
-						"Authentication has failed.");
+				return new RestResponse(Error.ERROR_AUTHENTICATION, "Authentication has failed.");
 			}
 			if (!admin.hasRole("ROLE_ADMIN")) {
-				return new RestResponse(Error.ERROR_FORBIDDEN,
-						"Unauthhorized request.");
+				return new RestResponse(Error.ERROR_FORBIDDEN, "Unauthhorized request.");
 			}
-			ApplicationUser user = this.repository.getUserByName(data
-					.getUsername());
+			AuthenticatedUser user = this.repository.getUserByName(data.getUsername());
 			if (user == null) {
-				return new RestResponse(ERROR_USER_NOT_FOUND,
-						"User does not exists.");
+				return new RestResponse(ERROR_USER_NOT_FOUND, "User does not exists.");
 			}
 			if (data.getRole() == EnumRole.ROLE_NONE) {
-				logger.warn(String.format("Role [%s] does not exists.", data
-						.getRole().toString()));
+				logger.warn(String.format("Role [%s] does not exists.", data.getRole().toString()));
 			} else {
 				repository.setRole(data.getUsername(), data.getRole(), false);
 			}
@@ -192,7 +165,6 @@ public class UserController {
 		} catch (Exception ex) {
 			logger.error("An unhandled exception has occurred", ex);
 		}
-		return new UserRegistrationResponse(Error.ERROR_UNKNOWN,
-				"An unhandled exception has occurred");
+		return new UserRegistrationResponse(Error.ERROR_UNKNOWN, "An unhandled exception has occurred");
 	}
 }
