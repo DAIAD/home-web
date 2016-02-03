@@ -90,10 +90,10 @@ var UserInfo = React.createClass({
 		return this._getFirstName();
 	},
 	componentDidMount: function() {
-		UserStore.addProfileUpdateListener(this._onChange);
+		UserStore.addProfileUpdateListener(this._onUpdate);
 	},
 	componentWillUnmount: function() {
-		UserStore.removeProfileUpdateListener(this._onChange);
+		UserStore.removeProfileUpdateListener(this._onUpdate);
 	},
 	render: function() {
 		return (
@@ -106,7 +106,7 @@ var UserInfo = React.createClass({
 			</div>
 		);
 	},
-	_onChange: function() {
+	_onUpdate: function() {
 		if (this.state.firstname !== this._getFirstName().firstname){
 			this.setState(this._getFirstName());
 		}
