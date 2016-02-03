@@ -157,9 +157,36 @@ CREATE TABLE public.device_amphiro
   id integer NOT NULL,
   name character varying(50),
   mac_address character varying(100),
+  aes_key  character varying,
   CONSTRAINT pk_device_amphiro PRIMARY KEY (id),
   CONSTRAINT fk_device_amphiro_device FOREIGN KEY (id)
         REFERENCES public.device (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE SEQUENCE public.device_amphiro_permission_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE TABLE public.device_amphiro_permission
+(
+  id integer NOT NULL DEFAULT nextval('device_amphiro_permission_id_seq'::regclass),
+  device_id integer,
+  owner_id integer,
+  assignee_id integer,
+  date_assigned timestamp without time zone,
+  CONSTRAINT pk_device_amphiro_permission PRIMARY KEY (id),
+  CONSTRAINT fk_device_amphiro_permission_device_amphiro FOREIGN KEY (device_id)
+        REFERENCES public.device_amphiro (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT fk_device_owner_id FOREIGN KEY (owner_id)
+        REFERENCES public.account (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT fk_device_assignee_id FOREIGN KEY (assignee_id)
+        REFERENCES public.account (id) MATCH SIMPLE
             ON UPDATE CASCADE ON DELETE CASCADE
 );
 
@@ -175,7 +202,6 @@ CREATE TABLE device_amphiro_config (
     device_id integer,
     key character varying(50),
     value character varying,
-    type character(20),
     CONSTRAINT pk_device_amphiro_config PRIMARY KEY (id),
     CONSTRAINT fk_device_amphiro_config_device_amphiro FOREIGN KEY (device_id)
         REFERENCES public.device_amphiro (id) MATCH SIMPLE

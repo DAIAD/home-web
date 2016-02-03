@@ -25,7 +25,7 @@ public class ProfileController extends BaseController {
 	private IProfileRepository profileRepository;
 
 	@RequestMapping(value = "/action/profile", method = RequestMethod.GET, produces = "application/json")
-	@Secured("ROLE_USER")
+	@Secured({"ROLE_USER", "ROLE_SUPERUSER", "ROLE_ADMIN"})
 	public RestResponse getProfile(@AuthenticationPrincipal AuthenticatedUser user) {
 		ProfileResponse response = new ProfileResponse();
 

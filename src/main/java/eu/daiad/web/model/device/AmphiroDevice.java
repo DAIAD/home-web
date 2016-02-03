@@ -11,12 +11,15 @@ public class AmphiroDevice extends Device {
 	private String name;
 
 	private String macAddress;
+	
+	private String aesKey;
 
-	public AmphiroDevice(UUID key, String name, String macAddress) {
+	public AmphiroDevice(UUID key, String name, String macAddress, String aesKey) {
 		super(key);
 
 		this.name = name;
 		this.macAddress = macAddress;
+		this.aesKey = aesKey;
 	}
 
 	public AmphiroDevice(UUID key, String name, String macAddress,
@@ -64,5 +67,13 @@ public class AmphiroDevice extends Device {
 		}
 
 		return r;
+	}
+
+	public String getAesKey() {
+		return aesKey;
+	}
+
+	public void setAesKey(String aesKey) {
+		this.aesKey = aesKey;
 	}
 }

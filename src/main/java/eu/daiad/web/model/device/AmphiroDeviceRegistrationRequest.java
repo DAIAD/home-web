@@ -7,6 +7,8 @@ public class AmphiroDeviceRegistrationRequest extends DeviceRegistrationRequest 
 
 	private String macAddress;
 
+	private String aesKey;
+
 	public String getName() {
 		return name;
 	}
@@ -26,5 +28,13 @@ public class AmphiroDeviceRegistrationRequest extends DeviceRegistrationRequest 
 
 	public void setMacAddress(String macAddress) {
 		this.macAddress = macAddress;
+	}
+
+	public String getAesKey() {
+		return aesKey;
+	}
+
+	public void setAesKey(String aesKey) {
+		this.aesKey = aesKey;
 	}
 }

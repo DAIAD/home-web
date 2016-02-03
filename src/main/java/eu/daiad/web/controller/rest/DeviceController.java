@@ -16,15 +16,19 @@ import eu.daiad.web.data.IDeviceRepository;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.device.AmphiroDeviceRegistrationRequest;
 import eu.daiad.web.model.device.Device;
+import eu.daiad.web.model.device.DeviceConfigurationRequest;
+import eu.daiad.web.model.device.DeviceConfigurationResponse;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.DeviceRegistrationQueryResult;
 import eu.daiad.web.model.device.DeviceRegistrationRequest;
 import eu.daiad.web.model.device.DeviceRegistrationResponse;
+import eu.daiad.web.model.device.ShareDeviceRequest;
 import eu.daiad.web.model.device.WaterMeterDeviceRegistrationRequest;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.security.AuthenticationService;
 
 @RestController("RestDeviceController")
@@ -64,7 +68,7 @@ public class DeviceController extends BaseController {
 					}
 
 					deviceKey = repository.createAmphiroDevice(user.getKey(), amphiroData.getName(),
-									amphiroData.getMacAddress(), amphiroData.getProperties());
+									amphiroData.getMacAddress(), amphiroData.getAesKey(), amphiroData.getProperties());
 				}
 				break;
 			case METER:
@@ -114,6 +118,56 @@ public class DeviceController extends BaseController {
 			queryResponse.setDevices(devices);
 
 			return queryResponse;
+		} catch (ApplicationException ex) {
+			logger.error(ex);
+
+			response.add(this.getError(ex));
+		}
+
+		return response;
+	}
+
+	@RequestMapping(value = "/api/v1/device/share", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	public RestResponse share(@RequestBody ShareDeviceRequest request) {
+		RestResponse response = new RestResponse();
+
+		try {
+			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(request.getCredentials());
+			if (user == null) {
+				throw new ApplicationException(SharedErrorCode.AUTHENTICATION);
+			}
+			if (!user.hasRole(EnumRole.ROLE_USER)) {
+				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+			}
+
+			repository.shareDevice(user.getKey(), request.getAssignee(), request.getDevice(), request.isShared());
+		} catch (ApplicationException ex) {
+			logger.error(ex);
+
+			response.add(this.getError(ex));
+		}
+
+		return response;
+	}
+
+	@RequestMapping(value = "/api/v1/device/config", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	public RestResponse share(@RequestBody DeviceConfigurationRequest request) {
+		RestResponse response = new RestResponse();
+
+		try {
+			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(request.getCredentials());
+			if (user == null) {
+				throw new ApplicationException(SharedErrorCode.AUTHENTICATION);
+			}
+			if (!user.hasRole(EnumRole.ROLE_USER)) {
+				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+			}
+
+			DeviceConfigurationResponse configuration = new DeviceConfigurationResponse();
+
+			configuration.setDevices(repository.getConfiguration(user.getKey(), request.getDeviceKey()));
+
+			return configuration;
 		} catch (ApplicationException ex) {
 			logger.error(ex);
 

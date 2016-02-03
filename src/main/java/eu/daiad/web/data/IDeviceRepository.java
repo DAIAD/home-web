@@ -5,12 +5,13 @@ import java.util.UUID;
 
 import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.device.Device;
+import eu.daiad.web.model.device.DeviceConfiguration;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.error.ApplicationException;
 
 public interface IDeviceRepository {
 
-	public abstract UUID createAmphiroDevice(UUID userKey, String name, String macAddress,
+	public abstract UUID createAmphiroDevice(UUID userKey, String name, String macAddress, String aesKey,
 					ArrayList<KeyValuePair> properties) throws ApplicationException;
 
 	public abstract UUID createMeterDevice(UUID userKey, String serial, ArrayList<KeyValuePair> properties)
@@ -24,6 +25,12 @@ public interface IDeviceRepository {
 	public abstract Device getUserWaterMeterDeviceBySerial(UUID userKey, String serial) throws ApplicationException;
 
 	public abstract ArrayList<Device> getUserDevices(UUID userKey, DeviceRegistrationQuery query)
+					throws ApplicationException;
+
+	public abstract void shareDevice(UUID ownerID, String assigneeUsername, UUID deviceKey, boolean shared)
+					throws ApplicationException;
+
+	public abstract ArrayList<DeviceConfiguration> getConfiguration(UUID userKey, UUID deviceKeys[])
 					throws ApplicationException;
 
 }

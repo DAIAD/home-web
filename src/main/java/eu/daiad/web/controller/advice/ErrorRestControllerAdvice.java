@@ -1,9 +1,12 @@
 package eu.daiad.web.controller.advice;
 
+import java.util.Arrays;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -23,6 +26,9 @@ import eu.daiad.web.model.error.SharedErrorCode;
 public class ErrorRestControllerAdvice {
 
 	private static final Log logger = LogFactory.getLog(ErrorRestControllerAdvice.class);
+
+	@Autowired
+	Environment environment;
 
 	@Autowired
 	protected MessageSource messageSource;
@@ -65,14 +71,20 @@ public class ErrorRestControllerAdvice {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
-		if (mostSpecificCause != null) {
+		RestResponse r = null;
+
+		if (mostSpecificCause == null) {
 			String messageKey = SharedErrorCode.PARSE_ERROR.getMessageKey();
-			RestResponse r = new RestResponse(messageKey, this.getMessage(messageKey));
+			r = new RestResponse(messageKey, this.getMessage(messageKey));
 
 			return new ResponseEntity<RestResponse>(r, headers, HttpStatus.BAD_REQUEST);
 		} else {
 			String messageKey = SharedErrorCode.PARSE_ERROR.getMessageKey();
-			RestResponse r = new RestResponse(messageKey, this.getMessage(messageKey));
+			if (Arrays.asList(environment.getActiveProfiles()).contains("development")) {
+				r = new RestResponse(messageKey, mostSpecificCause.getMessage());
+			} else {
+				r = new RestResponse(messageKey, this.getMessage(messageKey));
+			}
 
 			return new ResponseEntity<RestResponse>(r, headers, HttpStatus.BAD_REQUEST);
 		}

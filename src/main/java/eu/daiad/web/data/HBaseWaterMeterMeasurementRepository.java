@@ -459,13 +459,10 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 		DateTime queryStartDate = startDate;
 		DateTime queryEndDate = endDate;
 
-		startDate = startDate.minusHours(1);
-
 		DateTime maxDate = new DateTime();
 		if (maxDate.getMillis() < endDate.getMillis()) {
 			endDate = maxDate;
 		}
-		endDate = endDate.plusHours(1);
 
 		WaterMeterMeasurementQueryResult data = new WaterMeterMeasurementQueryResult();
 
