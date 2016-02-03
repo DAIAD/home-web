@@ -9,6 +9,8 @@ var FormattedMessage = require('react-intl').FormattedMessage;
 var bs = require('react-bootstrap');
 var Link = require('react-router').Link;
 
+var UserStore = require('../stores/UserStore');
+
 /* DAIAD Logo */
 
 var MainLogo = React.createClass({
@@ -63,8 +65,6 @@ var MainMenu = React.createClass({
 									route:"/commons"
 								}];
 
-		var props = this.props;
-
 		return (
 			<div className="main-menu">
 				<div className="navigation" role="navigation">
@@ -72,7 +72,7 @@ var MainMenu = React.createClass({
 						{
           	items.map(function (item) {
 							return (
-								<MenuItem key={item.name} {...props} item={item} />
+								<MenuItem key={item.name} item={item} />
 							);
 							})
         		}		
@@ -86,16 +86,35 @@ var MainMenu = React.createClass({
 /* User options */
 
 var UserInfo = React.createClass({
+	getInitialState: function() {
+		return this._getFirstName();
+	},
+	componentDidMount: function() {
+		UserStore.addProfileUpdateListener(this._onChange);
+	},
+	componentWillUnmount: function() {
+		UserStore.removeProfileUpdateListener(this._onChange);
+	},
 	render: function() {
 		return (
 			<div className="user-menu" >
 					<div title="home.profile">
-					<Link to="/profile">
-						<span>{this.props.profile.firstname}</span>
+					<Link to="settings/profile">
+						<span>{this.state.firstname}</span>
 					</Link>
 				</div>
 			</div>
 		);
+	},
+	_onChange: function() {
+		if (this.state.firstname !== this._getFirstName().firstname){
+			this.setState(this._getFirstName());
+		}
+	},
+	_getFirstName: function() {
+		return {
+			firstname: UserStore.getProfile().firstname 
+		};
 	}
 });
 
@@ -207,24 +226,28 @@ var NotificationArea = React.createClass({
 
 
 var Header = React.createClass({
+	contextTypes: {
+		//profile: React.PropTypes.object,
+		isAuthenticated: React.PropTypes.bool
+	},
 	render: function() {
 		return (
 			<header className="site-header">
 					{(() => {
-						if (this.props.isAuthenticated) {
+						if (this.context.isAuthenticated) {
 							return (
 								<div className="container">
 									<div className="header-left">
 										<MainLogo />
-										<MainMenu {...this.props} />
+										<MainMenu />
 									</div>
 									<div className="header-right">
 										<NotificationArea notifications={this.props.data.notifications} />
-										<UserInfo profile={this.props.profile} />
+										<UserInfo />
 										<LoginForm 	className="navbar logout"
 											action="logout"
-											isAuthenticated = { this.props.isAuthenticated } />
-										<LocaleSwitcher {...this.props} />	
+											isAuthenticated = { this.context.isAuthenticated } />
+										<LocaleSwitcher />	
 									</div>
 								</div>
 								);
@@ -236,7 +259,7 @@ var Header = React.createClass({
 										<MainLogo />
 									</div>
 									<div className="pull-right">
-										<LocaleSwitcher {...this.props} />	
+										<LocaleSwitcher />	
 									</div>
 								</div>
 								);

@@ -9,9 +9,12 @@ var MainSection = require('./MainSection.react');
 var Footer = require('./Footer.react');
 var History = require('./sections/History');
 var LocaleSwitcher = require('./LocaleSwitcher');
+var LoginPage = require('./sections/LoginPage');
+
 var Login = require('./sections/Login');
 
 var UserStore = require('../stores/UserStore');
+
 
 var ContentRoot = React.createClass({
 	getInitialState: function() {
@@ -19,30 +22,38 @@ var ContentRoot = React.createClass({
 			locale: 'el',
 		};
 	},
+
+	childContextTypes: {
+		isAuthenticated: React.PropTypes.bool
+	},
+	getChildContext: function() {
+		return {
+			isAuthenticated: UserStore.isAuthenticated() 
+		};
+	},
 	render: function() {
 		isAuthenticated = UserStore.isAuthenticated();
 		profile = UserStore.getProfile();
 		return (
 			<div>
-				<Header data={Constant.data} profile={profile} isAuthenticated={isAuthenticated}/>
-				<section className="main-section" >
-					<div className="container">
-						{(() => {
+				<Header data={Constant.data} />
+
+					{(() => {
 							if (isAuthenticated) {
 								return (
-									this.props.children
+									//React.cloneElement(this.props.children, {profile:profile})
+									<MainSection>
+										{this.props.children}
+									</MainSection>
 								);
 							}
 							else {
 								return (
-									<Login />	
+									<LoginPage />
 								);
 							}
-						})()
-						}
-					</div>
-				</section>
-				<Footer isAuthenticated={isAuthenticated}/>
+						})()}
+				<Footer />
 			</div>
 		);
 	}
