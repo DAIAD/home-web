@@ -9,8 +9,7 @@ var UserStore = require('../../stores/UserStore');
 /* Be Polite, greet user */
 var SayHello = React.createClass({
 	render: function() {
-
-		name = UserStore.getProfile().firstname;
+		var name = UserStore.getProfile().firstname;
 		return (
 			<h3>Hello {name}!</h3>
 		);
@@ -20,10 +19,8 @@ var SayHello = React.createClass({
 var Dashboard = React.createClass({
 	render: function() {
 		return (
-			<section className="section-dashboard">
-				<MainSection title="Dashboard" >
-					<SayHello />
-				</MainSection>
+			<section className="section-dashboard primary">
+				<SayHello />
 			</section>
 		);
 	}

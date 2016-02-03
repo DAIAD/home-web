@@ -44,13 +44,6 @@ constants.data = {
 				title: "This is the last time we ever send you a message",
 				description: "Please stop ignoring us"
 			},
-			{
-				id: "Not6",
-				type: "alert",
-				unread: true,
-				title: "A water snake is drinking your water",
-				description: "Watch out because this can lead to increased bills and cause you discomfort."
-			},
 		]
 	};
 module.exports = constants;

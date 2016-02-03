@@ -1,6 +1,6 @@
 var React = require('react');
 
-var Chart = require('../EChart');
+var Chart = require('../Chart');
 
 var MainSection = require('../MainSection.react');
 

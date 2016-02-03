@@ -1,8 +1,6 @@
 // Dependencies
 var React = require('react');
 
-var Bootstrap = require('react-bootstrap');
-
 var injectIntl = require('react-intl').injectIntl;
 
 var IntlMixin = require('react-intl').IntlMixin;

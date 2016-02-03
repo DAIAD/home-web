@@ -331,6 +331,8 @@ header{
 	width: 700px;
 }
 .main-section section{
+	min-height: 400px;
+	padding: 25px;
 }
 section[class^="section-"]{
 }
@@ -339,8 +341,6 @@ section[class^="section-"]{
 	display: block;
 	float: right;
 	width: 85%;
-	padding: 25px;
-	min-height: 400px;
 }
 
 .sidebar{
