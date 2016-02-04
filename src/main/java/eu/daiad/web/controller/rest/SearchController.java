@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import eu.daiad.web.controller.BaseController;
+import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.data.IAmphiroMeasurementRepository;
 import eu.daiad.web.data.IWaterMeterMeasurementRepository;
 import eu.daiad.web.model.RestResponse;
@@ -19,16 +19,15 @@ import eu.daiad.web.model.amphiro.AmphiroSessionCollectionQueryResult;
 import eu.daiad.web.model.amphiro.AmphiroSessionQuery;
 import eu.daiad.web.model.amphiro.AmphiroSessionQueryResult;
 import eu.daiad.web.model.error.ApplicationException;
-import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQuery;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQueryResult;
 import eu.daiad.web.model.meter.WaterMeterStatusQuery;
 import eu.daiad.web.model.meter.WaterMeterStatusQueryResult;
 import eu.daiad.web.model.security.AuthenticatedUser;
-import eu.daiad.web.security.AuthenticationService;
+import eu.daiad.web.model.security.EnumRole;
 
 @RestController("RestSearchController")
-public class SearchController extends BaseController {
+public class SearchController extends BaseRestController {
 
 	private static final Log logger = LogFactory.getLog(SearchController.class);
 
@@ -38,21 +37,12 @@ public class SearchController extends BaseController {
 	@Autowired
 	private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
 
-	@Autowired
-	private AuthenticationService authenticationService;
-
 	@RequestMapping(value = "/api/v1/meter/status", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse getWaterMeterStatus(@RequestBody WaterMeterStatusQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
-			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(query.getCredentials());
-			if (user == null) {
-				return this.createResponse(SharedErrorCode.AUTHENTICATION);
-			}
-			if (!user.hasRole("ROLE_USER")) {
-				return this.createResponse(SharedErrorCode.AUTHORIZATION);
-			}
+			AuthenticatedUser user = this.authenticate(query.getCredentials(), EnumRole.ROLE_USER);
 
 			if ((query.getDeviceKey() == null) || (query.getDeviceKey().length == 0)) {
 				return new WaterMeterStatusQueryResult();
@@ -77,13 +67,7 @@ public class SearchController extends BaseController {
 		RestResponse response = new RestResponse();
 
 		try {
-			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(query.getCredentials());
-			if (user == null) {
-				return this.createResponse(SharedErrorCode.AUTHENTICATION);
-			}
-			if (!user.hasRole("ROLE_USER")) {
-				return this.createResponse(SharedErrorCode.AUTHORIZATION);
-			}
+			AuthenticatedUser user = this.authenticate(query.getCredentials(), EnumRole.ROLE_USER);
 
 			query.setUserKey(user.getKey());
 
@@ -104,13 +88,7 @@ public class SearchController extends BaseController {
 		RestResponse response = new RestResponse();
 
 		try {
-			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(query.getCredentials());
-			if (user == null) {
-				return this.createResponse(SharedErrorCode.AUTHENTICATION);
-			}
-			if (!user.hasRole("ROLE_USER")) {
-				return this.createResponse(SharedErrorCode.AUTHORIZATION);
-			}
+			AuthenticatedUser user = this.authenticate(query.getCredentials(), EnumRole.ROLE_USER);
 
 			query.setUserKey(user.getKey());
 
@@ -131,13 +109,7 @@ public class SearchController extends BaseController {
 		RestResponse response = new RestResponse();
 
 		try {
-			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(query.getCredentials());
-			if (user == null) {
-				return this.createResponse(SharedErrorCode.AUTHENTICATION);
-			}
-			if (!user.hasRole("ROLE_USER")) {
-				return this.createResponse(SharedErrorCode.AUTHORIZATION);
-			}
+			AuthenticatedUser user = this.authenticate(query.getCredentials(), EnumRole.ROLE_USER);
 
 			query.setUserKey(user.getKey());
 
@@ -158,13 +130,7 @@ public class SearchController extends BaseController {
 		RestResponse response = new RestResponse();
 
 		try {
-			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(query.getCredentials());
-			if (user == null) {
-				return this.createResponse(SharedErrorCode.AUTHENTICATION);
-			}
-			if (!user.hasRole("ROLE_USER")) {
-				return this.createResponse(SharedErrorCode.AUTHORIZATION);
-			}
+			AuthenticatedUser user = this.authenticate(query.getCredentials(), EnumRole.ROLE_USER);
 
 			query.setUserKey(user.getKey());
 

@@ -8,23 +8,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import eu.daiad.web.controller.BaseController;
+import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.data.IProfileRepository;
 import eu.daiad.web.model.Credentials;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.ApplicationException;
-import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.profile.UpdateProfileRequest;
-import eu.daiad.web.model.security.AuthenticatedUser;
-import eu.daiad.web.security.AuthenticationService;
+import eu.daiad.web.model.security.EnumRole;
 
 @RestController("RestProfileController")
-public class ProfileController extends BaseController {
+public class ProfileController extends BaseRestController {
 
 	private static final Log logger = LogFactory.getLog(ProfileController.class);
-
-	@Autowired
-	private AuthenticationService authenticationService;
 
 	@Autowired
 	private IProfileRepository profileRepository;
@@ -34,10 +29,7 @@ public class ProfileController extends BaseController {
 		RestResponse response = new RestResponse();
 
 		try {
-			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(data);
-			if (user == null) {
-				throw new ApplicationException(SharedErrorCode.AUTHENTICATION);
-			}
+			this.authenticate(data, EnumRole.ROLE_USER);
 
 			return new RestResponse();
 		} catch (ApplicationException ex) {
@@ -54,10 +46,7 @@ public class ProfileController extends BaseController {
 		RestResponse response = new RestResponse();
 
 		try {
-			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(data.getCredentials());
-			if (user == null) {
-				throw new ApplicationException(SharedErrorCode.AUTHENTICATION);
-			}
+			this.authenticate(data.getCredentials(), EnumRole.ROLE_USER);
 
 			return new RestResponse();
 		} catch (ApplicationException ex) {

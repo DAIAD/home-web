@@ -8,12 +8,15 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Scope;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
 
-import eu.daiad.web.domain.Utility;
+import eu.daiad.web.domain.Account;
 import eu.daiad.web.model.commons.Community;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.model.security.AuthenticatedUser;
 
 @Primary
 @Repository()
@@ -27,10 +30,14 @@ public class JpaCommunityRepository implements ICommunityRepository {
 	@Override
 	public void create(Community community) throws ApplicationException {
 		try {
-			TypedQuery<Utility> query = entityManager.createQuery("select u from utility u", Utility.class)
-							.setFirstResult(0).setMaxResults(1);
+			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-			Utility u = query.getSingleResult();
+			TypedQuery<Account> query = entityManager
+							.createQuery("select a from account a where a.key = :key", Account.class).setFirstResult(0)
+							.setMaxResults(1);
+			query.setParameter("key", ((AuthenticatedUser) auth.getPrincipal()).getKey());
+
+			Account account = query.getSingleResult();
 
 			eu.daiad.web.domain.Community c = new eu.daiad.web.domain.Community();
 
@@ -47,7 +54,7 @@ public class JpaCommunityRepository implements ICommunityRepository {
 			c.setName(community.getName());
 			c.setSize(0);
 
-			c.setUtility(u);
+			c.setUtility(account.getUtility());
 
 			this.entityManager.persist(c);
 		} catch (Exception ex) {

@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import eu.daiad.web.controller.BaseController;
+import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.data.IAmphiroMeasurementRepository;
 import eu.daiad.web.data.IDeviceRepository;
 import eu.daiad.web.data.IWaterMeterMeasurementRepository;
@@ -21,13 +21,12 @@ import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DeviceErrorCode;
-import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.meter.WaterMeterMeasurementCollection;
 import eu.daiad.web.model.security.AuthenticatedUser;
-import eu.daiad.web.security.AuthenticationService;
+import eu.daiad.web.model.security.EnumRole;
 
 @RestController("RestDataController")
-public class DataController extends BaseController {
+public class DataController extends BaseRestController {
 
 	private static final Log logger = LogFactory.getLog(DataController.class);
 
@@ -43,21 +42,12 @@ public class DataController extends BaseController {
 	@Autowired
 	private IDeviceRepository deviceRepository;
 
-	@Autowired
-	private AuthenticationService authenticator;
-
 	@RequestMapping(value = "/api/v1/data/store", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse store(@RequestBody DeviceMeasurementCollection data) {
 		RestResponse response = new RestResponse();
 
 		try {
-			AuthenticatedUser user = this.authenticator.authenticateAndGetUser(data.getCredentials());
-			if (user == null) {
-				throw new ApplicationException(SharedErrorCode.AUTHENTICATION);
-			}
-			if (!user.hasRole("ROLE_USER")) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
-			}
+			AuthenticatedUser user = this.authenticate(data.getCredentials(), EnumRole.ROLE_USER);
 
 			data.setUserKey(user.getKey());
 

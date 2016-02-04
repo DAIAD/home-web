@@ -9,24 +9,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import eu.daiad.web.controller.BaseController;
+import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.data.IRecommendationRepository;
 import eu.daiad.web.model.Credentials;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.ApplicationException;
-import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.recommendation.StaticRecommendationResponse;
-import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
-import eu.daiad.web.security.AuthenticationService;
 
 @RestController("RestRecommendationController")
-public class RecommendationController extends BaseController {
+public class RecommendationController extends BaseRestController {
 
 	private static final Log logger = LogFactory.getLog(RecommendationController.class);
-
-	@Autowired
-	private AuthenticationService authenticationService;
 
 	@Autowired
 	private IRecommendationRepository recommendationRepository;
@@ -36,12 +30,7 @@ public class RecommendationController extends BaseController {
 		RestResponse response = new RestResponse();
 
 		try {
-			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(data);
-			if (user == null) {
-				throw new ApplicationException(SharedErrorCode.AUTHENTICATION);
-			} else if (!user.hasRole(EnumRole.ROLE_USER)) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
-			}
+			this.authenticate(data, EnumRole.ROLE_USER);
 
 			StaticRecommendationResponse recommendationResponse = new StaticRecommendationResponse();
 

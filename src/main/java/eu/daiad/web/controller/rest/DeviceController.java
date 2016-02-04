@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import eu.daiad.web.controller.BaseController;
+import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.data.IDeviceRepository;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.device.AmphiroDeviceRegistrationRequest;
@@ -26,18 +26,13 @@ import eu.daiad.web.model.device.ShareDeviceRequest;
 import eu.daiad.web.model.device.WaterMeterDeviceRegistrationRequest;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DeviceErrorCode;
-import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
-import eu.daiad.web.security.AuthenticationService;
 
 @RestController("RestDeviceController")
-public class DeviceController extends BaseController {
+public class DeviceController extends BaseRestController {
 
 	private static final Log logger = LogFactory.getLog(DeviceController.class);
-
-	@Autowired
-	private AuthenticationService authenticationService;
 
 	@Autowired
 	private IDeviceRepository repository;
@@ -49,10 +44,7 @@ public class DeviceController extends BaseController {
 		UUID deviceKey = null;
 
 		try {
-			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(data.getCredentials());
-			if (user == null) {
-				throw new ApplicationException(SharedErrorCode.AUTHENTICATION);
-			}
+			AuthenticatedUser user = this.authenticate(data.getCredentials(), EnumRole.ROLE_USER);
 
 			switch (data.getType()) {
 			case AMPHIRO:
@@ -107,10 +99,7 @@ public class DeviceController extends BaseController {
 		RestResponse response = new RestResponse();
 
 		try {
-			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(query.getCredentials());
-			if (user == null) {
-				throw new ApplicationException(SharedErrorCode.AUTHENTICATION);
-			}
+			AuthenticatedUser user = this.authenticate(query.getCredentials(), EnumRole.ROLE_USER);
 
 			ArrayList<Device> devices = repository.getUserDevices(user.getKey(), query);
 
@@ -132,13 +121,7 @@ public class DeviceController extends BaseController {
 		RestResponse response = new RestResponse();
 
 		try {
-			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(request.getCredentials());
-			if (user == null) {
-				throw new ApplicationException(SharedErrorCode.AUTHENTICATION);
-			}
-			if (!user.hasRole(EnumRole.ROLE_USER)) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
-			}
+			AuthenticatedUser user = this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
 			repository.shareDevice(user.getKey(), request.getAssignee(), request.getDevice(), request.isShared());
 		} catch (ApplicationException ex) {
@@ -155,13 +138,7 @@ public class DeviceController extends BaseController {
 		RestResponse response = new RestResponse();
 
 		try {
-			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(request.getCredentials());
-			if (user == null) {
-				throw new ApplicationException(SharedErrorCode.AUTHENTICATION);
-			}
-			if (!user.hasRole(EnumRole.ROLE_USER)) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
-			}
+			AuthenticatedUser user = this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
 			DeviceConfigurationResponse configuration = new DeviceConfigurationResponse();
 
