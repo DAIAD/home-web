@@ -6,13 +6,13 @@ import eu.daiad.web.model.RestResponse;
 
 public class DeviceConfigurationResponse extends RestResponse {
 
-	private ArrayList<DeviceConfiguration> devices = new ArrayList<DeviceConfiguration>();
+	private ArrayList<DeviceConfigurationCollection> devices = new ArrayList<DeviceConfigurationCollection>();
 
-	public ArrayList<DeviceConfiguration> getDevices() {
+	public ArrayList<DeviceConfigurationCollection> getDevices() {
 		return devices;
 	}
 
-	public void setDevices(ArrayList<DeviceConfiguration> devices) {
+	public void setDevices(ArrayList<DeviceConfigurationCollection> devices) {
 		this.devices = devices;
 	}
 }

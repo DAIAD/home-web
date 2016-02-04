@@ -29,7 +29,7 @@ public class DeviceAmphiro extends Device {
 
 	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
 	@JoinColumn(name = "device_id")
-	private Set<DeviceAmphiroConfigurationProperty> configurationProperties = new HashSet<DeviceAmphiroConfigurationProperty>();
+	private Set<DeviceAmphiroConfiguration> configurations = new HashSet<DeviceAmphiroConfiguration>();
 
 	public String getMacAddress() {
 		return macAddress;
@@ -59,7 +59,8 @@ public class DeviceAmphiro extends Device {
 		this.aesKey = aesKey;
 	}
 
-	public Set<DeviceAmphiroConfigurationProperty> getConfigurationProperties() {
-		return configurationProperties;
+	public Set<DeviceAmphiroConfiguration> getConfigurations() {
+		return configurations;
 	}
+
 }

@@ -1,5 +1,7 @@
 package eu.daiad.web.controller;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -9,13 +11,19 @@ import org.springframework.boot.autoconfigure.web.BasicErrorController;
 import org.springframework.boot.autoconfigure.web.ErrorAttributes;
 import org.springframework.boot.autoconfigure.web.ErrorProperties;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.ModelAndView;
+
+import eu.daiad.web.model.Error;
+import eu.daiad.web.model.error.SharedErrorCode;
 
 @Controller
 @RequestMapping("${server.error.path:${error.path:/error}}")
@@ -71,7 +79,26 @@ public class ErrorController extends BasicErrorController {
 	@RequestMapping
 	@ResponseBody
 	public ResponseEntity<Map<String, Object>> error(HttpServletRequest request) {
-		return super.error(request);
-	}
+		Map<String, Object> attributes = this.getErrorAttributes(request, isIncludeStackTrace(request, MediaType.ALL));
 
+		ArrayList<Error> errors = new ArrayList<Error>();
+
+		String messageKey = SharedErrorCode.UNKNOWN.getMessageKey();
+
+		if (attributes.containsKey("exception")) {
+			if (attributes.get("exception").equals(HttpMessageNotReadableException.class.getName())) {
+				messageKey = SharedErrorCode.PARSE_ERROR.getMessageKey();
+			} else if (attributes.get("exception").equals(HttpRequestMethodNotSupportedException.class.getName())) {
+				messageKey = SharedErrorCode.METHOD_NOT_SUPPORTED.getMessageKey();
+			}
+		}
+
+		errors.add(new Error(messageKey, attributes.get("message").toString()));
+
+		Map<String, Object> body = new HashMap<String, Object>();
+		body.put("success", false);
+		body.put("errors", errors);
+
+		return new ResponseEntity<Map<String, Object>>(body, getStatus(request));
+	}
 }

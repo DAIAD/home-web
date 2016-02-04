@@ -5,7 +5,7 @@ import java.util.UUID;
 
 import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.device.Device;
-import eu.daiad.web.model.device.DeviceConfiguration;
+import eu.daiad.web.model.device.DeviceConfigurationCollection;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.error.ApplicationException;
 
@@ -30,7 +30,7 @@ public interface IDeviceRepository {
 	public abstract void shareDevice(UUID ownerID, String assigneeUsername, UUID deviceKey, boolean shared)
 					throws ApplicationException;
 
-	public abstract ArrayList<DeviceConfiguration> getConfiguration(UUID userKey, UUID deviceKeys[])
+	public abstract ArrayList<DeviceConfigurationCollection> getConfiguration(UUID userKey, UUID deviceKeys[])
 					throws ApplicationException;
 
 }

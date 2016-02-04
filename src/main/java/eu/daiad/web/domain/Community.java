@@ -20,6 +20,8 @@ import javax.persistence.Table;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
+import com.vividsolutions.jts.geom.Geometry;
+
 @Entity(name = "community")
 @Table(schema = "public", name = "community")
 public class Community {
@@ -57,6 +59,10 @@ public class Community {
 	@Column(name = "created_on")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime createdOn = new DateTime();
+
+	@Type(type = "org.hibernate.spatial.GeometryType")
+	@Column(name = "spatial")
+	private Geometry geometry;
 
 	public Utility getUtility() {
 		return utility;
@@ -120,6 +126,14 @@ public class Community {
 
 	public Set<CommunityMember> getMembers() {
 		return members;
+	}
+
+	public Geometry getGeometry() {
+		return geometry;
+	}
+
+	public void setGeometry(Geometry geometry) {
+		this.geometry = geometry;
 	}
 
 }

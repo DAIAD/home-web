@@ -15,12 +15,13 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Repository;
 
 import eu.daiad.web.domain.DeviceAmphiro;
-import eu.daiad.web.domain.DeviceAmphiroConfigurationProperty;
+import eu.daiad.web.domain.DeviceAmphiroConfiguration;
 import eu.daiad.web.domain.DeviceProperty;
 import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceConfiguration;
+import eu.daiad.web.model.device.DeviceConfigurationCollection;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
@@ -341,8 +342,9 @@ public class JpaDeviceRepository implements IDeviceRepository {
 		}
 	}
 
-	public ArrayList<DeviceConfiguration> getConfiguration(UUID userKey, UUID deviceKeys[]) throws ApplicationException {
-		ArrayList<DeviceConfiguration> configuration = new ArrayList<DeviceConfiguration>();
+	public ArrayList<DeviceConfigurationCollection> getConfiguration(UUID userKey, UUID deviceKeys[])
+					throws ApplicationException {
+		ArrayList<DeviceConfigurationCollection> collections = new ArrayList<DeviceConfigurationCollection>();
 		try {
 			for (UUID deviceKey : deviceKeys) {
 				TypedQuery<eu.daiad.web.domain.DeviceAmphiro> deviceQuery = entityManager
@@ -360,21 +362,45 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 				DeviceAmphiro device = devices.get(0);
 
-				DeviceConfiguration deviceConfiguration = new DeviceConfiguration();
+				DeviceConfigurationCollection deviceConfigurationCollection = new DeviceConfigurationCollection();
+				deviceConfigurationCollection.setKey(device.getKey());
+				deviceConfigurationCollection.setMacAddress(device.getMacAddress());
 
-				deviceConfiguration.setKey(device.getKey());
-				deviceConfiguration.setMacAddress(device.getMacAddress());
+				for (DeviceAmphiroConfiguration p : device.getConfigurations()) {
+					if (p.isActive()) {
+						DeviceConfiguration configuration = new DeviceConfiguration();
 
-				for (DeviceAmphiroConfigurationProperty p : device.getConfigurationProperties()) {
-					deviceConfiguration.add(p.getKey(), p.getValue());
+						configuration.setTitle(p.getTitle());
+						configuration.setCreatedOn(p.getCreatedOn().getMillis());
+
+						configuration.getProperties().add(p.getValue1());
+						configuration.getProperties().add(p.getValue2());
+						configuration.getProperties().add(p.getValue3());
+						configuration.getProperties().add(p.getValue4());
+						configuration.getProperties().add(p.getValue5());
+						configuration.getProperties().add(p.getValue6());
+						configuration.getProperties().add(p.getValue7());
+						configuration.getProperties().add(p.getValue8());
+						configuration.getProperties().add(p.getValue9());
+						configuration.getProperties().add(p.getValue10());
+						configuration.getProperties().add(p.getValue11());
+						configuration.getProperties().add(p.getValue12());
+
+						configuration.setBlock(p.getBlock());
+						configuration.setFrameDuration(p.getFrameDuration());
+						configuration.setNumberOfFrames(p.getNumberOfFrames());
+
+						deviceConfigurationCollection.getConfigurations().add(configuration);
+					}
 				}
-
-				configuration.add(deviceConfiguration);
+				if (deviceConfigurationCollection.getConfigurations().size() > 0) {
+					collections.add(deviceConfigurationCollection);
+				}
 			}
 		} catch (Exception ex) {
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
 		}
 
-		return configuration;
+		return collections;
 	}
 }

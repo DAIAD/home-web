@@ -151,7 +151,7 @@ public class DeviceController extends BaseController {
 	}
 
 	@RequestMapping(value = "/api/v1/device/config", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse share(@RequestBody DeviceConfigurationRequest request) {
+	public RestResponse configuration(@RequestBody DeviceConfigurationRequest request) {
 		RestResponse response = new RestResponse();
 
 		try {

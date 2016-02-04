@@ -1,6 +1,8 @@
 package eu.daiad.web.controller.advice;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -17,6 +19,8 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.ibm.icu.text.MessageFormat;
 
 import eu.daiad.web.model.ResourceNotFoundException;
 import eu.daiad.web.model.RestResponse;
@@ -35,6 +39,14 @@ public class ErrorRestControllerAdvice {
 
 	private String getMessage(String code) {
 		return messageSource.getMessage(code, null, code, null);
+	}
+
+	protected String getMessage(String code, Map<String, Object> properties) {
+		String message = messageSource.getMessage(code, null, code, null);
+
+		MessageFormat msgFmt = new MessageFormat(message);
+
+		return msgFmt.format(properties);
 	}
 
 	@ExceptionHandler(Exception.class)
@@ -96,8 +108,11 @@ public class ErrorRestControllerAdvice {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
+		Map<String, Object> properties = new HashMap<String, Object>();
+		properties.put("method", ex.getMethod());
+
 		String messageKey = SharedErrorCode.METHOD_NOT_SUPPORTED.getMessageKey();
-		RestResponse r = new RestResponse(messageKey, this.getMessage(messageKey));
+		RestResponse r = new RestResponse(messageKey, this.getMessage(messageKey, properties));
 
 		return new ResponseEntity<RestResponse>(r, headers, HttpStatus.METHOD_NOT_ALLOWED);
 	}
