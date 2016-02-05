@@ -7,6 +7,11 @@ var constants = keyMirror({
 	PROFILE_REFRESH : null,
 	PROFILE_UPDATE: null,
 
+	DEVICE_SESSION_SEARCH: null,
+	DEVICE_SESSION_GET: null,
+	DEVICE_MEASUREMENT_SEARCH: null,
+	METER_STATUS: null,
+	METER_HISTORY: null,
 });
 constants.STATIC = "/assets/artwork/";
 

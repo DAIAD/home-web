@@ -44,6 +44,20 @@ var HomeActions = {
 			}
 		});
 	},
+	
+	searchSessions: function(data) {
+		AppDispatcher.dispatch({
+			action : HomeConstants.DEVICE_SESSION_SEARCH,
+			data : data 
+		});
+	},
+
+	getSession: function(data) {
+		AppDispatcher.dispatch({
+			action : HomeConstants.DEVICE_SESSION_GET,
+			data : data 
+		});
+	},
 
 };
 
