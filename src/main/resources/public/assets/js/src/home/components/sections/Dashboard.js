@@ -7,7 +7,7 @@ var Sidebar = require('../Sidebar.react');
 
 var Constant = require('../../constants/HomeConstants');
 var UserStore = require('../../stores/UserStore');
-var DeviceStore = require('../../stores/DeviceStore');
+var DeviceQueryStore = require('../../stores/DeviceQueryStore');
 
 var HomeActions = require('../../actions/HomeActions');
 
@@ -66,16 +66,16 @@ var Sessions = React.createClass({
 		console.log('component mounted');
 		var data = this._getSessionData({granularity:0, start:new Date("2000-01-01"), end:new Date()});
 		HomeActions.searchSessions(data);
-		//DeviceStore.addSessionSearchListener(this._searchDone);
+		//DeviceQueryStore.addSessionSearchListener(this._searchDone);
 		
 		//HomeActions.getSession(data);
-		DeviceStore.addSessionSearchListener(this._sessionsFetched);
-		//DeviceStore.addSessionGetListener(this._sessionMeasurementsFetched);
+		DeviceQueryStore.addSessionSearchListener(this._sessionsFetched);
+		//DeviceQueryStore.addSessionGetListener(this._sessionMeasurementsFetched);
 	},
 	componentWillUnmount: function() {
 
-		DeviceStore.removeSessionSearchListener(this._sessionsFetched);
-		//DeviceStore.removeSessionGetListener(this._sessionMeasurementsFetched);
+		DeviceQueryStore.removeSessionSearchListener(this._sessionsFetched);
+		//DeviceQueryStore.removeSessionGetListener(this._sessionMeasurementsFetched);
 	},
 	_getSessionData: function(properties) {
 		var devices = []; 
@@ -98,7 +98,7 @@ var Sessions = React.createClass({
 		//this.forceUpdate();
 		console.log(this.state.typeSelection);
 		this.setState({
-			chartData: DeviceStore.getSessionsMetric(this.state.typeSelection)
+			chartData: DeviceQueryStore.getSessionsMetric(this.state.typeSelection)
 		});
 		//_setChartData('Volume', 'lt', 'line', 'volume');
 		//this._setChartData('Showers', '', 'bar','count');
@@ -163,7 +163,7 @@ var Sessions = React.createClass({
 					type: 'bar',
 					mu: '',
 				},
-				chartData: DeviceStore.getSessionsShowers()
+				chartData: DeviceQueryStore.getSessionsShowers()
 			});
 		}
 		else if (key==="duration"){
@@ -173,7 +173,7 @@ var Sessions = React.createClass({
 					type: 'line',
 					mu: 'sec',
 				},
-				chartData: DeviceStore.getSessionsDuration()
+				chartData: DeviceQueryStore.getSessionsDuration()
 			});
 		}
 		else if (key==="volume"){
@@ -183,7 +183,7 @@ var Sessions = React.createClass({
 					type: 'line',
 					mu: 'lt',
 				},
-				chartData: DeviceStore.getSessionsVolume()
+				chartData: DeviceQueryStore.getSessionsVolume()
 			});
 		}
 		else if (key==="temperature"){
@@ -193,7 +193,7 @@ var Sessions = React.createClass({
 					type: 'line',
 					mu: ' C',
 				},
-				chartData: DeviceStore.getSessionsTemperature()
+				chartData: DeviceQueryStore.getSessionsTemperature()
 			});
 		}
 		else if (key==="energy"){
@@ -203,7 +203,7 @@ var Sessions = React.createClass({
 					type: 'line',
 					mu: 'Kwh',
 				},
-				chartData: DeviceStore.getSessionsEnergy()
+				chartData: DeviceQueryStore.getSessionsEnergy()
 			});
 		}
 		else if (key==="flow"){
@@ -213,7 +213,7 @@ var Sessions = React.createClass({
 					type: 'line',
 					mu: 'lt/min',
 				},
-				chartData: DeviceStore.getSessionsFlow()
+				chartData: DeviceQueryStore.getSessionsFlow()
 			});
 		}
 		else{

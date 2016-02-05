@@ -43,7 +43,7 @@ function deviceSessionSearch(data) {
 				
 			}
 
-			DeviceStore.emitSessionsFetched();
+			DeviceQueryStore.emitSessionsFetched();
 		}).fail(function(jqXHR, textStatus, errorThrown) {
 			updateCsrfToken(jqXHR.getResponseHeader('X-CSRF-TOKEN'));
 			
@@ -54,7 +54,7 @@ function deviceSessionSearch(data) {
 			
 			_sessions = [];
 		
-			DeviceStore.emitSessionsFetched();
+			DeviceQueryStore.emitSessionsFetched();
 		});	
 }
 function deviceSessionMeasurementsFetch(data) {
@@ -81,7 +81,7 @@ function deviceSessionMeasurementsFetch(data) {
 				
 			}
 
-			DeviceStore.emitSessionMeasurementsFetched();
+			DeviceQueryStore.emitSessionMeasurementsFetched();
 		}).fail(function(jqXHR, textStatus, errorThrown) {
 			updateCsrfToken(jqXHR.getResponseHeader('X-CSRF-TOKEN'));
 			
@@ -92,11 +92,11 @@ function deviceSessionMeasurementsFetch(data) {
 			
 			_measurements = [];
 		
-			DeviceStore.emitSessionMeasurementsFetched();
+			DeviceQueryStore.emitSessionMeasurementsFetched();
 		});	
 }
 
-var DeviceStore = assign({}, events.EventEmitter.prototype, {
+var DeviceQueryStore = assign({}, events.EventEmitter.prototype, {
 
 	getSessionMeasurements: function() {
 		return _measurements;
@@ -198,4 +198,4 @@ AppDispatcher.register(function(message) {
 		}
 });
 
-module.exports = DeviceStore;
+module.exports = DeviceQueryStore;
