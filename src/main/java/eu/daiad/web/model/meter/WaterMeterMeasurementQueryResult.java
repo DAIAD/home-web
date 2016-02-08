@@ -12,7 +12,7 @@ public class WaterMeterMeasurementQueryResult extends RestResponse {
 		super();
 	}
 
-	public WaterMeterMeasurementQueryResult(int code, String description) {
+	public WaterMeterMeasurementQueryResult(String code, String description) {
 		super(code, description);
 	}
 

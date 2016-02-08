@@ -8,6 +8,7 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
+import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 
 import eu.daiad.web.controller.ErrorController;
@@ -27,7 +28,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 		Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
 
 		// Add additional modules to JSON parser
-		builder.modules(new JodaModule());
+		builder.modules(new JodaModule(), new JtsModule());
 
 		return builder;
 	}

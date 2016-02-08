@@ -14,7 +14,7 @@ public class AmphiroSessionCollectionQueryResult extends RestResponse {
 		this.devices = new ArrayList<AmphiroSessionCollection>();
 	}
 
-	public AmphiroSessionCollectionQueryResult(int code, String description) {
+	public AmphiroSessionCollectionQueryResult(String code, String description) {
 		super(code, description);
 	}
 

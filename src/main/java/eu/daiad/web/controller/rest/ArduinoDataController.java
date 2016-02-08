@@ -15,17 +15,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.data.IArduinoDataRepository;
-import eu.daiad.web.model.Error;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.arduino.ArduinoIntervalQuery;
 import eu.daiad.web.model.arduino.ArduinoMeasurement;
+import eu.daiad.web.model.error.ApplicationException;
 
 @RestController("RestArduinoDataController")
-public class ArduinoDataController {
+public class ArduinoDataController extends BaseController {
 
-	private static final Log logger = LogFactory
-			.getLog(ArduinoDataController.class);
+	private static final Log logger = LogFactory.getLog(ArduinoDataController.class);
 
 	@Autowired
 	private IArduinoDataRepository arduinoDataRepository;
@@ -43,9 +43,7 @@ public class ArduinoDataController {
 				String[] items = StringUtils.split(data, ",");
 
 				if ((items.length < 1) || (((items.length - 1) % 2) != 0)) {
-					return new ResponseEntity<String>(
-							"Invalid number of arguments", headers,
-							HttpStatus.BAD_REQUEST);
+					return new ResponseEntity<String>("Invalid number of arguments", headers, HttpStatus.BAD_REQUEST);
 				}
 
 				String deviceKey = items[0];
@@ -69,19 +67,21 @@ public class ArduinoDataController {
 
 		}
 
-		return new ResponseEntity<String>(message, headers,
-				HttpStatus.INTERNAL_SERVER_ERROR);
+		return new ResponseEntity<String>(message, headers, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
 	@RequestMapping(value = "/api/v1/arduino/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse loadData(@RequestBody ArduinoIntervalQuery query) {
+		RestResponse response = new RestResponse();
+
 		try {
 			return this.arduinoDataRepository.searchData(query);
-		} catch (Exception ex) {
-			logger.error("Failed to load data", ex);
+		} catch (ApplicationException ex) {
+			logger.error(ex);
 
+			response.add(this.getError(ex));
 		}
 
-		return new RestResponse(Error.ERROR_UNKNOWN, "Failed to load data");
+		return response;
 	}
 }

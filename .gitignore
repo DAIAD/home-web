@@ -25,4 +25,5 @@ jspm_packages
 *.zip
 *.rar
 
-application-*.properties
+src/main/resources/log4j.properties
+src/main/resources/config/*.properties

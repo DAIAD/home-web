@@ -91,14 +91,11 @@ public class WaterMeterDataSeries {
 
 		if (this.reference == null) {
 			this.reference = new WaterMeterDataPoint();
-			this.reference.timestamp = Long.MAX_VALUE;
+			this.reference.timestamp = timestamp;
+			this.reference.volume = volume;
 		}
 
-		if ((timestamp < this.reference.timestamp)
-				&& (timestamp > this.minTimestamp)) {
-			this.setReference(timestamp, volume);
-		} else if ((timestamp > this.reference.timestamp)
-				&& (timestamp < this.minTimestamp)) {
+		if (timestamp < this.reference.timestamp) {
 			this.setReference(timestamp, volume);
 		}
 

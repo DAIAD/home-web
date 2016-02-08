@@ -23,14 +23,11 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 	private UserDetailsService userService;
 
 	@Override
-	public Authentication authenticate(Authentication authentication)
-			throws AuthenticationException {
+	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 		// Check application
-		ServletRequestAttributes sra = (ServletRequestAttributes) RequestContextHolder
-				.getRequestAttributes();
+		ServletRequestAttributes sra = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 
-		EnumApplication application = EnumApplication.fromString(sra
-				.getRequest().getParameter("application"));
+		EnumApplication application = EnumApplication.fromString(sra.getRequest().getParameter("application"));
 
 		if (application == EnumApplication.UNDEFINED) {
 			throw new BadCredentialsException("Application is unavailable");
@@ -51,14 +48,12 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 		// Check credentials for requested application
 		switch (application) {
 		case UTILITY:
-			if (!user.getAuthorities().contains(
-					new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+			if (!user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
 				throw new BadCredentialsException("Authorization has failed.");
 			}
 			break;
 		case HOME:
-			if (!user.getAuthorities().contains(
-					new SimpleGrantedAuthority("ROLE_USER"))) {
+			if (!user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER"))) {
 				throw new BadCredentialsException("Authorization has failed.");
 			}
 			break;
@@ -66,8 +61,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 			break;
 		}
 
-		return new UsernamePasswordAuthenticationToken(user,
-				authentication.getCredentials(), user.getAuthorities());
+		return new UsernamePasswordAuthenticationToken(user, authentication.getCredentials(), user.getAuthorities());
 	}
 
 	@Override

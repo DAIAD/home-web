@@ -14,7 +14,7 @@ public class AmphiroMeasurementQueryResult extends RestResponse {
 		this.series = new ArrayList<AmphiroDataSeries>();
 	}
 
-	public AmphiroMeasurementQueryResult(int code, String description) {
+	public AmphiroMeasurementQueryResult(String code, String description) {
 		super(code, description);
 	}
 

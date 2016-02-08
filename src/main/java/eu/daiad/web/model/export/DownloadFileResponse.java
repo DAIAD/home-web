@@ -3,7 +3,7 @@ package eu.daiad.web.model.export;
 import eu.daiad.web.model.RestResponse;
 
 public class DownloadFileResponse extends RestResponse {
-	
+
 	private String token;
 
 	public DownloadFileResponse() {
@@ -12,11 +12,11 @@ public class DownloadFileResponse extends RestResponse {
 
 	public DownloadFileResponse(String token) {
 		super();
-		
+
 		this.token = token;
 	}
-	
-	public DownloadFileResponse(int code, String description) {
+
+	public DownloadFileResponse(String code, String description) {
 		super(code, description);
 	}
 

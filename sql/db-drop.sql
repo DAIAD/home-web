@@ -1,59 +1,115 @@
-DROP TABLE public.group_member;
+-- alert
+DROP TABLE IF EXISTS public.account_alert_property;
 
-DROP SEQUENCE public.group_member_id_seq;
+DROP SEQUENCE IF EXISTS public.account_alert_property_id_seq;
 
-DROP TABLE public."group";
+DROP TABLE IF EXISTS public.account_alert;
 
-DROP SEQUENCE public.group_id_seq;
+DROP SEQUENCE IF EXISTS public.account_alert_id_seq;
 
-DROP TABLE public.community_member;
+DROP TABLE IF EXISTS public.alert_translation;
 
-DROP SEQUENCE public.community_member_id_seq;
+DROP SEQUENCE IF EXISTS public.alert_translation_id_seq;
 
-DROP TABLE public.community;
+DROP TABLE IF EXISTS public.alert;
 
-DROP SEQUENCE public.community_id_seq;
+-- announcement
+DROP TABLE IF EXISTS public.account_announcement;
 
-DROP TABLE public.device_meter;
+DROP SEQUENCE IF EXISTS public.account_announcement_id_seq;
 
-DROP TABLE public.device_amphiro_config;
+DROP TABLE IF EXISTS public.announcement_translation;
 
-DROP SEQUENCE public.device_amphiro_config_id_seq;
+DROP SEQUENCE IF EXISTS public.announcement_translation_id_seq;
 
-DROP TABLE public.device_amphiro;
+DROP TABLE IF EXISTS public.announcement_channel;
 
-DROP TABLE public.device_property;
+DROP TABLE IF EXISTS public.announcement;
 
-DROP SEQUENCE public.device_property_id_seq;
+-- channel
+DROP TABLE IF EXISTS public.channel;
 
-DROP TABLE public.device;
+-- dynamic recommendation
+DROP TABLE IF EXISTS public.account_dynamic_recommendation_property;
 
-DROP SEQUENCE public.device_id_seq;
+DROP SEQUENCE IF EXISTS public.account_dynamic_recommendation_property_id_seq;
 
-DROP TABLE public.account_role;
+DROP TABLE IF EXISTS public.account_dynamic_recommendation;
 
-DROP SEQUENCE public.account_role_id_seq;
+DROP SEQUENCE IF EXISTS public.account_dynamic_recommendation_id_seq;
 
-DROP TABLE public.role;
+DROP TABLE IF EXISTS public.dynamic_recommendation_translation;
 
-DROP SEQUENCE public.role_id_seq;
+DROP SEQUENCE IF EXISTS public.dynamic_recommendation_translation_id_seq;
 
-DROP TABLE public.account;
+DROP TABLE IF EXISTS public.dynamic_recommendation;
 
-DROP SEQUENCE public.account_id_seq;
+-- static recommendation
+DROP TABLE IF EXISTS public.static_recommendation;
 
-DROP TABLE public.utility;
+DROP SEQUENCE IF EXISTS public.static_recommendation_id_seq;
 
-DROP SEQUENCE public.utility_id_seq;
+DROP TABLE IF EXISTS public.static_recommendation_category;
 
+-- group
+DROP TABLE IF EXISTS public.group_member;
 
+DROP SEQUENCE IF EXISTS public.group_member_id_seq;
 
+DROP TABLE IF EXISTS public."group";
 
+DROP SEQUENCE IF EXISTS public.group_id_seq;
 
+-- community
+DROP TABLE IF EXISTS public.community_member;
 
+DROP SEQUENCE IF EXISTS public.community_member_id_seq;
 
+DROP TABLE IF EXISTS public.community;
 
+DROP SEQUENCE IF EXISTS public.community_id_seq;
 
+-- device
+DROP TABLE IF EXISTS public.device_meter;
 
+DROP TABLE IF EXISTS public.device_amphiro_config;
 
+DROP SEQUENCE IF EXISTS public.device_amphiro_config_id_seq;
 
+DROP TABLE IF EXISTS public.device_amphiro_permission;
+
+DROP SEQUENCE IF EXISTS public.device_amphiro_permission_id_seq;
+
+DROP TABLE IF EXISTS public.device_amphiro;
+
+DROP TABLE IF EXISTS public.device_property;
+
+DROP SEQUENCE IF EXISTS public.device_property_id_seq;
+
+DROP TABLE IF EXISTS public.device;
+
+DROP SEQUENCE IF EXISTS public.device_id_seq;
+
+-- role
+DROP TABLE IF EXISTS public.account_role;
+
+DROP SEQUENCE IF EXISTS public.account_role_id_seq;
+
+DROP TABLE IF EXISTS public.role;
+
+DROP SEQUENCE IF EXISTS public.role_id_seq;
+
+-- account white list
+DROP TABLE IF EXISTS public.account_white_list;
+
+DROP SEQUENCE IF EXISTS public.account_white_list_id_seq;
+
+-- account
+DROP TABLE IF EXISTS public.account;
+
+DROP SEQUENCE IF EXISTS public.account_id_seq;
+
+-- utility
+DROP TABLE IF EXISTS public.utility;
+
+DROP SEQUENCE IF EXISTS public.utility_id_seq;

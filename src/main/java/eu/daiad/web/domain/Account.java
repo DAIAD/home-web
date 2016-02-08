@@ -17,6 +17,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -47,6 +48,10 @@ public class Account {
 	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
 	@JoinColumn(name = "account_id")
 	private Set<Device> devices = new HashSet<Device>();
+
+	@OneToOne(mappedBy = "account")
+	@JoinColumn(name = "account_id")
+	private AccountWhiteListEntry whiteListEntry;
 
 	@Basic(fetch = FetchType.LAZY)
 	@Type(type = "org.hibernate.type.BinaryType")
@@ -84,7 +89,7 @@ public class Account {
 
 	@Basic()
 	private String username;
-	
+
 	@Basic()
 	private String password;
 
@@ -106,6 +111,9 @@ public class Account {
 
 	@Enumerated(EnumType.STRING)
 	private EnumGender gender;
+
+	@Column(name = "locale", columnDefinition = "bpchar", length = 2)
+	private String locale;
 
 	public int getId() {
 		return id;
@@ -272,6 +280,14 @@ public class Account {
 
 	public void setUsername(String username) {
 		this.username = username;
+	}
+
+	public String getLocale() {
+		return locale;
+	}
+
+	public void setLocale(String locale) {
+		this.locale = locale;
 	}
 
 }

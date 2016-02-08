@@ -19,8 +19,7 @@ public class AuthenticationService {
 		if (credentials == null) {
 			return false;
 		}
-		return this.authenticate(credentials.getUsername(),
-				credentials.getPassword());
+		return this.authenticate(credentials.getUsername(), credentials.getPassword());
 	}
 
 	public boolean authenticate(String username, String password) {
@@ -39,12 +38,10 @@ public class AuthenticationService {
 		if (credentials == null) {
 			return null;
 		}
-		return this.authenticateAndGetUser(credentials.getUsername(),
-				credentials.getPassword());
+		return this.authenticateAndGetUser(credentials.getUsername(), credentials.getPassword());
 	}
 
-	public AuthenticatedUser authenticateAndGetUser(String username,
-			String password) {
+	public AuthenticatedUser authenticateAndGetUser(String username, String password) {
 		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
 		UserDetails user = userService.loadUserByUsername(username);

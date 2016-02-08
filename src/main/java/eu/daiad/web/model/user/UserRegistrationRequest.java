@@ -1,8 +1,11 @@
 package eu.daiad.web.model.user;
 
+import javax.validation.Valid;
+
 
 public class UserRegistrationRequest {
 
+	@Valid
 	private Account account;
 
 	public Account getAccount() {

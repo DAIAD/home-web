@@ -9,25 +9,24 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.data.IAmphiroMeasurementRepository;
 import eu.daiad.web.data.IDeviceRepository;
 import eu.daiad.web.data.IWaterMeterMeasurementRepository;
 import eu.daiad.web.model.DeviceMeasurementCollection;
-import eu.daiad.web.model.Error;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.amphiro.AmphiroMeasurementCollection;
 import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.EnumDeviceType;
+import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.meter.WaterMeterMeasurementCollection;
 import eu.daiad.web.model.security.AuthenticatedUser;
-import eu.daiad.web.security.AuthenticationService;
+import eu.daiad.web.model.security.EnumRole;
 
 @RestController("RestDataController")
-public class DataController {
-
-	private static final int ERROR_TYPE_NOT_SUPPORTED = 3;
-	private static final int ERROR_DEVICE_NOT_FOUND = 4;
+public class DataController extends BaseRestController {
 
 	private static final Log logger = LogFactory.getLog(DataController.class);
 
@@ -43,33 +42,27 @@ public class DataController {
 	@Autowired
 	private IDeviceRepository deviceRepository;
 
-	@Autowired
-	private AuthenticationService authenticator;
-
 	@RequestMapping(value = "/api/v1/data/store", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse store(@RequestBody DeviceMeasurementCollection data) {
+		RestResponse response = new RestResponse();
+
 		try {
-			AuthenticatedUser user = this.authenticator.authenticateAndGetUser(data.getCredentials());
-			if (user == null) {
-				return new RestResponse(Error.ERROR_AUTHENTICATION, "Authentication has failed.");
-			}
-			if (!user.hasRole("ROLE_USER")) {
-				return new RestResponse(Error.ERROR_FORBIDDEN, "Unauthhorized request.");
-			}
+			AuthenticatedUser user = this.authenticate(data.getCredentials(), EnumRole.ROLE_USER);
 
 			data.setUserKey(user.getKey());
 
 			Device device = this.deviceRepository.getUserDeviceByKey(data.getUserKey(), data.getDeviceKey());
 
 			if (device == null) {
-				return new RestResponse(ERROR_DEVICE_NOT_FOUND, "Device does not exist.");
+				throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", data.getDeviceKey().toString());
 			}
 
 			switch (data.getType()) {
 			case AMPHIRO:
 				if (data instanceof AmphiroMeasurementCollection) {
 					if (!device.getType().equals(EnumDeviceType.AMPHIRO)) {
-						return new RestResponse(ERROR_TYPE_NOT_SUPPORTED, "Invalid device type.");
+						throw new ApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type", data.getType()
+										.toString());
 					}
 					amphiroMeasurementRepository.storeData((AuthenticatedUser) user, (AmphiroDevice) device,
 									(AmphiroMeasurementCollection) data);
@@ -77,19 +70,23 @@ public class DataController {
 				break;
 			case METER:
 				if (data instanceof WaterMeterMeasurementCollection) {
+					if (!device.getType().equals(EnumDeviceType.METER)) {
+						throw new ApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type", data.getType()
+										.toString());
+					}
 					waterMeterMeasurementRepository.storeData((WaterMeterMeasurementCollection) data);
 				}
 				break;
 			default:
 				break;
 			}
+		} catch (ApplicationException ex) {
+			logger.error(ex);
 
-			return new RestResponse();
-		} catch (Exception ex) {
-			logger.error("Failed to insert measurement data.", ex);
-
+			response.add(this.getError(ex));
 		}
-		return new RestResponse(Error.ERROR_UNKNOWN, "Unhandled exception has occured.");
+
+		return response;
 	}
 
 }

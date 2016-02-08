@@ -14,7 +14,7 @@
 		<java-version>1.7</java-version>
 		<jackson.version>2.5.4</jackson.version>
 		<hbase.version>1.0.0</hbase.version>
-		<geotools.version>14</geotools.version>
+		<geotools.version>14.2</geotools.version>
 		<hibernate-spatial.version>4.3</hibernate-spatial.version>
 	</properties>
 
@@ -155,6 +155,30 @@
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-spatial</artifactId>
 			<version>${hibernate-spatial.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.ibm.icu</groupId>
+			<artifactId>icu4j</artifactId>
+			<version>56.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.vividsolutions</groupId>
+			<artifactId>jts</artifactId>
+			<version>1.13</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.bedatadriven</groupId>
+			<artifactId>jackson-datatype-jts</artifactId>
+			<version>2.3</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.geotools</groupId>
+			<artifactId>gt-geometry</artifactId>
+			<version>${geotools.version}</version>
 		</dependency>
 
 	</dependencies>
