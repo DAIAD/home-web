@@ -41,7 +41,7 @@ public class Device {
 	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
 	@JoinColumn(name = "device_id")
 	private Set<DeviceProperty> properties = new HashSet<DeviceProperty>();
-	
+
 	@Column()
 	@Type(type = "pg-uuid")
 	private UUID key = UUID.randomUUID();
@@ -65,7 +65,7 @@ public class Device {
 	public Set<DeviceProperty> getProperties() {
 		return properties;
 	}
-	
+
 	public EnumDeviceType getType() {
 		return EnumDeviceType.UNDEFINED;
 	}

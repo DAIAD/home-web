@@ -48,6 +48,9 @@ public class Utility {
 	@JoinColumn(name = "utility_id")
 	private Set<Account> accounts = new HashSet<Account>();
 
+	@Column(name = "default_admin_username", nullable = false, unique = true)
+	private String defaultAdministratorUsername;
+
 	public int getId() {
 		return id;
 	}
@@ -89,5 +92,9 @@ public class Utility {
 			return new String(Base64.encodeBase64(logo));
 		}
 		return "";
+	}
+
+	public String getDefaultAdministratorUsername() {
+		return defaultAdministratorUsername;
 	}
 }

@@ -10,14 +10,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.data.IRecommendationRepository;
-import eu.daiad.web.model.Error;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.recommendation.StaticRecommendationResponse;
 import eu.daiad.web.model.security.AuthenticatedUser;
 
 @RestController
-public class RecommendationController {
+public class RecommendationController extends BaseController {
 
 	private static final Log logger = LogFactory.getLog(RecommendationController.class);
 
@@ -27,16 +28,17 @@ public class RecommendationController {
 	@RequestMapping(value = "/action/recommendation/static/{locale}", method = RequestMethod.GET, produces = "application/json")
 	@Secured("ROLE_USER")
 	public RestResponse getRecommendations(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable String locale) {
+		StaticRecommendationResponse response = new StaticRecommendationResponse();
+
 		try {
-			StaticRecommendationResponse response = new StaticRecommendationResponse();
-
 			response.setRecommendations(this.recommendationRepository.getStaticRecommendations(locale));
+		} catch (ApplicationException ex) {
+			logger.error(ex);
 
-			return response;
-		} catch (Exception ex) {
-			logger.error("Failed to load profile.", ex);
+			response.add(this.getError(ex));
 		}
-		return new RestResponse(Error.ERROR_UNKNOWN, "An unhandled exception has occurred.");
+
+		return response;
 	}
 
 }

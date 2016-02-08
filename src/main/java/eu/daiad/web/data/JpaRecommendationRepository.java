@@ -6,21 +6,19 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Repository;
 
+import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.recommendation.Recommendation;
 import eu.daiad.web.model.recommendation.RecommendationStatic;
 
 @Repository
 @Scope("prototype")
 public class JpaRecommendationRepository implements IRecommendationRepository {
-
-	private static final Log logger = LogFactory.getLog(JpaRecommendationRepository.class);
 
 	@Autowired
 	private ApplicationContext ctx;
@@ -29,7 +27,7 @@ public class JpaRecommendationRepository implements IRecommendationRepository {
 	EntityManager entityManager;
 
 	@Override
-	public ArrayList<Recommendation> getStaticRecommendations(String locale) throws Exception {
+	public ArrayList<Recommendation> getStaticRecommendations(String locale) throws ApplicationException {
 		ArrayList<Recommendation> recommendations = new ArrayList<Recommendation>();
 
 		try {
@@ -51,15 +49,13 @@ public class JpaRecommendationRepository implements IRecommendationRepository {
 				recommendationStatic.setImageLink(r.getImageLink());
 				recommendationStatic.setPrompt(r.getPrompt());
 				recommendationStatic.setTitle(r.getTitle());
-				
+
 				recommendations.add(recommendationStatic);
 			}
 
 			return recommendations;
 		} catch (Exception ex) {
-			logger.error(ex);
-
-			throw new RuntimeException(ex);
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 

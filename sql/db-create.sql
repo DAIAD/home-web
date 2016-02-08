@@ -12,6 +12,7 @@ CREATE TABLE utility (
     logo bytea,
     description character varying,
     date_created timestamp without time zone,
+    default_admin_username character varying(100) NOT NULL,
     CONSTRAINT pk_utility PRIMARY KEY (id)
 );
 
@@ -28,6 +29,7 @@ CREATE TABLE account (
     id integer NOT NULL DEFAULT nextval('account_id_seq'::regclass),
     utility_id integer,
     key uuid,
+	locale character(2),
     firstname character varying(40),
     lastname character varying(70),
     email character varying(100),
@@ -49,6 +51,30 @@ CREATE TABLE account (
     CONSTRAINT fk_utility FOREIGN KEY (utility_id)
         REFERENCES public.utility (id) MATCH SIMPLE
             ON UPDATE CASCADE ON DELETE SET NULL
+);
+
+-- account white list
+CREATE SEQUENCE public.account_white_list_id_seq
+  INCREMENT 1
+  MINVALUE 1
+  MAXVALUE 9223372036854775807
+  START 1
+  CACHE 1;
+
+CREATE TABLE public.account_white_list
+(
+  id integer NOT NULL DEFAULT nextval('account_white_list_id_seq'::regclass),
+  utility_id integer,
+  account_id integer,
+  username character varying(100),
+  registered_on timestamp without time zone,
+  CONSTRAINT pk_account_white_list PRIMARY KEY (id),
+    CONSTRAINT fk_utility FOREIGN KEY (utility_id)
+        REFERENCES public.utility (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE SET NULL,
+  CONSTRAINT fk_account FOREIGN KEY (account_id)
+        REFERENCES public.account (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- role
@@ -131,9 +157,36 @@ CREATE TABLE public.device_amphiro
   id integer NOT NULL,
   name character varying(50),
   mac_address character varying(100),
+  aes_key  character varying,
   CONSTRAINT pk_device_amphiro PRIMARY KEY (id),
   CONSTRAINT fk_device_amphiro_device FOREIGN KEY (id)
         REFERENCES public.device (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE SEQUENCE public.device_amphiro_permission_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE TABLE public.device_amphiro_permission
+(
+  id integer NOT NULL DEFAULT nextval('device_amphiro_permission_id_seq'::regclass),
+  device_id integer,
+  owner_id integer,
+  assignee_id integer,
+  date_assigned timestamp without time zone,
+  CONSTRAINT pk_device_amphiro_permission PRIMARY KEY (id),
+  CONSTRAINT fk_device_amphiro_permission_device_amphiro FOREIGN KEY (device_id)
+        REFERENCES public.device_amphiro (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT fk_device_owner_id FOREIGN KEY (owner_id)
+        REFERENCES public.account (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT fk_device_assignee_id FOREIGN KEY (assignee_id)
+        REFERENCES public.account (id) MATCH SIMPLE
             ON UPDATE CASCADE ON DELETE CASCADE
 );
 
@@ -147,9 +200,24 @@ CREATE SEQUENCE device_amphiro_config_id_seq
 CREATE TABLE device_amphiro_config (
     id integer NOT NULL DEFAULT nextval('device_amphiro_config_id_seq'::regclass),
     device_id integer,
-    key character varying(50),
-    value character varying,
-    type character(20),
+	title character varying(100),
+	created_on timestamp without time zone,
+	active boolean,
+    configuration_block integer,
+    value_1 integer,
+    value_2 integer,
+    value_3 integer,
+    value_4 integer,
+    value_5 integer,
+    value_6 integer,
+    value_7 integer,
+    value_8 integer,
+    value_9 integer,
+    value_10 integer,
+    value_11 integer,
+    value_12 integer,
+    frame_number integer,
+    frame_duration integer,
     CONSTRAINT pk_device_amphiro_config PRIMARY KEY (id),
     CONSTRAINT fk_device_amphiro_config_device_amphiro FOREIGN KEY (device_id)
         REFERENCES public.device_amphiro (id) MATCH SIMPLE
@@ -177,6 +245,8 @@ CREATE SEQUENCE community_id_seq
 
 CREATE TABLE community (
     id integer NOT NULL DEFAULT nextval('community_id_seq'::regclass),
+    utility_id integer,
+	locale character(2),
     name character varying(100),
     created_on timestamp without time zone,
     description character varying,
@@ -185,7 +255,10 @@ CREATE TABLE community (
     size integer,
     CONSTRAINT pk_community PRIMARY KEY (id),
     CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(spatial) = 2),
-    CONSTRAINT enforce_srid_the_geom CHECK (st_srid(spatial) = 4326)
+    CONSTRAINT enforce_srid_the_geom CHECK (st_srid(spatial) = 4326),
+    CONSTRAINT fk_utility FOREIGN KEY (utility_id)
+        REFERENCES public.utility (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE SET NULL
 );
 
 CREATE SEQUENCE community_member_id_seq
@@ -220,10 +293,17 @@ CREATE SEQUENCE group_id_seq
 
 CREATE TABLE "group" (
     id integer NOT NULL DEFAULT nextval('group_id_seq'::regclass),
+    utility_id integer,
     name character varying(100),
     created_on timestamp without time zone,
-    reference integer,
-    CONSTRAINT pk_group PRIMARY KEY (id)
+    spatial geometry,
+    size integer,
+    CONSTRAINT pk_group PRIMARY KEY (id),
+    CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(spatial) = 2),
+    CONSTRAINT enforce_srid_the_geom CHECK (st_srid(spatial) = 4326),
+	CONSTRAINT fk_utility FOREIGN KEY (utility_id)
+		REFERENCES public.utility (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
 CREATE SEQUENCE group_member_id_seq

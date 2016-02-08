@@ -14,7 +14,7 @@ public class WaterMeterStatusQueryResult extends RestResponse {
 		this.devices = new ArrayList<WaterMeterStatus>();
 	}
 
-	public WaterMeterStatusQueryResult(int code, String description) {
+	public WaterMeterStatusQueryResult(String code, String description) {
 		super(code, description);
 	}
 

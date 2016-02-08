@@ -9,6 +9,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.WebAttributes;
@@ -16,25 +18,29 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import eu.daiad.web.model.Error;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.util.AjaxUtils;
 
 public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
+	protected static final Log logger = LogFactory.getLog(CustomAccessDeniedHandler.class);
+
 	private String errorPage;
+
+	@Autowired
+	protected MessageSource messageSource;
 
 	public CustomAccessDeniedHandler(String errorPage) {
 		this.errorPage = errorPage;
 	}
 
-	protected static final Log logger = LogFactory
-			.getLog(CustomAccessDeniedHandler.class);
+	private String getMessage(String code) {
+		return messageSource.getMessage(code, null, code, null);
+	}
 
-	public void handle(HttpServletRequest request,
-			HttpServletResponse response,
-			AccessDeniedException accessDeniedException) throws IOException,
-			ServletException {
+	public void handle(HttpServletRequest request, HttpServletResponse response,
+					AccessDeniedException accessDeniedException) throws IOException, ServletException {
 		if (!response.isCommitted()) {
 			if (errorPage != null) {
 				if (AjaxUtils.isAjaxRequest(request)) {
@@ -46,33 +52,30 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 					if (request.getRequestURI().equals("/logout")) {
 						response.setStatus(HttpStatus.OK.value());
 
-						response.getWriter().print(
-								mapper.writeValueAsString(new RestResponse()));
+						response.getWriter().print(mapper.writeValueAsString(new RestResponse()));
 					} else {
 						response.setStatus(HttpStatus.FORBIDDEN.value());
 
-						response.getWriter().print(
-								mapper.writeValueAsString(new RestResponse(
-										Error.ERROR_AUTHENTICATION,
-										"Authentication has failed.")));
+						String messageKey = SharedErrorCode.AUTHENTICATION.getMessageKey();
+
+						RestResponse r = new RestResponse(messageKey, this.getMessage(messageKey));
+
+						response.getWriter().print(mapper.writeValueAsString(r));
 					}
 				} else {
 					// Put exception into request scope (perhaps of use to a
 					// view)
-					request.setAttribute(WebAttributes.ACCESS_DENIED_403,
-							accessDeniedException);
+					request.setAttribute(WebAttributes.ACCESS_DENIED_403, accessDeniedException);
 
 					// Set the 403 status code.
 					response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 
 					// forward to error page.
-					RequestDispatcher dispatcher = request
-							.getRequestDispatcher(errorPage);
+					RequestDispatcher dispatcher = request.getRequestDispatcher(errorPage);
 					dispatcher.forward(request, response);
 				}
 			} else {
-				response.sendError(HttpServletResponse.SC_FORBIDDEN,
-						accessDeniedException.getMessage());
+				response.sendError(HttpServletResponse.SC_FORBIDDEN, accessDeniedException.getMessage());
 			}
 		}
 	}

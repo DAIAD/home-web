@@ -1,5 +1,7 @@
 package eu.daiad.web.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -10,6 +12,9 @@ import eu.daiad.web.model.security.EnumRole;
 
 @Controller
 public class HomeController {
+
+	@Autowired
+	private MessageSource messageSource;
 
 	@RequestMapping("/")
 	public String index(Model model, @AuthenticationPrincipal AuthenticatedUser user) {

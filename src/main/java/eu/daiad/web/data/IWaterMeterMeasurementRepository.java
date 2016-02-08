@@ -10,10 +10,8 @@ public interface IWaterMeterMeasurementRepository {
 
 	public abstract void storeData(WaterMeterMeasurementCollection data);
 
-	public abstract WaterMeterStatusQueryResult getStatus(
-			WaterMeterStatusQuery query);
+	public abstract WaterMeterStatusQueryResult getStatus(WaterMeterStatusQuery query);
 
-	public abstract WaterMeterMeasurementQueryResult searchMeasurements(
-			WaterMeterMeasurementQuery query);
+	public abstract WaterMeterMeasurementQueryResult searchMeasurements(WaterMeterMeasurementQuery query);
 
 }

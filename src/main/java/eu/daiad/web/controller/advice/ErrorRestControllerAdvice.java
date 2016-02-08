@@ -1,7 +1,14 @@
 package eu.daiad.web.controller.advice;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -13,14 +20,34 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import eu.daiad.web.model.Error;
+import com.ibm.icu.text.MessageFormat;
+
 import eu.daiad.web.model.ResourceNotFoundException;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.error.SharedErrorCode;
 
 @ControllerAdvice()
 public class ErrorRestControllerAdvice {
 
 	private static final Log logger = LogFactory.getLog(ErrorRestControllerAdvice.class);
+
+	@Autowired
+	Environment environment;
+
+	@Autowired
+	protected MessageSource messageSource;
+
+	private String getMessage(String code) {
+		return messageSource.getMessage(code, null, code, null);
+	}
+
+	protected String getMessage(String code, Map<String, Object> properties) {
+		String message = messageSource.getMessage(code, null, code, null);
+
+		MessageFormat msgFmt = new MessageFormat(message);
+
+		return msgFmt.format(properties);
+	}
 
 	@ExceptionHandler(Exception.class)
 	@ResponseBody
@@ -30,24 +57,22 @@ public class ErrorRestControllerAdvice {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
-		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
-
-		int code = Error.ERROR_UNKNOWN;
-		String message = "An unhandled exception has occured";
-
 		if (ex instanceof ResourceNotFoundException) {
-			status = HttpStatus.NOT_FOUND;
+			String messageKey = SharedErrorCode.RESOURCE_NOT_FOUND.getMessageKey();
+			RestResponse r = new RestResponse(messageKey, this.getMessage(messageKey));
 
-			code = Error.ERROR_NOT_FOUND;
-			message = ex.getMessage();
+			return new ResponseEntity<RestResponse>(r, headers, HttpStatus.NOT_FOUND);
 		} else if (ex instanceof AccessDeniedException) {
-			status = HttpStatus.FORBIDDEN;
+			String messageKey = SharedErrorCode.AUTHORIZATION.getMessageKey();
+			RestResponse r = new RestResponse(messageKey, this.getMessage(messageKey));
 
-			code = Error.ERROR_FORBIDDEN;
-			message = ex.getMessage();
+			return new ResponseEntity<RestResponse>(r, headers, HttpStatus.FORBIDDEN);
 		}
 
-		return new ResponseEntity<RestResponse>(new RestResponse(code, message), headers, status);
+		String messageKey = SharedErrorCode.UNKNOWN.getMessageKey();
+		RestResponse r = new RestResponse(messageKey, this.getMessage(messageKey));
+
+		return new ResponseEntity<RestResponse>(r, headers, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
 	@ExceptionHandler(HttpMessageNotReadableException.class)
@@ -58,14 +83,22 @@ public class ErrorRestControllerAdvice {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
-		HttpStatus status = HttpStatus.OK;
+		RestResponse r = null;
 
-		if (mostSpecificCause != null) {
-			return new ResponseEntity<RestResponse>(
-							new RestResponse(Error.ERROR_PARSE, mostSpecificCause.getMessage()), headers, status);
+		if (mostSpecificCause == null) {
+			String messageKey = SharedErrorCode.PARSE_ERROR.getMessageKey();
+			r = new RestResponse(messageKey, this.getMessage(messageKey));
+
+			return new ResponseEntity<RestResponse>(r, headers, HttpStatus.BAD_REQUEST);
 		} else {
-			return new ResponseEntity<RestResponse>(new RestResponse(Error.ERROR_PARSE, "Request parsing has failed"),
-							headers, status);
+			String messageKey = SharedErrorCode.PARSE_ERROR.getMessageKey();
+			if (Arrays.asList(environment.getActiveProfiles()).contains("development")) {
+				r = new RestResponse(messageKey, mostSpecificCause.getMessage());
+			} else {
+				r = new RestResponse(messageKey, this.getMessage(messageKey));
+			}
+
+			return new ResponseEntity<RestResponse>(r, headers, HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -75,10 +108,13 @@ public class ErrorRestControllerAdvice {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
-		HttpStatus status = HttpStatus.OK;
+		Map<String, Object> properties = new HashMap<String, Object>();
+		properties.put("method", ex.getMethod());
 
-		return new ResponseEntity<RestResponse>(new RestResponse(Error.ERROR_NOT_FOUND, String.format(
-						"Method [%s] not supported.", ex.getMethod())), headers, status);
+		String messageKey = SharedErrorCode.METHOD_NOT_SUPPORTED.getMessageKey();
+		RestResponse r = new RestResponse(messageKey, this.getMessage(messageKey, properties));
+
+		return new ResponseEntity<RestResponse>(r, headers, HttpStatus.METHOD_NOT_ALLOWED);
 	}
 
 }

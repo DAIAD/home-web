@@ -1,22 +1,28 @@
 package eu.daiad.web.controller.rest;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.data.IProfileRepository;
 import eu.daiad.web.model.AuthenticationResponse;
 import eu.daiad.web.model.Credentials;
-import eu.daiad.web.model.Error;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.security.AuthenticationService;
 
 @RestController("RestAuthenticationController")
-public class AuthenticationController {
+public class AuthenticationController extends BaseController {
+
+	private static final Log logger = LogFactory.getLog(AuthenticationController.class);
 
 	@Autowired
 	private AuthenticationService authenticationService;
@@ -26,15 +32,24 @@ public class AuthenticationController {
 
 	@RequestMapping(value = "/api/v1/auth/login", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse login(@RequestBody Credentials data) throws Exception {
-		AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(data);
+		RestResponse response = new RestResponse();
 
-		if (user != null) {
-			Profile profile = profileRepository.getProfileByUsername(user.getUsername());
+		try {
+			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(data);
 
-			return new AuthenticationResponse(profile);
-		} else {
-			return new RestResponse(Error.ERROR_AUTHENTICATION, "Authentication has failed");
+			if (user != null) {
+				Profile profile = profileRepository.getProfileByUsername(user.getUsername());
+
+				return new AuthenticationResponse(profile);
+			} else {
+				throw new ApplicationException(SharedErrorCode.AUTHENTICATION);
+			}
+		} catch (ApplicationException ex) {
+			logger.error(ex);
+
+			response.add(this.getError(ex));
 		}
-	}
 
+		return response;
+	}
 }

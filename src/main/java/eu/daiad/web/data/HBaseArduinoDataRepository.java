@@ -1,6 +1,5 @@
 package eu.daiad.web.data;
 
-import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,11 +30,15 @@ import org.springframework.stereotype.Repository;
 import eu.daiad.web.model.arduino.ArduinoIntervalQuery;
 import eu.daiad.web.model.arduino.ArduinoIntervalQueryResult;
 import eu.daiad.web.model.arduino.ArduinoMeasurement;
+import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.SharedErrorCode;
 
 @Repository()
 @Scope("prototype")
 @PropertySource("${hbase.properties}")
 public class HBaseArduinoDataRepository implements IArduinoDataRepository {
+
+	private final String ERROR_RELEASE_RESOURCES = "Failed to release resources";
 
 	private enum EnumTimeInterval {
 		UNDEFINED(0), HOUR(3600), DAY(86400);
@@ -57,22 +60,18 @@ public class HBaseArduinoDataRepository implements IArduinoDataRepository {
 
 	private String columnFamilyName = "cf";
 
-	private Connection connection = null;
-
-	private Table table = null;
-
-	private static final Log logger = LogFactory
-			.getLog(HBaseArduinoDataRepository.class);
+	private static final Log logger = LogFactory.getLog(HBaseArduinoDataRepository.class);
 
 	@Autowired
-	public HBaseArduinoDataRepository(
-			@Value("${hbase.zookeeper.quorum}") String quorum) {
+	public HBaseArduinoDataRepository(@Value("${hbase.zookeeper.quorum}") String quorum) {
 		this.quorum = quorum;
 	}
 
+	@SuppressWarnings("resource")
 	@Override
-	public void storeData(String deviceKey, ArrayList<ArduinoMeasurement> data)
-			throws Exception {
+	public void storeData(String deviceKey, ArrayList<ArduinoMeasurement> data) throws ApplicationException {
+		Connection connection = null;
+		Table table = null;
 
 		try {
 			Configuration config = HBaseConfiguration.create();
@@ -83,8 +82,7 @@ public class HBaseArduinoDataRepository implements IArduinoDataRepository {
 
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
-			table = connection.getTable(TableName
-					.valueOf(this.arduinoTableMeasurements));
+			table = connection.getTable(TableName.valueOf(this.arduinoTableMeasurements));
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			byte[] deviceKeyBytes = deviceKey.getBytes("UTF-8");
@@ -112,41 +110,34 @@ public class HBaseArduinoDataRepository implements IArduinoDataRepository {
 					throw new RuntimeException("Invalid byte array length!");
 				}
 
-				byte[] rowKey = new byte[deviceKeyHash.length
-						+ timeBucketBytes.length];
-				System.arraycopy(deviceKeyHash, 0, rowKey, 0,
-						deviceKeyHash.length);
-				System.arraycopy(timeBucketBytes, 0, rowKey,
-						(deviceKeyHash.length), timeBucketBytes.length);
+				byte[] rowKey = new byte[deviceKeyHash.length + timeBucketBytes.length];
+				System.arraycopy(deviceKeyHash, 0, rowKey, 0, deviceKeyHash.length);
+				System.arraycopy(timeBucketBytes, 0, rowKey, (deviceKeyHash.length), timeBucketBytes.length);
 
 				Put p = new Put(rowKey);
 
-				byte[] column = this.concatenate(timeSliceBytes,
-						this.appendLength(Bytes.toBytes("v")));
+				byte[] column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("v")));
 				p.addColumn(columnFamily, column, Bytes.toBytes(m.getVolume()));
 
 				table.put(p);
 			}
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (table != null) {
 					table.close();
-					table = null;
 				}
-				if (connection != null) {
+				if ((connection != null) && (!connection.isClosed())) {
 					connection.close();
-					connection = null;
 				}
-			} catch (IOException ioEx) {
-				logger.error(
-						"Failed to release HBASE connection/table resources",
-						ioEx);
+			} catch (Exception ex) {
+				logger.error(ERROR_RELEASE_RESOURCES, ex);
 			}
 		}
 	}
 
-	private byte[] getDeviceTimeRowKey(byte[] deviceKeyHash, long date,
-			EnumTimeInterval interval) throws Exception {
+	private byte[] getDeviceTimeRowKey(byte[] deviceKeyHash, long date, EnumTimeInterval interval) throws Exception {
 
 		long intervalInSeconds = EnumTimeInterval.HOUR.getValue();
 		switch (interval) {
@@ -157,9 +148,7 @@ public class HBaseArduinoDataRepository implements IArduinoDataRepository {
 			intervalInSeconds = interval.getValue();
 			break;
 		default:
-			throw new RuntimeException(
-					String.format("Time interval [%s] is not supported.",
-							interval.toString()));
+			throw new RuntimeException(String.format("Time interval [%s] is not supported.", interval.toString()));
 		}
 
 		long timestamp = Long.MAX_VALUE - (date / 1000);
@@ -169,8 +158,7 @@ public class HBaseArduinoDataRepository implements IArduinoDataRepository {
 
 		byte[] rowKey = new byte[deviceKeyHash.length + 8];
 		System.arraycopy(deviceKeyHash, 0, rowKey, 0, deviceKeyHash.length);
-		System.arraycopy(timeBucketBytes, 0, rowKey, deviceKeyHash.length,
-				timeBucketBytes.length);
+		System.arraycopy(timeBucketBytes, 0, rowKey, deviceKeyHash.length, timeBucketBytes.length);
 
 		return rowKey;
 	}
@@ -191,12 +179,12 @@ public class HBaseArduinoDataRepository implements IArduinoDataRepository {
 	}
 
 	@Override
-	public ArduinoIntervalQueryResult searchData(ArduinoIntervalQuery query)
-			throws Exception {
+	public ArduinoIntervalQueryResult searchData(ArduinoIntervalQuery query) throws ApplicationException {
 		ArduinoIntervalQueryResult data = new ArduinoIntervalQueryResult();
 
 		Connection connection = null;
 		Table table = null;
+		ResultScanner scanner = null;
 
 		try {
 			Configuration config = HBaseConfiguration.create();
@@ -207,8 +195,7 @@ public class HBaseArduinoDataRepository implements IArduinoDataRepository {
 
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
-			table = connection.getTable(TableName
-					.valueOf(this.arduinoTableMeasurements));
+			table = connection.getTable(TableName.valueOf(this.arduinoTableMeasurements));
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			byte[] deviceKeyBytes = query.getDeviceKey().getBytes("UTF-8");
@@ -217,36 +204,32 @@ public class HBaseArduinoDataRepository implements IArduinoDataRepository {
 			Scan scan = new Scan();
 			scan.addFamily(columnFamily);
 
-			byte[] startRow = this.getDeviceTimeRowKey(deviceKeyHash,
-					query.getTimestampEnd(), EnumTimeInterval.HOUR);
+			byte[] startRow = this.getDeviceTimeRowKey(deviceKeyHash, query.getTimestampEnd(), EnumTimeInterval.HOUR);
 
 			scan.setStartRow(startRow);
 
 			byte[] stopRow = new byte[startRow.length + 1];
-			System.arraycopy(this.getDeviceTimeRowKey(deviceKeyHash,
-					query.getTimestampStart(), EnumTimeInterval.HOUR), 0, stopRow, 0, startRow.length);
-			
+			System.arraycopy(this.getDeviceTimeRowKey(deviceKeyHash, query.getTimestampStart(), EnumTimeInterval.HOUR),
+							0, stopRow, 0, startRow.length);
+
 			scan.setStopRow(stopRow);
 
-			ResultScanner scanner = table.getScanner(scan);
+			scanner = table.getScanner(scan);
 
 			boolean isScanCompleted = false;
 
 			for (Result r = scanner.next(); r != null; r = scanner.next()) {
 				NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
 
-				long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(),
-						16, 24));
+				long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 16, 24));
 
 				for (Entry<byte[], byte[]> entry : map.entrySet()) {
-					short offset = Bytes.toShort(Arrays.copyOfRange(
-							entry.getKey(), 0, 2));
+					short offset = Bytes.toShort(Arrays.copyOfRange(entry.getKey(), 0, 2));
 
 					long timestamp = (Long.MAX_VALUE - (timeBucket + (long) offset)) * 1000L;
 
 					int length = (int) Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
-					byte[] slice = Arrays.copyOfRange(entry.getKey(), 3,
-							3 + length);
+					byte[] slice = Arrays.copyOfRange(entry.getKey(), 3, 3 + length);
 
 					String qualifier = Bytes.toString(slice);
 					if (qualifier.equals("v")) {
@@ -266,38 +249,36 @@ public class HBaseArduinoDataRepository implements IArduinoDataRepository {
 					break;
 				}
 			}
-			scanner.close();
 
-			Collections.sort(data.getMeasurements(),
-					new Comparator<ArduinoMeasurement>() {
+			Collections.sort(data.getMeasurements(), new Comparator<ArduinoMeasurement>() {
 
-						public int compare(ArduinoMeasurement o1,
-								ArduinoMeasurement o2) {
-							if (o1.getTimestamp() <= o2.getTimestamp()) {
-								return -1;
-							} else {
-								return 1;
-							}
-						}
-					});
+				public int compare(ArduinoMeasurement o1, ArduinoMeasurement o2) {
+					if (o1.getTimestamp() <= o2.getTimestamp()) {
+						return -1;
+					} else {
+						return 1;
+					}
+				}
+			});
+
+			return data;
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
+				if (scanner != null) {
+					scanner.close();
+				}
 				if (table != null) {
 					table.close();
-					table = null;
 				}
-				if (connection != null) {
+				if ((connection != null) && (!connection.isClosed())) {
 					connection.close();
-					connection = null;
 				}
-			} catch (IOException ioEx) {
-				logger.error(
-						"Failed to release HBASE connection/table resources",
-						ioEx);
+			} catch (Exception ex) {
+				logger.error(ERROR_RELEASE_RESOURCES, ex);
 			}
 		}
-
-		return data;
 	}
 
 }

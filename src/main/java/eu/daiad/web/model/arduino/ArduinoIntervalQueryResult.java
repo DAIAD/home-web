@@ -12,19 +12,19 @@ public class ArduinoIntervalQueryResult extends RestResponse {
 		super();
 	}
 
-	public ArduinoIntervalQueryResult(int code, String description) {
+	public ArduinoIntervalQueryResult(String code, String description) {
 		super(code, description);
 	}
 
 	public ArrayList<ArduinoMeasurement> getMeasurements() {
 		return measurements;
 	}
-	
+
 	public void add(long timestamp, long volume) {
 		ArduinoMeasurement m = new ArduinoMeasurement();
 		m.setTimestamp(timestamp);
 		m.setVolume(volume);
-		
+
 		this.measurements.add(m);
 	}
 }

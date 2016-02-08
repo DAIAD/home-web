@@ -9,10 +9,10 @@ public class ProfileResponse extends RestResponse {
 	public ProfileResponse() {
 	}
 
-	public ProfileResponse(int code, String description) {
+	public ProfileResponse(String code, String description) {
 		super(code, description);
 	}
-	
+
 	public Profile getProfile() {
 		return profile;
 	}
@@ -20,5 +20,5 @@ public class ProfileResponse extends RestResponse {
 	public void setProfile(Profile profile) {
 		this.profile = profile;
 	}
-	
+
 }

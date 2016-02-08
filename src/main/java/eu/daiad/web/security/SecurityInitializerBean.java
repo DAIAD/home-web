@@ -14,7 +14,7 @@ public class SecurityInitializerBean implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		this.userRepository.createDefaultUser();
+		this.userRepository.initializeSecurityConfiguration();
 	}
 
 }

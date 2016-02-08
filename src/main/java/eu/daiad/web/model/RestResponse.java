@@ -9,8 +9,16 @@ public class RestResponse {
 	public RestResponse() {
 	}
 
-	public RestResponse(int code, String description) {
+	public RestResponse(String code, String description) {
 		this.add(code, description);
+	}
+
+	public RestResponse(Error error) {
+		this.errors.add(error);
+	}
+
+	public RestResponse(ArrayList<Error> errors) {
+		this.errors.addAll(errors);
 	}
 
 	public boolean getSuccess() {
@@ -21,7 +29,15 @@ public class RestResponse {
 		return this.errors;
 	}
 
-	public void add(int code, String description) {
+	public void add(String code, String description) {
 		this.errors.add(new Error(code, description));
+	}
+
+	public void add(Error error) {
+		this.errors.add(error);
+	}
+
+	public void add(ArrayList<Error> errors) {
+		this.errors.addAll(errors);
 	}
 }

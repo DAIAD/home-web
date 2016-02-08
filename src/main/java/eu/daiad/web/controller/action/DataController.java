@@ -13,26 +13,22 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Controller;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import eu.daiad.web.model.ExportException;
+import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.ResourceNotFoundException;
+import eu.daiad.web.model.error.ActionErrorCode;
+import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.export.DownloadFileResponse;
 import eu.daiad.web.model.export.ExportDataRequest;
 import eu.daiad.web.service.IExportService;
 
 @Controller
-public class DataController {
-
-	private static final int ERROR_PARSING_FAILED = 1;
-	private static final int ERROR_TYPE_NOT_SUPPORTED = 2;
-
-	private static final int ERROR_UNKNOWN = 100;
+public class DataController extends BaseController {
 
 	private static final Log logger = LogFactory.getLog(DataController.class);
 
@@ -45,44 +41,31 @@ public class DataController {
 	@RequestMapping(value = "/action/data/export", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@ResponseBody
 	@Secured({ "ROLE_ADMIN" })
-	public DownloadFileResponse export(@RequestBody ExportDataRequest data,
-			BindingResult results) {
-		String errorMessage = null;
+	public DownloadFileResponse export(@RequestBody ExportDataRequest data) {
+		DownloadFileResponse response = new DownloadFileResponse();
 
 		try {
-			if (results.hasErrors()) {
-				return new DownloadFileResponse(ERROR_PARSING_FAILED,
-						"Input parsing has failed.");
-			}
-
 			switch (data.getType()) {
 			case SESSION:
 				String token = this.exportService.export(data);
 
-				// Create response
-				return new DownloadFileResponse(token.toString());
+				response.setToken(token);
 			default:
-				break;
+				throw new ApplicationException(ActionErrorCode.EXPORT_TYPE_NOT_SUPPORTED).set("type", data.getType()
+								.toString());
 			}
+		} catch (ApplicationException ex) {
+			logger.error(ex);
 
-			return new DownloadFileResponse(ERROR_TYPE_NOT_SUPPORTED,
-					String.format("Export type [%s] is not supported.", data
-							.getType().toString()));
-		} catch (ExportException eEx) {
-			logger.error("Failed to export data.", eEx);
-			errorMessage = eEx.getMessage();
-		} catch (Exception ex) {
-			logger.error("Unhandled exception has occured.", ex);
+			response.add(this.getError(ex));
 		}
-		return new DownloadFileResponse(ERROR_UNKNOWN,
-				(errorMessage == null ? "Unhandled exception has occured."
-						: errorMessage));
+
+		return response;
 	}
 
 	@RequestMapping(value = "/action/data/download/{token}", method = RequestMethod.GET)
 	@Secured({ "ROLE_ADMIN" })
-	public ResponseEntity<InputStreamResource> download(
-			@PathVariable("token") String token) {
+	public ResponseEntity<InputStreamResource> download(@PathVariable("token") String token) {
 		try {
 			File path = new File(temporaryPath);
 
@@ -92,19 +75,13 @@ public class DataController {
 				FileSystemResource fileResource = new FileSystemResource(file);
 
 				HttpHeaders headers = new HttpHeaders();
-				headers.add("Cache-Control",
-						"no-cache, no-store, must-revalidate");
+				headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
 				headers.add("Pragma", "no-cache");
 				headers.add("Expires", "0");
 
-				return ResponseEntity
-						.ok()
-						.headers(headers)
-						.contentLength(fileResource.contentLength())
-						.contentType(
-								MediaType.parseMediaType("application/zip"))
-						.body(new InputStreamResource(fileResource
-								.getInputStream()));
+				return ResponseEntity.ok().headers(headers).contentLength(fileResource.contentLength())
+								.contentType(MediaType.parseMediaType("application/zip"))
+								.body(new InputStreamResource(fileResource.getInputStream()));
 			}
 		} catch (Exception ex) {
 			logger.error(String.format("File [%s] was not found.", token), ex);
