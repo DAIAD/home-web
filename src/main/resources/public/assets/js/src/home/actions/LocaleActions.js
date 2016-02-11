@@ -11,7 +11,7 @@ var LocaleActions = {
 			messages: messages
 		};
 	},
-	_requestLocaleMessages: function(locale) {
+	_requestedLocaleMessages: function(locale) {
 		return {
 			type: types.LOCALE_REQUEST_MESSAGES,
 			locale: locale
@@ -30,7 +30,7 @@ var LocaleActions = {
 				return true;
 			}
 			//dispatch request messages to update state
-			dispatch(LocaleActions._requestLocaleMessages(locale));
+			dispatch(LocaleActions._requestedLocaleMessages(locale));
 			//dispatch fetch messages to call API
 			dispatch(LocaleActions.fetchLocaleMessages(locale));
 		};
