@@ -18,7 +18,7 @@ var UserActions = require('./actions/UserActions');
 var routes = require('./routes');
 
 
-//Check if already logged in template property
+//Check if already logged-in template property
 if (properties.reload){
 	store.dispatch(UserActions.refreshProfile());
 }

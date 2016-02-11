@@ -5,12 +5,12 @@ var locales = function (state, action) {
 	switch (action.type) {
 		case types.LOCALE_REQUEST_MESSAGES:
 			return Object.assign({}, state, {
-				isFetching: true,
+				isLoading: true,
 			});
 
 		case types.LOCALE_RECEIVED_MESSAGES:
 			return Object.assign({}, state, {
-				isFetching: false,
+				isLoading: false,
 				messages: action.messages,
 				locale: action.locale
 			});

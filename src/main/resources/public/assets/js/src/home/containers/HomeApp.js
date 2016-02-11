@@ -21,7 +21,6 @@ var LocaleActions = require('../actions/LocaleActions');
 var HomeApp = React.createClass({
 
 	render: function() {
-		
 		if (this.props.locale.locale === undefined){
 			return (null);
 		}
@@ -32,6 +31,15 @@ var HomeApp = React.createClass({
 					messages={this.props.locale.messages} >
 					
 					<div>
+						{
+							(() => {
+								if (this.props.loading){
+									return (
+										<span style={{position:'absolute'}} >Loading....</span>
+										);
+								}
+								})()
+						}	
 						<Header 
 							data={Constant.data}
 							firstname={this.props.user.profile.firstname}
@@ -81,7 +89,9 @@ var HomeApp = React.createClass({
 function mapStateToProps(state) {
 		return {
 			user: state.user,
-			locale: state.locale
+			locale: state.locale,
+			loading: state.user.isLoading || state.locale.isLoading
+
 		};
 }
 

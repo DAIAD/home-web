@@ -26,7 +26,7 @@ var LocaleActions = {
 	},
 	setLocale : function(locale) {
 		return function(dispatch, getState) {
-			if (getState().locale === locale && !getState().isFetching){
+			if (getState().locale === locale && !getState().isLoading){
 				return true;
 			}
 			//dispatch request messages to update state
