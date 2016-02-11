@@ -1,9 +1,12 @@
 {
 	"locale": {
-		"en":"English",
-		"el":"Greek",
-		"es":"Spanish",
-		"de":"German"
+		"en": "English",
+		"el": "Ελληνικά",
+		"es": "Español",
+		"de": "Deutsche"
+	},
+	"Errors": {
+		"Forbidden": "Authentication has failed. Please try again."
 	},
 	"LoginForm": {
 		"login": {

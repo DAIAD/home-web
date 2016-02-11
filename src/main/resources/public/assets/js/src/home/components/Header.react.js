@@ -9,7 +9,6 @@ var FormattedMessage = require('react-intl').FormattedMessage;
 var bs = require('react-bootstrap');
 var Link = require('react-router').Link;
 
-var UserStore = require('../stores/UserStore');
 
 /* DAIAD Logo */
 
@@ -86,36 +85,17 @@ var MainMenu = React.createClass({
 /* User options */
 
 var UserInfo = React.createClass({
-	getInitialState: function() {
-		return this._getFirstName();
-	},
-	componentDidMount: function() {
-		UserStore.addProfileUpdateListener(this._onChange);
-	},
-	componentWillUnmount: function() {
-		UserStore.removeProfileUpdateListener(this._onChange);
-	},
 	render: function() {
 		return (
 			<div className="user-menu" >
 					<div title="home.profile">
 					<Link to="settings/profile">
-						<span>{this.state.firstname}</span>
+						<span>{this.props.firstname}</span>
 					</Link>
 				</div>
 			</div>
 		);
 	},
-	_onChange: function() {
-		if (this.state.firstname !== this._getFirstName().firstname){
-			this.setState(this._getFirstName());
-		}
-	},
-	_getFirstName: function() {
-		return {
-			firstname: UserStore.getProfile().firstname 
-		};
-	}
 });
 
 /* Notification Area */
@@ -226,15 +206,11 @@ var NotificationArea = React.createClass({
 
 
 var Header = React.createClass({
-	contextTypes: {
-		//profile: React.PropTypes.object,
-		isAuthenticated: React.PropTypes.bool
-	},
 	render: function() {
 		return (
 			<header className="site-header">
 					{(() => {
-						if (this.context.isAuthenticated) {
+						if (this.props.isAuthenticated) {
 							return (
 								<div className="container">
 									<div className="header-left">
@@ -243,11 +219,19 @@ var Header = React.createClass({
 									</div>
 									<div className="header-right">
 										<NotificationArea notifications={this.props.data.notifications} />
-										<UserInfo />
-										<LoginForm 	className="navbar logout"
+										<UserInfo 
+											firstname={this.props.firstname}
+											/>
+										<LoginForm 	
+											isAuthenticated={this.props.isAuthenticated}
+											onLogout={this.props.onLogout}
+											className="navbar logout"
 											action="logout"
-											isAuthenticated = { this.context.isAuthenticated } />
-										<LocaleSwitcher />	
+											 />
+										 <LocaleSwitcher
+											 onLocaleSwitch={this.props.onLocaleSwitch}
+											 locale={this.props.locale}
+											 />	
 									</div>
 								</div>
 								);
@@ -259,7 +243,11 @@ var Header = React.createClass({
 										<MainLogo />
 									</div>
 									<div className="pull-right">
-										<LocaleSwitcher />	
+										<LocaleSwitcher
+											 onLocaleSwitch={this.props.onLocaleSwitch}
+											 locale={this.props.locale}
+											 />	
+
 									</div>
 								</div>
 								);
@@ -270,6 +258,8 @@ var Header = React.createClass({
 		);
 	}
 });
+
+
 
 Header.NotificationList = NotificationList;
 

@@ -1,14 +1,12 @@
 var React = require('react');
-
 var Route = require('react-router').Route;
 var IndexRoute = require('react-router').IndexRoute;
 var Redirect = require('react-router').Redirect;
 
-var HomeApp = require('./components/HomeApp');
+//Containers
+var HomeApp = require('./containers/HomeApp');
 
-var ContentRoot = require('./components/ContentRoot');
-var MainSection = require('./components/MainSection.react');
-
+//Components
 var Dashboard = require('./components/sections/Dashboard');
 var History = require('./components/sections/History');
 var Commons = require('./components/sections/Commons');
@@ -22,7 +20,7 @@ var Devices = require('./components/sections/Devices');
 
 module.exports = 
 	(
-		<Route path="/" component={ContentRoot} >
+		<Route path="/" component={HomeApp} >
 				<IndexRoute component={Dashboard} />
 				<Route path="/dashboard" component={Dashboard} />
 				<Route path="/history" component={History} />
@@ -34,9 +32,9 @@ module.exports =
 					<Route path="tips" component={Tips} />
 				</Route>
 				<Route path="/settings" component={Settings} >
+					<IndexRoute component={Devices} />
 					<Route path="profile" component={Profile} />
 					<Route path="devices" component={Devices} />
 				</Route>
 			</Route>
 		);
-

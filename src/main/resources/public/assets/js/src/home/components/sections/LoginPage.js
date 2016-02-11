@@ -1,15 +1,19 @@
 var React = require('react');
 
 var MainSection = require('../MainSection.react');
-var Login = require('./Login');
+var LoginForm = require('../LoginForm');
 
 var LoginPage = React.createClass({
-render: function() {
+
+	render: function() {
 	return (
-		<MainSection>
-			<div className="primary">
-				<Login />
-			</div>
+			<MainSection title="Welcome to DAIAD Home" >
+				<section className="section-login">
+				<LoginForm 	
+					action="login"
+					user = {this.context.user}
+				/>
+			</section>
 		</MainSection>
 	);
 }

@@ -1,21 +1,35 @@
 var React = require('react');
-
 var bs = require('react-bootstrap');
+var injectIntl = require('react-intl').injectIntl;
+var connect = require('react-redux').connect;
 
 var MainSection = require('../MainSection.react');
 var Sidebar = require('../Sidebar.react');
 
 var Constant = require('../../constants/HomeConstants');
-var UserStore = require('../../stores/UserStore');
-var DeviceQueryStore = require('../../stores/DeviceQueryStore');
+//var DeviceQueryStore = require('../../stores/DeviceQueryStore');
 
-var HomeActions = require('../../actions/HomeActions');
+//var HomeActions = require('../../actions/HomeActions');
 
-var Chart = require('../Chart');
+
+
+/* Be Polite, greet user */
+var SayHello = React.createClass({
+	render: function() {
+		return (
+			<div >
+				<h3>Hello {this.props.firstname}!</h3>
+			</div>
+		);
+	}
+});
+/*
+ var Chart = require('../Chart');
+
 var defaultFormatter = function(timestamp){
 	var date = new Date(timestamp);
 	return (date.getDate() + '/' +
-					date.getMonth() + '/' +
+					(date.getMonth()+1) + '/' +
 					date.getFullYear());
 };
 var yearFormatter = function(timestamp){
@@ -35,19 +49,7 @@ var dayFormatter = function(timestamp){
 	return (date.getHours() + ':' +
 		date.getMinutes());
 };
-
-/* Be Polite, greet user */
-var SayHello = React.createClass({
-	render: function() {
-		var name = UserStore.getProfile().firstname;
-		return (
-			<div >
-				<h3>Hello {name}!</h3>
-			</div>
-		);
-	}
-});
-
+ 
 var Sessions = React.createClass({
 	getInitialState: function() {
 		return {
@@ -58,7 +60,7 @@ var Sessions = React.createClass({
 				type: 'bar',
 				mu: '',
 			},
-			chartFormatter: defaultFormatter,
+			//chartFormatter: defaultFormatter,
 			chartData: []
 		};
 	},
@@ -255,7 +257,7 @@ var Sessions = React.createClass({
 					mu={this.state.chart.mu}
 					type={this.state.chart.type}
 					chartData={this.state.chartData} 
-					formatter={this.state.chartFormatter}
+					formatter={defaultFormatter}
 					/>
 			
 			</section>
@@ -271,7 +273,7 @@ var ChartSessions = React.createClass({
 		type: React.PropTypes.string,
 		mu: React.PropTypes.string,
 		chartData: React.PropTypes.array,
-		formatter: React.PropTypes.function
+		//formatter: React.PropTypes.function
 	},
 	render: function() {
 		console.log('rendering chart');
@@ -321,7 +323,7 @@ var ChartSessions = React.createClass({
 										type : 'value',
 										axisLabel : {
 											formatter: '{value} ' + this.props.mu
-												/*
+												
 												function(value){
 												if (value > 3600){
 													return Math.floor(value/3600) + ' h';
@@ -333,7 +335,7 @@ var ChartSessions = React.createClass({
 													return value + ' sec';
 												}
 												}
-												*/
+												
 										},
 										boundaryGap: [0, 0.1]
 								}
@@ -370,12 +372,19 @@ var ChartSessions = React.createClass({
 		);
 	}
 });
+*/
 var Dashboard = React.createClass({
 	render: function() {
 		return (
-			<Sessions />
+			<SayHello firstname={this.props.firstname}/>
 		);
 	}
 });
+function mapStateToProps(state) {
+	return {
+		firstname: state.user.profile.firstname
+	};
+}
 
+Dashboard = connect(mapStateToProps)(Dashboard);
 module.exports = Dashboard;
