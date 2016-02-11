@@ -2,6 +2,7 @@ var React = require('react');
 var bs = require('react-bootstrap');
 var injectIntl = require('react-intl').injectIntl;
 var connect = require('react-redux').connect;
+var FormattedMessage = require('react-intl').FormattedMessage;
 
 var MainSection = require('../MainSection.react');
 var Sidebar = require('../Sidebar.react');
@@ -18,7 +19,7 @@ var SayHello = React.createClass({
 	render: function() {
 		return (
 			<div >
-				<h3>Hello {this.props.firstname}!</h3>
+				<h4><FormattedMessage id="dashboard.hello" values={{name:this.props.firstname}} /></h4>
 			</div>
 		);
 	}
@@ -376,7 +377,11 @@ var ChartSessions = React.createClass({
 var Dashboard = React.createClass({
 	render: function() {
 		return (
-			<SayHello firstname={this.props.firstname}/>
+			<section className="section-dashboard">
+				<h3><FormattedMessage id="section.dashboard"/></h3>
+				
+				<SayHello firstname={this.props.firstname}/>
+			</section>
 		);
 	}
 });

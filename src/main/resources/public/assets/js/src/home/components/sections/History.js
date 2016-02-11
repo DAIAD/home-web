@@ -1,4 +1,5 @@
 var React = require('react');
+var FormattedMessage = require('react-intl').FormattedMessage;
 
 var Chart = require('../Chart');
 
@@ -34,7 +35,7 @@ var History = React.createClass({
 		};
 		return (
 			<section className="section-history">
-				<MainSection title="History" >
+				<h3><FormattedMessage id="section.history"/></h3>
 					<Chart 
 						style={{
 							height:'400px',
@@ -225,7 +226,6 @@ var History = React.createClass({
 					/>
 					*/
 					}
-				</MainSection>
 			</section>
 		);
 	}

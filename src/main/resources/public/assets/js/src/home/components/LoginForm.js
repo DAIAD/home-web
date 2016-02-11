@@ -32,7 +32,7 @@ var LoginForm = React.createClass({
 			   				className="btn btn-primary"
 	   						style={{ width: 80, height: 33 }}
 		   					onClick={this.onLogout}>
-			   			<FormattedMessage id="LoginForm.button.signout" />
+			   			<FormattedMessage id="loginForm.button.signout" />
    					</button>
 		   		</div>
 	   		);
@@ -41,22 +41,22 @@ var LoginForm = React.createClass({
 				<form key="login" className="form-login" action={this.props.action}>
 					<div className="form-group">
 						<input id="username" name="username" type="text" ref="username"
-							placeholder={_t({ id: 'LoginForm.placehoder.username'})} className="form-control" />
+							placeholder={_t({ id: 'loginForm.placehoder.username'})} className="form-control" />
 					</div>
 					<div className="form-group" >
 						<input id="password" name="password" type="password" ref="password"
-							placeholder={_t({ id: 'LoginForm.placehoder.password'})} className="form-control" />
+							placeholder={_t({ id: 'loginForm.placehoder.password'})} className="form-control" />
 					</div>
 					<button type="submit"
 							className="btn btn-primary action-login"
 							onClick={this.onLogin}
 							style={{width: 80, height: 33}}>
-						<FormattedMessage id="LoginForm.button.signin" />
+						<FormattedMessage id="loginForm.button.signin" />
 					</button>
 					<br/>
 					<div className="login-errors">
 						{
-							this.props.errors?(<FormattedMessage id={"Errors."+this.props.errors} />):(<div/>)
+							this.props.errors?(<FormattedMessage id={"errors."+this.props.errors} />):(<div/>)
 					}
 				</div>
 				</form>

@@ -5,10 +5,13 @@
 		"es": "Español",
 		"de": "Deutsche"
 	},
-	"Errors": {
+	"errors": {
 		"Forbidden": "Authentication has failed. Please try again."
 	},
-	"LoginForm": {
+	"forms": {
+		"submit": "Update"
+	},
+	"loginForm": {
 		"login": {
 			"failure": "Authentication has failed. Please try again."
 		},
@@ -21,17 +24,42 @@
 			"password":"Password"
 		}
 	},
-	"Section": {
-		"Dashboard": "Dashboard",
-		"History":"History",
-		"Commons": "Commons",
-		"Notifications": "Notifications",
-		"Search": "Search",
-		"Alerts": "Alerts",
-		"Tips": "Tips",
-		"Insights": "Insights",
-		"Settings": "Settings",
-		"Reporting": "Reporting",
-		"Export": "Export"
+	"section": {
+		"dashboard": "Dashboard",
+		"history":"History",
+		"commons": "Commons",
+		"notifications": "Notifications",
+		"search": "Search",
+		"alerts": "Alerts",
+		"tips": "Tips",
+		"insights": "Insights",
+		"settings": "Settings",
+		"profile": "Profile",
+		"devices": "Devices",
+		"reporting": "Reporting",
+		"export": "Export"
+	},
+	"dashboard": {
+		"hello": "Hello {name}!"
+	},
+	"notifications": {
+		"showAll": "Show all"
+	},
+	"profile": {
+		"username": "Username",
+		"email": "Email",
+		"firstname": "First name",
+		"lastname": "Last name",
+		"submit": "Update"
+	},
+	"devices": {
+		"name": "Device name",
+		"key": "Device key",
+		"mac": "Mac address",
+		"macaddress": "Mac address",
+		"properties": "Properties",
+		"model": "Model",
+		"manufacturer": "Manufacturer",
+		"serial": "Serial"
 	}
 }
