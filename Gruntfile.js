@@ -38,10 +38,7 @@ module.exports = function (grunt) {
 				],
 				transform: [
 					[
-						"reactify",
-						{
-							"es6": true
-						}
+						"babelify"
 					], [
 						"envify",
 						{
@@ -55,7 +52,7 @@ module.exports = function (grunt) {
 			utility: {
 				files: {
 					'src/main/resources/public/assets/js/build/utility/bundle.js': [
-						'src/main/resources/public/assets/js/src/utility/main.js'
+						'src/main/resources/public/assets/js/src/utility/index.js'
 					]
 				}
 			}

@@ -28,5 +28,31 @@
 	    "Settings": "Settings",
 	    "Reporting": "Reporting",
 	    "Export": "Export"
+	},
+	"Demographics" : {
+		"Group" : "Groups"
+	},
+	"Settings" : {
+		"User" : "User Preferences",
+		"System" : "System Configuration"
+	},
+	"Table" : {
+		"Group" : {
+			"id": "Id",
+			"name": "Name",
+			"size": "# of Members",
+			"createdOn": "Creation Date"
+		}
+	},
+	"Counter" : {
+		"Users" : "Users",
+		"Meters" : "Smart Meters",
+		"Devices" : "Amphiro Devices"
+	},
+	"Error": {
+		"400" : "Bad request",
+		"403" : "Forbidden",
+		"404" : "Not found",
+		"500" : "Internal server error"
 	}
 }

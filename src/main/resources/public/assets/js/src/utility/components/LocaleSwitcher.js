@@ -1,37 +1,49 @@
+// Dependencies
 var React = require('react');
 var injectIntl = require('react-intl').injectIntl;
-var Bootstrap = require('react-bootstrap');
 
-Bootstrap.Select = require('./Select');
+// Actions
+var LocaleActions = require('../actions/LocaleActions');
 
-var LocaleStore = require('../stores/LocaleStore');
+var LOCALES = require('../constants/Constants').LOCALES;
 
-var UtilityActions = require('../actions/UtilityActions');
+// Components
+var bs = require('react-bootstrap');
+var Link = require('react-router').Link;
 
-var onChangeHandler =  function(event) {
-	UtilityActions.setLocale(event.target.value);
-};
 
 var LocaleSwitcher = React.createClass({
+	contextTypes: {
+	    intl: React.PropTypes.object
+	},
 
-	render: function() {
-		var _t = this.props.intl.formatMessage;
-
-		var options = LocaleStore.getLocales().map(function(locale) {
-			var translationKey = 'locale.' + locale;
-			return (
-				<option key={locale} value={locale}>
-					{_t({ id: translationKey})}
-				</option>
-			);
-		});
+	handleChange: function(e, value) {
+		this.props.onLocaleSwitch(value);
+	},
+	render: function() {	
+		var locale = this.props.locale;
+		var _t = this.context.intl.formatMessage;
+		var translationKey = 'locale.' + locale;
 
 		return (
-			<Bootstrap.Select defaultValue={LocaleStore.getLocale()} onChange={onChangeHandler.bind(this)}  data-width='110px'>
-				{options}
-			</Bootstrap.Select>
+			<div className="language-switcher">
+				<bs.DropdownButton
+					title={_t({ id: translationKey})}
+					id="language-switcher"
+					defaultValue={locale}
+					onSelect={this.handleChange}>
+					{
+						LOCALES.map(function(locale) {
+							var translationKey = 'locale.' + locale;
+							return (
+								<bs.MenuItem key={locale} eventKey={locale} value={locale} >{_t({ id: translationKey})}</bs.MenuItem>
+							);
+					})
+					}	
+        </bs.DropdownButton>
+      </div>	
 		);
 	}
 });
 
-module.exports = injectIntl(LocaleSwitcher);
+module.exports = LocaleSwitcher;

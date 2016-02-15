@@ -1,0 +1,136 @@
+@CHARSET "UTF-8";
+
+.wrapper {
+	width: 100%;
+}
+
+.page-wrapper {
+	background-color: #fff;
+	position: inherit;
+	margin: 0 0 0 250px;
+	padding: 70px 30px 0px 30px;
+	border-left: 1px solid #e7e7e7;
+	min-height: 1300px;
+}
+
+.login-wrapper {
+	background-color: #fff;
+	position: inherit;
+	margin-left: auto;
+	margin-right: auto;
+	width: 30%;
+	min-width: 250px;
+	max-width: 350px;
+	padding: 70px 30px 0px 30px;
+	height: 100%;
+	padding: 70px 30px 0px 30px;
+}
+
+.navbar-static-side {
+	z-index: 1;
+	position: absolute;
+	width: 250px;
+	margin-top: 51px;
+}
+
+ul.breadcrumbs-list {
+    padding: 8px 15px;
+    margin-bottom: 20px;
+    list-style: none;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
+
+ul.breadcrumbs-list li {
+	display: inline-block;
+	margin-right: 20px;
+}
+
+ul.breadcrumbs-list li a:not (.breadcrumb-active ) {
+	font-weight: bold;
+	margin-right: 20px;
+}
+
+ul.breadcrumbs-list li a.breadcrumb-active {
+	text-decoration: none;
+	cursor: default;
+}
+
+/* Images */
+img.sm {
+	max-width: 16px;
+}
+
+/* Bootstrap Grid */
+
+/* Bootstrap circle button */
+
+/* http://bootsnipp.com/snippets/featured/circle-button */
+.btn-circle {
+	width: 30px;
+	height: 30px;
+	text-align: center;
+	padding: 6px 0;
+	font-size: 12px;
+	line-height: 1.428571429;
+	border-radius: 15px;
+	outline: none;
+}
+
+.btn-circle.btn-lg {
+	width: 50px;
+	height: 50px;
+	padding: 10px 16px;
+	font-size: 18px;
+	line-height: 1.33;
+	border-radius: 25px;
+}
+
+.btn-circle.btn-xl {
+	width: 70px;
+	height: 70px;
+	padding: 10px 16px;
+	font-size: 24px;
+	line-height: 1.33;
+	border-radius: 35px;
+}
+
+/* React Bootstrap Badge */
+.badge.danger {
+	background: red;
+}
+
+/* React Bootstrap Tabs */
+.nav.nav-pills.nav-stacked {
+	padding-top: 10px;
+}
+
+.nav-tabs>li>a {
+	border-radius: 0px;
+}
+
+.nav-tabs>li>a:hover {
+	border-color: transparent;
+	border-top-color: #337ab7;
+	border-bottom-color: #ddd;
+	background: #fff;
+}
+
+.nav-tabs>li>a:focus {
+	outline: none;
+	border-top-color: #337ab7;
+}
+
+.nav-pills>li.active>a, .nav-pills>li.active>a:focus, .nav-pills>li.active>a:hover
+	{
+	color: #fff;
+	background-color: #337ab7;
+	outline: none;
+}
+
+.nav-pills>li.active>a, .nav-pills>li.active>a:focus, .nav-pills>li.active>a:hover
+	{
+	color: #fff;
+	background-color: #337ab7;
+	outline: none;
+}

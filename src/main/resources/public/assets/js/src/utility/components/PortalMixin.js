@@ -8,42 +8,43 @@ var PortalMixin = {
 	propTypes : {
 		id : React.PropTypes.number,
 		elementClassName : React.PropTypes.string,
-		prefix: React.PropTypes.string
+		prefix : React.PropTypes.string
 	},
 
-	getDefaultProps: function() {
+	getDefaultProps : function() {
 		return {
-			prefix: 'portal',
-			elementClassName: 'mixin'
-	    };
+			prefix : 'portal',
+			elementClassName : 'mixin'
+		};
 	},
-	
-	_hasClass: function(className) {
+
+	_hasClass : function(className) {
 		if (this._element.classList) {
 			return this._element.classList.contains(className);
 		} else {
-			return new RegExp('(^| )' + className + '( |$)', 'gi').test(className);
+			return new RegExp('(^| )' + className + '( |$)', 'gi')
+					.test(className);
 		}
 	},
-	
-	_addClass: function(className) {
+
+	_addClass : function(className) {
 		if (this._element.classList) {
 			this._element.classList.add(className);
 		} else {
 			this._element.className += ' ' + className;
 		}
 	},
-	
-	_removeClass: function(className) {
+
+	_removeClass : function(className) {
 		if (this._element.classList) {
 			this._element.classList.remove(className);
 		} else {
 			this._element.className = this._element.className.replace(
-				new RegExp('(^|\\b)' + className.split(' ').join('|') + '(\\b|$)', 'gi'), ' '
-			);
+					new RegExp('(^|\\b)' + className.split(' ').join('|')
+							+ '(\\b|$)', 'gi'), ' ');
 		}
 	},
-	
+
 	_createContainer : function(id) {
 		var parent = ReactDOM.findDOMNode(this) || document.body;
 		this._element = parent.appendChild(document.createElement('div'));
@@ -73,7 +74,7 @@ var PortalMixin = {
 	},
 
 	componentWillReceiveProps : function(nextProps) {
-		if(this.props.elementClassName != nextProps.elementClassName) {			
+		if (this.props.elementClassName != nextProps.elementClassName) {
 			if (this.props.elementClassName) {
 				this._removeClass(this.props.elementClassName);
 			}

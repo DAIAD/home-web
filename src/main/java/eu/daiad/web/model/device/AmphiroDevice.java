@@ -58,6 +58,7 @@ public class AmphiroDevice extends Device {
 		r.setDeviceKey(this.getKey());
 		r.setName(this.getName());
 		r.setMacAddress(this.getMacAddress());
+		r.setAesKey(this.getAesKey());
 
 		for (Iterator<KeyValuePair> p = this.getProperties().iterator(); p
 				.hasNext();) {
