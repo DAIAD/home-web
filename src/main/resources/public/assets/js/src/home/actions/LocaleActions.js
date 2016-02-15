@@ -4,9 +4,11 @@ var types = require('../constants/ActionTypes');
 
 var LocaleActions = {
 
-	_receivedMessages: function(locale, messages) {
+	_receivedMessages: function(success, errors, locale, messages) {
 		return {
 			type: types.LOCALE_RECEIVED_MESSAGES,
+			success: success,
+			errors: errors,
 			locale: locale,
 			messages: messages
 		};
@@ -20,7 +22,10 @@ var LocaleActions = {
 	fetchLocaleMessages: function(locale) {
 		return function(dispatch, getState) {
 			localeAPI.fetchLocaleMessages(locale, function(messages) {
-				dispatch(LocaleActions._receivedMessages(locale, flattenMessages(messages)));
+				dispatch(LocaleActions._receivedMessages(true, null, locale, flattenMessages(messages)));
+			},
+			function(errors) {
+				dispatch(LocaleActions._receivedMessages(false, errors, null, []));
 			});
 		};
 	},

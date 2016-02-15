@@ -65,7 +65,7 @@ var HomeApp = React.createClass({
 												>
 												<LoginForm 	
 													isAuthenticated = {this.props.user.isAuthenticated}
-													errors = {this.props.user.errors}
+													errors = {this.props.user.status.errors}
 													onLogin = {this.props.onLogin}
 													onLogout = {this.props.onLogout}
 												/>
@@ -90,7 +90,7 @@ function mapStateToProps(state) {
 		return {
 			user: state.user,
 			locale: state.locale,
-			loading: state.user.isLoading || state.locale.isLoading
+			loading: state.user.status.isLoading || state.locale.status.isLoading
 
 		};
 }

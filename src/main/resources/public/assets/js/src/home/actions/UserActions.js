@@ -48,7 +48,7 @@ var UserActions = {
 	refreshProfile: function() {
 		return function(dispatch, getState) {
 			userAPI.getProfile(function(response) {
-				dispatch(UserActions._receivedLogin(response.success, response.erros, response.profile));
+				dispatch(UserActions._receivedLogin(response.success, response.errors, response.profile));
 			},
 			function (error) {
 				dispatch(UserActions._receivedLogin(false, error, {}));
@@ -71,9 +71,5 @@ var UserActions = {
 
 };
 
-//http://stackoverflow.com/questions/46155/validate-email-address-in-javascript
-function validateEmail(email) {
-		 var re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-		return re.test(email);
-}
+
 module.exports = UserActions;
