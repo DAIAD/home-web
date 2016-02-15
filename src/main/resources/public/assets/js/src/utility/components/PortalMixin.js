@@ -40,8 +40,7 @@ var PortalMixin = {
 			this._element.classList.remove(className);
 		} else {
 			this._element.className = this._element.className.replace(
-					new RegExp('(^|\\b)' + className.split(' ').join('|')
-							+ '(\\b|$)', 'gi'), ' ');
+					new RegExp('(^|\\b)' + className.split(' ').join('|') + '(\\b|$)', 'gi'), ' ');
 		}
 	},
 
