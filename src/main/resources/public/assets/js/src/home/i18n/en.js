@@ -27,6 +27,7 @@
 	"section": {
 		"dashboard": "Dashboard",
 		"history":"History",
+		"shower": "Shower",
 		"commons": "Commons",
 		"notifications": "Notifications",
 		"search": "Search",

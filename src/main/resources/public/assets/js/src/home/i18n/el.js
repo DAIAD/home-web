@@ -27,6 +27,7 @@
 	"section": {
 		"dashboard": "Περίληψη",
 		"history":"Ιστορικό",
+		"shower": "Ντους",
 		"commons": "Κοινά",
 		"notifications": "Ενημερώσεις",
 		"search": "Αναζήτηση",
