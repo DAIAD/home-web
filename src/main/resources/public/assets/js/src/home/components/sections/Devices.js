@@ -4,12 +4,6 @@ var connect = require('react-redux').connect;
 var injectIntl = require('react-intl').injectIntl;
 var FormattedMessage = require('react-intl').FormattedMessage;
 
-// Actions
-//var HomeActions = require('../../actions/HomeActions');
-
-function capitalize(word) {
-		return word.charAt(0).toUpperCase() + word.slice(1);
-}
 
 var Device = React.createClass({
 

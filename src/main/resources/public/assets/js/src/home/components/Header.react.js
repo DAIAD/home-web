@@ -26,12 +26,7 @@ var MainLogo = React.createClass({
 /* Main Menu */
 
 var MenuItem = React.createClass({
-	handleClick: function() {
-		//this.props.onMenuClick(this.props.item.name);
-	},
 	render: function() {
-		//var selected = this.props.sectionShown === this.props.item.name ? " selected":"";
-		//<a className="menu-item" href={this.props.item.link} onClick={this.handleClick} >
 		return (
 			<li>
 				<Link to={this.props.item.route} className="menu-item" activeClassName="selected">
@@ -204,9 +199,6 @@ var NotificationArea = React.createClass({
 											}}
 					/>
 				</div>
-				
-				{//<NotificationList items={this.props.notifications} shown={this.state.notificationsShown} />
-				}
 			</div>	
 		);
 	}
