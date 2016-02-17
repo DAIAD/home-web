@@ -1,7 +1,8 @@
 var userAPI = require('../api/user');
 var types = require('../constants/ActionTypes');
 
-
+var DeviceActions = require('./DeviceActions');
+var getDefaultDevice = require('../utils/device').getDefaultDevice;
 
 var UserActions = {
 	_requestedLogin: function() {
@@ -38,6 +39,10 @@ var UserActions = {
 			userAPI.login(username, password, function(response) {
 
 				dispatch(UserActions._receivedLogin(response.success, response.errors, response.profile));
+				//set default active device
+				const defaultDevice = getDefaultDevice(response.profile.devices);
+				if (defaultDevice) 
+					dispatch(DeviceActions._setActiveDevice(defaultDevice.deviceKey));
 			},
 			function(error) {
 				dispatch(UserActions._receivedLogin(false, error, {}));
@@ -49,6 +54,12 @@ var UserActions = {
 		return function(dispatch, getState) {
 			userAPI.getProfile(function(response) {
 				dispatch(UserActions._receivedLogin(response.success, response.errors, response.profile));
+
+				//set default active device
+				const defaultDevice = getDefaultDevice(response.profile.devices);
+				if (defaultDevice) 
+					dispatch(DeviceActions._setActiveDevice(defaultDevice.deviceKey));
+
 			},
 			function (error) {
 				dispatch(UserActions._receivedLogin(false, error, {}));
