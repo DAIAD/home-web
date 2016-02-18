@@ -18,19 +18,24 @@ var UserActions = require('./actions/UserActions');
 var routes = require('./routes');
 
 
-//Check if already logged-in template property
-if (properties.reload){
-	store.dispatch(UserActions.refreshProfile());
-}
-
-//Set locale from template property
-store.dispatch(LocaleActions.setLocale(properties.locale));
-
-ReactDOM.render(
-	<ReduxProvider store={store}>
-		<Router 
-			history={history}
-			routes={routes}
-		/>
-	</ReduxProvider>,
-document.getElementById('app'));
+store.dispatch(LocaleActions.setLocale(properties.locale)).then(function() {
+	if (properties.reload){
+		store.dispatch(UserActions.refreshProfile()).then(function() {
+			init();
+		});
+	}
+	else {
+		init();
+	}
+});
+		
+var init = function() {
+	ReactDOM.render(
+		<ReduxProvider store={store}>
+			<Router 
+				history={history}
+				routes={routes}
+			/>
+		</ReduxProvider>,
+		document.getElementById('app'));
+};

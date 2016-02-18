@@ -8,12 +8,6 @@ var DeviceActions = require('../actions/DeviceActions');
 
 var SessionLink = React.createClass({
 	
-	_onClick: function(e) {
-		e.preventDefault();
-		console.log('clicked');
-		console.log(this.props.data.id);
-		this.props.fetchSession(this.props.data.id);
-	},
 	render: function() {
 		return (
 			<li>	
@@ -42,7 +36,6 @@ var SessionLink = React.createClass({
 
 var SessionInfo = React.createClass({
 	render: function() {
-		console.log('rendering info!');
 		var data = this.props.data;
 		var array = Array.from(entries(data));
 
@@ -82,8 +75,6 @@ function* entries(obj) {
 var SessionsList = React.createClass({
 	
 	render: function() {
-		console.log('rendering sessions list');
-		console.log(this.props.sessions);
 		return (
 			<div style={{marginTop: '50px'}}>
 				<h3>List</h3>

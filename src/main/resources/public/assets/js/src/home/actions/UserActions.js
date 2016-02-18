@@ -1,82 +1,74 @@
 var userAPI = require('../api/user');
 var types = require('../constants/ActionTypes');
+require('es6-promise').polyfill();
 
-var DeviceActions = require('./DeviceActions');
-var getDefaultDevice = require('../utils/device').getDefaultDevice;
+var requestedLogin = function() {
+	return {
+		type:types.USER_REQUESTED_LOGIN,
+		};
+};
+
+var receivedLogin = function(status, errors, profile) {
+	return {
+		type: types.USER_RECEIVED_LOGIN,
+		status: status,
+		errors: errors,
+		profile: profile
+	};
+};
+
+var requestedLogout = function() {
+	return {
+		type:types.USER_REQUESTED_LOGOUT,
+		};
+};
+
+var receivedLogout = function(status, errors) {
+	return {
+		type: types.USER_RECEIVED_LOGOUT,
+		status: status,
+		errors: errors
+	};
+};
 
 var UserActions = {
-	_requestedLogin: function() {
-		return {
-			type:types.USER_REQUESTED_LOGIN,
-			};
-	},
 
-	_receivedLogin: function(status, errors, profile) {
-		return {
-			type: types.USER_RECEIVED_LOGIN,
-			status: status,
-			errors: errors,
-			profile: profile
-		};
-	},
-	_requestedLogout: function() {
-		return {
-			type:types.USER_REQUESTED_LOGOUT,
-			};
-	},
-
-	_receivedLogout: function(status, errors) {
-		return {
-			type: types.USER_RECEIVED_LOGOUT,
-			status: status,
-			errors: errors
-		};
-	},
 	login: function(username, password) {
 		return function(dispatch, getState) {
-			dispatch(UserActions._requestedLogin());
+			dispatch(requestedLogin());
 
-			userAPI.login(username, password, function(response) {
-
-				dispatch(UserActions._receivedLogin(response.success, response.errors, response.profile));
-				//set default active device
-				const defaultDevice = getDefaultDevice(response.profile.devices);
-				if (defaultDevice) 
-					dispatch(DeviceActions._setActiveDevice(defaultDevice.deviceKey));
-			},
-			function(error) {
-				dispatch(UserActions._receivedLogin(false, error, {}));
-			});
-			
+			return userAPI.login(username, password).then(
+				function(response) {
+					dispatch(receivedLogin(response.success, response.errors, response.profile));
+				},
+				function(error) {
+					dispatch(receivedLogin(false, error, {}));
+				});
 		};
 	},
 	refreshProfile: function() {
 		return function(dispatch, getState) {
-			userAPI.getProfile(function(response) {
-				dispatch(UserActions._receivedLogin(response.success, response.errors, response.profile));
-
-				//set default active device
-				const defaultDevice = getDefaultDevice(response.profile.devices);
-				if (defaultDevice) 
-					dispatch(DeviceActions._setActiveDevice(defaultDevice.deviceKey));
-
-			},
-			function (error) {
-				dispatch(UserActions._receivedLogin(false, error, {}));
-			});
+			return userAPI.getProfile().then(
+				function(response) {
+					dispatch(receivedLogin(response.success, response.errors, response.profile));
+				},
+				function (error) {
+					dispatch(receivedLogin(false, error, {}));
+					reject(error);
+				});
 		};
 	},
 	logout: function() {
 		return function(dispatch, getState) {
-			dispatch(UserActions._requestedLogout());
+			dispatch(requestedLogout());
 
-			userAPI.logout(function(response) {
-				dispatch(UserActions._receivedLogout(response.success, response.errors));
-			},
-			function(error) {
-				dispatch(UserActions._receivedLogout(false, error));
-			});
-			
+			return userAPI.logout().then(
+				function(response) {
+					dispatch(receivedLogout(response.success, response.errors));
+				},
+				function(error) {
+					dispatch(receivedLogout(false, error));
+				});
 		};
 	},
 

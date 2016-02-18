@@ -54,18 +54,7 @@ function* entries(obj) {
 }
 
 var Shower = React.createClass({
-	componentWillMount: function() {
-		const id = this.props.params.id;
-		if (this.props.activeDevice){
-			this.props.fetchSession(id);
-		}
-	},
-	componentWillReceiveProps: function(nextProps) {
-		const id = this.props.params.id;
-		if (!this.props.activeDevice && nextProps.activeDevice){
-			this.props.fetchSession(id);
-		}
-	},
+	
 	handleTypeSelect: function(key){
 		this.props.setSessionFilter(key);	
 	},

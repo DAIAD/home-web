@@ -38,7 +38,7 @@ var SessionsChart = React.createClass({
 									type : 'time',
 									splitNumber: 0,
 									axisLabel : {
-												formatter: defaultFormatter
+												formatter: this.props.formatter?this.props.formatter:defaultFormatter
 										},
 										boundaryGap: [0, 0.1]
 								},

@@ -1,7 +1,7 @@
 var types = require('../constants/ActionTypes');
+var updateOrAppendToSession = require('../utils/device').updateOrAppendToSession;
 
-
-var deviceSessions = function (state, action) {
+var sessions = function (state, action) {
 	//initial state
 	if (state === undefined) {
 		state = {
@@ -10,84 +10,91 @@ var deviceSessions = function (state, action) {
 				success: null,
 				errors: null
 			},
-			activeDevice: null,
-			filter: "showers",
-			time: {
-				startDate: new Date("1990-01-01").getTime(),
-				endDate: new Date().getTime(),
-				granularity: 0
-			},
+			filter: "volume",
+			lastSession: null,
 			data: [],
-			showers: []
 		};
 	}
  
 	switch (action.type) {
-		case types.DEVICE_REQUESTED_SESSION_SEARCH:
-			return Object.assign({}, state, {
-				status: {
-					isLoading: true,
-				},
+		
+			case types.DEVICE_REQUESTED_SESSION:
+				return Object.assign({}, state, {
+					status: {
+						isLoading: true
+					},
 			});
 
-		case types.DEVICE_RECEIVED_SESSION_SEARCH:
-			switch (action.success) {
-				case true:
-					switch (state.time.granularity) {
-						case 0:
-							return Object.assign({}, state, {
-								showers: action.data,
-								data: action.data,
-								status: {
-									isLoading: false,
-									success: true,
-									errors: null
-								}
-							});
-
-						default:
-							return Object.assign({}, state, {
-								data: action.data,
-								status: {
-									isLoading: false,
-									success: true,
-									errors: null
-								}
-							});
-					}
-					break;
-
-				case false:
-					return Object.assign({}, state, {
-						data: [],
-						status: {
-							isLoading: false,
-							success: false,
-							errors: action.errors
-						}
-					});
+			case types.DEVICE_RECEIVED_SESSION:
+				switch (action.success) {
+					
+					case true:
+						var updated = updateOrAppendToSession(state.data, action.data, action.id);
+						return Object.assign({}, state, {
+							status: {
+								isLoading: false,
+								success: true,
+								errors: null
+							},
+							data: updated
+						});
+					
+					case false:
+						return Object.assign({}, state, {
+							status: {
+								isLoading: false,
+								success: false,
+								errors: action.errors
+							},
+						});
 				}
 				break;
-						
-			case types.DEVICE_SET_TIME:
+
+			case types.DEVICE_REQUESTED_SESSIONS:
 				return Object.assign({}, state, {
-					time: Object.assign({}, state.time, action.time)
+					status: {
+						isLoading: true
+					}
+				});
+			
+			case types.DEVICE_RECEIVED_SESSIONS:
+				switch (action.success) {
+					
+					case true:
+						return Object.assign({}, state, {
+							status: {
+								isLoading: false,
+								success: true,
+								errors: null
+							},
+							data: action.data
+						});
+					
+					case false:
+						return Object.assign({}, state, {
+							status: {
+								isLoading: false,
+								success: false,
+								errors: action.errors
+							},
+						});
+				}
+				break;
+
+			case types.DEVICE_LAST_SESSION_REQUESTED:
+				return Object.assign({}, state, {
+					lastSession: action.id
 				});
 
-			case types.DEVICE_SET_ACTIVE:
-				return Object.assign({}, state, {
-					activeDevice: action.deviceKey
-				});
-
-			case types.DEVICE_SET_FILTER:
+			case types.DEVICE_SET_SESSION_FILTER:
 				return Object.assign({}, state, {
 					filter: action.filter
 				});
-			
+
 		default:
 			return state;
 	}
 };
 
-module.exports = deviceSessions;
+module.exports = sessions;
 

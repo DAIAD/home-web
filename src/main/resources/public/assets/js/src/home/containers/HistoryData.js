@@ -1,3 +1,4 @@
+var React = require('react');
 var connect = require('react-redux').connect;
 
 var DeviceActions = require('../actions/DeviceActions');
@@ -5,6 +6,7 @@ var History = require('../components/sections/History');
 
 var getAvailableDevices = require('../utils/device').getAvailableDevices;
 var getAvailableDeviceKeys = require('../utils/device').getAvailableDeviceKeys;
+var getDefaultDevice = require('../utils/device').getDefaultDevice;
 
 var getCount = function(metrics) {
 	return metrics.count?metrics.count:1;
@@ -44,39 +46,53 @@ var getFilteredData = function(data, filter) {
 	return filteredData.map(x => [new Date(x[0]),x[1]]);
 };
 
+var HistoryData = React.createClass({
+	componentWillMount: function() {
+		this.props.querySessions(this.props.activeDevice, this.props.time);
+		this.props.fetchSessionsIfNeeded(this.props.activeDevice, this.props.time);
+	},
+	render: function() {
+		return (
+			<History {...this.props} />
+		);
+	}
+});
+
 function mapStateToProps(state, ownProps) {
 	return {
-		time: state.device.time,
-		filter: state.device.sessions.filter,
+		time: state.device.query.time,
+		filter: state.device.query.filter,
 		devices: getAvailableDevices(state.user.profile.devices),
-		activeDevice: state.device.sessions.activeDevice,
-		listData: state.device.sessions.showers,
-		chartData: getFilteredData(state.device.sessions.data, state.device.sessions.filter),
-		//sessionData: state.device.activeSession?getSessionById(state.device.data, state.device.activeSession):{},
-		loading: state.device.sessions.status.isLoading
+		activeDevice: state.device.query.activeDevice,
+		listData: state.device.sessions.data,
+		chartData: getFilteredData(state.device.query.data, state.device.query.filter),
+		loading: state.device.query.status.isLoading
 		};
 }
 
 function mapDispatchToProps(dispatch) {
 	return {
-		setFilter: function(filter) {
-			dispatch(DeviceActions.setFilter(filter));
+		setQueryFilter: function(filter) {
+			dispatch(DeviceActions.setQueryFilter(filter));
 		},
 		setTime: function(time) {
 			dispatch(DeviceActions.setTime(time));
 		},
-		searchSessions: function() {
-			dispatch(DeviceActions.searchSessions());
+		querySessions: function(deviceKey, time) {
+			dispatch(DeviceActions.querySessions(deviceKey, time));
+		},
+		fetchSessionsIfNeeded: function(deviceKey, time) {
+			dispatch(DeviceActions.fetchSessionsIfNeeded(deviceKey, time));
 		},
 		setActive: function(deviceKey) {
 			dispatch(DeviceActions.setActiveDevice(deviceKey));
 		},
-		fetchSession: function(sessionId) {
-			dispatch(DeviceActions.fetchSession(sessionId));
+		fetchSession: function(sessionId, deviceKey, time) {
+			dispatch(DeviceActions.fetchSession(sessionId, deviceKey, time));
 		}
 	};
 }
 
 
-var HistoryData = connect(mapStateToProps, mapDispatchToProps)(History);
+HistoryData = connect(mapStateToProps, mapDispatchToProps)(HistoryData);
 module.exports = HistoryData;

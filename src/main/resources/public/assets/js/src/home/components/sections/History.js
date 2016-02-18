@@ -14,19 +14,12 @@ var DeviceActions = require('../../actions/DeviceActions');
 var getDefaultDevice = require('../../utils/device').getDefaultDevice;
 var getDeviceByKey = require('../../utils/device').getDeviceByKey;
 
+var timeUtil = require('../../utils/time');
+
 var History = React.createClass({
-	componentWillMount: function() {
-		if (this.props.activeDevice){
-			this.props.searchSessions();
-		}
-	},
-	componentWillReceiveProps: function(nextProps) {
-		if (!this.props.activeDevice && nextProps.activeDevice){
-			this.props.searchSessions();
-		}
-	},
+	
 	handleTypeSelect: function(key){
-		this.props.setFilter(key);	
+		this.props.setQueryFilter(key);	
 	},
 	handleTimeSelect: function(key){
 		var time = {};
@@ -36,44 +29,33 @@ var History = React.createClass({
 				endDate: new Date().getTime(),
 				granularity: 0
 			};
-
 		}
 		else if (key==="year"){
-			time = {
-				startDate: new Date("2014-01-01T22:00:00").getTime(),
-				endDate: new Date().getTime(),
-				granularity: 4
-			};
+			time = timeUtil.thisYear();
+			time.granularity = 4;
 		}
 		else if (key==="month"){
-			time = {
-				startDate: new Date("2014-01-01T22:00:00").getTime(),
-				endDate: new Date().getTime(),
-				granularity: 3
-			};
+			time = timeUtil.thisMonth();
+			time.granularity = 3;
 		}
 		else if (key==="week"){
-			time = {
-				startDate: new Date("2014-01-01T22:00:00").getTime(),
-				endDate: new Date().getTime(),
-				granularity: 2
-			};
+			time = timeUtil.thisWeek();
+			time.granularity = 2;
 		}
 		else if (key==="day"){
-			time = {
-				startDate: new Date("2014-01-01T22:00:00").getTime(),
-				endDate: new Date().getTime(),
-				granularity: 1
-			};
+			time = timeUtil.today();
+			time.granularity = 1;
 		}
 		else{
 			return;
 		}
 		this.props.setTime(time);
+		this.props.querySessions(this.props.activeDevice, time);
 
 	},
 	handleDeviceChange: function(e, value) {
 		this.props.setActive(value);
+		this.props.querySessions(value, this.props.query.time);
 	},
 	render: function() {
 		const activeDevice = this.props.activeDevice;

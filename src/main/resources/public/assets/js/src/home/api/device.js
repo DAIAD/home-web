@@ -1,11 +1,14 @@
 var callAPI = require('./base');
 
 var DeviceAPI = {
-	searchSessions: function(data, cb, fl) {
-		return callAPI('/action/device/session/query', data, cb, fl);
+	querySessions: function(data) {
+		return callAPI('/action/device/session/query', data);
 	},
-	getSession: function(data, cb, fl) {
-		return callAPI('/action/device/session', data, cb, fl);
+	queryMeasurements: function(data) {
+		return callAPI('/action/device/measurement/query', data);
+	},
+	getSession: function(data) {
+		return callAPI('/action/device/session', data);
 	}
 };
 
