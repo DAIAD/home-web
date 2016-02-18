@@ -1,19 +1,8 @@
-var keyMirror = require('keymirror');
 
-var constants = keyMirror({
-	USER_LOGIN : null,
-	USER_LOGOUT : null,
-	LOCALE_CHANGE : null,
-	PROFILE_REFRESH : null,
-	PROFILE_UPDATE: null,
-
-});
-constants.STATIC = "/assets/artwork/";
-
-constants.data = {
-	user: {
-			name: 'userakos',
-		},
+const constants = {
+	STATIC : "/assets/artwork/",
+	LOCALES: ["en", "el", "de", "es"],
+	data : {
 		notifications: [{
 				id: "Not1",
 				type: "alert",
@@ -45,6 +34,7 @@ constants.data = {
 				description: "Please stop ignoring us"
 			},
 		]
-	};
+	}
+};
 module.exports = constants;
 

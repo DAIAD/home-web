@@ -1,42 +1,35 @@
 // Dependencies
 var React = require('react');
-
 var injectIntl = require('react-intl').injectIntl;
 
-var IntlMixin = require('react-intl').IntlMixin;
-
-// Stores
-var LocaleStore = require('../stores/LocaleStore');
-
 // Actions
-var HomeActions = require('../actions/HomeActions');
+var LocaleActions = require('../actions/LocaleActions');
 
+var LOCALES = require('../constants/HomeConstants').LOCALES;
 
 // Components
 var bs = require('react-bootstrap');
-
 var Link = require('react-router').Link;
 
-/* Locale switcher */
+
 var LocaleSwitcher = React.createClass({
-	//mixins: [IntlMixin],
 
 	handleChange: function(e, value) {
-		HomeActions.setLocale(value);
-
+		this.props.onLocaleSwitch(value);
 	},
 	render: function() {
+		var locale = this.props.locale;
 		var _t = this.props.intl.formatMessage;
-		var translationKey = 'locale.' + LocaleStore.getLocale();
+		var translationKey = 'locale.' + locale;
 		return (
 			<div className="language-switcher">
 				<bs.DropdownButton
 					title={_t({ id: translationKey})}
 					id="language-switcher"
-					defaultValue={LocaleStore.getLocale()}
+					defaultValue={locale}
 					onSelect={this.handleChange}>
 					{
-						LocaleStore.getLocales().map(function(locale) {
+						LOCALES.map(function(locale) {
 							var translationKey = 'locale.' + locale;
 							return (
 								<bs.MenuItem key={locale} eventKey={locale} value={locale} >{_t({ id: translationKey})}</bs.MenuItem>
@@ -49,4 +42,5 @@ var LocaleSwitcher = React.createClass({
 	}
 });
 
-module.exports = injectIntl(LocaleSwitcher);
+LocaleSwitcher = injectIntl(LocaleSwitcher);
+module.exports = LocaleSwitcher;

@@ -9,7 +9,6 @@ var FormattedMessage = require('react-intl').FormattedMessage;
 var bs = require('react-bootstrap');
 var Link = require('react-router').Link;
 
-var UserStore = require('../stores/UserStore');
 
 /* DAIAD Logo */
 
@@ -27,12 +26,7 @@ var MainLogo = React.createClass({
 /* Main Menu */
 
 var MenuItem = React.createClass({
-	handleClick: function() {
-		//this.props.onMenuClick(this.props.item.name);
-	},
 	render: function() {
-		//var selected = this.props.sectionShown === this.props.item.name ? " selected":"";
-		//<a className="menu-item" href={this.props.item.link} onClick={this.handleClick} >
 		return (
 			<li>
 				<Link to={this.props.item.route} className="menu-item" activeClassName="selected">
@@ -48,19 +42,19 @@ var MainMenu = React.createClass({
 	render: function() {
 		var items = [{
 									name: "dashboard",
-									title: "Section.Dashboard",
+									title: "section.dashboard",
 									image: "Icons/SVG/dashboard.svg",
 									route:"/dashboard"
 								},
 								{
 									name: "history",
-									title: "Section.History",
+									title: "section.history",
 									image: "Icons/SVG/stats.svg",
 									route:"/history"
 								},
 								{
 									name: "commons",
-									title: "Section.Commons",
+									title: "section.commons",
 									image: "Icons/SVG/goals.svg",
 									route:"/commons"
 								}];
@@ -86,44 +80,28 @@ var MainMenu = React.createClass({
 /* User options */
 
 var UserInfo = React.createClass({
-	getInitialState: function() {
-		return this._getFirstName();
-	},
-	componentDidMount: function() {
-		UserStore.addProfileUpdateListener(this._onUpdate);
-	},
-	componentWillUnmount: function() {
-		UserStore.removeProfileUpdateListener(this._onUpdate);
-	},
 	render: function() {
+		var _t = this.props.intl.formatMessage;
 		return (
 			<div className="user-menu" >
-					<div title="home.profile">
+					<div title={_t({id: "section.profile"})}>
 					<Link to="settings/profile">
-						<span>{this.state.firstname}</span>
+						<span>{this.props.firstname}</span>
 					</Link>
 				</div>
 			</div>
 		);
 	},
-	_onUpdate: function() {
-		if (this.state.firstname !== this._getFirstName().firstname){
-			this.setState(this._getFirstName());
-		}
-	},
-	_getFirstName: function() {
-		return {
-			firstname: UserStore.getProfile().firstname 
-		};
-	}
+
 });
 
 /* Notification Area */
 
 var SettingsMenuItem = React.createClass({
 	render: function() {
+		var _t = this.props.intl.formatMessage;
 		return (
-			<div title={this.props.item.title}>
+			<div title={_t({id: this.props.item.title})}>
 				<Link to="/settings"> 
 					<img src={Constants.STATIC + this.props.item.image} />
 				</Link>
@@ -137,20 +115,22 @@ var NotificationMenuItem = React.createClass({
 	render: function() {
 		var hasUnread = this.props.unreadNotifications>0?"hasUnread":"";
 		var unreadNotifications = hasUnread?this.props.unreadNotifications:"";
+		var _t = this.props.intl.formatMessage;
 		return (
 			<bs.OverlayTrigger 
 				id="notifications-trigger"
 				trigger="click"
+				title={_t({id: this.props.item.title})}
 				rootClose
 				placement="bottom"
 				overlay={<bs.Popover 
 					id="notifications-popover"
-					title="Notifications" >
+					title={_t({id: this.props.item.title})} >
 					<div className="scrollable">
 						<NotificationList notifications={this.props.notifications} />
 					</div>
 					<div className="footer">
-						<Link className="notifications-show-all" to="/notifications">Show all</Link>
+						<Link className="notifications-show-all" to="/notifications">{_t({id:"notifications.showAll"})}</Link>
 					</div>
 				</bs.Popover>}
 				className="notifications-button" >
@@ -197,9 +177,11 @@ var NotificationArea = React.createClass({
 		return (
 			<div className="notification-area">
 				<div className="notifications notification-item">
-					<NotificationMenuItem item={{
+					<NotificationMenuItem 
+						intl={this.props.intl}
+						item={{
 											name: "notifications",
-											title: "home.notifications",
+											title: "section.notifications",
 											image: "Icons/SVG/info.svg",
 											link: "#"
 											}}
@@ -208,17 +190,16 @@ var NotificationArea = React.createClass({
 					/>
 				</div>
 				<div className="settings notification-item">
-					<SettingsMenuItem item={{
+					<SettingsMenuItem 
+						intl={this.props.intl}
+						item={{
 											name: "settings",
-											title: "home.settings",
+											title: "section.settings",
 											image: "Icons/SVG/settings.svg",
 											link: "#settings"
 											}}
 					/>
 				</div>
-				
-				{//<NotificationList items={this.props.notifications} shown={this.state.notificationsShown} />
-				}
 			</div>	
 		);
 	}
@@ -226,15 +207,11 @@ var NotificationArea = React.createClass({
 
 
 var Header = React.createClass({
-	contextTypes: {
-		//profile: React.PropTypes.object,
-		isAuthenticated: React.PropTypes.bool
-	},
 	render: function() {
 		return (
 			<header className="site-header">
 					{(() => {
-						if (this.context.isAuthenticated) {
+						if (this.props.isAuthenticated) {
 							return (
 								<div className="container">
 									<div className="header-left">
@@ -242,12 +219,23 @@ var Header = React.createClass({
 										<MainMenu />
 									</div>
 									<div className="header-right">
-										<NotificationArea notifications={this.props.data.notifications} />
-										<UserInfo />
-										<LoginForm 	className="navbar logout"
+										<NotificationArea
+											intl={this.props.intl}
+											notifications={this.props.data.notifications} />
+										<UserInfo
+											intl={this.props.intl}
+											firstname={this.props.firstname}
+											/>
+										<LoginForm 
+											isAuthenticated={this.props.isAuthenticated}
+											onLogout={this.props.onLogout}
+											className="navbar logout"
 											action="logout"
-											isAuthenticated = { this.context.isAuthenticated } />
-										<LocaleSwitcher />	
+											 />
+										 <LocaleSwitcher
+											 onLocaleSwitch={this.props.onLocaleSwitch}
+											 locale={this.props.locale}
+											 />	
 									</div>
 								</div>
 								);
@@ -259,7 +247,11 @@ var Header = React.createClass({
 										<MainLogo />
 									</div>
 									<div className="pull-right">
-										<LocaleSwitcher />	
+										<LocaleSwitcher
+											 onLocaleSwitch={this.props.onLocaleSwitch}
+											 locale={this.props.locale}
+											 />	
+
 									</div>
 								</div>
 								);
@@ -271,6 +263,10 @@ var Header = React.createClass({
 	}
 });
 
-Header.NotificationList = NotificationList;
 
+
+
+Header = injectIntl(Header);
+Header.NotificationList = NotificationList;
 module.exports = Header;
+
