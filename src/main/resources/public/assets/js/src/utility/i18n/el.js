@@ -28,5 +28,31 @@
 	    "Settings": "Ρυθμίσεις",
 	    "Reporting": "Αναφορές",
 	    "Export": "Εξαγωγή Δεδομένων"
+	},
+	"Demographics" : {
+		"Group" : "Ομάδες Καταναλωτών"
+	},
+	"Settings" : {
+		"User" : "Επιλογές Χρήστη",
+		"System" : "Ρυθμίσεις Συστήματος"
+	},
+	"Table" : {
+		"Group" : {
+			"id": "Κωδικός",
+			"name": "Περιγραφή",
+			"size": "# Μελών",
+			"createdOn": "Ημερομηνία δημιουργίας"
+		}
+	},
+	"Counter" : {
+		"Users" : "Χρήστες",
+		"Meters" : "Μετρητές",
+		"Devices" : "Συσκευές  Amphiro"
+	},
+	"Error": {
+		"400" : "Bad request",
+		"403" : "Forbidden",
+		"404" : "Not found",
+		"500" : "Internal server error"
 	}
 }

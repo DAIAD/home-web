@@ -6,23 +6,6 @@ body {
 	padding: 0px !important;
 }
 
-/* React BootStrap Tabs */
-.nav-tabs>li>a {
-	border-radius: 0px;
-}
-
-.nav-tabs>li>a:hover {
-	border-color: transparent;
-	border-top-color: #337ab7;
-	border-bottom-color: #ddd;
-	background: #fff;
-}
-
-.nav-tabs>li>a:focus {
-	outline: none;
-	border-top-color: #337ab7;
-}
-
 /* React Components */
 .mixin {
 	width: 100%;

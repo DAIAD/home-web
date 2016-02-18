@@ -6,6 +6,8 @@ public class AmphiroDeviceRegistration extends DeviceRegistration {
 
 	private String macAddress;
 
+	private String aesKey;
+
 	public String getName() {
 		return name;
 	}
@@ -25,6 +27,14 @@ public class AmphiroDeviceRegistration extends DeviceRegistration {
 	@Override
 	public EnumDeviceType getType() {
 		return EnumDeviceType.AMPHIRO;
+	}
+
+	public String getAesKey() {
+		return aesKey;
+	}
+
+	public void setAesKey(String aesKey) {
+		this.aesKey = aesKey;
 	}
 
 }

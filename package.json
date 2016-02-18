@@ -16,29 +16,23 @@
     "jquery": "~2.2.0",
     "keymirror": "~0.1.1",
     "leaflet": "^0.7.7",
-    "leaflet.heat": "^0.2.0",
+    "leaflet.heat": "~0.2.0",
     "lodash": "~4.0.1",
     "object-assign": "~4.0.1",
     "react": "~0.14.6",
     "react-bootstrap": "^0.28.2",
     "react-dom": "~0.14.6",
     "react-intl": "^2.0.0-beta-2",
-    "react-redux": "^4.4.0",
-    "react-router": "^1.0.3",
-    "redux": "^3.3.1",
-    "redux-thunk": "^1.0.3"
-  },
-  "browserify": {
-    "transform": [
-      [
-        "reactify",
-        {
-          "es6": true
-        }
-      ]
-    ],
-    "insertGlobals": true,
-    "debug": true
+    "clone": "~1.0.2",
+    "redux": "~3.3.1",
+    "react-redux": "~4.4.0",
+    "react-router": "~2.0.0",
+    "react-router-redux": "~3.0.0",
+    "react-router-bootstrap": "~0.20.1",
+    "redux-thunk": "~1.0.3",
+    "history": "~2.0.0",
+    "es6-promise": "~3.0.2",
+    "react-scroll-up": "~1.1.2"
   },
   "scripts": {
     "build": "grunt build",
@@ -62,6 +56,7 @@
     "grunt-cli": "~0.1.13",
     "grunt-contrib-clean": "~0.7.0",
     "grunt-contrib-copy": "~0.8.2",
+    "grunt-contrib-concat": "~0.5.1",
     "grunt-contrib-jshint": "~0.11.3",
     "grunt-contrib-uglify": "~0.11.0",
     "grunt-contrib-watch": "~0.6.1",
@@ -71,11 +66,14 @@
     "jshint-stylish": "~2.1.0",
     "react-tools": "~0.13.3",
     "reactify": "~1.1.1",
-    "watchify": "~3.7.0"
+    "watchify": "~3.7.0",
+    "redux-devtools": "~3.1.1",
+    "babel-preset-stage-2": "~6.5.0"
   },
   "babelify": {
     "presets": [
       "es2015",
+      "stage-2",
       "react"
     ],
     "plugins": [
