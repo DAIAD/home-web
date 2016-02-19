@@ -76,7 +76,19 @@ var DeviceActions = {
 				});
 		};
 	},
-	
+	querySessionsIfEmpty: function(deviceKey, time) {
+		return function(dispatch, getState) {
+			//just check if empty
+			if (getState().device.query.data.length) {
+				return new Promise(function(resolve){
+					resolve();
+				});
+			}
+			else {
+				return dispatch(DeviceActions.querySessions(deviceKey, time));
+			}
+		};
+	},
 	fetchSessions: function(deviceKey, time) {
 		return function(dispatch, getState) {
 
@@ -96,7 +108,7 @@ var DeviceActions = {
 		return function(dispatch, getState) {
 			//no real check for new sessions
 			//should implement sth
-			if (getState().device.sessions.data.length) {
+			if (getState().device.sessions.data.length>1) {
 				return new Promise(function(resolve){
 					resolve();
 				});

@@ -55,9 +55,10 @@ function mapDispatchToProps(dispatch) {
 
 		initDashboard: function(deviceKey, time) {
 			
-			dispatch(DeviceActions.fetchSessionsIfNeeded(deviceKey, Object.assign({}, time, {granularity:0}))).then(function() { 
-				dispatch(DeviceActions.fetchLastSession(deviceKey, Object.assign({}, time, {granularity:0})));
-			},
+			dispatch(DeviceActions.fetchSessionsIfNeeded(deviceKey, Object.assign({}, time, {granularity:0}))).then(
+				function() { 
+					dispatch(DeviceActions.fetchLastSession(deviceKey, Object.assign({}, time, {granularity:0})));
+				},
 				function(error) {
 					console.log('failed'); 
 					console.log(error);

@@ -48,7 +48,7 @@ var getFilteredData = function(data, filter) {
 
 var HistoryData = React.createClass({
 	componentWillMount: function() {
-		this.props.querySessions(this.props.activeDevice, this.props.time);
+		this.props.querySessionsIfEmpty(this.props.activeDevice, this.props.time);
 		this.props.fetchSessionsIfNeeded(this.props.activeDevice, this.props.time);
 	},
 	render: function() {
@@ -80,6 +80,9 @@ function mapDispatchToProps(dispatch) {
 		},
 		querySessions: function(deviceKey, time) {
 			dispatch(DeviceActions.querySessions(deviceKey, time));
+		},
+		querySessionsIfEmpty: function(deviceKey, time) {
+			dispatch(DeviceActions.querySessionsIfEmpty(deviceKey, time));
 		},
 		fetchSessionsIfNeeded: function(deviceKey, time) {
 			dispatch(DeviceActions.fetchSessionsIfNeeded(deviceKey, time));
