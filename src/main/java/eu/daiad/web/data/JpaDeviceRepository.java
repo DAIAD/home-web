@@ -450,16 +450,14 @@ public class JpaDeviceRepository implements IDeviceRepository {
 				throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey);
 			}
 
-			for (eu.daiad.web.domain.Device c : result) {
-				switch (c.getType()) {
-				case AMPHIRO:
-						this.entityManager.remove(c);
-					break;
-				case METER:
-						this.entityManager.remove(c);
+			for (eu.daiad.web.domain.Device d : result) {
+				switch (d.getType()) {
+				case AMPHIRO: case METER:
+						d.getAccount().getDevices().remove(d);
+						this.entityManager.remove(d);
 					break;
 				default:
-					throw new ApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type", c.getType());
+					throw new ApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type", d.getType());
 				}
 			}
 		} catch (Exception ex) {
