@@ -74,6 +74,8 @@ DROP TABLE IF EXISTS public.device_meter;
 
 DROP TABLE IF EXISTS public.device_amphiro_config;
 
+DROP TABLE IF EXISTS public.device_amphiro_config_default;
+
 DROP SEQUENCE IF EXISTS public.device_amphiro_config_id_seq;
 
 DROP TABLE IF EXISTS public.device_amphiro_permission;

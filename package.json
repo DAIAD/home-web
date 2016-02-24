@@ -11,7 +11,7 @@
     "echarts": "^3.0.2",
     "events": "~1.1.0",
     "flux": "~2.1.1",
-    "jquery": "~2.2.0",
+    "jquery": "^1.11.3",
     "keymirror": "~0.1.1",
     "leaflet": "^0.7.7",
     "leaflet.heat": "~0.2.0",
@@ -30,10 +30,16 @@
     "redux-thunk": "~1.0.3",
     "history": "~2.0.0",
     "es6-promise": "~3.0.2",
-    "react-scroll-up": "~1.1.2"
+    "react-scroll-up": "~1.1.2",
+    "leaflet-draw": "~0.2.3",
+    "react-select": "~1.0.0-beta9",
+    "moment": "~2.11.2",
+    "react-bootstrap-daterangepicker": "~1.0.6",
+    "react-bootstrap-datetimepicker": "0.0.22"
   },
   "scripts": {
-    "build": "grunt build"
+    "build": "NODE_ENV=production grunt build",
+    "develop": "NODE_ENV=development grunt develop"
   },
   "devDependencies": {
     "babel": "~6.3.26",

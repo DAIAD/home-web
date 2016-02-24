@@ -6,6 +6,10 @@
 		"de":"Γερμανικά"
 	},
 	"LoginForm" : {
+		"title": "Σύνδεση στο DAIAD@Utility",
+		"password": {
+			"reset": "Ξεχάσατε τον κωδικό σας;"
+		},
 		"login" : {
 			"failure" : "Ο λογαριασμός ή/και ο κωδικός πρόσβασης είναι λάθος. Η σύνδεση απέτυχε."
 		},
@@ -14,7 +18,7 @@
 			"signout": "Έξοδος"
 		},
 		"placehoder": {
-			"username":"Όνομα χρήστη",
+			"username":"Διεύθυνση ηλ. ταχ.",
 			"password":"Κωδικός πρόσβασης"
 		}
 	},
@@ -24,10 +28,12 @@
 	    "Forecasting": "Πρόβλεψη",
 	    "Demographics": "Δημογραφικά",
 	    "Search": "Αναζήτηση",
-	    "Alerts_Notifications": "Ειδοποιήσεις",
+	    "Messages": "Μηνύματα",
 	    "Settings": "Ρυθμίσεις",
 	    "Reporting": "Αναφορές",
-	    "Export": "Εξαγωγή Δεδομένων"
+	    "Alerts": "Ειδοποιήσεις",
+	    "Announcements" : "Ανακοινώσεις",
+	    "Scheduler": "Διαχείριση Εργασιών"
 	},
 	"Demographics" : {
 		"Group" : "Ομάδες Καταναλωτών"
@@ -42,6 +48,11 @@
 			"name": "Περιγραφή",
 			"size": "# Μελών",
 			"createdOn": "Ημερομηνία δημιουργίας"
+		},
+		"Alert": {
+			"text" :"Description",
+			"createdOn": "Creation Date",
+			"acknowledged" : "Is Acknowledged"
 		}
 	},
 	"Counter" : {
@@ -51,7 +62,7 @@
 	},
 	"Error": {
 		"400" : "Bad request",
-		"403" : "Forbidden",
+		"403" : "Η πιστοποίηση απέτυχε",
 		"404" : "Not found",
 		"500" : "Internal server error"
 	}

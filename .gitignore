@@ -25,3 +25,5 @@ jspm_packages
 
 src/main/resources/log4j.properties
 src/main/resources/config/*.properties
+
+src/main/resources/public/assets/images/demo

@@ -1,7 +1,7 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
 var Bootstrap = require('react-bootstrap');
-
+var { Link } = require('react-router');
 var Breadcrumb = require('../Breadcrumb');
 var Counter = require('../Counter');
 var Message = require('../Message');
@@ -25,11 +25,9 @@ var Dashboard = React.createClass({
   	},
 	
   	render: function() {
-  		var _t = this.context.intl.formatMessage;
-
   		var chartData = {
 		    series: [{
-		        legend: 'Daily Consumption',
+		        legend: 'Smart Meter',
 		        xAxis: 'date',
 		        yAxis: 'volume',
 		        data: [{
@@ -87,6 +85,65 @@ var Dashboard = React.createClass({
 		            date: new Date(2016, 1, 9),
 		            geometry: { }
 		        }]
+		    }, {
+		        legend: 'Amphiro',
+		        xAxis: 'date',
+		        yAxis: 'volume',
+		        data: [{
+		            id: 1,
+		            name: 'Sales',
+		            volume: 15,
+		            date: new Date(2016, 1, 1),
+		            geometry: { }
+		        }, {
+		            id: 1,
+		            name: 'Sales',
+		            volume: 30,
+		            date: new Date(2016, 1, 2),
+		            geometry: { } 
+		        }, {
+		            id: 1,
+		            name: 'Sales',
+		            volume: 44,
+		            date: new Date(2016, 1, 3),
+		            geometry: { }
+		        }, {
+		            id: 1,
+		            name: 'Sales',
+		            volume: 32,
+		            date: new Date(2016, 1, 4),
+		            geometry: { }
+		        }, {
+		            id: 1,
+		            name: 'Sales',
+		            volume: 23,
+		            date: new Date(2016, 1, 5),
+		            geometry: { }
+		        }, {
+		            id: 1,
+		            name: 'Sales',
+		            volume: 11,
+		            date: new Date(2016, 1, 6),
+		            geometry: { }
+		        }, {
+		            id: 1,
+		            name: 'Sales',
+		            volume: 18,
+		            date: new Date(2016, 1, 7),
+		            geometry: { }
+		        }, {
+		            id: 1,
+		            name: 'Sales',
+		            volume: 11,
+		            date: new Date(2016, 1, 8),
+		            geometry: { }
+		        }, {
+		            id: 1,
+		            name: 'Sales',
+		            volume: 5,
+		            date: new Date(2016, 1, 9),
+		            geometry: { }
+		        }]
 		    }]
 		};
   		
@@ -103,72 +160,78 @@ var Dashboard = React.createClass({
         
 		const chartTitle = (
 			<span>
-				<i className="fa fa-bar-chart fa-fw"></i>
+				<i className='fa fa-bar-chart fa-fw'></i>
 				<span style={{ paddingLeft: 4 }}>Daily Consumption</span>
 				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-					<Bootstrap.Button	bsStyle="default" className="btn-circle">
-						<Bootstrap.Glyphicon glyph="fullscreen" />
+					<Bootstrap.Button bsStyle='default' className='btn-circle'>
+						<i className='fa fa-expand fa-fw'></i>
 					</Bootstrap.Button>
 				</span>
 				<span style={{float: 'right',  marginTop: -3, marginLeft: 5  }}>
-					<Bootstrap.Button	bsStyle="default" className="btn-circle">
-						<Bootstrap.Glyphicon glyph="cog" />
+					<Bootstrap.Button	bsStyle='default' className='btn-circle'>
+						<i className='fa fa-calendar fa-fw'></i>
 					</Bootstrap.Button>
 				</span>
 				<span style={{float: 'right',  marginTop: -3 }}>
-					<Bootstrap.Button	bsStyle="default" className="btn-circle">
-						<Bootstrap.Glyphicon glyph="heart-empty" />
+					<Bootstrap.Button	bsStyle='default' className='btn-circle'>
+						<i className='fa fa-group fa-fw'></i>
 					</Bootstrap.Button>
 				</span>
 			</span>
 		);
 
-		const mapTile = (
+		const mapTitle = (
 			<span>
-				<i className="fa fa-map fa-fw"></i>
+				<i className='fa fa-map fa-fw'></i>
 				<span style={{ paddingLeft: 4 }}>Daily Consumption Heatmap</span>
-				<span style={{float: 'right',  marginTop: -5 }}>
-					<Bootstrap.SplitButton title='Actions' id='map-actions'>
-						<Bootstrap.MenuItem eventKey="1">Action</Bootstrap.MenuItem>
-						<Bootstrap.MenuItem eventKey="2">Another action</Bootstrap.MenuItem>
-						<Bootstrap.MenuItem eventKey="3">Something else here</Bootstrap.MenuItem>
-						<Bootstrap.MenuItem divider />
-						<Bootstrap.MenuItem eventKey="4">Separated link</Bootstrap.MenuItem>
-					</Bootstrap.SplitButton>
-			    </span>
+				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
+					<Bootstrap.Button bsStyle='default' className='btn-circle'>
+						<i className='fa fa-expand fa-fw'></i>
+					</Bootstrap.Button>
+				</span>
 			</span>
 		);
   		return (
-			<div className="container-fluid" style={{ paddingTop: 10 }}>
-				<div className="row">
-					<div className="col-md-12">
+			<div className='container-fluid' style={{ paddingTop: 10 }}>
+				<div className='row'>
+					<div className='col-md-12'>
 						<Breadcrumb routes={this.props.routes}/>
 					</div>
 				</div>
-				<div className="row">
-					<div className="col-md-2">
+				<div className='row'>
+					<div className='col-md-2'>
 						<div style={{ marginBottom: 20 }}>
 							<Counter text={'Counter.Users'} value={198} />
 						</div>
 					</div>
-					<div className="col-md-2">
+					<div className='col-md-2'>
 						<div style={{ marginBottom: 20 }}>
 							<Counter text={'Counter.Meters'} value={75} color='#1abc9c'/>
 						</div>
 					</div>
-					<div className="col-md-2">
+					<div className='col-md-2'>
 						<div style={{ marginBottom: 20 }}>
 							<Counter text={'Counter.Devices'} value={230} color='#27ae60' />
 						</div>
 					</div>
-					<div className="col-md-6">
+					<div className='col-md-2'>
 						<div style={{ marginBottom: 20 }}>
-							<Message text={'Administrator account jkouvar@daiad.eu has been locked. More than three failed login attempts detected.'} color='#c0392b' />
+							<Counter text='Alerts' value={4} color='#c0392b' />
+						</div>
+					</div>
+					<div className='col-md-2'>
+						<div style={{ marginBottom: 20 }}>
+							<Counter text='Warning' value={1} color='#f39c12' />
+						</div>
+					</div>
+					<div className='col-md-2'>
+						<div style={{ marginBottom: 20 }}>
+							<Counter text='Information Messages' value={2} color='#2e8ece' />
 						</div>
 					</div>
 				</div>
-				<div className="row">
-					<div className="col-lg-6">
+				<div className='row'>
+					<div className='col-lg-6'>
 						<Bootstrap.Panel header={chartTitle}>
 							<Bootstrap.ListGroup fill>
 								<Bootstrap.ListGroupItem>
@@ -180,13 +243,13 @@ var Dashboard = React.createClass({
 								</Bootstrap.ListGroupItem>
 								<Bootstrap.ListGroupItem>
 									<span style={{ paddingLeft : 7}}> </span>
-									<a style={{ paddingLeft : 7, float: 'right'}} href='#'>View analytics</a>
+									<Link to='/analytics' style={{ paddingLeft : 7, float: 'right'}}>View analytics</Link>
 								</Bootstrap.ListGroupItem>
 							</Bootstrap.ListGroup>
 						</Bootstrap.Panel>
 					</div>
-					<div className="col-lg-6">
-						<Bootstrap.Panel header={mapTile}>
+					<div className='col-lg-6'>
+						<Bootstrap.Panel header={mapTitle}>
 							<Bootstrap.ListGroup fill>
 								<Bootstrap.ListGroupItem>
 									<LeafletMap style={{ width: '100%', height: 400}} 
@@ -196,39 +259,39 @@ var Dashboard = React.createClass({
 								</Bootstrap.ListGroupItem>
 								<Bootstrap.ListGroupItem>
 									<span style={{ paddingLeft : 7}}> </span>
-									<a style={{ paddingLeft : 7, float: 'right'}} href='#'>View timeline</a>
+									<Link to='/analytics' style={{ paddingLeft : 7, float: 'right'}}>View analytics</Link>
 								</Bootstrap.ListGroupItem>
 							</Bootstrap.ListGroup>
 						</Bootstrap.Panel>
 					</div>
 				</div>
-				<div className="row">
-					<div className="col-lg-6">
-						<Bootstrap.Panel collapsible defaultExpanded header={ (<span><i className="fa fa-bell fa-fw"></i><span style={{ paddingLeft: 4 }}>Notifications / Alerts</span></span>) }>
+				<div className='row'>
+					<div className='col-lg-6'>
+						<Bootstrap.Panel collapsible defaultExpanded header={ (<span><i className='fa fa-bell fa-fw'></i><span style={{ paddingLeft: 4 }}>Alerts / Announcements</span></span>) }>
 							<Bootstrap.ListGroup fill>
 								<Bootstrap.ListGroupItem>
-									<i className="fa fa-comments fa-fw"></i>
-									<span style={{ paddingLeft : 7}}>New Comment</span>
-									<span className="pull-right text-muted small"><em>4 minutes ago</em></span>
+									<i className='fa fa-volume-up fa-fw'></i>
+									<span style={{ paddingLeft : 7}}>New water tariff policy</span>
+									<span className='pull-right text-muted small'><em>4 minutes ago</em></span>
 								</Bootstrap.ListGroupItem>
 								<Bootstrap.ListGroupItem>
-									<i className="fa fa-cogs fa-fw"></i>
-									<span style={{ paddingLeft : 7}}>New Task</span>
-									<span className="pull-right text-muted small"><em>12 minutes ago</em></span>
+									<i className='fa fa-cogs fa-fw'></i>
+									<span style={{ paddingLeft : 7}}>Job 'Daily pre aggregation MR job' has started</span>
+									<span className='pull-right text-muted small'><em>12 minutes ago</em></span>
 								</Bootstrap.ListGroupItem>
 								<Bootstrap.ListGroupItem>
-									<i className="fa fa-envelope fa-fw"></i>
-									<span style={{ paddingLeft : 7}}>Message Sent</span>
-	                                <span className="pull-right text-muted small"><em>27 minutes ago</em></span>
+									<i className='fa fa-warning fa-fw' style={{ color: '#f39c12'}}></i>
+									<span style={{ paddingLeft : 7}}>Excessive water consumption detected</span>
+	                                <span className='pull-right text-muted small'><em>27 minutes ago</em></span>
 								</Bootstrap.ListGroupItem>
 								<Bootstrap.ListGroupItem>
-									<i className="fa fa-exclamation fa-fw" style={{ color: 'red'}}></i>
+									<i className='fa fa-exclamation fa-fw' style={{ color: '#c0392b'}}></i>
 									<span style={{ paddingLeft : 7}}>Server master-c1-n01 has gone offline</span>
-									<span className="pull-right text-muted small"><em>1 hour ago</em></span>
+									<span className='pull-right text-muted small'><em>1 hour ago</em></span>
 								</Bootstrap.ListGroupItem>
 								<Bootstrap.ListGroupItem>
 									<span style={{ paddingLeft : 7}}> </span>
-									<a style={{ paddingLeft : 7, float: 'right'}} href='#'>View all alerts</a>
+									<Link to='/alerts' style={{ paddingLeft : 7, float: 'right'}}>View all alerts</Link>
 								</Bootstrap.ListGroupItem>
 							</Bootstrap.ListGroup>
 						</Bootstrap.Panel>

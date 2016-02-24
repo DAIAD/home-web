@@ -2,6 +2,7 @@ var types = require('../constants/ActionTypes');
 
 var initialState = {
 	isAuthenticated : false,
+	isLoading: false,
 	profile : null,
 	errors : null
 };
@@ -9,7 +10,9 @@ var initialState = {
 var session = function(state, action) {
 	switch (action.type) {
 	case types.USER_REQUESTED_LOGIN:
-		return Object.assign({}, state);
+		return Object.assign({}, state, {
+			isLoading: true
+		});
 
 	case types.USER_RECEIVED_LOGIN:
 		switch (action.status) {
@@ -17,20 +20,24 @@ var session = function(state, action) {
 			return Object.assign({}, state, {
 				isAuthenticated : true,
 				profile : action.profile,
-				errors : null
+				errors : null,
+				isLoading: false
 			});
 
 		case false:
 			return Object.assign({}, state, {
 				isAuthenticated : false,
 				profile : null,
-				errors : action.errors
+				errors : action.errors,
+				isLoading: false
 			});
 		}
 		break;
 
 	case types.USER_REQUESTED_LOGOUT:
-		return Object.assign({}, state);
+		return Object.assign({}, state, {
+			isLoading: true
+		});
 
 	case types.USER_RECEIVED_LOGOUT:
 		switch (action.status) {
@@ -38,14 +45,16 @@ var session = function(state, action) {
 			return Object.assign({}, state, {
 				isAuthenticated : false,
 				profile : null,
-				errors : null
+				errors : null,
+				isLoading: false
 			});
 
 		case false:
 			return Object.assign({}, state, {
 				isAuthenticated : false,
 				profile : null,
-				errors : action.errors
+				errors : action.errors,
+				isLoading: false
 			});
 		}
 		break;

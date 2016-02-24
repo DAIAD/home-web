@@ -55,6 +55,10 @@ var Chart = React.createClass({
 		// Initialize
 		var chartOptions = clone(options);
 		
+		chartOptions.dataZoom = {
+	        show: true,
+	        start : intl.formatDate(new Date(2016,1,1), { day: 'numeric', month: 'long', year: 'numeric'})
+	    };
 		chartOptions.legend = {         
 			data : []
 		};
@@ -79,7 +83,7 @@ var Chart = React.createClass({
     	};
 		
         for(var i=0; i<data.series.length; i++) {
-        	var series = data.series[0];
+        	var series = data.series[i];
 
         	chartOptions.legend.data.push(series.legend);
         	
@@ -98,8 +102,8 @@ var Chart = React.createClass({
         	// Data series configuration
         	chartOptions.series.push({
                 'name': series.legend,
-                'type': 'bar',
-                'data': getValues(series)
+                'type': 'line',
+                'data': getValues(series)                
             });
         }
 
