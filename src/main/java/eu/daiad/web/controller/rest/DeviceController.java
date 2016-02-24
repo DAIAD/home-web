@@ -174,7 +174,7 @@ public class DeviceController extends BaseRestController {
 	}
 	
 	@RequestMapping(value = "/api/v1/device/reset", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse configuration(@RequestBody DeviceResetRequest request) {
+	public RestResponse remove(@RequestBody DeviceResetRequest request) {
 		RestResponse response = new RestResponse();
 
 		try {

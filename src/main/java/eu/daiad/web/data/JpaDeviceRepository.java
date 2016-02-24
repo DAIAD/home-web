@@ -459,9 +459,8 @@ public class JpaDeviceRepository implements IDeviceRepository {
 						this.entityManager.remove(c);
 					break;
 				default:
-					break;
+					throw new ApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type", c.getType());
 				}
-
 			}
 		} catch (Exception ex) {
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
