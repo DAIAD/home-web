@@ -16,11 +16,11 @@ import org.springframework.stereotype.Repository;
 
 import eu.daiad.web.domain.DeviceAmphiro;
 import eu.daiad.web.domain.DeviceAmphiroConfiguration;
+import eu.daiad.web.domain.DeviceAmphiroConfigurationDefault;
 import eu.daiad.web.domain.DeviceProperty;
 import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.device.Device;
-import eu.daiad.web.model.device.DeviceConfiguration;
 import eu.daiad.web.model.device.DeviceConfigurationCollection;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -60,6 +60,36 @@ public class JpaDeviceRepository implements IDeviceRepository {
 			for (KeyValuePair p : properties) {
 				amphiro.getProperties().add(new DeviceProperty(p.getKey(), p.getValue()));
 			}
+
+			TypedQuery<DeviceAmphiroConfigurationDefault> configQuery = entityManager
+							.createQuery("select c from device_amphiro_config_default c where c.id = :id",
+											DeviceAmphiroConfigurationDefault.class).setFirstResult(0).setMaxResults(1);
+			configQuery.setParameter("id", DeviceAmphiroConfigurationDefault.CONFIG_DEFAULT);
+
+			DeviceAmphiroConfigurationDefault defaultConfiguration = configQuery.getSingleResult();
+
+			DeviceAmphiroConfiguration configuration = new DeviceAmphiroConfiguration();
+			configuration.setActive(true);
+			configuration.setBlock(defaultConfiguration.getBlock());
+			configuration.setCreatedOn(new DateTime());
+			configuration.setDevice(amphiro);
+			configuration.setFrameDuration(defaultConfiguration.getFrameDuration());
+			configuration.setNumberOfFrames(defaultConfiguration.getNumberOfFrames());
+			configuration.setTitle(defaultConfiguration.getTitle());
+			configuration.setValue1(defaultConfiguration.getValue1());
+			configuration.setValue2(defaultConfiguration.getValue2());
+			configuration.setValue3(defaultConfiguration.getValue3());
+			configuration.setValue4(defaultConfiguration.getValue4());
+			configuration.setValue5(defaultConfiguration.getValue5());
+			configuration.setValue6(defaultConfiguration.getValue6());
+			configuration.setValue7(defaultConfiguration.getValue7());
+			configuration.setValue8(defaultConfiguration.getValue8());
+			configuration.setValue9(defaultConfiguration.getValue9());
+			configuration.setValue10(defaultConfiguration.getValue10());
+			configuration.setValue11(defaultConfiguration.getValue11());
+			configuration.setValue12(defaultConfiguration.getValue12());
+
+			amphiro.getConfigurations().add(configuration);
 
 			account.getDevices().add(amphiro);
 
@@ -342,6 +372,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 		}
 	}
 
+	@Override
 	public ArrayList<DeviceConfigurationCollection> getConfiguration(UUID userKey, UUID deviceKeys[])
 					throws ApplicationException {
 		ArrayList<DeviceConfigurationCollection> collections = new ArrayList<DeviceConfigurationCollection>();
@@ -368,7 +399,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 				for (DeviceAmphiroConfiguration p : device.getConfigurations()) {
 					if (p.isActive()) {
-						DeviceConfiguration configuration = new DeviceConfiguration();
+						eu.daiad.web.model.device.DeviceAmphiroConfiguration configuration = new eu.daiad.web.model.device.DeviceAmphiroConfiguration();
 
 						configuration.setTitle(p.getTitle());
 						configuration.setCreatedOn(p.getCreatedOn().getMillis());
@@ -403,4 +434,35 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 		return collections;
 	}
+	
+	@Override
+	public void removeDevice(UUID deviceKey) {
+		try {
+			TypedQuery<eu.daiad.web.domain.Device> deviceQuery = entityManager.createQuery(
+							"select d from device d where d.key = :device_key", eu.daiad.web.domain.Device.class)
+							.setFirstResult(0).setMaxResults(1);
+
+			deviceQuery.setParameter("device_key", deviceKey);
+
+			List<eu.daiad.web.domain.Device> result = deviceQuery.getResultList();
+
+			if(result.size()!=1) {
+				throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey);
+			}
+
+			for (eu.daiad.web.domain.Device d : result) {
+				switch (d.getType()) {
+				case AMPHIRO: case METER:
+						d.getAccount().getDevices().remove(d);
+						this.entityManager.remove(d);
+					break;
+				default:
+					throw new ApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type", d.getType());
+				}
+			}
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		}
+	}
+	
 }

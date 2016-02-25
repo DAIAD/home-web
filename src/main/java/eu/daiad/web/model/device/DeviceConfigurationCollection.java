@@ -9,7 +9,7 @@ public class DeviceConfigurationCollection {
 
 	private String macAddress;
 
-	private ArrayList<DeviceConfiguration> configurations = new ArrayList<DeviceConfiguration>();
+	private ArrayList<DeviceAmphiroConfiguration> configurations = new ArrayList<DeviceAmphiroConfiguration>();
 
 	public UUID getKey() {
 		return key;
@@ -27,7 +27,7 @@ public class DeviceConfigurationCollection {
 		this.macAddress = macAddress;
 	}
 
-	public ArrayList<DeviceConfiguration> getConfigurations() {
+	public ArrayList<DeviceAmphiroConfiguration> getConfigurations() {
 		return configurations;
 	}
 }

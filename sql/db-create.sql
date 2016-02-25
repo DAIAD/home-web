@@ -224,6 +224,28 @@ CREATE TABLE device_amphiro_config (
             ON UPDATE CASCADE ON DELETE CASCADE
 );
 
+CREATE TABLE device_amphiro_config_default (
+    id integer NOT NULL,
+	title character varying(100),
+	created_on timestamp without time zone,
+    configuration_block integer,
+    value_1 integer,
+    value_2 integer,
+    value_3 integer,
+    value_4 integer,
+    value_5 integer,
+    value_6 integer,
+    value_7 integer,
+    value_8 integer,
+    value_9 integer,
+    value_10 integer,
+    value_11 integer,
+    value_12 integer,
+    frame_number integer,
+    frame_duration integer,
+    CONSTRAINT pk_device_amphiro_config_default PRIMARY KEY (id)
+);
+
 -- meter
 CREATE TABLE public.device_meter
 (

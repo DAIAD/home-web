@@ -17,6 +17,10 @@ var { setLocale } = require('../actions/LocaleActions');
 
 var Collapsible = require('../components/Collapsible');
 
+var expandMessages = function(e) {
+	this.setState({ expandMessages : !this.state.expandMessages});
+};
+
 var expandSettings = function(e) {
 	this.setState({ expandSettings : !this.state.expandSettings});
 };
@@ -28,6 +32,7 @@ var ContentRoot = React.createClass({
 
 	getInitialState() {
 		return {
+			expandMessages: false,
 			expandSettings: false
 	    };
 	},
@@ -35,7 +40,7 @@ var ContentRoot = React.createClass({
 	render: function() {
 		var content = null;
 		var _t = this.context.intl.formatMessage;
-	
+
 		if(!this.props.isAuthenticated) {
 			content = (
 				<div className='wrapper'>
@@ -52,7 +57,8 @@ var ContentRoot = React.createClass({
 					<div className='login-wrapper'>
 						<LoginForm action='login' 	isAuthenticated = { this.props.isAuthenticated } 
 													errors = {this.props.session.errors}
-													onLogin = {this.props.actions.login} />
+													onLogin = {this.props.actions.login}
+													isLoading = {this.props.session.isLoading}/>
 					</div>
 				</div>
 			);
@@ -66,12 +72,13 @@ var ContentRoot = React.createClass({
 							</a>
 						</div>
 						<div style={{ float: 'right', marginTop: 8, marginLeft: 10, paddingRight: 45}}>
-							<button id="logout"
-				   				type="submit"
-				   				className="btn btn-primary"
-		   						style={{ width: 80, height: 33 }}
+							<button id='logout'
+				   				type='submit'
+				   				className='btn btn-primary'
+		   						style={{ height: 33 }}
 			   					onClick={this.props.actions.logout}>
-				   				<FormattedMessage id="LoginForm.button.signout" />
+								<i className='fa fa-power-off fa-fw'></i>
+				   				<FormattedMessage id='LoginForm.button.signout' />
 				   			</button>
 						</div>
 						<div style={{ float: 'right', marginTop: 8, marginLeft: 10, paddingRight: 15}}>
@@ -82,53 +89,54 @@ var ContentRoot = React.createClass({
 		                    	<ul className='nav' id='side-menu'>
 	                            	<li>
                             			<Link to='/'>
-	                            			<i className="fa fa-dashboard fa-fw"></i>{' ' + _t({ id: 'Section.Dashboard'})}
+	                            			<i className='fa fa-dashboard fa-fw'></i>{' ' + _t({ id: 'Section.Dashboard'})}
                             			</Link>
 	                            	</li>
 	                            	<li>
-		                            	<a href='#'>
-		                            		<i className="fa fa-bar-chart fa-fw"></i>{' ' + _t({ id: 'Section.Analytics'})}
-	                            		</a>
+	                            		<Link to='/analytics'>
+		                            		<i className='fa fa-bar-chart fa-fw'></i>{' ' + _t({ id: 'Section.Analytics'})}
+	                            		</Link>
 	                    			</li>
-	                            	<li>
-	                            		<a href='#'>
-	                            			<i className="fa fa-line-chart fa-fw"></i>{' ' + _t({ id: 'Section.Forecasting'})}
+	                            	<li className='disabled'>
+	                            		<a to='/forecasting'>
+	                            			<i className='fa fa-line-chart fa-fw'></i>{' ' + _t({ id: 'Section.Forecasting'})}
 	                        			</a>
 	                    			</li>
 	                    			<li>
 	                    				<Link to='/demographics'>
-	                    					<i className="fa fa-group fa-fw"></i>{' ' + _t({ id: 'Section.Demographics'})}
+	                    					<i className='fa fa-group fa-fw'></i>{' ' + _t({ id: 'Section.Demographics'})}
 	                					</Link>
 	            					</li>
 	            					<li>
-	            						<a href='#'>
-	            							<i className="fa fa-search fa-fw"></i>{' ' + _t({ id: 'Section.Search'})}
-	            						</a>
+	            						<Link to='/search'>
+	            							<i className='fa fa-search fa-fw'></i>{' ' + _t({ id: 'Section.Search'})}
+	            						</Link>
 	            					</li>
+		            				<li>
+		            					<Link to='/scheduler'>
+		            						<i className='fa fa-clock-o fa-fw'></i>{' ' + _t({ id: 'Section.Scheduler'})}
+		            					</Link>
+		            				</li>
 	            					<li>
-	            						<a href='#'>
-	            							<i className="fa fa-bell fa-fw"></i>{' ' + _t({ id: 'Section.Alerts_Notifications'})} <Bootstrap.Badge className='danger'>4</Bootstrap.Badge>
+	            						<a href='#' onClick={expandMessages.bind(this)}>
+	            							<i className='fa fa-comments-o fa-fw'></i>
+	            							{' ' + _t({ id: 'Section.Messages'}) + ' '}
+	            							<Bootstrap.Badge className='danger'>4</Bootstrap.Badge>
+	            							{ this.state.expandMessages ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)}
 	            						</a>
-	            					</li>
-	            					<li>
-	            						<a href='#' onClick={expandSettings.bind(this)}>
-	            							<i className="fa fa-cogs fa-fw"></i>
-	            							{' ' + _t({ id: 'Section.Settings'})}
-	            							{ this.state.expandSettings ? (<i className="fa fa-caret-up fa-fw"></i>) : (<i className="fa fa-caret-down fa-fw"></i>)} 
-	            						</a>
-	            						<Collapsible open={this.state.expandSettings}>
+	            						<Collapsible open={this.state.expandMessages}>
 	            							<ul className='nav'>
 		                    					<li>
-		                    						<Link to='/settings/user'>
+		                    						<Link to='/alerts'>
 				            							<span  style={{paddingLeft: 18}}>
-				            								<i className="fa fa-user fa-fw"></i>{' ' + _t({ id: 'Settings.User'})}
+				            								<i className='fa fa-bell fa-fw'></i>{' ' + _t({ id: 'Section.Alerts'})}
 			            								</span>
 				            						</Link>
 				            					</li>
 				            					<li>
-				            						<Link to='/settings/system'>
+				            						<Link to='/announcements'>
 				            							<span  style={{paddingLeft: 18}}>
-				            								<i className="fa fa-server fa-fw"></i>{' ' + _t({ id: 'Settings.System'})}
+				            								<i className='fa fa-volume-up fa-fw'></i>{' ' + _t({ id: 'Section.Announcements'})}
 			            								</span>
 				            						</Link>
 				            					</li>
@@ -136,15 +144,35 @@ var ContentRoot = React.createClass({
 	            						</Collapsible>
 	            					</li>
 	            					<li>
-	            						<a href='#'>
-	            							<i className="fa fa-database fa-fw"></i>{' ' + _t({ id: 'Section.Reporting'})}
-	            						</a>
-	            					</li>
-	            					<li>
-	            						<a href='#'>
-	            							<i className="fa fa-download fa-fw"></i>{' ' + _t({ id: 'Section.Export'})}
-	            						</a>
-	            					</li>
+		            					<a href='#' onClick={expandSettings.bind(this)}>
+		            					<i className='fa fa-cogs fa-fw'></i>
+		            					{' ' + _t({ id: 'Section.Settings'})}
+		            					{ this.state.expandSettings ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)} 
+		            				</a>
+		            				<Collapsible open={this.state.expandSettings}>
+		            					<ul className='nav'>
+		            						<li>
+		            							<Link to='/settings/user'>
+		            								<span  style={{paddingLeft: 18}}>
+		            									<i className='fa fa-user fa-fw'></i>{' ' + _t({ id: 'Settings.User'})}
+		            								</span>
+		            							</Link>
+		            						</li>
+		            						<li>
+		            							<Link to='/settings/system'>
+		            								<span  style={{paddingLeft: 18}}>
+		            									<i className='fa fa-server fa-fw'></i>{' ' + _t({ id: 'Settings.System'})}
+		            								</span>
+		            							</Link>
+		            						</li>
+		            					</ul>
+		            				</Collapsible>
+		            				</li>
+		            				<li>
+		            					<Link to='/report'>
+		            						<i className='fa fa-database fa-fw'></i>{' ' + _t({ id: 'Section.Reporting'})}
+		            					</Link>
+		            				</li>
 	                        	</ul>
 	                    	</div>
 	                	</div>
@@ -153,7 +181,9 @@ var ContentRoot = React.createClass({
 						{this.props.children}
 					</div>
 					<ScrollToTop showUnder={160}>
-					<i className="fa fa-arrow-circle-o-up fa-4x fa-fw" style={{ color : '#337ab7'}}></i>
+						<div style={{marginRight: -25}}>
+							<i className='fa fa-arrow-up fa-2x fa-fw' style={{ color : '#337ab7'}}></i>
+						</div>
 					</ScrollToTop>
 				</div>
 			);
@@ -168,7 +198,8 @@ function mapStateToProps(state) {
 	return {
 	    isAuthenticated: state.session.isAuthenticated,
 	    session: {
-	    	errors: state.session.errors
+	    	errors: state.session.errors,
+	    	isLoading: state.session.isLoading
 	    },
 	    routing: state.routing
 	};

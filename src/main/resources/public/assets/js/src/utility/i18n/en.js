@@ -6,6 +6,10 @@
 		"de":"German"
 	},
 	"LoginForm": {
+		"title": "Sign in to DAIAD@Utility",
+		"password": {
+			"reset": "Forgot password?"
+		},
 		"login": {
 			"failure": "Authentication has failed. Please try again."
 		},
@@ -14,7 +18,7 @@
 			"signout": "Sign out"
 		},
 		"placehoder": {
-			"username":"Username",
+			"username":"Email",
 			"password":"Password"
 		}
 	},
@@ -24,10 +28,12 @@
 	    "Forecasting": "Forecasting",
 	    "Demographics": "Demographics",
 	    "Search": "Search",
-	    "Alerts_Notifications": "Alerts / Notifications",
+	    "Messages": "Messages",
 	    "Settings": "Settings",
 	    "Reporting": "Reporting",
-	    "Export": "Export"
+	    "Alerts": "Alerts",
+	    "Announcements" : "Announcements",
+	    "Scheduler": "Job Management"
 	},
 	"Demographics" : {
 		"Group" : "Groups"
@@ -42,6 +48,11 @@
 			"name": "Name",
 			"size": "# of Members",
 			"createdOn": "Creation Date"
+		},
+		"Alert": {
+			"text" :"Description",
+			"createdOn": "Creation Date",
+			"acknowledged" : "Is Acknowledged"
 		}
 	},
 	"Counter" : {
@@ -51,7 +62,7 @@
 	},
 	"Error": {
 		"400" : "Bad request",
-		"403" : "Forbidden",
+		"403" : "Authentication has failed",
 		"404" : "Not found",
 		"500" : "Internal server error"
 	}

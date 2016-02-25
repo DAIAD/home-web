@@ -11,6 +11,8 @@ import eu.daiad.web.model.error.ApplicationException;
 
 public interface IDeviceRepository {
 
+	public abstract void removeDevice(UUID deviceKey);
+	
 	public abstract UUID createAmphiroDevice(UUID userKey, String name, String macAddress, String aesKey,
 					ArrayList<KeyValuePair> properties) throws ApplicationException;
 

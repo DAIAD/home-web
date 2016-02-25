@@ -54,10 +54,7 @@ module.exports = function (grunt) {
 					[
 						"babelify"
 					], [
-						"envify",
-						{
-							"NODE_ENV": "production"
-						}
+						"envify"
 					], [
 						"browserify-shim"
 					]
@@ -182,9 +179,33 @@ module.exports = function (grunt) {
 					filter: 'isFile'
 				}, {
 					expand: true,
+					cwd: 'node_modules/leaflet-draw/dist/',
+					src: ['**/*'],
+					dest: 'src/main/resources/public/assets/lib/leaflet-draw/',
+					filter: 'isFile'
+				}, {
+					expand: true,
 					cwd: 'node_modules/echarts/dist/',
 					src: ['**/*'],
 					dest: 'src/main/resources/public/assets/lib/echarts/',
+					filter: 'isFile'
+				}, {
+					expand: true,
+					cwd: 'node_modules/react-select/dist/',
+					src: ['**/*'],
+					dest: 'src/main/resources/public/assets/lib/react-select/',
+					filter: 'isFile'
+				}, {
+					expand: true,
+					cwd: 'node_modules/react-bootstrap-daterangepicker/css/',
+					src: ['**/*'],
+					dest: 'src/main/resources/public/assets/lib/react-bootstrap-daterangepicker/',
+					filter: 'isFile'
+				}, {
+					expand: true,
+					cwd: 'node_modules/react-bootstrap-datetimepicker/css/',
+					src: ['**/*'],
+					dest: 'src/main/resources/public/assets/lib/react-bootstrap-datetimepicker/',
 					filter: 'isFile'
 				}, {
 					expand: true,

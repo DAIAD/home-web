@@ -13,9 +13,11 @@
 
 <link href="/assets/lib/bootstrap/css/bootstrap.min.css"
 	rel="stylesheet" />
-<link href="/assets/lib/bootstrap-select/css/bootstrap-select.min.css"
-	rel="stylesheet" />
 <link href="/assets/lib/leaflet/leaflet.css" rel="stylesheet" />
+<link href="/assets/lib/leaflet-draw/leaflet.draw.css" rel="stylesheet" />
+<link href="/assets/lib/react-select/react-select.css" rel="stylesheet" />
+<link href="/assets/lib/react-bootstrap-daterangepicker/daterangepicker.css" rel="stylesheet" />
+<link href="/assets/lib/react-bootstrap-datetimepicker/bootstrap-datetimepicker.css" rel="stylesheet" />
 <link href="/assets/css/site.css" rel="stylesheet" />
 <link href="/assets/css/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
 <link href="/assets/css/utility/utility.css" rel="stylesheet" />
@@ -27,7 +29,13 @@
     </script>
 </head>
 <body>
-	<div id="root"></div>
+	<div id="root">
+            <div style='position: absolute; left: 50%; top: 50%; margin-left: -50px; margin-top: -70px;'>
+                <img alt='' src='/assets/images/daiad-transparent.png' />
+                <br />
+                <i class="fa fa-refresh fa-2x fa-spin" style='color : #2980b9; position: relative; left: 38px'></i>
+            </div>
+	</div>
 	<script th:if="${@environment.getActiveProfiles()[0] == 'production'}"
 		src="/assets/js/build/utility/bundle.min.js"></script>
 	<script th:if="${@environment.getActiveProfiles()[0] == 'development'}"

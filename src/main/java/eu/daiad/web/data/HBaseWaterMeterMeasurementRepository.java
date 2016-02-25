@@ -66,8 +66,9 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 
 	private String quorum;
 
-	private String meterTableMeasurementByUser = "daiad:meter-measurements-by-time";
-	private String meterTableMeasurementByTime = "daiad:meter-measurements-by-user";
+	private String meterTableMeasurementByUser = "daiad:meter-measurements-by-user";
+
+	private String meterTableMeasurementByTime = "daiad:meter-measurements-by-time";
 
 	private String columnFamilyName = "cf";
 

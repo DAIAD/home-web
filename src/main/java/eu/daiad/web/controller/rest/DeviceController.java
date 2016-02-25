@@ -15,13 +15,17 @@ import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.data.IDeviceRepository;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.device.AmphiroDeviceRegistrationRequest;
+import eu.daiad.web.model.device.AmphiroDeviceRegistrationResponse;
 import eu.daiad.web.model.device.Device;
+import eu.daiad.web.model.device.DeviceAmphiroConfiguration;
+import eu.daiad.web.model.device.DeviceConfigurationCollection;
 import eu.daiad.web.model.device.DeviceConfigurationRequest;
 import eu.daiad.web.model.device.DeviceConfigurationResponse;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.DeviceRegistrationQueryResult;
 import eu.daiad.web.model.device.DeviceRegistrationRequest;
 import eu.daiad.web.model.device.DeviceRegistrationResponse;
+import eu.daiad.web.model.device.DeviceResetRequest;
 import eu.daiad.web.model.device.ShareDeviceRequest;
 import eu.daiad.web.model.device.WaterMeterDeviceRegistrationRequest;
 import eu.daiad.web.model.error.ApplicationException;
@@ -61,6 +65,21 @@ public class DeviceController extends BaseRestController {
 
 					deviceKey = repository.createAmphiroDevice(user.getKey(), amphiroData.getName(),
 									amphiroData.getMacAddress(), amphiroData.getAesKey(), amphiroData.getProperties());
+
+					ArrayList<DeviceConfigurationCollection> deviceConfigurationCollection = repository
+									.getConfiguration(user.getKey(), new UUID[] { deviceKey });
+
+					AmphiroDeviceRegistrationResponse deviceResponse = new AmphiroDeviceRegistrationResponse();
+					deviceResponse.setDeviceKey(deviceKey.toString());
+
+					if (deviceConfigurationCollection.size() == 1) {
+						for (DeviceAmphiroConfiguration configuration : deviceConfigurationCollection.get(0)
+										.getConfigurations()) {
+							deviceResponse.getConfigurations().add(configuration);
+						}
+					}
+
+					return deviceResponse;
 				}
 				break;
 			case METER:
@@ -75,16 +94,16 @@ public class DeviceController extends BaseRestController {
 
 					deviceKey = repository.createMeterDevice(user.getKey(), meterData.getSerial(),
 									meterData.getProperties());
+
+					DeviceRegistrationResponse deviceResponse = new DeviceRegistrationResponse();
+					deviceResponse.setDeviceKey(deviceKey.toString());
+
+					return deviceResponse;
 				}
 				break;
 			default:
 				break;
 			}
-
-			DeviceRegistrationResponse deviceResponse = new DeviceRegistrationResponse();
-			deviceResponse.setDeviceKey(deviceKey.toString());
-
-			return deviceResponse;
 		} catch (ApplicationException ex) {
 			logger.error(ex);
 
@@ -145,6 +164,23 @@ public class DeviceController extends BaseRestController {
 			configuration.setDevices(repository.getConfiguration(user.getKey(), request.getDeviceKey()));
 
 			return configuration;
+		} catch (ApplicationException ex) {
+			logger.error(ex);
+
+			response.add(this.getError(ex));
+		}
+
+		return response;
+	}
+	
+	@RequestMapping(value = "/api/v1/device/reset", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	public RestResponse remove(@RequestBody DeviceResetRequest request) {
+		RestResponse response = new RestResponse();
+
+		try {
+			this.authenticate(request.getCredentials(), EnumRole.ROLE_ADMIN);
+
+			this.repository.removeDevice(request.getDeviceKey());
 		} catch (ApplicationException ex) {
 			logger.error(ex);
 

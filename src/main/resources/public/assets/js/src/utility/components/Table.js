@@ -1,9 +1,11 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
 
-var FormattedMessage = require('react-intl').FormattedMessage;
-var FormattedDate = require('react-intl').FormattedDate;
+var {FormattedMessage, FormattedTime, FormattedDate} = require('react-intl');
+var { Link } = require('react-router');
+
 var Bootstrap = require('react-bootstrap');
+var Checkbox = require('./Checkbox');
 
 var Table = React.createClass({
 	getInitialState: function() {
@@ -42,7 +44,7 @@ var Table = React.createClass({
 
   	render: function() { 		
   		return (
-			<div>
+			<div className='clearfix'>
 				<Bootstrap.Table hover style={{margin: 0, padding: 0}}>
 					<Table.Header data = {this.props.data}></Table.Header>
 					<Table.Body data = {this.props.data}></Table.Body>			
@@ -71,9 +73,20 @@ var Header = React.createClass({
   	render: function() {	
   		var _t = this.context.intl.formatMessage;
 
-		var header = this.props.data.fields.map(function(field) {
+		var header = this.props.data.fields.filter((f) => { return !!!f.hidden; }).map(function(field) {
+			switch(field.type ) {
+				case 'action':
+					return (
+						<th key={field.name} style={{ width: 24 }}>{field.title ? _t({ id: field.title}) : ''}</th>
+					);
+				case 'boolean':
+					return (
+						<th key={field.name} style={{ width: 90 }}>{field.title ? _t({ id: field.title}) : ''}</th>
+					);
+			}
+
 			return (
-				<th key={field.name}>{_t({ id: field.title})}</th>
+				<th key={field.name}>{field.title ? _t({ id: field.title}) : ''}</th>
 			);
 		});
 		
@@ -115,9 +128,9 @@ var Row = React.createClass({
   		return (
 			<tr>
 				{
-					this.props.fields.map(function(field, columnIndex) {
+					this.props.fields.filter((f) => { return !!!f.hidden; }).map(function(field, columnIndex) {
 						return (
-							<Table.Cell key={columnIndex} value={self.props.row[field.name]}>
+							<Table.Cell key={columnIndex} row={self.props.row} field={field}>
 							</Table.Cell>
 						);
 					})
@@ -127,18 +140,88 @@ var Row = React.createClass({
   	}
 });
 
+var formatLink = function(route, row) {
+	return Object.keys(row).reduce(function(link, key) {
+		return link.replace(new RegExp('\{' + key + '\}'), row[key]);
+	}, route);
+};
+
 var Cell = React.createClass({
   	render: function() {
-  		if(this.props.value instanceof Date) {
+  		var value= this.props.row[this.props.field.name];
+  		var text = (<span>{value}</span>);
+ 		
+  		if(this.props.field.hasOwnProperty('type')) {
+  			switch(this.props.field.type) {
+  			case 'action':
+  				text = (<i className={'fa fa-' + this.props.field.icon + ' fa-fw table-action'} onClick={this.props.field.handler.bind(this)}></i>);
+  				break;
+  			case 'datetime':
+  				if(value) {
+  					text = (<FormattedTime 	value={value} 
+  										day='numeric' 
+  										month='numeric' 
+  										year='numeric'
+  										hour='numeric' 
+  										minute='numeric' />);
+  				} else {
+  					text = '';
+  				}
+  				break;
+  			case 'time':
+  				text = (<FormattedTime 	value={value} 
+										hour='numeric' 
+										minute='numeric' />);
+  				break;
+  			case 'progress':
+  				if(value !== null) {
+  					text = (<Bootstrap.ProgressBar now={value} label="%(percent)s%" />);
+  				} else {
+  					text = (<span />);
+  				}
+  				break;
+  			case 'boolean':
+  				text = (<Checkbox checked={value} disabled={true} />);
+  				break;
+  			case 'date':
+  				text = (<FormattedDate value={value} day='numeric' month='long' year='numeric' />);
+  				break;
+			default:
+				console.log('Cell type [' + this.props.field.type + '] is not supported.');
+				break;
+  			}
+  		} else {
+	  		if(value instanceof Date) {
+	  			text = (<FormattedDate value={value} day='numeric' month='long' year='numeric' />);
+	  		} else if(typeof value === 'boolean') {
+	  			text = (<Checkbox checked={value} disabled={true} />);
+	  		}
+  		} 
+
+  		if(this.props.field.hasOwnProperty('link')) { 	
+  			if(typeof this.props.field.link === 'function') {
+  				console.log(this.props.field.link(this.props.row));
+  				text = (<Link to={formatLink(this.props.field.link(this.props.row), this.props.row)}>{text}</Link>);
+  			} else {
+  				text = (<Link to={formatLink(this.props.field.link, this.props.row)}>{text}</Link>);
+  			}
+  			
+  		}
+
+  		if(typeof this.props.field.className === 'function') {
   			return (
-				<td>
-  					<FormattedDate value={this.props.value} day="numeric" month="long" year="numeric" />
-				</td>
-  			);
+				<td className={this.props.field.className(value)}>{text}</td>
+			);	
+  		}
+  		
+  		if(this.props.field.hasOwnProperty('align')) {
+  			return (
+  					<td style={{ textAlign: this.props.field.align}}>{text}</td>
+  				);
   		}
 
 		return (
-			<td>{this.props.value.toString()}</td>
+			<td>{text}</td>
 		);
   	}
 });

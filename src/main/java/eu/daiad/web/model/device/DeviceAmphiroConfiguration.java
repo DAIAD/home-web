@@ -2,7 +2,7 @@ package eu.daiad.web.model.device;
 
 import java.util.ArrayList;
 
-public class DeviceConfiguration {
+public class DeviceAmphiroConfiguration {
 
 	private String title;
 
