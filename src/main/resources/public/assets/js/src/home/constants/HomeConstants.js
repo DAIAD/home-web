@@ -1,6 +1,6 @@
 
 const constants = {
-	STATIC : "/assets/artwork/",
+	STATIC : "/assets/",
 	LOCALES: ["en", "el", "de", "es"],
 	data : {
 		notifications: [{
