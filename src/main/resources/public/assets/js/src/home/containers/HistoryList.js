@@ -1,5 +1,6 @@
 var React = require('react');
 var connect = require('react-redux').connect;
+var injectIntl = require('react-intl').injectIntl;
 
 var SessionsList = require('../components/SessionsList');
 
@@ -95,4 +96,5 @@ function mapDispatchToProps(dispatch, ownProps) {
 
 
 HistoryList = connect(mapStateToProps, mapDispatchToProps)(HistoryList);
+HistoryList = injectIntl(HistoryList);
 module.exports = HistoryList;

@@ -7,12 +7,12 @@
 	},
 	"weekdays": {
 		"1": "Sunday",
-		"2": "Tuesday",
-		"3": "Wednesday",
-		"4": "Thursday",
-		"5": "Friday",
-		"6": "Saturday",
-		"7": "Monday"
+		"2": "Monday",
+		"3": "Tuesday",
+		"4": "Wednesday",
+		"5": "Thursday",
+		"6": "Friday",
+		"7": "Saturday"
 	},
 	"errors": {
 		"Forbidden": "Authentication has failed. Please try again."
@@ -53,6 +53,24 @@
 	},
 	"shower": {
 		"details": "Shower details"
+	},
+	"history": {
+		"showers": "Showers",
+		"duration": "Duration",
+		"volume": "Volume",
+		"temperature": "Temperature",
+		"energy": "Energy",
+		"count": "Aggregated Showers",
+		"volumeDetails": "Total water used for this shower",
+		"temperatureDetails": "Average water temperature",
+		"energyDetails": "Estimated energy used for hot water",
+		"countDetails": "The total number of aggregated showers",
+		"limitedData": "Oops, limited data...",
+		"always": "Since the beginning of time",
+		"year": "This year",
+		"month": "This month",
+		"week": "This week",
+		"day": "Today"
 	},
 	"notifications": {
 		"showAll": "Show all"

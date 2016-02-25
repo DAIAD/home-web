@@ -1,6 +1,5 @@
 var React = require('react');
 var FormattedMessage = require('react-intl').FormattedMessage;
-var injectIntl = require('react-intl').injectIntl;
 var bs = require('react-bootstrap');
 
 var MainSection = require('../MainSection.react');
@@ -78,14 +77,13 @@ var History = React.createClass({
 							})()
 					}
 					<div>
-					
 					<Sidebar>	
 						<bs.Tabs style={{marginTop: '50px'}} position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
-							<bs.Tab eventKey="showers" title="Showers" />
-							<bs.Tab eventKey="duration" title="Duration" />
-							<bs.Tab eventKey="volume" title="Volume"/>
-							<bs.Tab eventKey="temperature" title="Temperature"/>
-							<bs.Tab eventKey="energy" title="Energy"/>
+							<bs.Tab eventKey="showers" title={_t({id: "history.showers"})}/>
+							<bs.Tab eventKey="duration" title={_t({id: "history.duration"})} />
+							<bs.Tab eventKey="volume" title={_t({id: "history.volume"})}/>
+							<bs.Tab eventKey="temperature" title={_t({id: "history.temperature"})}/>
+							<bs.Tab eventKey="energy" title={_t({id: "history.energy"})}/>
 						</bs.Tabs>
 					</Sidebar>
 					
@@ -108,11 +106,11 @@ var History = React.createClass({
 						</div>
 
 						<bs.Tabs  position='top' tabWidth={3} activeKey={this.props.timeFilter} onSelect={this.handleTimeSelect}>
-							<bs.Tab eventKey="always" title="Since the beginning of time" />
-							<bs.Tab eventKey="year" title="This year"/>
-							<bs.Tab eventKey="month" title="This month"/>
-							<bs.Tab eventKey="week" title="This week"/>
-							<bs.Tab eventKey="day" title="Today"/>
+							<bs.Tab eventKey="always" title={_t({id: "history.always"})} />
+							<bs.Tab eventKey="year" title={_t({id: "history.year"})}/>
+							<bs.Tab eventKey="month" title={_t({id: "history.month"})}/>
+							<bs.Tab eventKey="week" title={_t({id: "history.week"})}/>
+							<bs.Tab eventKey="day" title={_t({id: "history.day"})}/>
 						</bs.Tabs>
 
 						<HistoryChart />
@@ -127,5 +125,4 @@ var History = React.createClass({
 	}
 });
 
-History = injectIntl(History);
 module.exports = History;

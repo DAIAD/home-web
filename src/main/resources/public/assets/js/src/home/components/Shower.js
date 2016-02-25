@@ -1,5 +1,4 @@
 var React = require('react');
-var injectIntl = require('react-intl').injectIntl;
 var bs = require('react-bootstrap');
 //var link = require('react-router').link;
 var FormattedMessage = require('react-intl').FormattedMessage;
@@ -18,10 +17,10 @@ var SessionItem = React.createClass({
 		if (!this.props.data) return (null);
 		return (
 			<li className="session-item-inner">
-				<h4>{this.props.title}</h4>
+				<h4><FormattedMessage id={this.props.title} /></h4>
 				<h4 style={{float:'right'}}>{this.props.data} <span>{this.props.mu}</span></h4>
 				{
-					this.props.details?(<p>{this.props.details}</p>):null
+					this.props.details?(<p><FormattedMessage id={this.props.details} /></p>):null
 				}
 			</li>
 		);
@@ -33,10 +32,10 @@ var SessionInfo = React.createClass({
 		var data = this.props.data;
 		if (!data) return <div/>;
 		const metrics = [
-			{id:'volume', mu:'lt',title:'Water', details:'Total water used for this shower'}, 
-			{id:'temperature', mu:'C', title:'Temperature', details: 'Average water temperature'}, 
-			{id:'energy',mu:'W', title:'Energy', details: 'Estimated energy used for hot water'}, 
-			{id:'count',mu:'', title:'Aggregated Showers', details:'The total number of showers aggregated'}];	
+			{id:'volume', mu:'lt',title:'history.volume', details:'history.volumeDetails'}, 
+			{id:'temperature', mu:'C', title:'history.temperature', details: 'history.temperatureDetails'}, 
+			{id:'energy',mu:'W', title:'history.energy', details: 'history.energyDetails'}, 
+			{id:'count',mu:'', title:'history.count', details:'history.countDetails'}];	
 		return (
 			<div style={{marginTop: '50px'}}>
 				<h4><FormattedMessage id="shower.details"/></h4>
@@ -85,7 +84,7 @@ var Shower = React.createClass({
 					<SessionsChart
 								height='350px'
 								width='95%'	
-								title="Shower"
+								title={_t({id: "section.shower"})}
 								subtitle=""
 								mu=""
 								type="line"
@@ -119,7 +118,7 @@ var Shower = React.createClass({
 								}
 								else {
 									return (
-										<h3>Oops, limited data...</h3>
+										<h3><FormattedMessage id="history.limitedData"/> </h3>
 										);
 								}
 							})()
@@ -139,5 +138,4 @@ var Shower = React.createClass({
 		
 });
 
-Shower = injectIntl(Shower);
 module.exports = Shower;

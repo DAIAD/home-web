@@ -2,7 +2,6 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
 var ReactIntlProvider = require('react-intl').IntlProvider;
-var injectIntl = require('react-intl').injectIntl;
 var connect = require('react-redux').connect;
 
 //Constants
@@ -123,5 +122,4 @@ function mapDispatchToProps(dispatch, ownProps) {
 }
 
 HomeApp = connect(mapStateToProps, mapDispatchToProps)(HomeApp);
-HomeApp = injectIntl(HomeApp);
 module.exports = HomeApp; 

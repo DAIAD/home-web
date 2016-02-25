@@ -151,6 +151,7 @@ var SessionsList = React.createClass({
 					</bs.Modal.Header>
 					<bs.Modal.Body>
 						<Shower 
+							intl={this.props.intl}
 							setSessionFilter={this.props.setSessionFilter}
 							activeSession={this.props.activeSession} 
 							listData={this.props.activeSessionData}
@@ -169,5 +170,4 @@ var SessionsList = React.createClass({
 	}
 });
 
-SessionsList = injectIntl(SessionsList);
 module.exports = SessionsList;

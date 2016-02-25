@@ -1,5 +1,6 @@
 var React = require('react');
 var connect = require('react-redux').connect;
+var injectIntl = require('react-intl').injectIntl;
 
 var History = require('../components/sections/History');
 
@@ -34,7 +35,7 @@ function mapStateToProps(state, ownProps) {
 		timeFilter: state.device.query.timeFilter,
 		devices: getAvailableDevices(state.user.profile.devices),
 		activeDevice: state.device.query.activeDevice,
-		loading: state.device.query.status.isLoading 
+		loading: state.device.query.status.isLoading,
 		};
 }
 
@@ -63,4 +64,5 @@ function mapDispatchToProps(dispatch, ownProps) {
 
 
 HistoryData = connect(mapStateToProps, mapDispatchToProps)(HistoryData);
+HistoryData = injectIntl(HistoryData);
 module.exports = HistoryData;
