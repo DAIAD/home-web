@@ -11,8 +11,6 @@ var Dashboard = require('./components/sections/Dashboard');
 var DashboardData = require('./containers/DashboardData');
 var History = require('./components/sections/History');
 var HistoryData = require('./containers/HistoryData');
-var Shower = require('./components/Shower');
-var ShowerData = require('./containers/ShowerData');
 var Commons = require('./components/sections/Commons');
 var Notifications = require('./components/sections/Notifications');
 var Profile = require('./components/sections/Profile');
@@ -25,7 +23,6 @@ module.exports =
 				<IndexRoute component={DashboardData} />
 				<Route path="/dashboard" component={DashboardData} />
 				<Route path="/history" component={HistoryData} />
-				<Route path="/history/:id" component={ShowerData} />
 				<Route path="/commons" component={Commons} />
 				<Route path="/notifications" component={Notifications} />
 				<Route path="/notifications/:id" component={Notifications} />
