@@ -5,6 +5,15 @@
 		"es": "Español",
 		"de": "Deutsche"
 	},
+	"weekdays": {
+		"1": "Δευτέρα",
+		"2": "Τρίτη",
+		"3": "Τετάρτη",
+		"4": "Πέπμτη",
+		"5": "Παρασκευή",
+		"6": "Σάββατο",
+		"7": "Κυριακή"
+	},
 	"errors": {
 		"Forbidden": "Ο λογαριασμός ή/και ο κωδικός πρόσβασης είναι λάθος. Η σύνδεση απέτυχε."
 	},
@@ -38,10 +47,14 @@
 		"profile": "Προφίλ",
 		"devices": "Συσκευές",
 		"reporting": "Reporting",
-		"export": "Export"
+		"export": "Export",
+		"login": "Καλώς ήρθατε στο DAIAD"
 	},
 	"dashboard": {
 		"hello": "Γειά σου {name}!"
+	},
+	"shower": {
+		"details": "Λεπτομέρειες ντους"
 	},
 	"notifications": {
 		"showAll": "Προβολή όλων"

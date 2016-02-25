@@ -5,6 +5,15 @@
 		"es": "Español",
 		"de": "Deutsche"
 	},
+	"weekdays": {
+		"1": "Monday",
+		"2": "Tuesday",
+		"3": "Wednesday",
+		"4": "Thursday",
+		"5": "Friday",
+		"6": "Saturday",
+		"7": "Sunday"
+	},
 	"errors": {
 		"Forbidden": "Authentication has failed. Please try again."
 	},
@@ -37,11 +46,13 @@
 		"settings": "Settings",
 		"profile": "Profile",
 		"devices": "Devices",
-		"reporting": "Reporting",
-		"export": "Export"
+		"login": "Welcome to DAIAD Home"
 	},
 	"dashboard": {
 		"hello": "Hello {name}!"
+	},
+	"shower": {
+		"details": "Shower details"
 	},
 	"notifications": {
 		"showAll": "Show all"
