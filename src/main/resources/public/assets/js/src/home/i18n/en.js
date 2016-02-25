@@ -6,13 +6,13 @@
 		"de": "Deutsche"
 	},
 	"weekdays": {
-		"1": "Monday",
+		"1": "Sunday",
 		"2": "Tuesday",
 		"3": "Wednesday",
 		"4": "Thursday",
 		"5": "Friday",
 		"6": "Saturday",
-		"7": "Sunday"
+		"7": "Monday"
 	},
 	"errors": {
 		"Forbidden": "Authentication has failed. Please try again."
