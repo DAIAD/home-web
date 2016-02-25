@@ -38,7 +38,7 @@ var Notifications = React.createClass({
 		}
 
 		return (
-			<section className="section-notifications">
+			<section>
 				<Topbar> 
 					<ul className="list-unstyled">
 						<li><Link to="/notifications">All</Link></li>
@@ -47,10 +47,12 @@ var Notifications = React.createClass({
 						<li><Link to="/notifications/tips">Tips</Link></li>
 					</ul>
 				</Topbar>
-				<Sidebar>
-					<NotificationList notifications={Constant.data.notifications} />		
-				</Sidebar>
-				<MainSection title="Notifications">
+
+				<MainSection id="section.notifications">
+					<Sidebar>
+						<NotificationList notifications={Constant.data.notifications} />		
+					</Sidebar>
+
 					<input 
 						type="hidden" 
 						ref= {

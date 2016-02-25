@@ -3,6 +3,7 @@ var bs = require('react-bootstrap');
 var connect = require('react-redux').connect;
 var injectIntl = require('react-intl').injectIntl;
 var FormattedMessage = require('react-intl').FormattedMessage;
+var MainSection = require('../MainSection.react');
 
 
 var Device = React.createClass({
@@ -39,7 +40,6 @@ var Device = React.createClass({
 									);
 								})
 						}
-						<bs.ButtonInput style={{marginTop: "20px"}} type="submit" value="Submit" onClick={this._onSubmit} />
 			</div>
 		);
 	}
@@ -66,7 +66,7 @@ var DevicesForm = React.createClass({
 								<bs.Panel key={device.deviceKey}
 									header={device.name || device.deviceKey}
 									eventKey={i}>
-									<Device {...device} profile={profile}/>
+									<Device {...device} intl={this.props.intl}/>
 								</bs.Panel>
 								);
 						}.bind(this))
@@ -83,10 +83,9 @@ var Devices = React.createClass({
 
 	render: function() {
 		return (
-			<div className="section-devices">
-				<h3><FormattedMessage id="section.devices" /></h3>
+			<MainSection id="section.devices">
 				<DevicesForm {...this.props} />	
-			</div>
+			</MainSection>
 		);
 	}
 });

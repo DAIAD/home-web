@@ -1,9 +1,10 @@
 var React = require('react');
+var classNames = require('classnames');
 
 var injectIntl = require('react-intl').injectIntl;
 var Constants = require('../constants/HomeConstants');
 var LocaleSwitcher = require('./LocaleSwitcher');
-var LoginForm = require('./LoginForm');
+var Logout = require('./LoginForm').Logout;
 
 var FormattedMessage = require('react-intl').FormattedMessage;
 var bs = require('react-bootstrap');
@@ -16,7 +17,7 @@ var MainLogo = React.createClass({
 	render: function() {
 		return (
 			<Link to="/" className="logo" activeClassName="selected">
-				<img src= {Constants.STATIC + "Icons/SVG/daiad-logo2.svg"} alt="DAIAD Logo"
+				<img src= {Constants.STATIC + "images/svg/daiad-logo2.svg"} alt="DAIAD Logo"
 					title="DAIAD" />
 			</Link>
 		);
@@ -43,19 +44,19 @@ var MainMenu = React.createClass({
 		var items = [{
 									name: "dashboard",
 									title: "section.dashboard",
-									image: "Icons/SVG/dashboard.svg",
+									image: "images/svg/dashboard.svg",
 									route:"/dashboard"
 								},
 								{
 									name: "history",
 									title: "section.history",
-									image: "Icons/SVG/stats.svg",
+									image: "images/svg/stats.svg",
 									route:"/history"
 								},
 								{
 									name: "commons",
 									title: "section.commons",
-									image: "Icons/SVG/goals.svg",
+									image: "images/svg/goals.svg",
 									route:"/commons"
 								}];
 
@@ -98,12 +99,22 @@ var UserInfo = React.createClass({
 /* Notification Area */
 
 var SettingsMenuItem = React.createClass({
+	getInitialState: function() {
+		return {
+			hover:false 
+		};
+	},
 	render: function() {
+		const deviceCount = this.props.deviceCount;
+		const image = this.state.hover?"images/svg/amphiro_small-green.svg":"images/svg/amphiro_small.svg";
 		var _t = this.props.intl.formatMessage;
 		return (
-			<div title={_t({id: this.props.item.title})}>
-				<Link to="/settings"> 
-					<img src={Constants.STATIC + this.props.item.image} />
+			<div title={_t({id: "section.settings"})}>
+				<Link to="/settings"
+					onMouseEnter={() => {this.setState({hover:true});}}
+					onMouseLeave={() => {this.setState({hover:false});}} > 
+					<img src={Constants.STATIC + image} />
+					<span className={classNames("deviceCount", "navy")}>{deviceCount>0?deviceCount:""}</span>	
 				</Link>
 			</div>
 		);
@@ -111,34 +122,48 @@ var SettingsMenuItem = React.createClass({
 });
 
 var NotificationMenuItem = React.createClass({
-
+	getInitialState: function() {
+		return {
+			hover:false,
+		 	popover:false
+		};
+	},
 	render: function() {
 		var hasUnread = this.props.unreadNotifications>0?"hasUnread":"";
 		var unreadNotifications = hasUnread?this.props.unreadNotifications:"";
 		var _t = this.props.intl.formatMessage;
 		return (
+			
 			<bs.OverlayTrigger 
 				id="notifications-trigger"
 				trigger="click"
 				title={_t({id: this.props.item.title})}
 				rootClose
 				placement="bottom"
-				overlay={<bs.Popover 
-					id="notifications-popover"
-					title={_t({id: this.props.item.title})} >
+				onEnter={() => this.setState({popover:true}) }
+				onExit={() => this.setState({popover:false}) }
+				overlay={
+					<bs.Popover 
+						id="notifications-popover"
+						title={_t({id: this.props.item.title})} >
 					<div className="scrollable">
 						<NotificationList notifications={this.props.notifications} />
 					</div>
 					<div className="footer">
 						<Link className="notifications-show-all" to="/notifications">{_t({id:"notifications.showAll"})}</Link>
 					</div>
-				</bs.Popover>}
+				</bs.Popover>
+				}
 				className="notifications-button" >
-					<div>
-						<i className={hasUnread}>{unreadNotifications}</i>	
-						<img src={Constants.STATIC + this.props.item.image} />
-					</div>
-				</bs.OverlayTrigger>
+					<a
+						onMouseEnter={() => {this.setState({hover:true});}}
+						onMouseLeave={() => {this.setState({hover:false});}} >
+						<span className={classNames(hasUnread, "red")}>{unreadNotifications}</span>	
+						<i className={
+							classNames("fa", "fa-lg", "navy", (this.state.hover || this.state.popover)?"fa-bell":"fa-bell-o")
+						}	/>
+					</a>
+				</bs.OverlayTrigger>	
 		);
 	}
 });
@@ -182,7 +207,7 @@ var NotificationArea = React.createClass({
 						item={{
 											name: "notifications",
 											title: "section.notifications",
-											image: "Icons/SVG/info.svg",
+											image: "images/svg/info.svg",
 											link: "#"
 											}}
 							unreadNotifications={unreadNotifications}
@@ -190,14 +215,9 @@ var NotificationArea = React.createClass({
 					/>
 				</div>
 				<div className="settings notification-item">
-					<SettingsMenuItem 
-						intl={this.props.intl}
-						item={{
-											name: "settings",
-											title: "section.settings",
-											image: "Icons/SVG/settings.svg",
-											link: "#settings"
-											}}
+					<SettingsMenuItem
+					 	deviceCount={this.props.deviceCount}	
+						intl={this.props.intl}	
 					/>
 				</div>
 			</div>	
@@ -221,16 +241,16 @@ var Header = React.createClass({
 									<div className="header-right">
 										<NotificationArea
 											intl={this.props.intl}
+											deviceCount={this.props.deviceCount}
 											notifications={this.props.data.notifications} />
 										<UserInfo
 											intl={this.props.intl}
 											firstname={this.props.firstname}
 											/>
-										<LoginForm 
+										<Logout
 											isAuthenticated={this.props.isAuthenticated}
 											onLogout={this.props.onLogout}
 											className="navbar logout"
-											action="logout"
 											 />
 										 <LocaleSwitcher
 											 onLocaleSwitch={this.props.onLocaleSwitch}

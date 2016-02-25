@@ -1,22 +1,17 @@
 var React = require('react');
 
 var MainSection = require('../MainSection.react');
-var LoginForm = require('../LoginForm');
+var Login = require('../LoginForm').Login;
 
 
-//var parseDate = d3.time.format("%YM%m").parse;
-
-var History = React.createClass({
+var LoginPage = React.createClass({
 	render: function() {
 		return (
-			<section className="section-login">
-				<MainSection title="Welcome to DAIAD Home" >
-					
-					
-				</MainSection>
-			</section>
+			<MainSection id="section.login">
+				<Login {...this.props} style={{marginTop: '50px'}}/>
+			</MainSection>				
 		);
 	}
 });
 
-module.exports = History;
+module.exports = LoginPage;

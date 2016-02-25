@@ -4,6 +4,7 @@ var bs = require('react-bootstrap');
 var connect = require('react-redux').connect;
 var injectIntl = require('react-intl').injectIntl;
 var FormattedMessage = require('react-intl').FormattedMessage;
+var MainSection = require('../MainSection.react');
 
 var ProfileForm = React.createClass({
 
@@ -30,12 +31,9 @@ var ProfileForm = React.createClass({
 var Profile = React.createClass({
 	render: function() {
 		return (
-			<div className="section-profile">
-				<h3>Profile</h3>
-
-				<h3><FormattedMessage id="section.profile" /></h3>
+			<MainSection id="section.profile">
 				<ProfileForm {...this.props} />	
-			</div>
+			</MainSection>
 		);
 	}
 });

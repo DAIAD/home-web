@@ -4,7 +4,9 @@ var Topbar = React.createClass({
 	render: function() {
 		return (
 			<div className="top-bar">
-				{ this.props.children }
+				<div className="container">
+					{ this.props.children }
+				</div>
 			</div>
 		);
 	}
