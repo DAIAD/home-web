@@ -2,19 +2,14 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
 var ReduxProvider = require('react-redux').Provider;
-var store = require('./store/configureStore');
-var BrowserHistory = require('history');
-//var browserHistory=require('react-router').browserHistory;
-
-var getDefaultDevice = require('./utils/device').getDefaultDevice;
-
+var configureStore = require('./store/configureStore');
 var Router = require('react-router').Router;
 require('babel-polyfill');
 
-const history = BrowserHistory.useBasename(BrowserHistory.createHistory)({
-	basename: '/home/'
-});
+const history = require('./routing/history');
+var routes = require('./routing/routes');
 
+var store = configureStore();
 
 //Actions
 var LocaleActions = require('./actions/LocaleActions');
@@ -22,7 +17,8 @@ var DeviceActions = require('./actions/DeviceActions');
 var UserActions = require('./actions/UserActions');
 
 //Components
-var routes = require('./routes');
+
+var getDefaultDevice = require('./utils/device').getDefaultDevice;
 
 
 store.dispatch(LocaleActions.setLocale(properties.locale)).then(function() {
