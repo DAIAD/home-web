@@ -194,6 +194,7 @@ header{
 }
 .site-header {
 	background: #D0EAFA;
+	height: 49px;
 }
 
 .site-header .logo{
@@ -203,7 +204,7 @@ header{
 
 .site-header .logo img{
 	width: 125px;
-	margin-bottom: -29px;
+	margin-bottom: -20px;
 }
 
 .site-header .main-menu{
@@ -290,7 +291,7 @@ header{
 
 .form-login { 
 	max-width: 160px;
-	margin-top: -5px;
+	margin-top: 30px;
 }
 .site-header .logout{
 	float: left;
@@ -516,7 +517,7 @@ footer{
 	border-right: 1px #2D3580 solid;
 }
 
-.session-item {
+.session-item, .session-item-inner {
 	padding: 10px;
 	border-bottom: 1px #2D3580 solid;
 }
