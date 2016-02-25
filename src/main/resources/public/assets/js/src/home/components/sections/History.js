@@ -3,12 +3,14 @@ var FormattedMessage = require('react-intl').FormattedMessage;
 var injectIntl = require('react-intl').injectIntl;
 var bs = require('react-bootstrap');
 
-var SessionsChart = require('../SessionsChart');
-var SessionsList = require('../SessionsList');
-
 var MainSection = require('../MainSection.react');
 var Sidebar = require('../Sidebar.react');
 
+//sub-containers
+var HistoryChart = require('../../containers/HistoryChart');
+var HistoryList = require('../../containers/HistoryList');
+
+//actions
 var DeviceActions = require('../../actions/DeviceActions');
 
 var getDefaultDevice = require('../../utils/device').getDefaultDevice;
@@ -25,8 +27,8 @@ var History = React.createClass({
 		var time = {};
 		if (key==="always"){
 			time = {
-				startDate: new Date("2000-12-27T22:00:00").getTime(),
-				endDate: new Date().getTime(),
+				startDate: new Date("2000-02-18").getTime(),
+				endDate: new Date("2016-02-25").getTime(),
 				granularity: 0
 			};
 		}
@@ -36,36 +38,36 @@ var History = React.createClass({
 		}
 		else if (key==="month"){
 			time = timeUtil.thisMonth();
-			time.granularity = 3;
+			time.granularity = 2;
 		}
 		else if (key==="week"){
 			time = timeUtil.thisWeek();
-			time.granularity = 2;
+			time.granularity = 0;
 		}
 		else if (key==="day"){
 			time = timeUtil.today();
-			time.granularity = 1;
+			time.granularity = 0;
 		}
 		else{
 			return;
 		}
+		this.props.setTimeFilter(key);
 		this.props.setTime(time);
 		this.props.querySessions(this.props.activeDevice, time);
 
 	},
 	handleDeviceChange: function(e, value) {
 		this.props.setActive(value);
-		this.props.querySessions(value, this.props.query.time);
+		this.props.querySessions(value, this.props.time);
 	},
 	render: function() {
 		const activeDevice = this.props.activeDevice;
 		const device = getDeviceByKey(this.props.devices, activeDevice);
-		const activeDeviceName = device?device.name:"None selected";
+		const activeDeviceName = device?device.name:"None";
 		
 		var _t = this.props.intl.formatMessage;
 		return (
-			<section className="section-history">
-				<h3><FormattedMessage id="section.history"/></h3>
+			<MainSection id="section.history">
 					{
 						(() => {
 							if (this.props.loading){
@@ -75,31 +77,22 @@ var History = React.createClass({
 							}
 							})()
 					}
-						<div>
+					<div>
+					
+					<Sidebar>	
+						<bs.Tabs style={{marginTop: '50px'}} position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
+							<bs.Tab eventKey="showers" title="Showers" />
+							<bs.Tab eventKey="duration" title="Duration" />
+							<bs.Tab eventKey="volume" title="Volume"/>
+							<bs.Tab eventKey="temperature" title="Temperature"/>
+							<bs.Tab eventKey="energy" title="Energy"/>
+						</bs.Tabs>
+					</Sidebar>
+					
+					<div className="primary">
 						
-							<Sidebar>	
-							<bs.Tabs position='left' tabWidth={20} activeKey={this.props.filter} onSelect={this.handleTypeSelect}>
-								<bs.Tab eventKey="showers" title="Showers" />
-								<bs.Tab eventKey="duration" title="Duration" />
-								<bs.Tab eventKey="volume" title="Volume"/>
-								<bs.Tab eventKey="temperature" title="Temperature"/>
-								<bs.Tab eventKey="energy" title="Energy"/>
-								<bs.Tab eventKey="flow" title="Flow"/>
-							</bs.Tabs>
-						</Sidebar>
-						
-						<section className="section-dashboard primary">
-						
-							<bs.Tabs  position='top' tabWidth={3} activeKey="always" onSelect={this.handleTimeSelect}>
-								<bs.Tab eventKey="always" title="Since the beginning of time" />
-								<bs.Tab eventKey="year" title="This year"/>
-								<bs.Tab eventKey="month" title="This month"/>
-								<bs.Tab eventKey="week" title="This week"/>
-								<bs.Tab eventKey="day" title="Today"/>
-							</bs.Tabs>
-							
+						<div className="pull-right">
 							<bs.DropdownButton
-								style={{float:"right"}}
 								title={activeDeviceName}
 								id="device-switcher"
 								defaultValue={activeDevice}
@@ -111,28 +104,25 @@ var History = React.createClass({
 										);
 								})
 							}	
-						</bs.DropdownButton>
-
-
-							<SessionsChart
-							 	height='350px'
-								width='100%'	
-								title="Chart"
-								subtitle=""
-								mu=""
-								type="bar"
-								data={this.props.chartData}
-								/>
-			
-							<SessionsList
-								fetchSession={this.props.fetchSession}
-								sessions={this.props.listData}
-							/>
-
-						</section>
+							</bs.DropdownButton>
 						</div>
 
-			</section>
+						<bs.Tabs  position='top' tabWidth={3} activeKey={this.props.timeFilter} onSelect={this.handleTimeSelect}>
+							<bs.Tab eventKey="always" title="Since the beginning of time" />
+							<bs.Tab eventKey="year" title="This year"/>
+							<bs.Tab eventKey="month" title="This month"/>
+							<bs.Tab eventKey="week" title="This week"/>
+							<bs.Tab eventKey="day" title="Today"/>
+						</bs.Tabs>
+
+						<HistoryChart />
+						
+						<HistoryList />
+
+					</div>
+				</div>
+
+				</MainSection>
 		);
 	}
 });

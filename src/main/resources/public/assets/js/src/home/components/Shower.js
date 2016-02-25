@@ -1,57 +1,58 @@
 var React = require('react');
-var FormattedMessage = require('react-intl').FormattedMessage;
 var injectIntl = require('react-intl').injectIntl;
 var bs = require('react-bootstrap');
-var Link = require('react-router').Link;
+//var link = require('react-router').link;
+var FormattedMessage = require('react-intl').FormattedMessage;
+var FormattedTime = require('react-intl').FormattedTime;
+var FormattedRelative = require('react-intl').FormattedRelative;
+
 
 var SessionsChart = require('./SessionsChart');
 
 var MainSection = require('./MainSection.react');
 var Sidebar = require('./Sidebar.react');
+var timeUtil = require('../utils/time');
 
-var DeviceActions = require('../actions/DeviceActions');
+var SessionItem = React.createClass({
+	render: function() {
+		if (!this.props.data) return (null);
+		return (
+			<li className="session-item-inner">
+				<h4>{this.props.title}</h4>
+				<h4 style={{float:'right'}}>{this.props.data} <span>{this.props.mu}</span></h4>
+				{
+					this.props.details?(<p>{this.props.details}</p>):null
+				}
+			</li>
+		);
+	}
+});
 
 var SessionInfo = React.createClass({
 	render: function() {
 		var data = this.props.data;
 		if (!data) return <div/>;
-		
-		var array = Array.from(entries(data));
-
+		const metrics = [
+			{id:'volume', mu:'lt',title:'Water', details:'Total water used for this shower'}, 
+			{id:'temperature', mu:'C', title:'Temperature', details: 'Average water temperature'}, 
+			{id:'energy',mu:'W', title:'Energy', details: 'Estimated energy used for hot water'}, 
+			{id:'count',mu:'', title:'Aggregated Showers', details:'The total number of showers aggregated'}];	
 		return (
-			<div>
-			<h3>Shower info</h3>
-			<ul>
-				{
-					this.props.activeSession?
-				(<li>
-					<b>measurements:</b><span>{data.measurements?data.measurements.length:'null'}</span>
-				</li>):<div/>
-				}
-				{
-					array.map(function(dato) {
-						const prop = dato[0];
-						const value = dato[1];
-							
-						if (typeof(value)==="object") return;
-					return (
-						<li key={prop}>
-							<b>{prop}:</b> <span>{value}</span>
-						</li>
-					);
-					})
-				}
-			</ul>
+			<div style={{marginTop: '50px'}}>
+				<h4><FormattedMessage id="shower.details"/></h4>
+				<b><FormattedTime value={new Date(data.timestamp)} date={{day:"numeric", month:"long", year:"numeric"}} time={{hours:"numeric", minutes:"numeric"}} /></b>
+				<ul className="sessions-list" style={{marginTop:'30px'}}>
+					{
+						metrics.map(function(metric) {
+							return (<SessionItem key={metric.id} title={metric.title} data={data[metric.id]} mu={metric.mu} details={metric.details} />);
+						})
+					}
+				</ul>
 		</div>
 		);
 	}
 });
 
-function* entries(obj) {
-	   for (var key of Object.keys(obj)) {
-			      yield [key, obj[key]];
-		}
-}
 
 var Shower = React.createClass({
 	
@@ -64,13 +65,15 @@ var Shower = React.createClass({
 		
 		if (!this.props.listData || this.props.loading){
 			return (
-				<span style={{position:'absolute'}} >Loading....</span>
+				<MainSection id="section.shower">
+					<span style={{position:'absolute'}} >Loading....</span>
+				</MainSection>
 			);
 		
 		}	
 		else if (history === false){
 			return (
-				<div>
+				<div style={{overflow:'auto'}}>
 					<Sidebar>
 						<bs.Tabs position='left' tabWidth={20} activeKey={this.props.filter} onSelect={this.handleTypeSelect}>
 							<bs.Tab eventKey="volume" title="Volume"/>
@@ -78,45 +81,57 @@ var Shower = React.createClass({
 							<bs.Tab eventKey="energy" title="Energy"/>
 						</bs.Tabs>
 					</Sidebar>
-					
-					<section className="section-history primary">
+					<div className="primary">
 					<SessionsChart
 								height='350px'
-								width='100%'	
-								title="Chart"
+								width='95%'	
+								title="Shower"
 								subtitle=""
 								mu=""
 								type="line"
+								formatter={(x) => this.props.intl.formatTime(x, { hour: 'numeric', minute: 'numeric'})}
 								data={this.props.chartData}
 							/>
 							
 					<SessionInfo
 						style={{marginTop: '50px'}}
-						data={this.props.listData}
-					/>
+						data={this.props.listData} />
+					</div>
 
-					<Link to="/history">Back to all showers</Link>
-				</section>
 					
 				</div>
 			);
 		}
 		else {
 			return (
-				<div>
+				<div style={{overflow:'auto'}}>
 					<Sidebar>
 					</Sidebar>
+					<div className="primary">
 					
-					<section className="section-history primary">
-						<h3>Oops, limited data...</h3>
+					<section>
+						{ (() => 
+							 {
+								if (this.props.listData.count) {
+									return (
+										<h3>Aggregated data</h3>
+										);
+								}
+								else {
+									return (
+										<h3>Oops, limited data...</h3>
+										);
+								}
+							})()
+						}
+
 							
 					<SessionInfo
 						style={{marginTop: '50px'}}
-						data={this.props.listData}
-					/>
+						data={this.props.listData} />
 
-					<Link to="/history">Back to all showers</Link>
-				</section>
+					</section>
+					</div>
 				</div>
 			);
 		}

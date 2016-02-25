@@ -1,13 +1,53 @@
 var React = require('react');
+var injectIntl = require('react-intl').injectIntl;
+
 var Chart = require('./Chart');
 
 var SessionsChart = React.createClass({
+	getDefaultProps: function() { 
+		return {
+			height: '350px',
+			width: '100%',
+			title: "History",
+			subtitle: "",
+			mu: "",
+			type: "bar"
+		};
+	},
 	render: function() {
+		var colors = ['#2D3580', '#CD4D3E'];
+		var seriesArray = this.props.data.map((x, i) => { return {
+			name: 'Shower #'+(i+1),
+			type: this.props.type,
+			stack: this.props.type==='bar'?'name':null,
+			showAllSymbol: true,
+			itemStyle: {
+				normal: {
+					color: colors[i],
+						barBorderColor: colors[i],
+						barBorderWidth: 15,
+						barBorderRadius:5,
+						label : {
+								show: false, 
+								position: 'insideTop',
+								textStyle: '#666'
+						},
+						textStyle: '#666'
+				}
+			},
+			data: x,
+			markLine : {
+					data : [
+							{type : 'average', name: 'Average'}
+					]
+			}
+		};
+		});
 		return (
 			<Chart
 				style={{
-					height:'400px',
-					width: '100%',
+					height: this.props.height,
+					width: this.props.width,
 				}} 
 				options = {{
 						title : {
@@ -25,7 +65,7 @@ var SessionsChart = React.createClass({
 								show : false,
 						},
 						backgroundColor: 'rgba(55,230,123,0.0)',
-						color: ['#666', '#A45476'],
+						color: ['#2D3580', '#A45476'],
 						calculable : false,
 						dataZoom: {
 							show: true,
@@ -37,8 +77,12 @@ var SessionsChart = React.createClass({
 								{
 									type : 'time',
 									splitNumber: 0,
+									scale: true,
+									min: this.props.xMin,
+									max: this.props.xMax,
 									axisLabel : {
-												formatter: this.props.formatter?this.props.formatter:defaultFormatter
+										formatter: this.props.formatter
+										//this.props.formatter?this.props.formatter:defaultFormatter
 										},
 										boundaryGap: [0, 0.1]
 								},
@@ -66,35 +110,9 @@ var SessionsChart = React.createClass({
 										boundaryGap: [0, 0.1]
 								}
 						],
-						series : [
-								{
-										name:this.props.title,
-										type:this.props.type,
-										showAllSymbol: true,
-										itemStyle: {
-											normal: {
-												color: '#666',
-													barBorderColor: '#666',
-													barBorderWidth: 5,
-													barBorderRadius:5,
-													label : {
-															show: false, 
-															position: 'insideTop',
-															textStyle: '#666'
-													},
-													textStyle: '#666'
-											}
-            				},
-										data: this.props.data,
-										markLine : {
-												data : [
-														{type : 'average', name: 'Average'}
-												]
-										}
-								},
-						]
-				}}
-			/>
+						series : seriesArray
+					}}	
+				/>
 		);
 	}
 });
@@ -106,4 +124,5 @@ const defaultFormatter = function(timestamp){
 					date.getFullYear());
 };
 
+SessionsChart = injectIntl(SessionsChart);
 module.exports = SessionsChart;

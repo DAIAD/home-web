@@ -17,13 +17,13 @@ var Chart = React.createClass({
 	componentDidMount: function() {
 		this._chart = echarts.init(document.getElementById(this.getId())); 
 		if(this.props.options) {
-			this._chart.setOption(this.props.options);
+			this._chart.setOption(this.props.options, true);
 		}
 	},
 	
 	componentWillReceiveProps : function(nextProps) {
 		if((this._chart) && (nextProps.options)) {
-			this._chart.setOption(nextProps.options);
+			this._chart.setOption(nextProps.options, true);
 		}
 	},
 
