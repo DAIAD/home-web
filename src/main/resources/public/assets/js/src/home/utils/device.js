@@ -3,6 +3,10 @@ var getDefaultDevice = function(devices) {
 	return amphiroDevices.length?amphiroDevices[0]:null;
 };
 
+var getDeviceCount = function(devices) {
+	return getAvailableDevices(devices).length;
+};
+
 var getAvailableDevices = function(devices) {
 	return devices.filter((device) => (device.type === 'AMPHIRO'));
 };
@@ -32,11 +36,39 @@ var updateOrAppendToSession = function(sessions, data, id) {
 	return updated;
 };
 
+var getSessionByIndex = function(sessions, index) {
+	if (typeof(index) !== "number") return null;
+	//if (sessions.length && !sessions[0].id) return null;
+
+	return sessions[index];
+};
+
 var getSessionById = function(sessions, id) {
 	if (!id) return null;
+	if (sessions.length && !sessions[0].id) return null;
+
 	return sessions.find(x => (x.id).toString() === id.toString());
 };
 
+var getNextSession = function(sessions, id) {
+	const sessionIndex = getSessionIndexById(sessions, id);
+	if (sessions[sessionIndex+1]){
+		return sessions[sessionIndex+1].id;
+	}
+	else {
+		return null;
+	}
+};
+
+var getPreviousSession = function(sessions, id) {
+	const sessionIndex = getSessionIndexById(sessions, id);
+	if (sessions[sessionIndex-1]){
+		return sessions[sessionIndex-1].id;
+	}
+	else {
+		return null;
+	}
+};
 var getSessionIndexById = function(sessions, id) {
 	return sessions.findIndex(x => (x.id).toString() === id.toString());
 };
@@ -56,10 +88,14 @@ var getLastSession = function(sessions) {
 
 module.exports = {
 	getSessionById,
+	getSessionByIndex,
+	getNextSession,
+	getPreviousSession,
 	getSessionIndexById,
 	getLastSession,
 	updateOrAppendToSession,
 	getDefaultDevice,
+	getDeviceCount,
 	getAvailableDevices,
 	getAvailableDeviceKeys,
 	getDeviceByKey

@@ -4,13 +4,9 @@ require('es6-promise').polyfill();
 
 var getSessionById = require('../utils/device').getSessionById;
 var getLastSession = require('../utils/device').getLastSession;
+var getNextSession = require('../utils/device').getNextSession;
+var getPreviousSession = require('../utils/device').getPreviousSession;
 
-var requestLastSession = function(id) {
-	return {
-		type: types.DEVICE_LAST_SESSION_REQUESTED,
-		id: id
-	};
-};
 
 var requestedSessionsQuery = function() {
 	return {
@@ -58,6 +54,13 @@ var receivedSession = function(success, errors, data, id) {
 	};
 };
 
+var setLastSession = function(id) {
+	return {
+		type: types.DEVICE_SET_LAST_SESSION,
+		id: id
+	};
+};
+
 var DeviceActions = {
 	
 	querySessions: function(deviceKey, time) {
@@ -66,13 +69,14 @@ var DeviceActions = {
 			dispatch(requestedSessionsQuery());
 
 			var data = Object.assign({}, time, {deviceKey: [ deviceKey ] });
-			
 			return deviceAPI.querySessions(data).then(
 				function(response) {
 					dispatch(receivedSessionsQuery(response.success, response.errors, response.devices?response.devices[0].sessions:[]) );
+					return response;
 				},
 				function(error) {
 					dispatch(receivedSessionsQuery(false, error, {}));
+					return error;
 				});
 		};
 	},
@@ -89,6 +93,7 @@ var DeviceActions = {
 			}
 		};
 	},
+	/*
 	fetchSessions: function(deviceKey, time) {
 		return function(dispatch, getState) {
 
@@ -117,41 +122,76 @@ var DeviceActions = {
 				return dispatch(DeviceActions.fetchSessions(deviceKey, time));
 			}
 		};
-	},
+		},
+	*/
 	fetchSession: function(id, deviceKey, time) {
 		return function(dispatch, getState) {
+			//dispatch(DeviceActions.setActiveSession(id));
 
-			var session = getSessionById(getState().device.sessions.data, id);
+			var session = getSessionById(getState().device.query.data, id);
 			//var session = getState().device.session.data;
-			
 			if (session !== undefined && session.measurements){
 				console.log('found session in memory');
 				return true;
-				}
-				
+			}
+			if (id===null || id===undefined) {
+				return false;
+			}
 			dispatch(requestedSession(id));
 
 			var data = Object.assign({}, time,  {sessionId:id, deviceKey: deviceKey});
 
-			console.log('searching session..');
 			return deviceAPI.getSession(data).then(
 				function(response) {
 					dispatch(receivedSession(response.success, response.errors, response.session, id));
+					return response;
 				},
 				function(error) {
 					dispatch(receivedSession(false, error, {}));
+					return error;
 				});
 		};
 	},
+	fetchActiveSession: function(deviceKey, time) {
+		return function(dispatch, getState) {
+			const sessions = getState().device.query.data;
+			const activeSessionIndex = getState().device.query.activeSessionIndex;
+				if (getState().device.query.activeSessionIndex===null || !getState().device.query.data[activeSessionIndex] || !getState().device.query.data[activeSessionIndex].id) {
+					return false;
+				}
+			
+			const activeSessionId = getState().device.query.data[activeSessionIndex].id;
+			return dispatch(DeviceActions.fetchSession(activeSessionId, deviceKey, time));
+		};
+	},
+	fetchNextSession: function(deviceKey, time) {
+		return function(dispatch, getState) {
+			const sessions = getState().device.query.data;
+			const nextSession = getState().device.query.activeSessionIndex; 
 
+			if (!nextSession) { return false; }
+			
+			return dispatch(DeviceActions.fetchSession(nextSession, deviceKey, time));
+		};
+	},
+	fetchPreviousSession: function(deviceKey, time) {
+		return function(dispatch, getState) {
+			const sessions = getState().device.query.data;
+			const previousSession = getPreviousSession(sessions, id);
+
+			if (!previousSession) { return false; }
+			
+			return dispatch(DeviceActions.fetchSession(previousSession, deviceKey, time));
+		};
+	},
 	fetchLastSession: function(deviceKey, time) {
 		return function(dispatch, getState) {
-			const session = getLastSession(getState().device.sessions.data);
+			const session = getLastSession(getState().device.query.data);
 			const id = session.id;
 			if (!id){ return false;}
 
-			if (getState().device.sessions.lastSession !== id) {
-				dispatch(requestLastSession(id));
+			if (getState().device.query.lastSession !== id) {
+				dispatch(setLastSession(id));
 				return dispatch(DeviceActions.fetchSession(id, deviceKey, time));
 			}
 			else {
@@ -169,10 +209,42 @@ var DeviceActions = {
 			time: time 
 		};
 	},
+	setActiveSession: function(sessionId) {
+		return {
+			type: types.DEVICE_SET_ACTIVE_SESSION,
+			id: sessionId
+		};
+	},
+	setActiveSessionIndex: function(sessionIndex) {
+		return {
+			type: types.DEVICE_SET_ACTIVE_SESSION_INDEX,
+			id: sessionIndex
+		};
+	},
+	resetActiveSessionIndex: function() {
+		return {
+			type: types.DEVICE_RESET_ACTIVE_SESSION_INDEX
+		};
+	},
+	increaseActiveSessionIndex: function() {
+		return {
+			type: types.DEVICE_INCREASE_ACTIVE_SESSION_INDEX
+		};
+	},
+	decreaseActiveSessionIndex: function() {
+		return {
+			type: types.DEVICE_DECREASE_ACTIVE_SESSION_INDEX
+		};
+	},
 	setActiveDevice: function(deviceKey) {
 		return {
 			type: types.DEVICE_SET_ACTIVE,
 			deviceKey: deviceKey
+		};
+	},
+	resetActiveDevice: function() {
+		return {
+			type: types.DEVICE_RESET_ACTIVE,
 		};
 	},
 	setActiveDeviceIfNone: function(deviceKey) {
@@ -181,7 +253,7 @@ var DeviceActions = {
 				return true;
 			}
 			else {
-				dispatch(DeviceActions.setActiveDevice(deviceKey));
+				return dispatch(DeviceActions.setActiveDevice(deviceKey));
 			}
 		};
 	},
@@ -191,12 +263,20 @@ var DeviceActions = {
 			filter: filter
 		};
 	},
+	setTimeFilter: function(filter) {
+		return {
+			type: types.DEVICE_SET_TIME_FILTER,
+			filter: filter
+		};
+	},
 	setSessionFilter: function(filter) {
 		return {
 			type: types.DEVICE_SET_SESSION_FILTER,
 			filter: filter
 		};
-	}
+	},
+
+
 
 };
 
