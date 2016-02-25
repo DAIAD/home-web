@@ -40,9 +40,11 @@ var LocaleActions = {
 			return localeAPI.fetchLocaleMessages(locale).then(
 				function(messages) {
 					dispatch(receivedMessages(true, null, locale, flattenMessages(messages)));
+					return messages;
 				},
 				function(errors) {
 					dispatch(receivedMessages(false, errors, null, []));
+					return errors;
 				});
 		};
 	},

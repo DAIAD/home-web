@@ -12,7 +12,7 @@ var Constant = require('../constants/HomeConstants');
 var Header = require('../components/Header.react');
 var MainSection = require('../components/MainSection.react');
 var Footer = require('../components/Footer.react');
-var LoginForm = require('../components/LoginForm');
+var LoginPage = require('../components/sections/Login');
 
 // Actions
 var UserActions = require('../actions/UserActions');
@@ -20,16 +20,16 @@ var LocaleActions = require('../actions/LocaleActions');
 var DeviceActions = require('../actions/DeviceActions');
 
 var getDefaultDevice = require('../utils/device').getDefaultDevice;
+var getDeviceCount = require('../utils/device').getDeviceCount;
 
 var HomeApp = React.createClass({
 
 	componentWillMount: function() {
 		if (this.props.user.isAuthenticated) {
-			this.props.setDefaultActiveDevice(this.props.user.profile.devices);
+			//this.props.setDefaultActiveDevice(this.props.user.profile.devices);
 		}
 	},
 	render: function() {
-		// wait until locale is loaded 
 		const devices = this.props.user.profile.devices;
 		return (
 			<ReactIntlProvider 
@@ -49,6 +49,7 @@ var HomeApp = React.createClass({
 					<Header 
 						data={Constant.data}
 						firstname={this.props.user.profile.firstname}
+						deviceCount={this.props.user.isAuthenticated?getDeviceCount(devices):0}
 						isAuthenticated={this.props.user.isAuthenticated}
 						locale={this.props.locale.locale}
 						onLogout={this.props.onLogout} 
@@ -64,25 +65,18 @@ var HomeApp = React.createClass({
 									}
 									else {
 										return (
-											<MainSection>
-												{this.props.children}
-											</MainSection>
+												this.props.children
 											);
 									}
 								}
 								else {
 									return (
-										<MainSection 
-											style = {{paddingTop: '50px'}}
-											>
-											<LoginForm 	
-												isAuthenticated = {this.props.user.isAuthenticated}
-												errors = {this.props.user.status.errors}
-												onLogin = {this.props.onLogin}
-												onLogout = {this.props.onLogout}
-											/>
-										</MainSection>
-								);
+										<LoginPage 
+											isAuthenticated = {this.props.user.isAuthenticated}
+											errors = {this.props.user.status.errors}
+											onLogin = {this.props.onLogin}
+											onLogout = {this.props.onLogout} />
+										);
 								}
 							})()
 						}
@@ -97,6 +91,7 @@ var HomeApp = React.createClass({
 
 });
 
+
 function mapStateToProps(state) {
 		return {
 			user: state.user,
@@ -108,8 +103,13 @@ function mapStateToProps(state) {
 function mapDispatchToProps(dispatch, ownProps) {
 	return {
 		onLogin: function(username, password) {
-			dispatch(UserActions.login(username, password)).then(function() {
-				ownProps.setDefaultActiveDevice(this.props.user.profile.devices);
+			dispatch(UserActions.login(username, password)).then(function(response) {
+				const devices = response.profile.devices;
+				const device = getDefaultDevice(devices);
+				return dispatch(DeviceActions.setActiveDevice(device.deviceKey));
+			},
+			function(error) {
+				console.log('oops, something went wrong while logging-in');
 			});
 		},
 		onLogout: function() {
@@ -118,12 +118,7 @@ function mapDispatchToProps(dispatch, ownProps) {
 		onLocaleSwitch: function(locale) {
 			dispatch(LocaleActions.setLocale(locale));
 		},
-		setDefaultActiveDevice: function(devices) {
-			const device = getDefaultDevice(devices);
-			
-			if (!device) { return; }
-			dispatch(DeviceActions.setActiveDeviceIfNone(device.deviceKey));
-		}
+		
 	};
 }
 

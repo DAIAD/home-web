@@ -1,6 +1,6 @@
 var userAPI = require('../api/user');
 var types = require('../constants/ActionTypes');
-require('es6-promise').polyfill();
+var DeviceActions = require('./DeviceActions');
 
 var requestedLogin = function() {
 	return {
@@ -40,9 +40,12 @@ var UserActions = {
 			return userAPI.login(username, password).then(
 				function(response) {
 					dispatch(receivedLogin(response.success, response.errors, response.profile));
+					return response;
+
 				},
 				function(error) {
 					dispatch(receivedLogin(false, error, {}));
+					return error;
 				});
 		};
 	},
@@ -51,10 +54,12 @@ var UserActions = {
 			return userAPI.getProfile().then(
 				function(response) {
 					dispatch(receivedLogin(response.success, response.errors, response.profile));
+					return response;
 				},
 				function (error) {
 					dispatch(receivedLogin(false, error, {}));
 					reject(error);
+					return error;
 				});
 		};
 	},
@@ -65,9 +70,13 @@ var UserActions = {
 			return userAPI.logout().then(
 				function(response) {
 					dispatch(receivedLogout(response.success, response.errors));
+					//reset active device
+					dispatch(DeviceActions.resetActiveDevice());
+					return response;
 				},
 				function(error) {
 					dispatch(receivedLogout(false, error));
+					return error;
 				});
 		};
 	},
