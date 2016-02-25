@@ -2,7 +2,9 @@ var React = require('react');
 var bs = require('react-bootstrap');
 var injectIntl = require('react-intl').injectIntl;
 var FormattedMessage = require('react-intl').FormattedMessage;
+var FormattedRelative = require('react-intl').FormattedRelative;
 
+var MainSection = require('../MainSection.react');
 var SessionsChart = require('../SessionsChart');
 
 var Budget = require('../Budget');
@@ -25,8 +27,8 @@ var SessionStats = React.createClass({
 		}
 		return (
 			<div>
-				<h3>Last shower</h3>
-				<h4>{new Date(this.props.lastShower.timestamp).toString()}</h4>
+				<h4>Last shower</h4>
+				<b><FormattedRelative value={new Date(this.props.lastShower.timestamp)}/></b>
 				<ul>
 					<li>You consumed a total of <b>{this.props.lastShower.volume} liters</b>!</li>
 					<li>You used a total of <b>{this.props.lastShower.energy} kWh</b> for water heating!</li>
@@ -41,14 +43,12 @@ var Dashboard = React.createClass({
 
 	render: function() {
 		return (
-			<section className="section-dashboard">
-				<h3><FormattedMessage id="section.dashboard"/></h3>
+			<MainSection id="section.dashboard">
 				<SayHello firstname={this.props.firstname}/>
 				
 				<SessionStats 
 						lastShower={this.props.lastShower}
 					/>
-				<Budget />
 				{
 					(() => {
 						if (!this.props.lastShower){
@@ -60,12 +60,12 @@ var Dashboard = React.createClass({
 						else {
 							return (
 								<SessionsChart
-									height='200px'
-									width={50}	
-									title="Showers"
-									subtitle="today"
+									height={320}
+									width={450}	
+									title="Last shower"
+									subtitle=""
 									mu=""
-									formatter={dayFormatter}
+									formatter={this.props.chartFormatter}
 									type="line"
 									data={this.props.chartData}
 								/>
@@ -74,7 +74,7 @@ var Dashboard = React.createClass({
 					})()
 				}
 
-			</section>
+			</MainSection>
 		);
 	}
 });

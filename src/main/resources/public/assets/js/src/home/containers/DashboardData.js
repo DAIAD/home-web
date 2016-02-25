@@ -29,7 +29,14 @@ var getFilteredData = function(data, filter) {
 var DashboardData = React.createClass({
 	
 	componentWillMount: function() {
-		this.props.initDashboard(this.props.activeDevice, this.props.time);
+		if (this.props.activeDevice) {
+			this.props.initDashboard(this.props.activeDevice);
+		}
+	},
+	componentWillReceiveProps: function(nextProps) {
+		if (!this.props.activeDevice && nextProps.activeDevice) {
+			this.props.initDashboard(nextProps.activeDevice);
+		}
 	},
 	render: function() {
 		return (
@@ -38,29 +45,30 @@ var DashboardData = React.createClass({
 	}
 });
 
-function mapStateToProps(state) {
-	var lastSession = getSessionById(state.device.sessions.data, state.device.sessions.lastSession);
+function mapStateToProps(state, ownProps) {
+	var lastSession = getSessionById(state.device.query.data, state.device.query.lastSession);
 	return {
 		time: state.device.query.time,
-		firstname: state.user.profile.firstname,
-		chartData: lastSession?getFilteredData(lastSession.measurements?lastSession.measurements:[], 'volume'):[],
-		lastShower: lastSession,
 		activeDevice: state.device.query.activeDevice,
-		loading: (state.device.query.status.isLoading || state.device.sessions.status.isLoading),
+		firstname: state.user.profile.firstname,
+		chartData: lastSession?(getFilteredData(lastSession.measurements?lastSession.measurements:[], 'volume')):[],
+		chartFormatter: (x) => ownProps.intl.formatTime(x, { hour: 'numeric', minute: 'numeric'}),
+		lastShower: lastSession,
+		loading: (state.device.query.status.isLoading),
 	};
 }
 
 function mapDispatchToProps(dispatch) {
 	return {
 
-		initDashboard: function(deviceKey, time) {
-			
-			dispatch(DeviceActions.fetchSessionsIfNeeded(deviceKey, Object.assign({}, time, {granularity:0}))).then(
-				function() { 
-					dispatch(DeviceActions.fetchLastSession(deviceKey, Object.assign({}, time, {granularity:0})));
+		initDashboard: function(deviceKey) {
+			const time = Object.assign({}, timeUtil.thisMonth(), {granularity: 0});
+
+			dispatch(DeviceActions.querySessions(deviceKey, time)).then(
+				function(response) { 
+					dispatch(DeviceActions.fetchLastSession(deviceKey, time));
 				},
 				function(error) {
-					console.log('failed'); 
 					console.log(error);
 				});
 		}
@@ -68,4 +76,5 @@ function mapDispatchToProps(dispatch) {
 }
 
 DashboardData = connect(mapStateToProps, mapDispatchToProps)(DashboardData);
+DashboardData = injectIntl(DashboardData);
 module.exports = DashboardData;
