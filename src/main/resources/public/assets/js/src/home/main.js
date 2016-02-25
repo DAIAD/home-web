@@ -9,7 +9,7 @@ var BrowserHistory = require('history');
 var getDefaultDevice = require('./utils/device').getDefaultDevice;
 
 var Router = require('react-router').Router;
-//require('babel-polyfill');
+require('babel-polyfill');
 
 const history = BrowserHistory.useBasename(BrowserHistory.createHistory)({
 	basename: '/home/'
