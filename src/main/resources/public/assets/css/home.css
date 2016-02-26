@@ -1,0 +1,536 @@
+/* Fonts */
+
+@font-face {
+    font-family: "SourceSansPro";
+    src: url("../fonts/SourceSansPro/SourceSansPro-Regular.ttf");
+}
+@font-face {
+    font-family: "SourceSansPro";
+    src: url("../fonts/SourceSansPro/SourceSansPro-Italic.ttf");
+    font-style: italic;
+}
+@font-face {
+    font-family: "SourceSansPro";
+    src: url("../fonts/SourceSansPro/SourceSansPro-Bold.ttf");
+    font-weight: bold;
+}
+@font-face {
+    font-family: "SourceSansPro";
+    src: url("../fonts/SourceSansPro/SourceSansPro-BoldItalic.ttf");
+    font-weight: bold;
+		font-style: italic;
+}
+@font-face {
+    font-family: "SourceSansPro";
+    src: url("../fonts/SourceSansPro/SourceSansPro-SemiBold.ttf");
+    font-weight: 600;
+}
+@font-face {
+    font-family: "SourceSansPro";
+    src: url("../fonts/SourceSansPro/SourceSansPro-SemiBoldItalic.ttf");
+    font-weight: 600;
+		font-style: italic;
+}
+@font-face {
+    font-family: "SourceSansPro";
+    src: url("../fonts/SourceSansPro/SourceSansPro-Light.ttf");
+    font-weight: 300;
+}
+@font-face {
+    font-family: "SourceSansPro";
+    src: url("../fonts/SourceSansPro/SourceSansPro-LightItalic.ttf");
+    font-weight: 300;
+		font-style: italic;
+}
+@font-face {
+    font-family: "SourceSansPro";
+    src: url("../fonts/SourceSansPro/SourceSansPro-ExtraLight.ttf");
+    font-weight: 200;
+  font-family: "SourceSansPro", Helvetica, Arial, sans-serif;
+}
+@font-face {
+    font-family: "SourceSansPro";
+    src: url("../fonts/SourceSansPro/SourceSansPro-ExtraLightItalic.ttf");
+    font-weight: 200;
+		font-style: italic;
+}
+@font-face {
+    font-family: "Simplifica";
+    src: url("../fonts/SourceSansPro/SourceSansPro-Regular.ttf");
+}
+@font-face {
+    font-family: "FontAwesome";
+    src: url("../fonts/FontAwesome.otf");
+}
+
+/* Common */
+
+/* Generic */
+body {
+	background: #D0EAFA;
+	color: #424242;
+  font-family: "SourceSansPro", Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+	max-width: 1024px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+a {
+	color: #2D3580;
+	font-weight: 500;
+  text-decoration: none;
+}
+
+a:hover, a:focus {
+	cursor: pointer;
+	color: #424242;
+  text-decoration: none;
+}
+
+h1, h2, h3, h4 {
+  font-family: "Simplifica", Helvetica, Arial, sans-serif;
+	color: #2D3580;
+  font-weight: bold;
+  margin: 0 0 15px;
+  padding: 0;
+}
+
+h1 {
+  border-bottom: 1px solid #ddd;
+  font-size: 2.5em;
+  font-weight: bold;
+  margin: 0 0 15px;
+  padding: 0;
+}
+
+h2 {
+  border-bottom: 1px solid #eee;
+  font-size: 2em;
+}
+
+h3 {
+  font-size: 1.5em;
+}
+
+h4 {
+  font-size: 1.2em;
+}
+
+p {
+  margin: 15px 0;
+}
+
+ul {
+  padding-left: 30px;
+}
+
+.pull-left{
+	float: left;
+}
+.pull-right{
+	float: right;
+}
+
+.hidden{
+	display: none;
+}
+
+.list-unstyled{
+	list-style: none;
+}
+
+/* Common colors */
+
+.navy {
+	color: #2D3580;
+}
+
+.azure {
+	color: #E8F5FD;
+}
+
+.dark-azure {
+	color: #D0EAFA;
+}
+
+.dark-grey {
+	color: #424242;
+}
+
+.grey {
+	color: #808285;
+}
+
+.red {
+	color: #CD4D3E;
+}
+
+.green {
+	color: #7AD3AB;
+}
+
+
+/* Header */
+
+header{
+	padding: 20px 0 0 0;
+	width: 100%;
+	border-bottom: 1px #2D3580 solid;
+}
+
+.navigation ul{
+	margin: 0;
+	padding: 0 10px;
+}
+.navbar{
+	float: left;
+}
+.site-header {
+	background: #D0EAFA;
+}
+
+.site-header .logo{
+	float: left;
+	margin-top: -10px;
+}
+
+.site-header .logo img{
+	width: 125px;
+	margin-bottom: -29px;
+}
+
+.site-header .main-menu{
+	float: left;
+	margin-left: 30px;
+}
+
+.site-header .main-menu ul li{
+	float: left;
+	margin-right: 10px;
+}
+
+.main-menu .menu-item{
+	transition: color 200ms ease-in;
+}
+
+.main-menu .menu-item:hover{
+	transition: color 700ms ease-out;
+}
+
+.main-menu .menu-item{
+	display: table;
+	margin-right: 5px;
+}
+
+.main-menu .menu-item.selected{
+	color: #CD4D3E;
+}
+
+.main-menu .menu-icon{
+	margin-right: 5px;
+	display: table-cell;
+	vertical-align: middle;
+}
+
+.main-menu .menu-span{
+	display: table-cell;
+	vertical-align: middle;
+}
+
+.site-header .notification-area{
+	display: table;
+	float: left;
+	margin-left: 20px;
+	margin-top: -7px;
+}
+
+.site-header .notification-item{
+	display: table-cell;
+	//display: inline-block;
+	vertical-align: middle;
+	width: 40px;
+	height: 40px;
+}
+.site-header .notification-item:hover{
+	cursor: pointer;
+}
+
+.header-right{
+	float: right;
+}
+.header-left{
+	float:left;
+}
+
+.settings img{
+	margin-top: -4px;
+}
+
+.site-header .user-menu{
+	float: left;
+	margin-left: 10px;
+}
+
+.site-header .language-switcher{
+	float: left;
+	margin-left: 10px;
+	margin-top: -5px;
+}
+.site-header .language-switcher #language-switcher {
+	background: #D0EAFA;
+	border: none;
+}
+
+.form-login { 
+	max-width: 160px;
+	margin-top: -5px;
+}
+.site-header .logout{
+	float: left;
+	margin-left: 7px;
+}
+
+#notifications-popover .popover-title{
+}
+#notifications-popover .popover-content{
+	width:  220px;
+}
+#notifications-popover .popover-content .scrollable{
+	overflow: auto;
+	height: 200px;
+}
+
+#notifications-popover .popover-content .footer{
+	padding: 8px 14px;
+	margin: 0;
+	font-size: 14px;
+	background-color: #f7f7f7;
+	border-top: 1px solid #ebebeb;
+}
+.notifications-show-all{
+}
+
+.popover-content{
+	padding: 0;
+}
+
+.notification-list{
+}
+
+.site-header .notification-list{
+	background: #fff;
+	position: absolute;
+	margin-top: 30px;
+}
+.notification-list ul{
+	margin: 0;
+	padding: 0;
+}
+.notification-list ul li{
+	border-bottom: 1px #111 solid;
+	padding: 2px 10px;
+}
+
+.notification-list ul li:hover{
+	cursor: pointer;
+	background: #4183c4;
+}
+.notification-list ul li:hover a{
+	color: #fff;
+}
+.notification-list ul li a:hover{
+	color: #fff;
+}
+
+.hasUnread{
+	position: absolute;
+	display: block;
+	font-size: 16px;
+	font-weight: bold;
+	margin-top: -10px;
+	margin-left: 17px;
+}
+.unread:before{
+	font-size: 20px;
+	content: '\2022';
+	margin-right: 6px;
+}
+.read:before{
+	content: '';
+	margin-right: 10px;
+}
+
+.deviceCount{
+	position: absolute;
+	top: 20px;
+	margin-left: 13px;
+	display: block;
+	font-size: 16px;
+}
+/* Content */
+
+/* Sections */
+
+.map{
+	height: 400px;
+	width: 700px;
+}
+.main-section{
+	background: #fff;
+	min-height: 400px;
+	padding: 0 25px;
+}
+div[class^="section."]{
+	padding: 25px 0;
+}
+
+.primary{
+	display: block;
+	float: right;
+	width: 85%;
+}
+
+.sidebar{
+	display:block;
+	width: 15%;
+	margin: 50px 0;
+	float: left;
+	padding-right: 0;
+	border-right: 1px #2D3580 solid;
+}
+
+.top-bar{
+	background: #E8F5FD;
+	display: block;
+	height: 30px;
+	width: 100%;
+	padding: 5px 0;
+	border-bottom: 1px #2D3580 solid;
+}
+
+.top-bar ul{
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.top-bar ul li{
+	float: left;
+	margin-left: 40px;
+}
+
+.section-enter{
+	opacity: 0.01;
+}
+.section-enter.section-enter-active{
+	opacity: 1;
+	transition: opacity 1s ease-in;
+}
+
+.section-leave{
+	opacity: 1;
+}
+.section-leave.section-leave-active{
+	opacity: 0.01;
+	transition: opacity 500ms ease-in;
+}
+
+
+.notifications-list-full{
+}
+
+.notifications-list-full li.selected{
+	background: red;
+}
+
+/* Footer */
+
+footer{
+	background: #D0EAFA;
+	height: 200px;
+	width: 100%;
+	padding-top: 10px;
+	border-top: 1px #2D3580 solid;
+}
+
+/* Charts */
+
+.chartContainer{
+	min-height: 700px;
+}
+
+/* React BootStrap Tabs */
+.nav-tabs>li>a {
+	border-radius: 0px;
+}
+
+.nav-tabs>li>a:hover {
+	border-color: transparent;
+	border-top-color: #337ab7;
+	border-bottom-color: #ddd;
+	background: #fff;
+}
+
+.nav-tabs>li>a:focus {
+	outline: none;
+	border-top-color: #337ab7;
+}
+
+.nav-pills>li.active>a, .nav-pills>li.active>a:focus, .nav-pills>li.active>a:hover {
+	background-color: #2D3580;
+	outline: none;
+}
+
+/* React Components */
+.mixin {
+	width: 100%;
+	height: 100%;
+}
+
+/* Bootstrap fixes */
+
+.has-feedback label~.form-control-feedback{
+	top: 30px;
+}
+
+/* Section specific */
+
+/* History */
+
+.sessions-list {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	padding: 0;
+	width: 80%;
+	list-style: none;
+	color: #424242;
+	border-top: 1px #2D3580 solid;
+	border-left: 1px #2D3580 solid;
+	border-right: 1px #2D3580 solid;
+}
+
+.session-item {
+	padding: 10px;
+	border-bottom: 1px #2D3580 solid;
+}
+
+.session-item:hover, .session-item:focus {
+	background: #eee;
+}
+
+.session-item-header {
+	font-size: 1.5em;
+	font-weight: bold;
+}
+
+.session-item-details {
+	font-size: 1.0em;
+	font-weight: bold;
+}
