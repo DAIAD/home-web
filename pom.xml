@@ -202,7 +202,7 @@
 			<plugin>
 				<groupId>com.github.eirslett</groupId>
 				<artifactId>frontend-maven-plugin</artifactId>
-				<version>0.0.27</version>
+				<version>0.0.28</version>
 
 				<executions>
 
@@ -213,8 +213,8 @@
 						</goals>
 						<configuration>
 							<!-- https://nodejs.org/dist/ -->
-							<nodeVersion>v0.12.2</nodeVersion>
-							<npmVersion>2.7.6</npmVersion>
+							<nodeVersion>v0.12.9</nodeVersion>
+							<npmVersion>3.8.0</npmVersion>
 						</configuration>
 					</execution>
 

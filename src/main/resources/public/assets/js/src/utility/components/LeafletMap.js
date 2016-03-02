@@ -5,6 +5,13 @@ var L = require('leaflet');
 require('leaflet.heat');
 require('leaflet-draw');
 
+var createHeatMap = function(points) {
+	if(this.heat) {
+		this.map.removeLayer(this.heat);
+	}
+	this.heat = L.heatLayer(points, {radius: 30, maxZoom: 11}).addTo(this.map);
+};
+
 var LeafletMap = React.createClass({
 
 	mixins: [PortalMixin],
@@ -12,12 +19,13 @@ var LeafletMap = React.createClass({
 	getDefaultProps: function() {
 		return {
 			center: [0 ,0],
-			zoom: 13
+			zoom: 13,
+			points: []
 	    };
 	},
 
 	render: function() {
-		var { prefix, options , ...other } = this.props;
+		var { prefix, options, points, ...other } = this.props;
 		
 		return (
 			<div {...other}/>
@@ -26,9 +34,11 @@ var LeafletMap = React.createClass({
 
 	componentWillReceiveProps : function(nextProps, nextContext) {
 		if(this.map) {
-			this.map.invalidateSize();
+			createHeatMap.bind(this)(nextProps.points);
+			this.map.invalidateSize();			
 		}
 	},	
+
 
 	componentDidMount: function() {
 		L.Icon.Default.imagePath = '/assets/lib/leaflet/images/';
@@ -40,18 +50,10 @@ var LeafletMap = React.createClass({
 				attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 			}).addTo(this.map);
 
-		var heat = L.heatLayer([
-		                    	[38.35, -0.481, 1.0],
-		                    	[38.34, -0.484, 1.0],
-		                    	[38.352, -0.482, 1.0],
-		                    	[38.348, -0.481, 1.0],
-		                    	[38.353, -0.479, 1.0],
-		                    	[38.341, -0.485, 1.0],
-		                    	[38.342, -0.481, 1.0],
-		                    	[38.342, -0.483, 1.0],
-		                    	[38.347, -0.489, 1.0]
-		                    ], {radius: 10, maxZoom: 11}).addTo(this.map);
+		var points = this.props.points;
 
+		createHeatMap.bind(this)(points);
+		
 		if(this.props.options.draw) {
 			var drawnItems = new L.FeatureGroup();
 			this.map.addLayer(drawnItems);

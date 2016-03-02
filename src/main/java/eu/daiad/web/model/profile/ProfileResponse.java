@@ -6,7 +6,8 @@ public class ProfileResponse extends RestResponse {
 
 	private Profile profile;
 
-	public ProfileResponse() {
+	public ProfileResponse(Profile profile) {
+		this.profile = profile;
 	}
 
 	public ProfileResponse(String code, String description) {
@@ -15,10 +16,6 @@ public class ProfileResponse extends RestResponse {
 
 	public Profile getProfile() {
 		return profile;
-	}
-
-	public void setProfile(Profile profile) {
-		this.profile = profile;
 	}
 
 }

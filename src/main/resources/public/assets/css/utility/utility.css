@@ -20,6 +20,7 @@
 
 .wrapper {
 	width: 100%;
+	background: #34495e;
 }
 
 .page-wrapper {
@@ -44,11 +45,24 @@
 	padding: 70px 30px 0px 30px;
 }
 
+.navbar-default {
+}
+
 .navbar-static-side {
 	z-index: 1;
 	position: absolute;
 	width: 250px;
 	margin-top: 51px;
+    background-color: #34495e;
+}
+
+.navbar-static-side li  a {
+    color: #fff;	
+}
+
+.navbar-static-side li  a:focus, .navbar-static-side li  a:hover {
+    background-color: #fff;
+    color: #2c3e50;
 }
 
 /* Select 2 wrapper */
@@ -325,4 +339,19 @@ img.sm {
 .rc-input-number-disabled .rc-input-number-handler:hover {
   color: #999;
   border-color: #d9d9d9;
+}
+
+/* react-grid-layout */
+.react-grid-item.react-grid-placeholder {
+    background: #F5F5F5;
+    opacity: 0.5;
+    cursor: move;
+}
+
+.react-grid-item > .react-resizable-handle {
+	right: -2px;
+}
+
+.draggable {
+	cursor: move;
 }

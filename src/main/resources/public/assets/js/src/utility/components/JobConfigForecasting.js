@@ -4,9 +4,9 @@ var Bootstrap = require('react-bootstrap');
 var Select = require('react-select');
 var DateRangePicker = require('react-bootstrap-daterangepicker');
 var Scheduler = require('./Scheduler');
-var JobParameters = require('./JobParameters');
+var ForecastingJobParameters = require('./ForecastingJobParameters');
 
-var JobConfig = React.createClass({
+var JobConfigForecasting = React.createClass({
 	contextTypes: {
 	    intl: React.PropTypes.object
 	},
@@ -21,12 +21,7 @@ var JobConfig = React.createClass({
                          { value: 'User 1', label: 'User 1', type: 2 }],
             source: 'Both',
             ranges: {
-				'Today': [moment(), moment()],
-				'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-				'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-				'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-				'This Month': [moment().startOf('month'), moment().endOf('month')],
-				'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+				'Next 7 Days': [moment(), moment().add(7, 'days')]
 			},
 			interval:null
         };
@@ -58,9 +53,8 @@ var JobConfig = React.createClass({
 		);
 
   		// Job
-  		var jobs = [
-           { value: 'Job-1', label: 'Daily average consumption over time interval' },
-           { value: 'Job-2', label: 'Maximum consumption per week day' }
+        var jobs = [
+	       { value: 'Job-1', label: 'Weekly forecasting using weather forecast and historical data' }
   		];
 
    		var onChangeJob = function(val) {
@@ -96,7 +90,7 @@ var JobConfig = React.createClass({
    		// Chart
    		if(this.state.job !== null) {
    			paramtersConfig = (
-				<JobParameters />
+				<ForecastingJobParameters />
    			);
    		}
 
@@ -139,4 +133,4 @@ var JobConfig = React.createClass({
   	}
 });
 
-module.exports = JobConfig;
+module.exports = JobConfigForecasting;

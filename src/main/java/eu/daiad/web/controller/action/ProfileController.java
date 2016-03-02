@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.data.IProfileRepository;
+import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.profile.ProfileResponse;
@@ -24,13 +25,17 @@ public class ProfileController extends BaseController {
 	@Autowired
 	private IProfileRepository profileRepository;
 
-	@RequestMapping(value = "/action/profile", method = RequestMethod.GET, produces = "application/json")
+	@RequestMapping(value = "/action/profile/load", method = RequestMethod.GET, produces = "application/json")
 	@Secured({"ROLE_USER", "ROLE_SUPERUSER", "ROLE_ADMIN"})
 	public RestResponse getProfile(@AuthenticationPrincipal AuthenticatedUser user) {
-		ProfileResponse response = new ProfileResponse();
-
+		RestResponse response = new RestResponse();
+		
 		try {
-			response.setProfile(profileRepository.getProfileByUsername(user.getUsername()));
+			if(user.hasRole("ROLE_ADMIN")) {
+				return  new ProfileResponse(profileRepository.getProfileByUsername(EnumApplication.UTILITY, user.getUsername()));
+			}
+			
+			return  new ProfileResponse(profileRepository.getProfileByUsername(EnumApplication.HOME, user.getUsername()));
 		} catch (ApplicationException ex) {
 			logger.error(ex);
 

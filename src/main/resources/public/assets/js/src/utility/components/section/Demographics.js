@@ -437,7 +437,7 @@ var Demographics = React.createClass({
   	}
 });
 
-Demographics.icon = 'group';
+Demographics.icon = 'bookmark';
 Demographics.title = 'Section.Demographics';
 
 module.exports = Demographics;

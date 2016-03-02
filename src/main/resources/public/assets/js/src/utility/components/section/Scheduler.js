@@ -69,7 +69,7 @@ var Scheduler = React.createClass({
 			}],
 			rows: [{
 				id: 1,
-				type: 'Demographics',
+				type: 'Segmentation',
 				description: 'Find top 20 consumers for January 2016',
 				owner: 'Yannis',
 				createdOn: new Date((new Date()).getTime() + Math.random() * 3600000),
@@ -78,7 +78,7 @@ var Scheduler = React.createClass({
 				progress: 45
 			}, {
 				id: 2,
-				type: 'Demographics',
+				type: 'Segmentation',
 				description: 'Create clusters of users based on consumption behavior patterns',
 				owner: 'Yannis',
 				createdOn: new Date((new Date()).getTime() + Math.random() * 3600000),
@@ -162,7 +162,7 @@ var Scheduler = React.createClass({
 		const historyTitle = (
 			<span>
 				<i className='fa fa-calendar fa-fw'></i>
-				<span style={{ paddingLeft: 4 }}>Messages</span>
+				<span style={{ paddingLeft: 4 }}>Log</span>
 				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}></span>
 			</span>
 		);

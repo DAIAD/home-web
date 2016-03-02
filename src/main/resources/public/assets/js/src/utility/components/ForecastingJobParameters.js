@@ -7,22 +7,19 @@ var DateRangePicker = require('react-bootstrap-daterangepicker');
 var Wizard = require('./Wizard');
 var Message = require('./Message');
 
-var JobParameters  = React.createClass({
+var ForecastingJobParameters  = React.createClass({
     getInitialState: function() {
         return {
         	granularity: 'Day',
-            population: [{ value: 'Alicante', label: 'Alicante', type: 1 },
-                         { value: 'User 1', label: 'User 1', type: 2 }],
+            population: [{ value: 'All', label: 'All', type: 1 }],
             source: 'Both',
             ranges: {
 				'Today': [moment(), moment()],
-				'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-				'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-				'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-				'This Month': [moment().startOf('month'), moment().endOf('month')],
-				'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+				'Next 7 Days': [moment(), moment().add(6, 'days')],
+				'Next 30 Days': [moment(), moment().add(29, 'days')],
 			},
-			interval:null
+			interval:null,
+			model: 'model-1'
         };
     },
     
@@ -60,7 +57,7 @@ var JobParameters  = React.createClass({
     		});
     	};
     	
-        var intervalConfig, populationConfig, sourceConfig, granularityConfig;
+        var intervalConfig, populationConfig, sourceConfig, granularityConfig, modelConfig;
         sourceConfig = (
 				<div className='form-group col-md-4'>
 					<label className='col-md-3 control-label' htmlFor='source'>Data Source</label>  
@@ -99,6 +96,31 @@ var JobParameters  = React.createClass({
 			</div>
 		);
 
+  		var onChangeModel = function(val) {
+  			this.setState({
+  				model: val.value
+  			});
+        };
+        
+		
+		modelConfig = (
+			<div className='form-group col-md-4'>
+				<label className='col-md-3 control-label' htmlFor='granularity'>Model</label>  
+				<div className='col-md-9'>
+					<Select name='model'
+						value={this.state.model}
+  		            	options={[
+	            	          { value: 'model-1', label: 'Forecasting based on historical weather and consumption data' },
+	            	          { value: 'model-2', label: 'Forecasting based on both historical and current weather and consumption data' }
+	                    ]}
+  		            	onChange={onChangeModel.bind(this)}
+						clearable={false} 
+					/>
+					<span className='help-block'>Select forecasting model</span>  
+				</div>
+			</div>
+		);
+		
 		populationConfig = (
 				<div className='form-group col-md-4'>
 					<label className='col-md-3 control-label' htmlFor='population'>Population</label>  
@@ -107,6 +129,7 @@ var JobParameters  = React.createClass({
 							multi={true}
 							value={this.state.population}
 	  		            	options={[
+            	          		  { value: 'All', label: 'All', type: 1 },
   		            	          { value: 'Alicante', label: 'Alicante', type: 1 },
   		            	          { value: 'St. Albans', label: 'St. Albans', type: 1 },
   		            	          { value: 'User 1', label: 'User 1', type: 2 },
@@ -146,8 +169,7 @@ var JobParameters  = React.createClass({
     			</div>
 			</div>
 		);
-
-		
+	
   		return (
 			<div className='row'>
 				<div className='col-md-12'>  
@@ -158,10 +180,7 @@ var JobParameters  = React.createClass({
 						{populationConfig}
 					</div>
 					<div className='row'>
-						{granularityConfig}
-					</div>
-					<div className='row'>
-						{sourceConfig}
+						{modelConfig}
 					</div>
 				</div>
 			</div>
@@ -170,4 +189,4 @@ var JobParameters  = React.createClass({
 });
 
 
-module.exports = JobParameters;
+module.exports = ForecastingJobParameters;

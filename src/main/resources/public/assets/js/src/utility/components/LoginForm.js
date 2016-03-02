@@ -32,7 +32,7 @@ var LoginForm = React.createClass({
 						<div className='form-group' >
 							<input id='password' name='password' type='password' ref='password'
 								placeholder={_t({ id: 'LoginForm.placehoder.password'})} className='form-control' />
-							<a style={{ float: 'right', color: '#337ab7', fontSize: 12}} href='#'>
+							<a style={{ float: 'right', color: '#337ab7', fontSize: 12, marginTop: 10 }} href='#'>
 								<FormattedMessage id='LoginForm.password.reset'/>
 							</a>
 						</div>

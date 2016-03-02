@@ -150,6 +150,12 @@ module.exports = function (grunt) {
 					src: ['*.js'],
 					dest: 'target/classes/public/assets/js/build/utility/i18n/',
 					filter: 'isFile'
+				}, {
+					expand: true,
+					cwd: 'src/main/resources/public/assets/js/src/home/i18n/',
+					src: ['*.js'],
+					dest: 'target/classes/public/assets/js/build/home/i18n/',
+					filter: 'isFile'
 				}]
 			},
 			utility: {
@@ -206,6 +212,12 @@ module.exports = function (grunt) {
 					cwd: 'node_modules/react-bootstrap-datetimepicker/css/',
 					src: ['**/*'],
 					dest: 'src/main/resources/public/assets/lib/react-bootstrap-datetimepicker/',
+					filter: 'isFile'
+				}, {
+					expand: true,
+					cwd: 'node_modules/react-grid-layout/css/',
+					src: ['**/*'],
+					dest: 'src/main/resources/public/assets/lib/react-grid-layout/',
 					filter: 'isFile'
 				}, {
 					expand: true,

@@ -58,7 +58,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 			}
 			break;
 		default:
-			break;
+			throw new BadCredentialsException("Authorization has failed.");
 		}
 
 		return new UsernamePasswordAuthenticationToken(user, authentication.getCredentials(), user.getAuthorities());

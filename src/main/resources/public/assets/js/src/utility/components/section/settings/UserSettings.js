@@ -1,7 +1,12 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
+var { bindActionCreators } = require('redux');
+var { connect } = require('react-redux');
 var FormattedMessage = require('react-intl').FormattedMessage;
 var Bootstrap = require('react-bootstrap');
+var LocaleSwitcher = require('../../../components/LocaleSwitcher');
+var { setLocale } = require('../../../actions/LocaleActions');
+
 
 var Breadcrumb = require('../../Breadcrumb');
 
@@ -20,6 +25,11 @@ var UserSettings = React.createClass({
 						<Breadcrumb routes={this.props.routes}/>
 					</div>
 				</div>
+				<div className="row">
+					<div className="col-md-12">
+						<LocaleSwitcher locale={this.props.locale} onLocaleSwitch={this.props.actions.setLocale} />
+					</div>
+				</div>
 			</div>
  		);
   	}
@@ -28,4 +38,16 @@ var UserSettings = React.createClass({
 UserSettings.icon = 'user';
 UserSettings.title = 'Settings.User';
 
-module.exports = UserSettings;
+function mapStateToProps(state) {
+	return {
+		locale: state.i18n.locale
+	};
+}
+
+function mapDispatchToProps(dispatch) {
+	return {
+		actions : bindActionCreators(Object.assign({}, { setLocale }) , dispatch)
+	};
+}
+
+module.exports = connect(mapStateToProps, mapDispatchToProps)(UserSettings);

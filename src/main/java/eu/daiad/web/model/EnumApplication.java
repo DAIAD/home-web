@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum EnumApplication {
-	UNDEFINED(0), HOME(1), UTILITY(2);
+	UNDEFINED(0), HOME(1), UTILITY(2), MOBILE(3);
 
 	private final int value;
 

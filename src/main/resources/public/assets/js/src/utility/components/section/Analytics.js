@@ -1,16 +1,54 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
+var moment = require('moment');
 var Bootstrap = require('react-bootstrap');
 var { Link } = require('react-router');
 var Breadcrumb = require('../Breadcrumb');
 var Chart = require('../Chart');
+var ClusterChart = require('../ClusterChart');
 var LeafletMap = require('../LeafletMap');
 var Table = require('../Table');
 var ChartWizard = require('../ChartWizard');
 var ChartConfig = require('../ChartConfig');
 var Tag = require('../Tag');
 var Message = require('../Message');
-var JobConfig = require('../JobConfig');
+var JobConfigAnalysis = require('../JobConfigAnalysis');
+var FilterTag = require('../chart/dimension/FilterTag');
+var Timeline = require('../Timeline');
+
+var createPoints = function() {
+	var points = [];
+	
+	for(var i=0; i<50; i++) {
+		points.push([38.35 + 0.02 * Math.random(), -0.521 + 0.05 * Math.random(), Math.random()]);
+	}
+	
+	return points;
+};
+
+var createSeries = function(ref, days, baseConsumption, offset) {
+	var series = [];
+	for(var d=0; d < days; d++) {
+		series.push({
+			volume: (baseConsumption + Math.random() * offset).toFixed(0),
+			date: ref.clone().toDate()
+		});
+		ref.add(1, 'days');
+	}
+
+	return series;
+};
+
+var createTimeLabels = function(ref, hours) {
+	var series = [];
+
+	for(var h=0; h < hours; h++) {
+		series.push(ref.clone().toDate());
+		ref.subtract(1, 'hours');
+	}
+
+	return series.reverse();
+};
 
 var Analytics = React.createClass({
 	contextTypes: {
@@ -20,7 +58,9 @@ var Analytics = React.createClass({
 	getInitialState() {
 		return {
 			chart: false,
-			mode: 'queries'
+			mode: 'queries',
+			points: [],
+			interval:[moment(new Date()).subtract(28, 'days'), moment()]
     	};
 	},
 
@@ -37,6 +77,10 @@ var Analytics = React.createClass({
   	toggleExpanded() {
   		this.setState({expanded: !this.state.expanded});
   	},
+    
+  	componentWillMount : function() {
+		this.setState({points : createPoints()});
+	},
 	
   	render: function() {
   		var chartData = {
@@ -44,84 +88,12 @@ var Analytics = React.createClass({
 		        legend: 'Alicante (average)',
 		        xAxis: 'date',
 		        yAxis: 'volume',
-		        data: [{
-		            id: 1,
-		            volume: 25,
-		            date: new Date(2016, 1, 1)
-		        }, {
-		            id: 1,
-		            volume: 70,
-		            date: new Date(2016, 1, 2)
-		        }, {
-		            id: 1,
-		            volume: 75,
-		            date: new Date(2016, 1, 3)
-		        }, {
-		            id: 1,
-		            volume: 62,
-		            date: new Date(2016, 1, 4)
-		        }, {
-		            id: 1,
-		            volume: 53,
-		            date: new Date(2016, 1, 5)
-		        }, {
-		            id: 1,
-		            volume: 27,
-		            date: new Date(2016, 1, 6)
-		        }, {
-		            id: 1,
-		            volume: 41,
-		            date: new Date(2016, 1, 7)
-		        }, {
-		            id: 1,
-		            volume: 45,
-		            date: new Date(2016, 1, 8)
-		        }, {
-		            id: 1,
-		            volume: 13,
-		            date: new Date(2016, 1, 9)
-		        }]
+		        data: createSeries(moment(new Date()).subtract(28, 'days'), 29, 180, 60)
 		    }, {
 		        legend: 'User 1',
 		        xAxis: 'date',
 		        yAxis: 'volume',
-		        data: [{
-		            id: 1,
-		            volume: 15,
-		            date: new Date(2016, 1, 1)
-		        }, {
-		            id: 1,
-		            volume: 30,
-		            date: new Date(2016, 1, 2) 
-		        }, {
-		            id: 1,
-		            volume: 44,
-		            date: new Date(2016, 1, 3)
-		        }, {
-		            id: 1,
-		            volume: 32,
-		            date: new Date(2016, 1, 4)
-		        }, {
-		            id: 1,
-		            volume: 23,
-		            date: new Date(2016, 1, 5)
-		        }, {
-		            id: 1,
-		            volume: 11,
-		            date: new Date(2016, 1, 6)
-		        }, {
-		            id: 1,
-		            volume: 18,
-		            date: new Date(2016, 1, 7)
-		        }, {
-		            id: 1,
-		            volume: 11,
-		            date: new Date(2016, 1, 8)
-		        }, {
-		            id: 1,
-		            volume: 5,
-		            date: new Date(2016, 1, 9)
-		        }]
+		        data: createSeries(moment(new Date()).subtract(28, 'days'), 29, 150, 30)
 		    }]
 		};
   		
@@ -186,7 +158,7 @@ var Analytics = React.createClass({
 		const dataTitle1 = (
 			<span>
 				<i className={'fa fa-' + (this.state.chart ? 'map' : 'bar-chart') + ' fa-fw'}></i>
-				<span style={{ paddingLeft: 4 }}>Daily consumption for the last 7 days</span>
+				<span style={{ paddingLeft: 4 }}>Daily consumption for the last 30 days</span>
 				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
 					<Bootstrap.Button	bsStyle='default' className='btn-circle'>
 						<i className='fa fa-remove fa-fw'></i>
@@ -213,7 +185,7 @@ var Analytics = React.createClass({
 		const dataTitle2 = (
 			<span>
 				<i className='fa fa-map fa-fw'></i>
-				<span style={{ paddingLeft: 4 }}>Favourite users hourly consumption</span>
+				<span style={{ paddingLeft: 4 }}>Favourite users hourly consumption heatmap for the last 24 hours</span>
 				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
 					<Bootstrap.Button bsStyle='default' className='btn-circle'>
 						<i className='fa fa-remove fa-fw'></i>
@@ -245,15 +217,43 @@ var Analytics = React.createClass({
 						elementClassName='mixin'
 						prefix='chart'
 						options={chartOptions}
-						data={chartData}/>
+						data={chartData}
+						type='line'/>
 			);
 		}
 
+		var onChangeTimeline = function(value) {
+			this.setState({points: createPoints()});
+		};
+		
+		var mapFilterTags = [];
+		mapFilterTags.push( 
+			<FilterTag key='time' text='Last 24 hours' icon='calendar' />
+    	);
+		mapFilterTags.push( 
+			<FilterTag key='population' text='Favourites' icon='group' />
+    	);
+		mapFilterTags.push( 
+			<FilterTag key='source' text='Meter' icon='database' />
+    	);
+			
+		var today = new Date();
 		dataContent2 = (
-			<LeafletMap style={{ width: '100%', height: 600}} 
-						elementClassName='mixin'
-						prefix='map'
-						options={mapOptions} />
+			<Bootstrap.ListGroupItem>
+				<LeafletMap style={{ width: '100%', height: 600}} 
+							elementClassName='mixin'
+							prefix='map'
+							options={mapOptions}
+							points={this.state.points} />
+				<Timeline 	onChange={onChangeTimeline.bind(this)} 
+							style={{paddingTop: 10}}
+							min={1}
+							max={24}
+							value={24}
+							type='time'
+						    data={createTimeLabels(moment(new Date(today.getFullYear(), today.getMonth(), today.getDate(), today.getHours(), 0, 0)), 24)}>
+				</Timeline>
+			</Bootstrap.ListGroupItem>
 		);
 
   		var jobs = {
@@ -317,7 +317,7 @@ var Analytics = React.createClass({
 		switch(this.state.mode) {
 			case 'job':
 				configContent = (
-					<JobConfig />
+					<JobConfigAnalysis />
 				);
 				break;
 			case 'chart':
@@ -362,9 +362,8 @@ var Analytics = React.createClass({
 
 				configContent = (
 					<Tag.Collection>
-						<Tag.Item key={1} text='Daily consumption for the last 7 days' actions={actions} checked={true} />
-						<Tag.Item key={2} text='Alicante Trial group monthly consumption' actions={actions} />
-						<Tag.Item key={3} text='Favourite users hourly consumption heatmap' actions={actions} checked={true} />
+						<Tag.Item key={1} text='Daily consumption for the last 30 days' actions={actions} checked={true} />
+						<Tag.Item key={3} text='Favourite users hourly consumption heatmap for the last 24 hours' actions={actions} checked={true} />
 					</Tag.Collection>
 				);
 
@@ -372,6 +371,32 @@ var Analytics = React.createClass({
 		}
 
 		var content;
+		var chartFilterTags = [];
+        
+		var intervalLabel ='';
+        if(this.state.interval) {
+        	var start = this.state.interval[0].format('DD/MM/YYYY');
+        	var end = this.state.interval[1].format('DD/MM/YYYY');
+        	intervalLabel = start + ' - ' + end;
+        	if (start === end) {
+        		intervalLabel = start;
+        	}
+        }  
+
+    	chartFilterTags.push( 
+			<FilterTag key='time' text={intervalLabel} icon='calendar' />
+    	);
+    	chartFilterTags.push( 
+			<FilterTag key='population' text='Alicante, User 1' icon='group' />
+    	);
+    	chartFilterTags.push( 
+			<FilterTag key='spatial' text='Alicante' icon='map' />
+    	);
+    	chartFilterTags.push( 
+			<FilterTag key='source' text='Meter, Amphiro' icon='database' />
+    	);
+
+		
 		if(this.state.mode === 'queries') {
 			content = (
 				<div className='row'>
@@ -381,14 +406,26 @@ var Analytics = React.createClass({
 								<Bootstrap.ListGroupItem>
 									{dataContent1}
 								</Bootstrap.ListGroupItem>
+								<Bootstrap.ListGroupItem className='clearfix'>				
+									<div className='pull-left'>
+										{chartFilterTags}
+									</div>
+									<span style={{ paddingLeft : 7}}> </span>
+									<Link className='pull-right' to='/forecasting' style={{ paddingLeft : 7, paddingTop: 12 }}>View forecasting</Link>
+								</Bootstrap.ListGroupItem>
 							</Bootstrap.ListGroup>
 						</Bootstrap.Panel>
 					</div>
 					<div className='col-lg-6'>
 						<Bootstrap.Panel header={dataTitle2}>
 							<Bootstrap.ListGroup fill>
-								<Bootstrap.ListGroupItem>
-									{dataContent2}
+								{dataContent2}
+								<Bootstrap.ListGroupItem className='clearfix'>
+									<div className='pull-left'>
+										{mapFilterTags}
+									</div>
+									<span style={{ paddingLeft : 7}}> </span>
+									<Link className='pull-right' to='/forecasting' style={{ paddingLeft : 7, paddingTop: 12 }}>View forecasting</Link>
 								</Bootstrap.ListGroupItem>
 							</Bootstrap.ListGroup>
 						</Bootstrap.Panel>
@@ -396,6 +433,65 @@ var Analytics = React.createClass({
 				</div>
 			);
 		}
+		const clusterTitle = (
+			<span>
+				<i className='fa fa-map fa-fw'></i>
+				<span style={{ paddingLeft: 4 }}>Clusters of households based on income and consumption</span>
+				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
+					<Bootstrap.Button bsStyle='default' className='btn-circle'>
+						<i className='fa fa-remove fa-fw'></i>
+					</Bootstrap.Button>
+				</span>
+				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
+					<Bootstrap.Button	bsStyle='default' className='btn-circle'>
+						<i className='fa fa-copy fa-fw'></i>
+					</Bootstrap.Button>
+				</span>
+				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
+					<Bootstrap.Button	bsStyle='default' className='btn-circle'>
+						<i className='fa fa-pencil fa-fw'></i>
+					</Bootstrap.Button>
+				</span>
+			</span>
+		);
+
+		var clusterFilterTags = [];
+
+		clusterFilterTags.push( 
+			<FilterTag key='filter1' text='01/01/2015 - 01/12/2015' icon='calendar' />
+    	);
+		clusterFilterTags.push( 
+			<FilterTag key='filter2' text='Alicante' icon='map' />
+    	);
+		clusterFilterTags.push( 
+			<FilterTag key='filter3' text='Income' icon='euro' />
+    	);
+		clusterFilterTags.push( 
+			<FilterTag key='filter4' text='Consumption' icon='tachometer' />
+    	);
+    	
+		var contentCluster = (
+			<div className='row'>
+				<div className='col-lg-12'>
+					<Bootstrap.Panel header={clusterTitle}>
+						<Bootstrap.ListGroup fill>
+							<Bootstrap.ListGroupItem>
+								<ClusterChart 	style={{ width: '100%', height: 600 }} 
+												elementClassName='mixin'
+												prefix='chart'/>
+							</Bootstrap.ListGroupItem>
+							<Bootstrap.ListGroupItem className='clearfix'>
+								<div className='pull-left'>
+									{clusterFilterTags}
+								</div>
+								<span style={{ paddingLeft : 7}}> </span>
+								<Link className='pull-right' to='/forecasting' style={{ paddingLeft : 7, paddingTop: 12 }}>View forecasting</Link>
+							</Bootstrap.ListGroupItem>
+						</Bootstrap.ListGroup>
+					</Bootstrap.Panel>
+				</div>
+			</div>
+		);
 
 		const jobTitle = (
 			<span>
@@ -408,7 +504,7 @@ var Analytics = React.createClass({
 				</span>
 			</span>
 		);
-	
+			
 		return (
 			<div className='container-fluid' style={{ paddingTop: 10 }}>
 				<div className='row'>
@@ -427,6 +523,7 @@ var Analytics = React.createClass({
 					</div>
 				</div>
 				{content}
+				{contentCluster}
             </div>
  		);
   	}

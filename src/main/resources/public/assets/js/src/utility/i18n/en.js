@@ -26,14 +26,15 @@
 		"Dashboard": "Dashboard",
 	    "Analytics":"Analytics",
 	    "Forecasting": "Forecasting",
-	    "Demographics": "Demographics",
+	    "Demographics": "Users & Groups",
 	    "Search": "Search",
 	    "Messages": "Messages",
 	    "Settings": "Settings",
 	    "Reporting": "Reporting",
 	    "Alerts": "Alerts",
 	    "Announcements" : "Announcements",
-	    "Scheduler": "Job Management"
+	    "Scheduler": "Job Management",
+	    "Consumers": "Consumers"
 	},
 	"Demographics" : {
 		"Group" : "Groups"

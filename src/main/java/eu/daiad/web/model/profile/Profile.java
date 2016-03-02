@@ -3,11 +3,14 @@ package eu.daiad.web.model.profile;
 import java.util.ArrayList;
 import java.util.UUID;
 
+import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.device.DeviceRegistration;
 
 public class Profile {
 
 	private UUID key;
+	
+	private EnumApplication application;
 
 	private String username;
 	
@@ -23,6 +26,10 @@ public class Profile {
 
 	private String country;
 
+	private boolean enabled = false;
+	
+	private String configuration;
+	
 	private ArrayList<DeviceRegistration> devices;
 
 	public Profile() {
@@ -102,6 +109,30 @@ public class Profile {
 
 	public void setUsername(String username) {
 		this.username = username;
+	}
+
+	public EnumApplication getApplication() {
+		return application;
+	}
+
+	public void setApplication(EnumApplication application) {
+		this.application = application;
+	}
+
+	public boolean isEnabled() {
+		return enabled;
+	}
+
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+
+	public String getConfiguration() {
+		return configuration;
+	}
+
+	public void setConfiguration(String configuration) {
+		this.configuration = configuration;
 	}
 
 }

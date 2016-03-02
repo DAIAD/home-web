@@ -11,9 +11,15 @@ var Chart = React.createClass({
 	},
 	
 	mixins: [PortalMixin],
+
+	getDefaultProps: function() {
+		return {
+			type: 'line'
+		};
+	},
 	
 	render: function() {
-		var { prefix, options, data, ...other } = this.props;
+		var { prefix, options, data, type, ...other } = this.props;
 		
 		return (
 			<div {...other} />
@@ -57,7 +63,7 @@ var Chart = React.createClass({
 		
 		chartOptions.dataZoom = {
 	        show: true,
-	        start : intl.formatDate(new Date(2016,1,1), { day: 'numeric', month: 'long', year: 'numeric'})
+	        start : 0
 	    };
 		chartOptions.legend = {         
 			data : []
@@ -95,15 +101,29 @@ var Chart = React.createClass({
             	});
                 
         		chartOptions.yAxis.push({
-                    type : 'value'
+                    type : 'value',
+                	name: 'Volume',
+                	nameLocation: 'end',
+                	nameTextStyle: {
+                		color: '#000'
+                	}
                 });
         	}
         	
         	// Data series configuration
+        	var itemStyle = {
+        		normal: {
+        			areaStyle: {
+        				type: 'default'
+					}
+    			}
+            };
+
         	chartOptions.series.push({
-                'name': series.legend,
-                'type': 'line',
-                'data': getValues(series)                
+                name: series.legend,
+                type: (this.props.type === 'area' ? 'line' : this.props.type),
+                itemStyle: (this.props.type === 'area' ? itemStyle : null),
+                data: getValues(series)                
             });
         }
 
