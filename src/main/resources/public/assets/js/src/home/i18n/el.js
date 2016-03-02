@@ -35,7 +35,7 @@
 	},
 	"section": {
 		"dashboard": "Περίληψη",
-		"history":"Ιστορικό",
+		"history":"Στατιστικά",
 		"shower": "Ντους",
 		"commons": "Κοινά",
 		"notifications": "Ενημερώσεις",

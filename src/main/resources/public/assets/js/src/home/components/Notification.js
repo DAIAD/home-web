@@ -2,12 +2,12 @@ var React = require('react');
 
 var Link = require('react-router').Link;
 
-var Constants = require('../../constants/HomeConstants');
+var Constants = require('../constants/HomeConstants');
 
-var Topbar = require('../Topbar.react');
-var Sidebar = require('../Sidebar.react');
-var MainSection = require('../MainSection.react');
-var NotificationList = require('../Header.react').NotificationList;
+var Topbar = require('./Topbar.react');
+var Sidebar = require('./Sidebar.react');
+var MainSection = require('./MainSection.react');
+var NotificationList = require('./Header.react').NotificationList;
 
 
 var NotificationMessage = React.createClass({
@@ -16,6 +16,7 @@ var NotificationMessage = React.createClass({
 			return (<div />);
 		}
 		var { notification } = this.props;
+		console.log(notification);
 		return (
 			<div className="notification">
 				<h3 className="notification-header">{notification.title}</h3>
@@ -27,7 +28,7 @@ var NotificationMessage = React.createClass({
 		);
 		}
 });
-var Notifications = React.createClass({
+var Notification = React.createClass({
 	
 	render: function() {
 		var notId = parseInt(this.props.params.id);
@@ -35,25 +36,21 @@ var Notifications = React.createClass({
 
 		return (
 			<section>
-				<Topbar> 
-					<ul className="list-unstyled">
-						<li><Link to="/notifications">All</Link></li>
-						<li><Link to="/notifications/insights">Insights</Link></li>
-						<li><Link to="/notifications/alerts">Alerts</Link></li>
-						<li><Link to="/notifications/tips">Tips</Link></li>
-					</ul>
-				</Topbar>
 
 				<MainSection id="section.notifications">
-					<div className="primary" >
+					<Sidebar width = '30%'>
 						<NotificationList notifications={Constants.data.recommendations} />		
+					</Sidebar>
 
+					<div className="primary" style={{width: '50%', marginRight: '150px'}}>
 						<input 
 							type="hidden" 
 							ref= {
 								function(i) { if (i!==null){ i.click(); } } 
 							} />
-
+						<NotificationMessage notification={notificationItem} />
+						
+						<Link className="notifications-show-all" to="/notifications">Back to all notifications</Link>
 					</div>
 				</MainSection>
 			</section>
@@ -61,4 +58,4 @@ var Notifications = React.createClass({
 	}
 });
 
-module.exports = Notifications;
+module.exports = Notification;

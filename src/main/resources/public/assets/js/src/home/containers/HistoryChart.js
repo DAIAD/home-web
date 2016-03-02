@@ -67,7 +67,7 @@ var getFilteredData = function(data, filter) {
 					filteredData.push([dato.timestamp, count]);			
 				}	
 			});
-			return [filteredData.map(x => [new Date(x[0]),x[1]])];
+			return filteredData.map(x => [new Date(x[0]),x[1]]);
 
 		case "volume12":
 			filteredData = [[]];
@@ -95,7 +95,7 @@ var getFilteredData = function(data, filter) {
 				}
 				filteredData.push([dato.timestamp, dato[filter]]);
 			});
-			return [filteredData.map(x => [new Date(x[0]),x[1]])];
+			return filteredData.map(x => [new Date(x[0]),x[1]]);
 	}
 	return;
 	//return array with dates instead of timestamps
@@ -117,15 +117,17 @@ var HistoryChart = React.createClass({
 function mapStateToProps(state, ownProps) {
 	if(!state.user.isAuthenticated) {
 		return {};
-	}
+  }
+  const dummySeries = {title:'Comparison', data:[[new Date("2016-02-25"),35], [new Date("2016-02-26"), 52], [new Date("2016-02-28"), 100], [new Date("2016-03-01"), 102]]};
 	return {
 		time: state.device.query.time,
 		filter: state.device.query.filter,
 		timeFilter: state.device.query.timeFilter,
-		//queryData: state.device.query.data,
-		data: getFilteredData(state.device.query.data, state.device.query.filter),
-		xMin: getTimeRange(state.device.query.timeFilter).startDate,
-		xMax: getTimeRange(state.device.query.timeFilter).endDate,
+		data: [{title:state.device.query.filter, data:getFilteredData(state.device.query.data, state.device.query.filter)}],
+		xMin: state.device.query.time.startDate,
+    xMax: state.device.query.time.endDate,
+    fontSize: 13,
+    type: (state.device.query.filter==='showers')?'bar':'line',
 		formatter: selectTimeFormatter(state.device.query.timeFilter, ownProps.intl),
 		loading: state.device.query.status.isLoading 
 		};
@@ -134,12 +136,11 @@ function mapStateToProps(state, ownProps) {
 function mapDispatchToProps(dispatch, ownProps) {
 	return {
 		setQueryFilter: function(filter) {
-			dispatch(DeviceActions.setQueryFilter(filter));
-		},
+			return dispatch(DeviceActions.setQueryFilter(filter));
+    },
 	};
 }
-
-
+ 
 HistoryChart = connect(mapStateToProps, mapDispatchToProps)(HistoryChart);
 HistoryChart = injectIntl(HistoryChart);
 module.exports = HistoryChart;

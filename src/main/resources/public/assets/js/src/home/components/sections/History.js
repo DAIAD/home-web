@@ -1,9 +1,12 @@
 var React = require('react');
-var FormattedMessage = require('react-intl').FormattedMessage;
+var { FormattedMessage, FormattedDate } = require('react-intl');
+
 var bs = require('react-bootstrap');
 
 var MainSection = require('../MainSection.react');
 var Sidebar = require('../Sidebar.react');
+var Topbar = require('../Topbar.react');
+var { Link } = require('react-router');
 
 //sub-containers
 var HistoryChart = require('../../containers/HistoryChart');
@@ -18,7 +21,6 @@ var getDeviceByKey = require('../../utils/device').getDeviceByKey;
 var timeUtil = require('../../utils/time');
 
 var History = React.createClass({
-	
 	handleTypeSelect: function(key){
 		this.props.setQueryFilter(key);	
 	},
@@ -27,7 +29,7 @@ var History = React.createClass({
 		if (key==="always"){
 			time = {
 				startDate: new Date("2000-02-18").getTime(),
-				endDate: new Date("2016-02-25").getTime(),
+				endDate: new Date("2016-12-31").getTime(),
 				granularity: 0
 			};
 		}
@@ -35,8 +37,8 @@ var History = React.createClass({
 			time = timeUtil.thisYear();
 			time.granularity = 4;
 		}
-		else if (key==="month"){
-			time = timeUtil.thisMonth();
+    else if (key==="month"){
+      time = timeUtil.thisMonth();
 			time.granularity = 2;
 		}
 		else if (key==="week"){
@@ -44,7 +46,7 @@ var History = React.createClass({
 			time.granularity = 0;
 		}
 		else if (key==="day"){
-			time = timeUtil.today();
+      time = timeUtil.today();
 			time.granularity = 0;
 		}
 		else{
@@ -53,32 +55,50 @@ var History = React.createClass({
 		this.props.setTimeFilter(key);
 		this.props.setTime(time);
 		this.props.querySessions(this.props.activeDevice, time);
-
-	},
+  },
+  handleTimePrevious: function() { 
+    console.log(this.props.previousPeriod);
+    this.props.setTime(this.props.previousPeriod);
+    this.props.querySessions(this.props.activeDevice, Object.assign({}, this.props.time, this.props.previousPeriod));
+  },
+  handleTimeNext: function() { 
+    console.log(this.props.nextPeriod);
+    this.props.setTime(this.props.nextPeriod);
+    this.props.querySessions(this.props.activeDevice, Object.assign({}, this.props.time, this.props.nextPeriod));
+  },
 	handleDeviceChange: function(e, value) {
 		this.props.setActive(value);
 		this.props.querySessions(value, this.props.time);
-	},
+  },
 	render: function() {
 		const activeDevice = this.props.activeDevice;
 		const device = getDeviceByKey(this.props.devices, activeDevice);
 		const activeDeviceName = device?device.name:"None";
 		
 		var _t = this.props.intl.formatMessage;
-		return (
+    return (
+      <div>
+        <Topbar> 
+					<ul className="list-unstyled">
+						<li><Link to="/history">Explore</Link></li>
+						<li><Link to="/history">Compare</Link></li>
+						<li><Link to="/history">Forecast</Link></li>
+					</ul>
+				</Topbar>
 			<MainSection id="section.history">
 					{
 						(() => {
 							if (this.props.loading){
 								return (
-									<span style={{position:'absolute'}} >Loading....</span>
+									<img className="preloader" src="/assets/images/svg/Smiley.svg" />
 									);
 							}
 							})()
 					}
-					<div>
+          <div>
+				
 					<Sidebar>	
-						<bs.Tabs style={{marginTop: '50px'}} position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
+						<bs.Tabs style={{marginTop: 60}} position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
 							<bs.Tab eventKey="showers" title={_t({id: "history.showers"})}/>
 							<bs.Tab eventKey="duration" title={_t({id: "history.duration"})} />
 							<bs.Tab eventKey="volume" title={_t({id: "history.volume"})}/>
@@ -105,22 +125,39 @@ var History = React.createClass({
 							</bs.DropdownButton>
 						</div>
 
-						<bs.Tabs  position='top' tabWidth={3} activeKey={this.props.timeFilter} onSelect={this.handleTimeSelect}>
-							<bs.Tab eventKey="always" title={_t({id: "history.always"})} />
+            <bs.Tabs  position='top' tabWidth={3} activeKey={this.props.timeFilter} onSelect={this.handleTimeSelect}>
+              {
+                //<bs.Tab eventKey="always" title={_t({id: "history.always"})} />
+               }
 							<bs.Tab eventKey="year" title={_t({id: "history.year"})}/>
 							<bs.Tab eventKey="month" title={_t({id: "history.month"})}/>
 							<bs.Tab eventKey="week" title={_t({id: "history.week"})}/>
 							<bs.Tab eventKey="day" title={_t({id: "history.day"})}/>
 						</bs.Tabs>
+            
+            <HistoryChart />
+            <hr/>
+            <div>
+              <a className="pull-left" onClick={this.handleTimePrevious}>
+                <img src="/assets/images/svg/arrow-big-left.svg" />
+              </a>
+              <div className="pull-left" style={{marginLeft:230}}>
+                <FormattedDate value={this.props.time.startDate} day="numeric" month="long" year="numeric" /> - <FormattedDate value={this.props.time.endDate} day="numeric" month="long" year="numeric" />
+              </div>
+              <a className="pull-right" onClick={this.handleTimeNext}>
+                <img src="/assets/images/svg/arrow-big-right.svg" />
+              </a>
+            </div>
+            <br />  
+            <hr style={{marginTop:30}} />
 
-						<HistoryChart />
-						
 						<HistoryList />
 
 					</div>
 				</div>
 
-				</MainSection>
+      </MainSection>
+    </div>
 		);
 	}
 });

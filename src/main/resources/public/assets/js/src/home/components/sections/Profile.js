@@ -6,6 +6,10 @@ var injectIntl = require('react-intl').injectIntl;
 var FormattedMessage = require('react-intl').FormattedMessage;
 var MainSection = require('../MainSection.react');
 
+var LocaleSwitcher = require('../LocaleSwitcher');
+
+var LocaleActions = require('../../actions/LocaleActions');
+
 var ProfileForm = React.createClass({
 
 	handleClick: function(e) {
@@ -16,7 +20,16 @@ var ProfileForm = React.createClass({
 		var profile = this.props.profile;
 		var _t = this.props.intl.formatMessage;
 		return (
-			<form id="form-profile" className="col-xs-5" >
+      <form id="form-profile" className="col-xs-5" >
+        <div className="form-group">
+          <label className="control-label">
+            <span>Select language</span>
+          </label>
+          <LocaleSwitcher
+            onLocaleSwitch={this.props.onLocaleSwitch}
+            locale={this.props.locale}
+          />
+        </div>    
 					<bs.Input type="text" label={_t({id:"profile.username"})} defaultValue={profile.username} readOnly={true} />
 					<bs.Input type="email" label={_t({id:"profile.email"})} defaultValue={profile.email} ref="email" hasFeedback={true} help="Please enter your email address" />
 					<bs.Input type="text" label={_t({id:"profile.firstname"})} defaultValue={profile.firstname} ref="firstname" disabled={false} />
@@ -29,9 +42,10 @@ var ProfileForm = React.createClass({
 });
 
 var Profile = React.createClass({
-	render: function() {
+  render: function() {
+    console.log('rendering profile');
 		return (
-			<MainSection id="section.profile">
+      <MainSection id="section.profile"> 
 				<ProfileForm {...this.props} />	
 			</MainSection>
 		);
@@ -40,10 +54,18 @@ var Profile = React.createClass({
 
 function mapStateToProps(state) {
 	return {
-		profile: state.user.profile
+    profile: state.user.profile,
+		locale: state.locale.locale
 	};
 }
 
-Profile = connect(mapStateToProps)(Profile);
+function mapDispatchToProps(dispatch, ownProps) {
+	return {
+		onLocaleSwitch: function(locale) {
+			dispatch(LocaleActions.setLocale(locale));
+		},
+	};
+}
+Profile = connect(mapStateToProps, mapDispatchToProps)(Profile);
 Profile = injectIntl(Profile);
 module.exports = Profile;

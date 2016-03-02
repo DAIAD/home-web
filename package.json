@@ -37,7 +37,8 @@
     "react-select": "~1.0.0-beta9",
     "moment": "~2.11.2",
     "react-bootstrap-daterangepicker": "~1.0.6",
-    "react-bootstrap-datetimepicker": "0.0.22"
+    "react-bootstrap-datetimepicker": "0.0.22",
+    "react-grid-layout": "^0.10.8"
   },
   "scripts": {
     "build": "NODE_ENV=production grunt build",

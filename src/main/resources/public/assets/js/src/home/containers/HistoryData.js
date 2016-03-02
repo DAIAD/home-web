@@ -6,19 +6,19 @@ var History = require('../components/sections/History');
 
 var DeviceActions = require('../actions/DeviceActions');
 
-var getAvailableDevices = require('../utils/device').getAvailableDevices;
+var { getAvailableDevices } = require('../utils/device');
+var timeUtil = require('../utils/time');
 
 
 var HistoryData = React.createClass({
 	componentWillMount: function() {
 		if (this.props.activeDevice) {
-			this.props.querySessions(this.props.activeDevice, this.props.time);
+			this.props.initHistory(this.props.activeDevice, this.props.time);
 		}
-		//this.props.fetchSessionsIfNeeded(this.props.activeDevice, this.props.time);
 	},
 	componentWillReceiveProps: function(nextProps) {
 		if (!this.props.activeDevice && nextProps.activeDevice) {
-			this.props.querySessions(nextProps.activeDevice, this.props.time);
+			this.props.initHistory(nextProps.activeDevice, this.props.time);
 		}
 	},
 	render: function() {
@@ -35,29 +35,40 @@ function mapStateToProps(state, ownProps) {
 		timeFilter: state.device.query.timeFilter,
 		devices: getAvailableDevices(state.user.profile.devices),
 		activeDevice: state.device.query.activeDevice,
-		loading: state.device.query.status.isLoading,
+    loading: state.device.query.status.isLoading,
+    nextPeriod: timeUtil.getNextPeriod(state.device.query.timeFilter, state.device.query.time.endDate),
+    previousPeriod: timeUtil.getPreviousPeriod(state.device.query.timeFilter, state.device.query.time.endDate),
+
 		};
 }
 
 function mapDispatchToProps(dispatch, ownProps) {
 	return {
 		setQueryFilter: function(filter) {
-			dispatch(DeviceActions.setQueryFilter(filter));
+			return dispatch(DeviceActions.setQueryFilter(filter));
 		},
 		setTime: function(time) {
-			dispatch(DeviceActions.setTime(time));
+			return dispatch(DeviceActions.setTime(time));
 		},
 		setTimeFilter: function(filter) {
-			dispatch(DeviceActions.setTimeFilter(filter));
-		},
+			 return dispatch(DeviceActions.setTimeFilter(filter));
+    },
+    initHistory: function(deviceKey, time) {
+      this.querySessions(deviceKey, time).then(
+        (response) => this.fetchAllSessions(deviceKey, time), 
+        (error) => console.log(error));
+    },
 		querySessions: function(deviceKey, time) {
-			dispatch(DeviceActions.querySessions(deviceKey, time));
-		},
+			return dispatch(DeviceActions.querySessions(deviceKey, time));
+    },
+    fetchAllSessions: function(deviceKey, time) {
+      return dispatch(DeviceActions.fetchAllSessions(deviceKey, time));
+    },
 		querySessionsIfEmpty: function(deviceKey, time) {
-			dispatch(DeviceActions.querySessionsIfEmpty(deviceKey, time));
+			return dispatch(DeviceActions.querySessionsIfEmpty(deviceKey, time));
 		},
 		setActive: function(deviceKey) {
-			dispatch(DeviceActions.setActiveDevice(deviceKey));
+			return dispatch(DeviceActions.setActiveDevice(deviceKey));
 		},
 	};
 }

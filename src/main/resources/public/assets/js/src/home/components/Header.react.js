@@ -16,9 +16,9 @@ var Link = require('react-router').Link;
 var MainLogo = React.createClass({
 	render: function() {
 		return (
-			<Link to="/" className="logo" activeClassName="selected">
-				<img src= {Constants.STATIC + "images/svg/daiad-logo2.svg"} alt="DAIAD Logo"
-					title="DAIAD" />
+			<Link to="/"  className="logo" activeClassName="selected">
+        <img src="/assets/images/svg/daiad-logo2.svg" alt="DAIAD Logo"
+          title="DAIAD"/>
 			</Link>
 		);
 	}
@@ -45,18 +45,20 @@ var MainMenu = React.createClass({
 									name: "dashboard",
 									title: "section.dashboard",
 									image: "images/svg/dashboard.svg",
+                  //image: "images/svg/dashboard-side-off.svg",
 									route:"/dashboard"
 								},
 								{
 									name: "history",
 									title: "section.history",
-									image: "images/svg/stats.svg",
+                  //image: "images/svg/stats-new-side-off.svg",
+									image: "images/svg/dashboard.svg",
 									route:"/history"
 								},
 								{
 									name: "commons",
 									title: "section.commons",
-									image: "images/svg/goals.svg",
+									image: "images/svg/dashboard.svg",
 									route:"/commons"
 								}];
 
@@ -114,7 +116,7 @@ var SettingsMenuItem = React.createClass({
 					onMouseEnter={() => {this.setState({hover:true});}}
 					onMouseLeave={() => {this.setState({hover:false});}} > 
 					<img src={Constants.STATIC + image} />
-					<span className={classNames("deviceCount", "navy")}>{deviceCount>0?deviceCount:""}</span>	
+					<span className={classNames("deviceCount", "white")}>{deviceCount>0?deviceCount:""}</span>	
 				</Link>
 			</div>
 		);
@@ -160,7 +162,7 @@ var NotificationMenuItem = React.createClass({
 						onMouseLeave={() => {this.setState({hover:false});}} >
 						<span className={classNames(hasUnread, "red")}>{unreadNotifications}</span>	
 						<i className={
-							classNames("fa", "fa-lg", "navy", (this.state.hover || this.state.popover)?"fa-bell":"fa-bell-o")
+							classNames("fa", "fa-md", "white", (this.state.hover || this.state.popover)?"fa-bell":"fa-bell-o")
 						}	/>
 					</a>
 				</bs.OverlayTrigger>	
@@ -169,7 +171,12 @@ var NotificationMenuItem = React.createClass({
 });
 
 var NotificationList = React.createClass({
+	propTypes: {
+		notifications: React.PropTypes.array
+	},
 	render: function() {
+		var maxLength = Constants.NOTIFICATION_TITLE_LENGTH;
+
 		return (
 			<div className="notification-list">
 			<ul className="list-unstyled">
@@ -177,11 +184,11 @@ var NotificationList = React.createClass({
 					this.props.notifications.map(function(notification) {
 						var notificationClass = notification.unread?"unread":"read";
 						return (
-							<Link key={notification.id} to={"/notifications/"+notification.id} >
 							<li className={notificationClass} >
-									{notification.title}
+								<Link key={notification.id} to={"/notifications/"+notification.id} >
+									{(notification.title.length>maxLength)?(notification.title.substring(0, maxLength).trim()+'...'):notification.title}
+								</Link>
 							</li>
-							</Link>
 						);
 						})
 			}
@@ -214,12 +221,16 @@ var NotificationArea = React.createClass({
 							notifications={this.props.notifications}
 					/>
 				</div>
-				<div className="settings notification-item">
-					<SettingsMenuItem
+          {
+          /*
+				  <div className="settings notification-item">
+          <SettingsMenuItem
 					 	deviceCount={this.props.deviceCount}	
 						intl={this.props.intl}	
-					/>
-				</div>
+            />
+				    </div>
+          */
+          }
 			</div>	
 		);
 	}
@@ -242,7 +253,7 @@ var Header = React.createClass({
 										<NotificationArea
 											intl={this.props.intl}
 											deviceCount={this.props.deviceCount}
-											notifications={this.props.data.notifications} />
+											notifications={this.props.data.recommendations} />
 										<UserInfo
 											intl={this.props.intl}
 											firstname={this.props.firstname}
@@ -252,10 +263,7 @@ var Header = React.createClass({
 											onLogout={this.props.onLogout}
 											className="navbar logout"
 											 />
-										 <LocaleSwitcher
-											 onLocaleSwitch={this.props.onLocaleSwitch}
-											 locale={this.props.locale}
-											 />	
+										 	
 									</div>
 								</div>
 								);

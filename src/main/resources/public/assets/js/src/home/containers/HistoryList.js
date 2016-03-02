@@ -19,7 +19,7 @@ var getFilteredData = function(data, filter) {
 		}
 		filteredData.push([dato.timestamp, dato[filter]]);
 	});
-	return [filteredData.map(x => [new Date(x[0]),x[1]])];
+	return filteredData.map(x => [new Date(x[0]),x[1]]);
 };
 
 var HistoryList = React.createClass({
@@ -58,8 +58,10 @@ function mapStateToProps(state, ownProps) {
 		disabledNext: disabledNextSession,
 		disabledPrevious: disabledPreviousSession,
 		activeSessionIndex: state.device.query.activeSessionIndex,
-		activeSessionData: activeSessionData,
-		activeSessionChartData: getFilteredData(activeSessionDataMeasurements, state.device.query.sessionFilter),
+    getSessionByIndex: getSessionByIndex,
+    getFilteredData: getFilteredData,
+    activeSessionData: activeSessionData,
+		activeSessionChartData: [{title: state.device.query.sesionFilter, data:getFilteredData(activeSessionDataMeasurements, state.device.query.sessionFilter)}],
 		queryData: state.device.query.data,
 		showModal: state.device.query.activeSessionIndex!==null?true:false,
 		loading: state.device.query.status.isLoading 

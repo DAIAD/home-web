@@ -1,5 +1,7 @@
 var types = require('../constants/ActionTypes');
 
+var { thisWeek } = require('../utils/time');
+
 var updateOrAppendToSession = require('../utils/device').updateOrAppendToSession;
 
 var deviceQuery = function (state, action) {
@@ -13,10 +15,8 @@ var deviceQuery = function (state, action) {
 			},
 			activeDevice: null,
 			filter: "volume",
-			timeFilter: "always",
+			timeFilter: "week",
 			time: {
-				startDate: new Date("2000-02-18").getTime(),
-				endDate: new Date("2016-02-25").getTime(),
 				granularity: 0
 			},
 			sessionFilter: "volume",
@@ -24,9 +24,10 @@ var deviceQuery = function (state, action) {
 			activeSessionIndex: null,
 			lastSession: null,
 			data: [],
-		};
+    };
+    state.time = Object.assign({}, thisWeek());
 	}
- 
+   
 	switch (action.type) {
 		case types.DEVICE_REQUESTED_SESSION_SEARCH:
 			return Object.assign({}, state, {

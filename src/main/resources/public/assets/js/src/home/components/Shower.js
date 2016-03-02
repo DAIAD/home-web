@@ -1,4 +1,6 @@
 var React = require('react');
+var ReactDOM = require('react-dom');
+
 var bs = require('react-bootstrap');
 //var link = require('react-router').link;
 var FormattedMessage = require('react-intl').FormattedMessage;
@@ -12,38 +14,57 @@ var MainSection = require('./MainSection.react');
 var Sidebar = require('./Sidebar.react');
 var timeUtil = require('../utils/time');
 
+
 var SessionItem = React.createClass({
+	handleClick: function(e) {
+		e.preventDefault();
+		
+		this.props.sessionClick(this.props.id);
+		//TODO: scroll to chart
+	},
 	render: function() {
-		if (!this.props.data) return (null);
+    if (!this.props.data) return (null);
+		var _t = this.props.intl.formatMessage;
 		return (
-			<li className="session-item-inner">
-				<h4><FormattedMessage id={this.props.title} /></h4>
+			<li className="session-item" >
+				<a onClick={this.handleClick} title={_t({id: this.props.details})}>
+          <h4 style={{float: 'left'}}><img style={{width:this.props.id==='temperature'?12:24, marginRight:20}} src={"/assets/images/svg/"+this.props.icon+".svg"} /><FormattedMessage id={this.props.title} /></h4>
 				<h4 style={{float:'right'}}>{this.props.data} <span>{this.props.mu}</span></h4>
-				{
-					this.props.details?(<p><FormattedMessage id={this.props.details} /></p>):null
-				}
+			</a>
 			</li>
 		);
 	}
 });
 
 var SessionInfo = React.createClass({
+
 	render: function() {
+		const { setSessionFilter, chartDOM } = this.props;
+		
 		var data = this.props.data;
-		if (!data) return <div/>;
+		 var intl = this.props.intl;
+
 		const metrics = [
+			{id:'count',mu:'', title:'history.count', details:'history.countDetails'},	
 			{id:'volume', mu:'lt',title:'history.volume', details:'history.volumeDetails'}, 
-			{id:'temperature', mu:'C', title:'history.temperature', details: 'history.temperatureDetails'}, 
-			{id:'energy',mu:'W', title:'history.energy', details: 'history.energyDetails'}, 
-			{id:'count',mu:'', title:'history.count', details:'history.countDetails'}];	
+			{id:'temperature', mu:'ºC', title:'history.temperature', details: 'history.temperatureDetails'}, 
+      {id:'energy',mu:'W', title:'history.energy', details: 'history.energyDetails'}, 
+      {id:'duration', icon:'timer-on', mu:'sec', title:'history.duration', details: 'history.durationDetails'}, 
+    ];
+		if (!data) return <div/>;
+
 		return (
-			<div style={{marginTop: '50px'}}>
-				<h4><FormattedMessage id="shower.details"/></h4>
-				<b><FormattedTime value={new Date(data.timestamp)} date={{day:"numeric", month:"long", year:"numeric"}} time={{hours:"numeric", minutes:"numeric"}} /></b>
-				<ul className="sessions-list" style={{marginTop:'30px'}}>
+      <div style={{width: '80%', marginLeft:'auto', marginRight:'auto'}}>
+        <h4><FormattedMessage id="shower.details"/></h4>
+        <hr/>
+				<h5 style={{float: 'right'}} ><i style={{marginRight: 10}} className="fa fa-user"/>Stelios</h5>
+        <h5 style={{float: 'left'}}><i style={{marginRight: 10}} className="fa fa-calendar"/><FormattedTime value={new Date(data.timestamp)} date={{day:"numeric", month:"long", year:"numeric"}} time={{hours:"numeric", minutes:"numeric"}} /></h5>
+        <br/>
+        <br/>
+				<ul className="sessions-list" >
 					{
 						metrics.map(function(metric) {
-							return (<SessionItem key={metric.id} title={metric.title} data={data[metric.id]} mu={metric.mu} details={metric.details} />);
+							return (<SessionItem key={metric.id} intl={intl} icon={metric.icon || metric.id} sessionClick={setSessionFilter} title={metric.title} chartDOM={chartDOM} id={metric.id} data={data[metric.id]} mu={metric.mu} details={metric.details} />);
 						})
 					}
 				</ul>
@@ -62,78 +83,66 @@ var Shower = React.createClass({
 		const history = this.props.listData?this.props.listData.history:null;
 		var _t = this.props.intl.formatMessage;
 		
-		if (!this.props.listData || this.props.loading){
-			return (
-				<MainSection id="section.shower">
-					<span style={{position:'absolute'}} >Loading....</span>
-				</MainSection>
-			);
-		
-		}	
-		else if (history === false){
-			return (
-				<div style={{overflow:'auto'}}>
-					<Sidebar>
-						<bs.Tabs position='left' tabWidth={20} activeKey={this.props.filter} onSelect={this.handleTypeSelect}>
-							<bs.Tab eventKey="volume" title="Volume"/>
-							<bs.Tab eventKey="temperature" title="Temperature"/>
-							<bs.Tab eventKey="energy" title="Energy"/>
-						</bs.Tabs>
-					</Sidebar>
-					<div className="primary">
-					<SessionsChart
-								height='350px'
-								width='95%'	
-								title={_t({id: "section.shower"})}
-								subtitle=""
-								mu=""
+		return (
+			<div>
+			{
+			(() => {
+				if (history === false){
+				return (
+					<div style={{padding: 30}}>
+						<SessionsChart 
+								ref="chartDOM"
+								height={300}
+                width='100%'
+								title={_t({id: "history."+this.props.filter})}
+                mu="lt"
+                xMargin={60}
+                x2Margin={60}
 								type="line"
 								formatter={(x) => this.props.intl.formatTime(x, { hour: 'numeric', minute: 'numeric'})}
 								data={this.props.chartData}
-							/>
-							
-					<SessionInfo
-						style={{marginTop: '50px'}}
-						data={this.props.listData} />
+								/>
+                <div style={{marginTop: 30}}/>		
+            <SessionInfo
+              intl={this.props.intl}
+							setSessionFilter={this.props.setSessionFilter}
+							chartDOM={this.refs.chartDOM}
+							data={this.props.listData} />	
 					</div>
+				);
+			}
+			else {
+				return (
+					<div style={{padding:30}}>
+						<section>
+							{ (() => 
+								 {
+									if (this.props.listData.count) {
+										return (null);
+									}
+									else {
+										return (
+                      <div style={{width:'80%', marginLeft: 'auto', marginRight:'auto'}}>
+                      <h3><FormattedMessage id="history.limitedData"/> </h3>
+                      <div style={{marginTop: 50}}/>		
+                      </div>
+											);
+									}
+								})()
+							}
 
-					
-				</div>
-			);
-		}
-		else {
-			return (
-				<div style={{overflow:'auto'}}>
-					<Sidebar>
-					</Sidebar>
-					<div className="primary">
-					
-					<section>
-						{ (() => 
-							 {
-								if (this.props.listData.count) {
-									return (
-										<h3>Aggregated data</h3>
-										);
-								}
-								else {
-									return (
-										<h3><FormattedMessage id="history.limitedData"/> </h3>
-										);
-								}
-							})()
-						}
-
-							
 					<SessionInfo
-						style={{marginTop: '50px'}}
+             intl={this.props.intl}
 						data={this.props.listData} />
 
 					</section>
-					</div>
 				</div>
 			);
-		}
+			}
+			})()
+			}
+		</div>
+		);
 	}
 		
 });

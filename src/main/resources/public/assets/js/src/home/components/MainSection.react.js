@@ -11,7 +11,9 @@ var MainSection = React.createClass({
 			<section className="main-section" >
 				<div className={this.props.id}>
 					<div className="container">
-						<h3><FormattedMessage id={this.props.id}/></h3>
+            {
+              //<h2><FormattedMessage id={this.props.id} /></h2>
+             }
 							{this.props.children}
 						</div>
 					</div>

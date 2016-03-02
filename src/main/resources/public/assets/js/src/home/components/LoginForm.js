@@ -63,7 +63,7 @@ var Logout = React.createClass({
 				title={_t({id: "loginForm.button.signout"})}
 				onClick={this.onLogout}
 				type="submit">
-					<i className={classNames("fa", "fa-lg", "fa-sign-out", "navy")} />
+					<i className={classNames("fa", "fa-md", "fa-sign-out", "white")} style={{marginLeft: 5}} />
 				</a>
 			);
 		} 

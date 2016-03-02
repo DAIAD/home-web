@@ -35,7 +35,7 @@
 	},
 	"section": {
 		"dashboard": "Dashboard",
-		"history":"History",
+		"history":"Statistics",
 		"shower": "Shower",
 		"commons": "Commons",
 		"notifications": "Notifications",
@@ -49,7 +49,7 @@
 		"login": "Welcome to DAIAD Home"
 	},
 	"dashboard": {
-		"hello": "Hello {name}!"
+		"hello": "Welcome {name}!"
 	},
 	"shower": {
 		"details": "Shower details"
@@ -60,17 +60,18 @@
 		"volume": "Volume",
 		"temperature": "Temperature",
 		"energy": "Energy",
-		"count": "Aggregated Showers",
+		"count": "Total Showers",
 		"volumeDetails": "Total water used for this shower",
 		"temperatureDetails": "Average water temperature",
 		"energyDetails": "Estimated energy used for hot water",
-		"countDetails": "The total number of aggregated showers",
+    "countDetails": "The total number of aggregated showers",
+    "durationDetails": "The duration of the shower",
 		"limitedData": "Oops, limited data...",
 		"always": "Since the beginning of time",
-		"year": "This year",
-		"month": "This month",
-		"week": "This week",
-		"day": "Today"
+		"year": "Year",
+		"month": "Month",
+		"week": "Week",
+		"day": "Day"
 	},
 	"notifications": {
 		"showAll": "Show all"

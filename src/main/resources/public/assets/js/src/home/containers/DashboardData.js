@@ -46,13 +46,14 @@ var DashboardData = React.createClass({
 });
 
 function mapStateToProps(state, ownProps) {
-	var lastSession = getSessionById(state.device.query.data, state.device.query.lastSession);
+  var lastSession = getSessionById(state.device.query.data, state.device.query.lastSession);
+
 	return {
 		time: state.device.query.time,
 		activeDevice: state.device.query.activeDevice,
 		firstname: state.user.profile.firstname,
-		chartData: lastSession?(getFilteredData(lastSession.measurements?lastSession.measurements:[], 'volume')):[],
-		chartFormatter: (x) => ownProps.intl.formatTime(x, { hour: 'numeric', minute: 'numeric'}),
+		chartData: [{title:'Consumption', data:(lastSession?(getFilteredData(lastSession.measurements?lastSession.measurements:[], 'volume')):[])}],
+		chartFormatter: (x) => ownProps.intl.formatTime(x, { hour:'numeric', minute:'numeric', second:'numeric'}),
 		lastShower: lastSession,
 		loading: state.device.query.status.isLoading,
 	};
@@ -61,16 +62,12 @@ function mapStateToProps(state, ownProps) {
 function mapDispatchToProps(dispatch) {
 	return {
 
-		initDashboard: function(deviceKey) {
-			const time = Object.assign({}, timeUtil.thisMonth(), {granularity: 0});
+    initDashboard: function(deviceKey) {
+			const time = Object.assign({}, timeUtil.thisWeek(), {granularity: 0});
 
-			dispatch(DeviceActions.querySessions(deviceKey, time)).then(
-				function(response) { 
-					dispatch(DeviceActions.fetchLastSession(deviceKey, time));
-				},
-				function(error) {
-					console.log(error);
-				});
+      dispatch(DeviceActions.querySessions(deviceKey, time)).then(
+        (response) => dispatch(DeviceActions.fetchLastSession(deviceKey, time)),
+        (error) => console.log(error));
 		}
 	};
 }

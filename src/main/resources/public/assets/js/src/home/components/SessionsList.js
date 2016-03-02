@@ -1,11 +1,12 @@
 var React = require('react');
 var Link = require('react-router').Link;
 var bs = require('react-bootstrap');
-var injectIntl = require('react-intl').injectIntl;
-var FormattedRelative = require('react-intl').FormattedRelative;
+var { injectIntl } = require('react-intl');
+var { FormattedMessage, FormattedRelative } = require('react-intl');
 
 var Chart = require('./Chart');
 var Shower = require('./Shower');
+var SessionsChart = require('./SessionsChart');
 
 //Actions
 var DeviceActions = require('../actions/DeviceActions');
@@ -23,85 +24,145 @@ var getFriendlyDuration = function(seconds) {
 };
 
 var getEnergyClass = function(energy) {
-	if (energy>150) {
-		return "G";
-	}
-	else if (energy>=125) {
-		return "F";
-	}
-	else if (energy>=110) {
-		return "E";
-	}
-	else if (energy>=95) {
-		return "D";
-	}
-	else if (energy>=75) {
-		return "C";
-	}
-	else if (energy>=55) {
-		return "B";
-	}
-	else {
-		return "A";
-	}
+  var scale = "";
+
+  if (energy >= 3675) {
+    scale = "G-";
+  }
+  else if (energy >= 3500) {
+    scale = "G";
+  }
+  else if (energy >= 3325) {
+    scale = "G+";
+  }
+  else if (energy >= 3150) {
+    scale = "F-";
+  }
+  else if (energy >= 2975) {
+    scale = "F";
+  }
+  else if (energy >= 2800) {
+    scale = "F+";
+  }
+  else if (energy >= 2625) {
+    scale = "E-";
+  }
+  else if (energy >= 2450) {
+    scale = "E";
+  }
+  else if (energy >= 2275) {
+    scale = "E+";
+  }
+  else if (energy >= 2100) {
+    scale = "D-";
+  }
+  else if (energy >= 1925) {
+    scale = "D";
+  }
+  else if (energy >= 1750) {
+    scale = "D+";
+  }
+  else if (energy >= 1575) {
+    scale = "C-";
+  }
+  else if (energy >= 1400) {
+    scale = "C";
+  }
+  else if (energy >= 1225) {
+    scale = "C+";
+  }
+  else if (energy >= 1050) {
+    scale = "B-";
+  }
+  else if (energy >= 875) {
+    scale = "B";
+  }
+  else if (energy >= 700) {
+    scale = "B+";
+  }
+  else if (energy >= 525) {
+    scale = "A-";
+  }
+  else if (energy >= 351) {
+    scale = "A";
+  }
+  else if (energy <= 350) {
+    scale = "A+";
+  }
+  return scale;
 };
 
 var SessionItem = React.createClass({
 	handleClick: function() {
 		this.props.onOpen(this.refs.link.dataset.id, this.refs.link.dataset.index);
 	},
-	render: function() {
+  render: function() {
+    var arrowClasses = "fa-arrow-up red";
+    if (this.props.index===2 || this.props.index===4 || this.props.index===0){
+      arrowClasses = "fa-arrow-down green";
+    }
 		return (
-			<a onClick={this.handleClick} ref="link" data-id={this.props.data.id} data-index={this.props.index} >
-				<li className="session-item">	
-					<span className="session-item-header">{this.props.data.volume}<span style={{fontSize: '0.6em'}}> lt</span></span><br/>
-					<span className="session-item-details">
-						<span>Stelios, </span>
-						<span><FormattedRelative value={new Date(this.props.data.timestamp)} />, </span> 
-						<span>{getFriendlyDuration(this.props.data.duration)}, </span> 
-						<span>{getEnergyClass(this.props.data.energy)}</span></span>
-				</li>
-			</a>
+			<li className="session-item">	
+				<a onClick={this.handleClick} ref="link" data-id={this.props.data.id} data-index={this.props.index} >
+          <div className="session-item-header col-md-3"><h3>{this.props.data.volume}<span style={{fontSize: '0.6em'}}> lt</span> <i className={"fa " + arrowClasses}/></h3>
+            
+          </div>
+          <div className="col-md-7">
+            <span className="session-item-detail">Stelios</span>
+						<span className="session-item-detail"><i className="fa fa-calendar"/><FormattedRelative value={new Date(this.props.data.timestamp)} /></span> 
+						<span className="session-item-detail"><i className="fa fa-clock-o"/>{getFriendlyDuration(this.props.data.duration)}</span> 
+            <span className="session-item-detail"><i className="fa fa-flash"/>{getEnergyClass(this.props.data.energy)}</span>
+            <span className="session-item-detail"><i className="fa fa-temperature"/>{this.props.data.temperature}ºC</span>
+
+          </div>
+          <div className="col-md-2">
+            <SparklineChart data={this.props.data.measurements} intl={this.props.intl}/>
+          </div>
+				</a>
+			</li>
 		);
 	}
 });
 
-var SessionInfo = React.createClass({
-	render: function() {
-		var data = this.props.data;
-		var array = Array.from(entries(data));
-
-		return (
-			<ul>
-				{
-					this.props.activeSession?
-				(<li>
-					<b>measurements:</b><span>{data.measurements?data.measurements.length:'null'}</span>
-				</li>):<div/>
-				}
-				{
-					array.map(function(dato) {
-						const prop = dato[0];
-						const value = dato[1];
-							
-						if (typeof(value)==="object") return;
-					return (
-						<li key={prop}>
-							<b>{prop}:</b> <span>{value}</span>
-						</li>
-					);
-					})
-				}
-		</ul>
-		);
-	}
-});
-
-function* entries(obj) {
-	   for (var key of Object.keys(obj)) {
-			      yield [key, obj[key]];
-		}
+function getDummyData(i) { 
+  return [{title:'consumption', data:[[new Date(1456771433394),(200*i+87)%100],[new Date(1456772533394),i*13%100], [new Date(1456872933394),(i*i*i)%100], [new Date(1456872933394),(85*i-i)%100]]}];
 }
+
+var getFilteredData = function(data, filter) {
+	if (!data) return [];
+	var filteredData = [];
+	
+	data.forEach(function(dato) {
+		if (!dato[filter]){
+			return;
+		}
+		filteredData.push([dato.timestamp, dato[filter]]);
+	});
+	return filteredData.map(x => [new Date(x[0]),x[1]]);
+};
+var SparklineChart = React.createClass({
+  render: function() {
+    if (!this.props.data || !this.props.data.length || this.props.data.length<=1) {
+      return (<h3>-</h3>);
+    }
+    return (
+      <SessionsChart
+        height={80}
+        width='100%'	
+        title=""
+        subtitle=""
+        mu=""
+        formatter={(x) => this.props.intl.formatDate(x)}
+        type="line"
+        sparkline={true}
+        xMargin={5}
+        yMargin={0}
+        x2Margin={2}
+        y2Margin={0}
+        data={[{title: 'Consumption', data:getFilteredData(this.props.data, 'volume')}]}
+      />);
+  }
+});
 
 
 var SessionsList = React.createClass({
@@ -129,8 +190,8 @@ var SessionsList = React.createClass({
 	},
 	render: function() {
 		return (
-			<div style={{marginTop: '50px'}}>
-				<h3>List</h3>
+			<div style={{margin:50}}>
+				<h3>In detail</h3>
 				<ul className="sessions-list">
 					{
 						this.props.sessions.map((session, idx) => (
@@ -147,9 +208,9 @@ var SessionsList = React.createClass({
 				</ul>
 				<bs.Modal animation={false} show={this.props.showModal} onHide={this.onClose} bsSize="large">
 					<bs.Modal.Header closeButton>
-						<bs.Modal.Title>Details</bs.Modal.Title>
+						<bs.Modal.Title><FormattedMessage id="section.shower" /></bs.Modal.Title>
 					</bs.Modal.Header>
-					<bs.Modal.Body>
+          <bs.Modal.Body>
 						<Shower 
 							intl={this.props.intl}
 							setSessionFilter={this.props.setSessionFilter}

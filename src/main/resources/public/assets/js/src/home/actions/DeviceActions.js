@@ -185,20 +185,30 @@ var DeviceActions = {
 		};
 	},
 	fetchLastSession: function(deviceKey, time) {
-		return function(dispatch, getState) {
-			const session = getLastSession(getState().device.query.data);
+    return function(dispatch, getState) {
+      const session = getLastSession(getState().device.query.data);
 			const id = session.id;
 			if (!id){ return false;}
 
-			if (getState().device.query.lastSession !== id) {
-				dispatch(setLastSession(id));
-				return dispatch(DeviceActions.fetchSession(id, deviceKey, time));
-			}
-			else {
-				return new Promise(function(resolve){
-					resolve();
-				});
-			}
+		  dispatch(setLastSession(id));
+        
+     return dispatch(DeviceActions.fetchSession(id, deviceKey, time));
+       
+		};
+  },
+	fetchAllSessions: function(deviceKey, time) {
+    return function(dispatch, getState) {
+      console.log('fetching all sessions');
+      //const session = getLastSession(getState().device.query.data);
+      var sessions = getState().device.query.data;
+      console.log('sessions');
+      console.log(sessions);
+      sessions.forEach(function(session) {
+        const id = session.id;
+        if (!id){ return false;}
+        
+        return dispatch(DeviceActions.fetchSession(id, deviceKey, time));
+      });
 		};
 	},
 	// time is of type Object with

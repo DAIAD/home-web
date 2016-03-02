@@ -1,55 +1,51 @@
+var moment = require('moment');
+
 const today = function() {
-	var start = new Date();
-	start.setHours(0,0,0,0);
-	var end = new Date();
-	end.setHours(23, 59, 59, 999);
 	return {
-		startDate: start.getTime(),
-		endDate: end.getTime()
+		startDate: moment().startOf('day').valueOf(),
+		endDate: moment().endOf('day').add(3, 'hours').valueOf()
 	};
 };
 
 const thisWeek = function() {
-	var start = new Date();
-	var currDay = start.getDay();
-	start.setDate(start.getDate() - currDay);
-	start.setHours(0,0,0,0);
-	var end = new Date();
-	end.setDate(start.getDate() + 6);
-	end.setHours(23,59,59,999);
 	return {
-		startDate: start.getTime(),
-		endDate: end.getTime()
+		startDate: moment().startOf('week').valueOf(),
+		endDate: moment().endOf('week').valueOf()
 	};
 };
 
 const thisMonth = function() {
-	var start = new Date();
-	start.setDate(1);
-	start.setHours(0,0,0,0);
-	var end = new Date();
-	end.setMonth(start.getMonth() + 1);
-	end.setHours(23,59,59,999);
-	end.setDate(0);
 	return {
-		startDate: start.getTime(),
-		endDate: end.getTime()
-	};
+		startDate: moment().startOf('month').valueOf(),
+		endDate: moment().endOf('month').valueOf()
+  };
 };
 
 const thisYear = function() {
-	var start = new Date();
-	start.setDate(1);
-	start.setMonth(0);
-	start.setHours(0,0,0,0);
-
-	var end = new Date(new Date().getFullYear(), 11, 31);
-	//end.setHours(23,59,59,999);
 	return {
-		startDate: start.getTime(),
-		endDate: end.getTime()
+    startDate: moment().startOf('year').valueOf(),
+    endDate: moment().endOf('year').valueOf()
 	};
 };
+
+function getPeriod(granularity, timestamp=moment().valueOf()) {
+  return {
+    startDate: moment().startOf(granularity).valueOf(),
+    endDate: Object.assign({}, moment(timestamp)).endOf(granularity).valueOf()
+  };
+}
+function getNextPeriod(granularity, timestamp=moment().valueOf()) {
+  return {
+    startDate: moment(timestamp).startOf(granularity).add(1, granularity).valueOf(),
+    endDate: Object.assign(moment(), moment(timestamp)).endOf(granularity).add(1, granularity).valueOf()
+  };
+}
+function getPreviousPeriod(granularity, timestamp=moment().valueOf()) {
+  return {
+    startDate: moment(timestamp).startOf(granularity).subtract(1, granularity).valueOf(),
+    endDate: moment(timestamp).endOf(granularity).subtract(1, granularity).valueOf()
+  };
+}
 
 const defaultFormatter = function(timestamp){
 	const date = new Date(timestamp);
@@ -60,8 +56,11 @@ const defaultFormatter = function(timestamp){
 
 module.exports = {
 	defaultFormatter,
-	today,
-	thisWeek,
-	thisMonth,
-	thisYear
+  today,
+  thisWeek,
+  thisMonth,
+  thisYear,
+  getPeriod,
+  getNextPeriod,
+  getPreviousPeriod
 };
