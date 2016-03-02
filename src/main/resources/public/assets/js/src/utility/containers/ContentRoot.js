@@ -17,6 +17,10 @@ var { setLocale } = require('../actions/LocaleActions');
 
 var Collapsible = require('../components/Collapsible');
 
+var expandConsumers= function(e) {
+	this.setState({ expandConsumers : !this.state.expandConsumers});
+};
+ 
 var expandMessages = function(e) {
 	this.setState({ expandMessages : !this.state.expandMessages});
 };
@@ -33,7 +37,8 @@ var ContentRoot = React.createClass({
 	getInitialState() {
 		return {
 			expandMessages: false,
-			expandSettings: false
+			expandSettings: false,
+			expandConsumers: false
 	    };
 	},
 
@@ -43,18 +48,18 @@ var ContentRoot = React.createClass({
 
 		if(!this.props.isAuthenticated) {
 			content = (
-				<div className='wrapper'>
+				<div className='login-wrapper'>
 					<nav className='navbar navbar-default navbar-fixed-top'>
 						<div className='navbar-header' style={{ paddingLeft: 15}} >
 							<a className='navbar-brand' href='#' style={{ padding: 0, margin: 0}}>
-								<img alt='DAIAD' src='/assets/images/daiad-transparent.png' />
+								<img alt='DAIAD' src='/assets/images/daiad-logo.svg' style={{ marginTop: 15 }} />
 							</a>
 						</div>
 						<div style={{ float: 'right', marginTop: 8, marginLeft: 10, paddingRight: 15}}>
 							<LocaleSwitcher locale={this.props.locale} onLocaleSwitch={this.props.actions.setLocale} />
 						</div>
 					</nav>
-					<div className='login-wrapper'>
+					<div>
 						<LoginForm action='login' 	isAuthenticated = { this.props.isAuthenticated } 
 													errors = {this.props.session.errors}
 													onLogin = {this.props.actions.login}
@@ -64,11 +69,11 @@ var ContentRoot = React.createClass({
 			);
 		} else {
 			content = (
-				<div className='wrapper' style={{ backgroundColor : '#f8f8f8'}} >
+				<div className='wrapper'>
 					<nav className='navbar navbar-default navbar-fixed-top'>
-						<div className='navbar-header' style={{ paddingLeft: 15}} >
+						<div className='navbar-header' style={{ paddingLeft: 15 }} >
 							<a className='navbar-brand' href='#' style={{ padding: 0, margin: 0}}>
-								<img alt='DAIAD' src='/assets/images/daiad-transparent.png' />
+								<img alt='DAIAD' src='/assets/images/daiad-logo.svg' style={{ marginTop: 15 }} />
 							</a>
 						</div>
 						<div style={{ float: 'right', marginTop: 8, marginLeft: 10, paddingRight: 45}}>
@@ -77,12 +82,8 @@ var ContentRoot = React.createClass({
 				   				className='btn btn-primary'
 		   						style={{ height: 33 }}
 			   					onClick={this.props.actions.logout}>
-								<i className='fa fa-power-off fa-fw'></i>
 				   				<FormattedMessage id='LoginForm.button.signout' />
 				   			</button>
-						</div>
-						<div style={{ float: 'right', marginTop: 8, marginLeft: 10, paddingRight: 15}}>
-							<LocaleSwitcher locale={this.props.locale} onLocaleSwitch={this.props.actions.setLocale} />
 						</div>
 						<div className='navbar-default navbar-static-side' role='navigation'>
 							<div className='sidebar-collapse'>
@@ -97,20 +98,35 @@ var ContentRoot = React.createClass({
 		                            		<i className='fa fa-bar-chart fa-fw'></i>{' ' + _t({ id: 'Section.Analytics'})}
 	                            		</Link>
 	                    			</li>
-	                            	<li className='disabled'>
-	                            		<a to='/forecasting'>
+	                            	<li>
+	                            		<Link to='/forecasting'>
 	                            			<i className='fa fa-line-chart fa-fw'></i>{' ' + _t({ id: 'Section.Forecasting'})}
-	                        			</a>
+	                        			</Link>
 	                    			</li>
-	                    			<li>
-	                    				<Link to='/demographics'>
-	                    					<i className='fa fa-group fa-fw'></i>{' ' + _t({ id: 'Section.Demographics'})}
-	                					</Link>
-	            					</li>
 	            					<li>
-	            						<Link to='/search'>
-	            							<i className='fa fa-search fa-fw'></i>{' ' + _t({ id: 'Section.Search'})}
-	            						</Link>
+	            						<a href='#' onClick={expandConsumers.bind(this)}>
+	            							<i className='fa fa-group fa-fw'></i>
+	            							{' ' + _t({ id: 'Section.Consumers'}) + ' '}
+	            							{ this.state.expandConsumers ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)}
+	            						</a>
+	            						<Collapsible open={this.state.expandConsumers}>
+	            							<ul className='nav'>
+		                    					<li>
+		                    						<Link to='/demographics'>
+				            							<span  style={{paddingLeft: 18}}>
+				            								<i className='fa fa-bookmark fa-fw'></i>{' ' + _t({ id: 'Section.Demographics'})}
+			            								</span>
+				            						</Link>
+				            					</li>
+				            					<li>
+				            						<Link to='/search'>
+				            							<span  style={{paddingLeft: 18}}>
+				            								<i className='fa fa-search fa-fw'></i>{' ' + _t({ id: 'Section.Search'})}
+			            								</span>
+				            						</Link>
+				            					</li>
+				                        	</ul>
+	            						</Collapsible>
 	            					</li>
 		            				<li>
 		            					<Link to='/scheduler'>

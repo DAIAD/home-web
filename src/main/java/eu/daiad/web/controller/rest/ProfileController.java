@@ -11,9 +11,12 @@ import org.springframework.web.bind.annotation.RestController;
 import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.data.IProfileRepository;
 import eu.daiad.web.model.Credentials;
+import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.profile.ProfileResponse;
 import eu.daiad.web.model.profile.UpdateProfileRequest;
+import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 
 @RestController("RestProfileController")
@@ -29,9 +32,9 @@ public class ProfileController extends BaseRestController {
 		RestResponse response = new RestResponse();
 
 		try {
-			this.authenticate(data, EnumRole.ROLE_USER);
+			AuthenticatedUser user = this.authenticate(data, EnumRole.ROLE_USER);
 
-			return new RestResponse();
+			return new ProfileResponse(this.profileRepository.getProfileByUsername(EnumApplication.MOBILE, user.getUsername()));
 		} catch (ApplicationException ex) {
 			logger.error(ex);
 
@@ -42,13 +45,14 @@ public class ProfileController extends BaseRestController {
 	}
 
 	@RequestMapping(value = "/api/v1/profile/save", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse saveProfile(@RequestBody UpdateProfileRequest data) {
+	public RestResponse saveProfile(@RequestBody UpdateProfileRequest request) {
 		RestResponse response = new RestResponse();
 
 		try {
-			this.authenticate(data.getCredentials(), EnumRole.ROLE_USER);
+			this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
-			return new RestResponse();
+			this.profileRepository.setProfileConfiguration(request.getApplication(), request.getConfiguration());
+
 		} catch (ApplicationException ex) {
 			logger.error(ex);
 

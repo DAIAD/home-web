@@ -22,6 +22,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
 
+import eu.daiad.web.domain.AccountProfile;
 import eu.daiad.web.domain.AccountRole;
 import eu.daiad.web.domain.AccountWhiteListEntry;
 import eu.daiad.web.domain.Role;
@@ -116,7 +117,7 @@ public class JpaUserRepository implements IUserRepository {
 
 					this.entityManager.persist(account);
 
-					logger.warn(String
+					logger.info(String
 									.format("Default administrator has been crearted for utility [%s]. User name : %s. Password : %s",
 													utility.getName(), utility.getDefaultAdministratorUsername(),
 													password));
@@ -233,6 +234,16 @@ public class JpaUserRepository implements IUserRepository {
 			account.getRoles().add(assignedRole);
 
 			this.entityManager.persist(account);
+			this.entityManager.flush();
+			
+			AccountProfile profile = new AccountProfile();
+			profile.setMobileEnabled(true);
+			profile.setWebEnabled(true);
+			profile.setUtilityEnabled(false);
+			
+			profile.setAccount(account);
+
+			this.entityManager.persist(profile);
 
 			if (entry != null) {
 				entry.setRegisteredOn(DateTime.now());

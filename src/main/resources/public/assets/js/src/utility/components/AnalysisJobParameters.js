@@ -7,11 +7,10 @@ var DateRangePicker = require('react-bootstrap-daterangepicker');
 var Wizard = require('./Wizard');
 var Message = require('./Message');
 
-var ChartConfig  = React.createClass({
+var AnalysisJobParameters  = React.createClass({
     getInitialState: function() {
         return {
-            dimension: 'Population',
-            granularity: 'Day',
+        	granularity: 'Day',
             population: [{ value: 'Alicante', label: 'Alicante', type: 1 },
                          { value: 'User 1', label: 'User 1', type: 2 }],
             source: 'Both',
@@ -23,29 +22,11 @@ var ChartConfig  = React.createClass({
 				'This Month': [moment().startOf('month'), moment().endOf('month')],
 				'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
 			},
-			interval:null,
-			description: ''
+			interval:null
         };
     },
     
-  	render: function() {
-  		var options = [
-           	{ value: 'Time', label: 'Time' },
-           	{ value: 'Population', label: 'Population' }
-        ];
-
-  	    var setDescription=  function(input) {
-  	    	this.setState({
-  				description: input.value
-  			});
-  	    };
-
-  		var onChangeDimension = function(val) {
-  			this.setState({
-  				dimension: (val ? val.value : null)
-  			});
-        };
-        
+  	render: function() {     
   		var onChangeGranularity = function(val) {
   			this.setState({
   				granularity: val.value
@@ -79,7 +60,7 @@ var ChartConfig  = React.createClass({
     		});
     	};
     	
-        var dimensionConfig, intervalConfig, populationConfig, sourceConfig, granularityConfig;
+        var intervalConfig, populationConfig, sourceConfig, granularityConfig;
         sourceConfig = (
 				<div className='form-group col-md-4'>
 					<label className='col-md-3 control-label' htmlFor='source'>Data Source</label>  
@@ -119,25 +100,25 @@ var ChartConfig  = React.createClass({
 		);
 
 		populationConfig = (
-			<div className='form-group col-md-4'>
-				<label className='col-md-3 control-label' htmlFor='population'>Population</label>  
-				<div className='col-md-9'>
-					<Select name='population'
-						multi={true}
-						value={this.state.population}
-  		            	options={[
-	            	          { value: 'Alicante', label: 'Alicante', type: 1 },
-	            	          { value: 'St. Albans', label: 'St. Albans', type: 1 },
-	            	          { value: 'User 1', label: 'User 1', type: 2 },
-	                    ]}
-						optionRenderer={renderOption.bind(this)}
-  		            	onChange={onChangePopulation.bind(this)}
-						clearable={true} 
-					/>
-					<span className='help-block'>Select users or groups</span>  
+				<div className='form-group col-md-4'>
+					<label className='col-md-3 control-label' htmlFor='population'>Population</label>  
+					<div className='col-md-9'>
+						<Select name='population'
+							multi={true}
+							value={this.state.population}
+	  		            	options={[
+  		            	          { value: 'Alicante', label: 'Alicante', type: 1 },
+  		            	          { value: 'St. Albans', label: 'St. Albans', type: 1 },
+  		            	          { value: 'User 1', label: 'User 1', type: 2 },
+  		                    ]}
+							optionRenderer={renderOption.bind(this)}
+	  		            	onChange={onChangePopulation.bind(this)}
+							clearable={true} 
+						/>
+						<span className='help-block'>Select users or groups</span>  
+					</div>
 				</div>
-			</div>
-		);
+			);
 
         var label ='';
         if(this.state.interval) {
@@ -151,7 +132,7 @@ var ChartConfig  = React.createClass({
         
 		intervalConfig = (
 			<div className='form-group col-md-4'>
-				<label className='col-md-3 control-label' htmlFor='dimension'>Interval</label>  
+				<label className='col-md-3 control-label' htmlFor='interval'>Interval</label>  
 				<div className='col-md-9'>
 					<DateRangePicker	startDate={this.state.interval ? this.state.interval[0] : moment() } 
 										endDate={this.state.interval ? this.state.interval[1] : moment()} 
@@ -166,71 +147,22 @@ var ChartConfig  = React.createClass({
 			</div>
 		);
 
-		dimensionConfig = (				
-			<div className='form-group col-md-4'>
-				<label className='col-md-3 control-label' htmlFor='dimension'>Dimension</label>  
-				<div className='col-md-9'>
-					<Select name='dimension'
-						value={this.state.dimension}
-			            	options={options}
-			            	onChange={onChangeDimension.bind(this)}
-						clearable={true} 
-					/>
-					<span className='help-block'>Select the source of the labels in the x Axis</span>  
-				</div>
-			</div>
-		);
-			
+		
   		return (
-			<div className='clearfix' style={{ paddingTop: 10 }}>
-				<div className='row'>
-					<div className='col-md-12'>
-						<div className='row'>
-							<div className='form-group col-md-4'>
-								<label className='col-md-3 control-label' htmlFor='description'>Description</label>  
-								<div className='col-md-9'>
-									<Bootstrap.Input
-										name='description'
-							        	type="text"
-						        		value={this.state.description}
-										onChange={setDescription.bind(this)}
-					        			placeholder="Enter configuration description ..." />
-				        			<span className='help-block'>Display name for chart configuration</span>
-				    			</div>
-							</div>
-						</div>	    
-						<div className='row'>
-							{intervalConfig}
-						</div>
-						<div className='row'>
-							{dimensionConfig}
-						</div>
-						<div className='row'>
-							{populationConfig}
-						</div>
-						<div className='row'>
-							{granularityConfig}
-						</div>
-						<div className='row'>
-							{sourceConfig}
-						</div>
+			<div className='row'>
+				<div className='col-md-12'>  
+					<div className='row'>
+						{intervalConfig}
 					</div>
-				</div>
-				<div className='row' style={{float: 'right', paddingRight: 20}}>
-					<div className='form-group col-md-6'>
-						<button id='Execute'
-			   				className='btn btn-success'>
-							<i className='fa fa-save fa-fw'></i>
-							Save
-			   			</button>
-	   				</div>
-	   				<div className='form-group col-md-6'>
-						<button id='Cancel'
-			   				className='btn btn-danger'>
-							<i className='fa fa-remove fa-fw'></i>
-			   				Cancel
-			   			</button>
-	   				</div>
+					<div className='row'>
+						{populationConfig}
+					</div>
+					<div className='row'>
+						{granularityConfig}
+					</div>
+					<div className='row'>
+						{sourceConfig}
+					</div>
 				</div>
 			</div>
  		);
@@ -238,4 +170,4 @@ var ChartConfig  = React.createClass({
 });
 
 
-module.exports = ChartConfig;
+module.exports = AnalysisJobParameters;

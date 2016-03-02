@@ -12,6 +12,7 @@ import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.data.IProfileRepository;
 import eu.daiad.web.model.AuthenticationResponse;
 import eu.daiad.web.model.Credentials;
+import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
@@ -38,7 +39,7 @@ public class AuthenticationController extends BaseController {
 			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(data);
 
 			if (user != null) {
-				Profile profile = profileRepository.getProfileByUsername(user.getUsername());
+				Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE, user.getUsername());
 
 				return new AuthenticationResponse(profile);
 			} else {

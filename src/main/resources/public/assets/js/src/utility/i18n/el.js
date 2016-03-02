@@ -26,14 +26,15 @@
 		"Dashboard": "Περίληψη",
 	    "Analytics":"Ανάλυση",
 	    "Forecasting": "Πρόβλεψη",
-	    "Demographics": "Δημογραφικά",
+	    "Demographics": "Ομάδες & Χρήστες",
 	    "Search": "Αναζήτηση",
 	    "Messages": "Μηνύματα",
 	    "Settings": "Ρυθμίσεις",
 	    "Reporting": "Αναφορές",
 	    "Alerts": "Ειδοποιήσεις",
 	    "Announcements" : "Ανακοινώσεις",
-	    "Scheduler": "Διαχείριση Εργασιών"
+	    "Scheduler": "Διαχείριση Εργασιών",
+	    "Consumers": "Καταναλωτές"
 	},
 	"Demographics" : {
 		"Group" : "Ομάδες Καταναλωτών"

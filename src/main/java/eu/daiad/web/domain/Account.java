@@ -52,6 +52,9 @@ public class Account {
 	@OneToOne(mappedBy = "account")
 	@JoinColumn(name = "account_id")
 	private AccountWhiteListEntry whiteListEntry;
+	
+	@OneToOne(mappedBy = "account")
+	private AccountProfile profile;
 
 	@Basic(fetch = FetchType.LAZY)
 	@Type(type = "org.hibernate.type.BinaryType")
@@ -288,6 +291,14 @@ public class Account {
 
 	public void setLocale(String locale) {
 		this.locale = locale;
+	}
+
+	public AccountProfile getProfile() {
+		return profile;
+	}
+
+	public void setProfile(AccountProfile profile) {
+		this.profile = profile;
 	}
 
 }

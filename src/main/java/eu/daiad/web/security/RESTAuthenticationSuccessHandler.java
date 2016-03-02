@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.daiad.web.data.IProfileRepository;
 import eu.daiad.web.model.AuthenticationResponse;
 import eu.daiad.web.model.CsrfConstants;
+import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.util.AjaxUtils;
@@ -49,7 +50,12 @@ public class RESTAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuc
 
 				AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
-				Profile profile = profileRepository.getProfileByUsername(user.getUsername());
+				Profile profile;
+				if(user.hasRole("ROLE_ADMIN")) {
+					profile = profileRepository.getProfileByUsername(EnumApplication.UTILITY, user.getUsername());
+				} else {
+					profile = profileRepository.getProfileByUsername(EnumApplication.HOME, user.getUsername());
+				}
 
 				AuthenticationResponse authenticationResponse = new AuthenticationResponse(profile);
 
