@@ -8,7 +8,7 @@ var UserAPI = {
 		return callAPI('/logout', {});
 	},
 	getProfile: function() {
-		return callAPI('/action/profile', null);
+    return callAPI('/action/profile/load', null);
 	}
 };
 
