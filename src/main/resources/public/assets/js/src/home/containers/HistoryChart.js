@@ -4,7 +4,7 @@ var injectIntl = require('react-intl').injectIntl;
 
 var SessionsChart = require('../components/SessionsChart');
 
-var DeviceActions = require('../actions/DeviceActions');
+var HistoryActions = require('../actions/HistoryActions');
 
 var timeUtil = require('../utils/time');
 
@@ -120,23 +120,23 @@ function mapStateToProps(state, ownProps) {
   }
   const dummySeries = {title:'Comparison', data:[[new Date("2016-02-25"),35], [new Date("2016-02-26"), 52], [new Date("2016-02-28"), 100], [new Date("2016-03-01"), 102]]};
 	return {
-		time: state.device.query.time,
-		filter: state.device.query.filter,
-		timeFilter: state.device.query.timeFilter,
-		data: [{title:state.device.query.filter, data:getFilteredData(state.device.query.data, state.device.query.filter)}],
-		xMin: state.device.query.time.startDate,
-    xMax: state.device.query.time.endDate,
+		time: state.query.time,
+		filter: state.section.history.filter,
+    timeFilter: state.section.history.timeFilter,
+    data: [{title:state.section.history.filter, data:getFilteredData(state.query.data, state.section.history.filter)}],
+		xMin: state.query.time.startDate,
+    xMax: state.query.time.endDate,
     fontSize: 13,
-    type: (state.device.query.filter==='showers')?'bar':'line',
-		formatter: selectTimeFormatter(state.device.query.timeFilter, ownProps.intl),
-		loading: state.device.query.status.isLoading 
+    type: (state.section.history.filter==='showers')?'bar':'line',
+		formatter: selectTimeFormatter(state.section.history.timeFilter, ownProps.intl),
+		loading: state.query.status.isLoading 
 		};
 }
 
 function mapDispatchToProps(dispatch, ownProps) {
 	return {
 		setQueryFilter: function(filter) {
-			return dispatch(DeviceActions.setQueryFilter(filter));
+			return dispatch(HistoryActions.setQueryFilter(filter));
     },
 	};
 }

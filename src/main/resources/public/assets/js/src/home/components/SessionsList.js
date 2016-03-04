@@ -108,15 +108,40 @@ var SessionItem = React.createClass({
             
           </div>
           <div className="col-md-7">
+            <div className="pull-right">
             <span className="session-item-detail">Stelios</span>
 						<span className="session-item-detail"><i className="fa fa-calendar"/><FormattedRelative value={new Date(this.props.data.timestamp)} /></span> 
-						<span className="session-item-detail"><i className="fa fa-clock-o"/>{getFriendlyDuration(this.props.data.duration)}</span> 
-            <span className="session-item-detail"><i className="fa fa-flash"/>{getEnergyClass(this.props.data.energy)}</span>
-            <span className="session-item-detail"><i className="fa fa-temperature"/>{this.props.data.temperature}ºC</span>
-
+            {(() => { 
+              if (this.props.data.duration) {
+                return (
+                  <span className="session-item-detail"><i className="fa fa-clock-o"/>{getFriendlyDuration(this.props.data.duration)}</span>);
+              }
+              else {
+                return (null);
+              }
+            })()}
+            {(() => { 
+              if (this.props.data.energy) {
+                return (
+              <span className="session-item-detail"><i className="fa fa-flash"/>{getEnergyClass(this.props.data.energy)}</span>);
+              }
+              else {
+                return (null);
+              }
+            })()}
+            {(() => { 
+              if (this.props.data.temperature) {
+                return (
+              <span className="session-item-detail"><i className="fa fa-temperature"/>{this.props.data.temperature}ºC</span>);
+              }
+              else {
+                return (null);
+            }
+            })()}
+          </div>
           </div>
           <div className="col-md-2">
-            <SparklineChart data={this.props.data.measurements} intl={this.props.intl}/>
+            <SparklineChart history={this.props.data.history} data={this.props.data.measurements} intl={this.props.intl}/>
           </div>
 				</a>
 			</li>
@@ -142,7 +167,7 @@ var getFilteredData = function(data, filter) {
 };
 var SparklineChart = React.createClass({
   render: function() {
-    if (!this.props.data || !this.props.data.length || this.props.data.length<=1) {
+    if (!this.props.data || !this.props.data.length || this.props.data.length<=1 || this.props.history) {
       return (<h3>-</h3>);
     }
     return (
@@ -172,7 +197,6 @@ var SessionsList = React.createClass({
 		this.props.setActiveSessionIndex(index);
 
 		if (id){
-			this.props.setActiveSession(id);
 			this.props.fetchSession(id, this.props.activeDevice, this.props.time);
 		}
 	},

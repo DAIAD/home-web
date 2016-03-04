@@ -35,9 +35,10 @@ var SessionsChart = React.createClass({
         name: x.title,
         type: this.props.type,
         stack: this.props.type==='bar'?'name':null,
-        showAllSymbol: true,
-        symbolSize: this.props.sparkline?0:10,
-        smooth: true,
+        showAllSymbols: false,
+        symbolSize: this.props.sparkline?0:5,
+        //symbolSize: this.props.sparkline?0:0,
+        smooth: false,
         itemStyle: {
           normal: {
             color: colors[i],

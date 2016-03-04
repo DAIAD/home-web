@@ -9,8 +9,7 @@ var Dashboard = require('../components/sections/Dashboard');
 var DeviceActions = require('../actions/DeviceActions');
 
 var timeUtil = require('../utils/time');
-var getSessionById = require('../utils/device').getSessionById;
-var getDefaultDevice = require('../utils/device').getDefaultDevice;
+var { getDefaultDevice, getLastSession } = require('../utils/device');
 
 var getFilteredData = function(data, filter) {
 	var filteredData = [];
@@ -29,43 +28,44 @@ var getFilteredData = function(data, filter) {
 var DashboardData = React.createClass({
 	
 	componentWillMount: function() {
-		if (this.props.activeDevice) {
-			this.props.initDashboard(this.props.activeDevice);
+    if (this.props.defaultDevice) {
+			this.props.getLastSession(this.props.defaultDevice);
 		}
 	},
 	componentWillReceiveProps: function(nextProps) {
-		if (!this.props.activeDevice && nextProps.activeDevice) {
-			this.props.initDashboard(nextProps.activeDevice);
+		if (!this.props.defaultDevice && nextProps.defaultDevice) {
+			this.props.getLastSession(nextProps.defaultDevice);
 		}
 	},
-	render: function() {
-		return (
-				<Dashboard {...this.props} />
+  render: function() {
+    return (
+      <Dashboard {...this.props} />
 		);
 	}
 });
 
-function mapStateToProps(state, ownProps) {
-  var lastSession = getSessionById(state.device.query.data, state.device.query.lastSession);
 
+function mapStateToProps(state, ownProps) {
+  var lastSession = getLastSession(state.query.data);
+   const defaultDevice = getDefaultDevice(state.user.profile.devices);
+   const deviceKey = defaultDevice?defaultDevice.deviceKey:null;
 	return {
-		time: state.device.query.time,
-		activeDevice: state.device.query.activeDevice,
+    time: state.query.time,
+    activeDevice: state.query.activeDevice,
+    defaultDevice: deviceKey,
 		firstname: state.user.profile.firstname,
-		chartData: [{title:'Consumption', data:(lastSession?(getFilteredData(lastSession.measurements?lastSession.measurements:[], 'volume')):[])}],
+    chartData: [{title:'Consumption', data:(lastSession?(getFilteredData(lastSession.measurements?lastSession.measurements:[], 'volume')):[])}],
 		chartFormatter: (x) => ownProps.intl.formatTime(x, { hour:'numeric', minute:'numeric', second:'numeric'}),
-		lastShower: lastSession,
-		loading: state.device.query.status.isLoading,
+    lastShower: lastSession,
+    loading: state.query.status.isLoading,
 	};
 }
 
 function mapDispatchToProps(dispatch) {
 	return {
-
-    initDashboard: function(deviceKey) {
-			const time = Object.assign({}, timeUtil.thisWeek(), {granularity: 0});
-
-      dispatch(DeviceActions.querySessions(deviceKey, time)).then(
+    getLastSession: function(deviceKey) {
+      const time = Object.assign({}, timeUtil.thisWeek(), {granularity: 0});
+      return dispatch(DeviceActions.querySessions(deviceKey, time)).then(
         (response) => dispatch(DeviceActions.fetchLastSession(deviceKey, time)),
         (error) => console.log(error));
 		}

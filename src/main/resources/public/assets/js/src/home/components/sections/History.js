@@ -23,8 +23,8 @@ var timeUtil = require('../../utils/time');
 var History = React.createClass({
 	handleTypeSelect: function(key){
 		this.props.setQueryFilter(key);	
-	},
-	handleTimeSelect: function(key){
+  },
+  handleTimeSelect: function(key){
 		var time = {};
 		if (key==="always"){
 			time = {
@@ -53,28 +53,26 @@ var History = React.createClass({
 			return;
 		}
 		this.props.setTimeFilter(key);
-		this.props.setTime(time);
-		this.props.querySessions(this.props.activeDevice, time);
+		this.props.setTimeAndQuery(time);
+    //this.props.queryDeviceOrMeter(this.props.activeDevice, time); 
   },
   handleTimePrevious: function() { 
-    console.log(this.props.previousPeriod);
-    this.props.setTime(this.props.previousPeriod);
-    this.props.querySessions(this.props.activeDevice, Object.assign({}, this.props.time, this.props.previousPeriod));
+    this.props.setTimeAndQuery(this.props.previousPeriod);
+
   },
   handleTimeNext: function() { 
-    console.log(this.props.nextPeriod);
-    this.props.setTime(this.props.nextPeriod);
-    this.props.querySessions(this.props.activeDevice, Object.assign({}, this.props.time, this.props.nextPeriod));
+    this.props.setTimeAndQuery(this.props.nextPeriod);
+
   },
 	handleDeviceChange: function(e, value) {
-		this.props.setActive(value);
-		this.props.querySessions(value, this.props.time);
+    this.props.setActiveAndQuery(value);
   },
 	render: function() {
 		const activeDevice = this.props.activeDevice;
-		const device = getDeviceByKey(this.props.devices, activeDevice);
-		const activeDeviceName = device?device.name:"None";
-		
+    const device = getDeviceByKey(this.props.devices, activeDevice);
+		const activeDeviceName = device?(device.name?device.name:device.serial):"None";
+	  const devType = this.props.devType;
+
 		var _t = this.props.intl.formatMessage;
     return (
       <div>
@@ -98,41 +96,54 @@ var History = React.createClass({
           <div>
 				
 					<Sidebar>	
-						<bs.Tabs style={{marginTop: 60}} position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
-							<bs.Tab eventKey="showers" title={_t({id: "history.showers"})}/>
-							<bs.Tab eventKey="duration" title={_t({id: "history.duration"})} />
-							<bs.Tab eventKey="volume" title={_t({id: "history.volume"})}/>
-							<bs.Tab eventKey="temperature" title={_t({id: "history.temperature"})}/>
-							<bs.Tab eventKey="energy" title={_t({id: "history.energy"})}/>
-						</bs.Tabs>
+              {(() => {
+                if (this.props.devType === 'AMPHIRO') {
+                  return (
+                    <bs.Tabs style={{marginTop: 60}} position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
+                      <bs.Tab eventKey="showers" title={_t({id: "history.showers"})}/>
+                      <bs.Tab eventKey="duration" title={_t({id: "history.duration"})} />
+                      <bs.Tab eventKey="volume" title={_t({id: "history.volume"})}/>
+                      <bs.Tab eventKey="temperature" title={_t({id: "history.temperature"})}/>
+                      <bs.Tab eventKey="energy" title={_t({id: "history.energy"})}/>
+						        </bs.Tabs>);
+                }
+                else if (this.props.devType === 'METER') {
+                  return (
+                    <bs.Tabs style={{marginTop: 60}} position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
+                      <bs.Tab eventKey="volume" title={_t({id: "history.volume"})}/>
+						        </bs.Tabs>);
+                }
+              })()
+              }
 					</Sidebar>
 					
 					<div className="primary">
-						
 						<div className="pull-right">
-							<bs.DropdownButton
+              <span style={{marginRight: 10, marginTop: 5, fontFamily:'OpenSansCondensed', fontSize: '1.1em'}}>{devType}</span>
+              <bs.DropdownButton
 								title={activeDeviceName}
 								id="device-switcher"
 								defaultValue={activeDevice}
 								onSelect={this.handleDeviceChange}>
 								{
-									this.props.devices.map(function(device) {
+                  this.props.devices.map(function(device) {
 										return (
-											<bs.MenuItem key={device.deviceKey} eventKey={device.deviceKey} value={device.deviceKey} >{device.name}</bs.MenuItem>
+											<bs.MenuItem key={device.deviceKey} eventKey={device.deviceKey} value={device.deviceKey} >{device.name || device.serial}</bs.MenuItem>
 										);
-								})
-							}	
+                  })
+							  }	
 							</bs.DropdownButton>
 						</div>
 
             <bs.Tabs  position='top' tabWidth={3} activeKey={this.props.timeFilter} onSelect={this.handleTimeSelect}>
-              {
-                //<bs.Tab eventKey="always" title={_t({id: "history.always"})} />
-               }
-							<bs.Tab eventKey="year" title={_t({id: "history.year"})}/>
-							<bs.Tab eventKey="month" title={_t({id: "history.month"})}/>
-							<bs.Tab eventKey="week" title={_t({id: "history.week"})}/>
+              
 							<bs.Tab eventKey="day" title={_t({id: "history.day"})}/>
+							<bs.Tab eventKey="week" title={_t({id: "history.week"})}/>
+							<bs.Tab eventKey="month" title={_t({id: "history.month"})}/>
+              <bs.Tab eventKey="year" title={_t({id: "history.year"})}/>
+              {
+               <bs.Tab eventKey="always" title={_t({id: "history.always"})} />
+               }
 						</bs.Tabs>
             
             <HistoryChart />

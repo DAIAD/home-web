@@ -5,9 +5,9 @@ var injectIntl = require('react-intl').injectIntl;
 var SessionsList = require('../components/SessionsList');
 
 var DeviceActions = require('../actions/DeviceActions');
+var HistoryActions = require('../actions/HistoryActions');
 
-var getSessionById = require('../utils/device').getSessionById;
-var getSessionByIndex = require('../utils/device').getSessionByIndex;
+var { getSessionByIndex } = require('../utils/device');
 
 var getFilteredData = function(data, filter) {
 	if (!data) return [];
@@ -34,63 +34,73 @@ var HistoryList = React.createClass({
 });
 
 function mapStateToProps(state, ownProps) {
-	var activeSessionData = getSessionByIndex(state.device.query.data, state.device.query.activeSessionIndex);
+	var activeSessionData = getSessionByIndex(state.query.data, state.section.history.activeSessionIndex);
 	var activeSessionDataMeasurements = [];
  	if (activeSessionData) {
-		activeSessionDataMeasurements = activeSessionData.measurements?activeSessionData.measurements:[];
+    activeSessionDataMeasurements = activeSessionData.measurements?activeSessionData.measurements:[];
 	}
 	var disabledNextSession = true;
 	var disabledPreviousSession = true;
-	if (state.device.query.activeSessionIndex!==null) {
-		if (state.device.query.data[state.device.query.activeSessionIndex+1]) {
+	if (state.section.history.activeSessionIndex!==null) {
+		if (state.query.data[state.section.history.activeSessionIndex+1]) {
 			disabledNextSession = false;
 		}
-		if (state.device.query.data[state.device.query.activeSessionIndex-1]) {
+		if (state.query.data[state.section.history.activeSessionIndex-1]) {
 			disabledPreviousSession = false;
 		}
-	}
+  }
+  var data = getFilteredData(activeSessionDataMeasurements, state.section.history.sessionFilter);
+  //data.shift();
+  /*
+  data = data.map(
+    (val,idx,array) => (idx-1>=0)?[val[0],array.reduce(
+                                  (prev, curr, idx2, arr) => (idx2-1<=idx && idx2-1>=0)?arr[idx2-1][1]+arr[idx2][1]:arr[idx2][1])
+      //.reduce((prev, curr, idx2, arr) => (idx2<idx)?
+      // arr[1][idx2]+=prev:arr[1][idx2])
+    ]:[val[0],val[1]]);
+    console.log(data);
+    */
+   var arr = [{title: state.section.history.sesionFilter, data:data}];
+  //arr.splice(0, 1);
 	return {
-		time: state.device.query.time,
-		activeDevice: state.device.query.activeDevice,
-		sessionFilter: state.device.query.sessionFilter,
-		sessions: state.device.query.data,
-		activeSession: state.device.query.activeSession,
+		time: state.query.time,
+		activeDevice: state.query.activeDevice,
+    sessionFilter: state.section.history.sessionFilter,
+    sessions: state.query.data,
+		activeSession: state.query.activeSession,
 		disabledNext: disabledNextSession,
 		disabledPrevious: disabledPreviousSession,
-		activeSessionIndex: state.device.query.activeSessionIndex,
+		activeSessionIndex: state.section.history.activeSessionIndex,
     getSessionByIndex: getSessionByIndex,
     getFilteredData: getFilteredData,
     activeSessionData: activeSessionData,
-		activeSessionChartData: [{title: state.device.query.sesionFilter, data:getFilteredData(activeSessionDataMeasurements, state.device.query.sessionFilter)}],
-		queryData: state.device.query.data,
-		showModal: state.device.query.activeSessionIndex!==null?true:false,
-		loading: state.device.query.status.isLoading 
+    activeSessionChartData: arr,
+    queryData: state.query.data,
+		showModal: state.section.history.activeSessionIndex===null?false:true,
+		loading: state.query.status.isLoading 
 		};
 }
 
 function mapDispatchToProps(dispatch, ownProps) {
 	return {
-		setActiveSession: function(sessionId) {
-			dispatch(DeviceActions.setActiveSession(sessionId));
-		},
 		setActiveSessionIndex: function(sessionIndex) {
-			dispatch(DeviceActions.setActiveSessionIndex(sessionIndex));
+			dispatch(HistoryActions.setActiveSessionIndex(sessionIndex));
 		},
 		resetActiveSessionIndex: function() {
-			dispatch(DeviceActions.resetActiveSessionIndex());
+			dispatch(HistoryActions.resetActiveSessionIndex());
 		},
 		setSessionFilter: function(filter) {
-			dispatch(DeviceActions.setSessionFilter(filter));
+			dispatch(HistoryActions.setSessionFilter(filter));
 		},
 		fetchSession: function(sessionId, deviceKey, time) {
 			dispatch(DeviceActions.fetchSession(sessionId, deviceKey, time));
 		},
 		getNextSession: function(deviceKey, time) {
-			dispatch(DeviceActions.increaseActiveSessionIndex());
+			dispatch(HistoryActions.increaseActiveSessionIndex());
 			dispatch(DeviceActions.fetchActiveSession(deviceKey, time));
 		},
 		getPreviousSession: function(deviceKey, time) {
-			dispatch(DeviceActions.decreaseActiveSessionIndex());
+			dispatch(HistoryActions.decreaseActiveSessionIndex());
 			dispatch(DeviceActions.fetchActiveSession(deviceKey, time));
 		}
 	};

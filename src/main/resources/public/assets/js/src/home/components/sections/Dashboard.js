@@ -137,6 +137,9 @@ var InfoPanel = React.createClass({
     }
   },
   render: function() {
+    console.log('info panel');
+    console.log('last shower');
+    console.log(this.props.lastShower);
 
     var layouts = [
       {x:0, y:0, w:6, h:1, i:"0"},
@@ -164,16 +167,26 @@ var InfoPanel = React.createClass({
         />
         </div>
         <div key="2">
-        <InfoBox 
-          title="Last Shower"
-          classContainer="padded"
-          classLeft="row"
-          classRight="row padded"
-          improved={true}
-          compareText={<span>You consumed a total of <b>2.5lt</b> in <b>2 secs</b>.</span>}
-          highlight={<LastShowerChart ref="lastShower" {...this.props} />}
-          extraText=""
-        />
+          
+        {(() => {
+          if (!this.props.lastShower) {
+            return null;
+          }
+          else {
+            return (
+              <InfoBox 
+                title="Last Shower"
+                classContainer="padded"
+                classLeft="row"
+                classRight="row padded"
+                improved={true}
+                compareText={<span>You consumed a total of <b>{this.props.lastShower.volume + " lt"}</b> in <b>{this.props.lastShower.duration + " secs"}</b>.</span>}
+                highlight={<LastShowerChart ref="lastShower" {...this.props} />}
+                extraText=""
+              />);
+          }
+        })()
+        }
         </div>
         <div key="3">
         <InfoBox 
@@ -277,6 +290,7 @@ var Counters = React.createClass({
 var Dashboard = React.createClass({
 
   render: function() {
+    console.log('rendering dashoard');
 		return (
       <MainSection id="section.dashboard">
         {

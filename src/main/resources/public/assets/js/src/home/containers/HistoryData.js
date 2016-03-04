@@ -5,20 +5,22 @@ var injectIntl = require('react-intl').injectIntl;
 var History = require('../components/sections/History');
 
 var DeviceActions = require('../actions/DeviceActions');
+var MeterActions = require('../actions/MeterActions');
+var HistoryActions = require('../actions/HistoryActions');
 
-var { getAvailableDevices } = require('../utils/device');
+var { getAvailableDevices, getDeviceTypeByKey } = require('../utils/device');
 var timeUtil = require('../utils/time');
 
 
 var HistoryData = React.createClass({
 	componentWillMount: function() {
 		if (this.props.activeDevice) {
-			this.props.initHistory(this.props.activeDevice, this.props.time);
+			this.props.queryAndFetchAllSessions(this.props.activeDevice, this.props.time);
 		}
 	},
 	componentWillReceiveProps: function(nextProps) {
 		if (!this.props.activeDevice && nextProps.activeDevice) {
-			this.props.initHistory(nextProps.activeDevice, this.props.time);
+			this.props.queryAndFetchAllSessions(nextProps.activeDevice, this.props.time);
 		}
 	},
 	render: function() {
@@ -30,46 +32,61 @@ var HistoryData = React.createClass({
 
 function mapStateToProps(state, ownProps) {
 	return {
-		time: state.device.query.time,
-		metricFilter: state.device.query.filter,
-		timeFilter: state.device.query.timeFilter,
-		devices: getAvailableDevices(state.user.profile.devices),
-		activeDevice: state.device.query.activeDevice,
-    loading: state.device.query.status.isLoading,
-    nextPeriod: timeUtil.getNextPeriod(state.device.query.timeFilter, state.device.query.time.endDate),
-    previousPeriod: timeUtil.getPreviousPeriod(state.device.query.timeFilter, state.device.query.time.endDate),
-
+    time: state.query.time,
+    devType: getDeviceTypeByKey(state.user.profile.devices, state.query.activeDevice), 
+		metricFilter: state.section.history.filter,
+		timeFilter: state.section.history.timeFilter,
+		devices: state.user.profile.devices,
+		activeDevice: state.query.activeDevice,
+    loading: state.query.status.isLoading,
+    nextPeriod: timeUtil.getNextPeriod(state.section.history.timeFilter, state.query.time.endDate),
+    previousPeriod: timeUtil.getPreviousPeriod(state.section.history.timeFilter, state.query.time.endDate),
 		};
 }
 
 function mapDispatchToProps(dispatch, ownProps) {
 	return {
 		setQueryFilter: function(filter) {
-			return dispatch(DeviceActions.setQueryFilter(filter));
-		},
-		setTime: function(time) {
-			return dispatch(DeviceActions.setTime(time));
-		},
-		setTimeFilter: function(filter) {
-			 return dispatch(DeviceActions.setTimeFilter(filter));
+			return dispatch(HistoryActions.setQueryFilter(filter));
     },
-    initHistory: function(deviceKey, time) {
-      this.querySessions(deviceKey, time).then(
-        (response) => this.fetchAllSessions(deviceKey, time), 
-        (error) => console.log(error));
+    setTimeFilter: function(filter) {
+			 return dispatch(HistoryActions.setTimeFilter(filter));
     },
+		setActiveAndQuery: function(deviceKey) {
+			dispatch(DeviceActions.setActiveDevice(deviceKey));
+      return this.queryDeviceOrMeter(deviceKey, this.time);
+    },
+		setTimeAndQuery: function(time) {
+      dispatch(DeviceActions.setTime(Object.assign({}, this.time, time)));
+      return this.queryDeviceOrMeter(this.activeDevice, time);
+		},	
 		querySessions: function(deviceKey, time) {
 			return dispatch(DeviceActions.querySessions(deviceKey, time));
     },
     fetchAllSessions: function(deviceKey, time) {
       return dispatch(DeviceActions.fetchAllSessions(deviceKey, time));
     },
+    queryAndFetchAllSessions: function(deviceKey, time) {
+      return this.querySessions(deviceKey, time).then(
+        (response) => this.fetchAllSessions(deviceKey, time), 
+          (error) => console.log(error));
+    },
 		querySessionsIfEmpty: function(deviceKey, time) {
 			return dispatch(DeviceActions.querySessionsIfEmpty(deviceKey, time));
 		},
-		setActive: function(deviceKey) {
-			return dispatch(DeviceActions.setActiveDevice(deviceKey));
-		},
+    queryMeter: function(deviceKey, time) {
+      return dispatch(MeterActions.getHistory(deviceKey, time));
+    },
+    queryDeviceOrMeter: function(deviceKey, time) {
+      const devType = getDeviceTypeByKey(this.devices, deviceKey);
+      if (devType === 'AMPHIRO') {
+        this.queryAndFetchAllSessions(deviceKey, time); 
+      }
+      else if (devType === 'METER') {
+        return this.queryMeter(deviceKey, time).then(
+          () => this.setQueryFilter('volume'));
+      }
+    }
 	};
 }
 

@@ -3,12 +3,16 @@ var getDefaultDevice = function(devices) {
 	return amphiroDevices.length?amphiroDevices[0]:null;
 };
 
+var getDeviceTypeByKey = function(devices, key) {
+  const device = getDeviceByKey(devices, key);
+  return device.type;
+};
 var getDeviceCount = function(devices) {
 	return getAvailableDevices(devices).length;
 };
 
 var getAvailableDevices = function(devices) {
-	return devices.filter((device) => (device.type === 'AMPHIRO'));
+  return devices.filter((device) => (device.type === 'AMPHIRO'));
 };
 
 var getAvailableDeviceKeys = function(devices) {
@@ -94,7 +98,8 @@ module.exports = {
 	getSessionIndexById,
 	getLastSession,
 	updateOrAppendToSession,
-	getDefaultDevice,
+  getDefaultDevice,
+  getDeviceTypeByKey,
 	getDeviceCount,
 	getAvailableDevices,
 	getAvailableDeviceKeys,
