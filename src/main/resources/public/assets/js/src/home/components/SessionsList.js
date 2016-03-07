@@ -97,6 +97,7 @@ var SessionItem = React.createClass({
 		this.props.onOpen(this.refs.link.dataset.id, this.refs.link.dataset.index);
 	},
   render: function() {
+    //mockup values
     var arrowClasses = "fa-arrow-up red";
     if (this.props.index===2 || this.props.index===4 || this.props.index===0){
       arrowClasses = "fa-arrow-down green";
@@ -109,6 +110,9 @@ var SessionItem = React.createClass({
           </div>
           <div className="col-md-7">
             <div className="pull-right">
+              {
+                //mockup values
+               }
             <span className="session-item-detail">Stelios</span>
 						<span className="session-item-detail"><i className="fa fa-calendar"/><FormattedRelative value={new Date(this.props.data.timestamp)} /></span> 
             {(() => { 
@@ -149,22 +153,6 @@ var SessionItem = React.createClass({
 	}
 });
 
-function getDummyData(i) { 
-  return [{title:'consumption', data:[[new Date(1456771433394),(200*i+87)%100],[new Date(1456772533394),i*13%100], [new Date(1456872933394),(i*i*i)%100], [new Date(1456872933394),(85*i-i)%100]]}];
-}
-
-var getFilteredData = function(data, filter) {
-	if (!data) return [];
-	var filteredData = [];
-	
-	data.forEach(function(dato) {
-		if (!dato[filter]){
-			return;
-		}
-		filteredData.push([dato.timestamp, dato[filter]]);
-	});
-	return filteredData.map(x => [new Date(x[0]),x[1]]);
-};
 var SparklineChart = React.createClass({
   render: function() {
     if (!this.props.data || !this.props.data.length || this.props.data.length<=1 || this.props.history) {
@@ -184,7 +172,7 @@ var SparklineChart = React.createClass({
         yMargin={0}
         x2Margin={2}
         y2Margin={0}
-        data={[{title: 'Consumption', data:getFilteredData(this.props.data, 'volume')}]}
+        data={[{title: 'Consumption', data:this.props.data}]}
       />);
   }
 });
@@ -201,7 +189,9 @@ var SessionsList = React.createClass({
 		}
 	},
 	onClose: function() {
-		this.props.resetActiveSessionIndex();
+    this.props.resetActiveSessionIndex();
+    //set session filter to volume for sparkline
+    this.props.setSessionFilter('volume');
 	},
 	onNext: function() {
 		
@@ -238,10 +228,8 @@ var SessionsList = React.createClass({
 						<Shower 
 							intl={this.props.intl}
 							setSessionFilter={this.props.setSessionFilter}
-							activeSession={this.props.activeSession} 
-							listData={this.props.activeSessionData}
-							chartData={this.props.activeSessionChartData}
-							filter={this.props.sessionFilter}
+              data={this.props.sessions[this.props.activeSessionIndex]}
+              filter={this.props.sessionFilter}
 							loading={this.props.loading}  />
 					</bs.Modal.Body>
 					<bs.Modal.Footer>

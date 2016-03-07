@@ -8,19 +8,7 @@ var DeviceActions = require('../actions/DeviceActions');
 var HistoryActions = require('../actions/HistoryActions');
 
 var { getSessionByIndex } = require('../utils/device');
-
-var getFilteredData = function(data, filter) {
-	if (!data) return [];
-	var filteredData = [];
-	
-	data.forEach(function(dato) {
-		if (!dato[filter]){
-			return;
-		}
-		filteredData.push([dato.timestamp, dato[filter]]);
-	});
-	return filteredData.map(x => [new Date(x[0]),x[1]]);
-};
+var { getFilteredData } = require('../utils/chart');
 
 var HistoryList = React.createClass({
 	componentWillMount: function() {
@@ -34,12 +22,7 @@ var HistoryList = React.createClass({
 });
 
 function mapStateToProps(state, ownProps) {
-	var activeSessionData = getSessionByIndex(state.query.data, state.section.history.activeSessionIndex);
-	var activeSessionDataMeasurements = [];
- 	if (activeSessionData) {
-    activeSessionDataMeasurements = activeSessionData.measurements?activeSessionData.measurements:[];
-	}
-	var disabledNextSession = true;
+  var disabledNextSession = true;
 	var disabledPreviousSession = true;
 	if (state.section.history.activeSessionIndex!==null) {
 		if (state.query.data[state.section.history.activeSessionIndex+1]) {
@@ -49,32 +32,15 @@ function mapStateToProps(state, ownProps) {
 			disabledPreviousSession = false;
 		}
   }
-  var data = getFilteredData(activeSessionDataMeasurements, state.section.history.sessionFilter);
 
-  if (state.section.history.sessionFilter === 'volume' || state.section.history.sessionFilter === 'energy'){
-    
-    //TODO: refactor this monster
-    data = data.map((val, idx, arr) => [val[0], arr.map((array) => array[1]?array[1]:0).reduce((prev, curr, idx2, array, initial) => idx2<=idx?prev+curr:prev)]);
-  }
-
-  //console.log('data is ');
-  //console.log(data);
-   var arr = [{title: state.section.history.sesionFilter, data:data}];
-  //arr.splice(0, 1);
 	return {
 		time: state.query.time,
 		activeDevice: state.query.activeDevice,
     sessionFilter: state.section.history.sessionFilter,
-    sessions: state.query.data,
-		activeSession: state.query.activeSession,
+    sessions: state.query.data.map((session) => Object.assign({}, session, {measurements: getFilteredData(session.measurements, state.section.history.sessionFilter)})),
+		activeSessionIndex: state.section.history.activeSessionIndex,
 		disabledNext: disabledNextSession,
 		disabledPrevious: disabledPreviousSession,
-		activeSessionIndex: state.section.history.activeSessionIndex,
-    getSessionByIndex: getSessionByIndex,
-    getFilteredData: getFilteredData,
-    activeSessionData: activeSessionData,
-    activeSessionChartData: arr,
-    queryData: state.query.data,
 		showModal: state.section.history.activeSessionIndex===null?false:true,
 		loading: state.query.status.isLoading 
 		};

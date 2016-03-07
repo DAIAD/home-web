@@ -10,20 +10,7 @@ var DeviceActions = require('../actions/DeviceActions');
 
 var timeUtil = require('../utils/time');
 var { getDefaultDevice, getLastSession } = require('../utils/device');
-
-var getFilteredData = function(data, filter) {
-	var filteredData = [];
-
-	data.forEach(function(dato) {
-		if (!dato[filter]){
-			return;
-		}
-		filteredData.push([new Date(dato.timestamp), dato[filter]]);
-	});
-	
-	//return array with dates instead of timestamps
-	return filteredData.map(x => [new Date(x[0]),x[1]]);
-};
+var { getFilteredData } = require('../utils/chart');
 
 var DashboardData = React.createClass({
 	

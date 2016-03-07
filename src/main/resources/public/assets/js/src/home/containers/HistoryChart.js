@@ -7,14 +7,8 @@ var SessionsChart = require('../components/SessionsChart');
 var HistoryActions = require('../actions/HistoryActions');
 
 var timeUtil = require('../utils/time');
+var { getFilteredData } = require('../utils/chart');
 
-var getCount = function(metrics) {
-	return metrics.count?metrics.count:1;
-};
-
-var getTimestampIndex = function(points, timestamp) {
-	  return points.findIndex((x) => (x[0]===timestamp));
-};
 
 var selectTimeFormatter = function(key, intl) {
 	switch (key) {
@@ -34,74 +28,6 @@ var selectTimeFormatter = function(key, intl) {
 	}
 };
 
-var getTimeRange = function(key) {
-	switch (key) {
-		case "year":
-			return timeUtil.thisYear();
-		case "month":
-			return timeUtil.thisMonth();
-		case "week":
-			return timeUtil.thisWeek();
-		case "day":
-			return timeUtil.today();
-		default:
-			return timeUtil.thisYear();
-	}
-
-};
-
-var getFilteredData = function(data, filter) {
-	var filteredData = [];
-	if (!data) return [];
-	switch (filter) {
-		case "showers":
-			data.forEach(function(dato, i)	{
-				const count = getCount(dato);
-				var index = getTimestampIndex(filteredData, dato.timestamp);
-				
-				//increment or append
-				if (index>-1){
-					filteredData[index] = [filteredData[index][0], filteredData[index][1]+count];			
-				}
-				else{
-					filteredData.push([dato.timestamp, count]);			
-				}	
-			});
-			return filteredData.map(x => [new Date(x[0]),x[1]]);
-
-		case "volume12":
-			filteredData = [[]];
-			data.forEach(function(dato, i)	{
-					var index = getTimestampIndex(filteredData[0], dato.timestamp);
-					
-					if (index>-1){
-						if (!filteredData[1]){
-							filteredData[1] = [];
-						}
-						filteredData[1].push([dato.timestamp, dato.volume]);
-					}
-					else{
-						filteredData[0].push([dato.timestamp, dato.volume]);
-						//filteredData.push([dato.timestamp, count]);			
-											
-					}
-					
-			});
-			return filteredData.map(dI => dI.map(x => [new Date(x[0]),x[1]]));
-		default:
-			data.forEach(function(dato) {
-				if (!dato[filter]){
-					return;
-				}
-				filteredData.push([dato.timestamp, dato[filter]]);
-			});
-			return filteredData.map(x => [new Date(x[0]),x[1]]);
-	}
-	return;
-	//return array with dates instead of timestamps
-	//return filteredData;
-	//return filteredData.map(x => [new Date(x[0]),x[1]]);
-};
 
 var HistoryChart = React.createClass({
 	componentWillMount: function() {
@@ -118,8 +44,8 @@ function mapStateToProps(state, ownProps) {
 	if(!state.user.isAuthenticated) {
 		return {};
   }
-  const dummySeries = {title:'Comparison', data:[[new Date("2016-02-25"),35], [new Date("2016-02-26"), 52], [new Date("2016-02-28"), 100], [new Date("2016-03-01"), 102]]};
-	return {
+  
+  return {
 		time: state.query.time,
 		filter: state.section.history.filter,
     timeFilter: state.section.history.timeFilter,

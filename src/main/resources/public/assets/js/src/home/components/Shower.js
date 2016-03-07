@@ -80,9 +80,8 @@ var Shower = React.createClass({
 		this.props.setSessionFilter(key);	
 	},
 	render: function() {
-		const history = this.props.listData?this.props.listData.history:null;
+		const history = this.props.data?this.props.data.history:null;
 		var _t = this.props.intl.formatMessage;
-		
 		return (
 			<div>
 			{
@@ -100,14 +99,14 @@ var Shower = React.createClass({
                 x2Margin={60}
 								type="line"
 								formatter={(x) => this.props.intl.formatTime(x, { hour: 'numeric', minute: 'numeric'})}
-								data={this.props.chartData}
+                data={[{title: this.props.filter, data:this.props.data.measurements}]}
 								/>
                 <div style={{marginTop: 30}}/>		
             <SessionInfo
               intl={this.props.intl}
 							setSessionFilter={this.props.setSessionFilter}
 							chartDOM={this.refs.chartDOM}
-							data={this.props.listData} />	
+							data={this.props.data} />	
 					</div>
 				);
 			}
@@ -117,7 +116,7 @@ var Shower = React.createClass({
 						<section>
 							{ (() => 
 								 {
-									if (this.props.listData.count) {
+									if (this.props.data.count) {
 										return (null);
 									}
 									else {
@@ -133,7 +132,7 @@ var Shower = React.createClass({
 
 					<SessionInfo
              intl={this.props.intl}
-						data={this.props.listData} />
+						data={this.props.data} />
 
 					</section>
 				</div>
