@@ -1,8 +1,11 @@
 package eu.daiad.web.model.device;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class DeviceAmphiroConfiguration {
+
+	UUID version;
 
 	private String title;
 
@@ -11,7 +14,7 @@ public class DeviceAmphiroConfiguration {
 	private ArrayList<Integer> properties = new ArrayList<Integer>();
 
 	private int block;
-	
+
 	private int numberOfFrames;
 
 	private int frameDuration;
@@ -66,6 +69,14 @@ public class DeviceAmphiroConfiguration {
 
 	public void setBlock(int block) {
 		this.block = block;
+	}
+
+	public UUID getVersion() {
+		return version;
+	}
+
+	public void setVersion(UUID version) {
+		this.version = version;
 	}
 
 }

@@ -14,9 +14,9 @@ import eu.daiad.web.model.Credentials;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.profile.NotifyProfileRequest;
 import eu.daiad.web.model.profile.ProfileResponse;
 import eu.daiad.web.model.profile.UpdateProfileRequest;
-import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 
 @RestController("RestProfileController")
@@ -32,9 +32,9 @@ public class ProfileController extends BaseRestController {
 		RestResponse response = new RestResponse();
 
 		try {
-			AuthenticatedUser user = this.authenticate(data, EnumRole.ROLE_USER);
+			this.authenticate(data, EnumRole.ROLE_USER);
 
-			return new ProfileResponse(this.profileRepository.getProfileByUsername(EnumApplication.MOBILE, user.getUsername()));
+			return new ProfileResponse(this.profileRepository.getProfileByUsername(EnumApplication.MOBILE));
 		} catch (ApplicationException ex) {
 			logger.error(ex);
 
@@ -62,4 +62,21 @@ public class ProfileController extends BaseRestController {
 		return response;
 	}
 
+	@RequestMapping(value = "/api/v1/profile/notify", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	public RestResponse saveProfile(@RequestBody NotifyProfileRequest request) {
+		RestResponse response = new RestResponse();
+
+		try {
+			this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
+
+			this.profileRepository.notifyProfile(request.getApplication(), request.getVersion(), request.getUpdatedOn());
+
+		} catch (ApplicationException ex) {
+			logger.error(ex);
+
+			response.add(this.getError(ex));
+		}
+
+		return response;
+	}
 }

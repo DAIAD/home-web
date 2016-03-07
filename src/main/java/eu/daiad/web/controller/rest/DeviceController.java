@@ -26,6 +26,7 @@ import eu.daiad.web.model.device.DeviceRegistrationQueryResult;
 import eu.daiad.web.model.device.DeviceRegistrationRequest;
 import eu.daiad.web.model.device.DeviceRegistrationResponse;
 import eu.daiad.web.model.device.DeviceResetRequest;
+import eu.daiad.web.model.device.NotifyConfigurationRequest;
 import eu.daiad.web.model.device.ShareDeviceRequest;
 import eu.daiad.web.model.device.WaterMeterDeviceRegistrationRequest;
 import eu.daiad.web.model.error.ApplicationException;
@@ -164,6 +165,23 @@ public class DeviceController extends BaseRestController {
 			configuration.setDevices(repository.getConfiguration(user.getKey(), request.getDeviceKey()));
 
 			return configuration;
+		} catch (ApplicationException ex) {
+			logger.error(ex);
+
+			response.add(this.getError(ex));
+		}
+
+		return response;
+	}
+	
+	@RequestMapping(value = "/api/v1/device/notify", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	public RestResponse notify(@RequestBody NotifyConfigurationRequest request) {
+		RestResponse response = new RestResponse();
+
+		try {
+			AuthenticatedUser user = this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
+
+			repository.notifyConfiguration(user.getKey(), request.getDeviceKey(), request.getVersion(), request.getUpdatedOn());
 		} catch (ApplicationException ex) {
 			logger.error(ex);
 

@@ -9,27 +9,29 @@ import eu.daiad.web.model.device.DeviceRegistration;
 public class Profile {
 
 	private UUID key;
+
+	private UUID version;
 	
 	private EnumApplication application;
 
 	private String username;
-	
+
 	private String firstname;
 
 	private String lastname;
-	
+
 	private String email;
-	
+
 	private byte[] photo;
 
 	private String timezone;
 
 	private String country;
 
-	private boolean enabled = false;
-	
+	private int mode = 0;
+
 	private String configuration;
-	
+
 	private ArrayList<DeviceRegistration> devices;
 
 	public Profile() {
@@ -119,20 +121,28 @@ public class Profile {
 		this.application = application;
 	}
 
-	public boolean isEnabled() {
-		return enabled;
-	}
-
-	public void setEnabled(boolean enabled) {
-		this.enabled = enabled;
-	}
-
 	public String getConfiguration() {
 		return configuration;
 	}
 
 	public void setConfiguration(String configuration) {
 		this.configuration = configuration;
+	}
+
+	public int getMode() {
+		return mode;
+	}
+
+	public void setMode(int mode) {
+		this.mode = mode;
+	}
+
+	public UUID getVersion() {
+		return version;
+	}
+
+	public void setVersion(UUID version) {
+		this.version = version;
 	}
 
 }
