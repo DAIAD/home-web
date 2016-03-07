@@ -57,11 +57,11 @@ CREATE TABLE account (
 CREATE TABLE public.account_profile
 (
   id integer,
-  mobile_enabled boolean NOT NULL,
+  mobile_mode int NOT NULL,
   mobile_config character varying NULL,
-  web_enabled boolean NOT NULL,
+  web_mode int NOT NULL,
   web_config character varying NULL,
-  utility_enabled boolean NOT NULL,
+  utility_mode int NOT NULL,
   utility_config character varying NULL,  
   CONSTRAINT pk_account_profile PRIMARY KEY (id),
   CONSTRAINT fk_account_profile_account FOREIGN KEY (id)
