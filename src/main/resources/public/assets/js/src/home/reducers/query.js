@@ -18,7 +18,7 @@ var query = function (state, action) {
 			},
 			data: [],
     };
-    state.time = Object.assign({}, thisWeek());
+    state.time = Object.assign({}, state.time, thisWeek());
 	}
    
 	switch (action.type) {
@@ -67,7 +67,17 @@ var query = function (state, action) {
 				return Object.assign({}, state, {
 					activeDevice: null
 				});
-
+      
+      case types.QUERY_RESET:
+				return Object.assign({}, state, {
+          activeDevice: null,
+          data: [],
+          status: {
+            isLoading: false,
+            success: null,
+            errors: null
+          }
+				});
 			// Sessions
 			case types.DEVICE_REQUESTED_SESSION:
 				return Object.assign({}, state, {

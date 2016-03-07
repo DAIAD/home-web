@@ -19,6 +19,7 @@ module.exports = keyMirror({
 	QUERY_SET_TIME: null,
 	QUERY_SET_ACTIVE: null,
 	QUERY_RESET_ACTIVE: null,
+	QUERY_RESET: null,
   
   METER_REQUESTED_QUERY: null,
   METER_RECEIVED_QUERY: null,

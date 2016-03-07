@@ -1,6 +1,5 @@
 var userAPI = require('../api/user');
 var types = require('../constants/ActionTypes');
-var DeviceActions = require('./DeviceActions');
 
 var requestedLogin = function() {
 	return {
@@ -70,8 +69,6 @@ var UserActions = {
 			return userAPI.logout().then(
 				function(response) {
 					dispatch(receivedLogout(response.success, response.errors));
-					//reset active device
-					dispatch(DeviceActions.resetActiveDevice());
 					return response;
 				},
 				function(error) {

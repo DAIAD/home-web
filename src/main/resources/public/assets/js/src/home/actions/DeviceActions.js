@@ -46,13 +46,13 @@ var DeviceActions = {
 
 			dispatch(requestedSessionsQuery());
 
-			var data = Object.assign({}, time, {deviceKey: [ deviceKey ] });
+      var data = Object.assign({}, time, {deviceKey: [ deviceKey ] });
 			return deviceAPI.querySessions(data).then(
-				function(response) {
+        function(response) {
 					dispatch(receivedSessionsQuery(response.success, response.errors, response.devices?response.devices[0].sessions:[]) );
 					return response;
 				},
-				function(error) {
+        function(error) {
 					dispatch(receivedSessionsQuery(false, error, {}));
 					return error;
 				});
@@ -155,7 +155,12 @@ var DeviceActions = {
 		return {
 			type: types.QUERY_RESET_ACTIVE,
 		};
-	},
+  },
+  resetQuery: function() {
+    return {
+      type: types.QUERY_RESET,
+    };
+  },
 	setActiveDeviceIfNone: function(deviceKey) {
 		return function(dispatch, getState) {
 			if (getState().query.activeDevice) {

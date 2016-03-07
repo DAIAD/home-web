@@ -34,7 +34,6 @@ var HomeApp = React.createClass({
 			<ReactIntlProvider 
 				locale={this.props.locale.locale}
 				messages={this.props.locale.messages} >
-				
 				<div>
 					{
 						(() => {
@@ -103,16 +102,24 @@ function mapDispatchToProps(dispatch, ownProps) {
 	return {
 		onLogin: function(username, password) {
 			dispatch(UserActions.login(username, password)).then(function(response) {
+        if (!response.profile) {
+          return response;
+        }
 				const devices = response.profile.devices;
-				const device = getDefaultDevice(devices);
-				return dispatch(DeviceActions.setActiveDevice(device.deviceKey));
+        const device = getDefaultDevice(devices);
+        if (device) {
+				  return dispatch(DeviceActions.setActiveDevice(device.deviceKey));
+        }
 			},
 			function(error) {
-				console.log('oops, something went wrong while logging-in');
+        console.log('oops, something went wrong while logging-in');
+        console.log(error);
 			});
 		},
 		onLogout: function() {
-			dispatch(UserActions.logout());
+      dispatch(UserActions.logout()).then(
+        (response) => dispatch(DeviceActions.resetQuery()),
+         (error) => console.log(error));
 		},
 		onLocaleSwitch: function(locale) {
 			dispatch(LocaleActions.setLocale(locale));

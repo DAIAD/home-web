@@ -5,6 +5,7 @@ var getDefaultDevice = function(devices) {
 
 var getDeviceTypeByKey = function(devices, key) {
   const device = getDeviceByKey(devices, key);
+  if (!device) return null;
   return device.type;
 };
 var getDeviceCount = function(devices) {

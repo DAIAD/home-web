@@ -24,10 +24,11 @@ var getDefaultDevice = require('./utils/device').getDefaultDevice;
 store.dispatch(LocaleActions.setLocale(properties.locale)).then(function() {
 	if (properties.reload){
 		store.dispatch(UserActions.refreshProfile()).then(function(response) {
-
 			const devices = response.profile.devices;
-			const device = getDefaultDevice(devices);
-			store.dispatch(DeviceActions.setActiveDevice(device.deviceKey));
+      const device = getDefaultDevice(devices);
+      if (device){
+			  store.dispatch(DeviceActions.setActiveDevice(device.deviceKey));
+      }
 			
 			init();
 		}, function(error) {
