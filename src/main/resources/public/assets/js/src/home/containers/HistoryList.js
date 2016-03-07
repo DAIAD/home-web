@@ -50,16 +50,15 @@ function mapStateToProps(state, ownProps) {
 		}
   }
   var data = getFilteredData(activeSessionDataMeasurements, state.section.history.sessionFilter);
-  //data.shift();
-  /*
-  data = data.map(
-    (val,idx,array) => (idx-1>=0)?[val[0],array.reduce(
-                                  (prev, curr, idx2, arr) => (idx2-1<=idx && idx2-1>=0)?arr[idx2-1][1]+arr[idx2][1]:arr[idx2][1])
-      //.reduce((prev, curr, idx2, arr) => (idx2<idx)?
-      // arr[1][idx2]+=prev:arr[1][idx2])
-    ]:[val[0],val[1]]);
-    console.log(data);
-    */
+
+  if (state.section.history.sessionFilter === 'volume' || state.section.history.sessionFilter === 'energy'){
+    
+    //TODO: refactor this monster
+    data = data.map((val, idx, arr) => [val[0], arr.map((array) => array[1]?array[1]:0).reduce((prev, curr, idx2, array, initial) => idx2<=idx?prev+curr:prev)]);
+  }
+
+  //console.log('data is ');
+  //console.log(data);
    var arr = [{title: state.section.history.sesionFilter, data:data}];
   //arr.splice(0, 1);
 	return {

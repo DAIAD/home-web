@@ -67,9 +67,10 @@ var History = React.createClass({
 	handleDeviceChange: function(e, value) {
     this.props.setActiveAndQuery(value);
   },
-	render: function() {
+  render: function() {
+    const devices = this.props.devices?this.props.devices:[];
 		const activeDevice = this.props.activeDevice;
-    const device = getDeviceByKey(this.props.devices, activeDevice);
+    const device = getDeviceByKey(devices, activeDevice);
 		const activeDeviceName = device?(device.name?device.name:device.serial):"None";
 	  const devType = this.props.devType;
 
@@ -126,7 +127,7 @@ var History = React.createClass({
 								defaultValue={activeDevice}
 								onSelect={this.handleDeviceChange}>
 								{
-                  this.props.devices.map(function(device) {
+                  devices.map(function(device) {
 										return (
 											<bs.MenuItem key={device.deviceKey} eventKey={device.deviceKey} value={device.deviceKey} >{device.name || device.serial}</bs.MenuItem>
 										);
@@ -147,20 +148,22 @@ var History = React.createClass({
 						</bs.Tabs>
             
             <HistoryChart />
-            <hr/>
-            <div>
+            <br/>
+            <div >
               <a className="pull-left" onClick={this.handleTimePrevious}>
                 <img src="/assets/images/svg/arrow-big-left.svg" />
               </a>
-              <div className="pull-left" style={{marginLeft:230}}>
+              <div className="pull-left" style={{marginLeft:230, marginTop:10}}>
                 <FormattedDate value={this.props.time.startDate} day="numeric" month="long" year="numeric" /> - <FormattedDate value={this.props.time.endDate} day="numeric" month="long" year="numeric" />
               </div>
               <a className="pull-right" onClick={this.handleTimeNext}>
                 <img src="/assets/images/svg/arrow-big-right.svg" />
               </a>
             </div>
-            <br />  
-            <hr style={{marginTop:30}} />
+
+            <br /> 
+            
+            <span style={{marginTop:30}} />
 
 						<HistoryList />
 
