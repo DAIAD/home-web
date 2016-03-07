@@ -3,13 +3,13 @@ var React = require('react');
 var Chart = require('./Chart');
 
 var SessionsChart = React.createClass({
-	getDefaultProps: function() { 
-		return {
-			height: '350px',
-			width: '100%',
-			title: "",
-			subtitle: "",
-			mu: "",
+  getDefaultProps: function() { 
+    return {
+      height: '350px',
+      width: '100%',
+      title: "",
+      subtitle: "",
+      mu: "",
       type: "line",
       xAxis: "time",
       xAxisData: [],
@@ -20,7 +20,7 @@ var SessionsChart = React.createClass({
       yMargin: 50,
       x2Margin: 20,
       y2Margin: 30
-		};
+    };
   },
   componentWillReceiveProps: function(nextProps) {
   },
@@ -67,11 +67,11 @@ var SessionsChart = React.createClass({
         },
         data: x.data,
         //markLine : {
-        //		data : [
-        //				{type : 'average', name: 'Average'}
-        //		]
+        //    data : [
+        //        {type : 'average', name: 'Average'}
+        //    ]
         //}
-		};
+    };
     });
 
     var xAxis = [
@@ -132,53 +132,53 @@ var SessionsChart = React.createClass({
         boundaryGap: [0, 0.1]
       }
     ];
-		return (
-			<Chart
+    return (
+      <Chart
         style={{
-					height: this.props.height,
-					width: this.props.width,
-				}} 
-				options = {{
-						title : {
+          height: this.props.height,
+          width: this.props.width,
+        }} 
+        options = {{
+            title : {
               text: this.props.title,
               padding: this.props.title.length?[-2, 0, 50, 30]:5,
               textStyle: {
                 //fontFamily: "OpenSansCondensed",
-								color: '#808285'
-							},
-							//x: "center",
-							subtext: this.props.subtitle
-						},
-						tooltip : {
-							//trigger: 'axis'
-							trigger: 'item',
-							backgroundColor: '#2D3580',
-							borderColor: '#2D3580',
-							padding: 7,
-							textStyle: {
+                color: '#808285'
+              },
+              //x: "center",
+              subtext: this.props.subtitle
+            },
+            tooltip : {
+              //trigger: 'axis'
+              trigger: 'item',
+              backgroundColor: '#2D3580',
+              borderColor: '#2D3580',
+              padding: 7,
+              textStyle: {
                 //fontFamily: "OpenSansCondensed",
-								color: '#fff'
-							},
-						},
-						legend: {
-							//data:[this.props.title]
-						},
-						toolbox: {
-								show : false,
-						},
-						backgroundColor: 'rgba(55,230,123,0.0)',
-						color: ['#2D3580', '#A45476'],
-						calculable : false,
-						dataZoom: {
-							show: false,
-							y: 'bottom',	
-							realtime: true,
-							start: 0,
-							end: 100,
-							//backgroundColor: 'rgba(0,0,0,0)',
-							//dataBackgroundColor: '#E8F5FD',
-							//fillerColor: 'rgba(0,0,0,0.4)',
-							handleColor: '#2D3580'
+                color: '#fff'
+              },
+            },
+            legend: {
+              //data:[this.props.title]
+            },
+            toolbox: {
+                show : false,
+            },
+            backgroundColor: 'rgba(55,230,123,0.0)',
+            color: ['#2D3580', '#A45476'],
+            calculable : false,
+            dataZoom: {
+              show: false,
+              y: 'bottom',  
+              realtime: true,
+              start: 0,
+              end: 100,
+              //backgroundColor: 'rgba(0,0,0,0)',
+              //dataBackgroundColor: '#E8F5FD',
+              //fillerColor: 'rgba(0,0,0,0.4)',
+              handleColor: '#2D3580'
             },
             grid: {
               //show: this.props.sparkline?false:true,
@@ -187,20 +187,20 @@ var SessionsChart = React.createClass({
                x2: this.props.x2Margin,
                y2: this.props.y2Margin
             },
-						xAxis : this.props.invertAxis?yAxis:xAxis,
-						yAxis : this.props.invertAxis?xAxis:yAxis,
-						series : seriesArray
-					}}	
-				/>
-		);
-	}
+            xAxis : this.props.invertAxis?yAxis:xAxis,
+            yAxis : this.props.invertAxis?xAxis:yAxis,
+            series : seriesArray
+          }}  
+        />
+    );
+  }
 });
 
 const defaultFormatter = function(timestamp){
-	var date = new Date(timestamp);
-	return (date.getDate() + '/' +
-					(date.getMonth()+1) + '/' +
-					date.getFullYear());
+  var date = new Date(timestamp);
+  return (date.getDate() + '/' +
+          (date.getMonth()+1) + '/' +
+          date.getFullYear());
 };
 
 module.exports = SessionsChart;

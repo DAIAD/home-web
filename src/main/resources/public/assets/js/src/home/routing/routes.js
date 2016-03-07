@@ -16,21 +16,21 @@ var Settings = require('../components/sections/Settings');
 var Devices = require('../components/sections/Devices');
 
 module.exports = 
-	(
-		<Route path="/" component={HomeApp} >
-				<IndexRoute component={DashboardData} />
-				<Route path="/dashboard" component={DashboardData} />
-				<Route path="/history" component={HistoryData} />
-				<Route path="/commons" component={Commons} />
-				<Route path="/notifications" component={Notifications} />
-				<Route path="/notifications/alerts" component={Notifications} />
-				<Route path="/notifications/tips" component={Notifications} />
-				<Route path="/notifications/insights" component={Notifications} />
-				<Route path="/notifications/:id" component={Notification} />
-				<Route path="/settings" component={Settings} >
-					<IndexRoute component={Devices} />
-					<Route path="profile" component={Profile} />
-					<Route path="devices" component={Devices} />
-				</Route>
-			</Route>
-		);
+  (
+    <Route path="/" component={HomeApp} >
+        <IndexRoute component={DashboardData} />
+        <Route path="/dashboard" component={DashboardData} />
+        <Route path="/history" component={HistoryData} />
+        <Route path="/commons" component={Commons} />
+        <Route path="/notifications" component={Notifications} />
+        <Route path="/notifications/alerts" component={Notifications} />
+        <Route path="/notifications/tips" component={Notifications} />
+        <Route path="/notifications/insights" component={Notifications} />
+        <Route path="/notifications/:id" component={Notification} />
+        <Route path="/settings" component={Settings} >
+          <IndexRoute component={Devices} />
+          <Route path="profile" component={Profile} />
+          <Route path="devices" component={Devices} />
+        </Route>
+      </Route>
+    );

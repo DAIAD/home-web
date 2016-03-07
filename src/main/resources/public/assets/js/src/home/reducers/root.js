@@ -7,9 +7,9 @@ var history = require('./history');
 var { routeReducer } = require('react-router-redux');
 
 var rootReducer = combineReducers({
-	locale,
-	user,
-	routing: routeReducer,
+  locale,
+  user,
+  routing: routeReducer,
   query,
   section: combineReducers({
     history

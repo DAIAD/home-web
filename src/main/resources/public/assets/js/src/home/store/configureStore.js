@@ -12,11 +12,11 @@ var { syncHistory } = require('react-router-redux');
 var rootReducer = require('../reducers/root');
 
 var configureStore = function(initialState) {
-	return createStore(rootReducer,
-										 initialState,
-										 applyMiddleware(thunkMiddleware, logger()),
-										 applyMiddleware(thunkMiddleware, syncHistory(history))
-										);
+  return createStore(rootReducer,
+                     initialState,
+                     applyMiddleware(thunkMiddleware, logger()),
+                     applyMiddleware(thunkMiddleware, syncHistory(history))
+                    );
 };
 
 module.exports = configureStore;

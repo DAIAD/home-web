@@ -1,6 +1,6 @@
 var getDefaultDevice = function(devices) {
-	var amphiroDevices = getAvailableDevices(devices);
-	return amphiroDevices.length?amphiroDevices[0]:null;
+  var amphiroDevices = getAvailableDevices(devices);
+  return amphiroDevices.length?amphiroDevices[0]:null;
 };
 
 var getDeviceTypeByKey = function(devices, key) {
@@ -9,7 +9,7 @@ var getDeviceTypeByKey = function(devices, key) {
   return device.type;
 };
 var getDeviceCount = function(devices) {
-	return getAvailableDevices(devices).length;
+  return getAvailableDevices(devices).length;
 };
 
 var getAvailableDevices = function(devices) {
@@ -17,92 +17,92 @@ var getAvailableDevices = function(devices) {
 };
 
 var getAvailableDeviceKeys = function(devices) {
-	return getAvailableDevices(devices).map((device) => (device.deviceKey));
+  return getAvailableDevices(devices).map((device) => (device.deviceKey));
 };
 
 var getDeviceByKey = function(devices, key) {
-	if (!devices) return null;
+  if (!devices) return null;
 
-	return devices.find((device) => (device.deviceKey === key));
+  return devices.find((device) => (device.deviceKey === key));
 };
 
 var updateOrAppendToSession = function(sessions, data, id) {
-	if (!data || !id){
-		return sessions;
-	}
-	var index = getSessionIndexById(sessions, id);
-	var updated = sessions.slice();
-	if (index > -1) {
-		updated[index] = data;
-	}
-	else {
-		updated.push(data);
-	}
-	return updated;
+  if (!data || !id){
+    return sessions;
+  }
+  var index = getSessionIndexById(sessions, id);
+  var updated = sessions.slice();
+  if (index > -1) {
+    updated[index] = data;
+  }
+  else {
+    updated.push(data);
+  }
+  return updated;
 };
 
 var getSessionByIndex = function(sessions, index) {
-	if (typeof(index) !== "number") return null;
-	//if (sessions.length && !sessions[0].id) return null;
+  if (typeof(index) !== "number") return null;
+  //if (sessions.length && !sessions[0].id) return null;
 
-	return sessions[index];
+  return sessions[index];
 };
 
 var getSessionById = function(sessions, id) {
-	if (!id) return null;
-	if (sessions.length && !sessions[0].id) return null;
+  if (!id) return null;
+  if (sessions.length && !sessions[0].id) return null;
 
-	return sessions.find(x => (x.id).toString() === id.toString());
+  return sessions.find(x => (x.id).toString() === id.toString());
 };
 
 var getNextSession = function(sessions, id) {
-	const sessionIndex = getSessionIndexById(sessions, id);
-	if (sessions[sessionIndex+1]){
-		return sessions[sessionIndex+1].id;
-	}
-	else {
-		return null;
-	}
+  const sessionIndex = getSessionIndexById(sessions, id);
+  if (sessions[sessionIndex+1]){
+    return sessions[sessionIndex+1].id;
+  }
+  else {
+    return null;
+  }
 };
 
 var getPreviousSession = function(sessions, id) {
-	const sessionIndex = getSessionIndexById(sessions, id);
-	if (sessions[sessionIndex-1]){
-		return sessions[sessionIndex-1].id;
-	}
-	else {
-		return null;
-	}
+  const sessionIndex = getSessionIndexById(sessions, id);
+  if (sessions[sessionIndex-1]){
+    return sessions[sessionIndex-1].id;
+  }
+  else {
+    return null;
+  }
 };
 var getSessionIndexById = function(sessions, id) {
-	return sessions.findIndex(x => (x.id).toString() === id.toString());
+  return sessions.findIndex(x => (x.id).toString() === id.toString());
 };
 
 var getLastSession = function(sessions) {
-	var lastSession = null;
-	sessions.forEach(function(session) {
-		if (!lastSession){
-			lastSession = session;
-		}
-		if (session.timestamp > lastSession.timestamp) {
-			lastSession = session;
-		}
-	});
-	return lastSession;
+  var lastSession = null;
+  sessions.forEach(function(session) {
+    if (!lastSession){
+      lastSession = session;
+    }
+    if (session.timestamp > lastSession.timestamp) {
+      lastSession = session;
+    }
+  });
+  return lastSession;
 };
 
 module.exports = {
-	getSessionById,
-	getSessionByIndex,
-	getNextSession,
-	getPreviousSession,
-	getSessionIndexById,
-	getLastSession,
-	updateOrAppendToSession,
+  getSessionById,
+  getSessionByIndex,
+  getNextSession,
+  getPreviousSession,
+  getSessionIndexById,
+  getLastSession,
+  updateOrAppendToSession,
   getDefaultDevice,
   getDeviceTypeByKey,
-	getDeviceCount,
-	getAvailableDevices,
-	getAvailableDeviceKeys,
-	getDeviceByKey
+  getDeviceCount,
+  getAvailableDevices,
+  getAvailableDeviceKeys,
+  getDeviceByKey
 };

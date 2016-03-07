@@ -13,22 +13,22 @@ var { getDefaultDevice, getLastSession } = require('../utils/device');
 var { getFilteredData } = require('../utils/chart');
 
 var DashboardData = React.createClass({
-	
-	componentWillMount: function() {
+  
+  componentWillMount: function() {
     if (this.props.defaultDevice) {
-			this.props.getLastSession(this.props.defaultDevice);
-		}
-	},
-	componentWillReceiveProps: function(nextProps) {
-		if (!this.props.defaultDevice && nextProps.defaultDevice) {
-			this.props.getLastSession(nextProps.defaultDevice);
-		}
-	},
+      this.props.getLastSession(this.props.defaultDevice);
+    }
+  },
+  componentWillReceiveProps: function(nextProps) {
+    if (!this.props.defaultDevice && nextProps.defaultDevice) {
+      this.props.getLastSession(nextProps.defaultDevice);
+    }
+  },
   render: function() {
     return (
       <Dashboard {...this.props} />
-		);
-	}
+    );
+  }
 });
 
 
@@ -36,27 +36,27 @@ function mapStateToProps(state, ownProps) {
   var lastSession = getLastSession(state.query.data);
    const defaultDevice = getDefaultDevice(state.user.profile.devices);
    const deviceKey = defaultDevice?defaultDevice.deviceKey:null;
-	return {
+  return {
     time: state.query.time,
     activeDevice: state.query.activeDevice,
     defaultDevice: deviceKey,
-		firstname: state.user.profile.firstname,
+    firstname: state.user.profile.firstname,
     chartData: [{title:'Consumption', data:(lastSession?(getFilteredData(lastSession.measurements?lastSession.measurements:[], 'volume')):[])}],
-		chartFormatter: (x) => ownProps.intl.formatTime(x, { hour:'numeric', minute:'numeric', second:'numeric'}),
+    chartFormatter: (x) => ownProps.intl.formatTime(x, { hour:'numeric', minute:'numeric', second:'numeric'}),
     lastShower: lastSession,
     loading: state.query.status.isLoading,
-	};
+  };
 }
 
 function mapDispatchToProps(dispatch) {
-	return {
+  return {
     getLastSession: function(deviceKey) {
       const time = Object.assign({}, timeUtil.thisWeek(), {granularity: 0});
       return dispatch(DeviceActions.querySessions(deviceKey, time)).then(
         (response) => dispatch(DeviceActions.fetchLastSession(deviceKey, time)),
         (error) => console.log(error));
-		}
-	};
+    }
+  };
 }
 
 DashboardData = connect(mapStateToProps, mapDispatchToProps)(DashboardData);

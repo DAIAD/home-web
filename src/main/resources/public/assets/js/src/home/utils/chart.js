@@ -1,9 +1,9 @@
 var getCount = function(metrics) {
-	return metrics.count?metrics.count:1;
+  return metrics.count?metrics.count:1;
 };
 
 var getTimestampIndex = function(points, timestamp) {
-	  return points.findIndex((x) => (x[0]===timestamp));
+    return points.findIndex((x) => (x[0]===timestamp));
 };
 
 //TODO: refactor this monster
@@ -12,32 +12,32 @@ var addPreviousValues = function(data) {
 };
 
 var getFilteredData = function(data, filter) {
-	var filteredData = [];
+  var filteredData = [];
   if (!data) return [];
 
-	switch (filter) {
-		case "showers":
-			data.forEach(function(dato, i)	{
-				const count = getCount(dato);
-				var index = getTimestampIndex(filteredData, dato.timestamp);
-				
-				//increment or append
-				if (index>-1){
-					filteredData[index] = [filteredData[index][0], filteredData[index][1]+count];			
-				}
-				else{
-					filteredData.push([dato.timestamp, count]);			
-				}	
-			});
-			return filteredData.map(x => [new Date(x[0]),x[1]]);
+  switch (filter) {
+    case "showers":
+      data.forEach(function(dato, i)  {
+        const count = getCount(dato);
+        var index = getTimestampIndex(filteredData, dato.timestamp);
+        
+        //increment or append
+        if (index>-1){
+          filteredData[index] = [filteredData[index][0], filteredData[index][1]+count];     
+        }
+        else{
+          filteredData.push([dato.timestamp, count]);     
+        } 
+      });
+      return filteredData.map(x => [new Date(x[0]),x[1]]);
 
-		case "volume":
-			data.forEach(function(dato) {
-				if (!dato[filter]){
-					return;
-				}
-				filteredData.push([dato.timestamp, dato[filter]]);
-			});
+    case "volume":
+      data.forEach(function(dato) {
+        if (!dato[filter]){
+          return;
+        }
+        filteredData.push([dato.timestamp, dato[filter]]);
+      });
 
       filteredData = filteredData.map(x => [new Date(x[0]),x[1]]);
       filteredData = addPreviousValues(filteredData); 
@@ -45,12 +45,12 @@ var getFilteredData = function(data, filter) {
       return filteredData;
 
     case "energy":
-			data.forEach(function(dato) {
-				if (!dato[filter]){
-					return;
-				}
-				filteredData.push([dato.timestamp, dato[filter]]);
-			});
+      data.forEach(function(dato) {
+        if (!dato[filter]){
+          return;
+        }
+        filteredData.push([dato.timestamp, dato[filter]]);
+      });
 
       filteredData = filteredData.map(x => [new Date(x[0]),x[1]]);
       filteredData = addPreviousValues(filteredData); 
@@ -58,21 +58,21 @@ var getFilteredData = function(data, filter) {
       return filteredData;
 
     default:
-			data.forEach(function(dato) {
-				if (!dato[filter]){
-					return;
-				}
-				filteredData.push([dato.timestamp, dato[filter]]);
+      data.forEach(function(dato) {
+        if (!dato[filter]){
+          return;
+        }
+        filteredData.push([dato.timestamp, dato[filter]]);
       });
       
       return filteredData.map(x => [new Date(x[0]),x[1]]);
       
 
-	}
-	return;
-	//return array with dates instead of timestamps
-	//return filteredData;
-	//return filteredData.map(x => [new Date(x[0]),x[1]]);
+  }
+  return;
+  //return array with dates instead of timestamps
+  //return filteredData;
+  //return filteredData.map(x => [new Date(x[0]),x[1]]);
 };
 
 

@@ -17,48 +17,48 @@ function flattenMessages(nestedMessages, prefix) {
 }
 
 var receivedMessages = function(success, errors, locale, messages) {
-	return {
-		type: types.LOCALE_RECEIVED_MESSAGES,
-		success: success,
-		errors: errors,
-		locale: locale,
-		messages: messages
-	};
+  return {
+    type: types.LOCALE_RECEIVED_MESSAGES,
+    success: success,
+    errors: errors,
+    locale: locale,
+    messages: messages
+  };
 };
 
 var requestedLocaleMessages = function(locale) {
-	return {
-		type: types.LOCALE_REQUEST_MESSAGES,
-		locale: locale
-	};
+  return {
+    type: types.LOCALE_REQUEST_MESSAGES,
+    locale: locale
+  };
 };
 
 var LocaleActions = {
 
-	fetchLocaleMessages: function(locale) {
-		return function(dispatch, getState) {
-			return localeAPI.fetchLocaleMessages(locale).then(
-				function(messages) {
-					dispatch(receivedMessages(true, null, locale, flattenMessages(messages)));
-					return messages;
-				},
-				function(errors) {
-					dispatch(receivedMessages(false, errors, null, []));
-					return errors;
-				});
-		};
-	},
-	setLocale : function(locale) {
-		return function(dispatch, getState) {
-			if (getState().locale.locale === locale){
-				return true;
-			}
-			//dispatch request messages to update state
-			dispatch(requestedLocaleMessages(locale));
-			//dispatch fetch messages to call API
-			return dispatch(LocaleActions.fetchLocaleMessages(locale));
-		};
-	},
+  fetchLocaleMessages: function(locale) {
+    return function(dispatch, getState) {
+      return localeAPI.fetchLocaleMessages(locale).then(
+        function(messages) {
+          dispatch(receivedMessages(true, null, locale, flattenMessages(messages)));
+          return messages;
+        },
+        function(errors) {
+          dispatch(receivedMessages(false, errors, null, []));
+          return errors;
+        });
+    };
+  },
+  setLocale : function(locale) {
+    return function(dispatch, getState) {
+      if (getState().locale.locale === locale){
+        return true;
+      }
+      //dispatch request messages to update state
+      dispatch(requestedLocaleMessages(locale));
+      //dispatch fetch messages to call API
+      return dispatch(LocaleActions.fetchLocaleMessages(locale));
+    };
+  },
 
 };
 

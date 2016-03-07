@@ -15,13 +15,13 @@ var Budget = require('../Budget');
 
 /* Be Polite, greet user */
 var SayHello = React.createClass({
-	render: function() {
-		return (
-			<div >
-				<h3><FormattedMessage id="dashboard.hello" values={{name:this.props.firstname}} /></h3>
-			</div>
-		);
-	}
+  render: function() {
+    return (
+      <div >
+        <h3><FormattedMessage id="dashboard.hello" values={{name:this.props.firstname}} /></h3>
+      </div>
+    );
+  }
 });
 
 var InfoBox = React.createClass({
@@ -68,13 +68,13 @@ var LastShowerChart = React.createClass({
       return (<div/>);
     }
     else if (this.props.lastShower.history){
-      return (<h4>Oops, can't graph due to limited data..</h4>);	
+      return (<h4>Oops, can't graph due to limited data..</h4>);  
     }
     else {
       return (
         <SessionsChart
           height={150}
-          width='100%'	
+          width='100%'  
           title=""
           subtitle=""
           mu="lt"
@@ -93,7 +93,7 @@ var ForecastingChart = React.createClass({
     return (
       <SessionsChart
         height={180}
-        width={250}	
+        width={250} 
         title=""
         subtitle=""
         mu="lt"
@@ -253,33 +253,33 @@ var InfoPanel = React.createClass({
 var Counters = React.createClass({
   render: function() {
     return (
-			<div className='row'>
-					<div className='col-md-2'>
-						<div style={{ marginBottom: 20 }}>
-							<Counter text="Members" value={3} />
-						</div>
-					</div>
-					<div className='col-md-2'>
-						<div style={{ marginBottom: 20 }}>
-							<Counter text="Meters" value={1} color='#1abc9c'/>
-						</div>
-					</div>
-					<div className='col-md-2'>
-						<div style={{ marginBottom: 20 }}>
-							<Counter text="Devices" value={2} color='#27ae60' />
-						</div>
-					</div>
-					<div className='col-md-2'>
-						<div style={{ marginBottom: 20 }}>
-							<Counter text='Alerts' value={0} color='#c0392b' />
-						</div>
-					</div>
-					<div className='col-md-2'>
-						<div style={{ marginBottom: 20 }}>
-							<Counter text='Notifications' value={1} color='#f39c12' />
-						</div>
-					</div>
-				</div>
+      <div className='row'>
+          <div className='col-md-2'>
+            <div style={{ marginBottom: 20 }}>
+              <Counter text="Members" value={3} />
+            </div>
+          </div>
+          <div className='col-md-2'>
+            <div style={{ marginBottom: 20 }}>
+              <Counter text="Meters" value={1} color='#1abc9c'/>
+            </div>
+          </div>
+          <div className='col-md-2'>
+            <div style={{ marginBottom: 20 }}>
+              <Counter text="Devices" value={2} color='#27ae60' />
+            </div>
+          </div>
+          <div className='col-md-2'>
+            <div style={{ marginBottom: 20 }}>
+              <Counter text='Alerts' value={0} color='#c0392b' />
+            </div>
+          </div>
+          <div className='col-md-2'>
+            <div style={{ marginBottom: 20 }}>
+              <Counter text='Notifications' value={1} color='#f39c12' />
+            </div>
+          </div>
+        </div>
 
     );
   }
@@ -291,27 +291,27 @@ var Dashboard = React.createClass({
 
   render: function() {
     console.log('rendering dashoard');
-		return (
+    return (
       <MainSection id="section.dashboard">
         {
-						(() => {
-							if (this.props.loading){
-								return (
-									<img className="preloader" src="/assets/images/svg/Smiley.svg" />
-									);
-							}
-							})()
-					}
+            (() => {
+              if (this.props.loading){
+                return (
+                  <img className="preloader" src="/assets/images/svg/Smiley.svg" />
+                  );
+              }
+              })()
+          }
         <br/>
         <SayHello firstname={this.props.firstname} style={{margin:50}}/>
 
         <InfoPanel {...this.props} />
 
         
-				
-			</MainSection>
-		);
-	}
+        
+      </MainSection>
+    );
+  }
 });
 
 function addZero(i) {
@@ -322,10 +322,10 @@ function addZero(i) {
 }
 
 const dayFormatter = function(timestamp){
-	var date = new Date(timestamp);
-	return (addZero(date.getHours()) + ':' +
-					addZero(date.getMinutes()) + ':' +
-					addZero(date.getSeconds())
-				);
+  var date = new Date(timestamp);
+  return (addZero(date.getHours()) + ':' +
+          addZero(date.getMinutes()) + ':' +
+          addZero(date.getSeconds())
+        );
 };
 module.exports = Dashboard;

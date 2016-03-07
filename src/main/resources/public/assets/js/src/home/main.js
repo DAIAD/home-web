@@ -22,35 +22,35 @@ var getDefaultDevice = require('./utils/device').getDefaultDevice;
 
 
 store.dispatch(LocaleActions.setLocale(properties.locale)).then(function() {
-	if (properties.reload){
-		store.dispatch(UserActions.refreshProfile()).then(function(response) {
-			const devices = response.profile.devices;
+  if (properties.reload){
+    store.dispatch(UserActions.refreshProfile()).then(function(response) {
+      const devices = response.profile.devices;
       const device = getDefaultDevice(devices);
       if (device){
-			  store.dispatch(DeviceActions.setActiveDevice(device.deviceKey));
+        store.dispatch(DeviceActions.setActiveDevice(device.deviceKey));
       }
-			
-			init();
-		}, function(error) {
-				console.log('refresh profile problem');
-				console.log(error);
+      
+      init();
+    }, function(error) {
+        console.log('refresh profile problem');
+        console.log(error);
 });
-	}
-	else {
-		init();
-	}
+  }
+  else {
+    init();
+  }
 }, function(e) {
-		console.log('set locale problem');
-		console.log(e);
+    console.log('set locale problem');
+    console.log(e);
 });
-		
+    
 var init = function() {
-	ReactDOM.render(
-		<ReduxProvider store={store}>
-			<Router 
-				history={history}
-				routes={routes}
-			/>
-		</ReduxProvider>,
-		document.getElementById('app'));
+  ReactDOM.render(
+    <ReduxProvider store={store}>
+      <Router 
+        history={history}
+        routes={routes}
+      />
+    </ReduxProvider>,
+    document.getElementById('app'));
 };
