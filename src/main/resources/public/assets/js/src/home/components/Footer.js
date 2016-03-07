@@ -1,7 +1,5 @@
 var React = require('react');
 
-//var MainMenu = require('./Header.react').MainMenu;
-
 var Footer = React.createClass({
   render: function() {
     return (

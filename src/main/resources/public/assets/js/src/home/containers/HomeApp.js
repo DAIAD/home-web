@@ -8,9 +8,9 @@ var connect = require('react-redux').connect;
 var Constant = require('../constants/HomeConstants');
 
 // Components
-var Header = require('../components/Header.react');
-var MainSection = require('../components/MainSection.react');
-var Footer = require('../components/Footer.react');
+var Header = require('../components/Header');
+var MainSection = require('../components/MainSection');
+var Footer = require('../components/Footer');
 var LoginPage = require('../components/sections/Login');
 
 // Actions

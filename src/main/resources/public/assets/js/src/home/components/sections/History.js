@@ -1,12 +1,11 @@
 var React = require('react');
 var { FormattedMessage, FormattedDate } = require('react-intl');
-
 var bs = require('react-bootstrap');
-
-var MainSection = require('../MainSection.react');
-var Sidebar = require('../Sidebar.react');
-var Topbar = require('../Topbar.react');
 var { Link } = require('react-router');
+
+var MainSection = require('../MainSection');
+var Sidebar = require('../Sidebar');
+var Topbar = require('../Topbar');
 
 //sub-containers
 var HistoryChart = require('../../containers/HistoryChart');
@@ -15,9 +14,8 @@ var HistoryList = require('../../containers/HistoryList');
 //actions
 var DeviceActions = require('../../actions/DeviceActions');
 
-var getDefaultDevice = require('../../utils/device').getDefaultDevice;
-var getDeviceByKey = require('../../utils/device').getDeviceByKey;
-
+//utils
+var { getDeviceByKey } = require('../../utils/device');
 var timeUtil = require('../../utils/time');
 
 var History = React.createClass({

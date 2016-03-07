@@ -4,10 +4,10 @@ var Link = require('react-router').Link;
 
 var Constants = require('../../constants/HomeConstants');
 
-var Topbar = require('../Topbar.react');
-var Sidebar = require('../Sidebar.react');
-var MainSection = require('../MainSection.react');
-var NotificationList = require('../Header.react').NotificationList;
+var Topbar = require('../Topbar');
+var Sidebar = require('../Sidebar');
+var MainSection = require('../MainSection');
+var NotificationList = require('../Header').NotificationList;
 
 
 var NotificationMessage = React.createClass({

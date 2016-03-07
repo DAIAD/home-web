@@ -1,9 +1,9 @@
 var React = require('react');
+var { injectIntl } = require('react-intl');
+var { FormattedMessage } = require('react-intl');
 
-var injectIntl = require('react-intl').injectIntl;
-var FormattedMessage = require('react-intl').FormattedMessage;
-var MainSection = require('../MainSection.react');
-var Sidebar = require('../Sidebar.react');
+var MainSection = require('../MainSection');
+var Sidebar = require('../Sidebar');
 
 var Commons = React.createClass({
   render: function() {

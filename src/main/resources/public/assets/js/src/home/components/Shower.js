@@ -10,8 +10,8 @@ var FormattedRelative = require('react-intl').FormattedRelative;
 
 var SessionsChart = require('./SessionsChart');
 
-var MainSection = require('./MainSection.react');
-var Sidebar = require('./Sidebar.react');
+var MainSection = require('./MainSection');
+var Sidebar = require('./Sidebar');
 var timeUtil = require('../utils/time');
 
 

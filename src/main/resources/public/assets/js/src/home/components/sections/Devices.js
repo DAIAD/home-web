@@ -2,8 +2,9 @@ var React = require('react');
 var bs = require('react-bootstrap');
 var connect = require('react-redux').connect;
 var injectIntl = require('react-intl').injectIntl;
-var FormattedMessage = require('react-intl').FormattedMessage;
-var MainSection = require('../MainSection.react');
+var { FormattedMessage } = require('react-intl');
+
+var MainSection = require('../MainSection');
 
 
 var Device = React.createClass({

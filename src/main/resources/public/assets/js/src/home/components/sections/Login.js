@@ -1,7 +1,7 @@
 var React = require('react');
 var { FormattedMessage } = require('react-intl');
 
-var MainSection = require('../MainSection.react');
+var MainSection = require('../MainSection');
 var Login = require('../LoginForm').Login;
 
 

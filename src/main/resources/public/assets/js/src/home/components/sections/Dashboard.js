@@ -1,14 +1,11 @@
 var React = require('react');
 var bs = require('react-bootstrap');
-var injectIntl = require('react-intl').injectIntl;
-var FormattedMessage = require('react-intl').FormattedMessage;
-var FormattedRelative = require('react-intl').FormattedRelative;
 var classNames = require('classnames');
+var { FormattedMessage, FormatterRelative } = require('react-intl');
 var { Responsive, WidthProvider } = require('react-grid-layout');
 var ResponsiveGridLayout = WidthProvider(Responsive);
-var Counter = require('../Counter');
 
-var MainSection = require('../MainSection.react');
+var MainSection = require('../MainSection');
 var SessionsChart = require('../SessionsChart');
 
 var Budget = require('../Budget');
@@ -248,43 +245,6 @@ var InfoPanel = React.createClass({
     );
   }
 });
-
-
-var Counters = React.createClass({
-  render: function() {
-    return (
-      <div className='row'>
-          <div className='col-md-2'>
-            <div style={{ marginBottom: 20 }}>
-              <Counter text="Members" value={3} />
-            </div>
-          </div>
-          <div className='col-md-2'>
-            <div style={{ marginBottom: 20 }}>
-              <Counter text="Meters" value={1} color='#1abc9c'/>
-            </div>
-          </div>
-          <div className='col-md-2'>
-            <div style={{ marginBottom: 20 }}>
-              <Counter text="Devices" value={2} color='#27ae60' />
-            </div>
-          </div>
-          <div className='col-md-2'>
-            <div style={{ marginBottom: 20 }}>
-              <Counter text='Alerts' value={0} color='#c0392b' />
-            </div>
-          </div>
-          <div className='col-md-2'>
-            <div style={{ marginBottom: 20 }}>
-              <Counter text='Notifications' value={1} color='#f39c12' />
-            </div>
-          </div>
-        </div>
-
-    );
-  }
-});
-
 
 
 var Dashboard = React.createClass({
