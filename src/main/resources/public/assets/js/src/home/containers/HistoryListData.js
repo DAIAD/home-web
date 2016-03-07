@@ -42,7 +42,6 @@ function mapStateToProps(state, ownProps) {
     disabledNext: disabledNextSession,
     disabledPrevious: disabledPreviousSession,
     showModal: state.section.history.activeSessionIndex===null?false:true,
-    loading: state.query.status.isLoading 
     };
 }
 

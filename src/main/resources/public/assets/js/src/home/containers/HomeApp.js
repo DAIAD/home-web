@@ -39,11 +39,14 @@ var HomeApp = React.createClass({
             (() => {
               if (this.props.loading){
                 return (
-                  <span style={{position:'absolute'}} >Loading....</span>
+                  <div>
+                    <img className="preloader" src="/assets/images/png/preloader-counterclock.png" />
+                    <img className="preloader-inner" src="/assets/images/png/preloader-clockwise.png" />
+                  </div>
                   );
               }
               })()
-          } 
+          }
           <Header 
             data={Constant.data}
             firstname={this.props.user.profile.firstname}
@@ -94,7 +97,7 @@ function mapStateToProps(state) {
     return {
       user: state.user,
       locale: state.locale,
-      loading: state.user.status.isLoading || state.locale.status.isLoading,
+      loading: state.user.status.isLoading || state.locale.status.isLoading || state.query.status.isLoading
     };
 }
 

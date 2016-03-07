@@ -8,8 +8,8 @@ var Sidebar = require('../Sidebar');
 var Topbar = require('../Topbar');
 
 //sub-containers
-var HistoryChart = require('../../containers/HistoryChart');
-var HistoryList = require('../../containers/HistoryList');
+var HistoryChartData = require('../../containers/HistoryChartData');
+var HistoryListData = require('../../containers/HistoryListData');
 
 //actions
 var DeviceActions = require('../../actions/DeviceActions');
@@ -83,15 +83,7 @@ var History = React.createClass({
           </ul>
         </Topbar>
       <MainSection id="section.history">
-          {
-            (() => {
-              if (this.props.loading){
-                return (
-                  <img className="preloader" src="/assets/images/svg/Smiley.svg" />
-                  );
-              }
-              })()
-          }
+          
           <div>
         
           <Sidebar> 
@@ -145,7 +137,8 @@ var History = React.createClass({
                }
             </bs.Tabs>
             
-            <HistoryChart />
+            <HistoryChartData />
+
             <br/>
             <div >
               <a className="pull-left" onClick={this.handleTimePrevious}>
@@ -163,7 +156,7 @@ var History = React.createClass({
             
             <span style={{marginTop:30}} />
 
-            <HistoryList />
+            <HistoryListData />
 
           </div>
         </div>

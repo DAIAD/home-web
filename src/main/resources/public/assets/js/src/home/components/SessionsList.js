@@ -215,7 +215,6 @@ var SessionsList = React.createClass({
                 index={idx}
                 data={session}
                 onOpen={this.onOpen}
-                loading={this.props.loading}
               />  
               ))
           }
@@ -230,7 +229,7 @@ var SessionsList = React.createClass({
               setSessionFilter={this.props.setSessionFilter}
               data={this.props.sessions[this.props.activeSessionIndex]}
               filter={this.props.sessionFilter}
-              loading={this.props.loading}  />
+              />
           </bs.Modal.Body>
           <bs.Modal.Footer>
             <bs.Button disabled={this.props.disabledPrevious} onClick={this.onPrevious}>Previous</bs.Button>

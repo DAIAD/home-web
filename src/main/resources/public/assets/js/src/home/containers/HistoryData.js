@@ -38,7 +38,6 @@ function mapStateToProps(state, ownProps) {
     timeFilter: state.section.history.timeFilter,
     devices: state.user.profile.devices,
     activeDevice: state.query.activeDevice,
-    loading: state.query.status.isLoading,
     nextPeriod: timeUtil.getNextPeriod(state.section.history.timeFilter, state.query.time.endDate),
     previousPeriod: timeUtil.getPreviousPeriod(state.section.history.timeFilter, state.query.time.endDate),
     };

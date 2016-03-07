@@ -253,15 +253,6 @@ var Dashboard = React.createClass({
     console.log('rendering dashoard');
     return (
       <MainSection id="section.dashboard">
-        {
-            (() => {
-              if (this.props.loading){
-                return (
-                  <img className="preloader" src="/assets/images/svg/Smiley.svg" />
-                  );
-              }
-              })()
-          }
         <br/>
         <SayHello firstname={this.props.firstname} style={{margin:50}}/>
 

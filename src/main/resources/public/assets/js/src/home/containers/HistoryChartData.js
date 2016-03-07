@@ -55,7 +55,6 @@ function mapStateToProps(state, ownProps) {
     fontSize: 13,
     type: (state.section.history.filter==='showers')?'bar':'line',
     formatter: selectTimeFormatter(state.section.history.timeFilter, ownProps.intl),
-    loading: state.query.status.isLoading 
     };
 }
 

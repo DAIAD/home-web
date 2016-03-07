@@ -44,7 +44,6 @@ function mapStateToProps(state, ownProps) {
     chartData: [{title:'Consumption', data:(lastSession?(getFilteredData(lastSession.measurements?lastSession.measurements:[], 'volume')):[])}],
     chartFormatter: (x) => ownProps.intl.formatTime(x, { hour:'numeric', minute:'numeric', second:'numeric'}),
     lastShower: lastSession,
-    loading: state.query.status.isLoading,
   };
 }
 
