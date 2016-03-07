@@ -7,27 +7,22 @@ function updateCsrfToken(crsf) {
 	$('input[name=_csrf]').val(crsf);
 }
 
-var callAPI = function(url, data, stringify) {
+var callAPI = function(url, data, type="POST", contentType="application/json", stringify=true) {
 	if (data){
 		data._csrf = $('meta[name=_csrf]').attr('content');
 	}
-	if (stringify === undefined){
-		stringify = true;
-	}
-	
-	var request = {
-				type : data?'POST':'GET',
+  
+  var request = {
+				type : type,
 				dataType: 'json',
-				data: stringify?JSON.stringify(data):data,
-				url : url, 
+        data: stringify?JSON.stringify(data):data,
+        url : url,
+        contentType: contentType, 
 				beforeSend : function(xhr) {
 						xhr.setRequestHeader('X-CSRF-TOKEN', $('meta[name=_csrf]').attr(
 										'content'));
 				}
 	};
-	if (stringify){
-		request.contentType = "application/json";
-	}
 
 	return new Promise(function(resolve, reject) {
 	
