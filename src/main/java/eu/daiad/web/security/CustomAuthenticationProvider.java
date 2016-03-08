@@ -7,7 +7,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -15,6 +14,9 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import eu.daiad.web.model.EnumApplication;
+import eu.daiad.web.model.profile.EnumUtilityMode;
+import eu.daiad.web.model.profile.EnumWebMode;
+import eu.daiad.web.model.security.AuthenticatedUser;
 
 @Component
 public class CustomAuthenticationProvider implements AuthenticationProvider {
@@ -39,7 +41,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
 		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-		UserDetails user = userService.loadUserByUsername(username);
+		AuthenticatedUser user = (AuthenticatedUser) userService.loadUserByUsername(username);
 
 		if ((user == null) || (!encoder.matches(password, user.getPassword()))) {
 			throw new BadCredentialsException("Authentication has failed.");
@@ -51,10 +53,16 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 			if (!user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
 				throw new BadCredentialsException("Authorization has failed.");
 			}
+			if(!user.getUtilityMode().equals(EnumUtilityMode.ACTIVE)) {
+				throw new BadCredentialsException("Applicaiton is not enabled.");
+			}
 			break;
 		case HOME:
 			if (!user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER"))) {
 				throw new BadCredentialsException("Authorization has failed.");
+			}
+			if(!user.getWebMode().equals(EnumWebMode.ACTIVE)) {
+				throw new BadCredentialsException("Applicaiton is not enabled.");
 			}
 			break;
 		default:

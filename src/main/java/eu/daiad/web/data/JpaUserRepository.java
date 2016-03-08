@@ -273,8 +273,13 @@ public class JpaUserRepository implements IUserRepository {
 			this.entityManager.flush();
 
 			AccountProfile profile = new AccountProfile();
-			profile.setMobileMode(EnumMobileMode.ACTIVE.getValue());
-			profile.setWebMode(EnumWebMode.ACTIVE.getValue());
+			if (whiteListEntry != null) {
+				profile.setMobileMode(whiteListEntry.getDefaultMobileMode());
+				profile.setWebMode(whiteListEntry.getDefaultWebMode());
+			} else {
+				profile.setMobileMode(EnumMobileMode.ACTIVE.getValue());
+				profile.setWebMode(EnumWebMode.ACTIVE.getValue());
+			}
 			profile.setUtilityMode(EnumUtilityMode.INACTIVE.getValue());
 			profile.setUpdatedOn(account.getCreatedOn());
 
@@ -342,6 +347,10 @@ public class JpaUserRepository implements IUserRepository {
 				user.setGender(account.getGender());
 				user.setPostalCode(account.getPostalCode());
 				user.setTimezone(account.getTimezone());
+
+				user.setWebMode(EnumWebMode.fromInteger(account.getProfile().getWebMode()));
+				user.setMobileMode(EnumMobileMode.fromInteger(account.getProfile().getMobileMode()));
+				user.setUtilityMode(EnumUtilityMode.fromInteger(account.getProfile().getUtilityMode()));
 			}
 
 			return user;

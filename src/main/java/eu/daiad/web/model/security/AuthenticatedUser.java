@@ -12,6 +12,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 
 import eu.daiad.web.model.EnumGender;
+import eu.daiad.web.model.profile.EnumMobileMode;
+import eu.daiad.web.model.profile.EnumUtilityMode;
+import eu.daiad.web.model.profile.EnumWebMode;
 
 public class AuthenticatedUser extends User {
 
@@ -32,6 +35,12 @@ public class AuthenticatedUser extends User {
 	private String postalCode;
 
 	private String timezone;
+
+	private EnumWebMode webMode = EnumWebMode.INACTIVE;
+
+	private EnumMobileMode mobileMode = EnumMobileMode.INACTIVE;
+
+	private EnumUtilityMode utilityMode = EnumUtilityMode.INACTIVE;
 
 	public AuthenticatedUser(UUID key, String username, String password) {
 		super(username, password, new ArrayList<GrantedAuthority>());
@@ -124,5 +133,29 @@ public class AuthenticatedUser extends User {
 		return "DaiadUser [key=" + key + ", username=" + this.getUsername() + ", firstname=" + firstname
 						+ ", lastname=" + lastname + ", gender=" + gender + ", birthdate=" + birthdate + ", country="
 						+ country + ", postalCode=" + postalCode + ", roles=" + StringUtils.join(roles, ",") + "]";
+	}
+
+	public EnumWebMode getWebMode() {
+		return webMode;
+	}
+
+	public void setWebMode(EnumWebMode webMode) {
+		this.webMode = webMode;
+	}
+
+	public EnumMobileMode getMobileMode() {
+		return mobileMode;
+	}
+
+	public void setMobileMode(EnumMobileMode mobileMode) {
+		this.mobileMode = mobileMode;
+	}
+
+	public EnumUtilityMode getUtilityMode() {
+		return utilityMode;
+	}
+
+	public void setUtilityMode(EnumUtilityMode utilityMode) {
+		this.utilityMode = utilityMode;
 	}
 }

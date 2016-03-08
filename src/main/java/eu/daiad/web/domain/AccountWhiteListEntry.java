@@ -28,46 +28,52 @@ public class AccountWhiteListEntry {
 	@Column(name = "id")
 	@SequenceGenerator(sequenceName = "account_white_list_id_seq", name = "account_white_list_id_seq", allocationSize = 1, initialValue = 1)
 	@GeneratedValue(generator = "account_white_list_id_seq", strategy = GenerationType.SEQUENCE)
-	private int			id;
+	private int id;
 
 	@ManyToOne(cascade = { CascadeType.ALL })
 	@JoinColumn(name = "utility_id", nullable = false)
-	private Utility		utility;
+	private Utility utility;
 
 	@OneToOne()
 	@JoinColumn(name = "account_id", nullable = true)
-	private Account		account;
+	private Account account;
 
 	@Basic()
-	private String		username;
+	private String username;
 
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	@Column(name = "registered_on")
-	private DateTime	registeredOn;
+	private DateTime registeredOn;
 
 	@Column(name = "locale", columnDefinition = "bpchar", length = 2)
-	private String		locale;
+	private String locale;
 
 	@Basic()
-	private String		firstname;
+	private String firstname;
 
 	@Basic()
-	private String		lastname;
+	private String lastname;
 
 	@Basic()
-	private String		timezone;
+	private String timezone;
 
 	@Basic()
-	private String		country;
+	private String country;
 
 	@Column(name = "postal_code")
-	private String		postalCode;
+	private String postalCode;
 
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-	private DateTime	birthdate;
+	private DateTime birthdate;
 
 	@Enumerated(EnumType.STRING)
-	private EnumGender	gender;
+	private EnumGender gender;
+
+	@Column(name = "default_mobile_mode")
+	private int defaultMobileMode;
+
+	@Column(name = "default_web_mode")
+	private int defaultWebMode;
 
 	public Account getAccount() {
 		return account;
@@ -159,6 +165,22 @@ public class AccountWhiteListEntry {
 
 	public void setGender(EnumGender gender) {
 		this.gender = gender;
+	}
+
+	public int getDefaultMobileMode() {
+		return defaultMobileMode;
+	}
+
+	public void setDefaultMobileMode(int defaultMobileMode) {
+		this.defaultMobileMode = defaultMobileMode;
+	}
+
+	public int getDefaultWebMode() {
+		return defaultWebMode;
+	}
+
+	public void setDefaultWebMode(int defaultWebMode) {
+		this.defaultWebMode = defaultWebMode;
 	}
 
 }
