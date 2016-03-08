@@ -6,15 +6,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import javax.validation.Valid;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.validation.beanvalidation.OptionalValidatorFactoryBean;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -41,11 +41,23 @@ public class UserController extends BaseRestController {
 	@Autowired
 	private IUserRepository repository;
 
+	@Autowired
+	private org.springframework.validation.Validator validator;
+
+	@Value("${security.white-list}")
+	private boolean enforceWhiteListCheck;
+
 	@RequestMapping(value = "/api/v1/user/register", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse register(@RequestBody @Valid UserRegistrationRequest request, BindingResult results) {
+	public RestResponse register(@RequestBody UserRegistrationRequest request, BindingResult results) {
 		RestResponse response = new RestResponse();
 
 		try {
+			if (enforceWhiteListCheck) {
+				((OptionalValidatorFactoryBean) validator).validate(request, results, Account.AccountSimpleValidation.class);
+			} else {
+				((OptionalValidatorFactoryBean) validator).validate(request.getAccount(), results, Account.AccountDefaultValidation.class);
+			}
+
 			if (results.hasErrors()) {
 				for (FieldError e : results.getFieldErrors()) {
 					response.add(this.getError(e));

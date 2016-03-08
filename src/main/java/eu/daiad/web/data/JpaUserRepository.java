@@ -121,14 +121,14 @@ public class JpaUserRepository implements IUserRepository {
 
 					this.entityManager.persist(account);
 					this.entityManager.flush();
-					
+
 					AccountProfile profile = new AccountProfile();
 					profile.setMobileMode(EnumMobileMode.INACTIVE.getValue());
 					profile.setWebMode(EnumWebMode.INACTIVE.getValue());
 					profile.setUtilityMode(EnumUtilityMode.ACTIVE.getValue());
 					profile.setUpdatedOn(account.getCreatedOn());
-					
-					profile.setAccount(account);					
+
+					profile.setAccount(account);
 					this.entityManager.persist(profile);
 
 					AccountProfileHistoryEntry entry = new AccountProfileHistoryEntry();
@@ -140,7 +140,7 @@ public class JpaUserRepository implements IUserRepository {
 
 					entry.setProfile(profile);
 					this.entityManager.persist(entry);
-					
+
 					logger.info(String
 									.format("Default administrator has been crearted for utility [%s]. User name : %s. Password : %s",
 													utility.getName(), utility.getDefaultAdministratorUsername(),
@@ -229,15 +229,27 @@ public class JpaUserRepository implements IUserRepository {
 
 			account.setEmail(user.getUsername());
 
-			account.setFirstname(user.getFirstname());
-			account.setLastname(user.getLastname());
-			account.setBirthdate(user.getBirthdate());
-			account.setGender(user.getGender());
+			if (whiteListEntry != null) {
+				account.setFirstname(whiteListEntry.getFirstname());
+				account.setLastname(whiteListEntry.getLastname());
+				account.setBirthdate(whiteListEntry.getBirthdate());
+				account.setGender(whiteListEntry.getGender());
 
-			account.setLocale(user.getLocale());
-			account.setCountry(user.getCountry());
-			account.setTimezone(user.getTimezone());
-			account.setPostalCode(user.getPostalCode());
+				account.setLocale(whiteListEntry.getLocale());
+				account.setCountry(whiteListEntry.getCountry());
+				account.setTimezone(whiteListEntry.getTimezone());
+				account.setPostalCode(whiteListEntry.getPostalCode());
+			} else {
+				account.setFirstname(user.getFirstname());
+				account.setLastname(user.getLastname());
+				account.setBirthdate(user.getBirthdate());
+				account.setGender(user.getGender());
+
+				account.setLocale(user.getLocale());
+				account.setCountry(user.getCountry());
+				account.setTimezone(user.getTimezone());
+				account.setPostalCode(user.getPostalCode());
+			}
 
 			account.setLocked(false);
 			account.setChangePasswordOnNextLogin(false);
@@ -259,13 +271,13 @@ public class JpaUserRepository implements IUserRepository {
 
 			this.entityManager.persist(account);
 			this.entityManager.flush();
-			
+
 			AccountProfile profile = new AccountProfile();
 			profile.setMobileMode(EnumMobileMode.ACTIVE.getValue());
 			profile.setWebMode(EnumWebMode.ACTIVE.getValue());
 			profile.setUtilityMode(EnumUtilityMode.INACTIVE.getValue());
 			profile.setUpdatedOn(account.getCreatedOn());
-			
+
 			profile.setAccount(account);
 			this.entityManager.persist(profile);
 
@@ -278,7 +290,7 @@ public class JpaUserRepository implements IUserRepository {
 
 			profileHistoryEntry.setProfile(profile);
 			this.entityManager.persist(profileHistoryEntry);
-			
+
 			if (whiteListEntry != null) {
 				whiteListEntry.setRegisteredOn(DateTime.now());
 				whiteListEntry.setAccount(account);
