@@ -64,7 +64,7 @@ CREATE TABLE public.account_profile
   web_mode int NOT NULL,
   web_config character varying NULL,
   utility_mode int NOT NULL,
-  utility_config character varying NULL,  
+  utility_config character varying NULL,
   CONSTRAINT pk_account_profile PRIMARY KEY (id),
   CONSTRAINT fk_account_profile_account FOREIGN KEY (id)
         REFERENCES public.account (id) MATCH SIMPLE
@@ -77,7 +77,7 @@ CREATE SEQUENCE public.account_profile_history_id_seq
   MAXVALUE 9223372036854775807
   START 1
   CACHE 1;
-  
+
 CREATE TABLE public.account_profile_history
 (
   id integer NOT NULL DEFAULT nextval('account_profile_history_id_seq'::regclass),
@@ -110,6 +110,14 @@ CREATE TABLE public.account_white_list
   account_id integer,
   username character varying(100),
   registered_on timestamp without time zone,
+  locale character(2),
+  firstname character varying(40),
+  lastname character varying(70),
+  timezone character varying(50),
+  country character varying(50),
+  postal_code character varying(10),
+  birthdate timestamp without time zone,
+  gender character varying(12),
   CONSTRAINT pk_account_white_list PRIMARY KEY (id),
     CONSTRAINT fk_utility FOREIGN KEY (utility_id)
         REFERENCES public.utility (id) MATCH SIMPLE

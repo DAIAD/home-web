@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import eu.daiad.web.controller.BaseController;
+import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.data.IProfileRepository;
 import eu.daiad.web.model.AuthenticationResponse;
 import eu.daiad.web.model.Credentials;
@@ -21,7 +21,7 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.security.AuthenticationService;
 
 @RestController("RestAuthenticationController")
-public class AuthenticationController extends BaseController {
+public class AuthenticationController extends BaseRestController {
 
 	private static final Log logger = LogFactory.getLog(AuthenticationController.class);
 
@@ -32,11 +32,11 @@ public class AuthenticationController extends BaseController {
 	private IProfileRepository profileRepository;
 
 	@RequestMapping(value = "/api/v1/auth/login", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse login(@RequestBody Credentials data) throws Exception {
+	public RestResponse login(@RequestBody Credentials credentials) throws Exception {
 		RestResponse response = new RestResponse();
 
 		try {
-			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(data);
+			AuthenticatedUser user = this.authenticate(credentials);
 
 			if (user != null) {
 				Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE);

@@ -17,46 +17,54 @@ import eu.daiad.web.util.GenderDeserializer;
 
 public class Account {
 
-	@NotEmpty
-	@Size(max = 100)
-	@Email
+	public interface AccountDefaultValidation {
+
+	}
+
+	public interface AccountSimpleValidation {
+
+	}
+
+	@NotEmpty(groups = { AccountSimpleValidation.class, AccountDefaultValidation.class })
+	@Size(max = 100, groups = { AccountSimpleValidation.class, AccountDefaultValidation.class })
+	@Email(groups = { AccountSimpleValidation.class, AccountDefaultValidation.class })
 	private String username;
 
-	@NotEmpty
-	@Size(min = 8)
+	@NotEmpty(groups = { AccountSimpleValidation.class, AccountDefaultValidation.class })
+	@Size(min = 8, groups = { AccountSimpleValidation.class, AccountDefaultValidation.class })
 	private String password;
 
-	@NotEmpty
-	@Size(max = 40)
+	@NotEmpty(groups = { AccountDefaultValidation.class })
+	@Size(max = 40, groups = { AccountDefaultValidation.class })
 	private String firstname;
 
-	@NotEmpty
-	@Size(max = 70)
+	@NotEmpty(groups = { AccountDefaultValidation.class })
+	@Size(max = 70, groups = { AccountDefaultValidation.class })
 	private String lastname;
 
 	@JsonDeserialize(using = GenderDeserializer.class)
-	@NotNull
+	@NotNull(groups = { AccountDefaultValidation.class })
 	private EnumGender gender;
 
-	@NotNull
-	@Past
+	@NotNull(groups = { AccountDefaultValidation.class })
+	@Past(groups = { AccountDefaultValidation.class })
 	private DateTime birthdate;
 
-	@NotNull
-	@Size(max = 50)
+	@NotNull(groups = { AccountDefaultValidation.class })
+	@Size(max = 50, groups = { AccountDefaultValidation.class })
 	private String country;
 
-	@NotNull
-	@Size(max = 50)
+	@NotNull(groups = { AccountDefaultValidation.class })
+	@Size(max = 50, groups = { AccountDefaultValidation.class })
 	private String timezone;
 
-	@NotNull
-	@Size(max = 10)
+	@NotNull(groups = { AccountDefaultValidation.class })
+	@Size(max = 10, groups = { AccountDefaultValidation.class })
 	private String postalCode;
 
-	@NotNull
-	@NotEmpty
-	@Pattern(regexp = "en|el|es|de")
+	@NotNull(groups = { AccountDefaultValidation.class })
+	@NotEmpty(groups = { AccountDefaultValidation.class })
+	@Pattern(regexp = "en|el|es|de", groups = { AccountDefaultValidation.class })
 	private String locale;
 
 	public EnumGender getGender() {
