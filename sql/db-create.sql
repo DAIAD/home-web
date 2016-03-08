@@ -118,6 +118,8 @@ CREATE TABLE public.account_white_list
   postal_code character varying(10),
   birthdate timestamp without time zone,
   gender character varying(12),
+  default_mobile_mode integer NOT NULL,
+  default_web_mode integer NOT NULL,
   CONSTRAINT pk_account_white_list PRIMARY KEY (id),
     CONSTRAINT fk_utility FOREIGN KEY (utility_id)
         REFERENCES public.utility (id) MATCH SIMPLE
