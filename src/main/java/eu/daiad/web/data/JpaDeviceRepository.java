@@ -421,6 +421,8 @@ public class JpaDeviceRepository implements IDeviceRepository {
 						configuration.setFrameDuration(p.getFrameDuration());
 						configuration.setNumberOfFrames(p.getNumberOfFrames());
 
+						configuration.setVersion(p.getVersion());
+						
 						deviceConfigurationCollection.getConfigurations().add(configuration);
 					}
 				}
@@ -434,27 +436,66 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 		return collections;
 	}
-	
+
+	@Override
+	public void notifyConfiguration(UUID userKey, UUID deviceKey, UUID version, DateTime updatedOn)
+					throws ApplicationException {
+		try {
+			boolean found = false;
+			
+			TypedQuery<eu.daiad.web.domain.DeviceAmphiro> deviceQuery = entityManager
+							.createQuery("select d from device_amphiro d where d.key = :deviceKey and d.account.key = :userKey",
+											eu.daiad.web.domain.DeviceAmphiro.class).setFirstResult(0)
+							.setMaxResults(1);
+			deviceQuery.setParameter("deviceKey", deviceKey);
+			deviceQuery.setParameter("userKey", userKey);
+
+			List<eu.daiad.web.domain.DeviceAmphiro> devices = deviceQuery.getResultList();
+
+			if (devices.size() != 1) {
+				throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
+			}
+			
+			eu.daiad.web.domain.DeviceAmphiro device = devices.get(0);
+			
+			for(DeviceAmphiroConfiguration c : device.getConfigurations()) {
+				if(c.getVersion().equals(version)) {
+					c.setAcknowledgedOn(new DateTime());
+					c.setEnabledOn(updatedOn);
+					
+					found = true;
+				}
+			}
+			
+			if(!found) {
+				throw new ApplicationException(DeviceErrorCode.CONFIGURATION_NOT_FOUND).set("version", version.toString());
+			}
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		}
+	}
+
 	@Override
 	public void removeDevice(UUID deviceKey) {
 		try {
-			TypedQuery<eu.daiad.web.domain.Device> deviceQuery = entityManager.createQuery(
-							"select d from device d where d.key = :device_key", eu.daiad.web.domain.Device.class)
-							.setFirstResult(0).setMaxResults(1);
+			TypedQuery<eu.daiad.web.domain.Device> deviceQuery = entityManager
+							.createQuery("select d from device d where d.key = :device_key",
+											eu.daiad.web.domain.Device.class).setFirstResult(0).setMaxResults(1);
 
 			deviceQuery.setParameter("device_key", deviceKey);
 
 			List<eu.daiad.web.domain.Device> result = deviceQuery.getResultList();
 
-			if(result.size()!=1) {
+			if (result.size() != 1) {
 				throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey);
 			}
 
 			for (eu.daiad.web.domain.Device d : result) {
 				switch (d.getType()) {
-				case AMPHIRO: case METER:
-						d.getAccount().getDevices().remove(d);
-						this.entityManager.remove(d);
+				case AMPHIRO:
+				case METER:
+					d.getAccount().getDevices().remove(d);
+					this.entityManager.remove(d);
 					break;
 				default:
 					throw new ApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type", d.getType());
@@ -464,5 +505,5 @@ public class JpaDeviceRepository implements IDeviceRepository {
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
-	
+
 }

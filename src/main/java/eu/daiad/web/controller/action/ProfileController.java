@@ -32,10 +32,10 @@ public class ProfileController extends BaseController {
 		
 		try {
 			if(user.hasRole("ROLE_ADMIN")) {
-				return  new ProfileResponse(profileRepository.getProfileByUsername(EnumApplication.UTILITY, user.getUsername()));
+				return  new ProfileResponse(profileRepository.getProfileByUsername(EnumApplication.UTILITY));
 			}
 			
-			return  new ProfileResponse(profileRepository.getProfileByUsername(EnumApplication.HOME, user.getUsername()));
+			return  new ProfileResponse(profileRepository.getProfileByUsername(EnumApplication.HOME));
 		} catch (ApplicationException ex) {
 			logger.error(ex);
 

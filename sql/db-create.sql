@@ -57,15 +57,41 @@ CREATE TABLE account (
 CREATE TABLE public.account_profile
 (
   id integer,
-  mobile_enabled boolean NOT NULL,
+  version uuid NOT NULL,
+  updated_on timestamp without time zone NOT NULL,
+  mobile_mode int NOT NULL,
   mobile_config character varying NULL,
-  web_enabled boolean NOT NULL,
+  web_mode int NOT NULL,
   web_config character varying NULL,
-  utility_enabled boolean NOT NULL,
+  utility_mode int NOT NULL,
   utility_config character varying NULL,  
   CONSTRAINT pk_account_profile PRIMARY KEY (id),
   CONSTRAINT fk_account_profile_account FOREIGN KEY (id)
         REFERENCES public.account (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE SEQUENCE public.account_profile_history_id_seq
+  INCREMENT 1
+  MINVALUE 1
+  MAXVALUE 9223372036854775807
+  START 1
+  CACHE 1;
+  
+CREATE TABLE public.account_profile_history
+(
+  id integer NOT NULL DEFAULT nextval('account_profile_history_id_seq'::regclass),
+  profile_id int NOT NULL,
+  version uuid NOT NULL,
+  updated_on timestamp without time zone NOT NULL,
+  acknowledged_on timestamp without time zone,
+  enabled_on timestamp without time zone,
+  mobile_mode int NOT NULL,
+  web_mode int NOT NULL,
+  utility_mode int NOT NULL,
+  CONSTRAINT pk_account_profile_history PRIMARY KEY (id),
+  CONSTRAINT fk_pk_account_profile_history_pk_account_profile FOREIGN KEY (profile_id)
+        REFERENCES public.account_profile (id) MATCH SIMPLE
             ON UPDATE CASCADE ON DELETE CASCADE
 );
 
@@ -216,8 +242,11 @@ CREATE SEQUENCE device_amphiro_config_id_seq
 CREATE TABLE device_amphiro_config (
     id integer NOT NULL DEFAULT nextval('device_amphiro_config_id_seq'::regclass),
     device_id integer,
+    version uuid NOT NULL,
 	title character varying(100),
 	created_on timestamp without time zone,
+	acknowledged_on timestamp without time zone,
+	enabled_on timestamp without time zone,
 	active boolean,
     configuration_block integer,
     value_1 integer,

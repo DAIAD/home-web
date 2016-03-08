@@ -1,16 +1,25 @@
 package eu.daiad.web.domain;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Parameter;
+import org.hibernate.annotations.Type;
+import org.joda.time.DateTime;
 
 @Entity(name = "account_profile")
 @Table(schema = "public", name = "account_profile")
@@ -22,18 +31,30 @@ public class AccountProfile {
 	@Column(name = "id", unique = true, nullable = false)
 	private int id;
 
+	@Column()
+	@Type(type = "pg-uuid")
+	private UUID version = UUID.randomUUID();
+	
 	@OneToOne(fetch = FetchType.LAZY)
 	@PrimaryKeyJoinColumn()
 	private Account account;
 
-	@Column(name = "mobile_enabled")
-	private boolean mobileEnabled;
+	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+	@JoinColumn(name = "profile_id")
+	private Set<AccountProfileHistoryEntry> history = new HashSet<AccountProfileHistoryEntry>();
+	
+	@Column(name = "updated_on")
+	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+	private DateTime updatedOn;
+	
+	@Column(name = "mobile_mode")
+	private int mobileMode;
 
-	@Column(name = "web_enabled")
-	private boolean webEnabled;
+	@Column(name = "web_mode")
+	private int webMode;
 
-	@Column(name = "utility_enabled")
-	private boolean utilityEnabled;
+	@Column(name = "utility_mode")
+	private int utilityMode;
 	
 	@Column(name = "mobile_config")
 	private String mobileConfiguration;
@@ -46,22 +67,6 @@ public class AccountProfile {
 	
 	public int getId() {
 		return id;
-	}
-
-	public boolean isMobileEnabled() {
-		return mobileEnabled;
-	}
-
-	public void setMobileEnabled(boolean mobileEnabled) {
-		this.mobileEnabled = mobileEnabled;
-	}
-
-	public boolean isWebEnabled() {
-		return webEnabled;
-	}
-
-	public void setWebEnabled(boolean webEnabled) {
-		this.webEnabled = webEnabled;
 	}
 
 	public String getMobileConfiguration() {
@@ -84,20 +89,56 @@ public class AccountProfile {
 		this.account = account;
 	}
 
-	public boolean isUtilityEnabled() {
-		return utilityEnabled;
-	}
-
-	public void setUtilityEnabled(boolean utilityEnabled) {
-		this.utilityEnabled = utilityEnabled;
-	}
-
 	public String getUtilityConfiguration() {
 		return utilityConfiguration;
 	}
 
 	public void setUtilityConfiguration(String utilityConfiguration) {
 		this.utilityConfiguration = utilityConfiguration;
+	}
+
+	public int getMobileMode() {
+		return mobileMode;
+	}
+
+	public void setMobileMode(int mobileMode) {
+		this.mobileMode = mobileMode;
+	}
+
+	public int getWebMode() {
+		return webMode;
+	}
+
+	public void setWebMode(int webMode) {
+		this.webMode = webMode;
+	}
+
+	public int getUtilityMode() {
+		return utilityMode;
+	}
+
+	public void setUtilityMode(int utilityMode) {
+		this.utilityMode = utilityMode;
+	}
+
+	public Set<AccountProfileHistoryEntry> getHistory() {
+		return history;
+	}
+
+	public DateTime getUpdatedOn() {
+		return updatedOn;
+	}
+
+	public void setUpdatedOn(DateTime updatedOn) {
+		this.updatedOn = updatedOn;
+	}
+
+	public UUID getVersion() {
+		return version;
+	}
+
+	public void setVersion(UUID version) {
+		this.version = version;
 	}
 
 }

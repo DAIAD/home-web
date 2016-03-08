@@ -1,5 +1,7 @@
 package eu.daiad.web.domain;
 
+import java.util.UUID;
+
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -25,6 +27,10 @@ public class DeviceAmphiroConfiguration {
 	@GeneratedValue(generator = "device_amphiro_config_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
 
+	@Column()
+	@Type(type = "pg-uuid")
+	private UUID version = UUID.randomUUID();
+
 	@ManyToOne(cascade = { CascadeType.ALL })
 	@JoinColumn(name = "device_id", nullable = false)
 	private DeviceAmphiro device;
@@ -36,6 +42,14 @@ public class DeviceAmphiroConfiguration {
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime createdOn;
 
+	@Column(name = "acknowledged_on")
+	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+	private DateTime acknowledgedOn;
+
+	@Column(name = "enabled_on")
+	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+	private DateTime enabledOn;
+	
 	@Basic()
 	private boolean active;
 
@@ -238,6 +252,26 @@ public class DeviceAmphiroConfiguration {
 
 	public int getId() {
 		return id;
+	}
+
+	public UUID getVersion() {
+		return version;
+	}
+
+	public DateTime getAcknowledgedOn() {
+		return acknowledgedOn;
+	}
+
+	public void setAcknowledgedOn(DateTime acknowledgedOn) {
+		this.acknowledgedOn = acknowledgedOn;
+	}
+
+	public DateTime getEnabledOn() {
+		return enabledOn;
+	}
+
+	public void setEnabledOn(DateTime enabledOn) {
+		this.enabledOn = enabledOn;
 	}
 
 }

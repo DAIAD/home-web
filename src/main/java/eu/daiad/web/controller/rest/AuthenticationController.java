@@ -39,7 +39,7 @@ public class AuthenticationController extends BaseController {
 			AuthenticatedUser user = this.authenticationService.authenticateAndGetUser(data);
 
 			if (user != null) {
-				Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE, user.getUsername());
+				Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE);
 
 				return new AuthenticationResponse(profile);
 			} else {

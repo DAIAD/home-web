@@ -3,6 +3,8 @@ package eu.daiad.web.data;
 import java.util.ArrayList;
 import java.util.UUID;
 
+import org.joda.time.DateTime;
+
 import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceConfigurationCollection;
@@ -12,7 +14,7 @@ import eu.daiad.web.model.error.ApplicationException;
 public interface IDeviceRepository {
 
 	public abstract void removeDevice(UUID deviceKey);
-	
+
 	public abstract UUID createAmphiroDevice(UUID userKey, String name, String macAddress, String aesKey,
 					ArrayList<KeyValuePair> properties) throws ApplicationException;
 
@@ -33,6 +35,9 @@ public interface IDeviceRepository {
 					throws ApplicationException;
 
 	public abstract ArrayList<DeviceConfigurationCollection> getConfiguration(UUID userKey, UUID deviceKeys[])
+					throws ApplicationException;
+
+	public abstract void notifyConfiguration(UUID userKey, UUID deviceKey, UUID version, DateTime updatedOn)
 					throws ApplicationException;
 
 }

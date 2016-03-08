@@ -2,11 +2,13 @@ package eu.daiad.web.data;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.UUID;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.security.core.Authentication;
@@ -14,6 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
 
 import eu.daiad.web.domain.Account;
+import eu.daiad.web.domain.AccountProfileHistoryEntry;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistration;
@@ -39,12 +42,34 @@ public class JpaProfileRepository implements IProfileRepository {
 	private IDeviceRepository deviceRepository;
 
 	@Override
-	public Profile getProfileByUsername(EnumApplication application, String username) throws ApplicationException {
+	public Profile getProfileByUsername(EnumApplication application) throws ApplicationException {
 		try {
+			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
+
+			switch (application) {
+			case HOME:
+			case MOBILE:
+				if (!user.hasRole("ROLE_USER")) {
+					throw new ApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
+									application);
+				}
+				break;
+			case UTILITY:
+				if (!user.hasRole("ROLE_ADMIN")) {
+					throw new ApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
+									application);
+				}
+				break;
+			default:
+				throw new ApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application", application);
+			}
+
 			TypedQuery<eu.daiad.web.domain.Account> userQuery = entityManager
 							.createQuery("select a from account a where a.username = :username",
 											eu.daiad.web.domain.Account.class).setFirstResult(0).setMaxResults(1);
-			userQuery.setParameter("username", username);
+			userQuery.setParameter("username", user.getUsername());
 
 			Account account = userQuery.getSingleResult();
 
@@ -53,6 +78,7 @@ public class JpaProfileRepository implements IProfileRepository {
 
 			Profile profile = new Profile();
 
+			profile.setVersion(account.getProfile().getVersion());
 			profile.setKey(account.getKey());
 			profile.setUsername(account.getUsername());
 			profile.setFirstname(account.getFirstname());
@@ -68,16 +94,19 @@ public class JpaProfileRepository implements IProfileRepository {
 
 			switch (application) {
 			case HOME:
-				profile.setEnabled(account.getProfile().isWebEnabled());
+				profile.setMode(account.getProfile().getWebMode());
 				profile.setConfiguration(account.getProfile().getWebConfiguration());
 				break;
 			case MOBILE:
-				profile.setEnabled(account.getProfile().isMobileEnabled());
+				profile.setMode(account.getProfile().getMobileMode());
 				profile.setConfiguration(account.getProfile().getMobileConfiguration());
 				break;
+			case UTILITY:
+				profile.setMode(account.getProfile().getUtilityMode());
+				profile.setConfiguration(account.getProfile().getUtilityConfiguration());
+				break;
 			default:
-				profile.setEnabled(false);
-				profile.setConfiguration(null);
+				throw new ApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application", application);
 			}
 
 			return profile;
@@ -107,6 +136,45 @@ public class JpaProfileRepository implements IProfileRepository {
 				break;
 			default:
 				throw new ApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application", application);
+			}
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		}
+	}
+
+	@Override
+	public void notifyProfile(EnumApplication application, UUID version, DateTime updatedOn) {
+		try {
+			boolean found = false;
+
+			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+			TypedQuery<Account> query = entityManager
+							.createQuery("select a from account a where a.key = :key", Account.class).setFirstResult(0)
+							.setMaxResults(1);
+			query.setParameter("key", ((AuthenticatedUser) auth.getPrincipal()).getKey());
+
+			Account account = query.getSingleResult();
+
+			switch (application) {
+			case HOME:
+				throw new ApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application", application);
+			case MOBILE:
+				for (AccountProfileHistoryEntry h : account.getProfile().getHistory()) {
+					if (h.getVersion().equals(version)) {
+						found = true;
+
+						h.setEnabledOn(updatedOn);
+						h.setAcknowledgedOn(new DateTime());
+						break;
+					}
+				}
+				break;
+			default:
+				throw new ApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application", application);
+			}
+			if (!found) {
+				throw new ApplicationException(ProfileErrorCode.PROFILE_VERSION_NOT_FOUND).set("version", version);
 			}
 		} catch (Exception ex) {
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);

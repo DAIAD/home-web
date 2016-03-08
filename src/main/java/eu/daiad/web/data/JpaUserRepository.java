@@ -23,6 +23,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
 
 import eu.daiad.web.domain.AccountProfile;
+import eu.daiad.web.domain.AccountProfileHistoryEntry;
 import eu.daiad.web.domain.AccountRole;
 import eu.daiad.web.domain.AccountWhiteListEntry;
 import eu.daiad.web.domain.Role;
@@ -31,6 +32,9 @@ import eu.daiad.web.model.EnumValueDescription;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
+import eu.daiad.web.model.profile.EnumMobileMode;
+import eu.daiad.web.model.profile.EnumUtilityMode;
+import eu.daiad.web.model.profile.EnumWebMode;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.user.Account;
@@ -110,13 +114,33 @@ public class JpaUserRepository implements IUserRepository {
 
 					AccountRole assignedRole = new AccountRole();
 					assignedRole.setRole(role);
-					assignedRole.setAssignedOn(new DateTime());
+					assignedRole.setAssignedOn(account.getCreatedOn());
 					assignedRole.setAssignedBy(account);
 
 					account.getRoles().add(assignedRole);
 
 					this.entityManager.persist(account);
+					this.entityManager.flush();
+					
+					AccountProfile profile = new AccountProfile();
+					profile.setMobileMode(EnumMobileMode.INACTIVE.getValue());
+					profile.setWebMode(EnumWebMode.INACTIVE.getValue());
+					profile.setUtilityMode(EnumUtilityMode.ACTIVE.getValue());
+					profile.setUpdatedOn(account.getCreatedOn());
+					
+					profile.setAccount(account);					
+					this.entityManager.persist(profile);
 
+					AccountProfileHistoryEntry entry = new AccountProfileHistoryEntry();
+					entry.setVersion(profile.getVersion());
+					entry.setUpdatedOn(account.getCreatedOn());
+					entry.setMobileMode(profile.getMobileMode());
+					entry.setWebMode(profile.getWebMode());
+					entry.setUtilityMode(profile.getUtilityMode());
+
+					entry.setProfile(profile);
+					this.entityManager.persist(entry);
+					
 					logger.info(String
 									.format("Default administrator has been crearted for utility [%s]. User name : %s. Password : %s",
 													utility.getName(), utility.getDefaultAdministratorUsername(),
@@ -165,7 +189,7 @@ public class JpaUserRepository implements IUserRepository {
 								.set("username", user.getUsername());
 			}
 
-			AccountWhiteListEntry entry = null;
+			AccountWhiteListEntry whiteListEntry = null;
 
 			if (enforceWhiteListCheck) {
 				TypedQuery<eu.daiad.web.domain.AccountWhiteListEntry> query = entityManager
@@ -179,16 +203,16 @@ public class JpaUserRepository implements IUserRepository {
 					throw new ApplicationException(UserErrorCode.WHITELIST_MISMATCH)
 									.set("username", user.getUsername());
 				} else {
-					entry = result.get(0);
+					whiteListEntry = result.get(0);
 				}
 			}
 
 			Utility utility = null;
 
-			if (entry != null) {
+			if (whiteListEntry != null) {
 				TypedQuery<eu.daiad.web.domain.Utility> query = entityManager.createQuery(
 								"select u from utility u where u.id = :id", eu.daiad.web.domain.Utility.class);
-				query.setParameter("id", entry.getUtility().getId());
+				query.setParameter("id", whiteListEntry.getUtility().getId());
 
 				utility = query.getSingleResult();
 			} else {
@@ -229,7 +253,7 @@ public class JpaUserRepository implements IUserRepository {
 
 			AccountRole assignedRole = new AccountRole();
 			assignedRole.setRole(role);
-			assignedRole.setAssignedOn(new DateTime());
+			assignedRole.setAssignedOn(account.getCreatedOn());
 
 			account.getRoles().add(assignedRole);
 
@@ -237,17 +261,27 @@ public class JpaUserRepository implements IUserRepository {
 			this.entityManager.flush();
 			
 			AccountProfile profile = new AccountProfile();
-			profile.setMobileEnabled(true);
-			profile.setWebEnabled(true);
-			profile.setUtilityEnabled(false);
+			profile.setMobileMode(EnumMobileMode.ACTIVE.getValue());
+			profile.setWebMode(EnumWebMode.ACTIVE.getValue());
+			profile.setUtilityMode(EnumUtilityMode.INACTIVE.getValue());
+			profile.setUpdatedOn(account.getCreatedOn());
 			
 			profile.setAccount(account);
-
 			this.entityManager.persist(profile);
 
-			if (entry != null) {
-				entry.setRegisteredOn(DateTime.now());
-				entry.setAccount(account);
+			AccountProfileHistoryEntry profileHistoryEntry = new AccountProfileHistoryEntry();
+			profileHistoryEntry.setVersion(profile.getVersion());
+			profileHistoryEntry.setUpdatedOn(account.getCreatedOn());
+			profileHistoryEntry.setMobileMode(profile.getMobileMode());
+			profileHistoryEntry.setWebMode(profile.getWebMode());
+			profileHistoryEntry.setUtilityMode(profile.getUtilityMode());
+
+			profileHistoryEntry.setProfile(profile);
+			this.entityManager.persist(profileHistoryEntry);
+			
+			if (whiteListEntry != null) {
+				whiteListEntry.setRegisteredOn(DateTime.now());
+				whiteListEntry.setAccount(account);
 			}
 
 			return account.getKey();
