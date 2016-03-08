@@ -1,32 +1,45 @@
-var getDefaultDevice = function(devices) {
+function getDefaultDevice (devices) {
   var amphiroDevices = getAvailableDevices(devices);
-  return amphiroDevices.length?amphiroDevices[0]:null;
-};
+  var meters = getAvailableMeters(devices);
+  if (amphiroDevices.length) {
+    return amphiroDevices[0];
+  }
+  else if (meters.length) {
+    return meters[0];
+  }
+  else {
+    return null;
+  }
+}
 
-var getDeviceTypeByKey = function(devices, key) {
+function getDeviceTypeByKey (devices, key) {
   const device = getDeviceByKey(devices, key);
   if (!device) return null;
   return device.type;
-};
-var getDeviceCount = function(devices) {
+}
+function getDeviceCount (devices) {
   return getAvailableDevices(devices).length;
-};
+}
 
-var getAvailableDevices = function(devices) {
+function getAvailableDevices (devices) {
   return devices.filter((device) => (device.type === 'AMPHIRO'));
-};
+}
 
-var getAvailableDeviceKeys = function(devices) {
+function getAvailableMeters (devices) {
+  return devices.filter((device) => (device.type === 'METER'));
+}
+
+function getAvailableDeviceKeys (devices) {
   return getAvailableDevices(devices).map((device) => (device.deviceKey));
-};
+}
 
-var getDeviceByKey = function(devices, key) {
+function getDeviceByKey (devices, key) {
   if (!devices) return null;
 
   return devices.find((device) => (device.deviceKey === key));
-};
+}
 
-var updateOrAppendToSession = function(sessions, data, id) {
+function updateOrAppendToSession (sessions, data, id) {
   if (!data || !id){
     return sessions;
   }
@@ -39,23 +52,23 @@ var updateOrAppendToSession = function(sessions, data, id) {
     updated.push(data);
   }
   return updated;
-};
+}
 
-var getSessionByIndex = function(sessions, index) {
+function getSessionByIndex (sessions, index) {
   if (typeof(index) !== "number") return null;
   //if (sessions.length && !sessions[0].id) return null;
 
   return sessions[index];
-};
+}
 
-var getSessionById = function(sessions, id) {
+function getSessionById (sessions, id) {
   if (!id) return null;
   if (sessions.length && !sessions[0].id) return null;
 
   return sessions.find(x => (x.id).toString() === id.toString());
-};
+}
 
-var getNextSession = function(sessions, id) {
+function getNextSession (sessions, id) {
   const sessionIndex = getSessionIndexById(sessions, id);
   if (sessions[sessionIndex+1]){
     return sessions[sessionIndex+1].id;
@@ -63,9 +76,9 @@ var getNextSession = function(sessions, id) {
   else {
     return null;
   }
-};
+}
 
-var getPreviousSession = function(sessions, id) {
+function getPreviousSession (sessions, id) {
   const sessionIndex = getSessionIndexById(sessions, id);
   if (sessions[sessionIndex-1]){
     return sessions[sessionIndex-1].id;
@@ -73,12 +86,12 @@ var getPreviousSession = function(sessions, id) {
   else {
     return null;
   }
-};
-var getSessionIndexById = function(sessions, id) {
+}
+function getSessionIndexById (sessions, id) {
   return sessions.findIndex(x => (x.id).toString() === id.toString());
-};
+}
 
-var getLastSession = function(sessions) {
+function getLastSession (sessions) {
   var lastSession = null;
   sessions.forEach(function(session) {
     if (!lastSession){
@@ -89,7 +102,7 @@ var getLastSession = function(sessions) {
     }
   });
   return lastSession;
-};
+}
 
 module.exports = {
   getSessionById,
