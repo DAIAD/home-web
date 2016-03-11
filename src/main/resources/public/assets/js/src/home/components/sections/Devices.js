@@ -10,7 +10,7 @@ var MainSection = require('../MainSection');
 var Device = React.createClass({
 
   render: function() {
-    var _t = this.props.intl.formatMessage;
+    const _t = this.props.intl.formatMessage;
     return (
       <div className="col-xs-5" >
         
@@ -37,7 +37,7 @@ var Device = React.createClass({
                   return (<div/>);
                 }
                 return (
-                  <bs.Input key={property.key} type="text" label={_t({id:"devices."+property.key})} defaultValue={property.value} readOnly={true} />
+                  <bs.Input key={property.key} type="text" label={_t({id:`devices.${property.key}`})} defaultValue={property.value} readOnly={true} />
                   );
                 })
             }
@@ -56,8 +56,8 @@ var DevicesForm = React.createClass({
   },
 
   render: function() {
-    var devices = this.props.devices;
-    var _t = this.props.intl.formatMessage;
+    const devices = this.props.devices;
+    const _t = this.props.intl.formatMessage;
     return (
       <form>
         <bs.Accordion className="col-xs-10">

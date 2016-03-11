@@ -15,7 +15,8 @@
     "7": "Saturday"
   },
   "errors": {
-    "Forbidden": "Authentication has failed. Please try again."
+    "SharedErrorCode.AUTHENTICATION": "Authentication has failed. Please try again.",
+    "SharedErrorCode.UNKNOWN": "We are facing an internal problem, please try again in a while."
   },
   "forms": {
     "submit": "Update"

@@ -1,13 +1,13 @@
 var meterAPI = require('../api/meter');
 var types = require('../constants/ActionTypes');
 
-var requestedMeterQuery = function() {
+const requestedMeterQuery = function() {
   return {
     type: types.METER_REQUESTED_QUERY,
   };
 };
 
-var receivedMeterQuery = function(success, errors, data) {
+const receivedMeterQuery = function(success, errors, data) {
   return {
     type: types.METER_RECEIVED_QUERY,
     success: success,
@@ -16,13 +16,13 @@ var receivedMeterQuery = function(success, errors, data) {
   };
 };
 
-var requestedMeterStatus = function() {
+const requestedMeterStatus = function() {
   return {
     type: types.METER_REQUESTED_STATUS,
   };
 };
 
-var receivedMeterStatus = function(success, errors, data) {
+const receivedMeterStatus = function(success, errors, data) {
   return {
     type: types.METER_RECEIVED_STATUS,
     success: success,
@@ -31,22 +31,23 @@ var receivedMeterStatus = function(success, errors, data) {
   };
 };
 
-var MeterActions = {
+const MeterActions = {
   
   getHistory: function(deviceKey, time) {
     return function(dispatch, getState) {
 
       dispatch(requestedMeterQuery());
 
-      var data = Object.assign({}, time, {deviceKey: [ deviceKey ] });
-      return meterAPI.getHistory(data).then(
-        function(response) {
+      const data = Object.assign({}, time, {deviceKey: [ deviceKey ] }, {csrf: getState().query.csrf});
+
+      return meterAPI.getHistory(data)
+        .then((response) => {
           dispatch(receivedMeterQuery(response.success, response.errors, response.series?response.series[0].values:[]) );
           return response;
-        },
-        function(error) {
-          dispatch(receivedMeterQuery(false, error, {}));
-          return error;
+        })
+        .catch((errors) => {
+          dispatch(receivedMeterQuery(false, errors, {}));
+          return errors;
         });
     };
   },
@@ -54,16 +55,15 @@ var MeterActions = {
     return function(dispatch, getState) {
       dispatch(requestedMeterStatus());
       
-      var data = {deviceKey: [ deviceKey ] };
-      return meterAPI.getStatus(data).then(
-        function(response) {
+      const data = {deviceKey: [ deviceKey ], csrf: getState().query.csrf };
+      return meterAPI.getStatus(data)
+        .then((response) => {
           dispatch(receivedMeterStatus(response.success, response.errors, response.devices?response.devices:[]) );
           return response;
-        },
-        function(error) {
-          console.log(error);
-          dispatch(receivedMeterStatus(false, error, {}));
-          return error;
+        })
+        .catch((errors) => {
+          dispatch(receivedMeterStatus(false, errors, {}));
+          return errors;
         });
     };
   }

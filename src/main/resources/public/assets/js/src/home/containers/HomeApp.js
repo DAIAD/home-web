@@ -104,25 +104,22 @@ function mapStateToProps(state) {
 function mapDispatchToProps(dispatch, ownProps) {
   return {
     onLogin: function(username, password) {
-      dispatch(UserActions.login(username, password)).then(function(response) {
+      dispatch(UserActions.login(username, password))
+      .then((response) => {
         if (!response.profile) {
-          return response;
-        }
-        const devices = response.profile.devices;
-        const device = getDefaultDevice(devices);
-        if (device) {
-          return dispatch(DeviceActions.setActiveDevice(device.deviceKey));
-        }
-      },
-      function(error) {
-        console.log('oops, something went wrong while logging-in');
-        console.log(error);
-      });
+            return response;
+          }
+          const devices = response.profile.devices;
+          const device = getDefaultDevice(devices);
+          if (device) {
+            dispatch(DeviceActions.setActiveDevice(device.deviceKey));
+            return response;
+          }
+        });
     },
     onLogout: function() {
-      dispatch(UserActions.logout()).then(
-        (response) => dispatch(DeviceActions.resetQuery()),
-         (error) => console.log(error));
+      dispatch(UserActions.logout())
+        .then((response) => dispatch(DeviceActions.resetQuery()));
     },
     onLocaleSwitch: function(locale) {
       dispatch(LocaleActions.setLocale(locale));

@@ -24,11 +24,11 @@ var SessionItem = React.createClass({
   },
   render: function() {
     if (!this.props.data) return (null);
-    var _t = this.props.intl.formatMessage;
+    const _t = this.props.intl.formatMessage;
     return (
       <li className="session-item" >
         <a onClick={this.handleClick} title={_t({id: this.props.details})}>
-          <h4 style={{float: 'left'}}><img style={{width:this.props.id==='temperature'?12:24, marginRight:20}} src={"/assets/images/svg/"+this.props.icon+".svg"} /><FormattedMessage id={this.props.title} /></h4>
+          <h4 style={{float: 'left'}}><img style={{width:this.props.id==='temperature'?12:24, marginRight:20}} src={`/assets/images/svg/${this.props.icon}.svg`} /><FormattedMessage id={this.props.title} /></h4>
         <h4 style={{float:'right'}}>{this.props.data} <span>{this.props.mu}</span></h4>
       </a>
       </li>
@@ -39,11 +39,8 @@ var SessionItem = React.createClass({
 var SessionInfo = React.createClass({
 
   render: function() {
-    const { setSessionFilter, chartDOM } = this.props;
+    const { setSessionFilter, chartDOM, intl, data } = this.props;
     
-    var data = this.props.data;
-     var intl = this.props.intl;
-
     const metrics = [
       {id:'count',mu:'', title:'history.count', details:'history.countDetails'},  
       {id:'volume', mu:'lt',title:'history.volume', details:'history.volumeDetails'}, 
@@ -81,7 +78,7 @@ var Shower = React.createClass({
   },
   render: function() {
     const history = this.props.data?this.props.data.history:null;
-    var _t = this.props.intl.formatMessage;
+    const _t = this.props.intl.formatMessage;
     return (
       <div>
       {
@@ -93,7 +90,7 @@ var Shower = React.createClass({
                 ref="chartDOM"
                 height={300}
                 width='100%'
-                title={_t({id: "history."+this.props.filter})}
+                title={_t({id: `history.${this.props.filter}`})}
                 mu="lt"
                 xMargin={60}
                 x2Margin={60}

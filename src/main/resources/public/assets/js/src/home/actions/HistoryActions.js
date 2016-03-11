@@ -1,14 +1,7 @@
-var deviceAPI = require('../api/device');
 var types = require('../constants/ActionTypes');
 require('es6-promise').polyfill();
 
-var getSessionById = require('../utils/device').getSessionById;
-var getLastSession = require('../utils/device').getLastSession;
-var getNextSession = require('../utils/device').getNextSession;
-var getPreviousSession = require('../utils/device').getPreviousSession;
-
-
-var HistoryActions = {
+const HistoryActions = {
   
   setActiveSessionIndex: function(sessionIndex) {
     return {

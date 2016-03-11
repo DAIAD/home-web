@@ -33,9 +33,9 @@ var DashboardData = React.createClass({
 
 
 function mapStateToProps(state, ownProps) {
-  var lastSession = getLastSession(state.query.data);
-   const defaultDevice = getDefaultDevice(state.user.profile.devices);
-   const deviceKey = defaultDevice?defaultDevice.deviceKey:null;
+  const lastSession = getLastSession(state.query.data);
+  const defaultDevice = getDefaultDevice(state.user.profile.devices);
+  const deviceKey = defaultDevice?defaultDevice.deviceKey:null;
   return {
     time: state.query.time,
     activeDevice: state.query.activeDevice,
@@ -51,9 +51,8 @@ function mapDispatchToProps(dispatch) {
   return {
     getLastSession: function(deviceKey) {
       const time = Object.assign({}, timeUtil.thisWeek(), {granularity: 0});
-      return dispatch(DeviceActions.querySessions(deviceKey, time)).then(
-        (response) => dispatch(DeviceActions.fetchLastSession(deviceKey, time)),
-        (error) => console.log(error));
+      return dispatch(DeviceActions.querySessions(deviceKey, time))
+        .then((response) => dispatch(DeviceActions.fetchLastSession(deviceKey, time)));
     }
   };
 }

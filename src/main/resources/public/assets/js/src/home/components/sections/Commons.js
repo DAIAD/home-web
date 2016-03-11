@@ -7,7 +7,7 @@ var Sidebar = require('../Sidebar');
 
 var Commons = React.createClass({
   render: function() {
-    var _t = this.props.intl.formatMessage;
+    const _t = this.props.intl.formatMessage;
     return (
       <MainSection id="section.commons">
       </MainSection>

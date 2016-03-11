@@ -23,7 +23,7 @@ var History = React.createClass({
     this.props.setQueryFilter(key); 
   },
   handleTimeSelect: function(key){
-    var time = {};
+    let time = {};
     if (key==="always"){
       time = {
         startDate: new Date("2000-02-18").getTime(),
@@ -48,6 +48,7 @@ var History = React.createClass({
       time.granularity = 0;
     }
     else{
+      console.log('oops, shouldn\'t be here');
       return;
     }
     this.props.setTimeFilter(key);
@@ -72,7 +73,7 @@ var History = React.createClass({
     const activeDeviceName = device?(device.name?device.name:device.serial):"None";
     const devType = this.props.devType;
 
-    var _t = this.props.intl.formatMessage;
+    const _t = this.props.intl.formatMessage;
     return (
       <div>
         <Topbar> 

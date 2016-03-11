@@ -8,13 +8,13 @@ var getNextSession = require('../utils/device').getNextSession;
 var getPreviousSession = require('../utils/device').getPreviousSession;
 
 
-var requestedSessionsQuery = function() {
+const requestedSessionsQuery = function() {
   return {
     type: types.DEVICE_REQUESTED_SESSION_SEARCH,
   };
 };
 
-var receivedSessionsQuery = function(success, errors, data) {
+const receivedSessionsQuery = function(success, errors, data) {
   return {
     type: types.DEVICE_RECEIVED_SESSION_SEARCH,
     success: success,
@@ -23,13 +23,13 @@ var receivedSessionsQuery = function(success, errors, data) {
   };
 };
 
-var requestedSession = function() {
+const requestedSession = function() {
   return {
     type: types.DEVICE_REQUESTED_SESSION,
   };
 };
 
-var receivedSession = function(success, errors, data, id) {
+const receivedSession = function(success, errors, data, id) {
   return {
     type: types.DEVICE_RECEIVED_SESSION,
     success: success,
@@ -39,63 +39,51 @@ var receivedSession = function(success, errors, data, id) {
   };
 };
 
-var DeviceActions = {
+const DeviceActions = {
   
   querySessions: function(deviceKey, time) {
     return function(dispatch, getState) {
-
+      
       dispatch(requestedSessionsQuery());
 
-      var data = Object.assign({}, time, {deviceKey: [ deviceKey ] });
-      return deviceAPI.querySessions(data).then(
-        function(response) {
+      const data = Object.assign({}, time, {deviceKey: [ deviceKey ] }, {csrf: getState().query.csrf});
+      
+      return deviceAPI.querySessions(data)
+      .then((response) => {
           dispatch(receivedSessionsQuery(response.success, response.errors, response.devices?response.devices[0].sessions:[]) );
           return response;
-        },
-        function(error) {
-          dispatch(receivedSessionsQuery(false, error, {}));
-          return error;
+        })
+        .catch((errors) => {
+          dispatch(receivedSessionsQuery(false, errors, {}));
+          return errors;
         });
-    };
-  },
-  querySessionsIfEmpty: function(deviceKey, time) {
-    return function(dispatch, getState) {
-      //just check if empty
-      if (getState().query.data.length) {
-        return new Promise(function(resolve){
-          resolve();
-        });
-      }
-      else {
-        return dispatch(DeviceActions.querySessions(deviceKey, time));
-      }
     };
   },
   fetchSession: function(id, deviceKey, time) {
     return function(dispatch, getState) {
-      //dispatch(DeviceActions.setActiveSession(id));
-
-      var session = getSessionById(getState().query.data, id);
-      //var session = getState().device.session.data;
+      
+      if (id===null || id===undefined) {
+        return false;
+      }
+      
+      const session = getSessionById(getState().query.data, id);
       if (session !== undefined && session.measurements){
         console.log('found session in memory');
         return true;
       }
-      if (id===null || id===undefined) {
-        return false;
-      }
+      
       dispatch(requestedSession(id));
 
-      var data = Object.assign({}, time,  {sessionId:id, deviceKey: deviceKey});
+      const data = Object.assign({}, time,  {sessionId:id, deviceKey: deviceKey}, {csrf: getState().query.csrf});
 
-      return deviceAPI.getSession(data).then(
-        function(response) {
+      return deviceAPI.getSession(data)
+        .then((response) => {
           dispatch(receivedSession(response.success, response.errors, response.session, id));
           return response;
-        },
-        function(error) {
-          dispatch(receivedSession(false, error, {}));
-          return error;
+        })
+        .catch((errors) => {
+          dispatch(receivedSession(false, errors, {}));
+          return errors;
         });
     };
   },
@@ -110,23 +98,23 @@ var DeviceActions = {
       const activeSessionId = getState().query.data[activeSessionIndex].id;
       return dispatch(DeviceActions.fetchSession(activeSessionId, deviceKey, time));
     };
-  },
+    },
   fetchLastSession: function(deviceKey, time) {
     return function(dispatch, getState) {
       const session = getLastSession(getState().query.data);
       const id = session.id;
       if (!id){ return false;}
 
-      //dispatch(setLastSession(id));
      return dispatch(DeviceActions.fetchSession(id, deviceKey, time));
        
     };
   },
   fetchAllSessions: function(deviceKey, time) {
     return function(dispatch, getState) {
+      //TODO: this function should not be used seriously
       console.log('fetching all sessions');
-      //const session = getLastSession(getState().device.query.data);
-      var sessions = getState().query.data;
+      
+      const sessions = getState().query.data;
       console.log('sessions');
       console.log(sessions);
       sessions.forEach(function(session) {
@@ -135,6 +123,12 @@ var DeviceActions = {
         
         return dispatch(DeviceActions.fetchSession(id, deviceKey, time));
       });
+    };
+  },
+  setCsrf: function(csrf) {
+    return {
+      type: types.QUERY_SET_CSRF,
+      csrf: csrf 
     };
   },
   // time is of type Object with
@@ -147,13 +141,13 @@ var DeviceActions = {
   },
   setActiveDevice: function(deviceKey) {
     return {
-      type: types.QUERY_SET_ACTIVE,
+      type: types.QUERY_SET_ACTIVE_DEVICE,
       deviceKey: deviceKey
     };
   },
   resetActiveDevice: function() {
     return {
-      type: types.QUERY_RESET_ACTIVE,
+      type: types.QUERY_RESET_ACTIVE_DEVICE,
     };
   },
   resetQuery: function() {

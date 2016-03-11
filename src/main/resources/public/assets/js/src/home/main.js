@@ -20,31 +20,25 @@ var UserActions = require('./actions/UserActions');
 
 var getDefaultDevice = require('./utils/device').getDefaultDevice;
 
-
-store.dispatch(LocaleActions.setLocale(properties.locale)).then(function() {
-  if (properties.reload){
-    store.dispatch(UserActions.refreshProfile()).then(function(response) {
-      const devices = response.profile.devices;
-      const device = getDefaultDevice(devices);
-      if (device){
-        store.dispatch(DeviceActions.setActiveDevice(device.deviceKey));
-      }
-      
+store.dispatch(LocaleActions.setLocale(properties.locale))
+  .then((response) => {
+    if (properties.reload){
+      store.dispatch(UserActions.refreshProfile())
+        .then((response) =>{
+          const devices = response.profile.devices;
+          const device = getDefaultDevice(devices);
+          if (device){
+            store.dispatch(DeviceActions.setActiveDevice(device.deviceKey));
+          }
+          init();
+        });
+    }
+    else {
       init();
-    }, function(error) {
-        console.log('refresh profile problem');
-        console.log(error);
-});
-  }
-  else {
-    init();
-  }
-}, function(e) {
-    console.log('set locale problem');
-    console.log(e);
+    }
 });
     
-var init = function() {
+const init = function() {
   ReactDOM.render(
     <ReduxProvider store={store}>
       <Router 

@@ -29,9 +29,9 @@ var history = function (state, action) {
         });
       
       case types.HISTORY_SET_ACTIVE_SESSION_INDEX:
-        var intId = parseInt(action.id);
+        const intId = parseInt(action.id);
         if (typeof(intId) !== "number") {
-          throw('can\'t set non-integer as index');
+          throw new Error('can\'t set non-integer as index');
         }
         return Object.assign({}, state, {
           activeSessionIndex: intId

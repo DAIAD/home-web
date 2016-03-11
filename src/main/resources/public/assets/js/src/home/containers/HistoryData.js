@@ -11,7 +11,6 @@ var HistoryActions = require('../actions/HistoryActions');
 var { getAvailableDevices, getDeviceTypeByKey } = require('../utils/device');
 var timeUtil = require('../utils/time');
 
-
 var HistoryData = React.createClass({
   componentWillMount: function() {
     if (this.props.activeDevice) {
@@ -66,12 +65,8 @@ function mapDispatchToProps(dispatch, ownProps) {
       return dispatch(DeviceActions.fetchAllSessions(deviceKey, time));
     },
     queryAndFetchAllSessions: function(deviceKey, time) {
-      return this.querySessions(deviceKey, time).then(
-        (response) => this.fetchAllSessions(deviceKey, time), 
-          (error) => console.log(error));
-    },
-    querySessionsIfEmpty: function(deviceKey, time) {
-      return dispatch(DeviceActions.querySessionsIfEmpty(deviceKey, time));
+      return this.querySessions(deviceKey, time)
+        .then((response) => this.fetchAllSessions(deviceKey, time));
     },
     queryMeter: function(deviceKey, time) {
       return dispatch(MeterActions.getHistory(deviceKey, time));
@@ -82,8 +77,8 @@ function mapDispatchToProps(dispatch, ownProps) {
         this.queryAndFetchAllSessions(deviceKey, time); 
       }
       else if (devType === 'METER') {
-        return this.queryMeter(deviceKey, time).then(
-          () => this.setQueryFilter('volume'));
+        return this.queryMeter(deviceKey, time)
+          .then(() => this.setQueryFilter('volume'));
       }
     }
   };

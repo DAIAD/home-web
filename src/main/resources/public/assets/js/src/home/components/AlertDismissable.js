@@ -31,7 +31,7 @@ var ErrorAlert = React.createClass({
       if(!this.state.alertVisible) {
         return null;
       }
-      var errors = this.props.errors.map(function(e, index) {
+      const errors = this.props.errors.map(function(e, index) {
         return (<p key={{index}}><FormattedMessage id={e.code}/></p>);
       });
       

@@ -45,7 +45,7 @@ var PortalMixin = {
   },
   
   _createContainer : function(id) {
-    var parent = ReactDOM.findDOMNode(this) || document.body;
+    let parent = ReactDOM.findDOMNode(this) || document.body;
     this._element = parent.appendChild(document.createElement('div'));
 
     this._element.setAttribute('id', id);
@@ -62,7 +62,7 @@ var PortalMixin = {
   },
 
   componentDidMount : function() {
-    var id = null;
+    let id = null;
     if (this.props.prefix) {
       id = _.uniqueId(this.props.prefix);
     } else {

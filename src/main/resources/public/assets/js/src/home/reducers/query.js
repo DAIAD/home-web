@@ -7,6 +7,7 @@ var query = function (state, action) {
   //initial state
   if (state === undefined) {
     state = {
+      csrf: null,
       status: {
         isLoading: false,
         success: null,
@@ -52,18 +53,23 @@ var query = function (state, action) {
           });
         }
         break;
-            
+      
+      case types.QUERY_SET_CSRF:
+        return Object.assign({}, state, {
+          csrf: action.csrf 
+        });
+     
       case types.QUERY_SET_TIME:
         return Object.assign({}, state, {
           time: Object.assign({}, state.time, action.time)
         });
 
-      case types.QUERY_SET_ACTIVE:
+      case types.QUERY_SET_ACTIVE_DEVICE:
         return Object.assign({}, state, {
           activeDevice: action.deviceKey
         });
       
-      case types.QUERY_RESET_ACTIVE:
+      case types.QUERY_RESET_ACTIVE_DEVICE:
         return Object.assign({}, state, {
           activeDevice: null
         });
@@ -90,7 +96,7 @@ var query = function (state, action) {
         switch (action.success) {
           
           case true:
-            var updated = updateOrAppendToSession(state.data, action.data, action.id);
+            const updated = updateOrAppendToSession(state.data, action.data, action.id);
             return Object.assign({}, state, {
               status: {
                 isLoading: false,

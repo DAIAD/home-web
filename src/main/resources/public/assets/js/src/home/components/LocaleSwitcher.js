@@ -5,7 +5,7 @@ var injectIntl = require('react-intl').injectIntl;
 // Actions
 var LocaleActions = require('../actions/LocaleActions');
 
-var LOCALES = require('../constants/HomeConstants').LOCALES;
+const LOCALES = require('../constants/HomeConstants').LOCALES;
 
 // Components
 var bs = require('react-bootstrap');
@@ -18,9 +18,9 @@ var LocaleSwitcher = React.createClass({
     this.props.onLocaleSwitch(value);
   },
   render: function() {
-    var locale = this.props.locale;
-    var _t = this.props.intl.formatMessage;
-    var translationKey = 'locale.' + locale;
+    const locale = this.props.locale;
+    const _t = this.props.intl.formatMessage;
+    const translationKey = `locale.${locale}`;
     return (
       <div className="language-switcher">
         <bs.DropdownButton
@@ -30,7 +30,7 @@ var LocaleSwitcher = React.createClass({
           onSelect={this.handleChange}>
           {
             LOCALES.map(function(locale) {
-              var translationKey = 'locale.' + locale;
+              const translationKey = `locale.${locale}`;
               return (
                 <bs.MenuItem key={locale} eventKey={locale} value={locale} >{_t({ id: translationKey})}</bs.MenuItem>
               );

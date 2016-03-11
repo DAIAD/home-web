@@ -41,8 +41,8 @@ var user = function (state, action) {
             },
             isAuthenticated: false,
           });
-        }
-        break;
+      }
+      return state;
 
     case types.USER_REQUESTED_LOGOUT:
       return Object.assign({}, state, {
@@ -73,7 +73,7 @@ var user = function (state, action) {
             }
           });
         }
-        break;
+        return state;
 
     default:
       return state;

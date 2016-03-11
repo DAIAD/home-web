@@ -32,7 +32,7 @@ var InfoBox = React.createClass({
   },
   render: function() {
     const { title, highlight, classContainer, classLeft, classRight, improved, compareText, extraText } = this.props;
-    var improvedDiv = (<div/>);
+    let improvedDiv = (<div/>);
     
     if (improved === true) {
       improvedDiv = (<img src="/assets/images/svg/success.svg"/>);
@@ -134,11 +134,7 @@ var InfoPanel = React.createClass({
     }
   },
   render: function() {
-    console.log('info panel');
-    console.log('last shower');
-    console.log(this.props.lastShower);
-
-    var layouts = [
+    const layouts = [
       {x:0, y:0, w:6, h:1, i:"0"},
       {x:0, y:1, w:2, h:1, i:"1"}, 
       {x:2, y:1, w:2, h:2, i:"2"}, 
@@ -272,11 +268,5 @@ function addZero(i) {
     return i;
 }
 
-const dayFormatter = function(timestamp){
-  var date = new Date(timestamp);
-  return (addZero(date.getHours()) + ':' +
-          addZero(date.getMinutes()) + ':' +
-          addZero(date.getSeconds())
-        );
-};
+
 module.exports = Dashboard;

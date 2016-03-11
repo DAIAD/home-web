@@ -12,8 +12,7 @@ var Login = React.createClass({
 
   },
   render: function() {
-    var _t = this.props.intl.formatMessage;
-    var component;
+    const _t = this.props.intl.formatMessage;
     if(this.props.isAuthenticated) {
       return (<div/>);
     }
@@ -36,7 +35,7 @@ var Login = React.createClass({
         <br/>
         <div className="login-errors">
           {
-            this.props.errors?(<FormattedMessage id={"errors."+this.props.errors} />):(<div/>)
+            this.props.errors?(<FormattedMessage id={`errors.${this.props.errors}`} />):(<div/>)
         }
       </div>
     </form>

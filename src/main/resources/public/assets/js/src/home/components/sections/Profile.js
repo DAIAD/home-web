@@ -18,8 +18,8 @@ var ProfileForm = React.createClass({
     //HomeActions.updateProfile(this.state.profile);
   },
   render: function() {
-    var profile = this.props.profile;
-    var _t = this.props.intl.formatMessage;
+    const profile = this.props.profile;
+    const _t = this.props.intl.formatMessage;
     return (
       <form id="form-profile" className="col-xs-5" >
         <div className="form-group">
@@ -44,7 +44,6 @@ var ProfileForm = React.createClass({
 
 var Profile = React.createClass({
   render: function() {
-    console.log('rendering profile');
     return (
       <MainSection id="section.profile"> 
         <ProfileForm {...this.props} /> 

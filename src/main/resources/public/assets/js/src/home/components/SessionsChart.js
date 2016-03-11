@@ -25,12 +25,12 @@ var SessionsChart = React.createClass({
   componentWillReceiveProps: function(nextProps) {
   },
   render: function() {
-    var colors = ['#2D3580', '#CD4D3E'];
-    var areaStyle = this.props.sparkline?null:{
+    const colors = ['#2D3580', '#CD4D3E'];
+    const areaStyle = this.props.sparkline?null:{
             color:  'rgba(232,232,237, 0.7)',
             type: 'default'
           };
-    var seriesArray = this.props.data.map((x, i) => { 
+    const seriesArray = this.props.data.map((x, i) => { 
       return {
         name: x.title,
         type: this.props.type,
@@ -74,7 +74,7 @@ var SessionsChart = React.createClass({
     };
     });
 
-    var xAxis = [
+    const xAxis = [
       {
         show: this.props.sparkline?false:true,
         type : this.props.xAxis,
@@ -103,12 +103,12 @@ var SessionsChart = React.createClass({
       },
     ];
 
-    var yAxis = [
+    const yAxis = [
       {
         show: this.props.sparkline?false:true,
         type : 'value',
         axisLabel : {
-          formatter: '{value} ' + this.props.mu,
+          formatter: `{value}  ${this.props.mu}`,
           textStyle: {
             //fontFamily: "OpenSansCondensed",
             color: '#808285',
@@ -139,68 +139,61 @@ var SessionsChart = React.createClass({
           width: this.props.width,
         }} 
         options = {{
-            title : {
-              text: this.props.title,
-              padding: this.props.title.length?[-2, 0, 50, 30]:5,
-              textStyle: {
-                //fontFamily: "OpenSansCondensed",
-                color: '#808285'
-              },
-              //x: "center",
-              subtext: this.props.subtitle
+          title : {
+            text: this.props.title,
+            padding: this.props.title.length?[-2, 0, 50, 30]:5,
+            textStyle: {
+              //fontFamily: "OpenSansCondensed",
+              color: '#808285'
             },
-            tooltip : {
-              //trigger: 'axis'
-              trigger: 'item',
-              backgroundColor: '#2D3580',
-              borderColor: '#2D3580',
-              padding: 7,
-              textStyle: {
-                //fontFamily: "OpenSansCondensed",
-                color: '#fff'
-              },
+            //x: "center",
+            subtext: this.props.subtitle
+          },
+          tooltip : {
+            //trigger: 'axis'
+            trigger: 'item',
+            backgroundColor: '#2D3580',
+            borderColor: '#2D3580',
+            padding: 7,
+            textStyle: {
+              //fontFamily: "OpenSansCondensed",
+              color: '#fff'
             },
-            legend: {
-              //data:[this.props.title]
-            },
-            toolbox: {
-                show : false,
-            },
-            backgroundColor: 'rgba(55,230,123,0.0)',
-            color: ['#2D3580', '#A45476'],
-            calculable : false,
-            dataZoom: {
-              show: false,
-              y: 'bottom',  
-              realtime: true,
-              start: 0,
-              end: 100,
-              //backgroundColor: 'rgba(0,0,0,0)',
-              //dataBackgroundColor: '#E8F5FD',
-              //fillerColor: 'rgba(0,0,0,0.4)',
-              handleColor: '#2D3580'
-            },
-            grid: {
-              //show: this.props.sparkline?false:true,
-               x: this.props.xMargin,
-               y: this.props.yMargin,
-               x2: this.props.x2Margin,
-               y2: this.props.y2Margin
-            },
-            xAxis : this.props.invertAxis?yAxis:xAxis,
-            yAxis : this.props.invertAxis?xAxis:yAxis,
-            series : seriesArray
-          }}  
-        />
+          },
+          legend: {
+            //data:[this.props.title]
+          },
+          toolbox: {
+            show : false,
+          },
+          backgroundColor: 'rgba(55,230,123,0.0)',
+          color: ['#2D3580', '#A45476'],
+          calculable : false,
+          dataZoom: {
+            show: false,
+            y: 'bottom',  
+            realtime: true,
+            start: 0,
+            end: 100,
+            //backgroundColor: 'rgba(0,0,0,0)',
+            //dataBackgroundColor: '#E8F5FD',
+            //fillerColor: 'rgba(0,0,0,0.4)',
+            handleColor: '#2D3580'
+          },
+          grid: {
+            //show: this.props.sparkline?false:true,
+            x: this.props.xMargin,
+            y: this.props.yMargin,
+            x2: this.props.x2Margin,
+            y2: this.props.y2Margin
+          },
+          xAxis : this.props.invertAxis?yAxis:xAxis,
+          yAxis : this.props.invertAxis?xAxis:yAxis,
+          series : seriesArray
+        }}  
+      />
     );
   }
 });
-
-const defaultFormatter = function(timestamp){
-  var date = new Date(timestamp);
-  return (date.getDate() + '/' +
-          (date.getMonth()+1) + '/' +
-          date.getFullYear());
-};
 
 module.exports = SessionsChart;

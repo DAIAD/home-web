@@ -11,86 +11,6 @@ var SessionsChart = require('./SessionsChart');
 //Actions
 var DeviceActions = require('../actions/DeviceActions');
 
-var getFriendlyDuration = function(seconds) {
-  if (seconds>3600) {
-    return Math.floor(seconds/3600) + ":" + Math.floor((seconds % 3600)/60) + ":" + (Math.floor((seconds % 3600)/60)) % 60;
-  }
-  else if (seconds>60) {
-    return Math.floor(seconds/60)  + ":" + Math.floor(seconds/60)%60;
-  }
-  else {
-    return "00:" + seconds;
-  }
-};
-
-var getEnergyClass = function(energy) {
-  var scale = "";
-
-  if (energy >= 3675) {
-    scale = "G-";
-  }
-  else if (energy >= 3500) {
-    scale = "G";
-  }
-  else if (energy >= 3325) {
-    scale = "G+";
-  }
-  else if (energy >= 3150) {
-    scale = "F-";
-  }
-  else if (energy >= 2975) {
-    scale = "F";
-  }
-  else if (energy >= 2800) {
-    scale = "F+";
-  }
-  else if (energy >= 2625) {
-    scale = "E-";
-  }
-  else if (energy >= 2450) {
-    scale = "E";
-  }
-  else if (energy >= 2275) {
-    scale = "E+";
-  }
-  else if (energy >= 2100) {
-    scale = "D-";
-  }
-  else if (energy >= 1925) {
-    scale = "D";
-  }
-  else if (energy >= 1750) {
-    scale = "D+";
-  }
-  else if (energy >= 1575) {
-    scale = "C-";
-  }
-  else if (energy >= 1400) {
-    scale = "C";
-  }
-  else if (energy >= 1225) {
-    scale = "C+";
-  }
-  else if (energy >= 1050) {
-    scale = "B-";
-  }
-  else if (energy >= 875) {
-    scale = "B";
-  }
-  else if (energy >= 700) {
-    scale = "B+";
-  }
-  else if (energy >= 525) {
-    scale = "A-";
-  }
-  else if (energy >= 351) {
-    scale = "A";
-  }
-  else if (energy <= 350) {
-    scale = "A+";
-  }
-  return scale;
-};
 
 var SessionItem = React.createClass({
   handleClick: function() {
@@ -98,14 +18,14 @@ var SessionItem = React.createClass({
   },
   render: function() {
     //mockup values
-    var arrowClasses = "fa-arrow-up red";
+    let arrowClasses = "fa-arrow-up red";
     if (this.props.index===2 || this.props.index===4 || this.props.index===0){
       arrowClasses = "fa-arrow-down green";
     }
     return (
       <li className="session-item"> 
         <a onClick={this.handleClick} ref="link" data-id={this.props.data.id} data-index={this.props.index} >
-          <div className="session-item-header col-md-3"><h3>{this.props.data.volume}<span style={{fontSize: '0.6em'}}> lt</span> <i className={"fa " + arrowClasses}/></h3>
+          <div className="session-item-header col-md-3"><h3>{this.props.data.volume}<span style={{fontSize: '0.6em'}}> lt</span> <i className={`fa ${arrowClasses}`}/></h3>
             
           </div>
           <div className="col-md-7">
@@ -118,16 +38,16 @@ var SessionItem = React.createClass({
             {(() => { 
               if (this.props.data.duration) {
                 return (
-                  <span className="session-item-detail"><i className="fa fa-clock-o"/>{getFriendlyDuration(this.props.data.duration)}</span>);
+                  <span className="session-item-detail"><i className="fa fa-clock-o"/>{this.props.data.duration}</span>);
               }
               else {
                 return (null);
               }
             })()}
             {(() => { 
-              if (this.props.data.energy) {
+              if (this.props.data.energyClass) {
                 return (
-              <span className="session-item-detail"><i className="fa fa-flash"/>{getEnergyClass(this.props.data.energy)}</span>);
+              <span className="session-item-detail"><i className="fa fa-flash"/>{this.props.data.energyClass}</span>);
               }
               else {
                 return (null);

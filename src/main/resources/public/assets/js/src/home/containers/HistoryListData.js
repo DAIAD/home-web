@@ -9,6 +9,7 @@ var HistoryActions = require('../actions/HistoryActions');
 
 var { getSessionByIndex } = require('../utils/device');
 var { getFilteredData } = require('../utils/chart');
+var { getFriendlyDuration, getEnergyClass } = require('../utils/general');
 
 var HistoryList = React.createClass({
   componentWillMount: function() {
@@ -22,8 +23,8 @@ var HistoryList = React.createClass({
 });
 
 function mapStateToProps(state, ownProps) {
-  var disabledNextSession = true;
-  var disabledPreviousSession = true;
+  let disabledNextSession = true;
+  let disabledPreviousSession = true;
   if (state.section.history.activeSessionIndex!==null) {
     if (state.query.data[state.section.history.activeSessionIndex+1]) {
       disabledNextSession = false;
@@ -37,7 +38,7 @@ function mapStateToProps(state, ownProps) {
     time: state.query.time,
     activeDevice: state.query.activeDevice,
     sessionFilter: state.section.history.sessionFilter,
-    sessions: state.query.data.map((session) => Object.assign({}, session, {measurements: getFilteredData(session.measurements, state.section.history.sessionFilter)})),
+    sessions: state.query.data.map((session) => Object.assign({}, session, {duration:getFriendlyDuration(session.duration)}, {energyClass:getEnergyClass(session.energy)}, {measurements: getFilteredData(session.measurements, state.section.history.sessionFilter)})),
     activeSessionIndex: state.section.history.activeSessionIndex,
     disabledNext: disabledNextSession,
     disabledPrevious: disabledPreviousSession,

@@ -31,7 +31,7 @@ var MenuItem = React.createClass({
     return (
       <li>
         <Link to={this.props.item.route} className="menu-item" activeClassName="selected">
-          <img className="menu-icon" src={Constants.STATIC + this.props.item.image} />
+          <img className="menu-icon" src={`/assets/${this.props.item.image}`} />
           <span className="menu-span"><FormattedMessage id={this.props.item.title}/></span>
         </Link>
       </li>
@@ -41,7 +41,7 @@ var MenuItem = React.createClass({
 
 var MainMenu = React.createClass({
   render: function() {
-    var items = [{
+    const items = [{
                   name: "dashboard",
                   title: "section.dashboard",
                   image: "images/svg/dashboard.svg",
@@ -84,7 +84,7 @@ var MainMenu = React.createClass({
 
 var UserInfo = React.createClass({
   render: function() {
-    var _t = this.props.intl.formatMessage;
+    const _t = this.props.intl.formatMessage;
     return (
       <div className="user-menu" >
           <div title={_t({id: "section.profile"})}>
@@ -109,13 +109,13 @@ var SettingsMenuItem = React.createClass({
   render: function() {
     const deviceCount = this.props.deviceCount;
     const image = this.state.hover?"images/svg/amphiro_small-green.svg":"images/svg/amphiro_small.svg";
-    var _t = this.props.intl.formatMessage;
+    const _t = this.props.intl.formatMessage;
     return (
       <div title={_t({id: "section.settings"})}>
         <Link to="/settings"
           onMouseEnter={() => {this.setState({hover:true});}}
           onMouseLeave={() => {this.setState({hover:false});}} > 
-          <img src={Constants.STATIC + image} />
+          <img src={`/assets/${image}`} />
           <span className={classNames("deviceCount", "white")}>{deviceCount>0?deviceCount:""}</span>  
         </Link>
       </div>
@@ -131,9 +131,9 @@ var NotificationMenuItem = React.createClass({
     };
   },
   render: function() {
-    var hasUnread = this.props.unreadNotifications>0?"hasUnread":"";
-    var unreadNotifications = hasUnread?this.props.unreadNotifications:"";
-    var _t = this.props.intl.formatMessage;
+    const hasUnread = this.props.unreadNotifications>0?"hasUnread":"";
+    const unreadNotifications = hasUnread?this.props.unreadNotifications:"";
+    const _t = this.props.intl.formatMessage;
     return (
       
       <bs.OverlayTrigger 
@@ -175,18 +175,18 @@ var NotificationList = React.createClass({
     notifications: React.PropTypes.array
   },
   render: function() {
-    var maxLength = Constants.NOTIFICATION_TITLE_LENGTH;
+    const maxLength = Constants.NOTIFICATION_TITLE_LENGTH;
 
     return (
       <div className="notification-list">
       <ul className="list-unstyled">
         {
           this.props.notifications.map(function(notification) {
-            var notificationClass = notification.unread?"unread":"read";
+            const notificationClass = notification.unread?"unread":"read";
             return (
               <li className={notificationClass} >
-                <Link key={notification.id} to={"/notifications/"+notification.id} >
-                  {(notification.title.length>maxLength)?(notification.title.substring(0, maxLength).trim()+'...'):notification.title}
+                <Link key={notification.id} to={`/notifications/${notification.id}`} >
+                  {(notification.title.length>maxLength)?(`${notification.title.substring(0, maxLength).trim()}...`):notification.title}
                 </Link>
               </li>
             );
@@ -200,7 +200,7 @@ var NotificationList = React.createClass({
 
 var NotificationArea = React.createClass({
   render: function() {
-    var unreadNotifications = 0;
+    let unreadNotifications = 0;
     this.props.notifications.forEach(function(notification) {
       if (notification.unread){
         unreadNotifications += 1;

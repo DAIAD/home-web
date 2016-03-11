@@ -37,7 +37,7 @@ var Counter = React.createClass({
   },
 
     render: function() {
-    var content = null;
+    let content = null;
 
       switch(this.props.format) {
         case Format.Number:

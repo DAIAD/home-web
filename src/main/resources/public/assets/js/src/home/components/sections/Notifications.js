@@ -15,7 +15,7 @@ var NotificationMessage = React.createClass({
     if (!this.props.notification){
       return (<div />);
     }
-    var { notification } = this.props;
+    const { notification } = this.props;
     return (
       <div className="notification">
         <h3 className="notification-header">{notification.title}</h3>
@@ -30,8 +30,8 @@ var NotificationMessage = React.createClass({
 var Notifications = React.createClass({
   
   render: function() {
-    var notId = parseInt(this.props.params.id);
-    var notificationItem = Constants.data.recommendations.find((item) => (item.id === notId));
+    const notId = parseInt(this.props.params.id);
+    const notificationItem = Constants.data.recommendations.find((item) => (item.id === notId));
 
     return (
       <section>
