@@ -6,10 +6,13 @@ var configureStore = require('./store/configureStore');
 var Router = require('react-router').Router;
 require('babel-polyfill');
 
-const history = require('./routing/history');
+var history = require('./routing/history');
 var routes = require('./routing/routes');
+var store = configureStore(history);
 
-var store = configureStore();
+var { syncHistoryWithStore } = require('react-router-redux');
+history = syncHistoryWithStore(history, store);
+
 
 //Actions
 var LocaleActions = require('./actions/LocaleActions');

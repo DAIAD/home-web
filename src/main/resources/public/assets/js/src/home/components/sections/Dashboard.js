@@ -118,7 +118,7 @@ var InfoPanel = React.createClass({
   },
   onResizeStop: function(layout, oldItem, newItem, placeholder, e, element){
     if (newItem.i === "2") {
-      this.refs.lastShower.forceUpdate();
+      //this.refs.lastShower.forceUpdate();
     }
   },
   render: function() {
@@ -162,7 +162,7 @@ var InfoPanel = React.createClass({
                 classRight="row padded"
                 improved={true}
                 compareText={<span>You consumed a total of <b>{this.props.lastShower.volume + " lt"}</b> in <b>{this.props.lastShower.duration + " secs"}</b>.</span>}
-                highlight={<LastShowerChart ref="lastShower" {...this.props} />}
+                highlight={<LastShowerChart {...this.props} />}
                 extraText=""
               />);
           }
@@ -190,7 +190,6 @@ var InfoPanel = React.createClass({
         compareText={<span><b>5%</b> more than last year</span>}
         extraText="See more"
         onClick={() => this.props.linkToHistory({
-          activeSessionIndex:null,
           filter: 'energy',
           timeFilter: 'year'
         })}

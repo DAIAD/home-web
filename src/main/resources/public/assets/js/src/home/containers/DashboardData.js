@@ -52,11 +52,12 @@ function mapStateToProps(state, ownProps) {
 function mapDispatchToProps(dispatch) {
   return {
     linkToHistory: function(options) {
-      dispatch(HistoryActions.setActiveSessionIndex(options.activeSessionIndex));
+      dispatch(HistoryActions.resetActiveSessionIndex());
       dispatch(HistoryActions.setQueryFilter(options.filter));
       dispatch(HistoryActions.setTimeFilter(options.timeFilter));
-
-      return dispatch(push('/history'));
+      dispatch(DeviceActions.setTime(Object.assign({}, timeUtil.thisYear(), {granularity:4})));
+       
+      dispatch(push('/history'));
     },
     getLastSession: function(deviceKey) {
       const time = Object.assign({}, timeUtil.thisMonth(), {granularity: 0});

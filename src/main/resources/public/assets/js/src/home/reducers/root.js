@@ -4,12 +4,12 @@ var user = require('./user');
 var query = require('./query');
 var history = require('./history');
 
-var { routeReducer } = require('react-router-redux');
+var { routerReducer } = require('react-router-redux');
 
 var rootReducer = combineReducers({
   locale,
   user,
-  routing: routeReducer,
+  routing: routerReducer,
   query,
   section: combineReducers({
     history
