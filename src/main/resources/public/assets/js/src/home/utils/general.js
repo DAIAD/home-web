@@ -22,18 +22,22 @@ const flattenMessages = function(nestedMessages, prefix) {
     }, {});
 };
 
+const addZero = function(input) {
+  return input<10?`0${input}`:`${input}`;
+};
+
 const getFriendlyDuration = function(seconds) {
   if (seconds>3600) {
-    return  (Math.floor(seconds/3600)) + ":" +
-            Math.floor((seconds % 3600)/60) + ":" +
-            Math.floor((seconds % 3600)/60) % 60;
+    return  (addZero(Math.floor(seconds/3600))) + ":" +
+            addZero(Math.floor((seconds % 3600)/60)) + ":" +
+            addZero(Math.floor((seconds % 3600)/60) % 60);
   }
   else if (seconds>60) {
-    return Math.floor(seconds/60) + ":" +
-           Math.floor(seconds/60)%60;
+    return addZero(Math.floor(seconds/60)) + ":" +
+           addZero(Math.floor(seconds/60)%60);
   }
   else {
-    return `00:${seconds}`;
+    return "00:" + addZero(seconds);
   }
 };
 

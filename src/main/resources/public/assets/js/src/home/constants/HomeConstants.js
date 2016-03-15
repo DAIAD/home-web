@@ -3,6 +3,26 @@ const constants = {
   STATIC : "/assets/",
   NOTIFICATION_TITLE_LENGTH: 50,
   LOCALES: ["en", "el", "de", "es"],
+  MAIN_MENU: [{
+    name: "dashboard",
+    title: "section.dashboard",
+    image: "images/svg/dashboard.svg",
+    //image: "images/svg/dashboard-side-off.svg",
+    route:"/dashboard"
+  },
+  {
+    name: "history",
+    title: "section.history",
+    //image: "images/svg/stats-new-side-off.svg",
+    image: "images/svg/dashboard.svg",
+    route:"/history"
+  },
+  {
+    name: "commons",
+    title: "section.commons",
+    image: "images/svg/dashboard.svg",
+    route:"/commons"
+  }],
   data : {
     recommendations: [
       {

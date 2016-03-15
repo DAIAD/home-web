@@ -50,7 +50,7 @@ var Device = React.createClass({
 
 var DevicesForm = React.createClass({
   
-  _onSubmit: function(e) {
+  onSubmit: function(e) {
     e.preventDefault();
     //HomeActions.updateProfile(this.state.profile);
   },
@@ -72,7 +72,7 @@ var DevicesForm = React.createClass({
                 );
             }.bind(this))
           }
-        <bs.ButtonInput style={{marginTop: "20px"}} type="submit" value={_t({id:"forms.submit"})} onClick={this._onSubmit} />
+        <bs.ButtonInput style={{marginTop: "20px"}} type="submit" value={_t({id:"forms.submit"})} onClick={this.onSubmit} />
         </bs.Accordion>
       </form>
     );

@@ -33,6 +33,7 @@ function mapStateToProps(state, ownProps) {
     data: [{title:state.section.history.filter, data:getFilteredData(state.query.data, state.section.history.filter)}],
     xMin: state.query.time.startDate,
     xMax: state.query.time.endDate,
+    yMargin: 0,
     fontSize: 13,
     type: (state.section.history.filter==='showers')?'bar':'line',
     formatter: selectTimeFormatter(state.section.history.timeFilter, ownProps.intl),

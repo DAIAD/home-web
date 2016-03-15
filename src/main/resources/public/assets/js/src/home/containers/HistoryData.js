@@ -14,14 +14,17 @@ var timeUtil = require('../utils/time');
 var HistoryData = React.createClass({
   componentWillMount: function() {
     if (this.props.activeDevice) {
-      this.props.queryAndFetchAllSessions(this.props.activeDevice, this.props.time);
+      //this.props.queryAndFetchAllSessions(this.props.activeDevice, this.props.time);
+      this.props.querySessions(this.props.activeDevice, this.props.time);
     }
   },
   componentWillReceiveProps: function(nextProps) {
     if (!this.props.activeDevice && nextProps.activeDevice) {
-      this.props.queryAndFetchAllSessions(nextProps.activeDevice, this.props.time);
+      //this.props.queryAndFetchAllSessions(nextProps.activeDevice, this.props.time);
+      this.props.querySessions(nextProps.activeDevice, this.props.time);
     }
   },
+
   render: function() {
     return (
       <History {...this.props} />
@@ -74,7 +77,7 @@ function mapDispatchToProps(dispatch, ownProps) {
     queryDeviceOrMeter: function(deviceKey, time) {
       const devType = getDeviceTypeByKey(this.devices, deviceKey);
       if (devType === 'AMPHIRO') {
-        this.queryAndFetchAllSessions(deviceKey, time); 
+        this.querySessions(deviceKey, time); 
       }
       else if (devType === 'METER') {
         return this.queryMeter(deviceKey, time)

@@ -18,10 +18,28 @@ var DeviceActions = require('../../actions/DeviceActions');
 var { getDeviceByKey } = require('../../utils/device');
 var timeUtil = require('../../utils/time');
 
+function TimeNavigator(props) {
+    return (
+      <div className="time-navigator">
+        <a className="pull-left" onClick={props.handleTimePrevious}>
+          <img src="/assets/images/svg/arrow-big-left.svg" />
+        </a>
+        <div className="pull-left" style={{marginLeft:230, marginTop:10}}>
+          <FormattedDate value={props.time.startDate} day="numeric" month="long" year="numeric" /> - <FormattedDate value={props.time.endDate} day="numeric" month="long" year="numeric" />
+        </div>
+        <a className="pull-right" onClick={props.handleTimeNext}>
+          <img src="/assets/images/svg/arrow-big-right.svg" />
+        </a>
+      </div>
+    );
+}
+
 var History = React.createClass({
+  
   handleTypeSelect: function(key){
     this.props.setQueryFilter(key); 
   },
+  
   handleTimeSelect: function(key){
     let time = {};
     if (key==="always"){
@@ -48,8 +66,7 @@ var History = React.createClass({
       time.granularity = 0;
     }
     else{
-      console.log('oops, shouldn\'t be here');
-      return;
+      throw new Error('oops, shouldn\'t be here');
     }
     this.props.setTimeFilter(key);
     this.props.setTimeAndQuery(time);
@@ -57,11 +74,9 @@ var History = React.createClass({
   },
   handleTimePrevious: function() { 
     this.props.setTimeAndQuery(this.props.previousPeriod);
-
   },
   handleTimeNext: function() { 
     this.props.setTimeAndQuery(this.props.nextPeriod);
-
   },
   handleDeviceChange: function(e, value) {
     this.props.setActiveAndQuery(value);
@@ -84,29 +99,27 @@ var History = React.createClass({
           </ul>
         </Topbar>
       <MainSection id="section.history">
-          
-          <div>
-        
+        <div>
           <Sidebar> 
-              {(() => {
-                if (this.props.devType === 'AMPHIRO') {
-                  return (
-                    <bs.Tabs style={{marginTop: 60}} position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
-                      <bs.Tab eventKey="showers" title={_t({id: "history.showers"})}/>
-                      <bs.Tab eventKey="duration" title={_t({id: "history.duration"})} />
-                      <bs.Tab eventKey="volume" title={_t({id: "history.volume"})}/>
-                      <bs.Tab eventKey="temperature" title={_t({id: "history.temperature"})}/>
-                      <bs.Tab eventKey="energy" title={_t({id: "history.energy"})}/>
-                    </bs.Tabs>);
-                }
-                else if (this.props.devType === 'METER') {
-                  return (
-                    <bs.Tabs style={{marginTop: 60}} position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
-                      <bs.Tab eventKey="volume" title={_t({id: "history.volume"})}/>
-                    </bs.Tabs>);
-                }
-              })()
-              }
+          {(() => {
+            if (this.props.devType === 'AMPHIRO') {
+              return (
+                <bs.Tabs style={{marginTop: 60}} position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
+                  <bs.Tab eventKey="showers" title={_t({id: "history.showers"})}/>
+                  <bs.Tab eventKey="duration" title={_t({id: "history.duration"})} />
+                  <bs.Tab eventKey="volume" title={_t({id: "history.volume"})}/>
+                  <bs.Tab eventKey="temperature" title={_t({id: "history.temperature"})}/>
+                  <bs.Tab eventKey="energy" title={_t({id: "history.energy"})}/>
+                </bs.Tabs>);
+            }
+            else if (this.props.devType === 'METER') {
+              return (
+                <bs.Tabs style={{marginTop: 60}} position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
+                  <bs.Tab eventKey="volume" title={_t({id: "history.volume"})}/>
+                </bs.Tabs>);
+            }
+          })()
+          }
           </Sidebar>
           
           <div className="primary">
@@ -138,24 +151,13 @@ var History = React.createClass({
                }
             </bs.Tabs>
             
-            <HistoryChartData />
-
-            <br/>
-            <div >
-              <a className="pull-left" onClick={this.handleTimePrevious}>
-                <img src="/assets/images/svg/arrow-big-left.svg" />
-              </a>
-              <div className="pull-left" style={{marginLeft:230, marginTop:10}}>
-                <FormattedDate value={this.props.time.startDate} day="numeric" month="long" year="numeric" /> - <FormattedDate value={this.props.time.endDate} day="numeric" month="long" year="numeric" />
-              </div>
-              <a className="pull-right" onClick={this.handleTimeNext}>
-                <img src="/assets/images/svg/arrow-big-right.svg" />
-              </a>
-            </div>
-
-            <br /> 
+            <TimeNavigator 
+              handleTimePrevious={this.handleTimePrevious} 
+              handleTimeNext={this.handleTimeNext}
+              time={this.props.time}
+            /> 
             
-            <span style={{marginTop:30}} />
+            <HistoryChartData />
 
             <HistoryListData />
 

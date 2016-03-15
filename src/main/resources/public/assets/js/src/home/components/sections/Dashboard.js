@@ -10,118 +10,106 @@ var SessionsChart = require('../SessionsChart');
 
 var Budget = require('../Budget');
 
-/* Be Polite, greet user */
-var SayHello = React.createClass({
-  render: function() {
-    return (
-      <div >
-        <h3><FormattedMessage id="dashboard.hello" values={{name:this.props.firstname}} /></h3>
-      </div>
-    );
-  }
-});
 
-var InfoBox = React.createClass({
-  getDefaultProps: function() {
-    return {
-      classContainer: 'row',
-      classLeft: 'col-md-5',
-      classRight: 'col-md-7',
-      improved: null
-    };
-  },
-  render: function() {
-    const { title, highlight, classContainer, classLeft, classRight, improved, compareText, extraText } = this.props;
-    let improvedDiv = (<div/>);
-    
-    if (improved === true) {
-      improvedDiv = (<img src="/assets/images/svg/success.svg"/>);
-    }
-    else if (improved === false) {
-      improvedDiv = (<img src="/assets/images/svg/warning.svg"/>);
-    }
-    return (
-      <div className='info-box'>
-        <h3>{title}</h3>
-        <div className={classContainer}>
-          <div className={classLeft}>
-            {highlight} 
-          </div>
-          <div className={classRight}>
-            {improvedDiv}
-            <span> {compareText}</span>
-            <br/>
-            <a href="#">{extraText}</a>
-          </div>
+/* Be Polite, greet user */
+function SayHello (props) {
+  return (
+    <div >
+      <h3><FormattedMessage id="dashboard.hello" values={{name:props.firstname}} /></h3>
+    </div>
+  );
+}
+
+function InfoBox (props) {
+  
+  const { title, highlight, compareText, extraText, improved } = props;
+  const classLeft = props.classLeft || 'col-md-5';
+  const classRight = props.classRight || 'col-md-7';
+  const classContainer = props.classContainer || 'row';
+  
+  let improvedDiv = (<div/>);
+  if (improved === true) {
+    improvedDiv = (<img src="/assets/images/svg/success.svg"/>);
+  }
+  else if (improved === false) {
+    improvedDiv = (<img src="/assets/images/svg/warning.svg"/>);
+  }
+  return (
+    <div className='info-box'>
+      <h3>{title}</h3>
+      <div className={classContainer}>
+        <div className={classLeft}>
+          {highlight} 
+        </div>
+        <div className={classRight}>
+          {improvedDiv}
+          <span> {compareText}</span>
+          <br/>
+          <a onClick={props.onClick}>{extraText}</a>
         </div>
       </div>
-    );
-  }
-});
+    </div>
+  );
+}
 
-var LastShowerChart = React.createClass({
-  render: function() {
-    if (!this.props.lastShower){
-      return (<div/>);
-    }
-    else if (this.props.lastShower.history){
-      return (<h4>Oops, can't graph due to limited data..</h4>);  
-    }
-    else {
-      return (
-        <SessionsChart
-          height={150}
-          width='100%'  
-          title=""
-          subtitle=""
-          mu="lt"
-          formatter={this.props.chartFormatter}
-          yMargin={10}
-          fontSize={12}
-          type="line"
-          data={this.props.chartData}
-        />);
-    }
+function LastShowerChart (props) {
+  if (!props.lastShower){
+    return (<div/>);
   }
-});
-
-var ForecastingChart = React.createClass({
-  render: function() {
+  else if (props.lastShower.history){
+    return (<h4>Oops, can't graph due to limited data..</h4>);  
+  }
+  else {
     return (
       <SessionsChart
-        height={180}
-        width={250} 
+        height={150}
+        width='100%'  
         title=""
         subtitle=""
         mu="lt"
-        type="bar"
-        xMargin={50}
+        formatter={props.chartFormatter}
         yMargin={10}
-        xAxis="category"
-        xAxisData={[2014, 2015, 2016]}
-        data={[{title:'Consumption', data:[100, 200, 150]}]}
+        fontSize={12}
+        type="line"
+        data={props.chartData}
       />);
-    }
-});
+  }
+}
 
-var BreakdownChart = React.createClass({
-  render: function() {
-    return (
-      <SessionsChart
-        height={250}
-        width={400}
-        mu="lt"
-        type="bar"
-        invertAxis={true}
-        xMargin={80}
-        yMargin={10}
-        y2Margin={50}
-        xAxis="category"
-        xAxisData={["toilet", "faucet", "shower", "kitchen"]}
-        data={[{title:'Consumption', data:[23, 25, 10, 20]}]}
-      />);
-    }
-});
+function ForecastingChart (props) {
+  return (
+    <SessionsChart
+      height={180}
+      width={250} 
+      title=""
+      subtitle=""
+      mu="lt"
+      type="bar"
+      xMargin={50}
+      yMargin={10}
+      xAxis="category"
+      xAxisData={[2014, 2015, 2016]}
+      data={[{title:'Consumption', data:[100, 200, 150]}]}
+    />);
+}
+
+function BreakdownChart (props) {
+  return (
+    <SessionsChart
+      height={250}
+      width={400}
+      mu="lt"
+      type="bar"
+      invertAxis={true}
+      xMargin={80}
+      yMargin={10}
+      y2Margin={50}
+      xAxis="category"
+      xAxisData={["toilet", "faucet", "shower", "kitchen"]}
+      data={[{title:'Consumption', data:[23, 25, 10, 20]}]}
+    />);
+}
+
 var InfoPanel = React.createClass({
   onLayoutChange: function(layout) {
     //console.log('layout changed');
@@ -201,6 +189,11 @@ var InfoPanel = React.createClass({
         highlight={(()=>(<h2>850 kWh</h2>))()}
         compareText={<span><b>5%</b> more than last year</span>}
         extraText="See more"
+        onClick={() => this.props.linkToHistory({
+          activeSessionIndex:null,
+          filter: 'energy',
+          timeFilter: 'year'
+        })}
         />
       </div>
 
@@ -243,30 +236,14 @@ var InfoPanel = React.createClass({
 });
 
 
-var Dashboard = React.createClass({
-
-  render: function() {
-    console.log('rendering dashoard');
-    return (
-      <MainSection id="section.dashboard">
-        <br/>
-        <SayHello firstname={this.props.firstname} style={{margin:50}}/>
-
-        <InfoPanel {...this.props} />
-
-        
-        
-      </MainSection>
-    );
-  }
-});
-
-function addZero(i) {
-    if (i < 10) {
-        i = "0" + i;
-    }
-    return i;
+function Dashboard (props) {
+  return (
+    <MainSection id="section.dashboard">
+      <br/>
+      <SayHello firstname={props.firstname} style={{margin:50}}/>
+      <InfoPanel {...props} />
+    </MainSection>
+  );
 }
-
 
 module.exports = Dashboard;

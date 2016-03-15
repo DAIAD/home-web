@@ -17,11 +17,9 @@ var SessionItem = React.createClass({
     this.props.onOpen(this.refs.link.dataset.id, this.refs.link.dataset.index);
   },
   render: function() {
-    //mockup values
-    let arrowClasses = "fa-arrow-up red";
-    if (this.props.index===2 || this.props.index===4 || this.props.index===0){
-      arrowClasses = "fa-arrow-down green";
-    }
+
+    let arrowClasses = this.props.data.better===null?"":this.props.data.better?"fa-arrow-down green":"fa-arrow-up red";
+    
     return (
       <li className="session-item"> 
         <a onClick={this.handleClick} ref="link" data-id={this.props.data.id} data-index={this.props.index} >
@@ -30,9 +28,7 @@ var SessionItem = React.createClass({
           </div>
           <div className="col-md-7">
             <div className="pull-right">
-              {
-                //mockup values
-               }
+
             <span className="session-item-detail">Stelios</span>
             <span className="session-item-detail"><i className="fa fa-calendar"/><FormattedRelative value={new Date(this.props.data.timestamp)} /></span> 
             {(() => { 
@@ -73,29 +69,27 @@ var SessionItem = React.createClass({
   }
 });
 
-var SparklineChart = React.createClass({
-  render: function() {
-    if (!this.props.data || !this.props.data.length || this.props.data.length<=1 || this.props.history) {
-      return (<h3>-</h3>);
-    }
-    return (
-      <SessionsChart
-        height={80}
-        width='100%'  
-        title=""
-        subtitle=""
-        mu=""
-        formatter={(x) => this.props.intl.formatDate(x)}
-        type="line"
-        sparkline={true}
-        xMargin={5}
-        yMargin={0}
-        x2Margin={2}
-        y2Margin={0}
-        data={[{title: 'Consumption', data:this.props.data}]}
-      />);
+function SparklineChart (props) {
+  if (!props.data || !props.data.length || props.data.length<=1 || props.history) {
+    return (<h3>-</h3>);
   }
-});
+  return (
+    <SessionsChart
+      height={80}
+      width='100%'  
+      title=""
+      subtitle=""
+      mu=""
+      formatter={(x) => props.intl.formatDate(x)}
+      type="line"
+      sparkline={true}
+      xMargin={5}
+      yMargin={0}
+      x2Margin={2}
+      y2Margin={0}
+      data={[{title: 'Consumption', data:props.data}]}
+    />);
+}
 
 
 var SessionsList = React.createClass({
@@ -114,12 +108,9 @@ var SessionsList = React.createClass({
     this.props.setSessionFilter('volume');
   },
   onNext: function() {
-    
-    //this.props.setActiveSessionIndex(index+1);
     this.props.getNextSession(this.props.activeDevice, this.props.time);
   },
   onPrevious: function() {
-    //this.props.setActiveSessionIndex(index-1);
     this.props.getPreviousSession(this.props.activeDevice, this.props.time);
   },
   render: function() {

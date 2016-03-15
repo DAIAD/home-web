@@ -3,10 +3,12 @@ var bs = require('react-bootstrap');
 var injectIntl = require('react-intl').injectIntl;
 var connect = require('react-redux').connect;
 var FormattedMessage = require('react-intl').FormattedMessage;
+var { push } = require('react-router-redux');
 
 var Dashboard = require('../components/sections/Dashboard');
 
 var DeviceActions = require('../actions/DeviceActions');
+var HistoryActions = require('../actions/HistoryActions');
 
 var timeUtil = require('../utils/time');
 var { getDefaultDevice, getLastSession } = require('../utils/device');
@@ -49,8 +51,15 @@ function mapStateToProps(state, ownProps) {
 
 function mapDispatchToProps(dispatch) {
   return {
+    linkToHistory: function(options) {
+      dispatch(HistoryActions.setActiveSessionIndex(options.activeSessionIndex));
+      dispatch(HistoryActions.setQueryFilter(options.filter));
+      dispatch(HistoryActions.setTimeFilter(options.timeFilter));
+
+      return dispatch(push('/history'));
+    },
     getLastSession: function(deviceKey) {
-      const time = Object.assign({}, timeUtil.thisWeek(), {granularity: 0});
+      const time = Object.assign({}, timeUtil.thisMonth(), {granularity: 0});
       return dispatch(DeviceActions.querySessions(deviceKey, time))
         .then((response) => dispatch(DeviceActions.fetchLastSession(deviceKey, time)));
     }

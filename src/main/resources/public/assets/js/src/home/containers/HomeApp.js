@@ -47,7 +47,8 @@ var HomeApp = React.createClass({
               }
               })()
           }
-          <Header 
+          <Header
+            intl={this.props.intl}
             data={Constant.data}
             firstname={this.props.user.profile.firstname}
             deviceCount={this.props.user.isAuthenticated?getDeviceCount(devices):0}

@@ -33,12 +33,12 @@ function mapStateToProps(state, ownProps) {
       disabledPreviousSession = false;
     }
   }
-
+  let sessions = state.query.data.map((session, idx, array) => Object.assign({}, session, {better:array[idx+1]?(session.volume<array[idx+1].volume?true:false):null}, {duration:getFriendlyDuration(session.duration)}, {energyClass:getEnergyClass(session.energy)}, {measurements: getFilteredData(session.measurements, state.section.history.sessionFilter)}));
   return {
     time: state.query.time,
     activeDevice: state.query.activeDevice,
     sessionFilter: state.section.history.sessionFilter,
-    sessions: state.query.data.map((session) => Object.assign({}, session, {duration:getFriendlyDuration(session.duration)}, {energyClass:getEnergyClass(session.energy)}, {measurements: getFilteredData(session.measurements, state.section.history.sessionFilter)})),
+    sessions: sessions,
     activeSessionIndex: state.section.history.activeSessionIndex,
     disabledNext: disabledNextSession,
     disabledPrevious: disabledPreviousSession,
