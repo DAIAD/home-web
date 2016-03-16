@@ -38,7 +38,7 @@ const MeterActions = {
 
       dispatch(requestedMeterQuery());
 
-      const data = Object.assign({}, time, {deviceKey: [ deviceKey ] }, {csrf: getState().query.csrf});
+      const data = Object.assign({}, time, {deviceKey: [ deviceKey ] }, {csrf: getState().user.csrf});
 
       return meterAPI.getHistory(data)
         .then((response) => {
@@ -55,7 +55,7 @@ const MeterActions = {
     return function(dispatch, getState) {
       dispatch(requestedMeterStatus());
       
-      const data = {deviceKey: [ deviceKey ], csrf: getState().query.csrf };
+      const data = {deviceKey: [ deviceKey ], csrf: getState().user.csrf };
       return meterAPI.getStatus(data)
         .then((response) => {
           dispatch(receivedMeterStatus(response.success, response.errors, response.devices?response.devices:[]) );

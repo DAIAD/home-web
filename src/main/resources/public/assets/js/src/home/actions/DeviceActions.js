@@ -46,7 +46,7 @@ const DeviceActions = {
       
       dispatch(requestedSessionsQuery());
 
-      const data = Object.assign({}, time, {deviceKey: [ deviceKey ] }, {csrf: getState().query.csrf});
+      const data = Object.assign({}, time, {deviceKey: [ deviceKey ] }, {csrf: getState().user.csrf});
       
       return deviceAPI.querySessions(data)
       .then((response) => {
@@ -74,7 +74,7 @@ const DeviceActions = {
       
       dispatch(requestedSession(id));
 
-      const data = Object.assign({}, time,  {sessionId:id, deviceKey: deviceKey}, {csrf: getState().query.csrf});
+      const data = Object.assign({}, time,  {sessionId:id, deviceKey: deviceKey}, {csrf: getState().user.csrf});
 
       return deviceAPI.getSession(data)
         .then((response) => {
