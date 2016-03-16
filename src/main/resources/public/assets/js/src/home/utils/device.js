@@ -1,102 +1,119 @@
-var getDefaultDevice = function(devices) {
-	var amphiroDevices = getAvailableDevices(devices);
-	return amphiroDevices.length?amphiroDevices[0]:null;
+const getDefaultDevice = function(devices) {
+  const amphiroDevices = getAvailableDevices(devices);
+  const meters = getAvailableMeters(devices);
+  if (amphiroDevices.length) {
+    return amphiroDevices[0];
+  }
+  else if (meters.length) {
+    return meters[0];
+  }
+  else {
+    return null;
+  }
 };
 
-var getDeviceCount = function(devices) {
-	return getAvailableDevices(devices).length;
+const getDeviceTypeByKey = function(devices, key) {
+  const device = getDeviceByKey(devices, key);
+  if (!device) return null;
+  return device.type;
+};
+const getDeviceCount = function(devices) {
+  if (!devices.length) return 0;
+  return getAvailableDevices(devices).length;
 };
 
-var getAvailableDevices = function(devices) {
-	return devices.filter((device) => (device.type === 'AMPHIRO'));
+const getAvailableDevices = function(devices) {
+  if (!devices) return [];
+  return devices.filter((device) => (device.type === 'AMPHIRO'));
 };
 
-var getAvailableDeviceKeys = function(devices) {
-	return getAvailableDevices(devices).map((device) => (device.deviceKey));
+const getAvailableMeters = function(devices) {
+  if (!devices) return [];
+  return devices.filter((device) => (device.type === 'METER'));
 };
 
-var getDeviceByKey = function(devices, key) {
-	if (!devices) return null;
-
-	return devices.find((device) => (device.deviceKey === key));
+const getAvailableDeviceKeys = function(devices) {
+  if (!devices) return [];
+  return getAvailableDevices(devices).map((device) => (device.deviceKey));
 };
 
-var updateOrAppendToSession = function(sessions, data, id) {
-	if (!data || !id){
-		return sessions;
-	}
-	var index = getSessionIndexById(sessions, id);
-	var updated = sessions.slice();
-	if (index > -1) {
-		updated[index] = data;
-	}
-	else {
-		updated.push(data);
-	}
-	return updated;
+const getDeviceByKey = function(devices, key) {
+  if (!devices) return null;
+  return devices.find((device) => (device.deviceKey === key));
 };
 
-var getSessionByIndex = function(sessions, index) {
-	if (typeof(index) !== "number") return null;
-	//if (sessions.length && !sessions[0].id) return null;
-
-	return sessions[index];
+const updateOrAppendToSession = function(sessions, data, id) {
+  if (!sessions.length) return null;
+  let updated = sessions.slice();
+  if (!data || !id) return updated;
+  
+  const index = getSessionIndexById(sessions, id);
+  if (index > -1) {
+    updated[index] = data;
+  }
+  else {
+    updated.push(data);
+  }
+  return updated;
 };
 
-var getSessionById = function(sessions, id) {
-	if (!id) return null;
-	if (sessions.length && !sessions[0].id) return null;
-
-	return sessions.find(x => (x.id).toString() === id.toString());
+const getSessionByIndex = function(sessions, index) {
+  if (typeof(index) !== "number" || !sessions.length) return null;
+  return sessions[index];
 };
 
-var getNextSession = function(sessions, id) {
-	const sessionIndex = getSessionIndexById(sessions, id);
-	if (sessions[sessionIndex+1]){
-		return sessions[sessionIndex+1].id;
-	}
-	else {
-		return null;
-	}
+const getSessionById = function(sessions, id) {
+  if (!id || !sessions.length || !sessions[0].hasOwnProperty('id')) return null;
+  return sessions.find(x => (x.id).toString() === id.toString());
 };
 
-var getPreviousSession = function(sessions, id) {
-	const sessionIndex = getSessionIndexById(sessions, id);
-	if (sessions[sessionIndex-1]){
-		return sessions[sessionIndex-1].id;
-	}
-	else {
-		return null;
-	}
-};
-var getSessionIndexById = function(sessions, id) {
-	return sessions.findIndex(x => (x.id).toString() === id.toString());
+const getNextSession = function(sessions, id) {
+  if (!id || !sessions.length || !sessions[0].hasOwnProperty('id')) return null;
+  
+  const sessionIndex = getSessionIndexById(sessions, id);
+  if (sessions[sessionIndex+1]){
+    return sessions[sessionIndex+1].id;
+  }
+  else {
+    return null;
+  }
 };
 
-var getLastSession = function(sessions) {
-	var lastSession = null;
-	sessions.forEach(function(session) {
-		if (!lastSession){
-			lastSession = session;
-		}
-		if (session.timestamp > lastSession.timestamp) {
-			lastSession = session;
-		}
-	});
-	return lastSession;
+const getPreviousSession = function(sessions, id) {
+  if (!id || !sessions.length || !sessions[0].hasOwnProperty('id')) return null;
+  
+  const sessionIndex = getSessionIndexById(sessions, id);
+  if (sessions[sessionIndex-1]){
+    return sessions[sessionIndex-1].id;
+  }
+  else {
+    return null;
+  }
+};
+
+const getSessionIndexById = function(sessions, id) {
+  if (!id || !sessions.length || !sessions[0].hasOwnProperty('id')) return null;
+  
+  return sessions.findIndex(x => (x.id).toString() === id.toString());
+};
+const getLastSession = function(sessions) { 
+  if (!sessions.length || !sessions[0].hasOwnProperty('timestamp')) return null;
+
+  return sessions.reduce((prev, curr) => (curr.timestamp>prev.timestamp)?curr:prev);
 };
 
 module.exports = {
-	getSessionById,
-	getSessionByIndex,
-	getNextSession,
-	getPreviousSession,
-	getSessionIndexById,
-	getLastSession,
-	updateOrAppendToSession,
-	getDefaultDevice,
-	getDeviceCount,
-	getAvailableDevices,
-	getAvailableDeviceKeys,
-	getDeviceByKey
+  getSessionById,
+  getSessionByIndex,
+  getNextSession,
+  getPreviousSession,
+  getSessionIndexById,
+  getLastSession,
+  updateOrAppendToSession,
+  getDefaultDevice,
+  getDeviceTypeByKey,
+  getDeviceCount,
+  getAvailableDevices,
+  getAvailableDeviceKeys,
+  getDeviceByKey
 };
