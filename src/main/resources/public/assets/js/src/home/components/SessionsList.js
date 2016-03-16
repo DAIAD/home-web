@@ -8,9 +8,6 @@ var Chart = require('./Chart');
 var Shower = require('./Shower');
 var SessionsChart = require('./SessionsChart');
 
-//Actions
-var DeviceActions = require('../actions/DeviceActions');
-
 
 var SessionItem = React.createClass({
   handleClick: function() {
@@ -18,46 +15,39 @@ var SessionItem = React.createClass({
   },
   render: function() {
 
-    let arrowClasses = this.props.data.better===null?"":this.props.data.better?"fa-arrow-down green":"fa-arrow-up red";
-    
     return (
       <li className="session-item"> 
         <a onClick={this.handleClick} ref="link" data-id={this.props.data.id} data-index={this.props.index} >
-          <div className="session-item-header col-md-3"><h3>{this.props.data.volume}<span style={{fontSize: '0.6em'}}> lt</span> <i className={`fa ${arrowClasses}`}/></h3>
+          <div className="session-item-header col-md-3"><h3>{this.props.data.volume}<span style={{fontSize: '0.6em'}}> lt</span> <i className={`fa ${this.props.data.better===null?"":this.props.data.better?"fa-arrow-down green":"fa-arrow-up red"}`}/></h3>
             
           </div>
           <div className="col-md-7">
             <div className="pull-right">
-
-            <span className="session-item-detail">Stelios</span>
-            <span className="session-item-detail"><i className="fa fa-calendar"/><FormattedRelative value={new Date(this.props.data.timestamp)} /></span> 
-            {(() => { 
-              if (this.props.data.duration) {
-                return (
-                  <span className="session-item-detail"><i className="fa fa-clock-o"/>{this.props.data.duration}</span>);
-              }
-              else {
-                return (null);
-              }
-            })()}
-            {(() => { 
-              if (this.props.data.energyClass) {
-                return (
-              <span className="session-item-detail"><i className="fa fa-flash"/>{this.props.data.energyClass}</span>);
-              }
-              else {
-                return (null);
-              }
-            })()}
-            {(() => { 
-              if (this.props.data.temperature) {
-                return (
-              <span className="session-item-detail"><i className="fa fa-temperature"/>{this.props.data.temperature}ºC</span>);
-              }
-              else {
-                return (null);
-            }
-            })()}
+              {(() => {
+                if (this.props.data.id) {
+                  return <span className="session-item-detail">{this.props.data.id}</span>;
+                }
+              })()}
+              <span className="session-item-detail">Stelios</span>
+              <span className="session-item-detail"><i className="fa fa-calendar"/><FormattedRelative value={new Date(this.props.data.timestamp)} /></span> 
+              {(() => { 
+                if (this.props.data.duration) {
+                  return (
+                    <span className="session-item-detail"><i className="fa fa-clock-o"/>{this.props.data.duration}</span>);
+                }
+              })()}
+              {(() => { 
+                if (this.props.data.energyClass) {
+                  return (
+                <span className="session-item-detail"><i className="fa fa-flash"/>{this.props.data.energyClass}</span>);
+                }
+              })()}
+              {(() => { 
+                if (this.props.data.temperature) {
+                  return (
+                <span className="session-item-detail"><i className="fa fa-temperature"/>{this.props.data.temperature}ºC</span>);
+                }
+              })()}
           </div>
           </div>
           <div className="col-md-2">
@@ -97,10 +87,13 @@ var SessionsList = React.createClass({
   onOpen: function (id, index) {
 
     this.props.setActiveSessionIndex(index);
-
+    this.props.getActiveSession(this.props.activeDevice, this.props.time);
+    /*
+    this.props.setActiveSessionIndex(index);
     if (id){
       this.props.fetchSession(id, this.props.activeDevice, this.props.time);
-    }
+      }
+      */
   },
   onClose: function() {
     this.props.resetActiveSessionIndex();
@@ -139,7 +132,7 @@ var SessionsList = React.createClass({
               intl={this.props.intl}
               setSessionFilter={this.props.setSessionFilter}
               data={this.props.sessions[this.props.activeSessionIndex]}
-              filter={this.props.sessionFilter}
+              filter={this.props.activeSessionFilter}
               />
           </bs.Modal.Body>
           <bs.Modal.Footer>

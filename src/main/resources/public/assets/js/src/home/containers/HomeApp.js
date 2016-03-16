@@ -16,10 +16,8 @@ var LoginPage = require('../components/sections/Login');
 // Actions
 var UserActions = require('../actions/UserActions');
 var LocaleActions = require('../actions/LocaleActions');
-var DeviceActions = require('../actions/DeviceActions');
 
-var getDefaultDevice = require('../utils/device').getDefaultDevice;
-var getDeviceCount = require('../utils/device').getDeviceCount;
+var { getDeviceCount } = require('../utils/device');
 
 var HomeApp = React.createClass({
 
@@ -98,29 +96,17 @@ function mapStateToProps(state) {
     return {
       user: state.user,
       locale: state.locale,
-      loading: state.user.status.isLoading || state.locale.status.isLoading || state.query.status.isLoading
+      loading: state.user.status.isLoading || state.locale.status.isLoading || state.query.isLoading
     };
 }
 
 function mapDispatchToProps(dispatch, ownProps) {
   return {
     onLogin: function(username, password) {
-      dispatch(UserActions.login(username, password))
-      .then((response) => {
-        if (!response.profile) {
-            return response;
-          }
-          const devices = response.profile.devices;
-          const device = getDefaultDevice(devices);
-          if (device) {
-            dispatch(DeviceActions.setActiveDevice(device.deviceKey));
-            return response;
-          }
-        });
+      dispatch(UserActions.login(username, password));
     },
     onLogout: function() {
-      dispatch(UserActions.logout())
-        .then((response) => dispatch(DeviceActions.resetQuery()));
+      dispatch(UserActions.logout());
     },
     onLocaleSwitch: function(locale) {
       dispatch(LocaleActions.setLocale(locale));

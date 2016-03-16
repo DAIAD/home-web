@@ -189,7 +189,8 @@ var InfoPanel = React.createClass({
         highlight={(()=>(<h2>850 kWh</h2>))()}
         compareText={<span><b>5%</b> more than last year</span>}
         extraText="See more"
-        onClick={() => this.props.linkToHistory({
+        onClick={() => this.props.linkToHistoryTest({
+          device: this.props.defaultDevice,
           filter: 'energy',
           timeFilter: 'year'
         })}

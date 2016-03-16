@@ -12,7 +12,7 @@ var { getFilteredData } = require('../utils/chart');
 
 var HistoryChart = React.createClass({
   componentWillMount: function() {
-    //this.props.querySessions(this.props.activeDevice, this.props.time);
+    //this.props.section.history.essions(this.props.activeDevice, this.props.time);
   },
   render: function() {
     return (
@@ -27,12 +27,12 @@ function mapStateToProps(state, ownProps) {
   }
   
   return {
-    time: state.query.time,
+    time: state.section.history.time,
     filter: state.section.history.filter,
     timeFilter: state.section.history.timeFilter,
-    data: [{title:state.section.history.filter, data:getFilteredData(state.query.data, state.section.history.filter)}],
-    xMin: state.query.time.startDate,
-    xMax: state.query.time.endDate,
+    data: [{title:state.section.history.filter, data:getFilteredData(state.section.history.data, state.section.history.filter)}],
+    xMin: state.section.history.time.startDate,
+    xMax: state.section.history.time.endDate,
     yMargin: 0,
     fontSize: 13,
     type: (state.section.history.filter==='showers')?'bar':'line',

@@ -16,23 +16,14 @@ history = syncHistoryWithStore(history, store);
 
 //Actions
 var LocaleActions = require('./actions/LocaleActions');
-var DeviceActions = require('./actions/DeviceActions');
 var UserActions = require('./actions/UserActions');
 
-//Components
-
-var getDefaultDevice = require('./utils/device').getDefaultDevice;
 
 store.dispatch(LocaleActions.setLocale(properties.locale))
   .then((response) => {
     if (properties.reload){
       store.dispatch(UserActions.refreshProfile())
         .then((response) =>{
-          const devices = response.profile.devices;
-          const device = getDefaultDevice(devices);
-          if (device){
-            store.dispatch(DeviceActions.setActiveDevice(device.deviceKey));
-          }
           init();
         });
     }

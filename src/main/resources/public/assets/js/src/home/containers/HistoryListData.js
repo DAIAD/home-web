@@ -4,7 +4,6 @@ var injectIntl = require('react-intl').injectIntl;
 
 var SessionsList = require('../components/SessionsList');
 
-var DeviceActions = require('../actions/DeviceActions');
 var HistoryActions = require('../actions/HistoryActions');
 
 var { getSessionByIndex } = require('../utils/device');
@@ -26,18 +25,18 @@ function mapStateToProps(state, ownProps) {
   let disabledNextSession = true;
   let disabledPreviousSession = true;
   if (state.section.history.activeSessionIndex!==null) {
-    if (state.query.data[state.section.history.activeSessionIndex+1]) {
+    if (state.section.history.data[state.section.history.activeSessionIndex+1]) {
       disabledNextSession = false;
     }
-    if (state.query.data[state.section.history.activeSessionIndex-1]) {
+    if (state.section.history.data[state.section.history.activeSessionIndex-1]) {
       disabledPreviousSession = false;
     }
   }
-  let sessions = state.query.data.map((session, idx, array) => Object.assign({}, session, {better:array[idx+1]?(session.volume<array[idx+1].volume?true:false):null}, {duration:getFriendlyDuration(session.duration)}, {energyClass:getEnergyClass(session.energy)}, {measurements: getFilteredData(session.measurements, state.section.history.sessionFilter)}));
+  let sessions = state.section.history.data.map((session, idx, array) => Object.assign({}, session, {better:array[idx+1]?(session.volume<array[idx+1].volume?true:false):null}, {duration:getFriendlyDuration(session.duration)}, {energyClass:getEnergyClass(session.energy)}, {measurements: getFilteredData(session.measurements, state.section.history.activeSessionFilter)}));
   return {
-    time: state.query.time,
-    activeDevice: state.query.activeDevice,
-    sessionFilter: state.section.history.sessionFilter,
+    time: state.section.history.time,
+    activeDevice: state.section.history.activeDevice,
+    activeSessionFilter: state.section.history.activeSessionFilter,
     sessions: sessions,
     activeSessionIndex: state.section.history.activeSessionIndex,
     disabledNext: disabledNextSession,
@@ -57,16 +56,16 @@ function mapDispatchToProps(dispatch, ownProps) {
     setSessionFilter: function(filter) {
       dispatch(HistoryActions.setSessionFilter(filter));
     },
-    fetchSession: function(sessionId, deviceKey, time) {
-      dispatch(DeviceActions.fetchSession(sessionId, deviceKey, time));
+    getActiveSession: function (deviceKey, time) {
+      dispatch(HistoryActions.getActiveSession(deviceKey, time));
     },
     getNextSession: function(deviceKey, time) {
       dispatch(HistoryActions.increaseActiveSessionIndex());
-      dispatch(DeviceActions.fetchActiveSession(deviceKey, time));
+      dispatch(HistoryActions.getActiveSession(deviceKey, time));
     },
     getPreviousSession: function(deviceKey, time) {
       dispatch(HistoryActions.decreaseActiveSessionIndex());
-      dispatch(DeviceActions.fetchActiveSession(deviceKey, time));
+      dispatch(HistoryActions.getActiveSession(deviceKey, time));
     }
   };
 }

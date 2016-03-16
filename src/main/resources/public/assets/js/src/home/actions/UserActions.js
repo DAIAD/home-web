@@ -1,8 +1,6 @@
 var userAPI = require('../api/user');
 var types = require('../constants/ActionTypes');
 
-var DeviceActions = require('../actions/DeviceActions');
-
 const requestedLogin = function() {
   return {
     type:types.USER_REQUESTED_LOGIN,

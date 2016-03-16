@@ -7,8 +7,8 @@ var { push } = require('react-router-redux');
 
 var Dashboard = require('../components/sections/Dashboard');
 
-var DeviceActions = require('../actions/DeviceActions');
 var HistoryActions = require('../actions/HistoryActions');
+var DashboardActions = require('../actions/DashboardActions');
 
 var timeUtil = require('../utils/time');
 var { getDefaultDevice, getLastSession } = require('../utils/device');
@@ -22,9 +22,9 @@ var DashboardData = React.createClass({
     }
   },
   componentWillReceiveProps: function(nextProps) {
-    if (!this.props.defaultDevice && nextProps.defaultDevice) {
-      this.props.getLastSession(nextProps.defaultDevice);
-    }
+    //if (!this.props.defaultDevice && nextProps.defaultDevice) {
+    //  this.props.getLastSession(nextProps.defaultDevice);
+    //}
   },
   render: function() {
     return (
@@ -35,12 +35,12 @@ var DashboardData = React.createClass({
 
 
 function mapStateToProps(state, ownProps) {
-  const lastSession = getLastSession(state.query.data);
+  const lastSession = state.section.dashboard.lastSession;
   const defaultDevice = getDefaultDevice(state.user.profile.devices);
   const deviceKey = defaultDevice?defaultDevice.deviceKey:null;
   return {
     time: state.query.time,
-    activeDevice: state.query.activeDevice,
+    //activeDevice: state.query.activeDevice,
     defaultDevice: deviceKey,
     firstname: state.user.profile.firstname,
     chartData: [{title:'Consumption', data:(lastSession?(getFilteredData(lastSession.measurements?lastSession.measurements:[], 'volume')):[])}],
@@ -51,18 +51,18 @@ function mapStateToProps(state, ownProps) {
 
 function mapDispatchToProps(dispatch) {
   return {
-    linkToHistory: function(options) {
+    linkToHistoryTest: function(options) {
       dispatch(HistoryActions.resetActiveSessionIndex());
+      dispatch(HistoryActions.setActiveDevice(options.device));
       dispatch(HistoryActions.setQueryFilter(options.filter));
       dispatch(HistoryActions.setTimeFilter(options.timeFilter));
-      dispatch(DeviceActions.setTime(Object.assign({}, timeUtil.thisYear(), {granularity:4})));
+      dispatch(HistoryActions.setTime(Object.assign({}, timeUtil.thisYear(), {granularity:4})));
        
       dispatch(push('/history'));
     },
     getLastSession: function(deviceKey) {
       const time = Object.assign({}, timeUtil.thisMonth(), {granularity: 0});
-      return dispatch(DeviceActions.querySessions(deviceKey, time))
-        .then((response) => dispatch(DeviceActions.fetchLastSession(deviceKey, time)));
+      return dispatch(DashboardActions.getLastSession(deviceKey, time));
     }
   };
 }

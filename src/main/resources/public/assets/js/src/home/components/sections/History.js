@@ -11,9 +11,6 @@ var Topbar = require('../Topbar');
 var HistoryChartData = require('../../containers/HistoryChartData');
 var HistoryListData = require('../../containers/HistoryListData');
 
-//actions
-var DeviceActions = require('../../actions/DeviceActions');
-
 //utils
 var { getDeviceByKey } = require('../../utils/device');
 var timeUtil = require('../../utils/time');
@@ -55,11 +52,11 @@ var History = React.createClass({
     }
     else if (key==="month"){
       time = timeUtil.thisMonth();
-      time.granularity = 2;
+      time.granularity = 3;
     }
     else if (key==="week"){
       time = timeUtil.thisWeek();
-      time.granularity = 0;
+      time.granularity = 2;
     }
     else if (key==="day"){
       time = timeUtil.today();
@@ -70,7 +67,6 @@ var History = React.createClass({
     }
     this.props.setTimeFilter(key);
     this.props.setTimeAndQuery(time);
-    //this.props.queryDeviceOrMeter(this.props.activeDevice, time); 
   },
   handleTimePrevious: function() { 
     this.props.setTimeAndQuery(this.props.previousPeriod);
