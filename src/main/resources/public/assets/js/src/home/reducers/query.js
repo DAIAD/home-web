@@ -7,19 +7,15 @@ var query = function (state, action) {
   //initial state
   if (state === undefined) {
     state = {
-      csrf: null,
       status: {
         isLoading: false,
         success: null,
         errors: null
       },
       activeDevice: null,
-      time: {
-        granularity: 0
-      },
       data: [],
     };
-    state.time = Object.assign({}, state.time, thisWeek());
+    state.time = Object.assign({}, {granularity:2}, thisWeek());
   }
    
   switch (action.type) {
@@ -53,12 +49,7 @@ var query = function (state, action) {
           });
         }
         break;
-      
-      case types.QUERY_SET_CSRF:
-        return Object.assign({}, state, {
-          csrf: action.csrf 
-        });
-     
+           
       case types.QUERY_SET_TIME:
         return Object.assign({}, state, {
           time: Object.assign({}, state.time, action.time)

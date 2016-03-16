@@ -32,6 +32,13 @@ const receivedLogout = function(status, errors) {
   };
 };
 
+const setCsrf = function(csrf) {
+  return {
+    type: types.USER_SESSION_SET_CSRF,
+    csrf: csrf 
+  };
+};
+
 const UserActions = {
 
   login: function(username, password) {
@@ -40,9 +47,10 @@ const UserActions = {
 
       return userAPI.login({username, password})
       .then((response) => {
-        
         const { csrf, success, errors, profile } = response;
-        if (csrf) { dispatch(DeviceActions.setCsrf(csrf)); }
+
+        if (csrf) { dispatch(setCsrf(csrf)); }
+        
         dispatch(receivedLogin(success, errors.length?errors[0].code:null, profile));
         return response;
       })
@@ -56,9 +64,9 @@ const UserActions = {
     return function(dispatch, getState) {
       return userAPI.getProfile()
       .then((response) => {
-         
         const { csrf, success, errors, profile } = response;
-        if (csrf) { dispatch(DeviceActions.setCsrf(csrf)); }
+        
+        if (csrf) { dispatch(setCsrf(csrf)); }
 
         dispatch(receivedLogin(success, errors.length?errors[0].code:null, profile));
         return response;
@@ -85,7 +93,7 @@ const UserActions = {
         });
     };
   },
-
+  
 };
 
 

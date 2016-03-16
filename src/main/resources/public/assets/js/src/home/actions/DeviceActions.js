@@ -125,12 +125,6 @@ const DeviceActions = {
       });
     };
   },
-  setCsrf: function(csrf) {
-    return {
-      type: types.QUERY_SET_CSRF,
-      csrf: csrf 
-    };
-  },
   // time is of type Object with
   // startDate, endDate, granularity}
   setTime: function(time) {
