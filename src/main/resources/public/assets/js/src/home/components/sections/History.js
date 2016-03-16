@@ -66,18 +66,19 @@ var History = React.createClass({
       throw new Error('oops, shouldn\'t be here');
     }
     this.props.setTimeFilter(key);
-    this.props.setTimeAndQuery(time);
+    this.props.setTimeAndQuery(this.props.activeDevice, time);
   },
   handleTimePrevious: function() { 
-    this.props.setTimeAndQuery(this.props.previousPeriod);
+    this.props.setTimeAndQuery(this.props.activeDevice, this.props.previousPeriod);
   },
   handleTimeNext: function() { 
-    this.props.setTimeAndQuery(this.props.nextPeriod);
+    this.props.setTimeAndQuery(this.props.activeDevice, this.props.nextPeriod);
   },
   handleDeviceChange: function(e, value) {
-    this.props.setActiveAndQuery(value);
+    this.props.setActiveAndQuery(value, this.props.time);
   },
   render: function() {
+    console.log('hello history');
     const devices = this.props.devices?this.props.devices:[];
     const activeDevice = this.props.activeDevice;
     const device = getDeviceByKey(devices, activeDevice);

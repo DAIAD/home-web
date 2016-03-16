@@ -8,7 +8,7 @@ var classNames = require('classnames');
 var Login = React.createClass({
   onLogin: function(e) {
     e.preventDefault();
-    this.props.onLogin(this.refs.username.value, this.refs.password.value);
+    this.props.login(this.refs.username.value, this.refs.password.value);
 
   },
   render: function() {
@@ -49,9 +49,11 @@ var Logout = React.createClass({
   
   onLogout: function(e) {
     e.preventDefault();
-    this.props.onLogout();
+    this.props.logout();
   },
   render: function() {
+    console.log('thisporps');
+    console.log(this.props);
     var _t = this.props.intl.formatMessage;
     if(!this.props.isAuthenticated) {
       return (<div/>);

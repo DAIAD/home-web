@@ -1,6 +1,7 @@
 var React = require('react');
 var bs = require('react-bootstrap');
 var injectIntl = require('react-intl').injectIntl;
+var { bindActionCreators } = require('redux');
 var connect = require('react-redux').connect;
 var FormattedMessage = require('react-intl').FormattedMessage;
 var { push } = require('react-router-redux');
@@ -18,7 +19,8 @@ var DashboardData = React.createClass({
   
   componentWillMount: function() {
     if (this.props.defaultDevice) {
-      this.props.getLastSession(this.props.defaultDevice);
+      const time = Object.assign({}, timeUtil.thisMonth(), {granularity: 0});
+      this.props.getLastSession(this.props.defaultDevice, time);
     }
   },
   componentWillReceiveProps: function(nextProps) {
@@ -50,6 +52,10 @@ function mapStateToProps(state, ownProps) {
 }
 
 function mapDispatchToProps(dispatch) {
+  return bindActionCreators(DashboardActions, dispatch);
+}
+/*
+function mapDispatchToProps(dispatch) {
   return {
     linkToHistoryTest: function(options) {
       dispatch(HistoryActions.resetActiveSessionIndex());
@@ -60,13 +66,9 @@ function mapDispatchToProps(dispatch) {
        
       dispatch(push('/history'));
     },
-    getLastSession: function(deviceKey) {
-      const time = Object.assign({}, timeUtil.thisMonth(), {granularity: 0});
-      return dispatch(DashboardActions.getLastSession(deviceKey, time));
-    }
-  };
+   };
 }
-
+*/
 DashboardData = connect(mapStateToProps, mapDispatchToProps)(DashboardData);
 DashboardData = injectIntl(DashboardData);
 module.exports = DashboardData;

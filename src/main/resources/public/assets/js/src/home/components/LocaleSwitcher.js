@@ -15,7 +15,7 @@ var Link = require('react-router').Link;
 var LocaleSwitcher = React.createClass({
 
   handleChange: function(e, value) {
-    this.props.onLocaleSwitch(value);
+    this.props.setLocale(value);
   },
   render: function() {
     const locale = this.props.locale;

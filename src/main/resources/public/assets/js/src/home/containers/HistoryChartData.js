@@ -40,14 +40,6 @@ function mapStateToProps(state, ownProps) {
     };
 }
 
-function mapDispatchToProps(dispatch, ownProps) {
-  return {
-    setQueryFilter: function(filter) {
-      return dispatch(HistoryActions.setQueryFilter(filter));
-    },
-  };
-}
- 
-HistoryChart = connect(mapStateToProps, mapDispatchToProps)(HistoryChart);
+HistoryChart = connect(mapStateToProps)(HistoryChart);
 HistoryChart = injectIntl(HistoryChart);
 module.exports = HistoryChart;

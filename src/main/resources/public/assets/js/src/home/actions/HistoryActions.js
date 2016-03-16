@@ -33,7 +33,7 @@ const resetDataDirty = function () {
 
 const HistoryActions = {
 
-  getDeviceSessions: function(deviceKey, time) {
+  queryDevice: function(deviceKey, time) {
     return function(dispatch, getState) {
       //if query not changed dont update (for now)
       //TODO: have to ask every now and then for new data
@@ -101,8 +101,11 @@ const HistoryActions = {
       }
     };
   },
-  getAllDeviceSessions: function(deviceKey, time) {
+  /*
+  queryDeviceAndFetchAllSessions: function(deviceKey, time) {
     return function(dispatch, getState) {
+      dispatch(HistoryActions.queryDevice(deviceKey, time))
+      .then(
       //TODO: this function should not be used seriously
       console.log('fetching all sessions');
       
@@ -116,8 +119,9 @@ const HistoryActions = {
         return dispatch(HistoryActions.getDeviceSession(id, deviceKey, time));
        });
     };
-  },
-  getMeterHistory: function (deviceKey, time) {
+    },
+    */
+  queryMeter: function (deviceKey, time) {
     return function(dispatch, getState) {
       //if query not changed dont update (for now)
       //TODO: have to ask every now and then for new data
@@ -142,6 +146,21 @@ const HistoryActions = {
 
     };
   },
+  queryDeviceOrMeter: function (deviceKey, time) {
+    console.log('query device or meter');
+    return function(dispatch, getState) {
+      const devType = getDeviceTypeByKey(getState().user.profile.devices, deviceKey);
+      console.log('devtype');
+      console.log(devType);
+      if (devType === 'AMPHIRO') {
+        return dispatch(HistoryActions.queryDevice(deviceKey, time)); 
+      }
+      else if (devType === 'METER') {
+        return dispatch(HistoryActions.queryMeter(deviceKey, time))
+          .then(() => dispatch(HistoryActions.setQueryFilter('volume')));
+      }
+    };
+  },
   // time is of type Object with
   //  startDate of type string (unix timestamp),
   //  endDate of type string (unix timestamp)
@@ -157,6 +176,12 @@ const HistoryActions = {
       });
     };
   },
+  setTimeAndQuery: function (deviceKey, time) {
+    return function(dispatch, getState) {
+      dispatch(HistoryActions.setTime(time));
+      dispatch(HistoryActions.queryDeviceOrMeter(deviceKey, time));
+    };
+  },
   setActiveDevice: function(deviceKey) {
     return function(dispatch, getState) {
       if (!getState().section.history.dirty) { 
@@ -166,6 +191,12 @@ const HistoryActions = {
         type: types.HISTORY_SET_ACTIVE_DEVICE,
         deviceKey: deviceKey
       });
+    };
+  },
+  setActiveDeviceAndQuery: function (deviceKey, time) {
+    return function(dispatch, getState) {
+      dispatch(HistoryActions.setActiveDevice(deviceKey));
+      dispatch(HistoryActions.queryDeviceOrMeter(deviceKey, time));
     };
   },
   resetActiveDevice: function() {

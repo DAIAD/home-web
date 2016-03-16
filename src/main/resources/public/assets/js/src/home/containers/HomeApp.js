@@ -2,7 +2,8 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
 var ReactIntlProvider = require('react-intl').IntlProvider;
-var connect = require('react-redux').connect;
+var { bindActionCreators } = require('redux');
+var { connect } = require('react-redux');
 
 //Constants
 var Constant = require('../constants/HomeConstants');
@@ -14,8 +15,8 @@ var Footer = require('../components/Footer');
 var LoginPage = require('../components/sections/Login');
 
 // Actions
-var UserActions = require('../actions/UserActions');
-var LocaleActions = require('../actions/LocaleActions');
+var { login, logout } = require('../actions/UserActions');
+var { setLocale } = require('../actions/LocaleActions');
 
 var { getDeviceCount } = require('../utils/device');
 
@@ -52,8 +53,8 @@ var HomeApp = React.createClass({
             deviceCount={this.props.user.isAuthenticated?getDeviceCount(devices):0}
             isAuthenticated={this.props.user.isAuthenticated}
             locale={this.props.locale.locale}
-            onLogout={this.props.onLogout} 
-            onLocaleSwitch={this.props.onLocaleSwitch}
+            logout={this.props.logout} 
+            setLocale={this.props.setLocale}
           />
           
           {
@@ -74,8 +75,8 @@ var HomeApp = React.createClass({
                     <LoginPage 
                       isAuthenticated = {this.props.user.isAuthenticated}
                       errors = {this.props.user.status.errors}
-                      onLogin = {this.props.onLogin}
-                      onLogout = {this.props.onLogout} />
+                      login = {this.props.login}
+                      logout = {this.props.logout} />
                     );
                 }
               })()
@@ -100,19 +101,9 @@ function mapStateToProps(state) {
     };
 }
 
-function mapDispatchToProps(dispatch, ownProps) {
-  return {
-    onLogin: function(username, password) {
-      dispatch(UserActions.login(username, password));
-    },
-    onLogout: function() {
-      dispatch(UserActions.logout());
-    },
-    onLocaleSwitch: function(locale) {
-      dispatch(LocaleActions.setLocale(locale));
-    },
-    
-  };
+function mapDispatchToProps(dispatch) {
+  console.log('mapping');
+  return bindActionCreators(Object.assign({}, {login, logout, setLocale}), dispatch);
 }
 
 HomeApp = connect(mapStateToProps, mapDispatchToProps)(HomeApp);

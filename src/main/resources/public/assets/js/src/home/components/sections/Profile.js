@@ -1,7 +1,8 @@
 var React = require('react');
 var assign = require('object-assign');
 var bs = require('react-bootstrap');
-var connect = require('react-redux').connect;
+var { bindActionCreators } = require('redux');
+var { connect } = require('react-redux');
 var injectIntl = require('react-intl').injectIntl;
 var { FormattedMessage } = require('react-intl');
 
@@ -9,7 +10,7 @@ var MainSection = require('../MainSection');
 
 var LocaleSwitcher = require('../LocaleSwitcher');
 
-var LocaleActions = require('../../actions/LocaleActions');
+var { setLocale } = require('../../actions/LocaleActions');
 
 var ProfileForm = React.createClass({
 
@@ -27,7 +28,7 @@ var ProfileForm = React.createClass({
             <span>Select language</span>
           </label>
           <LocaleSwitcher
-            onLocaleSwitch={this.props.onLocaleSwitch}
+            setLocale={this.props.setLocale}
             locale={this.props.locale}
           />
         </div>    
@@ -59,6 +60,10 @@ function mapStateToProps(state) {
   };
 }
 
+function mapDispatchToProps(dispatch) {
+  return bindActionCreators({ setLocale }, dispatch);
+}
+/*
 function mapDispatchToProps(dispatch, ownProps) {
   return {
     onLocaleSwitch: function(locale) {
@@ -66,6 +71,7 @@ function mapDispatchToProps(dispatch, ownProps) {
     },
   };
 }
+*/
 Profile = connect(mapStateToProps, mapDispatchToProps)(Profile);
 Profile = injectIntl(Profile);
 module.exports = Profile;

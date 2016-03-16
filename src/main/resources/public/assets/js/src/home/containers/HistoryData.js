@@ -1,5 +1,6 @@
 var React = require('react');
-var connect = require('react-redux').connect;
+var { bindActionCreators } = require('redux');
+var { connect } = require('react-redux');
 var injectIntl = require('react-intl').injectIntl;
 
 var History = require('../components/sections/History');
@@ -51,48 +52,9 @@ function mapStateToProps(state, ownProps) {
     };
 }
 
-function mapDispatchToProps(dispatch, ownProps) {
-  return {
-    setQueryFilter: function(filter) {
-      return dispatch(HistoryActions.setQueryFilter(filter));
-    },
-    setTimeFilter: function(filter) {
-       return dispatch(HistoryActions.setTimeFilter(filter));
-    },
-    setActiveDevice: function (deviceKey) {
-      dispatch(HistoryActions.setActiveDevice(deviceKey));
-    },
-    setActiveAndQuery: function(deviceKey) {
-      dispatch(HistoryActions.setActiveDevice(deviceKey));
-      return this.queryDeviceOrMeter(deviceKey, this.time);
-    },
-    setTimeAndQuery: function(time) {
-      dispatch(HistoryActions.setTime(Object.assign({}, this.time, time)));
-      return this.queryDeviceOrMeter(this.activeDevice, time);
-    },  
-    queryDevice: function(deviceKey, time) {
-      return dispatch(HistoryActions.getDeviceSessions(deviceKey, time));
-    },
-    queryDeviceAndFetchAllSessions: function(deviceKey, time) {
-      return this.queryDevice(deviceKey, time)
-        .then((response) => dispatch(HistoryActions.getAllDeviceSessions(deviceKey, time)));
-    },
-    queryMeter: function(deviceKey, time) {
-      return dispatch(HistoryActions.getMeterHistory(deviceKey, time));
-    },
-    queryDeviceOrMeter: function(deviceKey, time) {
-      const devType = getDeviceTypeByKey(this.devices, deviceKey);
-      if (devType === 'AMPHIRO') {
-        this.queryDevice(deviceKey, time); 
-      }
-      else if (devType === 'METER') {
-        return this.queryMeter(deviceKey, time)
-          .then(() => this.setQueryFilter('volume'));
-      }
-    }
-  };
+function mapDispatchToProps(dispatch) {
+  return bindActionCreators(HistoryActions, dispatch);
 }
-
 
 HistoryData = connect(mapStateToProps, mapDispatchToProps)(HistoryData);
 HistoryData = injectIntl(HistoryData);

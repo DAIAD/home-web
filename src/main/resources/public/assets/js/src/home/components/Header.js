@@ -221,7 +221,7 @@ var Header = React.createClass({
                     />
                   <Logout
                     isAuthenticated={this.props.isAuthenticated}
-                    onLogout={this.props.onLogout}
+                    logout={this.props.logout}
                     className="navbar logout"
                      />
                     
@@ -237,7 +237,7 @@ var Header = React.createClass({
                 </div>
                 <div className="pull-right">
                   <LocaleSwitcher
-                     onLocaleSwitch={this.props.onLocaleSwitch}
+                     setLocale={this.props.setLocale}
                      locale={this.props.locale}
                      /> 
 

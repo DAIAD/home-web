@@ -1,5 +1,6 @@
 var React = require('react');
-var connect = require('react-redux').connect;
+var { bindActionCreators } = require('redux');
+var { connect } = require('react-redux');
 var injectIntl = require('react-intl').injectIntl;
 
 var SessionsList = require('../components/SessionsList');
@@ -44,32 +45,9 @@ function mapStateToProps(state, ownProps) {
     showModal: state.section.history.activeSessionIndex===null?false:true,
     };
 }
-
-function mapDispatchToProps(dispatch, ownProps) {
-  return {
-    setActiveSessionIndex: function(sessionIndex) {
-      dispatch(HistoryActions.setActiveSessionIndex(sessionIndex));
-    },
-    resetActiveSessionIndex: function() {
-      dispatch(HistoryActions.resetActiveSessionIndex());
-    },
-    setSessionFilter: function(filter) {
-      dispatch(HistoryActions.setSessionFilter(filter));
-    },
-    getActiveSession: function (deviceKey, time) {
-      dispatch(HistoryActions.getActiveSession(deviceKey, time));
-    },
-    getNextSession: function(deviceKey, time) {
-      dispatch(HistoryActions.increaseActiveSessionIndex());
-      dispatch(HistoryActions.getActiveSession(deviceKey, time));
-    },
-    getPreviousSession: function(deviceKey, time) {
-      dispatch(HistoryActions.decreaseActiveSessionIndex());
-      dispatch(HistoryActions.getActiveSession(deviceKey, time));
-    }
-  };
+function mapDispatchToProps (dispatch) {
+  return bindActionCreators(HistoryActions, dispatch);
 }
-
 
 HistoryList = connect(mapStateToProps, mapDispatchToProps)(HistoryList);
 HistoryList = injectIntl(HistoryList);

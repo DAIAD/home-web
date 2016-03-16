@@ -101,10 +101,12 @@ var SessionsList = React.createClass({
     this.props.setSessionFilter('volume');
   },
   onNext: function() {
-    this.props.getNextSession(this.props.activeDevice, this.props.time);
+    this.props.increaseActiveSessionIndex();
+    this.props.getActiveSession(this.props.activeDevice, this.props.time);
   },
   onPrevious: function() {
-    this.props.getPreviousSession(this.props.activeDevice, this.props.time);
+    this.props.decreaseActiveSessionIndex();
+    this.props.getActiveSession(this.props.activeDevice, this.props.time);
   },
   render: function() {
     return (
