@@ -3,7 +3,6 @@ var Link = require('react-router').Link;
 var bs = require('react-bootstrap');
 var { injectIntl } = require('react-intl');
 var { FormattedMessage, FormattedRelative } = require('react-intl');
-var PureRenderMixin = require('react-addons-pure-render-mixin');
 
 var Chart = require('./Chart');
 var Shower = require('./Shower');
@@ -79,7 +78,6 @@ function SparklineChart (props) {
 
 
 var SessionsList = React.createClass({
-  mixins: [PureRenderMixin],
 
   onOpen: function (index) {
     this.props.setActiveSessionIndex(index);

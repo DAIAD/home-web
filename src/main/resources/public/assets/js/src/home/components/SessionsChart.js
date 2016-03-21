@@ -1,10 +1,8 @@
 var React = require('react');
 
 var Chart = require('./Chart');
-var PureRenderMixin = require('react-addons-pure-render-mixin');
 
 var SessionsChart = React.createClass({
-  mixins: [PureRenderMixin],
 
   getDefaultProps: function() { 
     return {
