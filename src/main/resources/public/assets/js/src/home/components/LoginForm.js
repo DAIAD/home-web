@@ -1,6 +1,5 @@
 // Dependencies
 var React = require('react');
-var injectIntl = require('react-intl').injectIntl;
 var FormattedMessage = require('react-intl').FormattedMessage;
 var classNames = require('classnames');
 
@@ -52,8 +51,6 @@ var Logout = React.createClass({
     this.props.logout();
   },
   render: function() {
-    console.log('thisporps');
-    console.log(this.props);
     var _t = this.props.intl.formatMessage;
     if(!this.props.isAuthenticated) {
       return (<div/>);
@@ -69,9 +66,6 @@ var Logout = React.createClass({
       );
     } 
 });
-
-Login = injectIntl(Login);
-Logout = injectIntl(Logout);
 
 module.exports = {
   Login,

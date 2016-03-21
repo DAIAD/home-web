@@ -3,45 +3,37 @@ var assign = require('object-assign');
 var bs = require('react-bootstrap');
 var { bindActionCreators } = require('redux');
 var { connect } = require('react-redux');
-var injectIntl = require('react-intl').injectIntl;
-var { FormattedMessage } = require('react-intl');
+var { injectIntl, FormattedMessage } = require('react-intl');
 
 var MainSection = require('../MainSection');
-
 var LocaleSwitcher = require('../LocaleSwitcher');
-
 var { setLocale } = require('../../actions/LocaleActions');
 
-var ProfileForm = React.createClass({
 
-  handleClick: function(e) {
-    e.preventDefault();
-    //HomeActions.updateProfile(this.state.profile);
-  },
-  render: function() {
-    const profile = this.props.profile;
-    const _t = this.props.intl.formatMessage;
-    return (
-      <form id="form-profile" className="col-xs-5" >
-        <div className="form-group">
-          <label className="control-label">
-            <span>Select language</span>
-          </label>
-          <LocaleSwitcher
-            setLocale={this.props.setLocale}
-            locale={this.props.locale}
-          />
-        </div>    
-          <bs.Input type="text" label={_t({id:"profile.username"})} defaultValue={profile.username} readOnly={true} />
-          <bs.Input type="email" label={_t({id:"profile.email"})} defaultValue={profile.email} ref="email" hasFeedback={true} help="Please enter your email address" />
-          <bs.Input type="text" label={_t({id:"profile.firstname"})} defaultValue={profile.firstname} ref="firstname" disabled={false} />
-          <bs.Input type="text" label={_t({id:"profile.lastname"})} defaultValue={profile.lastname} ref="lastname" disabled={false} />
-          <bs.ButtonInput type="submit" value={_t({id:"forms.submit"})} onClick={this.handleClick} />
-        </form>
+function ProfileForm (props) {
+  const { intl, profile, setLocale, locale } = props;
+  const _t = intl.formatMessage;
+  return (
+    <form id="form-profile" className="col-xs-5" >
+      <div className="form-group">
+        <label className="control-label">
+          <span>Select language</span>
+        </label>
+        <LocaleSwitcher
+          intl={intl}
+          setLocale={setLocale}
+          locale={locale}
+        />
+      </div>    
+        <bs.Input type="text" label={_t({id:"profile.username"})} defaultValue={profile.username} readOnly={true} />
+        <bs.Input type="email" label={_t({id:"profile.email"})} defaultValue={profile.email} hasFeedback={true} help="Please enter your email address" />
+        <bs.Input type="text" label={_t({id:"profile.firstname"})} defaultValue={profile.firstname} disabled={false} />
+        <bs.Input type="text" label={_t({id:"profile.lastname"})} defaultValue={profile.lastname} disabled={false} />
+        <bs.ButtonInput type="submit" value={_t({id:"forms.submit"})} onClick={(e) => {e.preventDefault();} } />
+      </form>
 
-    );
-  }
-});
+  );
+}
 
 var Profile = React.createClass({
   render: function() {
@@ -63,15 +55,7 @@ function mapStateToProps(state) {
 function mapDispatchToProps(dispatch) {
   return bindActionCreators({ setLocale }, dispatch);
 }
-/*
-function mapDispatchToProps(dispatch, ownProps) {
-  return {
-    onLocaleSwitch: function(locale) {
-      dispatch(LocaleActions.setLocale(locale));
-    },
-  };
-}
-*/
+
 Profile = connect(mapStateToProps, mapDispatchToProps)(Profile);
 Profile = injectIntl(Profile);
 module.exports = Profile;

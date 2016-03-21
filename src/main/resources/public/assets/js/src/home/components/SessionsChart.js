@@ -1,8 +1,11 @@
 var React = require('react');
 
 var Chart = require('./Chart');
+var PureRenderMixin = require('react-addons-pure-render-mixin');
 
 var SessionsChart = React.createClass({
+  mixins: [PureRenderMixin],
+
   getDefaultProps: function() { 
     return {
       height: '350px',
@@ -22,8 +25,7 @@ var SessionsChart = React.createClass({
       y2Margin: 30
     };
   },
-  componentWillReceiveProps: function(nextProps) {
-  },
+
   render: function() {
     const colors = ['#2D3580', '#CD4D3E'];
     const areaStyle = this.props.sparkline?null:{

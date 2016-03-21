@@ -12,8 +12,8 @@ var HistoryChartData = require('../../containers/HistoryChartData');
 var HistoryListData = require('../../containers/HistoryListData');
 
 //utils
-var { getDeviceByKey } = require('../../utils/device');
 var timeUtil = require('../../utils/time');
+
 
 function TimeNavigator(props) {
     return (
@@ -32,7 +32,14 @@ function TimeNavigator(props) {
 }
 
 var History = React.createClass({
-  
+
+  componentWillMount: function() {
+    const device = this.props.activeDevice || this.props.defaultDevice;
+    if (!this.props.activeDevice) {
+      this.props.setActiveDevice(this.props.defaultDevice);
+    }
+    this.props.queryDeviceOrMeter(device, this.props.time);
+  },
   handleTypeSelect: function(key){
     this.props.setQueryFilter(key); 
   },
@@ -66,26 +73,37 @@ var History = React.createClass({
       throw new Error('oops, shouldn\'t be here');
     }
     this.props.setTimeFilter(key);
-    this.props.setTimeAndQuery(this.props.activeDevice, time);
+    this.props.setTimeAndQuery(this.props.activeDeviceId, time);
   },
   handleTimePrevious: function() { 
-    this.props.setTimeAndQuery(this.props.activeDevice, this.props.previousPeriod);
+    this.props.setTimeAndQuery(this.props.activeDeviceId, this.props.previousPeriod);
   },
   handleTimeNext: function() { 
-    this.props.setTimeAndQuery(this.props.activeDevice, this.props.nextPeriod);
+    this.props.setTimeAndQuery(this.props.activeDeviceId, this.props.nextPeriod);
   },
   handleDeviceChange: function(e, value) {
-    this.props.setActiveAndQuery(value, this.props.time);
+    this.props.setActiveDeviceAndQuery(value, this.props.time);
   },
-  render: function() {
-    console.log('hello history');
-    const devices = this.props.devices?this.props.devices:[];
-    const activeDevice = this.props.activeDevice;
-    const device = getDeviceByKey(devices, activeDevice);
-    const activeDeviceName = device?(device.name?device.name:device.serial):"None";
-    const devType = this.props.devType;
+  /*
+  componentWillReceiveProps: function(nextProps) {
+    console.log('history receiving props');   
+    //console.log(nextProps);
+    //console.log(this.props);
+    for (let key in nextProps) {
+      let prop = nextProps[key];
+      if (typeof prop === 'function') { continue; }
+      if (this.props[key] === prop) { continue; }
+      console.log('new', key, prop);
+      console.log('old', key, this.props[key]);
+    }
 
-    const _t = this.props.intl.formatMessage;
+   
+  },
+  */
+  render: function() {
+    const { intl, devices, activeDevice, device, devType, timeFilter, time } = this.props;
+    const activeDeviceName = activeDevice?(activeDevice.name?activeDevice.name:activeDevice.serial):"None";
+    const _t = intl.formatMessage;
     return (
       <div>
         <Topbar> 
@@ -99,7 +117,7 @@ var History = React.createClass({
         <div>
           <Sidebar> 
           {(() => {
-            if (this.props.devType === 'AMPHIRO') {
+            if (devType === 'AMPHIRO') {
               return (
                 <bs.Tabs style={{marginTop: 60}} position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
                   <bs.Tab eventKey="showers" title={_t({id: "history.showers"})}/>
@@ -109,7 +127,7 @@ var History = React.createClass({
                   <bs.Tab eventKey="energy" title={_t({id: "history.energy"})}/>
                 </bs.Tabs>);
             }
-            else if (this.props.devType === 'METER') {
+            else if (devType === 'METER') {
               return (
                 <bs.Tabs style={{marginTop: 60}} position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
                   <bs.Tab eventKey="volume" title={_t({id: "history.volume"})}/>
@@ -137,7 +155,7 @@ var History = React.createClass({
               </bs.DropdownButton>
             </div>
 
-            <bs.Tabs  position='top' tabWidth={3} activeKey={this.props.timeFilter} onSelect={this.handleTimeSelect}>
+            <bs.Tabs  position='top' tabWidth={3} activeKey={timeFilter} onSelect={this.handleTimeSelect}>
               
               <bs.Tab eventKey="day" title={_t({id: "history.day"})}/>
               <bs.Tab eventKey="week" title={_t({id: "history.week"})}/>
@@ -151,7 +169,7 @@ var History = React.createClass({
             <TimeNavigator 
               handleTimePrevious={this.handleTimePrevious} 
               handleTimeNext={this.handleTimeNext}
-              time={this.props.time}
+              time={time}
             /> 
             
             <HistoryChartData />

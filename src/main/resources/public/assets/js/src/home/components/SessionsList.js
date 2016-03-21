@@ -3,61 +3,57 @@ var Link = require('react-router').Link;
 var bs = require('react-bootstrap');
 var { injectIntl } = require('react-intl');
 var { FormattedMessage, FormattedRelative } = require('react-intl');
+var PureRenderMixin = require('react-addons-pure-render-mixin');
 
 var Chart = require('./Chart');
 var Shower = require('./Shower');
 var SessionsChart = require('./SessionsChart');
 
 
-var SessionItem = React.createClass({
-  handleClick: function() {
-    this.props.onOpen(this.refs.link.dataset.id, this.refs.link.dataset.index);
-  },
-  render: function() {
+function SessionItem (props) {
+  const arrowClass = props.data.better===null?"":props.data.better?"fa-arrow-down green":"fa-arrow-up red";
 
-    return (
-      <li className="session-item"> 
-        <a onClick={this.handleClick} ref="link" data-id={this.props.data.id} data-index={this.props.index} >
-          <div className="session-item-header col-md-3"><h3>{this.props.data.volume}<span style={{fontSize: '0.6em'}}> lt</span> <i className={`fa ${this.props.data.better===null?"":this.props.data.better?"fa-arrow-down green":"fa-arrow-up red"}`}/></h3>
-            
-          </div>
-          <div className="col-md-7">
-            <div className="pull-right">
-              {(() => {
-                if (this.props.data.id) {
-                  return <span className="session-item-detail">{this.props.data.id}</span>;
-                }
-              })()}
-              <span className="session-item-detail">Stelios</span>
-              <span className="session-item-detail"><i className="fa fa-calendar"/><FormattedRelative value={new Date(this.props.data.timestamp)} /></span> 
-              {(() => { 
-                if (this.props.data.duration) {
-                  return (
-                    <span className="session-item-detail"><i className="fa fa-clock-o"/>{this.props.data.duration}</span>);
-                }
-              })()}
-              {(() => { 
-                if (this.props.data.energyClass) {
-                  return (
-                <span className="session-item-detail"><i className="fa fa-flash"/>{this.props.data.energyClass}</span>);
-                }
-              })()}
-              {(() => { 
-                if (this.props.data.temperature) {
-                  return (
-                <span className="session-item-detail"><i className="fa fa-temperature"/>{this.props.data.temperature}ºC</span>);
-                }
-              })()}
-          </div>
-          </div>
-          <div className="col-md-2">
-            <SparklineChart history={this.props.data.history} data={this.props.data.measurements} intl={this.props.intl}/>
-          </div>
-        </a>
-      </li>
-    );
-  }
-});
+  return (
+    <li className="session-item"> 
+      <a onClick={() => props.onOpen(props.index)} >
+        <div className="session-item-header col-md-3"><h3>{props.data.volume}<span style={{fontSize: '0.6em'}}> lt</span> <i className={`fa ${arrowClass}`}/></h3>
+        </div>
+        <div className="col-md-7">
+          <div className="pull-right">
+            {(() => {
+              if (props.data.id) {
+                return <span className="session-item-detail">{props.data.id}</span>;
+              }
+            })()}
+            <span className="session-item-detail">Stelios</span>
+            <span className="session-item-detail"><i className="fa fa-calendar"/><FormattedRelative value={new Date(props.data.timestamp)} /></span> 
+            {(() => { 
+              if (props.data.duration) {
+                return (
+                  <span className="session-item-detail"><i className="fa fa-clock-o"/>{props.data.duration}</span>);
+              }
+            })()}
+            {(() => { 
+              if (props.data.energyClass) {
+                return (
+              <span className="session-item-detail"><i className="fa fa-flash"/>{props.data.energyClass}</span>);
+              }
+            })()}
+            {(() => { 
+              if (props.data.temperature) {
+                return (
+              <span className="session-item-detail"><i className="fa fa-temperature"/>{props.data.temperature}ºC</span>);
+              }
+            })()}
+        </div>
+        </div>
+        <div className="col-md-2">
+          <SparklineChart history={props.data.history} data={props.data.measurements} intl={props.intl}/>
+        </div>
+      </a>
+    </li>
+  );
+}
 
 function SparklineChart (props) {
   if (!props.data || !props.data.length || props.data.length<=1 || props.history) {
@@ -83,17 +79,11 @@ function SparklineChart (props) {
 
 
 var SessionsList = React.createClass({
+  mixins: [PureRenderMixin],
 
-  onOpen: function (id, index) {
-
+  onOpen: function (index) {
     this.props.setActiveSessionIndex(index);
     this.props.getActiveSession(this.props.activeDevice, this.props.time);
-    /*
-    this.props.setActiveSessionIndex(index);
-    if (id){
-      this.props.fetchSession(id, this.props.activeDevice, this.props.time);
-      }
-      */
   },
   onClose: function() {
     this.props.resetActiveSessionIndex();
@@ -125,6 +115,7 @@ var SessionsList = React.createClass({
               ))
           }
         </ul>
+        
         <bs.Modal animation={false} show={this.props.showModal} onHide={this.onClose} bsSize="large">
           <bs.Modal.Header closeButton>
             <bs.Modal.Title><FormattedMessage id="section.shower" /></bs.Modal.Title>
