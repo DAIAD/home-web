@@ -33,7 +33,8 @@ const QueryActions = {
       return deviceAPI.querySessions(data)
       .then((response) => {
         dispatch(receivedQuery(response.success, response.errors, response.devices) );
-          return response;
+          if (!response.devices.length || !response.devices[0].sessions.length) { return []; }
+          return response.devices[0].sessions;
         })
         .catch((errors) => {
           dispatch(receivedQuery(false, errors));
@@ -55,7 +56,8 @@ const QueryActions = {
       return deviceAPI.getSession(data)
         .then((response) => {
           dispatch(receivedQuery(response.success, response.errors, response.session));
-          return response;
+          if (!response.session) { return {}; }
+          return response.session;
         })
         .catch((errors) => {
           dispatch(receivedQuery(false, errors));
@@ -74,7 +76,8 @@ const QueryActions = {
       return meterAPI.getHistory(data)
         .then((response) => {
           dispatch(receivedQuery(response.success, response.errors, response.session));
-          return response;
+          if (!response.series.length || !response.series[0].values) { return []; }
+          return response.series[0].values;
         })
         .catch((errors) => {
           dispatch(receivedQuery(false, errors));

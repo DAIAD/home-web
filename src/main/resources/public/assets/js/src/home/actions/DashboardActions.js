@@ -17,16 +17,15 @@ const DashboardActions = {
     return function(dispatch, getState) {
       if (getState().section.dashboard.lastSession) { console.log('found in memory'); return true; }
       dispatch(QueryActions.queryDeviceSessions(deviceKey, time))
-        .then((response) => {
-          if (!response.devices.length || !response.devices[0].sessions.length) { return false; }
-          const session = getLastSession(response.devices[0].sessions);
+        .then(sessions => {
+          const session = getLastSession(sessions);
           const id = session.id;
           if (!id){ return false;}
 
           dispatch(QueryActions.fetchDeviceSession(id, deviceKey, time))
-          .then(response => {
-            dispatch(setLastSession(response.session?response.session:{}));
-            return response;
+          .then(session => {
+            dispatch(setLastSession(session));
+            return session;
           })
           .catch((error) => {
             return error;

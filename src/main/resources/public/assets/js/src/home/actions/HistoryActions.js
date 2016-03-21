@@ -42,12 +42,10 @@ const HistoryActions = {
         return true;
       }
       return dispatch(QueryActions.queryDeviceSessions(deviceKey, time))
-        .then(response => {
-          if (!response.devices.length || !response.devices[0].sessions.length) { return false; }
-          
-          dispatch(setSessions(response.devices[0].sessions));
+        .then(sessions => {
+          dispatch(setSessions(sessions));
           dispatch(resetDataDirty());
-          return response;
+          return sessions;
         })
         .catch(error => {
           console.log('oops error while getting all sessions');
@@ -68,10 +66,9 @@ const HistoryActions = {
       }
       console.log('fetching...');
       return dispatch(QueryActions.fetchDeviceSession(id, deviceKey, time))
-        .then(response => { 
-          if (!response.session) { return false; }
-          
-          return dispatch(setSession(response.session));
+        .then(session => { 
+          dispatch(setSession(session));
+          return session;
         })
         .catch(error => {
           console.log('error fetching active sesssion');
@@ -130,14 +127,10 @@ const HistoryActions = {
         return true;
       }
       return dispatch(QueryActions.fetchMeterHistory(deviceKey, time))
-      .then(response => {
-        console.log('got history');
-        console.log(response);
-          if (!response.series.length || !response.series[0].values) { return false; }
-          
-          dispatch(setSessions(response.series[0].values));
+      .then(sessions => { 
+          dispatch(setSessions(sessions));
           dispatch(resetDataDirty());
-          return response;
+          return sessions;
         })
         .catch(error => {
           console.log('oops error while getting all sessions');
@@ -147,11 +140,8 @@ const HistoryActions = {
     };
   },
   queryDeviceOrMeter: function (deviceKey, time) {
-    console.log('query device or meter');
     return function(dispatch, getState) {
       const devType = getDeviceTypeByKey(getState().user.profile.devices, deviceKey);
-      console.log('devtype');
-      console.log(devType);
       if (devType === 'AMPHIRO') {
         return dispatch(HistoryActions.queryDevice(deviceKey, time)); 
       }
