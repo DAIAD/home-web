@@ -32,7 +32,7 @@ function Notification (props) {
       <MainSection id="section.notifications">
       
         <Sidebar width = '30%'>
-          <NotificationList notifications={Constants.data.recommendations} />   
+          <NotificationList notifications={STATIC_RECOMMENDATIONS} />   
         </Sidebar>
 
         <div className="primary" style={{width: '50%', marginRight: '150px'}}>
