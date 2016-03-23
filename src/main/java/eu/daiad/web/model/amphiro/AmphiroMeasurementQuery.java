@@ -2,8 +2,6 @@ package eu.daiad.web.model.amphiro;
 
 import java.util.UUID;
 
-import org.joda.time.DateTime;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import eu.daiad.web.model.AuthenticatedRequest;
@@ -16,9 +14,9 @@ public class AmphiroMeasurementQuery extends AuthenticatedRequest {
 
 	private UUID deviceKey[];
 
-	private DateTime startDate;
+	private long startDate;
 
-	private DateTime endDate;
+	private long endDate;
 
 	private int granularity = TemporalConstants.NONE;
 
@@ -38,19 +36,19 @@ public class AmphiroMeasurementQuery extends AuthenticatedRequest {
 		this.deviceKey = deviceKey;
 	}
 
-	public void setStartDate(DateTime value) {
+	public void setStartDate(long value) {
 		this.startDate = value;
 	}
 
-	public DateTime getStartDate() {
+	public long getStartDate() {
 		return this.startDate;
 	}
 
-	public void setEndDate(DateTime value) {
+	public void setEndDate(long value) {
 		this.endDate = value;
 	}
 
-	public DateTime getEndDate() {
+	public long getEndDate() {
 		return this.endDate;
 	}
 
