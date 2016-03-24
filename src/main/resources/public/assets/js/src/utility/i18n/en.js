@@ -27,6 +27,7 @@
 	    "Analytics":"Analytics",
 	    "Forecasting": "Forecasting",
 	    "Demographics": "Users & Groups",
+	    "ModeManagement": "Mode Management",
 	    "Search": "Search",
 	    "Messages": "Messages",
 	    "Settings": "Settings",
@@ -50,11 +51,50 @@
 			"size": "# of Members",
 			"createdOn": "Creation Date"
 		},
+		"User" : {
+			"Users": "Users",
+			"id": "Id",
+			"active": "active",
+			"name": "Name",
+			"group": "Group",
+			"currentMode": "Current Mode",
+			"viewInfoOnB1": "b1",
+			"viewInfoOnMobile": "Mobile",
+			"allowSocial": "Social",
+			"deactivateUser": "Deactivate User",
+			"searchUsers": "Search users..."
+		},
 		"Alert": {
 			"text" :"Description",
 			"createdOn": "Creation Date",
 			"acknowledged" : "Is Acknowledged"
+		},
+		"Save": "Save Changes"
+	},
+	"Modal" : {
+		"DeactivateUser" : {
+			"Title": "User Deactivation",
+			"Body" : {
+				"Part1" : "Are you sure you wish to deactivate user \"",
+				"Part2" : "\" (with id:\"",
+				"Part3" : "\")?"
+			}
+		},
+		"SaveChanges": {
+			"Title": "Save Changes",
+			"Body" : {
+				"singular": " row has been modified. Are you sure you want to save this change?",
+				"plural": " rows have been modified. Are you sure you want to save these changes?"
+			}
+		},
+		"Buttons" : {
+			"Cancel" : "Cancel",
+			"Deactivate": "Deactivate",
+			"SaveChanges": "Save Changes"
 		}
+	},
+	"FilterBar" : {
+		"Filters": "Filters"
 	},
 	"Counter" : {
 		"Users" : "Users",

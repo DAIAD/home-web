@@ -164,11 +164,38 @@ img.sm {
 	background-color: #337ab7;
 }
 
+.c-checkbox-warning	input[type="checkbox"]+span{
+	border: 2px solid #f0ad4e;
+}
+
+.c-checkbox-warning	input[type="checkbox"]:checked+span{
+	background-color: #f0ad4e;
+}
+
+.c-checkbox-disabled input[type="checkbox"]+span{
+	border: 1px solid #999999;
+}
+
+.c-checkbox-disabled input[type="checkbox"]:checked+span{
+	background-color: #999999;
+}
+
 .c-checkbox input[type=checkbox]:checked+span:before, .c-checkbox input[type=radio]:checked+span:before,
 	.c-radio input[type=checkbox]:checked+span:before, .c-radio input[type=radio]:checked+span:before
 	{
 	color: #fff;
 	opacity: 1;
+}
+
+/* Links */
+a .disabled{
+	color: #999999;
+    text-decoration: line-through;
+}
+
+/* Icon */
+.disabled-icon{
+	color: #999999;
 }
 
 /* Bootstrap Grid */

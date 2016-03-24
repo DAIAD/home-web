@@ -27,6 +27,7 @@
 	    "Analytics":"Ανάλυση",
 	    "Forecasting": "Πρόβλεψη",
 	    "Demographics": "Ομάδες & Χρήστες",
+	    "ModeManagement": "Διαχείριση Κατάστασης",
 	    "Search": "Αναζήτηση",
 	    "Messages": "Μηνύματα",
 	    "Settings": "Ρυθμίσεις",
@@ -50,10 +51,49 @@
 			"size": "# Μελών",
 			"createdOn": "Ημερομηνία δημιουργίας"
 		},
+		"User" : {
+			"Users": "Χρήστες",
+			"id": "Id",
+			"active": "ενεργός",
+			"name": "Όνομα",
+			"group": "Ομάδα",
+			"currentMode": "Τρέχουσα Κατάσταση",
+			"viewInfoOnB1": "b1",
+			"viewInfoOnMobile": "Mobile",
+			"allowSocial": "Social",
+			"deactivateUser": "Απενεργοποίηση Χρήστη",
+			"searchUsers": "Αναζητήστε χρήστες..."
+		},
 		"Alert": {
 			"text" :"Description",
 			"createdOn": "Creation Date",
 			"acknowledged" : "Is Acknowledged"
+		},
+		"Save": "Αποθήκευση Αλλαγών"
+	},
+	"FilterBar" : {
+		"Filters": "Φίλτρα"
+	},
+	"Modal" : {
+		"DeactivateUser" : {
+			"Title": "Απενεργοποίηση Χρήστη",
+			"Body" : {
+				"Part1" : "Είστε σίγουρος ότι θέλετε να απενεργοποιήσετε το χρήστη \"",
+				"Part2" : "\" (με id:\"",
+				"Part3" : "\");"
+			}			
+		},
+		"SaveChanges": {
+			"Title": "Αποθήκευση Αλλαγών",
+			"Body" : {
+				"singular": " εγγραφή έχει τροποποιηθεί. Είστε σίγουρος ότι θέλετε να αποθηκεύσετε αυτήν την αλλαγή;",
+				"plural": " εγγραφές έχουν τροποποιηθεί. Είστε σίγουρος ότι θέλετε να αποθηκεύσετε αυτές τις αλλαγές;"
+			}
+		},
+		"Buttons" : {
+			"Cancel" : "Ακύρωση",
+			"Deactivate": "Απενεργοποίηση",
+			"SaveChanges": "Αποθήκευση αλλαγών"
 		}
 	},
 	"Counter" : {

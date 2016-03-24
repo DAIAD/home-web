@@ -7,6 +7,7 @@ var App = require('../containers/App');
 var Dashboard = require('../components/section/Dashboard');
 var Analytics = require('../components/section/Analytics');
 var Demographics = require('../components/section/Demographics');
+var ModeManagement = require('../components/section/ModeManagement');
 var User = require('../components/User');
 var Group = require('../components/Group');
 var Device = require('../components/Device');
@@ -26,6 +27,7 @@ module.exports = (
 		<Route path="/analytics" component={Analytics} />
 		<Route path="/forecasting" component={Forecasting} />
 		<Route path="/demographics" component={Demographics} />
+		<Route path="/mode_management" component={ModeManagement}/>
 		<Route path="/user/:id" component={User} />
 		<Route path="/group/:id" component={Group} />
 		<Route path="/device/:id" component={Device} />
