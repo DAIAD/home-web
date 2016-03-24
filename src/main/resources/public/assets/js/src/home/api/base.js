@@ -1,49 +1,24 @@
-//var assign = require('object-assign');
-var $ = require('jquery');
+var fetch = require('isomorphic-fetch');
 require('es6-promise').polyfill();
 
-function updateCsrfToken(crsf) {
-	$('meta[name=_csrf]').attr('content', crsf);
-	$('input[name=_csrf]').val(crsf);
-}
+var callAPI = function(url, data, method="POST") {
+  const { csrf } = data;
+  delete data.csrf;
 
-var callAPI = function(url, data, stringify) {
-	if (data){
-		data._csrf = $('meta[name=_csrf]').attr('content');
-	}
-	if (stringify === undefined){
-		stringify = true;
-	}
-	
-	var request = {
-				type : data?'POST':'GET',
-				dataType: 'json',
-				data: stringify?JSON.stringify(data):data,
-				url : url, 
-				beforeSend : function(xhr) {
-						xhr.setRequestHeader('X-CSRF-TOKEN', $('meta[name=_csrf]').attr(
-										'content'));
-				}
-	};
-	if (stringify){
-		request.contentType = "application/json";
-	}
+  let fetchObj = {
+    method: method,
+    credentials: 'same-origin',
+    headers: {
+      'Accept': "application/json",
+      'Content-Type': "application/json",
+      'X-CSRF-TOKEN': csrf
+    }
+  };
+  fetchObj = Object.assign({}, fetchObj, Object.keys(data).length>0?{body:JSON.stringify(data)}:{});
 
-	return new Promise(function(resolve, reject) {
-	
-	    $.ajax(request).done(function(data, textStatus, request) {
-				updateCsrfToken(request.getResponseHeader('X-CSRF-TOKEN'));
-				resolve(data);			
-
-			}).fail(function(jqXHR, textStatus, errorThrown) {
-				updateCsrfToken(jqXHR.getResponseHeader('X-CSRF-TOKEN'));
-					reject(errorThrown);
-	        switch (jqXHR.status) {
-	        case 403:
-	            break;
-	        }
-			});
-	});
-
+  return fetch(url, fetchObj) 
+    .then(response => (response.status >= 200 && response.status < 300)?response:new Error(response.statusText))
+    .then(response => response.json().then(json => Object.assign({}, json, {csrf:response.headers.get('X-CSRF-TOKEN')})));
 };
+
 module.exports = callAPI;

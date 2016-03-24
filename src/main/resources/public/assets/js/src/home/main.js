@@ -6,10 +6,13 @@ var configureStore = require('./store/configureStore');
 var Router = require('react-router').Router;
 require('babel-polyfill');
 
-const history = require('./routing/history');
+var history = require('./routing/history');
 var routes = require('./routing/routes');
+var store = configureStore(history);
 
-var store = configureStore();
+var { syncHistoryWithStore } = require('react-router-redux');
+history = syncHistoryWithStore(history, store);
+
 
 //Actions
 var LocaleActions = require('./actions/LocaleActions');
@@ -20,36 +23,31 @@ var UserActions = require('./actions/UserActions');
 
 var getDefaultDevice = require('./utils/device').getDefaultDevice;
 
-
-store.dispatch(LocaleActions.setLocale(properties.locale)).then(function() {
-	if (properties.reload){
-		store.dispatch(UserActions.refreshProfile()).then(function(response) {
-
-			const devices = response.profile.devices;
-			const device = getDefaultDevice(devices);
-			store.dispatch(DeviceActions.setActiveDevice(device.deviceKey));
-			
-			init();
-		}, function(error) {
-				console.log('refresh profile problem');
-				console.log(error);
+store.dispatch(LocaleActions.setLocale(properties.locale))
+  .then((response) => {
+    if (properties.reload){
+      store.dispatch(UserActions.refreshProfile())
+        .then((response) =>{
+          const devices = response.profile.devices;
+          const device = getDefaultDevice(devices);
+          if (device){
+            store.dispatch(DeviceActions.setActiveDevice(device.deviceKey));
+          }
+          init();
+        });
+    }
+    else {
+      init();
+    }
 });
-	}
-	else {
-		init();
-	}
-}, function(e) {
-		console.log('set locale problem');
-		console.log(e);
-});
-		
-var init = function() {
-	ReactDOM.render(
-		<ReduxProvider store={store}>
-			<Router 
-				history={history}
-				routes={routes}
-			/>
-		</ReduxProvider>,
-		document.getElementById('app'));
+    
+const init = function() {
+  ReactDOM.render(
+    <ReduxProvider store={store}>
+      <Router 
+        history={history}
+        routes={routes}
+      />
+    </ReduxProvider>,
+    document.getElementById('app'));
 };

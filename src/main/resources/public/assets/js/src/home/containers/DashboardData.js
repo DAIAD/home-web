@@ -3,76 +3,68 @@ var bs = require('react-bootstrap');
 var injectIntl = require('react-intl').injectIntl;
 var connect = require('react-redux').connect;
 var FormattedMessage = require('react-intl').FormattedMessage;
+var { push } = require('react-router-redux');
 
 var Dashboard = require('../components/sections/Dashboard');
 
 var DeviceActions = require('../actions/DeviceActions');
+var HistoryActions = require('../actions/HistoryActions');
 
 var timeUtil = require('../utils/time');
-var getSessionById = require('../utils/device').getSessionById;
-var getDefaultDevice = require('../utils/device').getDefaultDevice;
-
-var getFilteredData = function(data, filter) {
-	var filteredData = [];
-
-	data.forEach(function(dato) {
-		if (!dato[filter]){
-			return;
-		}
-		filteredData.push([new Date(dato.timestamp), dato[filter]]);
-	});
-	
-	//return array with dates instead of timestamps
-	return filteredData.map(x => [new Date(x[0]),x[1]]);
-};
+var { getDefaultDevice, getLastSession } = require('../utils/device');
+var { getFilteredData } = require('../utils/chart');
 
 var DashboardData = React.createClass({
-	
-	componentWillMount: function() {
-		if (this.props.activeDevice) {
-			this.props.initDashboard(this.props.activeDevice);
-		}
-	},
-	componentWillReceiveProps: function(nextProps) {
-		if (!this.props.activeDevice && nextProps.activeDevice) {
-			this.props.initDashboard(nextProps.activeDevice);
-		}
-	},
-	render: function() {
-		return (
-				<Dashboard {...this.props} />
-		);
-	}
+  
+  componentWillMount: function() {
+    if (this.props.defaultDevice) {
+      this.props.getLastSession(this.props.defaultDevice);
+    }
+  },
+  componentWillReceiveProps: function(nextProps) {
+    if (!this.props.defaultDevice && nextProps.defaultDevice) {
+      this.props.getLastSession(nextProps.defaultDevice);
+    }
+  },
+  render: function() {
+    return (
+      <Dashboard {...this.props} />
+    );
+  }
 });
 
+
 function mapStateToProps(state, ownProps) {
-	var lastSession = getSessionById(state.device.query.data, state.device.query.lastSession);
-	return {
-		time: state.device.query.time,
-		activeDevice: state.device.query.activeDevice,
-		firstname: state.user.profile.firstname,
-		chartData: lastSession?(getFilteredData(lastSession.measurements?lastSession.measurements:[], 'volume')):[],
-		chartFormatter: (x) => ownProps.intl.formatTime(x, { hour: 'numeric', minute: 'numeric'}),
-		lastShower: lastSession,
-		loading: state.device.query.status.isLoading,
-	};
+  const lastSession = getLastSession(state.query.data);
+  const defaultDevice = getDefaultDevice(state.user.profile.devices);
+  const deviceKey = defaultDevice?defaultDevice.deviceKey:null;
+  return {
+    time: state.query.time,
+    activeDevice: state.query.activeDevice,
+    defaultDevice: deviceKey,
+    firstname: state.user.profile.firstname,
+    chartData: [{title:'Consumption', data:(lastSession?(getFilteredData(lastSession.measurements?lastSession.measurements:[], 'volume')):[])}],
+    chartFormatter: (x) => ownProps.intl.formatTime(x, { hour:'numeric', minute:'numeric', second:'numeric'}),
+    lastShower: lastSession,
+  };
 }
 
 function mapDispatchToProps(dispatch) {
-	return {
-
-		initDashboard: function(deviceKey) {
-			const time = Object.assign({}, timeUtil.thisMonth(), {granularity: 0});
-
-			dispatch(DeviceActions.querySessions(deviceKey, time)).then(
-				function(response) { 
-					dispatch(DeviceActions.fetchLastSession(deviceKey, time));
-				},
-				function(error) {
-					console.log(error);
-				});
-		}
-	};
+  return {
+    linkToHistory: function(options) {
+      dispatch(HistoryActions.resetActiveSessionIndex());
+      dispatch(HistoryActions.setQueryFilter(options.filter));
+      dispatch(HistoryActions.setTimeFilter(options.timeFilter));
+      dispatch(DeviceActions.setTime(Object.assign({}, timeUtil.thisYear(), {granularity:4})));
+       
+      dispatch(push('/history'));
+    },
+    getLastSession: function(deviceKey) {
+      const time = Object.assign({}, timeUtil.thisMonth(), {granularity: 0});
+      return dispatch(DeviceActions.querySessions(deviceKey, time))
+        .then((response) => dispatch(DeviceActions.fetchLastSession(deviceKey, time)));
+    }
+  };
 }
 
 DashboardData = connect(mapStateToProps, mapDispatchToProps)(DashboardData);

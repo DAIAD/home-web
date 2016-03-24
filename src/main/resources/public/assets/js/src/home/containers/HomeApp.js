@@ -8,9 +8,9 @@ var connect = require('react-redux').connect;
 var Constant = require('../constants/HomeConstants');
 
 // Components
-var Header = require('../components/Header.react');
-var MainSection = require('../components/MainSection.react');
-var Footer = require('../components/Footer.react');
+var Header = require('../components/Header');
+var MainSection = require('../components/MainSection');
+var Footer = require('../components/Footer');
 var LoginPage = require('../components/sections/Login');
 
 // Actions
@@ -23,102 +23,110 @@ var getDeviceCount = require('../utils/device').getDeviceCount;
 
 var HomeApp = React.createClass({
 
-	componentWillMount: function() {
-		if (this.props.user.isAuthenticated) {
-			//this.props.setDefaultActiveDevice(this.props.user.profile.devices);
-		}
-	},
-	render: function() {
-		const devices = this.props.user.profile.devices;
-		return (
-			<ReactIntlProvider 
-				locale={this.props.locale.locale}
-				messages={this.props.locale.messages} >
-				
-				<div>
-					{
-						(() => {
-							if (this.props.loading){
-								return (
-									<span style={{position:'absolute'}} >Loading....</span>
-									);
-							}
-							})()
-					}	
-					<Header 
-						data={Constant.data}
-						firstname={this.props.user.profile.firstname}
-						deviceCount={this.props.user.isAuthenticated?getDeviceCount(devices):0}
-						isAuthenticated={this.props.user.isAuthenticated}
-						locale={this.props.locale.locale}
-						onLogout={this.props.onLogout} 
-						onLocaleSwitch={this.props.onLocaleSwitch}
-					/>
-					
-					{
-						(() => {
-							if (this.props.user.isAuthenticated) {
-									// wait until profile is loaded 
-									if (devices === undefined){
-										return (null);
-									}
-									else {
-										return (
-												this.props.children
-											);
-									}
-								}
-								else {
-									return (
-										<LoginPage 
-											isAuthenticated = {this.props.user.isAuthenticated}
-											errors = {this.props.user.status.errors}
-											onLogin = {this.props.onLogin}
-											onLogout = {this.props.onLogout} />
-										);
-								}
-							})()
-						}
+  componentWillMount: function() {
+    if (this.props.user.isAuthenticated) {
+      //this.props.setDefaultActiveDevice(this.props.user.profile.devices);
+    }
+  },
+  render: function() {
+    const devices = this.props.user.profile.devices;
+    return (
+      <ReactIntlProvider 
+        locale={this.props.locale.locale}
+        messages={this.props.locale.messages} >
+        <div>
+          {
+            (() => {
+              if (this.props.loading){
+                return (
+                  <div>
+                    <img className="preloader" src="/assets/images/png/preloader-counterclock.png" />
+                    <img className="preloader-inner" src="/assets/images/png/preloader-clockwise.png" />
+                  </div>
+                  );
+              }
+              })()
+          }
+          <Header
+            intl={this.props.intl}
+            data={Constant.data}
+            firstname={this.props.user.profile.firstname}
+            deviceCount={this.props.user.isAuthenticated?getDeviceCount(devices):0}
+            isAuthenticated={this.props.user.isAuthenticated}
+            locale={this.props.locale.locale}
+            onLogout={this.props.onLogout} 
+            onLocaleSwitch={this.props.onLocaleSwitch}
+          />
+          
+          {
+            (() => {
+              if (this.props.user.isAuthenticated) {
+                  // wait until profile is loaded 
+                  if (devices === undefined){
+                    return (null);
+                  }
+                  else {
+                    return (
+                        this.props.children
+                      );
+                  }
+                }
+                else {
+                  return (
+                    <LoginPage 
+                      isAuthenticated = {this.props.user.isAuthenticated}
+                      errors = {this.props.user.status.errors}
+                      onLogin = {this.props.onLogin}
+                      onLogout = {this.props.onLogout} />
+                    );
+                }
+              })()
+            }
 
-						<Footer />
+            <Footer />
 
-					</div>
+          </div>
 
-				</ReactIntlProvider>
-			);
-	},
+        </ReactIntlProvider>
+      );
+  },
 
 });
 
 
 function mapStateToProps(state) {
-		return {
-			user: state.user,
-			locale: state.locale,
-			loading: state.user.status.isLoading || state.locale.status.isLoading,
-		};
+    return {
+      user: state.user,
+      locale: state.locale,
+      loading: state.user.status.isLoading || state.locale.status.isLoading || state.query.status.isLoading
+    };
 }
 
 function mapDispatchToProps(dispatch, ownProps) {
-	return {
-		onLogin: function(username, password) {
-			dispatch(UserActions.login(username, password)).then(function(response) {
-				const devices = response.profile.devices;
-				const device = getDefaultDevice(devices);
-				return dispatch(DeviceActions.setActiveDevice(device.deviceKey));
-			},
-			function(error) {
-				console.log('oops, something went wrong while logging-in');
-			});
-		},
-		onLogout: function() {
-			dispatch(UserActions.logout());
-		},
-		onLocaleSwitch: function(locale) {
-			dispatch(LocaleActions.setLocale(locale));
-		},
-		
-	};
+  return {
+    onLogin: function(username, password) {
+      dispatch(UserActions.login(username, password))
+      .then((response) => {
+        if (!response.profile) {
+            return response;
+          }
+          const devices = response.profile.devices;
+          const device = getDefaultDevice(devices);
+          if (device) {
+            dispatch(DeviceActions.setActiveDevice(device.deviceKey));
+            return response;
+          }
+        });
+    },
+    onLogout: function() {
+      dispatch(UserActions.logout())
+        .then((response) => dispatch(DeviceActions.resetQuery()));
+    },
+    onLocaleSwitch: function(locale) {
+      dispatch(LocaleActions.setLocale(locale));
+    },
+    
+  };
 }
 
 HomeApp = connect(mapStateToProps, mapDispatchToProps)(HomeApp);

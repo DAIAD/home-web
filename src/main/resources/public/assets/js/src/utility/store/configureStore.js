@@ -1,16 +1,15 @@
-var Redux = require('redux');
-var thunk = require('redux-thunk');
+var { createStore, applyMiddleware } = require('redux');
+var thunkMiddleware = require('redux-thunk');
 
-var history = require('../routing/history');
-var { syncHistory}  = require('react-router-redux');
+var { routerMiddleware }  = require('react-router-redux');
 
 var rootReducer = require('../reducers');
 
-function configureStore(initialState) {
-	return Redux.createStore(
+function configureStore(history, initialState) {
+	return createStore(
 		rootReducer,
 		initialState,
-		Redux.applyMiddleware(thunk, syncHistory(history))
+		applyMiddleware(thunkMiddleware, routerMiddleware(history))
 	);
 }
 
