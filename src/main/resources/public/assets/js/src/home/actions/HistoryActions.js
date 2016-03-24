@@ -32,7 +32,18 @@ const resetDataDirty = function () {
 };
 
 const HistoryActions = {
+  
+  linkToHistory: function(options) {
+    const { device, filter, timeFilter, time } = options;
 
+    dispatch(HistoryActions.resetActiveSessionIndex());
+    if (device) { dispatch(HistoryActions.setActiveDevice(device)); }
+    if (filter) { dispatch(HistoryActions.setQueryFilter(filter)); }
+    if (timeFilter) { dispatch(HistoryActions.setTimeFilter(timeFilter)); }
+    if (time) { dispatch(HistoryActions.setTime(time)); }
+
+    dispatch(push('/history'));
+  },
   queryDevice: function(deviceKey, time) {
     return function(dispatch, getState) {
       //if query not changed dont update (for now)

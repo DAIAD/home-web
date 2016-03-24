@@ -34,8 +34,9 @@ function TimeNavigator(props) {
 var History = React.createClass({
 
   componentWillMount: function() {
-    const device = this.props.activeDevice || this.props.defaultDevice;
-    if (!this.props.activeDevice) {
+    console.log('will mount');
+    const device = this.props.activeDeviceId || this.props.defaultDevice;
+    if (!this.props.activeDeviceId) {
       this.props.setActiveDevice(this.props.defaultDevice);
     }
     this.props.queryDeviceOrMeter(device, this.props.time);

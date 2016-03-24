@@ -37,6 +37,8 @@ module.exports = keyMirror({
   HISTORY_RESET_DATA_DIRTY: null,
 
   DASHBOARD_SET_LAST_SESSION: null,
+  DASHBOARD_UPDATE_LAYOUT: null,
+  DASHBOARD_UPDATE_INFOBOX: null,
 
 });
 
