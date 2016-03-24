@@ -2,8 +2,6 @@ package eu.daiad.web.model.amphiro;
 
 import java.util.UUID;
 
-import org.joda.time.DateTime;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import eu.daiad.web.model.AuthenticatedRequest;
@@ -17,9 +15,9 @@ public class AmphiroSessionQuery extends AuthenticatedRequest {
 
 	private long sessionId;
 
-	private DateTime startDate;
+	private long startDate;
 
-	private DateTime endDate;
+	private long endDate;
 
 	public UUID getDeviceKey() {
 		return deviceKey;
@@ -37,19 +35,19 @@ public class AmphiroSessionQuery extends AuthenticatedRequest {
 		this.sessionId = sessionId;
 	}
 
-	public DateTime getStartDate() {
+	public long getStartDate() {
 		return startDate;
 	}
 
-	public void setStartDate(DateTime startDate) {
+	public void setStartDate(long startDate) {
 		this.startDate = startDate;
 	}
 
-	public DateTime getEndDate() {
+	public long getEndDate() {
 		return endDate;
 	}
 
-	public void setEndDate(DateTime endDate) {
+	public void setEndDate(long endDate) {
 		this.endDate = endDate;
 	}
 
