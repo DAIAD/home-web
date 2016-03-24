@@ -73,7 +73,7 @@ var ContentRoot = React.createClass({
 					<nav className='navbar navbar-default navbar-fixed-top'>
 						<div className='navbar-header' style={{ paddingLeft: 15 }} >
 							<a className='navbar-brand' href='#' style={{ padding: 0, margin: 0}}>
-								<img alt='DAIAD' src='/assets/images/daiad-logo.svg' style={{ marginTop: 15 }} />
+								<img alt='DAIAD' src='/assets/images/utility/daiad-logo.svg' style={{ marginTop: 15 }} />
 							</a>
 						</div>
 						<div style={{ float: 'right', marginTop: 8, marginLeft: 10, paddingRight: 45}}>
