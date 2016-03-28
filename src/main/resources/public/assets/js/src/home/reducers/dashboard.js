@@ -5,6 +5,7 @@ var dashboard = function (state, action) {
   //initial state
   if (state === undefined) {
     state = {
+      mode: "normal",
       lastSession: null,
       layout: [
         {x:0, y:1, w:2, h:1, i:"1"},
@@ -16,18 +17,21 @@ var dashboard = function (state, action) {
         {x:3, y:2, w:3, h:2, i:"7"},
       ],
       infobox: [
+        /*
         {
           id: "1", 
           title: "Water efficiency Score", 
           data: [],
 
-        },
+          },
+          */
         {
           id: "2", 
-          title: "Week consumption",
+          title: "Month consumption",
           type: "stat",
-          time: Object.assign({}, timeUtil.thisWeek(), {granularity:2}),
-          device: "e5f05388-af4b-484b-8f1a-a62f37f08dee",
+          time: Object.assign({}, timeUtil.thisMonth(), {granularity:3}),
+          period: "month",
+          device: "39533fa1-61d5-456f-beae-11845a03b374",
           metric: "volume",
           data: [],
         },
@@ -36,30 +40,32 @@ var dashboard = function (state, action) {
           title: "Last Shower", 
           type: "last",
           time: Object.assign({}, timeUtil.thisMonth(), {granularity:0}),
-          device: "e5f05388-af4b-484b-8f1a-a62f37f08dee",
+          device: "5451aecb-9b1b-450c-9de6-c3ca5691fe25",
           metric: "volume",
           data: [],
         },
         {
           id: "4", 
-          title: "Year energy consumption", 
+          title: "Year volume consumption", 
           type: "stat",
           time: Object.assign({}, timeUtil.thisYear(), {granularity:4}),
-          device: "e5f05388-af4b-484b-8f1a-a62f37f08dee",
-          metric: "energy",
+          period: "year",
+          device: "39533fa1-61d5-456f-beae-11845a03b374",
+          metric: "volume",
           data: [],
 
         },
+        /*
         {
           id: "5", 
           title:"Day consumption",
           type: "stat",
           time: Object.assign({}, timeUtil.today(), {granularity:0}),
-          device: "e5f05388-af4b-484b-8f1a-a62f37f08dee",
+          device: "39533fa1-61d5-456f-beae-11845a03b374",
           metric: "volume",
           data: [],
-
-        },
+          },
+          */
         /*{
           i: "6", 
           title: "Year forecasting", 
@@ -76,7 +82,18 @@ var dashboard = function (state, action) {
   }
    
   switch (action.type) {
-      case types.DASHBOARD_SET_LAST_SESSION:
+    
+    case types.DASHBOARD_SWITCH_TO_EDIT:
+        return Object.assign({}, state, {
+          mode: "edit"
+        });
+  
+     case types.DASHBOARD_SWITCH_TO_NORMAL:
+        return Object.assign({}, state, {
+          mode: "normal"
+        });
+
+    case types.DASHBOARD_SET_LAST_SESSION:
         return Object.assign({}, state, {
           lastSession: action.session
         });

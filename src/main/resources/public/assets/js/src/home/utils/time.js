@@ -3,7 +3,7 @@ var moment = require('moment');
 const today = function() {
   return {
     startDate: moment().startOf('day').valueOf(),
-    endDate: moment().endOf('day').add(3, 'hours').valueOf()
+    endDate: moment().endOf('day').valueOf()
   };
 };
 

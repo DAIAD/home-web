@@ -49,22 +49,14 @@ function SessionInfo (props) {
 }
 
 function Shower (props) {
+ 
+  console.log('shower',props);
   const history = props.data?props.data.history:null;
+
+  const hasChartData = !history?(props.data?(props.data.id?true:false):false):false;
   const _t = props.intl.formatMessage;
   return (
-    history?(
-      <div style={{padding:30}}>
-        <section>
-          <div style={{width:'80%', marginLeft: 'auto', marginRight:'auto'}}>
-            <h3><FormattedMessage id="history.limitedData"/> </h3>
-            <div style={{marginTop: 50}}/>    
-          </div>
-          <SessionInfo
-            intl={props.intl}
-            data={props.data} />
-        </section>
-    </div>
-    ):(
+    hasChartData?(
       <div style={{padding: 30}}>
         <SessionsChart 
             height={300}
@@ -75,14 +67,27 @@ function Shower (props) {
             x2Margin={60}
             type="line"
             formatter={(x) => props.intl.formatTime(x, { hour: 'numeric', minute: 'numeric'})}
-            data={[{title: props.filter, data:props.data.measurements}]}
+            data={[{title: props.filter, data:props.data?props.data.chartData:[]}]}
             />
-            <div style={{marginTop: 30}}/>    
+            <div style={{marginTop: 30}}/>
+
         <SessionInfo
           intl={props.intl}
           setSessionFilter={props.setSessionFilter}
           data={props.data} /> 
       </div>
+    ):(
+    <div style={{padding:30}}>
+      <section>
+        <div style={{width:'80%', marginLeft: 'auto', marginRight:'auto'}}>
+          <h3><FormattedMessage id="history.limitedData"/> </h3>
+          <div style={{marginTop: 50}}/>    
+        </div>
+        <SessionInfo
+          intl={props.intl}
+          data={props.data} />
+      </section>
+      </div> 
     )
   );
 }

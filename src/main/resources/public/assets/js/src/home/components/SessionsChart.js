@@ -17,8 +17,8 @@ var SessionsChart = React.createClass({
       invertAxis: false,
       sparkline: false,
       fontSize: 15,
-      xMargin: 45,
-      yMargin: 50,
+      xMargin: 75,
+      yMargin: 10,
       x2Margin: 20,
       y2Margin: 30
     };
@@ -114,7 +114,7 @@ var SessionsChart = React.createClass({
             color: '#808285',
             fontSize: this.props.fontSize
           },
-          margin: 12
+          margin: 20
         },
         axisLine: {
           show: false

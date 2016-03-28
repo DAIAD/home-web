@@ -38,8 +38,8 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
     Object.assign({}, 
                   stateProps, 
                   { 
-                    nextPeriod: timeUtil.getNextPeriod(stateProps.timeFilter, stateProps.time.startDate), 
-                    previousPeriod: timeUtil.getPreviousPeriod(stateProps.timeFilter, stateProps.time.endDate),
+                    nextPeriod: Object.assign({}, stateProps.time, timeUtil.getNextPeriod(stateProps.timeFilter, stateProps.time.startDate)), 
+                    previousPeriod: Object.assign({}, stateProps.time, timeUtil.getPreviousPeriod(stateProps.timeFilter, stateProps.time.endDate)),
                     activeDevice: getDeviceByKey(stateProps.devices, stateProps.activeDeviceId),
 
                   }

@@ -35,11 +35,13 @@ var History = React.createClass({
 
   componentWillMount: function() {
     console.log('will mount');
-    const device = this.props.activeDeviceId || this.props.defaultDevice;
-    if (!this.props.activeDeviceId) {
-      this.props.setActiveDevice(this.props.defaultDevice);
+    const { activeSessionIndex, time, activeDeviceId, defaultDevice, setActiveDevice, queryDeviceOrMeter, getActiveSession } = this.props;
+    const device = activeDeviceId || defaultDevice;
+    if (!activeDeviceId) {
+      setActiveDevice(defaultDevice);
     }
-    this.props.queryDeviceOrMeter(device, this.props.time);
+    queryDeviceOrMeter(device, time)
+    .then(() => { if (activeSessionIndex!==null) { return getActiveSession(device, time); } });
   },
   handleTypeSelect: function(key){
     this.props.setQueryFilter(key); 

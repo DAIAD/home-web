@@ -7,7 +7,7 @@ var SessionsList = require('../components/SessionsList');
 
 var HistoryActions = require('../actions/HistoryActions');
 
-var { getSessionByIndex } = require('../utils/device');
+var { getSessionByIndex, getDeviceTypeByKey } = require('../utils/device');
 var { getFilteredData } = require('../utils/chart');
 var { getFriendlyDuration, getEnergyClass } = require('../utils/general');
 
@@ -19,6 +19,7 @@ function mapStateToProps(state, ownProps) {
     activeSessionFilter: state.section.history.activeSessionFilter,
     data: state.section.history.data,
     activeSessionIndex: state.section.history.activeSessionIndex,
+    devType: getDeviceTypeByKey(state.user.profile.devices, state.section.history.activeDevice), 
     };
 }
 function mapDispatchToProps (dispatch) {
@@ -44,10 +45,10 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                       (session, idx, array) => 
                         Object.assign({}, 
                                     session, 
-                                    {better:array[idx+1]?(session.volume<array[idx+1].volume?true:false):null}, 
+                                    {better:array[idx+1]?(session.volume<=array[idx+1].volume?true:false):null}, 
                                     {duration:getFriendlyDuration(session.duration)}, 
                                     {energyClass:getEnergyClass(session.energy)}, 
-                                    {measurements: getFilteredData(session.measurements, stateProps.activeSessionFilter)}
+                                    {chartData: getFilteredData(session.measurements, stateProps.activeSessionFilter, stateProps.devType)}
                                    )),
                     showModal: stateProps.activeSessionIndex===null?false:true,
                     disabledNext,

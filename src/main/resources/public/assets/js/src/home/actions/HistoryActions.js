@@ -1,5 +1,6 @@
 var types = require('../constants/ActionTypes');
 require('es6-promise').polyfill();
+var { push } = require('react-router-redux');
 
 var { getSessionById, getDeviceTypeByKey } = require('../utils/device');
 
@@ -34,15 +35,19 @@ const resetDataDirty = function () {
 const HistoryActions = {
   
   linkToHistory: function(options) {
-    const { device, filter, timeFilter, time } = options;
+    return function(dispatch, getState) {
+      const { device, metric, period, time, index } = options;
 
-    dispatch(HistoryActions.resetActiveSessionIndex());
-    if (device) { dispatch(HistoryActions.setActiveDevice(device)); }
-    if (filter) { dispatch(HistoryActions.setQueryFilter(filter)); }
-    if (timeFilter) { dispatch(HistoryActions.setTimeFilter(timeFilter)); }
-    if (time) { dispatch(HistoryActions.setTime(time)); }
+      if (index===null || index===undefined) { dispatch(HistoryActions.resetActiveSessionIndex()); } 
+      else { dispatch(HistoryActions.setSessionFilter(metric)); dispatch(HistoryActions.setActiveSessionIndex(index)); }
 
-    dispatch(push('/history'));
+      if (device) { dispatch(HistoryActions.setActiveDevice(device)); }
+      if (metric) { dispatch(HistoryActions.setQueryFilter(metric)); }
+      if (period) { dispatch(HistoryActions.setTimeFilter(period)); }
+      if (time) { dispatch(HistoryActions.setTime(time)); }
+
+      dispatch(push('/history'));
+    };
   },
   queryDevice: function(deviceKey, time) {
     return function(dispatch, getState) {
@@ -89,14 +94,13 @@ const HistoryActions = {
   },
   getActiveSession: function(deviceKey, time) {
     return function(dispatch, getState) {
-
       const sessions = getState().section.history.data;
       const activeSessionIndex = getState().section.history.activeSessionIndex;
       
-      if (!activeSessionIndex) { return false; }
+      if (activeSessionIndex===null) { return false; }
 
       const activeSession = sessions[activeSessionIndex];
-
+      console.log(activeSession);
       if (!activeSession) { return false; }
            
       const devType = getDeviceTypeByKey(getState().user.profile.devices, deviceKey);
@@ -135,7 +139,7 @@ const HistoryActions = {
       //TODO: have to ask every now and then for new data
       if (!getState().section.history.dirty) {
         console.log('meter data already in memory');
-        return true;
+        return new Promise((() => getState().section.history.data), (() => getState().query.errors));
       }
       return dispatch(QueryActions.fetchMeterHistory(deviceKey, time))
       .then(sessions => { 

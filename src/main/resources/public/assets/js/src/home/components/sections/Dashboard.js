@@ -24,9 +24,11 @@ function SayHello (props) {
   );
 }
 
-function InfoBox (props) {
+function StatBox (props) {
 
-  const { title, highlight, compareText, linkText, improved, data, metric } = props;
+  //const { title, highlight, compareText, linkText, improved, data, metric, period, device, time } = props;
+  const { title, type, improved, data, metric, measurements, period, device, deviceDetails, time, index } = props.data;
+  console.log('info box', props);
   const classLeft = props.classLeft || 'col-md-5';
   const classRight = props.classRight || 'col-md-7';
   const classContainer = props.classContainer || 'row';
@@ -38,34 +40,44 @@ function InfoBox (props) {
   else if (improved === false) {
     improvedDiv = (<img src="/assets/images/svg/warning.svg"/>);
   }
-  console.log('reducing');
-  console.log(title);
-  console.log(data);
-  console.log(metric);
-  console.log(data.map(obj=>obj[metric]).reduce((prev, curr) => prev+curr, 0));
+  const metricReduced = Array.isArray(data)?data.map(obj=>obj[metric]).reduce((prev, curr) => prev+curr, 0):data[metric];
+  const duration = Array.isArray(data)?null:data.duration;
   return (
     <div className='info-box'>
       <h3>{title}</h3>
       <div className={classContainer}>
         <div className={classLeft}>
-          <h2>{data.map(obj=>obj[metric]).reduce((prev, curr) => prev+curr, 0)}</h2>
+          { (() => {
+            if (type === 'stat') {
+              return <h2>{metricReduced}</h2>;
+            }
+            else if (type === 'last') {
+              return (
+                <div>
+                  <LastShowerChart {...data} />
+                  <span>You consumed a total of <b>{metricReduced} lt</b> in <b>{duration} sec</b>!</span>
+                </div>
+                );
+            }
+          })()
+          }
         </div>
         <div className={classRight}>
           {improvedDiv}
-          <span> {compareText}</span>
           <br/>
-          <a onClick={props.onClick}>{linkText}</a>
+          <a onClick={() => props.onClick({time, period, device, metric, index})}>See more</a>
+          
         </div>
+        <span className="pull-right">{deviceDetails.name || deviceDetails.serial}</span>
       </div>
     </div>
   );
 }
 
 function LastShowerChart (props) {
-  if (!props.lastShower){
-    return (<div/>);
-  }
-  else if (props.lastShower.history){
+  console.log('last showrr!!');
+  console.log(props);
+  if (props.history){
     return (<h4>Oops, can't graph due to limited data..</h4>);  
   }
   else {
@@ -73,14 +85,14 @@ function LastShowerChart (props) {
     return (
       <SessionsChart
         height={150}
-        width='100%'  
+        width={250}  
         title=""
         subtitle=""
         mu="lt"
         yMargin={10}
         fontSize={12}
         type="line"
-        data={props.chartData?props.chartData:[[]]}
+        data={[{title: props.metric, data:props.chartData}]}
       />);
   }
 }
@@ -121,8 +133,8 @@ function BreakdownChart (props) {
 
 
 function InfoPanel (props) {
-  const { layouts, infoboxData, updateLayout } = props;
-  console.log('rendered info panel');
+  const { layouts, infoboxData, updateLayout, linkToHistory } = props;
+  console.log('info panel', infoboxData);
   return (
     <div>
       <ResponsiveGridLayout 
@@ -131,7 +143,6 @@ function InfoPanel (props) {
         breakpoints={{lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0}}
         cols={{lg: 12, md: 10, sm: 6, xs: 4, xxs: 2}}
         onLayoutChange={(layout, layouts) => { 
-          console.log('layout changed', layout, layouts); 
           //updateLayout(layout);  
         }}
         onResizeStop={(layout, oldItem, newItem, placeholder) => { 
@@ -143,16 +154,14 @@ function InfoPanel (props) {
        >
        {
          infoboxData.map(function(data) {
-           console.log('each info has', data);
-          return (
-            <div key={data.id}>
-              <InfoBox
-                title={data.title}
-                data={data.data}
-                metric={data.metric}
-              />
-            </div>
-            );
+           return (
+             <div key={data.id}>
+               <StatBox
+                 data={data.type!=='last'?data:Object.assign({}, data, {index:0})}
+                 onClick={linkToHistory}
+               /> 
+           </div>
+           );
         })
        }
       </ResponsiveGridLayout>
@@ -164,7 +173,9 @@ var Dashboard = React.createClass({
   mixins: [PureRenderMixin],
 
   componentWillMount: function() {
-    const { queryDevice, getLastSession, updateInfobox, infoboxData } = this.props;
+    const { queryDevice, getLastSession, updateInfobox, updateAllInfoboxes, infoboxData } = this.props;
+    updateAllInfoboxes();
+    /*
     infoboxData.map(infobox => {
       
       if (infobox.type === "stat") {
@@ -175,9 +186,10 @@ var Dashboard = React.createClass({
       //  getLastSession(infobox.device, infobox.time)
       //  .then(session => updateInfobox(infobox.id, session));
       //}
-    });
+      });
+      */
   },
-  
+  /*
   componentWillReceiveProps: function(nextProps) {
     console.log('history receiving props');   
     //console.log(nextProps);
@@ -192,6 +204,7 @@ var Dashboard = React.createClass({
 
    
   },
+  */
   render: function() {
     console.log('rendered dashboard');
     console.log(this.props);

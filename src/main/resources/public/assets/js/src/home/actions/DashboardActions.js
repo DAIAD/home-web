@@ -4,7 +4,7 @@ require('es6-promise').polyfill();
 var QueryActions = require('./QueryActions');
 var HistoryActions = require('./HistoryActions');
 
-var { getLastSession } = require('../utils/device');
+var { getFilteredData } = require('../utils/chart');
 
 const setLastSession = function(session) {
   return {
@@ -13,34 +13,50 @@ const setLastSession = function(session) {
   };
 };
 
+const updateInfobox = function(id, data) {
+  console.log('gonna send infobox update', id, data);
+  return {
+    type: types.DASHBOARD_UPDATE_INFOBOX,
+    id: id,
+    data: data
+  };
+};
+
 const DashboardActions = {
-  updateInfobox: function(id, data) {
+  switchToEditMode: function() {
     return {
-      type: types.DASHBOARD_UPDATE_INFOBOX,
-      id: id,
-      data: data
+      type: types.DASHBOARD_SWITCH_TO_EDIT
     };
   },
-  queryDevice: function(deviceKey, time) {
-    return function(dispatch, getState) {
-      console.log('querying device with', deviceKey, time);
-
-      return dispatch(QueryActions.queryDeviceSessions(deviceKey, time))
-      .then(sessions => {
-        console.log('got', sessions);
-          //dispatch(setSessions(sessions));
-          //dispatch(resetDataDirty());
-          return sessions;
-        })
-        .catch(error => {
-          console.log(`oops error (${error}) while getting all sessions`);
-        });
-
-    }; 
+  switchToNormalMode: function() {
+    return {
+      type: types.DASHBOARD_SWITCH_TO_NORMAL
+    };
   },
+  updateAllInfoboxes: function() {
+    return function(dispatch, getState) {
+      console.log('updating all infoboxes');
+      getState().section.dashboard.infobox.map(function (infobox) {
+        console.log('infobox #', infobox.id);
+        console.log(infobox);
+        if (infobox.type === "stat") {
+          dispatch(QueryActions.queryDeviceOrMeter(infobox.device, infobox.time))
+          .then(x => {  console.log('updating infobox', infobox); console.log(x); return x;})
+          .then(sessions =>  dispatch(updateInfobox(infobox.id, sessions)))
+          .catch(error => { console.log(error); });
+        }
+        else if (infobox.type === "last") {
+          dispatch(QueryActions.fetchLastSession(infobox.device, infobox.time))
+          .then(session =>  dispatch(updateInfobox(infobox.id, session)))
+          .catch(error => { console.log(error); });
+        }
+      });
+    };
+  },
+  /*
   getLastSession: function(deviceKey, time) {
     return function(dispatch, getState) {
-      if (getState().section.dashboard.lastSession) { console.log('found in memory'); return true; }
+      //if (getState().section.dashboard.lastSession) { console.log('found in memory'); return true; }
       dispatch(QueryActions.queryDeviceSessions(deviceKey, time))
         .then(sessions => {
           const session = getLastSession(sessions);
@@ -50,7 +66,7 @@ const DashboardActions = {
           dispatch(QueryActions.fetchDeviceSession(id, deviceKey, time))
           .then(session => {
             console.log('last session', session);
-            dispatch(setLastSession(session));
+            //dispatch(setLastSession(session));
             return session;
           })
           .catch((error) => {
@@ -58,7 +74,8 @@ const DashboardActions = {
           });
         });
     };
-  },
+    },
+    */
   updateLayout: function(layout) {
     console.log('UPDATEING LAYOUT');
     return {

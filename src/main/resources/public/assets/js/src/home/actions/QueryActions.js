@@ -5,6 +5,7 @@ var types = require('../constants/ActionTypes');
 var deviceAPI = require('../api/device');
 var meterAPI = require('../api/meter');
 
+var { getLastSession, getDeviceTypeByKey } = require('../utils/device');
 
 const requestedQuery = function() {
   return {
@@ -22,14 +23,24 @@ const receivedQuery = function(success, errors) {
 
 
 const QueryActions = {
-  
+
+  queryDeviceOrMeter: function(deviceKey, time) {
+    return function(dispatch, getState) {
+      const type = getDeviceTypeByKey(getState().user.profile.devices, deviceKey);
+      if (type === 'AMPHIRO') {
+        return dispatch(QueryActions.queryDeviceSessions(deviceKey, time));
+      }
+      else if (type === 'METER') {
+        return dispatch(QueryActions.fetchMeterHistory(deviceKey, time));
+      }
+    };
+  },
   queryDeviceSessions: function(deviceKey, time) {
     return function(dispatch, getState) {
       
       dispatch(requestedQuery());
 
       const data = Object.assign({}, time, {deviceKey: [ deviceKey ] }, {csrf: getState().user.csrf});
-      
       return deviceAPI.querySessions(data)
       .then((response) => {
         dispatch(receivedQuery(response.success, response.errors, response.devices) );
@@ -37,6 +48,7 @@ const QueryActions = {
           return response.devices[0].sessions;
         })
         .catch((errors) => {
+          console.log('ooops...', errors);
           dispatch(receivedQuery(false, errors));
           return errors;
         });
@@ -65,7 +77,26 @@ const QueryActions = {
         });
     };
   },
-  
+  fetchLastSession: function(deviceKey, time) {
+    return function(dispatch, getState) {
+      return dispatch(QueryActions.queryDeviceSessions(deviceKey, time))
+      .then(sessions => {
+          const session = getLastSession(sessions);
+          const id = session.id;
+          if (!id){ return false;}
+
+          return dispatch(QueryActions.fetchDeviceSession(id, deviceKey, time))
+          .then(session => {
+            //dispatch(setLastSession(session));
+            return session;
+          })
+          .catch((error) => {
+            return error;
+          });
+        });
+
+    };
+  },
   fetchMeterHistory: function(deviceKey, time) {
     return function(dispatch, getState) {
 
