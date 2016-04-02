@@ -13,11 +13,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseRestController;
-import eu.daiad.web.data.ICommunityRepository;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.commons.CreateCommonsRequest;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.security.EnumRole;
+import eu.daiad.web.repository.application.ICommunityRepository;
 
 @RestController("RestCommunityController")
 public class CommunityController extends BaseRestController {
@@ -44,7 +44,7 @@ public class CommunityController extends BaseRestController {
 
 			repository.create(data.getCommunity());
 		} catch (ApplicationException ex) {
-			logger.error(ex);
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

@@ -17,8 +17,7 @@ import eu.daiad.web.controller.ErrorController;
 public class WebConfig extends WebMvcConfigurerAdapter {
 
 	@Bean
-	public ErrorController errorController(ErrorAttributes errorAttributes,
-			ErrorProperties errorProperties) {
+	public ErrorController errorController(ErrorAttributes errorAttributes, ErrorProperties errorProperties) {
 		// Override default implementation for ErrorController
 		return new ErrorController(errorAttributes, errorProperties);
 	}

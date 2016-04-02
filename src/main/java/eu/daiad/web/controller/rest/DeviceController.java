@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseRestController;
-import eu.daiad.web.data.IDeviceRepository;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.device.AmphiroDeviceRegistrationRequest;
 import eu.daiad.web.model.device.AmphiroDeviceRegistrationResponse;
@@ -33,6 +32,7 @@ import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
+import eu.daiad.web.repository.application.IDeviceRepository;
 
 @RestController("RestDeviceController")
 public class DeviceController extends BaseRestController {
@@ -106,7 +106,7 @@ public class DeviceController extends BaseRestController {
 				break;
 			}
 		} catch (ApplicationException ex) {
-			logger.error(ex);
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -128,7 +128,7 @@ public class DeviceController extends BaseRestController {
 
 			return queryResponse;
 		} catch (ApplicationException ex) {
-			logger.error(ex);
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -145,7 +145,7 @@ public class DeviceController extends BaseRestController {
 
 			repository.shareDevice(user.getKey(), request.getAssignee(), request.getDevice(), request.isShared());
 		} catch (ApplicationException ex) {
-			logger.error(ex);
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -166,7 +166,7 @@ public class DeviceController extends BaseRestController {
 
 			return configuration;
 		} catch (ApplicationException ex) {
-			logger.error(ex);
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -183,7 +183,7 @@ public class DeviceController extends BaseRestController {
 
 			repository.notifyConfiguration(user.getKey(), request.getDeviceKey(), request.getVersion(), request.getUpdatedOn());
 		} catch (ApplicationException ex) {
-			logger.error(ex);
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -200,7 +200,7 @@ public class DeviceController extends BaseRestController {
 
 			this.repository.removeDevice(request.getDeviceKey());
 		} catch (ApplicationException ex) {
-			logger.error(ex);
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

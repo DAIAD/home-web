@@ -10,6 +10,8 @@ public class AmphiroSession extends AmphiroAbstractSession {
 
 	private boolean history;
 
+	private AmphiroSessionDeleteAction delete;
+
 	private ArrayList<KeyValuePair> properties;
 
 	public AmphiroSession() {
@@ -35,7 +37,7 @@ public class AmphiroSession extends AmphiroAbstractSession {
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
 	}
-	
+
 	public ArrayList<KeyValuePair> getProperties() {
 		return properties;
 	}
@@ -62,5 +64,13 @@ public class AmphiroSession extends AmphiroAbstractSession {
 			}
 		}
 		return null;
+	}
+
+	public AmphiroSessionDeleteAction getDelete() {
+		return delete;
+	}
+
+	public void setDelete(AmphiroSessionDeleteAction delete) {
+		this.delete = delete;
 	}
 }

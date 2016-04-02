@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseRestController;
-import eu.daiad.web.data.IUserRepository;
 import eu.daiad.web.model.PasswordChangeRequest;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.ApplicationException;
@@ -32,6 +31,7 @@ import eu.daiad.web.model.security.RoleUpdateRequest;
 import eu.daiad.web.model.user.Account;
 import eu.daiad.web.model.user.UserRegistrationRequest;
 import eu.daiad.web.model.user.UserRegistrationResponse;
+import eu.daiad.web.repository.application.IUserRepository;
 
 @RestController("RestUserController")
 public class UserController extends BaseRestController {
@@ -98,7 +98,7 @@ public class UserController extends BaseRestController {
 
 			return registerResponse;
 		} catch (ApplicationException ex) {
-			logger.error(ex);
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -117,7 +117,7 @@ public class UserController extends BaseRestController {
 
 			return new RestResponse();
 		} catch (ApplicationException ex) {
-			logger.error(ex);
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -147,7 +147,7 @@ public class UserController extends BaseRestController {
 
 			return new RestResponse();
 		} catch (ApplicationException ex) {
-			logger.error(ex);
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -177,7 +177,7 @@ public class UserController extends BaseRestController {
 
 			return new RestResponse();
 		} catch (ApplicationException ex) {
-			logger.error(ex);
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

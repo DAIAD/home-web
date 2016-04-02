@@ -10,12 +10,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
-import eu.daiad.web.data.IProfileRepository;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.profile.ProfileResponse;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.repository.application.IProfileRepository;
 
 @RestController
 public class ProfileController extends BaseController {
@@ -37,7 +37,7 @@ public class ProfileController extends BaseController {
 			
 			return  new ProfileResponse(profileRepository.getProfileByUsername(EnumApplication.HOME));
 		} catch (ApplicationException ex) {
-			logger.error(ex);
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

@@ -2,19 +2,15 @@ package eu.daiad.web.model.export;
 
 import java.util.ArrayList;
 
-import org.joda.time.DateTime;
-
 import eu.daiad.web.model.AuthenticatedRequest;
 
 public class ExportDataRequest extends AuthenticatedRequest {
 
 	private EnumExportDataSource type;
 
-	// TODO: Convert to Unix Time Stamp
-	private DateTime from;
+	private long from;
 
-	// TODO: Convert to Unix Time Stamp
-	private DateTime to;
+	private long to;
 
 	private String username;
 
@@ -30,19 +26,19 @@ public class ExportDataRequest extends AuthenticatedRequest {
 		this.type = type;
 	}
 
-	public DateTime getFrom() {
+	public long getFrom() {
 		return from;
 	}
 
-	public void setFrom(DateTime from) {
+	public void setFrom(long from) {
 		this.from = from;
 	}
 
-	public DateTime getTo() {
+	public long getTo() {
 		return to;
 	}
 
-	public void setTo(DateTime to) {
+	public void setTo(long to) {
 		this.to = to;
 	}
 
@@ -72,7 +68,6 @@ public class ExportDataRequest extends AuthenticatedRequest {
 
 	@Override
 	public String toString() {
-		return "ExportData [type=" + type + ", from=" + from + ", to=" + to
-				+ ", username=" + username + "]";
+		return "ExportData [type=" + type + ", from=" + from + ", to=" + to + ", username=" + username + "]";
 	}
 }

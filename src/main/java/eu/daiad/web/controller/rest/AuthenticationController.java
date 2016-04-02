@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseRestController;
-import eu.daiad.web.data.IProfileRepository;
 import eu.daiad.web.model.AuthenticationResponse;
 import eu.daiad.web.model.Credentials;
 import eu.daiad.web.model.EnumApplication;
@@ -18,6 +17,7 @@ import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.repository.application.IProfileRepository;
 import eu.daiad.web.security.AuthenticationService;
 
 @RestController("RestAuthenticationController")
@@ -46,7 +46,7 @@ public class AuthenticationController extends BaseRestController {
 				throw new ApplicationException(SharedErrorCode.AUTHENTICATION);
 			}
 		} catch (ApplicationException ex) {
-			logger.error(ex);
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

@@ -2,7 +2,6 @@ package eu.daiad.web.model;
 
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -22,18 +21,7 @@ public class DeviceMeasurementCollection extends AuthenticatedRequest {
 	@JsonDeserialize(using = DeviceTypeDeserializer.class)
 	private EnumDeviceType type;
 
-	@JsonIgnore
-	private UUID userKey;
-
 	private UUID deviceKey;
-
-	public void setUserKey(UUID value) {
-		this.userKey = value;
-	}
-
-	public UUID getUserKey() {
-		return this.userKey;
-	}
 
 	public UUID getDeviceKey() {
 		return deviceKey;
@@ -45,10 +33,6 @@ public class DeviceMeasurementCollection extends AuthenticatedRequest {
 
 	public EnumDeviceType getType() {
 		return this.type;
-	}
-
-	public void setType(EnumDeviceType value) {
-		this.type = value;
 	}
 
 }

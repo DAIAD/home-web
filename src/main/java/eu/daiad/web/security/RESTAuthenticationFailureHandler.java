@@ -51,8 +51,8 @@ public class RESTAuthenticationFailureHandler extends SimpleUrlAuthenticationFai
 
 				ObjectMapper mapper = new ObjectMapper();
 				response.getWriter().print(mapper.writeValueAsString(r));
-			} catch (Exception e) {
-				logger.debug(e.getMessage());
+			} catch (Exception ex) {
+				logger.debug(ex);
 			}
 		} else {
 			super.onAuthenticationFailure(request, response, exception);

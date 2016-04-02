@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.DateTimeZone;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -54,29 +55,29 @@ public class AmphiroDataSeries {
 			this.points.add(point);
 		} else {
 
-			DateTime date = new DateTime(point.getTimestamp());
+			DateTime date = new DateTime(point.getTimestamp(), DateTimeZone.UTC);
 
 			switch (this.granularity) {
 			case TemporalConstants.HOUR:
 				date = new DateTime(date.getYear(), date.getMonthOfYear(),
-						date.getDayOfMonth(), date.getHourOfDay(), 0, 0);
+						date.getDayOfMonth(), date.getHourOfDay(), 0, 0, DateTimeZone.UTC);
 				break;
 			case TemporalConstants.DAY:
 				date = new DateTime(date.getYear(), date.getMonthOfYear(),
-						date.getDayOfMonth(), 0, 0, 0);
+						date.getDayOfMonth(), 0, 0, 0, DateTimeZone.UTC);
 				break;
 			case TemporalConstants.WEEK:
 				DateTime sunday = date.withDayOfWeek(DateTimeConstants.SUNDAY);
 
 				date = new DateTime(sunday.getYear(), sunday.getMonthOfYear(),
-						sunday.getDayOfMonth(), 0, 0, 0);
+						sunday.getDayOfMonth(), 0, 0, 0, DateTimeZone.UTC);
 				break;
 			case TemporalConstants.MONTH:
 				date = new DateTime(date.getYear(), date.getMonthOfYear(), 1,
-						0, 0, 0);
+						0, 0, 0, DateTimeZone.UTC);
 				break;
 			case TemporalConstants.YEAR:
-				date = new DateTime(date.getYear(), 1, 1, 0, 0, 0);
+				date = new DateTime(date.getYear(), 1, 1, 0, 0, 0, DateTimeZone.UTC);
 				break;
 			default:
 				throw new IllegalArgumentException(
