@@ -15,7 +15,8 @@ lib/
 node
 node_modules
 npm-debug.log
-src/main/resources/config
+src/main/resources/config/*
+!src/main/resources/config/sql
 src/main/resources/public/assets/js/build
 src/main/resources/public/assets/images
 
