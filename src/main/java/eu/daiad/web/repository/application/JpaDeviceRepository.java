@@ -9,7 +9,6 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
 import org.joda.time.DateTime;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,9 +28,8 @@ import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
 
-@Primary
 @Repository()
-@Transactional()
+@Transactional("transactionManager")
 public class JpaDeviceRepository implements IDeviceRepository {
 
 	@PersistenceContext(unitName = "default")

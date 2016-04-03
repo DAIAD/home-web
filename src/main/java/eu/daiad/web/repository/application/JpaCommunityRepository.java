@@ -5,7 +5,6 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
 import org.joda.time.DateTime;
-import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
@@ -17,9 +16,8 @@ import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.security.AuthenticatedUser;
 
-@Primary
 @Repository()
-@Transactional()
+@Transactional("transactionManager")
 public class JpaCommunityRepository implements ICommunityRepository {
 
 	@PersistenceContext(unitName="default")

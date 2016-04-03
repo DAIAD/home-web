@@ -40,8 +40,6 @@ public class HBaseInitializer implements CommandLineRunner {
 			Configuration config = this.configurationBuilder.build();
 			connection = ConnectionFactory.createConnection(config);
 
-			Thread.sleep(60000);
-
 			if (connection.isAborted()) {
 				throw new Exception("aborted");
 			}

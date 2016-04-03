@@ -12,30 +12,38 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
 @EnableJpaRepositories(basePackages = { "eu.daiad.web.repository.application" }, entityManagerFactoryRef = "entityManagerFactory", transactionManagerRef = "transactionManager")
 public class ApplicationPersistenceConfig {
 
-	@Primary
 	@Bean(name = "dataSource")
+	@Primary
 	@ConfigurationProperties(prefix = "datasource.default")
 	public DataSource dataSource() {
 		return DataSourceBuilder.create().build();
 	}
 
-	@Primary
 	@Bean(name = "entityManagerFactory")
+	@Primary
 	public LocalContainerEntityManagerFactoryBean entityManagerFactory(EntityManagerFactoryBuilder builder) {
 		return builder.dataSource(dataSource()).packages("eu.daiad.web.domain.application").persistenceUnit("default")
 						.build();
 	}
 
-	@Primary
 	@Bean(name = "entityManager")
+	@Primary
 	public EntityManager entityManager(@Qualifier("entityManagerFactory") EntityManagerFactory entityManagerFactory) {
 		return entityManagerFactory.createEntityManager();
 	}
 
+	@Bean(name = "transactionManager")
+	@Primary
+	public PlatformTransactionManager transactionManager(
+					@Qualifier("entityManagerFactory") EntityManagerFactory entityManagerFactory) {
+		return new JpaTransactionManager(entityManagerFactory);
+	}
 }

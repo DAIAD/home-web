@@ -37,7 +37,7 @@ import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.user.Account;
 
 @Repository
-@Transactional()
+@Transactional("transactionManager")
 public class JpaUserRepository implements IUserRepository {
 
 	private static final Log logger = LogFactory.getLog(JpaUserRepository.class);
@@ -145,7 +145,6 @@ public class JpaUserRepository implements IUserRepository {
 	}
 
 	@Override
-	@Transactional
 	public void initializeSecurityConfiguration() {
 		try {
 			// Initialize all system roles

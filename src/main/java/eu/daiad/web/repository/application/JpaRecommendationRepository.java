@@ -18,7 +18,7 @@ import eu.daiad.web.model.recommendation.Recommendation;
 import eu.daiad.web.model.recommendation.RecommendationStatic;
 
 @Repository
-@Transactional
+@Transactional("transactionManager")
 public class JpaRecommendationRepository implements IRecommendationRepository {
 
 	@Autowired
