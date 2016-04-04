@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseRestController;
-import eu.daiad.web.data.IProfileRepository;
 import eu.daiad.web.model.Credentials;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
@@ -18,6 +17,7 @@ import eu.daiad.web.model.profile.NotifyProfileRequest;
 import eu.daiad.web.model.profile.ProfileResponse;
 import eu.daiad.web.model.profile.UpdateProfileRequest;
 import eu.daiad.web.model.security.EnumRole;
+import eu.daiad.web.repository.application.IProfileRepository;
 
 @RestController("RestProfileController")
 public class ProfileController extends BaseRestController {
@@ -36,7 +36,7 @@ public class ProfileController extends BaseRestController {
 
 			return new ProfileResponse(this.profileRepository.getProfileByUsername(EnumApplication.MOBILE));
 		} catch (ApplicationException ex) {
-			logger.error(ex);
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -54,7 +54,7 @@ public class ProfileController extends BaseRestController {
 			this.profileRepository.setProfileConfiguration(request.getApplication(), request.getConfiguration());
 
 		} catch (ApplicationException ex) {
-			logger.error(ex);
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -72,7 +72,7 @@ public class ProfileController extends BaseRestController {
 			this.profileRepository.notifyProfile(request.getApplication(), request.getVersion(), request.getUpdatedOn());
 
 		} catch (ApplicationException ex) {
-			logger.error(ex);
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

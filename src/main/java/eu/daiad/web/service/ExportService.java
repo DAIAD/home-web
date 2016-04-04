@@ -21,11 +21,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import eu.daiad.web.data.IAmphiroMeasurementRepository;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.ExportErrorCode;
 import eu.daiad.web.model.export.ExportDataRequest;
 import eu.daiad.web.model.export.ExtendedSessionData;
+import eu.daiad.web.repository.application.IAmphiroMeasurementRepository;
 
 @Service
 public class ExportService implements IExportService {

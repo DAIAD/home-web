@@ -1,16 +1,14 @@
 package eu.daiad.web.model.meter;
 
-import org.joda.time.DateTime;
-
 import eu.daiad.web.model.TemporalConstants;
 
 public class WaterMeterMeasurementQuery extends WaterMeterStatusQuery {
 
 	private int granularity = TemporalConstants.NONE;
 
-	private DateTime startDate;
+	private long startDate;
 
-	private DateTime endDate;
+	private long endDate;
 
 	public int getGranularity() {
 		return granularity;
@@ -20,19 +18,19 @@ public class WaterMeterMeasurementQuery extends WaterMeterStatusQuery {
 		this.granularity = granularity;
 	}
 
-	public DateTime getStartDate() {
+	public long getStartDate() {
 		return startDate;
 	}
 
-	public void setStartDate(DateTime startDate) {
+	public void setStartDate(long startDate) {
 		this.startDate = startDate;
 	}
 
-	public DateTime getEndDate() {
+	public long getEndDate() {
 		return endDate;
 	}
 
-	public void setEndDate(DateTime endDate) {
+	public void setEndDate(long endDate) {
 		this.endDate = endDate;
 	}
 

@@ -55,7 +55,7 @@ public class DataController extends BaseController {
 								.toString());
 			}
 		} catch (ApplicationException ex) {
-			logger.error(ex);
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

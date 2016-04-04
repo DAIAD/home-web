@@ -7,6 +7,8 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.boot.autoconfigure.web.BasicErrorController;
 import org.springframework.boot.autoconfigure.web.ErrorAttributes;
 import org.springframework.boot.autoconfigure.web.ErrorProperties;
@@ -29,6 +31,8 @@ import eu.daiad.web.model.error.SharedErrorCode;
 @RequestMapping("${server.error.path:${error.path:/error}}")
 public class ErrorController extends BasicErrorController {
 
+	private static final Log logger = LogFactory.getLog(ErrorController.class);
+
 	private final ErrorAttributes errorAttributes;
 
 	public ErrorController(ErrorAttributes errorAttributes, ErrorProperties errorProperties) {
@@ -49,6 +53,8 @@ public class ErrorController extends BasicErrorController {
 		try {
 			return HttpStatus.valueOf(statusCode);
 		} catch (Exception ex) {
+			logger.error("Failed to resolve HTTP status.", ex);
+
 			return HttpStatus.INTERNAL_SERVER_ERROR;
 		}
 	}
@@ -61,17 +67,17 @@ public class ErrorController extends BasicErrorController {
 		String path = (String) getErrorAttributes(request, false).get("path");
 
 		switch (status) {
-		case NOT_FOUND:
-			return new ModelAndView("redirect:/error/404");
-		case UNAUTHORIZED:
-		case FORBIDDEN:
-		case METHOD_NOT_ALLOWED:
-			if ((path != null) && (path.equals("/logout"))) {
-				return new ModelAndView("redirect:");
-			}
-			return new ModelAndView("redirect:/error/403");
-		default:
-			return new ModelAndView("redirect:/error/500");
+			case NOT_FOUND:
+				return new ModelAndView("redirect:/error/404");
+			case UNAUTHORIZED:
+			case FORBIDDEN:
+			case METHOD_NOT_ALLOWED:
+				if ((path != null) && (path.equals("/logout"))) {
+					return new ModelAndView("redirect:");
+				}
+				return new ModelAndView("redirect:/error/403");
+			default:
+				return new ModelAndView("redirect:/error/500");
 		}
 	}
 

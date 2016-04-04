@@ -269,8 +269,8 @@ var User = React.createClass({
 										<Bootstrap.ListGroupItem>
 											<div className='row'>
 												<div className='col-md-4'>
-													<div style={{width: '100%',  border: '#3498db solid 3px', borderRadius: '50%', padding: 3 }}>
-														<img src='/assets/images/demo/profile.png' style={{borderRadius: '50%', width: '100%'}} />
+													<div style={{width: '100px', height: '100px',  border: '#3498db solid 3px', borderRadius: '50%', padding: 3 }}>
+														<img src='/assets/images/utility/profile.png' style={{borderRadius: '50%', width: '100%', height: '100%'}} />
 													</div>
 												</div>
 												<div className='col-md-8'>

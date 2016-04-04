@@ -54,6 +54,12 @@ public class Account {
 	@Size(max = 50, groups = { AccountDefaultValidation.class })
 	private String country;
 
+	@Size(max = 60, groups = { AccountDefaultValidation.class })
+	private String city;
+	
+	@Size(max = 90, groups = { AccountDefaultValidation.class })
+	private String address;
+	
 	@NotNull(groups = { AccountDefaultValidation.class })
 	@Size(max = 50, groups = { AccountDefaultValidation.class })
 	private String timezone;
@@ -149,6 +155,22 @@ public class Account {
 
 	public void setLocale(String locale) {
 		this.locale = locale;
+	}
+
+	public String getCity() {
+		return city;
+	}
+
+	public void setCity(String city) {
+		this.city = city;
+	}
+
+	public String getAddress() {
+		return address;
+	}
+
+	public void setAddress(String address) {
+		this.address = address;
 	}
 
 }
