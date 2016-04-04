@@ -45,7 +45,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                       (session, idx, array) => 
                         Object.assign({}, 
                                     session, 
-                                    {better:array[idx+1]?(session.volume<=array[idx+1].volume?true:false):null}, 
+                                    {better:array[idx-1]?(array[idx].volume<=array[idx-1].volume?true:false):null}, 
                                     {duration:getFriendlyDuration(session.duration)}, 
                                     {energyClass:getEnergyClass(session.energy)}, 
                                     {chartData: getFilteredData(session.measurements, stateProps.activeSessionFilter, stateProps.devType)}

@@ -2,8 +2,7 @@ var React = require('react');
 var bs = require('react-bootstrap');
 var { injectIntl } = require('react-intl');
 var { bindActionCreators } = require('redux');
-var connect = require('react-redux').connect;
-var FormattedMessage = require('react-intl').FormattedMessage;
+var { connect } = require('react-redux');
 var { push } = require('react-router-redux');
 
 var Dashboard = require('../components/sections/Dashboard');
@@ -12,48 +11,132 @@ var HistoryActions = require('../actions/HistoryActions');
 var DashboardActions = require('../actions/DashboardActions');
 
 var timeUtil = require('../utils/time');
-var { getDeviceByKey, getDefaultDevice, getLastSession } = require('../utils/device');
+var { getDeviceByKey, getDeviceTypeByKey, getDefaultDevice, getLastSession } = require('../utils/device');
 var { getFilteredData } = require('../utils/chart');
 
 
 function mapStateToProps(state, ownProps) {
-  const lastSession = state.section.dashboard.lastSession;
-  const defaultDevice = getDefaultDevice(state.user.profile.devices);
-  const deviceKey = defaultDevice?defaultDevice.deviceKey:null;
-  
   return {
-    defaultDevice: deviceKey,
-    devices: state.user.profile.devices,
     firstname: state.user.profile.firstname,
-    lastShower: lastSession,
-    layouts: state.section.dashboard.layout,
-    edit: state.section.dashboard.mode==="edit"?true:false,
+    devices: state.user.profile.devices,
+    layout: state.section.dashboard.layout,
+    mode: state.section.dashboard.mode,
+    tempInfoboxData: state.section.dashboard.tempInfoboxData,
     infoboxData: state.section.dashboard.infobox,
   };
 }
 
 function mapDispatchToProps(dispatch) {
   return Object.assign({},
-                        merged(bindActionCreators(DashboardActions, dispatch)),
+                        assign(bindActionCreators(DashboardActions, dispatch)),
                         {linkToHistory: options => dispatch(HistoryActions.linkToHistory(options))}); 
 }
 
 function mergeProps(stateProps, dispatchProps, ownProps) {
-  return merged(ownProps,
+  //available infobox options
+  const periods = [
+    { id: "day", title: "Day", value: timeUtil.today() }, 
+    { id: "week", title: "Week", value: timeUtil.thisWeek() }, 
+    { id: "month", title: "Month", value: timeUtil.thisMonth() }, 
+    { id: "year", title: "Year", value: timeUtil.thisYear() }
+  ];
+  
+  let metrics = [
+    { id: "volume", title: "Volume" }, 
+    { id: "energy", title: "Energy" },
+    { id: "temperature", title: "Temperature" },
+    { id: "duration", title: "Duration" }
+  ];
+ 
+  const types = [
+    { id: "stat", title: "Statistic" },
+    { id: "chart", title: "Chart" }
+  ];
+
+  const chartSubtypes = [
+    { id: "total", title: "Total" },
+    {  id: "last", title: "Last" }
+  ];
+
+  const device = stateProps.tempInfoboxData.device || (stateProps.devices.length?stateProps.devices[0].deviceKey:"none");
+  metrics = getDeviceTypeByKey(stateProps.devices, device)==='METER'?metrics.filter(x=>x.id==='volume'):metrics;
+
+  //default values 
+  const metric = stateProps.tempInfoboxData.metric || metrics[0].id;
+  let time = stateProps.tempInfoboxData.time || periods[0].value;
+  const period = stateProps.tempInfoboxData.period || periods[0].id;
+  const type = stateProps.tempInfoboxData.type || types[0].id;
+
+  const subtypes = chartSubtypes;
+  const subtype = subtypes?(stateProps.tempInfoboxData.subtype || subtypes[0].id):"total";
+  
+  let defTitle = "";
+  if (period === 'day') defTitle += "Today's ";
+  else defTitle += "This " + period + "'s ";
+
+  if (subtype === 'last') defTitle += "last shower ";
+
+  if (metric === 'volume') defTitle += "water consumption ";
+  else if (metric === 'energy') defTitle += "energy consumption ";
+  else if (metric === 'temperature') defTitle += "average temperature ";
+  else if (metric === 'duration') defTitle += "duration ";
+
+  //const title = stateProps.tempInfoboxData.title || defTitle;
+  const title = defTitle;
+  
+  time = subtype==='last'?Object.assign(time, {granularity:0}):time;
+  //const subtypes = type==='chart'?chartSubtypes:null;
+
+  return assign(ownProps,
                dispatchProps,
-               merged(stateProps,
-                     {
-                       lastSessionTime: merged(timeUtil.thisMonth(), {granularity: 0}),
-                       chartFormatter: (intl => (x) => { console.log(intl); return intl.formatTime(x, { hour:'numeric', minute:'numeric', second:'numeric'}); }),
-                         chartData: [{title:'Consumption', data:(stateProps.lastShower?(getFilteredData(stateProps.lastShower.measurements?stateProps.lastShower.measurements:[], 'volume')):[])}],
-                         infoboxData: stateProps.infoboxData.map(infobox => Object.assign({}, infobox, {deviceDetails: getDeviceByKey(stateProps.devices, infobox.device)})).map(infobox => { return infobox.type !== 'last'?infobox:Object.assign({}, infobox, {data:Object.assign({}, infobox.data, { chartData: getFilteredData(infobox.data.measurements, infobox.metric)})});})
+               assign(stateProps,
+                      {
+                        chartFormatter: intl => (x) => intl.formatTime(x, { hour:'numeric', minute:'numeric'}) ,
+                         infoboxData: transformInfoboxData(stateProps.infoboxData, stateProps.devices),
+                           periods,
+                           types,
+                           subtypes,
+                           metrics,
+                           tempInfoboxData: { 
+                             title, 
+                             type, 
+                             subtype,
+                             period, 
+                             time, 
+                             metric,
+                             device,
+                           }
+                           
                      }));
 }
 
-function merged (...objects) {
+function assign(...objects) {
   return Object.assign({}, ...objects);
 }
 
+function transformInfoboxData (infoboxData, devices) {
+
+  return infoboxData.map(infobox => 
+  Object.assign({}, infobox, {deviceDetails: getDeviceByKey(devices, infobox.device)}))
+  .map(infobox => {
+    const { type, subtype, data, metric } = infobox;
+    
+    if (type === 'chart') {
+      if (subtype==='last') {
+        return Object.assign({}, infobox, {data:Object.assign({}, data, {chartData: getFilteredData(data.measurements, metric, infobox.deviceDetails.type)})});
+      }
+      else if (subtype ==='total') {  
+        return Object.assign({}, infobox, {data:Object.assign({}, data, {chartData:getFilteredData(infobox.data, infobox.metric, infobox.deviceDetails.type)})});
+      }
+      else throw new Error('oops, subtype', subtype, ' not supported');
+    }
+    else if (type === 'stat') {
+      return infobox;
+    }
+    else throw new Error('oops, type', type, ' not supported');
+  });
+}
+
 var DashboardData = connect(mapStateToProps, mapDispatchToProps, mergeProps)(Dashboard);
-//DashboardData = injectIntl(DashboardData);
+DashboardData = injectIntl(DashboardData);
 module.exports = DashboardData;

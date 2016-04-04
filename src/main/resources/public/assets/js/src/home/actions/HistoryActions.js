@@ -37,39 +37,23 @@ const HistoryActions = {
   linkToHistory: function(options) {
     return function(dispatch, getState) {
       const { device, metric, period, time, index } = options;
+      if ((index !== null && index !==undefined)) { 
+        dispatch(HistoryActions.setSessionFilter(metric)); 
+        dispatch(HistoryActions.setActiveSessionIndex(index)); 
+      }
+      else { 
+        dispatch(HistoryActions.resetActiveSessionIndex()); 
+      }
 
-      if (index===null || index===undefined) { dispatch(HistoryActions.resetActiveSessionIndex()); } 
-      else { dispatch(HistoryActions.setSessionFilter(metric)); dispatch(HistoryActions.setActiveSessionIndex(index)); }
-
-      if (device) { dispatch(HistoryActions.setActiveDevice(device)); }
-      if (metric) { dispatch(HistoryActions.setQueryFilter(metric)); }
-      if (period) { dispatch(HistoryActions.setTimeFilter(period)); }
-      if (time) { dispatch(HistoryActions.setTime(time)); }
+      if (device) dispatch(HistoryActions.setActiveDevice(device));
+      if (metric) dispatch(HistoryActions.setQueryFilter(metric));
+      if (period) dispatch(HistoryActions.setTimeFilter(period));
+      if (time) dispatch(HistoryActions.setTime(time));
 
       dispatch(push('/history'));
     };
   },
-  queryDevice: function(deviceKey, time) {
-    return function(dispatch, getState) {
-      //if query not changed dont update (for now)
-      //TODO: have to ask every now and then for new data
-      if (!getState().section.history.dirty) {
-        console.log('device data already in memory');
-        return true;
-      }
-      return dispatch(QueryActions.queryDeviceSessions(deviceKey, time))
-        .then(sessions => {
-          dispatch(setSessions(sessions));
-          dispatch(resetDataDirty());
-          return sessions;
-        })
-        .catch(error => {
-          console.log('oops error while getting all sessions');
-          console.log(error);
-        });
-
-    }; 
-  },
+  
   getDeviceSession: function (id, deviceKey, time) {
     return function(dispatch, getState) {
       
@@ -78,7 +62,7 @@ const HistoryActions = {
 
       if (session !== undefined && session.measurements){
         console.log('found session in memory');
-        return true;
+        return new Promise((() => getState().section.history.data), (() => getState().query.errors));
       }
       console.log('fetching...');
       return dispatch(QueryActions.fetchDeviceSession(id, deviceKey, time))
@@ -113,38 +97,18 @@ const HistoryActions = {
       }
     };
   },
-  /*
-  queryDeviceAndFetchAllSessions: function(deviceKey, time) {
-    return function(dispatch, getState) {
-      dispatch(HistoryActions.queryDevice(deviceKey, time))
-      .then(
-      //TODO: this function should not be used seriously
-      console.log('fetching all sessions');
-      
-      const sessions = getState().section.history.data;
-      console.log('sessions');
-      console.log(sessions);
-      sessions.forEach(function(session) {
-        const id = session.id;
-        if (!id) { return false; }
-        
-        return dispatch(HistoryActions.getDeviceSession(id, deviceKey, time));
-       });
-    };
-    },
-    */
-  queryMeter: function (deviceKey, time) {
+  getDeviceSessions: function(deviceKey, time) {
     return function(dispatch, getState) {
       //if query not changed dont update (for now)
       //TODO: have to ask every now and then for new data
       if (!getState().section.history.dirty) {
-        console.log('meter data already in memory');
+        console.log('device data already in memory');
         return new Promise((() => getState().section.history.data), (() => getState().query.errors));
       }
-      return dispatch(QueryActions.fetchMeterHistory(deviceKey, time))
-      .then(sessions => { 
-          dispatch(setSessions(sessions));
+      return dispatch(QueryActions.queryDeviceSessions(deviceKey, time))
+        .then(sessions => {
           dispatch(resetDataDirty());
+          dispatch(setSessions(sessions));
           return sessions;
         })
         .catch(error => {
@@ -152,16 +116,39 @@ const HistoryActions = {
           console.log(error);
         });
 
+    }; 
+  },
+  getMeterSessions: function (deviceKey, time) {
+    return function(dispatch, getState) {
+      //if query not changed dont update (for now)
+      //TODO: have to ask every now and then for new data
+      if (!getState().section.history.dirty) {
+        console.log('meter data already in memory');
+        return new Promise((() => getState().section.history.data), (() => getState().query.errors));
+      }
+      console.log('getting data', deviceKey, time);
+      return dispatch(QueryActions.fetchMeterHistory(deviceKey, time))
+        .then(x => {  console.log('before updating infobox', x); return x;})
+        //  .then(sessions => sessions.length?sessions.map((x, i, array) => array[i-1]?Object.assign({}, array[i], {volume:(array[i].volume-array[i-1].volume)}):array[i]):sessions)
+        .then(sessions => {
+          dispatch(setSessions(sessions));
+          dispatch(resetDataDirty());
+          return sessions;
+        })
+        .catch(error => {
+          console.log('oops error while getting all sessions');
+          console.error(error);
+        });
     };
   },
-  queryDeviceOrMeter: function (deviceKey, time) {
+  getDeviceOrMeterSessions: function (deviceKey, time) {
     return function(dispatch, getState) {
       const devType = getDeviceTypeByKey(getState().user.profile.devices, deviceKey);
       if (devType === 'AMPHIRO') {
-        return dispatch(HistoryActions.queryDevice(deviceKey, time)); 
+        return dispatch(HistoryActions.getDeviceSessions(deviceKey, time)); 
       }
       else if (devType === 'METER') {
-        return dispatch(HistoryActions.queryMeter(deviceKey, time))
+        return dispatch(HistoryActions.getMeterSessions(deviceKey, time))
           .then(() => dispatch(HistoryActions.setQueryFilter('volume')));
       }
     };
@@ -184,7 +171,7 @@ const HistoryActions = {
   setTimeAndQuery: function (deviceKey, time) {
     return function(dispatch, getState) {
       dispatch(HistoryActions.setTime(time));
-      dispatch(HistoryActions.queryDeviceOrMeter(deviceKey, time));
+      dispatch(HistoryActions.getDeviceOrMeterSessions(deviceKey, time));
     };
   },
   setActiveDevice: function(deviceKey) {
@@ -201,7 +188,7 @@ const HistoryActions = {
   setActiveDeviceAndQuery: function (deviceKey, time) {
     return function(dispatch, getState) {
       dispatch(HistoryActions.setActiveDevice(deviceKey));
-      dispatch(HistoryActions.queryDeviceOrMeter(deviceKey, time));
+      dispatch(HistoryActions.getDeviceOrMeterSessions(deviceKey, time));
     };
   },
   resetActiveDevice: function() {

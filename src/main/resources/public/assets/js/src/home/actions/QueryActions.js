@@ -5,7 +5,7 @@ var types = require('../constants/ActionTypes');
 var deviceAPI = require('../api/device');
 var meterAPI = require('../api/meter');
 
-var { getLastSession, getDeviceTypeByKey } = require('../utils/device');
+var { getLastSession, getSessionIndexById, getDeviceTypeByKey } = require('../utils/device');
 
 const requestedQuery = function() {
   return {
@@ -27,16 +27,22 @@ const QueryActions = {
   queryDeviceOrMeter: function(deviceKey, time) {
     return function(dispatch, getState) {
       const type = getDeviceTypeByKey(getState().user.profile.devices, deviceKey);
+      console.log(getState().user.profile.devices, deviceKey);
+      console.log('type', type);
       if (type === 'AMPHIRO') {
         return dispatch(QueryActions.queryDeviceSessions(deviceKey, time));
       }
       else if (type === 'METER') {
         return dispatch(QueryActions.fetchMeterHistory(deviceKey, time));
       }
+      else {
+        return new Promise(() => console.error('oops, sth went wrong'), ()=> console.error('oops, sth went wrong'));
+      }
     };
   },
   queryDeviceSessions: function(deviceKey, time) {
     return function(dispatch, getState) {
+      console.log('querying device sessions');
       
       dispatch(requestedQuery());
 
@@ -79,16 +85,21 @@ const QueryActions = {
   },
   fetchLastSession: function(deviceKey, time) {
     return function(dispatch, getState) {
+      console.log('querying device key with', deviceKey, time);
       return dispatch(QueryActions.queryDeviceSessions(deviceKey, time))
       .then(sessions => {
+        console.log('getting last session', sessions);
+        if (!sessions.length) return false;
           const session = getLastSession(sessions);
+          console.log('last one', session);
           const id = session.id;
-          if (!id){ return false;}
+          if (!id) return false;
+          const index = getSessionIndexById(sessions, id);
 
           return dispatch(QueryActions.fetchDeviceSession(id, deviceKey, time))
           .then(session => {
             //dispatch(setLastSession(session));
-            return session;
+            return Object.assign({}, session, {index});
           })
           .catch((error) => {
             return error;
@@ -99,7 +110,7 @@ const QueryActions = {
   },
   fetchMeterHistory: function(deviceKey, time) {
     return function(dispatch, getState) {
-
+      console.log('fetching meter history');
       dispatch(requestedQuery());
 
       const data = Object.assign({}, time, {deviceKey: [ deviceKey ] }, {csrf: getState().user.csrf});
@@ -107,7 +118,10 @@ const QueryActions = {
       return meterAPI.getHistory(data)
         .then((response) => {
           dispatch(receivedQuery(response.success, response.errors, response.session));
-          if (!response.series.length || !response.series[0].values) { return []; }
+          if (!response.series.length || !response.series[0].values) return []; 
+          
+          console.log('fetch meter sessions', response.series[0].values);
+          //return response.series[0].values.map((session, i, array) => Object.assign({}, session, {volume: session.volume-array[0].volume}));
           return response.series[0].values;
         })
         .catch((errors) => {

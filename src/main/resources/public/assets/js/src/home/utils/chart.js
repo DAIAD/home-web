@@ -45,7 +45,8 @@ const getFilteredData = function(data, filter, devType='AMPHIRO') {
         filteredData = addPreviousValues(filteredData); 
       }
       else if (devType === 'METER') {
-        filteredData = filteredData.map((x, i, array) => array[i-1]?[x[0], (array[i][1]-array[i-1][1])]:array[i]);
+        //filteredData = filteredData.map((x, i, array) => array[i-1]?[x[0],imer(array[i][1] - array[0][1])]:array[i]);
+        //filteredData = filteredData.map((x, i, array) => array[i-1]?[x[0], (array[i][1]-array[i-1][1])]:array[i]);
       }
 
       return filteredData;

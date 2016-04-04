@@ -35,12 +35,12 @@ var History = React.createClass({
 
   componentWillMount: function() {
     console.log('will mount');
-    const { activeSessionIndex, time, activeDeviceId, defaultDevice, setActiveDevice, queryDeviceOrMeter, getActiveSession } = this.props;
+    const { activeSessionIndex, time, activeDeviceId, defaultDevice, setActiveDevice, getDeviceOrMeterSessions, getActiveSession } = this.props;
     const device = activeDeviceId || defaultDevice;
     if (!activeDeviceId) {
       setActiveDevice(defaultDevice);
     }
-    queryDeviceOrMeter(device, time)
+    getDeviceOrMeterSessions(device, time)
     .then(() => { if (activeSessionIndex!==null) { return getActiveSession(device, time); } });
   },
   handleTypeSelect: function(key){
@@ -58,19 +58,15 @@ var History = React.createClass({
     }
     else if (key==="year"){
       time = timeUtil.thisYear();
-      time.granularity = 4;
     }
     else if (key==="month"){
       time = timeUtil.thisMonth();
-      time.granularity = 3;
     }
     else if (key==="week"){
       time = timeUtil.thisWeek();
-      time.granularity = 2;
     }
     else if (key==="day"){
       time = timeUtil.today();
-      time.granularity = 0;
     }
     else{
       throw new Error('oops, shouldn\'t be here');

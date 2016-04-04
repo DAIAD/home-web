@@ -1,16 +1,17 @@
 var React = require('react');
 var bs = require('react-bootstrap');
 var classNames = require('classnames');
+
 var intl = require('react-intl');
-var { injectIntl } = require('react-intl');
-var { FormattedMessage, FormatterRelative } = require('react-intl');
+var { injectIntl, FormattedMessage, FormatterRelative } = require('react-intl');
+
 var { Responsive, WidthProvider } = require('react-grid-layout');
 var ResponsiveGridLayout = WidthProvider(Responsive);
-var MainSection = require('../MainSection');
-var SessionsChart = require('../SessionsChart');
 var PureRenderMixin = require('react-addons-pure-render-mixin');
 
-var Budget = require('../Budget');
+var MainSection = require('../MainSection');
+var SessionsChart = require('../SessionsChart');
+
 
 var timeUtil = require('../../utils/time');
 
@@ -24,14 +25,35 @@ function SayHello (props) {
   );
 }
 
-function StatBox (props) {
+function InfoBox (props) {
+  const { mode, data, linkToHistory, removeInfobox, chartFormatter } = props;
+  const editable = mode==='edit'?true:false;
+  return (
+    <div className='info-box'>
+      {(()=>editable?(<a className="info-box-x" onClick={()=>removeInfobox(data.id)}><i className="fa fa-times"></i></a>):(<i/>))()}
+      <h3>{data.title}</h3>
+         <div>
+           {
+             (()=>{
+               if (data.type==='stat') {
+                 return (
+                   <StatBox {...props} /> 
+                 );
+               } 
+               else if (data.type==='chart') {
+                 return (
+                   <ChartBox {...props} /> 
+                   );
+               }
+             })()
+           }
+         </div>
+    </div>
+  );
+}
 
-  //const { title, highlight, compareText, linkText, improved, data, metric, period, device, time } = props;
-  const { title, type, improved, data, metric, measurements, period, device, deviceDetails, time, index } = props.data;
-  console.log('info box', props);
-  const classLeft = props.classLeft || 'col-md-5';
-  const classRight = props.classRight || 'col-md-7';
-  const classContainer = props.classContainer || 'row';
+function StatBox (props) {
+  const { title, type, improved, data, metric, measurements, period, device, deviceDetails, time } = props.data;
   
   let improvedDiv = (<div/>);
   if (improved === true) {
@@ -40,45 +62,43 @@ function StatBox (props) {
   else if (improved === false) {
     improvedDiv = (<img src="/assets/images/svg/warning.svg"/>);
   }
-  const metricReduced = Array.isArray(data)?data.map(obj=>obj[metric]).reduce((prev, curr) => prev+curr, 0):data[metric];
-  const duration = Array.isArray(data)?null:data.duration;
+  const metricReduced = data?(Array.isArray(data)?data.map(obj=>obj[metric]).reduce((prev, curr)=>curr, 0):data[metric]):0;
+  const duration = data?(Array.isArray(data)?null:data.duration):null;
   return (
-    <div className='info-box'>
-      <h3>{title}</h3>
-      <div className={classContainer}>
-        <div className={classLeft}>
-          { (() => {
-            if (type === 'stat') {
-              return <h2>{metricReduced}</h2>;
-            }
-            else if (type === 'last') {
-              return (
-                <div>
-                  <LastShowerChart {...data} />
-                  <span>You consumed a total of <b>{metricReduced} lt</b> in <b>{duration} sec</b>!</span>
-                </div>
-                );
-            }
-          })()
-          }
-        </div>
-        <div className={classRight}>
-          {improvedDiv}
-          <br/>
-          <a onClick={() => props.onClick({time, period, device, metric, index})}>See more</a>
-          
-        </div>
-        <span className="pull-right">{deviceDetails.name || deviceDetails.serial}</span>
+    <div className='row'>
+      <div className='col-md-5'>
+        <h2>{metricReduced}</h2>
+      </div>
+      <div className='col-md-7'>
+        <a onClick={() => props.linkToHistory({time, period, device, metric, index:data.index})}>See more</a>
       </div>
     </div>
   );
 }
 
-function LastShowerChart (props) {
-  console.log('last showrr!!');
-  console.log(props);
-  if (props.history){
-    return (<h4>Oops, can't graph due to limited data..</h4>);  
+function ChartBox (props) {
+  const { title, type, improved, data, metric, measurements, period, device, deviceDetails, time } = props.data;
+  
+  const metricReduced = data?data[metric]:0;
+  const duration = data?data.duration:null;
+  return (
+    <div>
+      <div >
+        <ShowerChart {...props} />
+        <span>You consumed a total of <b>{metricReduced} lt</b> in <b>{duration} sec</b>!</span>
+      </div>
+      <div>
+        <a onClick={() => props.linkToHistory({time, period, device, metric, index:data.index})}>See more</a>
+      </div>
+    </div>
+  );
+}
+
+
+function ShowerChart (props) {
+  const { chartFormatter, intl, history, data:{data:{chartData}}, metric } = props;
+  if (history){
+    return (<h4>Oops, can\'t graph due to limited data..</h4>);  
   }
   else {
     //formatter={props.chartFormatter(props.intl)}
@@ -92,7 +112,8 @@ function LastShowerChart (props) {
         yMargin={10}
         fontSize={12}
         type="line"
-        data={[{title: props.metric, data:props.chartData}]}
+        formatter={chartFormatter(intl)}
+        data={[{title: metric, data:chartData}]}
       />);
   }
 }
@@ -133,15 +154,17 @@ function BreakdownChart (props) {
 
 
 function InfoPanel (props) {
-  const { layouts, infoboxData, updateLayout, linkToHistory } = props;
-  console.log('info panel', infoboxData);
+  const { mode, layout, infoboxData, updateLayout, linkToHistory, switchMode, removeInfobox, chartFormatter, intl } = props;
+  const editable = mode==='edit'?true:false;
   return (
     <div>
       <ResponsiveGridLayout 
-        className='layout' 
-        layouts={{lg:layouts}}
+        className='layout'
+        layouts={{lg:layout}}
         breakpoints={{lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0}}
         cols={{lg: 12, md: 10, sm: 6, xs: 4, xxs: 2}}
+        isDraggable={editable}
+        isResizable={editable}
         onLayoutChange={(layout, layouts) => { 
           //updateLayout(layout);  
         }}
@@ -156,16 +179,174 @@ function InfoPanel (props) {
          infoboxData.map(function(data) {
            return (
              <div key={data.id}>
-               <StatBox
-                 data={data.type!=='last'?data:Object.assign({}, data, {index:0})}
-                 onClick={linkToHistory}
-               /> 
+               <InfoBox {...{mode, chartFormatter, data, linkToHistory, removeInfobox, intl}} /> 
            </div>
            );
-        })
+         })
        }
       </ResponsiveGridLayout>
      </div>
+  );
+}
+
+function InfoboxBuildForm (props) {
+  const { mode, switchMode, tempInfoboxData, updateInfoboxTemp, types, subtypes, periods, metrics, devices, fetchInfoboxData, addInfobox, resetInfoboxTemp } = props;
+  return (
+    <bs.Modal animation={false} show={mode==="add"?true:false} onHide={() => switchMode("normal")} bsSize="sm">
+      <bs.Modal.Header closeButton>
+        <bs.Modal.Title>Add Infobox</bs.Modal.Title>
+      </bs.Modal.Header>
+      <bs.Modal.Body>
+        <div style={{padding: '5px 20px'}}>
+          <bs.Input 
+            type="text" 
+            label="Title" 
+            disabled={true}
+            value={tempInfoboxData.title} 
+            onChange={(e) => 
+              updateInfoboxTemp({title: e.target.value}) 
+            }/>
+          <bs.Input
+            type="select"
+            label="Device"
+            title={tempInfoboxData.device?tempInfoboxData.device:"none"}
+            id="device-switcher"
+            defaultValue={tempInfoboxData.device}
+            onChange={(e) => 
+              updateInfoboxTemp({device: e.target.value})
+            }>
+            {
+              devices.map(function(device) {
+                return (
+                  <option key={device.deviceKey} value={device.deviceKey} >{device.name || device.serial}</option>
+                );
+              })
+            } 
+          </bs.Input>
+          
+          <bs.Input
+            type="select"
+            label="Type"
+            title={tempInfoboxData.type?tempInfoboxData.type:"none"}
+            id="type-switcher"
+            defaultValue={tempInfoboxData.type}
+            onChange={(e) => 
+              updateInfoboxTemp({type: e.target.value})
+            }
+            >
+            {
+              types.map(function(type) {
+                return (
+                  <option key={type.id} value={type.id} >{type.title}</option>
+                );
+              })
+            } 
+          </bs.Input>
+          { 
+            (()=> subtypes?(
+              <bs.Input
+                type="select"
+                label="Sub-type"
+                title={tempInfoboxData.subtype?tempInfoboxData.subtype:"none"}
+                id="subtype-switcher"
+                defaultValue={tempInfoboxData.subtype}
+                onChange={(e) => 
+                  updateInfoboxTemp({subtype: e.target.value})
+                }
+                >
+                {
+                  subtypes.map(function(type) {
+                    return (
+                      <option key={type.id} value={type.id} >{type.title}</option>
+                    );
+                  })
+                } 
+              </bs.Input>):
+                (<div/>)
+            )()
+          }
+
+          <bs.Input
+            type="select"
+            label="Period"
+            title={tempInfoboxData.period?tempInfoboxData.period:"none"}
+            id="period-switcher"
+            defaultValue={tempInfoboxData.period}
+            onChange={(e) => 
+              updateInfoboxTemp({
+                period: e.target.value,
+                time: periods.find(x=> x.id === e.target.value)?periods.find(x=> x.id===e.target.value).value:{}
+                }
+              )
+             }>
+            {
+              periods.map(function(period) {
+                return (
+                  <option key={period.id} value={period.id} >{period.title}</option>
+                );
+              })
+            } 
+          </bs.Input>
+
+          <bs.Input
+            type="select"
+            label="Metric"
+            title={tempInfoboxData.metric?tempInfoboxData.metric:"none"}
+            id="metric-switcher"
+            defaultValue={tempInfoboxData.metric}
+            onChange={(e) => 
+              updateInfoboxTemp({metric: e.target.value})
+            }
+             >
+            {
+              metrics.map(function(metric) {
+                return (
+                  <option key={metric.id} value={metric.id}>{metric.title}</option>
+                );
+              })
+            } 
+          </bs.Input>
+          
+        </div>
+         
+      </bs.Modal.Body>
+      <bs.Modal.Footer>
+        <bs.Button 
+          onClick={()=> { 
+            const { type, subtype, device, time } = tempInfoboxData;
+            const id = addInfobox(tempInfoboxData); 
+            fetchInfoboxData({id, type, subtype, device, time});
+            resetInfoboxTemp(); 
+            switchMode("edit"); 
+          }}>
+          OK
+        </bs.Button>
+        <bs.Button 
+          onClick={()=> 
+            switchMode("normal")
+          }>
+          Cancel
+        </bs.Button>
+      </bs.Modal.Footer>
+    </bs.Modal>
+  );
+}
+
+function ButtonToolbar (props) {
+  const { switchMode, mode } = props;
+  return (
+    <div className="pull-right">
+      <bs.ButtonToolbar>
+        <bs.Button onClick={()=> switchMode("add")} active={false}>Add</bs.Button>
+        {
+          (()=> mode==="edit"?(
+            <bs.Button onClick={()=> switchMode("normal")} bsStyle="primary" active={false}>Done</bs.Button>
+            ):(
+            <bs.Button onClick={()=> switchMode("edit")} active={false}>Edit</bs.Button>
+            ))()
+        }
+      </bs.ButtonToolbar>
+    </div>
   );
 }
 
@@ -173,21 +354,10 @@ var Dashboard = React.createClass({
   mixins: [PureRenderMixin],
 
   componentWillMount: function() {
-    const { queryDevice, getLastSession, updateInfobox, updateAllInfoboxes, infoboxData } = this.props;
-    updateAllInfoboxes();
-    /*
-    infoboxData.map(infobox => {
-      
-      if (infobox.type === "stat") {
-        queryDevice(infobox.device, infobox.time)
-        .then(sessions =>  updateInfobox(infobox.id, sessions));
-      }
-      //else if (infobox.type === "last") {
-      //  getLastSession(infobox.device, infobox.time)
-      //  .then(session => updateInfobox(infobox.id, session));
-      //}
-      });
-      */
+    const { fetchAllInfoboxesData, switchMode } = this.props;
+    switchMode("normal");
+    fetchAllInfoboxesData();
+
   },
   /*
   componentWillReceiveProps: function(nextProps) {
@@ -206,13 +376,18 @@ var Dashboard = React.createClass({
   },
   */
   render: function() {
-    console.log('rendered dashboard');
-    console.log(this.props);
+    const { firstname, mode, switchMode } = this.props;
+
     return (
       <MainSection id="section.dashboard">
         <br/>
-        <SayHello firstname={this.props.firstname} style={{margin:50}}/>
+        <SayHello firstname={firstname} />
+        
+        <ButtonToolbar {...{mode, switchMode}} />
+        <br/>
         <InfoPanel {...this.props} />
+        
+        <InfoboxBuildForm {...this.props} /> 
       </MainSection>
     );
   }
