@@ -4,10 +4,10 @@ var { connect } = require('react-redux');
 var ReactIntl = require('react-intl');
 
 var Locale = {};
-Locale.en = require('react-intl/lib/locale-data/en');
-Locale.el = require('react-intl/lib/locale-data/el');
-Locale.es = require('react-intl/lib/locale-data/es');
-Locale.de = require('react-intl/lib/locale-data/de');
+Locale.en = require('react-intl/locale-data/en');
+Locale.el = require('react-intl/locale-data/el');
+Locale.es = require('react-intl/locale-data/es');
+Locale.de = require('react-intl/locale-data/de');
 
 ReactIntl.addLocaleData(Locale.en);
 ReactIntl.addLocaleData(Locale.el);
