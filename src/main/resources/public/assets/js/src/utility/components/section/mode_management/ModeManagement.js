@@ -2,11 +2,11 @@ var React = require('react');
 var ReactDOM = require('react-dom');
 var Bootstrap = require('react-bootstrap');
 var { Link } = require('react-router');
-var Breadcrumb = require('../Breadcrumb');
-var EditTable = require('../EditTable');
-var Modal = require('../Modal');
-var FilterPanel = require('../FilterPanel');
-//var RandomUsers = require('../../testData/Users');
+var Breadcrumb = require('../../Breadcrumb');
+var EditTable = require('../../EditTable');
+var Modal = require('../../Modal');
+var FilterPanel = require('../../FilterPanel');
+var RandomUsers = require('../../../testData/Users');
 
 var $ = require('jquery');
 
@@ -15,16 +15,11 @@ var ModeManagement = React.createClass({
 	    intl: React.PropTypes.object
 	},
 	
-	getInitialState() {
-		var filterStatus = {};
-		$.each(this.filters, function(i, f){
-			filterStatus[f.id] = null;
-		});
-		
+	getInitialState() {		
 		return {
 			userToDecativate: null,
 			changedRows: null,
-			filterStatus: filterStatus,
+			filterStatus: {},
 			nameFilter: '',
 			modal : {
 				show: false,
@@ -61,7 +56,7 @@ var ModeManagement = React.createClass({
 	
 	removeFilter: function(filter) {
     	var currentFilterStatus = this.state.filterStatus;
-    	currentFilterStatus[filter] = null;
+    	delete currentFilterStatus[filter];
     	this.setState({filterStatus: currentFilterStatus});
     },
 		
@@ -136,6 +131,8 @@ var ModeManagement = React.createClass({
 	}],
 	
   	render: function() {
+  		console.log('RENDERING ModeManagement....................');
+  		console.log(this.state.filterStatus);
   		  		
   		var self = this;
   		var _t = this.context.intl.formatMessage;
@@ -320,7 +317,7 @@ var ModeManagement = React.createClass({
 			}
 		};
 		
-		//users.rows = RandomUsers.randomUsers;
+		users.rows = RandomUsers.randomUsers;
   		
 		var distinctGroups = getDistinctValuesArrayObjects(users.rows, 'group');
 		var distinctGroupOptions = {};
