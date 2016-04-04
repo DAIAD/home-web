@@ -98,7 +98,7 @@ function ChartBox (props) {
 function ShowerChart (props) {
   const { chartFormatter, intl, history, data:{data:{chartData}}, metric } = props;
   if (history){
-    return (<h4>Oops, can\'t graph due to limited data..</h4>);  
+    return (<h4>Oops, cannot graph due to limited data..</h4>);  
   }
   else {
     //formatter={props.chartFormatter(props.intl)}
