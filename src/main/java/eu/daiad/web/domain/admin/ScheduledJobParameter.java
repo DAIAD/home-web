@@ -12,33 +12,25 @@ import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
-@Entity(name = "job_parameter")
-@Table(schema = "public", name = "job_parameter")
-public class JobParameter {
+@Entity(name = "scheduled_job_parameter")
+@Table(schema = "public", name = "scheduled_job_parameter")
+public class ScheduledJobParameter {
 
 	@Id()
 	@Column(name = "id")
-	@SequenceGenerator(sequenceName = "job_parameter_id_seq", name = "job_parameter_id_seq", allocationSize = 1, initialValue = 1)
-	@GeneratedValue(generator = "job_parameter_id_seq", strategy = GenerationType.SEQUENCE)
-	private int id;
+	@SequenceGenerator(sequenceName = "scheduled_job_parameter_id_seq", name = "scheduled_job_parameter_id_seq", allocationSize = 1, initialValue = 1)
+	@GeneratedValue(generator = "scheduled_job_parameter_id_seq", strategy = GenerationType.SEQUENCE)
+	private long id;
 
 	@ManyToOne(cascade = { CascadeType.ALL })
-	@JoinColumn(name = "job_id", nullable = false)
-	private Job job;
+	@JoinColumn(name = "scheduled_job_id", nullable = false)
+	private ScheduledJob scheduledJob;
 
 	@Basic
 	private String name;
 
 	@Basic
 	private String value;
-
-	public Job getJob() {
-		return job;
-	}
-
-	public void setJob(Job job) {
-		this.job = job;
-	}
 
 	public String getName() {
 		return name;
@@ -56,7 +48,15 @@ public class JobParameter {
 		this.value = value;
 	}
 
-	public int getId() {
+	public ScheduledJob getScheduledJob() {
+		return scheduledJob;
+	}
+
+	public void setScheduledJob(ScheduledJob scheduledJob) {
+		this.scheduledJob = scheduledJob;
+	}
+
+	public long getId() {
 		return id;
 	}
 

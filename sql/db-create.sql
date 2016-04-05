@@ -130,7 +130,8 @@ CREATE TABLE public.account_white_list
             ON UPDATE CASCADE ON DELETE SET NULL,
   CONSTRAINT fk_account FOREIGN KEY (account_id)
         REFERENCES public.account (id) MATCH SIMPLE
-            ON UPDATE CASCADE ON DELETE CASCADE
+            ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT uq_utility_username UNIQUE (utility_id, username)
 );
 
 -- role

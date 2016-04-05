@@ -9,11 +9,13 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -38,9 +40,11 @@ import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 
 @Service
 @Transactional("managementTransactionManager")
-public class WaterMeterDataLoader implements IWaterMeterDataLoader {
+public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService {
 
-	private static final Log logger = LogFactory.getLog(WaterMeterDataLoader.class);
+	private static final Log logger = LogFactory.getLog(WaterMeterDataLoaderService.class);
+
+	private boolean cancelled = false;
 
 	@Autowired
 	SecureFileTransferConnector sftConnector;
@@ -57,6 +61,10 @@ public class WaterMeterDataLoader implements IWaterMeterDataLoader {
 	@Override
 	public void load(DataTransferConfiguration config) {
 		try {
+			// Create local folder
+			FileUtils.forceMkdir(new File(config.getLocalFolder()));
+
+			// Set time zone
 			Set<String> zones = DateTimeZone.getAvailableIDs();
 			if (config.getTimezone() == null) {
 				config.setTimezone("UTC");
@@ -65,13 +73,22 @@ public class WaterMeterDataLoader implements IWaterMeterDataLoader {
 				throw new ExportException(String.format("Time zone [%s] is not supported.", config.getTimezone()));
 			}
 
+			// Construct regular expression for filtering file names
+			Pattern allowedFilenames = null;
+			if (!StringUtils.isBlank(config.getFilterRegEx())) {
+				allowedFilenames = Pattern.compile(config.getFilterRegEx());
+			}
+
+			// Enumerate files from the remote folder
 			ArrayList<RemoteFileAttributes> files = this.sftConnector.ls(config.getSftpProperties(),
 							config.getRemoteFolder());
 
-			String qlString = "select u from upload u where u.remoteFolder = :remoteFolder and u.remoteFilename = :remoteFilename and u.size = :fileSize";
+			String qlString = "select u from upload u where u.remoteFolder = :remoteFolder "
+							+ "and u.remoteFilename = :remoteFilename and u.size = :fileSize order by u.id desc";
 
 			for (RemoteFileAttributes f : files) {
-
+				// Check if a file with the same path, name and size has already
+				// been imported
 				TypedQuery<Upload> uploadQuery = entityManager.createQuery(qlString, Upload.class).setFirstResult(0)
 								.setMaxResults(1);
 
@@ -80,7 +97,24 @@ public class WaterMeterDataLoader implements IWaterMeterDataLoader {
 				uploadQuery.setParameter("fileSize", f.getSize());
 
 				List<Upload> uploads = uploadQuery.getResultList();
-				if (uploads.size() == 0) {
+
+				Upload existingUpload = null;
+				if (uploads.size() != 0) {
+					existingUpload = uploads.get(0);
+				}
+
+				if ((existingUpload == null)
+								|| ((existingUpload.getSkippedRows() + existingUpload.getProccessedRows()) != existingUpload
+												.getTotalRows())) {
+					// Filter file names based on a regular expression
+					if ((allowedFilenames != null) && (!allowedFilenames.matcher(f.getFilename()).matches())) {
+						continue;
+					}
+					if(this.cancelled) {
+						return;
+					}
+
+					// Create upload record
 					Upload upload = new Upload();
 
 					upload.setSource(f.getSource());
@@ -96,11 +130,13 @@ public class WaterMeterDataLoader implements IWaterMeterDataLoader {
 
 					String target = FilenameUtils.concat(config.getLocalFolder(), upload.getLocalFilename());
 
+					// Download file to the local folder
 					upload.setUploadStartedOn(new DateTime());
 					this.sftConnector
 									.get(config.getSftpProperties(), config.getRemoteFolder(), f.getFilename(), target);
 					upload.setUploadCompletedOn(new DateTime());
 
+					// Process data and import records to HBASE
 					upload.setProcessingStartedOn(new DateTime());
 					this.parse(config, upload);
 					upload.setProcessingCompletedOn(new DateTime());
@@ -124,9 +160,23 @@ public class WaterMeterDataLoader implements IWaterMeterDataLoader {
 		DateTimeFormatter formatter = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss").withZone(
 						DateTimeZone.forID(config.getTimezone()));
 
-		int index = 0, processedRows = 0, skippedRows = 0;
+		int index = 0, totalRows = 0, processedRows = 0, skippedRows = 0;
 
 		try {
+			// Count rows
+			scan = new Scanner(new File(filename));
+
+			while (scan.hasNextLine()) {
+				scan.nextLine();
+				totalRows++;
+			}
+			scan.close();
+			scan = null;
+
+			upload.setTotalRows(totalRows);
+			this.entityManager.flush();
+
+			// Process rows
 			scan = new Scanner(new File(filename));
 
 			this.waterMeterMeasurementRepository.open();
@@ -201,5 +251,16 @@ public class WaterMeterDataLoader implements IWaterMeterDataLoader {
 				scan.close();
 			}
 		}
+	}
+
+	@Override
+	public void cancel() {
+		this.cancelled = true;
+
+	}
+
+	@Override
+	public boolean isCancelled() {
+		return cancelled;
 	}
 }
