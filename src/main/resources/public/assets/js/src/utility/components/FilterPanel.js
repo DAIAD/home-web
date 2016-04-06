@@ -3,6 +3,9 @@ var Bootstrap = require('react-bootstrap');
 var DropDown = require('./DropDown');
 var DismissableFilterTag = require('./DismissableFilterTag');
 
+var ModeManagementActions = require('../actions/ModeManagementActions');
+var { connect } = require('react-redux');
+var { bindActionCreators } = require('redux');
 
 var FilterPanel = React.createClass({
 	
@@ -20,6 +23,7 @@ var FilterPanel = React.createClass({
 	},
 	
 	render: function(){
+		console.log('RENDERING FilterPanel....................');
 		var _t = this.context.intl.formatMessage;
 		var self = this;
 		
@@ -45,7 +49,7 @@ var FilterPanel = React.createClass({
 						options={options}
 						onSelect={self.props.addFilter}
 					    icon={filter.icon}
-						disabled={self.props.filterStatus[filter.id] !== null}
+						disabled={(typeof self.props.filterStatus[filter.id] !== 'undefined')}
 					/>		
 				)
 			);
@@ -104,4 +108,21 @@ var FilterPanel = React.createClass({
 	}
 });
 
-module.exports = FilterPanel;
+function mapStateToProps(state) {
+	return {
+		filterStatus: state.mode_management.filterStatus
+	};
+}
+
+function mapDispatchToProps(dispatch) {
+	return {
+		addFilter: function(event, filter){
+			dispatch(ModeManagementActions.addFilter(filter));
+		},
+		removeFilter: function(filterId){
+			dispatch(ModeManagementActions.removeFilter(filterId));
+		}
+	};
+}
+
+module.exports = connect(mapStateToProps, mapDispatchToProps)(FilterPanel);

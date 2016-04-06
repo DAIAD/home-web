@@ -126,7 +126,7 @@ var ContentRoot = React.createClass({
 				            						</Link>
 				            					</li>
 				            					<li>
-	                        						<Link to='/mode_management'>
+	                        						<Link to='/mode/management'>
 			                							<span  style={{paddingLeft: 18}}>
 			                								<i className='fa fa-sliders fa-fw'></i>{' ' + _t({ id: 'Section.ModeManagement'})}
 		                								</span>

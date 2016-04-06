@@ -8,63 +8,37 @@ var Bootstrap = require('react-bootstrap');
 var Checkbox = require('./Checkbox');
 var IndeterminateCheckbox = require('./IndeterminateCheckbox');
 
+var Helpers = require('../helpers/helpers');
+
+
 var EditTable = React.createClass({
+	
 	getInitialState: function() {
 		return {
-			activePage: 0,
-			propertyFieldNames: this._pluck(
-					this._pickQualiffied(this.props.data.fields, 'type', 'property'),
-					'name'
-			),
-			rows: this._computeModesState(),
-			toggleCheckboxesState: this._computeToggleCheckboxesState()
+			//activePage: 0,
     	};
 	},
 	
 	onPageIndexChange(event, selectedEvent) {
-		this.setState({
-			activePage: (selectedEvent.eventKey - 1)
-    	});
+		this.props.setActivePage(selectedEvent.eventKey - 1);
 	},
 	
-	//TODO: move it to helpers
-	_pluck: function(arr, key){
-  		    return arr.map(function (e) { return e[key]; });
-	},
-	//TODO: move it to helpers
-	/* From an array of objects, we pick those, 
-	 * having a specific value for a given key
-	 * */
-	_pickQualiffied: function(arr, key, value){
-		var qualified =  arr.map(function(e) { 
-			console.log(e);
-			console.log(key);
-			console.log(value);
-			if (e.hasOwnProperty(key)){
-				if (e[key] === value) {
-					return e; 
-				}
-			}
-		});
-		return qualified.filter(function (e) { if (e !== undefined) return e;} );
-	},
-	
-	_computeModesState: function (){
+	_computeModesState: function (data){
 		var modesState = {};
-		var propertyNames = this._pluck(
-						this._pickQualiffied(this.props.data.fields, 'type', 'property'),
+		var propertyNames = Helpers.pluck(
+						Helpers.pickQualiffied(data.fields, 'type', 'property'),
 						'name'
 					);
 		var self = this;
-		var rowIds = this._pluck(self.props.data.rows, 'id');
+		var rowIds = Helpers.pluck(data.rows, 'id');
 		
 		for (var i = 0, len = rowIds.length; i < len; i++){
 			var modeEntry = {};
-			modeEntry.active = self.props.data.rows[i].active;
+			modeEntry.active = data.rows[i].active;
 			modeEntry.modes = {};
 			for (var p = 0, len2 = propertyNames.length; p < len2; p++){
 				var mode = {
-					value: self.props.data.rows[i][propertyNames[p]],
+					value: data.rows[i][propertyNames[p]],
 					draft: false
 				};
 				modeEntry.modes[propertyNames[p]] = mode;
@@ -73,28 +47,17 @@ var EditTable = React.createClass({
 		}
 		return modesState;
 	},
-	
-	_computeToggleCheckboxesState: function(){
-		var toggleCheckboxesState = {};
-		var propertyNames = this._pluck(
-				this._pickQualiffied(this.props.data.fields, 'type', 'property'),
-				'name'
-			);
-		for (var p = 0, len = propertyNames.length; p < len; p++){
-			toggleCheckboxesState[propertyNames[p]] = 'indeterminate';
-		}
-		return toggleCheckboxesState;
-	},
-	
+
 	_syncStateData: function (){
 		var syncdData = this.props.data;
 		var syncdRows = syncdData.rows;
 		var self = this;
 		for (var r = 0, len = syncdRows.length; r < len; r++){
 			var row = syncdRows[r];
-			for (var m in self.state.rows[row.id].modes){
-				if(self.state.rows[row.id].modes.hasOwnProperty(m)){
-					row[m] = self.state.rows[row.id].modes[m].value;
+			for (var m in self.props.modes[row.id].modes){
+
+				if(self.props.modes[row.id].modes.hasOwnProperty(m)){
+					row[m] = self.props.modes[row.id].modes[m].value;
 				}
 			}
 		}
@@ -108,8 +71,8 @@ var EditTable = React.createClass({
   		for (var r = 0, len = visibleRows.length; r < len; r++){
 			var row = visibleRows[r];
   			var rowDraftFlags = {};
-  			for (var m in self.state.rows[row.id].modes){
-  				rowDraftFlags[m] = self.state.rows[row.id].modes[m].draft;
+  			for (var m in self.props.modes[row.id].modes){
+  				rowDraftFlags[m] = self.props.modes[row.id].modes[m].draft;
   			}
   			visibleCellDraftFlags[row.id] = rowDraftFlags;
   		}
@@ -117,24 +80,21 @@ var EditTable = React.createClass({
 	},
 	
 	handleCheckboxChange: function (rowId, propertyName, currentValue){
-		var currentModesState = this.state.rows;
+		var currentModesState = Object.assign({}, this.props.modes);
 		currentModesState[rowId].modes[propertyName] = {
-				value: !this.state.rows[rowId].modes[propertyName].value,
-				draft: !this.state.rows[rowId].modes[propertyName].draft								  
+				value: !this.props.modes[rowId].modes[propertyName].value,
+				draft: !this.props.modes[rowId].modes[propertyName].draft								  
 		};
-		this.setState({rows: currentModesState});
+		this.props.setModes(currentModesState);
 	},
 	
 	toggleCheckBoxes: function (propertyName, toggleState){	
-		var ps = this.props.data.pager.size;
-		var ap = this.state.activePage;
-
 		var visibleRowIds = [];
 		for (var i = 0; i<this.props.data.rows.length ; i++){
 			visibleRowIds.push(this.props.data.rows[i].id);
 		}
 		
-		var currentModesState = this.state.rows;
+		var currentModesState = Object.assign({}, this.props.modes);
 		switch(toggleState) {
 		case 'indeterminate':
 			for (let r = 0, len = visibleRowIds.length; r < len; r++){
@@ -174,7 +134,7 @@ var EditTable = React.createClass({
 			}
 			break;
 		}
-		this.setState({rows: currentModesState});
+		this.props.setModes(currentModesState);
 	},
 	  
 	getDefaultProps: function() {
@@ -204,9 +164,9 @@ var EditTable = React.createClass({
   	
   	_countChangedRows: function(){
 		var cnt = 0;
-		for (var r in this.state.rows){
-			if(this.state.rows.hasOwnProperty(r)){
-				let row = this.state.rows[r];
+		for (var r in this.props.modes){
+			if(this.props.modes.hasOwnProperty(r)){
+				let row = this.props.modes[r];
 				for (var p in row.modes){
 					if(row.modes.hasOwnProperty(p)){
 						let mode = row.modes[p];
@@ -222,11 +182,9 @@ var EditTable = React.createClass({
 	},
 	
 	_getChangedRows: function(){
-		console.log('_getChangedRows');
 		var changedRows = [];
-		console.log(this.state.rows);
-		for (var r in this.state.rows){
-			let row = this.state.rows[r];
+		for (var r in this.props.modes){
+			let row = this.props.modes[r];
 			for (var p in row.modes){
 				if(row.modes.hasOwnProperty(p)){
 					let property = row.modes[p];
@@ -244,17 +202,16 @@ var EditTable = React.createClass({
 	},
 
   	render: function() {
+  		console.log('RENDERING EditTable....................');
   		var self = this;
-  		
   		var visibleData = Object.assign({}, 
   				this._syncStateData(this.props.data),
   				{rows: this.props.data.rows.slice(
-  						this.state.activePage * this.props.data.pager.size, 
-  						(this.state.activePage + 1) * this.props.data.pager.size)
+  						this.props.activePage * this.props.data.pager.size, 
+  						(this.props.activePage + 1) * this.props.data.pager.size)
   				}
   		);
   		var numberOfPages = Math.ceil(this.props.data.rows.length / this.props.data.pager.size); 
-  		
   		var saveButton;  		
   		if (this._countChangedRows() > 0){
   			saveButton = (
@@ -289,7 +246,7 @@ var EditTable = React.createClass({
 											ellipsis
 											items={numberOfPages}
 			        						maxButtons={7}
-			        						activePage={this.state.activePage + 1}
+			        						activePage={this.props.activePage + 1}
 			        						onSelect={this.onPageIndexChange} />	
 				</div>
 			</div>
@@ -450,7 +407,7 @@ var Cell = React.createClass({
   				text = (<Checkbox checked={value} 
   								disabled={disabled} 
   								rowId={rowId}
-  								propertName={this.props.field.name}
+  								propertyName={this.props.field.name}
   								draftFlag={this.props.draftFlag}
   								onUserClick={this.props.checkboxHandler}/>);
   				break;
@@ -506,3 +463,4 @@ EditTable.Row = Row;
 EditTable.Cell = Cell;
 
 module.exports = EditTable;
+

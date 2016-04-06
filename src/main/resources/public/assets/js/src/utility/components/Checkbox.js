@@ -13,7 +13,7 @@ var Checkbox = React.createClass({
 	handleChange: function(){
 		this.props.onUserClick(
 			this.props.rowId,
-			this.props.propertName,
+			this.props.propertyName,
 			this.refs.checkbox.defaultChecked
 		);
 	},

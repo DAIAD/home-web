@@ -13,12 +13,17 @@ var Demographics = React.createClass({
 	
 	getInitialState() {
 		return {
-			key: 1
+			key: 1,
+			showAddNewUserForm: false
     	};
 	},
 
 	selectSection(key) {
 		this.setState({key : key});
+  	},
+  	
+  	showAddNewUserForm: function (){
+  		this.setState({showAddNewUserForm : true});
   	},
 	
   	render: function() {
@@ -356,6 +361,46 @@ var Demographics = React.createClass({
 				</span>
 			</span>
 		);
+		
+		var addNewUserForm;
+		
+		if (this.state.showAddNewUserForm){
+			addNewUserForm = (
+				<div className='row'>
+					<div className='col-md-12'>
+						<Bootstrap.ListGroup>
+							<Bootstrap.ListGroupItem>
+								<div className='clearfix'>
+									<div style={{ float: 'right'}}>
+										<Bootstrap.Button bsStyle="danger"	onClick={function(){alert('Hello new user!');}}>
+											<i className='fa fa-plus' style={{ paddingRight: 5 }}></i>
+											Add New User
+										</Bootstrap.Button>
+									</div>
+								</div>
+							</Bootstrap.ListGroupItem>
+						</Bootstrap.ListGroup>
+					</div>
+				</div>
+			);
+		} else {
+			addNewUserForm = (
+				<div className='row'>
+					<div className='col-md-12'>
+						<Bootstrap.ListGroup>
+								<div className='clearfix'>
+									<div style={{ float: 'right'}}>
+										<Bootstrap.Button bsStyle="success"	onClick={this.showAddNewUserForm}>
+											<i className='fa fa-plus' style={{ paddingRight: 5 }}></i>
+											Add New User
+										</Bootstrap.Button>
+									</div>
+								</div>
+						</Bootstrap.ListGroup>
+					</div>
+				</div>
+			);
+		}
 
   		return (
 			<div className="container-fluid" style={{ paddingTop: 10 }}>
@@ -364,6 +409,7 @@ var Demographics = React.createClass({
 						<Breadcrumb routes={this.props.routes}/>
 					</div>
 				</div>
+				{addNewUserForm}
 				<div className='row'>
 					<div className='col-md-6'>
 					 	<Bootstrap.Input 	type="text" 
