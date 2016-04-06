@@ -43,11 +43,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	private RESTLogoutSuccessHandler logoutSuccessHandler;
 
 	@Autowired
-	private CustomAuthenticationProvider provider;
+	private CustomAuthenticationProvider authenticationProvider;
 
 	@Override
 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-		auth.authenticationProvider(provider);
+		auth.authenticationProvider(authenticationProvider);
 	}
 
 	@Override

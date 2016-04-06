@@ -29,7 +29,6 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IAmphiroMeasurementRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
-import eu.daiad.web.security.AuthenticationService;
 
 @RestController
 public class SearchController extends BaseController {
@@ -44,9 +43,6 @@ public class SearchController extends BaseController {
 
 	@Autowired
 	private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
-
-	@Autowired
-	private AuthenticationService authenticator;
 
 	@RequestMapping(value = "/action/meter/status", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")

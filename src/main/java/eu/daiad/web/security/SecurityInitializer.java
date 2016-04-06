@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import eu.daiad.web.repository.application.IUserRepository;
 
 @Component
-public class SecurityInitializerBean implements CommandLineRunner {
+public class SecurityInitializer implements CommandLineRunner {
 
 	@Autowired
 	private IUserRepository userRepository;

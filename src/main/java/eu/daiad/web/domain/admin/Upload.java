@@ -20,7 +20,7 @@ public class Upload {
 	@Column(name = "id")
 	@SequenceGenerator(sequenceName = "upload_id_seq", name = "upload_id_seq", allocationSize = 1, initialValue = 1)
 	@GeneratedValue(generator = "upload_id_seq", strategy = GenerationType.SEQUENCE)
-	private int id;
+	private long id;
 
 	@Basic
 	private String source;
@@ -40,11 +40,14 @@ public class Upload {
 	@Column(name = "file_size")
 	private long size;
 
+	@Column(name = "row_count")
+	long totalRows = 0;
+
 	@Column(name = "row_processed")
-	int proccessedRows = 0;
+	long proccessedRows = 0;
 
 	@Column(name = "row_skipped")
-	int skippedRows = 0;
+	long skippedRows = 0;
 
 	@Column(name = "date_modified")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
@@ -146,7 +149,7 @@ public class Upload {
 		this.processingCompletedOn = processingCompletedOn;
 	}
 
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 
@@ -158,20 +161,28 @@ public class Upload {
 		this.source = source;
 	}
 
-	public int getProccessedRows() {
+	public long getProccessedRows() {
 		return proccessedRows;
 	}
 
-	public void setProccessedRows(int proccessedRows) {
+	public void setProccessedRows(long proccessedRows) {
 		this.proccessedRows = proccessedRows;
 	}
 
-	public int getSkippedRows() {
+	public long getSkippedRows() {
 		return skippedRows;
 	}
 
-	public void setSkippedRows(int skippedRows) {
+	public void setSkippedRows(long skippedRows) {
 		this.skippedRows = skippedRows;
+	}
+
+	public long getTotalRows() {
+		return totalRows;
+	}
+
+	public void setTotalRows(long totalRows) {
+		this.totalRows = totalRows;
 	}
 
 }

@@ -18,15 +18,11 @@ import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IProfileRepository;
-import eu.daiad.web.security.AuthenticationService;
 
 @RestController("RestAuthenticationController")
 public class AuthenticationController extends BaseRestController {
 
 	private static final Log logger = LogFactory.getLog(AuthenticationController.class);
-
-	@Autowired
-	private AuthenticationService authenticationService;
 
 	@Autowired
 	private IProfileRepository profileRepository;

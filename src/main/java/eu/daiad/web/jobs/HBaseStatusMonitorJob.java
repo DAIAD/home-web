@@ -26,7 +26,7 @@ import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.repository.application.HBaseConfigurationBuilder;
 
 @Component
-public class HBaseStatusMonitorJob implements IScheduledJob {
+public class HBaseStatusMonitorJob implements IJobBuilder {
 
 	private static final Log logger = LogFactory.getLog(HBaseStatusMonitorJob.class);
 

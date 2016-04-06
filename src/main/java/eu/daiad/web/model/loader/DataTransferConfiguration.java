@@ -11,7 +11,9 @@ public class DataTransferConfiguration {
 	private String localFolder;
 
 	private String timezone;
-	
+
+	private String filterRegEx;
+
 	public SftpProperties getSftpProperties() {
 		return sftpProperties;
 	}
@@ -42,6 +44,14 @@ public class DataTransferConfiguration {
 
 	public void setTimezone(String timezone) {
 		this.timezone = timezone;
+	}
+
+	public String getFilterRegEx() {
+		return filterRegEx;
+	}
+
+	public void setFilterRegEx(String filterRegEx) {
+		this.filterRegEx = filterRegEx;
 	}
 
 }

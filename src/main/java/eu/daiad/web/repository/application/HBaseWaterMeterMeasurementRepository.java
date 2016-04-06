@@ -61,7 +61,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 		}
 	}
 
-	private String meterTableMeasurementByUser = "daiad:meter-measurements-by-user";
+	private String meterTableMeasurementByMeter = "daiad:meter-measurements-by-user";
 
 	private String meterTableMeasurementByTime = "daiad:meter-measurements-by-time";
 
@@ -77,17 +77,10 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 
 	private Connection connection = null;
 
-	private Table userTable = null;
-
-	private Table timeTable = null;
-
 	public void open() throws IOException {
 		if (this.connection == null) {
 			Configuration config = this.configurationBuilder.build();
 			this.connection = ConnectionFactory.createConnection(config);
-
-			this.userTable = connection.getTable(TableName.valueOf(this.meterTableMeasurementByUser));
-			this.timeTable = connection.getTable(TableName.valueOf(this.meterTableMeasurementByTime));
 		}
 	}
 
@@ -98,14 +91,6 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 	@Override
 	public void close() {
 		try {
-			if (this.userTable != null) {
-				this.userTable.close();
-				this.userTable = null;
-			}
-			if (this.timeTable != null) {
-				this.timeTable.close();
-				this.timeTable = null;
-			}
 			if ((this.connection != null) && (!this.connection.isClosed())) {
 				this.connection.close();
 				this.connection = null;
@@ -128,7 +113,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 				autoClose = true;
 			}
 
-			this.storeDataByUser(connection, serial, data);
+			this.storeDataByMeter(connection, serial, data);
 			this.storeDataByTime(connection, serial, data);
 		} catch (Exception ex) {
 			autoClose = true;
@@ -141,8 +126,12 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 		}
 	}
 
-	private void storeDataByUser(Connection connection, String serial, WaterMeterMeasurementCollection data) {
+	@SuppressWarnings("resource")
+	private void storeDataByMeter(Connection connection, String serial, WaterMeterMeasurementCollection data) {
+		Table table = null;
 		try {
+			table = connection.getTable(TableName.valueOf(this.meterTableMeasurementByMeter));
+
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
@@ -184,15 +173,29 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 				column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("d")));
 				p.addColumn(columnFamily, column, Bytes.toBytes(m.getDifference()));
 
-				this.userTable.put(p);
+				table.put(p);
 			}
 		} catch (Exception ex) {
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		} finally {
+			try {
+				if (table != null) {
+					table.close();
+					table = null;
+				}
+			} catch (Exception ex) {
+				logger.error(ERROR_RELEASE_RESOURCES, ex);
+			}
 		}
 	}
 
+	@SuppressWarnings("resource")
 	private void storeDataByTime(Connection connection, String serial, WaterMeterMeasurementCollection data) {
+		Table table = null;
+
 		try {
+			table = connection.getTable(TableName.valueOf(this.meterTableMeasurementByTime));
+
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
@@ -239,10 +242,19 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 				column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("d")));
 				p.addColumn(columnFamily, column, Bytes.toBytes(m.getDifference()));
 
-				this.timeTable.put(p);
+				table.put(p);
 			}
 		} catch (Exception ex) {
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		} finally {
+			try {
+				if (table != null) {
+					table.close();
+					table = null;
+				}
+			} catch (Exception ex) {
+				logger.error(ERROR_RELEASE_RESOURCES, ex);
+			}
 		}
 	}
 
@@ -301,7 +313,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
-			table = connection.getTable(TableName.valueOf(this.meterTableMeasurementByUser));
+			table = connection.getTable(TableName.valueOf(this.meterTableMeasurementByMeter));
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			for (int deviceIndex = 0; deviceIndex < serials.length; deviceIndex++) {
@@ -467,7 +479,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
-			table = connection.getTable(TableName.valueOf(this.meterTableMeasurementByUser));
+			table = connection.getTable(TableName.valueOf(this.meterTableMeasurementByMeter));
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			for (int deviceIndex = 0; deviceIndex < serials.length; deviceIndex++) {
