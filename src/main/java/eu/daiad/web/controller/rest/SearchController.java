@@ -184,7 +184,7 @@ public class SearchController extends BaseRestController {
 		}
 	}
 
-	private void checkAmphiroOwnership(UUID userKey, UUID devices[]) {
+	private void checkAmphiroOwnership(UUID userKey, UUID[] devices) {
 		if (devices != null) {
 			for (UUID deviceKey : devices) {
 				Device device = this.deviceRepository.getUserDeviceByKey(userKey, deviceKey);
@@ -196,7 +196,7 @@ public class SearchController extends BaseRestController {
 		}
 	}
 
-	private String[] checkMeterOwnership(UUID userKey, UUID devices[]) {
+	private String[] checkMeterOwnership(UUID userKey, UUID[] devices) {
 		ArrayList<String> serialList = new ArrayList<String>();
 
 		if (devices != null) {

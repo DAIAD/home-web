@@ -2,6 +2,7 @@ package eu.daiad.web.controller.rest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -47,10 +48,15 @@ public class DataController extends BaseRestController {
 	public RestResponse store(@RequestBody DeviceMeasurementCollection data) {
 		RestResponse response = new RestResponse();
 
-		try {
-			AuthenticatedUser user = this.authenticate(data.getCredentials(), EnumRole.ROLE_USER);
+		AuthenticatedUser user = null;
+		Device device = null;
 
-			Device device = this.deviceRepository.getUserDeviceByKey(user.getKey(), data.getDeviceKey());
+		boolean success = true;
+
+		try {
+			user = this.authenticate(data.getCredentials(), EnumRole.ROLE_USER);
+
+			device = this.deviceRepository.getUserDeviceByKey(user.getKey(), data.getDeviceKey());
 
 			if (device == null) {
 				throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", data.getDeviceKey().toString());
@@ -85,9 +91,24 @@ public class DataController extends BaseRestController {
 			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
+
+			success = false;
+		} finally {
+			logDataUploadSession(user, device, success);
 		}
 
 		return response;
 	}
 
+	private void logDataUploadSession(AuthenticatedUser user, Device device, boolean success) {
+		try {
+			if ((user == null) || (device == null)) {
+				return;
+			}
+			deviceRepository.setLastDataUploadDate(user.getKey(), device.getKey(), new DateTime(), success);
+		} catch (Exception ex) {
+			// Ignore exceptions
+		}
+
+	}
 }

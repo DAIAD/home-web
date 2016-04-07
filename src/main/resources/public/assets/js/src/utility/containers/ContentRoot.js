@@ -209,7 +209,6 @@ var ContentRoot = React.createClass({
   }
 });
 
-
 function mapStateToProps(state) {
 	return {
 	    isAuthenticated: state.session.isAuthenticated,

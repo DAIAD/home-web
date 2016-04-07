@@ -11,6 +11,16 @@ var constants = keyMirror({
 	USER_RECEIVED_LOGOUT: null,
 	USER_PROFILE_REFRESH : null,
 	USER_PROFILE_UPDATE: null,
+	
+	ADMIN_REQUESTED_ACTIVITY: null,
+	ADMIN_RECEIVED_ACTIVITY: null,
+	
+	ADMIN_RESET_USER_SESSIONS: null,
+	
+	ADMIN_REQUESTED_SESSIONS: null,
+	ADMIN_RECEIVED_SESSIONS: null,
+	
+	ADMIN_FILTER_USER: null
 });
 
 module.exports = constants;

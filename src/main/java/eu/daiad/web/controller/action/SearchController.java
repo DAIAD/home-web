@@ -20,20 +20,27 @@ import eu.daiad.web.model.amphiro.AmphiroMeasurementQueryResult;
 import eu.daiad.web.model.amphiro.AmphiroSessionCollectionQuery;
 import eu.daiad.web.model.amphiro.AmphiroSessionQuery;
 import eu.daiad.web.model.device.Device;
+import eu.daiad.web.model.device.DeviceRegistrationQuery;
+import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQuery;
 import eu.daiad.web.model.meter.WaterMeterStatusQuery;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.application.IAmphiroMeasurementRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
+import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 
 @RestController
 public class SearchController extends BaseController {
 
 	private static final Log logger = LogFactory.getLog(SearchController.class);
+
+	@Autowired
+	private IUserRepository userRepository;
 
 	@Autowired
 	private IDeviceRepository deviceRepository;
@@ -46,7 +53,8 @@ public class SearchController extends BaseController {
 
 	@RequestMapping(value = "/action/meter/status", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public RestResponse query(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody WaterMeterStatusQuery query) {
+	public RestResponse getMeterStatus(@AuthenticationPrincipal AuthenticatedUser user,
+					@RequestBody WaterMeterStatusQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -64,7 +72,7 @@ public class SearchController extends BaseController {
 
 	@RequestMapping(value = "/action/meter/history", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public RestResponse query(@AuthenticationPrincipal AuthenticatedUser user,
+	public RestResponse getMeterMeasurements(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody WaterMeterMeasurementQuery query) {
 		RestResponse response = new RestResponse();
 
@@ -83,7 +91,7 @@ public class SearchController extends BaseController {
 
 	@RequestMapping(value = "/action/device/measurement/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public RestResponse query(@AuthenticationPrincipal AuthenticatedUser user,
+	public RestResponse getAmphiroMeasurements(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody AmphiroMeasurementQuery query) {
 		RestResponse response = new RestResponse();
 
@@ -105,15 +113,44 @@ public class SearchController extends BaseController {
 	}
 
 	@RequestMapping(value = "/action/device/session/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured("ROLE_USER")
-	public RestResponse searchAmphiroSessions(@AuthenticationPrincipal AuthenticatedUser user,
+	@Secured({ "ROLE_USER", "ROLE_ADMIN" })
+	public RestResponse getAmphiroSessions(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody AmphiroSessionCollectionQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
-			this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
+			// If user has not administrative permissions or user key is null,
+			// use the key of the authenticated user
+			if ((query.getUserKey() == null) || (!user.hasRole(EnumRole.ROLE_ADMIN))) {
+				query.setUserKey(user.getKey());
+			}
 
-			query.setUserKey(user.getKey());
+			// Check utility access
+			if (!user.getKey().equals(query.getUserKey())) {
+				AuthenticatedUser deviceOwner = userRepository.getUserByUtilityAndKey(user.getUtilityId(),
+								query.getUserKey());
+				if (deviceOwner == null) {
+					throw new ApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
+									.set("owner", query.getUserKey());
+				}
+			}
+
+			if ((query.getDeviceKey() == null) || (query.getDeviceKey().length == 0)) {
+				DeviceRegistrationQuery deviceQuery = new DeviceRegistrationQuery();
+				deviceQuery.setType(EnumDeviceType.AMPHIRO);
+
+				ArrayList<UUID> deviceKeys = new ArrayList<UUID>();
+
+				for (Device d : this.deviceRepository.getUserDevices(query.getUserKey(), deviceQuery)) {
+					deviceKeys.add(d.getKey());
+				}
+
+				UUID[] deviceKeyArray = new UUID[deviceKeys.size()];
+
+				query.setDeviceKey(deviceKeys.toArray(deviceKeyArray));
+			}
+
+			this.checkAmphiroOwnership(query.getUserKey(), query.getDeviceKey());
 
 			return amphiroMeasurementRepository.searchSessions(query);
 		} catch (ApplicationException ex) {
@@ -127,7 +164,8 @@ public class SearchController extends BaseController {
 
 	@RequestMapping(value = "/action/device/session", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public RestResponse query(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody AmphiroSessionQuery query) {
+	public RestResponse getAmphiroSession(@AuthenticationPrincipal AuthenticatedUser user,
+					@RequestBody AmphiroSessionQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {

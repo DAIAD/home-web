@@ -9,6 +9,7 @@ import javax.annotation.PreDestroy;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.joda.time.DateTime;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
@@ -108,6 +109,7 @@ public class SchedulerService {
 		@Override
 		public void run() {
 			try {
+				System.out.println(new DateTime());
 				jobLauncher.run(job, job.getJobParametersIncrementer().getNext(parameters));
 			} catch (Exception ex) {
 				logger.error(String.format("Failed to start job [%s].", job.getName()), ex);

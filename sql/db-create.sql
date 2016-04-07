@@ -27,6 +27,7 @@ CREATE SEQUENCE account_id_seq
 
 CREATE TABLE account (
     id integer NOT NULL DEFAULT nextval('account_id_seq'::regclass),
+    row_version  bigint default 1,
     utility_id integer,
     key uuid,
 	locale character(2),
@@ -59,6 +60,7 @@ CREATE TABLE account (
 CREATE TABLE public.account_profile
 (
   id integer,
+  row_version  bigint default 1,
   version uuid NOT NULL,
   updated_on timestamp without time zone NOT NULL,
   mobile_mode int NOT NULL,
@@ -108,6 +110,7 @@ CREATE SEQUENCE public.account_white_list_id_seq
 CREATE TABLE public.account_white_list
 (
   id integer NOT NULL DEFAULT nextval('account_white_list_id_seq'::regclass),
+  row_version  bigint default 1,
   utility_id integer,
   account_id integer,
   username character varying(100),
@@ -182,8 +185,12 @@ CREATE SEQUENCE public.device_id_seq
 CREATE TABLE public.device
 (
   id integer NOT NULL DEFAULT nextval('device_id_seq'::regclass),
+  row_version  bigint default 1,
   key uuid,
   account_id integer,
+  registered_on timestamp without time zone,
+  last_upload_success_on timestamp without time zone,
+  last_upload_failure_on timestamp without time zone,
   CONSTRAINT pk_device PRIMARY KEY (id),
   CONSTRAINT fk_account FOREIGN KEY (account_id)
         REFERENCES public.account (id) MATCH SIMPLE
@@ -256,6 +263,7 @@ CREATE SEQUENCE device_amphiro_config_id_seq
 
 CREATE TABLE device_amphiro_config (
     id integer NOT NULL DEFAULT nextval('device_amphiro_config_id_seq'::regclass),
+    row_version  bigint default 1,
     device_id integer,
     version uuid NOT NULL,
 	title character varying(100),
@@ -327,6 +335,7 @@ CREATE SEQUENCE community_id_seq
 
 CREATE TABLE community (
     id integer NOT NULL DEFAULT nextval('community_id_seq'::regclass),
+    row_version  bigint default 1,
     utility_id integer,
 	locale character(2),
     name character varying(100),
@@ -375,6 +384,7 @@ CREATE SEQUENCE group_id_seq
 
 CREATE TABLE "group" (
     id integer NOT NULL DEFAULT nextval('group_id_seq'::regclass),
+    row_version  bigint default 1,
     utility_id integer,
     name character varying(100),
     created_on timestamp without time zone,
@@ -646,3 +656,28 @@ CREATE TABLE account_dynamic_recommendation_property (
             ON UPDATE CASCADE ON DELETE CASCADE
 );
 
+-- Helper views
+CREATE OR REPLACE VIEW public.trial_account_activity AS
+ SELECT w.id,
+    u.id AS utility_id,
+    u.name AS utility_name,
+    w.account_id,
+    a.key,
+    w.username,
+    w.firstname,
+    w.lastname,
+    w.registered_on AS signup_date,
+    a.last_login_success,
+    a.last_login_failure,
+    count(d.id) AS device_count,
+    max(d.registered_on) AS device_last_registration,
+    max(d.last_upload_success_on) AS device_last_upload_success,
+    max(d.last_upload_failure_on) AS device_last_upload_failure
+   FROM account_white_list w
+     JOIN utility u ON w.utility_id = u.id
+     LEFT JOIN account a ON w.account_id = a.id
+     LEFT JOIN device d ON a.id = d.account_id
+  GROUP BY w.id, u.id, u.name, w.account_id, a.key, w.username, w.firstname, w.lastname, w.registered_on, a.last_login_success, a.last_login_failure;
+
+ALTER TABLE public.trial_account_activity
+  OWNER TO daiad;

@@ -16,6 +16,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Version;
 
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
@@ -29,6 +30,10 @@ public class Group {
 	@SequenceGenerator(sequenceName = "group_id_seq", name = "group_id_seq", allocationSize = 1, initialValue = 1)
 	@GeneratedValue(generator = "group_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
+
+	@Version()
+	@Column(name = "row_version")
+	private long rowVersion;
 
 	@ManyToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
 	@JoinColumn(name = "utility_id", nullable = false)
@@ -88,4 +93,7 @@ public class Group {
 		this.size = size;
 	}
 
+	public long getRowVersion() {
+		return rowVersion;
+	}
 }

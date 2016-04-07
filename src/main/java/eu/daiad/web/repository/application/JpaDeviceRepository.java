@@ -51,6 +51,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 			eu.daiad.web.domain.application.DeviceAmphiro amphiro = new eu.daiad.web.domain.application.DeviceAmphiro();
 			amphiro.setName(name);
+			amphiro.setRegisteredOn(new DateTime());
 			amphiro.setMacAddress(macAddress);
 			amphiro.setAesKey(aesKey);
 
@@ -116,6 +117,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 			eu.daiad.web.domain.application.DeviceMeter meter = new eu.daiad.web.domain.application.DeviceMeter();
 			meter.setSerial(serial);
+			meter.setRegisteredOn(new DateTime());
 
 			for (KeyValuePair p : properties) {
 				meter.getProperties().add(new DeviceProperty(p.getKey(), p.getValue()));
@@ -508,6 +510,32 @@ public class JpaDeviceRepository implements IDeviceRepository {
 			}
 		} catch (Exception ex) {
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		}
+	}
+
+	public void setLastDataUploadDate(UUID userKey, UUID deviceKey, DateTime when, boolean success) {
+		try {
+			TypedQuery<eu.daiad.web.domain.application.Device> query = entityManager
+							.createQuery("select d from device d where d.key = :device_key and d.account.key = :user_key",
+											eu.daiad.web.domain.application.Device.class).setFirstResult(0)
+							.setMaxResults(1);
+			query.setParameter("user_key", userKey);
+			query.setParameter("device_key", deviceKey);
+
+			List<eu.daiad.web.domain.application.Device> result = query.getResultList();
+
+			if (result.size() == 1) {
+				eu.daiad.web.domain.application.Device entity = result.get(0);
+
+				if (success) {
+					entity.setLastDataUploadSuccess(when);
+				} else {
+					entity.setLastDataUploadFailure(when);
+				}
+
+			}
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex, DeviceErrorCode.LOG_DATA_UPLOAD_FAILED).set("key", deviceKey);
 		}
 	}
 

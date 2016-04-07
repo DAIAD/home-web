@@ -51,7 +51,7 @@ public class ProfileController extends BaseRestController {
 		try {
 			this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
-			this.profileRepository.setProfileConfiguration(request.getApplication(), request.getConfiguration());
+			this.profileRepository.setProfileConfiguration(EnumApplication.MOBILE, request.getConfiguration());
 
 		} catch (ApplicationException ex) {
 			logger.error(ex.getMessage(), ex);
@@ -69,7 +69,7 @@ public class ProfileController extends BaseRestController {
 		try {
 			this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
-			this.profileRepository.notifyProfile(request.getApplication(), request.getVersion(), request.getUpdatedOn());
+			this.profileRepository.notifyProfile(EnumApplication.MOBILE, request.getVersion(), request.getUpdatedOn());
 
 		} catch (ApplicationException ex) {
 			logger.error(ex.getMessage(), ex);

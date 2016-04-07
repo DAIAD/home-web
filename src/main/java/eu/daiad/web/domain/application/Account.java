@@ -20,6 +20,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Version;
 
 import org.apache.commons.net.util.Base64;
 import org.hibernate.annotations.Type;
@@ -37,6 +38,10 @@ public class Account {
 	@GeneratedValue(generator = "account_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
 
+	@Version()
+	@Column(name = "row_version")
+	private long rowVersion;
+
 	@ManyToOne(cascade = { CascadeType.ALL })
 	@JoinColumn(name = "utility_id", nullable = false)
 	private Utility utility;
@@ -52,7 +57,7 @@ public class Account {
 	@OneToOne(mappedBy = "account")
 	@JoinColumn(name = "account_id")
 	private AccountWhiteListEntry whiteListEntry;
-	
+
 	@OneToOne(mappedBy = "account")
 	private AccountProfile profile;
 
@@ -105,10 +110,10 @@ public class Account {
 
 	@Basic()
 	private String country;
-	
+
 	@Basic()
 	private String city;
-	
+
 	@Basic()
 	private String address;
 
@@ -321,6 +326,10 @@ public class Account {
 
 	public void setAddress(String address) {
 		this.address = address;
+	}
+
+	public long getRowVersion() {
+		return rowVersion;
 	}
 
 }

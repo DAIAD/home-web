@@ -22,7 +22,7 @@ public class SchedulerConfig implements SchedulingConfigurer {
 	@Value("${pool-size}")
 	private int poolSize;
 
-	@Value("${thread-name-refix}")
+	@Value("${thread-name-prefix}")
 	private String threadNamePrefix;
 
 	@Autowired

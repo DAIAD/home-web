@@ -7,18 +7,22 @@ import java.util.UUID;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import eu.daiad.web.domain.application.AccountActivity;
 import eu.daiad.web.domain.application.AccountProfile;
 import eu.daiad.web.domain.application.AccountProfileHistoryEntry;
 import eu.daiad.web.domain.application.AccountRole;
@@ -26,6 +30,7 @@ import eu.daiad.web.domain.application.AccountWhiteListEntry;
 import eu.daiad.web.domain.application.Role;
 import eu.daiad.web.domain.application.Utility;
 import eu.daiad.web.model.EnumValueDescription;
+import eu.daiad.web.model.PagedQuery;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
@@ -45,7 +50,7 @@ public class JpaUserRepository implements IUserRepository {
 	@Value("${security.white-list}")
 	private boolean enforceWhiteListCheck;
 
-	@PersistenceContext(unitName="default")
+	@PersistenceContext(unitName = "default")
 	EntityManager entityManager;
 
 	private void initializeRoles() throws ApplicationException {
@@ -335,8 +340,8 @@ public class JpaUserRepository implements IUserRepository {
 				for (AccountRole r : account.getRoles()) {
 					authorities.add(new SimpleGrantedAuthority(r.getRole().getName()));
 				}
-				user = new AuthenticatedUser(account.getKey(), account.getUsername(), account.getPassword(),
-								authorities);
+				user = new AuthenticatedUser(account.getId(), account.getKey(), account.getUsername(),
+								account.getPassword(), account.getUtility().getId(), account.isLocked(), authorities);
 
 				user.setBirthdate(account.getBirthdate());
 				user.setCountry(account.getCountry());
@@ -357,4 +362,106 @@ public class JpaUserRepository implements IUserRepository {
 		}
 	}
 
+	@Override
+	public AuthenticatedUser getUserByUtilityAndKey(int utilityId, UUID key) throws ApplicationException {
+		try {
+			AuthenticatedUser user = null;
+
+			TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager
+							.createQuery("select a from account a where a.key = :key and a.utility.id = :utility_id",
+											eu.daiad.web.domain.application.Account.class).setFirstResult(0)
+							.setMaxResults(1);
+			query.setParameter("utility_id", utilityId);
+			query.setParameter("key", key);
+
+			List<eu.daiad.web.domain.application.Account> result = query.getResultList();
+			if (result.size() != 0) {
+				eu.daiad.web.domain.application.Account account = result.get(0);
+
+				List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
+				for (AccountRole r : account.getRoles()) {
+					authorities.add(new SimpleGrantedAuthority(r.getRole().getName()));
+				}
+				user = new AuthenticatedUser(account.getId(), account.getKey(), account.getUsername(),
+								account.getPassword(), account.getUtility().getId(), account.isLocked(), authorities);
+
+				user.setBirthdate(account.getBirthdate());
+				user.setCountry(account.getCountry());
+				user.setFirstname(account.getFirstname());
+				user.setLastname(account.getLastname());
+				user.setGender(account.getGender());
+				user.setPostalCode(account.getPostalCode());
+				user.setTimezone(account.getTimezone());
+
+				user.setWebMode(EnumWebMode.fromInteger(account.getProfile().getWebMode()));
+				user.setMobileMode(EnumMobileMode.fromInteger(account.getProfile().getMobileMode()));
+				user.setUtilityMode(EnumUtilityMode.fromInteger(account.getProfile().getUtilityMode()));
+			}
+
+			return user;
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		}
+	}
+
+	@Override
+	public List<AccountWhiteListEntry> getAccountWhiteListEntries(PagedQuery query) {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+		AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
+
+		TypedQuery<eu.daiad.web.domain.application.AccountWhiteListEntry> entityQuery = entityManager
+						.createQuery("select a from account_white_list a where a.utility = :utility_id",
+										eu.daiad.web.domain.application.AccountWhiteListEntry.class)
+						.setFirstResult(query.getPageIndex() * query.getPageSize()).setMaxResults(query.getPageSize());
+
+		entityQuery.setParameter("utility_id", user.getUtilityId());
+
+		return entityQuery.getResultList();
+	}
+
+	@Override
+	public void updateLoginStats(int id, boolean success) {
+		try {
+			TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager
+							.createQuery("select a from account a where a.id = :id",
+											eu.daiad.web.domain.application.Account.class).setFirstResult(0)
+							.setMaxResults(1);
+			query.setParameter("id", id);
+
+			eu.daiad.web.domain.application.Account user = query.getSingleResult();
+
+			if (success) {
+				user.setLastLoginSuccessOn(new DateTime());
+			} else {
+				user.setLastLoginFailureOn(new DateTime());
+				user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
+			}
+
+		} catch (Exception ex) {
+			logger.error(String.format("Failed to update login stats for user [%d]", id), ex);
+		}
+	}
+
+	@Override
+	public List<AccountActivity> getAccountActivity(int utilityId) {
+		try {
+			Query query = entityManager.createNativeQuery(
+							"select a.* from trial_account_activity a where a.utility_id = :utility_id order by a.username",
+							AccountActivity.class);
+			query.setParameter("utility_id", utilityId);
+
+			ArrayList<AccountActivity> results = new ArrayList<AccountActivity>();
+
+			for (Object o : query.getResultList()) {
+				results.add((AccountActivity) o);
+			}
+
+			return results;
+		} catch (Exception ex) {
+			logger.error(String.format("Failed to load account activity for utility [%d]", utilityId), ex);
+		}
+
+		return null;
+	}
 }

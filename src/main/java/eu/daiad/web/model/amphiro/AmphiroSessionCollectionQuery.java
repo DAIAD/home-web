@@ -2,23 +2,24 @@ package eu.daiad.web.model.amphiro;
 
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import eu.daiad.web.model.AuthenticatedRequest;
 import eu.daiad.web.model.TemporalConstants;
 
 public class AmphiroSessionCollectionQuery extends AuthenticatedRequest {
 
-	@JsonIgnore
 	private UUID userKey;
 
-	private UUID deviceKey[];
+	private UUID[] deviceKey;
 
 	private long startDate;
 
 	private long endDate;
 
 	private int granularity = TemporalConstants.NONE;
+
+	public AmphiroSessionCollectionQuery() {
+
+	}
 
 	public UUID getUserKey() {
 		return userKey;

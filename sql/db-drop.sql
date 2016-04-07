@@ -121,3 +121,7 @@ DROP SEQUENCE IF EXISTS public.account_id_seq;
 DROP TABLE IF EXISTS public.utility;
 
 DROP SEQUENCE IF EXISTS public.utility_id_seq;
+
+
+-- views
+DROP VIEW IF EXISTS public.trial_account_activity;

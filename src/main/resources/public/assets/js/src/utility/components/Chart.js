@@ -29,16 +29,17 @@ var Chart = React.createClass({
 	componentDidMount: function() {
 		this._chart = echarts.init(document.getElementById(this.getId()), theme); 
  
-		var chartOptions = this.shapeData(this.props.options, this.props.data, this.context.intl);
+		var chartOptions = this.shapeData(this.props.type, this.props.options, this.props.data, this.context.intl);
 		if(chartOptions) {
-			this._chart.setOption(chartOptions);
+			this._chart.setOption(chartOptions, true);
 		}		
 	},
 	
 	componentWillReceiveProps : function(nextProps, nextContext) {
-		var chartOptions = this.shapeData(nextProps.options, nextProps.data, nextContext.intl);
+		var chartOptions = this.shapeData(nextProps.type, nextProps.options, nextProps.data, nextContext.intl);
+
 		if((this._chart) && (chartOptions)) {
-			this._chart.setOption(chartOptions);
+			this._chart.setOption(chartOptions, true);
 		}
 	},
 
@@ -50,7 +51,7 @@ var Chart = React.createClass({
 		return this._chart;
 	},
 	
-	shapeData : function (options, data, intl) {
+	shapeData : function (type, options, data, intl) {
 		if((!options) && (!data)) {
 			return null;
 		}
@@ -60,11 +61,14 @@ var Chart = React.createClass({
 
 		// Initialize
 		var chartOptions = clone(options);
-		
-		chartOptions.dataZoom = {
-	        show: true,
-	        start : 0
-	    };
+
+		if(!chartOptions.dataZoom) {
+		  chartOptions.dataZoom = {
+	      show: true,
+	      start : 0
+		  };
+		}
+
 		chartOptions.legend = {         
 			data : []
 		};
@@ -76,11 +80,13 @@ var Chart = React.createClass({
 			return series.data.map(function(record) {
 				var value = record[series.xAxis];
 				if(value instanceof Date) {
-					return intl.formatDate(value, { day: 'numeric', month: 'long', year: 'numeric'});
+					return (intl.formatDate(value, { day: 'numeric', month: 'long', year: 'numeric'})  + 
+					        ' ' + 
+					        intl.formatTime(value, { hour: 'numeric', minute: 'numeric'}));
 				}
 				return value;
 			});
-    	};
+  	};
 		
 		var getValues = function(series) {
 			return series.data.map(function(record) {
@@ -101,7 +107,7 @@ var Chart = React.createClass({
             	});
                 
         		chartOptions.yAxis.push({
-                    type : 'value',
+                  type : 'value',
                 	name: 'Volume',
                 	nameLocation: 'end',
                 	nameTextStyle: {
@@ -115,14 +121,14 @@ var Chart = React.createClass({
         		normal: {
         			areaStyle: {
         				type: 'default'
-					}
-    			}
-            };
+        			}
+        		}
+          };
 
         	chartOptions.series.push({
                 name: series.legend,
-                type: (this.props.type === 'area' ? 'line' : this.props.type),
-                itemStyle: (this.props.type === 'area' ? itemStyle : null),
+                type: (type === 'area' ? 'line' : type),
+                itemStyle: (type === 'area' ? itemStyle : null),
                 data: getValues(series)                
             });
         }

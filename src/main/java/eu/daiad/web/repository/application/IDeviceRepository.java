@@ -40,4 +40,6 @@ public interface IDeviceRepository {
 	public abstract void notifyConfiguration(UUID userKey, UUID deviceKey, UUID version, DateTime updatedOn)
 					throws ApplicationException;
 
+	public abstract void setLastDataUploadDate(UUID userKey, UUID deviceKey, DateTime when, boolean success);
+
 }
