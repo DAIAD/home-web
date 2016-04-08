@@ -6,7 +6,12 @@ var dashboard = function (state, action) {
   if (state === undefined) {
     state = {
       mode: "normal",
-      layout: [],
+      layout: [
+        {i: "1", x:0, y:0, w:2, h:2, minW:2, minH:2},
+        {i: "2", x:2, y:0, w:2, h:2, minW:2, minH:2},
+        {i: "4", x:4, y:0, w:2, h:1, minW:2, minH:1},
+        {i: "5", x:4, y:1, w:2, h:1, minW:2, minH:1},
+      ],
       tempInfoboxData: {
         title: null,
         type: null,
@@ -24,40 +29,44 @@ var dashboard = function (state, action) {
           data: [],
 
           },
+          */
           {
-          id: "2", 
-          title: "Month consumption",
-          type: "stat",
-          time: Object.assign({}, timeUtil.thisMonth(), {granularity:3}),
-          period: "month",
-          device: "5703cc7f-cb6c-49a2-94d5-7c501fa5d54d",
+          id: "1", 
+          title: "Year amphiro consumption",
+          type: "chart",
+          subtype: "total",
+          period: "year",
+          deviceType: "AMPHIRO",
           metric: "volume",
           data: [],
           },
-        {
-          id: "3", 
+          {
+          id: "2", 
           title: "Last Shower", 
           type: "chart",
           subtype: "last",
-          time: Object.assign({}, timeUtil.thisMonth(), {granularity:0}),
-          //device: "5451aecb-9b1b-450c-9de6-c3ca5691fe25",
-          device: "5703cc7f-cb6c-49a2-94d5-7c501fa5d54d",
+          deviceType: "AMPHIRO",
           metric: "volume",
           data: [],
           },
         {
           id: "4", 
-          title: "Year volume consumption", 
+          title: "Year amphiro consumption", 
           type: "stat",
-          time: Object.assign({}, timeUtil.thisYear(), {granularity:4}),
+          deviceType: "AMPHIRO",
           period: "year",
-          device: "5703cc7f-cb6c-49a2-94d5-7c501fa5d54d",
           metric: "volume",
           data: [],
-
+          },
+         {
+          id: "5", 
+          title: "Last shower consumption", 
+          type: "stat",
+          subtype: "last",
+          deviceType: "AMPHIRO",
+          metric: "volume",
+          data: [],
         },
-          */
-         
         /*
         {
           id: "5", 

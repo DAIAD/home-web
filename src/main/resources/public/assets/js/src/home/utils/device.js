@@ -32,6 +32,14 @@ const getAvailableMeters = function(devices) {
   return devices.filter((device) => (device.type === 'METER'));
 };
 
+const getDeviceKeysByType = function(devices, type) {
+  let available = [];
+  if (type === "AMPHIRO") available = getAvailableDevices(devices);
+  else if (type === "METER") available = getAvailableMeters(devices);
+  else throw new Error('device type ', type, 'not supported');
+
+  return available.map(d=>d.deviceKey);
+};
 const getAvailableDeviceKeys = function(devices) {
   if (!devices) return [];
   return getAvailableDevices(devices).map((device) => (device.deviceKey));
@@ -40,6 +48,12 @@ const getAvailableDeviceKeys = function(devices) {
 const getDeviceByKey = function(devices, key) {
   if (!devices) return null;
   return devices.find((device) => (device.deviceKey === key));
+};
+
+const getDeviceNameByKey = function(devices, key) {
+  const device = getDeviceByKey(devices, key);
+  if (device === null || device === undefined) return null;
+  return device.name || device.serial || device.macAddress || device.deviceKey;
 };
 
 const updateOrAppendToSession = function(sessions, data, id) {
@@ -115,5 +129,8 @@ module.exports = {
   getDeviceCount,
   getAvailableDevices,
   getAvailableDeviceKeys,
-  getDeviceByKey
+  getAvailableMeters,
+  getDeviceNameByKey,
+  getDeviceByKey,
+  getDeviceKeysByType
 };

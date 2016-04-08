@@ -10,12 +10,11 @@ const today = function() {
 
 const thisWeek = function() {
   return {
-    startDate: moment().startOf('week').valueOf(),
-    endDate: moment().endOf('week').valueOf(),
+    startDate: moment().startOf('isoweek').valueOf(),
+    endDate: moment().endOf('isoweek').valueOf(),
     granularity: 2
   };
 };
-
 const thisMonth = function() {
   return {
     startDate: moment().startOf('month').valueOf(),
@@ -77,12 +76,28 @@ const selectTimeFormatter = function(key, intl) {
       return (x) => intl.formatDate(x);
   }
 };
+
 const convertGranularityToInt = function (granularity) {
   if (granularity === "year") return 4;
   else if (granularity === "month") return 3;
   else if (granularity === "week") return 2;
   else if (granularity === "day") return 0;
   else return 0;
+};
+
+const getTimeByPeriod = function (period) {
+  if (period === "year") return thisYear();
+  else if (period === "month") return thisMonth();
+  else if (period === "week") return thisWeek();
+  else if (period === "day") return today();
+};
+
+const getLastShowerTime = function () {
+  return {
+    startDate: moment().subtract(1, 'month').valueOf(),
+    endDate: moment().valueOf(),
+    granularity: 0
+  };
 };
 
 module.exports = {
@@ -94,5 +109,7 @@ module.exports = {
   thisYear,
   getPeriod,
   getNextPeriod,
-  getPreviousPeriod
+  getPreviousPeriod,
+  getTimeByPeriod,
+  getLastShowerTime
 };

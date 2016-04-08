@@ -11,7 +11,7 @@ var HistoryActions = require('../actions/HistoryActions');
 var DashboardActions = require('../actions/DashboardActions');
 
 var timeUtil = require('../utils/time');
-var { getDeviceByKey, getDeviceTypeByKey, getDefaultDevice, getLastSession } = require('../utils/device');
+var { getDeviceByKey, getDeviceNameByKey, getDeviceTypeByKey, getAvailableDevices, getAvailableMeters, getDefaultDevice, getLastSession } = require('../utils/device');
 var { getFilteredData } = require('../utils/chart');
 
 
@@ -91,8 +91,10 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                dispatchProps,
                assign(stateProps,
                       {
-                        chartFormatter: intl => (x) => intl.formatTime(x, { hour:'numeric', minute:'numeric'}) ,
-                         infoboxData: transformInfoboxData(stateProps.infoboxData, stateProps.devices),
+                        chartFormatter: intl => (x) => intl.formatTime(x, { hour:'numeric', minute:'numeric'}),
+                          //amphiros: getAvailableDevices(stateProps.devices).map(dev=>dev.deviceKey),
+                          //meters: getAvailableMeters(stateProps.devices).map(dev=>dev.deviceKey),
+                        infoboxData: transformInfoboxData(stateProps.infoboxData, stateProps.devices),
                            periods,
                            types,
                            subtypes,
@@ -116,22 +118,55 @@ function assign(...objects) {
 
 function transformInfoboxData (infoboxData, devices) {
 
-  return infoboxData.map(infobox => 
-  Object.assign({}, infobox, {deviceDetails: getDeviceByKey(devices, infobox.device)}))
-  .map(infobox => {
-    const { type, subtype, data, metric } = infobox;
+  return infoboxData.map(infobox => {
+                         //Object.assign({}, infobox, {device: "1bc00c64-a51a-474f-90dd-6156162475d9"}))
+                         //Object.assign({}, infobox, {deviceDetails: getDeviceByKey(devices, infobox.device)}))
+                         //.map(infobox => {
+
     
+    const { type, deviceType, subtype, data, metric } = infobox;
+    let dataSource;
+    
+    if (deviceType === "AMPHIRO") dataSource = "sessions";
+    else if (deviceType === "METER") dataSource = "values";
+
     if (type === 'chart') {
       if (subtype==='last') {
-        return Object.assign({}, infobox, {data:Object.assign({}, data, {chartData: getFilteredData(data.measurements, metric, infobox.deviceDetails.type)})});
+        //return Object.assign({}, infobox, {data:Object.assign({}, data, {chartData: getFilteredData(data.measurements, metric, infobox.deviceDetails.type)})});
+        dataSource = "measurements";
       }
-      else if (subtype ==='total') {  
-        return Object.assign({}, infobox, {data:Object.assign({}, data, {chartData:getFilteredData(infobox.data, infobox.metric, infobox.deviceDetails.type)})});
+      else if (subtype ==='total') {
+        //return Object.assign({}, infobox, {data:Object.assign({}, data, {chartData:getFilteredData(infobox.data, infobox.metric, infobox.deviceDetails.type)})});
       }
       else throw new Error('oops, subtype', subtype, ' not supported');
+      //}
+      return Object.assign({}, 
+                                 infobox,
+                                 {device:getAvailableDevices(devices).map(device=>device.deviceKey)},
+                                   {chartData:infobox.data.map(devData =>
+                                                       {
+                                                         return {title: getDeviceNameByKey(devices, devData.deviceKey), data:getFilteredData(devData[dataSource], infobox.metric, getDeviceTypeByKey(devices, devData.deviceKey))};
+                                                       }) 
+                           });
     }
     else if (type === 'stat') {
-      return infobox;
+      if (subtype === 'last') {
+        return Object.assign({},
+                             infobox,
+                             {
+                               reducedData: infobox.data.map(it=>it?it.measurements.map(it=>it[metric]?it[metric]:0).reduce(((c,p)=>c+p),0):[]).reduce(((c, p)=>c+p),0).toFixed(1)
+                             }
+                            );
+      }
+      else {
+        return Object.assign({},
+                             infobox,
+                             {
+                               reducedData: infobox.data.map(it=>it[dataSource].map(it=>it[metric]?it[metric]:0).reduce(((c,p)=>c+p),0)).reduce(((c, p)=>c+p),0).toFixed(1)
+                             }
+                            );
+        
+      }
     }
     else throw new Error('oops, type', type, ' not supported');
   });

@@ -26,21 +26,22 @@ function SayHello (props) {
 }
 
 function InfoBox (props) {
-  const { mode, data, linkToHistory, removeInfobox, chartFormatter } = props;
+  const { mode, infobox, linkToHistory, removeInfobox, chartFormatter } = props;
+  console.log('infobox here ', infobox);
   const editable = mode==='edit'?true:false;
   return (
     <div className='info-box'>
-      {(()=>editable?(<a className="info-box-x" onClick={()=>removeInfobox(data.id)}><i className="fa fa-times"></i></a>):(<i/>))()}
-      <h3>{data.title}</h3>
+      {(()=>editable?(<a className="info-box-x" onClick={()=>removeInfobox(infobox.id)}><i className="fa fa-times"></i></a>):(<i/>))()}
+      <h3>{infobox.title}</h3>
          <div>
            {
              (()=>{
-               if (data.type==='stat') {
+               if (infobox.type==='stat') {
                  return (
                    <StatBox {...props} /> 
                  );
                } 
-               else if (data.type==='chart') {
+               else if (infobox.type==='chart') {
                  return (
                    <ChartBox {...props} /> 
                    );
@@ -53,8 +54,10 @@ function InfoBox (props) {
 }
 
 function StatBox (props) {
-  const { title, type, improved, data, metric, measurements, period, device, deviceDetails, time } = props.data;
-  
+  const { title, type, improved, data, reducedData, metric, measurements, period, device, deviceDetails, time, index } = props.infobox;
+
+  console.log('statBOX', props.infobox);
+  console.log('REDUCED', reducedData);
   let improvedDiv = (<div/>);
   if (improved === true) {
     improvedDiv = (<img src="/assets/images/svg/success.svg"/>);
@@ -62,25 +65,25 @@ function StatBox (props) {
   else if (improved === false) {
     improvedDiv = (<img src="/assets/images/svg/warning.svg"/>);
   }
-  const metricReduced = data?(Array.isArray(data)?data.map(obj=>obj[metric]).reduce((prev, curr)=>curr, 0):data[metric]):0;
   const duration = data?(Array.isArray(data)?null:data.duration):null;
   return (
     <div className='row'>
       <div className='col-md-5'>
-        <h2>{metricReduced}</h2>
+        <h2>{reducedData}</h2>
       </div>
       <div className='col-md-7'>
-        <a onClick={() => props.linkToHistory({time, period, device, metric, index:data.index})}>See more</a>
+        <a onClick={() => props.linkToHistory({time, period, device:device.length?device[0]:device, metric, index})}>See more</a>
       </div>
     </div>
   );
 }
 
 function ChartBox (props) {
-  const { title, type, improved, data, metric, measurements, period, device, deviceDetails, time } = props.data;
-  
+  const { title, type, improved, data, metric, measurements, period, device, deviceDetails, time, index } = props.infobox;
+   console.log('chartbox', props);
   const metricReduced = data?data[metric]:0;
   const duration = data?data.duration:null;
+  console.log('chartbox device', device.length?device[0]:[] );
   return (
     <div>
       <div >
@@ -88,7 +91,7 @@ function ChartBox (props) {
         <span>You consumed a total of <b>{metricReduced} lt</b> in <b>{duration} sec</b>!</span>
       </div>
       <div>
-        <a onClick={() => props.linkToHistory({time, period, device, metric, index:data.index})}>See more</a>
+        <a onClick={() => props.linkToHistory({time, period, device:device.length?device[0]:device, metric, index})}>See more</a>
       </div>
     </div>
   );
@@ -96,7 +99,8 @@ function ChartBox (props) {
 
 
 function ShowerChart (props) {
-  const { chartFormatter, intl, history, data:{data:{chartData}}, metric } = props;
+  const { chartFormatter, intl, history, infobox:{chartData}, metric } = props;
+  console.log('shower chart data', chartData);
   if (history){
     return (<h4>Oops, cannot graph due to limited data..</h4>);  
   }
@@ -113,7 +117,7 @@ function ShowerChart (props) {
         fontSize={12}
         type="line"
         formatter={chartFormatter(intl)}
-        data={[{title: metric, data:chartData}]}
+        data={chartData}
       />);
   }
 }
@@ -176,10 +180,10 @@ function InfoPanel (props) {
         }}
        >
        {
-         infoboxData.map(function(data) {
+         infoboxData.map(function(infobox) {
            return (
-             <div key={data.id}>
-               <InfoBox {...{mode, chartFormatter, data, linkToHistory, removeInfobox, intl}} /> 
+             <div key={infobox.id}>
+               <InfoBox {...{mode, chartFormatter, infobox, linkToHistory, removeInfobox, intl}} /> 
            </div>
            );
          })
@@ -376,8 +380,9 @@ var Dashboard = React.createClass({
   },
   */
   render: function() {
-    const { firstname, mode, switchMode } = this.props;
-
+    console.log('rendered dashboaerd');
+    console.log(this.props);
+    const { firstname, mode, switchMode, amphiros, meters } = this.props;
     return (
       <MainSection id="section.dashboard">
         <br/>
