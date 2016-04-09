@@ -124,16 +124,15 @@ public class DeviceController extends BaseRestController {
 											(meterData.getUserKey() == null ? "" : meterData.getUserKey().toString()));
 						}
 
-						Device device = deviceRepository.getUserWaterMeterDeviceBySerial(user.getKey(),
-										meterData.getSerial());
+						Device device = deviceRepository.getWaterMeterDeviceBySerial(meterData.getSerial());
 
 						if (device != null) {
 							throw new ApplicationException(DeviceErrorCode.ALREADY_EXISTS).set("id",
 											meterData.getSerial());
 						}
 
-						deviceKey = deviceRepository.createMeterDevice(meterData.getUserKey(), meterData.getSerial(),
-										meterData.getProperties());
+						deviceKey = deviceRepository.createMeterDevice(owner.getUsername(), meterData.getSerial(),
+										meterData.getProperties(), meterData.getLocation());
 
 						DeviceRegistrationResponse deviceResponse = new DeviceRegistrationResponse();
 						deviceResponse.setDeviceKey(deviceKey.toString());

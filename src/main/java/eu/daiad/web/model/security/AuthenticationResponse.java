@@ -1,5 +1,6 @@
-package eu.daiad.web.model;
+package eu.daiad.web.model.security;
 
+import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.profile.Profile;
 
 public class AuthenticationResponse extends RestResponse {

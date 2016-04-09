@@ -19,6 +19,7 @@ import eu.daiad.web.model.amphiro.AmphiroSessionCollectionQuery;
 import eu.daiad.web.model.amphiro.AmphiroSessionCollectionQueryResult;
 import eu.daiad.web.model.amphiro.AmphiroSessionQuery;
 import eu.daiad.web.model.amphiro.AmphiroSessionQueryResult;
+import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.WaterMeterDevice;
 import eu.daiad.web.model.error.ApplicationException;
@@ -137,9 +138,9 @@ public class SearchController extends BaseRestController {
 				return new WaterMeterStatusQueryResult();
 			}
 
-			this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
+			String[] names = this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
 
-			AmphiroSessionCollectionQueryResult data = amphiroMeasurementRepository.searchSessions(query);
+			AmphiroSessionCollectionQueryResult data = amphiroMeasurementRepository.searchSessions(names, query);
 
 			return data;
 		} catch (ApplicationException ex) {
@@ -178,13 +179,17 @@ public class SearchController extends BaseRestController {
 		return response;
 	}
 
-	private void checkAmphiroOwnership(UUID userKey, UUID deviceKey) {
+	private String[] checkAmphiroOwnership(UUID userKey, UUID deviceKey) {
 		if (deviceKey != null) {
-			this.checkAmphiroOwnership(userKey, new UUID[] { deviceKey });
+			return this.checkAmphiroOwnership(userKey, new UUID[] { deviceKey });
 		}
+
+		return new String[] { null };
 	}
 
-	private void checkAmphiroOwnership(UUID userKey, UUID[] devices) {
+	private String[] checkAmphiroOwnership(UUID userKey, UUID[] devices) {
+		ArrayList<String> nameList = new ArrayList<String>();
+
 		if (devices != null) {
 			for (UUID deviceKey : devices) {
 				Device device = this.deviceRepository.getUserDeviceByKey(userKey, deviceKey);
@@ -192,8 +197,14 @@ public class SearchController extends BaseRestController {
 				if (device == null) {
 					throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
 				}
+
+				nameList.add(((AmphiroDevice) device).getName());
 			}
 		}
+
+		String[] nameArray = new String[nameList.size()];
+
+		return nameList.toArray(nameArray);
 	}
 
 	private String[] checkMeterOwnership(UUID userKey, UUID[] devices) {

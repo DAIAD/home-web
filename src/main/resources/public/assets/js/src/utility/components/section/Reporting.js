@@ -9,7 +9,7 @@ var Breadcrumb = require('../Breadcrumb');
 var Table = require('../Table');
 var Chart = require('../Chart');
 
-var { getActivity, setFilter, getSessions, resetSessions } = require('../../actions/AdminActions');
+var { getActivity, setFilter, getSessions, getMeters, resetUserData } = require('../../actions/AdminActions');
 
 var Reporting = React.createClass({
 	contextTypes: {
@@ -30,8 +30,12 @@ var Reporting = React.createClass({
     this.props.actions.setFilter('');
   },
   
-  resetSessions: function(e) {
-    this.props.actions.resetSessions();
+  resetUserData: function(e) {
+    this.props.actions.resetUserData();
+  },
+  
+  refreshParticipants: function(e) {
+    this.props.actions.getActivity();
   },
   
   onPageIndexChange: function(index) {
@@ -44,7 +48,12 @@ var Reporting = React.createClass({
     const groupTitle = (
       <span>
         <i className='fa fa-group fa-fw'></i>
-        <span style={{ paddingLeft: 4 }}>Users</span>
+        <span style={{ paddingLeft: 4 }}>Participants</span>
+        <span style={{float: 'right',  marginTop: -3, marginLeft: 5  }}>
+          <Bootstrap.Button bsStyle='default' className='btn-circle' onClick={this.refreshParticipants}>
+            <i className='fa fa-refresh fa-fw'></i>
+          </Bootstrap.Button>
+        </span>
       </span>
     );
     
@@ -52,7 +61,7 @@ var Reporting = React.createClass({
     if(this.props.admin.user.name) {
       closeSessionChartButton = (
         <span style={{float: 'right',  marginTop: -3, marginLeft: 5  }}>
-          <Bootstrap.Button bsStyle='default' className='btn-circle' onClick={this.resetSessions}>
+          <Bootstrap.Button bsStyle='default' className='btn-circle' onClick={this.resetUserData}>
             <i className='fa fa-rotate-left fa-fw'></i>
           </Bootstrap.Button>
         </span>
@@ -67,7 +76,7 @@ var Reporting = React.createClass({
     );
     
     var rows = [];
-    var total = 0, registered = 0, login = 0, paired = 0, uploaded = 0;
+    var total = 0, registered = 0, login = 0, paired = 0, uploaded = 0, assigned = 0;
 
     if(this.props.admin.activity!==null) {
       var records = this.props.admin.activity;
@@ -79,8 +88,11 @@ var Reporting = React.createClass({
         if(records[i].lastLoginSuccess){
           login++;
         }  
-        if(records[i].leastDeviceRegistration) {
+        if(records[i].leastAmphiroRegistration) {
           paired++;
+        }
+        if(records[i].leastMeterRegistration) {
+          assigned++;
         }
         if(records[i].lastDataUploadSuccess) {
           uploaded++;
@@ -91,8 +103,10 @@ var Reporting = React.createClass({
             key: records[i].key,
             username: records[i].username || '',
             accountRegisteredOn: (records[i].accountRegisteredOn ? new Date(records[i].accountRegisteredOn) : null),
-            numberOfDevices: records[i].numberOfDevices,
-            leastDeviceRegistration: (records[i].leastDeviceRegistration ? new Date(records[i].leastDeviceRegistration) : null),
+            numberOfAmphiroDevices: records[i].numberOfAmphiroDevices,
+            numberOfMeters: records[i].numberOfMeters,
+            leastAmphiroRegistration: (records[i].leastAmphiroRegistration ? new Date(records[i].leastAmphiroRegistration) : null),
+            leastMeterRegistration: (records[i].leastMeterRegistration ? new Date(records[i].leastMeterRegistration) : null),
             lastLoginSuccess: (records[i].lastLoginSuccess ? new Date(records[i].lastLoginSuccess) : null)
           });
         }
@@ -107,85 +121,150 @@ var Reporting = React.createClass({
         }
     };
     
-    if(this.props.admin.user.name) {
-      model.chart.type = 'line';
-      model.chart.options = {
+    var series = [], data = [];
+    if(!this.props.admin.isLoading) {
+      if(this.props.admin.user.devices) {
+        model.chart.type = 'line';
+        model.chart.options = {
           tooltip: {
               show: true
           },
           dataZoom: {
-            show: true
+            show: true,
+            format: 'day-hour'
           }
-      };
-      
-      var series = [], devices = this.props.admin.user.devices;
+        };
+
         
-      for(var d=0; d<devices.length; d++) {
-        var device = devices[d], data = [];
-        
-        for(var s=0; s < device.sessions.length; s++) {
-          data.push({
-            volume: device.sessions[s].volume,
-            date: new Date(device.sessions[s].timestamp)
+        var devices = this.props.admin.user.devices;
+          
+        for(var d=0; d<devices.length; d++) {
+          var device = devices[d];
+          data = [];
+          
+          for(var s=0; s < device.sessions.length; s++) {
+            data.push({
+              volume: device.sessions[s].volume,
+              date: new Date(device.sessions[s].timestamp)
+            });
+          }
+          
+          series.push({
+            legend: device.name || device.deviceKey,
+            xAxis: 'date',
+            yAxis: 'volume',
+            data: data,
+            yAxisName: 'Volume (lt)'
           });
         }
         
-        series.push({
-          legend: device.deviceKey,
-          xAxis: 'date',
-          yAxis: 'volume',
-          data: data
-        });
-      }
-      
-      model.chart.data = {
-        series: series
-      };       
-    } else {
-      model.chart.type = 'bar';
-
-      var dataPoints = [];
-      
-      model.chart.options = {
-        tooltip: {
-            show: true
-        },
-        dataZoom: {
-          show: false
+        model.chart.data = {
+          series: series
+        };  
+      } else if(this.props.admin.user.meters) {
+        model.chart.type = 'bar';
+        model.chart.options = {
+            tooltip: {
+                show: true
+            },
+            dataZoom: {
+              show: true,
+              format: 'day'
+            }
+        };
+        
+        var meters = this.props.admin.user.meters;
+          
+        for(var m=0; m<meters.length; m++) {
+          var meter = meters[m];
+          data = [];
+          
+          for(var v=0; v < meter.values.length; v++) {
+            data.push({
+              volume: meter.values[v].difference,
+              date: new Date(meter.values[v].timestamp)
+            });
+          }
+  
+          series.push({
+            legend: meter.serial || meter.deviceKey,
+            xAxis: 'date',
+            yAxis: 'volume',
+            data: data,
+            yAxisName: 'Volume (lt)'
+          });
         }
-      };
-
-      dataPoints.push({
-        value: total,
-        label: 'Total Participants'
-      });
-      dataPoints.push({
-        value: registered,
-        label: 'Registered'
-      });
-      dataPoints.push({
-        value: login,
-        label: 'Login'
-      });
-      dataPoints.push({
-        value: paired,
-        label: 'Paired'
-      });
-      dataPoints.push({
-        value: uploaded,
-        label: 'Uploaded'
-      });
-      
-      model.chart.data = {
-          series: [{
-              legend: 'Trial Activity',
-              xAxis: 'label',
-              yAxis: 'value',
-              data: dataPoints
-          }]
-      };     
+        
+        model.chart.data = {
+          series: series
+        }; 
+        
+      } else {
+        model.chart.type = 'bar';
+  
+        var dataPoints = [];
+        
+        model.chart.options = {
+          tooltip: {
+              show: true
+          },
+          dataZoom: {
+            show: false
+          },
+          itemStyle: {
+            normal: {
+              label : {
+                show: true, 
+                position: 'top',
+                formatter: function (params) {
+                  return params.value;
+                },
+                textStyle: {
+                  color: '#565656',
+                  fontWeight: 'bold'
+                }
+              }
+            }
+          }
+        };
+  
+        dataPoints.push({
+          value: total,
+          label: 'Total Participants'
+        });
+        dataPoints.push({
+          value: registered,
+          label: 'Registered'
+        });
+        dataPoints.push({
+          value: login,
+          label: 'Login'
+        });
+        dataPoints.push({
+          value: paired,
+          label: 'Paired'
+        });
+        dataPoints.push({
+          value: assigned,
+          label: 'Meters'
+        });
+        dataPoints.push({
+          value: uploaded,
+          label: 'Uploaded'
+        });
+        
+        model.chart.data = {
+            series: [{
+                legend: 'Trial Activity',
+                xAxis: 'label',
+                yAxis: 'value',
+                data: dataPoints,
+                yAxisName: 'Count'
+            }]
+        };     
+      }
     }
-    
+
     model.table = {
         fields: [{
           name: 'id',
@@ -209,7 +288,7 @@ var Reporting = React.createClass({
           title: 'Registered On',
           type: 'datetime'
         }, {
-          name: 'numberOfDevices',
+          name: 'numberOfAmphiroDevices',
           title: '# of Amphiro'
         }, {
           name: 'leastDeviceRegistration',
@@ -220,13 +299,28 @@ var Reporting = React.createClass({
           title: 'Last login on',
           type: 'datetime'
         }, {
-          name: 'view',
+          name: 'meter',
           type:'action',
-          icon: 'search',
+          image: '/assets/images/utility/meter.svg',
           handler: function(e) {
-            if((this.props.row.key) && (this.props.row.numberOfDevices > 0)) {
+            if((this.props.row.key) && (this.props.row.numberOfMeters > 0)) {
+              self.props.actions.getMeters(this.props.row.key, this.props.row.username);
+            }
+          },
+          visible: function(row) { 
+            return ((row.key) && (row.numberOfMeters > 0));
+          }
+        }, {
+          name: 'session',
+          type:'action',
+          image: '/assets/images/utility/amphiro.svg',
+          handler: function(e) {
+            if((this.props.row.key) && (this.props.row.numberOfAmphiroDevices > 0)) {
               self.props.actions.getSessions(this.props.row.key, this.props.row.username);
             }
+          },
+          visible: function(row) { 
+            return ((row.key) && (row.numberOfAmphiroDevices > 0));
           }
         }],
         rows: rows,
@@ -244,7 +338,7 @@ var Reporting = React.createClass({
           <div className='col-md-4'>
             <Bootstrap.Input type='text' 
                              id='filter' name='filter' ref='filter'
-                             placeholder='Search users ...' 
+                             placeholder='Search participants by email ...' 
                              onChange={this.setFilter}
                              value={this.props.admin.filter}
                              buttonAfter={
@@ -315,7 +409,7 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
   return {
-    actions : bindActionCreators(Object.assign({}, { getActivity, setFilter, getSessions, resetSessions }) , dispatch)
+    actions : bindActionCreators(Object.assign({}, { getActivity, setFilter, getSessions, getMeters, resetUserData }) , dispatch)
   };
 }
 

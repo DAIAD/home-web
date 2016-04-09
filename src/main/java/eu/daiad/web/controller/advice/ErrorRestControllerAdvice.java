@@ -23,8 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ibm.icu.text.MessageFormat;
 
-import eu.daiad.web.model.ResourceNotFoundException;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.error.ResourceNotFoundException;
 import eu.daiad.web.model.error.SharedErrorCode;
 
 @ControllerAdvice(annotations = RestController.class)

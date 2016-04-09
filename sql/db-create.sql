@@ -127,6 +127,8 @@ CREATE TABLE public.account_white_list
   gender character varying(12),
   default_mobile_mode integer NOT NULL,
   default_web_mode integer NOT NULL,
+  meter_serial character varying(50),
+  meter_location geometry,
   CONSTRAINT pk_account_white_list PRIMARY KEY (id),
     CONSTRAINT fk_utility FOREIGN KEY (utility_id)
         REFERENCES public.utility (id) MATCH SIMPLE
@@ -134,7 +136,9 @@ CREATE TABLE public.account_white_list
   CONSTRAINT fk_account FOREIGN KEY (account_id)
         REFERENCES public.account (id) MATCH SIMPLE
             ON UPDATE CASCADE ON DELETE CASCADE,
-  CONSTRAINT uq_utility_username UNIQUE (utility_id, username)
+  CONSTRAINT uq_utility_username UNIQUE (utility_id, username),
+  CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(meter_location) = 2),
+  CONSTRAINT enforce_srid_the_geom CHECK (st_srid(meter_location) = 4326)
 );
 
 -- role
@@ -319,10 +323,13 @@ CREATE TABLE public.device_meter
 (
   id integer NOT NULL,
   serial character varying(50),
+  location geometry,
   CONSTRAINT pk_device_meter PRIMARY KEY (id),
   CONSTRAINT fk_device_meter_device FOREIGN KEY (id)
         REFERENCES public.device (id) MATCH SIMPLE
-            ON UPDATE CASCADE ON DELETE CASCADE
+            ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(location) = 2),
+  CONSTRAINT enforce_srid_the_geom CHECK (st_srid(location) = 4326)
 );
 
 -- community
@@ -669,14 +676,18 @@ CREATE OR REPLACE VIEW public.trial_account_activity AS
     w.registered_on AS signup_date,
     a.last_login_success,
     a.last_login_failure,
-    count(d.id) AS device_count,
-    max(d.registered_on) AS device_last_registration,
+    count(da.id) AS amphiro_count,
+    count(dm.id) AS meter_count,
+    max(case when not da.id is null then d.registered_on else null end) AS amphiro_last_registration,
+    max(case when not dm.id is null then d.registered_on else null end) AS meter_last_registration,
     max(d.last_upload_success_on) AS device_last_upload_success,
     max(d.last_upload_failure_on) AS device_last_upload_failure
    FROM account_white_list w
      JOIN utility u ON w.utility_id = u.id
      LEFT JOIN account a ON w.account_id = a.id
      LEFT JOIN device d ON a.id = d.account_id
+     LEFT JOIN device_amphiro da ON da.id = d.id
+     LEFT JOIN device_meter dm ON dm.id = d.id
   GROUP BY w.id, u.id, u.name, w.account_id, a.key, w.username, w.firstname, w.lastname, w.registered_on, a.last_login_success, a.last_login_failure;
 
 ALTER TABLE public.trial_account_activity

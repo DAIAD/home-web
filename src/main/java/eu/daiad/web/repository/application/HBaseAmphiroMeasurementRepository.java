@@ -880,7 +880,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 	}
 
 	@Override
-	public AmphiroSessionCollectionQueryResult searchSessions(AmphiroSessionCollectionQuery query) {
+	public AmphiroSessionCollectionQueryResult searchSessions(String[] names, AmphiroSessionCollectionQuery query) {
 		AmphiroSessionCollectionQueryResult data = new AmphiroSessionCollectionQueryResult();
 
 		DateTime startDate = new DateTime(query.getStartDate(), DateTimeZone.UTC);
@@ -1009,7 +1009,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 				scanner = null;
 
 				AmphiroSessionCollection collection = new AmphiroSessionCollection(deviceKeys[deviceIndex],
-								query.getGranularity());
+								names[deviceIndex], query.getGranularity());
 
 				collection.addSessions(sessions);
 

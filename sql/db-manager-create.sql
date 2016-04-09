@@ -1,3 +1,6 @@
+-- Schema for Spring Batch objects
+CREATE SCHEMA IF NOT EXISTS batch AUTHORIZATION daiad;
+
 -- Documents uploaded from remote services
 CREATE SEQUENCE upload_id_seq
     START WITH 1

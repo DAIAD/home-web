@@ -1,5 +1,12 @@
 package eu.daiad.web.model.security;
 
+import java.io.IOException;
+
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+
 import eu.daiad.web.model.EnumValueDescription;
 
 public enum EnumRole {
@@ -20,6 +27,15 @@ public enum EnumRole {
 		}
 
 		return null;
+	}
+
+	public static class Deserializer extends JsonDeserializer<EnumRole> {
+
+		@Override
+		public EnumRole deserialize(JsonParser parser, DeserializationContext context) throws IOException,
+						JsonProcessingException {
+			return EnumRole.fromString(parser.getValueAsString());
+		}
 	}
 
 }

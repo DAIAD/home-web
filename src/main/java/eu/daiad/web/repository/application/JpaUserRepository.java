@@ -7,17 +7,14 @@ import java.util.UUID;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +27,6 @@ import eu.daiad.web.domain.application.AccountWhiteListEntry;
 import eu.daiad.web.domain.application.Role;
 import eu.daiad.web.domain.application.Utility;
 import eu.daiad.web.model.EnumValueDescription;
-import eu.daiad.web.model.PagedQuery;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
@@ -303,6 +299,8 @@ public class JpaUserRepository implements IUserRepository {
 				whiteListEntry.setAccount(account);
 			}
 
+			this.entityManager.flush();
+
 			return account.getKey();
 		} catch (Exception ex) {
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
@@ -405,19 +403,45 @@ public class JpaUserRepository implements IUserRepository {
 	}
 
 	@Override
-	public List<AccountWhiteListEntry> getAccountWhiteListEntries(PagedQuery query) {
-		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+	public eu.daiad.web.model.admin.AccountWhiteListEntry getAccountWhiteListEntry(String username) {
+		TypedQuery<AccountWhiteListEntry> entityQuery = entityManager
+						.createQuery("select a from account_white_list a where a.username = :username",
+										AccountWhiteListEntry.class).setFirstResult(0).setMaxResults(1);
+		entityQuery.setParameter("username", username);
 
-		AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
+		List<AccountWhiteListEntry> entries = entityQuery.getResultList();
 
-		TypedQuery<eu.daiad.web.domain.application.AccountWhiteListEntry> entityQuery = entityManager
-						.createQuery("select a from account_white_list a where a.utility = :utility_id",
-										eu.daiad.web.domain.application.AccountWhiteListEntry.class)
-						.setFirstResult(query.getPageIndex() * query.getPageSize()).setMaxResults(query.getPageSize());
+		if (entries.size() == 1) {
+			AccountWhiteListEntry entry = entries.get(0);
 
-		entityQuery.setParameter("utility_id", user.getUtilityId());
+			eu.daiad.web.model.admin.AccountWhiteListEntry result = new eu.daiad.web.model.admin.AccountWhiteListEntry();
 
-		return entityQuery.getResultList();
+			if (entry.getAccount() != null) {
+				result.setAccountId(entry.getAccount().getId());
+			}
+			result.setAddress(entry.getAddress());
+			result.setBirthdate(entry.getBirthdate());
+			result.setCity(entry.getCity());
+			result.setCountry(entry.getCountry());
+			result.setDefaultMobileMode(entry.getDefaultMobileMode());
+			result.setDefaultWebMode(entry.getDefaultWebMode());
+			result.setFirstname(entry.getFirstname());
+			result.setGender(entry.getGender());
+			result.setId(entry.getId());
+			result.setLastname(entry.getLastname());
+			result.setLocale(entry.getLocale());
+			result.setMeterLocation(entry.getMeterLocation());
+			result.setMeterSerial(entry.getMeterSerial());
+			result.setPostalCode(entry.getPostalCode());
+			result.setRegisteredOn(entry.getRegisteredOn());
+			result.setTimezone(entry.getTimezone());
+			result.setUsername(entry.getUsername());
+			result.setUtilityId(entry.getUtility().getId());
+
+			return result;
+		}
+
+		return null;
 	}
 
 	@Override
@@ -444,17 +468,48 @@ public class JpaUserRepository implements IUserRepository {
 	}
 
 	@Override
-	public List<AccountActivity> getAccountActivity(int utilityId) {
+	public List<eu.daiad.web.model.admin.AccountActivity> getAccountActivity(int utilityId) {
 		try {
-			Query query = entityManager.createNativeQuery(
-							"select a.* from trial_account_activity a where a.utility_id = :utility_id order by a.username",
-							AccountActivity.class);
+			TypedQuery<AccountActivity> query = entityManager
+							.createQuery("select a from trial_account_activity a where a.utilityId = :utility_id order by a.username",
+											AccountActivity.class);
+
 			query.setParameter("utility_id", utilityId);
 
-			ArrayList<AccountActivity> results = new ArrayList<AccountActivity>();
+			ArrayList<eu.daiad.web.model.admin.AccountActivity> results = new ArrayList<eu.daiad.web.model.admin.AccountActivity>();
 
-			for (Object o : query.getResultList()) {
-				results.add((AccountActivity) o);
+			for (AccountActivity a : query.getResultList()) {
+				eu.daiad.web.model.admin.AccountActivity account = new eu.daiad.web.model.admin.AccountActivity();
+
+				account.setId(a.getId());
+				account.setKey(a.getKey());
+				account.setUtilityId(a.getUtilityId());
+				account.setAccountId(a.getAccountId());
+				account.setAccountRegisteredOn(a.getAccountRegisteredOn() != null ? a.getAccountRegisteredOn()
+								.getMillis() : null);
+				account.setUtilityName(a.getUtilityName());
+				account.setUsername(a.getUsername());
+				account.setFirstName(a.getFirstName());
+				account.setLastName(a.getLastName());
+
+				account.setNumberOfAmphiroDevices(a.getNumberOfAmphiroDevices());
+				account.setNumberOfMeters(a.getNumberOfMeters());
+
+				account.setLastDataUploadFailure((a.getLastDataUploadFailure() != null) ? a.getLastDataUploadFailure()
+								.getMillis() : null);
+				account.setLastDataUploadSuccess(a.getLastDataUploadSuccess() != null ? a.getLastDataUploadSuccess()
+								.getMillis() : null);
+				account.setLastLoginFailure(a.getLastLoginFailure() != null ? a.getLastLoginFailure().getMillis()
+								: null);
+				account.setLastLoginSuccess(a.getLastLoginSuccess() != null ? a.getLastLoginSuccess().getMillis()
+								: null);
+
+				account.setLeastAmphiroRegistration(a.getLeastAmphiroRegistration() != null ? a
+								.getLeastAmphiroRegistration().getMillis() : null);
+				account.setLeastMeterRegistration(a.getLeastMeterRegistration() != null ? a.getLeastMeterRegistration()
+								.getMillis() : null);
+
+				results.add(account);
 			}
 
 			return results;

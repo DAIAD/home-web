@@ -10,15 +10,13 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import eu.daiad.web.model.amphiro.AmphiroMeasurementCollection;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.meter.WaterMeterMeasurementCollection;
-import eu.daiad.web.util.DeviceTypeDeserializer;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type")
-@JsonSubTypes({
-		@Type(value = AmphiroMeasurementCollection.class, name = "AMPHIRO"),
-		@Type(value = WaterMeterMeasurementCollection.class, name = "METER") })
+@JsonSubTypes({ @Type(value = AmphiroMeasurementCollection.class, name = "AMPHIRO"),
+				@Type(value = WaterMeterMeasurementCollection.class, name = "METER") })
 public class DeviceMeasurementCollection extends AuthenticatedRequest {
 
-	@JsonDeserialize(using = DeviceTypeDeserializer.class)
+	@JsonDeserialize(using = EnumDeviceType.Deserializer.class)
 	private EnumDeviceType type;
 
 	private UUID deviceKey;

@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
-import eu.daiad.web.domain.application.AccountActivity;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.admin.AccountActivity;
 import eu.daiad.web.model.admin.AccountActivityResponse;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.security.AuthenticatedUser;
@@ -29,7 +29,7 @@ public class AdminController extends BaseController {
 
 	@RequestMapping(value = "/action/admin/trial/activity", method = RequestMethod.GET, produces = "application/json")
 	@Secured("ROLE_ADMIN")
-	public RestResponse query(@AuthenticationPrincipal AuthenticatedUser user) {
+	public RestResponse getTrialUserActivity(@AuthenticationPrincipal AuthenticatedUser user) {
 		RestResponse response = null;
 
 		try {
@@ -38,31 +38,7 @@ public class AdminController extends BaseController {
 			List<AccountActivity> records = userRepository.getAccountActivity(user.getUtilityId());
 
 			for (AccountActivity a : records) {
-				AccountActivityResponse.AccountActivity account = new AccountActivityResponse.AccountActivity();
-
-				account.setId(a.getId());
-				account.setKey(a.getKey());
-				account.setUtilityId(a.getUtilityId());
-				account.setAccountId(a.getAccountId());
-				account.setAccountRegisteredOn(a.getAccountRegisteredOn() != null ? a.getAccountRegisteredOn()
-								.getMillis() : null);
-				account.setUtilityName(a.getUtilityName());
-				account.setUsername(a.getUsername());
-				account.setFirstName(a.getFirstName());
-				account.setLastName(a.getLastName());
-				account.setNumberOfDevices(a.getNumberOfDevices());
-				account.setLastDataUploadFailure((a.getLastDataUploadFailure() != null) ? a.getLastDataUploadFailure()
-								.getMillis() : null);
-				account.setLastDataUploadSuccess(a.getLastDataUploadSuccess() != null ? a.getLastDataUploadSuccess()
-								.getMillis() : null);
-				account.setLastLoginFailure(a.getLastLoginFailure() != null ? a.getLastLoginFailure().getMillis()
-								: null);
-				account.setLastLoginSuccess(a.getLastDataUploadSuccess() != null ? a.getLastDataUploadSuccess()
-								.getMillis() : null);
-				account.setLeastDeviceRegistration(a.getLeastDeviceRegistration() != null ? a
-								.getLeastDeviceRegistration().getMillis() : null);
-
-				controllerResponse.getAccounts().add(account);
+				controllerResponse.getAccounts().add(a);
 			}
 
 			response = controllerResponse;

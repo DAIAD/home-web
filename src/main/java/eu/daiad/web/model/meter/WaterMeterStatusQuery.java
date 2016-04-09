@@ -6,6 +6,8 @@ import eu.daiad.web.model.AuthenticatedRequest;
 
 public class WaterMeterStatusQuery extends AuthenticatedRequest {
 
+	private UUID userKey;
+
 	private UUID deviceKey[];
 
 	public UUID[] getDeviceKey() {
@@ -14,6 +16,14 @@ public class WaterMeterStatusQuery extends AuthenticatedRequest {
 
 	public void setDeviceKey(UUID deviceKey[]) {
 		this.deviceKey = deviceKey;
+	}
+
+	public UUID getUserKey() {
+		return userKey;
+	}
+
+	public void setUserKey(UUID userKey) {
+		this.userKey = userKey;
 	}
 
 }

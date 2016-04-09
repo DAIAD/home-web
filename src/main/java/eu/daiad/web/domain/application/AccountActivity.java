@@ -22,7 +22,7 @@ public class AccountActivity {
 	@Column()
 	@Type(type = "pg-uuid")
 	private UUID key;
-	
+
 	@Column(name = "utility_id")
 	private Integer utilityId;
 
@@ -53,12 +53,19 @@ public class AccountActivity {
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime lastLoginFailure;
 
-	@Column(name = "device_count")
-	private Long numberOfDevices;
+	@Column(name = "amphiro_count")
+	private Long numberOfAmphiroDevices;
 
-	@Column(name = "device_last_registration")
+	@Column(name = "meter_count")
+	private Long numberOfMeters;
+
+	@Column(name = "amphiro_last_registration")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-	private DateTime leastDeviceRegistration;
+	private DateTime leastAmphiroRegistration;
+
+	@Column(name = "meter_last_registration")
+	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+	private DateTime leastMeterRegistration;
 
 	@Column(name = "device_last_upload_success")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
@@ -140,22 +147,6 @@ public class AccountActivity {
 		this.lastLoginFailure = lastLoginFailure;
 	}
 
-	public Long getNumberOfDevices() {
-		return numberOfDevices;
-	}
-
-	public void setNumberOfDevices(Long numberOfDevices) {
-		this.numberOfDevices = numberOfDevices;
-	}
-
-	public DateTime getLeastDeviceRegistration() {
-		return leastDeviceRegistration;
-	}
-
-	public void setLeastDeviceRegistration(DateTime leastDeviceRegistration) {
-		this.leastDeviceRegistration = leastDeviceRegistration;
-	}
-
 	public DateTime getLastDataUploadSuccess() {
 		return lastDataUploadSuccess;
 	}
@@ -182,6 +173,38 @@ public class AccountActivity {
 
 	public void setKey(UUID key) {
 		this.key = key;
+	}
+
+	public Long getNumberOfAmphiroDevices() {
+		return numberOfAmphiroDevices;
+	}
+
+	public void setNumberOfAmphiroDevices(Long numberOfAmphiroDevices) {
+		this.numberOfAmphiroDevices = numberOfAmphiroDevices;
+	}
+
+	public Long getNumberOfMeters() {
+		return numberOfMeters;
+	}
+
+	public void setNumberOfMeters(Long numberOfMeters) {
+		this.numberOfMeters = numberOfMeters;
+	}
+
+	public DateTime getLeastAmphiroRegistration() {
+		return leastAmphiroRegistration;
+	}
+
+	public void setLeastAmphiroRegistration(DateTime leastAmphiroRegistration) {
+		this.leastAmphiroRegistration = leastAmphiroRegistration;
+	}
+
+	public DateTime getLeastMeterRegistration() {
+		return leastMeterRegistration;
+	}
+
+	public void setLeastMeterRegistration(DateTime leastMeterRegistration) {
+		this.leastMeterRegistration = leastMeterRegistration;
 	}
 
 }

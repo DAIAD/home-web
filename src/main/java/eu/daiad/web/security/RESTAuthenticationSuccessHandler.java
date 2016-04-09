@@ -18,11 +18,11 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import eu.daiad.web.model.AuthenticationResponse;
-import eu.daiad.web.model.CsrfConstants;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.security.AuthenticationResponse;
+import eu.daiad.web.model.security.CsrfConstants;
 import eu.daiad.web.repository.application.IProfileRepository;
 import eu.daiad.web.util.AjaxUtils;
 

@@ -167,7 +167,17 @@ var Cell = React.createClass({
   		if(this.props.field.hasOwnProperty('type')) {
   			switch(this.props.field.type) {
   			case 'action':
-  				text = (<i className={'fa fa-' + this.props.field.icon + ' fa-fw table-action'} onClick={this.props.field.handler.bind(this)}></i>);
+  			  var visible = true;
+  			  if(typeof this.props.field.visible === 'function') {
+  			    visible = this.props.field.visible(this.props.row);
+  			  }
+  			  if(visible) {
+  			    if(this.props.field.icon) {
+  			      text = (<i className={'fa fa-' + this.props.field.icon + ' fa-fw table-action'} onClick={this.props.field.handler.bind(this)}></i>);
+  			    } else {
+  			      text = (<i className="table-action" onClick={this.props.field.handler.bind(this)}><img src={this.props.field.image} /></i>);
+  			    }
+  			  }
   				break;
   			case 'datetime':
   				if(value) {

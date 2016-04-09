@@ -18,11 +18,15 @@ var Chart = React.createClass({
 		};
 	},
 	
+	onResize: function() {
+	  this._chart.resize();
+	},
+	
 	render: function() {
 		var { prefix, options, data, type, ...other } = this.props;
 		
 		return (
-			<div {...other} />
+		  <div className={prefix + '-container'} {...other} />
 		);
 	},
 
@@ -80,9 +84,14 @@ var Chart = React.createClass({
 			return series.data.map(function(record) {
 				var value = record[series.xAxis];
 				if(value instanceof Date) {
-					return (intl.formatDate(value, { day: 'numeric', month: 'long', year: 'numeric'})  + 
-					        ' ' + 
-					        intl.formatTime(value, { hour: 'numeric', minute: 'numeric'}));
+				  switch(chartOptions.dataZoom.format) {
+				    case 'day-hour':
+				      return (intl.formatDate(value, { day: 'numeric', month: 'long', year: 'numeric'})  + 
+					            ' ' + 
+					            intl.formatTime(value, { hour: 'numeric', minute: 'numeric'}));
+				    case 'day':
+	            return intl.formatDate(value, { day: 'numeric', month: 'long', year: 'numeric'});
+				  }
 				}
 				return value;
 			});
@@ -92,46 +101,50 @@ var Chart = React.createClass({
 			return series.data.map(function(record) {
 				return record[series.yAxis];
 			});
-    	};
+  	};
 		
-        for(var i=0; i<data.series.length; i++) {
-        	var series = data.series[i];
+    for(var i=0; i<data.series.length; i++) {
+    	var series = data.series[i];
 
-        	chartOptions.legend.data.push(series.legend);
-        	
-        	// Common configuration
-        	if(i===0) {
-                chartOptions.xAxis.push({
-                	type : 'category',
-                	data : getLabels(series)
-            	});
-                
-        		chartOptions.yAxis.push({
-                  type : 'value',
-                	name: 'Volume',
-                	nameLocation: 'end',
-                	nameTextStyle: {
-                		color: '#000'
-                	}
-                });
-        	}
-        	
-        	// Data series configuration
-        	var itemStyle = {
-        		normal: {
-        			areaStyle: {
-        				type: 'default'
-        			}
-        		}
-          };
-
-        	chartOptions.series.push({
-                name: series.legend,
-                type: (type === 'area' ? 'line' : type),
-                itemStyle: (type === 'area' ? itemStyle : null),
-                data: getValues(series)                
+    	chartOptions.legend.data.push(series.legend);
+    	
+    	// Common configuration
+    	if(i===0) {
+            chartOptions.xAxis.push({
+            	type : 'category',
+            	data : getLabels(series),
+            	name: series.xAxisName || '',
+        	});
+            
+    		chartOptions.yAxis.push({
+              type : 'value',
+            	name: series.yAxisName || 'Volume',
+            	nameLocation: 'end',
+            	nameTextStyle: {
+            		color: '#000'
+            	}
             });
-        }
+    	}
+        	
+    	// Data series configuration
+    	var itemStyle = options.itemStyle || null;
+    	if(type === 'area') {
+    	  itemStyle = itemStyle || {
+    	    normal: {
+    	      areaStyle: {
+    	        type: 'default'
+    	      }
+    	    }
+    	  };
+    	}
+
+    	chartOptions.series.push({
+            name: series.legend,
+            type: (type === 'area' ? 'line' : type),
+            itemStyle: itemStyle,
+            data: getValues(series)                
+        });
+    }
 
 		return chartOptions;
 	}

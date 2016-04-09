@@ -2,6 +2,8 @@ package eu.daiad.web.model;
 
 import java.util.ArrayList;
 
+import eu.daiad.web.model.error.Error;
+
 public class RestResponse {
 
 	private ArrayList<Error> errors = new ArrayList<Error>();

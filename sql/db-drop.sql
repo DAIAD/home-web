@@ -1,3 +1,6 @@
+-- views
+DROP VIEW IF EXISTS public.trial_account_activity;
+
 -- alert
 DROP TABLE IF EXISTS public.account_alert_property;
 
@@ -121,7 +124,3 @@ DROP SEQUENCE IF EXISTS public.account_id_seq;
 DROP TABLE IF EXISTS public.utility;
 
 DROP SEQUENCE IF EXISTS public.utility_id_seq;
-
-
--- views
-DROP VIEW IF EXISTS public.trial_account_activity;

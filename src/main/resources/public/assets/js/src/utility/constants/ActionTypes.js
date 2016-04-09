@@ -15,12 +15,18 @@ var constants = keyMirror({
 	ADMIN_REQUESTED_ACTIVITY: null,
 	ADMIN_RECEIVED_ACTIVITY: null,
 	
-	ADMIN_RESET_USER_SESSIONS: null,
+	ADMIN_RESET_USER_DATA: null,
 	
 	ADMIN_REQUESTED_SESSIONS: null,
 	ADMIN_RECEIVED_SESSIONS: null,
 	
-	ADMIN_FILTER_USER: null
+	ADMIN_REQUESTED_METERS: null,
+  ADMIN_RECEIVED_METERS: null,
+	
+	ADMIN_FILTER_USER: null,
+	
+	QUERY_SUBMIT: null,
+	QUERY_RESPONSE: null
 });
 
 module.exports = constants;

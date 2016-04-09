@@ -32,9 +32,25 @@ var receivedSessions = function(success, errors, devices) {
   };
 };
 
-var resetSessions = function() {
+var requestedMeters = function(username) {
   return {
-    type : types.ADMIN_RESET_USER_SESSIONS
+    type : types.ADMIN_REQUESTED_METERS,
+    username : username
+  };
+};
+
+var receivedMeters = function(success, errors, meters) {
+  return {
+    type : types.ADMIN_RECEIVED_METERS,
+    success : success,
+    errors : errors,
+    meters : meters
+  };
+};
+
+var resetUserData = function() {
+  return {
+    type : types.ADMIN_RESET_USER_DATA
   };
 };
 
@@ -63,8 +79,20 @@ var AdminActions = {
     };
   },
 
-  resetSessions : function() {
-    return resetSessions();
+  getMeters : function(userKey, username) {
+    return function(dispatch, getState) {
+      dispatch(requestedMeters(username));
+
+      return adminAPI.getMeters(userKey).then(function(response) {
+        dispatch(receivedMeters(response.success, response.errors, response.series));
+      }, function(error) {
+        dispatch(receivedMeters(false, error, null));
+      });
+    };
+  },
+  
+  resetUserData : function() {
+    return resetUserData();
   },
 
   setFilter : function(filter) {

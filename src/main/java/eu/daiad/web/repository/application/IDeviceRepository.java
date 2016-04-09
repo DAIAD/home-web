@@ -5,6 +5,8 @@ import java.util.UUID;
 
 import org.joda.time.DateTime;
 
+import com.vividsolutions.jts.geom.Geometry;
+
 import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceConfigurationCollection;
@@ -18,8 +20,8 @@ public interface IDeviceRepository {
 	public abstract UUID createAmphiroDevice(UUID userKey, String name, String macAddress, String aesKey,
 					ArrayList<KeyValuePair> properties) throws ApplicationException;
 
-	public abstract UUID createMeterDevice(UUID userKey, String serial, ArrayList<KeyValuePair> properties)
-					throws ApplicationException;
+	public abstract UUID createMeterDevice(String username, String serial, ArrayList<KeyValuePair> properties,
+					Geometry location) throws ApplicationException;
 
 	public abstract Device getUserDeviceByKey(UUID userKey, UUID deviceKey) throws ApplicationException;
 
@@ -27,6 +29,8 @@ public interface IDeviceRepository {
 					throws ApplicationException;
 
 	public abstract Device getUserWaterMeterDeviceBySerial(UUID userKey, String serial) throws ApplicationException;
+
+	public abstract Device getWaterMeterDeviceBySerial(String serial) throws ApplicationException;
 
 	public abstract ArrayList<Device> getUserDevices(UUID userKey, DeviceRegistrationQuery query)
 					throws ApplicationException;

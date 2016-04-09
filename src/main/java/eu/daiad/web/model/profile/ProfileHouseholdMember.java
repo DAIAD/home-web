@@ -3,7 +3,6 @@ package eu.daiad.web.model.profile;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import eu.daiad.web.model.EnumGender;
-import eu.daiad.web.util.GenderDeserializer;
 
 public class ProfileHouseholdMember {
 
@@ -11,7 +10,7 @@ public class ProfileHouseholdMember {
 
 	private String name;
 
-	@JsonDeserialize(using = GenderDeserializer.class)
+	@JsonDeserialize(using = EnumGender.Deserializer.class)
 	private EnumGender gender;
 
 	private int age;

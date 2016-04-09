@@ -24,7 +24,7 @@ public interface IAmphiroMeasurementRepository {
 
 	public abstract AmphiroMeasurementQueryResult searchMeasurements(AmphiroMeasurementQuery query);
 
-	public abstract AmphiroSessionCollectionQueryResult searchSessions(AmphiroSessionCollectionQuery query);
+	public abstract AmphiroSessionCollectionQueryResult searchSessions(String[] name, AmphiroSessionCollectionQuery query);
 
 	public abstract AmphiroSessionQueryResult getSession(AmphiroSessionQuery query);
 

@@ -19,6 +19,7 @@ import eu.daiad.web.model.amphiro.AmphiroMeasurementQuery;
 import eu.daiad.web.model.amphiro.AmphiroMeasurementQueryResult;
 import eu.daiad.web.model.amphiro.AmphiroSessionCollectionQuery;
 import eu.daiad.web.model.amphiro.AmphiroSessionQuery;
+import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -52,13 +53,44 @@ public class SearchController extends BaseController {
 	private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
 
 	@RequestMapping(value = "/action/meter/status", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured("ROLE_USER")
+	@Secured({ "ROLE_USER", "ROLE_ADMIN" })
 	public RestResponse getMeterStatus(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody WaterMeterStatusQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
-			String[] serials = this.checkMeterOwnership(user.getKey(), query.getDeviceKey());
+			// If user has not administrative permissions or user key is null,
+			// use the key of the authenticated user
+			if ((query.getUserKey() == null) || (!user.hasRole(EnumRole.ROLE_ADMIN))) {
+				query.setUserKey(user.getKey());
+			}
+
+			// Check utility access
+			if (!user.getKey().equals(query.getUserKey())) {
+				AuthenticatedUser deviceOwner = userRepository.getUserByUtilityAndKey(user.getUtilityId(),
+								query.getUserKey());
+				if (deviceOwner == null) {
+					throw new ApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
+									.set("owner", query.getUserKey());
+				}
+			}
+
+			if ((query.getDeviceKey() == null) || (query.getDeviceKey().length == 0)) {
+				DeviceRegistrationQuery deviceQuery = new DeviceRegistrationQuery();
+				deviceQuery.setType(EnumDeviceType.METER);
+
+				ArrayList<UUID> deviceKeys = new ArrayList<UUID>();
+
+				for (Device d : this.deviceRepository.getUserDevices(query.getUserKey(), deviceQuery)) {
+					deviceKeys.add(d.getKey());
+				}
+
+				UUID[] deviceKeyArray = new UUID[deviceKeys.size()];
+
+				query.setDeviceKey(deviceKeys.toArray(deviceKeyArray));
+			}
+
+			String[] serials = this.checkMeterOwnership(query.getUserKey(), query.getDeviceKey());
 
 			return waterMeterMeasurementRepository.getStatus(serials, query);
 		} catch (ApplicationException ex) {
@@ -71,13 +103,44 @@ public class SearchController extends BaseController {
 	}
 
 	@RequestMapping(value = "/action/meter/history", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured("ROLE_USER")
+	@Secured({ "ROLE_USER", "ROLE_ADMIN" })
 	public RestResponse getMeterMeasurements(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody WaterMeterMeasurementQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
-			String[] serials = this.checkMeterOwnership(user.getKey(), query.getDeviceKey());
+			// If user has not administrative permissions or user key is null,
+			// use the key of the authenticated user
+			if ((query.getUserKey() == null) || (!user.hasRole(EnumRole.ROLE_ADMIN))) {
+				query.setUserKey(user.getKey());
+			}
+
+			// Check utility access
+			if (!user.getKey().equals(query.getUserKey())) {
+				AuthenticatedUser deviceOwner = userRepository.getUserByUtilityAndKey(user.getUtilityId(),
+								query.getUserKey());
+				if (deviceOwner == null) {
+					throw new ApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
+									.set("owner", query.getUserKey());
+				}
+			}
+
+			if ((query.getDeviceKey() == null) || (query.getDeviceKey().length == 0)) {
+				DeviceRegistrationQuery deviceQuery = new DeviceRegistrationQuery();
+				deviceQuery.setType(EnumDeviceType.METER);
+
+				ArrayList<UUID> deviceKeys = new ArrayList<UUID>();
+
+				for (Device d : this.deviceRepository.getUserDevices(query.getUserKey(), deviceQuery)) {
+					deviceKeys.add(d.getKey());
+				}
+
+				UUID[] deviceKeyArray = new UUID[deviceKeys.size()];
+
+				query.setDeviceKey(deviceKeys.toArray(deviceKeyArray));
+			}
+
+			String[] serials = this.checkMeterOwnership(query.getUserKey(), query.getDeviceKey());
 
 			return waterMeterMeasurementRepository.searchMeasurements(serials, query);
 		} catch (ApplicationException ex) {
@@ -150,9 +213,9 @@ public class SearchController extends BaseController {
 				query.setDeviceKey(deviceKeys.toArray(deviceKeyArray));
 			}
 
-			this.checkAmphiroOwnership(query.getUserKey(), query.getDeviceKey());
+			String[] names = this.checkAmphiroOwnership(query.getUserKey(), query.getDeviceKey());
 
-			return amphiroMeasurementRepository.searchSessions(query);
+			return amphiroMeasurementRepository.searchSessions(names, query);
 		} catch (ApplicationException ex) {
 			logger.error(ex.getMessage(), ex);
 
@@ -183,13 +246,17 @@ public class SearchController extends BaseController {
 		return response;
 	}
 
-	private void checkAmphiroOwnership(UUID userKey, UUID deviceKey) {
+	private String[] checkAmphiroOwnership(UUID userKey, UUID deviceKey) {
 		if (deviceKey != null) {
-			this.checkAmphiroOwnership(userKey, new UUID[] { deviceKey });
+			return this.checkAmphiroOwnership(userKey, new UUID[] { deviceKey });
 		}
+
+		return new String[] { null };
 	}
 
-	private void checkAmphiroOwnership(UUID userKey, UUID devices[]) {
+	private String[] checkAmphiroOwnership(UUID userKey, UUID devices[]) {
+		ArrayList<String> nameList = new ArrayList<String>();
+
 		if (devices != null) {
 			for (UUID deviceKey : devices) {
 				Device device = this.deviceRepository.getUserDeviceByKey(userKey, deviceKey);
@@ -197,8 +264,14 @@ public class SearchController extends BaseController {
 				if (device == null) {
 					throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
 				}
+
+				nameList.add(((AmphiroDevice) device).getName());
 			}
 		}
+
+		String[] nameArray = new String[nameList.size()];
+
+		return nameList.toArray(nameArray);
 	}
 
 	private String[] checkMeterOwnership(UUID userKey, UUID devices[]) {

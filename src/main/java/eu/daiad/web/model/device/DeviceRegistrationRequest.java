@@ -9,15 +9,13 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import eu.daiad.web.model.AuthenticatedRequest;
 import eu.daiad.web.model.KeyValuePair;
-import eu.daiad.web.util.DeviceTypeDeserializer;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type")
-@JsonSubTypes({
-		@Type(value = AmphiroDeviceRegistrationRequest.class, name = "AMPHIRO"),
-		@Type(value = WaterMeterDeviceRegistrationRequest.class, name = "METER") })
+@JsonSubTypes({ @Type(value = AmphiroDeviceRegistrationRequest.class, name = "AMPHIRO"),
+				@Type(value = WaterMeterDeviceRegistrationRequest.class, name = "METER") })
 public class DeviceRegistrationRequest extends AuthenticatedRequest {
 
-	@JsonDeserialize(using = DeviceTypeDeserializer.class)
+	@JsonDeserialize(using = EnumDeviceType.Deserializer.class)
 	private EnumDeviceType type;
 
 	private ArrayList<KeyValuePair> properties;

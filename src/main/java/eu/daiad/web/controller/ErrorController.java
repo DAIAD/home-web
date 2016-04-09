@@ -24,7 +24,7 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.ModelAndView;
 
-import eu.daiad.web.model.Error;
+import eu.daiad.web.model.error.Error;
 import eu.daiad.web.model.error.SharedErrorCode;
 
 @Controller

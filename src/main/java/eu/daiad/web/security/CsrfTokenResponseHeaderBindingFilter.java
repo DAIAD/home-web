@@ -10,7 +10,7 @@ import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import eu.daiad.web.model.CsrfConstants;
+import eu.daiad.web.model.security.CsrfConstants;
 
 public class CsrfTokenResponseHeaderBindingFilter extends OncePerRequestFilter {
 

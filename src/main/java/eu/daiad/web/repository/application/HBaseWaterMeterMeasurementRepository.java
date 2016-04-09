@@ -333,7 +333,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 
 				int valueCount = 0;
 
-				WaterMeterStatus status = new WaterMeterStatus();
+				WaterMeterStatus status = new WaterMeterStatus(query.getDeviceKey()[deviceIndex], serials[deviceIndex]);
 				WaterMeterDataPoint value1 = new WaterMeterDataPoint();
 				WaterMeterDataPoint value2 = new WaterMeterDataPoint();
 
@@ -382,14 +382,12 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 						status.setTimestamp(value2.timestamp);
 						status.setVolume(value2.volume);
 						status.setVariation(0);
-						status.setDeviceKey(query.getDeviceKey()[deviceIndex]);
 
 						data.getDevices().add(status);
 					default:
 						status.setTimestamp(value2.timestamp);
 						status.setVolume(value2.volume);
 						status.setVariation(value2.volume - value1.volume);
-						status.setDeviceKey(query.getDeviceKey()[deviceIndex]);
 
 						data.getDevices().add(status);
 				}
@@ -499,10 +497,10 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 
 				boolean stopScanner = false;
 
-				WaterMeterDataSeries series = new WaterMeterDataSeries(startDate.getMillis(), queryEndDate.getMillis(),
+				WaterMeterDataSeries series = new WaterMeterDataSeries(query.getDeviceKey()[deviceIndex],
+								serials[deviceIndex], startDate.getMillis(), queryEndDate.getMillis(),
 								query.getGranularity());
 
-				series.setDeviceKey(query.getDeviceKey()[deviceIndex]);
 				data.getSeries().add(series);
 
 				for (Result r = scanner.next(); r != null; r = scanner.next()) {

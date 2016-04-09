@@ -18,6 +18,7 @@ var Announcements = require('../components/section/Announcements');
 var UserSettings = require('../components/section/settings/UserSettings');
 var SystemSettings = require('../components/section/settings/SystemSettings');
 var Reporting = require('../components/section/Reporting');
+var Debug = require('../components/section/Debug');
 
 module.exports = (
 	<Route path="/" component={App} >
@@ -36,5 +37,6 @@ module.exports = (
 		<Route path="/settings/user" component={UserSettings}/>
 		<Route path="/settings/system" component={SystemSettings}/>
 		<Route path="/report" component={Reporting}/>
+		<Route path="/debug" component={Debug}/>
 	</Route>
 );

@@ -6,6 +6,7 @@ var AdminAPI = {
   getActivity : function() {
     return api.json('/action/admin/trial/activity');
   },
+
   getSessions : function(userKey) {
     var endDate = moment().valueOf();
     var startDate = moment().subtract(20, 'days').valueOf();
@@ -18,6 +19,19 @@ var AdminAPI = {
       endDate : endDate
     });
   },
+
+  getMeters : function(userKey) {
+    var endDate = moment().valueOf();
+    var startDate = moment().subtract(20, 'days').valueOf();
+
+    return api.json('/action/meter/history',{
+      userKey : userKey,
+      granularity : 2,
+      deviceKey : null,
+      startDate : startDate,
+      endDate : endDate
+    });
+  }
 };
 
 module.exports = AdminAPI;
