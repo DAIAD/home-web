@@ -1,10 +1,16 @@
 package eu.daiad.web.model.export;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+
 public enum EnumExportDataSource {
-	UNDEFINED(0), USER(1), DEVICE(2), SESSION(3), MEASUREMENT(4), METER(5);
+	UNDEFINED(0), USER_DATA(1);
 
 	private final int value;
 
@@ -38,4 +44,14 @@ public enum EnumExportDataSource {
 		}
 		return EnumExportDataSource.UNDEFINED;
 	}
+
+	public static class Deserializer extends JsonDeserializer<EnumExportDataSource> {
+
+		@Override
+		public EnumExportDataSource deserialize(JsonParser parser, DeserializationContext context) throws IOException,
+						JsonProcessingException {
+			return EnumExportDataSource.fromString(parser.getValueAsString());
+		}
+	}
+
 }

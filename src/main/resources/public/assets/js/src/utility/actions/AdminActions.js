@@ -1,6 +1,9 @@
 var adminAPI = require('../api/admin');
 var types = require('../constants/ActionTypes');
 
+// TODO : Remove jquery dependency
+var $ = require('jquery');
+
 var requestedActivity = function() {
   return {
     type : types.ADMIN_REQUESTED_ACTIVITY
@@ -48,6 +51,22 @@ var receivedMeters = function(success, errors, meters) {
   };
 };
 
+var requestedExport = function(username) {
+  return {
+    type : types.ADMIN_EXPORT_REQUEST,
+    username : username
+  };
+};
+
+var receivedExport = function(success, errors, token) {
+  return {
+    type : types.ADMIN_EXPORT_COMPLETE,
+    success : success,
+    errors : errors,
+    token : token
+  };
+};
+
 var resetUserData = function() {
   return {
     type : types.ADMIN_RESET_USER_DATA
@@ -90,7 +109,27 @@ var AdminActions = {
       });
     };
   },
-  
+
+  exportUserData : function(userKey, username) {
+    return function(dispatch, getState) {
+      dispatch(requestedExport(username));
+
+      return adminAPI.exportUserData(userKey).then(function(response) {
+        dispatch(receivedExport(response.success, response.errors, response.token));
+
+        var content = [];
+        content.push('<div id="export-download-frame" style="display: none">');
+        content.push('<iframe src="/action/data/download/' + response.token + '/"></iframe>');
+        content.push('</div>');
+
+        $('#export-download-frame').remove();
+        $('body').append(content.join(''));
+      }, function(error) {
+        dispatch(receivedMeters(false, error, null));
+      });
+    };
+  },
+
   resetUserData : function() {
     return resetUserData();
   },

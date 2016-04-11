@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
 public enum EnumMeasurementDataSource {
-	ALL(0), AMPHIRO(1), METER(2);
+	BOTH(0), AMPHIRO(1), METER(2);
 
 	private final int value;
 
@@ -32,7 +32,7 @@ public enum EnumMeasurementDataSource {
 	public static EnumMeasurementDataSource fromInteger(int value) {
 		EnumMeasurementDataSource type = intToTypeMap.get(Integer.valueOf(value));
 		if (type == null)
-			return EnumMeasurementDataSource.ALL;
+			return EnumMeasurementDataSource.BOTH;
 		return type;
 	}
 
@@ -42,7 +42,7 @@ public enum EnumMeasurementDataSource {
 				return item;
 			}
 		}
-		return EnumMeasurementDataSource.ALL;
+		return EnumMeasurementDataSource.BOTH;
 	}
 
 	public static class Deserializer extends JsonDeserializer<EnumMeasurementDataSource> {

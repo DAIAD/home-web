@@ -11,9 +11,9 @@ public class AmphiroSessionCollectionQuery extends AuthenticatedRequest {
 
 	private UUID[] deviceKey;
 
-	private long startDate;
+	private Long startDate;
 
-	private long endDate;
+	private Long endDate;
 
 	private int granularity = TemporalConstants.NONE;
 
@@ -37,19 +37,19 @@ public class AmphiroSessionCollectionQuery extends AuthenticatedRequest {
 		this.deviceKey = deviceKey;
 	}
 
-	public void setStartDate(long value) {
+	public void setStartDate(Long value) {
 		this.startDate = value;
 	}
 
-	public long getStartDate() {
+	public Long getStartDate() {
 		return this.startDate;
 	}
 
-	public void setEndDate(long value) {
+	public void setEndDate(Long value) {
 		this.endDate = value;
 	}
 
-	public long getEndDate() {
+	public Long getEndDate() {
 		return this.endDate;
 	}
 

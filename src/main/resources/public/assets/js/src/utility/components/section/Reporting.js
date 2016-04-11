@@ -9,7 +9,7 @@ var Breadcrumb = require('../Breadcrumb');
 var Table = require('../Table');
 var Chart = require('../Chart');
 
-var { getActivity, setFilter, getSessions, getMeters, resetUserData } = require('../../actions/AdminActions');
+var { getActivity, setFilter, getSessions, getMeters, resetUserData, exportUserData } = require('../../actions/AdminActions');
 
 var Reporting = React.createClass({
 	contextTypes: {
@@ -291,7 +291,7 @@ var Reporting = React.createClass({
           name: 'numberOfAmphiroDevices',
           title: '# of Amphiro'
         }, {
-          name: 'leastDeviceRegistration',
+          name: 'leastAmphiroRegistration',
           title: 'Amphiro registered on',
           type: 'datetime'
         }, {
@@ -317,6 +317,19 @@ var Reporting = React.createClass({
           handler: function(e) {
             if((this.props.row.key) && (this.props.row.numberOfAmphiroDevices > 0)) {
               self.props.actions.getSessions(this.props.row.key, this.props.row.username);
+            }
+          },
+          visible: function(row) { 
+            return ((row.key) && (row.numberOfAmphiroDevices > 0));
+          }
+        }, {
+          name: 'export',
+          type:'action',
+          icon: 'cloud-download fa-2x',
+          color: '#2D3580',
+          handler: function(e) {
+            if((this.props.row.key) && (this.props.row.numberOfAmphiroDevices > 0)) {
+              self.props.actions.exportUserData(this.props.row.key, this.props.row.username);
             }
           },
           visible: function(row) { 
@@ -409,7 +422,7 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
   return {
-    actions : bindActionCreators(Object.assign({}, { getActivity, setFilter, getSessions, getMeters, resetUserData }) , dispatch)
+    actions : bindActionCreators(Object.assign({}, { getActivity, setFilter, getSessions, getMeters, resetUserData, exportUserData }) , dispatch)
   };
 }
 

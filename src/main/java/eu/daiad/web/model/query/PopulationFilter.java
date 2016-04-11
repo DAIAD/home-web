@@ -1,25 +1,36 @@
 package eu.daiad.web.model.query;
 
+import java.util.ArrayList;
+import java.util.UUID;
+
+import eu.daiad.web.service.DataQueryUserCollection;
+
 public class PopulationFilter {
 
-	private int[] users;
+	private ArrayList<DataQueryUserCollection> groups = new ArrayList<DataQueryUserCollection>();
 
-	private int[] groups;
+	public PopulationFilter() {
 
-	public int[] getUsers() {
-		return users;
 	}
 
-	public void setUsers(int[] users) {
-		this.users = users;
+	public PopulationFilter(String label, UUID user) {
+		this.add(label, user);
 	}
 
-	public int[] getGroups() {
+	public PopulationFilter(String label, UUID[] users) {
+		this.add(label, users);
+	}
+
+	public ArrayList<DataQueryUserCollection> getGroups() {
 		return groups;
 	}
 
-	public void setGroups(int[] groups) {
-		this.groups = groups;
+	public void add(String label, UUID user) {
+		this.groups.add(new DataQueryUserCollection(label, user));
+	}
+
+	public void add(String label, UUID[] users) {
+		this.groups.add(new DataQueryUserCollection(label, users));
 	}
 
 }

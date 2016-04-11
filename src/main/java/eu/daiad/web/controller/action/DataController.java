@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
@@ -31,6 +32,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -49,16 +51,23 @@ import com.vividsolutions.jts.geom.PrecisionModel;
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.device.Device;
+import eu.daiad.web.model.device.DeviceRegistrationQuery;
+import eu.daiad.web.model.device.WaterMeterDevice;
 import eu.daiad.web.model.error.ActionErrorCode;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.ResourceNotFoundException;
 import eu.daiad.web.model.export.DownloadFileResponse;
-import eu.daiad.web.model.export.ExportDataRequest;
+import eu.daiad.web.model.export.ExportUserDataQuery;
+import eu.daiad.web.model.export.ExportUserDataRequest;
+import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryRequest;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumMetric;
+import eu.daiad.web.model.query.EnumTimeUnit;
 import eu.daiad.web.model.query.SpatialDataPoint;
+import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IExportService;
@@ -245,18 +254,69 @@ public class DataController extends BaseController {
 	@RequestMapping(value = "/action/data/export", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@ResponseBody
 	@Secured({ "ROLE_ADMIN" })
-	public RestResponse export(@RequestBody ExportDataRequest data) {
+	public RestResponse export(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody ExportUserDataRequest data) {
 		RestResponse response = new RestResponse();
 
 		try {
 			switch (data.getType()) {
-				case SESSION:
-					String token = this.exportService.export(data);
+				case USER_DATA:
+					ExportUserDataQuery userQuery = new ExportUserDataQuery();
+
+					// Get user
+					AuthenticatedUser owner = userRepository.getUserByUtilityAndKey(user.getUtilityId(),
+									data.getUserKey());
+
+					userQuery.setUserKey(data.getUserKey());
+					userQuery.setUsername(owner.getUsername());
+
+					// Get devices
+					ArrayList<Device> devices = deviceRepository.getUserDevices(owner.getKey(),
+									new DeviceRegistrationQuery());
+
+					for (Device d : devices) {
+						boolean fetch = false;
+
+						if ((data.getDeviceKeys() == null) || (data.getDeviceKeys().length == 0)) {
+							fetch = true;
+						} else {
+							for (UUID deviceKey : data.getDeviceKeys()) {
+								if (d.getKey().equals(deviceKey)) {
+									fetch = true;
+									break;
+								}
+							}
+						}
+						if (fetch) {
+							switch (d.getType()) {
+								case AMPHIRO:
+									userQuery.getAmphiroKeys().add(d.getKey());
+									userQuery.getAmphiroNames().add(((AmphiroDevice) d).getName());
+
+									break;
+								case METER:
+									userQuery.getMeterKeys().add(d.getKey());
+									userQuery.getMeterNames().add(((WaterMeterDevice) d).getSerial());
+
+									break;
+								default:
+									// Ignore device
+							}
+						}
+					}
+
+					// Set time constraints
+					userQuery.setStartDateTime(data.getStartDateTime());
+					userQuery.setEndDateTime(data.getEndDateTime());
+					userQuery.setTimezone(data.getTimezone());
+
+					String token = this.exportService.export(userQuery);
 
 					response = new DownloadFileResponse(token);
+
+					break;
 				default:
-					throw new ApplicationException(ActionErrorCode.EXPORT_TYPE_NOT_SUPPORTED).set("type", data
-									.getType().toString());
+					throw new ApplicationException(ActionErrorCode.EXPORT_TYPE_NOT_SUPPORTED).set("type",
+									data.getType());
 			}
 		} catch (ApplicationException ex) {
 			logger.error(ex.getMessage(), ex);

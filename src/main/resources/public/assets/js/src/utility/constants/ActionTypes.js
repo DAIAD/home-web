@@ -24,7 +24,10 @@ var constants = keyMirror({
   ADMIN_RECEIVED_METERS: null,
 	
 	ADMIN_FILTER_USER: null,
-	
+
+	ADMIN_EXPORT_REQUEST: null,
+	ADMIN_EXPORT_COMPLETE: null,
+	 
 	QUERY_SUBMIT: null,
 	QUERY_RESPONSE: null
 });

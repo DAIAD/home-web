@@ -7,7 +7,10 @@ var initialState = {
     name : null,
     devices : null
   },
-  filter : null
+  filter : null,
+  export : {
+    token : null
+  }
 };
 
 var admin = function(state, action) {
@@ -78,6 +81,20 @@ var admin = function(state, action) {
         filter : action.filter || null
       });
 
+    case types.ADMIN_EXPORT_REQUEST:
+      return Object.assign({}, state, {
+        export : {
+          token : null
+        }
+      });
+
+    case types.ADMIN_EXPORT_COMPLETE:
+      return Object.assign({}, state, {
+        export : {
+          token : action.token
+        }
+      });
+
     case types.USER_RECEIVED_LOGOUT:
       return Object.assign({}, state, {
         isLoading : false,
@@ -86,7 +103,10 @@ var admin = function(state, action) {
           name : null,
           devices : null
         },
-        filter : null
+        filter : null,
+        export : {
+          token : null
+        }
       });
 
     default:

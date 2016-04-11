@@ -8,6 +8,8 @@ public class SpatialFilter {
 
 	private Geometry geometry;
 
+	private Double distance;
+
 	public EnumSpatialFilterType getType() {
 		return type;
 	}
@@ -22,6 +24,22 @@ public class SpatialFilter {
 
 	public void setGeometry(Geometry geometry) {
 		this.geometry = geometry;
+	}
+
+	public Double getDistance() {
+		if (this.type == EnumSpatialFilterType.DISTANCE) {
+			return null;
+		}
+		return distance;
+	}
+
+	public void setDistance(Double distance) {
+		this.distance = distance;
+	}
+
+	@Override
+	public String toString() {
+		return "SpatialFilter [type=" + type + ", geometry=" + geometry + ", distance=" + distance + "]";
 	}
 
 }

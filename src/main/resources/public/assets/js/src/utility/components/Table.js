@@ -173,7 +173,8 @@ var Cell = React.createClass({
   			  }
   			  if(visible) {
   			    if(this.props.field.icon) {
-  			      text = (<i className={'fa fa-' + this.props.field.icon + ' fa-fw table-action'} onClick={this.props.field.handler.bind(this)}></i>);
+  			      var color = this.props.field.color || '#000000';
+  			      text = (<i className={'fa fa-' + this.props.field.icon + ' fa-fw table-action'} style={{color : color}} onClick={this.props.field.handler.bind(this)}></i>);
   			    } else {
   			      text = (<i className="table-action" onClick={this.props.field.handler.bind(this)}><img src={this.props.field.image} /></i>);
   			    }

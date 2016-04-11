@@ -1,5 +1,7 @@
 package eu.daiad.web.model.query;
 
+import java.util.Arrays;
+
 public class DataQuery {
 
 	TimeFilter time;
@@ -8,9 +10,9 @@ public class DataQuery {
 
 	SpatialFilter spatial;
 
-	EnumMeasurementDataSource source = EnumMeasurementDataSource.ALL;
+	EnumMeasurementDataSource source = EnumMeasurementDataSource.BOTH;
 
-	EnumMetric metrics[] = { EnumMetric.SUM };
+	EnumMetric metrics[] = {};
 
 	public TimeFilter getTime() {
 		return time;
@@ -50,5 +52,11 @@ public class DataQuery {
 
 	public void setMetrics(EnumMetric[] metrics) {
 		this.metrics = metrics;
+	}
+
+	@Override
+	public String toString() {
+		return "DataQuery [time=" + time + ", population=" + population + ", spatial=" + spatial + ", source=" + source
+						+ ", metrics=" + Arrays.toString(metrics) + "]";
 	}
 }

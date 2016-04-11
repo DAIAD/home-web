@@ -9,6 +9,14 @@ public class DeviceRegistrationQuery extends AuthenticatedRequest {
 	@JsonDeserialize(using = EnumDeviceType.Deserializer.class)
 	private EnumDeviceType type;
 
+	public DeviceRegistrationQuery() {
+
+	}
+
+	public DeviceRegistrationQuery(EnumDeviceType type) {
+		this.type = type;
+	}
+
 	public EnumDeviceType getType() {
 		if (this.type == null) {
 			return EnumDeviceType.UNDEFINED;
