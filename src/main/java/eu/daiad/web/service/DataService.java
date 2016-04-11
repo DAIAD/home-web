@@ -1,5 +1,6 @@
 package eu.daiad.web.service;
 
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -18,6 +19,11 @@ import eu.daiad.web.model.error.UserErrorCode;
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.ExpandedDataQuery;
+import eu.daiad.web.model.query.ExpandedPopulationFilter;
+import eu.daiad.web.model.query.GroupPopulationFilter;
+import eu.daiad.web.model.query.PopulationFilter;
+import eu.daiad.web.model.query.UserPopulationFilter;
+import eu.daiad.web.model.query.UtilityPopulationFilter;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IAmphiroMeasurementRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
@@ -41,121 +47,153 @@ public class DataService implements IDataService {
 
 	@Override
 	public DataQueryResponse execute(DataQuery query) {
-		DataQueryResponse response = new DataQueryResponse();
+		try {
+			DataQueryResponse response = new DataQueryResponse();
 
-		ExpandedDataQuery expandedQuery = new ExpandedDataQuery();
+			ExpandedDataQuery expandedQuery = new ExpandedDataQuery();
 
-		// Get authenticated user
-		AuthenticatedUser authenticatedUser = (AuthenticatedUser) SecurityContextHolder.getContext()
-						.getAuthentication().getPrincipal();
+			// Get authenticated user
+			AuthenticatedUser authenticatedUser = (AuthenticatedUser) SecurityContextHolder.getContext()
+							.getAuthentication().getPrincipal();
 
-		// At least one group or user must be selected. Time constraint is
-		// required
-		if ((query.getTime() == null) || (query.getPopulation() == null)) {
-			return response;
-		}
+			// At least one group or user must be selected. Time constraint is
+			// required
+			if ((query.getTime() == null) || (query.getPopulation() == null)) {
+				return response;
+			}
 
-		// Get all unique user keys for every group
-		if ((query.getPopulation().getGroups() != null) && (query.getPopulation().getGroups().size() != 0)) {
-			for (DataQueryUserCollection group : query.getPopulation().getGroups()) {
+			// Get all unique user keys for every group
+			if ((query.getPopulation() != null) && (query.getPopulation().size() != 0)) {
+				MessageDigest md = MessageDigest.getInstance("MD5");
 
-				DataQueryUserCollection filteredUserGroup = new DataQueryUserCollection(group.getLabel());
+				for (PopulationFilter filter : query.getPopulation()) {
 
-				if (group.getUsers().size() > 0) {
-					for (UUID userKey : group.getUsers()) {
-						AuthenticatedUser user = userRepository.getUserByUtilityAndKey(
-										authenticatedUser.getUtilityId(), userKey);
+					ExpandedPopulationFilter expandedPopulationFilter = new ExpandedPopulationFilter(filter.getLabel());
 
-						if (user == null) {
-							throw new ApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", userKey);
-						}
+					ArrayList<UUID> filterUsers = null;
+					switch (filter.getType()) {
+						case USER:
+							filterUsers = ((UserPopulationFilter) filter).getUsers();
+							break;
+						case GROUP:
+							filterUsers = userRepository.getUserKeysForGroup(((GroupPopulationFilter) filter)
+											.getGroup());
+							break;
+						case UTILITY:
+							filterUsers = userRepository.getUserKeysForUtility(((UtilityPopulationFilter) filter)
+											.getUtility());
+							break;
+						default:
+							// Ignore
+					}
+					if (filterUsers.size() > 0) {
+						for (UUID userKey : filterUsers) {
+							AuthenticatedUser user = userRepository.getUserByUtilityAndKey(
+											authenticatedUser.getUtilityId(), userKey);
 
-						// Apply spatial filtering
-						if (query.getSpatial() != null) {
-							ArrayList<Device> devices = deviceRepository.getUserDevices(userKey,
-											new DeviceRegistrationQuery(EnumDeviceType.METER));
+							if (user == null) {
+								throw new ApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username",
+												userKey);
+							}
 
-							for (Device device : devices) {
-								WaterMeterDevice meter = (WaterMeterDevice) device;
+							// Apply spatial filtering
+							if (query.getSpatial() != null) {
+								ArrayList<Device> devices = deviceRepository.getUserDevices(userKey,
+												new DeviceRegistrationQuery(EnumDeviceType.METER));
 
-								boolean include = false;
+								for (Device device : devices) {
+									WaterMeterDevice meter = (WaterMeterDevice) device;
 
-								if (meter.getLocation() != null) {
-									switch (query.getSpatial().getType()) {
-										case CONTAINS:
-											include = query.getSpatial().getGeometry().contains(meter.getLocation());
-											break;
-										case INTERSECT:
-											include = query.getSpatial().getGeometry().intersects(meter.getLocation());
-											break;
-										case DISTANCE:
-											include = (query.getSpatial().getGeometry().distance(meter.getLocation()) < query
-															.getSpatial().getDistance());
-											break;
-										default:
-											// Ignore
+									boolean include = false;
+
+									if (meter.getLocation() != null) {
+										switch (query.getSpatial().getType()) {
+											case CONTAINS:
+												include = query.getSpatial().getGeometry()
+																.contains(meter.getLocation());
+												break;
+											case INTERSECT:
+												include = query.getSpatial().getGeometry()
+																.intersects(meter.getLocation());
+												break;
+											case DISTANCE:
+												include = (query.getSpatial().getGeometry()
+																.distance(meter.getLocation()) < query.getSpatial()
+																.getDistance());
+												break;
+											default:
+												// Ignore
+										}
+									}
+									if (include) {
+										expandedPopulationFilter.getUsers().add(userKey);
+										expandedPopulationFilter.getHashes().add(
+														md.digest(userKey.toString().getBytes("UTF-8")));
+										break;
 									}
 								}
-								if (include) {
-									filteredUserGroup.getUsers().add(userKey);
-									break;
-								}
+							} else {
+								expandedPopulationFilter.getUsers().add(userKey);
+								expandedPopulationFilter.getHashes().add(
+												md.digest(userKey.toString().getBytes("UTF-8")));
 							}
-						} else {
-							filteredUserGroup.getUsers().add(userKey);
 						}
-					}
 
-					expandedQuery.getGroups().add(filteredUserGroup);
+						expandedQuery.getGroups().add(expandedPopulationFilter);
+					}
 				}
 			}
+
+			// Compute time constraints
+			long startDateTime, endDateTime;
+
+			startDateTime = query.getTime().getStart();
+
+			switch (query.getTime().getType()) {
+				case ABSOLUTE:
+					endDateTime = query.getTime().getEnd();
+					break;
+				case SLIDING:
+					switch (query.getTime().getDurationTimeUnit()) {
+						case HOUR:
+							endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).minusHours(query.getTime()
+											.getDuration()).getMillis());
+							break;
+						case DAY:
+							endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).minusDays(query.getTime()
+											.getDuration()).getMillis());
+							break;
+						case WEEK:
+							endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).minusWeeks(query.getTime()
+											.getDuration()).getMillis());
+							break;
+						case MONTH:
+							endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).minusMonths(query.getTime()
+											.getDuration()).getMillis());
+							break;
+						case YEAR:
+							endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).minusYears(query.getTime()
+											.getDuration()).getMillis());
+							break;
+						default:
+							return response;
+					}
+					break;
+				default:
+					return response;
+			}
+
+			// Construct expanded query
+			expandedQuery.setStartDateTime(startDateTime);
+			expandedQuery.setEndDateTime(endDateTime);
+			expandedQuery.setGranularity(query.getTime().getGraunlarity());
+			expandedQuery.setMetrics(query.getMetrics());
+
+			response.setDevices(amphiroRepository.query(expandedQuery));
+
+			return response;
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex);
 		}
-
-		// Compute time constraints
-		long startDateTime, endDateTime;
-
-		startDateTime = query.getTime().getStart();
-
-		switch (query.getTime().getType()) {
-			case ABSOLUTE:
-				endDateTime = query.getTime().getEnd();
-				break;
-			case SLIDING:
-				switch (query.getTime().getDurationTimeUnit()) {
-					case HOUR:
-						endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).minusHours(query.getTime()
-										.getDuration()).getMillis());
-						break;
-					case DAY:
-						endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).minusDays(query.getTime()
-										.getDuration()).getMillis());
-						break;
-					case WEEK:
-						endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).minusWeeks(query.getTime()
-										.getDuration()).getMillis());
-						break;
-					case MONTH:
-						endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).minusMonths(query.getTime()
-										.getDuration()).getMillis());
-						break;
-					case YEAR:
-						endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).minusYears(query.getTime()
-										.getDuration()).getMillis());
-						break;
-					default:
-						return response;
-				}
-				break;
-			default:
-				return response;
-		}
-
-		// Construct expanded query
-		expandedQuery.setStartDateTime(startDateTime);
-		expandedQuery.setEndDateTime(endDateTime);
-		expandedQuery.setGranularity(query.getTime().getGraunlarity());
-		expandedQuery.setMetrics(query.getMetrics());
-
-		return null;
 	}
 }

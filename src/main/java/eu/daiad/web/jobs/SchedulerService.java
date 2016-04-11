@@ -9,7 +9,6 @@ import javax.annotation.PreDestroy;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.joda.time.DateTime;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
@@ -48,6 +47,7 @@ public class SchedulerService {
 
 	@PostConstruct
 	private void initialize() throws Exception {
+		logger.warn("Initializing Scheduler Service");
 		try {
 			// Fetch all registered jobs
 			for (ScheduledJob scheduledJob : this.schedulerRepository.getScheduledJobs()) {
@@ -62,6 +62,8 @@ public class SchedulerService {
 					parameterBuilder.addString(parameter.getName(), parameter.getValue());
 				}
 				JobParameters jobParameters = parameterBuilder.toJobParameters();
+
+				logger.warn(String.format("Initializing job [%s].", scheduledJob.getJob().getJobName()));
 
 				// Start job execution
 				if ((scheduledJob.getPeriod() != null) && (!StringUtils.isBlank(scheduledJob.getCronExpression()))) {
@@ -109,7 +111,6 @@ public class SchedulerService {
 		@Override
 		public void run() {
 			try {
-				System.out.println(new DateTime());
 				jobLauncher.run(job, job.getJobParametersIncrementer().getNext(parameters));
 			} catch (Exception ex) {
 				logger.error(String.format("Failed to start job [%s].", job.getName()), ex);

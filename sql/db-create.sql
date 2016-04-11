@@ -8,6 +8,7 @@ CREATE SEQUENCE utility_id_seq
 
 CREATE TABLE utility (
     id integer DEFAULT nextval('utility_id_seq'::regclass) NOT NULL,
+    key uuid,
     name character varying(40),
     logo bytea,
     description character varying,
@@ -342,6 +343,7 @@ CREATE SEQUENCE community_id_seq
 
 CREATE TABLE community (
     id integer NOT NULL DEFAULT nextval('community_id_seq'::regclass),
+    key uuid,
     row_version  bigint default 1,
     utility_id integer,
 	locale character(2),
@@ -391,6 +393,7 @@ CREATE SEQUENCE group_id_seq
 
 CREATE TABLE "group" (
     id integer NOT NULL DEFAULT nextval('group_id_seq'::regclass),
+    key uuid,
     row_version  bigint default 1,
     utility_id integer,
     name character varying(100),

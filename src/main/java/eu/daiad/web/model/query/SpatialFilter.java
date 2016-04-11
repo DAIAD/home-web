@@ -1,9 +1,11 @@
 package eu.daiad.web.model.query;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.vividsolutions.jts.geom.Geometry;
 
 public class SpatialFilter {
 
+	@JsonDeserialize(using = EnumSpatialFilterType.Deserializer.class)
 	private EnumSpatialFilterType type;
 
 	private Geometry geometry;

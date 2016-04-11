@@ -1,5 +1,6 @@
 package eu.daiad.web.repository.application;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,5 +30,9 @@ public interface IUserRepository {
 	void updateLoginStats(int id, boolean success);
 
 	List<AccountActivity> getAccountActivity(int utilityId);
+
+	ArrayList<UUID> getUserKeysForGroup(UUID groupKey);
+
+	ArrayList<UUID> getUserKeysForUtility(UUID utilityKey);
 
 }

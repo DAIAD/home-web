@@ -6,10 +6,24 @@ import eu.daiad.web.model.RestResponse;
 
 public class DataQueryResponse extends RestResponse {
 
-	ArrayList<DataPoint> points = new ArrayList<DataPoint>();
+	ArrayList<GroupDataSeries> devices;
 
-	public ArrayList<DataPoint> getPoints() {
-		return points;
+	ArrayList<GroupDataSeries> meters;
+
+	public ArrayList<GroupDataSeries> getDevices() {
+		return devices;
+	}
+
+	public ArrayList<GroupDataSeries> getMeters() {
+		return meters;
+	}
+
+	public void setDevices(ArrayList<GroupDataSeries> devices) {
+		this.devices = devices;
+	}
+
+	public void setMeters(ArrayList<GroupDataSeries> meters) {
+		this.meters = meters;
 	}
 
 }

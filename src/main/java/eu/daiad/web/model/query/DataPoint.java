@@ -5,39 +5,27 @@ import java.util.Map;
 
 public class DataPoint {
 
-	private long timestamp;
+	private Long timestamp = null;
 
-	private int population;
+	private Map<String, Double> values = new HashMap<String, Double>();
 
-	private String label;
+	public DataPoint() {
 
-	private Map<String, Number> values = new HashMap<String, Number>();
-
-	public long getTimestamp() {
-		return timestamp;
 	}
 
-	public void setTimestamp(long timestamp) {
+	public DataPoint(long timestamp) {
 		this.timestamp = timestamp;
 	}
 
-	public int getPopulation() {
-		return population;
+	public Long getTimestamp() {
+		return timestamp;
 	}
 
-	public void setPopulation(int population) {
-		this.population = population;
+	public void setTimestamp(Long timestamp) {
+		this.timestamp = timestamp;
 	}
 
-	public String getLabel() {
-		return label;
-	}
-
-	public void setLabel(String label) {
-		this.label = label;
-	}
-
-	public Map<String, Number> getValues() {
+	public Map<String, Double> getValues() {
 		return values;
 	}
 

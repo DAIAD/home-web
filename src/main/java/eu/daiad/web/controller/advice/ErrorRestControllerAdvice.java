@@ -15,11 +15,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
 
 import com.ibm.icu.text.MessageFormat;
 
@@ -27,7 +27,7 @@ import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.ResourceNotFoundException;
 import eu.daiad.web.model.error.SharedErrorCode;
 
-@ControllerAdvice(annotations = RestController.class)
+@ControllerAdvice(annotations = Controller.class)
 public class ErrorRestControllerAdvice {
 
 	private static final Log logger = LogFactory.getLog(ErrorRestControllerAdvice.class);

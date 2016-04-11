@@ -58,26 +58,28 @@ public class DataQueryBuilder {
 		return this;
 	}
 
-	private void initializePopulationFilter() {
-		if (this.query.getPopulation() == null) {
-			this.query.setPopulation(new PopulationFilter());
-		}
-	}
-
 	public DataQueryBuilder removePopulationFilter() {
-		this.query.setPopulation(new PopulationFilter());
+		this.query.getPopulation().clear();
 		return this;
 	}
 
-	public DataQueryBuilder group(String label, UUID user) {
-		initializePopulationFilter();
-		this.query.getPopulation().add(label, user);
+	public DataQueryBuilder user(String label, UUID user) {
+		this.query.getPopulation().add(new UserPopulationFilter(label, user));
 		return this;
 	}
 
-	public DataQueryBuilder group(String label, UUID users[]) {
-		initializePopulationFilter();
-		this.query.getPopulation().add(label, users);
+	public DataQueryBuilder users(String label, UUID[] users) {
+		this.query.getPopulation().add(new UserPopulationFilter(label, users));
+		return this;
+	}
+
+	public DataQueryBuilder group(String label, UUID group) {
+		this.query.getPopulation().add(new GroupPopulationFilter(label, group));
+		return this;
+	}
+
+	public DataQueryBuilder utility(String label, UUID utility) {
+		this.query.getPopulation().add(new UtilityPopulationFilter(label, utility));
 		return this;
 	}
 
@@ -87,7 +89,7 @@ public class DataQueryBuilder {
 		return this;
 	}
 
-	public DataQueryBuilder absolute(long start, long end, EnumTimeUnit graunlarity) {
+	public DataQueryBuilder absolute(long start, long end, EnumTimeAggregation graunlarity) {
 		this.query.setTime(new TimeFilter(start, end, graunlarity));
 
 		return this;
@@ -99,7 +101,7 @@ public class DataQueryBuilder {
 		return this;
 	}
 
-	public DataQueryBuilder absolute(DateTime start, DateTime end, EnumTimeUnit graunlarity) {
+	public DataQueryBuilder absolute(DateTime start, DateTime end, EnumTimeAggregation graunlarity) {
 		this.query.setTime(new TimeFilter(start, end, graunlarity));
 
 		return this;
@@ -117,7 +119,8 @@ public class DataQueryBuilder {
 		return this;
 	}
 
-	public DataQueryBuilder sliding(long start, int duration, EnumTimeUnit durationTimeUnit, EnumTimeUnit granularity) {
+	public DataQueryBuilder sliding(long start, int duration, EnumTimeUnit durationTimeUnit,
+					EnumTimeAggregation granularity) {
 		this.query.setTime(new TimeFilter(start, duration, durationTimeUnit, granularity));
 		return this;
 	}
@@ -147,13 +150,13 @@ public class DataQueryBuilder {
 	}
 
 	public DataQueryBuilder sliding(DateTime start, int duration, EnumTimeUnit durationTimeUnit,
-					EnumTimeUnit granularity) {
+					EnumTimeAggregation granularity) {
 		this.query.setTime(new TimeFilter(start, duration, durationTimeUnit, granularity));
 
 		return this;
 	}
 
-	public DataQueryBuilder sliding(int duration, EnumTimeUnit durationTimeUnit, EnumTimeUnit granularity) {
+	public DataQueryBuilder sliding(int duration, EnumTimeUnit durationTimeUnit, EnumTimeAggregation granularity) {
 		this.query.setTime(new TimeFilter(new DateTime().getMillis(), duration, durationTimeUnit, granularity));
 
 		return this;

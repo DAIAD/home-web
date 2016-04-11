@@ -200,7 +200,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 						eu.daiad.web.domain.application.DeviceMeter meterEntity = (eu.daiad.web.domain.application.DeviceMeter) entity;
 
 						WaterMeterDevice meter = new WaterMeterDevice(meterEntity.getAccount().getId(),
-										meterEntity.getKey(), meterEntity.getSerial());
+										meterEntity.getKey(), meterEntity.getSerial(), meterEntity.getLocation());
 
 						for (eu.daiad.web.domain.application.DeviceProperty p : meterEntity.getProperties()) {
 							meter.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
@@ -253,7 +253,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 							eu.daiad.web.domain.application.DeviceMeter meterEntity = (eu.daiad.web.domain.application.DeviceMeter) entity;
 
 							WaterMeterDevice meter = new WaterMeterDevice(meterEntity.getAccount().getId(),
-											meterEntity.getKey(), meterEntity.getSerial());
+											meterEntity.getKey(), meterEntity.getSerial(), meterEntity.getLocation());
 
 							for (eu.daiad.web.domain.application.DeviceProperty p : meterEntity.getProperties()) {
 								meter.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
@@ -320,7 +320,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 				eu.daiad.web.domain.application.DeviceMeter entity = result.get(0);
 
 				WaterMeterDevice meter = new WaterMeterDevice(entity.getAccount().getId(), entity.getKey(),
-								entity.getSerial());
+								entity.getSerial(), entity.getLocation());
 
 				for (eu.daiad.web.domain.application.DeviceProperty p : entity.getProperties()) {
 					meter.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));

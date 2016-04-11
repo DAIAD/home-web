@@ -1,18 +1,21 @@
 package eu.daiad.web.model.query;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 public class DataQuery {
 
 	TimeFilter time;
 
-	PopulationFilter population;
+	private ArrayList<PopulationFilter> population = new ArrayList<PopulationFilter>();
 
 	SpatialFilter spatial;
 
+	@JsonDeserialize(using = EnumMeasurementDataSource.Deserializer.class)
 	EnumMeasurementDataSource source = EnumMeasurementDataSource.BOTH;
 
-	EnumMetric metrics[] = {};
+	EnumMetric[] metrics = {};
 
 	public TimeFilter getTime() {
 		return time;
@@ -20,14 +23,6 @@ public class DataQuery {
 
 	public void setTime(TimeFilter time) {
 		this.time = time;
-	}
-
-	public PopulationFilter getPopulation() {
-		return population;
-	}
-
-	public void setPopulation(PopulationFilter population) {
-		this.population = population;
 	}
 
 	public SpatialFilter getSpatial() {
@@ -54,9 +49,7 @@ public class DataQuery {
 		this.metrics = metrics;
 	}
 
-	@Override
-	public String toString() {
-		return "DataQuery [time=" + time + ", population=" + population + ", spatial=" + spatial + ", source=" + source
-						+ ", metrics=" + Arrays.toString(metrics) + "]";
+	public ArrayList<PopulationFilter> getPopulation() {
+		return population;
 	}
 }

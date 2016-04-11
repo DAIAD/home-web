@@ -2,6 +2,7 @@ package eu.daiad.web.domain.application;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
@@ -30,6 +31,10 @@ public class Group {
 	@SequenceGenerator(sequenceName = "group_id_seq", name = "group_id_seq", allocationSize = 1, initialValue = 1)
 	@GeneratedValue(generator = "group_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
+
+	@Column()
+	@Type(type = "pg-uuid")
+	private UUID key = UUID.randomUUID();
 
 	@Version()
 	@Column(name = "row_version")
@@ -95,5 +100,9 @@ public class Group {
 
 	public long getRowVersion() {
 		return rowVersion;
+	}
+
+	public UUID getKey() {
+		return key;
 	}
 }

@@ -2,11 +2,15 @@ package eu.daiad.web.model.query;
 
 import org.joda.time.DateTime;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 public class TimeFilter {
 
+	@JsonDeserialize(using = EnumTemporalFilterType.Deserializer.class)
 	private EnumTemporalFilterType type = EnumTemporalFilterType.ABSOLUTE;
 
-	private EnumTimeUnit graunlarity = EnumTimeUnit.NONE;
+	@JsonDeserialize(using = EnumTimeAggregation.Deserializer.class)
+	private EnumTimeAggregation graunlarity = EnumTimeAggregation.ALL;
 
 	private long start;
 
@@ -14,11 +18,12 @@ public class TimeFilter {
 
 	private Integer duration;
 
-	private EnumTimeUnit durationTimeUnit = EnumTimeUnit.NONE;
+	@JsonDeserialize(using = EnumTimeUnit.Deserializer.class)
+	private EnumTimeUnit durationTimeUnit = EnumTimeUnit.HOUR;
 
 	public TimeFilter() {
 		this.type = EnumTemporalFilterType.ABSOLUTE;
-		this.graunlarity = EnumTimeUnit.HOUR;
+		this.graunlarity = EnumTimeAggregation.HOUR;
 
 		this.start = (new DateTime()).getMillis();
 		this.end = this.start;
@@ -26,7 +31,7 @@ public class TimeFilter {
 
 	public TimeFilter(long start, long end) {
 		this.type = EnumTemporalFilterType.ABSOLUTE;
-		this.graunlarity = EnumTimeUnit.HOUR;
+		this.graunlarity = EnumTimeAggregation.HOUR;
 
 		this.start = start;
 		this.end = end;
@@ -34,13 +39,13 @@ public class TimeFilter {
 
 	public TimeFilter(DateTime start, DateTime end) {
 		this.type = EnumTemporalFilterType.ABSOLUTE;
-		this.graunlarity = EnumTimeUnit.HOUR;
+		this.graunlarity = EnumTimeAggregation.HOUR;
 
 		this.start = start.getMillis();
 		this.end = end.getMillis();
 	}
 
-	public TimeFilter(long start, long end, EnumTimeUnit graunlarity) {
+	public TimeFilter(long start, long end, EnumTimeAggregation graunlarity) {
 		this.type = EnumTemporalFilterType.ABSOLUTE;
 		this.graunlarity = graunlarity;
 
@@ -48,7 +53,7 @@ public class TimeFilter {
 		this.end = end;
 	}
 
-	public TimeFilter(DateTime start, DateTime end, EnumTimeUnit graunlarity) {
+	public TimeFilter(DateTime start, DateTime end, EnumTimeAggregation graunlarity) {
 		this.type = EnumTemporalFilterType.ABSOLUTE;
 		this.graunlarity = graunlarity;
 
@@ -58,7 +63,7 @@ public class TimeFilter {
 
 	public TimeFilter(long start, int duration) {
 		this.type = EnumTemporalFilterType.SLIDING;
-		this.graunlarity = EnumTimeUnit.HOUR;
+		this.graunlarity = EnumTimeAggregation.HOUR;
 
 		this.start = start;
 		this.duration = duration;
@@ -67,14 +72,14 @@ public class TimeFilter {
 
 	public TimeFilter(long start, int duration, EnumTimeUnit durationTimeUnit) {
 		this.type = EnumTemporalFilterType.SLIDING;
-		this.graunlarity = EnumTimeUnit.HOUR;
+		this.graunlarity = EnumTimeAggregation.HOUR;
 
 		this.start = start;
 		this.duration = duration;
 		this.durationTimeUnit = durationTimeUnit;
 	}
 
-	public TimeFilter(long start, int duration, EnumTimeUnit durationTimeUnit, EnumTimeUnit granularity) {
+	public TimeFilter(long start, int duration, EnumTimeUnit durationTimeUnit, EnumTimeAggregation granularity) {
 		this.type = EnumTemporalFilterType.SLIDING;
 		this.graunlarity = granularity;
 
@@ -85,7 +90,7 @@ public class TimeFilter {
 
 	public TimeFilter(DateTime start, int duration) {
 		this.type = EnumTemporalFilterType.SLIDING;
-		this.graunlarity = EnumTimeUnit.HOUR;
+		this.graunlarity = EnumTimeAggregation.HOUR;
 
 		this.start = start.getMillis();
 		this.duration = duration;
@@ -94,14 +99,14 @@ public class TimeFilter {
 
 	public TimeFilter(DateTime start, int duration, EnumTimeUnit durationTimeUnit) {
 		this.type = EnumTemporalFilterType.SLIDING;
-		this.graunlarity = EnumTimeUnit.HOUR;
+		this.graunlarity = EnumTimeAggregation.HOUR;
 
 		this.start = start.getMillis();
 		this.duration = duration;
 		this.durationTimeUnit = durationTimeUnit;
 	}
 
-	public TimeFilter(DateTime start, int duration, EnumTimeUnit durationTimeUnit, EnumTimeUnit granularity) {
+	public TimeFilter(DateTime start, int duration, EnumTimeUnit durationTimeUnit, EnumTimeAggregation granularity) {
 		this.type = EnumTemporalFilterType.SLIDING;
 		this.graunlarity = granularity;
 
@@ -114,7 +119,7 @@ public class TimeFilter {
 		return type;
 	}
 
-	public EnumTimeUnit getGraunlarity() {
+	public EnumTimeAggregation getGraunlarity() {
 		return graunlarity;
 	}
 

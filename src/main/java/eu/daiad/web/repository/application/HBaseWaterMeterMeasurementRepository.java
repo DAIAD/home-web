@@ -2,6 +2,7 @@ package eu.daiad.web.repository.application;
 
 import java.io.IOException;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
@@ -40,6 +41,9 @@ import eu.daiad.web.model.meter.WaterMeterMeasurementQueryResult;
 import eu.daiad.web.model.meter.WaterMeterStatus;
 import eu.daiad.web.model.meter.WaterMeterStatusQuery;
 import eu.daiad.web.model.meter.WaterMeterStatusQueryResult;
+import eu.daiad.web.model.query.ExpandedDataQuery;
+import eu.daiad.web.model.query.ExpandedPopulationFilter;
+import eu.daiad.web.model.query.GroupDataSeries;
 
 @Repository()
 @Scope("prototype")
@@ -581,4 +585,163 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 		return newStopRow;
 	}
 
+	public ArrayList<GroupDataSeries> query(ExpandedDataQuery query) throws ApplicationException {
+		Connection connection = null;
+		Table table = null;
+		ResultScanner scanner = null;
+
+		ArrayList<GroupDataSeries> result = new ArrayList<GroupDataSeries>();
+		for (ExpandedPopulationFilter filter : query.getGroups()) {
+			result.add(new GroupDataSeries(filter.getLabel()));
+		}
+		try {
+			Configuration config = this.configurationBuilder.build();
+			connection = ConnectionFactory.createConnection(config);
+
+			table = connection.getTable(TableName.valueOf(this.meterTableMeasurementByTime));
+			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+
+			DateTime startDate = new DateTime(query.getStartDateTime(), DateTimeZone.UTC);
+			DateTime endDate = new DateTime(query.getEndDateTime(), DateTimeZone.UTC);
+
+			switch (query.getGranularity()) {
+				case HOUR:
+					startDate = new DateTime(startDate.getYear(), startDate.getMonthOfYear(),
+									startDate.getDayOfMonth(), startDate.getHourOfDay(), 0, 0, DateTimeZone.UTC);
+					endDate = new DateTime(endDate.getYear(), endDate.getMonthOfYear(), endDate.getDayOfMonth(),
+									endDate.getHourOfDay(), 59, 59, DateTimeZone.UTC);
+					break;
+				case DAY:
+					startDate = new DateTime(startDate.getYear(), startDate.getMonthOfYear(),
+									startDate.getDayOfMonth(), 0, 0, 0, DateTimeZone.UTC);
+					endDate = new DateTime(endDate.getYear(), endDate.getMonthOfYear(), endDate.getDayOfMonth(), 23,
+									59, 59, DateTimeZone.UTC);
+					break;
+				case WEEK:
+					DateTime monday = startDate.withDayOfWeek(DateTimeConstants.MONDAY);
+					DateTime sunday = endDate.withDayOfWeek(DateTimeConstants.SUNDAY);
+					startDate = new DateTime(monday.getYear(), monday.getMonthOfYear(), monday.getDayOfMonth(), 0, 0,
+									0, DateTimeZone.UTC);
+					endDate = new DateTime(sunday.getYear(), sunday.getMonthOfYear(), sunday.getDayOfMonth(), 23, 59,
+									59, DateTimeZone.UTC);
+					break;
+				case MONTH:
+					startDate = new DateTime(startDate.getYear(), startDate.getMonthOfYear(), 1, 0, 0, 0,
+									DateTimeZone.UTC);
+					endDate = new DateTime(endDate.getYear(), endDate.getMonthOfYear(), endDate.dayOfMonth()
+									.getMaximumValue(), 23, 59, 59, DateTimeZone.UTC);
+					break;
+				case YEAR:
+					startDate = new DateTime(startDate.getYear(), 1, 1, 0, 0, 0, DateTimeZone.UTC);
+					endDate = new DateTime(endDate.getYear(), 12, 31, 23, 59, 59, DateTimeZone.UTC);
+					break;
+				case ALL:
+					// Ignore
+					break;
+				default:
+					throw new ApplicationException(DataErrorCode.TIME_GRANULARITY_NOT_SUPPORTED).set("level",
+									query.getGranularity());
+			}
+
+			for (short p = 0; p < timePartitions; p++) {
+				Scan scan = new Scan();
+				scan.addFamily(columnFamily);
+
+				byte[] partitionBytes = Bytes.toBytes(p);
+
+				long from = startDate.getMillis() / 1000;
+				from = from - (from % EnumTimeInterval.DAY.getValue());
+				byte[] fromBytes = Bytes.toBytes(from);
+
+				long to = endDate.getMillis() / 1000;
+				to = to - (to % EnumTimeInterval.DAY.getValue());
+				byte[] toBytes = Bytes.toBytes(to);
+
+				// Scanner row key prefix start
+				byte[] rowKey = new byte[partitionBytes.length + fromBytes.length];
+
+				System.arraycopy(partitionBytes, 0, rowKey, 0, partitionBytes.length);
+				System.arraycopy(fromBytes, 0, rowKey, partitionBytes.length, fromBytes.length);
+
+				scan.setStartRow(rowKey);
+
+				// Scanner row key prefix end
+				rowKey = new byte[partitionBytes.length + toBytes.length];
+
+				System.arraycopy(partitionBytes, 0, rowKey, 0, partitionBytes.length);
+				System.arraycopy(toBytes, 0, rowKey, partitionBytes.length, toBytes.length);
+
+				scan.setStopRow(calculateTheClosestNextRowKeyForPrefix(rowKey));
+
+				scanner = table.getScanner(scan);
+
+				boolean stopScanner = false;
+				for (Result r = scanner.next(); r != null; r = scanner.next()) {
+					NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
+
+					long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 2, 10));
+					byte[] serialHash = Arrays.copyOfRange(r.getRow(), 10, 26);
+
+					for (Entry<byte[], byte[]> entry : map.entrySet()) {
+						short offset = Bytes.toShort(Arrays.copyOfRange(entry.getKey(), 0, 2));
+
+						long timestamp = ((Long.MAX_VALUE / 1000) - (timeBucket + (long) offset)) * 1000L;
+						if (startDate.getMillis() > timestamp) {
+							stopScanner = true;
+							break;
+						}
+
+						int length = (int) Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
+						byte[] slice = Arrays.copyOfRange(entry.getKey(), 3, 3 + length);
+
+						String columnQualifier = Bytes.toString(slice);
+						if (columnQualifier.equals("v")) {
+							float volume = Bytes.toFloat(entry.getValue());
+
+							int filterIndex = 0;
+							for (ExpandedPopulationFilter filter : query.getGroups()) {
+								GroupDataSeries series = result.get(filterIndex);
+
+								if (inArray(filter.getSerials(), serialHash)) {
+									series.addDataPoint(query.getGranularity(), timestamp, volume, query.getMetrics());
+								}
+
+								filterIndex++;
+							}
+						}
+					}
+					if (stopScanner) {
+						break;
+					}
+				}
+			}
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		} finally {
+			try {
+				if (scanner != null) {
+					scanner.close();
+				}
+				if (table != null) {
+					table.close();
+				}
+				if ((connection != null) && (!connection.isClosed())) {
+					connection.close();
+				}
+			} catch (Exception ex) {
+				logger.error(ERROR_RELEASE_RESOURCES, ex);
+			}
+		}
+
+		return result;
+	}
+
+	private boolean inArray(ArrayList<byte[]> group, byte[] hash) {
+		for (byte[] entry : group) {
+			if (Arrays.equals(entry, hash)) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

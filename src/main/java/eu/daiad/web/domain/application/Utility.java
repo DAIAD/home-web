@@ -2,6 +2,7 @@ package eu.daiad.web.domain.application;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
@@ -29,6 +30,10 @@ public class Utility {
 	@SequenceGenerator(sequenceName = "utility_id_seq", name = "utility_id_seq", allocationSize = 1, initialValue = 1)
 	@GeneratedValue(generator = "utility_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
+
+	@Column()
+	@Type(type = "pg-uuid")
+	private UUID key = UUID.randomUUID();
 
 	@Basic
 	private String name;
@@ -96,5 +101,9 @@ public class Utility {
 
 	public String getDefaultAdministratorUsername() {
 		return defaultAdministratorUsername;
+	}
+
+	public UUID getKey() {
+		return key;
 	}
 }

@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
 public enum EnumTimeUnit {
-	NONE(0), HOUR(1), DAY(2), WEEK(3), MONTH(4), YEAR(5), ALL(6);
+	HOUR(1), DAY(2), WEEK(3), MONTH(4), YEAR(5);
 
 	private final int value;
 
@@ -32,7 +32,7 @@ public enum EnumTimeUnit {
 	public static EnumTimeUnit fromInteger(int value) {
 		EnumTimeUnit type = intToTypeMap.get(Integer.valueOf(value));
 		if (type == null)
-			return EnumTimeUnit.NONE;
+			return EnumTimeUnit.HOUR;
 		return type;
 	}
 
@@ -42,7 +42,7 @@ public enum EnumTimeUnit {
 				return item;
 			}
 		}
-		return EnumTimeUnit.NONE;
+		return EnumTimeUnit.HOUR;
 	}
 
 	public static class Deserializer extends JsonDeserializer<EnumTimeUnit> {

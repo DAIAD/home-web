@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
 import org.apache.commons.logging.Log;
@@ -518,5 +519,44 @@ public class JpaUserRepository implements IUserRepository {
 		}
 
 		return null;
+	}
+
+	public ArrayList<UUID> getUserKeysForGroup(UUID groupKey) {
+		ArrayList<UUID> result = new ArrayList<UUID>();
+		try {
+			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from \"group\" g "
+							+ "inner join group_member gm on g.id = gm.group_id "
+							+ "inner join account a on gm.account_id = a.id where g.key = CAST(? as uuid)");
+			query.setParameter(1, groupKey.toString());
+
+			List<?> keys = query.getResultList();
+			for (Object key : keys) {
+				result.add((UUID) key);
+			}
+		} catch (Exception ex) {
+			logger.error(String.format("Failed to load user keys for group [%s].", groupKey), ex);
+		}
+
+		return result;
+	}
+
+	public ArrayList<UUID> getUserKeysForUtility(UUID utilityKey) {
+		ArrayList<UUID> result = new ArrayList<UUID>();
+		try {
+			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from utility u "
+							+ "inner join account a on u.id = a.utility_id where u.key = CAST(? as uuid)");
+			query.setParameter(1, utilityKey.toString());
+
+			@SuppressWarnings("unchecked")
+			List<String> keys = query.getResultList();
+
+			for (String key : keys) {
+				result.add(UUID.fromString(key));
+			}
+		} catch (Exception ex) {
+			logger.error(String.format("Failed to load user keys for utility [%s]", utilityKey), ex);
+		}
+
+		return result;
 	}
 }

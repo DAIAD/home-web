@@ -62,12 +62,10 @@ import eu.daiad.web.model.export.DownloadFileResponse;
 import eu.daiad.web.model.export.ExportUserDataQuery;
 import eu.daiad.web.model.export.ExportUserDataRequest;
 import eu.daiad.web.model.query.DataQueryRequest;
-import eu.daiad.web.model.query.DataQueryResponse;
-import eu.daiad.web.model.query.EnumMetric;
-import eu.daiad.web.model.query.SpatialDataPoint;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IUserRepository;
+import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.IExportService;
 
 @Controller
@@ -80,6 +78,9 @@ public class DataController extends BaseController {
 
 	@Autowired
 	private IExportService exportService;
+
+	@Autowired
+	private IDataService dataService;
 
 	@Autowired
 	private IUserRepository userRepository;
@@ -225,21 +226,7 @@ public class DataController extends BaseController {
 		RestResponse response = new RestResponse();
 
 		try {
-			DataQueryResponse result = new DataQueryResponse();
-
-			SpatialDataPoint point = new SpatialDataPoint();
-
-			point.setGeometry(data.getQuery().getSpatial().getGeometry());
-
-			point.setLabel("Alicante");
-			point.setPopulation(3);
-			point.setTimestamp((new DateTime()).getMillis());
-
-			point.getValues().put(EnumMetric.SUM.toString(), 1293.34);
-			point.getValues().put(EnumMetric.COUNT.toString(), 20);
-
-			result.getPoints().add(point);
-			return result;
+			return dataService.execute(data.getQuery());
 		} catch (ApplicationException ex) {
 			logger.error(ex.getMessage(), ex);
 

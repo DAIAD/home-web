@@ -27,19 +27,20 @@ var Debug = React.createClass({
   
   execute: function(e) {
     var end = moment().valueOf();
-    var start = moment().subtract(20, 'days').valueOf();
+    var start = moment().subtract(30, 'days').valueOf();
     
     var query = {
         time: {
           type : 'ABSOLUTE',
           interval : 'DAY',
           start: start,
-          end: end
+          end: end,
+          graunlarity: 'ALL'
         },
-        population: {
-          users: [1,2],
-          groups: [4,15]
-        },
+        population: [
+          { type :'USER', label: 'Bob', users: ['a9509da9-edf5-4838-acf4-8f1b73485d7a']},
+          { type :'UTILITY', label: 'Alicante', utility: 'd62815fb-b949-463c-a0e1-a0f1d1a9d6cd'}
+        ],
         spatial : {
           type: 'CONTAINS',
           geometry: {
@@ -79,7 +80,7 @@ var Debug = React.createClass({
           }
         },
         source: 'ALL',
-        metrics: ['SUM', 'COUNT']
+        metrics: ['SUM', 'COUNT', 'MIN', 'MAX', 'AVERAGE']
     };
     
     this.props.actions.submitQuery({ query : query });

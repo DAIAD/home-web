@@ -1,36 +1,36 @@
 package eu.daiad.web.model.query;
 
-import java.util.ArrayList;
-import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import eu.daiad.web.service.DataQueryUserCollection;
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type")
+@JsonSubTypes({ @Type(value = UserPopulationFilter.class, name = "USER"),
+				@Type(value = GroupPopulationFilter.class, name = "GROUP"),
+				@Type(value = UtilityPopulationFilter.class, name = "UTILITY") })
+public abstract class PopulationFilter {
 
-public class PopulationFilter {
+	@JsonDeserialize(using = EnumPopulationFilterType.Deserializer.class)
+	private EnumPopulationFilterType type = EnumPopulationFilterType.UNDEFINED;
 
-	private ArrayList<DataQueryUserCollection> groups = new ArrayList<DataQueryUserCollection>();
+	private String label;
 
 	public PopulationFilter() {
 
 	}
 
-	public PopulationFilter(String label, UUID user) {
-		this.add(label, user);
+	public PopulationFilter(String label) {
+		this.label = label;
 	}
 
-	public PopulationFilter(String label, UUID[] users) {
-		this.add(label, users);
+	public String getLabel() {
+		return label;
 	}
 
-	public ArrayList<DataQueryUserCollection> getGroups() {
-		return groups;
+	public void setLabel(String label) {
+		this.label = label;
 	}
 
-	public void add(String label, UUID user) {
-		this.groups.add(new DataQueryUserCollection(label, user));
-	}
-
-	public void add(String label, UUID[] users) {
-		this.groups.add(new DataQueryUserCollection(label, users));
-	}
-
+	public abstract EnumPopulationFilterType getType();
 }

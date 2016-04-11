@@ -2,17 +2,15 @@ package eu.daiad.web.model.query;
 
 import java.util.ArrayList;
 
-import eu.daiad.web.service.DataQueryUserCollection;
-
 public class ExpandedDataQuery {
 
 	private long startDateTime;
 
 	private long endDateTime;
 
-	private EnumTimeUnit granularity = EnumTimeUnit.HOUR;
+	private EnumTimeAggregation granularity = EnumTimeAggregation.ALL;
 
-	private ArrayList<DataQueryUserCollection> groups = new ArrayList<DataQueryUserCollection>();
+	private ArrayList<ExpandedPopulationFilter> groups = new ArrayList<ExpandedPopulationFilter>();
 
 	private EnumMetric metrics[];
 
@@ -32,11 +30,11 @@ public class ExpandedDataQuery {
 		this.endDateTime = endDateTime;
 	}
 
-	public EnumTimeUnit getGranularity() {
+	public EnumTimeAggregation getGranularity() {
 		return granularity;
 	}
 
-	public void setGranularity(EnumTimeUnit granularity) {
+	public void setGranularity(EnumTimeAggregation granularity) {
 		this.granularity = granularity;
 	}
 
@@ -48,7 +46,7 @@ public class ExpandedDataQuery {
 		this.metrics = metrics;
 	}
 
-	public ArrayList<DataQueryUserCollection> getGroups() {
+	public ArrayList<ExpandedPopulationFilter> getGroups() {
 		return groups;
 	}
 
