@@ -81,7 +81,7 @@ public class SearchController extends BaseRestController {
 			AuthenticatedUser user = this.authenticate(query.getCredentials(), EnumRole.ROLE_USER);
 
 			if ((query.getDeviceKey() == null) || (query.getDeviceKey().length == 0)) {
-				return new WaterMeterStatusQueryResult();
+				return new WaterMeterMeasurementQueryResult();
 			}
 
 			String[] serials = this.checkMeterOwnership(user.getKey(), query.getDeviceKey());
