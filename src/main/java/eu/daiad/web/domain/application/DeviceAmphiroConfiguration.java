@@ -13,6 +13,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Version;
 
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
@@ -26,6 +27,10 @@ public class DeviceAmphiroConfiguration {
 	@SequenceGenerator(sequenceName = "device_amphiro_config_id_seq", name = "device_amphiro_config_id_seq", allocationSize = 1, initialValue = 1)
 	@GeneratedValue(generator = "device_amphiro_config_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
+
+	@Version()
+	@Column(name = "row_version")
+	private long rowVersion;
 
 	@Column()
 	@Type(type = "pg-uuid")
@@ -49,7 +54,7 @@ public class DeviceAmphiroConfiguration {
 	@Column(name = "enabled_on")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime enabledOn;
-	
+
 	@Basic()
 	private boolean active;
 
@@ -272,6 +277,10 @@ public class DeviceAmphiroConfiguration {
 
 	public void setEnabledOn(DateTime enabledOn) {
 		this.enabledOn = enabledOn;
+	}
+
+	public long getRowVersion() {
+		return rowVersion;
 	}
 
 }

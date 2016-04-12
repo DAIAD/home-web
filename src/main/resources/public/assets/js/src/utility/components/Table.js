@@ -10,14 +10,17 @@ var Checkbox = require('./Checkbox');
 var Table = React.createClass({
 	getInitialState: function() {
 		return {
-			activePage: 0
-    	};
+			activePage: this.props.data.pager.index
+  	};
 	},
 	
 	onPageIndexChange(event, selectedEvent) {
 		this.setState({
 			activePage: (selectedEvent.eventKey - 1)
-    	});
+  	});
+		if(typeof this.props.onPageIndexChange === 'function') {
+		  this.props.onPageIndexChange(selectedEvent.eventKey - 1);
+		}
 	},
 	  
 	getDefaultProps: function() {
@@ -47,7 +50,7 @@ var Table = React.createClass({
 			<div className='clearfix'>
 				<Bootstrap.Table hover style={{margin: 0, padding: 0}}>
 					<Table.Header data = {this.props.data}></Table.Header>
-					<Table.Body data = {this.props.data}></Table.Body>			
+					<Table.Body data={this.props.data} activePageIndex={this.state.activePage} ></Table.Body>			
 				</Bootstrap.Table>
 				<div style={{float:'right'}}>
 					<Bootstrap.Pagination 	prev
@@ -55,7 +58,7 @@ var Table = React.createClass({
 											first
 											last
 											ellipsis
-											items={this.props.data.pager.size}
+											items={Math.ceil(this.props.data.pager.count / this.props.data.pager.size)}
 			        						maxButtons={7}
 			        						activePage={this.state.activePage + 1}
 			        						onSelect={this.onPageIndexChange} />	
@@ -104,14 +107,24 @@ var Body = React.createClass({
   	render: function() { 		
   		var self = this;
 
-		var rows = this.props.data.rows.map(function(row, rowIndex) {
-			return (
-				<Table.Row 	key={rowIndex} 
-							fields={self.props.data.fields} 
-							row={row}>
-				</Table.Row>
-			);
-		});
+  		var filtered = this.props.data.rows.reduce(function(newArray, currentValue, currentIndex) {
+  		  var pager = self.props.data.pager;
+  		  
+  		  if(((self.props.activePageIndex*pager.size) <= currentIndex) && (currentIndex < ((self.props.activePageIndex+1)*pager.size))) {
+          newArray.push(currentValue);
+  		  }
+
+  		  return newArray;
+  		}, []);
+  		
+  		var rows = filtered.map(function(row, rowIndex) {
+  			return (
+  				<Table.Row 	key={rowIndex} 
+  							fields={self.props.data.fields} 
+  							row={row}>
+  				</Table.Row>
+  			);
+  		});
 		
   		return (
 			<tbody>
@@ -154,7 +167,18 @@ var Cell = React.createClass({
   		if(this.props.field.hasOwnProperty('type')) {
   			switch(this.props.field.type) {
   			case 'action':
-  				text = (<i className={'fa fa-' + this.props.field.icon + ' fa-fw table-action'} onClick={this.props.field.handler.bind(this)}></i>);
+  			  var visible = true;
+  			  if(typeof this.props.field.visible === 'function') {
+  			    visible = this.props.field.visible(this.props.row);
+  			  }
+  			  if(visible) {
+  			    if(this.props.field.icon) {
+  			      var color = this.props.field.color || '#000000';
+  			      text = (<i className={'fa fa-' + this.props.field.icon + ' fa-fw table-action'} style={{color : color}} onClick={this.props.field.handler.bind(this)}></i>);
+  			    } else {
+  			      text = (<i className="table-action" onClick={this.props.field.handler.bind(this)}><img src={this.props.field.image} /></i>);
+  			    }
+  			  }
   				break;
   			case 'datetime':
   				if(value) {
@@ -200,8 +224,10 @@ var Cell = React.createClass({
 
   		if(this.props.field.hasOwnProperty('link')) { 	
   			if(typeof this.props.field.link === 'function') {
-  				console.log(this.props.field.link(this.props.row));
-  				text = (<Link to={formatLink(this.props.field.link(this.props.row), this.props.row)}>{text}</Link>);
+  			  var href = this.props.field.link(this.props.row);
+  			  if(href) {
+            text = (<Link to={formatLink(this.props.field.link(this.props.row), this.props.row)}>{text}</Link>);  			    
+  			  }
   			} else {
   				text = (<Link to={formatLink(this.props.field.link, this.props.row)}>{text}</Link>);
   			}

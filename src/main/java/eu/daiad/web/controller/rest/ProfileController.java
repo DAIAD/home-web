@@ -9,13 +9,13 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseRestController;
-import eu.daiad.web.model.Credentials;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.profile.NotifyProfileRequest;
 import eu.daiad.web.model.profile.ProfileResponse;
 import eu.daiad.web.model.profile.UpdateProfileRequest;
+import eu.daiad.web.model.security.Credentials;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.application.IProfileRepository;
 
@@ -51,7 +51,7 @@ public class ProfileController extends BaseRestController {
 		try {
 			this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
-			this.profileRepository.setProfileConfiguration(request.getApplication(), request.getConfiguration());
+			this.profileRepository.setProfileConfiguration(EnumApplication.MOBILE, request.getConfiguration());
 
 		} catch (ApplicationException ex) {
 			logger.error(ex.getMessage(), ex);
@@ -69,7 +69,7 @@ public class ProfileController extends BaseRestController {
 		try {
 			this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
-			this.profileRepository.notifyProfile(request.getApplication(), request.getVersion(), request.getUpdatedOn());
+			this.profileRepository.notifyProfile(EnumApplication.MOBILE, request.getVersion(), request.getUpdatedOn());
 
 		} catch (ApplicationException ex) {
 			logger.error(ex.getMessage(), ex);

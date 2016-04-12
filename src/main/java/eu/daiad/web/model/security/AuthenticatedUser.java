@@ -22,6 +22,10 @@ public class AuthenticatedUser extends User {
 
 	private UUID key;
 
+	private int id;
+
+	private int utilityId;
+
 	private String firstname;
 
 	private String lastname;
@@ -42,15 +46,12 @@ public class AuthenticatedUser extends User {
 
 	private EnumUtilityMode utilityMode = EnumUtilityMode.INACTIVE;
 
-	public AuthenticatedUser(UUID key, String username, String password) {
-		super(username, password, new ArrayList<GrantedAuthority>());
-
-		this.key = key;
-	}
-
-	public AuthenticatedUser(UUID key, String username, String password,
+	public AuthenticatedUser(int id, UUID key, String username, String password, int utilityId, boolean isLocked,
 					Collection<? extends GrantedAuthority> authorities) {
-		super(username, password, authorities);
+		super(username, password, true, true, true, !isLocked, authorities);
+
+		this.id = id;
+		this.utilityId = utilityId;
 
 		this.key = key;
 	}
@@ -157,5 +158,13 @@ public class AuthenticatedUser extends User {
 
 	public void setUtilityMode(EnumUtilityMode utilityMode) {
 		this.utilityMode = utilityMode;
+	}
+
+	public int getUtilityId() {
+		return utilityId;
+	}
+
+	public int getId() {
+		return id;
 	}
 }

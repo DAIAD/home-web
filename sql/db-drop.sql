@@ -1,3 +1,6 @@
+-- views
+DROP VIEW IF EXISTS public.trial_account_activity;
+
 -- alert
 DROP TABLE IF EXISTS public.account_alert_property;
 

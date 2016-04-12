@@ -291,7 +291,6 @@ var Dashboard = React.createClass({
 		}
 
 		var onChangeTimeline = function(value) {
-			console.log(value);
 			this.setState({points: createPoints()});
 		};
 		

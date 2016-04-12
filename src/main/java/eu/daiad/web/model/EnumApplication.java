@@ -1,7 +1,13 @@
 package eu.daiad.web.model;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 
 public enum EnumApplication {
 	UNDEFINED(0), HOME(1), UTILITY(2), MOBILE(3);
@@ -40,5 +46,14 @@ public enum EnumApplication {
 		}
 
 		return EnumApplication.UNDEFINED;
+	}
+
+	public class Deserializer extends JsonDeserializer<EnumApplication> {
+
+		@Override
+		public EnumApplication deserialize(JsonParser parser, DeserializationContext context) throws IOException,
+						JsonProcessingException {
+			return EnumApplication.fromString(parser.getValueAsString());
+		}
 	}
 }

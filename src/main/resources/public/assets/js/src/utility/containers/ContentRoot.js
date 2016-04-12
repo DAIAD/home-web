@@ -10,8 +10,6 @@ var ScrollToTop = require('react-scroll-up');
 var LoginForm = require('../components/LoginForm');
 var LocaleSwitcher = require('../components/LocaleSwitcher');
 
-var LeafletMap = require('../components/LeafletMap');
-
 var { login, logout } = require('../actions/SessionActions');
 var { setLocale } = require('../actions/LocaleActions');
 
@@ -87,118 +85,123 @@ var ContentRoot = React.createClass({
 						</div>
 						<div className='navbar-default navbar-static-side' role='navigation'>
 							<div className='sidebar-collapse'>
-		                    	<ul className='nav' id='side-menu'>
-	                            	<li>
-                            			<Link to='/'>
-	                            			<i className='fa fa-dashboard fa-fw'></i>{' ' + _t({ id: 'Section.Dashboard'})}
-                            			</Link>
-	                            	</li>
-	                            	<li>
-	                            		<Link to='/analytics'>
-		                            		<i className='fa fa-bar-chart fa-fw'></i>{' ' + _t({ id: 'Section.Analytics'})}
-	                            		</Link>
-	                    			</li>
-	                            	<li>
-	                            		<Link to='/forecasting'>
-	                            			<i className='fa fa-line-chart fa-fw'></i>{' ' + _t({ id: 'Section.Forecasting'})}
-	                        			</Link>
-	                    			</li>
-	            					<li>
-	            						<a href='#' onClick={expandConsumers.bind(this)}>
-	            							<i className='fa fa-group fa-fw'></i>
-	            							{' ' + _t({ id: 'Section.Consumers'}) + ' '}
-	            							{ this.state.expandConsumers ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)}
-	            						</a>
-	            						<Collapsible open={this.state.expandConsumers}>
-	            							<ul className='nav'>
-		                    					<li>
-		                    						<Link to='/demographics'>
-				            							<span  style={{paddingLeft: 18}}>
-				            								<i className='fa fa-bookmark fa-fw'></i>{' ' + _t({ id: 'Section.Demographics'})}
-			            								</span>
-				            						</Link>
-				            					</li>
-				            					<li>
-				            						<Link to='/search'>
-				            							<span  style={{paddingLeft: 18}}>
-				            								<i className='fa fa-search fa-fw'></i>{' ' + _t({ id: 'Section.Search'})}
-			            								</span>
-				            						</Link>
-				            					</li>
-				            					<li>
-	                        						<Link to='/mode/management'>
-			                							<span  style={{paddingLeft: 18}}>
-			                								<i className='fa fa-sliders fa-fw'></i>{' ' + _t({ id: 'Section.ModeManagement'})}
-		                								</span>
-			                						</Link>
-			            					    </li>
-				                        	</ul>
-	            						</Collapsible>
-	            					</li>
-		            				<li>
-		            					<Link to='/scheduler'>
-		            						<i className='fa fa-clock-o fa-fw'></i>{' ' + _t({ id: 'Section.Scheduler'})}
-		            					</Link>
-		            				</li>
-	            					<li>
-	            						<a href='#' onClick={expandMessages.bind(this)}>
-	            							<i className='fa fa-comments-o fa-fw'></i>
-	            							{' ' + _t({ id: 'Section.Messages'}) + ' '}
-	            							<Bootstrap.Badge className='danger'>4</Bootstrap.Badge>
-	            							{ this.state.expandMessages ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)}
-	            						</a>
-	            						<Collapsible open={this.state.expandMessages}>
-	            							<ul className='nav'>
-		                    					<li>
-		                    						<Link to='/alerts'>
-				            							<span  style={{paddingLeft: 18}}>
-				            								<i className='fa fa-bell fa-fw'></i>{' ' + _t({ id: 'Section.Alerts'})}
-			            								</span>
-				            						</Link>
-				            					</li>
-				            					<li>
-				            						<Link to='/announcements'>
-				            							<span  style={{paddingLeft: 18}}>
-				            								<i className='fa fa-volume-up fa-fw'></i>{' ' + _t({ id: 'Section.Announcements'})}
-			            								</span>
-				            						</Link>
-				            					</li>
-				                        	</ul>
-	            						</Collapsible>
+							  <ul className='nav' id='side-menu'>
+        	        <li>
+            			  <Link to='/'>
+              			  <i className='fa fa-dashboard fa-fw'></i>{' ' + _t({ id: 'Section.Dashboard'})}
+              			</Link>
+                	</li>
+                	<li>
+                		<Link to='/analytics'>
+                  		<i className='fa fa-bar-chart fa-fw'></i>{' ' + _t({ id: 'Section.Analytics'})}
+                		</Link>
+            			</li>
+                	<li>
+                		<Link to='/forecasting'>
+                			<i className='fa fa-line-chart fa-fw'></i>{' ' + _t({ id: 'Section.Forecasting'})}
+              			</Link>
+            			</li>
+        					<li>
+        						<a href='#' onClick={expandConsumers.bind(this)}>
+        							<i className='fa fa-group fa-fw'></i>
+        							{' ' + _t({ id: 'Section.Consumers'}) + ' '}
+        							{ this.state.expandConsumers ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)}
+        						</a>
+        						<Collapsible open={this.state.expandConsumers}>
+        							<ul className='nav'>
+                  					<li>
+                  						<Link to='/demographics'>
+	            							<span  style={{paddingLeft: 18}}>
+	            								<i className='fa fa-bookmark fa-fw'></i>{' ' + _t({ id: 'Section.Demographics'})}
+            								</span>
+	            						</Link>
 	            					</li>
 	            					<li>
-		            					<a href='#' onClick={expandSettings.bind(this)}>
-		            					<i className='fa fa-cogs fa-fw'></i>
-		            					{' ' + _t({ id: 'Section.Settings'})}
-		            					{ this.state.expandSettings ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)} 
-		            				</a>
-		            				<Collapsible open={this.state.expandSettings}>
-		            					<ul className='nav'>
-		            						<li>
-		            							<Link to='/settings/user'>
-		            								<span  style={{paddingLeft: 18}}>
-		            									<i className='fa fa-user fa-fw'></i>{' ' + _t({ id: 'Settings.User'})}
-		            								</span>
-		            							</Link>
-		            						</li>
-		            						<li>
-		            							<Link to='/settings/system'>
-		            								<span  style={{paddingLeft: 18}}>
-		            									<i className='fa fa-server fa-fw'></i>{' ' + _t({ id: 'Settings.System'})}
-		            								</span>
-		            							</Link>
-		            						</li>
-		            					</ul>
-		            				</Collapsible>
-		            				</li>
-		            				<li>
-		            					<Link to='/report'>
-		            						<i className='fa fa-database fa-fw'></i>{' ' + _t({ id: 'Section.Reporting'})}
-		            					</Link>
-		            				</li>
+	            						<Link to='/search'>
+	            							<span  style={{paddingLeft: 18}}>
+	            								<i className='fa fa-search fa-fw'></i>{' ' + _t({ id: 'Section.Search'})}
+            								</span>
+	            						</Link>
+	            					</li>
+	            					<li>
+                  						<Link to='/mode/management'>
+                							<span  style={{paddingLeft: 18}}>
+                								<i className='fa fa-sliders fa-fw'></i>{' ' + _t({ id: 'Section.ModeManagement'})}
+              								</span>
+                						</Link>
+            					    </li>
 	                        	</ul>
-	                    	</div>
-	                	</div>
+        						</Collapsible>
+        					</li>
+          				<li>
+          					<Link to='/scheduler'>
+          						<i className='fa fa-clock-o fa-fw'></i>{' ' + _t({ id: 'Section.Scheduler'})}
+          					</Link>
+          				</li>
+        					<li>
+        						<a href='#' onClick={expandMessages.bind(this)}>
+        							<i className='fa fa-comments-o fa-fw'></i>
+        							{' ' + _t({ id: 'Section.Messages'}) + ' '}
+        							<Bootstrap.Badge className='danger'>4</Bootstrap.Badge>
+        							{ this.state.expandMessages ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)}
+        						</a>
+        						<Collapsible open={this.state.expandMessages}>
+        							<ul className='nav'>
+                  					<li>
+                  						<Link to='/alerts'>
+	            							<span  style={{paddingLeft: 18}}>
+	            								<i className='fa fa-bell fa-fw'></i>{' ' + _t({ id: 'Section.Alerts'})}
+            								</span>
+	            						</Link>
+	            					</li>
+	            					<li>
+	            						<Link to='/announcements'>
+	            							<span  style={{paddingLeft: 18}}>
+	            								<i className='fa fa-volume-up fa-fw'></i>{' ' + _t({ id: 'Section.Announcements'})}
+            								</span>
+	            						</Link>
+	            					</li>
+	                        	</ul>
+        						</Collapsible>
+        					</li>
+        					<li>
+          					<a href='#' onClick={expandSettings.bind(this)}>
+          					  <i className='fa fa-cogs fa-fw'></i>
+          					  {' ' + _t({ id: 'Section.Settings'})}
+          					  { this.state.expandSettings ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)} 
+          					</a>
+          					<Collapsible open={this.state.expandSettings}>
+            					<ul className='nav'>
+            						<li>
+            							<Link to='/settings/user'>
+            								<span  style={{paddingLeft: 18}}>
+            									<i className='fa fa-user fa-fw'></i>{' ' + _t({ id: 'Settings.User'})}
+            								</span>
+            							</Link>
+            						</li>
+            						<li>
+            							<Link to='/settings/system'>
+            								<span  style={{paddingLeft: 18}}>
+            									<i className='fa fa-server fa-fw'></i>{' ' + _t({ id: 'Settings.System'})}
+            								</span>
+            							</Link>
+            						</li>
+            					</ul>
+            				</Collapsible>
+          				</li>
+          				<li>
+          					<Link to='/report'>
+          						<i className='fa fa-database fa-fw'></i>{' ' + _t({ id: 'Section.Reporting'})}
+          					</Link>
+          				</li>
+        				  <li>
+        				    <Link to='/debug'>
+        				      <i className='fa fa-bug fa-fw'></i>{' ' + _t({ id: 'Debug'})}
+      				      </Link>
+    				      </li>	            				
+  				      </ul>
+            	</div>
+          	</div>
 					</nav>
 					<div className='page-wrapper'>
 						{this.props.children}
@@ -215,7 +218,6 @@ var ContentRoot = React.createClass({
 		return content;
   }
 });
-
 
 function mapStateToProps(state) {
 	return {

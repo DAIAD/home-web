@@ -14,9 +14,12 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Version;
 
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
+
+import com.vividsolutions.jts.geom.Geometry;
 
 import eu.daiad.web.model.EnumGender;
 
@@ -29,6 +32,10 @@ public class AccountWhiteListEntry {
 	@SequenceGenerator(sequenceName = "account_white_list_id_seq", name = "account_white_list_id_seq", allocationSize = 1, initialValue = 1)
 	@GeneratedValue(generator = "account_white_list_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
+
+	@Version()
+	@Column(name = "row_version")
+	private long rowVersion;
 
 	@ManyToOne(cascade = { CascadeType.ALL })
 	@JoinColumn(name = "utility_id", nullable = false)
@@ -48,6 +55,13 @@ public class AccountWhiteListEntry {
 	@Column(name = "locale", columnDefinition = "bpchar", length = 2)
 	private String locale;
 
+	@Column(name = "meter_serial")
+	private String meterSerial;
+
+	@Type(type = "org.hibernate.spatial.GeometryType")
+	@Column(name = "meter_location")
+	private Geometry meterLocation;
+
 	@Basic()
 	private String firstname;
 
@@ -62,10 +76,10 @@ public class AccountWhiteListEntry {
 
 	@Basic()
 	private String city;
-	
+
 	@Basic()
 	private String address;
-	
+
 	@Column(name = "postal_code")
 	private String postalCode;
 
@@ -203,6 +217,26 @@ public class AccountWhiteListEntry {
 
 	public void setAddress(String address) {
 		this.address = address;
+	}
+
+	public long getRowVersion() {
+		return rowVersion;
+	}
+
+	public String getMeterSerial() {
+		return meterSerial;
+	}
+
+	public void setMeterSerial(String meterSerial) {
+		this.meterSerial = meterSerial;
+	}
+
+	public Geometry getMeterLocation() {
+		return meterLocation;
+	}
+
+	public void setMeterLocation(Geometry meterLocation) {
+		this.meterLocation = meterLocation;
 	}
 
 }

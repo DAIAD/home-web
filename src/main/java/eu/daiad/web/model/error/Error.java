@@ -1,4 +1,4 @@
-package eu.daiad.web.model;
+package eu.daiad.web.model.error;
 
 public class Error {
 

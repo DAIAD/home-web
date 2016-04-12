@@ -9,9 +9,13 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
 import org.joda.time.DateTime;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.vividsolutions.jts.geom.Geometry;
+
+import eu.daiad.web.domain.application.AccountWhiteListEntry;
 import eu.daiad.web.domain.application.DeviceAmphiro;
 import eu.daiad.web.domain.application.DeviceAmphiroConfiguration;
 import eu.daiad.web.domain.application.DeviceAmphiroConfigurationDefault;
@@ -32,6 +36,9 @@ import eu.daiad.web.model.error.UserErrorCode;
 @Transactional("transactionManager")
 public class JpaDeviceRepository implements IDeviceRepository {
 
+	@Value("${security.white-list}")
+	private boolean enforceWhiteListCheck;
+
 	@PersistenceContext(unitName = "default")
 	EntityManager entityManager;
 
@@ -51,6 +58,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 			eu.daiad.web.domain.application.DeviceAmphiro amphiro = new eu.daiad.web.domain.application.DeviceAmphiro();
 			amphiro.setName(name);
+			amphiro.setRegisteredOn(new DateTime());
 			amphiro.setMacAddress(macAddress);
 			amphiro.setAesKey(aesKey);
 
@@ -118,31 +126,58 @@ public class JpaDeviceRepository implements IDeviceRepository {
 	}
 
 	@Override
-	public UUID createMeterDevice(UUID userKey, String serial, ArrayList<KeyValuePair> properties)
+	public UUID createMeterDevice(String username, String serial, ArrayList<KeyValuePair> properties, Geometry location)
 					throws ApplicationException {
 		UUID deviceKey = null;
 
 		try {
-			TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager
-							.createQuery("select a from account a where a.key = :key",
+			TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager
+							.createQuery("select a from account a where a.username = :username",
 											eu.daiad.web.domain.application.Account.class).setFirstResult(0)
 							.setMaxResults(1);
-			query.setParameter("key", userKey);
 
-			eu.daiad.web.domain.application.Account account = query.getSingleResult();
+			accountQuery.setParameter("username", username);
 
-			eu.daiad.web.domain.application.DeviceMeter meter = new eu.daiad.web.domain.application.DeviceMeter();
-			meter.setSerial(serial);
+			List<eu.daiad.web.domain.application.Account> accounts = accountQuery.getResultList();
 
-			for (KeyValuePair p : properties) {
-				meter.getProperties().add(new DeviceProperty(p.getKey(), p.getValue()));
+			if (accounts.size() == 1) {
+				eu.daiad.web.domain.application.Account account = accounts.get(0);
+
+				eu.daiad.web.domain.application.DeviceMeter meter = new eu.daiad.web.domain.application.DeviceMeter();
+				meter.setSerial(serial);
+				meter.setLocation(location);
+				meter.setRegisteredOn(new DateTime());
+
+				if (properties != null) {
+					for (KeyValuePair p : properties) {
+						meter.getProperties().add(new DeviceProperty(p.getKey(), p.getValue()));
+					}
+				}
+
+				account.getDevices().add(meter);
+
+				this.entityManager.persist(account);
+
+				deviceKey = meter.getKey();
+			} else if (enforceWhiteListCheck) {
+				TypedQuery<AccountWhiteListEntry> entryQuery = entityManager
+								.createQuery("select a from account_white_list a where a.username = :username",
+												AccountWhiteListEntry.class).setFirstResult(0).setMaxResults(1);
+
+				entryQuery.setParameter("username", username);
+
+				List<AccountWhiteListEntry> entries = entryQuery.getResultList();
+
+				if (entries.size() == 1) {
+					AccountWhiteListEntry entry = entries.get(0);
+
+					entry.setMeterSerial(serial);
+					entry.setMeterLocation(location);
+
+					this.entityManager.persist(entry);
+				}
 			}
 
-			account.getDevices().add(meter);
-
-			this.entityManager.persist(account);
-
-			deviceKey = meter.getKey();
 		} catch (Exception ex) {
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
 		}
@@ -167,22 +202,24 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 				switch (entity.getType()) {
 					case AMPHIRO:
-						eu.daiad.web.domain.application.DeviceAmphiro amphiroEntiry = (eu.daiad.web.domain.application.DeviceAmphiro) entity;
+						eu.daiad.web.domain.application.DeviceAmphiro amphiroEntity = (eu.daiad.web.domain.application.DeviceAmphiro) entity;
 
-						AmphiroDevice amphiro = new AmphiroDevice(amphiroEntiry.getKey(), amphiroEntiry.getName(),
-										amphiroEntiry.getMacAddress(), amphiroEntiry.getAesKey());
+						AmphiroDevice amphiro = new AmphiroDevice(amphiroEntity.getAccount().getId(),
+										amphiroEntity.getKey(), amphiroEntity.getName(), amphiroEntity.getMacAddress(),
+										amphiroEntity.getAesKey());
 
-						for (eu.daiad.web.domain.application.DeviceProperty p : amphiroEntiry.getProperties()) {
+						for (eu.daiad.web.domain.application.DeviceProperty p : amphiroEntity.getProperties()) {
 							amphiro.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
 						}
 
 						return amphiro;
 					case METER:
-						eu.daiad.web.domain.application.DeviceMeter meterEntiry = (eu.daiad.web.domain.application.DeviceMeter) entity;
+						eu.daiad.web.domain.application.DeviceMeter meterEntity = (eu.daiad.web.domain.application.DeviceMeter) entity;
 
-						WaterMeterDevice meter = new WaterMeterDevice(meterEntiry.getKey(), meterEntiry.getSerial());
+						WaterMeterDevice meter = new WaterMeterDevice(meterEntity.getAccount().getId(),
+										meterEntity.getKey(), meterEntity.getSerial(), meterEntity.getLocation());
 
-						for (eu.daiad.web.domain.application.DeviceProperty p : meterEntiry.getProperties()) {
+						for (eu.daiad.web.domain.application.DeviceProperty p : meterEntity.getProperties()) {
 							meter.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
 						}
 
@@ -215,12 +252,13 @@ public class JpaDeviceRepository implements IDeviceRepository {
 				switch (entity.getType()) {
 					case AMPHIRO:
 						if ((query.getType() == EnumDeviceType.UNDEFINED) || (query.getType() == entity.getType())) {
-							eu.daiad.web.domain.application.DeviceAmphiro amphiroEntiry = (eu.daiad.web.domain.application.DeviceAmphiro) entity;
+							eu.daiad.web.domain.application.DeviceAmphiro amphiroEntity = (eu.daiad.web.domain.application.DeviceAmphiro) entity;
 
-							AmphiroDevice amphiro = new AmphiroDevice(amphiroEntiry.getKey(), amphiroEntiry.getName(),
-											amphiroEntiry.getMacAddress(), amphiroEntiry.getAesKey());
+							AmphiroDevice amphiro = new AmphiroDevice(amphiroEntity.getAccount().getId(),
+											amphiroEntity.getKey(), amphiroEntity.getName(),
+											amphiroEntity.getMacAddress(), amphiroEntity.getAesKey());
 
-							for (eu.daiad.web.domain.application.DeviceProperty p : amphiroEntiry.getProperties()) {
+							for (eu.daiad.web.domain.application.DeviceProperty p : amphiroEntity.getProperties()) {
 								amphiro.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
 							}
 
@@ -229,11 +267,12 @@ public class JpaDeviceRepository implements IDeviceRepository {
 						break;
 					case METER:
 						if ((query.getType() == EnumDeviceType.UNDEFINED) || (query.getType() == entity.getType())) {
-							eu.daiad.web.domain.application.DeviceMeter meterEntiry = (eu.daiad.web.domain.application.DeviceMeter) entity;
+							eu.daiad.web.domain.application.DeviceMeter meterEntity = (eu.daiad.web.domain.application.DeviceMeter) entity;
 
-							WaterMeterDevice meter = new WaterMeterDevice(meterEntiry.getKey(), meterEntiry.getSerial());
+							WaterMeterDevice meter = new WaterMeterDevice(meterEntity.getAccount().getId(),
+											meterEntity.getKey(), meterEntity.getSerial(), meterEntity.getLocation());
 
-							for (eu.daiad.web.domain.application.DeviceProperty p : meterEntiry.getProperties()) {
+							for (eu.daiad.web.domain.application.DeviceProperty p : meterEntity.getProperties()) {
 								meter.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
 							}
 
@@ -266,8 +305,8 @@ public class JpaDeviceRepository implements IDeviceRepository {
 			if (result.size() == 1) {
 				eu.daiad.web.domain.application.DeviceAmphiro entity = result.get(0);
 
-				AmphiroDevice amphiro = new AmphiroDevice(entity.getKey(), entity.getName(), entity.getMacAddress(),
-								entity.getAesKey());
+				AmphiroDevice amphiro = new AmphiroDevice(entity.getAccount().getId(), entity.getKey(),
+								entity.getName(), entity.getMacAddress(), entity.getAesKey());
 
 				for (eu.daiad.web.domain.application.DeviceProperty p : entity.getProperties()) {
 					amphiro.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
@@ -286,6 +325,38 @@ public class JpaDeviceRepository implements IDeviceRepository {
 	public Device getUserWaterMeterDeviceBySerial(UUID userKey, String serial) throws ApplicationException {
 		try {
 			TypedQuery<eu.daiad.web.domain.application.DeviceMeter> query = entityManager
+							.createQuery("select d from device_meter d where d.serial = :serial and d.account.key = :userKey",
+											eu.daiad.web.domain.application.DeviceMeter.class).setFirstResult(0)
+							.setMaxResults(1);
+			query.setParameter("serial", serial);
+			query.setParameter("userKey", userKey);
+
+			List<eu.daiad.web.domain.application.DeviceMeter> result = query.getResultList();
+
+			if (result.size() == 1) {
+				eu.daiad.web.domain.application.DeviceMeter entity = result.get(0);
+
+				WaterMeterDevice meter = new WaterMeterDevice(entity.getAccount().getId(), entity.getKey(),
+								entity.getSerial(), entity.getLocation());
+
+				for (eu.daiad.web.domain.application.DeviceProperty p : entity.getProperties()) {
+					meter.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
+				}
+
+				return meter;
+
+			}
+
+			return null;
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		}
+	}
+
+	@Override
+	public Device getWaterMeterDeviceBySerial(String serial) {
+		try {
+			TypedQuery<eu.daiad.web.domain.application.DeviceMeter> query = entityManager
 							.createQuery("select d from device_meter d where d.serial = :serial",
 											eu.daiad.web.domain.application.DeviceMeter.class).setFirstResult(0)
 							.setMaxResults(1);
@@ -296,7 +367,8 @@ public class JpaDeviceRepository implements IDeviceRepository {
 			if (result.size() == 1) {
 				eu.daiad.web.domain.application.DeviceMeter entity = result.get(0);
 
-				WaterMeterDevice meter = new WaterMeterDevice(entity.getKey(), entity.getSerial());
+				WaterMeterDevice meter = new WaterMeterDevice(entity.getAccount().getId(), entity.getKey(),
+								entity.getSerial(), entity.getLocation());
 
 				for (eu.daiad.web.domain.application.DeviceProperty p : entity.getProperties()) {
 					meter.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
@@ -525,6 +597,32 @@ public class JpaDeviceRepository implements IDeviceRepository {
 			}
 		} catch (Exception ex) {
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		}
+	}
+
+	public void setLastDataUploadDate(UUID userKey, UUID deviceKey, DateTime when, boolean success) {
+		try {
+			TypedQuery<eu.daiad.web.domain.application.Device> query = entityManager
+							.createQuery("select d from device d where d.key = :device_key and d.account.key = :user_key",
+											eu.daiad.web.domain.application.Device.class).setFirstResult(0)
+							.setMaxResults(1);
+			query.setParameter("user_key", userKey);
+			query.setParameter("device_key", deviceKey);
+
+			List<eu.daiad.web.domain.application.Device> result = query.getResultList();
+
+			if (result.size() == 1) {
+				eu.daiad.web.domain.application.Device entity = result.get(0);
+
+				if (success) {
+					entity.setLastDataUploadSuccess(when);
+				} else {
+					entity.setLastDataUploadFailure(when);
+				}
+
+			}
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex, DeviceErrorCode.LOG_DATA_UPLOAD_FAILED).set("key", deviceKey);
 		}
 	}
 

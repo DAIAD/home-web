@@ -18,8 +18,10 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Version;
 
 import org.hibernate.annotations.Type;
+import org.joda.time.DateTime;
 
 import eu.daiad.web.model.device.EnumDeviceType;
 
@@ -34,6 +36,10 @@ public class Device {
 	@GeneratedValue(generator = "device_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
 
+	@Version()
+	@Column(name = "row_version")
+	private long rowVersion;
+
 	@ManyToOne(cascade = { CascadeType.ALL })
 	@JoinColumn(name = "account_id", nullable = false)
 	private Account account;
@@ -45,6 +51,18 @@ public class Device {
 	@Column()
 	@Type(type = "pg-uuid")
 	private UUID key = UUID.randomUUID();
+
+	@Column(name = "registered_on")
+	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+	private DateTime registeredOn;
+
+	@Column(name = "last_upload_success_on")
+	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+	private DateTime lastDataUploadSuccess;
+
+	@Column(name = "last_upload_failure_on")
+	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+	private DateTime lastDataUploadFailure;
 
 	public int getId() {
 		return id;
@@ -68,6 +86,34 @@ public class Device {
 
 	public EnumDeviceType getType() {
 		return EnumDeviceType.UNDEFINED;
+	}
+
+	public DateTime getLastDataUploadSuccess() {
+		return lastDataUploadSuccess;
+	}
+
+	public void setLastDataUploadSuccess(DateTime lastDataUploadSuccess) {
+		this.lastDataUploadSuccess = lastDataUploadSuccess;
+	}
+
+	public DateTime getLastDataUploadFailure() {
+		return lastDataUploadFailure;
+	}
+
+	public void setLastDataUploadFailure(DateTime lastDataUploadFailure) {
+		this.lastDataUploadFailure = lastDataUploadFailure;
+	}
+
+	public DateTime getRegisteredOn() {
+		return registeredOn;
+	}
+
+	public void setRegisteredOn(DateTime registeredOn) {
+		this.registeredOn = registeredOn;
+	}
+
+	public long getRowVersion() {
+		return rowVersion;
 	}
 
 }

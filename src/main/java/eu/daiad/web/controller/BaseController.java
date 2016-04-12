@@ -10,9 +10,9 @@ import org.springframework.validation.FieldError;
 
 import com.ibm.icu.text.MessageFormat;
 
-import eu.daiad.web.model.Error;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.Error;
 import eu.daiad.web.model.error.ErrorCode;
 
 public abstract class BaseController {

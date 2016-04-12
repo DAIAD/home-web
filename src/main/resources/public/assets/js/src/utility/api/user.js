@@ -8,7 +8,7 @@ var UserAPI = {
 		return api.submit('/logout', {});
 	},
 	getProfile: function(cb) {
-		return api.submit('/action/profile/load', null);
+		return api.json('/action/profile/load', null);
 	}
 };
 

@@ -47,6 +47,7 @@ public class SchedulerService {
 
 	@PostConstruct
 	private void initialize() throws Exception {
+		logger.warn("Initializing Scheduler Service");
 		try {
 			// Fetch all registered jobs
 			for (ScheduledJob scheduledJob : this.schedulerRepository.getScheduledJobs()) {
@@ -61,6 +62,8 @@ public class SchedulerService {
 					parameterBuilder.addString(parameter.getName(), parameter.getValue());
 				}
 				JobParameters jobParameters = parameterBuilder.toJobParameters();
+
+				logger.warn(String.format("Initializing job [%s].", scheduledJob.getJob().getJobName()));
 
 				// Start job execution
 				if ((scheduledJob.getPeriod() != null) && (!StringUtils.isBlank(scheduledJob.getCronExpression()))) {

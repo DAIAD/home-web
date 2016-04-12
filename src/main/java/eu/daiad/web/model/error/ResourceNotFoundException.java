@@ -1,4 +1,4 @@
-package eu.daiad.web.model;
+package eu.daiad.web.model.error;
 
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.http.HttpStatus;

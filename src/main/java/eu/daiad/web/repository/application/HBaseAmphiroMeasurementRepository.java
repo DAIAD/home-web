@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.UUID;
@@ -53,8 +52,9 @@ import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DataErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
-import eu.daiad.web.model.export.ExportDataRequest;
-import eu.daiad.web.model.export.ExtendedSessionData;
+import eu.daiad.web.model.query.ExpandedDataQuery;
+import eu.daiad.web.model.query.ExpandedPopulationFilter;
+import eu.daiad.web.model.query.GroupDataSeries;
 import eu.daiad.web.model.security.AuthenticatedUser;
 
 @Repository()
@@ -92,157 +92,6 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 	private String columnFamilyName = "cf";
 
 	private static final Log logger = LogFactory.getLog(HBaseAmphiroMeasurementRepository.class);
-
-	@Override
-	public List<ExtendedSessionData> exportSessions(ExportDataRequest data) throws ApplicationException {
-		ArrayList<ExtendedSessionData> sessions = new ArrayList<ExtendedSessionData>();
-
-		Connection connection = null;
-		Table table = null;
-		ResultScanner scanner = null;
-
-		try {
-			if (data != null) {
-				Configuration config = this.configurationBuilder.build();
-
-				connection = ConnectionFactory.createConnection(config);
-
-				table = connection.getTable(TableName.valueOf(this.amphiroTableSessionByTime));
-				byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
-
-				DateTime fromDate = new DateTime(data.getFrom(), DateTimeZone.UTC);
-				DateTime toDate = new DateTime(data.getTo(), DateTimeZone.UTC).plusDays(1);
-
-				for (short p = 0; p < timePartitions; p++) {
-					Scan scan = new Scan();
-					scan.addFamily(columnFamily);
-
-					byte[] partitionBytes = Bytes.toBytes(p);
-
-					long from = fromDate.getMillis() / 1000;
-					from = from - (from % EnumTimeInterval.DAY.getValue());
-					byte[] fromBytes = Bytes.toBytes(from);
-
-					long to = toDate.getMillis() / 1000;
-					to = to - (to % EnumTimeInterval.DAY.getValue());
-					byte[] toBytes = Bytes.toBytes(to);
-
-					// Scanner row key prefix start
-					byte[] rowKey = new byte[partitionBytes.length + fromBytes.length];
-
-					System.arraycopy(partitionBytes, 0, rowKey, 0, partitionBytes.length);
-					System.arraycopy(fromBytes, 0, rowKey, partitionBytes.length, fromBytes.length);
-
-					scan.setStartRow(rowKey);
-
-					// Scanner row key prefix end
-					rowKey = new byte[partitionBytes.length + toBytes.length];
-
-					System.arraycopy(partitionBytes, 0, rowKey, 0, partitionBytes.length);
-					System.arraycopy(toBytes, 0, rowKey, partitionBytes.length, toBytes.length);
-
-					scan.setStopRow(rowKey);
-
-					scanner = table.getScanner(scan);
-
-					for (Result r = scanner.next(); r != null; r = scanner.next()) {
-						NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
-
-						if (map != null) {
-							ExtendedSessionData session = new ExtendedSessionData();
-
-							rowKey = r.getRow();
-
-							long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 2, 10));
-							long sessionId = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 42, 50));
-
-							session.setId(sessionId);
-
-							for (Entry<byte[], byte[]> entry : map.entrySet()) {
-								String qualifier = Bytes.toString(entry.getKey());
-
-								switch (qualifier) {
-								// User data
-									case "u:key":
-										session.getUser().setKey(new String(entry.getValue(), StandardCharsets.UTF_8));
-										break;
-									case "u:username":
-										session.getUser().setUsername(
-														new String(entry.getValue(), StandardCharsets.UTF_8));
-										break;
-									case "u:postal":
-										session.getUser().setPostalCode(
-														new String(entry.getValue(), StandardCharsets.UTF_8));
-										break;
-									// Device data
-									case "d:id":
-										session.getDevice().setId(new String(entry.getValue(), StandardCharsets.UTF_8));
-										break;
-									case "d:key":
-										session.getDevice()
-														.setKey(new String(entry.getValue(), StandardCharsets.UTF_8));
-										break;
-									case "d:name":
-										session.getDevice().setName(
-														new String(entry.getValue(), StandardCharsets.UTF_8));
-										break;
-									// Measurement data
-									case "m:offset":
-										int offset = Bytes.toInt(entry.getValue());
-
-										session.setTimestamp((timeBucket + offset) * 1000L);
-										break;
-									case "m:t":
-										session.setTemperature(Bytes.toFloat(entry.getValue()));
-										break;
-									case "m:v":
-										session.setVolume(Bytes.toFloat(entry.getValue()));
-										break;
-									case "m:f":
-										session.setFlow(Bytes.toFloat(entry.getValue()));
-										break;
-									case "m:e":
-										session.setEnergy(Bytes.toFloat(entry.getValue()));
-										break;
-									case "m:d":
-										session.setDuration(Bytes.toInt(entry.getValue()));
-										break;
-									// General data
-									case "r:h":
-										session.setHistory(Bytes.toBoolean(entry.getValue()));
-										break;
-									default:
-										session.addProperty(qualifier, new String(entry.getValue(),
-														StandardCharsets.UTF_8));
-										break;
-								}
-							}
-
-							sessions.add(session);
-						}
-					}
-				}
-			}
-		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
-		} finally {
-			try {
-				if (scanner != null) {
-					scanner.close();
-				}
-				if (table != null) {
-					table.close();
-				}
-				if ((connection != null) && (!connection.isClosed())) {
-					connection.close();
-				}
-			} catch (Exception ex) {
-				logger.error(ERROR_RELEASE_RESOURCES, ex);
-			}
-		}
-
-		return sessions;
-	}
 
 	private void storeSessionByUser(Connection connection, AuthenticatedUser user, AmphiroDevice device,
 					AmphiroMeasurementCollection data) throws Exception {
@@ -880,11 +729,21 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 	}
 
 	@Override
-	public AmphiroSessionCollectionQueryResult searchSessions(AmphiroSessionCollectionQuery query) {
+	public AmphiroSessionCollectionQueryResult searchSessions(String[] names, AmphiroSessionCollectionQuery query) {
 		AmphiroSessionCollectionQueryResult data = new AmphiroSessionCollectionQueryResult();
 
-		DateTime startDate = new DateTime(query.getStartDate(), DateTimeZone.UTC);
-		DateTime endDate = new DateTime(query.getEndDate(), DateTimeZone.UTC);
+		DateTime startDate = null;
+		if (query.getStartDate() != null) {
+			startDate = new DateTime(query.getStartDate(), DateTimeZone.UTC);
+		} else {
+			startDate = new DateTime(0L, DateTimeZone.UTC);
+		}
+		DateTime endDate = null;
+		if (query.getEndDate() != null) {
+			endDate = new DateTime(query.getEndDate(), DateTimeZone.UTC);
+		} else {
+			endDate = new DateTime(DateTimeZone.UTC);
+		}
 
 		switch (query.getGranularity()) {
 			case TemporalConstants.NONE:
@@ -1009,7 +868,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 				scanner = null;
 
 				AmphiroSessionCollection collection = new AmphiroSessionCollection(deviceKeys[deviceIndex],
-								query.getGranularity());
+								names[deviceIndex], query.getGranularity());
 
 				collection.addSessions(sessions);
 
@@ -1280,5 +1139,167 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 				logger.error(ERROR_RELEASE_RESOURCES, ex);
 			}
 		}
+	}
+
+	@Override
+	public ArrayList<GroupDataSeries> query(ExpandedDataQuery query) throws ApplicationException {
+		Connection connection = null;
+		Table table = null;
+		ResultScanner scanner = null;
+
+		ArrayList<GroupDataSeries> result = new ArrayList<GroupDataSeries>();
+		for (ExpandedPopulationFilter filter : query.getGroups()) {
+			result.add(new GroupDataSeries(filter.getLabel()));
+		}
+		try {
+			Configuration config = this.configurationBuilder.build();
+			connection = ConnectionFactory.createConnection(config);
+
+			table = connection.getTable(TableName.valueOf(this.amphiroTableSessionByTime));
+			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+
+			DateTime startDate = new DateTime(query.getStartDateTime(), DateTimeZone.UTC);
+			DateTime endDate = new DateTime(query.getEndDateTime(), DateTimeZone.UTC);
+
+			switch (query.getGranularity()) {
+				case HOUR:
+					startDate = new DateTime(startDate.getYear(), startDate.getMonthOfYear(),
+									startDate.getDayOfMonth(), startDate.getHourOfDay(), 0, 0, DateTimeZone.UTC);
+					endDate = new DateTime(endDate.getYear(), endDate.getMonthOfYear(), endDate.getDayOfMonth(),
+									endDate.getHourOfDay(), 59, 59, DateTimeZone.UTC);
+					break;
+				case DAY:
+					startDate = new DateTime(startDate.getYear(), startDate.getMonthOfYear(),
+									startDate.getDayOfMonth(), 0, 0, 0, DateTimeZone.UTC);
+					endDate = new DateTime(endDate.getYear(), endDate.getMonthOfYear(), endDate.getDayOfMonth(), 23,
+									59, 59, DateTimeZone.UTC);
+					break;
+				case WEEK:
+					DateTime monday = startDate.withDayOfWeek(DateTimeConstants.MONDAY);
+					DateTime sunday = endDate.withDayOfWeek(DateTimeConstants.SUNDAY);
+					startDate = new DateTime(monday.getYear(), monday.getMonthOfYear(), monday.getDayOfMonth(), 0, 0,
+									0, DateTimeZone.UTC);
+					endDate = new DateTime(sunday.getYear(), sunday.getMonthOfYear(), sunday.getDayOfMonth(), 23, 59,
+									59, DateTimeZone.UTC);
+					break;
+				case MONTH:
+					startDate = new DateTime(startDate.getYear(), startDate.getMonthOfYear(), 1, 0, 0, 0,
+									DateTimeZone.UTC);
+					endDate = new DateTime(endDate.getYear(), endDate.getMonthOfYear(), endDate.dayOfMonth()
+									.getMaximumValue(), 23, 59, 59, DateTimeZone.UTC);
+					break;
+				case YEAR:
+					startDate = new DateTime(startDate.getYear(), 1, 1, 0, 0, 0, DateTimeZone.UTC);
+					endDate = new DateTime(endDate.getYear(), 12, 31, 23, 59, 59, DateTimeZone.UTC);
+					break;
+				case ALL:
+					// Ignore
+					break;
+				default:
+					throw new ApplicationException(DataErrorCode.TIME_GRANULARITY_NOT_SUPPORTED).set("level",
+									query.getGranularity());
+			}
+
+			for (short p = 0; p < timePartitions; p++) {
+				Scan scan = new Scan();
+				scan.addFamily(columnFamily);
+
+				byte[] partitionBytes = Bytes.toBytes(p);
+
+				long from = startDate.getMillis() / 1000;
+				from = from - (from % EnumTimeInterval.DAY.getValue());
+				byte[] fromBytes = Bytes.toBytes(from);
+
+				long to = endDate.getMillis() / 1000;
+				to = to - (to % EnumTimeInterval.DAY.getValue());
+				byte[] toBytes = Bytes.toBytes(to);
+
+				// Scanner row key prefix start
+				byte[] rowKey = new byte[partitionBytes.length + fromBytes.length];
+
+				System.arraycopy(partitionBytes, 0, rowKey, 0, partitionBytes.length);
+				System.arraycopy(fromBytes, 0, rowKey, partitionBytes.length, fromBytes.length);
+
+				scan.setStartRow(rowKey);
+
+				// Scanner row key prefix end
+				rowKey = new byte[partitionBytes.length + toBytes.length];
+
+				System.arraycopy(partitionBytes, 0, rowKey, 0, partitionBytes.length);
+				System.arraycopy(toBytes, 0, rowKey, partitionBytes.length, toBytes.length);
+
+				scan.setStopRow(calculateTheClosestNextRowKeyForPrefix(rowKey));
+
+				scanner = table.getScanner(scan);
+
+				for (Result r = scanner.next(); r != null; r = scanner.next()) {
+					NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
+
+					if (map != null) {
+						rowKey = r.getRow();
+
+						long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 2, 10));
+						byte[] userHash = Arrays.copyOfRange(r.getRow(), 10, 26);
+
+						int filterIndex = 0;
+						for (ExpandedPopulationFilter filter : query.getGroups()) {
+							GroupDataSeries series = result.get(filterIndex);
+
+							if (inArray(filter.getHashes(), userHash)) {
+								long timestamp = 0;
+								float volume = 0;
+
+								for (Entry<byte[], byte[]> entry : map.entrySet()) {
+									String qualifier = Bytes.toString(entry.getKey());
+
+									switch (qualifier) {
+										case "m:offset":
+											timestamp = (timeBucket + Bytes.toInt(entry.getValue())) * 1000L;
+											break;
+										case "m:v":
+											volume = Bytes.toFloat(entry.getValue());
+											break;
+										default:
+											// Ignore
+											break;
+									}
+								}
+
+								series.addDataPoint(query.getGranularity(), timestamp, volume, query.getMetrics());
+							}
+
+							filterIndex++;
+						}
+					}
+				}
+			}
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		} finally {
+			try {
+				if (scanner != null) {
+					scanner.close();
+				}
+				if (table != null) {
+					table.close();
+				}
+				if ((connection != null) && (!connection.isClosed())) {
+					connection.close();
+				}
+			} catch (Exception ex) {
+				logger.error(ERROR_RELEASE_RESOURCES, ex);
+			}
+		}
+
+		return result;
+	}
+
+	private boolean inArray(ArrayList<byte[]> group, byte[] hash) {
+		for (byte[] entry : group) {
+			if (Arrays.equals(entry, hash)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

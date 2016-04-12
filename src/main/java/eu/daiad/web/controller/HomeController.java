@@ -45,6 +45,7 @@ public class HomeController {
 		if (user == null) {
 			model.addAttribute("reload", false);
 		} else {
+
 			if (!user.hasRole(EnumRole.ROLE_ADMIN)) {
 				return "redirect:/error/403";
 			}

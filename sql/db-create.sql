@@ -8,6 +8,7 @@ CREATE SEQUENCE utility_id_seq
 
 CREATE TABLE utility (
     id integer DEFAULT nextval('utility_id_seq'::regclass) NOT NULL,
+    key uuid,
     name character varying(40),
     logo bytea,
     description character varying,
@@ -27,6 +28,7 @@ CREATE SEQUENCE account_id_seq
 
 CREATE TABLE account (
     id integer NOT NULL DEFAULT nextval('account_id_seq'::regclass),
+    row_version  bigint default 1,
     utility_id integer,
     key uuid,
 	locale character(2),
@@ -59,6 +61,7 @@ CREATE TABLE account (
 CREATE TABLE public.account_profile
 (
   id integer,
+  row_version  bigint default 1,
   version uuid NOT NULL,
   updated_on timestamp without time zone NOT NULL,
   mobile_mode int NOT NULL,
@@ -108,6 +111,7 @@ CREATE SEQUENCE public.account_white_list_id_seq
 CREATE TABLE public.account_white_list
 (
   id integer NOT NULL DEFAULT nextval('account_white_list_id_seq'::regclass),
+  row_version  bigint default 1,
   utility_id integer,
   account_id integer,
   username character varying(100),
@@ -124,6 +128,8 @@ CREATE TABLE public.account_white_list
   gender character varying(12),
   default_mobile_mode integer NOT NULL,
   default_web_mode integer NOT NULL,
+  meter_serial character varying(50),
+  meter_location geometry,
   CONSTRAINT pk_account_white_list PRIMARY KEY (id),
     CONSTRAINT fk_utility FOREIGN KEY (utility_id)
         REFERENCES public.utility (id) MATCH SIMPLE
@@ -131,7 +137,9 @@ CREATE TABLE public.account_white_list
   CONSTRAINT fk_account FOREIGN KEY (account_id)
         REFERENCES public.account (id) MATCH SIMPLE
             ON UPDATE CASCADE ON DELETE CASCADE,
-  CONSTRAINT uq_utility_username UNIQUE (utility_id, username)
+  CONSTRAINT uq_utility_username UNIQUE (utility_id, username),
+  CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(meter_location) = 2),
+  CONSTRAINT enforce_srid_the_geom CHECK (st_srid(meter_location) = 4326)
 );
 
 -- role
@@ -182,8 +190,12 @@ CREATE SEQUENCE public.device_id_seq
 CREATE TABLE public.device
 (
   id integer NOT NULL DEFAULT nextval('device_id_seq'::regclass),
+  row_version  bigint default 1,
   key uuid,
   account_id integer,
+  registered_on timestamp without time zone,
+  last_upload_success_on timestamp without time zone,
+  last_upload_failure_on timestamp without time zone,
   CONSTRAINT pk_device PRIMARY KEY (id),
   CONSTRAINT fk_account FOREIGN KEY (account_id)
         REFERENCES public.account (id) MATCH SIMPLE
@@ -256,6 +268,7 @@ CREATE SEQUENCE device_amphiro_config_id_seq
 
 CREATE TABLE device_amphiro_config (
     id integer NOT NULL DEFAULT nextval('device_amphiro_config_id_seq'::regclass),
+    row_version  bigint default 1,
     device_id integer,
     version uuid NOT NULL,
 	title character varying(100),
@@ -311,10 +324,13 @@ CREATE TABLE public.device_meter
 (
   id integer NOT NULL,
   serial character varying(50),
+  location geometry,
   CONSTRAINT pk_device_meter PRIMARY KEY (id),
   CONSTRAINT fk_device_meter_device FOREIGN KEY (id)
         REFERENCES public.device (id) MATCH SIMPLE
-            ON UPDATE CASCADE ON DELETE CASCADE
+            ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(location) = 2),
+  CONSTRAINT enforce_srid_the_geom CHECK (st_srid(location) = 4326)
 );
 
 -- community
@@ -327,6 +343,8 @@ CREATE SEQUENCE community_id_seq
 
 CREATE TABLE community (
     id integer NOT NULL DEFAULT nextval('community_id_seq'::regclass),
+    key uuid,
+    row_version  bigint default 1,
     utility_id integer,
 	locale character(2),
     name character varying(100),
@@ -375,6 +393,8 @@ CREATE SEQUENCE group_id_seq
 
 CREATE TABLE "group" (
     id integer NOT NULL DEFAULT nextval('group_id_seq'::regclass),
+    key uuid,
+    row_version  bigint default 1,
     utility_id integer,
     name character varying(100),
     created_on timestamp without time zone,
@@ -646,3 +666,32 @@ CREATE TABLE account_dynamic_recommendation_property (
             ON UPDATE CASCADE ON DELETE CASCADE
 );
 
+-- Helper views
+CREATE OR REPLACE VIEW public.trial_account_activity AS
+ SELECT w.id,
+    u.id AS utility_id,
+    u.name AS utility_name,
+    w.account_id,
+    a.key,
+    w.username,
+    w.firstname,
+    w.lastname,
+    w.registered_on AS signup_date,
+    a.last_login_success,
+    a.last_login_failure,
+    count(da.id) AS amphiro_count,
+    count(dm.id) AS meter_count,
+    max(case when not da.id is null then d.registered_on else null end) AS amphiro_last_registration,
+    max(case when not dm.id is null then d.registered_on else null end) AS meter_last_registration,
+    max(d.last_upload_success_on) AS device_last_upload_success,
+    max(d.last_upload_failure_on) AS device_last_upload_failure
+   FROM account_white_list w
+     JOIN utility u ON w.utility_id = u.id
+     LEFT JOIN account a ON w.account_id = a.id
+     LEFT JOIN device d ON a.id = d.account_id
+     LEFT JOIN device_amphiro da ON da.id = d.id
+     LEFT JOIN device_meter dm ON dm.id = d.id
+  GROUP BY w.id, u.id, u.name, w.account_id, a.key, w.username, w.firstname, w.lastname, w.registered_on, a.last_login_success, a.last_login_failure;
+
+ALTER TABLE public.trial_account_activity
+  OWNER TO daiad;

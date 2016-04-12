@@ -25,6 +25,7 @@ import eu.daiad.web.model.profile.ProfileModesRequest;
 import eu.daiad.web.model.profile.ProfileModesResponse;
 import eu.daiad.web.model.profile.ProfileModesSubmitChangesRequest;
 import eu.daiad.web.model.profile.ProfileResponse;
+import eu.daiad.web.model.profile.UpdateProfileRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IProfileRepository;
 
@@ -59,16 +60,16 @@ public class ProfileController extends BaseController {
 	}
 
 	@RequestMapping(value = "/action/profile/load", method = RequestMethod.GET, produces = "application/json")
-	@Secured({"ROLE_USER", "ROLE_SUPERUSER", "ROLE_ADMIN"})
-	public RestResponse getProfile(@AuthenticationPrincipal AuthenticatedUser user) throws JsonProcessingException {
+	@Secured({ "ROLE_USER", "ROLE_SUPERUSER", "ROLE_ADMIN" })
+	public RestResponse getProfile(@AuthenticationPrincipal AuthenticatedUser user) {
 		RestResponse response = new RestResponse();
-		
+
 		try {
-			if(user.hasRole("ROLE_ADMIN")) {
+			if (user.hasRole("ROLE_ADMIN")) {
 				return new ProfileResponse(profileRepository.getProfileByUsername(EnumApplication.UTILITY));
 			}
-			
-			return  new ProfileResponse(profileRepository.getProfileByUsername(EnumApplication.HOME));
+
+			return new ProfileResponse(profileRepository.getProfileByUsername(EnumApplication.HOME));
 		} catch (ApplicationException ex) {
 			logger.error(ex.getMessage(), ex);
 
@@ -144,4 +145,24 @@ public class ProfileController extends BaseController {
 		return response;
 	}
 
+	@RequestMapping(value = "/action/profile/save", method = RequestMethod.POST, produces = "application/json")
+	@Secured({ "ROLE_USER", "ROLE_SUPERUSER", "ROLE_ADMIN" })
+	public RestResponse setProfile(@AuthenticationPrincipal AuthenticatedUser user,
+					@RequestBody UpdateProfileRequest request) {
+		RestResponse response = new RestResponse();
+
+		try {
+			if (user.hasRole("ROLE_ADMIN")) {
+				this.profileRepository.setProfileConfiguration(EnumApplication.UTILITY, request.getConfiguration());
+			} else {
+				this.profileRepository.setProfileConfiguration(EnumApplication.HOME, request.getConfiguration());
+			}
+		} catch (ApplicationException ex) {
+			logger.error(ex.getMessage(), ex);
+
+			response.add(this.getError(ex));
+		}
+
+		return response;
+	}
 }

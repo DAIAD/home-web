@@ -15,6 +15,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
+import javax.persistence.Version;
 
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Parameter;
@@ -31,10 +32,14 @@ public class AccountProfile {
 	@Column(name = "id", unique = true, nullable = false)
 	private int id;
 
+	@Version()
+	@Column(name = "row_version")
+	private long rowVersion;
+
 	@Column()
 	@Type(type = "pg-uuid")
 	private UUID version = UUID.randomUUID();
-	
+
 	@OneToOne(fetch = FetchType.LAZY)
 	@PrimaryKeyJoinColumn()
 	private Account account;
@@ -42,11 +47,11 @@ public class AccountProfile {
 	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
 	@JoinColumn(name = "profile_id")
 	private Set<AccountProfileHistoryEntry> history = new HashSet<AccountProfileHistoryEntry>();
-	
+
 	@Column(name = "updated_on")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime updatedOn;
-	
+
 	@Column(name = "mobile_mode")
 	private int mobileMode;
 
@@ -55,7 +60,7 @@ public class AccountProfile {
 
 	@Column(name = "utility_mode")
 	private int utilityMode;
-	
+
 	@Column(name = "mobile_config")
 	private String mobileConfiguration;
 
@@ -64,7 +69,7 @@ public class AccountProfile {
 
 	@Column(name = "utility_config")
 	private String utilityConfiguration;
-	
+
 	public int getId() {
 		return id;
 	}
@@ -139,6 +144,10 @@ public class AccountProfile {
 
 	public void setVersion(UUID version) {
 		this.version = version;
+	}
+
+	public long getRowVersion() {
+		return rowVersion;
 	}
 
 }

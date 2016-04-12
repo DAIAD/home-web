@@ -13,7 +13,6 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import eu.daiad.web.model.EnumGender;
-import eu.daiad.web.util.GenderDeserializer;
 
 public class Account {
 
@@ -42,7 +41,7 @@ public class Account {
 	@Size(max = 70, groups = { AccountDefaultValidation.class })
 	private String lastname;
 
-	@JsonDeserialize(using = GenderDeserializer.class)
+	@JsonDeserialize(using = EnumGender.Deserializer.class)
 	@NotNull(groups = { AccountDefaultValidation.class })
 	private EnumGender gender;
 
@@ -56,10 +55,10 @@ public class Account {
 
 	@Size(max = 60, groups = { AccountDefaultValidation.class })
 	private String city;
-	
+
 	@Size(max = 90, groups = { AccountDefaultValidation.class })
 	private String address;
-	
+
 	@NotNull(groups = { AccountDefaultValidation.class })
 	@Size(max = 50, groups = { AccountDefaultValidation.class })
 	private String timezone;

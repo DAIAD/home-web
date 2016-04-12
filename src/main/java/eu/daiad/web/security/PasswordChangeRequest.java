@@ -1,4 +1,4 @@
-package eu.daiad.web.model;
+package eu.daiad.web.security;
 
 import eu.daiad.web.model.AuthenticatedRequest;
 

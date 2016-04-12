@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
 import org.apache.commons.logging.Log;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import eu.daiad.web.domain.application.AccountActivity;
 import eu.daiad.web.domain.application.AccountProfile;
 import eu.daiad.web.domain.application.AccountProfileHistoryEntry;
 import eu.daiad.web.domain.application.AccountRole;
@@ -46,7 +48,7 @@ public class JpaUserRepository implements IUserRepository {
 	@Value("${security.white-list}")
 	private boolean enforceWhiteListCheck;
 
-	@PersistenceContext(unitName="default")
+	@PersistenceContext(unitName = "default")
 	EntityManager entityManager;
 
 	private void initializeRoles() throws ApplicationException {
@@ -300,6 +302,8 @@ public class JpaUserRepository implements IUserRepository {
 				whiteListEntry.setAccount(account);
 			}
 
+			this.entityManager.flush();
+
 			return account.getKey();
 		} catch (Exception ex) {
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
@@ -337,8 +341,8 @@ public class JpaUserRepository implements IUserRepository {
 				for (AccountRole r : account.getRoles()) {
 					authorities.add(new SimpleGrantedAuthority(r.getRole().getName()));
 				}
-				user = new AuthenticatedUser(account.getKey(), account.getUsername(), account.getPassword(),
-								authorities);
+				user = new AuthenticatedUser(account.getId(), account.getKey(), account.getUsername(),
+								account.getPassword(), account.getUtility().getId(), account.isLocked(), authorities);
 
 				user.setBirthdate(account.getBirthdate());
 				user.setCountry(account.getCountry());
@@ -359,4 +363,202 @@ public class JpaUserRepository implements IUserRepository {
 		}
 	}
 
+	@Override
+	public AuthenticatedUser getUserByUtilityAndKey(int utilityId, UUID key) throws ApplicationException {
+		try {
+			AuthenticatedUser user = null;
+
+			TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager
+							.createQuery("select a from account a where a.key = :key and a.utility.id = :utility_id",
+											eu.daiad.web.domain.application.Account.class).setFirstResult(0)
+							.setMaxResults(1);
+			query.setParameter("utility_id", utilityId);
+			query.setParameter("key", key);
+
+			List<eu.daiad.web.domain.application.Account> result = query.getResultList();
+			if (result.size() != 0) {
+				eu.daiad.web.domain.application.Account account = result.get(0);
+
+				List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
+				for (AccountRole r : account.getRoles()) {
+					authorities.add(new SimpleGrantedAuthority(r.getRole().getName()));
+				}
+				user = new AuthenticatedUser(account.getId(), account.getKey(), account.getUsername(),
+								account.getPassword(), account.getUtility().getId(), account.isLocked(), authorities);
+
+				user.setBirthdate(account.getBirthdate());
+				user.setCountry(account.getCountry());
+				user.setFirstname(account.getFirstname());
+				user.setLastname(account.getLastname());
+				user.setGender(account.getGender());
+				user.setPostalCode(account.getPostalCode());
+				user.setTimezone(account.getTimezone());
+
+				user.setWebMode(EnumWebMode.fromInteger(account.getProfile().getWebMode()));
+				user.setMobileMode(EnumMobileMode.fromInteger(account.getProfile().getMobileMode()));
+				user.setUtilityMode(EnumUtilityMode.fromInteger(account.getProfile().getUtilityMode()));
+			}
+
+			return user;
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		}
+	}
+
+	@Override
+	public eu.daiad.web.model.admin.AccountWhiteListEntry getAccountWhiteListEntry(String username) {
+		TypedQuery<AccountWhiteListEntry> entityQuery = entityManager
+						.createQuery("select a from account_white_list a where a.username = :username",
+										AccountWhiteListEntry.class).setFirstResult(0).setMaxResults(1);
+		entityQuery.setParameter("username", username);
+
+		List<AccountWhiteListEntry> entries = entityQuery.getResultList();
+
+		if (entries.size() == 1) {
+			AccountWhiteListEntry entry = entries.get(0);
+
+			eu.daiad.web.model.admin.AccountWhiteListEntry result = new eu.daiad.web.model.admin.AccountWhiteListEntry();
+
+			if (entry.getAccount() != null) {
+				result.setAccountId(entry.getAccount().getId());
+			}
+			result.setAddress(entry.getAddress());
+			result.setBirthdate(entry.getBirthdate());
+			result.setCity(entry.getCity());
+			result.setCountry(entry.getCountry());
+			result.setDefaultMobileMode(entry.getDefaultMobileMode());
+			result.setDefaultWebMode(entry.getDefaultWebMode());
+			result.setFirstname(entry.getFirstname());
+			result.setGender(entry.getGender());
+			result.setId(entry.getId());
+			result.setLastname(entry.getLastname());
+			result.setLocale(entry.getLocale());
+			result.setMeterLocation(entry.getMeterLocation());
+			result.setMeterSerial(entry.getMeterSerial());
+			result.setPostalCode(entry.getPostalCode());
+			result.setRegisteredOn(entry.getRegisteredOn());
+			result.setTimezone(entry.getTimezone());
+			result.setUsername(entry.getUsername());
+			result.setUtilityId(entry.getUtility().getId());
+
+			return result;
+		}
+
+		return null;
+	}
+
+	@Override
+	public void updateLoginStats(int id, boolean success) {
+		try {
+			TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager
+							.createQuery("select a from account a where a.id = :id",
+											eu.daiad.web.domain.application.Account.class).setFirstResult(0)
+							.setMaxResults(1);
+			query.setParameter("id", id);
+
+			eu.daiad.web.domain.application.Account user = query.getSingleResult();
+
+			if (success) {
+				user.setLastLoginSuccessOn(new DateTime());
+			} else {
+				user.setLastLoginFailureOn(new DateTime());
+				user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
+			}
+
+		} catch (Exception ex) {
+			logger.error(String.format("Failed to update login stats for user [%d]", id), ex);
+		}
+	}
+
+	@Override
+	public List<eu.daiad.web.model.admin.AccountActivity> getAccountActivity(int utilityId) {
+		try {
+			TypedQuery<AccountActivity> query = entityManager
+							.createQuery("select a from trial_account_activity a where a.utilityId = :utility_id order by a.username",
+											AccountActivity.class);
+
+			query.setParameter("utility_id", utilityId);
+
+			ArrayList<eu.daiad.web.model.admin.AccountActivity> results = new ArrayList<eu.daiad.web.model.admin.AccountActivity>();
+
+			for (AccountActivity a : query.getResultList()) {
+				eu.daiad.web.model.admin.AccountActivity account = new eu.daiad.web.model.admin.AccountActivity();
+
+				account.setId(a.getId());
+				account.setKey(a.getKey());
+				account.setUtilityId(a.getUtilityId());
+				account.setAccountId(a.getAccountId());
+				account.setAccountRegisteredOn(a.getAccountRegisteredOn() != null ? a.getAccountRegisteredOn()
+								.getMillis() : null);
+				account.setUtilityName(a.getUtilityName());
+				account.setUsername(a.getUsername());
+				account.setFirstName(a.getFirstName());
+				account.setLastName(a.getLastName());
+
+				account.setNumberOfAmphiroDevices(a.getNumberOfAmphiroDevices());
+				account.setNumberOfMeters(a.getNumberOfMeters());
+
+				account.setLastDataUploadFailure((a.getLastDataUploadFailure() != null) ? a.getLastDataUploadFailure()
+								.getMillis() : null);
+				account.setLastDataUploadSuccess(a.getLastDataUploadSuccess() != null ? a.getLastDataUploadSuccess()
+								.getMillis() : null);
+				account.setLastLoginFailure(a.getLastLoginFailure() != null ? a.getLastLoginFailure().getMillis()
+								: null);
+				account.setLastLoginSuccess(a.getLastLoginSuccess() != null ? a.getLastLoginSuccess().getMillis()
+								: null);
+
+				account.setLeastAmphiroRegistration(a.getLeastAmphiroRegistration() != null ? a
+								.getLeastAmphiroRegistration().getMillis() : null);
+				account.setLeastMeterRegistration(a.getLeastMeterRegistration() != null ? a.getLeastMeterRegistration()
+								.getMillis() : null);
+
+				results.add(account);
+			}
+
+			return results;
+		} catch (Exception ex) {
+			logger.error(String.format("Failed to load account activity for utility [%d]", utilityId), ex);
+		}
+
+		return null;
+	}
+
+	public ArrayList<UUID> getUserKeysForGroup(UUID groupKey) {
+		ArrayList<UUID> result = new ArrayList<UUID>();
+		try {
+			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from \"group\" g "
+							+ "inner join group_member gm on g.id = gm.group_id "
+							+ "inner join account a on gm.account_id = a.id where g.key = CAST(? as uuid)");
+			query.setParameter(1, groupKey.toString());
+
+			List<?> keys = query.getResultList();
+			for (Object key : keys) {
+				result.add((UUID) key);
+			}
+		} catch (Exception ex) {
+			logger.error(String.format("Failed to load user keys for group [%s].", groupKey), ex);
+		}
+
+		return result;
+	}
+
+	public ArrayList<UUID> getUserKeysForUtility(UUID utilityKey) {
+		ArrayList<UUID> result = new ArrayList<UUID>();
+		try {
+			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from utility u "
+							+ "inner join account a on u.id = a.utility_id where u.key = CAST(? as uuid)");
+			query.setParameter(1, utilityKey.toString());
+
+			@SuppressWarnings("unchecked")
+			List<String> keys = query.getResultList();
+
+			for (String key : keys) {
+				result.add(UUID.fromString(key));
+			}
+		} catch (Exception ex) {
+			logger.error(String.format("Failed to load user keys for utility [%s]", utilityKey), ex);
+		}
+
+		return result;
+	}
 }

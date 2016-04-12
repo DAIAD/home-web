@@ -35,6 +35,7 @@ import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.application.IDeviceRepository;
+import eu.daiad.web.repository.application.IUserRepository;
 
 @RestController("RestDeviceController")
 public class DeviceController extends BaseRestController {
@@ -42,10 +43,13 @@ public class DeviceController extends BaseRestController {
 	private static final Log logger = LogFactory.getLog(DeviceController.class);
 
 	@Autowired
-	private IDeviceRepository repository;
-	
+	private IUserRepository userRepository;
+
+	@Autowired
+	private IDeviceRepository deviceRepository;
+
 	@RequestMapping(value = "/api/v1/device/register", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse register(@RequestBody DeviceRegistrationRequest data) {
+	public RestResponse registerAmphiro(@RequestBody DeviceRegistrationRequest data) {
 		RestResponse response = new RestResponse();
 
 		UUID deviceKey = null;
@@ -54,58 +58,93 @@ public class DeviceController extends BaseRestController {
 			AuthenticatedUser user = this.authenticate(data.getCredentials(), EnumRole.ROLE_USER);
 
 			switch (data.getType()) {
-			case AMPHIRO:
-				if (data instanceof AmphiroDeviceRegistrationRequest) {
-					AmphiroDeviceRegistrationRequest amphiroData = (AmphiroDeviceRegistrationRequest) data;
+				case AMPHIRO:
+					if (data instanceof AmphiroDeviceRegistrationRequest) {
+						AmphiroDeviceRegistrationRequest amphiroData = (AmphiroDeviceRegistrationRequest) data;
 
-					Device device = repository.getUserAmphiroDeviceByMacAddress(user.getKey(),
-									amphiroData.getMacAddress());
-
-					if (device != null) {
-						throw new ApplicationException(DeviceErrorCode.ALREADY_EXISTS).set("id",
+						Device device = deviceRepository.getUserAmphiroDeviceByMacAddress(user.getKey(),
 										amphiroData.getMacAddress());
-					}
 
-					deviceKey = repository.createAmphiroDevice(user.getKey(), amphiroData.getName(),
-									amphiroData.getMacAddress(), amphiroData.getAesKey(), amphiroData.getProperties());
-
-					ArrayList<DeviceConfigurationCollection> deviceConfigurationCollection = repository
-									.getConfiguration(user.getKey(), new UUID[] { deviceKey });
-
-					AmphiroDeviceRegistrationResponse deviceResponse = new AmphiroDeviceRegistrationResponse();
-					deviceResponse.setDeviceKey(deviceKey.toString());
-
-					if (deviceConfigurationCollection.size() == 1) {
-						for (DeviceAmphiroConfiguration configuration : deviceConfigurationCollection.get(0)
-										.getConfigurations()) {
-							deviceResponse.getConfigurations().add(configuration);
+						if (device != null) {
+							throw new ApplicationException(DeviceErrorCode.ALREADY_EXISTS).set("id",
+											amphiroData.getMacAddress());
 						}
+
+						deviceKey = deviceRepository.createAmphiroDevice(user.getKey(), amphiroData.getName(),
+										amphiroData.getMacAddress(), amphiroData.getAesKey(),
+										amphiroData.getProperties());
+
+						ArrayList<DeviceConfigurationCollection> deviceConfigurationCollection = deviceRepository
+										.getConfiguration(user.getKey(), new UUID[] { deviceKey });
+
+						AmphiroDeviceRegistrationResponse deviceResponse = new AmphiroDeviceRegistrationResponse();
+						deviceResponse.setDeviceKey(deviceKey.toString());
+
+						if (deviceConfigurationCollection.size() == 1) {
+							for (DeviceAmphiroConfiguration configuration : deviceConfigurationCollection.get(0)
+											.getConfigurations()) {
+								deviceResponse.getConfigurations().add(configuration);
+							}
+						}
+
+						return deviceResponse;
 					}
+					break;
+				default:
+					throw new ApplicationException(DeviceErrorCode.NOT_SUPPORTED)
+									.set("type", data.getType().toString());
+			}
+		} catch (ApplicationException ex) {
+			logger.error(ex.getMessage(), ex);
 
-					return deviceResponse;
-				}
-				break;
-			case METER:
-				if (data instanceof WaterMeterDeviceRegistrationRequest) {
-					WaterMeterDeviceRegistrationRequest meterData = (WaterMeterDeviceRegistrationRequest) data;
+			response.add(this.getError(ex));
+		}
 
-					Device device = repository.getUserWaterMeterDeviceBySerial(user.getKey(), meterData.getSerial());
+		return response;
+	}
 
-					if (device != null) {
-						throw new ApplicationException(DeviceErrorCode.ALREADY_EXISTS).set("id", meterData.getSerial());
+	@RequestMapping(value = "/api/v1/meter/register", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	public RestResponse registerMeter(@RequestBody DeviceRegistrationRequest data) {
+		RestResponse response = new RestResponse();
+
+		UUID deviceKey = null;
+
+		try {
+			AuthenticatedUser user = this.authenticate(data.getCredentials(), EnumRole.ROLE_ADMIN);
+
+			switch (data.getType()) {
+				case METER:
+					if (data instanceof WaterMeterDeviceRegistrationRequest) {
+						WaterMeterDeviceRegistrationRequest meterData = (WaterMeterDeviceRegistrationRequest) data;
+
+						AuthenticatedUser owner = userRepository.getUserByUtilityAndKey(user.getUtilityId(),
+										meterData.getUserKey());
+
+						if (owner == null) {
+							throw new ApplicationException(DeviceErrorCode.DEVICE_OWNER_NOT_FOUND).set("meter",
+											meterData.getSerial()).set("key",
+											(meterData.getUserKey() == null ? "" : meterData.getUserKey().toString()));
+						}
+
+						Device device = deviceRepository.getWaterMeterDeviceBySerial(meterData.getSerial());
+
+						if (device != null) {
+							throw new ApplicationException(DeviceErrorCode.ALREADY_EXISTS).set("id",
+											meterData.getSerial());
+						}
+
+						deviceKey = deviceRepository.createMeterDevice(owner.getUsername(), meterData.getSerial(),
+										meterData.getProperties(), meterData.getLocation());
+
+						DeviceRegistrationResponse deviceResponse = new DeviceRegistrationResponse();
+						deviceResponse.setDeviceKey(deviceKey.toString());
+
+						return deviceResponse;
 					}
-
-					deviceKey = repository.createMeterDevice(user.getKey(), meterData.getSerial(),
-									meterData.getProperties());
-
-					DeviceRegistrationResponse deviceResponse = new DeviceRegistrationResponse();
-					deviceResponse.setDeviceKey(deviceKey.toString());
-
-					return deviceResponse;
-				}
-				break;
-			default:
-				break;
+					break;
+				default:
+					throw new ApplicationException(DeviceErrorCode.NOT_SUPPORTED)
+									.set("type", data.getType().toString());
 			}
 		} catch (ApplicationException ex) {
 			logger.error(ex.getMessage(), ex);
@@ -123,7 +162,7 @@ public class DeviceController extends BaseRestController {
 		try {
 			AuthenticatedUser user = this.authenticate(query.getCredentials(), EnumRole.ROLE_USER);
 
-			ArrayList<Device> devices = repository.getUserDevices(user.getKey(), query);
+			ArrayList<Device> devices = deviceRepository.getUserDevices(user.getKey(), query);
 
 			DeviceRegistrationQueryResult queryResponse = new DeviceRegistrationQueryResult();
 			queryResponse.setDevices(devices);
@@ -145,7 +184,7 @@ public class DeviceController extends BaseRestController {
 		try {
 			AuthenticatedUser user = this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
-			repository.shareDevice(user.getKey(), request.getAssignee(), request.getDevice(), request.isShared());
+			deviceRepository.shareDevice(user.getKey(), request.getAssignee(), request.getDevice(), request.isShared());
 		} catch (ApplicationException ex) {
 			logger.error(ex.getMessage(), ex);
 
@@ -164,7 +203,7 @@ public class DeviceController extends BaseRestController {
 
 			DeviceConfigurationResponse configuration = new DeviceConfigurationResponse();
 
-			configuration.setDevices(repository.getConfiguration(user.getKey(), request.getDeviceKey()));
+			configuration.setDevices(deviceRepository.getConfiguration(user.getKey(), request.getDeviceKey()));
 
 			return configuration;
 		} catch (ApplicationException ex) {
@@ -175,7 +214,7 @@ public class DeviceController extends BaseRestController {
 
 		return response;
 	}
-	
+
 	@RequestMapping(value = "/api/v1/device/notify", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse notify(@RequestBody NotifyConfigurationRequest request) {
 		RestResponse response = new RestResponse();
@@ -183,7 +222,8 @@ public class DeviceController extends BaseRestController {
 		try {
 			AuthenticatedUser user = this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
-			repository.notifyConfiguration(user.getKey(), request.getDeviceKey(), request.getVersion(), request.getUpdatedOn());
+			deviceRepository.notifyConfiguration(user.getKey(), request.getDeviceKey(), request.getVersion(),
+							request.getUpdatedOn());
 		} catch (ApplicationException ex) {
 			logger.error(ex.getMessage(), ex);
 
@@ -192,7 +232,7 @@ public class DeviceController extends BaseRestController {
 
 		return response;
 	}
-	
+
 	@RequestMapping(value = "/api/v1/device/reset", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse remove(@RequestBody DeviceResetRequest request) {
 		RestResponse response = new RestResponse();
@@ -200,7 +240,7 @@ public class DeviceController extends BaseRestController {
 		try {
 			this.authenticate(request.getCredentials(), EnumRole.ROLE_ADMIN);
 
-			this.repository.removeDevice(request.getDeviceKey());
+			this.deviceRepository.removeDevice(request.getDeviceKey());
 		} catch (ApplicationException ex) {
 			logger.error(ex.getMessage(), ex);
 

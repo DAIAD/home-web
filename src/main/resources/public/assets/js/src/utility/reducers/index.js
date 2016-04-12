@@ -4,11 +4,16 @@ var { routerReducer } = require('react-router-redux');
 var i18n = require('./i18n');
 var session = require('./session');
 var mode_management = require('./mode_management');
+var admin = require('./admin');
+var query = require('./query');
+
 
 var rootReducer = combineReducers({
 	i18n,
 	session,
 	mode_management,
+	admin,
+	query,
 	routing: routerReducer
 });
 

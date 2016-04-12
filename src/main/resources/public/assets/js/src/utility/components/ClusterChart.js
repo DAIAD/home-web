@@ -69,6 +69,10 @@ var ClusterChart = React.createClass({
 	
 	mixins: [PortalMixin],
 
+	onResize: function() {
+	  this._chart.resize();
+  },
+	  
 	render: function() {
 		var { prefix, options, data, ...other } = this.props;
 		

@@ -17,6 +17,8 @@ public class WaterMeterDataSeries {
 
 	private UUID deviceKey;
 
+	private String serial;
+
 	private WaterMeterDataPoint reference;
 
 	private ArrayList<WaterMeterDataPoint> values = new ArrayList<WaterMeterDataPoint>();
@@ -25,19 +27,18 @@ public class WaterMeterDataSeries {
 
 	private long maxTimestamp;
 
-	public WaterMeterDataSeries(long minTimestamp, long maxTimestamp, int granularity) {
+	public WaterMeterDataSeries(UUID deviceKey, String serial, long minTimestamp, long maxTimestamp, int granularity) {
 		this.minTimestamp = minTimestamp;
 		this.maxTimestamp = maxTimestamp;
 
 		this.granularity = granularity;
+
+		this.deviceKey = deviceKey;
+		this.serial = serial;
 	}
 
 	public UUID getDeviceKey() {
 		return deviceKey;
-	}
-
-	public void setDeviceKey(UUID deviceKey) {
-		this.deviceKey = deviceKey;
 	}
 
 	public WaterMeterDataPoint getReference() {
@@ -142,5 +143,9 @@ public class WaterMeterDataSeries {
 	private void setReference(long timestamp, float volume) {
 		this.reference.timestamp = timestamp;
 		this.reference.volume = volume;
+	}
+
+	public String getSerial() {
+		return serial;
 	}
 }
