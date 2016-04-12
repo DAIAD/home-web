@@ -17,6 +17,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.domain.application.AccountProfile;
@@ -145,6 +146,7 @@ public class JpaUserRepository implements IUserRepository {
 	}
 
 	@Override
+	@Transactional(transactionManager = "transactionManager", propagation=Propagation.REQUIRES_NEW)
 	public void initializeSecurityConfiguration() {
 		try {
 			// Initialize all system roles

@@ -1,10 +1,12 @@
 package eu.daiad.web.repository.application;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.joda.time.DateTime;
 
+import eu.daiad.web.domain.application.DeviceAmphiroConfigurationDefault;
 import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceConfigurationCollection;
@@ -17,6 +19,8 @@ public interface IDeviceRepository {
 
 	public abstract UUID createAmphiroDevice(UUID userKey, String name, String macAddress, String aesKey,
 					ArrayList<KeyValuePair> properties) throws ApplicationException;
+	
+	public List <DeviceAmphiroConfigurationDefault> getAmphiroDefaultConfigurations() throws ApplicationException;
 
 	public abstract UUID createMeterDevice(UUID userKey, String serial, ArrayList<KeyValuePair> properties)
 					throws ApplicationException;

@@ -58,7 +58,7 @@
 			"name": "Όνομα",
 			"group": "Ομάδα",
 			"currentMode": "Τρέχουσα Κατάσταση",
-			"viewInfoOnB1": "b1",
+			"viewInfoOnAmphiro": "b1",
 			"viewInfoOnMobile": "Mobile",
 			"allowSocial": "Social",
 			"deactivateUser": "Απενεργοποίηση Χρήστη",

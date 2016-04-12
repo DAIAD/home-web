@@ -75,7 +75,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 				if (!user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER"))) {
 					throw new BadCredentialsException("Authorization has failed.");
 				}
-				if (!user.getMobileMode().equals(EnumMobileMode.ACTIVE)) {
+				if ((!user.getMobileMode().equals(EnumMobileMode.ACTIVE)) && (!user.getMobileMode().equals(EnumMobileMode.LEARNING))) {
 					throw new BadCredentialsException("Applicaiton is not enabled.");
 				}
 				break;

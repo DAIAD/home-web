@@ -58,7 +58,7 @@
 			"name": "Name",
 			"group": "Group",
 			"currentMode": "Current Mode",
-			"viewInfoOnB1": "b1",
+			"viewInfoOnAmphiro": "b1",
 			"viewInfoOnMobile": "Mobile",
 			"allowSocial": "Social",
 			"deactivateUser": "Deactivate User",

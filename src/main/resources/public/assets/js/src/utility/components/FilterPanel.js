@@ -47,7 +47,7 @@ var FilterPanel = React.createClass({
 						title={filter.name}
 						key={filter.name}
 						options={options}
-						onSelect={self.props.addFilter}
+						onSelect={self.props.applyAddFilter}
 					    icon={filter.icon}
 						disabled={(typeof self.props.filterStatus[filter.id] !== 'undefined')}
 					/>		
@@ -66,7 +66,7 @@ var FilterPanel = React.createClass({
 							key={this.props.filterStatus[k].name}
 							text={tagText}
 							icon={this.props.filterStatus[k].icon}
-							onSelect={self.props.removeFilter}
+							onSelect={self.props.applyRemoveFilter}
 							/>
 					)
 				);
@@ -116,12 +116,8 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
 	return {
-		addFilter: function(event, filter){
-			dispatch(ModeManagementActions.addFilter(filter));
-		},
-		removeFilter: function(filterId){
-			dispatch(ModeManagementActions.removeFilter(filterId));
-		}
+		applyAddFilter : bindActionCreators(ModeManagementActions.applyAddFilter, dispatch),
+		applyRemoveFilter : bindActionCreators(ModeManagementActions.applyRemoveFilter, dispatch)
 	};
 }
 

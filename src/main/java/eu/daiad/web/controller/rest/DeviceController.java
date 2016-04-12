@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.device.AmphiroDeviceRegistrationRequest;
@@ -41,7 +43,7 @@ public class DeviceController extends BaseRestController {
 
 	@Autowired
 	private IDeviceRepository repository;
-
+	
 	@RequestMapping(value = "/api/v1/device/register", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse register(@RequestBody DeviceRegistrationRequest data) {
 		RestResponse response = new RestResponse();

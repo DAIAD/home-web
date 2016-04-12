@@ -21,21 +21,23 @@ var ModeManagement = React.createClass({
 	
 	componentWillMount : function() {
 		var self = this;
+		console.log('Now fetch filterOptions.....');
+		this.props.fetchFilterOptions();
 		console.log('Now fetch users.....');
-		this.props.fetchUsers();
+		this.props.fetchUsers({nameFilter: ''});		
 		console.log('Component ModeManagement will mount now.....');
 	},
 	
 	filters: [{
-		id: 'group',
+		id: 'groupName',
 		name: 'Group',
-		field: 'group',
+		field: 'groupName',
 		icon: 'group',
 		type: 'text',
 	}, {
-		id: 'b1',
+		id: 'amphiro',
 		name: 'b1',
-		field: 'b1',
+		field: 'amphiro',
 		icon: 'tachometer',
 		type: 'boolean',		
 	}, {
@@ -54,26 +56,24 @@ var ModeManagement = React.createClass({
 	
   	render: function() {  		  
   		console.log('RENDERING ModeManagement....................');
-  		  		
+  		
   		var self = this;
   		if (!this.props.usersFetchingInProgress && this.props.users){
-			var distinctGroups = Helpers.getDistinctValuesArrayObjects(this.props.users.rows, 'group');
-			var distinctGroupOptions = {};
-			$.each(distinctGroups, function (i, group){
-				distinctGroupOptions[group] = group;
-			});
-			var binaryOptions = {
-				'On': true,
-				'Off': false
-			};
-			$.each(this.filters, function (i, f){
-				if (f.id === 'group'){
-					f.options = distinctGroupOptions;
-				} else {
-					f.options = binaryOptions;
-				}
-			});
-					
+  			console.log('-----------CASE RESULTS----------');
+  			$.each(this.filters, function (i, f){
+  				var optionsList = self.props.filterOptions[f.id];
+  				var options = {};
+  				$.each(optionsList, function(j, o){
+  					var o_key = o;
+  					if (o === "NOT_APPLICABLE"){
+  						o_key = "NOT APPLICABLE";
+  					} 
+  					options[o_key] = o;
+  				});
+  				f.options = options;
+  				
+  			});
+  								
 	  		return (
 				<ModeManagementComponnent
 					filters={this.filters}
@@ -81,7 +81,7 @@ var ModeManagement = React.createClass({
 				/>
 	 		);
   		} else {
-  			
+  			console.log('-----------CASE SPINNER----------');
   			return (
   				<div>
                     <img className="preloader" src="/assets/images/utility/preloader-counterclock.png" />
@@ -98,6 +98,7 @@ ModeManagement.title = 'Section.ModeManagement';
 
 function mapStateToProps(state) {
 	return {
+		filterOptions: state.mode_management.filterOptions,
 		users: state.mode_management.users,
 		modes: state.mode_management.modes,
 		usersFetchingInProgress: state.mode_management.usersFetchingInProgress,
@@ -107,7 +108,9 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
 	return {
-		fetchUsers : bindActionCreators(ModeManagementActions.fetchUsers, dispatch)
+		fetchFilterOptions : bindActionCreators(ModeManagementActions.fetchFilterOptions, dispatch),
+		fetchUsers : bindActionCreators(ModeManagementActions.fetchUsers, dispatch),
+		test : bindActionCreators(ModeManagementActions.test, dispatch)
 	};
 }
 

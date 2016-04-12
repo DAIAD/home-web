@@ -43,6 +43,7 @@ var ModeManagementComponent = React.createClass({
 	decativateUser(){
 		console.log("Call API to deactivate user with id: " + this.props.userToDecativate.id);
 		this.closeModal();
+		this.props.deactivateUser({userDeactId: this.props.userToDecativate.id});
 	},
 	
 	showModalSaveChanges: function(changedModes){
@@ -67,15 +68,32 @@ var ModeManagementComponent = React.createClass({
 		this.openModal(title, body, actions);
 	},
 	
-	saveModeChanges: function(){
-		console.log('Call API to save changes..................');
-		console.log(this.changedModes);
+	saveModeChanges: function(){		
+		var changes = {};
+		changes.modeChanges = [];
+		this.changedModes.forEach(function(value){
+			var entry = {};
+			entry.id = value.id;
+			entry.changes = [];
+			Object.keys(value.modes).forEach(function(k, v){
+				console.log(k, v);
+				if (value.modes[k].draft){
+					var change = {};
+					change.mode = k;
+					change.value = value.modes[k].value;
+					entry.changes.push(change);
+				}
+			});
+			changes.modeChanges.push(entry);
+			
+		});
+
 		this.closeModal();
-		this.props.fetchUsers();
+		this.props.saveModeChanges(changes);
 	},
 	
 	searchName: function(nameFilter){
-		this.props.setNameFilter(nameFilter);
+		this.props.applyNameFilter(nameFilter);
 	},
 	
 	computeModesState: function (data){
@@ -141,39 +159,6 @@ var ModeManagementComponent = React.createClass({
   			}
   		}
   		
-		var applyFilters = function(row){
-  			var pass = true;
-  			$.each(self.props.filterStatus, function (filterName, filterValue){
-  				if(filterValue){
-  					if(typeof(row[filterValue.name]) === "boolean"){  	
-  						
-  						if(row[filterValue.name] !== filterValue.value){
-  							pass = false;
-  						} 
-  					} else {
-  						if(row[filterValue.name] !== filterValue.value){
-  							pass = false;
-  						}
-  					}
-  				}
-  			});
-  			return pass;
-  		};
-  		
-  		var filteredUsersRows = this.users.rows.filter(applyFilters);
-  		this.users.rows = filteredUsersRows;
-
-  		// Filter rows with the search bar contents
-  		if(this.props.nameFilter.length > 0){
-	  		filteredUsersRows = [];
-	  		$.each(this.users.rows, function(i, row){
-	  			if(row.name.toLowerCase().indexOf(self.props.nameFilter.toLowerCase()) >= 0){
-	  				filteredUsersRows.push(row);
-	  			}
-	  				
-	  		});
-	  		this.users.rows = filteredUsersRows;
-  		}
   		const userTitle = (
 			<span>
 				<i className='fa fa-group fa-fw'></i>
@@ -202,7 +187,7 @@ var ModeManagementComponent = React.createClass({
 				<div className='row'>
 					<div className='col-md-12'>
 					 	<Bootstrap.Input 	type='text'
-					 						placeholder={_t({ id:'Table.User.searchUsers'})}
+					 						placeholder={this.props.nameFilter.length > 0 ? this.props.nameFilter : _t({ id:'Table.User.searchUsers'})}
 					 						ref="search"
 					 						buttonAfter={<Bootstrap.Button onClick={function(){self.searchName(self.refs.search.getValue());}}><i className='fa fa-search fa-fw'></i></Bootstrap.Button>} 
 					 	/>
@@ -242,9 +227,8 @@ function mapStateToProps(state) {
 	return {
 		users: state.mode_management.users,
 		modes: state.mode_management.modes,
-		activePage: state.mode_management.activePage,
-		filterStatus: state.mode_management.filterStatus,
 		nameFilter: state.mode_management.nameFilter,
+		activePage: state.mode_management.activePage,
 		userToDecativate: state.mode_management.userToDecativate,
 		modal: state.mode_management.modal,
 		
@@ -260,10 +244,8 @@ function mapDispatchToProps(dispatch) {
 		setActivePage: function(activePage){
 			dispatch(ModeManagementActions.setActivePage(activePage));
 		},
-		
-		setNameFilter: function (nameFilter){
-			dispatch(ModeManagementActions.setNameFilter(nameFilter));
-		},
+
+		applyNameFilter : bindActionCreators(ModeManagementActions.applyNameFilter, dispatch),
 		
 		setModal: function(modal){
 			dispatch(ModeManagementActions.setModal(modal));
@@ -273,7 +255,11 @@ function mapDispatchToProps(dispatch) {
 			dispatch(ModeManagementActions.markUserForDeactivation(userId));
 		},
 		
-		fetchUsers : bindActionCreators(ModeManagementActions.fetchUsers, dispatch)
+		fetchUsers : bindActionCreators(ModeManagementActions.fetchUsers, dispatch),
+		
+		saveModeChanges: bindActionCreators(ModeManagementActions.saveModeChanges, dispatch),
+		
+		deactivateUser: bindActionCreators(ModeManagementActions.deactivateUser, dispatch)
 	};
 }
 

@@ -80,15 +80,47 @@ var EditTable = React.createClass({
 	},
 	
 	handleCheckboxChange: function (rowId, propertyName, currentValue){
-		var currentModesState = Object.assign({}, this.props.modes);
-		currentModesState[rowId].modes[propertyName] = {
-				value: !this.props.modes[rowId].modes[propertyName].value,
-				draft: !this.props.modes[rowId].modes[propertyName].draft								  
+		var truthTable = {
+				"ON": true,
+				"OFF": false
 		};
+		
+		var inverseTruthTable = {
+				true: "ON",
+				false: "OFF"
+		};
+		
+		var currentModesState = Object.assign({}, this.props.modes);
+		
+		if (typeof currentModesState[rowId].modes[propertyName].value === 'string'){
+			if (currentModesState[rowId].modes[propertyName].value === 'NOT_APPLICABLE'){
+				return;
+			} else {
+				currentModesState[rowId].modes[propertyName] = {
+						value: inverseTruthTable[!truthTable[this.props.modes[rowId].modes[propertyName].value]],
+						draft: !this.props.modes[rowId].modes[propertyName].draft								  
+				};
+			}
+		} else {
+			currentModesState[rowId].modes[propertyName] = {
+					value: !this.props.modes[rowId].modes[propertyName].value,
+					draft: !this.props.modes[rowId].modes[propertyName].draft								  
+			};
+		}
 		this.props.setModes(currentModesState);
 	},
 	
 	toggleCheckBoxes: function (propertyName, toggleState){	
+		var truthTable = {
+				"ON": true,
+				"OFF": false
+		};
+		
+		var inverseTruthTable = {
+				true: "ON",
+				false: "OFF"
+		};
+		
 		var visibleRowIds = [];
 		for (var i = 0; i<this.props.data.rows.length ; i++){
 			visibleRowIds.push(this.props.data.rows[i].id);
@@ -101,10 +133,21 @@ var EditTable = React.createClass({
 				let rowId = visibleRowIds[r];
 				if(currentModesState[rowId].active === true){
 					if (currentModesState[rowId].modes[propertyName].draft === true) {
-						currentModesState[rowId].modes[propertyName] = {
-								value: !currentModesState[rowId].modes[propertyName].value,
-								draft: false								  
-						};
+						if (typeof currentModesState[rowId].modes[propertyName].value === 'string'){
+							if (currentModesState[rowId].modes[propertyName].value === 'NOT_APPLICABLE'){
+								continue;
+							} else {
+								currentModesState[rowId].modes[propertyName] = {
+										value: inverseTruthTable[!truthTable[currentModesState[rowId].modes[propertyName].value]],
+										draft: false								  
+								};
+							} 
+						} else {
+							currentModesState[rowId].modes[propertyName] = {
+									value: !currentModesState[rowId].modes[propertyName].value,
+									draft: false								  
+							};
+						}
 					}
 				}
 			}
@@ -113,11 +156,23 @@ var EditTable = React.createClass({
 			for (let r = 0, len = visibleRowIds.length; r < len; r++){
 				let rowId = visibleRowIds[r];
 				if(currentModesState[rowId].active === true){
-					currentModesState[rowId].modes[propertyName] = {
-						value: true,
-						draft: (currentModesState[rowId].modes[propertyName].value === 
-							currentModesState[rowId].modes[propertyName].draft) ? true : false
-					};
+					if (typeof currentModesState[rowId].modes[propertyName].value === 'string'){
+						if (currentModesState[rowId].modes[propertyName].value === 'NOT_APPLICABLE'){
+							continue;
+						} else {
+							currentModesState[rowId].modes[propertyName] = {
+									value: 'ON',
+									draft: (truthTable[currentModesState[rowId].modes[propertyName].value] === 
+										currentModesState[rowId].modes[propertyName].draft) ? true : false
+							};
+						}
+					} else {
+						currentModesState[rowId].modes[propertyName] = {
+							value: true,
+							draft: (currentModesState[rowId].modes[propertyName].value === 
+								currentModesState[rowId].modes[propertyName].draft) ? true : false
+						};
+					}
 				}
 			}
 			break;
@@ -125,11 +180,23 @@ var EditTable = React.createClass({
 			for (var r = 0, len = visibleRowIds.length; r < len; r++){
 				let rowId = visibleRowIds[r];
 				if(currentModesState[rowId].active === true){
-					currentModesState[rowId].modes[propertyName] = {
-							value: false,
-							draft: (currentModesState[rowId].modes[propertyName].value === 
-								currentModesState[rowId].modes[propertyName].draft) ? false : true
-					};
+					if (typeof currentModesState[rowId].modes[propertyName].value === 'string'){
+						if (currentModesState[rowId].modes[propertyName].value === 'NOT_APPLICABLE'){
+							continue;
+						} else {
+							currentModesState[rowId].modes[propertyName] = {
+									value: 'OFF',
+									draft: (truthTable[currentModesState[rowId].modes[propertyName].value] === 
+										currentModesState[rowId].modes[propertyName].draft) ? false : true
+							};
+						}
+					} else {
+						currentModesState[rowId].modes[propertyName] = {
+								value: false,
+								draft: (currentModesState[rowId].modes[propertyName].value === 
+									currentModesState[rowId].modes[propertyName].draft) ? false : true
+						};
+					}
 				}
 			}
 			break;
@@ -404,12 +471,40 @@ var Cell = React.createClass({
   				text = (<Checkbox checked={value} disabled={true} />);
   				break;
 			case 'property':
-  				text = (<Checkbox checked={value} 
-  								disabled={disabled} 
-  								rowId={rowId}
-  								propertyName={this.props.field.name}
-  								draftFlag={this.props.draftFlag}
-  								onUserClick={this.props.checkboxHandler}/>);
+				if (typeof value === 'boolean'){
+	  				text = (<Checkbox checked={value} 
+	  								disabled={disabled} 
+	  								rowId={rowId}
+	  								propertyName={this.props.field.name}
+	  								draftFlag={this.props.draftFlag}
+	  								onUserClick={this.props.checkboxHandler}/>);
+	  			} else {
+	  				if (value === "NOT_APPLICABLE"){
+		  				text = (<div className='checkbox c-checkbox c-checkbox-disabled'>
+									<label>
+										<input type='checkbox' 
+											disabled={true} checked={true}
+											/>
+											<span className='fa fa-times' style={{ marginRight: 30 }}></span>
+									</label>
+								</div>);
+					} else {
+						switch (value){
+							case "ON":
+								value = true;
+								break;
+							case "OFF":
+								value = false;
+								break;
+						}
+						text = (<Checkbox checked={value} 
+							disabled={disabled} 
+							rowId={rowId}
+							propertyName={this.props.field.name}
+							draftFlag={this.props.draftFlag}
+							onUserClick={this.props.checkboxHandler}/>);
+					}
+	  			}
   				break;
   			case 'date':
   				text = (<FormattedDate value={value} day='numeric' month='long' year='numeric' />);

@@ -1,6 +1,53 @@
 var modeManagementAPI = require('../api/mode_management');
 var types = require('../constants/ActionTypes');
 
+var prepareFiltersPayload = function (nameFilter, filterStatus){
+	
+	var truthTable = {
+		true: "ON",
+		false: "OFF",
+	};
+	
+	var results = {};
+	results.nameFilter = nameFilter;
+	for (var key in filterStatus){
+		if (typeof filterStatus[key].value === "boolean"){
+			results[key] = truthTable[filterStatus[key].value];
+		} else {
+			results[key] = filterStatus[key].value;
+		}
+	}
+	return results;
+};
+
+var requestedTest = function (){
+	return {
+		type: types.MODEMNG_TEST_REQUEST
+		
+	};
+};
+
+var receivedTest = function (data){
+	return {
+		type: types.MODEMNG_TEST_RECEIVE,
+		data: data
+	};
+};
+
+
+var requestedFilterOptions = function (){
+	return {
+		type: types.MODEMNG_REQUEST_FILTER_OPTIONS
+	};
+};
+
+var receivedFilterOptions = function (options){
+	return {
+		type: types.MODEMNG_RECEIVED_FILTER_OPTIONS,
+		filterOptions: options
+	};
+};
+
 var requestedUsers = function (){
 	return {
 		type: types.MODEMNG_REQUEST_USERS
@@ -14,43 +61,41 @@ var receivedUsers = function (users){
 	};
 };
 
-var sendDeactivateUserRequest = function(user){
+var setNameFilter = function (term) {
+	return{
+		type: types.MODEMNG_SET_NAME_FILTER,
+		nameFilter: term
+	};
+};
+
+var addFilter = function(event, filter) {
 	return {
-		type: types.MODEMNG_DEACTIVATE_USER,
-		user: user
+		type: types.MODEMNG_FILTER_ADD,
+		filter: filter
+	};
+};
+
+var removeFilter = function(filterId) {
+	return {
+		type: types.MODEMNG_FILTER_REMOVE,
+		filterId: filterId
+	};
+};
+
+var sendDeactivateUserRequest = function(){
+	return {
+		type: types.MODEMNG_DEACTIVATE_USER
 	};
 };
 
 var sendSaveModesRequest = function(updatedModes){
 	return {
 		type: types.MODEMNG_SAVE_MODE_CHANGES,
-		modes: updatedModes
 	};
 };
 
 const ModeManagementActions = {
 
-	addFilter: function(filter) {
-		return {
-			type: types.MODEMNG_FILTER_ADD,
-			filter: filter
-		};
-	},
-	
-	removeFilter: function(filterId) {
-		return {
-			type: types.MODEMNG_FILTER_REMOVE,
-			filterId: filterId
-		};
-	},
-	
-	setNameFilter: function (term) {
-		return{
-			type: types.MODEMNG_SET_NAME_FILTER,
-			nameFilter: term
-		};
-	},
-	
 	markUserForDeactivation: function(userId){
 		return {
 			type: types.MODEMNG_MARK_USER_DEACTIVATION,
@@ -86,14 +131,61 @@ const ModeManagementActions = {
 		};
 	},
 	
+	fetchFilterOptions: function(){
+		return function(dispatch, getState){
+			dispatch(requestedFilterOptions());
+			return modeManagementAPI.fetchFilterOptions().then(
+				function (filterOptions) {
+					dispatch(receivedFilterOptions(filterOptions));
+				});
+		};
+	},
+	
 	fetchUsers: function(){
 		return function(dispatch, getState) {
 			dispatch(requestedUsers());
-			return modeManagementAPI.fetchUsers().then(
+			var filters = prepareFiltersPayload(getState().mode_management.nameFilter, getState().mode_management.filterStatus);
+			return modeManagementAPI.fetchUsers(filters).then(
 				function(users) {
 					dispatch(receivedUsers(users));
 				});
 		};
+	},
+	
+	applyNameFilter: function (term){
+		return function(dispatch, getState){
+			dispatch(setNameFilter(term));
+			var filters = prepareFiltersPayload(getState().mode_management.nameFilter, getState().mode_management.filterStatus);
+			return modeManagementAPI.fetchUsers(filters).then(
+				function(users) {
+					dispatch(receivedUsers(users));
+				});
+		};
+		
+	},
+	
+	applyAddFilter: function (event, filter){
+		return function(dispatch, getState){
+			dispatch(addFilter(event, filter));
+			var filters = prepareFiltersPayload(getState().mode_management.nameFilter, getState().mode_management.filterStatus);
+			return modeManagementAPI.fetchUsers(filters).then(
+				function(users) {
+					dispatch(receivedUsers(users));
+				});
+		};
+		
+	},
+	
+	applyRemoveFilter: function (filterId){
+		return function(dispatch, getState){
+			dispatch(removeFilter(filterId));
+			var filters = prepareFiltersPayload(getState().mode_management.nameFilter, getState().mode_management.filterStatus);
+			return modeManagementAPI.fetchUsers(filters).then(
+				function(users) {
+					dispatch(receivedUsers(users));
+				});
+		};
+		
 	},
 	
 	deactivateUser: function(user){
@@ -101,7 +193,8 @@ const ModeManagementActions = {
 			dispatch(sendDeactivateUserRequest());
 			modeManagementAPI.deactivateUser(user).then(
 				function(){
-					return modeManagementAPI.fetchUsers().then(
+					var filters = prepareFiltersPayload(getState().mode_management.nameFilter, getState().mode_management.filterStatus);
+					return modeManagementAPI.fetchUsers(filters).then(
 						function (users){
 							dispatch(receivedUsers(users));
 						});
@@ -115,14 +208,26 @@ const ModeManagementActions = {
 			dispatch(sendSaveModesRequest());
 			modeManagementAPI.saveModeChanges(modes).then(
 				function(){
-					return modeManagementAPI.fetchUsers().then(
+					var filters = prepareFiltersPayload(getState().mode_management.nameFilter, getState().mode_management.filterStatus);
+					return modeManagementAPI.fetchUsers(filters).then(
 						function (users){
 							dispatch(receivedUsers(users));
 						});
 				}
 			);
 		};
-	}
+	},
+	
+	
+	test: function(input){
+		return function(dispatch, getState) {
+			dispatch(requestedTest());
+			return modeManagementAPI.testCall(input).then(
+				function(data) {
+					dispatch(receivedTest(data));
+				});
+		};
+	},
 };
 
 module.exports = ModeManagementActions;

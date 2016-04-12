@@ -23,6 +23,10 @@
 	background: #34495e;
 }
 
+.white-wrapper {
+	width: 100%;
+}
+
 .page-wrapper {
 	background-color: #fff;
 	position: inherit;

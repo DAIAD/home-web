@@ -11,6 +11,7 @@ var initialState = {
 		show: false
 	},
 	changedModes: [],
+	filterOptions: null,
 	users: null,
 	modes: null,
 	activePage: 0
@@ -83,6 +84,11 @@ var mode_management = function(state, action) {
 		return Object.assign({}, state, {
 			activePage : action.activePage
 		});
+	
+	case types.MODEMNG_RECEIVED_FILTER_OPTIONS:
+		return Object.assign({}, state, {
+			filterOptions : action.filterOptions.filterOptions
+		});
 		
 	case types.MODEMNG_REQUEST_USERS:
 		return Object.assign({}, state, {
@@ -99,17 +105,21 @@ var mode_management = function(state, action) {
 				name: 'active',
 				title: 'Table.User.active',
 				hidden: true
-			},{
+			}, {
+				name: 'groupId',
+				title: 'Table.User.group',
+				hidden: true
+			}, {
 				name: 'name',
 				title: 'Table.User.name',
 				link: '/user/{id}'
 			}, {
-				name: 'group',
+				name: 'groupName',
 				title: 'Table.User.group',
-				link: '/group/{id}'
+				link: '/group/{groupId}'
 			}, {
-				name: 'b1',
-				title: 'Table.User.viewInfoOnB1',
+				name: 'amphiro',
+				title: 'Table.User.viewInfoOnAmphiro',
 				type:'property'
 			}, {
 				name: 'mobile',
@@ -133,8 +143,7 @@ var mode_management = function(state, action) {
 				size: 10
 			}
 		};
-		
-		users.rows = action.users;
+		users.rows = action.users.profileSet;
 		var modes = computeModesState(users);
 		return Object.assign({}, state, {
 			usersFetchingInProgress : false,
@@ -142,16 +151,35 @@ var mode_management = function(state, action) {
 			modes: modes
 		});
 		
+	case types.MODEMNG_SAVE_MODE_CHANGES:
+		return Object.assign({}, state, {
+			usersFetchingInProgress : true,
+		});
+		
+	case types.MODEMNG_DEACTIVATE_USER:
+		return Object.assign({}, state, {
+			usersFetchingInProgress : true,
+		});
 		
 	case types.MODEMNG_SET_NAME_FILTER:
 		return  Object.assign({}, state, {
-			nameFilter : action.nameFilter
+			nameFilter : action.nameFilter,
+			usersFetchingInProgress : true
 		});	
 	
 	case types.MODEMNG_MARK_USER_DEACTIVATION:
 		return Object.assign({}, state, {
 			userToDecativate : action.userId
 		});
+	
+	case types.MODEMNG_TEST_REQUEST:
+		return Object.assign({}, state);
+		
+	case types.MODEMNG_TEST_RECEIVE:
+		console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+		console.log(action.data);
+		console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+		return Object.assign({}, state);
 
 	default:
 		return state || initialState;
