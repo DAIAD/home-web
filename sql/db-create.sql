@@ -1,3 +1,8 @@
+-- Extensions
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE EXTENSION IF NOT EXISTS postgis;
+
 --  utility
 CREATE SEQUENCE utility_id_seq
     START WITH 1
