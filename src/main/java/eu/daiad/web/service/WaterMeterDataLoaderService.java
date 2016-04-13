@@ -32,7 +32,9 @@ import eu.daiad.web.connector.RemoteFileAttributes;
 import eu.daiad.web.connector.SecureFileTransferConnector;
 import eu.daiad.web.domain.admin.Upload;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.loader.DataTransferConfiguration;
+import eu.daiad.web.model.loader.FileProcessingStatus;
 import eu.daiad.web.model.meter.WaterMeterMeasurement;
 import eu.daiad.web.model.meter.WaterMeterMeasurementCollection;
 import eu.daiad.web.repository.application.IDeviceRepository;
@@ -138,7 +140,13 @@ public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService
 
 					// Process data and import records to HBASE
 					upload.setProcessingStartedOn(new DateTime());
-					this.parse(config, upload);
+
+					FileProcessingStatus status = this.parse(target, config.getTimezone());
+
+					upload.setTotalRows(status.getTotalRows());
+					upload.setProccessedRows(status.getProcessedRows());
+					upload.setSkippedRows(status.getSkippedRows());
+
 					upload.setProcessingCompletedOn(new DateTime());
 
 					this.entityManager.persist(upload);
@@ -150,37 +158,43 @@ public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService
 		}
 	}
 
-	private void parse(DataTransferConfiguration config, Upload upload) {
+	@Override
+	public FileProcessingStatus parse(String filename, String timezone) throws ApplicationException {
+		File file = new File(filename);
+		if (!file.exists()) {
+			throw new ApplicationException(SharedErrorCode.FILE_DOES_NOT_EXIST).set("filename", filename);
+		}
+
 		Scanner scan = null;
-		String filename = FilenameUtils.concat(upload.getLocalFolder(), upload.getLocalFilename());
+
+		FileProcessingStatus status = new FileProcessingStatus();
 
 		// ABCD;ABCD;METER;17/02/2014 11:13:45;867;2;
 		String line = "";
 
 		DateTimeFormatter formatter = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss").withZone(
-						DateTimeZone.forID(config.getTimezone()));
-
-		int index = 0, totalRows = 0, processedRows = 0, skippedRows = 0;
+						DateTimeZone.forID(timezone));
 
 		try {
 			// Count rows
 			scan = new Scanner(new File(filename));
 
+			int index = 0;
 			while (scan.hasNextLine()) {
+				index++;
 				scan.nextLine();
-				totalRows++;
 			}
 			scan.close();
 			scan = null;
 
-			upload.setTotalRows(totalRows);
-			this.entityManager.flush();
+			status.setTotalRows(index);
 
 			// Process rows
 			scan = new Scanner(new File(filename));
 
 			this.waterMeterMeasurementRepository.open();
 
+			index = 0;
 			while (scan.hasNextLine()) {
 				index++;
 				line = scan.nextLine();
@@ -189,7 +203,7 @@ public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService
 
 				String[] tokens = StringUtils.split(line, ";");
 				if (tokens.length != 6) {
-					skippedRows++;
+					status.skipRow();
 				} else {
 					String serial = tokens[2];
 
@@ -199,7 +213,7 @@ public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService
 					} catch (Exception ex) {
 						logger.error(String.format("Failed to parse timestamp [%s] in line [%d] from file [%s].",
 										tokens[3], index, filename), ex);
-						skippedRows++;
+						status.skipRow();
 						continue;
 					}
 
@@ -208,7 +222,7 @@ public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService
 					} catch (Exception ex) {
 						logger.error(String.format("Failed to parse volume [%s] in line [%d] from file [%s].",
 										tokens[4], index, filename), ex);
-						skippedRows++;
+						status.skipRow();
 						continue;
 					}
 					try {
@@ -216,7 +230,7 @@ public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService
 					} catch (Exception ex) {
 						logger.error(String.format("Failed to parse difference [%s] in line [%d] from file [%s].",
 										tokens[5], index, filename), ex);
-						skippedRows++;
+						status.skipRow();
 						continue;
 					}
 
@@ -234,7 +248,7 @@ public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService
 
 					this.waterMeterMeasurementRepository.storeData(serial, data);
 
-					processedRows++;
+					status.processRow();
 				}
 			}
 		} catch (FileNotFoundException fileEx) {
@@ -244,13 +258,12 @@ public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService
 		} finally {
 			this.waterMeterMeasurementRepository.close();
 
-			upload.setProccessedRows(processedRows);
-			upload.setSkippedRows(skippedRows);
-
 			if (scan != null) {
 				scan.close();
 			}
 		}
+
+		return status;
 	}
 
 	@Override

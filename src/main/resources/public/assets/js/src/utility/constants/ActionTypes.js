@@ -29,7 +29,12 @@ var constants = keyMirror({
 	ADMIN_EXPORT_COMPLETE: null,
 	 
 	QUERY_SUBMIT: null,
-	QUERY_RESPONSE: null
+	QUERY_RESPONSE: null,
+	
+	DEBUG_CREATE_USER: null,
+	DEBUG_USER_CREATED: null,
+	DEBUG_CREATE_AMPHIRO: null,
+	DEBUG_AMPHIRO_CREATED: null
 });
 
 module.exports = constants;

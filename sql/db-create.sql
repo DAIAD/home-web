@@ -75,6 +75,7 @@ CREATE TABLE public.account_profile
   web_config character varying NULL,
   utility_mode int NOT NULL,
   utility_config character varying NULL,
+  static_tip_sent_on timestamp without time zone,
   CONSTRAINT pk_account_profile PRIMARY KEY (id),
   CONSTRAINT fk_account_profile_account FOREIGN KEY (id)
         REFERENCES public.account (id) MATCH SIMPLE

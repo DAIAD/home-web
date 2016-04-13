@@ -1,5 +1,6 @@
 package eu.daiad.web.repository.application;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -48,18 +49,18 @@ import eu.daiad.web.model.amphiro.AmphiroSessionCollectionQueryResult;
 import eu.daiad.web.model.amphiro.AmphiroSessionDetails;
 import eu.daiad.web.model.amphiro.AmphiroSessionQuery;
 import eu.daiad.web.model.amphiro.AmphiroSessionQueryResult;
-import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DataErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.query.ExpandedDataQuery;
 import eu.daiad.web.model.query.ExpandedPopulationFilter;
 import eu.daiad.web.model.query.GroupDataSeries;
-import eu.daiad.web.model.security.AuthenticatedUser;
 
 @Repository()
 @Scope("prototype")
 public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRepository {
+
+	private static final Log logger = LogFactory.getLog(HBaseAmphiroMeasurementRepository.class);
 
 	private final String ERROR_RELEASE_RESOURCES = "Failed to release resources";
 
@@ -77,9 +78,6 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 		}
 	}
 
-	@Autowired
-	private HBaseConfigurationBuilder configurationBuilder;
-
 	@Value("${hbase.data.time.partitions}")
 	private short timePartitions;
 
@@ -91,10 +89,38 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 
 	private String columnFamilyName = "cf";
 
-	private static final Log logger = LogFactory.getLog(HBaseAmphiroMeasurementRepository.class);
+	@Autowired
+	private HBaseConfigurationBuilder configurationBuilder;
 
-	private void storeSessionByUser(Connection connection, AuthenticatedUser user, AmphiroDevice device,
-					AmphiroMeasurementCollection data) throws Exception {
+	private Connection connection = null;
+
+	@Override
+	public void open() throws IOException {
+		if (this.connection == null) {
+			Configuration config = this.configurationBuilder.build();
+			this.connection = ConnectionFactory.createConnection(config);
+		}
+	}
+
+	@Override
+	public boolean isOpen() {
+		return ((this.connection != null) && (!this.connection.isClosed()));
+	}
+
+	@Override
+	public void close() {
+		try {
+			if ((this.connection != null) && (!this.connection.isClosed())) {
+				this.connection.close();
+				this.connection = null;
+			}
+		} catch (Exception ex) {
+			logger.error(ERROR_RELEASE_RESOURCES, ex);
+		}
+	}
+
+	private void storeSessionByUser(Connection connection, UUID userKey, AmphiroMeasurementCollection data)
+					throws Exception {
 		Table table = null;
 		try {
 			if ((data == null) || (data.getSessions() == null)) {
@@ -108,8 +134,8 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 			for (int i = 0; i < data.getSessions().size(); i++) {
 				AmphiroSession s = data.getSessions().get(i);
 
-				byte[] userKey = user.getKey().toString().getBytes("UTF-8");
-				byte[] userKeyHash = md.digest(userKey);
+				byte[] userKeyBytes = userKey.toString().getBytes("UTF-8");
+				byte[] userKeyHash = md.digest(userKeyBytes);
 
 				byte[] deviceKey = data.getDeviceKey().toString().getBytes("UTF-8");
 				byte[] deviceKeyHash = md.digest(deviceKey);
@@ -198,8 +224,8 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 		}
 	}
 
-	private void storeSessionByTime(Connection connection, AuthenticatedUser user, AmphiroDevice device,
-					AmphiroMeasurementCollection data) throws Exception {
+	private void storeSessionByTime(Connection connection, UUID userKey, AmphiroMeasurementCollection data)
+					throws Exception {
 		Table table = null;
 
 		try {
@@ -217,8 +243,8 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 				short partition = (short) (s.getTimestamp() % this.timePartitions);
 				byte[] partitionBytes = Bytes.toBytes(partition);
 
-				byte[] userKey = user.getKey().toString().getBytes("UTF-8");
-				byte[] userKeyHash = md.digest(userKey);
+				byte[] userKeyBytes = userKey.toString().getBytes("UTF-8");
+				byte[] userKeyHash = md.digest(userKeyBytes);
 
 				byte[] deviceKey = data.getDeviceKey().toString().getBytes("UTF-8");
 				byte[] deviceKeyHash = md.digest(deviceKey);
@@ -392,8 +418,8 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 	}
 
 	@SuppressWarnings("resource")
-	private void storeMeasurements(Connection connection, AuthenticatedUser user, AmphiroDevice device,
-					AmphiroMeasurementCollection data) throws Exception {
+	private void storeMeasurements(Connection connection, UUID userKey, AmphiroMeasurementCollection data)
+					throws Exception {
 		Table table = null;
 
 		try {
@@ -413,8 +439,8 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 					continue;
 				}
 
-				byte[] userKey = user.getKey().toString().getBytes("UTF-8");
-				byte[] userKeyHash = md.digest(userKey);
+				byte[] userKeyBytes = userKey.toString().getBytes("UTF-8");
+				byte[] userKeyHash = md.digest(userKeyBytes);
 
 				byte[] deviceKey = data.getDeviceKey().toString().getBytes("UTF-8");
 				byte[] deviceKeyHash = md.digest(deviceKey);
@@ -470,36 +496,32 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 	}
 
 	@Override
-	public void storeData(AuthenticatedUser user, AmphiroDevice device, AmphiroMeasurementCollection data)
-					throws ApplicationException {
-		Connection connection = null;
+	public void storeData(UUID userKey, AmphiroMeasurementCollection data) throws ApplicationException {
+		boolean autoClose = false;
 
 		try {
 			if (data == null) {
 				return;
 			}
 
+			if (!this.isOpen()) {
+				this.open();
+				autoClose = true;
+			}
+
 			this.preProcessData(data);
 
-			Configuration config = this.configurationBuilder.build();
+			this.storeSessionByUser(connection, userKey, data);
+			this.storeSessionByTime(connection, userKey, data);
 
-			connection = ConnectionFactory.createConnection(config);
-
-			this.storeSessionByUser(connection, user, device, data);
-			this.storeSessionByTime(connection, user, device, data);
-
-			this.storeMeasurements(connection, user, device, data);
-
-			connection.close();
+			this.storeMeasurements(connection, userKey, data);
 		} catch (Exception ex) {
+			autoClose = true;
+
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
 		} finally {
-			try {
-				if ((connection != null) && (!connection.isClosed())) {
-					connection.close();
-				}
-			} catch (Exception ex) {
-				logger.error(ERROR_RELEASE_RESOURCES, ex);
+			if (autoClose) {
+				this.close();
 			}
 		}
 	}
@@ -784,14 +806,17 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 								query.getGranularity());
 		}
 
-		Connection connection = null;
+		boolean autoClose = false;
+
 		Table table = null;
 		ResultScanner scanner = null;
 
 		try {
-			Configuration config = this.configurationBuilder.build();
 
-			connection = ConnectionFactory.createConnection(config);
+			if (!this.isOpen()) {
+				this.open();
+				autoClose = true;
+			}
 
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
@@ -890,6 +915,8 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 
 			return data;
 		} catch (Exception ex) {
+			autoClose = true;
+
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
@@ -899,8 +926,8 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 				if (table != null) {
 					table.close();
 				}
-				if ((connection != null) && (!connection.isClosed())) {
-					connection.close();
+				if (autoClose) {
+					this.close();
 				}
 			} catch (Exception ex) {
 				logger.error(ERROR_RELEASE_RESOURCES, ex);

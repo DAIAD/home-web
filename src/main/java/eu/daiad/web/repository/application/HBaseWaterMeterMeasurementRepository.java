@@ -50,6 +50,8 @@ import eu.daiad.web.model.query.GroupDataSeries;
 @Scope("prototype")
 public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurementRepository {
 
+	private static final Log logger = LogFactory.getLog(HBaseWaterMeterMeasurementRepository.class);
+
 	private final String ERROR_RELEASE_RESOURCES = "Failed to release resources";
 
 	private enum EnumTimeInterval {
@@ -78,10 +80,9 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 	@Autowired
 	private HBaseConfigurationBuilder configurationBuilder;
 
-	private static final Log logger = LogFactory.getLog(HBaseWaterMeterMeasurementRepository.class);
-
 	private Connection connection = null;
 
+	@Override
 	public void open() throws IOException {
 		if (this.connection == null) {
 			Configuration config = this.configurationBuilder.build();
@@ -89,6 +90,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 		}
 	}
 
+	@Override
 	public boolean isOpen() {
 		return ((this.connection != null) && (!this.connection.isClosed()));
 	}

@@ -14,7 +14,6 @@ import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.DeviceMeasurementCollection;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.amphiro.AmphiroMeasurementCollection;
-import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
@@ -69,7 +68,7 @@ public class DataController extends BaseRestController {
 							throw new ApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type", data.getType()
 											.toString());
 						}
-						amphiroMeasurementRepository.storeData((AuthenticatedUser) user, (AmphiroDevice) device,
+						amphiroMeasurementRepository.storeData(((AuthenticatedUser) user).getKey(),
 										(AmphiroMeasurementCollection) data);
 					}
 					break;
