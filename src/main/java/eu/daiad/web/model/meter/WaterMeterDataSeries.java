@@ -57,23 +57,19 @@ public class WaterMeterDataSeries {
 		return values;
 	}
 
-	public void sortAndComputeDiff() {
+	public void sort() {
 		Collections.sort(this.values, new Comparator<WaterMeterDataPoint>() {
 			public int compare(WaterMeterDataPoint o1, WaterMeterDataPoint o2) {
-				if (o1.timestamp <= o2.timestamp) {
+				if (o1.getTimestamp() <= o2.getTimestamp()) {
 					return -1;
 				} else {
 					return 1;
 				}
 			}
 		});
-
-		for (int i = this.values.size() - 1; i > 0; i--) {
-			this.values.get(i).difference = this.values.get(i).volume - this.values.get(i - 1).volume;
-		}
 	}
 
-	public void add(long timestamp, float volume) {
+	public void add(long timestamp, float volume, float difference) {
 		DateTime date = new DateTime(timestamp, DateTimeZone.UTC);
 
 		switch (this.granularity) {
@@ -110,11 +106,11 @@ public class WaterMeterDataSeries {
 
 		if (this.reference == null) {
 			this.reference = new WaterMeterDataPoint();
-			this.reference.timestamp = timestamp;
-			this.reference.volume = volume;
+			this.reference.setTimestamp(timestamp);
+			this.reference.setVolume(volume);
 		}
 
-		if (timestamp < this.reference.timestamp) {
+		if (timestamp < this.reference.getTimestamp()) {
 			this.setReference(timestamp, volume);
 		}
 
@@ -123,26 +119,28 @@ public class WaterMeterDataSeries {
 			// for the selected time granularity
 			if (this.granularity != TemporalConstants.NONE) {
 				for (int i = 0, count = values.size(); i < count; i++) {
-					if (values.get(i).timestamp == timestamp) {
-						if (values.get(i).volume < volume) {
-							values.get(i).volume = volume;
+					if (values.get(i).getTimestamp() == timestamp) {
+						if (values.get(i).getVolume() < volume) {
+							values.get(i).setVolume(volume);
 						}
+						values.get(i).setDifference(values.get(i).getDifference() + difference);
 						return;
 					}
 				}
 			}
 
 			WaterMeterDataPoint point = new WaterMeterDataPoint();
-			point.timestamp = timestamp;
-			point.volume = volume;
+			point.setTimestamp(timestamp);
+			point.setVolume(volume);
+			point.setDifference(difference);
 
 			values.add(point);
 		}
 	}
 
 	private void setReference(long timestamp, float volume) {
-		this.reference.timestamp = timestamp;
-		this.reference.volume = volume;
+		this.reference.setTimestamp(timestamp);
+		this.reference.setVolume(volume);
 	}
 
 	public String getSerial() {

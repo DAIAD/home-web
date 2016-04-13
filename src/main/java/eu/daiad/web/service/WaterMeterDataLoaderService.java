@@ -110,7 +110,7 @@ public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService
 					if ((allowedFilenames != null) && (!allowedFilenames.matcher(f.getFilename()).matches())) {
 						continue;
 					}
-					if(this.cancelled) {
+					if (this.cancelled) {
 						return;
 					}
 

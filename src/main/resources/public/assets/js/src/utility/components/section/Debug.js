@@ -31,11 +31,11 @@ var Debug = React.createClass({
     
     var query = {
         time: {
-          type : 'ABSOLUTE',
-          interval : 'DAY',
-          start: start,
-          end: end,
-          graunlarity: 'ALL'
+          type : 'SLIDING',
+          start: moment().valueOf(),
+          duration: -30,
+          durationTimeUnit: 'DAY',
+          granularity: 'DAY'
         },
         population: [
           { type :'USER', label: 'Bob', users: ['a9509da9-edf5-4838-acf4-8f1b73485d7a']},

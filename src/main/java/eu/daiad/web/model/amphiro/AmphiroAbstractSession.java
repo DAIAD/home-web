@@ -1,6 +1,7 @@
 package eu.daiad.web.model.amphiro;
 
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -23,8 +24,8 @@ public abstract class AmphiroAbstractSession {
 	}
 
 	@JsonIgnore
-	public DateTime getDate() {
-		return new DateTime(this.timestamp);
+	public DateTime getUtcDate() {
+		return new DateTime(this.timestamp, DateTimeZone.UTC);
 	}
 
 	public int getDuration() {

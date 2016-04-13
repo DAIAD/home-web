@@ -18,6 +18,7 @@ import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.UserErrorCode;
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryResponse;
+import eu.daiad.web.model.query.EnumMeasurementDataSource;
 import eu.daiad.web.model.query.ExpandedDataQuery;
 import eu.daiad.web.model.query.ExpandedPopulationFilter;
 import eu.daiad.web.model.query.GroupPopulationFilter;
@@ -96,41 +97,56 @@ public class DataService implements IDataService {
 												userKey);
 							}
 
-							// Apply spatial filtering
-							if (query.getSpatial() != null) {
+							// Load devices only if there is a spatial filter or
+							// meter values are requested
+							if ((query.getSpatial() != null)
+											|| (query.getSource().equals(EnumMeasurementDataSource.BOTH))
+											|| (query.getSource().equals(EnumMeasurementDataSource.METER))) {
 								ArrayList<Device> devices = deviceRepository.getUserDevices(userKey,
 												new DeviceRegistrationQuery(EnumDeviceType.METER));
+
+								boolean includeUser = false;
 
 								for (Device device : devices) {
 									WaterMeterDevice meter = (WaterMeterDevice) device;
 
-									boolean include = false;
+									if (query.getSpatial() == null) {
+										includeUser = true;
+										expandedPopulationFilter.getSerials().add(
+														md.digest(meter.getSerial().getBytes("UTF-8")));
+									} else {
+										boolean includeMeter = false;
 
-									if (meter.getLocation() != null) {
-										switch (query.getSpatial().getType()) {
-											case CONTAINS:
-												include = query.getSpatial().getGeometry()
-																.contains(meter.getLocation());
-												break;
-											case INTERSECT:
-												include = query.getSpatial().getGeometry()
-																.intersects(meter.getLocation());
-												break;
-											case DISTANCE:
-												include = (query.getSpatial().getGeometry()
-																.distance(meter.getLocation()) < query.getSpatial()
-																.getDistance());
-												break;
-											default:
-												// Ignore
+										if (meter.getLocation() != null) {
+											switch (query.getSpatial().getType()) {
+												case CONTAINS:
+													includeMeter = query.getSpatial().getGeometry()
+																	.contains(meter.getLocation());
+													break;
+												case INTERSECT:
+													includeMeter = query.getSpatial().getGeometry()
+																	.intersects(meter.getLocation());
+													break;
+												case DISTANCE:
+													includeMeter = (query.getSpatial().getGeometry()
+																	.distance(meter.getLocation()) < query.getSpatial()
+																	.getDistance());
+													break;
+												default:
+													// Ignore
+											}
+										}
+										if (includeMeter) {
+											includeUser = true;
+											expandedPopulationFilter.getSerials().add(
+															md.digest(meter.getSerial().getBytes("UTF-8")));
 										}
 									}
-									if (include) {
-										expandedPopulationFilter.getUsers().add(userKey);
-										expandedPopulationFilter.getHashes().add(
-														md.digest(userKey.toString().getBytes("UTF-8")));
-										break;
-									}
+								}
+								if (includeUser) {
+									expandedPopulationFilter.getUsers().add(userKey);
+									expandedPopulationFilter.getHashes().add(
+													md.digest(userKey.toString().getBytes("UTF-8")));
 								}
 							} else {
 								expandedPopulationFilter.getUsers().add(userKey);
@@ -156,27 +172,33 @@ public class DataService implements IDataService {
 				case SLIDING:
 					switch (query.getTime().getDurationTimeUnit()) {
 						case HOUR:
-							endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).minusHours(query.getTime()
+							endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusHours(query.getTime()
 											.getDuration()).getMillis());
 							break;
 						case DAY:
-							endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).minusDays(query.getTime()
+							endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusDays(query.getTime()
 											.getDuration()).getMillis());
 							break;
 						case WEEK:
-							endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).minusWeeks(query.getTime()
+							endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusWeeks(query.getTime()
 											.getDuration()).getMillis());
 							break;
 						case MONTH:
-							endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).minusMonths(query.getTime()
+							endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusMonths(query.getTime()
 											.getDuration()).getMillis());
 							break;
 						case YEAR:
-							endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).minusYears(query.getTime()
+							endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusYears(query.getTime()
 											.getDuration()).getMillis());
 							break;
 						default:
 							return response;
+					}
+
+					if (endDateTime < startDateTime) {
+						long temp = startDateTime;
+						startDateTime = endDateTime;
+						endDateTime = temp;
 					}
 					break;
 				default:
@@ -186,10 +208,21 @@ public class DataService implements IDataService {
 			// Construct expanded query
 			expandedQuery.setStartDateTime(startDateTime);
 			expandedQuery.setEndDateTime(endDateTime);
-			expandedQuery.setGranularity(query.getTime().getGraunlarity());
+			expandedQuery.setGranularity(query.getTime().getGranularity());
 			expandedQuery.setMetrics(query.getMetrics());
 
-			response.setDevices(amphiroRepository.query(expandedQuery));
+			switch (query.getSource()) {
+				case BOTH:
+					response.setDevices(amphiroRepository.query(expandedQuery));
+					response.setMeters(meterRepository.query(expandedQuery));
+					break;
+				case AMPHIRO:
+					response.setDevices(amphiroRepository.query(expandedQuery));
+					break;
+				case METER:
+					response.setMeters(meterRepository.query(expandedQuery));
+					break;
+			}
 
 			return response;
 		} catch (Exception ex) {

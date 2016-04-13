@@ -6,9 +6,9 @@ public class WaterMeterMeasurementQuery extends WaterMeterStatusQuery {
 
 	private int granularity = TemporalConstants.NONE;
 
-	private long startDate;
+	private Long startDate;
 
-	private long endDate;
+	private Long endDate;
 
 	public int getGranularity() {
 		return granularity;
@@ -18,19 +18,19 @@ public class WaterMeterMeasurementQuery extends WaterMeterStatusQuery {
 		this.granularity = granularity;
 	}
 
-	public long getStartDate() {
+	public Long getStartDate() {
 		return startDate;
 	}
 
-	public void setStartDate(long startDate) {
+	public void setStartDate(Long startDate) {
 		this.startDate = startDate;
 	}
 
-	public long getEndDate() {
+	public Long getEndDate() {
 		return endDate;
 	}
 
-	public void setEndDate(long endDate) {
+	public void setEndDate(Long endDate) {
 		this.endDate = endDate;
 	}
 
