@@ -40,4 +40,10 @@ public class FileProcessingStatus {
 		this.skippedRows++;
 	}
 
+	@Override
+	public String toString() {
+		return "FileProcessingStatus [totalRows=" + totalRows + ", processedRows=" + processedRows + ", skippedRows="
+						+ skippedRows + "]";
+	}
+
 }

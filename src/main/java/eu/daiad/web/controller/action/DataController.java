@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.UUID;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,10 +98,13 @@ public class DataController extends BaseController {
 			// Get the filename and build the local file path (be sure that the
 			// application have write permissions on such directory)
 			if (request.getFiles() != null) {
+				FileUtils.forceMkdir(new File(temporaryPath));
+
 				switch (request.getType()) {
 					case METER:
 						for (MultipartFile file : request.getFiles()) {
-							String filename = Paths.get(temporaryPath, file.getOriginalFilename()).toString();
+							String filename = Paths.get(temporaryPath,
+											UUID.randomUUID().toString() + "-" + file.getOriginalFilename()).toString();
 
 							this.saveFile(filename, file.getBytes());
 

@@ -13,6 +13,7 @@ import java.util.UUID;
 import javax.crypto.KeyGenerator;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -178,10 +179,9 @@ public class DebugController extends BaseController {
 
 		if (ArrayUtils.contains(environment.getActiveProfiles(), "development")) {
 			try {
-				// Get the filename and build the local file path (be sure that
-				// the
-				// application have write permissions on such directory)
 				if (request.getFiles() != null) {
+					FileUtils.forceMkdir(new File(temporaryPath));
+
 					switch (request.getType()) {
 						case AMPHIRO_DATA:
 							if ((request.getFiles() != null) && (request.getFiles().length == 1)) {
