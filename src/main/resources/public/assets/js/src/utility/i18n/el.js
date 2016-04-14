@@ -71,9 +71,56 @@
 		},
 		"Save": "Αποθήκευση Αλλαγών"
 	},
-	"FilterBar" : {
-		"Filters": "Φίλτρα"
+	"AddUserForm" : {
+	  "PanelTitle" : "Προσθήκη νέου χρήστη",
+	  "MandatoryFields" : "Υποχρεωτικά πεδία",
+	  "ErrorsDetected" : "Εντοπίστηκαν σφάλματα:",
+	  "Success" : "Επιτυχία!",
+	  "FirstName" : {
+	    "label" : "Όνομα",
+	    "placeholder" : "Παρακαλώ εισάγετε το Όνομα."
+	  },
+	  "LastName" : {
+      "label" : "Επώνυμο",
+      "placeholder" : "Παρακαλώ εισάγετε το Επώνυμο."
+    },
+    "E-mail" : {
+      "label" : "E-mail",
+      "placeholder" : "Παρακαλώ εισάγετε το E-mail."
+    },
+    "Gender" : {
+      "label" : "Φύλο",
+      "values" : {
+        "Male" : "Άνδρας",
+        "Female" : "Γυναίκα"
+      }
+    },
+    "Address" : {
+      "label" : "Διεύθυνση",
+      "placeholder" : "Παρακαλώ εισάγετε τη Διεύθυνση."
+    },
+    "Country" : {
+      "label" : "Χώρα"
+    },
+    "Group" : {
+      "label" : "Ομάδα"
+    },
+    "City" : {
+      "label" : "Πόλη",
+      "placeholder" : "Παρακαλώ εισάγετε την Πόλη."
+    },
+    "PostalCode" : {
+      "label" : "Ταχυδρομικός Κωδικός",
+      "placeholder" : "Παρακαλώ εισάγετε τον Ταχυδρομικό Κωδικό."
+    }
 	},
+  "Buttons" : {
+    "Cancel" : "Άκυρο",
+    "Deactivate": "Απενεργοποίση",
+    "SaveChanges": "Αποθήκευση Αλλαγών",
+    "AddNewUser": "Προσθήκη Νέου Χρήστη",
+    "AddUser" : "Προσθήκη Χρήστη"
+  },
 	"Modal" : {
 		"DeactivateUser" : {
 			"Title": "Απενεργοποίηση Χρήστη",
@@ -89,22 +136,39 @@
 				"singular": " εγγραφή έχει τροποποιηθεί. Είστε σίγουρος ότι θέλετε να αποθηκεύσετε αυτήν την αλλαγή;",
 				"plural": " εγγραφές έχουν τροποποιηθεί. Είστε σίγουρος ότι θέλετε να αποθηκεύσετε αυτές τις αλλαγές;"
 			}
-		},
-		"Buttons" : {
-			"Cancel" : "Ακύρωση",
-			"Deactivate": "Απενεργοποίηση",
-			"SaveChanges": "Αποθήκευση αλλαγών"
 		}
 	},
+  "FilterBar" : {
+    "Filters": "Φίλτρα"
+  },
 	"Counter" : {
 		"Users" : "Χρήστες",
 		"Meters" : "Μετρητές",
 		"Devices" : "Συσκευές  Amphiro"
 	},
+  "Country" : {
+    "Spain" : "Ισπανία",
+    "UnitedKingdom" : "Ηνωμένο Βασίλειο"
+  },
 	"Error": {
 		"400" : "Bad request",
 		"403" : "Η πιστοποίηση απέτυχε",
 		"404" : "Not found",
-		"500" : "Internal server error"
-	}
+		"500" : "Internal server error",
+    "ValidationError.NO_FIRST_NAME": "Λείπει το Όνομα.",
+    "ValidationError.NO_LAST_NAME": "Λείπει το Επώνυμο.",
+    "ValidationError.NO_EMAIL": "Λείπει το E-mail.",
+    "ValidationError.NO_GENDER": "Λείπει το Φύλο.",
+    "ValidationError.NO_ADDRESS": "Λείπει η Διεύθυνση.",
+    "ValidationError.NO_COUNTRY": "Λείπει η Χώρα.",
+    "ValidationError.NO_GROUP": "Λείπει η Ομάδα.",
+    "ValidationError.NO_CITY": "Λείπει η Πόλη.",
+    "ValidationError.NO_POSTAL_CODE": "Λείπει ο Ταχυδρομικός Κωδικός.",
+    "ValidationError.INVALID_EMAIL": "Η διεύθυνση E-mail δεν είναι έγκυρη.",
+    "UserErrorCode.USERNAME_EXISTS_IN_WHITELIST": "Υπάρχει ήδη στη user white list χρήστης με αυτή τη διεύθυνση E-mail."
+	}, 
+  "Success": {
+    "UserSuccess.USER_ADDED_WHITELIST" : "Ο χρήστης εγγράφηκε επιτυχώς στη user white list."
+  }
+
 }

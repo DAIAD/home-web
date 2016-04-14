@@ -4,34 +4,20 @@ var types = require('../constants/ActionTypes');
 var prepareFiltersPayload = function (nameFilter, filterStatus){
 	
 	var truthTable = {
-		true: "ON",
-		false: "OFF",
+		true: 'ON',
+		false: 'OFF',
 	};
 	
 	var results = {};
 	results.nameFilter = nameFilter;
 	for (var key in filterStatus){
-		if (typeof filterStatus[key].value === "boolean"){
+		if (typeof filterStatus[key].value === 'boolean'){
 			results[key] = truthTable[filterStatus[key].value];
 		} else {
 			results[key] = filterStatus[key].value;
 		}
 	}
 	return results;
-};
-
-var requestedTest = function (){
-	return {
-		type: types.MODEMNG_TEST_REQUEST
-		
-	};
-};
-
-var receivedTest = function (data){
-	return {
-		type: types.MODEMNG_TEST_RECEIVE,
-		data: data
-	};
 };
 
 

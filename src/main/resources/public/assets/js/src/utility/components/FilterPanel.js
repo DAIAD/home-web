@@ -1,6 +1,6 @@
 var React = require('react');
 var Bootstrap = require('react-bootstrap');
-var DropDown = require('./DropDown');
+var DropDownFilter = require('./DropDownFilter');
 var DismissableFilterTag = require('./DismissableFilterTag');
 
 var ModeManagementActions = require('../actions/ModeManagementActions');
@@ -23,7 +23,6 @@ var FilterPanel = React.createClass({
 	},
 	
 	render: function(){
-		console.log('RENDERING FilterPanel....................');
 		var _t = this.context.intl.formatMessage;
 		var self = this;
 		
@@ -43,7 +42,7 @@ var FilterPanel = React.createClass({
 			}
 			dropDownButtons.push(
 				(
-					<DropDown
+					<DropDownFilter
 						title={filter.name}
 						key={filter.name}
 						options={options}

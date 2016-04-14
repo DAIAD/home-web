@@ -22,7 +22,7 @@ var init = function() {
 
 let unsubscribe = store.subscribe(function(){
 		console.log('STATE>>');
-		console.log(store.getState().mode_management);
+		console.log(store.getState().admin.addUser);
 	}
 );
 

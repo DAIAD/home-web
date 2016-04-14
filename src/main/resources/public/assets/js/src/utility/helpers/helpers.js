@@ -1,5 +1,3 @@
-var $ = require('jquery');
-
 var Helpers = {
 		
 	pluck: function(arr, key){
@@ -24,7 +22,7 @@ var Helpers = {
 		var distincts = [];
 		var shownBefore = {};
 		
-		$.each(array, function (i,v){
+		array.forEach(function (v, i){
 			if(!shownBefore[v[property]]){
 				shownBefore[v[property]] = true;
 				distincts.push(v[property]);

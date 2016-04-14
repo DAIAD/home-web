@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import eu.daiad.web.model.admin.AccountActivity;
 import eu.daiad.web.model.admin.AccountWhiteListEntry;
+import eu.daiad.web.model.admin.AccountWhiteListInfo;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
@@ -26,6 +27,8 @@ public interface IUserRepository {
 	AuthenticatedUser getUserByUtilityAndKey(int utilityId, UUID key) throws ApplicationException;
 
 	AccountWhiteListEntry getAccountWhiteListEntry(String username);
+	
+	void insertAccountWhiteListEntry(AccountWhiteListInfo userInfo);
 
 	void updateLoginStats(int id, boolean success);
 

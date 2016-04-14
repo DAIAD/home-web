@@ -42,7 +42,11 @@ var AdminAPI = {
       endDateTime : null,
       timezone : 'Europe/Athens'
     });
-  }
+  },
+  
+  createNewUser : function (userInfo){
+    return api.json('/action/user/create', userInfo);
+  },
 };
 
 module.exports = AdminAPI;

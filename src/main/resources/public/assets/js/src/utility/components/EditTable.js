@@ -8,54 +8,21 @@ var Bootstrap = require('react-bootstrap');
 var Checkbox = require('./Checkbox');
 var IndeterminateCheckbox = require('./IndeterminateCheckbox');
 
-var Helpers = require('../helpers/helpers');
-
 
 var EditTable = React.createClass({
-	
-	getInitialState: function() {
-		return {
-			//activePage: 0,
-    	};
-	},
 	
 	onPageIndexChange(event, selectedEvent) {
 		this.props.setActivePage(selectedEvent.eventKey - 1);
 	},
-	
-	_computeModesState: function (data){
-		var modesState = {};
-		var propertyNames = Helpers.pluck(
-						Helpers.pickQualiffied(data.fields, 'type', 'property'),
-						'name'
-					);
-		var self = this;
-		var rowIds = Helpers.pluck(data.rows, 'id');
-		
-		for (var i = 0, len = rowIds.length; i < len; i++){
-			var modeEntry = {};
-			modeEntry.active = data.rows[i].active;
-			modeEntry.modes = {};
-			for (var p = 0, len2 = propertyNames.length; p < len2; p++){
-				var mode = {
-					value: data.rows[i][propertyNames[p]],
-					draft: false
-				};
-				modeEntry.modes[propertyNames[p]] = mode;
-			}
-			modesState[rowIds[i]] = modeEntry;
-		}
-		return modesState;
-	},
 
-	_syncStateData: function (){
+	syncStateData: function (){
 		var syncdData = this.props.data;
 		var syncdRows = syncdData.rows;
 		var self = this;
 		for (var r = 0, len = syncdRows.length; r < len; r++){
 			var row = syncdRows[r];
+			
 			for (var m in self.props.modes[row.id].modes){
-
 				if(self.props.modes[row.id].modes.hasOwnProperty(m)){
 					row[m] = self.props.modes[row.id].modes[m].value;
 				}
@@ -65,7 +32,7 @@ var EditTable = React.createClass({
 		return syncdData;
 	},
 	
-	_getVisibleCellsDraftFlags: function(visibleRows){
+	getVisibleCellsDraftFlags: function(visibleRows){
 		var visibleCellDraftFlags = {};
   		var self = this;
   		for (var r = 0, len = visibleRows.length; r < len; r++){
@@ -81,44 +48,38 @@ var EditTable = React.createClass({
 	
 	handleCheckboxChange: function (rowId, propertyName, currentValue){
 		var truthTable = {
-				"ON": true,
-				"OFF": false
+				'ON': true,
+				'OFF': false
 		};
 		
 		var inverseTruthTable = {
-				true: "ON",
-				false: "OFF"
+				true: 'ON',
+				false: 'OFF'
 		};
 		
 		var currentModesState = Object.assign({}, this.props.modes);
 		
-		if (typeof currentModesState[rowId].modes[propertyName].value === 'string'){
-			if (currentModesState[rowId].modes[propertyName].value === 'NOT_APPLICABLE'){
-				return;
-			} else {
-				currentModesState[rowId].modes[propertyName] = {
-						value: inverseTruthTable[!truthTable[this.props.modes[rowId].modes[propertyName].value]],
-						draft: !this.props.modes[rowId].modes[propertyName].draft								  
-				};
-			}
+		if (currentModesState[rowId].modes[propertyName].value === 'NOT_APPLICABLE'){
+			return;
 		} else {
 			currentModesState[rowId].modes[propertyName] = {
-					value: !this.props.modes[rowId].modes[propertyName].value,
+					value: inverseTruthTable[!truthTable[this.props.modes[rowId].modes[propertyName].value]],
 					draft: !this.props.modes[rowId].modes[propertyName].draft								  
 			};
 		}
+		
 		this.props.setModes(currentModesState);
 	},
 	
 	toggleCheckBoxes: function (propertyName, toggleState){	
 		var truthTable = {
-				"ON": true,
-				"OFF": false
+				'ON': true,
+				'OFF': false
 		};
 		
 		var inverseTruthTable = {
-				true: "ON",
-				false: "OFF"
+				true: 'ON',
+				false: 'OFF'
 		};
 		
 		var visibleRowIds = [];
@@ -133,21 +94,14 @@ var EditTable = React.createClass({
 				let rowId = visibleRowIds[r];
 				if(currentModesState[rowId].active === true){
 					if (currentModesState[rowId].modes[propertyName].draft === true) {
-						if (typeof currentModesState[rowId].modes[propertyName].value === 'string'){
-							if (currentModesState[rowId].modes[propertyName].value === 'NOT_APPLICABLE'){
-								continue;
-							} else {
-								currentModesState[rowId].modes[propertyName] = {
-										value: inverseTruthTable[!truthTable[currentModesState[rowId].modes[propertyName].value]],
-										draft: false								  
-								};
-							} 
+						if (currentModesState[rowId].modes[propertyName].value === 'NOT_APPLICABLE'){
+							continue;
 						} else {
 							currentModesState[rowId].modes[propertyName] = {
-									value: !currentModesState[rowId].modes[propertyName].value,
+									value: inverseTruthTable[!truthTable[currentModesState[rowId].modes[propertyName].value]],
 									draft: false								  
 							};
-						}
+						} 
 					}
 				}
 			}
@@ -156,21 +110,13 @@ var EditTable = React.createClass({
 			for (let r = 0, len = visibleRowIds.length; r < len; r++){
 				let rowId = visibleRowIds[r];
 				if(currentModesState[rowId].active === true){
-					if (typeof currentModesState[rowId].modes[propertyName].value === 'string'){
-						if (currentModesState[rowId].modes[propertyName].value === 'NOT_APPLICABLE'){
-							continue;
-						} else {
-							currentModesState[rowId].modes[propertyName] = {
-									value: 'ON',
-									draft: (truthTable[currentModesState[rowId].modes[propertyName].value] === 
-										currentModesState[rowId].modes[propertyName].draft) ? true : false
-							};
-						}
+					if (currentModesState[rowId].modes[propertyName].value === 'NOT_APPLICABLE'){
+						continue;
 					} else {
 						currentModesState[rowId].modes[propertyName] = {
-							value: true,
-							draft: (currentModesState[rowId].modes[propertyName].value === 
-								currentModesState[rowId].modes[propertyName].draft) ? true : false
+								value: 'ON',
+								draft: (truthTable[currentModesState[rowId].modes[propertyName].value] === 
+									currentModesState[rowId].modes[propertyName].draft) ? true : false
 						};
 					}
 				}
@@ -180,20 +126,12 @@ var EditTable = React.createClass({
 			for (var r = 0, len = visibleRowIds.length; r < len; r++){
 				let rowId = visibleRowIds[r];
 				if(currentModesState[rowId].active === true){
-					if (typeof currentModesState[rowId].modes[propertyName].value === 'string'){
-						if (currentModesState[rowId].modes[propertyName].value === 'NOT_APPLICABLE'){
-							continue;
-						} else {
-							currentModesState[rowId].modes[propertyName] = {
-									value: 'OFF',
-									draft: (truthTable[currentModesState[rowId].modes[propertyName].value] === 
-										currentModesState[rowId].modes[propertyName].draft) ? false : true
-							};
-						}
+					if (currentModesState[rowId].modes[propertyName].value === 'NOT_APPLICABLE'){
+						continue;
 					} else {
 						currentModesState[rowId].modes[propertyName] = {
-								value: false,
-								draft: (currentModesState[rowId].modes[propertyName].value === 
+								value: 'OFF',
+								draft: (truthTable[currentModesState[rowId].modes[propertyName].value] === 
 									currentModesState[rowId].modes[propertyName].draft) ? false : true
 						};
 					}
@@ -211,25 +149,17 @@ var EditTable = React.createClass({
 				rows: [],
 				pager: {
 					index: 0,
-					size: 10
+					size: 20
 				}
 			}
 		};
 	},
 
-	suspendUI: function() {
-		this.setState({ loading : false});
-  	},
+	saveModeChanges: function(){
+		this.props.saveAction(this.getChangedRows());
+	},
   	
-  	resumeUI: function() {
-  		this.setState({ loading : true});
-  	},
-  	
-  	saveModeChanges: function(){
-  		this.props.saveAction(this._getChangedRows());
-  	},
-  	
-  	_countChangedRows: function(){
+  countChangedRows: function(){
 		var cnt = 0;
 		for (var r in this.props.modes){
 			if(this.props.modes.hasOwnProperty(r)){
@@ -248,7 +178,7 @@ var EditTable = React.createClass({
 		return cnt;
 	},
 	
-	_getChangedRows: function(){
+	getChangedRows: function(){
 		var changedRows = [];
 		for (var r in this.props.modes){
 			let row = this.props.modes[r];
@@ -268,40 +198,39 @@ var EditTable = React.createClass({
 		return changedRows;
 	},
 
-  	render: function() {
-  		console.log('RENDERING EditTable....................');
-  		var self = this;
-  		var visibleData = Object.assign({}, 
-  				this._syncStateData(this.props.data),
-  				{rows: this.props.data.rows.slice(
-  						this.props.activePage * this.props.data.pager.size, 
-  						(this.props.activePage + 1) * this.props.data.pager.size)
-  				}
-  		);
-  		var numberOfPages = Math.ceil(this.props.data.rows.length / this.props.data.pager.size); 
-  		var saveButton;  		
-  		if (this._countChangedRows() > 0){
-  			saveButton = (
-  				<div className='pull-left' style={{ marginTop : 20, marginBottom : 20}}>
-  					<button id='logout'
-  		   				type='submit'
-  		   				className='btn btn-primary'
-  							style={{ height: 33 }}
-  							onClick={this.saveModeChanges}>
-  		   				<FormattedMessage id='Table.Save' />
-  		   			</button>
-  				</div>
-  			);
-  		}
+	render: function() {
+		var self = this;
+		var visibleData = Object.assign({}, 
+				this.syncStateData(this.props.data),
+				{rows: this.props.data.rows.slice(
+						this.props.activePage * this.props.data.pager.size, 
+						(this.props.activePage + 1) * this.props.data.pager.size)
+				}
+		);
+		var numberOfPages = Math.ceil(this.props.data.rows.length / this.props.data.pager.size); 
+		var saveButton;  		
+		if (this.countChangedRows() > 0){
+			saveButton = (
+				<div className='pull-left' style={{ marginTop : 20, marginBottom : 20}}>
+					<button id='logout'
+		   				type='submit'
+		   				className='btn btn-primary'
+							style={{ height: 33 }}
+							onClick={this.saveModeChanges}>
+		   				<FormattedMessage id='Table.Save' />
+		   			</button>
+				</div>
+			);
+		}
 
-  		return (
+		return (
 			<div className='clearfix'>
 				<Bootstrap.Table hover style={{margin: 0, padding: 0}}>
 					<EditTable.Header data = {this.props.data}
 								  toggleCheckBoxes = {this.toggleCheckBoxes}>
 					  </EditTable.Header>
 					<EditTable.Body data = {visibleData}
-								draftFlags = {this._getVisibleCellsDraftFlags(visibleData.rows)}
+								draftFlags = {this.getVisibleCellsDraftFlags(visibleData.rows)}
 								checkboxHandler = {this.handleCheckboxChange}></EditTable.Body>			
 				</Bootstrap.Table>
 				{saveButton}
@@ -318,7 +247,7 @@ var EditTable = React.createClass({
 				</div>
 			</div>
  		);
-  	}
+	}
 });
 
 var Header = React.createClass({
@@ -326,9 +255,9 @@ var Header = React.createClass({
 	    intl: React.PropTypes.object
 	},
 
-  	render: function() {	
-  		var _t = this.context.intl.formatMessage;
-  		var self = this;
+	render: function() {
+		var _t = this.context.intl.formatMessage;
+		var self = this;
 
 		var header = this.props.data.fields.filter((f) => { return !!!f.hidden; }).map(function(field) {
 			switch(field.type ) {
@@ -343,9 +272,9 @@ var Header = React.createClass({
 				case 'property':
 					return (
 						<th key={field.name} style={{ width: 90 }}>
-							<IndeterminateCheckbox 
-			  					propertyName={field.name}
-			  					checked={true} 
+							<IndeterminateCheckbox
+						    propertyName={field.name}
+						    checked={true}
 								disabled={false}
 								action={self.props.toggleCheckBoxes}
 							/>
@@ -354,36 +283,36 @@ var Header = React.createClass({
 					);
 			}
 
-			return (
-				<th key={field.name}>{field.title ? _t({ id: field.title}) : ''}</th>
-			);
-		});
-		
-  		return (
-			<thead>
-				<tr>
-					{header}
-				</tr>	
-			</thead>
- 		);
-  	}
+      return (
+        <th key={field.name}>{field.title ? _t({ id: field.title}) : ''}</th>
+      );
+    });
+
+    return (
+      <thead>
+        <tr>
+          {header}
+        </tr>  
+      </thead>
+    );
+  }
 });
 
 var Body = React.createClass({
-  	render: function() { 		
-  		var self = this;
-		var rows = this.props.data.rows.map(function(row, rowIndex) {
-			return (
-				<EditTable.Row 	key={rowIndex} 
-							fields={self.props.data.fields} 
-							row={row}
-							draftFlags={self.props.draftFlags[row.id]}
-							checkboxHandler={self.props.checkboxHandler}>
-				</EditTable.Row>
-			);
-		});
-		
-  		return (
+    render: function() {
+      var self = this;
+      var rows = this.props.data.rows.map(function(row, rowIndex) {
+      return (
+        <EditTable.Row   key={rowIndex} 
+              fields={self.props.data.fields} 
+              row={row}
+              draftFlags={self.props.draftFlags[row.id]}
+              checkboxHandler={self.props.checkboxHandler}>
+        </EditTable.Row>
+      );
+    });
+
+      return (
 			<tbody>
 				{rows}
 			</tbody>
@@ -429,7 +358,7 @@ var Cell = React.createClass({
   		var text;
   		
   		if (disabled)
-  			text = (<span className="disabled">{value}</span>);
+  			text = (<span className='disabled'>{value}</span>);
   		else
   			text = (<span>{value}</span>);
   		 		
@@ -462,7 +391,7 @@ var Cell = React.createClass({
   				break;
   			case 'progress':
   				if(value !== null) {
-  					text = (<Bootstrap.ProgressBar now={value} label="%(percent)s%" />);
+  					text = (<Bootstrap.ProgressBar now={value} label='%(percent)s%' />);
   				} else {
   					text = (<span />);
   				}
@@ -479,7 +408,7 @@ var Cell = React.createClass({
 	  								draftFlag={this.props.draftFlag}
 	  								onUserClick={this.props.checkboxHandler}/>);
 	  			} else {
-	  				if (value === "NOT_APPLICABLE"){
+	  				if (value === 'NOT_APPLICABLE'){
 		  				text = (<div className='checkbox c-checkbox c-checkbox-disabled'>
 									<label>
 										<input type='checkbox' 
@@ -490,10 +419,10 @@ var Cell = React.createClass({
 								</div>);
 					} else {
 						switch (value){
-							case "ON":
+							case 'ON':
 								value = true;
 								break;
-							case "OFF":
+							case 'OFF':
 								value = false;
 								break;
 						}
@@ -523,7 +452,6 @@ var Cell = React.createClass({
 
   		if(this.props.field.hasOwnProperty('link')) { 	
   			if(typeof this.props.field.link === 'function') {
-  				console.log(this.props.field.link(this.props.row));
   				text = (<Link to={formatLink(this.props.field.link(this.props.row), this.props.row)}>{text}</Link>);
   			} else {
   				text = (<Link to={formatLink(this.props.field.link, this.props.row)}>{text}</Link>);

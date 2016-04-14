@@ -21,30 +21,53 @@ var ErrorAlert = React.createClass({
 	getDefaultProps: function() {
 		return {
 			errors: [],
+			i18nNamespace: '',
+			success: false,
+			title: '',
+			format: 'paragraph'
 	    };
 	},
 
-  	render: function() {
-  		if((!this.props.errors) || (this.props.errors.length ===0)) {
-  			return null;
-  		}
-  		if(!this.state.alertVisible) {
-  			return null;
-  		}
-  		var errors = this.props.errors.map(function(e, index) {
-  			return (<p key={{index}}><FormattedMessage id={e.code}/></p>);
+	render: function() {
+	  var self = this;
+	  
+		if((!this.props.errors) || (this.props.errors.length ===0)) {
+			return null;
+		}
+		
+		if(!(this.state.alertVisible || this.props.show )) {
+			return null;
+		}
+		var errors;
+		var title = (<h4>{this.props.title}</h4>);
+		
+		if (this.props.format === 'list') {
+  		errors = this.props.errors.map(function(e, index) {
+  		  return(<li key={e.code}><FormattedMessage id={self.props.i18nNamespace + e.code}/></li>);
   		});
   		
-  		return (
-			<Alert bsStyle='danger' onDismiss={this.handleAlertDismiss}>
-				{errors}
-  	        </Alert>
- 		);
-  	},
-  	
-  	handleAlertDismiss() {
-  		this.setState({alertVisible: false});
-  	}
+  		errors = (<div>{title}<ul>{errors}</ul></div>);
+		} else {
+		  errors = this.props.errors.map(function(e, index) {
+        return(<p key={e.code}><FormattedMessage id={self.props.i18nNamespace + e.code}/></p>);
+      });
+      
+		}
+		
+		
+		return (
+		<Alert bsStyle={this.props.success ? 'success' : 'danger'} onDismiss={this.handleAlertDismiss}>
+			{errors}
+	  </Alert>
+	);
+	},
+	
+	handleAlertDismiss() {
+	  if (this.props.hasOwnProperty('hideAlert')){
+	    this.props.hideAlert();
+	  }
+		this.setState({alertVisible: false});
+	}
 });
 
 module.exports = ErrorAlert;

@@ -362,124 +362,6 @@ var Demographics = React.createClass({
 			</span>
 		);
 		
-		var addNewUserForm;
-		
-		addNewUserForm = (
-			<div>
-				<div className='row'>
-					<div className='col-md-12'>
-						<Bootstrap.ListGroup>
-								<div className='clearfix'>
-									<div style={{ float: 'right'}}>
-										<Bootstrap.Button bsStyle="success"	onClick={this.showAddNewUserForm}>
-											<i className='fa fa-plus' style={{ paddingRight: 5 }}></i>
-											Add New User
-										</Bootstrap.Button>
-									</div>
-								</div>
-						</Bootstrap.ListGroup>
-					</div>
-				</div>
-				<div className='row'>
-					<div className='col-md-12'>
-						<Bootstrap.ListGroup>
-							<Bootstrap.ListGroupItem>
-								<div className='clearfix'>
-									<div style={{ float: 'left'}}>
-										
-											<Bootstrap.Input type="text" label="First Name" placeholder="Enter text" />
-											<Bootstrap.Input type="email" label="Last Name" placeholder="Enter email" />
-											<Bootstrap.Input type="email" label="Email Address" placeholder="Enter email" />
-											<Bootstrap.Input label="Input wrapper" help="Use this when you need something other than the available input types." wrapperClassName="white-wrapper">
-											    <Bootstrap.Row>
-											      <Bootstrap.Col xs={6}>
-											        <input type="text" className="form-control" />
-											      </Bootstrap.Col>
-											      <Bootstrap.Col xs={6}>
-											        <input type="text" className="form-control" />
-											      </Bootstrap.Col>
-											    </Bootstrap.Row>
-											 </Bootstrap.Input>
-											 <Bootstrap.Input label="Gender" wrapperClassName="white-wrapper">
-											 	<Bootstrap.Row>
-											 		<Bootstrap.Col xs={3}>
-											 			<Bootstrap.Input type="radio" label="Male" name="gender" readOnly />	
-											 		</Bootstrap.Col>
-											 		<Bootstrap.Col xs={3}>
-											 			<Bootstrap.Input type="radio" label="Female" name="gender" readOnly />
-											 		</Bootstrap.Col>
-											 	</Bootstrap.Row>
-											 </Bootstrap.Input>
-										
-									</div>
-								</div>
-							</Bootstrap.ListGroupItem>
-						</Bootstrap.ListGroup>
-					</div>
-				</div>
-			</div>
-			
-				
-				
-		);
-		/*
-		 * 
-		 * <div className='row'>
-					<div className='col-md-12'>
-						<Bootstrap.ListGroup>
-							<Bootstrap.ListGroupItem>
-								<div className='clearfix'>
-									<div style={{ float: 'right'}}>
-										<p>Loren ipsum</p>
-									</div>
-								</div>
-							</Bootstrap.ListGroupItem>
-						</Bootstrap.ListGroup>
-					</div>
-				</div>
-		 * 
-		 * */
-		
-		
-		/*
-		if (this.state.showAddNewUserForm){
-			addNewUserForm = (
-				<div className='row'>
-					<div className='col-md-12'>
-						<Bootstrap.ListGroup>
-							<Bootstrap.ListGroupItem>
-								<div className='clearfix'>
-									<div style={{ float: 'right'}}>
-										<Bootstrap.Button bsStyle="danger"	onClick={function(){alert('Hello new user!');}}>
-											<i className='fa fa-plus' style={{ paddingRight: 5 }}></i>
-											Add New User
-										</Bootstrap.Button>
-									</div>
-								</div>
-							</Bootstrap.ListGroupItem>
-						</Bootstrap.ListGroup>
-					</div>
-				</div>
-			);
-		} else {
-			addNewUserForm = (
-				<div className='row'>
-					<div className='col-md-12'>
-						<Bootstrap.ListGroup>
-								<div className='clearfix'>
-									<div style={{ float: 'right'}}>
-										<Bootstrap.Button bsStyle="success"	onClick={this.showAddNewUserForm}>
-											<i className='fa fa-plus' style={{ paddingRight: 5 }}></i>
-											Add New User
-										</Bootstrap.Button>
-									</div>
-								</div>
-						</Bootstrap.ListGroup>
-					</div>
-				</div>
-			);
-		}
-		*/
 
   		return (
 			<div className="container-fluid" style={{ paddingTop: 10 }}>
@@ -488,7 +370,6 @@ var Demographics = React.createClass({
 						<Breadcrumb routes={this.props.routes}/>
 					</div>
 				</div>
-				{addNewUserForm}
 				<div className='row'>
 					<div className='col-md-6'>
 					 	<Bootstrap.Input 	type="text" 

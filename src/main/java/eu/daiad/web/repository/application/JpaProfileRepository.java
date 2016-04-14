@@ -18,11 +18,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import eu.daiad.web.domain.application.Account;
 import eu.daiad.web.domain.application.AccountProfileHistoryEntry;
-import eu.daiad.web.domain.application.AccountRole;
 import eu.daiad.web.domain.application.DeviceAmphiro;
 import eu.daiad.web.domain.application.DeviceAmphiroConfiguration;
 import eu.daiad.web.domain.application.DeviceAmphiroConfigurationDefault;
@@ -34,7 +31,6 @@ import eu.daiad.web.model.device.DeviceRegistration;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.error.ApplicationException;
-import eu.daiad.web.model.error.ErrorCode;
 import eu.daiad.web.model.error.ProfileErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.profile.EnumMobileMode;
@@ -54,9 +50,6 @@ public class JpaProfileRepository implements IProfileRepository {
 
 	@PersistenceContext(unitName="default")
 	EntityManager entityManager;
-
-	@Autowired
-	private IUserRepository userRepository;
 
 	@Autowired
 	private IDeviceRepository deviceRepository;
@@ -141,6 +134,7 @@ public class JpaProfileRepository implements IProfileRepository {
 	@Override
 	public List <ProfileModes> getProfileModes(ProfileModesRequest filters) throws ApplicationException {
 		try {
+						
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
@@ -148,38 +142,40 @@ public class JpaProfileRepository implements IProfileRepository {
 			if (!user.hasRole("ROLE_ADMIN")) {
 					throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
 			}			
+						
 			TypedQuery<eu.daiad.web.domain.application.Account> userQuery = null;
+		
+			String queryFilterPart = "";
 			if (filters.getNameFilter() != null && filters.getNameFilter().length() > 0){
-				userQuery = entityManager
-						.createQuery("select a from account a WHERE LOWER(a.firstname) LIKE :searchTerm "
-																+ "OR LOWER(a.lastname) LIKE :searchTerm "
-																+ "ORDER BY a.lastname",
-										eu.daiad.web.domain.application.Account.class).setFirstResult(0);
+				queryFilterPart = " AND (LOWER(a.firstname) LIKE :searchTerm "
+										+ "OR LOWER(a.lastname) LIKE :searchTerm "
+										+ "OR LOWER(a.username) LIKE :searchTerm "
+										+ "ORDER BY a.lastname, a.username)";
+			} 
+			
+			String queryString = "select a from account a join a.roles r "
+										+ "where r.role.name = :userRole" 
+										+ queryFilterPart 
+										+ " ORDER BY a.lastname, a.username";
+			userQuery = entityManager.createQuery(queryString, eu.daiad.web.domain.application.Account.class).setFirstResult(0);
+			userQuery.setParameter("userRole", "ROLE_USER");
+			
+			if (filters.getNameFilter() != null && filters.getNameFilter().length() > 0){
 				userQuery.setParameter("searchTerm", "%" + filters.getNameFilter().toLowerCase() + "%");
-			} else {
-				userQuery = entityManager
-							.createQuery("select a from account a ORDER BY a.lastname",
-											eu.daiad.web.domain.application.Account.class).setFirstResult(0);
 			}
 			List <Account> accounts = userQuery.getResultList();
 			List <ProfileModes> profileModesList = new ArrayList<ProfileModes>();
 			
+			// List all DeviceAmphiroConfigurationDefault's in a simple HashMap 
+			List<DeviceAmphiroConfigurationDefault> defaultConfigurations = this.deviceRepository.getAmphiroDefaultConfigurations();
+			HashMap <Integer, String> simplifiedDefaultConfs = new HashMap <Integer, String>();
+			for (DeviceAmphiroConfigurationDefault defaultConfiguration : defaultConfigurations){
+				simplifiedDefaultConfs.put(defaultConfiguration.getId(), defaultConfiguration.getTitle());
+			}
+			
 			for(Account account : accounts){
-				boolean hasUserRole = false;
-				Set<AccountRole> roles = account.getRoles();
-				for(AccountRole role : roles){
-					if (role.getRole().getName().equals("ROLE_USER")){
-						hasUserRole = true;
-						break;
-					}
-				}
-				if(!hasUserRole){
-					continue;
-				}
-				
 				ProfileModes profileModes = new ProfileModes();
-				
-				
+
 				// User Id
 				profileModes.setId(account.getKey());
 				
@@ -189,6 +185,7 @@ public class JpaProfileRepository implements IProfileRepository {
 				} else {
 					profileModes.setName(account.getUsername());
 				}
+				
 				// Utility name & Id
 				Utility utility = account.getUtility();
 				profileModes.setGroupId(utility.getId());
@@ -197,15 +194,14 @@ public class JpaProfileRepository implements IProfileRepository {
 				if (filters.getGroupName()!= null && !filters.getGroupName().equals(profileModes.getGroupName())){
 					continue;
 				}
-				
-				
+
 				// Active flag
 				if(account.getProfile().getMobileMode() == EnumMobileMode.BLOCK.getValue()){
 					profileModes.setActive(false);
 				} else {
 					profileModes.setActive(true);
 				}
-				
+
 				// Amphiro b1 flag
 				ArrayList<Device> devices = this.deviceRepository.getUserDevices(account.getKey(),
 						new DeviceRegistrationQuery());
@@ -216,28 +212,22 @@ public class JpaProfileRepository implements IProfileRepository {
 					}
 				}
 				
-				UUID[] deviceKeys = deviceKeyList.toArray(new UUID[0]);
-				
-				ArrayList<DeviceConfigurationCollection> deviceConfigurations = this.deviceRepository.getConfiguration(account.getKey(), deviceKeys);
-				List<DeviceAmphiroConfigurationDefault> defaultConfigurations = this.deviceRepository.getAmphiroDefaultConfigurations();
-				
-				HashMap <Integer, String> simplifiedDefltConfs = new HashMap <Integer, String>();
-				for (DeviceAmphiroConfigurationDefault defaultConfiguration : defaultConfigurations){
-					simplifiedDefltConfs.put(defaultConfiguration.getId(), defaultConfiguration.getTitle());
-				}
-				
-				// Get only the conf of the first amphiro device, since all amphiro devices ought to have the same conf.
-				if (deviceConfigurations.size() > 0){
+				if (deviceKeyList.size() > 0){
+					UUID[] deviceKeys = deviceKeyList.toArray(new UUID[0]);
+					ArrayList<DeviceConfigurationCollection> deviceConfigurations = this.deviceRepository.getConfiguration(account.getKey(), deviceKeys);
+					
+					// Get only the conf of the first amphiro device, since all amphiro devices ought to have the same conf.
 					if (deviceConfigurations.get(0).getConfigurations().get(0).getTitle()
-							.equals(simplifiedDefltConfs.get(DeviceAmphiroConfigurationDefault.CONFIG_ENABLED_METRIC)) 
+							.equals(simplifiedDefaultConfs.get(DeviceAmphiroConfigurationDefault.CONFIG_ENABLED_METRIC)) 
 							||
 							deviceConfigurations.get(0).getConfigurations().get(0).getTitle()
-							.equals(simplifiedDefltConfs.get(DeviceAmphiroConfigurationDefault.CONFIG_ENABLED_IMPERIAL))){
+							.equals(simplifiedDefaultConfs.get(DeviceAmphiroConfigurationDefault.CONFIG_ENABLED_IMPERIAL))){
 						profileModes.setAmphiro(ProfileModes.AmphiroModeState.ON);
 						
 					} else {
 						profileModes.setAmphiro(ProfileModes.AmphiroModeState.OFF);
 					}
+					
 				} else {
 					profileModes.setAmphiro(ProfileModes.AmphiroModeState.NOT_APPLICABLE);
 				}
@@ -269,7 +259,7 @@ public class JpaProfileRepository implements IProfileRepository {
 				}
 				profileModesList.add(profileModes);
 			}
-						
+									
 			return profileModesList;
 		} catch (Exception ex) {
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
@@ -281,19 +271,13 @@ public class JpaProfileRepository implements IProfileRepository {
 		try {
 			
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
 			if (!user.hasRole("ROLE_ADMIN")) {
-					throw new ApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED);
+					throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
-			
-			// Query for amphiro default configurations
-			TypedQuery<DeviceAmphiroConfigurationDefault> configQuery = entityManager
-					.createQuery("select c from device_amphiro_config_default c",
-									DeviceAmphiroConfigurationDefault.class).setFirstResult(0);
 		
-			List <DeviceAmphiroConfigurationDefault> configurations = configQuery.getResultList();
+			List <DeviceAmphiroConfigurationDefault> configurations = this.deviceRepository.getAmphiroDefaultConfigurations();
 			
 			// Organizing amphiro default configurations in a handy HashMap
 			HashMap <String, DeviceAmphiroConfigurationDefault> defaultconfigurations = new HashMap <String, DeviceAmphiroConfigurationDefault>();
@@ -416,7 +400,14 @@ public class JpaProfileRepository implements IProfileRepository {
 	@Override
 	public void deactivateProfile (ProfileDeactivateRequest userDeactId){
 		try {
-			ObjectMapper mapper = new ObjectMapper();
+			
+			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
+
+			if (!user.hasRole("ROLE_ADMIN")) {
+					throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+			}
 			
 			TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager
 					.createQuery("select a from account a where a.key = :key",
@@ -445,8 +436,6 @@ public class JpaProfileRepository implements IProfileRepository {
 						
 			this.entityManager.persist(account);
 			this.entityManager.persist(historyEntry);
-			
-			
 			
 		} catch (Exception ex) {
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
@@ -516,7 +505,6 @@ public class JpaProfileRepository implements IProfileRepository {
 			}
 			
 			// Get distinct mobile names for simple user accounts
-			//TODO: Think if it is more appropriate to load these values from the database (just like for utilities)
 			profileModesFilterOptions.setMobile(new ArrayList <String>());
 			profileModesFilterOptions.getMobile().add("ON");
 			profileModesFilterOptions.getMobile().add("OFF");
@@ -524,7 +512,6 @@ public class JpaProfileRepository implements IProfileRepository {
 			
 			// Get distinct social names for simple user accounts
 			//TODO: Currently social is not supported
-			//TODO: Think if it is more appropriate to load these values from the database (just like for utilities)
 			profileModesFilterOptions.setSocial(new ArrayList <String>());
 			profileModesFilterOptions.getSocial().add("ON");
 			profileModesFilterOptions.getSocial().add("OFF");

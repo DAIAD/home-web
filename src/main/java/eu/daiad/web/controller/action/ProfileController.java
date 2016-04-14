@@ -1,7 +1,5 @@
 package eu.daiad.web.controller.action;
 
-import java.util.UUID;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,28 +34,6 @@ public class ProfileController extends BaseController {
 
 	@Autowired
 	private IProfileRepository profileRepository;
-	
-	@RequestMapping(value = "/action/profile/test", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse register2(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody ProfileModesRequest data) {
-		RestResponse response = new RestResponse();
-		
-		ObjectMapper mapper = new ObjectMapper();
-		try {
-			System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(data));
-		} catch (JsonProcessingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		if(user.hasRole("ROLE_ADMIN")) {
-			System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~ROLE_ADMIN~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-		} else {
-			System.out.println("~~~~~~~~~~~~~~~~~~~~~~~ROLE_NOT_ADMIN~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-		}
-		
-
-		return response;
-	}
 
 	@RequestMapping(value = "/action/profile/load", method = RequestMethod.GET, produces = "application/json")
 	@Secured({ "ROLE_USER", "ROLE_SUPERUSER", "ROLE_ADMIN" })

@@ -1,9 +1,11 @@
 var types = require('../constants/ActionTypes');
 var Helpers = require('../helpers/helpers');
+var Schema = require('../constants/ModeManagementTableSchema');
+
 
 
 var initialState = {
-	usersFetchingInProgress: false,
+	isLoading: false,
 	filterStatus: {},
 	nameFilter: '',
 	userToDecativate: {},
@@ -45,7 +47,9 @@ var computeModesState = function (data){
 
 var mode_management = function(state, action) {
 	let filterStatus; 
+	
 	switch (action.type) {
+	
 	case types.MODEMNG_FILTER_ADD:
 		filterStatus = Object.assign({}, state.filterStatus);
 		filterStatus[action.filter.filter] = {
@@ -55,6 +59,7 @@ var mode_management = function(state, action) {
 			icon: action.filter.icon
 		};
 		return Object.assign({}, state, {
+		  isLoading : true,
 			filterStatus : filterStatus
 		});
 
@@ -62,6 +67,7 @@ var mode_management = function(state, action) {
 		filterStatus = Object.assign({}, state.filterStatus);
 		delete filterStatus[action.filterId];
 		return Object.assign({}, state, {
+		  isLoading : true,
 			filterStatus : filterStatus
 		});
 		
@@ -92,94 +98,43 @@ var mode_management = function(state, action) {
 		
 	case types.MODEMNG_REQUEST_USERS:
 		return Object.assign({}, state, {
-			usersFetchingInProgress : true
+			isLoading : true
 		});
 		
 	case types.MODEMNG_RECEIVED_USERS:
 		var users = {
-			fields: [{
-				name: 'id',
-				title: 'Table.User.id',
-				hidden: true
-			}, {
-				name: 'active',
-				title: 'Table.User.active',
-				hidden: true
-			}, {
-				name: 'groupId',
-				title: 'Table.User.group',
-				hidden: true
-			}, {
-				name: 'name',
-				title: 'Table.User.name',
-				link: '/user/{id}'
-			}, {
-				name: 'groupName',
-				title: 'Table.User.group',
-				link: '/group/{groupId}'
-			}, {
-				name: 'amphiro',
-				title: 'Table.User.viewInfoOnAmphiro',
-				type:'property'
-			}, {
-				name: 'mobile',
-				title: 'Table.User.viewInfoOnMobile',
-				type:'property'
-			}, {
-				name: 'social',
-				title: 'Table.User.allowSocial',
-				type:'property'
-			}, {
-				name: 'deactivate',
-				title: 'Table.User.deactivateUser',
-				type:'action',
-				icon: 'user-times',
-				handler: null
-	
-			}],
+			fields: Schema.fields,
 			rows: [],
-			pager: {
-				index: 1,
-				size: 10
-			}
+			pager: Schema.pager
 		};
 		users.rows = action.users.profileSet;
 		var modes = computeModesState(users);
 		return Object.assign({}, state, {
-			usersFetchingInProgress : false,
+			isLoading : false,
 			users: users,
 			modes: modes
 		});
 		
 	case types.MODEMNG_SAVE_MODE_CHANGES:
 		return Object.assign({}, state, {
-			usersFetchingInProgress : true,
+			isLoading : true,
 		});
 		
 	case types.MODEMNG_DEACTIVATE_USER:
 		return Object.assign({}, state, {
-			usersFetchingInProgress : true,
+			isLoading : true,
 		});
 		
 	case types.MODEMNG_SET_NAME_FILTER:
 		return  Object.assign({}, state, {
 			nameFilter : action.nameFilter,
-			usersFetchingInProgress : true
+			isLoading : true
 		});	
 	
 	case types.MODEMNG_MARK_USER_DEACTIVATION:
 		return Object.assign({}, state, {
 			userToDecativate : action.userId
 		});
-	
-	case types.MODEMNG_TEST_REQUEST:
-		return Object.assign({}, state);
-		
-	case types.MODEMNG_TEST_RECEIVE:
-		console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
-		console.log(action.data);
-		console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
-		return Object.assign({}, state);
 
 	default:
 		return state || initialState;

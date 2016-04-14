@@ -6,15 +6,12 @@ var Breadcrumb = require('../../Breadcrumb');
 var EditTable = require('../../EditTable');
 var Modal = require('../../Modal');
 var FilterPanel = require('../../FilterPanel');
-var RandomUsers = require('../../../testData/Users');
 
 var Helpers = require('../../../helpers/helpers');
 
 var ModeManagementActions = require('../../../actions/ModeManagementActions');
 var { connect } = require('react-redux');
 var { bindActionCreators } = require('redux');
-
-var $ = require('jquery');
 
 var ModeManagementComponent = React.createClass({
 	
@@ -41,7 +38,6 @@ var ModeManagementComponent = React.createClass({
 	},
 	
 	decativateUser(){
-		console.log("Call API to deactivate user with id: " + this.props.userToDecativate.id);
 		this.closeModal();
 		this.props.deactivateUser({userDeactId: this.props.userToDecativate.id});
 	},
@@ -57,10 +53,10 @@ var ModeManagementComponent = React.createClass({
 		}
 		var actions = [{
 				action: this.closeModal,
-				name: _t({id:'Modal.Buttons.Cancel'})
+				name: _t({id:'Buttons.Cancel'})
 			}, {
 				action: this.saveModeChanges,
-				name: _t({id:'Modal.Buttons.SaveChanges'}),
+				name: _t({id:'Buttons.SaveChanges'}),
 				style: 'success'
 			}
 		];
@@ -76,7 +72,6 @@ var ModeManagementComponent = React.createClass({
 			entry.id = value.id;
 			entry.changes = [];
 			Object.keys(value.modes).forEach(function(k, v){
-				console.log(k, v);
 				if (value.modes[k].draft){
 					var change = {};
 					change.mode = k;
@@ -121,106 +116,103 @@ var ModeManagementComponent = React.createClass({
 		return modesState;
 	},
 	
-  	render: function() {  		  
-  		console.log('RENDERING ModeManagementComponent....................');
+  render: function() {  		    		  		
+		var self = this;
+		var _t = this.context.intl.formatMessage;
+		
+		this.users = Object.assign({}, this.props.users);
+		var showModalUserDeactivate = function(){
+			var title = _t({ id:'Modal.DeactivateUser.Title'});
+			
+			var body = _t({ id:'Modal.DeactivateUser.Body.Part1'}) +
+				this.props.row.name +
+			_t({ id:'Modal.DeactivateUser.Body.Part2'}) +
+			this.props.row.id +
+			_t({ id:'Modal.DeactivateUser.Body.Part3'});
+			
+			var actions = [{
+				action: self.closeModal,
+				name: _t({id:'Buttons.Cancel'})
+			},  {
+				action: self.decativateUser,
+				name: _t({id:'Buttons.Deactivate'}),
+				style: 'danger'
+			}
+		];
+			
+			self.openModal(title, body, actions);
+			self.props.markUserForDeactivation(this.props.row);	
+			
+		};
   		  		
-  		var self = this;
-  		var _t = this.context.intl.formatMessage;
-  		
-  		this.users = Object.assign({}, this.props.users);
-  		var showModalUserDeactivate = function(){
-  			var title = _t({ id:'Modal.DeactivateUser.Title'});
-  			
-  			var body = _t({ id:'Modal.DeactivateUser.Body.Part1'}) +
-  				this.props.row.name +
-				_t({ id:'Modal.DeactivateUser.Body.Part2'}) +
-				this.props.row.id +
-				_t({ id:'Modal.DeactivateUser.Body.Part3'});
-  			
-  			var actions = [{
-					action: self.closeModal,
-					name: _t({id:'Modal.Buttons.Cancel'})
-				},  {
-					action: self.decativateUser,
-					name: _t({id:'Modal.Buttons.Deactivate'}),
-					style: 'danger'
-				}
-			];
-  			
-  			self.openModal(title, body, actions);
-  			
-  			self.props.markUserForDeactivation(this.props.row);	
-  			
-  		};
-  		  		
-  		for (let i=0; i < this.users.fields.length; i++){
-  			if (this.users.fields[i].name === 'deactivate'){
-  				this.users.fields[i].handler = showModalUserDeactivate;
-  			}
-  		}
-  		
-  		const userTitle = (
-			<span>
-				<i className='fa fa-group fa-fw'></i>
-				<span style={{ paddingLeft: 4 }}>{_t({ id:'Table.User.Users'})}</span>
-				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-				</span>
-			</span>
+		for (let i=0; i < this.users.fields.length; i++){
+			if (this.users.fields[i].name === 'deactivate'){
+				this.users.fields[i].handler = showModalUserDeactivate;
+			}
+		}
+		
+		const userTitle = (
+  		<span>
+  			<i className='fa fa-group fa-fw'></i>
+  			<span style={{ paddingLeft: 4 }}>{_t({ id:'Table.User.Users'})}</span>
+  			<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
+  			</span>
+  		</span>
 		);
-  		return (
-			<div className='container-fluid' style={{ paddingTop: 10 }}>
-				<div className='row'>
-					<div className='col-md-12'>
-						<Breadcrumb routes={this.props.routes}/>
-					</div>
-				</div>
-				<div className='row'>
-					<div className='col-md-12'>						
-						<Modal 	show = {this.props.modal.show}
-								onClose = {this.closeModal}
-								actions = {this.props.modal.actions || []}
-								title = {this.props.modal.title || ''}
-								text = {this.props.modal.body || ''}
-						/>
-					</div>
-				</div>
-				<div className='row'>
-					<div className='col-md-12'>
-					 	<Bootstrap.Input 	type='text'
-					 						placeholder={this.props.nameFilter.length > 0 ? this.props.nameFilter : _t({ id:'Table.User.searchUsers'})}
-					 						ref="search"
-					 						buttonAfter={<Bootstrap.Button onClick={function(){self.searchName(self.refs.search.getValue());}}><i className='fa fa-search fa-fw'></i></Bootstrap.Button>} 
-					 	/>
-			 		</div>
-			 	</div>
-			 	<div className='row'>
-					<div className='col-md-12'>
-						<FilterPanel 
-							filters={this.props.filters}
-						/>
-					</div>
-				</div>
-				<div className='row'>
-					<div className='col-md-12'>
-						<Bootstrap.Panel header={userTitle}>
-							<Bootstrap.ListGroup fill>
-								<Bootstrap.ListGroupItem>
-									<EditTable
-										data={this.users}
-										saveAction={this.showModalSaveChanges}
-										activePage={this.props.activePage}
-										modes={this.props.modes}
-										setModes={this.props.setModes}
-										setActivePage={this.props.setActivePage}
-									/>
-								</Bootstrap.ListGroupItem>
-							</Bootstrap.ListGroup>
-						</Bootstrap.Panel>
-					</div>
-				</div>
-			</div>
- 		);
-  	}
+		return (
+  		<div className='container-fluid' style={{ paddingTop: 10 }}>
+  			<div className='row'>
+  				<div className='col-md-12'>
+  					<Breadcrumb routes={this.props.routes}/>
+  				</div>
+  			</div>
+  			<div className='row'>
+  				<div className='col-md-12'>						
+  					<Modal 	show = {this.props.modal.show}
+  							onClose = {this.closeModal}
+  							actions = {this.props.modal.actions || []}
+  							title = {this.props.modal.title || ''}
+  							text = {this.props.modal.body || ''}
+  					/>
+  				</div>
+  			</div>
+  			<div className='row'>
+  				<div className='col-md-12'>
+  				 	<Bootstrap.Input 	type='text'
+  				 						placeholder={this.props.nameFilter.length > 0 ? this.props.nameFilter : _t({ id:'Table.User.searchUsers'})}
+  				 						ref='search'
+  				 						buttonAfter={<Bootstrap.Button onClick={function(){self.searchName(self.refs.search.getValue());}}><i className='fa fa-search fa-fw'></i></Bootstrap.Button>} 
+  				 	/>
+  		 		</div>
+  		 	</div>
+  		 	<div className='row'>
+  				<div className='col-md-12'>
+  					<FilterPanel 
+  						filters={this.props.filters}
+  					/>
+  				</div>
+  			</div>
+  			<div className='row'>
+  				<div className='col-md-12'>
+  					<Bootstrap.Panel header={userTitle}>
+  						<Bootstrap.ListGroup fill>
+  							<Bootstrap.ListGroupItem>
+  								<EditTable
+  									data={this.users}
+  									saveAction={this.showModalSaveChanges}
+  									activePage={this.props.activePage}
+  									modes={this.props.modes}
+  									setModes={this.props.setModes}
+  									setActivePage={this.props.setActivePage}
+  								/>
+  							</Bootstrap.ListGroupItem>
+  						</Bootstrap.ListGroup>
+  					</Bootstrap.Panel>
+  				</div>
+  			</div>
+  		</div>
+		);
+  }
 });
 
 function mapStateToProps(state) {
@@ -254,9 +246,7 @@ function mapDispatchToProps(dispatch) {
 		markUserForDeactivation: function(userId){
 			dispatch(ModeManagementActions.markUserForDeactivation(userId));
 		},
-		
-		fetchUsers : bindActionCreators(ModeManagementActions.fetchUsers, dispatch),
-		
+				
 		saveModeChanges: bindActionCreators(ModeManagementActions.saveModeChanges, dispatch),
 		
 		deactivateUser: bindActionCreators(ModeManagementActions.deactivateUser, dispatch)

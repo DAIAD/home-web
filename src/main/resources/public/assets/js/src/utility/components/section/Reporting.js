@@ -8,13 +8,22 @@ var Bootstrap = require('react-bootstrap');
 var Breadcrumb = require('../Breadcrumb');
 var Table = require('../Table');
 var Chart = require('../Chart');
+var DropDown = require('../DropDown');
+var ErrorAlert = require('../AlertDismissable');
 
-var { getActivity, setFilter, getSessions, getMeters, resetUserData, exportUserData } = require('../../actions/AdminActions');
+var errorsCodes = require('../../constants/Errors');
+var successCodes = require('../../constants/Successes');
+
+
+var { getActivity, setFilter, getSessions, getMeters, resetUserData, exportUserData, 
+      showAddUserForm, hideAddUserForm, addUserSelectCountry, addUserSelectGroup, 
+      addUserFillForm, addUserShowErrorAlert, addUserHideErrorAlert, addUser } = require('../../actions/AdminActions');
 
 var Reporting = React.createClass({
 	contextTypes: {
 	    intl: React.PropTypes.object
 	},
+	
 	
   componentWillMount : function() {
     if(this.props.admin.activity === null) {
@@ -42,8 +51,88 @@ var Reporting = React.createClass({
     
   },
   
+  validateNewUserForm: function(firstName, lastName, email, gender){
+    var errors = [];
+    
+    if (!firstName){
+      errors.push({code: errorsCodes['ValidationError.NO_FIRST_NAME']});
+    }
+    
+    if (!lastName){
+      errors.push({code: errorsCodes['ValidationError.NO_LAST_NAME']});
+    }
+    if (!email){
+      errors.push({code: errorsCodes['ValidationError.NO_EMAIL']});
+    } else {
+      var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        if (!re.test(email)){
+          errors.push({code: errorsCodes['ValidationError.INVALID_EMAIL']});
+        }
+    } 
+
+    if (!gender){
+      errors.push({code: errorsCodes['ValidationError.NO_GENDER']});
+    }
+    if (this.props.admin.addUser.selectedCountry === null || 
+        this.props.admin.addUser.selectedCountry.length === 0){
+      errors.push({code: errorsCodes['ValidationError.NO_COUNTRY']});
+    }
+    if (this.props.admin.addUser.selectedGroup === null || 
+        this.props.admin.addUser.selectedGroup.length === 0){
+      errors.push({code: errorsCodes['ValidationError.NO_GROUP']});
+    }
+    
+    return errors;
+  },
+  
+  processAddNewUserForm: function(){    
+    var gender = null;
+    if (this.refs.genderMale.getChecked() === true){
+      gender = "MALE";
+    } else if (this.refs.genderFemale.getChecked() === true){
+      gender = "FEMALE";
+    }
+    var inputFieldsFormValues = {
+        firstName : this.refs.firstName.getValue(),
+        lastName : this.refs.lastName.getValue(),
+        email : this.refs.email.getValue(),
+        gender : gender,
+        address : this.refs.address.getValue(),
+        city : this.refs.city.getValue(),
+        postalCode : this.refs.postalCode.getValue()
+    };
+    this.props.actions.addUserFillForm(inputFieldsFormValues);
+    
+    var errors = this.validateNewUserForm(
+          this.refs.firstName.getValue(),
+          this.refs.lastName.getValue(),
+          this.refs.email.getValue(),
+          gender,
+          this.refs.address.getValue(),
+          this.refs.city.getValue(),
+          this.refs.postalCode.getValue()
+        );
+    if (errors.length === 0){
+      var userInfo = {
+          firstName : this.refs.firstName.getValue(),
+          lastName : this.refs.lastName.getValue(),
+          email : this.refs.email.getValue(),
+          gender : gender,
+          address : this.refs.address.getValue() === "" ? null : this.refs.address.getValue(),
+          country : this.props.admin.addUser.selectedCountry,
+          group : this.props.admin.addUser.selectedGroup,
+          city : this.refs.city.getValue() === "" ? null : this.refs.city.getValue(),
+          postalCode : this.refs.postalCode.getValue() === "" ? null : this.refs.postalCode.getValue()
+      };
+     
+      this.props.actions.addUser(userInfo);
+    }
+  },
+  
   render: function() {
     var self = this;
+    var _t = this.context.intl.formatMessage;
+
     
     const groupTitle = (
       <span>
@@ -344,8 +433,24 @@ var Reporting = React.createClass({
         }
     };
     
-    var table = null, filter = null, chart = null;
+    var addUserButton = null, table = null, filter = null, chart = null;
     if(this.props.data !== null) {
+      addUserButton = (
+        <div className='row'>
+          <div className='col-md-12'>
+            <Bootstrap.ListGroup>
+                <div className='clearfix'>
+                  <div style={{ float: 'right'}}>
+                    <Bootstrap.Button bsStyle="success" onClick={this.props.actions.showAddUserForm}>
+                      <i className='fa fa-plus' style={{ paddingRight: 5 }}></i>
+                      {_t({id : 'Buttons.AddNewUser'})}
+                    </Bootstrap.Button>
+                  </div>
+                </div>
+            </Bootstrap.ListGroup>
+          </div>
+        </div>);
+      
       filter = (
         <div className='row'>
           <div className='col-md-4'>
@@ -393,9 +498,147 @@ var Reporting = React.createClass({
         </div>
       );
     }
+    self = this;
     
-    var _t = this.context.intl.formatMessage;
     
+    const newUserPanelTitle = (
+        <span>
+          <i className='fa fa-user-plus fa-fw'></i>
+          <span style={{ paddingLeft: 4 }}>{_t({ id:'AddUserForm.PanelTitle'})}</span>
+          <span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
+          </span>
+        </span>
+      );
+    
+    var countryOptions = [];
+    countryOptions.push({label: "Spain", value: "Spain", key: "es"});
+    countryOptions.push({label: "United Kingdom", value: "United Kingdom" , key: "uk"});
+    
+    var groupOptions = [];
+    groupOptions.push({label: "Alicante", value: "Alicante", key: "Alicante"});
+    groupOptions.push({label: "St Albans", value: "St Albans", key: "St Albans"});
+    
+    var hideAddNewUserForm = function (){
+      self.errors = [];
+      self.props.actions.hideAddUserForm();
+    };
+        
+    var addNewUserForm = (
+      <div>
+        <Bootstrap.Panel header={newUserPanelTitle}>
+          <div className='row'>
+            <div className='col-md-6'>
+              <Bootstrap.ListGroup>
+                  <div className='clearfix'>
+                    <Bootstrap.Row>
+                      <Bootstrap.Col xs={6}>
+                        <Bootstrap.Input type="text" label={_t({ id:'AddUserForm.FirstName.label'}) + " (*)"} ref="firstName" placeholder={_t({ id:'AddUserForm.FirstName.placeholder'})} />
+                      </Bootstrap.Col>
+                      <Bootstrap.Col xs={6}>
+                        <Bootstrap.Input type="email" label={_t({ id:'AddUserForm.LastName.label'}) + " (*)"} ref="lastName" placeholder={_t({ id:'AddUserForm.LastName.placeholder'})} />
+                      </Bootstrap.Col>
+                    </Bootstrap.Row>
+                    <Bootstrap.Row>
+                      <Bootstrap.Col xs={6}>
+                        <Bootstrap.Input type="text" label={_t({ id:'AddUserForm.E-mail.label'}) + " (*)"} ref="email" placeholder={_t({ id:'AddUserForm.E-mail.placeholder'})} />
+                      </Bootstrap.Col>
+                      <Bootstrap.Col xs={6}>
+                        <Bootstrap.Input label={_t({ id:'AddUserForm.Gender.label'}) + " (*)"} wrapperClassName="white-wrapper">
+                            <Bootstrap.Row>
+                              <Bootstrap.Col xs={6}>
+                                <Bootstrap.Input type="radio" ref="genderMale" label={_t({ id:'AddUserForm.Gender.values.Male'})} name="gender" />
+                              </Bootstrap.Col>
+                              <Bootstrap.Col xs={6}>
+                                <Bootstrap.Input type="radio" ref="genderFemale" label={_t({ id:'AddUserForm.Gender.values.Female'})} name="gender" />
+                              </Bootstrap.Col>
+                            </Bootstrap.Row>
+                        </Bootstrap.Input>
+                      </Bootstrap.Col>
+                    </Bootstrap.Row>
+                    <Bootstrap.Row>
+                      <Bootstrap.Col xs={6}>
+                        <Bootstrap.Input type="text" label={_t({ id:'AddUserForm.Address.label'})} ref="address" placeholder={_t({ id:'AddUserForm.Address.placeholder'})}/>
+                      </Bootstrap.Col>
+                      <Bootstrap.Col xs={3}>
+                        <Bootstrap.Input label={_t({ id:'AddUserForm.Country.label'}) + " (*)"} wrapperClassName="white-wrapper">
+                          <DropDown
+                            title={this.props.admin.addUser.selectedCountry ? this.props.admin.addUser.selectedCountry : _t({ id:'AddUserForm.Country.label'})}
+                            ref="countryDDList"
+                            options={countryOptions}
+                            onSelect={this.props.actions.addUserSelectCountry}
+                            disabled={false}
+                          />
+                        </Bootstrap.Input>
+                      </Bootstrap.Col>
+                      <Bootstrap.Col xs={3}>
+                        <Bootstrap.Input label={_t({ id:'AddUserForm.Group.label'}) + " (*)"} wrapperClassName="white-wrapper">
+                          <DropDown
+                            title={this.props.admin.addUser.selectedGroup ? this.props.admin.addUser.selectedGroup : _t({ id:'AddUserForm.Group.label'})}
+                            ref="groupDDList"
+                            options={groupOptions}
+                            onSelect={this.props.actions.addUserSelectGroup}
+                            disabled={false}
+                          />
+                        </Bootstrap.Input>
+                      </Bootstrap.Col>
+                    </Bootstrap.Row>
+                    <Bootstrap.Row>
+                      <Bootstrap.Col xs={6}>
+                        <Bootstrap.Input type="text" label={_t({ id:'AddUserForm.City.label'})} ref="city" placeholder={_t({ id:'AddUserForm.City.placeholder'})}/>
+                      </Bootstrap.Col>
+                      <Bootstrap.Col xs={6}>
+                        <Bootstrap.Input type="text" label={_t({ id:'AddUserForm.PostalCode.label'})} ref="postalCode" placeholder={_t({ id:'AddUserForm.PostalCode.placeholder'})}/>
+                      </Bootstrap.Col>  
+                    </Bootstrap.Row>
+                  </div>
+                  <ErrorAlert
+                    show={this.props.admin.addUser.showErrorAlert}
+                    title={!this.props.admin.addUser.response.success ? _t({id: 'AddUserForm.ErrorsDetected'}) : _t({id: 'AddUserForm.Success'})}
+                    i18nNamespace={this.props.admin.addUser.response.success ? 'Success.' : 'Error.'}
+                    success={this.props.admin.addUser.response.success}
+                    format='list'
+                    errors={!this.props.admin.addUser.response.success ? this.props.admin.addUser.response.errors : [{code: successCodes['UserSuccess.USER_ADDED_WHITELIST']}]}
+                    hideAlert={this.props.actions.addUserHideErrorAlert}
+                  />
+              </Bootstrap.ListGroup>
+              <Bootstrap.Row>
+
+              <div style={{ float: 'right'}}>
+                <Bootstrap.Col xs={6}>
+                    <Bootstrap.Button onClick={hideAddNewUserForm}>
+                    {_t({ id:'Buttons.Cancel'})}
+                    </Bootstrap.Button>
+                  </Bootstrap.Col>
+                  <Bootstrap.Col xs={6}>
+                    <Bootstrap.Button bsStyle="success" onClick={this.processAddNewUserForm}>
+                    {_t({ id:'Buttons.AddUser'})}
+                    </Bootstrap.Button>
+                  </Bootstrap.Col>
+                </div>
+              </Bootstrap.Row>
+              <div>
+            </div>
+            </div>
+          </div>
+          
+          <em>(*) {_t({ id:'AddUserForm.MandatoryFields'})}</em>
+
+        </Bootstrap.Panel>
+      </div>
+        
+    );
+    
+    var reportBody = (
+        <div>
+        {addUserButton}
+        {filter}
+        {table}
+        {chart}
+        </div>
+        );
+    
+    var visiblePart = this.props.admin.addUser.show ? addNewUserForm : reportBody;
+
 		return (
   		<div className="container-fluid" style={{ paddingTop: 10 }}>
   		  <div className="row">
@@ -403,9 +646,7 @@ var Reporting = React.createClass({
   					<Breadcrumb routes={this.props.routes}/>
   				</div>
   			</div>
-  			{filter}
-        {table}
-        {chart}
+  			{visiblePart}
   		</div>);
   	}
 });
@@ -422,7 +663,9 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
   return {
-    actions : bindActionCreators(Object.assign({}, { getActivity, setFilter, getSessions, getMeters, resetUserData, exportUserData }) , dispatch)
+    actions : bindActionCreators(Object.assign({}, { getActivity, setFilter, getSessions, getMeters, resetUserData, 
+      exportUserData, showAddUserForm, hideAddUserForm, addUserSelectCountry, addUserSelectGroup, addUserFillForm, 
+      addUserShowErrorAlert, addUserHideErrorAlert, addUser }) , dispatch)
   };
 }
 
