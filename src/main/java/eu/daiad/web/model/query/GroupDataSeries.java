@@ -10,10 +10,13 @@ public class GroupDataSeries {
 
 	private String label;
 
+	private int population;
+
 	ArrayList<DataPoint> points = new ArrayList<DataPoint>();
 
-	public GroupDataSeries(String label) {
+	public GroupDataSeries(String label, int population) {
 		this.label = label;
+		this.population = population;
 	}
 
 	public String getLabel() {
@@ -138,4 +141,9 @@ public class GroupDataSeries {
 			}
 		}
 	}
+
+	public int getPopulation() {
+		return population;
+	}
+
 }

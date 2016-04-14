@@ -37,19 +37,6 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 		AuthenticatedUser user = null;
 
 		try {
-			// Check application
-			ServletRequestAttributes sra = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-
-			EnumApplication application = EnumApplication.fromString(sra.getRequest().getParameter("application"));
-
-			if (application == EnumApplication.UNDEFINED) {
-				if (apiMatcher.matches(sra.getRequest())) {
-					application = EnumApplication.MOBILE;
-				} else {
-					throw new BadCredentialsException("Application is unavailable");
-				}
-			}
-
 			// Check credentials
 			String username = authentication.getName();
 			String password = authentication.getCredentials().toString();
@@ -64,6 +51,21 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
 			if (!user.isAccountNonLocked()) {
 				throw new BadCredentialsException("Account is locked.");
+			}
+
+			// Check application
+			ServletRequestAttributes sra = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+
+			EnumApplication application = EnumApplication.fromString(sra.getRequest().getParameter("application"));
+
+			if (application == EnumApplication.UNDEFINED) {
+				if (user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+					application = EnumApplication.UTILITY;
+				} else if (apiMatcher.matches(sra.getRequest())) {
+					application = EnumApplication.MOBILE;
+				} else {
+					throw new BadCredentialsException("Application is unavailable");
+				}
 			}
 
 			// Check credentials for requested application

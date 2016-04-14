@@ -655,7 +655,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 
 		ArrayList<GroupDataSeries> result = new ArrayList<GroupDataSeries>();
 		for (ExpandedPopulationFilter filter : query.getGroups()) {
-			result.add(new GroupDataSeries(filter.getLabel()));
+			result.add(new GroupDataSeries(filter.getLabel(), filter.getUsers().size()));
 		}
 		try {
 			Configuration config = this.configurationBuilder.build();

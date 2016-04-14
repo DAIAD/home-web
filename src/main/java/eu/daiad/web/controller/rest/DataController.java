@@ -20,11 +20,13 @@ import eu.daiad.web.model.device.WaterMeterDevice;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.meter.WaterMeterMeasurementCollection;
+import eu.daiad.web.model.query.DataQueryRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.application.IAmphiroMeasurementRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
+import eu.daiad.web.service.IDataService;
 
 @RestController("RestDataController")
 public class DataController extends BaseRestController {
@@ -42,6 +44,24 @@ public class DataController extends BaseRestController {
 
 	@Autowired
 	private IDeviceRepository deviceRepository;
+
+	@Autowired
+	private IDataService dataService;
+
+	@RequestMapping(value = "/api/v1/data/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	public RestResponse query(@RequestBody DataQueryRequest data) {
+		RestResponse response = new RestResponse();
+
+		try {
+			this.authenticate(data.getCredentials(), EnumRole.ROLE_ADMIN);
+
+			return dataService.execute(data.getQuery());
+		} catch (ApplicationException ex) {
+			response.add(this.getError(ex));
+		}
+
+		return response;
+	}
 
 	@RequestMapping(value = "/api/v1/data/store", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse store(@RequestBody DeviceMeasurementCollection data) {
