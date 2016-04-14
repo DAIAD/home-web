@@ -27,7 +27,8 @@ public class GroupDataSeries {
 		return points;
 	}
 
-	private DataPoint getDataPoint(EnumTimeAggregation granularity, long timestamp, EnumMetric[] metrics) {
+	private DataPoint getDataPoint(EnumTimeAggregation granularity, long timestamp, EnumMetric[] metrics,
+					DataPoint.EnumDataPointType type) {
 		DateTime date = new DateTime(timestamp, DateTimeZone.UTC);
 
 		switch (granularity) {
@@ -61,14 +62,49 @@ public class GroupDataSeries {
 
 		if (granularity == EnumTimeAggregation.ALL) {
 			if (this.points.size() == 0) {
-				p = new DataPoint();
+				switch (type) {
+					case METER:
+						p = new DataPoint();
 
-				for (EnumMetric m : metrics) {
-					if (m == EnumMetric.MIN) {
-						p.getValues().put(m.toString(), Double.MAX_VALUE);
-					} else {
-						p.getValues().put(m.toString(), 0.0);
-					}
+						for (EnumMetric m : metrics) {
+							if (m == EnumMetric.MIN) {
+								p.getVolume().put(m, Double.MAX_VALUE);
+							} else {
+								p.getVolume().put(m, 0.0);
+							}
+
+						}
+						break;
+					case AMPHIRO:
+						AmphiroDataPoint ap = new AmphiroDataPoint();
+
+						for (EnumMetric m : metrics) {
+							if (m == EnumMetric.MIN) {
+								ap.getVolume().put(m, Double.MAX_VALUE);
+							} else {
+								ap.getVolume().put(m, 0.0);
+							}
+							if (m == EnumMetric.MIN) {
+								ap.getEnergy().put(m, Double.MAX_VALUE);
+							} else {
+								ap.getEnergy().put(m, 0.0);
+							}
+							if (m == EnumMetric.MIN) {
+								ap.getTemperature().put(m, Double.MAX_VALUE);
+							} else {
+								ap.getTemperature().put(m, 0.0);
+							}
+							if (m == EnumMetric.MIN) {
+								ap.getDuration().put(m, Double.MAX_VALUE);
+							} else {
+								ap.getDuration().put(m, 0.0);
+							}
+
+							p = ap;
+						}
+						break;
+					default:
+						throw new IllegalArgumentException("Data point type is not supported.");
 
 				}
 				this.points.add(p);
@@ -86,17 +122,57 @@ public class GroupDataSeries {
 			}
 
 			if (p == null) {
-				p = new DataPoint(timestamp);
+				switch (type) {
+					case METER:
+						p = new DataPoint(timestamp);
 
-				for (EnumMetric m : metrics) {
-					if (m == EnumMetric.MIN) {
-						p.getValues().put(m.toString(), Double.MAX_VALUE);
-					} else {
-						p.getValues().put(m.toString(), 0.0);
-					}
+						for (EnumMetric m : metrics) {
+							if (m == EnumMetric.MIN) {
+								p.getVolume().put(m, Double.MAX_VALUE);
+							} else {
+								p.getVolume().put(m, 0.0);
+							}
+
+						}
+						break;
+					case AMPHIRO:
+						AmphiroDataPoint ap = new AmphiroDataPoint(timestamp);
+
+						for (EnumMetric m : metrics) {
+							if (m == EnumMetric.MIN) {
+								ap.getVolume().put(m, Double.MAX_VALUE);
+							} else {
+								ap.getVolume().put(m, 0.0);
+							}
+
+							// Compute COUNT only for volume
+							if (m == EnumMetric.COUNT) {
+								continue;
+							}
+
+							if (m == EnumMetric.MIN) {
+								ap.getEnergy().put(m, Double.MAX_VALUE);
+							} else {
+								ap.getEnergy().put(m, 0.0);
+							}
+							if (m == EnumMetric.MIN) {
+								ap.getTemperature().put(m, Double.MAX_VALUE);
+							} else {
+								ap.getTemperature().put(m, 0.0);
+							}
+							if (m == EnumMetric.MIN) {
+								ap.getDuration().put(m, Double.MAX_VALUE);
+							} else {
+								ap.getDuration().put(m, 0.0);
+							}
+
+							p = ap;
+						}
+						break;
+					default:
+						throw new IllegalArgumentException("Data point type is not supported.");
 
 				}
-
 				this.points.add(p);
 			}
 		}
@@ -104,25 +180,25 @@ public class GroupDataSeries {
 	}
 
 	public void addDataPoint(EnumTimeAggregation granularity, long timestamp, double volume, EnumMetric[] metrics) {
-		DataPoint point = this.getDataPoint(granularity, timestamp, metrics);
+		DataPoint point = this.getDataPoint(granularity, timestamp, metrics, DataPoint.EnumDataPointType.METER);
 
 		boolean avg = false;
 		for (EnumMetric m : metrics) {
 			switch (m) {
 				case COUNT:
-					point.getValues().put(m.toString(), point.getValues().get(m.toString()) + 1);
+					point.getVolume().put(m, point.getVolume().get(m) + 1);
 					break;
 				case SUM:
-					point.getValues().put(m.toString(), point.getValues().get(m.toString()) + volume);
+					point.getVolume().put(m, point.getVolume().get(m) + volume);
 					break;
 				case MIN:
-					if (point.getValues().get(m.toString()) > volume) {
-						point.getValues().put(m.toString(), volume);
+					if (point.getVolume().get(m) > volume) {
+						point.getVolume().put(m, volume);
 					}
 					break;
 				case MAX:
-					if (point.getValues().get(m.toString()) < volume) {
-						point.getValues().put(m.toString(), volume);
+					if (point.getVolume().get(m) < volume) {
+						point.getVolume().put(m, volume);
 					}
 					break;
 				case AVERAGE:
@@ -132,12 +208,78 @@ public class GroupDataSeries {
 			}
 		}
 		if (avg) {
-			double count = point.getValues().get(EnumMetric.COUNT.toString());
+			double count = point.getVolume().get(EnumMetric.COUNT);
 			if (count == 0) {
-				point.getValues().put(EnumMetric.AVERAGE.toString(), 0.0);
+				point.getVolume().put(EnumMetric.AVERAGE, 0.0);
 			} else {
-				point.getValues().put(EnumMetric.AVERAGE.toString(),
-								point.getValues().get(EnumMetric.SUM.toString()) / count);
+				point.getVolume().put(EnumMetric.AVERAGE, point.getVolume().get(EnumMetric.SUM) / count);
+			}
+		}
+	}
+
+	public void addDataPoint(EnumTimeAggregation granularity, long timestamp, double volume, double energy,
+					double duration, double temperature, EnumMetric[] metrics) {
+		AmphiroDataPoint point = (AmphiroDataPoint) this.getDataPoint(granularity, timestamp, metrics,
+						DataPoint.EnumDataPointType.AMPHIRO);
+
+		boolean avg = false;
+		for (EnumMetric m : metrics) {
+			switch (m) {
+				case COUNT:
+					point.getVolume().put(m, point.getVolume().get(m) + 1);
+					break;
+				case SUM:
+					point.getVolume().put(m, point.getVolume().get(m) + volume);
+					point.getEnergy().put(m, point.getEnergy().get(m) + energy);
+					point.getDuration().put(m, point.getDuration().get(m) + duration);
+					point.getTemperature().put(m, point.getTemperature().get(m) + temperature);
+					break;
+				case MIN:
+					if (point.getVolume().get(m) > volume) {
+						point.getVolume().put(m, volume);
+					}
+					if (point.getEnergy().get(m) > energy) {
+						point.getEnergy().put(m, energy);
+					}
+					if (point.getDuration().get(m) > duration) {
+						point.getDuration().put(m, duration);
+					}
+					if (point.getTemperature().get(m) > temperature) {
+						point.getTemperature().put(m, temperature);
+					}
+					break;
+				case MAX:
+					if (point.getVolume().get(m) < volume) {
+						point.getVolume().put(m, volume);
+					}
+					if (point.getEnergy().get(m) < energy) {
+						point.getEnergy().put(m, energy);
+					}
+					if (point.getDuration().get(m) < duration) {
+						point.getDuration().put(m, duration);
+					}
+					if (point.getTemperature().get(m) < temperature) {
+						point.getTemperature().put(m, temperature);
+					}
+					break;
+				case AVERAGE:
+					avg = true;
+				default:
+					// Ignore
+			}
+		}
+		if (avg) {
+			double count = point.getVolume().get(EnumMetric.COUNT);
+			if (count == 0) {
+				point.getVolume().put(EnumMetric.AVERAGE, 0.0);
+				point.getEnergy().put(EnumMetric.AVERAGE, 0.0);
+				point.getDuration().put(EnumMetric.AVERAGE, 0.0);
+				point.getTemperature().put(EnumMetric.AVERAGE, 0.0);
+			} else {
+				point.getVolume().put(EnumMetric.AVERAGE, point.getVolume().get(EnumMetric.SUM) / count);
+				point.getEnergy().put(EnumMetric.AVERAGE, point.getEnergy().get(EnumMetric.SUM) / count);
+				point.getDuration().put(EnumMetric.AVERAGE, point.getDuration().get(EnumMetric.SUM) / count);
+				point.getTemperature().put(EnumMetric.AVERAGE, point.getTemperature().get(EnumMetric.SUM) / count);
 			}
 		}
 	}

@@ -36,7 +36,6 @@ import org.springframework.stereotype.Repository;
 import eu.daiad.web.model.TemporalConstants;
 import eu.daiad.web.model.amphiro.AmphiroAbstractDataPoint;
 import eu.daiad.web.model.amphiro.AmphiroAbstractSession;
-import eu.daiad.web.model.amphiro.AmphiroDataPoint;
 import eu.daiad.web.model.amphiro.AmphiroDataSeries;
 import eu.daiad.web.model.amphiro.AmphiroMeasurement;
 import eu.daiad.web.model.amphiro.AmphiroMeasurementCollection;
@@ -52,6 +51,8 @@ import eu.daiad.web.model.amphiro.AmphiroSessionQueryResult;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DataErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.model.query.AmphiroDataPoint;
+import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.ExpandedDataQuery;
 import eu.daiad.web.model.query.ExpandedPopulationFilter;
 import eu.daiad.web.model.query.GroupDataSeries;
@@ -659,7 +660,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 
 				data.getSeries().add(series);
 
-				ArrayList<AmphiroDataPoint> points = new ArrayList<AmphiroDataPoint>();
+				ArrayList<eu.daiad.web.model.amphiro.AmphiroDataPoint> points = new ArrayList<eu.daiad.web.model.amphiro.AmphiroDataPoint>();
 
 				for (Result r = scanner.next(); r != null; r = scanner.next()) {
 					NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
@@ -667,7 +668,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 					long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 32, 40));
 
 					short offset = -1;
-					AmphiroDataPoint point = null;
+					eu.daiad.web.model.amphiro.AmphiroDataPoint point = null;
 
 					for (Entry<byte[], byte[]> entry : map.entrySet()) {
 						short entryOffset = Bytes.toShort(Arrays.copyOfRange(entry.getKey(), 0, 2));
@@ -678,7 +679,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 								points.add(point);
 							}
 							offset = entryOffset;
-							point = new AmphiroDataPoint();
+							point = new eu.daiad.web.model.amphiro.AmphiroDataPoint();
 							point.setTimestamp((timeBucket + offset) * 1000L);
 						}
 
@@ -1275,6 +1276,9 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 							if (inArray(filter.getHashes(), userHash)) {
 								long timestamp = 0;
 								float volume = 0;
+								float energy = 0;
+								int duration = 0;
+								float temperature = 0;
 
 								for (Entry<byte[], byte[]> entry : map.entrySet()) {
 									String qualifier = Bytes.toString(entry.getKey());
@@ -1286,13 +1290,23 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 										case "m:v":
 											volume = Bytes.toFloat(entry.getValue());
 											break;
+										case "m:t":
+											temperature = Bytes.toFloat(entry.getValue());
+											break;
+										case "m:e":
+											energy = Bytes.toFloat(entry.getValue());
+											break;
+										case "m:d":
+											duration = Bytes.toInt(entry.getValue());
+											break;
 										default:
 											// Ignore
 											break;
 									}
 								}
 
-								series.addDataPoint(query.getGranularity(), timestamp, volume, query.getMetrics());
+								series.addDataPoint(query.getGranularity(), timestamp, volume, energy, duration,
+												temperature, query.getMetrics());
 							}
 
 							filterIndex++;
@@ -1318,7 +1332,17 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 			}
 		}
 
+		cleanSeries(result);
+
 		return result;
+	}
+
+	private void cleanSeries(ArrayList<GroupDataSeries> result) {
+		for (GroupDataSeries series : result) {
+			for (Object p : series.getPoints()) {
+				((AmphiroDataPoint) p).getTemperature().remove(EnumMetric.SUM);
+			}
+		}
 	}
 
 	private boolean inArray(ArrayList<byte[]> group, byte[] hash) {

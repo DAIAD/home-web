@@ -49,8 +49,8 @@ var Debug = React.createClass({
           granularity: 'DAY'
         },
         population: [
-          { type :'USER', label: 'Bob', users: ['a9509da9-edf5-4838-acf4-8f1b73485d7a']},
-          { type :'UTILITY', label: 'Alicante', utility: 'd62815fb-b949-463c-a0e1-a0f1d1a9d6cd'}
+          { type :'USER', label: 'Bob', users: ['633fcd0d-6f9d-4d2d-97f1-4556b4b3caaf']},
+          { type :'UTILITY', label: 'Alicante', utility: '3e0663f2-d6c3-4d9a-8799-a2e8a24d0549'}
         ],
         spatial : {
           type: 'CONTAINS',
