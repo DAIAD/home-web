@@ -417,12 +417,12 @@ var Reporting = React.createClass({
           icon: 'cloud-download fa-2x',
           color: '#2D3580',
           handler: function(e) {
-            if((this.props.row.key) && (this.props.row.numberOfAmphiroDevices > 0)) {
+            if((this.props.row.key) && ((this.props.row.numberOfAmphiroDevices > 0) || (this.props.row.numberOfMeters > 0))) {
               self.props.actions.exportUserData(this.props.row.key, this.props.row.username);
             }
           },
           visible: function(row) { 
-            return ((row.key) && (row.numberOfAmphiroDevices > 0));
+            return ((row.key) && ((row.numberOfAmphiroDevices > 0) || (row.numberOfMeters > 0)));
           }
         }],
         rows: rows,

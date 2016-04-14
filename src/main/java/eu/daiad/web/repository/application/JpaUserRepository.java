@@ -14,8 +14,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
@@ -413,7 +415,7 @@ public class JpaUserRepository implements IUserRepository {
 						.createQuery("select a from account_white_list a where a.username = :username",
 										AccountWhiteListEntry.class).setFirstResult(0).setMaxResults(1);
 		entityQuery.setParameter("username", username);
-        //TODO
+
 		List<AccountWhiteListEntry> entries = entityQuery.getResultList();
 
 		if (entries.size() == 1) {
@@ -473,6 +475,22 @@ public class JpaUserRepository implements IUserRepository {
 	}
 
 	@Override
+	public List<eu.daiad.web.model.admin.AccountActivity> getAccountActivity() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+		AuthenticatedUser user = null;
+		if (auth.getPrincipal() instanceof AuthenticatedUser) {
+			user = (AuthenticatedUser) auth.getPrincipal();
+		}
+
+		if (user != null) {
+			return this.getAccountActivity(user.getUtilityId());
+		}
+
+		return new ArrayList<eu.daiad.web.model.admin.AccountActivity>();
+	}
+
+	@Override
 	public List<eu.daiad.web.model.admin.AccountActivity> getAccountActivity(int utilityId) {
 		try {
 			TypedQuery<AccountActivity> query = entityManager
@@ -524,50 +542,11 @@ public class JpaUserRepository implements IUserRepository {
 
 		return null;
 	}
-
-	public ArrayList<UUID> getUserKeysForGroup(UUID groupKey) {
-		ArrayList<UUID> result = new ArrayList<UUID>();
-		try {
-			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from \"group\" g "
-							+ "inner join group_member gm on g.id = gm.group_id "
-							+ "inner join account a on gm.account_id = a.id where g.key = CAST(? as uuid)");
-			query.setParameter(1, groupKey.toString());
-
-			List<?> keys = query.getResultList();
-			for (Object key : keys) {
-				result.add((UUID) key);
-			}
-		} catch (Exception ex) {
-			logger.error(String.format("Failed to load user keys for group [%s].", groupKey), ex);
-		}
-
-		return result;
-	}
-
-	public ArrayList<UUID> getUserKeysForUtility(UUID utilityKey) {
-		ArrayList<UUID> result = new ArrayList<UUID>();
-		try {
-			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from utility u "
-							+ "inner join account a on u.id = a.utility_id where u.key = CAST(? as uuid)");
-			query.setParameter(1, utilityKey.toString());
-
-			@SuppressWarnings("unchecked")
-			List<String> keys = query.getResultList();
-
-			for (String key : keys) {
-				result.add(UUID.fromString(key));
-			}
-		} catch (Exception ex) {
-			logger.error(String.format("Failed to load user keys for utility [%s]", utilityKey), ex);
-		}
-
-		return result;
-	}
-
+	
 	@Override
 	public void insertAccountWhiteListEntry(AccountWhiteListInfo userInfo) {
 		try{
-			//TODO - remove me
+
 			TypedQuery<eu.daiad.web.domain.application.AccountWhiteListEntry> whitelistQuery = entityManager
 					.createQuery("select a from account_white_list a where a.username = :username",
 									eu.daiad.web.domain.application.AccountWhiteListEntry.class)
@@ -618,5 +597,74 @@ public class JpaUserRepository implements IUserRepository {
 		} catch (Exception ex) {
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
 		}
+	}
+
+	public ArrayList<UUID> getUserKeysForGroup(UUID groupKey) {
+		ArrayList<UUID> result = new ArrayList<UUID>();
+		try {
+			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from \"group\" g "
+							+ "inner join group_member gm on g.id = gm.group_id "
+							+ "inner join account a on gm.account_id = a.id where g.key = CAST(? as uuid)");
+			query.setParameter(1, groupKey.toString());
+
+			List<?> keys = query.getResultList();
+			for (Object key : keys) {
+				result.add((UUID) key);
+			}
+		} catch (Exception ex) {
+			logger.error(String.format("Failed to load user keys for group [%s].", groupKey), ex);
+		}
+
+		return result;
+	}
+
+	public ArrayList<UUID> getUserKeysForUtility(UUID utilityKey) {
+		ArrayList<UUID> result = new ArrayList<UUID>();
+		try {
+			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from utility u "
+							+ "inner join account a on u.id = a.utility_id where u.key = CAST(? as uuid)");
+			query.setParameter(1, utilityKey.toString());
+
+			@SuppressWarnings("unchecked")
+			List<String> keys = query.getResultList();
+
+			for (String key : keys) {
+				result.add(UUID.fromString(key));
+			}
+		} catch (Exception ex) {
+			logger.error(String.format("Failed to load user keys for utility [%s]", utilityKey), ex);
+		}
+
+		return result;
+	}
+
+	public ArrayList<UUID> getUserKeysForUtility() {
+		ArrayList<UUID> result = new ArrayList<UUID>();
+
+		try {
+			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+			AuthenticatedUser user = null;
+			if (auth.getPrincipal() instanceof AuthenticatedUser) {
+				user = (AuthenticatedUser) auth.getPrincipal();
+			}
+
+			if (user != null) {
+				Query query = entityManager
+								.createNativeQuery("select CAST(a.key as char varying) from account a where a.utility_id = :utility_id");
+				query.setParameter("utility_id", user.getUtilityId());
+
+				@SuppressWarnings("unchecked")
+				List<String> keys = query.getResultList();
+
+				for (String key : keys) {
+					result.add(UUID.fromString(key));
+				}
+			}
+		} catch (Exception ex) {
+			logger.error("Failed to load user keys for utility.", ex);
+		}
+
+		return result;
 	}
 }

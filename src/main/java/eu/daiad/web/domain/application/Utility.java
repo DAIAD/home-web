@@ -56,6 +56,18 @@ public class Utility {
 	@Column(name = "default_admin_username", nullable = false, unique = true)
 	private String defaultAdministratorUsername;
 
+	@Column(name = "locale", columnDefinition = "bpchar", length = 2)
+	private String locale;
+
+	@Basic()
+	private String timezone;
+
+	@Basic()
+	private String country;
+
+	@Basic()
+	private String city;
+
 	public int getId() {
 		return id;
 	}
@@ -105,5 +117,21 @@ public class Utility {
 
 	public UUID getKey() {
 		return key;
+	}
+
+	public String getLocale() {
+		return locale;
+	}
+
+	public String getTimezone() {
+		return timezone;
+	}
+
+	public String getCountry() {
+		return country;
+	}
+
+	public String getCity() {
+		return city;
 	}
 }

@@ -32,9 +32,13 @@ public interface IUserRepository {
 
 	void updateLoginStats(int id, boolean success);
 
+	List<AccountActivity> getAccountActivity();
+
 	List<AccountActivity> getAccountActivity(int utilityId);
 
 	ArrayList<UUID> getUserKeysForGroup(UUID groupKey);
+
+	ArrayList<UUID> getUserKeysForUtility();
 
 	ArrayList<UUID> getUserKeysForUtility(UUID utilityKey);
 

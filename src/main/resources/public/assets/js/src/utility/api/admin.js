@@ -9,7 +9,7 @@ var AdminAPI = {
 
   getSessions : function(userKey) {
     var endDate = moment().valueOf();
-    var startDate = moment().subtract(20, 'days').valueOf();
+    var startDate = moment().subtract(30, 'days').valueOf();
 
     return api.json('/action/device/session/query', {
       userKey : userKey,
@@ -22,7 +22,7 @@ var AdminAPI = {
 
   getMeters : function(userKey) {
     var endDate = moment().valueOf();
-    var startDate = moment().subtract(20, 'days').valueOf();
+    var startDate = moment().subtract(30, 'days').valueOf();
 
     return api.json('/action/meter/history', {
       userKey : userKey,

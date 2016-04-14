@@ -33,6 +33,10 @@ import eu.daiad.web.model.amphiro.AmphiroSessionCollectionQueryResult;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.ExportErrorCode;
 import eu.daiad.web.model.export.ExportUserDataQuery;
+import eu.daiad.web.model.meter.WaterMeterDataPoint;
+import eu.daiad.web.model.meter.WaterMeterDataSeries;
+import eu.daiad.web.model.meter.WaterMeterMeasurementQuery;
+import eu.daiad.web.model.meter.WaterMeterMeasurementQueryResult;
 import eu.daiad.web.repository.application.IAmphiroMeasurementRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 
@@ -136,7 +140,7 @@ public class ExportService implements IExportService {
 					row = sheet.createRow(rowIndex++);
 
 					row.createCell(0).setCellValue(((AmphiroSession) session).getId());
-					row.createCell(1).setCellValue(session.getDate().toString(formatter));
+					row.createCell(1).setCellValue(session.getUtcDate().toString(formatter));
 
 					row.createCell(2).setCellValue(session.getVolume());
 					row.getCell(2).setCellStyle(style);
@@ -152,6 +156,57 @@ public class ExportService implements IExportService {
 					row.createCell(7).setCellValue(((AmphiroSession) session).isHistory() ? "YES" : "NO");
 				}
 
+			}
+
+			// Load meter measurements
+			String[] serialArray = new String[query.getMeterNames().size()];
+			query.getMeterNames().toArray(serialArray);
+
+			UUID[] meterArray = new UUID[query.getMeterKeys().size()];
+			query.getMeterKeys().toArray(meterArray);
+
+			WaterMeterMeasurementQuery meterQuery = new WaterMeterMeasurementQuery();
+			meterQuery.setUserKey(query.getUserKey());
+			meterQuery.setDeviceKey(meterArray);
+			meterQuery.setGranularity(TemporalConstants.NONE);
+			meterQuery.setStartDate(null);
+			meterQuery.setEndDate(null);
+
+			WaterMeterMeasurementQueryResult meterCollection = this.waterMeterMeasurementRepository.searchMeasurements(
+							serialArray, meterQuery);
+
+			// Create one sheet per device
+			for (WaterMeterDataSeries series : meterCollection.getSeries()) {
+				int rowIndex = 0;
+
+				String sheetName = series.getSerial();
+				if (StringUtils.isBlank(sheetName)) {
+					sheetName = series.getDeviceKey().toString();
+				}
+
+				XSSFSheet sheet = workbook.createSheet(sheetName);
+
+				// Write header
+				Row row = sheet.createRow(rowIndex++);
+
+				row.createCell(0).setCellValue("Date Time");
+				row.createCell(1).setCellValue("Volume");
+				row.createCell(2).setCellValue("Difference");
+
+				DataFormat format = workbook.createDataFormat();
+				CellStyle style = workbook.createCellStyle();
+
+				style.setDataFormat(format.getFormat("0.00"));
+
+				for (WaterMeterDataPoint point : series.getValues()) {
+					row = sheet.createRow(rowIndex++);
+
+					row.createCell(0).setCellValue(point.getUtcDate().toString(formatter));
+					row.createCell(1).setCellValue(point.getVolume());
+					row.getCell(1).setCellStyle(style);
+					row.createCell(2).setCellValue(point.getDifference());
+					row.getCell(2).setCellStyle(style);
+				}
 			}
 
 			// Write workbook

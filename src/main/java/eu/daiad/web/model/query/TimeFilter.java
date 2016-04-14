@@ -10,7 +10,7 @@ public class TimeFilter {
 	private EnumTemporalFilterType type = EnumTemporalFilterType.ABSOLUTE;
 
 	@JsonDeserialize(using = EnumTimeAggregation.Deserializer.class)
-	private EnumTimeAggregation graunlarity = EnumTimeAggregation.ALL;
+	private EnumTimeAggregation granularity  = EnumTimeAggregation.ALL;
 
 	private long start;
 
@@ -23,7 +23,7 @@ public class TimeFilter {
 
 	public TimeFilter() {
 		this.type = EnumTemporalFilterType.ABSOLUTE;
-		this.graunlarity = EnumTimeAggregation.HOUR;
+		this.granularity  = EnumTimeAggregation.HOUR;
 
 		this.start = (new DateTime()).getMillis();
 		this.end = this.start;
@@ -31,7 +31,7 @@ public class TimeFilter {
 
 	public TimeFilter(long start, long end) {
 		this.type = EnumTemporalFilterType.ABSOLUTE;
-		this.graunlarity = EnumTimeAggregation.HOUR;
+		this.granularity  = EnumTimeAggregation.HOUR;
 
 		this.start = start;
 		this.end = end;
@@ -39,23 +39,23 @@ public class TimeFilter {
 
 	public TimeFilter(DateTime start, DateTime end) {
 		this.type = EnumTemporalFilterType.ABSOLUTE;
-		this.graunlarity = EnumTimeAggregation.HOUR;
+		this.granularity  = EnumTimeAggregation.HOUR;
 
 		this.start = start.getMillis();
 		this.end = end.getMillis();
 	}
 
-	public TimeFilter(long start, long end, EnumTimeAggregation graunlarity) {
+	public TimeFilter(long start, long end, EnumTimeAggregation granularity ) {
 		this.type = EnumTemporalFilterType.ABSOLUTE;
-		this.graunlarity = graunlarity;
+		this.granularity  = granularity ;
 
 		this.start = start;
 		this.end = end;
 	}
 
-	public TimeFilter(DateTime start, DateTime end, EnumTimeAggregation graunlarity) {
+	public TimeFilter(DateTime start, DateTime end, EnumTimeAggregation granularity ) {
 		this.type = EnumTemporalFilterType.ABSOLUTE;
-		this.graunlarity = graunlarity;
+		this.granularity  = granularity ;
 
 		this.start = start.getMillis();
 		this.end = end.getMillis();
@@ -63,7 +63,7 @@ public class TimeFilter {
 
 	public TimeFilter(long start, int duration) {
 		this.type = EnumTemporalFilterType.SLIDING;
-		this.graunlarity = EnumTimeAggregation.HOUR;
+		this.granularity  = EnumTimeAggregation.HOUR;
 
 		this.start = start;
 		this.duration = duration;
@@ -72,7 +72,7 @@ public class TimeFilter {
 
 	public TimeFilter(long start, int duration, EnumTimeUnit durationTimeUnit) {
 		this.type = EnumTemporalFilterType.SLIDING;
-		this.graunlarity = EnumTimeAggregation.HOUR;
+		this.granularity  = EnumTimeAggregation.HOUR;
 
 		this.start = start;
 		this.duration = duration;
@@ -81,7 +81,7 @@ public class TimeFilter {
 
 	public TimeFilter(long start, int duration, EnumTimeUnit durationTimeUnit, EnumTimeAggregation granularity) {
 		this.type = EnumTemporalFilterType.SLIDING;
-		this.graunlarity = granularity;
+		this.granularity  = granularity;
 
 		this.start = start;
 		this.duration = duration;
@@ -90,7 +90,7 @@ public class TimeFilter {
 
 	public TimeFilter(DateTime start, int duration) {
 		this.type = EnumTemporalFilterType.SLIDING;
-		this.graunlarity = EnumTimeAggregation.HOUR;
+		this.granularity  = EnumTimeAggregation.HOUR;
 
 		this.start = start.getMillis();
 		this.duration = duration;
@@ -99,7 +99,7 @@ public class TimeFilter {
 
 	public TimeFilter(DateTime start, int duration, EnumTimeUnit durationTimeUnit) {
 		this.type = EnumTemporalFilterType.SLIDING;
-		this.graunlarity = EnumTimeAggregation.HOUR;
+		this.granularity  = EnumTimeAggregation.HOUR;
 
 		this.start = start.getMillis();
 		this.duration = duration;
@@ -108,7 +108,7 @@ public class TimeFilter {
 
 	public TimeFilter(DateTime start, int duration, EnumTimeUnit durationTimeUnit, EnumTimeAggregation granularity) {
 		this.type = EnumTemporalFilterType.SLIDING;
-		this.graunlarity = granularity;
+		this.granularity  = granularity;
 
 		this.start = start.getMillis();
 		this.duration = duration;
@@ -119,8 +119,8 @@ public class TimeFilter {
 		return type;
 	}
 
-	public EnumTimeAggregation getGraunlarity() {
-		return graunlarity;
+	public EnumTimeAggregation getGranularity () {
+		return granularity ;
 	}
 
 	public long getStart() {
@@ -141,7 +141,7 @@ public class TimeFilter {
 
 	@Override
 	public String toString() {
-		return "TimeFilter [type=" + type + ", graunlarity=" + graunlarity + ", start=" + start + ", end=" + end
+		return "TimeFilter [type=" + type + ", granularity =" + granularity  + ", start=" + start + ", end=" + end
 						+ ", duration=" + duration + ", durationTimeUnit=" + durationTimeUnit + "]";
 	}
 

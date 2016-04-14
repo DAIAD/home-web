@@ -6,7 +6,7 @@ public class WaterMeterMeasurement {
 
 	private float volume;
 
-	private float difference;
+	private Float difference;
 
 	public float getVolume() {
 		return volume;
@@ -24,11 +24,11 @@ public class WaterMeterMeasurement {
 		this.timestamp = timestamp;
 	}
 
-	public float getDifference() {
+	public Float getDifference() {
 		return difference;
 	}
 
-	public void setDifference(float difference) {
+	public void setDifference(Float difference) {
 		this.difference = difference;
 	}
 }

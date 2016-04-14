@@ -10,6 +10,8 @@ import javax.persistence.TypedQuery;
 
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,7 @@ import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
+import eu.daiad.web.model.security.AuthenticatedUser;
 
 @Repository()
 @Transactional("transactionManager")
@@ -131,12 +134,17 @@ public class JpaDeviceRepository implements IDeviceRepository {
 		UUID deviceKey = null;
 
 		try {
+			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
+
 			TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager
-							.createQuery("select a from account a where a.username = :username",
+							.createQuery("select a from account a where a.username = :username and a.utility.id = :utility_id",
 											eu.daiad.web.domain.application.Account.class).setFirstResult(0)
 							.setMaxResults(1);
 
 			accountQuery.setParameter("username", username);
+			accountQuery.setParameter("utility_id", user.getUtilityId());
 
 			List<eu.daiad.web.domain.application.Account> accounts = accountQuery.getResultList();
 
@@ -175,14 +183,59 @@ public class JpaDeviceRepository implements IDeviceRepository {
 					entry.setMeterLocation(location);
 
 					this.entityManager.persist(entry);
+				} else {
+					throw new ApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
 				}
+			} else {
+				throw new ApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
 			}
 
+		} catch (ApplicationException appEx) {
+			throw appEx;
 		} catch (Exception ex) {
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
 		}
 
 		return deviceKey;
+	}
+
+	@Override
+	public void updateMeterLocation(String username, String serial, Geometry location) throws ApplicationException {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+		AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
+
+		TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager
+						.createQuery("select a from account a where a.username = :username and a.utility.id = :utility_id",
+										eu.daiad.web.domain.application.Account.class).setFirstResult(0)
+						.setMaxResults(1);
+
+		accountQuery.setParameter("username", username);
+		accountQuery.setParameter("utility_id", user.getUtilityId());
+
+		List<eu.daiad.web.domain.application.Account> accounts = accountQuery.getResultList();
+
+		if (accounts.size() == 1) {
+			TypedQuery<eu.daiad.web.domain.application.DeviceMeter> query = entityManager
+							.createQuery("select d from device_meter d where d.serial = :serial and d.account.key = :userKey",
+											eu.daiad.web.domain.application.DeviceMeter.class).setFirstResult(0)
+							.setMaxResults(1);
+			query.setParameter("serial", serial);
+			query.setParameter("userKey", accounts.get(0).getKey());
+
+			List<eu.daiad.web.domain.application.DeviceMeter> result = query.getResultList();
+
+			if (result.size() == 1) {
+				result.get(0).setLocation(location);
+
+				this.entityManager.flush();
+			} else {
+				throw new ApplicationException(DeviceErrorCode.METER_NOT_FOUND).set("serial", serial);
+			}
+		} else {
+			throw new ApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
+		}
+
 	}
 
 	@Override

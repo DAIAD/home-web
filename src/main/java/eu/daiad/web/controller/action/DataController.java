@@ -2,30 +2,18 @@ package eu.daiad.web.controller.action;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.geotools.geometry.jts.JTS;
-import org.geotools.referencing.CRS;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -38,18 +26,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.PrecisionModel;
-
 import eu.daiad.web.controller.BaseController;
-import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.device.Device;
@@ -61,12 +41,17 @@ import eu.daiad.web.model.error.ResourceNotFoundException;
 import eu.daiad.web.model.export.DownloadFileResponse;
 import eu.daiad.web.model.export.ExportUserDataQuery;
 import eu.daiad.web.model.export.ExportUserDataRequest;
+import eu.daiad.web.model.loader.ImportWaterMeterFileConfiguration;
+import eu.daiad.web.model.loader.UploadRequest;
 import eu.daiad.web.model.query.DataQueryRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.spatial.ReferenceSystem;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.IExportService;
+import eu.daiad.web.service.IFileDataLoaderService;
+import eu.daiad.web.service.IWaterMeterDataLoaderService;
 
 @Controller
 public class DataController extends BaseController {
@@ -83,131 +68,65 @@ public class DataController extends BaseController {
 	private IDataService dataService;
 
 	@Autowired
+	private IFileDataLoaderService fileDataLoaderService;
+
+	@Autowired
+	private IWaterMeterDataLoaderService waterMeterDataLoaderService;
+
+	@Autowired
 	private IUserRepository userRepository;
 
 	@Autowired
 	private IDeviceRepository deviceRepository;
 
-	private void registerMeter(String filename, String username, String serial, Geometry location) {
-		try {
-			// Check if meter is already associated with the user
-			Device device = this.deviceRepository.getWaterMeterDeviceBySerial(serial);
-			if (device != null) {
-				return;
-			}
+	@Autowired
+	Environment environment;
 
-			ArrayList<KeyValuePair> properties = new ArrayList<KeyValuePair>();
-			properties.add(new KeyValuePair("import.file", filename));
-			properties.add(new KeyValuePair("import.date", (new DateTime(DateTimeZone.UTC).toString())));
-
-			this.deviceRepository.createMeterDevice(username, serial, properties, location);
-		} catch (ApplicationException ex) {
-			// Ignore
-		} catch (Exception ex) {
-			logger.error(String.format("Failed to register device [%s] to user [%s].", username, serial), ex);
-		}
-	}
-
-	private String getStringFromCell(Row row, int index) {
-		Cell cell = row.getCell(index);
-
-		if ((cell != null) && (cell.getCellType() == Cell.CELL_TYPE_STRING)) {
-			return cell.getStringCellValue();
-		}
-		return null;
-	}
-
-	private Double getDoubleFromCell(Row row, int index) {
-		Cell cell = row.getCell(index);
-
-		if ((cell != null) && (cell.getCellType() == Cell.CELL_TYPE_NUMERIC)) {
-			return cell.getNumericCellValue();
-		}
-		return null;
-	}
-
-	private void parse(File input) {
-		XSSFWorkbook book = null;
-		FileInputStream fis = null;
-
-		Pattern allowedFilenames = Pattern.compile(".*\\.xls$|.*\\.xlsx$");
-
-		// EPSG:25830
-		GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 25830);
-
-		if (allowedFilenames.matcher(input.getName()).matches()) {
-			try {
-				fis = new FileInputStream(input);
-				book = new XSSFWorkbook(fis);
-				XSSFSheet sheet = book.getSheetAt(0);
-
-				Iterator<Row> itr = sheet.iterator();
-
-				// Iterating over Excel file in Java
-				while (itr.hasNext()) {
-					Row row = itr.next();
-
-					String username = getStringFromCell(row, 0);
-					String serial = getStringFromCell(row, 3);
-					Double longitude = getDoubleFromCell(row, 4);
-					Double latitude = getDoubleFromCell(row, 5);
-
-					if ((!StringUtils.isBlank(username)) && (!StringUtils.isBlank(serial)) && (longitude != null)
-									&& (latitude != null)) {
-						Point point = geometryFactory.createPoint(new Coordinate(longitude.doubleValue(), latitude
-										.doubleValue()));
-
-						CoordinateReferenceSystem sourceCRS = CRS.decode("EPSG:25830");
-						CoordinateReferenceSystem targetCRS = CRS.decode("EPSG:4326");
-
-						MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS, false);
-						Geometry transformedPoint = JTS.transform(point, transform);
-						transformedPoint.setSRID(4326);
-
-						this.registerMeter(input.getName(), username, serial, transformedPoint);
-					}
-				}
-			} catch (FactoryException fe) {
-				logger.warn(fe);
-			} catch (Exception ie) {
-				logger.error(ie);
-			} finally {
-				try {
-					if (book != null) {
-						book.close();
-						book = null;
-					}
-					if (fis != null) {
-						fis.close();
-						fis = null;
-					}
-				} catch (Exception ex) {
-					logger.error(String.format("Failed to release resources for file [%s]", input.getName()));
-				}
-			}
-		}
+	private void saveFile(String filename, byte[] bytes) throws IOException {
+		BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(filename)));
+		stream.write(bytes);
+		stream.close();
 	}
 
 	@RequestMapping(value = "/action/upload", method = RequestMethod.POST, produces = "application/json")
 	@ResponseBody
 	@Secured({ "ROLE_ADMIN" })
-	public RestResponse upload(@RequestParam("files") MultipartFile[] files) {
+	public RestResponse upload(UploadRequest request) {
 		RestResponse response = new RestResponse();
 
 		try {
 			// Get the filename and build the local file path (be sure that the
 			// application have write permissions on such directory)
-			if (files != null) {
-				for (MultipartFile file : files) {
-					String filename = file.getOriginalFilename();
-					String filepath = Paths.get(temporaryPath, filename).toString();
+			if (request.getFiles() != null) {
+				FileUtils.forceMkdir(new File(temporaryPath));
 
-					// Save the file locally
-					BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(filepath)));
-					stream.write(file.getBytes());
-					stream.close();
+				switch (request.getType()) {
+					case METER:
+						for (MultipartFile file : request.getFiles()) {
+							String filename = Paths.get(temporaryPath,
+											UUID.randomUUID().toString() + "-" + file.getOriginalFilename()).toString();
 
-					this.parse(new File(filepath));
+							this.saveFile(filename, file.getBytes());
+
+							ImportWaterMeterFileConfiguration configuration = new ImportWaterMeterFileConfiguration(
+											filename);
+							configuration.setSourceReferenceSystem(new ReferenceSystem(25830));
+
+							this.fileDataLoaderService.importWaterMeter(configuration);
+						}
+						break;
+					case METER_DATA:
+						for (MultipartFile file : request.getFiles()) {
+							String filename = Paths.get(temporaryPath,
+											UUID.randomUUID().toString() + "-" + file.getOriginalFilename()).toString();
+
+							this.saveFile(filename, file.getBytes());
+
+							this.waterMeterDataLoaderService.parse(filename, "UTC");
+						}
+						break;
+					default:
+						break;
 				}
 			}
 		} catch (Exception ex) {

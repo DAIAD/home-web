@@ -52,6 +52,10 @@ public class AccountProfile {
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime updatedOn;
 
+	@Column(name = "static_tip_sent_on")
+	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+	private DateTime staticTipSentOn;
+
 	@Column(name = "mobile_mode")
 	private int mobileMode;
 
@@ -148,6 +152,14 @@ public class AccountProfile {
 
 	public long getRowVersion() {
 		return rowVersion;
+	}
+
+	public DateTime getStaticTipSentOn() {
+		return staticTipSentOn;
+	}
+
+	public void setStaticTipSentOn(DateTime staticTipSentOn) {
+		this.staticTipSentOn = staticTipSentOn;
 	}
 
 }

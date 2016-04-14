@@ -1,3 +1,8 @@
+-- Extensions
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE EXTENSION IF NOT EXISTS postgis;
+
 --  utility
 CREATE SEQUENCE utility_id_seq
     START WITH 1
@@ -14,6 +19,10 @@ CREATE TABLE utility (
     description character varying,
     date_created timestamp without time zone,
     default_admin_username character varying(100) NOT NULL,
+	locale character(2),
+	timezone character varying(50),
+	country character varying(50),
+	city character varying(60),
     CONSTRAINT pk_utility PRIMARY KEY (id)
 );
 
@@ -70,6 +79,7 @@ CREATE TABLE public.account_profile
   web_config character varying NULL,
   utility_mode int NOT NULL,
   utility_config character varying NULL,
+  static_tip_sent_on timestamp without time zone,
   CONSTRAINT pk_account_profile PRIMARY KEY (id),
   CONSTRAINT fk_account_profile_account FOREIGN KEY (id)
         REFERENCES public.account (id) MATCH SIMPLE

@@ -27,6 +27,9 @@ public interface IDeviceRepository {
 	public abstract UUID createMeterDevice(String username, String serial, ArrayList<KeyValuePair> properties,
 					Geometry location) throws ApplicationException;
 
+	public abstract void updateMeterLocation(String username, String serial, Geometry location)
+					throws ApplicationException;
+
 	public abstract Device getUserDeviceByKey(UUID userKey, UUID deviceKey) throws ApplicationException;
 
 	public abstract Device getUserAmphiroDeviceByMacAddress(UUID userKey, String macAddress)

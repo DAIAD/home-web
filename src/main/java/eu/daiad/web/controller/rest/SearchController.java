@@ -26,6 +26,7 @@ import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQuery;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQueryResult;
+import eu.daiad.web.model.meter.WaterMeterStatus;
 import eu.daiad.web.model.meter.WaterMeterStatusQuery;
 import eu.daiad.web.model.meter.WaterMeterStatusQueryResult;
 import eu.daiad.web.model.security.AuthenticatedUser;
@@ -61,9 +62,18 @@ public class SearchController extends BaseRestController {
 
 			String[] serials = this.checkMeterOwnership(user.getKey(), query.getDeviceKey());
 
-			WaterMeterStatusQueryResult data = waterMeterMeasurementRepository.getStatus(serials, query);
+			WaterMeterStatusQueryResult result = waterMeterMeasurementRepository.getStatus(serials);
 
-			return data;
+			for (WaterMeterStatus status : result.getDevices()) {
+				for (int i = 0, count = serials.length; i < count; i++) {
+					if (status.getSerial().equals(serials[i])) {
+						status.setDeviceKey(query.getDeviceKey()[i]);
+						break;
+					}
+				}
+			}
+
+			return result;
 		} catch (ApplicationException ex) {
 			logger.error(ex.getMessage(), ex);
 

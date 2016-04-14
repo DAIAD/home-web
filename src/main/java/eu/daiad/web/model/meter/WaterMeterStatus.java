@@ -14,8 +14,7 @@ public class WaterMeterStatus {
 
 	private float variation;
 
-	public WaterMeterStatus(UUID deviceKey, String serial) {
-		this.deviceKey = deviceKey;
+	public WaterMeterStatus(String serial) {
 		this.serial = serial;
 	}
 
@@ -49,6 +48,10 @@ public class WaterMeterStatus {
 
 	public String getSerial() {
 		return serial;
+	}
+
+	public void setDeviceKey(UUID deviceKey) {
+		this.deviceKey = deviceKey;
 	}
 
 }

@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 
@@ -39,7 +41,6 @@ import eu.daiad.web.model.meter.WaterMeterMeasurementCollection;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQuery;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQueryResult;
 import eu.daiad.web.model.meter.WaterMeterStatus;
-import eu.daiad.web.model.meter.WaterMeterStatusQuery;
 import eu.daiad.web.model.meter.WaterMeterStatusQueryResult;
 import eu.daiad.web.model.query.ExpandedDataQuery;
 import eu.daiad.web.model.query.ExpandedPopulationFilter;
@@ -48,6 +49,8 @@ import eu.daiad.web.model.query.GroupDataSeries;
 @Repository()
 @Scope("prototype")
 public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurementRepository {
+
+	private static final Log logger = LogFactory.getLog(HBaseWaterMeterMeasurementRepository.class);
 
 	private final String ERROR_RELEASE_RESOURCES = "Failed to release resources";
 
@@ -77,10 +80,9 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 	@Autowired
 	private HBaseConfigurationBuilder configurationBuilder;
 
-	private static final Log logger = LogFactory.getLog(HBaseWaterMeterMeasurementRepository.class);
-
 	private Connection connection = null;
 
+	@Override
 	public void open() throws IOException {
 		if (this.connection == null) {
 			Configuration config = this.configurationBuilder.build();
@@ -88,6 +90,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 		}
 	}
 
+	@Override
 	public boolean isOpen() {
 		return ((this.connection != null) && (!this.connection.isClosed()));
 	}
@@ -115,6 +118,40 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 			if (!this.isOpen()) {
 				this.open();
 				autoClose = true;
+			}
+
+			// Sort measurements
+			Collections.sort(data.getMeasurements(), new Comparator<WaterMeterMeasurement>() {
+				public int compare(WaterMeterMeasurement o1, WaterMeterMeasurement o2) {
+					if (o1.getTimestamp() <= o2.getTimestamp()) {
+						return -1;
+					} else {
+						return 1;
+					}
+				}
+			});
+
+			// Get current status if no difference is computed
+			WaterMeterMeasurement first = data.getMeasurements().get(0);
+			if (first.getDifference() == null) {
+				WaterMeterStatusQueryResult status = this.getStatus(new String[] { serial },
+								new DateTime(first.getTimestamp(), DateTimeZone.UTC).getMillis());
+
+				if (status.getDevices().size() == 0) {
+					// This is the first measurement for this water meter
+					first.setDifference(0.0f);
+				} else if (first.getTimestamp() == status.getDevices().get(0).getTimestamp()) {
+					first.setDifference(first.getVolume() - status.getDevices().get(0).getVolume()
+									+ status.getDevices().get(0).getVariation());
+				} else {
+					first.setDifference(first.getVolume() - status.getDevices().get(0).getVolume());
+				}
+			}
+			for (int i = 1, count = data.getMeasurements().size(); i < count; i++) {
+				data.getMeasurements()
+								.get(i)
+								.setDifference(data.getMeasurements().get(i).getVolume()
+												- data.getMeasurements().get(i - 1).getVolume());
 			}
 
 			this.storeDataByMeter(connection, serial, data);
@@ -262,21 +299,19 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 		}
 	}
 
-	private byte[] getDeviceTimeRowKey(byte[] meterSerialHash, long date, EnumTimeInterval interval) throws Exception {
+	private byte[] getDeviceTimeRowKey(byte[] meterSerialHash, long timestamp, EnumTimeInterval interval)
+					throws Exception {
 
 		long intervalInSeconds = EnumTimeInterval.HOUR.getValue();
 		switch (interval) {
 			case HOUR:
 				intervalInSeconds = interval.getValue();
 				break;
-			case DAY:
-				intervalInSeconds = interval.getValue();
-				break;
+
 			default:
 				throw new RuntimeException(String.format("Time interval [%s] is not supported.", interval.toString()));
 		}
 
-		long timestamp = date / 1000;
 		long timeSlice = timestamp % intervalInSeconds;
 		long timeBucket = timestamp - timeSlice;
 		byte[] timeBucketBytes = Bytes.toBytes(timeBucket);
@@ -304,16 +339,24 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 	}
 
 	@Override
-	public WaterMeterStatusQueryResult getStatus(String serials[], WaterMeterStatusQuery query) {
+	public WaterMeterStatusQueryResult getStatus(String serials[]) {
+		return this.getStatus(serials, new DateTime(DateTimeZone.UTC).getMillis());
+	}
+
+	@Override
+	public WaterMeterStatusQueryResult getStatus(String serials[], long maxDateTime) {
+		boolean autoClose = false;
+
 		WaterMeterStatusQueryResult data = new WaterMeterStatusQueryResult();
-		Connection connection = null;
+
 		Table table = null;
 		ResultScanner scanner = null;
 
 		try {
-			Configuration config = this.configurationBuilder.build();
-
-			connection = ConnectionFactory.createConnection(config);
+			if (!this.isOpen()) {
+				this.open();
+				autoClose = true;
+			}
 
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
@@ -324,12 +367,10 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 				byte[] meterSerial = serials[deviceIndex].getBytes("UTF-8");
 				byte[] meterSerialHash = md.digest(meterSerial);
 
-				DateTime maxDate = new DateTime(DateTimeZone.UTC);
-
 				Scan scan = new Scan();
 				scan.addFamily(columnFamily);
-				scan.setStartRow(this.getDeviceTimeRowKey(meterSerialHash, (Long.MAX_VALUE - maxDate.getMillis()),
-								EnumTimeInterval.HOUR));
+				scan.setStartRow(this.getDeviceTimeRowKey(meterSerialHash, (Long.MAX_VALUE / 1000)
+								- (maxDateTime / 1000), EnumTimeInterval.HOUR));
 				scan.setStopRow(this.calculateTheClosestNextRowKeyForPrefix(meterSerialHash));
 				scan.setCaching(2);
 
@@ -337,7 +378,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 
 				int valueCount = 0;
 
-				WaterMeterStatus status = new WaterMeterStatus(query.getDeviceKey()[deviceIndex], serials[deviceIndex]);
+				WaterMeterStatus status = new WaterMeterStatus(serials[deviceIndex]);
 				WaterMeterDataPoint value1 = new WaterMeterDataPoint();
 				WaterMeterDataPoint value2 = new WaterMeterDataPoint();
 
@@ -359,20 +400,23 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 
 						long timestamp = ((Long.MAX_VALUE / 1000) - (timeBucket + (long) offset)) * 1000L;
 
-						int length = (int) Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
-						byte[] slice = Arrays.copyOfRange(entry.getKey(), 3, 3 + length);
-						String columnQualifier = Bytes.toString(slice);
-						if (columnQualifier.equals("v")) {
-							valueCount++;
-							if (value2.timestamp < timestamp) {
-								value1.timestamp = value2.timestamp;
-								value1.volume = value2.volume;
+						if (timestamp <= maxDateTime) {
+							int length = (int) Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
+							byte[] slice = Arrays.copyOfRange(entry.getKey(), 3, 3 + length);
+							String columnQualifier = Bytes.toString(slice);
 
-								value2.timestamp = timestamp;
-								value2.volume = Bytes.toFloat(entry.getValue());
-							} else if (value1.timestamp < timestamp) {
-								value1.timestamp = timestamp;
-								value1.volume = Bytes.toFloat(entry.getValue());
+							if (columnQualifier.equals("v")) {
+								valueCount++;
+								if (value2.getTimestamp() < timestamp) {
+									value1.setTimestamp(value2.getTimestamp());
+									value1.setVolume(value2.getVolume());
+
+									value2.setTimestamp(timestamp);
+									value2.setVolume(Bytes.toFloat(entry.getValue()));
+								} else if (value1.getTimestamp() < timestamp) {
+									value1.setTimestamp(timestamp);
+									value1.setVolume(Bytes.toFloat(entry.getValue()));
+								}
 							}
 						}
 					}
@@ -383,15 +427,15 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 						// No value found
 						break;
 					case 1:
-						status.setTimestamp(value2.timestamp);
-						status.setVolume(value2.volume);
+						status.setTimestamp(value2.getTimestamp());
+						status.setVolume(value2.getVolume());
 						status.setVariation(0);
 
 						data.getDevices().add(status);
 					default:
-						status.setTimestamp(value2.timestamp);
-						status.setVolume(value2.volume);
-						status.setVariation(value2.volume - value1.volume);
+						status.setTimestamp(value2.getTimestamp());
+						status.setVolume(value2.getVolume());
+						status.setVariation(value2.getVolume() - value1.getVolume());
 
 						data.getDevices().add(status);
 				}
@@ -408,8 +452,8 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 				if (table != null) {
 					table.close();
 				}
-				if ((connection != null) && (!connection.isClosed())) {
-					connection.close();
+				if (autoClose) {
+					this.close();
 				}
 			} catch (Exception ex) {
 				logger.error(ERROR_RELEASE_RESOURCES, ex);
@@ -423,8 +467,18 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 		Table table = null;
 		ResultScanner scanner = null;
 
-		DateTime startDate = new DateTime(query.getStartDate(), DateTimeZone.UTC);
-		DateTime endDate = new DateTime(query.getEndDate(), DateTimeZone.UTC);
+		DateTime startDate = null;
+		if (query.getStartDate() != null) {
+			startDate = new DateTime(query.getStartDate(), DateTimeZone.UTC);
+		} else {
+			startDate = new DateTime(0L, DateTimeZone.UTC);
+		}
+		DateTime endDate = null;
+		if (query.getEndDate() != null) {
+			endDate = new DateTime(query.getEndDate(), DateTimeZone.UTC);
+		} else {
+			endDate = new DateTime(DateTimeZone.UTC);
+		}
 
 		switch (query.getGranularity()) {
 			case TemporalConstants.NONE:
@@ -491,15 +545,13 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 				Scan scan = new Scan();
 				scan.addFamily(columnFamily);
 
-				scan.setStartRow(this.getDeviceTimeRowKey(meterSerialHash, (Long.MAX_VALUE - endDate.getMillis()),
-								EnumTimeInterval.HOUR));
+				scan.setStartRow(this.getDeviceTimeRowKey(meterSerialHash,
+								(Long.MAX_VALUE / 1000L) - (endDate.getMillis() / 1000L), EnumTimeInterval.HOUR));
 
 				scan.setStopRow(this.calculateTheClosestNextRowKeyForPrefix(this.getDeviceTimeRowKey(meterSerialHash,
-								(Long.MAX_VALUE - startDate.getMillis()), EnumTimeInterval.HOUR)));
+								(Long.MAX_VALUE / 1000L) - (startDate.getMillis() / 1000L), EnumTimeInterval.HOUR)));
 
 				scanner = table.getScanner(scan);
-
-				boolean stopScanner = false;
 
 				WaterMeterDataSeries series = new WaterMeterDataSeries(query.getDeviceKey()[deviceIndex],
 								serials[deviceIndex], startDate.getMillis(), queryEndDate.getMillis(),
@@ -512,31 +564,42 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 
 					long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 16, 24));
 
+					float volume = -1, difference = -1;
+					long timestamp = 0;
+
 					for (Entry<byte[], byte[]> entry : map.entrySet()) {
 						short offset = Bytes.toShort(Arrays.copyOfRange(entry.getKey(), 0, 2));
+						timestamp = ((Long.MAX_VALUE / 1000L) - (timeBucket + (long) offset)) * 1000L;
 
-						long timestamp = ((Long.MAX_VALUE / 1000) - (timeBucket + (long) offset)) * 1000L;
+						if ((startDate.getMillis() <= timestamp) && (timestamp <= endDate.getMillis())) {
+							int length = (int) Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
+							byte[] slice = Arrays.copyOfRange(entry.getKey(), 3, 3 + length);
 
-						int length = (int) Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
-						byte[] slice = Arrays.copyOfRange(entry.getKey(), 3, 3 + length);
+							String columnQualifier = Bytes.toString(slice);
+							if (columnQualifier.equals("v")) {
+								volume = Bytes.toFloat(entry.getValue());
+							}
+							if (columnQualifier.equals("d")) {
+								difference = Bytes.toFloat(entry.getValue());
+							}
 
-						String columnQualifier = Bytes.toString(slice);
-						if (columnQualifier.equals("v")) {
-							float volume = Bytes.toFloat(entry.getValue());
-							series.add(timestamp, volume);
-
-							if (startDate.getMillis() > timestamp) {
-								stopScanner = true;
-								break;
+							if ((volume > 0) && (difference >= 0)) {
+								series.add(timestamp, volume, difference);
+								volume = -1;
+								difference = -1;
 							}
 						}
 					}
-					if (stopScanner) {
-						break;
+
+					if ((volume > 0) && (difference >= 0)) {
+						series.add(timestamp, volume, difference);
+						volume = 0;
+						difference = 0;
 					}
+
 				}
 
-				series.sortAndComputeDiff();
+				series.sort();
 			}
 
 			return data;
@@ -592,7 +655,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 
 		ArrayList<GroupDataSeries> result = new ArrayList<GroupDataSeries>();
 		for (ExpandedPopulationFilter filter : query.getGroups()) {
-			result.add(new GroupDataSeries(filter.getLabel()));
+			result.add(new GroupDataSeries(filter.getLabel(), filter.getUsers().size()));
 		}
 		try {
 			Configuration config = this.configurationBuilder.build();
@@ -649,12 +712,12 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 
 				byte[] partitionBytes = Bytes.toBytes(p);
 
-				long from = startDate.getMillis() / 1000;
-				from = from - (from % EnumTimeInterval.DAY.getValue());
+				long from = (Long.MAX_VALUE / 1000) - (endDate.getMillis() / 1000);
+				from = from - (from % EnumTimeInterval.HOUR.getValue());
 				byte[] fromBytes = Bytes.toBytes(from);
 
-				long to = endDate.getMillis() / 1000;
-				to = to - (to % EnumTimeInterval.DAY.getValue());
+				long to = (Long.MAX_VALUE / 1000) - (startDate.getMillis() / 1000);
+				to = to - (to % EnumTimeInterval.HOUR.getValue());
 				byte[] toBytes = Bytes.toBytes(to);
 
 				// Scanner row key prefix start
@@ -675,7 +738,6 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 
 				scanner = table.getScanner(scan);
 
-				boolean stopScanner = false;
 				for (Result r = scanner.next(); r != null; r = scanner.next()) {
 					NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
 
@@ -686,32 +748,28 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 						short offset = Bytes.toShort(Arrays.copyOfRange(entry.getKey(), 0, 2));
 
 						long timestamp = ((Long.MAX_VALUE / 1000) - (timeBucket + (long) offset)) * 1000L;
-						if (startDate.getMillis() > timestamp) {
-							stopScanner = true;
-							break;
-						}
 
-						int length = (int) Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
-						byte[] slice = Arrays.copyOfRange(entry.getKey(), 3, 3 + length);
+						if ((startDate.getMillis() <= timestamp) && (timestamp <= endDate.getMillis())) {
+							int length = (int) Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
+							byte[] slice = Arrays.copyOfRange(entry.getKey(), 3, 3 + length);
 
-						String columnQualifier = Bytes.toString(slice);
-						if (columnQualifier.equals("v")) {
-							float volume = Bytes.toFloat(entry.getValue());
+							String columnQualifier = Bytes.toString(slice);
+							if (columnQualifier.equals("d")) {
+								float difference = Bytes.toFloat(entry.getValue());
 
-							int filterIndex = 0;
-							for (ExpandedPopulationFilter filter : query.getGroups()) {
-								GroupDataSeries series = result.get(filterIndex);
+								int filterIndex = 0;
+								for (ExpandedPopulationFilter filter : query.getGroups()) {
+									GroupDataSeries series = result.get(filterIndex);
 
-								if (inArray(filter.getSerials(), serialHash)) {
-									series.addDataPoint(query.getGranularity(), timestamp, volume, query.getMetrics());
+									if (inArray(filter.getSerials(), serialHash)) {
+										series.addDataPoint(query.getGranularity(), timestamp, difference,
+														query.getMetrics());
+									}
+
+									filterIndex++;
 								}
-
-								filterIndex++;
 							}
 						}
-					}
-					if (stopScanner) {
-						break;
 					}
 				}
 			}

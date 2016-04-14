@@ -6,6 +6,7 @@ var session = require('./session');
 var mode_management = require('./mode_management');
 var admin = require('./admin');
 var query = require('./query');
+var debug = require('./debug');
 
 
 var rootReducer = combineReducers({
@@ -14,6 +15,7 @@ var rootReducer = combineReducers({
 	mode_management,
 	admin,
 	query,
+	debug,
 	routing: routerReducer
 });
 
