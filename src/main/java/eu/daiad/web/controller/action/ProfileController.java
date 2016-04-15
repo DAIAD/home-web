@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.EnumApplication;
@@ -54,15 +53,15 @@ public class ProfileController extends BaseController {
 
 		return response;
 	}
-	
+
 	@RequestMapping(value = "/action/profile/modes/list", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN"})
-	public RestResponse getProfileModes(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody ProfileModesRequest filters) 
-			throws JsonProcessingException {
+	@Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
+	public RestResponse getProfileModes(@AuthenticationPrincipal AuthenticatedUser user,
+					@RequestBody ProfileModesRequest filters) throws JsonProcessingException {
 		RestResponse response = new RestResponse();
-		
+
 		try {
-				return new ProfileModesResponse(profileRepository.getProfileModes(filters));
+			return new ProfileModesResponse(profileRepository.getProfileModes(filters));
 		} catch (ApplicationException ex) {
 			logger.error(ex.getMessage(), ex);
 			response.add(this.getError(ex));
@@ -70,15 +69,15 @@ public class ProfileController extends BaseController {
 
 		return response;
 	}
-	
+
 	@RequestMapping(value = "/action/profile/modes/filter/options", method = RequestMethod.GET, produces = "application/json")
-	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN"})
-	public RestResponse getFilterOptions(@AuthenticationPrincipal AuthenticatedUser user) 
-			throws JsonProcessingException {
+	@Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
+	public RestResponse getFilterOptions(@AuthenticationPrincipal AuthenticatedUser user)
+					throws JsonProcessingException {
 		RestResponse response = new RestResponse();
-		
+
 		try {
-				return new ProfileModesFilterOptionsResponse(profileRepository.getFilterOptions());
+			return new ProfileModesFilterOptionsResponse(profileRepository.getFilterOptions());
 		} catch (ApplicationException ex) {
 			logger.error(ex.getMessage(), ex);
 			response.add(this.getError(ex));
@@ -86,16 +85,16 @@ public class ProfileController extends BaseController {
 
 		return response;
 	}
-	
+
 	@RequestMapping(value = "/action/profile/modes/save", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN"})
-	public RestResponse saveModeChanges(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody ProfileModesSubmitChangesRequest modeChanges) 
-			throws JsonProcessingException {
+	@Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
+	public RestResponse saveModeChanges(@AuthenticationPrincipal AuthenticatedUser user,
+					@RequestBody ProfileModesSubmitChangesRequest modeChanges) throws JsonProcessingException {
 		RestResponse response = new RestResponse();
-		
+
 		try {
 			profileRepository.setProfileModes(modeChanges);
-			
+
 		} catch (ApplicationException ex) {
 			logger.error(ex.getMessage(), ex);
 			response.add(this.getError(ex));
@@ -103,16 +102,16 @@ public class ProfileController extends BaseController {
 
 		return response;
 	}
-	
+
 	@RequestMapping(value = "/action/profile/deactivate", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN"})
-	public RestResponse deactivateProfile(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody ProfileDeactivateRequest userDeactId) 
-			throws JsonProcessingException {
+	@Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
+	public RestResponse deactivateProfile(@AuthenticationPrincipal AuthenticatedUser user,
+					@RequestBody ProfileDeactivateRequest userDeactId) throws JsonProcessingException {
 		RestResponse response = new RestResponse();
-		
+
 		try {
 			profileRepository.deactivateProfile(userDeactId);
-			
+
 		} catch (ApplicationException ex) {
 			logger.error(ex.getMessage(), ex);
 			response.add(this.getError(ex));
