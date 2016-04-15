@@ -89,8 +89,8 @@ public class DataQueryBuilder {
 		return this;
 	}
 
-	public DataQueryBuilder absolute(long start, long end, EnumTimeAggregation granularity ) {
-		this.query.setTime(new TimeFilter(start, end, granularity ));
+	public DataQueryBuilder absolute(long start, long end, EnumTimeAggregation granularity) {
+		this.query.setTime(new TimeFilter(start, end, granularity));
 
 		return this;
 	}
@@ -101,8 +101,8 @@ public class DataQueryBuilder {
 		return this;
 	}
 
-	public DataQueryBuilder absolute(DateTime start, DateTime end, EnumTimeAggregation granularity ) {
-		this.query.setTime(new TimeFilter(start, end, granularity ));
+	public DataQueryBuilder absolute(DateTime start, DateTime end, EnumTimeAggregation granularity) {
+		this.query.setTime(new TimeFilter(start, end, granularity));
 
 		return this;
 	}
@@ -213,10 +213,15 @@ public class DataQueryBuilder {
 	}
 
 	public DataQuery build() {
+		if (this.metrics.contains(EnumMetric.AVERAGE)) {
+			this.count().sum();
+		}
+
 		EnumMetric[] metricArray = new EnumMetric[this.metrics.size()];
 
 		this.query.setMetrics(this.metrics.toArray(metricArray));
 
 		return this.query;
 	}
+
 }
