@@ -9,7 +9,7 @@ var Breadcrumb = require('../Breadcrumb');
 var Table = require('../Table');
 var Chart = require('../Chart');
 var DropDown = require('../DropDown');
-var ErrorAlert = require('../AlertDismissable');
+var MessageAlert = require('../AlertDismissable');
 
 var errorsCodes = require('../../constants/Errors');
 var successCodes = require('../../constants/Successes');
@@ -585,14 +585,14 @@ var Reporting = React.createClass({
                       </Bootstrap.Col>  
                     </Bootstrap.Row>
                   </div>
-                  <ErrorAlert
+                  <MessageAlert
                     show={this.props.admin.addUser.showErrorAlert}
                     title={!this.props.admin.addUser.response.success ? _t({id: 'AddUserForm.ErrorsDetected'}) : _t({id: 'AddUserForm.Success'})}
                     i18nNamespace={this.props.admin.addUser.response.success ? 'Success.' : 'Error.'}
-                    success={this.props.admin.addUser.response.success}
+                    bsStyle={this.props.admin.addUser.response.success ? 'success' : 'danger' }
                     format='list'
-                    errors={!this.props.admin.addUser.response.success ? this.props.admin.addUser.response.errors : [{code: successCodes['UserSuccess.USER_ADDED_WHITELIST']}]}
-                    hideAlert={this.props.actions.addUserHideErrorAlert}
+                    messages={!this.props.admin.addUser.response.success ? this.props.admin.addUser.response.errors : [{code: successCodes['UserSuccess.USER_ADDED_WHITELIST']}]}
+                    dismissFunc={this.props.actions.addUserHideErrorAlert}
                   />
               </Bootstrap.ListGroup>
               <Bootstrap.Row>
