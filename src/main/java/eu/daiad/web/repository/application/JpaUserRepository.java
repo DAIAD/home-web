@@ -1,13 +1,16 @@
 package eu.daiad.web.repository.application;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
 import javax.persistence.EntityManager;
+import javax.persistence.ParameterMode;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.persistence.StoredProcedureQuery;
 import javax.persistence.TypedQuery;
 
 import org.apache.commons.logging.Log;
@@ -450,20 +453,17 @@ public class JpaUserRepository implements IUserRepository {
 	@Override
 	public void updateLoginStats(int id, boolean success) {
 		try {
-			TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager
-							.createQuery("select a from account a where a.id = :id",
-											eu.daiad.web.domain.application.Account.class).setFirstResult(0)
-							.setMaxResults(1);
-			query.setParameter("id", id);
+			StoredProcedureQuery procedure = entityManager.createStoredProcedureQuery("sp_account_update_stats");
 
-			eu.daiad.web.domain.application.Account user = query.getSingleResult();
+			procedure.registerStoredProcedureParameter(0, Integer.class, ParameterMode.IN);
+			procedure.registerStoredProcedureParameter(1, Boolean.class, ParameterMode.IN);
+			procedure.registerStoredProcedureParameter(2, Date.class, ParameterMode.IN);
 
-			if (success) {
-				user.setLastLoginSuccessOn(new DateTime());
-			} else {
-				user.setLastLoginFailureOn(new DateTime());
-				user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
-			}
+			procedure.setParameter(0, id);
+			procedure.setParameter(1, success);
+			procedure.setParameter(2, new Date());
+
+			procedure.execute();
 
 		} catch (Exception ex) {
 			logger.error(String.format("Failed to update login stats for user [%d]", id), ex);

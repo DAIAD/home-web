@@ -705,3 +705,18 @@ CREATE OR REPLACE VIEW public.trial_account_activity AS
 
 ALTER TABLE public.trial_account_activity
   OWNER TO daiad;
+
+-- procedures
+DROP FUNCTION IF EXISTS sp_account_update_stats(account_id integer, success boolean, login_date timestamp with time zone);
+
+CREATE OR REPLACE FUNCTION sp_account_update_stats(account_id integer, success boolean, login_date timestamp with time zone) RETURNS INT AS $$
+BEGIN
+	if  success = true then
+		update account set last_login_success = GREATEST(login_date AT TIME ZONE 'UTC', last_login_success) where id = account_id;
+	else
+		update account set last_login_failure = GREATEST(login_date AT TIME ZONE 'UTC', last_login_failure) where id = account_id;
+	end if;
+
+	return 1;
+END;
+$$ LANGUAGE plpgsql;
