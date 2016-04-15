@@ -87,6 +87,21 @@ var addUserReceiveResponse = function(success, errors) {
   };
 };
 
+var addUserGetUtilitiesRequest = function(){
+  return {
+    type : types.ADMIN_ADD_USER_GET_UTILITIES_MAKE_REQUEST
+  };
+};
+
+var addUserGetUtilitiesResponse = function(success, utilities, errors){
+  return{
+    type : types.ADMIN_ADD_USER_GET_UTILITIES_RECEIVE_RESPONSE,
+    success : success,
+    utilities : utilities,
+    errors : errors
+  };
+};
+
 
 var AdminActions = {
   showAddUserForm: function() {
@@ -101,17 +116,13 @@ var AdminActions = {
     };
   },
 
-  addUserSelectCountry: function(event, country) {
+  addUserSelectUtility: function(event, utility) {
     return{
-      type : types.ADMIN_ADD_USER_SELECT_COUNTRY,
-      country : country.value
-    };
-  },
-
-  addUserSelectGroup: function(event, group) {
-    return{
-      type : types.ADMIN_ADD_USER_SELECT_GROUP,
-      group : group.value
+      type : types.ADMIN_ADD_USER_SELECT_UTILITY,
+      utility : {
+        label : utility.label,
+        value : utility.value
+      }
     };
   },  
   
@@ -123,10 +134,16 @@ var AdminActions = {
       email : inputFormFields.email,
       gender : inputFormFields.gender,
       address : inputFormFields.address,
-      city : inputFormFields.city,
       postalCode : inputFormFields.postalCode
     };
-  },  
+  },
+  
+  addUserValidationsErrorsOccurred: function(errors) {
+    return {
+      type : types.ADMIN_ADD_USER_VALIDATION_ERRORS_OCCURRED,
+      errors : errors
+    };
+  },
   
   addUserShowErrorAlert: function(errors) {
     return{
@@ -152,6 +169,16 @@ var AdminActions = {
     };
   },
 
+  addUserGetUtilities : function(){
+    return function(dispatch, getState) {
+      dispatch(addUserGetUtilitiesRequest());
+      return adminAPI.getAllUtilities().then(function(response){
+        dispatch(addUserGetUtilitiesResponse(response.success, response.utilitiesInfo, response.errors));
+      }, function(error) {
+        dispatch(addUserReceiveResponse(false, null, error));
+      });
+    };
+  },
     
   getActivity : function() {
     return function(dispatch, getState) {

@@ -566,31 +566,26 @@ public class JpaUserRepository implements IUserRepository {
 			
 			//Get Utility
 			TypedQuery<eu.daiad.web.domain.application.Utility> utilityQuery = entityManager
-					.createQuery("select u from utility u where u.name = :name",
+					.createQuery("select u from utility u where u.id = :id",
 									eu.daiad.web.domain.application.Utility.class)
 					.setFirstResult(0).setMaxResults(1);
-			utilityQuery.setParameter("name", userInfo.getGroup());
+			utilityQuery.setParameter("id", userInfo.getUtilityId());
 			List <Utility> utilityEntry = utilityQuery.getResultList();
 			
 			if (utilityEntry.isEmpty()){
 				throw new ApplicationException(UserErrorCode.UTILITY_DOES_NOT_EXIST)
-					.set("utility", userInfo.getGroup());
+					.set("id", userInfo.getUtilityId());
 			}
 			newEntry.setUtility(utilityEntry.get(0));
-			newEntry.setCountry(userInfo.getCountry());
+			newEntry.setCountry(utilityEntry.get(0).getCountry());
+			newEntry.setCity(utilityEntry.get(0).getCity());
+			newEntry.setTimezone(utilityEntry.get(0).getTimezone());
+			newEntry.setLocale(utilityEntry.get(0).getLocale());
+			
 			newEntry.setAddress(userInfo.getAddress());
-			newEntry.setCity(userInfo.getCity());
 			newEntry.setPostalCode(userInfo.getPostalCode());
 			newEntry.setDefaultMobileMode(EnumMobileMode.LEARNING.getValue());
 			newEntry.setDefaultWebMode(EnumWebMode.INACTIVE.getValue());
-			
-			if (userInfo.getCountry().equals("Spain")){
-				newEntry.setTimezone("Europe/Madrid");
-				newEntry.setLocale("es");
-			} else if (userInfo.getCountry().equals("United Kingdom")){
-				newEntry.setTimezone("Europe/Londom");
-				newEntry.setLocale("en");
-			}
 			
 			this.entityManager.persist(newEntry);
 

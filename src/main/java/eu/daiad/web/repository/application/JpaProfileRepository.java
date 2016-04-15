@@ -31,6 +31,7 @@ import eu.daiad.web.model.device.DeviceRegistration;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.error.ProfileErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.profile.EnumMobileMode;
@@ -396,7 +397,6 @@ public class JpaProfileRepository implements IProfileRepository {
 		}
 	}
 	
-	
 	@Override
 	public void deactivateProfile (ProfileDeactivateRequest userDeactId){
 		try {
@@ -433,6 +433,54 @@ public class JpaProfileRepository implements IProfileRepository {
 			historyEntry.setMobileMode(newMode);
 			historyEntry.setUtilityMode(account.getProfile().getUtilityMode());
 			historyEntry.setWebMode(account.getProfile().getWebMode());
+			
+			// Deactivate with amphiro devices
+			List <DeviceAmphiroConfigurationDefault> configurations = this.deviceRepository.getAmphiroDefaultConfigurations();
+			
+			DeviceAmphiroConfigurationDefault offConfiguration = null;
+			for (DeviceAmphiroConfigurationDefault defconf : configurations){
+				if(defconf.getTitle().equals("Off Configuration")) {
+					offConfiguration = defconf;
+				}
+			}
+			
+			if (offConfiguration == null){
+				throw new ApplicationException(DeviceErrorCode.OFF_AMPHIRO_CONFIGURATION_NOT_FOUND);
+			}
+			
+			// Selecting the suitable default configuration
+			
+			DeviceAmphiroConfiguration newConfiguration = new DeviceAmphiroConfiguration();
+			
+			newConfiguration.setActive(true);
+			newConfiguration.setCreatedOn(new DateTime());
+			newConfiguration.setTitle(offConfiguration.getTitle());
+			newConfiguration.setBlock(offConfiguration.getBlock());
+			newConfiguration.setValue1(offConfiguration.getValue1());
+			newConfiguration.setValue2(offConfiguration.getValue2());
+			newConfiguration.setValue3(offConfiguration.getValue3());
+			newConfiguration.setValue4(offConfiguration.getValue4());
+			newConfiguration.setValue5(offConfiguration.getValue5());
+			newConfiguration.setValue6(offConfiguration.getValue6());
+			newConfiguration.setValue7(offConfiguration.getValue7());
+			newConfiguration.setValue8(offConfiguration.getValue8());
+			newConfiguration.setValue9(offConfiguration.getValue9());
+			newConfiguration.setValue10(offConfiguration.getValue10());
+			newConfiguration.setValue11(offConfiguration.getValue11());
+			newConfiguration.setValue12(offConfiguration.getValue12());
+			newConfiguration.setNumberOfFrames(offConfiguration.getNumberOfFrames());
+			newConfiguration.setFrameDuration(offConfiguration.getFrameDuration());
+			
+			//Get the current (active and inactive) configurations and set them as inactive
+			Set<eu.daiad.web.domain.application.Device> devices = account.getDevices();
+			for (eu.daiad.web.domain.application.Device device : devices){
+				DeviceAmphiro deviceAmphiro = (DeviceAmphiro) device;
+				for (DeviceAmphiroConfiguration currentConfiguration : deviceAmphiro.getConfigurations()){
+					currentConfiguration.setActive(false);
+				}
+				
+				deviceAmphiro.getConfigurations().add(newConfiguration);
+			}
 						
 			this.entityManager.persist(account);
 			this.entityManager.persist(historyEntry);

@@ -99,15 +99,8 @@
       "label" : "Διεύθυνση",
       "placeholder" : "Παρακαλώ εισάγετε τη Διεύθυνση."
     },
-    "Country" : {
-      "label" : "Χώρα"
-    },
-    "Group" : {
+    "Utility" : {
       "label" : "Ομάδα"
-    },
-    "City" : {
-      "label" : "Πόλη",
-      "placeholder" : "Παρακαλώ εισάγετε την Πόλη."
     },
     "PostalCode" : {
       "label" : "Ταχυδρομικός Κωδικός",
@@ -146,10 +139,6 @@
 		"Meters" : "Μετρητές",
 		"Devices" : "Συσκευές  Amphiro"
 	},
-  "Country" : {
-    "Spain" : "Ισπανία",
-    "UnitedKingdom" : "Ηνωμένο Βασίλειο"
-  },
 	"Error": {
 		"400" : "Bad request",
 		"403" : "Η πιστοποίηση απέτυχε",
@@ -159,12 +148,13 @@
     "ValidationError.NO_LAST_NAME": "Λείπει το Επώνυμο.",
     "ValidationError.NO_EMAIL": "Λείπει το E-mail.",
     "ValidationError.NO_GENDER": "Λείπει το Φύλο.",
-    "ValidationError.NO_ADDRESS": "Λείπει η Διεύθυνση.",
-    "ValidationError.NO_COUNTRY": "Λείπει η Χώρα.",
-    "ValidationError.NO_GROUP": "Λείπει η Ομάδα.",
-    "ValidationError.NO_CITY": "Λείπει η Πόλη.",
-    "ValidationError.NO_POSTAL_CODE": "Λείπει ο Ταχυδρομικός Κωδικός.",
+    "ValidationError.NO_UTILITY": "Λείπει η Ομάδα.",
     "ValidationError.INVALID_EMAIL": "Η διεύθυνση E-mail δεν είναι έγκυρη.",
+    "ValidationError.TOO_LONG_FIRST_NAME" : "Το Όνομα ξεπερνά το μέγιστο μήκος (40 χρακτήρες).",
+    "ValidationError.TOO_LONG_LAST_NAME" : "Το Επώνυμο ξεπερνά το μέγιστο μήκος (70 χρακτήρες).",
+    "ValidationError.TOO_LONG_EMAIL" : "Το E-mail ξεπερνά το μέγιστο μήκος (100 χρακτήρες).",
+    "ValidationError.TOO_LONG_ADDRESS" : "Η Διεύθυνση ξεπερνά το μέγιστο μήκος (90 χρακτήρες).",
+    "ValidationError.TOO_LONG_POSTAL_CODE" : "Ο Ταχυδρομικός Κωδικός ξεπερνά το μέγιστο μήκος (10 χρακτήρες).",
     "UserErrorCode.USERNAME_EXISTS_IN_WHITELIST": "Υπάρχει ήδη στη user white list χρήστης με αυτή τη διεύθυνση E-mail."
 	}, 
   "Success": {

@@ -7,23 +7,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import eu.daiad.web.controller.BaseController;
-import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.admin.AccountWhiteListInfo;
 import eu.daiad.web.model.error.ApplicationException;
-import eu.daiad.web.model.profile.ProfileResponse;
 import eu.daiad.web.model.security.AuthenticatedUser;
-import eu.daiad.web.model.user.UserRegistrationRequest;
 import eu.daiad.web.repository.application.IUserRepository;
 
 
@@ -50,13 +43,10 @@ public class UserController extends BaseController {
 	
 	@RequestMapping(value = "/action/user/create", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN"})
-	public @ResponseBody RestResponse deactivateProfileTest(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody AccountWhiteListInfo userInfo) 
-			throws JsonProcessingException {
+	public @ResponseBody RestResponse deactivateProfileTest(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody AccountWhiteListInfo userInfo){
 		RestResponse response = new RestResponse();
 		
 		try {
-			ObjectMapper mapper = new ObjectMapper();
-			System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(userInfo));
 			repository.insertAccountWhiteListEntry(userInfo);
 			
 		} catch (ApplicationException ex) {

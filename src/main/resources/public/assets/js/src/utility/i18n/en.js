@@ -99,15 +99,8 @@
       "label" : "Address",
       "placeholder" : "Please enter Address."
     },
-    "Country" : {
-      "label" : "Country"
-    },
-    "Group" : {
-      "label" : "Group"
-    },
-    "City" : {
-      "label" : "City",
-      "placeholder" : "Please enter City."
+    "Utility" : {
+      "label" : "Utility"
     },
     "PostalCode" : {
       "label" : "Postal Code",
@@ -146,10 +139,6 @@
 		"Meters" : "Smart Meters",
 		"Devices" : "Amphiro Devices"
 	},
-	"Country" : {
-	  "Spain" : "Spain",
-	  "UnitedKingdom" : "United Kingdom"
-	},
 	"Error": {
 		"400" : "Bad request",
 		"403" : "Authentication has failed",
@@ -160,11 +149,14 @@
 	  "ValidationError.NO_EMAIL": "E-mail address is missing.",
 	  "ValidationError.NO_GENDER": "Gender is missing.",
 	  "ValidationError.NO_ADDRESS": "Adress is missing.",
-	  "ValidationError.NO_COUNTRY": "Country is missing.",
-	  "ValidationError.NO_GROUP": "Group is missing.",
-	  "ValidationError.NO_CITY": "City is missing.",
+	  "ValidationError.NO_UTILITY": "Utility is missing.",
 	  "ValidationError.NO_POSTAL_CODE": "Postal code is missing.",
-	  "ValidationError.INVALID_EMAIL": "The e-mail address is invalid.",
+	  "ValidationError.INVALID_EMAIL": "The E-mail address is invalid.",
+    "ValidationError.TOO_LONG_FIRST_NAME" : "First name exceeds maximum length (40 characters).",
+    "ValidationError.TOO_LONG_LAST_NAME" : "Last name exceeds maximum length (70 characters).",
+    "ValidationError.TOO_LONG_EMAIL" : "E-mail exceeds maximum length (100 characters).",
+    "ValidationError.TOO_LONG_ADDRESS" : "Address exceeds maximum length (90 characters).",
+    "ValidationError.TOO_LONG_POSTAL_CODE" : "Postal code exceeds maximum length (10 characters).",
 	  "UserErrorCode.USERNAME_EXISTS_IN_WHITELIST": "A user with this E-mail already exists in the user white list."
 	}, 
 	"Success": {

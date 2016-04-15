@@ -19,10 +19,9 @@ var initialState = {
     selectedEmail: null,
     selectedGender: null,
     selectedAddress: null,
-    selectedCountry : null,
-    selectedGroup : null,
-    seelctedCity : null,
+    selectedUtility : null,
     selectedPostalCode : null,
+    utilities : null,
     response : {
       success : null,
       errors: null
@@ -122,8 +121,7 @@ var admin = function(state, action) {
     case types.ADMIN_ADD_USER_HIDE:
       newAddUser = Object.assign({}, state.addUser, {
         show : false, 
-        selectedCountry : null, 
-        selectedGroup : null, 
+        selectedUtility : null, 
         showErrorAlert : false,
         response : {
           errors : [],
@@ -133,15 +131,9 @@ var admin = function(state, action) {
       return Object.assign({}, state, {
         addUser: newAddUser
       });
-      
-    case types.ADMIN_ADD_USER_SELECT_COUNTRY:
-      newAddUser = Object.assign({}, state.addUser, {selectedCountry : action.country});
-      return Object.assign({}, state, {
-        addUser : newAddUser
-      });
      
-    case types.ADMIN_ADD_USER_SELECT_GROUP:
-      newAddUser = Object.assign({}, state.addUser, {selectedGroup : action.group});
+    case types.ADMIN_ADD_USER_SELECT_UTILITY:
+      newAddUser = Object.assign({}, state.addUser, {selectedUtility : action.utility});
       return Object.assign({}, state, {
         addUser : newAddUser
       });
@@ -153,7 +145,6 @@ var admin = function(state, action) {
         selectedEmail : action.email,
         selectedGender : action.gender,
         selectedAddress : action.address,
-        seelctedCity : action.city,
         selectedPostalCode : action.postalCode
       });
       return Object.assign({}, state, {
@@ -167,6 +158,25 @@ var admin = function(state, action) {
       
     case types.ADMIN_ADD_USER_RECEIVE_RESPONSE:
       newAddUser = Object.assign({}, state.addUser, {response : {success : action.success, errors : action.errors}});
+      return Object.assign({}, state, {
+        isLoading : false,
+        addUser : newAddUser
+      });
+      
+    case types.ADMIN_ADD_USER_VALIDATION_ERRORS_OCCURRED:
+      newAddUser = Object.assign({}, state.addUser, {showErrorAlert : true, response : {success : false, errors : action.errors}});
+      return Object.assign({}, state, {
+        isLoading : false,
+        addUser : newAddUser
+      });
+      
+    case types.ADMIN_ADD_USER_GET_UTILITIES_MAKE_REQUEST:
+      return Object.assign({}, state, {
+        isLoading : true
+      });
+      
+    case types.ADMIN_ADD_USER_GET_UTILITIES_RECEIVE_RESPONSE:
+      newAddUser = Object.assign({}, state.addUser, {utilities : action.utilities});
       return Object.assign({}, state, {
         isLoading : false,
         addUser : newAddUser

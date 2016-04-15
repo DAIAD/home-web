@@ -20,13 +20,6 @@ var init = function() {
 	);
 };
 
-let unsubscribe = store.subscribe(function(){
-		console.log('STATE>>');
-		console.log(store.getState().admin.addUser);
-	}
-);
-
-
 store.dispatch(setLocale(properties.locale, true)).then(function() {
 	if (properties.reload){
 		store.dispatch(refreshProfile()).then(function() {

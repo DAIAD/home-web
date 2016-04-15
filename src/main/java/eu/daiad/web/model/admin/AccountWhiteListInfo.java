@@ -7,9 +7,7 @@ public class AccountWhiteListInfo {
 	private String email;
 	private String gender;
 	private String address;
-	private String country;
-	private String group;
-	private String city;
+	private int utilityId;
 	private String postalCode;
 	
 	public String getFirstName() {
@@ -42,23 +40,11 @@ public class AccountWhiteListInfo {
 	public void setAddress(String address) {
 		this.address = address;
 	}
-	public String getCountry() {
-		return country;
+	public int getUtilityId() {
+		return utilityId;
 	}
-	public void setCountry(String country) {
-		this.country = country;
-	}
-	public String getGroup() {
-		return group;
-	}
-	public void setGroup(String group) {
-		this.group = group;
-	}
-	public String getCity() {
-		return city;
-	}
-	public void setCity(String city) {
-		this.city = city;
+	public void setUtilityId(int utilityId) {
+		this.utilityId = utilityId;
 	}
 	public String getPostalCode() {
 		return postalCode;

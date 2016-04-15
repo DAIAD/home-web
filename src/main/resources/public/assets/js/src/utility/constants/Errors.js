@@ -7,12 +7,13 @@ const constants = keyMirror({
 	'ValidationError.NO_LAST_NAME' : null,
 	'ValidationError.NO_EMAIL' : null,
 	'ValidationError.NO_GENDER' : null,
-	'ValidationError.NO_ADDRESS' : null,
-	'ValidationError.NO_COUNTRY' : null,
-	'ValidationError.NO_GROUP' : null,
-	'ValidationError.NO_CITY' : null,
-	'ValidationError.NO_POSTAL_CODE' : null,
+	'ValidationError.NO_UTILITY' : null,
 	'ValidationError.INVALID_EMAIL' : null,
+	'ValidationError.TOO_LONG_FIRST_NAME' : null,
+	'ValidationError.TOO_LONG_LAST_NAME' : null,
+	'ValidationError.TOO_LONG_EMAIL' : null,
+	'ValidationError.TOO_LONG_ADDRESS' : null,
+	'ValidationError.TOO_LONG_POSTAL_CODE' : null
 });
 
 module.exports = constants;
