@@ -94,6 +94,15 @@ public class AccountWhiteListEntry {
 
 	@Column(name = "default_web_mode")
 	private int defaultWebMode;
+	
+	public AccountWhiteListEntry(){
+		
+	}
+	
+	public AccountWhiteListEntry(String username){
+		this();
+		this.username = username;
+	}
 
 	public Account getAccount() {
 		return account;
@@ -106,6 +115,7 @@ public class AccountWhiteListEntry {
 	public String getUsername() {
 		return username;
 	}
+	
 
 	public DateTime getRegisteredOn() {
 		return registeredOn;
@@ -121,6 +131,10 @@ public class AccountWhiteListEntry {
 
 	public Utility getUtility() {
 		return utility;
+	}
+	
+	public void setUtility(Utility utility) {
+		this.utility = utility;
 	}
 
 	public String getLocale() {

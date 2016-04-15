@@ -1,10 +1,12 @@
 package eu.daiad.web.repository.application;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.joda.time.DateTime;
 
+import eu.daiad.web.domain.application.DeviceAmphiroConfigurationDefault;
 import com.vividsolutions.jts.geom.Geometry;
 
 import eu.daiad.web.model.KeyValuePair;
@@ -19,6 +21,8 @@ public interface IDeviceRepository {
 
 	public abstract UUID createAmphiroDevice(UUID userKey, String name, String macAddress, String aesKey,
 					ArrayList<KeyValuePair> properties) throws ApplicationException;
+	
+	public List <DeviceAmphiroConfigurationDefault> getAmphiroDefaultConfigurations() throws ApplicationException;
 
 	public abstract UUID createMeterDevice(String username, String serial, ArrayList<KeyValuePair> properties,
 					Geometry location) throws ApplicationException;

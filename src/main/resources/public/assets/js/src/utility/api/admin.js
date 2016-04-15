@@ -42,7 +42,15 @@ var AdminAPI = {
       endDateTime : null,
       timezone : 'Europe/Athens'
     });
-  }
+  },
+  
+  getAllUtilities : function(){
+    return api.json('/action/utility/fetch/all');
+  },
+  
+  createNewUser : function (userInfo){
+    return api.json('/action/user/create', userInfo);
+  },
 };
 
 module.exports = AdminAPI;

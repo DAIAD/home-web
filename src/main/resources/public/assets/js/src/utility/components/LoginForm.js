@@ -8,11 +8,20 @@ var Panel = require('react-bootstrap').Panel;
 var AlertDismissable = require('./AlertDismissable');
 
 var LoginForm = React.createClass({
-	contextTypes: {
+  getInitialState: function() {
+    return {showAlert: true};
+  },
+  
+  contextTypes: {
 	    intl: React.PropTypes.object
+	},
+	
+	dismissAlert: function(){
+	  this.setState({showAlert: false});
 	},
 
 	onLogin: function(e) {
+	  this.setState({showAlert: true});
 		e.preventDefault();
 		this.props.onLogin(this.refs.username.value, this.refs.password.value);
 	},
@@ -49,7 +58,11 @@ var LoginForm = React.createClass({
 					</form>
 				</Panel>
 				<div style={{marginTop: 15}}>
-					<AlertDismissable errors={this.props.errors} />
+					<AlertDismissable 
+					  show={this.state.showAlert}
+					  messages={this.props.errors}
+					  dismissFunc={this.dismissAlert}
+					/>
 				</div>
 			</div>
 		);

@@ -110,6 +110,23 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 		return deviceKey;
 	}
+	
+	public List <DeviceAmphiroConfigurationDefault> getAmphiroDefaultConfigurations() throws ApplicationException {
+		List <DeviceAmphiroConfigurationDefault> configurations = null;
+		
+		try {
+			TypedQuery<DeviceAmphiroConfigurationDefault> configQuery = entityManager
+						.createQuery("select c from device_amphiro_config_default c",
+										DeviceAmphiroConfigurationDefault.class).setFirstResult(0);
+			
+			configurations = configQuery.getResultList();
+			
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		}
+	
+		return configurations;
+	}
 
 	@Override
 	public UUID createMeterDevice(String username, String serial, ArrayList<KeyValuePair> properties, Geometry location)

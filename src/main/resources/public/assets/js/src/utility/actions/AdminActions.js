@@ -73,7 +73,113 @@ var resetUserData = function() {
   };
 };
 
+var addUserMakeRequest = function() {
+  return {
+    type : types.ADMIN_ADD_USER_MAKE_REQUEST
+  };
+};
+
+var addUserReceiveResponse = function(success, errors) {
+  return {
+    type : types.ADMIN_ADD_USER_RECEIVE_RESPONSE,
+    success : success,
+    errors : errors
+  };
+};
+
+var addUserGetUtilitiesRequest = function(){
+  return {
+    type : types.ADMIN_ADD_USER_GET_UTILITIES_MAKE_REQUEST
+  };
+};
+
+var addUserGetUtilitiesResponse = function(success, utilities, errors){
+  return{
+    type : types.ADMIN_ADD_USER_GET_UTILITIES_RECEIVE_RESPONSE,
+    success : success,
+    utilities : utilities,
+    errors : errors
+  };
+};
+
+
 var AdminActions = {
+  showAddUserForm: function() {
+    return{
+      type : types.ADMIN_ADD_USER_SHOW
+    };
+  },
+
+  hideAddUserForm: function() {
+    return{
+      type : types.ADMIN_ADD_USER_HIDE
+    };
+  },
+
+  addUserSelectUtility: function(event, utility) {
+    return{
+      type : types.ADMIN_ADD_USER_SELECT_UTILITY,
+      utility : {
+        label : utility.label,
+        value : utility.value
+      }
+    };
+  },  
+  
+  addUserFillForm: function(inputFormFields) {
+    return{
+      type : types.ADMIN_ADD_USER_FILL_FORM,
+      firstName : inputFormFields.firstName,
+      lastName : inputFormFields.lastName,
+      email : inputFormFields.email,
+      gender : inputFormFields.gender,
+      address : inputFormFields.address,
+      postalCode : inputFormFields.postalCode
+    };
+  },
+  
+  addUserValidationsErrorsOccurred: function(errors) {
+    return {
+      type : types.ADMIN_ADD_USER_VALIDATION_ERRORS_OCCURRED,
+      errors : errors
+    };
+  },
+  
+  addUserShowErrorAlert: function(errors) {
+    return{
+      type : types.ADMIN_ADD_USER_SHOW_ERROR_ALERT,
+      errors: errors
+    };
+  },
+  
+  addUserHideErrorAlert: function() {
+    return{
+      type : types.ADMIN_ADD_USER_HIDE_ERROR_ALERT
+    };
+  },
+  
+  addUser : function(userInfo) {
+    return function(dispatch, getState) {
+      dispatch(addUserMakeRequest());
+      return adminAPI.createNewUser(userInfo).then(function(response){
+        dispatch(addUserReceiveResponse(response.success, response.errors));
+      }, function(error) {
+        dispatch(addUserReceiveResponse(false, error));
+      });
+    };
+  },
+
+  addUserGetUtilities : function(){
+    return function(dispatch, getState) {
+      dispatch(addUserGetUtilitiesRequest());
+      return adminAPI.getAllUtilities().then(function(response){
+        dispatch(addUserGetUtilitiesResponse(response.success, response.utilitiesInfo, response.errors));
+      }, function(error) {
+        dispatch(addUserReceiveResponse(false, null, error));
+      });
+    };
+  },
+    
   getActivity : function() {
     return function(dispatch, getState) {
       dispatch(requestedActivity());

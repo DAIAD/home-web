@@ -14,6 +14,8 @@ import org.joda.time.DateTime;
 public class DeviceAmphiroConfigurationDefault {
 
 	public static final int CONFIG_DEFAULT = 1;
+	public static final int CONFIG_ENABLED_METRIC = 2;
+	public static final int CONFIG_ENABLED_IMPERIAL = 3;
 
 	@Id()
 	@Column(name = "id")

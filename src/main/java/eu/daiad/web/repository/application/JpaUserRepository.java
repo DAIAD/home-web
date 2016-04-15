@@ -23,6 +23,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.domain.application.AccountActivity;
@@ -32,7 +33,9 @@ import eu.daiad.web.domain.application.AccountRole;
 import eu.daiad.web.domain.application.AccountWhiteListEntry;
 import eu.daiad.web.domain.application.Role;
 import eu.daiad.web.domain.application.Utility;
+import eu.daiad.web.model.EnumGender;
 import eu.daiad.web.model.EnumValueDescription;
+import eu.daiad.web.model.admin.AccountWhiteListInfo;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
@@ -152,6 +155,7 @@ public class JpaUserRepository implements IUserRepository {
 	}
 
 	@Override
+	@Transactional(transactionManager = "transactionManager", propagation=Propagation.REQUIRES_NEW)
 	public void initializeSecurityConfiguration() {
 		try {
 			// Initialize all system roles
@@ -537,6 +541,57 @@ public class JpaUserRepository implements IUserRepository {
 		}
 
 		return null;
+	}
+	
+	@Override
+	public void insertAccountWhiteListEntry(AccountWhiteListInfo userInfo) {
+		try{
+
+			TypedQuery<eu.daiad.web.domain.application.AccountWhiteListEntry> whitelistQuery = entityManager
+					.createQuery("select a from account_white_list a where a.username = :username",
+									eu.daiad.web.domain.application.AccountWhiteListEntry.class)
+					.setFirstResult(0).setMaxResults(1);
+			whitelistQuery.setParameter("username", userInfo.getEmail());
+			List<AccountWhiteListEntry> whitelistEntries = whitelistQuery.getResultList();
+			
+			if (!whitelistEntries.isEmpty()){
+				throw new ApplicationException(UserErrorCode.USERNAME_EXISTS_IN_WHITELIST)
+					.set("username", userInfo.getEmail());
+			}
+			
+			AccountWhiteListEntry newEntry = new AccountWhiteListEntry(userInfo.getEmail());
+			newEntry.setFirstname(userInfo.getFirstName());
+			newEntry.setLastname(userInfo.getLastName());
+			newEntry.setGender(EnumGender.fromString(userInfo.getGender()));
+			
+			//Get Utility
+			TypedQuery<eu.daiad.web.domain.application.Utility> utilityQuery = entityManager
+					.createQuery("select u from utility u where u.id = :id",
+									eu.daiad.web.domain.application.Utility.class)
+					.setFirstResult(0).setMaxResults(1);
+			utilityQuery.setParameter("id", userInfo.getUtilityId());
+			List <Utility> utilityEntry = utilityQuery.getResultList();
+			
+			if (utilityEntry.isEmpty()){
+				throw new ApplicationException(UserErrorCode.UTILITY_DOES_NOT_EXIST)
+					.set("id", userInfo.getUtilityId());
+			}
+			newEntry.setUtility(utilityEntry.get(0));
+			newEntry.setCountry(utilityEntry.get(0).getCountry());
+			newEntry.setCity(utilityEntry.get(0).getCity());
+			newEntry.setTimezone(utilityEntry.get(0).getTimezone());
+			newEntry.setLocale(utilityEntry.get(0).getLocale());
+			
+			newEntry.setAddress(userInfo.getAddress());
+			newEntry.setPostalCode(userInfo.getPostalCode());
+			newEntry.setDefaultMobileMode(EnumMobileMode.LEARNING.getValue());
+			newEntry.setDefaultWebMode(EnumWebMode.INACTIVE.getValue());
+			
+			this.entityManager.persist(newEntry);
+
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		}
 	}
 
 	public ArrayList<UUID> getUserKeysForGroup(UUID groupKey) {

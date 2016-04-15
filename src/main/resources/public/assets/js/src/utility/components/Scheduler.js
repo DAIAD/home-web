@@ -12,13 +12,13 @@ var Scheduler = React.createClass({
 	    intl: React.PropTypes.object
 	},
 	
-  getInitialState: function() {
-    return {
-    	repeat: 'None',
-    	startDate:moment(),
-    	minDate: moment()
-    };
-  },
+    getInitialState: function() {
+        return {
+        	repeat: 'None',
+			startDate:moment(),
+			minDate: moment()
+        };
+    },
 
   	render: function() {
         var startDateConfig, repeatConfig, repeatIntervalConfig;

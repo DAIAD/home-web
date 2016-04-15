@@ -3,48 +3,66 @@ var ReactDOM = require('react-dom');
 var FormattedMessage = require('react-intl').FormattedMessage;
 var Alert = require('react-bootstrap').Alert;
 
-var ErrorAlert = React.createClass({
-	contextTypes: {
-	    intl: React.PropTypes.object
-	},
+var MessageAlert = React.createClass({
+  contextTypes: {
+      intl: React.PropTypes.object
+  },
 
-	propTypes : {
-		errors : React.PropTypes.array
-	},
+  propTypes : {
+    messages : React.PropTypes.array
+  },
 
-	getInitialState() {
-		return {
-			alertVisible: true
-	    };
-	},
+  getDefaultProps: function() {
+    return {
+      show: true,
+      messages: [],
+      i18nNamespace: '',
+      bsStyle: 'danger',
+      title: 'Errors detected: ',
+      format: 'paragraph',
+      dismissFunc : null
+     };
+  },
 
-	getDefaultProps: function() {
-		return {
-			errors: [],
-	    };
-	},
-
-  	render: function() {
-  		if((!this.props.errors) || (this.props.errors.length ===0)) {
-  			return null;
-  		}
-  		if(!this.state.alertVisible) {
-  			return null;
-  		}
-  		var errors = this.props.errors.map(function(e, index) {
-  			return (<p key={{index}}><FormattedMessage id={e.code}/></p>);
-  		});
-  		
-  		return (
-			<Alert bsStyle='danger' onDismiss={this.handleAlertDismiss}>
-				{errors}
-  	        </Alert>
- 		);
-  	},
-  	
-  	handleAlertDismiss() {
-  		this.setState({alertVisible: false});
-  	}
+  render: function() {
+    var self = this;
+    
+    
+    if(!this.props.show || !this.props.messages || this.props.messages.length ===0) {
+      return null;
+    }
+    
+    var messages;
+    var title = (<h4>{this.props.title}</h4>);
+    
+    if (this.props.format === 'list') {
+      messages = this.props.messages.map(function(m, index) {
+        return(<li key={m.code}><FormattedMessage id={self.props.i18nNamespace + m.code}/></li>);
+      });
+      
+      messages = (<div>{title}<ul>{messages}</ul></div>);
+    } else {
+      messages = this.props.messages.map(function(m, index) {
+        return(<p key={m.code}><FormattedMessage id={self.props.i18nNamespace + m.code}/></p>);
+      });
+      
+    }
+    
+    
+    if (this.props.dismissFunc){
+      return (
+        <Alert bsStyle={this.props.bsStyle} onDismiss={this.props.dismissFunc}>
+          {messages}
+        </Alert>
+      );
+    } else {
+      return (
+        <Alert bsStyle={this.props.bsStyle}>
+          {messages}
+        </Alert>
+      );
+    }
+  }
 });
 
-module.exports = ErrorAlert;
+module.exports = MessageAlert;
