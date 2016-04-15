@@ -99,12 +99,12 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 					throw new BadCredentialsException("Authorization has failed.");
 			}
 
-			log(user.getId(), true);
+			updateLoginStats(user.getId(), true);
 
 			return new UsernamePasswordAuthenticationToken(user, authentication.getCredentials(), user.getAuthorities());
 		} catch (Exception ex) {
 			if (user != null) {
-				log(user.getId(), false);
+				updateLoginStats(user.getId(), false);
 			}
 
 			throw ex;
@@ -117,7 +117,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 		return authentication.equals(UsernamePasswordAuthenticationToken.class);
 	}
 
-	private void log(int id, boolean success) {
+	private void updateLoginStats(int id, boolean success) {
 		userRepository.updateLoginStats(id, success);
 	};
 

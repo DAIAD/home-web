@@ -1,3 +1,6 @@
+-- procedures
+DROP FUNCTION IF EXISTS sp_account_update_stats(account_id integer, success boolean, login_date timestamp with time zone);
+
 -- views
 DROP VIEW IF EXISTS public.trial_account_activity;
 
