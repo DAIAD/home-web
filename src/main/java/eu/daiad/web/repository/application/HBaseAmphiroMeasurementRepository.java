@@ -1280,6 +1280,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 								float energy = 0;
 								int duration = 0;
 								float temperature = 0;
+								float flow = 0;
 
 								for (Entry<byte[], byte[]> entry : map.entrySet()) {
 									String qualifier = Bytes.toString(entry.getKey());
@@ -1297,6 +1298,9 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 										case "m:e":
 											energy = Bytes.toFloat(entry.getValue());
 											break;
+										case "m:f":
+											flow = Bytes.toFloat(entry.getValue());
+											break;
 										case "m:d":
 											duration = Bytes.toInt(entry.getValue());
 											break;
@@ -1307,7 +1311,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 								}
 
 								series.addDataPoint(query.getGranularity(), timestamp, volume, energy, duration,
-												temperature, query.getMetrics(), query.getTimezone());
+												temperature, flow, query.getMetrics(), query.getTimezone());
 							}
 
 							filterIndex++;
@@ -1342,6 +1346,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 		for (GroupDataSeries series : result) {
 			for (Object p : series.getPoints()) {
 				((AmphiroDataPoint) p).getTemperature().remove(EnumMetric.SUM);
+				((AmphiroDataPoint) p).getFlow().remove(EnumMetric.SUM);
 			}
 		}
 	}

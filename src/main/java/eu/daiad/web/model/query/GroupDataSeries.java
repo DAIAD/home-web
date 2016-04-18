@@ -98,6 +98,11 @@ public class GroupDataSeries {
 							} else {
 								ap.getDuration().put(m, 0.0);
 							}
+							if (m == EnumMetric.MIN) {
+								ap.getFlow().put(m, Double.MAX_VALUE);
+							} else {
+								ap.getFlow().put(m, 0.0);
+							}
 
 							p = ap;
 						}
@@ -164,6 +169,11 @@ public class GroupDataSeries {
 							} else {
 								ap.getDuration().put(m, 0.0);
 							}
+							if (m == EnumMetric.MIN) {
+								ap.getFlow().put(m, Double.MAX_VALUE);
+							} else {
+								ap.getFlow().put(m, 0.0);
+							}
 
 							p = ap;
 						}
@@ -219,7 +229,7 @@ public class GroupDataSeries {
 	}
 
 	public void addDataPoint(EnumTimeAggregation granularity, long timestamp, double volume, double energy,
-					double duration, double temperature, EnumMetric[] metrics, DateTimeZone timezone) {
+					double duration, double temperature, double flow, EnumMetric[] metrics, DateTimeZone timezone) {
 		AmphiroDataPoint point = (AmphiroDataPoint) this.getDataPoint(granularity, timestamp, metrics,
 						DataPoint.EnumDataPointType.AMPHIRO, timezone);
 
@@ -234,6 +244,7 @@ public class GroupDataSeries {
 					point.getEnergy().put(m, point.getEnergy().get(m) + energy);
 					point.getDuration().put(m, point.getDuration().get(m) + duration);
 					point.getTemperature().put(m, point.getTemperature().get(m) + temperature);
+					point.getFlow().put(m, point.getFlow().get(m) + flow);
 					break;
 				case MIN:
 					if (point.getVolume().get(m) > volume) {
@@ -247,6 +258,9 @@ public class GroupDataSeries {
 					}
 					if (point.getTemperature().get(m) > temperature) {
 						point.getTemperature().put(m, temperature);
+					}
+					if (point.getFlow().get(m) > flow) {
+						point.getFlow().put(m, flow);
 					}
 					break;
 				case MAX:
@@ -262,6 +276,9 @@ public class GroupDataSeries {
 					if (point.getTemperature().get(m) < temperature) {
 						point.getTemperature().put(m, temperature);
 					}
+					if (point.getFlow().get(m) < flow) {
+						point.getFlow().put(m, flow);
+					}
 					break;
 				case AVERAGE:
 					avg = true;
@@ -276,11 +293,13 @@ public class GroupDataSeries {
 				point.getEnergy().put(EnumMetric.AVERAGE, 0.0);
 				point.getDuration().put(EnumMetric.AVERAGE, 0.0);
 				point.getTemperature().put(EnumMetric.AVERAGE, 0.0);
+				point.getFlow().put(EnumMetric.AVERAGE, 0.0);
 			} else {
 				point.getVolume().put(EnumMetric.AVERAGE, point.getVolume().get(EnumMetric.SUM) / count);
 				point.getEnergy().put(EnumMetric.AVERAGE, point.getEnergy().get(EnumMetric.SUM) / count);
 				point.getDuration().put(EnumMetric.AVERAGE, point.getDuration().get(EnumMetric.SUM) / count);
 				point.getTemperature().put(EnumMetric.AVERAGE, point.getTemperature().get(EnumMetric.SUM) / count);
+				point.getFlow().put(EnumMetric.AVERAGE, point.getFlow().get(EnumMetric.SUM) / count);
 			}
 		}
 	}

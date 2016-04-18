@@ -11,6 +11,8 @@ public class AmphiroDataPoint extends DataPoint {
 
 	private Map<EnumMetric, Double> energy = new HashMap<EnumMetric, Double>();
 
+	private Map<EnumMetric, Double> flow = new HashMap<EnumMetric, Double>();
+
 	public AmphiroDataPoint() {
 		this.type = EnumDataPointType.AMPHIRO;
 	}
@@ -30,6 +32,10 @@ public class AmphiroDataPoint extends DataPoint {
 
 	public Map<EnumMetric, Double> getEnergy() {
 		return energy;
+	}
+
+	public Map<EnumMetric, Double> getFlow() {
+		return flow;
 	}
 
 }
