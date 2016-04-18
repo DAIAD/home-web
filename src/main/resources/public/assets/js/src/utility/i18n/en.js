@@ -56,6 +56,7 @@
 			"id": "Id",
 			"active": "active",
 			"name": "Name",
+			"email": "E-mail",
 			"group": "Group",
 			"currentMode": "Current Mode",
 			"viewInfoOnAmphiro": "b1",
