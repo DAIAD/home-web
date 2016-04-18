@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.crypto.KeyGenerator;
@@ -38,6 +39,8 @@ import eu.daiad.web.model.admin.AccountActivity;
 import eu.daiad.web.model.debug.DebugUserRegisterRequest;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
+import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.loader.UploadRequest;
 import eu.daiad.web.model.user.Account;
 import eu.daiad.web.repository.application.IDeviceRepository;
@@ -182,6 +185,16 @@ public class DebugController extends BaseController {
 				if (request.getFiles() != null) {
 					FileUtils.forceMkdir(new File(temporaryPath));
 
+					// Set time zone
+					Set<String> zones = DateTimeZone.getAvailableIDs();
+					if (request.getTimezone() == null) {
+						request.setTimezone("Europe/Athens");
+					}
+					if (!zones.contains(request.getTimezone())) {
+						throw new ApplicationException(SharedErrorCode.TIMEZONE_NOT_FOUND).set("timezone",
+										request.getTimezone());
+					}
+
 					switch (request.getType()) {
 						case AMPHIRO_DATA:
 							if ((request.getFiles() != null) && (request.getFiles().length == 1)) {
@@ -192,7 +205,8 @@ public class DebugController extends BaseController {
 
 								this.saveFile(filename, file.getBytes());
 
-								this.fileDataLoaderService.importRandomAmphiroSessions(filename);
+								this.fileDataLoaderService.importRandomAmphiroSessions(filename,
+												DateTimeZone.forID(request.getTimezone()));
 							}
 							break;
 						default:

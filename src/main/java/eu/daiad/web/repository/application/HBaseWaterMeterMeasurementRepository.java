@@ -462,7 +462,8 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 	}
 
 	@Override
-	public WaterMeterMeasurementQueryResult searchMeasurements(String serials[], WaterMeterMeasurementQuery query) {
+	public WaterMeterMeasurementQueryResult searchMeasurements(String serials[], DateTimeZone timezone,
+					WaterMeterMeasurementQuery query) {
 		Connection connection = null;
 		Table table = null;
 		ResultScanner scanner = null;
@@ -584,7 +585,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 							}
 
 							if ((volume > 0) && (difference >= 0)) {
-								series.add(timestamp, volume, difference);
+								series.add(timestamp, volume, difference, timezone);
 								volume = -1;
 								difference = -1;
 							}
@@ -592,7 +593,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 					}
 
 					if ((volume > 0) && (difference >= 0)) {
-						series.add(timestamp, volume, difference);
+						series.add(timestamp, volume, difference, timezone);
 						volume = 0;
 						difference = 0;
 					}
@@ -757,16 +758,19 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 							if (columnQualifier.equals("d")) {
 								float difference = Bytes.toFloat(entry.getValue());
 
-								int filterIndex = 0;
-								for (ExpandedPopulationFilter filter : query.getGroups()) {
-									GroupDataSeries series = result.get(filterIndex);
+								if (difference > 0) {
+									int filterIndex = 0;
+									for (ExpandedPopulationFilter filter : query.getGroups()) {
+										GroupDataSeries series = result.get(filterIndex);
 
-									if (inArray(filter.getSerials(), serialHash)) {
-										series.addDataPoint(query.getGranularity(), timestamp, difference,
-														query.getMetrics());
+										if (inArray(filter.getSerials(), serialHash)) {
+											series.addDataPoint(query.getGranularity(), timestamp, difference,
+															query.getMetrics(), query.getTimezone());
+										}
+
+										filterIndex++;
+
 									}
-
-									filterIndex++;
 								}
 							}
 						}

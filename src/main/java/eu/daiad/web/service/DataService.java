@@ -51,11 +51,11 @@ public class DataService implements IDataService {
 		try {
 			DataQueryResponse response = new DataQueryResponse();
 
-			ExpandedDataQuery expandedQuery = new ExpandedDataQuery();
-
 			// Get authenticated user
 			AuthenticatedUser authenticatedUser = (AuthenticatedUser) SecurityContextHolder.getContext()
 							.getAuthentication().getPrincipal();
+
+			ExpandedDataQuery expandedQuery = new ExpandedDataQuery(DateTimeZone.forID(authenticatedUser.getTimezone()));
 
 			// At least one group or user must be selected. Time constraint is
 			// required

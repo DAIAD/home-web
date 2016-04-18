@@ -580,7 +580,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 	}
 
 	@Override
-	public AmphiroMeasurementQueryResult searchMeasurements(AmphiroMeasurementQuery query) {
+	public AmphiroMeasurementQueryResult searchMeasurements(DateTimeZone timezone, AmphiroMeasurementQuery query) {
 		AmphiroMeasurementQueryResult data = new AmphiroMeasurementQueryResult();
 
 		DateTime startDate = new DateTime(query.getStartDate(), DateTimeZone.UTC);
@@ -716,7 +716,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 				scanner.close();
 				scanner = null;
 
-				series.setPoints(points);
+				series.setPoints(points, timezone);
 
 				Collections.sort(series.getPoints(), new Comparator<AmphiroAbstractDataPoint>() {
 
@@ -752,7 +752,8 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 	}
 
 	@Override
-	public AmphiroSessionCollectionQueryResult searchSessions(String[] names, AmphiroSessionCollectionQuery query) {
+	public AmphiroSessionCollectionQueryResult searchSessions(String[] names, DateTimeZone timezone,
+					AmphiroSessionCollectionQuery query) {
 		AmphiroSessionCollectionQueryResult data = new AmphiroSessionCollectionQueryResult();
 
 		DateTime startDate = null;
@@ -896,7 +897,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 				AmphiroSessionCollection collection = new AmphiroSessionCollection(deviceKeys[deviceIndex],
 								names[deviceIndex], query.getGranularity());
 
-				collection.addSessions(sessions);
+				collection.addSessions(sessions, timezone);
 
 				if (collection.getSessions().size() > 0) {
 					Collections.sort(collection.getSessions(), new Comparator<AmphiroAbstractSession>() {
@@ -1306,7 +1307,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 								}
 
 								series.addDataPoint(query.getGranularity(), timestamp, volume, energy, duration,
-												temperature, query.getMetrics());
+												temperature, query.getMetrics(), query.getTimezone());
 							}
 
 							filterIndex++;

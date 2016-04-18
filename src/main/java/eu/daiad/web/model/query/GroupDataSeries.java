@@ -28,29 +28,28 @@ public class GroupDataSeries {
 	}
 
 	private DataPoint getDataPoint(EnumTimeAggregation granularity, long timestamp, EnumMetric[] metrics,
-					DataPoint.EnumDataPointType type) {
-		DateTime date = new DateTime(timestamp, DateTimeZone.UTC);
+					DataPoint.EnumDataPointType type, DateTimeZone timezone) {
+		DateTime date = new DateTime(timestamp, timezone);
 
 		switch (granularity) {
 			case HOUR:
 				date = new DateTime(date.getYear(), date.getMonthOfYear(), date.getDayOfMonth(), date.getHourOfDay(),
-								0, 0, DateTimeZone.UTC);
+								0, 0, timezone);
 				break;
 			case DAY:
-				date = new DateTime(date.getYear(), date.getMonthOfYear(), date.getDayOfMonth(), 0, 0, 0,
-								DateTimeZone.UTC);
+				date = new DateTime(date.getYear(), date.getMonthOfYear(), date.getDayOfMonth(), 0, 0, 0, timezone);
 				break;
 			case WEEK:
 				DateTime sunday = date.withDayOfWeek(DateTimeConstants.SUNDAY);
 
 				date = new DateTime(sunday.getYear(), sunday.getMonthOfYear(), sunday.getDayOfMonth(), 0, 0, 0,
-								DateTimeZone.UTC);
+								timezone);
 				break;
 			case MONTH:
-				date = new DateTime(date.getYear(), date.getMonthOfYear(), 1, 0, 0, 0, DateTimeZone.UTC);
+				date = new DateTime(date.getYear(), date.getMonthOfYear(), 1, 0, 0, 0, timezone);
 				break;
 			case YEAR:
-				date = new DateTime(date.getYear(), 1, 1, 0, 0, 0, DateTimeZone.UTC);
+				date = new DateTime(date.getYear(), 1, 1, 0, 0, 0, timezone);
 				break;
 			case ALL:
 				break;
@@ -179,8 +178,10 @@ public class GroupDataSeries {
 		return p;
 	}
 
-	public void addDataPoint(EnumTimeAggregation granularity, long timestamp, double volume, EnumMetric[] metrics) {
-		DataPoint point = this.getDataPoint(granularity, timestamp, metrics, DataPoint.EnumDataPointType.METER);
+	public void addDataPoint(EnumTimeAggregation granularity, long timestamp, double volume, EnumMetric[] metrics,
+					DateTimeZone timezone) {
+		DataPoint point = this.getDataPoint(granularity, timestamp, metrics, DataPoint.EnumDataPointType.METER,
+						timezone);
 
 		boolean avg = false;
 		for (EnumMetric m : metrics) {
@@ -218,9 +219,9 @@ public class GroupDataSeries {
 	}
 
 	public void addDataPoint(EnumTimeAggregation granularity, long timestamp, double volume, double energy,
-					double duration, double temperature, EnumMetric[] metrics) {
+					double duration, double temperature, EnumMetric[] metrics, DateTimeZone timezone) {
 		AmphiroDataPoint point = (AmphiroDataPoint) this.getDataPoint(granularity, timestamp, metrics,
-						DataPoint.EnumDataPointType.AMPHIRO);
+						DataPoint.EnumDataPointType.AMPHIRO, timezone);
 
 		boolean avg = false;
 		for (EnumMetric m : metrics) {

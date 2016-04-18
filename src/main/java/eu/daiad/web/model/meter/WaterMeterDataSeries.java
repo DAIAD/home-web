@@ -69,8 +69,8 @@ public class WaterMeterDataSeries {
 		});
 	}
 
-	public void add(long timestamp, float volume, float difference) {
-		DateTime date = new DateTime(timestamp, DateTimeZone.UTC);
+	public void add(long timestamp, float volume, float difference, DateTimeZone timezone) {
+		DateTime date = new DateTime(timestamp, timezone);
 
 		switch (this.granularity) {
 			case TemporalConstants.NONE:
@@ -79,24 +79,23 @@ public class WaterMeterDataSeries {
 				break;
 			case TemporalConstants.HOUR:
 				date = new DateTime(date.getYear(), date.getMonthOfYear(), date.getDayOfMonth(), date.getHourOfDay(),
-								0, 0, DateTimeZone.UTC);
+								0, 0, timezone);
 				break;
 			case TemporalConstants.DAY:
-				date = new DateTime(date.getYear(), date.getMonthOfYear(), date.getDayOfMonth(), 0, 0, 0,
-								DateTimeZone.UTC);
+				date = new DateTime(date.getYear(), date.getMonthOfYear(), date.getDayOfMonth(), 0, 0, 0, timezone);
 				break;
 			case TemporalConstants.WEEK:
 				DateTime sunday = date.withDayOfWeek(DateTimeConstants.SUNDAY);
 
 				date = new DateTime(sunday.getYear(), sunday.getMonthOfYear(), sunday.getDayOfMonth(), 0, 0, 0,
-								DateTimeZone.UTC);
+								timezone);
 				break;
 			case TemporalConstants.MONTH:
 				date = new DateTime(date.getYear(), date.getMonthOfYear(), date.dayOfMonth().getMaximumValue(), 0, 0,
-								0, DateTimeZone.UTC);
+								0, timezone);
 				break;
 			case TemporalConstants.YEAR:
-				date = new DateTime(date.getYear(), 12, 31, 0, 0, 0, DateTimeZone.UTC);
+				date = new DateTime(date.getYear(), 12, 31, 0, 0, 0, timezone);
 				break;
 			default:
 				throw new IllegalArgumentException("Granularity level not supported.");

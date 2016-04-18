@@ -39,44 +39,43 @@ public class AmphiroSessionCollection {
 		return sessions;
 	}
 
-	public void addSessions(ArrayList<AmphiroSession> sessions) {
+	public void addSessions(ArrayList<AmphiroSession> sessions, DateTimeZone timezone) {
 		this.sessions.clear();
 		if (sessions != null) {
 			for (int i = 0, count = sessions.size(); i < count; i++) {
-				this.add(sessions.get(i));
+				this.add(sessions.get(i), timezone);
 			}
 		}
 	}
 
-	public void add(AmphiroSession session) {
+	public void add(AmphiroSession session, DateTimeZone timezone) {
 		if (this.granularity == TemporalConstants.NONE) {
 			// Retrieve values at the highest granularity, that is at the
 			// measurement level
 			this.sessions.add(session);
 		} else {
 
-			DateTime date = new DateTime(session.getTimestamp(), DateTimeZone.UTC);
+			DateTime date = new DateTime(session.getTimestamp(), timezone);
 
 			switch (this.granularity) {
 				case TemporalConstants.HOUR:
 					date = new DateTime(date.getYear(), date.getMonthOfYear(), date.getDayOfMonth(),
-									date.getHourOfDay(), 0, 0, DateTimeZone.UTC);
+									date.getHourOfDay(), 0, 0, timezone);
 					break;
 				case TemporalConstants.DAY:
-					date = new DateTime(date.getYear(), date.getMonthOfYear(), date.getDayOfMonth(), 0, 0, 0,
-									DateTimeZone.UTC);
+					date = new DateTime(date.getYear(), date.getMonthOfYear(), date.getDayOfMonth(), 0, 0, 0, timezone);
 					break;
 				case TemporalConstants.WEEK:
 					DateTime sunday = date.withDayOfWeek(DateTimeConstants.SUNDAY);
 
 					date = new DateTime(sunday.getYear(), sunday.getMonthOfYear(), sunday.getDayOfMonth(), 0, 0, 0,
-									DateTimeZone.UTC);
+									timezone);
 					break;
 				case TemporalConstants.MONTH:
-					date = new DateTime(date.getYear(), date.getMonthOfYear(), 1, 0, 0, 0, DateTimeZone.UTC);
+					date = new DateTime(date.getYear(), date.getMonthOfYear(), 1, 0, 0, 0, timezone);
 					break;
 				case TemporalConstants.YEAR:
-					date = new DateTime(date.getYear(), 1, 1, 0, 0, 0, DateTimeZone.UTC);
+					date = new DateTime(date.getYear(), 1, 1, 0, 0, 0, timezone);
 					break;
 				default:
 					throw new IllegalArgumentException("Granularity level not supported.");

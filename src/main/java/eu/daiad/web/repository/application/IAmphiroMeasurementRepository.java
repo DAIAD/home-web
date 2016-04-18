@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.UUID;
 
+import org.joda.time.DateTimeZone;
+
 import eu.daiad.web.model.amphiro.AmphiroMeasurementCollection;
 import eu.daiad.web.model.amphiro.AmphiroMeasurementQuery;
 import eu.daiad.web.model.amphiro.AmphiroMeasurementQueryResult;
@@ -19,9 +21,10 @@ public interface IAmphiroMeasurementRepository {
 
 	public void storeData(UUID userKey, AmphiroMeasurementCollection data) throws ApplicationException;
 
-	public abstract AmphiroMeasurementQueryResult searchMeasurements(AmphiroMeasurementQuery query);
+	public abstract AmphiroMeasurementQueryResult searchMeasurements(DateTimeZone timezone,
+					AmphiroMeasurementQuery query);
 
-	public abstract AmphiroSessionCollectionQueryResult searchSessions(String[] name,
+	public abstract AmphiroSessionCollectionQueryResult searchSessions(String[] name, DateTimeZone timezone,
 					AmphiroSessionCollectionQuery query);
 
 	public abstract AmphiroSessionQueryResult getSession(AmphiroSessionQuery query);

@@ -31,7 +31,7 @@ import eu.daiad.web.model.amphiro.AmphiroSessionCollection;
 import eu.daiad.web.model.amphiro.AmphiroSessionCollectionQuery;
 import eu.daiad.web.model.amphiro.AmphiroSessionCollectionQueryResult;
 import eu.daiad.web.model.error.ApplicationException;
-import eu.daiad.web.model.error.ExportErrorCode;
+import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.export.ExportUserDataQuery;
 import eu.daiad.web.model.meter.WaterMeterDataPoint;
 import eu.daiad.web.model.meter.WaterMeterDataSeries;
@@ -67,7 +67,7 @@ public class ExportService implements IExportService {
 			outputFolder.mkdirs();
 
 			if (!outputFolder.exists()) {
-				throw new ApplicationException(ExportErrorCode.PATH_CREATION_FAILED).set("path", outputFolderName);
+				throw new ApplicationException(SharedErrorCode.DIR_CREATION_FAILED).set("path", outputFolderName);
 			}
 
 			// Create new file name
@@ -82,7 +82,7 @@ public class ExportService implements IExportService {
 				query.setTimezone("Europe/Athens");
 			}
 			if (!zones.contains(query.getTimezone())) {
-				throw new ApplicationException(ExportErrorCode.TIMEZONE_NOT_FOUND).set("timezone", query.getTimezone());
+				throw new ApplicationException(SharedErrorCode.TIMEZONE_NOT_FOUND).set("timezone", query.getTimezone());
 			}
 
 			DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZone(
@@ -106,7 +106,7 @@ public class ExportService implements IExportService {
 			sessionQuery.setEndDate(null);
 
 			AmphiroSessionCollectionQueryResult amphiroCollection = this.amphiroMeasurementRepository.searchSessions(
-							nameArray, sessionQuery);
+							nameArray, DateTimeZone.forID(query.getTimezone()), sessionQuery);
 
 			// Create one sheet per device
 			for (AmphiroSessionCollection device : amphiroCollection.getDevices()) {
@@ -173,7 +173,7 @@ public class ExportService implements IExportService {
 			meterQuery.setEndDate(null);
 
 			WaterMeterMeasurementQueryResult meterCollection = this.waterMeterMeasurementRepository.searchMeasurements(
-							serialArray, meterQuery);
+							serialArray, DateTimeZone.forID(query.getTimezone()), meterQuery);
 
 			// Create one sheet per device
 			for (WaterMeterDataSeries series : meterCollection.getSeries()) {

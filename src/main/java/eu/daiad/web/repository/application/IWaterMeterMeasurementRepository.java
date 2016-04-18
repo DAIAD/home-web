@@ -3,6 +3,8 @@ package eu.daiad.web.repository.application;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import org.joda.time.DateTimeZone;
+
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.meter.WaterMeterMeasurementCollection;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQuery;
@@ -19,7 +21,7 @@ public interface IWaterMeterMeasurementRepository {
 
 	public abstract WaterMeterStatusQueryResult getStatus(String serials[], long maxDateTime);
 
-	public abstract WaterMeterMeasurementQueryResult searchMeasurements(String serials[],
+	public abstract WaterMeterMeasurementQueryResult searchMeasurements(String serials[], DateTimeZone timezone,
 					WaterMeterMeasurementQuery query);
 
 	public abstract void open() throws IOException;
