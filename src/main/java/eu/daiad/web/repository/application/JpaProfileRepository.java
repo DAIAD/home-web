@@ -187,6 +187,9 @@ public class JpaProfileRepository implements IProfileRepository {
 					profileModes.setName(account.getUsername());
 				}
 				
+				// E-mail
+				profileModes.setEmail(account.getUsername());
+				
 				// Utility name & Id
 				Utility utility = account.getUtility();
 				profileModes.setGroupId(utility.getId());
@@ -350,12 +353,13 @@ public class JpaProfileRepository implements IProfileRepository {
 						//Get the current (active and inactive) configurations and set them as inactive
 						Set<eu.daiad.web.domain.application.Device> devices = account.getDevices();
 						for (eu.daiad.web.domain.application.Device device : devices){
-							DeviceAmphiro deviceAmphiro = (DeviceAmphiro) device;
-							for (DeviceAmphiroConfiguration currentConfiguration : deviceAmphiro.getConfigurations()){
-								currentConfiguration.setActive(false);
+							if (device.getType() == EnumDeviceType.AMPHIRO){
+								DeviceAmphiro deviceAmphiro = (DeviceAmphiro) device;
+								for (DeviceAmphiroConfiguration currentConfiguration : deviceAmphiro.getConfigurations()){
+									currentConfiguration.setActive(false);
+								}
+								deviceAmphiro.getConfigurations().add(newConfiguration);
 							}
-							
-							deviceAmphiro.getConfigurations().add(newConfiguration);
 						}
 						
 						break;
@@ -474,12 +478,13 @@ public class JpaProfileRepository implements IProfileRepository {
 			//Get the current (active and inactive) configurations and set them as inactive
 			Set<eu.daiad.web.domain.application.Device> devices = account.getDevices();
 			for (eu.daiad.web.domain.application.Device device : devices){
-				DeviceAmphiro deviceAmphiro = (DeviceAmphiro) device;
-				for (DeviceAmphiroConfiguration currentConfiguration : deviceAmphiro.getConfigurations()){
-					currentConfiguration.setActive(false);
+				if (device.getType() == EnumDeviceType.AMPHIRO){
+					DeviceAmphiro deviceAmphiro = (DeviceAmphiro) device;
+					for (DeviceAmphiroConfiguration currentConfiguration : deviceAmphiro.getConfigurations()){
+						currentConfiguration.setActive(false);
+					}
+					deviceAmphiro.getConfigurations().add(newConfiguration);
 				}
-				
-				deviceAmphiro.getConfigurations().add(newConfiguration);
 			}
 						
 			this.entityManager.persist(account);

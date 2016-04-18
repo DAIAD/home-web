@@ -49,6 +49,8 @@ public class ProfileModes {
 	private UUID id = null;
 
 	private String name = null;
+	
+	private String email = null;
 
 	private MobileModeState mobile = MobileModeState.NOT_APPLICABLE;
 
@@ -76,6 +78,14 @@ public class ProfileModes {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
 	}
 
 	public MobileModeState getMobile() {

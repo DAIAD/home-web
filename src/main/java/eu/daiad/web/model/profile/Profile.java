@@ -29,10 +29,6 @@ public class Profile {
 	private String country;
 
 	private int mode = 0;
-	
-	private int mobileMode = 0;
-	
-	private int amphiroMode = 0;
 
 	private String configuration;
 
@@ -135,22 +131,6 @@ public class Profile {
 
 	public int getMode() {
 		return mode;
-	}
-	
-	public int getMobileMode() {
-		return mobileMode;
-	}
-
-	public void setMobileMode(int mobileMode) {
-		this.mobileMode = mobileMode;
-	}
-
-	public int getAmphiroMode() {
-		return amphiroMode;
-	}
-
-	public void setAmphiroMode(int amphiroMode) {
-		this.amphiroMode = amphiroMode;
 	}
 
 	public void setMode(int mode) {

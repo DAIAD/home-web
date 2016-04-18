@@ -44,6 +44,9 @@ var ModeManagementTableSchema = {
       title: 'Table.User.name',
       link: '/user/{id}'
     }, {
+      name: 'email',
+      title: 'Table.User.email'
+    }, {
       name: 'groupName',
       title: 'Table.User.group',
       link: '/group/{groupId}'

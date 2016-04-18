@@ -56,6 +56,7 @@
 			"id": "Id",
 			"active": "ενεργός",
 			"name": "Όνομα",
+		  "email": "E-mail",
 			"group": "Ομάδα",
 			"currentMode": "Τρέχουσα Κατάσταση",
 			"viewInfoOnAmphiro": "b1",
