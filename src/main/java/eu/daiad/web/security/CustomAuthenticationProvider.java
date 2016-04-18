@@ -91,6 +91,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 						throw new BadCredentialsException("Authorization has failed.");
 					}
 					if ((!user.getMobileMode().equals(EnumMobileMode.ACTIVE))
+									&& (!user.getMobileMode().equals(EnumMobileMode.INACTIVE))
 									&& (!user.getMobileMode().equals(EnumMobileMode.LEARNING))) {
 						throw new BadCredentialsException("Application is not enabled.");
 					}
