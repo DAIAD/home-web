@@ -12,6 +12,8 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -22,8 +24,13 @@ import javax.persistence.Version;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
+import com.vividsolutions.jts.geom.Geometry;
+
+import eu.daiad.web.model.commons.EnumGroupType;
+
 @Entity(name = "group")
 @Table(schema = "public", name = "group")
+@Inheritance(strategy = InheritanceType.JOINED)
 public class Group {
 
 	@Id()
@@ -57,6 +64,10 @@ public class Group {
 	@Column(name = "created_on")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime createdOn = new DateTime();
+
+	@Type(type = "org.hibernate.spatial.GeometryType")
+	@Column(name = "spatial")
+	private Geometry geometry;
 
 	public int getId() {
 		return id;
@@ -104,5 +115,17 @@ public class Group {
 
 	public UUID getKey() {
 		return key;
+	}
+
+	public EnumGroupType getType() {
+		return EnumGroupType.UNDEFINED;
+	}
+
+	public Geometry getGeometry() {
+		return geometry;
+	}
+
+	public void setGeometry(Geometry geometry) {
+		this.geometry = geometry;
 	}
 }

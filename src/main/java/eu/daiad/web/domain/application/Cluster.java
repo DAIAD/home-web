@@ -22,16 +22,16 @@ import javax.persistence.Version;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-import com.vividsolutions.jts.geom.Geometry;
+import eu.daiad.web.model.commons.EnumGroupType;
 
-@Entity(name = "community")
-@Table(schema = "public", name = "community")
-public class Community {
+@Entity(name = "cluster")
+@Table(schema = "public", name = "cluster")
+public class Cluster {
 
 	@Id()
 	@Column(name = "id")
-	@SequenceGenerator(sequenceName = "community_id_seq", name = "community_id_seq", allocationSize = 1, initialValue = 1)
-	@GeneratedValue(generator = "community_id_seq", strategy = GenerationType.SEQUENCE)
+	@SequenceGenerator(sequenceName = "cluster_id_seq", name = "cluster_id_seq", allocationSize = 1, initialValue = 1)
+	@GeneratedValue(generator = "cluster_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
 
 	@Column()
@@ -46,33 +46,20 @@ public class Community {
 	@JoinColumn(name = "utility_id", nullable = false)
 	private Utility utility;
 
-	@Column(name = "locale", columnDefinition = "bpchar", length = 2)
-	private String locale;
-
-	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
-	@JoinColumn(name = "community_id")
-	private Set<CommunityMember> members = new HashSet<CommunityMember>();
+	@OneToMany(cascade = { CascadeType.ALL })
+	@JoinColumn(name = "cluster_id")
+	private Set<GroupCluster> groups = new HashSet<GroupCluster>();
 
 	@Basic()
 	private String name;
-
-	@Basic()
-	private String description;
-
-	@Basic()
-	private int size;
-
-	@Basic(fetch = FetchType.LAZY)
-	@Type(type = "org.hibernate.type.BinaryType")
-	private byte image[];
 
 	@Column(name = "created_on")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime createdOn = new DateTime();
 
-	@Type(type = "org.hibernate.spatial.GeometryType")
-	@Column(name = "spatial")
-	private Geometry geometry;
+	public int getId() {
+		return id;
+	}
 
 	public Utility getUtility() {
 		return utility;
@@ -80,14 +67,6 @@ public class Community {
 
 	public void setUtility(Utility utility) {
 		this.utility = utility;
-	}
-
-	public String getLocale() {
-		return locale;
-	}
-
-	public void setLocale(String locale) {
-		this.locale = locale;
 	}
 
 	public String getName() {
@@ -98,30 +77,6 @@ public class Community {
 		this.name = name;
 	}
 
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
-	public int getSize() {
-		return size;
-	}
-
-	public void setSize(int size) {
-		this.size = size;
-	}
-
-	public byte[] getImage() {
-		return image;
-	}
-
-	public void setImage(byte[] image) {
-		this.image = image;
-	}
-
 	public DateTime getCreatedOn() {
 		return createdOn;
 	}
@@ -130,28 +85,20 @@ public class Community {
 		this.createdOn = createdOn;
 	}
 
-	public int getId() {
-		return id;
-	}
-
-	public Set<CommunityMember> getMembers() {
-		return members;
-	}
-
-	public Geometry getGeometry() {
-		return geometry;
-	}
-
-	public void setGeometry(Geometry geometry) {
-		this.geometry = geometry;
-	}
-
 	public long getRowVersion() {
 		return rowVersion;
 	}
 
 	public UUID getKey() {
 		return key;
+	}
+
+	public EnumGroupType getType() {
+		return EnumGroupType.UNDEFINED;
+	}
+
+	public Set<GroupCluster> getGroups() {
+		return groups;
 	}
 
 }

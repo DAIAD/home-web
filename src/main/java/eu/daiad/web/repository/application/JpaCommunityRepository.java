@@ -35,7 +35,7 @@ public class JpaCommunityRepository implements ICommunityRepository {
 
 			Account account = query.getSingleResult();
 
-			eu.daiad.web.domain.application.Community c = new eu.daiad.web.domain.application.Community();
+			eu.daiad.web.domain.application.GroupCommunity c = new eu.daiad.web.domain.application.GroupCommunity();
 
 			c.setCreatedOn(DateTime.now());
 			c.setDescription(community.getDescription());
@@ -46,8 +46,6 @@ public class JpaCommunityRepository implements ICommunityRepository {
 			}
 
 			c.setImage(community.getImage());
-			c.setLocale(community.getLocale());
-			c.setName(community.getName());
 			c.setSize(0);
 
 			c.setUtility(account.getUtility());
