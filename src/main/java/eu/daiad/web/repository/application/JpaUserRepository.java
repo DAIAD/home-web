@@ -604,7 +604,7 @@ public class JpaUserRepository implements IUserRepository {
 
 			List<?> keys = query.getResultList();
 			for (Object key : keys) {
-				result.add((UUID) key);
+				result.add(UUID.fromString((String) key));
 			}
 		} catch (Exception ex) {
 			logger.error(String.format("Failed to load user keys for group [%s].", groupKey), ex);
@@ -620,11 +620,9 @@ public class JpaUserRepository implements IUserRepository {
 							+ "inner join account a on u.id = a.utility_id where u.key = CAST(? as uuid)");
 			query.setParameter(1, utilityKey.toString());
 
-			@SuppressWarnings("unchecked")
-			List<String> keys = query.getResultList();
-
-			for (String key : keys) {
-				result.add(UUID.fromString(key));
+			List<?> keys = query.getResultList();
+			for (Object key : keys) {
+				result.add(UUID.fromString((String) key));
 			}
 		} catch (Exception ex) {
 			logger.error(String.format("Failed to load user keys for utility [%s]", utilityKey), ex);

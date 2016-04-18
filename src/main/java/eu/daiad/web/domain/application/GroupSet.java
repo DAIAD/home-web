@@ -1,6 +1,5 @@
 package eu.daiad.web.domain.application;
 
-import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -17,17 +16,6 @@ public class GroupSet extends Group {
 	@ManyToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
 	@JoinColumn(name = "owner_id", nullable = false)
 	private Account owner;
-
-	@Basic()
-	private String label;
-
-	public String getLabel() {
-		return label;
-	}
-
-	public void setLabel(String label) {
-		this.label = label;
-	}
 
 	@Override
 	public EnumGroupType getType() {

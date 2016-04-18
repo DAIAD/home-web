@@ -401,7 +401,6 @@ CREATE TABLE group_community (
 
 CREATE TABLE group_set (
 	id integer NOT NULL,
-    label character varying,
     owner_id int,
     CONSTRAINT pk_group_set PRIMARY KEY (id),
     CONSTRAINT fk_group_set_group FOREIGN KEY (id)
