@@ -172,6 +172,15 @@ public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService
 		// ABCD;ABCD;METER;17/02/2014 11:13:45;867;2;
 		String line = "";
 
+		// Set time zone
+		Set<String> zones = DateTimeZone.getAvailableIDs();
+		if (StringUtils.isBlank(timezone)) {
+			timezone = "UTC";
+		}
+		if (!zones.contains(timezone)) {
+			throw new ApplicationException(SharedErrorCode.TIMEZONE_NOT_FOUND).set("timezone", timezone);
+		}
+
 		DateTimeFormatter formatter = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss").withZone(
 						DateTimeZone.forID(timezone));
 

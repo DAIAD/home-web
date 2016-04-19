@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -96,7 +97,8 @@ public class SearchController extends BaseRestController {
 
 			String[] serials = this.checkMeterOwnership(user.getKey(), query.getDeviceKey());
 
-			WaterMeterMeasurementQueryResult data = waterMeterMeasurementRepository.searchMeasurements(serials, query);
+			WaterMeterMeasurementQueryResult data = waterMeterMeasurementRepository.searchMeasurements(serials,
+							DateTimeZone.forID(user.getTimezone()), query);
 
 			return data;
 		} catch (ApplicationException ex) {
@@ -123,7 +125,8 @@ public class SearchController extends BaseRestController {
 
 			this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
 
-			AmphiroMeasurementQueryResult data = amphiroMeasurementRepository.searchMeasurements(query);
+			AmphiroMeasurementQueryResult data = amphiroMeasurementRepository.searchMeasurements(
+							DateTimeZone.forID(user.getTimezone()), query);
 
 			return data;
 		} catch (ApplicationException ex) {
@@ -150,7 +153,8 @@ public class SearchController extends BaseRestController {
 
 			String[] names = this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
 
-			AmphiroSessionCollectionQueryResult data = amphiroMeasurementRepository.searchSessions(names, query);
+			AmphiroSessionCollectionQueryResult data = amphiroMeasurementRepository.searchSessions(names,
+							DateTimeZone.forID(user.getTimezone()), query);
 
 			return data;
 		} catch (ApplicationException ex) {

@@ -2,7 +2,11 @@ package eu.daiad.web.model.query;
 
 import java.util.ArrayList;
 
+import org.joda.time.DateTimeZone;
+
 public class ExpandedDataQuery {
+
+	private DateTimeZone timezone;
 
 	private long startDateTime;
 
@@ -13,6 +17,10 @@ public class ExpandedDataQuery {
 	private ArrayList<ExpandedPopulationFilter> groups = new ArrayList<ExpandedPopulationFilter>();
 
 	private EnumMetric metrics[];
+
+	public ExpandedDataQuery(DateTimeZone timezone) {
+		this.timezone = timezone;
+	}
 
 	public long getStartDateTime() {
 		return startDateTime;
@@ -48,6 +56,10 @@ public class ExpandedDataQuery {
 
 	public ArrayList<ExpandedPopulationFilter> getGroups() {
 		return groups;
+	}
+
+	public DateTimeZone getTimezone() {
+		return timezone;
 	}
 
 }

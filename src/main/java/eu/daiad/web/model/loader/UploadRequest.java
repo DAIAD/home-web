@@ -9,6 +9,8 @@ public class UploadRequest {
 	@JsonDeserialize(using = EnumUploadFileType.Deserializer.class)
 	private EnumUploadFileType type;
 
+	private String timezone;
+
 	private MultipartFile[] files;
 
 	public EnumUploadFileType getType() {
@@ -25,6 +27,14 @@ public class UploadRequest {
 
 	public void setFiles(MultipartFile[] files) {
 		this.files = files;
+	}
+
+	public String getTimezone() {
+		return timezone;
+	}
+
+	public void setTimezone(String timezone) {
+		this.timezone = timezone;
 	}
 
 }

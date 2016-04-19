@@ -343,56 +343,6 @@ CREATE TABLE public.device_meter
   CONSTRAINT enforce_srid_the_geom CHECK (st_srid(location) = 4326)
 );
 
--- community
-CREATE SEQUENCE community_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE TABLE community (
-    id integer NOT NULL DEFAULT nextval('community_id_seq'::regclass),
-    key uuid,
-    row_version  bigint default 1,
-    utility_id integer,
-	locale character(2),
-    name character varying(100),
-    created_on timestamp without time zone,
-    description character varying,
-    image bytea,
-    spatial geometry,
-    size integer,
-    CONSTRAINT pk_community PRIMARY KEY (id),
-    CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(spatial) = 2),
-    CONSTRAINT enforce_srid_the_geom CHECK (st_srid(spatial) = 4326),
-    CONSTRAINT fk_utility FOREIGN KEY (utility_id)
-        REFERENCES public.utility (id) MATCH SIMPLE
-            ON UPDATE CASCADE ON DELETE SET NULL
-);
-
-CREATE SEQUENCE community_member_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE TABLE community_member (
-    id integer NOT NULL DEFAULT nextval('community_member_id_seq'::regclass),
-    community_id integer,
-    account_id integer,
-    created_on timestamp without time zone,
-    ranking integer,
-    CONSTRAINT pk_community_member PRIMARY KEY (id),
-    CONSTRAINT fk_community_member_community FOREIGN KEY (community_id)
-        REFERENCES public.community (id) MATCH SIMPLE
-            ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT fk_community_member_account FOREIGN KEY (account_id)
-        REFERENCES public.account (id) MATCH SIMPLE
-            ON UPDATE CASCADE ON DELETE CASCADE
-);
-
 -- group
 CREATE SEQUENCE group_id_seq
     START WITH 1
@@ -436,6 +386,108 @@ CREATE TABLE group_member (
             ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT fk_group_member_account FOREIGN KEY (account_id)
         REFERENCES public.account (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE group_community (
+    id integer NOT NULL,
+    description character varying,
+    image bytea,
+    CONSTRAINT pk_group_community PRIMARY KEY (id),
+    CONSTRAINT fk_group_community_group FOREIGN KEY (id)
+        REFERENCES public."group" (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE SET NULL
+);
+
+CREATE TABLE group_set (
+	id integer NOT NULL,
+    owner_id int,
+    CONSTRAINT pk_group_set PRIMARY KEY (id),
+    CONSTRAINT fk_group_set_group FOREIGN KEY (id)
+        REFERENCES public."group" (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT fk_group_cluster_group FOREIGN KEY (owner_id)
+        REFERENCES public.account (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE SET NULL
+);
+
+-- clusters
+CREATE SEQUENCE cluster_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE TABLE "cluster" (
+    id integer NOT NULL DEFAULT nextval('cluster_id_seq'::regclass),
+    key uuid,
+    row_version  bigint default 1,
+    utility_id integer,
+    name character varying(100),
+    created_on timestamp without time zone,
+    CONSTRAINT pk_cluster PRIMARY KEY (id),
+	CONSTRAINT fk_cluster_utility FOREIGN KEY (utility_id)
+		REFERENCES public.utility (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE TABLE group_cluster (
+	id integer NOT NULL,
+    cluster_id int,
+    CONSTRAINT pk_group_cluster PRIMARY KEY (id),
+    CONSTRAINT fk_group_cluster_group FOREIGN KEY (id)
+        REFERENCES public."group" (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE SET NULL,
+	CONSTRAINT fk_group_cluster_cluster FOREIGN KEY (cluster_id)
+		REFERENCES public."cluster" (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+-- favourite
+CREATE SEQUENCE favourite_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE TABLE favourite (
+    id integer NOT NULL DEFAULT nextval('favourite_id_seq'::regclass),
+    key uuid,
+    row_version  bigint default 1,
+    owner_id integer,
+    label character varying(100),
+    created_on timestamp without time zone,
+    CONSTRAINT pk_favourite PRIMARY KEY (id),
+	CONSTRAINT fk_favourite_account FOREIGN KEY (owner_id)
+		REFERENCES public.account (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE TABLE public.favourite_account
+(
+  id integer NOT NULL,
+  account_id int,
+  CONSTRAINT pk_favourite_account PRIMARY KEY (id),
+  CONSTRAINT fk_favourite_account_favourite FOREIGN KEY (id)
+        REFERENCES public.favourite (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT fk_favourite_account_account FOREIGN KEY (account_id)
+        REFERENCES public.account (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.favourite_group
+(
+  id integer NOT NULL,
+  group_id int,
+  CONSTRAINT pk_favourite_group PRIMARY KEY (id),
+  CONSTRAINT fk_favourite_group_favourite FOREIGN KEY (id)
+        REFERENCES public.favourite (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT fk_favourite_group_group FOREIGN KEY (group_id)
+        REFERENCES public."group" (id) MATCH SIMPLE
             ON UPDATE CASCADE ON DELETE CASCADE
 );
 

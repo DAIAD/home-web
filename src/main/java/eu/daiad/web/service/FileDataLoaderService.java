@@ -182,7 +182,13 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 	}
 
 	@Override
-	public void importRandomAmphiroSessions(String filename) throws ApplicationException {
+	public void importRandomAmphiroSessions(String filename, String timezone) throws ApplicationException {
+
+		this.importRandomAmphiroSessions(filename, DateTimeZone.forID(timezone));
+	}
+
+	@Override
+	public void importRandomAmphiroSessions(String filename, DateTimeZone timezone) throws ApplicationException {
 		if (!ArrayUtils.contains(environment.getActiveProfiles(), "development")) {
 			return;
 		}
@@ -251,8 +257,8 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 				for (Device device : deviceRepository.getUserDevices(userKey, deviceQuery)) {
 					sessionQuery.setDeviceKey(new UUID[] { device.getKey() });
 
-					AmphiroMeasurementQueryResult existingSessions = amphiroMeasurementRepository
-									.searchMeasurements(sessionQuery);
+					AmphiroMeasurementQueryResult existingSessions = amphiroMeasurementRepository.searchMeasurements(
+									timezone, sessionQuery);
 					if ((existingSessions.getSeries() == null)
 									|| (existingSessions.getSeries().get(0).getPoints().size() == 0)) {
 						long showerId = 0;

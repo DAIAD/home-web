@@ -46,11 +46,12 @@ var Debug = React.createClass({
           start: moment().valueOf(),
           duration: -30,
           durationTimeUnit: 'DAY',
-          granularity: 'DAY'
+          granularity: 'MONTH'
         },
         population: [
-          { type :'USER', label: 'Bob', users: ['633fcd0d-6f9d-4d2d-97f1-4556b4b3caaf']},
-          { type :'UTILITY', label: 'Alicante', utility: '3e0663f2-d6c3-4d9a-8799-a2e8a24d0549'}
+          { type :'USER', label: 'User 1', users: ['633fcd0d-6f9d-4d2d-97f1-4556b4b3caaf'] },
+          { type :'GROUP', label: 'User Group 1', group: 'd0213b6c-69cd-4b16-a441-fdb373ba2014' },
+          { type :'UTILITY', label: 'Alicante', utility: '3e0663f2-d6c3-4d9a-8799-a2e8a24d0549' }
         ],
         spatial : {
           type: 'CONTAINS',

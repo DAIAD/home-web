@@ -122,7 +122,7 @@ public class DataController extends BaseController {
 
 							this.saveFile(filename, file.getBytes());
 
-							this.waterMeterDataLoaderService.parse(filename, "UTC");
+							this.waterMeterDataLoaderService.parse(filename, request.getTimezone());
 						}
 						break;
 					default:
