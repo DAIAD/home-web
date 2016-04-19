@@ -19,6 +19,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -82,11 +83,16 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 	@Value("${hbase.data.time.partitions}")
 	private short timePartitions;
 
+	@Value("${scanner-cache-size}")
+	private int scanCacheSize = 1;
+
 	private String amphiroTableMeasurements = "daiad:amphiro-measurements";
 
 	private String amphiroTableSessionByTime = "daiad:amphiro-sessions-by-time";
 
 	private String amphiroTableSessionByUser = "daiad:amphiro-sessions-by-user";
+
+	private String amphiroTableSessionIndex = "daiad:amphiro-sessions-index";
 
 	private String columnFamilyName = "cf";
 
@@ -117,6 +123,65 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 			}
 		} catch (Exception ex) {
 			logger.error(ERROR_RELEASE_RESOURCES, ex);
+		}
+	}
+
+	private void updateSessionIndex(Connection connection, UUID userKey, AmphiroMeasurementCollection data)
+					throws Exception {
+		Table table = null;
+		try {
+			if ((data == null) || (data.getSessions() == null)) {
+				return;
+			}
+			MessageDigest md = MessageDigest.getInstance("MD5");
+
+			table = connection.getTable(TableName.valueOf(this.amphiroTableSessionIndex));
+
+			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+			byte[] columnQualifier = Bytes.toBytes("ts");
+
+			for (int i = data.getSessions().size() - 1; i >= 0; i--) {
+				AmphiroSession s = data.getSessions().get(i);
+
+				byte[] userKeyBytes = userKey.toString().getBytes("UTF-8");
+				byte[] userKeyHash = md.digest(userKeyBytes);
+
+				byte[] deviceKey = data.getDeviceKey().toString().getBytes("UTF-8");
+				byte[] deviceKeyHash = md.digest(deviceKey);
+
+				byte[] sessionIdBytes = Bytes.toBytes(s.getId());
+
+				byte[] rowKey = new byte[userKeyHash.length + deviceKeyHash.length + sessionIdBytes.length];
+
+				System.arraycopy(userKeyHash, 0, rowKey, 0, userKeyHash.length);
+				System.arraycopy(deviceKeyHash, 0, rowKey, userKeyHash.length, deviceKeyHash.length);
+				System.arraycopy(sessionIdBytes, 0, rowKey, (userKeyHash.length + deviceKeyHash.length),
+								sessionIdBytes.length);
+
+				Get get = new Get(rowKey);
+
+				if (table.get(get).getRow() == null) {
+					Put put = new Put(rowKey);
+					put.addColumn(columnFamily, columnQualifier, Bytes.toBytes(s.getTimestamp()));
+
+					table.put(put);
+				} else {
+					data.getSessions().remove(i);
+					for (int j = data.getMeasurements().size() - 1; j >= 0; j--) {
+						if (data.getMeasurements().get(j).getSessionId() == i) {
+							data.getMeasurements().remove(j);
+						}
+					}
+				}
+			}
+		} finally {
+			try {
+				if (table != null) {
+					table.close();
+				}
+			} catch (Exception ex) {
+				logger.error(ERROR_RELEASE_RESOURCES, ex);
+			}
 		}
 	}
 
@@ -511,6 +576,8 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 			}
 
 			this.preProcessData(data);
+
+			this.updateSessionIndex(connection, userKey, data);
 
 			this.storeSessionByUser(connection, userKey, data);
 			this.storeSessionByTime(connection, userKey, data);
@@ -1231,6 +1298,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 
 			for (short p = 0; p < timePartitions; p++) {
 				Scan scan = new Scan();
+				scan.setCaching(this.scanCacheSize);
 				scan.addFamily(columnFamily);
 
 				byte[] partitionBytes = Bytes.toBytes(p);
