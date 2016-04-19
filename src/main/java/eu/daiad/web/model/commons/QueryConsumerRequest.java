@@ -2,9 +2,7 @@ package eu.daiad.web.model.commons;
 
 import com.vividsolutions.jts.geom.Geometry;
 
-import eu.daiad.web.model.AuthenticatedRequest;
-
-public class SearchCommonsRequest extends AuthenticatedRequest {
+public class QueryConsumerRequest {
 
 	private String name;
 
