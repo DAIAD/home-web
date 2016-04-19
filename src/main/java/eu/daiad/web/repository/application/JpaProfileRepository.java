@@ -332,29 +332,30 @@ public class JpaProfileRepository implements IProfileRepository {
 						//Get the current (active and inactive) configurations and set them as inactive
 						Set<eu.daiad.web.domain.application.Device> devices = account.getDevices();
 						for (eu.daiad.web.domain.application.Device device : devices){
-							
-							DeviceAmphiroConfiguration newConfiguration = new DeviceAmphiroConfiguration();
-							
-							newConfiguration.setActive(true);
-							newConfiguration.setCreatedOn(new DateTime());
-							newConfiguration.setTitle(newDefaultConfiguration.getTitle());
-							newConfiguration.setBlock(newDefaultConfiguration.getBlock());
-							newConfiguration.setValue1(newDefaultConfiguration.getValue1());
-							newConfiguration.setValue2(newDefaultConfiguration.getValue2());
-							newConfiguration.setValue3(newDefaultConfiguration.getValue3());
-							newConfiguration.setValue4(newDefaultConfiguration.getValue4());
-							newConfiguration.setValue5(newDefaultConfiguration.getValue5());
-							newConfiguration.setValue6(newDefaultConfiguration.getValue6());
-							newConfiguration.setValue7(newDefaultConfiguration.getValue7());
-							newConfiguration.setValue8(newDefaultConfiguration.getValue8());
-							newConfiguration.setValue9(newDefaultConfiguration.getValue9());
-							newConfiguration.setValue10(newDefaultConfiguration.getValue10());
-							newConfiguration.setValue11(newDefaultConfiguration.getValue11());
-							newConfiguration.setValue12(newDefaultConfiguration.getValue12());
-							newConfiguration.setNumberOfFrames(newDefaultConfiguration.getNumberOfFrames());
-							newConfiguration.setFrameDuration(newDefaultConfiguration.getFrameDuration());
-							
+
 							if (device.getType() == EnumDeviceType.AMPHIRO){
+								
+								DeviceAmphiroConfiguration newConfiguration = new DeviceAmphiroConfiguration();
+								
+								newConfiguration.setActive(true);
+								newConfiguration.setCreatedOn(new DateTime());
+								newConfiguration.setTitle(newDefaultConfiguration.getTitle());
+								newConfiguration.setBlock(newDefaultConfiguration.getBlock());
+								newConfiguration.setValue1(newDefaultConfiguration.getValue1());
+								newConfiguration.setValue2(newDefaultConfiguration.getValue2());
+								newConfiguration.setValue3(newDefaultConfiguration.getValue3());
+								newConfiguration.setValue4(newDefaultConfiguration.getValue4());
+								newConfiguration.setValue5(newDefaultConfiguration.getValue5());
+								newConfiguration.setValue6(newDefaultConfiguration.getValue6());
+								newConfiguration.setValue7(newDefaultConfiguration.getValue7());
+								newConfiguration.setValue8(newDefaultConfiguration.getValue8());
+								newConfiguration.setValue9(newDefaultConfiguration.getValue9());
+								newConfiguration.setValue10(newDefaultConfiguration.getValue10());
+								newConfiguration.setValue11(newDefaultConfiguration.getValue11());
+								newConfiguration.setValue12(newDefaultConfiguration.getValue12());
+								newConfiguration.setNumberOfFrames(newDefaultConfiguration.getNumberOfFrames());
+								newConfiguration.setFrameDuration(newDefaultConfiguration.getFrameDuration());
+								
 								DeviceAmphiro deviceAmphiro = (DeviceAmphiro) device;
 								for (DeviceAmphiroConfiguration currentConfiguration : deviceAmphiro.getConfigurations()){
 									currentConfiguration.setActive(false);
@@ -457,29 +458,29 @@ public class JpaProfileRepository implements IProfileRepository {
 			Set<eu.daiad.web.domain.application.Device> devices = account.getDevices();
 			for (eu.daiad.web.domain.application.Device device : devices){
 				
-				// Selecting the suitable default configuration
-				DeviceAmphiroConfiguration newConfiguration = new DeviceAmphiroConfiguration();
-				
-				newConfiguration.setActive(true);
-				newConfiguration.setCreatedOn(new DateTime());
-				newConfiguration.setTitle(offConfiguration.getTitle());
-				newConfiguration.setBlock(offConfiguration.getBlock());
-				newConfiguration.setValue1(offConfiguration.getValue1());
-				newConfiguration.setValue2(offConfiguration.getValue2());
-				newConfiguration.setValue3(offConfiguration.getValue3());
-				newConfiguration.setValue4(offConfiguration.getValue4());
-				newConfiguration.setValue5(offConfiguration.getValue5());
-				newConfiguration.setValue6(offConfiguration.getValue6());
-				newConfiguration.setValue7(offConfiguration.getValue7());
-				newConfiguration.setValue8(offConfiguration.getValue8());
-				newConfiguration.setValue9(offConfiguration.getValue9());
-				newConfiguration.setValue10(offConfiguration.getValue10());
-				newConfiguration.setValue11(offConfiguration.getValue11());
-				newConfiguration.setValue12(offConfiguration.getValue12());
-				newConfiguration.setNumberOfFrames(offConfiguration.getNumberOfFrames());
-				newConfiguration.setFrameDuration(offConfiguration.getFrameDuration());
-				
 				if (device.getType() == EnumDeviceType.AMPHIRO){
+
+					DeviceAmphiroConfiguration newConfiguration = new DeviceAmphiroConfiguration();
+					
+					newConfiguration.setActive(true);
+					newConfiguration.setCreatedOn(new DateTime());
+					newConfiguration.setTitle(offConfiguration.getTitle());
+					newConfiguration.setBlock(offConfiguration.getBlock());
+					newConfiguration.setValue1(offConfiguration.getValue1());
+					newConfiguration.setValue2(offConfiguration.getValue2());
+					newConfiguration.setValue3(offConfiguration.getValue3());
+					newConfiguration.setValue4(offConfiguration.getValue4());
+					newConfiguration.setValue5(offConfiguration.getValue5());
+					newConfiguration.setValue6(offConfiguration.getValue6());
+					newConfiguration.setValue7(offConfiguration.getValue7());
+					newConfiguration.setValue8(offConfiguration.getValue8());
+					newConfiguration.setValue9(offConfiguration.getValue9());
+					newConfiguration.setValue10(offConfiguration.getValue10());
+					newConfiguration.setValue11(offConfiguration.getValue11());
+					newConfiguration.setValue12(offConfiguration.getValue12());
+					newConfiguration.setNumberOfFrames(offConfiguration.getNumberOfFrames());
+					newConfiguration.setFrameDuration(offConfiguration.getFrameDuration());
+					
 					DeviceAmphiro deviceAmphiro = (DeviceAmphiro) device;
 					for (DeviceAmphiroConfiguration currentConfiguration : deviceAmphiro.getConfigurations()){
 						currentConfiguration.setActive(false);
