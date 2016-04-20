@@ -495,11 +495,10 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 			for (AmphiroMeasurement m : measurements) {
 				for (AmphiroSession s : sessions) {
 					if (m.getSessionId() == s.getId()) {
-						if ((s.isHistory()) && (s.getTimestamp() != m.getTimestamp())) {
-							throw new ApplicationException(DataErrorCode.HISTORY_SESSION_MEASUREMENT_TIMESTAMP_MISMATCH)
-											.set("session", m.getSessionId()).set("index", m.getIndex());
+						if(s.isHistory()) {
+							throw new ApplicationException(DataErrorCode.HISTORY_SESSION_MEASUREMENT_FOUND).set("session",
+											m.getSessionId()).set("index", m.getIndex());
 						}
-
 						m.setSession(s);
 						break;
 					}
@@ -525,69 +524,25 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 			for (int i = 0; i < data.getMeasurements().size(); i++) {
 				AmphiroMeasurement m = data.getMeasurements().get(i);
 
+				if (m.getVolume() <= 0) {
+					continue;
+				}
+
 				byte[] userKeyBytes = userKey.toString().getBytes("UTF-8");
 				byte[] userKeyHash = md.digest(userKeyBytes);
 
 				byte[] deviceKey = data.getDeviceKey().toString().getBytes("UTF-8");
 				byte[] deviceKeyHash = md.digest(deviceKey);
 
-				long timestamp, timeBucket, timeSlice;
+				long timestamp = m.getTimestamp() / 1000;
 
-				byte[] timeBucketBytes, timeSliceBytes, rowKey, column;
+				long timeSlice = timestamp % EnumTimeInterval.HOUR.getValue();
+				byte[] timeSliceBytes = Bytes.toBytes((short) timeSlice);
 
-				AmphiroSession s = m.getSession();
+				long timeBucket = timestamp - timeSlice;
+				byte[] timeBucketBytes = Bytes.toBytes(timeBucket);
 
-				if ((!s.isHistory()) && (s.getDelete() != null) && (s.getTimestamp() != s.getDelete().getTimestamp())) {
-					timestamp = s.getDelete().getTimestamp() / 1000;
-
-					timeSlice = timestamp % EnumTimeInterval.HOUR.getValue();
-					timeSliceBytes = Bytes.toBytes((short) timeSlice);
-
-					timeBucket = timestamp - timeSlice;
-					timeBucketBytes = Bytes.toBytes(timeBucket);
-
-					rowKey = new byte[userKeyHash.length + deviceKeyHash.length + timeBucketBytes.length];
-					System.arraycopy(userKeyHash, 0, rowKey, 0, userKeyHash.length);
-					System.arraycopy(deviceKeyHash, 0, rowKey, userKeyHash.length, deviceKeyHash.length);
-					System.arraycopy(timeBucketBytes, 0, rowKey, (userKeyHash.length + deviceKeyHash.length),
-									timeBucketBytes.length);
-
-					Delete delete = new Delete(rowKey);
-
-					column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("s")));
-					delete.addColumns(columnFamily, column);
-
-					column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("i")));
-					delete.addColumns(columnFamily, column);
-
-					column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("v")));
-					delete.addColumns(columnFamily, column);
-
-					column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("t")));
-					delete.addColumns(columnFamily, column);
-
-					column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("e")));
-					delete.addColumns(columnFamily, column);
-
-					column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("h")));
-					delete.addColumns(columnFamily, column);
-
-					table.delete(delete);
-				}
-
-				if (m.getVolume() <= 0) {
-					continue;
-				}
-
-				timestamp = m.getTimestamp() / 1000;
-
-				timeSlice = timestamp % EnumTimeInterval.HOUR.getValue();
-				timeSliceBytes = Bytes.toBytes((short) timeSlice);
-
-				timeBucket = timestamp - timeSlice;
-				timeBucketBytes = Bytes.toBytes(timeBucket);
-
-				rowKey = new byte[userKeyHash.length + deviceKeyHash.length + timeBucketBytes.length];
+				byte[] rowKey = new byte[userKeyHash.length + deviceKeyHash.length + timeBucketBytes.length];
 				System.arraycopy(userKeyHash, 0, rowKey, 0, userKeyHash.length);
 				System.arraycopy(deviceKeyHash, 0, rowKey, userKeyHash.length, deviceKeyHash.length);
 				System.arraycopy(timeBucketBytes, 0, rowKey, (userKeyHash.length + deviceKeyHash.length),
@@ -595,7 +550,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 
 				Put p = new Put(rowKey);
 
-				column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("s")));
+				byte[] column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("s")));
 				p.addColumn(columnFamily, column, Bytes.toBytes(m.getSessionId()));
 
 				column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("i")));
