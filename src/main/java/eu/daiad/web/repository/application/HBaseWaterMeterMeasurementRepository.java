@@ -42,9 +42,13 @@ import eu.daiad.web.model.meter.WaterMeterMeasurementQuery;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQueryResult;
 import eu.daiad.web.model.meter.WaterMeterStatus;
 import eu.daiad.web.model.meter.WaterMeterStatusQueryResult;
+import eu.daiad.web.model.query.DataPoint;
 import eu.daiad.web.model.query.ExpandedDataQuery;
 import eu.daiad.web.model.query.ExpandedPopulationFilter;
 import eu.daiad.web.model.query.GroupDataSeries;
+import eu.daiad.web.model.query.MeterUserDataPoint;
+import eu.daiad.web.model.query.RankingDataPoint;
+import eu.daiad.web.model.query.UserDataPoint;
 
 @Repository()
 @Scope("prototype")
@@ -767,9 +771,16 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 									for (ExpandedPopulationFilter filter : query.getGroups()) {
 										GroupDataSeries series = result.get(filterIndex);
 
-										if (inArray(filter.getSerials(), serialHash)) {
-											series.addDataPoint(query.getGranularity(), timestamp, difference,
-															query.getMetrics(), query.getTimezone());
+										int index = inArray(filter.getSerials(), serialHash);
+										if (index >= 0) {
+											if (filter.getRanking() == null) {
+												series.addDataPoint(query.getGranularity(), timestamp, difference,
+																query.getMetrics(), query.getTimezone());
+											} else {
+												series.addRankingDataPoint(query.getGranularity(), filter.getUsers()
+																.get(index), filter.getLabels().get(index), timestamp,
+																difference, query.getMetrics(), query.getTimezone());
+											}
 										}
 
 										filterIndex++;
@@ -799,15 +810,66 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 			}
 		}
 
+		// Post process ranked results
+		int index = 0;
+		for (final ExpandedPopulationFilter filter : query.getGroups()) {
+			if (filter.getRanking() != null) {
+				GroupDataSeries series = result.get(index);
+
+				for (DataPoint point : series.getPoints()) {
+					RankingDataPoint ranking = (RankingDataPoint) point;
+
+					Collections.sort(ranking.getUsers(), new Comparator<UserDataPoint>() {
+
+						@Override
+						public int compare(UserDataPoint u1, UserDataPoint u2) {
+							MeterUserDataPoint m1 = (MeterUserDataPoint) u1;
+							MeterUserDataPoint m2 = (MeterUserDataPoint) u2;
+
+							if (m1.getVolume().get(filter.getRanking().getMetric()) < m2.getVolume().get(
+											filter.getRanking().getMetric())) {
+								return -1;
+							}
+							if (m1.getVolume().get(filter.getRanking().getMetric()) > m2.getVolume().get(
+											filter.getRanking().getMetric())) {
+								return 1;
+							}
+							return 0;
+						}
+					});
+
+					int limit = filter.getRanking().getLimit();
+					switch (filter.getRanking().getType()) {
+						case TOP:
+							for (int i = 0, max = ranking.getUsers().size() - limit; i < max; i++) {
+								ranking.getUsers().remove(0);
+							}
+							break;
+						case BOTTOM:
+							for (int i = ranking.getUsers().size() - 1, max = limit - 1; i > max; i--) {
+								ranking.getUsers().remove(i);
+							}
+							break;
+						default:
+							series.getPoints().clear();
+							break;
+					}
+				}
+			}
+			index++;
+		}
+
 		return result;
 	}
 
-	private boolean inArray(ArrayList<byte[]> group, byte[] hash) {
-		for (byte[] entry : group) {
+	private int inArray(ArrayList<byte[]> array, byte[] hash) {
+		int index = 0;
+		for (byte[] entry : array) {
 			if (Arrays.equals(entry, hash)) {
-				return true;
+				return index;
 			}
+			index++;
 		}
-		return false;
+		return -1;
 	}
 }

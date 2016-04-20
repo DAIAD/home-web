@@ -1,14 +1,11 @@
 package eu.daiad.web.model.query;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class DataPoint {
 
 	enum EnumDataPointType {
-		METER, AMPHIRO;
+		UNDEFINED, METER, AMPHIRO, RANKING;
 	}
 
 	@JsonIgnore
@@ -16,15 +13,13 @@ public class DataPoint {
 
 	private Long timestamp = null;
 
-	private Map<EnumMetric, Double> volume = new HashMap<EnumMetric, Double>();
-
 	public DataPoint() {
-		this.type = EnumDataPointType.METER;
+		this.type = EnumDataPointType.UNDEFINED;
 	}
 
 	public DataPoint(long timestamp) {
 		this.timestamp = timestamp;
-		this.type = EnumDataPointType.METER;
+		this.type = EnumDataPointType.UNDEFINED;
 	}
 
 	public Long getTimestamp() {
@@ -33,10 +28,6 @@ public class DataPoint {
 
 	public void setTimestamp(Long timestamp) {
 		this.timestamp = timestamp;
-	}
-
-	public Map<EnumMetric, Double> getVolume() {
-		return volume;
 	}
 
 	public EnumDataPointType getType() {

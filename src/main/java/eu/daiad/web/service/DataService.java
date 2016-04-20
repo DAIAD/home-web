@@ -19,6 +19,7 @@ import eu.daiad.web.model.error.UserErrorCode;
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumMeasurementDataSource;
+import eu.daiad.web.model.query.EnumRankingType;
 import eu.daiad.web.model.query.ExpandedDataQuery;
 import eu.daiad.web.model.query.ExpandedPopulationFilter;
 import eu.daiad.web.model.query.GroupPopulationFilter;
@@ -68,8 +69,23 @@ public class DataService implements IDataService {
 				MessageDigest md = MessageDigest.getInstance("MD5");
 
 				for (PopulationFilter filter : query.getPopulation()) {
+					// Initialize ranking settings
+					if (filter.getRanking() != null) {
+						if (filter.getRanking().getType().equals(EnumRankingType.UNDEFINED)) {
+							filter.getRanking().setType(EnumRankingType.TOP);
+						}
+						if ((filter.getRanking().getLimit() == null) || (filter.getRanking().getLimit() < 1)) {
+							filter.getRanking().setLimit(1);
+						}
+					}
 
-					ExpandedPopulationFilter expandedPopulationFilter = new ExpandedPopulationFilter(filter.getLabel());
+					// Construct expanded population filter
+					ExpandedPopulationFilter expandedPopulationFilter;
+					if (filter.getRanking() == null) {
+						expandedPopulationFilter = new ExpandedPopulationFilter(filter.getLabel());
+					} else {
+						expandedPopulationFilter = new ExpandedPopulationFilter(filter.getLabel(), filter.getRanking());
+					}
 
 					ArrayList<UUID> filterUsers = null;
 					switch (filter.getType()) {
@@ -87,6 +103,7 @@ public class DataService implements IDataService {
 						default:
 							// Ignore
 					}
+
 					if (filterUsers.size() > 0) {
 						for (UUID userKey : filterUsers) {
 							AuthenticatedUser user = userRepository.getUserByUtilityAndKey(
@@ -145,11 +162,17 @@ public class DataService implements IDataService {
 								}
 								if (includeUser) {
 									expandedPopulationFilter.getUsers().add(userKey);
+									if (filter.getRanking() != null) {
+										expandedPopulationFilter.getLabels().add(user.getUsername());
+									}
 									expandedPopulationFilter.getHashes().add(
 													md.digest(userKey.toString().getBytes("UTF-8")));
 								}
 							} else {
 								expandedPopulationFilter.getUsers().add(userKey);
+								if (filter.getRanking() != null) {
+									expandedPopulationFilter.getLabels().add(user.getUsername());
+								}
 								expandedPopulationFilter.getHashes().add(
 												md.digest(userKey.toString().getBytes("UTF-8")));
 							}

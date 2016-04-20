@@ -495,9 +495,9 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 			for (AmphiroMeasurement m : measurements) {
 				for (AmphiroSession s : sessions) {
 					if (m.getSessionId() == s.getId()) {
-						if(s.isHistory()) {
-							throw new ApplicationException(DataErrorCode.HISTORY_SESSION_MEASUREMENT_FOUND).set("session",
-											m.getSessionId()).set("index", m.getIndex());
+						if (s.isHistory()) {
+							throw new ApplicationException(DataErrorCode.HISTORY_SESSION_MEASUREMENT_FOUND).set(
+											"session", m.getSessionId()).set("index", m.getIndex());
 						}
 						m.setSession(s);
 						break;
@@ -586,12 +586,12 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 				return;
 			}
 
+			this.preProcessData(data);
+
 			if (!this.isOpen()) {
 				this.open();
 				autoClose = true;
 			}
-
-			this.preProcessData(data);
 
 			this.updateSessionIndex(connection, userKey, data);
 
@@ -1362,7 +1362,8 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 						for (ExpandedPopulationFilter filter : query.getGroups()) {
 							GroupDataSeries series = result.get(filterIndex);
 
-							if (inArray(filter.getHashes(), userHash)) {
+							int index = inArray(filter.getHashes(), userHash);
+							if (index >= 0) {
 								long timestamp = 0;
 								float volume = 0;
 								float energy = 0;
@@ -1398,8 +1399,14 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 									}
 								}
 
-								series.addDataPoint(query.getGranularity(), timestamp, volume, energy, duration,
-												temperature, flow, query.getMetrics(), query.getTimezone());
+								if (filter.getRanking() == null) {
+									series.addDataPoint(query.getGranularity(), timestamp, volume, energy, duration,
+													temperature, flow, query.getMetrics(), query.getTimezone());
+								} else {
+									series.addRankingDataPoint(query.getGranularity(), filter.getUsers().get(index),
+													filter.getLabels().get(index), timestamp, volume, energy, duration,
+													temperature, flow, query.getMetrics(), query.getTimezone());
+								}
 							}
 
 							filterIndex++;
@@ -1439,12 +1446,14 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 		}
 	}
 
-	private boolean inArray(ArrayList<byte[]> group, byte[] hash) {
-		for (byte[] entry : group) {
+	private int inArray(ArrayList<byte[]> array, byte[] hash) {
+		int index = 0;
+		for (byte[] entry : array) {
 			if (Arrays.equals(entry, hash)) {
-				return true;
+				return index;
 			}
+			index++;
 		}
-		return false;
+		return -1;
 	}
 }

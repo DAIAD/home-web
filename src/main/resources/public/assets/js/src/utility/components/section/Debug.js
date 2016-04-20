@@ -46,12 +46,23 @@ var Debug = React.createClass({
           start: moment().valueOf(),
           duration: -30,
           durationTimeUnit: 'DAY',
-          granularity: 'MONTH'
+          granularity: 'DAY'
         },
         population: [
-          { type :'USER', label: 'User 1', users: ['633fcd0d-6f9d-4d2d-97f1-4556b4b3caaf'] },
-          { type :'GROUP', label: 'User Group 1', group: 'd0213b6c-69cd-4b16-a441-fdb373ba2014' },
-          { type :'UTILITY', label: 'Alicante', utility: '3e0663f2-d6c3-4d9a-8799-a2e8a24d0549' }
+          {
+            type :'USER',
+            label: 'User 1',
+            users: ['63078a88-f75a-4c5e-8d75-b4472ba456bb']
+          }, {
+            type :'UTILITY',
+            label: 'Alicante',
+            utility: '2b48083d-6f05-488f-9f9b-99607a93c6c3',
+            ranking: {
+              type: 'TOP',
+              metric: 'AVERAGE',
+              limit: 2
+            }
+          }
         ],
         spatial : {
           type: 'CONTAINS',
@@ -91,7 +102,7 @@ var Debug = React.createClass({
             ]
           }
         },
-        source: 'ALL',
+        source: 'METER',
         metrics: ['SUM', 'COUNT', 'MIN', 'MAX', 'AVERAGE']
     };
     

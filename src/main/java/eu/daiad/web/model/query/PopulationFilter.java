@@ -16,12 +16,19 @@ public abstract class PopulationFilter {
 
 	private String label;
 
+	private Ranking ranking;
+
 	public PopulationFilter() {
 
 	}
 
 	public PopulationFilter(String label) {
 		this.label = label;
+	}
+
+	public PopulationFilter(String label, Ranking ranking) {
+		this.label = label;
+		this.ranking = ranking;
 	}
 
 	public String getLabel() {
@@ -33,4 +40,9 @@ public abstract class PopulationFilter {
 	}
 
 	public abstract EnumPopulationFilterType getType();
+
+	public Ranking getRanking() {
+		return ranking;
+	}
+
 }

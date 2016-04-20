@@ -2,8 +2,9 @@ package eu.daiad.web.model.query;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
-public class AmphiroDataPoint extends DataPoint {
+public class AmphiroUserDataPoint extends UserDataPoint {
 
 	private Map<EnumMetric, Double> volume = new HashMap<EnumMetric, Double>();
 
@@ -15,13 +16,8 @@ public class AmphiroDataPoint extends DataPoint {
 
 	private Map<EnumMetric, Double> flow = new HashMap<EnumMetric, Double>();
 
-	public AmphiroDataPoint() {
-		this.type = EnumDataPointType.AMPHIRO;
-	}
-
-	public AmphiroDataPoint(long timestamp) {
-		super(timestamp);
-		this.type = EnumDataPointType.AMPHIRO;
+	public AmphiroUserDataPoint(UUID key, String label) {
+		super(key, label);
 	}
 
 	public Map<EnumMetric, Double> getDuration() {
@@ -43,5 +39,4 @@ public class AmphiroDataPoint extends DataPoint {
 	public Map<EnumMetric, Double> getVolume() {
 		return volume;
 	}
-
 }

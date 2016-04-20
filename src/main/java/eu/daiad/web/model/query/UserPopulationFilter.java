@@ -28,6 +28,20 @@ public class UserPopulationFilter extends PopulationFilter {
 		}
 	}
 
+	public UserPopulationFilter(String label, UUID[] users, Ranking ranking) {
+		super(label, ranking);
+		for (UUID userKey : users) {
+			this.users.add(userKey);
+		}
+	}
+
+	public UserPopulationFilter(String label, UUID[] users, EnumRankingType ranking, EnumMetric metric, int limit) {
+		super(label, new Ranking(ranking, metric, limit));
+		for (UUID userKey : users) {
+			this.users.add(userKey);
+		}
+	}
+
 	public ArrayList<UUID> getUsers() {
 		return users;
 	}
