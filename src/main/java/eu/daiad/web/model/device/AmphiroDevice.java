@@ -11,20 +11,19 @@ public class AmphiroDevice extends Device {
 	private String name;
 
 	private String macAddress;
-	
+
 	private String aesKey;
 
-	public AmphiroDevice(UUID key, String name, String macAddress, String aesKey) {
-		super(key);
+	public AmphiroDevice(int ownerId, UUID key, String name, String macAddress, String aesKey) {
+		super(ownerId, key);
 
 		this.name = name;
 		this.macAddress = macAddress;
 		this.aesKey = aesKey;
 	}
 
-	public AmphiroDevice(UUID key, String name, String macAddress,
-			ArrayList<KeyValuePair> properties) {
-		super(key, properties);
+	public AmphiroDevice(int ownerId, UUID key, String name, String macAddress, ArrayList<KeyValuePair> properties) {
+		super(ownerId, key, properties);
 
 		this.name = name;
 		this.macAddress = macAddress;
@@ -60,11 +59,9 @@ public class AmphiroDevice extends Device {
 		r.setMacAddress(this.getMacAddress());
 		r.setAesKey(this.getAesKey());
 
-		for (Iterator<KeyValuePair> p = this.getProperties().iterator(); p
-				.hasNext();) {
+		for (Iterator<KeyValuePair> p = this.getProperties().iterator(); p.hasNext();) {
 			KeyValuePair property = p.next();
-			r.getProperties().add(
-					new KeyValuePair(property.getKey(), property.getValue()));
+			r.getProperties().add(new KeyValuePair(property.getKey(), property.getValue()));
 		}
 
 		return r;

@@ -1,3 +1,9 @@
+-- procedures
+DROP FUNCTION IF EXISTS sp_account_update_stats(account_id integer, success boolean, login_date timestamp with time zone);
+
+-- views
+DROP VIEW IF EXISTS public.trial_account_activity;
+
 -- alert
 DROP TABLE IF EXISTS public.account_alert_property;
 
@@ -51,23 +57,34 @@ DROP SEQUENCE IF EXISTS public.static_recommendation_id_seq;
 
 DROP TABLE IF EXISTS public.static_recommendation_category;
 
+-- favourite
+DROP TABLE IF EXISTS public.favourite_account;
+
+DROP TABLE IF EXISTS public.favourite_group;
+
+DROP TABLE IF EXISTS public.favourite;
+
+DROP SEQUENCE IF EXISTS public.favourite_id_seq;
+
+-- cluster
+DROP TABLE IF EXISTS public.group_cluster;
+
+DROP TABLE IF EXISTS public."cluster";
+
+DROP SEQUENCE IF EXISTS public.cluster_id_seq;
+
 -- group
 DROP TABLE IF EXISTS public.group_member;
 
 DROP SEQUENCE IF EXISTS public.group_member_id_seq;
 
+DROP TABLE IF EXISTS public.group_set;
+
+DROP TABLE IF EXISTS public.group_community;
+
 DROP TABLE IF EXISTS public."group";
 
 DROP SEQUENCE IF EXISTS public.group_id_seq;
-
--- community
-DROP TABLE IF EXISTS public.community_member;
-
-DROP SEQUENCE IF EXISTS public.community_member_id_seq;
-
-DROP TABLE IF EXISTS public.community;
-
-DROP SEQUENCE IF EXISTS public.community_id_seq;
 
 -- device
 DROP TABLE IF EXISTS public.device_meter;

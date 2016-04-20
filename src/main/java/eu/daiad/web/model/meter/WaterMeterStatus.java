@@ -6,18 +6,20 @@ public class WaterMeterStatus {
 
 	private UUID deviceKey;
 
+	private String serial;
+
 	private long timestamp;
-	
+
 	private float volume;
 
 	private float variation;
 
-	public UUID getDeviceKey() {
-		return deviceKey;
+	public WaterMeterStatus(String serial) {
+		this.serial = serial;
 	}
 
-	public void setDeviceKey(UUID deviceKey) {
-		this.deviceKey = deviceKey;
+	public UUID getDeviceKey() {
+		return deviceKey;
 	}
 
 	public float getVariation() {
@@ -44,5 +46,12 @@ public class WaterMeterStatus {
 		this.volume = volume;
 	}
 
+	public String getSerial() {
+		return serial;
+	}
+
+	public void setDeviceKey(UUID deviceKey) {
+		this.deviceKey = deviceKey;
+	}
 
 }

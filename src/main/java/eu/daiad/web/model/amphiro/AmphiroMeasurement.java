@@ -1,5 +1,7 @@
 package eu.daiad.web.model.amphiro;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class AmphiroMeasurement {
 
 	private long sessionId;
@@ -15,6 +17,9 @@ public class AmphiroMeasurement {
 	private float volume;
 
 	private float energy;
+
+	@JsonIgnore
+	private AmphiroSession session;
 
 	public long getSessionId() {
 		return sessionId;
@@ -71,5 +76,13 @@ public class AmphiroMeasurement {
 	public void setEnergy(float energy) {
 		this.energy = energy;
 	}
-	
+
+	public AmphiroSession getSession() {
+		return session;
+	}
+
+	public void setSession(AmphiroSession session) {
+		this.session = session;
+	}
+
 }

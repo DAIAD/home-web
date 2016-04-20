@@ -16,6 +16,7 @@ var UserSettings = React.createClass({
 	},
 	
   	render: function() {
+  		console.log('RENDERING UserSettings ...........................');
   		var _t = this.context.intl.formatMessage;
 
   		return (

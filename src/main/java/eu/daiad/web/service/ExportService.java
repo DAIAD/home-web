@@ -3,17 +3,20 @@ package eu.daiad.web.service;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
-import java.rmi.server.ExportException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.DataFormat;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -21,14 +24,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import eu.daiad.web.data.IAmphiroMeasurementRepository;
+import eu.daiad.web.model.TemporalConstants;
+import eu.daiad.web.model.amphiro.AmphiroAbstractSession;
+import eu.daiad.web.model.amphiro.AmphiroSession;
+import eu.daiad.web.model.amphiro.AmphiroSessionCollection;
+import eu.daiad.web.model.amphiro.AmphiroSessionCollectionQuery;
+import eu.daiad.web.model.amphiro.AmphiroSessionCollectionQueryResult;
 import eu.daiad.web.model.error.ApplicationException;
-import eu.daiad.web.model.error.ExportErrorCode;
-import eu.daiad.web.model.export.ExportDataRequest;
-import eu.daiad.web.model.export.ExtendedSessionData;
+import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.model.export.ExportUserDataQuery;
+import eu.daiad.web.model.meter.WaterMeterDataPoint;
+import eu.daiad.web.model.meter.WaterMeterDataSeries;
+import eu.daiad.web.model.meter.WaterMeterMeasurementQuery;
+import eu.daiad.web.model.meter.WaterMeterMeasurementQueryResult;
+import eu.daiad.web.repository.application.IAmphiroMeasurementRepository;
+import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 
 @Service
 public class ExportService implements IExportService {
+
+	private static final Log logger = LogFactory.getLog(ExportService.class);
 
 	@Value("${tmp.folder}")
 	private String temporaryPath;
@@ -36,104 +51,169 @@ public class ExportService implements IExportService {
 	@Autowired
 	private IAmphiroMeasurementRepository amphiroMeasurementRepository;
 
+	@Autowired
+	private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
+
 	@Override
-	public String export(ExportDataRequest data) throws ApplicationException {
-		HashMap<String, String> properties = new HashMap<String, String>();
-		properties.put("settings.device.name", "Device name");
-		properties.put("settings.device.calibrate", "Calibrate");
-		properties.put("settings.unit", "Unit");
-		properties.put("settings.currency", "Currency");
-		properties.put("settings.alarm", "Alarm");
-		properties.put("settings.water.cost", "Water cost");
-		properties.put("settings.water.temperature-cold", "Cold water temperature");
-		properties.put("settings.energy.heating", "Heating system");
-		properties.put("settings.energy.efficiency", "Efficiency");
-		properties.put("settings.energy.cost", "Energy cost");
-		properties.put("settings.energy.solar", "Share of solar");
-		properties.put("settings.shower.estimate-per-week", "Estimates showers per week");
-		properties.put("settings.shower.time-between-shower", "Time between showers");
+	public String export(ExportUserDataQuery query) throws ApplicationException {
+		XSSFWorkbook workbook = null;
 
 		try {
-			File path = new File(temporaryPath);
+			// Create output folder
+			String outputFolderName = this.temporaryPath;
 
-			path.mkdirs();
+			File outputFolder = new File(this.temporaryPath);
 
-			if (!path.exists()) {
-				throw new ApplicationException("Unable to create temporary path.", ExportErrorCode.PATH_CREATION_FAILED);
-			}
-			;
+			outputFolder.mkdirs();
 
-			List<ExtendedSessionData> sessions = this.amphiroMeasurementRepository.exportSessions(data);
-
-			if (sessions.size() == 0) {
-				throw new ExportException("No data found for the selected criteria.");
+			if (!outputFolder.exists()) {
+				throw new ApplicationException(SharedErrorCode.DIR_CREATION_FAILED).set("path", outputFolderName);
 			}
 
+			// Create new file name
 			String token = UUID.randomUUID().toString();
 
-			File txtFile = new File(path, token + ".txt");
-			File csvFile = new File(path, token + ".csv");
-			File zipFile = new File(path, token + ".zip");
+			File excelFile = new File(FilenameUtils.concat(outputFolderName, token + ".xlsx"));
+			File zipFile = new File(FilenameUtils.concat(outputFolderName, token + ".zip"));
 
+			// Set time zone
 			Set<String> zones = DateTimeZone.getAvailableIDs();
-			if (data.getTimezone() == null) {
-				data.setTimezone("Europe/Athens");
+			if (query.getTimezone() == null) {
+				query.setTimezone("Europe/Athens");
 			}
-			if (!zones.contains(data.getTimezone())) {
-				throw new ExportException(String.format("Time zone [%s] is not supported.", data.getTimezone()));
+			if (!zones.contains(query.getTimezone())) {
+				throw new ApplicationException(SharedErrorCode.TIMEZONE_NOT_FOUND).set("timezone", query.getTimezone());
 			}
 
 			DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZone(
-							DateTimeZone.forID(data.getTimezone()));
+							DateTimeZone.forID(query.getTimezone()));
 
-			PrintWriter writer = new PrintWriter(csvFile, StandardCharsets.UTF_8.toString());
-			for (int s = 0; s < sessions.size(); s++) {
-				ExtendedSessionData session = sessions.get(s);
+			// Initialize excel work book
+			workbook = new XSSFWorkbook();
 
-				writer.format("%s\t%s\t%s\t%s\t%s\t%s\t", session.getUser().getKey(), session.getUser().getUsername(),
-								session.getUser().getPostalCode(), session.getDevice().getId(), session.getDevice()
-												.getKey(), session.getDevice().getName());
+			// Load sessions
+			String[] nameArray = new String[query.getAmphiroNames().size()];
+			query.getAmphiroNames().toArray(nameArray);
 
-				writer.format("%s\t%d\t%d\t%.4f\t%.4f\t%.4f\t%.4f", session.getDate().toString(formatter),
-								session.getId(), session.getDuration(), session.getTemperature(), session.getVolume(),
-								session.getFlow(), session.getEnergy());
+			UUID[] amphiroArray = new UUID[query.getAmphiroKeys().size()];
+			query.getAmphiroKeys().toArray(amphiroArray);
 
-				if (data.getProperties().size() != 0) {
-					Iterator<String> iter = data.getProperties().iterator();
-					while (iter.hasNext()) {
-						String key = (String) iter.next();
+			AmphiroSessionCollectionQuery sessionQuery = new AmphiroSessionCollectionQuery();
+			sessionQuery.setUserKey(query.getUserKey());
+			sessionQuery.setDeviceKey(amphiroArray);
+			sessionQuery.setGranularity(TemporalConstants.NONE);
+			sessionQuery.setStartDate(null);
+			sessionQuery.setEndDate(null);
 
-						String value = session.getPropertyByKey(key);
-						if (value == null) {
-							writer.print("\t");
-						} else {
-							writer.format("\t%s", value);
-						}
-					}
+			AmphiroSessionCollectionQueryResult amphiroCollection = this.amphiroMeasurementRepository.searchSessions(
+							nameArray, DateTimeZone.forID(query.getTimezone()), sessionQuery);
+
+			// Create one sheet per device
+			for (AmphiroSessionCollection device : amphiroCollection.getDevices()) {
+				int rowIndex = 0;
+
+				String sheetName = device.getName();
+				if (StringUtils.isBlank(sheetName)) {
+					sheetName = device.getDeviceKey().toString();
 				}
-				writer.format("\t%s", (session.isHistory() ? "true" : "false"));
-				writer.print("\n");
+
+				XSSFSheet sheet = workbook.createSheet(sheetName);
+
+				// Write header
+				Row row = sheet.createRow(rowIndex++);
+
+				row.createCell(0).setCellValue("Session Id");
+				row.createCell(1).setCellValue("Date Time");
+				row.createCell(2).setCellValue("Volume");
+				row.createCell(3).setCellValue("Temperature");
+				row.createCell(4).setCellValue("Energy");
+				row.createCell(5).setCellValue("Flow");
+				row.createCell(6).setCellValue("Duration");
+				row.createCell(7).setCellValue("History");
+
+				DataFormat format = workbook.createDataFormat();
+				CellStyle style = workbook.createCellStyle();
+
+				style.setDataFormat(format.getFormat("0.00"));
+
+				for (AmphiroAbstractSession session : device.getSessions()) {
+					row = sheet.createRow(rowIndex++);
+
+					row.createCell(0).setCellValue(((AmphiroSession) session).getId());
+					row.createCell(1).setCellValue(session.getUtcDate().toString(formatter));
+
+					row.createCell(2).setCellValue(session.getVolume());
+					row.getCell(2).setCellStyle(style);
+					row.createCell(3).setCellValue(session.getTemperature());
+					row.getCell(3).setCellStyle(style);
+					row.createCell(4).setCellValue(session.getEnergy());
+					row.getCell(4).setCellStyle(style);
+					row.createCell(5).setCellValue(session.getFlow());
+					row.getCell(5).setCellStyle(style);
+
+					row.createCell(6).setCellValue(session.getDuration());
+
+					row.createCell(7).setCellValue(((AmphiroSession) session).isHistory() ? "YES" : "NO");
+				}
+
 			}
-			writer.flush();
-			writer.close();
 
-			writer = new PrintWriter(txtFile, StandardCharsets.UTF_8.toString());
-			writer.format("%s\n%s\n%s\n%s\n%s\n%s\n", "User unique Id (Database)", "User name (email)",
-							"User postal code", "Device unique Id (Mobile Application)", "Device unique Id (Database)",
-							"Device name (optional)");
+			// Load meter measurements
+			String[] serialArray = new String[query.getMeterNames().size()];
+			query.getMeterNames().toArray(serialArray);
 
-			writer.format("%s\n%s\n%s\n%s\n%s\n%s\n%s\n", "Date & Time data received", "Shower Id", "Duration",
-							"Temperature", "Volume", "Flow", "Energy");
+			UUID[] meterArray = new UUID[query.getMeterKeys().size()];
+			query.getMeterKeys().toArray(meterArray);
 
-			if (data.getProperties().size() != 0) {
-				Iterator<String> iter = data.getProperties().iterator();
-				while (iter.hasNext()) {
-					writer.format("%s\n", properties.get(iter.next()));
+			WaterMeterMeasurementQuery meterQuery = new WaterMeterMeasurementQuery();
+			meterQuery.setUserKey(query.getUserKey());
+			meterQuery.setDeviceKey(meterArray);
+			meterQuery.setGranularity(TemporalConstants.NONE);
+			meterQuery.setStartDate(null);
+			meterQuery.setEndDate(null);
+
+			WaterMeterMeasurementQueryResult meterCollection = this.waterMeterMeasurementRepository.searchMeasurements(
+							serialArray, DateTimeZone.forID(query.getTimezone()), meterQuery);
+
+			// Create one sheet per device
+			for (WaterMeterDataSeries series : meterCollection.getSeries()) {
+				int rowIndex = 0;
+
+				String sheetName = series.getSerial();
+				if (StringUtils.isBlank(sheetName)) {
+					sheetName = series.getDeviceKey().toString();
+				}
+
+				XSSFSheet sheet = workbook.createSheet(sheetName);
+
+				// Write header
+				Row row = sheet.createRow(rowIndex++);
+
+				row.createCell(0).setCellValue("Date Time");
+				row.createCell(1).setCellValue("Volume");
+				row.createCell(2).setCellValue("Difference");
+
+				DataFormat format = workbook.createDataFormat();
+				CellStyle style = workbook.createCellStyle();
+
+				style.setDataFormat(format.getFormat("0.00"));
+
+				for (WaterMeterDataPoint point : series.getValues()) {
+					row = sheet.createRow(rowIndex++);
+
+					row.createCell(0).setCellValue(point.getUtcDate().toString(formatter));
+					row.createCell(1).setCellValue(point.getVolume());
+					row.getCell(1).setCellStyle(style);
+					row.createCell(2).setCellValue(point.getDifference());
+					row.getCell(2).setCellStyle(style);
 				}
 			}
-			writer.format("%s\n", "Real time / historical (true / false)");
-			writer.flush();
-			writer.close();
+
+			// Write workbook
+			FileOutputStream excelFileStream = new FileOutputStream(excelFile);
+			workbook.write(excelFileStream);
+			excelFileStream.close();
+			excelFileStream = null;
 
 			// Compress file
 			byte[] buffer = new byte[4096];
@@ -143,19 +223,9 @@ public class ExportService implements IExportService {
 
 			int len;
 
-			ZipEntry ze = new ZipEntry("export.csv");
+			ZipEntry ze = new ZipEntry(query.getUsername() + ".xlsx");
 			zos.putNextEntry(ze);
-			FileInputStream in = new FileInputStream(csvFile);
-			while ((len = in.read(buffer)) > 0) {
-				zos.write(buffer, 0, len);
-			}
-			in.close();
-			zos.flush();
-			zos.closeEntry();
-
-			ze = new ZipEntry("readme.txt");
-			zos.putNextEntry(ze);
-			in = new FileInputStream(txtFile);
+			FileInputStream in = new FileInputStream(excelFile);
 			while ((len = in.read(buffer)) > 0) {
 				zos.write(buffer, 0, len);
 			}
@@ -165,11 +235,20 @@ public class ExportService implements IExportService {
 
 			zos.close();
 
-			csvFile.delete();
-			txtFile.delete();
+			excelFile.delete();
+
 			return token;
 		} catch (Exception ex) {
 			throw ApplicationException.wrap(ex);
+		} finally {
+			try {
+				if (workbook != null) {
+					workbook.close();
+					workbook = null;
+				}
+			} catch (Exception ex) {
+				logger.error(ex);
+			}
 		}
 	}
 }

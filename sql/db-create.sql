@@ -1,3 +1,8 @@
+-- Extensions
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE EXTENSION IF NOT EXISTS postgis;
+
 --  utility
 CREATE SEQUENCE utility_id_seq
     START WITH 1
@@ -8,11 +13,16 @@ CREATE SEQUENCE utility_id_seq
 
 CREATE TABLE utility (
     id integer DEFAULT nextval('utility_id_seq'::regclass) NOT NULL,
+    key uuid,
     name character varying(40),
     logo bytea,
     description character varying,
     date_created timestamp without time zone,
     default_admin_username character varying(100) NOT NULL,
+	locale character(2),
+	timezone character varying(50),
+	country character varying(50),
+	city character varying(60),
     CONSTRAINT pk_utility PRIMARY KEY (id)
 );
 
@@ -27,6 +37,7 @@ CREATE SEQUENCE account_id_seq
 
 CREATE TABLE account (
     id integer NOT NULL DEFAULT nextval('account_id_seq'::regclass),
+    row_version  bigint default 1,
     utility_id integer,
     key uuid,
 	locale character(2),
@@ -44,19 +55,25 @@ CREATE TABLE account (
     photo bytea,
 	timezone character varying(50),
 	country character varying(50),
+	city character varying(60),
+	address character varying(90),
 	postal_code character varying(10),
 	birthdate timestamp without time zone,
 	gender character varying(12),
+	location geometry,
     CONSTRAINT pk_account PRIMARY KEY (id),
     CONSTRAINT fk_utility FOREIGN KEY (utility_id)
         REFERENCES public.utility (id) MATCH SIMPLE
-            ON UPDATE CASCADE ON DELETE SET NULL
+            ON UPDATE CASCADE ON DELETE SET NULL,
+	CONSTRAINT enforce_dims_location CHECK (st_ndims(location) = 2),
+    CONSTRAINT enforce_srid_location CHECK (st_srid(location) = 4326)
 );
 
 -- profile
 CREATE TABLE public.account_profile
 (
   id integer,
+  row_version  bigint default 1,
   version uuid NOT NULL,
   updated_on timestamp without time zone NOT NULL,
   mobile_mode int NOT NULL,
@@ -65,6 +82,7 @@ CREATE TABLE public.account_profile
   web_config character varying NULL,
   utility_mode int NOT NULL,
   utility_config character varying NULL,
+  static_tip_sent_on timestamp without time zone,
   CONSTRAINT pk_account_profile PRIMARY KEY (id),
   CONSTRAINT fk_account_profile_account FOREIGN KEY (id)
         REFERENCES public.account (id) MATCH SIMPLE
@@ -106,6 +124,7 @@ CREATE SEQUENCE public.account_white_list_id_seq
 CREATE TABLE public.account_white_list
 (
   id integer NOT NULL DEFAULT nextval('account_white_list_id_seq'::regclass),
+  row_version  bigint default 1,
   utility_id integer,
   account_id integer,
   username character varying(100),
@@ -115,18 +134,28 @@ CREATE TABLE public.account_white_list
   lastname character varying(70),
   timezone character varying(50),
   country character varying(50),
+  city character varying(60),
+  address character varying(90),
   postal_code character varying(10),
   birthdate timestamp without time zone,
   gender character varying(12),
   default_mobile_mode integer NOT NULL,
   default_web_mode integer NOT NULL,
+  location geometry,
+  meter_serial character varying(50),
+  meter_location geometry,
   CONSTRAINT pk_account_white_list PRIMARY KEY (id),
     CONSTRAINT fk_utility FOREIGN KEY (utility_id)
         REFERENCES public.utility (id) MATCH SIMPLE
             ON UPDATE CASCADE ON DELETE SET NULL,
   CONSTRAINT fk_account FOREIGN KEY (account_id)
         REFERENCES public.account (id) MATCH SIMPLE
-            ON UPDATE CASCADE ON DELETE CASCADE
+            ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT uq_utility_username UNIQUE (utility_id, username),
+  CONSTRAINT enforce_dims_meter_location CHECK (st_ndims(meter_location) = 2),
+  CONSTRAINT enforce_srid_meter_location CHECK (st_srid(meter_location) = 4326),
+  CONSTRAINT enforce_dims_location CHECK (st_ndims(location) = 2),
+  CONSTRAINT enforce_srid_location CHECK (st_srid(location) = 4326)
 );
 
 -- role
@@ -177,8 +206,12 @@ CREATE SEQUENCE public.device_id_seq
 CREATE TABLE public.device
 (
   id integer NOT NULL DEFAULT nextval('device_id_seq'::regclass),
+  row_version  bigint default 1,
   key uuid,
   account_id integer,
+  registered_on timestamp without time zone,
+  last_upload_success_on timestamp without time zone,
+  last_upload_failure_on timestamp without time zone,
   CONSTRAINT pk_device PRIMARY KEY (id),
   CONSTRAINT fk_account FOREIGN KEY (account_id)
         REFERENCES public.account (id) MATCH SIMPLE
@@ -251,6 +284,7 @@ CREATE SEQUENCE device_amphiro_config_id_seq
 
 CREATE TABLE device_amphiro_config (
     id integer NOT NULL DEFAULT nextval('device_amphiro_config_id_seq'::regclass),
+    row_version  bigint default 1,
     device_id integer,
     version uuid NOT NULL,
 	title character varying(100),
@@ -306,58 +340,13 @@ CREATE TABLE public.device_meter
 (
   id integer NOT NULL,
   serial character varying(50),
+  location geometry,
   CONSTRAINT pk_device_meter PRIMARY KEY (id),
   CONSTRAINT fk_device_meter_device FOREIGN KEY (id)
         REFERENCES public.device (id) MATCH SIMPLE
-            ON UPDATE CASCADE ON DELETE CASCADE
-);
-
--- community
-CREATE SEQUENCE community_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE TABLE community (
-    id integer NOT NULL DEFAULT nextval('community_id_seq'::regclass),
-    utility_id integer,
-	locale character(2),
-    name character varying(100),
-    created_on timestamp without time zone,
-    description character varying,
-    image bytea,
-    spatial geometry,
-    size integer,
-    CONSTRAINT pk_community PRIMARY KEY (id),
-    CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(spatial) = 2),
-    CONSTRAINT enforce_srid_the_geom CHECK (st_srid(spatial) = 4326),
-    CONSTRAINT fk_utility FOREIGN KEY (utility_id)
-        REFERENCES public.utility (id) MATCH SIMPLE
-            ON UPDATE CASCADE ON DELETE SET NULL
-);
-
-CREATE SEQUENCE community_member_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE TABLE community_member (
-    id integer NOT NULL DEFAULT nextval('community_member_id_seq'::regclass),
-    community_id integer,
-    account_id integer,
-    created_on timestamp without time zone,
-    ranking integer,
-    CONSTRAINT pk_community_member PRIMARY KEY (id),
-    CONSTRAINT fk_community_member_community FOREIGN KEY (community_id)
-        REFERENCES public.community (id) MATCH SIMPLE
             ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT fk_community_member_account FOREIGN KEY (account_id)
-        REFERENCES public.account (id) MATCH SIMPLE
-            ON UPDATE CASCADE ON DELETE CASCADE
+  CONSTRAINT enforce_dims_location CHECK (st_ndims(location) = 2),
+  CONSTRAINT enforce_srid_location CHECK (st_srid(location) = 4326)
 );
 
 -- group
@@ -370,14 +359,16 @@ CREATE SEQUENCE group_id_seq
 
 CREATE TABLE "group" (
     id integer NOT NULL DEFAULT nextval('group_id_seq'::regclass),
+    key uuid,
+    row_version  bigint default 1,
     utility_id integer,
     name character varying(100),
     created_on timestamp without time zone,
     spatial geometry,
     size integer,
     CONSTRAINT pk_group PRIMARY KEY (id),
-    CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(spatial) = 2),
-    CONSTRAINT enforce_srid_the_geom CHECK (st_srid(spatial) = 4326),
+    CONSTRAINT enforce_dims_spatial CHECK (st_ndims(spatial) = 2),
+    CONSTRAINT enforce_srid_spatial CHECK (st_srid(spatial) = 4326),
 	CONSTRAINT fk_utility FOREIGN KEY (utility_id)
 		REFERENCES public.utility (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION
@@ -401,6 +392,108 @@ CREATE TABLE group_member (
             ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT fk_group_member_account FOREIGN KEY (account_id)
         REFERENCES public.account (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE group_community (
+    id integer NOT NULL,
+    description character varying,
+    image bytea,
+    CONSTRAINT pk_group_community PRIMARY KEY (id),
+    CONSTRAINT fk_group_community_group FOREIGN KEY (id)
+        REFERENCES public."group" (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE SET NULL
+);
+
+CREATE TABLE group_set (
+	id integer NOT NULL,
+    owner_id int,
+    CONSTRAINT pk_group_set PRIMARY KEY (id),
+    CONSTRAINT fk_group_set_group FOREIGN KEY (id)
+        REFERENCES public."group" (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT fk_group_cluster_group FOREIGN KEY (owner_id)
+        REFERENCES public.account (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE SET NULL
+);
+
+-- clusters
+CREATE SEQUENCE cluster_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE TABLE "cluster" (
+    id integer NOT NULL DEFAULT nextval('cluster_id_seq'::regclass),
+    key uuid,
+    row_version  bigint default 1,
+    utility_id integer,
+    name character varying(100),
+    created_on timestamp without time zone,
+    CONSTRAINT pk_cluster PRIMARY KEY (id),
+	CONSTRAINT fk_cluster_utility FOREIGN KEY (utility_id)
+		REFERENCES public.utility (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE TABLE group_cluster (
+	id integer NOT NULL,
+    cluster_id int,
+    CONSTRAINT pk_group_cluster PRIMARY KEY (id),
+    CONSTRAINT fk_group_cluster_group FOREIGN KEY (id)
+        REFERENCES public."group" (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE SET NULL,
+	CONSTRAINT fk_group_cluster_cluster FOREIGN KEY (cluster_id)
+		REFERENCES public."cluster" (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+-- favourite
+CREATE SEQUENCE favourite_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE TABLE favourite (
+    id integer NOT NULL DEFAULT nextval('favourite_id_seq'::regclass),
+    key uuid,
+    row_version  bigint default 1,
+    owner_id integer,
+    label character varying(100),
+    created_on timestamp without time zone,
+    CONSTRAINT pk_favourite PRIMARY KEY (id),
+	CONSTRAINT fk_favourite_account FOREIGN KEY (owner_id)
+		REFERENCES public.account (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE TABLE public.favourite_account
+(
+  id integer NOT NULL,
+  account_id int,
+  CONSTRAINT pk_favourite_account PRIMARY KEY (id),
+  CONSTRAINT fk_favourite_account_favourite FOREIGN KEY (id)
+        REFERENCES public.favourite (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT fk_favourite_account_account FOREIGN KEY (account_id)
+        REFERENCES public.account (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.favourite_group
+(
+  id integer NOT NULL,
+  group_id int,
+  CONSTRAINT pk_favourite_group PRIMARY KEY (id),
+  CONSTRAINT fk_favourite_group_favourite FOREIGN KEY (id)
+        REFERENCES public.favourite (id) MATCH SIMPLE
+            ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT fk_favourite_group_group FOREIGN KEY (group_id)
+        REFERENCES public."group" (id) MATCH SIMPLE
             ON UPDATE CASCADE ON DELETE CASCADE
 );
 
@@ -641,3 +734,45 @@ CREATE TABLE account_dynamic_recommendation_property (
             ON UPDATE CASCADE ON DELETE CASCADE
 );
 
+-- Helper views
+CREATE OR REPLACE VIEW public.trial_account_activity AS
+ SELECT w.id,
+    u.id AS utility_id,
+    u.name AS utility_name,
+    w.account_id,
+    a.key,
+    w.username,
+    w.firstname,
+    w.lastname,
+    w.registered_on AS signup_date,
+    a.last_login_success,
+    a.last_login_failure,
+    count(da.id) AS amphiro_count,
+    count(dm.id) AS meter_count,
+    max(case when not da.id is null then d.registered_on else null end) AS amphiro_last_registration,
+    max(case when not dm.id is null then d.registered_on else null end) AS meter_last_registration,
+    max(d.last_upload_success_on) AS device_last_upload_success,
+    max(d.last_upload_failure_on) AS device_last_upload_failure
+   FROM account_white_list w
+     JOIN utility u ON w.utility_id = u.id
+     LEFT JOIN account a ON w.account_id = a.id
+     LEFT JOIN device d ON a.id = d.account_id
+     LEFT JOIN device_amphiro da ON da.id = d.id
+     LEFT JOIN device_meter dm ON dm.id = d.id
+  GROUP BY w.id, u.id, u.name, w.account_id, a.key, w.username, w.firstname, w.lastname, w.registered_on, a.last_login_success, a.last_login_failure;
+
+ALTER TABLE public.trial_account_activity
+  OWNER TO daiad;
+
+-- procedures
+CREATE FUNCTION sp_account_update_stats(account_id integer, success boolean, login_date timestamp with time zone) RETURNS INT AS $$
+BEGIN
+	if  success = true then
+		update account set last_login_success = GREATEST(login_date AT TIME ZONE 'UTC', last_login_success) where id = account_id;
+	else
+		update account set last_login_failure = GREATEST(login_date AT TIME ZONE 'UTC', last_login_failure) where id = account_id;
+	end if;
+
+	return 1;
+END;
+$$ LANGUAGE plpgsql;

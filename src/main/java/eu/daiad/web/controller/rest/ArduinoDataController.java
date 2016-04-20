@@ -16,11 +16,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
-import eu.daiad.web.data.IArduinoDataRepository;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.arduino.ArduinoIntervalQuery;
 import eu.daiad.web.model.arduino.ArduinoMeasurement;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.repository.application.IArduinoDataRepository;
 
 @RestController("RestArduinoDataController")
 public class ArduinoDataController extends BaseController {
@@ -64,7 +64,6 @@ public class ArduinoDataController extends BaseController {
 			message = ex.getMessage();
 
 			logger.error("Failed to insert data from arduino device", ex);
-
 		}
 
 		return new ResponseEntity<String>(message, headers, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -77,7 +76,7 @@ public class ArduinoDataController extends BaseController {
 		try {
 			return this.arduinoDataRepository.searchData(query);
 		} catch (ApplicationException ex) {
-			logger.error(ex);
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

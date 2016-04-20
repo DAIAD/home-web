@@ -11,9 +11,9 @@ import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.vividsolutions.jts.geom.Geometry;
 
 import eu.daiad.web.model.EnumGender;
-import eu.daiad.web.util.GenderDeserializer;
 
 public class Account {
 
@@ -42,7 +42,7 @@ public class Account {
 	@Size(max = 70, groups = { AccountDefaultValidation.class })
 	private String lastname;
 
-	@JsonDeserialize(using = GenderDeserializer.class)
+	@JsonDeserialize(using = EnumGender.Deserializer.class)
 	@NotNull(groups = { AccountDefaultValidation.class })
 	private EnumGender gender;
 
@@ -53,6 +53,12 @@ public class Account {
 	@NotNull(groups = { AccountDefaultValidation.class })
 	@Size(max = 50, groups = { AccountDefaultValidation.class })
 	private String country;
+
+	@Size(max = 60, groups = { AccountDefaultValidation.class })
+	private String city;
+
+	@Size(max = 90, groups = { AccountDefaultValidation.class })
+	private String address;
 
 	@NotNull(groups = { AccountDefaultValidation.class })
 	@Size(max = 50, groups = { AccountDefaultValidation.class })
@@ -66,6 +72,8 @@ public class Account {
 	@NotEmpty(groups = { AccountDefaultValidation.class })
 	@Pattern(regexp = "en|el|es|de", groups = { AccountDefaultValidation.class })
 	private String locale;
+
+	private Geometry location;
 
 	public EnumGender getGender() {
 		if (this.gender == null) {
@@ -149,6 +157,30 @@ public class Account {
 
 	public void setLocale(String locale) {
 		this.locale = locale;
+	}
+
+	public String getCity() {
+		return city;
+	}
+
+	public void setCity(String city) {
+		this.city = city;
+	}
+
+	public String getAddress() {
+		return address;
+	}
+
+	public void setAddress(String address) {
+		this.address = address;
+	}
+
+	public Geometry getLocation() {
+		return location;
+	}
+
+	public void setLocation(Geometry location) {
+		this.location = location;
 	}
 
 }

@@ -2,6 +2,9 @@ package eu.daiad.web.model.amphiro;
 
 import java.util.ArrayList;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import eu.daiad.web.model.KeyValuePair;
 
 public class AmphiroSession extends AmphiroAbstractSession {
@@ -9,6 +12,9 @@ public class AmphiroSession extends AmphiroAbstractSession {
 	private long id;
 
 	private boolean history;
+
+	@JsonIgnore
+	private AmphiroSessionDeleteAction delete;
 
 	private ArrayList<KeyValuePair> properties;
 
@@ -35,7 +41,7 @@ public class AmphiroSession extends AmphiroAbstractSession {
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
 	}
-	
+
 	public ArrayList<KeyValuePair> getProperties() {
 		return properties;
 	}
@@ -62,5 +68,15 @@ public class AmphiroSession extends AmphiroAbstractSession {
 			}
 		}
 		return null;
+	}
+
+	@JsonIgnore
+	public AmphiroSessionDeleteAction getDelete() {
+		return delete;
+	}
+
+	@JsonProperty
+	public void setDelete(AmphiroSessionDeleteAction delete) {
+		this.delete = delete;
 	}
 }

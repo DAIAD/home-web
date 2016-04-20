@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.DateTimeZone;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -14,13 +15,17 @@ public class AmphiroSessionCollection {
 
 	@JsonIgnore
 	private int granularity = TemporalConstants.NONE;
-	
+
 	private UUID deviceKey;
+
+	private String name;
 
 	private ArrayList<AmphiroAbstractSession> sessions;
 
-	public AmphiroSessionCollection(UUID deviceKey, int granularity) {
+	public AmphiroSessionCollection(UUID deviceKey, String name, int granularity) {
 		this.deviceKey = deviceKey;
+		this.name = name;
+
 		this.granularity = granularity;
 
 		this.sessions = new ArrayList<AmphiroAbstractSession>();
@@ -34,49 +39,46 @@ public class AmphiroSessionCollection {
 		return sessions;
 	}
 
-	public void addSessions(ArrayList<AmphiroSession> sessions) {
+	public void addSessions(ArrayList<AmphiroSession> sessions, DateTimeZone timezone) {
 		this.sessions.clear();
 		if (sessions != null) {
 			for (int i = 0, count = sessions.size(); i < count; i++) {
-				this.add(sessions.get(i));
+				this.add(sessions.get(i), timezone);
 			}
 		}
 	}
-	
-	public void add(AmphiroSession session) {
+
+	public void add(AmphiroSession session, DateTimeZone timezone) {
 		if (this.granularity == TemporalConstants.NONE) {
 			// Retrieve values at the highest granularity, that is at the
 			// measurement level
 			this.sessions.add(session);
 		} else {
 
-			DateTime date = new DateTime(session.getTimestamp());
+			DateTime date = new DateTime(session.getTimestamp(), timezone);
 
 			switch (this.granularity) {
-			case TemporalConstants.HOUR:
-				date = new DateTime(date.getYear(), date.getMonthOfYear(),
-						date.getDayOfMonth(), date.getHourOfDay(), 0, 0);
-				break;
-			case TemporalConstants.DAY:
-				date = new DateTime(date.getYear(), date.getMonthOfYear(),
-						date.getDayOfMonth(), 0, 0, 0);
-				break;
-			case TemporalConstants.WEEK:
-				DateTime sunday = date.withDayOfWeek(DateTimeConstants.SUNDAY);
+				case TemporalConstants.HOUR:
+					date = new DateTime(date.getYear(), date.getMonthOfYear(), date.getDayOfMonth(),
+									date.getHourOfDay(), 0, 0, timezone);
+					break;
+				case TemporalConstants.DAY:
+					date = new DateTime(date.getYear(), date.getMonthOfYear(), date.getDayOfMonth(), 0, 0, 0, timezone);
+					break;
+				case TemporalConstants.WEEK:
+					DateTime sunday = date.withDayOfWeek(DateTimeConstants.SUNDAY);
 
-				date = new DateTime(sunday.getYear(), sunday.getMonthOfYear(),
-						sunday.getDayOfMonth(), 0, 0, 0);
-				break;
-			case TemporalConstants.MONTH:
-				date = new DateTime(date.getYear(), date.getMonthOfYear(), 1,
-						0, 0, 0);
-				break;
-			case TemporalConstants.YEAR:
-				date = new DateTime(date.getYear(), 1, 1, 0, 0, 0);
-				break;
-			default:
-				throw new IllegalArgumentException(
-						"Granularity level not supported.");
+					date = new DateTime(sunday.getYear(), sunday.getMonthOfYear(), sunday.getDayOfMonth(), 0, 0, 0,
+									timezone);
+					break;
+				case TemporalConstants.MONTH:
+					date = new DateTime(date.getYear(), date.getMonthOfYear(), 1, 0, 0, 0, timezone);
+					break;
+				case TemporalConstants.YEAR:
+					date = new DateTime(date.getYear(), 1, 1, 0, 0, 0, timezone);
+					break;
+				default:
+					throw new IllegalArgumentException("Granularity level not supported.");
 			}
 
 			AmphiroAggregatedSession aggregate = null;
@@ -97,5 +99,9 @@ public class AmphiroSessionCollection {
 			this.sessions.add(aggregate);
 		}
 	}
-	
+
+	public String getName() {
+		return name;
+	}
+
 }

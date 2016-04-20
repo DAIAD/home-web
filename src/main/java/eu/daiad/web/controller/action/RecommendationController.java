@@ -11,11 +11,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
-import eu.daiad.web.data.IRecommendationRepository;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.recommendation.StaticRecommendationResponse;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.repository.application.IRecommendationRepository;
 
 @RestController
 public class RecommendationController extends BaseController {
@@ -33,7 +33,7 @@ public class RecommendationController extends BaseController {
 		try {
 			response.setRecommendations(this.recommendationRepository.getStaticRecommendations(locale));
 		} catch (ApplicationException ex) {
-			logger.error(ex);
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

@@ -1,14 +1,14 @@
-var callAPI = require('./base');
+var api = require('./base');
 
 var UserAPI = {
 	login: function(username, password) {
-		return callAPI('/login?application=utility', {username:username, password:password});
+		return api.submit('/login?application=utility', {username:username, password:password});
 	},
 	logout: function() {
-		return callAPI('/logout', {});
+		return api.submit('/logout', {});
 	},
 	getProfile: function(cb) {
-		return callAPI('/action/profile/load', null);
+		return api.json('/action/profile/load', null);
 	}
 };
 

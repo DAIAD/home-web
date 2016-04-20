@@ -8,7 +8,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import eu.daiad.web.data.IUserRepository;
+import eu.daiad.web.repository.application.IUserRepository;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {

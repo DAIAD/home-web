@@ -7,7 +7,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import eu.daiad.web.model.ResourceNotFoundException;
+import eu.daiad.web.model.error.ResourceNotFoundException;
 
 @ControllerAdvice(annotations = Controller.class)
 public class ErrorControllerAdvice {

@@ -13,12 +13,17 @@ var Demographics = React.createClass({
 	
 	getInitialState() {
 		return {
-			key: 1
+			key: 1,
+			showAddNewUserForm: false
     	};
 	},
 
 	selectSection(key) {
 		this.setState({key : key});
+  	},
+  	
+  	showAddNewUserForm: function (){
+  		this.setState({showAddNewUserForm : true});
   	},
 	
   	render: function() {
@@ -356,6 +361,7 @@ var Demographics = React.createClass({
 				</span>
 			</span>
 		);
+		
 
   		return (
 			<div className="container-fluid" style={{ paddingTop: 10 }}>

@@ -15,8 +15,8 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import eu.daiad.web.model.CsrfConstants;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.security.CsrfConstants;
 import eu.daiad.web.util.AjaxUtils;
 
 @Component

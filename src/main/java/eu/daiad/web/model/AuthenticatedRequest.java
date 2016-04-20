@@ -1,5 +1,7 @@
 package eu.daiad.web.model;
 
+import eu.daiad.web.model.security.Credentials;
+
 public class AuthenticatedRequest {
 
 	private Credentials credentials;

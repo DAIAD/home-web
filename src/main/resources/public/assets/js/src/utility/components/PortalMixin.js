@@ -6,7 +6,6 @@ var _ = require('lodash');
 var PortalMixin = {
 
 	propTypes : {
-		id : React.PropTypes.number,
 		elementClassName : React.PropTypes.string,
 		prefix : React.PropTypes.string
 	},
@@ -16,6 +15,14 @@ var PortalMixin = {
 			prefix : 'portal',
 			elementClassName : 'mixin'
 		};
+	},
+
+	_onResizeInternalHandler: function() {
+    this.getElement().style.width = this.getContainer().offsetWidth + 'px';
+	  
+	  if(typeof this.onResize === 'function') {
+	    this.onResize();
+	  }
 	},
 
 	_hasClass : function(className) {
@@ -45,19 +52,25 @@ var PortalMixin = {
 	},
 
 	_createContainer : function(id) {
-		var parent = ReactDOM.findDOMNode(this) || document.body;
-		this._element = parent.appendChild(document.createElement('div'));
+	  this._container = ReactDOM.findDOMNode(this) || document.body;		
+		this._element = this._container.appendChild(document.createElement('div'));
 
 		this._element.setAttribute('id', id);
 
 		if (this.props.elementClassName) {
 			this._addClass(this.props.elementClassName);
 		}
+		if((window) && (this.onResize)) {
+      window.addEventListener('resize', this._onResizeInternalHandler);
+    }
 	},
 
 	_destroyContainer : function() {
 		if (this._element) {
 			this._element.parentNode.removeChild(this._element);
+			if((window) && (this.onResize)) {
+			  window.removeEventListener('resize', this._onResizeInternalHandler);
+			}
 		}
 	},
 
@@ -98,6 +111,10 @@ var PortalMixin = {
 
 	getElement : function() {
 		return this._element;
+	},
+	
+	getContainer: function() {
+	  return this._container;
 	},
 
 	getElementClass : function() {

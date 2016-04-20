@@ -43,11 +43,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	private RESTLogoutSuccessHandler logoutSuccessHandler;
 
 	@Autowired
-	private CustomAuthenticationProvider provider;
+	private CustomAuthenticationProvider authenticationProvider;
+
+	@Autowired
+	private CustomAccessDeniedHandler accessDeniedHandler;
 
 	@Override
 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-		auth.authenticationProvider(provider);
+		auth.authenticationProvider(authenticationProvider);
 	}
 
 	@Override
@@ -91,7 +94,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		// Configure logout page for the web application
 		http.logout().logoutUrl("/logout").logoutSuccessHandler(logoutSuccessHandler);
 
-		http.exceptionHandling().accessDeniedHandler(new CustomAccessDeniedHandler("/error/403"));
+		http.exceptionHandling().accessDeniedHandler(accessDeniedHandler);
 
 		// Refresh CSRF token
 		http.addFilterAfter(new CsrfTokenResponseHeaderBindingFilter(), CsrfFilter.class);
