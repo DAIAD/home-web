@@ -83,7 +83,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 	@Value("${hbase.data.time.partitions}")
 	private short timePartitions;
 
-	@Value("${scanner-cache-size}")
+	@Value("${scanner.cache.size}")
 	private int scanCacheSize = 1;
 
 	private String amphiroTableMeasurements = "daiad:amphiro-measurements";

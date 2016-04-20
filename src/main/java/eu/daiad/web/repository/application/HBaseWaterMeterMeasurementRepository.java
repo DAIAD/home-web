@@ -77,7 +77,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 	@Value("${hbase.data.time.partitions}")
 	private short timePartitions;
 
-	@Value("${scanner-cache-size}")
+	@Value("${scanner.cache.size}")
 	private int scanCacheSize = 1;
 
 	@Autowired
