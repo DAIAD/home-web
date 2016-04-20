@@ -26,6 +26,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.vividsolutions.jts.geom.Point;
+
 import eu.daiad.web.domain.application.AccountActivity;
 import eu.daiad.web.domain.application.AccountProfile;
 import eu.daiad.web.domain.application.AccountProfileHistoryEntry;
@@ -155,7 +157,7 @@ public class JpaUserRepository implements IUserRepository {
 	}
 
 	@Override
-	@Transactional(transactionManager = "transactionManager", propagation=Propagation.REQUIRES_NEW)
+	@Transactional(transactionManager = "transactionManager", propagation = Propagation.REQUIRES_NEW)
 	public void initializeSecurityConfiguration() {
 		try {
 			// Initialize all system roles
@@ -245,6 +247,13 @@ public class JpaUserRepository implements IUserRepository {
 				account.setAddress(whiteListEntry.getAddress());
 				account.setTimezone(whiteListEntry.getTimezone());
 				account.setPostalCode(whiteListEntry.getPostalCode());
+
+				if ((whiteListEntry.getLocation() != null) && (whiteListEntry.getLocation() instanceof Point)) {
+					account.setLocation(whiteListEntry.getLocation());
+				} else if ((whiteListEntry.getMeterLocation() != null)
+								&& (whiteListEntry.getMeterLocation() instanceof Point)) {
+					account.setLocation(whiteListEntry.getMeterLocation());
+				}
 			} else {
 				account.setFirstname(user.getFirstname());
 				account.setLastname(user.getLastname());
@@ -257,6 +266,10 @@ public class JpaUserRepository implements IUserRepository {
 				account.setAddress(user.getAddress());
 				account.setTimezone(user.getTimezone());
 				account.setPostalCode(user.getPostalCode());
+
+				if ((user.getLocation() != null) && (user.getLocation() instanceof Point)) {
+					account.setLocation(user.getLocation());
+				}
 			}
 
 			account.setLocked(false);
@@ -542,51 +555,50 @@ public class JpaUserRepository implements IUserRepository {
 
 		return null;
 	}
-	
+
 	@Override
 	public void insertAccountWhiteListEntry(AccountWhiteListInfo userInfo) {
-		try{
+		try {
 
 			TypedQuery<eu.daiad.web.domain.application.AccountWhiteListEntry> whitelistQuery = entityManager
-					.createQuery("select a from account_white_list a where a.username = :username",
-									eu.daiad.web.domain.application.AccountWhiteListEntry.class)
-					.setFirstResult(0).setMaxResults(1);
+							.createQuery("select a from account_white_list a where a.username = :username",
+											eu.daiad.web.domain.application.AccountWhiteListEntry.class)
+							.setFirstResult(0).setMaxResults(1);
 			whitelistQuery.setParameter("username", userInfo.getEmail());
 			List<AccountWhiteListEntry> whitelistEntries = whitelistQuery.getResultList();
-			
-			if (!whitelistEntries.isEmpty()){
-				throw new ApplicationException(UserErrorCode.USERNAME_EXISTS_IN_WHITELIST)
-					.set("username", userInfo.getEmail());
+
+			if (!whitelistEntries.isEmpty()) {
+				throw new ApplicationException(UserErrorCode.USERNAME_EXISTS_IN_WHITELIST).set("username",
+								userInfo.getEmail());
 			}
-			
+
 			AccountWhiteListEntry newEntry = new AccountWhiteListEntry(userInfo.getEmail());
 			newEntry.setFirstname(userInfo.getFirstName());
 			newEntry.setLastname(userInfo.getLastName());
 			newEntry.setGender(EnumGender.fromString(userInfo.getGender()));
-			
-			//Get Utility
+
+			// Get Utility
 			TypedQuery<eu.daiad.web.domain.application.Utility> utilityQuery = entityManager
-					.createQuery("select u from utility u where u.id = :id",
-									eu.daiad.web.domain.application.Utility.class)
-					.setFirstResult(0).setMaxResults(1);
+							.createQuery("select u from utility u where u.id = :id",
+											eu.daiad.web.domain.application.Utility.class).setFirstResult(0)
+							.setMaxResults(1);
 			utilityQuery.setParameter("id", userInfo.getUtilityId());
-			List <Utility> utilityEntry = utilityQuery.getResultList();
-			
-			if (utilityEntry.isEmpty()){
-				throw new ApplicationException(UserErrorCode.UTILITY_DOES_NOT_EXIST)
-					.set("id", userInfo.getUtilityId());
+			List<Utility> utilityEntry = utilityQuery.getResultList();
+
+			if (utilityEntry.isEmpty()) {
+				throw new ApplicationException(UserErrorCode.UTILITY_DOES_NOT_EXIST).set("id", userInfo.getUtilityId());
 			}
 			newEntry.setUtility(utilityEntry.get(0));
 			newEntry.setCountry(utilityEntry.get(0).getCountry());
 			newEntry.setCity(utilityEntry.get(0).getCity());
 			newEntry.setTimezone(utilityEntry.get(0).getTimezone());
 			newEntry.setLocale(utilityEntry.get(0).getLocale());
-			
+
 			newEntry.setAddress(userInfo.getAddress());
 			newEntry.setPostalCode(userInfo.getPostalCode());
 			newEntry.setDefaultMobileMode(EnumMobileMode.LEARNING.getValue());
 			newEntry.setDefaultWebMode(EnumWebMode.INACTIVE.getValue());
-			
+
 			this.entityManager.persist(newEntry);
 
 		} catch (Exception ex) {

@@ -66,6 +66,13 @@ DROP TABLE IF EXISTS public.favourite;
 
 DROP SEQUENCE IF EXISTS public.favourite_id_seq;
 
+-- cluster
+DROP TABLE IF EXISTS public.group_cluster;
+
+DROP TABLE IF EXISTS public."cluster";
+
+DROP SEQUENCE IF EXISTS public.cluster_id_seq;
+
 -- group
 DROP TABLE IF EXISTS public.group_member;
 
@@ -78,13 +85,6 @@ DROP TABLE IF EXISTS public.group_community;
 DROP TABLE IF EXISTS public."group";
 
 DROP SEQUENCE IF EXISTS public.group_id_seq;
-
--- cluster
-DROP TABLE IF EXISTS public.group_cluster;
-
-DROP TABLE IF EXISTS public."cluster";
-
-DROP SEQUENCE IF EXISTS public.cluster_id_seq;
 
 -- device
 DROP TABLE IF EXISTS public.device_meter;

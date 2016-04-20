@@ -151,6 +151,12 @@ public class JpaDeviceRepository implements IDeviceRepository {
 			if (accounts.size() == 1) {
 				eu.daiad.web.domain.application.Account account = accounts.get(0);
 
+				// Update account location if not already set
+				if (account.getLocation() == null) {
+					account.setLocation(location);
+				}
+
+				// Create new device
 				eu.daiad.web.domain.application.DeviceMeter meter = new eu.daiad.web.domain.application.DeviceMeter();
 				meter.setSerial(serial);
 				meter.setLocation(location);
@@ -182,6 +188,9 @@ public class JpaDeviceRepository implements IDeviceRepository {
 					entry.setMeterSerial(serial);
 					entry.setMeterLocation(location);
 
+					if (entry.getLocation() == null) {
+						entry.setLocation(location);
+					}
 					this.entityManager.persist(entry);
 				} else {
 					throw new ApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
@@ -216,6 +225,12 @@ public class JpaDeviceRepository implements IDeviceRepository {
 		List<eu.daiad.web.domain.application.Account> accounts = accountQuery.getResultList();
 
 		if (accounts.size() == 1) {
+			// Update account location if not already set
+			if (accounts.get(0).getLocation() == null) {
+				accounts.get(0).setLocation(location);
+			}
+
+			// Update device location
 			TypedQuery<eu.daiad.web.domain.application.DeviceMeter> query = entityManager
 							.createQuery("select d from device_meter d where d.serial = :serial and d.account.key = :userKey",
 											eu.daiad.web.domain.application.DeviceMeter.class).setFirstResult(0)
@@ -410,11 +425,16 @@ public class JpaDeviceRepository implements IDeviceRepository {
 	@Override
 	public Device getWaterMeterDeviceBySerial(String serial) {
 		try {
+			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
+
 			TypedQuery<eu.daiad.web.domain.application.DeviceMeter> query = entityManager
-							.createQuery("select d from device_meter d where d.serial = :serial",
+							.createQuery("select d from device_meter d where d.serial = :serial and d.account.utility.id = :utility_id",
 											eu.daiad.web.domain.application.DeviceMeter.class).setFirstResult(0)
 							.setMaxResults(1);
 			query.setParameter("serial", serial);
+			query.setParameter("utility_id", user.getUtilityId());
 
 			List<eu.daiad.web.domain.application.DeviceMeter> result = query.getResultList();
 

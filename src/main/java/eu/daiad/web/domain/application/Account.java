@@ -26,6 +26,8 @@ import org.apache.commons.net.util.Base64;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
+import com.vividsolutions.jts.geom.Geometry;
+
 import eu.daiad.web.model.EnumGender;
 
 @Entity(name = "account")
@@ -128,6 +130,10 @@ public class Account {
 
 	@Column(name = "locale", columnDefinition = "bpchar", length = 2)
 	private String locale;
+
+	@Type(type = "org.hibernate.spatial.GeometryType")
+	@Column(name = "location")
+	private Geometry location;
 
 	public int getId() {
 		return id;
@@ -330,6 +336,14 @@ public class Account {
 
 	public long getRowVersion() {
 		return rowVersion;
+	}
+
+	public Geometry getLocation() {
+		return location;
+	}
+
+	public void setLocation(Geometry location) {
+		this.location = location;
 	}
 
 }
