@@ -20,15 +20,15 @@ const setSession = function (session) {
     session: session,
   };
 };
-const setDataDirty = function () {
+const setDataSynced = function () {
   return {
-    type: types.HISTORY_SET_DATA_DIRTY
+    type: types.HISTORY_SET_DATA_SYNCED
   };
 };
 
-const resetDataDirty = function () {
+const setDataUnsynced = function () {
   return {
-    type: types.HISTORY_RESET_DATA_DIRTY
+    type: types.HISTORY_SET_DATA_UNSYNCED
   };
 };
 
@@ -52,7 +52,7 @@ const HistoryActions = {
       if (time) dispatch(HistoryActions.setTime(time));
       if (data) { 
         dispatch(setSessions(data));
-        dispatch(resetDataDirty());
+        dispatch(setDataSynced());
       }
       dispatch(push('/history'));
     };
@@ -106,13 +106,13 @@ const HistoryActions = {
     return function(dispatch, getState) {
       //if query not changed dont update (for now)
       //TODO: have to ask every now and then for new data
-      if (!getState().section.history.dirty) {
+      if (getState().section.history.synced) {
         console.log('device data already in memory', getState().section.history.data);
         return new Promise((() => getState().section.history.data), (() => getState().query.errors));
       }
       return dispatch(QueryActions.queryDeviceSessions(deviceKeys, time))
       .then(sessions => {
-          dispatch(resetDataDirty());
+          dispatch(setDataSynced());
           dispatch(setSessions(sessions));
           return sessions;
         });
@@ -122,14 +122,14 @@ const HistoryActions = {
     return function(dispatch, getState) {
       //if query not changed dont update (for now)
       //TODO: have to ask every now and then for new data
-      if (!getState().section.history.dirty) {
+      if (getState().section.history.synced) {
         console.log('meter data already in memory');
         return new Promise((() => getState().section.history.data), (() => getState().query.errors));
       }
       return dispatch(QueryActions.fetchMeterHistory(deviceKeys, time))
         .then(sessions => {
           dispatch(setSessions(sessions));
-          dispatch(resetDataDirty());
+          dispatch(setDataSynced());
           return sessions;
         })
         .catch(error => {
@@ -165,8 +165,8 @@ const HistoryActions = {
   //  granularity of type int (0-4)
   setTime: function(time) {
     return function(dispatch, getState) {
-      if (!getState().section.history.dirty) { 
-        dispatch(setDataDirty());
+      if (getState().section.history.synced) { 
+        dispatch(setDataUnsynced());
       }
       return dispatch({
         type: types.HISTORY_SET_TIME,
@@ -182,8 +182,8 @@ const HistoryActions = {
   },
   setActiveDevice: function(deviceKey) {
     return function(dispatch, getState) {
-      if (!getState().section.history.dirty) { 
-        dispatch(setDataDirty());
+      if (getState().section.history.synced) { 
+        dispatch(setDataUnsynced());
       }
       return dispatch({
         type: types.HISTORY_SET_ACTIVE_DEVICE,
@@ -199,21 +199,11 @@ const HistoryActions = {
   },
   resetActiveDevice: function() {
     return function(dispatch, getState) {
-      if (!getState().section.history.dirty) { 
-        dispatch(setDataDirty());
+      if (getState().section.history.synced) { 
+        dispatch(setDataUnsynced());
       }
       return dispatch({
         type: types.HISTORY_RESET_ACTIVE_DEVICE,
-      });
-    };
-  },
-  resetQuery: function() {
-    return function(dispatch, getState) {
-      if (!getState().section.history.dirty) { 
-        dispatch(setDataDirty());
-      }
-      return dispatch({
-        type: types.HISTORY_RESET,
       });
     };
   },

@@ -13,7 +13,7 @@ var history = function (state, action) {
       activeDevice: [],
       activeSessionFilter: "volume",
       activeSessionIndex: null,
-      dirty: true,
+      synced: true,
       data: [],
     };
     state.time = Object.assign({}, {granularity:2}, thisWeek());
@@ -32,14 +32,14 @@ var history = function (state, action) {
         data: updated
       });
 
-    case types.HISTORY_SET_DATA_DIRTY:
+    case types.HISTORY_SET_DATA_SYNCED:
       return Object.assign({}, state, {
-        dirty: true
+        synced: true
       });
     
-    case types.HISTORY_RESET_DATA_DIRTY:
+    case types.HISTORY_SET_DATA_UNSYNCED:
       return Object.assign({}, state, {
-        dirty: false
+        synced: false
       });
 
     case types.HISTORY_SET_TIME:
