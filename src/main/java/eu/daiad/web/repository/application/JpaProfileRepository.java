@@ -294,7 +294,7 @@ public class JpaProfileRepository implements IProfileRepository {
 					defaultconfigurations.put("OFF", defconf);
 				}
 			}
-						
+
 			for (ProfileModesChanges modeChanges : modeChangesObject.getModeChanges()){
 				
 				TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager
