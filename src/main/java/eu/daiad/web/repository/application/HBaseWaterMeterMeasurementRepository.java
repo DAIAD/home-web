@@ -77,6 +77,9 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 	@Value("${hbase.data.time.partitions}")
 	private short timePartitions;
 
+	@Value("${scanner.cache.size}")
+	private int scanCacheSize = 1;
+
 	@Autowired
 	private HBaseConfigurationBuilder configurationBuilder;
 
@@ -709,6 +712,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 
 			for (short p = 0; p < timePartitions; p++) {
 				Scan scan = new Scan();
+				scan.setCaching(this.scanCacheSize);
 				scan.addFamily(columnFamily);
 
 				byte[] partitionBytes = Bytes.toBytes(p);

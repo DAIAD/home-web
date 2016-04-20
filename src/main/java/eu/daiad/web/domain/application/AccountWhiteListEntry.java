@@ -94,12 +94,16 @@ public class AccountWhiteListEntry {
 
 	@Column(name = "default_web_mode")
 	private int defaultWebMode;
-	
-	public AccountWhiteListEntry(){
-		
+
+	@Type(type = "org.hibernate.spatial.GeometryType")
+	@Column(name = "location")
+	private Geometry location;
+
+	public AccountWhiteListEntry() {
+
 	}
-	
-	public AccountWhiteListEntry(String username){
+
+	public AccountWhiteListEntry(String username) {
 		this();
 		this.username = username;
 	}
@@ -115,7 +119,6 @@ public class AccountWhiteListEntry {
 	public String getUsername() {
 		return username;
 	}
-	
 
 	public DateTime getRegisteredOn() {
 		return registeredOn;
@@ -132,7 +135,7 @@ public class AccountWhiteListEntry {
 	public Utility getUtility() {
 		return utility;
 	}
-	
+
 	public void setUtility(Utility utility) {
 		this.utility = utility;
 	}
@@ -251,6 +254,14 @@ public class AccountWhiteListEntry {
 
 	public void setMeterLocation(Geometry meterLocation) {
 		this.meterLocation = meterLocation;
+	}
+
+	public Geometry getLocation() {
+		return location;
+	}
+
+	public void setLocation(Geometry location) {
+		this.location = location;
 	}
 
 }

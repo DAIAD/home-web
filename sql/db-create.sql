@@ -60,10 +60,13 @@ CREATE TABLE account (
 	postal_code character varying(10),
 	birthdate timestamp without time zone,
 	gender character varying(12),
+	location geometry,
     CONSTRAINT pk_account PRIMARY KEY (id),
     CONSTRAINT fk_utility FOREIGN KEY (utility_id)
         REFERENCES public.utility (id) MATCH SIMPLE
-            ON UPDATE CASCADE ON DELETE SET NULL
+            ON UPDATE CASCADE ON DELETE SET NULL,
+	CONSTRAINT enforce_dims_location CHECK (st_ndims(location) = 2),
+    CONSTRAINT enforce_srid_location CHECK (st_srid(location) = 4326)
 );
 
 -- profile
@@ -138,6 +141,7 @@ CREATE TABLE public.account_white_list
   gender character varying(12),
   default_mobile_mode integer NOT NULL,
   default_web_mode integer NOT NULL,
+  location geometry,
   meter_serial character varying(50),
   meter_location geometry,
   CONSTRAINT pk_account_white_list PRIMARY KEY (id),
@@ -148,8 +152,10 @@ CREATE TABLE public.account_white_list
         REFERENCES public.account (id) MATCH SIMPLE
             ON UPDATE CASCADE ON DELETE CASCADE,
   CONSTRAINT uq_utility_username UNIQUE (utility_id, username),
-  CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(meter_location) = 2),
-  CONSTRAINT enforce_srid_the_geom CHECK (st_srid(meter_location) = 4326)
+  CONSTRAINT enforce_dims_meter_location CHECK (st_ndims(meter_location) = 2),
+  CONSTRAINT enforce_srid_meter_location CHECK (st_srid(meter_location) = 4326),
+  CONSTRAINT enforce_dims_location CHECK (st_ndims(location) = 2),
+  CONSTRAINT enforce_srid_location CHECK (st_srid(location) = 4326)
 );
 
 -- role
@@ -339,8 +345,8 @@ CREATE TABLE public.device_meter
   CONSTRAINT fk_device_meter_device FOREIGN KEY (id)
         REFERENCES public.device (id) MATCH SIMPLE
             ON UPDATE CASCADE ON DELETE CASCADE,
-  CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(location) = 2),
-  CONSTRAINT enforce_srid_the_geom CHECK (st_srid(location) = 4326)
+  CONSTRAINT enforce_dims_location CHECK (st_ndims(location) = 2),
+  CONSTRAINT enforce_srid_location CHECK (st_srid(location) = 4326)
 );
 
 -- group
@@ -361,8 +367,8 @@ CREATE TABLE "group" (
     spatial geometry,
     size integer,
     CONSTRAINT pk_group PRIMARY KEY (id),
-    CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(spatial) = 2),
-    CONSTRAINT enforce_srid_the_geom CHECK (st_srid(spatial) = 4326),
+    CONSTRAINT enforce_dims_spatial CHECK (st_ndims(spatial) = 2),
+    CONSTRAINT enforce_srid_spatial CHECK (st_srid(spatial) = 4326),
 	CONSTRAINT fk_utility FOREIGN KEY (utility_id)
 		REFERENCES public.utility (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION
@@ -759,9 +765,7 @@ ALTER TABLE public.trial_account_activity
   OWNER TO daiad;
 
 -- procedures
-DROP FUNCTION IF EXISTS sp_account_update_stats(account_id integer, success boolean, login_date timestamp with time zone);
-
-CREATE OR REPLACE FUNCTION sp_account_update_stats(account_id integer, success boolean, login_date timestamp with time zone) RETURNS INT AS $$
+CREATE FUNCTION sp_account_update_stats(account_id integer, success boolean, login_date timestamp with time zone) RETURNS INT AS $$
 BEGIN
 	if  success = true then
 		update account set last_login_success = GREATEST(login_date AT TIME ZONE 'UTC', last_login_success) where id = account_id;

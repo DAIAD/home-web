@@ -11,6 +11,7 @@ import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.vividsolutions.jts.geom.Geometry;
 
 import eu.daiad.web.model.EnumGender;
 
@@ -71,6 +72,8 @@ public class Account {
 	@NotEmpty(groups = { AccountDefaultValidation.class })
 	@Pattern(regexp = "en|el|es|de", groups = { AccountDefaultValidation.class })
 	private String locale;
+
+	private Geometry location;
 
 	public EnumGender getGender() {
 		if (this.gender == null) {
@@ -170,6 +173,14 @@ public class Account {
 
 	public void setAddress(String address) {
 		this.address = address;
+	}
+
+	public Geometry getLocation() {
+		return location;
+	}
+
+	public void setLocation(Geometry location) {
+		this.location = location;
 	}
 
 }
