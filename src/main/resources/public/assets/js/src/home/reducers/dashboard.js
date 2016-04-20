@@ -9,8 +9,9 @@ var dashboard = function (state, action) {
       layout: [
         {i: "1", x:0, y:0, w:2, h:2, minW:2, minH:2},
         {i: "2", x:2, y:0, w:2, h:2, minW:2, minH:2},
-        {i: "4", x:4, y:0, w:2, h:1, minW:2, minH:1},
+        {i: "4", x:4, y:0, w:2, h:2, minW:2, minH:2},
         {i: "5", x:4, y:1, w:2, h:1, minW:2, minH:1},
+        {i: "6", x:0, y:2, w:2, h:2, minW:2, minH:2},
       ],
       tempInfoboxData: {
         title: null,
@@ -51,9 +52,9 @@ var dashboard = function (state, action) {
           },
         {
           id: "4", 
-          title: "Year amphiro consumption", 
-          type: "stat",
-          deviceType: "AMPHIRO",
+          title: "Year meter consumption", 
+          type: "chart",
+          deviceType: "METER",
           period: "year",
           metric: "volume",
           data: [],
@@ -67,16 +68,17 @@ var dashboard = function (state, action) {
           metric: "volume",
           data: [],
         },
-        /*
         {
-          id: "5", 
-          title:"Day consumption",
-          type: "stat",
-          time: Object.assign({}, timeUtil.today(), {granularity:0}),
-          device: "39533fa1-61d5-456f-beae-11845a03b374",
+          id: "6", 
+          title:"Week consumption",
+          type: "chart",
+          subtype: "total",
+          deviceType: "AMPHIRO",
+          period: "week",
           metric: "volume",
           data: [],
           },
+          /*
           */
         /*{
           i: "6", 
@@ -136,10 +138,8 @@ var dashboard = function (state, action) {
  
     case types.DASHBOARD_REMOVE_INFOBOX: {
       let newInfobox = state.infobox.slice();
-      console.log('old nfobox', newInfobox);
       let idx = newInfobox.findIndex(obj => obj.id === action.id);
       newInfobox.splice(idx, 1);
-      console.log('new infobox', newInfobox);
       
       return Object.assign({}, state, {
         infobox: newInfobox
@@ -148,8 +148,11 @@ var dashboard = function (state, action) {
 
     case types.DASHBOARD_UPDATE_INFOBOX: {
       let newInfobox = state.infobox.slice();
+      //TODO: had to use let instead of const because of browserify block scope error
       let idx = newInfobox.findIndex(obj => obj.id === action.id);
-      newInfobox[idx].data = action.data;
+
+      newInfobox[idx] = Object.assign({}, newInfobox[idx], action.update);
+      //newInfobox[idx].data = action.data;
       
       return Object.assign({}, state, {
         infobox: newInfobox

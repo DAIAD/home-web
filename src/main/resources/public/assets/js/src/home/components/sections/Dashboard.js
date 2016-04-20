@@ -27,7 +27,7 @@ function SayHello (props) {
 
 function InfoBox (props) {
   const { mode, infobox, linkToHistory, removeInfobox, chartFormatter } = props;
-  console.log('infobox here ', infobox);
+  //const historyLink = 
   const editable = mode==='edit'?true:false;
   return (
     <div className='info-box'>
@@ -54,11 +54,8 @@ function InfoBox (props) {
 }
 
 function StatBox (props) {
-  const { title, type, improved, data, reducedData, metric, measurements, period, device, deviceDetails, time, index } = props.infobox;
-
-  console.log('statBOX', props.infobox);
-  console.log('REDUCED', reducedData);
-  let improvedDiv = (<div/>);
+  const { title, type, improved, data, reducedData, metric, measurements, period, device, deviceDetails, index, time, linkToHistory } = props.infobox;
+  let improvedDiv = <div/>;
   if (improved === true) {
     improvedDiv = (<img src="/assets/images/svg/success.svg"/>);
   }
@@ -72,26 +69,28 @@ function StatBox (props) {
         <h2>{reducedData}</h2>
       </div>
       <div className='col-md-7'>
-        <a onClick={() => props.linkToHistory({time, period, device:device.length?device[0]:device, metric, index})}>See more</a>
+        <a onClick={linkToHistory}>See more</a>
       </div>
     </div>
   );
 }
 
 function ChartBox (props) {
-  const { title, type, improved, data, metric, measurements, period, device, deviceDetails, time, index } = props.infobox;
-   console.log('chartbox', props);
-  const metricReduced = data?data[metric]:0;
-  const duration = data?data.duration:null;
-  console.log('chartbox device', device.length?device[0]:[] );
+  const { title, type, improved, data, metric, measurements, period, device, deviceDetails, chartData, reducedData, time, index, linkToHistory } = props.infobox;
   return (
     <div>
       <div >
-        <ShowerChart {...props} />
-        <span>You consumed a total of <b>{metricReduced} lt</b> in <b>{duration} sec</b>!</span>
+        {
+          (() => chartData.length>0?(
+            <ShowerChart {...props} />
+            ):(
+            <h4>Oops, no data available...</h4>
+            ))()
+        }
+        <span>You consumed a total of <b>{reducedData} lt</b>!</span>
       </div>
       <div>
-        <a onClick={() => props.linkToHistory({time, period, device:device.length?device[0]:device, metric, index})}>See more</a>
+        <a onClick={linkToHistory}>See more</a>
       </div>
     </div>
   );
@@ -100,7 +99,6 @@ function ChartBox (props) {
 
 function ShowerChart (props) {
   const { chartFormatter, intl, history, infobox:{chartData}, metric } = props;
-  console.log('shower chart data', chartData);
   if (history){
     return (<h4>Oops, cannot graph due to limited data..</h4>);  
   }
@@ -380,8 +378,6 @@ var Dashboard = React.createClass({
   },
   */
   render: function() {
-    console.log('rendered dashboaerd');
-    console.log(this.props);
     const { firstname, mode, switchMode, amphiros, meters } = this.props;
     return (
       <MainSection id="section.dashboard">

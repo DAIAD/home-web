@@ -11,7 +11,7 @@ var HistoryActions = require('../actions/HistoryActions');
 var DashboardActions = require('../actions/DashboardActions');
 
 var timeUtil = require('../utils/time');
-var { getDeviceByKey, getDeviceNameByKey, getDeviceTypeByKey, getAvailableDevices, getAvailableMeters, getDefaultDevice, getLastSession } = require('../utils/device');
+var { getDeviceByKey, getDeviceNameByKey, getDeviceKeysByType, getDeviceTypeByKey, getAvailableDevices, getAvailableDeviceKeys, getAvailableMeters, getDefaultDevice, getLastSession, reduceMetric, reduceSessions, getDataSessions, getDataMeasurements } = require('../utils/device');
 var { getFilteredData } = require('../utils/chart');
 
 
@@ -22,7 +22,7 @@ function mapStateToProps(state, ownProps) {
     layout: state.section.dashboard.layout,
     mode: state.section.dashboard.mode,
     tempInfoboxData: state.section.dashboard.tempInfoboxData,
-    infoboxData: state.section.dashboard.infobox,
+    infoboxes: state.section.dashboard.infobox,
   };
 }
 
@@ -30,6 +30,7 @@ function mapDispatchToProps(dispatch) {
   return Object.assign({},
                         assign(bindActionCreators(DashboardActions, dispatch)),
                         {linkToHistory: options => dispatch(HistoryActions.linkToHistory(options))}); 
+
 }
 
 function mergeProps(stateProps, dispatchProps, ownProps) {
@@ -94,7 +95,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                         chartFormatter: intl => (x) => intl.formatTime(x, { hour:'numeric', minute:'numeric'}),
                           //amphiros: getAvailableDevices(stateProps.devices).map(dev=>dev.deviceKey),
                           //meters: getAvailableMeters(stateProps.devices).map(dev=>dev.deviceKey),
-                        infoboxData: transformInfoboxData(stateProps.infoboxData, stateProps.devices),
+                        infoboxData: transformInfoboxData(stateProps.infoboxes, stateProps.devices, dispatchProps.linkToHistory),
                            periods,
                            types,
                            subtypes,
@@ -116,60 +117,49 @@ function assign(...objects) {
   return Object.assign({}, ...objects);
 }
 
-function transformInfoboxData (infoboxData, devices) {
+function transformInfoboxData (infoboxes, devices, link) {
 
-  return infoboxData.map(infobox => {
-                         //Object.assign({}, infobox, {device: "1bc00c64-a51a-474f-90dd-6156162475d9"}))
-                         //Object.assign({}, infobox, {deviceDetails: getDeviceByKey(devices, infobox.device)}))
-                         //.map(infobox => {
+  return infoboxes.map(infobox => {
+    const { title, type, time, period, index, deviceType, subtype, data, metric } = infobox;
 
+    let device, chartData, reducedData, linkToHistory;
     
-    const { type, deviceType, subtype, data, metric } = infobox;
-    let dataSource;
+    if (subtype === 'last') {
+      device = infobox.device;
+      const last = data.find(d=>d.deviceKey===device);
+      const lastShowerMeasurements = getDataMeasurements(devices, last, index);
+      
+      reducedData = lastShowerMeasurements.map(s=>s[metric]).reduce((c, p)=>c+p, 0);
+      
+      chartData = [{
+        title: getDeviceNameByKey(devices, device), 
+        data:  getFilteredData(lastShowerMeasurements , infobox.metric)
+      }];
     
-    if (deviceType === "AMPHIRO") dataSource = "sessions";
-    else if (deviceType === "METER") dataSource = "values";
+      linkToHistory =  () => link({time, period, device:[device], metric, index, data});
+    }
+    else {
+      device = getDeviceKeysByType(devices, deviceType);
+      
+      reducedData = reduceSessions(devices, data).map(s=>s[metric]).reduce((c, p)=>c+p, 0); 
 
-    if (type === 'chart') {
-      if (subtype==='last') {
-        //return Object.assign({}, infobox, {data:Object.assign({}, data, {chartData: getFilteredData(data.measurements, metric, infobox.deviceDetails.type)})});
-        dataSource = "measurements";
-      }
-      else if (subtype ==='total') {
-        //return Object.assign({}, infobox, {data:Object.assign({}, data, {chartData:getFilteredData(infobox.data, infobox.metric, infobox.deviceDetails.type)})});
-      }
-      else throw new Error('oops, subtype', subtype, ' not supported');
-      //}
-      return Object.assign({}, 
-                                 infobox,
-                                 {device:getAvailableDevices(devices).map(device=>device.deviceKey)},
-                                   {chartData:infobox.data.map(devData =>
-                                                       {
-                                                         return {title: getDeviceNameByKey(devices, devData.deviceKey), data:getFilteredData(devData[dataSource], infobox.metric, getDeviceTypeByKey(devices, devData.deviceKey))};
-                                                       }) 
-                           });
+      chartData = data.map(devData => ({ 
+        title: getDeviceNameByKey(devices, devData.deviceKey), 
+        data:getFilteredData(getDataSessions(devices, devData, subtype, index), infobox.metric, getDeviceTypeByKey(devices, devData.device))
+      }));
+     
+     linkToHistory =  () => link({time, period, device, metric, index, data});
     }
-    else if (type === 'stat') {
-      if (subtype === 'last') {
-        return Object.assign({},
-                             infobox,
-                             {
-                               reducedData: infobox.data.map(it=>it?it.measurements.map(it=>it[metric]?it[metric]:0).reduce(((c,p)=>c+p),0):[]).reduce(((c, p)=>c+p),0).toFixed(1)
-                             }
-                            );
-      }
-      else {
-        return Object.assign({},
-                             infobox,
-                             {
-                               reducedData: infobox.data.map(it=>it[dataSource].map(it=>it[metric]?it[metric]:0).reduce(((c,p)=>c+p),0)).reduce(((c, p)=>c+p),0).toFixed(1)
-                             }
-                            );
-        
-      }
-    }
-    else throw new Error('oops, type', type, ' not supported');
-  });
+
+    return Object.assign({}, 
+                       infobox,
+                       {
+                         device,
+                         reducedData,
+                         chartData,
+                         linkToHistory
+                       });
+     });
 }
 
 var DashboardData = connect(mapStateToProps, mapDispatchToProps, mergeProps)(Dashboard);

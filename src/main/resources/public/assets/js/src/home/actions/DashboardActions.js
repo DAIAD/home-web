@@ -29,11 +29,11 @@ const deleteInfobox = function(id) {
   };
 };
 
-const updateInfobox = function(id, data) {
+const updateInfobox = function(id, update) {
   return {
     type: types.DASHBOARD_UPDATE_INFOBOX,
-    id: id,
-    data: data
+    id,
+    update 
   };
 };
 
@@ -90,18 +90,29 @@ const DashboardActions = {
   fetchInfoboxData: function(data) {
     return function(dispatch, getState) {
       const { id, type, subtype, deviceType, period } = data;
-      const time = getTimeByPeriod(period);
       const device = getDeviceKeysByType(getState().user.profile.devices, deviceType);
+      let time = getTimeByPeriod(period);
       
+      if (!device || !device.length) return new Promise((resolve, reject) => resolve()); 
+
+      const found = getState().section.dashboard.infobox.find(x => x.id === id);
+
+      if (found && found.data && found.data.length>0){
+        console.log('found infobox data in memory');
+        return new Promise((() => found), (() => getState().query.errors));
+      }
+
       if (subtype === "last") {
-        return dispatch(QueryActions.fetchLastSession(device, getLastShowerTime()))
-        .then(session =>  dispatch(updateInfobox(id, session)))
+        time = getLastShowerTime();
+
+        return dispatch(QueryActions.fetchLastSession(device, time))
+        .then(session => session)
+        .then(response => dispatch(updateInfobox(id, {index: response.index, device:response.device, data:response.data, period: "custom", time})))
         .catch(error => { console.error(error); });
       }
       else {
-      //if (type === "stat") {
         return dispatch(QueryActions.queryDeviceOrMeter(device, time))
-        .then(sessions =>  dispatch(updateInfobox(id, sessions)))
+        .then(sessions =>  dispatch(updateInfobox(id, {data:sessions, time})))
         .catch(error => { console.error(error); });
       }
     };
