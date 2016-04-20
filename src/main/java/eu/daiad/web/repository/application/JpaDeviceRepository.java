@@ -110,21 +110,21 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 		return deviceKey;
 	}
-	
-	public List <DeviceAmphiroConfigurationDefault> getAmphiroDefaultConfigurations() throws ApplicationException {
-		List <DeviceAmphiroConfigurationDefault> configurations = null;
-		
+
+	public List<DeviceAmphiroConfigurationDefault> getAmphiroDefaultConfigurations() throws ApplicationException {
+		List<DeviceAmphiroConfigurationDefault> configurations = null;
+
 		try {
-			TypedQuery<DeviceAmphiroConfigurationDefault> configQuery = entityManager
-						.createQuery("select c from device_amphiro_config_default c",
-										DeviceAmphiroConfigurationDefault.class).setFirstResult(0);
-			
+			TypedQuery<DeviceAmphiroConfigurationDefault> configQuery = entityManager.createQuery(
+							"select c from device_amphiro_config_default c", DeviceAmphiroConfigurationDefault.class)
+							.setFirstResult(0);
+
 			configurations = configQuery.getResultList();
-			
+
 		} catch (Exception ex) {
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
 		}
-	
+
 		return configurations;
 	}
 
@@ -348,9 +348,10 @@ public class JpaDeviceRepository implements IDeviceRepository {
 	public Device getUserAmphiroDeviceByMacAddress(UUID userKey, String macAddress) throws ApplicationException {
 		try {
 			TypedQuery<eu.daiad.web.domain.application.DeviceAmphiro> query = entityManager
-							.createQuery("select d from device_amphiro d where d.macAddress = :macAddress",
+							.createQuery("select d from device_amphiro d where d.macAddress = :macAddress and d.account.key = :key",
 											eu.daiad.web.domain.application.DeviceAmphiro.class).setFirstResult(0)
 							.setMaxResults(1);
+			query.setParameter("key", userKey);
 			query.setParameter("macAddress", macAddress);
 
 			List<eu.daiad.web.domain.application.DeviceAmphiro> result = query.getResultList();
