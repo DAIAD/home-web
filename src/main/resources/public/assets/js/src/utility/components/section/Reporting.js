@@ -16,8 +16,8 @@ var successCodes = require('../../constants/Successes');
 
 
 var { getActivity, setFilter, getSessions, getMeters, resetUserData, exportUserData, showAddUserForm, 
-      hideAddUserForm, addUserSelectUtility, addUserFillForm, addUserValidationsErrorsOccurred, 
-      addUserShowErrorAlert, addUserHideErrorAlert, addUser, addUserGetUtilities } = require('../../actions/AdminActions');
+      hideAddUserForm, addUserSelectUtility, addUserSelectGenderMale, addUserSelectGenderFemale, addUserFillForm, 
+      addUserValidationsErrorsOccurred, addUserShowMessageAlert, addUserHideErrorAlert, addUser, addUserGetUtilities } = require('../../actions/AdminActions');
 
 var Reporting = React.createClass({
 	contextTypes: {
@@ -111,7 +111,6 @@ var Reporting = React.createClass({
         address : this.refs.address.getValue(),
         postalCode : this.refs.postalCode.getValue()
     };
-    this.props.actions.addUserFillForm(inputFieldsFormValues);
     
     var errors = this.validateNewUserForm(
           this.refs.firstName.getValue(),
@@ -123,6 +122,7 @@ var Reporting = React.createClass({
         );
 
     if (errors.length === 0){
+      this.props.actions.addUserFillForm(inputFieldsFormValues);
       var userInfo = {
           firstName : this.refs.firstName.getValue(),
           lastName : this.refs.lastName.getValue(),
@@ -541,24 +541,51 @@ var Reporting = React.createClass({
                   <div className='clearfix'>
                     <Bootstrap.Row>
                       <Bootstrap.Col xs={6}>
-                        <Bootstrap.Input type='text' label={_t({ id:'AddUserForm.FirstName.label'}) + ' (*)'} ref='firstName' placeholder={_t({ id:'AddUserForm.FirstName.placeholder'})} />
+                        <Bootstrap.Input 
+                          type='text' 
+                          value={this.props.admin.addUser.selectedFirstName}
+                          label={_t({ id:'AddUserForm.FirstName.label'}) + ' (*)'} 
+                          ref='firstName' 
+                          placeholder={_t({ id:'AddUserForm.FirstName.placeholder'})} />
                       </Bootstrap.Col>
                       <Bootstrap.Col xs={6}>
-                        <Bootstrap.Input type='email' label={_t({ id:'AddUserForm.LastName.label'}) + ' (*)'} ref='lastName' placeholder={_t({ id:'AddUserForm.LastName.placeholder'})} />
+                        <Bootstrap.Input 
+                          type='text'
+                          value={this.props.admin.addUser.selectedLastName}
+                          label={_t({ id:'AddUserForm.LastName.label'}) + ' (*)'} 
+                          ref='lastName' 
+                          placeholder={_t({ id:'AddUserForm.LastName.placeholder'})} />
                       </Bootstrap.Col>
                     </Bootstrap.Row>
                     <Bootstrap.Row>
                       <Bootstrap.Col xs={6}>
-                        <Bootstrap.Input type='text' label={_t({ id:'AddUserForm.E-mail.label'}) + ' (*)'} ref='email' placeholder={_t({ id:'AddUserForm.E-mail.placeholder'})} />
+                        <Bootstrap.Input 
+                          type='text'
+                          value={this.props.admin.addUser.selectedEmail}
+                          label={_t({ id:'AddUserForm.E-mail.label'}) + ' (*)'} 
+                          ref='email' 
+                          placeholder={_t({ id:'AddUserForm.E-mail.placeholder'})} />
                       </Bootstrap.Col>
                       <Bootstrap.Col xs={6}>
                         <Bootstrap.Input label={_t({ id:'AddUserForm.Gender.label'}) + ' (*)'} wrapperClassName='white-wrapper'>
                             <Bootstrap.Row>
                               <Bootstrap.Col xs={6}>
-                                <Bootstrap.Input type='radio' ref='genderMale' label={_t({ id:'AddUserForm.Gender.values.Male'})} name='gender' />
+                                <Bootstrap.Input 
+                                  type='radio' 
+                                  checked={this.props.admin.addUser.selectedGender === 'MALE' ? true : false}
+                                  onClick={this.props.actions.addUserSelectGenderMale}
+                                  ref='genderMale' 
+                                  label={_t({ id:'AddUserForm.Gender.values.Male'})} 
+                                  name='gender' />
                               </Bootstrap.Col>
                               <Bootstrap.Col xs={6}>
-                                <Bootstrap.Input type='radio' ref='genderFemale' label={_t({ id:'AddUserForm.Gender.values.Female'})} name='gender' />
+                                <Bootstrap.Input 
+                                  type='radio'
+                                  onClick={this.props.actions.addUserSelectGenderFemale}
+                                  checked={this.props.admin.addUser.selectedGender === 'FEMALE' ? true : false}
+                                  ref='genderFemale' 
+                                  label={_t({ id:'AddUserForm.Gender.values.Female'})} 
+                                  name='gender' />
                               </Bootstrap.Col>
                             </Bootstrap.Row>
                         </Bootstrap.Input>
@@ -566,7 +593,12 @@ var Reporting = React.createClass({
                     </Bootstrap.Row>
                     <Bootstrap.Row>
                       <Bootstrap.Col xs={6}>
-                        <Bootstrap.Input type='text' label={_t({ id:'AddUserForm.Address.label'})} ref='address' placeholder={_t({ id:'AddUserForm.Address.placeholder'})}/>
+                        <Bootstrap.Input 
+                          type='text'
+                          value={this.props.admin.addUser.selectedAddress}
+                          label={_t({ id:'AddUserForm.Address.label'})} 
+                          ref='address' 
+                          placeholder={_t({ id:'AddUserForm.Address.placeholder'})}/>
                       </Bootstrap.Col>
                       <Bootstrap.Col xs={6}>
                         <Bootstrap.Input label={_t({ id:'AddUserForm.Utility.label'}) + ' (*)'} wrapperClassName='white-wrapper'>
@@ -581,12 +613,17 @@ var Reporting = React.createClass({
                     </Bootstrap.Row>
                     <Bootstrap.Row>
                       <Bootstrap.Col xs={6}>
-                        <Bootstrap.Input type='text' label={_t({ id:'AddUserForm.PostalCode.label'})} ref='postalCode' placeholder={_t({ id:'AddUserForm.PostalCode.placeholder'})}/>
+                        <Bootstrap.Input 
+                          type='text'
+                          value={this.props.admin.addUser.selectedPostalCode}
+                          label={_t({ id:'AddUserForm.PostalCode.label'})} 
+                          ref='postalCode' 
+                          placeholder={_t({ id:'AddUserForm.PostalCode.placeholder'})}/>
                       </Bootstrap.Col>  
                     </Bootstrap.Row>
                   </div>
                   <MessageAlert
-                    show={this.props.admin.addUser.showErrorAlert}
+                    show={this.props.admin.addUser.showMessageAlert}
                     title={!this.props.admin.addUser.response.success ? _t({id: 'AddUserForm.ErrorsDetected'}) : _t({id: 'AddUserForm.Success'})}
                     i18nNamespace={this.props.admin.addUser.response.success ? 'Success.' : 'Error.'}
                     bsStyle={this.props.admin.addUser.response.success ? 'success' : 'danger' }
@@ -658,8 +695,8 @@ function mapStateToProps(state) {
 function mapDispatchToProps(dispatch) {
   return {
     actions : bindActionCreators(Object.assign({}, { getActivity, setFilter, getSessions, getMeters, resetUserData, 
-      exportUserData, showAddUserForm, hideAddUserForm, addUserSelectUtility, addUserFillForm, 
-      addUserValidationsErrorsOccurred, addUserShowErrorAlert, addUserHideErrorAlert, addUser, addUserGetUtilities }) , dispatch)
+      exportUserData, showAddUserForm, hideAddUserForm, addUserSelectUtility, addUserSelectGenderMale, addUserSelectGenderFemale, 
+      addUserFillForm, addUserValidationsErrorsOccurred, addUserShowMessageAlert, addUserHideErrorAlert, addUser, addUserGetUtilities }) , dispatch)
   };
 }
 
