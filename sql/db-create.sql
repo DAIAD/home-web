@@ -212,6 +212,9 @@ CREATE TABLE public.device
   registered_on timestamp without time zone,
   last_upload_success_on timestamp without time zone,
   last_upload_failure_on timestamp without time zone,
+  transmission_count bigint,
+  transmission_interval_sum bigint,
+  transmission_interval_max integer,
   CONSTRAINT pk_device PRIMARY KEY (id),
   CONSTRAINT fk_account FOREIGN KEY (account_id)
         REFERENCES public.account (id) MATCH SIMPLE
@@ -752,7 +755,10 @@ CREATE OR REPLACE VIEW public.trial_account_activity AS
     max(case when not da.id is null then d.registered_on else null end) AS amphiro_last_registration,
     max(case when not dm.id is null then d.registered_on else null end) AS meter_last_registration,
     max(d.last_upload_success_on) AS device_last_upload_success,
-    max(d.last_upload_failure_on) AS device_last_upload_failure
+    max(d.last_upload_failure_on) AS device_last_upload_failure,
+    sum(case when not da.id is null then d.transmission_count else null end) AS transmission_count,
+    sum(case when not da.id is null then d.transmission_interval_sum else null end) AS transmission_interval_sum,
+    max(case when not da.id is null then d.transmission_interval_max else null end) AS transmission_interval_max
    FROM account_white_list w
      JOIN utility u ON w.utility_id = u.id
      LEFT JOIN account a ON w.account_id = a.id

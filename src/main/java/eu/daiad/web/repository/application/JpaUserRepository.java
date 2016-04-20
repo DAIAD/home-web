@@ -545,6 +545,10 @@ public class JpaUserRepository implements IUserRepository {
 				account.setLeastMeterRegistration(a.getLeastMeterRegistration() != null ? a.getLeastMeterRegistration()
 								.getMillis() : null);
 
+				account.setTransmissionCount(a.getTransmissionCount());
+				account.setTransmissionIntervalMax(a.getTransmissionIntervalMax());
+				account.setTransmissionIntervalSum(a.getTransmissionIntervalSum());
+
 				results.add(account);
 			}
 

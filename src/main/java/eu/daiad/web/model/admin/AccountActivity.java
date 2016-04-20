@@ -1,5 +1,6 @@
 package eu.daiad.web.model.admin;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public class AccountActivity {
@@ -37,6 +38,12 @@ public class AccountActivity {
 	private Long lastDataUploadSuccess;
 
 	private Long lastDataUploadFailure;
+
+	private BigDecimal transmissionCount;
+
+	private BigDecimal transmissionIntervalSum;
+
+	private Integer transmissionIntervalMax;
 
 	public Integer getId() {
 		return id;
@@ -172,6 +179,30 @@ public class AccountActivity {
 
 	public void setLeastMeterRegistration(Long leastMeterRegistration) {
 		this.leastMeterRegistration = leastMeterRegistration;
+	}
+
+	public BigDecimal getTransmissionCount() {
+		return transmissionCount;
+	}
+
+	public void setTransmissionCount(BigDecimal transmissionCount) {
+		this.transmissionCount = transmissionCount;
+	}
+
+	public BigDecimal getTransmissionIntervalSum() {
+		return transmissionIntervalSum;
+	}
+
+	public void setTransmissionIntervalSum(BigDecimal transmissionIntervalSum) {
+		this.transmissionIntervalSum = transmissionIntervalSum;
+	}
+
+	public Integer getTransmissionIntervalMax() {
+		return transmissionIntervalMax;
+	}
+
+	public void setTransmissionIntervalMax(Integer transmissionIntervalMax) {
+		this.transmissionIntervalMax = transmissionIntervalMax;
 	}
 
 }

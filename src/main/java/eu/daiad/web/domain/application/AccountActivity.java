@@ -1,5 +1,6 @@
 package eu.daiad.web.domain.application;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import javax.persistence.Basic;
@@ -74,6 +75,15 @@ public class AccountActivity {
 	@Column(name = "device_last_upload_failure")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime lastDataUploadFailure;
+
+	@Column(name = "transmission_count")
+	private BigDecimal transmissionCount;
+
+	@Column(name = "transmission_interval_sum")
+	private BigDecimal transmissionIntervalSum;
+
+	@Column(name = "transmission_interval_max")
+	private Integer transmissionIntervalMax;
 
 	public Integer getUtilityId() {
 		return utilityId;
@@ -205,6 +215,30 @@ public class AccountActivity {
 
 	public void setLeastMeterRegistration(DateTime leastMeterRegistration) {
 		this.leastMeterRegistration = leastMeterRegistration;
+	}
+
+	public BigDecimal getTransmissionCount() {
+		return transmissionCount;
+	}
+
+	public void setTransmissionCount(BigDecimal transmissionCount) {
+		this.transmissionCount = transmissionCount;
+	}
+
+	public BigDecimal getTransmissionIntervalSum() {
+		return transmissionIntervalSum;
+	}
+
+	public void setTransmissionIntervalSum(BigDecimal transmissionIntervalSum) {
+		this.transmissionIntervalSum = transmissionIntervalSum;
+	}
+
+	public Integer getTransmissionIntervalMax() {
+		return transmissionIntervalMax;
+	}
+
+	public void setTransmissionIntervalMax(Integer transmissionIntervalMax) {
+		this.transmissionIntervalMax = transmissionIntervalMax;
 	}
 
 }
