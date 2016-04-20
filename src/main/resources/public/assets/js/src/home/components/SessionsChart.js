@@ -25,7 +25,7 @@ var SessionsChart = React.createClass({
   },
 
   render: function() {
-    const colors = ['#2D3580', '#CD4D3E'];
+    const colors = ['#2D3580', '#CD4D3E', '#564535'];
     const areaStyle = this.props.sparkline?null:{
             color:  'rgba(232,232,237, 0.7)',
             type: 'default'
@@ -41,9 +41,9 @@ var SessionsChart = React.createClass({
         smooth: false,
         itemStyle: {
           normal: {
-            color: colors[i],
+            color: colors[i]?colors[i]:colors[0],
             borderWidth: 2,
-            barBorderColor: colors[i],
+            barBorderColor: colors[i]?colors[i]:colors[0],
             barBorderWidth: 15,
             //barBorderRadius:10,
             lineStyle: {

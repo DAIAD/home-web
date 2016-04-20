@@ -7,7 +7,7 @@ var History = require('../components/sections/History');
 
 var HistoryActions = require('../actions/HistoryActions');
 
-var { getDeviceByKey, getDeviceTypeByKey, getDefaultDevice } = require('../utils/device');
+var { getReducedDeviceType, getDeviceByKey, getDeviceTypeByKey, getDefaultDevice } = require('../utils/device');
 var timeUtil = require('../utils/time');
 
 
@@ -17,13 +17,13 @@ function mapStateToProps(state, ownProps) {
 
   return {
     time: state.section.history.time,
-    devType: getDeviceTypeByKey(state.user.profile.devices, state.section.history.activeDevice), 
+    devType: getReducedDeviceType(state.user.profile.devices, state.section.history.activeDevice),
     metricFilter: state.section.history.filter,
     timeFilter: state.section.history.timeFilter,
     devices: state.user.profile.devices?state.user.profile.devices:[],
-    activeDeviceId: state.section.history.activeDevice,
+    activeDevice: state.section.history.activeDevice,
     defaultDevice: deviceKey,
-    };
+  };
 }
 
 function mapDispatchToProps(dispatch) {
@@ -31,6 +31,13 @@ function mapDispatchToProps(dispatch) {
 }
 
 function mergeProps(stateProps, dispatchProps, ownProps) {
+  const allMetrics = [
+    {id:'showers', title:'Showers'},
+    {id:'volume', title:'Volume'},
+    {id:'energy', title:'Energy'},
+    {id:'duration', title:'Duration'},
+    {id:'temperature', title:'Temperature'}
+  ];
   return Object.assign(
     {}, 
     ownProps, 
@@ -40,7 +47,8 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                   { 
                     nextPeriod: timeUtil.getNextPeriod(stateProps.timeFilter, stateProps.time.startDate), 
                     previousPeriod: timeUtil.getPreviousPeriod(stateProps.timeFilter, stateProps.time.endDate),
-                    activeDevice: getDeviceByKey(stateProps.devices, stateProps.activeDeviceId),
+                    metrics: stateProps.devType===-1?allMetrics.filter(m=>m.id!=='volume'):allMetrics,
+                    //activeDevice: getDeviceByKey(stateProps.devices, stateProps.activeDeviceId),
                   }
                  )
   );

@@ -24,11 +24,12 @@ const constants = {
     route:"/commons"
   }],
   SHOWER_METRICS: [
-      {id:'count',mu:'', title:'history.count', details:'history.countDetails'},  
-      {id:'volume', mu:'lt',title:'history.volume', details:'history.volumeDetails'}, 
-      {id:'temperature', mu:'ºC', title:'history.temperature', details: 'history.temperatureDetails'}, 
-      {id:'energy',mu:'W', title:'history.energy', details: 'history.energyDetails'}, 
-      {id:'duration', icon:'timer-on', mu:'sec', title:'history.duration', details: 'history.durationDetails'}, 
+      {id:'devName',  mu:'', title:'history.device', details: 'history.durationDetails', clickable: false}, 
+      {id:'count',mu:'', title:'history.count', details:'history.countDetails', clickable: true},  
+      {id:'volume', mu:'lt',title:'history.volume', details:'history.volumeDetails', clickable: true}, 
+      {id:'temperature', mu:'ºC', title:'history.temperature', details: 'history.temperatureDetails', clickable: true}, 
+      {id:'energy',mu:'W', title:'history.energy', details: 'history.energyDetails', clickable: true}, 
+      {id:'duration', icon:'timer-on', mu:'sec', title:'history.duration', details: 'history.durationDetails', clickable: true}, 
   ],
   STATIC_RECOMMENDATIONS: [
     {

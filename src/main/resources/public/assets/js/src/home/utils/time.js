@@ -94,7 +94,7 @@ const getTimeByPeriod = function (period) {
 
 const getLastShowerTime = function () {
   return {
-    startDate: moment().subtract(1, 'month').valueOf(),
+    startDate: moment().subtract(1, 'week').valueOf(),
     endDate: moment().valueOf(),
     granularity: 0
   };

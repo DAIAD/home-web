@@ -10,7 +10,7 @@ var history = function (state, action) {
     state = {
       filter: "volume",
       timeFilter: "week",
-      activeDevice: null,
+      activeDevice: [],
       activeSessionFilter: "volume",
       activeSessionIndex: null,
       dirty: true,

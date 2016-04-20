@@ -40,34 +40,44 @@ const getDeviceKeysByType = function(devices, type) {
 
   return available.map(d=>d.deviceKey);
 };
+
 const getAvailableDeviceKeys = function(devices) {
   if (!devices) return [];
   return getAvailableDevices(devices).map((device) => (device.deviceKey));
 };
 
 const getDeviceByKey = function(devices, key) {
-  if (!devices) return null;
+  //TODO: if !key added below error is thrown, why?
+  if (!devices ||!Array.isArray(devices)) throw new Error (`devices ${devices} must be of type array`);
   return devices.find((device) => (device.deviceKey === key));
 };
 
 const getDeviceNameByKey = function(devices, key) {
   const device = getDeviceByKey(devices, key);
-  if (device === null || device === undefined) return null;
+  if (!device) return null;
   return device.name || device.serial || device.macAddress || device.deviceKey;
 };
 
-const updateOrAppendToSession = function(sessions, data, id) {
+const updateOrAppendToSession = function(devices, data) {
+  const { id } = data;
+
+  let updated = devices.slice();
+  if (!data || !id) return devices;
+
+  const devIdx = devices.findIndex(d=>d.deviceKey===data.deviceKey);
+  if (devIdx === -1) return updated;
+
+  const sessions = updated[devIdx].sessions.slice();
   if (!sessions.length) return null;
-  let updated = sessions.slice();
-  if (!data || !id) return updated;
   
   const index = getSessionIndexById(sessions, id);
   if (index > -1) {
-    updated[index] = data;
+    sessions[index] = data;
   }
   else {
-    updated.push(data);
+    sessions.push(data);
   }
+  updated[devIdx] = Object.assign({}, updated[devIdx], {sessions});
   return updated;
 };
 
@@ -116,6 +126,60 @@ const getLastSession = function(sessions) {
   return sessions.reduce((prev, curr) => (curr.timestamp>prev.timestamp)?curr:prev);
 };
 
+const getReducedDeviceType = function(devices, keys) {
+   if (keys && !keys.length) return -1;
+   return keys.map(deviceKey => getDeviceTypeByKey(devices, deviceKey)).reduce((prev, curr) => prev===curr?curr:-1);
+};
+
+
+const getDataSessions = function (devices, data) {
+  if (!data || !data.deviceKey) return [];
+  
+  const devType = getDeviceTypeByKey(devices, data.deviceKey);
+  
+  if (devType === 'AMPHIRO') {
+      return data.sessions;
+  }
+  else if (devType === 'METER') {
+    return data.values;
+  }
+  else {
+    return [];
+  }
+};
+
+const getDataMeasurements = function (devices, data, index) {
+  const sessions = getDataSessions(devices, data);
+
+  if (!Array.isArray(sessions) || sessions.length < index) return [];
+
+  return sessions[index]?sessions[index].measurements:[];
+};
+
+// reduces array of devices with multiple sessions arrays
+// to single array of sessions (including device key)
+const reduceSessions = function(devices, devSessions) {
+  return devSessions.map(device =>  
+            getDataSessions(devices, device).map((session, idx) => 
+               Object.assign({}, session, 
+                             {index:idx},
+                             {device:device.deviceKey}
+                            )
+                          )
+                        )
+                        .reduce((c, p) => c.concat(p), []);
+};
+
+const reduceMetric = function(devices, devSessions, metric) {
+  let reduced = devSessions.map(it => getDataSessions(devices, it)
+                                .map(it=>it[metric]?it[metric]:[])
+                                .reduce(((c,p)=>c+p),0))
+                                .reduce(((c, p)=>c+p),0);
+
+  reduced = !isNaN(parseInt(reduced))?parseInt(reduced).toFixed(1):reduced;
+  return reduced;
+};
+
 module.exports = {
   getSessionById,
   getSessionByIndex,
@@ -132,5 +196,10 @@ module.exports = {
   getAvailableMeters,
   getDeviceNameByKey,
   getDeviceByKey,
-  getDeviceKeysByType
+  getDeviceKeysByType,
+  getReducedDeviceType,
+  reduceSessions,
+  reduceMetric,
+  getDataSessions,
+  getDataMeasurements,
 };

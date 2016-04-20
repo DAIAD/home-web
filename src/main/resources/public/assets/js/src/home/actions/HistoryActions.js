@@ -2,7 +2,7 @@ var types = require('../constants/ActionTypes');
 require('es6-promise').polyfill();
 var { push } = require('react-router-redux');
 
-var { getSessionById, getDeviceTypeByKey } = require('../utils/device');
+var { getSessionById, getReducedDeviceType, getDeviceTypeByKey } = require('../utils/device');
 
 var QueryActions = require('./QueryActions');
 
@@ -36,7 +36,8 @@ const HistoryActions = {
   
   linkToHistory: function(options) {
     return function(dispatch, getState) {
-      const { device, metric, period, time, index } = options;
+      console.log('linking to history', options);
+      const { device, metric, period, time, index, data } = options;
       if ((index !== null && index !==undefined)) { 
         dispatch(HistoryActions.setSessionFilter(metric)); 
         dispatch(HistoryActions.setActiveSessionIndex(index)); 
@@ -49,25 +50,27 @@ const HistoryActions = {
       if (metric) dispatch(HistoryActions.setQueryFilter(metric));
       if (period) dispatch(HistoryActions.setTimeFilter(period));
       if (time) dispatch(HistoryActions.setTime(time));
-
+      if (data) { 
+        dispatch(setSessions(data));
+        dispatch(resetDataDirty());
+      }
       dispatch(push('/history'));
     };
   },
   
   getDeviceSession: function (id, deviceKey, time) {
     return function(dispatch, getState) {
+      const devFound = getState().section.history.data.find(d=>d.deviceKey===deviceKey);
+      const sessions = devFound?devFound.sessions:[];
+      const found = getSessionById(sessions, id); 
       
-      const sessions = getState().section.history.data;
-      const session = getSessionById(sessions, id); 
-
-      if (session !== undefined && session.measurements){
+      if (found && found.measurements){
         console.log('found session in memory');
         return new Promise((() => getState().section.history.data), (() => getState().query.errors));
       }
-      console.log('fetching...');
       return dispatch(QueryActions.fetchDeviceSession(id, deviceKey, time))
-        .then(session => { 
-          dispatch(setSession(session));
+      .then(session => { 
+          dispatch(setSession(Object.assign({}, session, {deviceKey})));
           return session;
         })
         .catch(error => {
@@ -78,16 +81,18 @@ const HistoryActions = {
   },
   getActiveSession: function(deviceKey, time) {
     return function(dispatch, getState) {
-      const sessions = getState().section.history.data;
+      const devices = getState().section.history.data;
       const activeSessionIndex = getState().section.history.activeSessionIndex;
+      //TODO: have to find session index in device
       
       if (activeSessionIndex===null) { return false; }
 
-      const activeSession = sessions[activeSessionIndex];
-      console.log(activeSession);
+      const foundDev = devices.find(s=>s.deviceKey===deviceKey);
+      const activeSession = foundDev?foundDev.sessions[activeSessionIndex]:null;
       if (!activeSession) { return false; }
            
       const devType = getDeviceTypeByKey(getState().user.profile.devices, deviceKey);
+      
       if (devType === 'AMPHIRO') {
         if (!activeSession.id) { return false; }
         return dispatch(HistoryActions.getDeviceSession(activeSession.id, deviceKey, time));
@@ -97,28 +102,23 @@ const HistoryActions = {
       }
     };
   },
-  getDeviceSessions: function(deviceKey, time) {
+  getDeviceSessions: function(deviceKeys, time) {
     return function(dispatch, getState) {
       //if query not changed dont update (for now)
       //TODO: have to ask every now and then for new data
       if (!getState().section.history.dirty) {
-        console.log('device data already in memory');
+        console.log('device data already in memory', getState().section.history.data);
         return new Promise((() => getState().section.history.data), (() => getState().query.errors));
       }
-      return dispatch(QueryActions.queryDeviceSessions(deviceKey, time))
-        .then(sessions => {
+      return dispatch(QueryActions.queryDeviceSessions(deviceKeys, time))
+      .then(sessions => {
           dispatch(resetDataDirty());
           dispatch(setSessions(sessions));
           return sessions;
-        })
-        .catch(error => {
-          console.log('oops error while getting all sessions');
-          console.log(error);
         });
-
     }; 
   },
-  getMeterSessions: function (deviceKey, time) {
+  getMeterSessions: function (deviceKeys, time) {
     return function(dispatch, getState) {
       //if query not changed dont update (for now)
       //TODO: have to ask every now and then for new data
@@ -126,10 +126,7 @@ const HistoryActions = {
         console.log('meter data already in memory');
         return new Promise((() => getState().section.history.data), (() => getState().query.errors));
       }
-      console.log('getting data', deviceKey, time);
-      return dispatch(QueryActions.fetchMeterHistory(deviceKey, time))
-        .then(x => {  console.log('before updating infobox', x); return x;})
-        //  .then(sessions => sessions.length?sessions.map((x, i, array) => array[i-1]?Object.assign({}, array[i], {volume:(array[i].volume-array[i-1].volume)}):array[i]):sessions)
+      return dispatch(QueryActions.fetchMeterHistory(deviceKeys, time))
         .then(sessions => {
           dispatch(setSessions(sessions));
           dispatch(resetDataDirty());
@@ -141,15 +138,24 @@ const HistoryActions = {
         });
     };
   },
-  getDeviceOrMeterSessions: function (deviceKey, time) {
+  getDeviceOrMeterSessions: function (deviceKeys, time) {
     return function(dispatch, getState) {
-      const devType = getDeviceTypeByKey(getState().user.profile.devices, deviceKey);
+      //if (!Array.isArray(deviceKey)) throw new Error(`deviceKey ${deviceKey} must be of type array`);
+
+      if (!deviceKeys || !deviceKeys.length) return new Promise((resolve, reject) => resolve());
+      console.log('getting device or met sessions', deviceKeys);
+      const devType = getReducedDeviceType(getState().user.profile.devices, deviceKeys);
+      //TODO: now getting only last devType
+      //const devType = getDeviceTypeByKey(getState().user.profile.devices, deviceKey.reduce((c, p)=>c), 0);
       if (devType === 'AMPHIRO') {
-        return dispatch(HistoryActions.getDeviceSessions(deviceKey, time)); 
+        return dispatch(HistoryActions.getDeviceSessions(deviceKeys, time)); 
       }
       else if (devType === 'METER') {
-        return dispatch(HistoryActions.getMeterSessions(deviceKey, time))
+        return dispatch(HistoryActions.getMeterSessions(deviceKeys, time))
           .then(() => dispatch(HistoryActions.setQueryFilter('volume')));
+      }
+      else {
+        throw new Error(`device of type ${devType} not supported`);
       }
     };
   },

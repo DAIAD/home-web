@@ -5,7 +5,7 @@ var types = require('../constants/ActionTypes');
 var deviceAPI = require('../api/device');
 var meterAPI = require('../api/meter');
 
-var { getLastSession, getSessionIndexById, getDeviceTypeByKey } = require('../utils/device');
+var { reduceSessions, getLastSession, getSessionIndexById, getDeviceTypeByKey, updateOrAppendToSession } = require('../utils/device');
 
 const requestedQuery = function() {
   return {
@@ -30,7 +30,7 @@ const QueryActions = {
       const type = deviceKeys.map(deviceKey => getDeviceTypeByKey(getState().user.profile.devices, deviceKey)).reduce((prev, curr) => prev!==curr?-1:curr);
 
       if (!type) throw new Error('type not found');
-      else if (type === -1) throw new Error('device keys ',deviceKeys, ' of unequal type');
+      else if (type === -1) throw new Error('device keys of unequal type');
       
       if (type === 'AMPHIRO') {
         return dispatch(QueryActions.queryDeviceSessions(deviceKeys, time));
@@ -46,6 +46,8 @@ const QueryActions = {
   queryDeviceSessions: function(deviceKey, time) {
     return function(dispatch, getState) {
       
+      if (!deviceKey || !time) throw new Error(`Not sufficient data provided for device sessions query: deviceKey:${deviceKey}, time: ${time}`);
+
       dispatch(requestedQuery());
 
       //const data = Object.assign({}, time, {deviceKey: [ deviceKey ] }, {csrf: getState().user.csrf});
@@ -53,14 +55,12 @@ const QueryActions = {
       return deviceAPI.querySessions(data)
       .then(response => {
         dispatch(receivedQuery(response.success, response.errors, response.devices) );
-        //if (!response.devices.length || !response.devices[0].sessions.length) { return []; }
         if (!response || !Array.isArray(response.devices) || !Array.isArray(response.devices[0].sessions)) throw new Error('response of queryDeviceSessions with:', deviceKey, time, 'is not of type array');
-          //return response.devices[0].sessions;
-          //return response.devices.map(device => device.sessions);
+
           return response.devices;
         })
         .catch((errors) => {
-          console.log('ooops...', errors);
+          console.error(errors);
           dispatch(receivedQuery(false, errors));
           return errors;
         });
@@ -68,7 +68,9 @@ const QueryActions = {
   },
   fetchDeviceSession: function(id, deviceKey, time) {
     return function(dispatch, getState) {
-      if (id===null || id===undefined) throw new Error('cannot fetch device sessions without valid id:', id);
+      
+      if (!id || !deviceKey || !time) throw new Error(`Not sufficient data provided for device session fetch: id: ${id}, deviceKey:${deviceKey}, time: ${time}`);
+      //if (id===null || id===undefined) throw new Error('cannot fetch device sessions without valid id:', id);
       
       else if (!deviceKey) throw new Error('device key must be given:', deviceKey);
       dispatch(requestedQuery());
@@ -92,26 +94,28 @@ const QueryActions = {
     return function(dispatch, getState) {
       return dispatch(QueryActions.queryDeviceSessions(deviceKeys, time))
       .then(response => {
-
-        let sessions = [];
-        response.forEach(device => {
-          sessions.push({devKey:device.deviceKey, sessions:device.sessions, lastSession:getLastSession(device.sessions)});
-        });
-        const lastSession = sessions.reduce((curr, prev) => curr.lastSession.timestamp>prev.lastSession.timestamp?curr:prev);
-        const deviceKey = lastSession.devKey;
-        const id = lastSession.lastSession.id;
-        if (!id) throw new Error('last session id doesnt exist in:', response);
         
-        const index = getSessionIndexById(sessions.find(session=>session.devKey===deviceKey).sessions, id);
+        const sessions = response;
+        const reduced = reduceSessions(getState().user.profile.devices, sessions);        
         
-        return dispatch(QueryActions.fetchDeviceSession(id, deviceKey, time))
-        .then(session => [Object.assign({}, session, {index})])
+        //find last
+        const lastSession = reduced.reduce((curr, prev) => (curr.timestamp<prev.timestamp)?prev:curr);
+         
+        const { device, id, index } = lastSession;
+        
+        if (!id) throw new Error(`last session id doesnt exist in response: ${response}`);
+        
+        return dispatch(QueryActions.fetchDeviceSession(id, device, time))
+        .then(session => ({data: updateOrAppendToSession(sessions, Object.assign({}, session, {deviceKey:device})), device:device, index}) )
+        .then(session => session)
         .catch(error => error);
       });
     };
   },
   fetchMeterHistory: function(deviceKey, time) {
     return function(dispatch, getState) {
+      if (!deviceKey || !time) throw new Error(`Not sufficient data provided for meter history query: deviceKey:${deviceKey}, time: ${time}`);
+
       dispatch(requestedQuery());
       //const data = Object.assign({}, time, {deviceKey: [ deviceKey ] }, {csrf: getState().user.csrf});
       const data = Object.assign({}, time, {deviceKey}, {csrf: getState().user.csrf});
@@ -135,6 +139,9 @@ const QueryActions = {
   },
   fetchMeterStatus: function(deviceKey) {
     return function(dispatch, getState) {
+
+      if (!deviceKey) throw new Error(`Not sufficient data provided for meter status: deviceKey:${deviceKey}`);
+
       dispatch(requestedMeterStatus());
       
       const data = {deviceKey: [ deviceKey ], csrf: getState().user.csrf };

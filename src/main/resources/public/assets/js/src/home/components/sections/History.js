@@ -1,6 +1,8 @@
 var React = require('react');
 var { FormattedMessage, FormattedDate } = require('react-intl');
 var bs = require('react-bootstrap');
+var Select = require('react-select');
+
 var { Link } = require('react-router');
 
 var MainSection = require('../MainSection');
@@ -34,14 +36,13 @@ function TimeNavigator(props) {
 var History = React.createClass({
 
   componentWillMount: function() {
-    console.log('will mount');
-    const { activeSessionIndex, time, activeDeviceId, defaultDevice, setActiveDevice, getDeviceOrMeterSessions, getActiveSession } = this.props;
-    const device = activeDeviceId || defaultDevice;
-    if (!activeDeviceId) {
-      setActiveDevice(defaultDevice);
+    const { activeSessionIndex, time, activeDevice, defaultDevice, setActiveDevice, getDeviceOrMeterSessions, getActiveSession } = this.props;
+    const device = activeDevice?activeDevice:[defaultDevice];
+    if (!activeDevice) {
+      setActiveDevice([defaultDevice]);
     }
-    getDeviceOrMeterSessions(device, time)
-    .then(() => { if (activeSessionIndex!==null) { return getActiveSession(device, time); } });
+    if (device) 
+      getDeviceOrMeterSessions(device, time).then(() => { if (activeSessionIndex!==null) { return getActiveSession(device, time); } });
   },
   handleTypeSelect: function(key){
     this.props.setQueryFilter(key); 
@@ -72,16 +73,17 @@ var History = React.createClass({
       throw new Error('oops, shouldn\'t be here');
     }
     this.props.setTimeFilter(key);
-    this.props.setTimeAndQuery(this.props.activeDeviceId, time);
+    this.props.setTimeAndQuery(this.props.activeDevice, time);
   },
   handleTimePrevious: function() { 
-    this.props.setTimeAndQuery(this.props.activeDeviceId, this.props.previousPeriod);
+    this.props.setTimeAndQuery(this.props.activeDevice, this.props.previousPeriod);
   },
   handleTimeNext: function() { 
-    this.props.setTimeAndQuery(this.props.activeDeviceId, this.props.nextPeriod);
+    this.props.setTimeAndQuery(this.props.activeDevice, this.props.nextPeriod);
   },
-  handleDeviceChange: function(e, value) {
-    this.props.setActiveDeviceAndQuery(value, this.props.time);
+  handleDeviceChange: function(val) {
+    const mapped = val.map(d=>d.value); 
+    this.props.setActiveDeviceAndQuery(mapped, this.props.time);
   },
   /*
   componentWillReceiveProps: function(nextProps) {
@@ -102,6 +104,7 @@ var History = React.createClass({
   render: function() {
     const { intl, devices, activeDevice, device, devType, timeFilter, time } = this.props;
     const activeDeviceName = activeDevice?(activeDevice.name?activeDevice.name:activeDevice.serial):"None";
+    const activeDeviceKey = activeDevice?activeDevice.deviceKey:"none";
     const _t = intl.formatMessage;
     return (
       <div>
@@ -119,11 +122,20 @@ var History = React.createClass({
             if (devType === 'AMPHIRO') {
               return (
                 <bs.Tabs style={{marginTop: 60}} position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
+                  {
+                    this.props.metrics.map(metric =>
+                                           <bs.Tab key={metric.id} eventKey={metric.id} title={metric.title}/>
+                                           )
+                  }
+                  {
+                  /*
                   <bs.Tab eventKey="showers" title={_t({id: "history.showers"})}/>
                   <bs.Tab eventKey="duration" title={_t({id: "history.duration"})} />
                   <bs.Tab eventKey="volume" title={_t({id: "history.volume"})}/>
                   <bs.Tab eventKey="temperature" title={_t({id: "history.temperature"})}/>
                   <bs.Tab eventKey="energy" title={_t({id: "history.energy"})}/>
+                  */
+                  }
                 </bs.Tabs>);
             }
             else if (devType === 'METER') {
@@ -137,8 +149,9 @@ var History = React.createClass({
           </Sidebar>
           
           <div className="primary">
-            <div className="pull-right">
-              <span style={{marginRight: 10, marginTop: 5, fontFamily:'OpenSansCondensed', fontSize: '1.1em'}}>{devType}</span>
+            <div >
+              {
+                /*
               <bs.DropdownButton
                 title={activeDeviceName}
                 id="device-switcher"
@@ -152,7 +165,24 @@ var History = React.createClass({
                   })
                 } 
               </bs.DropdownButton>
+              */
+              }
+              <Select 
+                name="device-switcher"
+                value={activeDevice}
+                onChange={this.handleDeviceChange}
+                multi={true}
+                autosize={true}
+                style={{minWidth:120}}
+                options={devices.map(device => {
+                  return { 
+                    value: device.deviceKey,
+                    label: device.name || device.serial || device.macAddress 
+                  };
+                }) }
+              />
             </div>
+            <br/>
 
             <bs.Tabs  position='top' tabWidth={3} activeKey={timeFilter} onSelect={this.handleTimeSelect}>
               
@@ -174,6 +204,7 @@ var History = React.createClass({
             <HistoryChartData />
 
             <HistoryListData />
+
 
           </div>
         </div>
