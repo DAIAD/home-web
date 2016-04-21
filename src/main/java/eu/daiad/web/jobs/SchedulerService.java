@@ -3,7 +3,6 @@ package eu.daiad.web.jobs;
 import java.util.ArrayList;
 import java.util.concurrent.ScheduledFuture;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 import org.apache.commons.lang.StringUtils;
@@ -14,6 +13,7 @@ import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.JobParametersIncrementer;
 import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Service;
 import eu.daiad.web.domain.admin.ScheduledJob;
 
 @Service
-public class SchedulerService {
+public class SchedulerService implements InitializingBean {
 
 	private static final Log logger = LogFactory.getLog(SchedulerService.class);
 
@@ -45,8 +45,8 @@ public class SchedulerService {
 
 	private ArrayList<ScheduledFuture<?>> scheduledJobs = new ArrayList<ScheduledFuture<?>>();
 
-	@PostConstruct
-	private void initialize() throws Exception {
+	@Override
+	public void afterPropertiesSet() throws Exception {
 		logger.warn("Initializing Scheduler Service");
 		try {
 			// Fetch all registered jobs
@@ -63,8 +63,6 @@ public class SchedulerService {
 				}
 				JobParameters jobParameters = parameterBuilder.toJobParameters();
 
-				logger.warn(String.format("Initializing job [%s].", scheduledJob.getJob().getJobName()));
-
 				// Start job execution
 				if ((scheduledJob.getPeriod() != null) && (!StringUtils.isBlank(scheduledJob.getCronExpression()))) {
 					logger.error(String.format(
@@ -72,9 +70,15 @@ public class SchedulerService {
 									scheduledJob.getJob().getJobName(), scheduledJob.getPeriod(),
 									scheduledJob.getCronExpression()));
 				} else if (scheduledJob.getPeriod() != null) {
+					logger.warn(String.format("Initializing job [%s] with periodic trigger [%d].", scheduledJob
+									.getJob().getJobName(), scheduledJob.getPeriod()));
+
 					scheduledJobs.add(taskScheduler.schedule(new RunnableJob(jobLauncher, batchJob, jobParameters),
 									new PeriodicTrigger(scheduledJob.getPeriod() * 1000)));
 				} else if (!StringUtils.isBlank(scheduledJob.getCronExpression())) {
+					logger.warn(String.format("Initializing job [%s] with CRON trigger expression [%s].", scheduledJob
+									.getJob().getJobName(), scheduledJob.getCronExpression()));
+
 					scheduledJobs.add(taskScheduler.schedule(new RunnableJob(jobLauncher, batchJob, jobParameters),
 									new CronTrigger(scheduledJob.getCronExpression())));
 				} else {
@@ -111,6 +115,8 @@ public class SchedulerService {
 		@Override
 		public void run() {
 			try {
+				logger.warn(String.format("Launching job [%s].", job.getName()));
+
 				jobLauncher.run(job, job.getJobParametersIncrementer().getNext(parameters));
 			} catch (Exception ex) {
 				logger.error(String.format("Failed to start job [%s].", job.getName()), ex);

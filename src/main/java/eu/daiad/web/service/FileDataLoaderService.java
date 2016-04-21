@@ -241,8 +241,6 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 			Random rand = new Random();
 			int sampleIndex = 0;
 
-			amphiroMeasurementRepository.open();
-
 			AmphiroMeasurementQuery sessionQuery = new AmphiroMeasurementQuery();
 			sessionQuery.setStartDate(startDate);
 			sessionQuery.setEndDate(endDate);
@@ -294,10 +292,6 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 			// Ignore
 		} catch (Exception ex) {
 			logger.error(String.format("Failed to load random Amphiro data from file [%s].", filename), ex);
-		} finally {
-			if (amphiroMeasurementRepository.isOpen()) {
-				amphiroMeasurementRepository.close();
-			}
 		}
 	}
 

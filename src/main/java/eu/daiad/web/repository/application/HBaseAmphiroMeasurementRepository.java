@@ -1,6 +1,5 @@
 package eu.daiad.web.repository.application;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -13,11 +12,7 @@ import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
@@ -34,6 +29,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Repository;
 
+import eu.daiad.web.hbase.HBaseConnectionManager;
 import eu.daiad.web.model.TemporalConstants;
 import eu.daiad.web.model.amphiro.AmphiroAbstractDataPoint;
 import eu.daiad.web.model.amphiro.AmphiroAbstractSession;
@@ -97,43 +93,15 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 	private String columnFamilyName = "cf";
 
 	@Autowired
-	private HBaseConfigurationBuilder configurationBuilder;
+	private HBaseConnectionManager connection;
 
-	private Connection connection = null;
-
-	@Override
-	public void open() throws IOException {
-		if (this.connection == null) {
-			Configuration config = this.configurationBuilder.build();
-			this.connection = ConnectionFactory.createConnection(config);
-		}
-	}
-
-	@Override
-	public boolean isOpen() {
-		return ((this.connection != null) && (!this.connection.isClosed()));
-	}
-
-	@Override
-	public void close() {
-		try {
-			if ((this.connection != null) && (!this.connection.isClosed())) {
-				this.connection.close();
-				this.connection = null;
-			}
-		} catch (Exception ex) {
-			logger.error(ERROR_RELEASE_RESOURCES, ex);
-		}
-	}
-
-	private void updateSessionIndex(Connection connection, UUID userKey, AmphiroMeasurementCollection data)
-					throws Exception {
+	private void updateSessionIndex(UUID userKey, AmphiroMeasurementCollection data) throws Exception {
 		Table table = null;
 
 		try {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
-			table = connection.getTable(TableName.valueOf(this.amphiroTableSessionIndex));
+			table = connection.getTable(this.amphiroTableSessionIndex);
 
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 			byte[] columnQualifier = Bytes.toBytes("ts");
@@ -179,6 +147,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 			try {
 				if (table != null) {
 					table.close();
+					table = null;
 				}
 			} catch (Exception ex) {
 				logger.error(ERROR_RELEASE_RESOURCES, ex);
@@ -186,14 +155,13 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 		}
 	}
 
-	private void storeSessionByUser(Connection connection, UUID userKey, AmphiroMeasurementCollection data)
-					throws Exception {
+	private void storeSessionByUser(UUID userKey, AmphiroMeasurementCollection data) throws Exception {
 		Table table = null;
 
 		try {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
-			table = connection.getTable(TableName.valueOf(this.amphiroTableSessionByUser));
+			table = connection.getTable(this.amphiroTableSessionByUser);
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			for (int i = 0; i < data.getSessions().size(); i++) {
@@ -288,6 +256,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 			try {
 				if (table != null) {
 					table.close();
+					table = null;
 				}
 			} catch (Exception ex) {
 				logger.error(ERROR_RELEASE_RESOURCES, ex);
@@ -295,14 +264,13 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 		}
 	}
 
-	private void storeSessionByTime(Connection connection, UUID userKey, AmphiroMeasurementCollection data)
-					throws Exception {
+	private void storeSessionByTime(UUID userKey, AmphiroMeasurementCollection data) throws Exception {
 		Table table = null;
 
 		try {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
-			table = connection.getTable(TableName.valueOf(this.amphiroTableSessionByTime));
+			table = connection.getTable(this.amphiroTableSessionByTime);
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			for (int i = 0; i < data.getSessions().size(); i++) {
@@ -410,6 +378,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 			try {
 				if (table != null) {
 					table.close();
+					table = null;
 				}
 			} catch (Exception ex) {
 				logger.error(ERROR_RELEASE_RESOURCES, ex);
@@ -511,14 +480,13 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 		}
 	}
 
-	private void storeMeasurements(Connection connection, UUID userKey, AmphiroMeasurementCollection data)
-					throws Exception {
+	private void storeMeasurements(UUID userKey, AmphiroMeasurementCollection data) throws Exception {
 		Table table = null;
 
 		try {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
-			table = connection.getTable(TableName.valueOf(this.amphiroTableMeasurements));
+			table = connection.getTable(this.amphiroTableMeasurements);
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			for (int i = 0; i < data.getMeasurements().size(); i++) {
@@ -570,6 +538,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 			try {
 				if (table != null) {
 					table.close();
+					table = null;
 				}
 			} catch (Exception ex) {
 				logger.error(ERROR_RELEASE_RESOURCES, ex);
@@ -579,8 +548,6 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 
 	@Override
 	public void storeData(UUID userKey, AmphiroMeasurementCollection data) throws ApplicationException {
-		boolean autoClose = false;
-
 		try {
 			if ((data == null) || (data.getSessions() == null) || (data.getSessions().size() == 0)) {
 				return;
@@ -588,29 +555,18 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 
 			this.preProcessData(data);
 
-			if (!this.isOpen()) {
-				this.open();
-				autoClose = true;
-			}
-
-			this.updateSessionIndex(connection, userKey, data);
+			this.updateSessionIndex(userKey, data);
 
 			if (data.getSessions().size() > 0) {
-				this.storeSessionByUser(connection, userKey, data);
-				this.storeSessionByTime(connection, userKey, data);
+				this.storeSessionByUser(userKey, data);
+				this.storeSessionByTime(userKey, data);
 
 				if ((data.getMeasurements() != null) && (data.getMeasurements().size() > 0)) {
-					this.storeMeasurements(connection, userKey, data);
+					this.storeMeasurements(userKey, data);
 				}
 			}
 		} catch (Exception ex) {
-			autoClose = true;
-
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
-		} finally {
-			if (autoClose) {
-				this.close();
-			}
 		}
 	}
 
@@ -712,18 +668,13 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 								query.getGranularity());
 		}
 
-		Connection connection = null;
 		Table table = null;
 		ResultScanner scanner = null;
 
 		try {
-			Configuration config = this.configurationBuilder.build();
-
-			connection = ConnectionFactory.createConnection(config);
-
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
-			table = connection.getTable(TableName.valueOf(this.amphiroTableMeasurements));
+			table = connection.getTable(this.amphiroTableMeasurements);
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
@@ -825,12 +776,11 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 			try {
 				if (scanner != null) {
 					scanner.close();
+					scanner = null;
 				}
 				if (table != null) {
 					table.close();
-				}
-				if ((connection != null) && (!connection.isClosed())) {
-					connection.close();
+					table = null;
 				}
 			} catch (Exception ex) {
 				logger.error(ERROR_RELEASE_RESOURCES, ex);
@@ -895,21 +845,13 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 								query.getGranularity());
 		}
 
-		boolean autoClose = false;
-
 		Table table = null;
 		ResultScanner scanner = null;
 
 		try {
-
-			if (!this.isOpen()) {
-				this.open();
-				autoClose = true;
-			}
-
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
-			table = connection.getTable(TableName.valueOf(this.amphiroTableSessionByUser));
+			table = connection.getTable(this.amphiroTableSessionByUser);
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
@@ -1004,19 +946,16 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 
 			return data;
 		} catch (Exception ex) {
-			autoClose = true;
-
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (scanner != null) {
 					scanner.close();
+					scanner = null;
 				}
 				if (table != null) {
 					table.close();
-				}
-				if (autoClose) {
-					this.close();
+					table = null;
 				}
 			} catch (Exception ex) {
 				logger.error(ERROR_RELEASE_RESOURCES, ex);
@@ -1058,18 +997,13 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 		DateTime startDate = new DateTime(query.getStartDate(), DateTimeZone.UTC);
 		DateTime endDate = new DateTime(query.getEndDate(), DateTimeZone.UTC);
 
-		Connection connection = null;
 		Table table = null;
 		ResultScanner scanner = null;
 
 		try {
-			Configuration config = this.configurationBuilder.build();
-
-			connection = ConnectionFactory.createConnection(config);
-
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
-			table = connection.getTable(TableName.valueOf(this.amphiroTableSessionByUser));
+			table = connection.getTable(this.amphiroTableSessionByUser);
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
@@ -1132,7 +1066,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 								&& (session.getTimestamp() <= endDate.getMillis())
 								&& (session.getId() == query.getSessionId())) {
 
-					session.setMeasurements(this.getSessionMeasurements(query, connection));
+					session.setMeasurements(this.getSessionMeasurements(query));
 
 					data.setSession(session);
 					break;
@@ -1146,12 +1080,11 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 			try {
 				if (scanner != null) {
 					scanner.close();
+					scanner = null;
 				}
 				if (table != null) {
 					table.close();
-				}
-				if ((connection != null) && (!connection.isClosed())) {
-					connection.close();
+					table = null;
 				}
 			} catch (Exception ex) {
 				logger.error(ERROR_RELEASE_RESOURCES, ex);
@@ -1159,7 +1092,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 		}
 	}
 
-	private ArrayList<AmphiroMeasurement> getSessionMeasurements(AmphiroSessionQuery query, Connection connection) {
+	private ArrayList<AmphiroMeasurement> getSessionMeasurements(AmphiroSessionQuery query) {
 		ArrayList<AmphiroMeasurement> measurements = new ArrayList<AmphiroMeasurement>();
 
 		DateTime startDate = new DateTime(query.getStartDate(), DateTimeZone.UTC);
@@ -1171,7 +1104,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 		try {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
-			table = connection.getTable(TableName.valueOf(this.amphiroTableMeasurements));
+			table = connection.getTable(this.amphiroTableMeasurements);
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
@@ -1247,9 +1180,11 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 			try {
 				if (scanner != null) {
 					scanner.close();
+					scanner = null;
 				}
 				if (table != null) {
 					table.close();
+					table = null;
 				}
 			} catch (Exception ex) {
 				logger.error(ERROR_RELEASE_RESOURCES, ex);
@@ -1259,7 +1194,6 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 
 	@Override
 	public ArrayList<GroupDataSeries> query(ExpandedDataQuery query) throws ApplicationException {
-		Connection connection = null;
 		Table table = null;
 		ResultScanner scanner = null;
 
@@ -1268,10 +1202,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 			result.add(new GroupDataSeries(filter.getLabel(), filter.getUsers().size()));
 		}
 		try {
-			Configuration config = this.configurationBuilder.build();
-			connection = ConnectionFactory.createConnection(config);
-
-			table = connection.getTable(TableName.valueOf(this.amphiroTableSessionByTime));
+			table = connection.getTable(this.amphiroTableSessionByTime);
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			DateTime startDate = new DateTime(query.getStartDateTime(), DateTimeZone.UTC);
@@ -1420,12 +1351,11 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 			try {
 				if (scanner != null) {
 					scanner.close();
+					scanner = null;
 				}
 				if (table != null) {
 					table.close();
-				}
-				if ((connection != null) && (!connection.isClosed())) {
-					connection.close();
+					table = null;
 				}
 			} catch (Exception ex) {
 				logger.error(ERROR_RELEASE_RESOURCES, ex);

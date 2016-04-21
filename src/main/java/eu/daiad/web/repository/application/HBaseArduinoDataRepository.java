@@ -10,10 +10,6 @@ import java.util.NavigableMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -21,9 +17,9 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Repository;
 
+import eu.daiad.web.hbase.HBaseConnectionManager;
 import eu.daiad.web.model.arduino.ArduinoIntervalQuery;
 import eu.daiad.web.model.arduino.ArduinoIntervalQueryResult;
 import eu.daiad.web.model.arduino.ArduinoMeasurement;
@@ -31,7 +27,6 @@ import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
 
 @Repository()
-@Scope("prototype")
 public class HBaseArduinoDataRepository implements IArduinoDataRepository {
 
 	private final String ERROR_RELEASE_RESOURCES = "Failed to release resources";
@@ -50,29 +45,24 @@ public class HBaseArduinoDataRepository implements IArduinoDataRepository {
 		}
 	}
 
-	@Autowired
-	private HBaseConfigurationBuilder configurationBuilder;
-
 	private String arduinoTableMeasurements = "daiad:arduino-measurements";
 
 	private String columnFamilyName = "cf";
 
 	private static final Log logger = LogFactory.getLog(HBaseArduinoDataRepository.class);
 
+	@Autowired
+	private HBaseConnectionManager connection;
+
 	@SuppressWarnings("resource")
 	@Override
 	public void storeData(String deviceKey, ArrayList<ArduinoMeasurement> data) throws ApplicationException {
-		Connection connection = null;
 		Table table = null;
 
 		try {
-			Configuration config = this.configurationBuilder.build();
-
-			connection = ConnectionFactory.createConnection(config);
-
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
-			table = connection.getTable(TableName.valueOf(this.arduinoTableMeasurements));
+			table = connection.getTable(this.arduinoTableMeasurements);
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			byte[] deviceKeyBytes = deviceKey.getBytes("UTF-8");
@@ -117,9 +107,7 @@ public class HBaseArduinoDataRepository implements IArduinoDataRepository {
 			try {
 				if (table != null) {
 					table.close();
-				}
-				if ((connection != null) && (!connection.isClosed())) {
-					connection.close();
+					table = null;
 				}
 			} catch (Exception ex) {
 				logger.error(ERROR_RELEASE_RESOURCES, ex);
@@ -172,18 +160,13 @@ public class HBaseArduinoDataRepository implements IArduinoDataRepository {
 	public ArduinoIntervalQueryResult searchData(ArduinoIntervalQuery query) throws ApplicationException {
 		ArduinoIntervalQueryResult data = new ArduinoIntervalQueryResult();
 
-		Connection connection = null;
 		Table table = null;
 		ResultScanner scanner = null;
 
 		try {
-			Configuration config = this.configurationBuilder.build();
-
-			connection = ConnectionFactory.createConnection(config);
-
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
-			table = connection.getTable(TableName.valueOf(this.arduinoTableMeasurements));
+			table = connection.getTable(this.arduinoTableMeasurements);
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			byte[] deviceKeyBytes = query.getDeviceKey().getBytes("UTF-8");
@@ -256,12 +239,11 @@ public class HBaseArduinoDataRepository implements IArduinoDataRepository {
 			try {
 				if (scanner != null) {
 					scanner.close();
+					scanner = null;
 				}
 				if (table != null) {
 					table.close();
-				}
-				if ((connection != null) && (!connection.isClosed())) {
-					connection.close();
+					table = null;
 				}
 			} catch (Exception ex) {
 				logger.error(ERROR_RELEASE_RESOURCES, ex);
