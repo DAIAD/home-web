@@ -565,7 +565,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 				deviceConfigurationCollection.setMacAddress(device.getMacAddress());
 
 				for (DeviceAmphiroConfiguration p : device.getConfigurations()) {
-					if (p.isActive()) {
+					if ((p.isActive()) && (p.getAcknowledgedOn() == null)) {
 						eu.daiad.web.model.device.DeviceAmphiroConfiguration configuration = new eu.daiad.web.model.device.DeviceAmphiroConfiguration();
 
 						configuration.setTitle(p.getTitle());
