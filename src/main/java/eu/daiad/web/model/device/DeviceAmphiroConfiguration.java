@@ -11,6 +11,10 @@ public class DeviceAmphiroConfiguration {
 
 	private long createdOn;
 
+	private Long acknowledgedOn;
+
+	private Long enabledOn;
+
 	private ArrayList<Integer> properties = new ArrayList<Integer>();
 
 	private int block;
@@ -77,6 +81,22 @@ public class DeviceAmphiroConfiguration {
 
 	public void setVersion(UUID version) {
 		this.version = version;
+	}
+
+	public Long getAcknowledgedOn() {
+		return acknowledgedOn;
+	}
+
+	public void setAcknowledgedOn(Long acknowledgedOn) {
+		this.acknowledgedOn = acknowledgedOn;
+	}
+
+	public Long getEnabledOn() {
+		return enabledOn;
+	}
+
+	public void setEnabledOn(Long enabledOn) {
+		this.enabledOn = enabledOn;
 	}
 
 }

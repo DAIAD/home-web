@@ -565,7 +565,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 				deviceConfigurationCollection.setMacAddress(device.getMacAddress());
 
 				for (DeviceAmphiroConfiguration p : device.getConfigurations()) {
-					if ((p.isActive()) && (p.getAcknowledgedOn() == null)) {
+					if (p.isActive()) {
 						eu.daiad.web.model.device.DeviceAmphiroConfiguration configuration = new eu.daiad.web.model.device.DeviceAmphiroConfiguration();
 
 						configuration.setTitle(p.getTitle());
@@ -589,6 +589,12 @@ public class JpaDeviceRepository implements IDeviceRepository {
 						configuration.setNumberOfFrames(p.getNumberOfFrames());
 
 						configuration.setVersion(p.getVersion());
+						if (p.getAcknowledgedOn() != null) {
+							configuration.setAcknowledgedOn(p.getAcknowledgedOn().getMillis());
+						}
+						if (p.getEnabledOn() != null) {
+							configuration.setEnabledOn(p.getEnabledOn().getMillis());
+						}
 
 						deviceConfigurationCollection.getConfigurations().add(configuration);
 					}
