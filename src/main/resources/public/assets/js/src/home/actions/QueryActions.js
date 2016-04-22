@@ -43,19 +43,24 @@ const QueryActions = {
       }
     };
   },
-  queryDeviceSessions: function(deviceKey, time) {
+  queryDeviceSessions: function(deviceKeys, time) {
     return function(dispatch, getState) {
       
-      if (!deviceKey || !time) throw new Error(`Not sufficient data provided for device sessions query: deviceKey:${deviceKey}, time: ${time}`);
+      if (!deviceKeys || !time) throw new Error(`Not sufficient data provided for device sessions query: deviceKey:${deviceKeys}, time: ${time}`);
 
       dispatch(requestedQuery());
 
       //const data = Object.assign({}, time, {deviceKey: [ deviceKey ] }, {csrf: getState().user.csrf});
-      const data = Object.assign({}, time, {deviceKey}, {csrf: getState().user.csrf});
+      const data = Object.assign({}, time, {deviceKey:deviceKeys}, {csrf: getState().user.csrf});
+      
       return deviceAPI.querySessions(data)
       .then(response => {
         dispatch(receivedQuery(response.success, response.errors, response.devices) );
-        if (!response || !Array.isArray(response.devices) || !Array.isArray(response.devices[0].sessions)) throw new Error('response of queryDeviceSessions with:', deviceKey, time, 'is not of type array');
+        
+        if (!response || response.success === false) {
+          throw new Error (`device sessions query was not successful`);
+        }
+        if (!Array.isArray(response.devices) || !Array.isArray(response.devices[0].sessions)) throw new Error(`response of queryDeviceSessions with:  ${deviceKeys}, ${time} is not of type array`);
 
           return response.devices;
         })
@@ -99,32 +104,33 @@ const QueryActions = {
         const reduced = reduceSessions(getState().user.profile.devices, sessions);        
         
         //find last
-        const lastSession = reduced.reduce((curr, prev) => (curr.timestamp<prev.timestamp)?prev:curr);
+        const lastSession = reduced.reduce((curr, prev) => (curr.timestamp>prev.timestamp)?curr:prev);
          
         const { device, id, index } = lastSession;
-        
         if (!id) throw new Error(`last session id doesnt exist in response: ${response}`);
+        const devSessions = sessions.find(x=>x.deviceKey === device);
         
         return dispatch(QueryActions.fetchDeviceSession(id, device, time))
-        .then(session => ({data: updateOrAppendToSession(sessions, Object.assign({}, session, {deviceKey:device})), device:device, index}) )
-        .then(session => session)
+        .then(session => ({data: updateOrAppendToSession([devSessions], Object.assign({}, session, {deviceKey:device})), device:device, index}) )
+        //.then(sessions => {console.log('so sessions are', sessions); return sessions;})
+        //.then(session => ({data: updateOrAppendToSession(sessions, Object.assign({}, session, {deviceKey:device})), device:device, index}) )
         .catch(error => error);
       });
     };
   },
-  fetchMeterHistory: function(deviceKey, time) {
+  fetchMeterHistory: function(deviceKeys, time) {
     return function(dispatch, getState) {
-      if (!deviceKey || !time) throw new Error(`Not sufficient data provided for meter history query: deviceKey:${deviceKey}, time: ${time}`);
+      if (!deviceKeys || !time) throw new Error(`Not sufficient data provided for meter history query: deviceKey:${deviceKeys}, time: ${time}`);
 
       dispatch(requestedQuery());
       //const data = Object.assign({}, time, {deviceKey: [ deviceKey ] }, {csrf: getState().user.csrf});
-      const data = Object.assign({}, time, {deviceKey}, {csrf: getState().user.csrf});
+      const data = Object.assign({}, time, {deviceKey:deviceKeys}, {csrf: getState().user.csrf});
       return meterAPI.getHistory(data)
         .then((response) => {
           dispatch(receivedQuery(response.success, response.errors, response.session));
           //if (!response.series.length || !response.series[0].values) return []; 
           //TODO: throw new Error returns it
-          if (!response || !Array.isArray(response.series)) throw new Error(`fetchMeterHistory with: deviceKey: ${deviceKey}, time:${time} failed`);
+          if (!response || !Array.isArray(response.series)) throw new Error(`fetchMeterHistory with: deviceKey: ${deviceKeys}, time:${time} failed`);
           
           //return response.series[0].values.map((session, i, array) => Object.assign({}, session, {volume: session.volume-array[0].volume}));
           //return response.series[0].values;
@@ -137,14 +143,14 @@ const QueryActions = {
         });
     };
   },
-  fetchMeterStatus: function(deviceKey) {
+  fetchMeterStatus: function(deviceKeys) {
     return function(dispatch, getState) {
 
-      if (!deviceKey) throw new Error(`Not sufficient data provided for meter status: deviceKey:${deviceKey}`);
+      if (!deviceKeys) throw new Error(`Not sufficient data provided for meter status: deviceKeys:${deviceKeys}`);
 
       dispatch(requestedMeterStatus());
       
-      const data = {deviceKey: [ deviceKey ], csrf: getState().user.csrf };
+      const data = {deviceKey: deviceKeys, csrf: getState().user.csrf };
       return meterAPI.getStatus(data)
         .then((response) => {
           dispatch(receivedMeterStatus(response.success, response.errors, response.devices?response.devices:[]) );

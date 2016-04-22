@@ -165,8 +165,6 @@ var History = React.createClass({
                   })
                 } 
               </bs.DropdownButton>
-              */
-              }
               <Select 
                 name="device-switcher"
                 value={activeDevice}
@@ -181,8 +179,36 @@ var History = React.createClass({
                   };
                 }) }
               />
+              */
+              }
+              <div
+                style={{
+                  float: 'right',
+                  width: '15%'
+                }}
+                >
+              {
+                devices.map((device, i) => {
+                  console.log('device', device, i);
+                  return (
+                    <div key={i}>
+                    <input
+                      id={device.deviceKey}
+                      style={{marginRight: 7, marginLeft: 5}}
+                      type = "checkbox"
+                      checked={activeDevice.includes(device.deviceKey)}
+                      onChange={(e) => e.target.checked?this.props.addToActiveDevices(device.deviceKey, time):this.props.removeFromActiveDevices(device.deviceKey, time)}
+                      />
+                      
+                    <label >{device.name || macAddress || serial}</label>
+                  </div>
+                  ); 
+                }) 
+              }
             </div>
-            <br/>
+          
+          </div>
+          <br/>
 
             <bs.Tabs  position='top' tabWidth={3} activeKey={timeFilter} onSelect={this.handleTimeSelect}>
               
@@ -194,6 +220,7 @@ var History = React.createClass({
                <bs.Tab eventKey="always" title={_t({id: "history.always"})} />
                }
             </bs.Tabs>
+            <br/>
             
             <TimeNavigator 
               handleTimePrevious={this.handleTimePrevious} 

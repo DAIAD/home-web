@@ -17,6 +17,7 @@ function mapStateToProps(state, ownProps) {
     time: state.section.history.time,
     activeSessionFilter: state.section.history.activeSessionFilter,
     activeSessionIndex: state.section.history.activeSessionIndex,
+    activeSessionId: state.section.history.activeSessionId,
     };
 }
 function mapDispatchToProps (dispatch) {
@@ -24,6 +25,8 @@ function mapDispatchToProps (dispatch) {
 }
 
 function mergeProps(stateProps, dispatchProps, ownProps) {
+  const data = ownProps.sessions?(stateProps.activeSessionIndex!==null?ownProps.sessions[stateProps.activeSessionIndex]:{}):{};
+  //const data = ownProps.sessions.find(x => x.id === stateProps.activeSessionId);
   return Object.assign(
     {}, 
     ownProps, 
@@ -31,7 +34,8 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
     Object.assign({}, 
                   stateProps, 
                   {
-                    data: ownProps.sessions?(stateProps.activeSessionIndex!==null?ownProps.sessions[stateProps.activeSessionIndex]:{}):{},
+                    data,
+                    fetchSession: data?((data.id && data.device)?() => dispatchProps.getDeviceSession(data.id, data.device, stateProps.time):()=>null):()=>null,
                     showModal: stateProps.activeSessionIndex===null?false:true,
                   })
   );

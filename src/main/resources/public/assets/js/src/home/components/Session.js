@@ -101,6 +101,18 @@ function Session (props) {
 }
 
 var SessionModal = React.createClass({
+  componentWillMount: function() {
+
+  },
+  
+  componentWillReceiveProps: function(nextProps) {
+    const data = nextProps.data || this.props.data;
+    const fetchSession = nextProps.fetchSession || this.props.fetchSession;
+    console.log('component session modal receiving props', nextProps, data);
+    if (data && !data.measurements) {
+      fetchSession();
+    }
+  },
   /* 
   onOpen: function (id, index, device) {
     this.props.setActiveSessionIndex(index);

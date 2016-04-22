@@ -36,8 +36,8 @@ const HistoryActions = {
   
   linkToHistory: function(options) {
     return function(dispatch, getState) {
-      console.log('linking to history', options);
-      const { device, metric, period, time, index, data } = options;
+      const { id, device, metric, period, time, index, data } = options;
+      
       if ((index !== null && index !==undefined)) { 
         dispatch(HistoryActions.setSessionFilter(metric)); 
         dispatch(HistoryActions.setActiveSessionIndex(index)); 
@@ -142,11 +142,11 @@ const HistoryActions = {
     return function(dispatch, getState) {
       //if (!Array.isArray(deviceKey)) throw new Error(`deviceKey ${deviceKey} must be of type array`);
 
-      if (!deviceKeys || !deviceKeys.length) return new Promise((resolve, reject) => resolve());
+      if (!deviceKeys || !deviceKeys.length) return new Promise((resolve, reject) => resolve()).then(() => dispatch(setSessions([])));
+      
       console.log('getting device or met sessions', deviceKeys);
       const devType = getReducedDeviceType(getState().user.profile.devices, deviceKeys);
-      //TODO: now getting only last devType
-      //const devType = getDeviceTypeByKey(getState().user.profile.devices, deviceKey.reduce((c, p)=>c), 0);
+      
       if (devType === 'AMPHIRO') {
         return dispatch(HistoryActions.getDeviceSessions(deviceKeys, time)); 
       }
@@ -180,21 +180,49 @@ const HistoryActions = {
       dispatch(HistoryActions.getDeviceOrMeterSessions(deviceKey, time));
     };
   },
-  setActiveDevice: function(deviceKey) {
+  setActiveDevice: function(deviceKeys) {
     return function(dispatch, getState) {
       if (getState().section.history.synced) { 
         dispatch(setDataUnsynced());
       }
       return dispatch({
         type: types.HISTORY_SET_ACTIVE_DEVICE,
-        deviceKey: deviceKey
+        deviceKey: deviceKeys
       });
     };
   },
-  setActiveDeviceAndQuery: function (deviceKey, time) {
+  addToActiveDevices: function(deviceKey, time) {
     return function(dispatch, getState) {
-      dispatch(HistoryActions.setActiveDevice(deviceKey));
-      dispatch(HistoryActions.getDeviceOrMeterSessions(deviceKey, time));
+      
+      let active = getState().section.history.activeDevice.slice();
+      
+      if (!active.includes(deviceKey)) {
+        active.push(deviceKey);
+        if (getState().section.history.synced) { 
+          dispatch(setDataUnsynced());
+        } 
+        dispatch(HistoryActions.setActiveDeviceAndQuery(active, time));
+      }
+      
+    };
+  },
+  removeFromActiveDevices: function(deviceKey, time) {
+    return function(dispatch, getState) {
+      
+      let active = getState().section.history.activeDevice;
+      if (active.includes(deviceKey)) {
+        if (getState().section.history.synced) { 
+          dispatch(setDataUnsynced());
+        }
+        dispatch(HistoryActions.setActiveDeviceAndQuery(active.filter(x=>x!==deviceKey), time));
+      }
+      
+    };
+  },
+  setActiveDeviceAndQuery: function (deviceKeys, time) {
+    return function(dispatch, getState) {
+      dispatch(HistoryActions.setActiveDevice(deviceKeys));
+      dispatch(HistoryActions.getDeviceOrMeterSessions(deviceKeys, time));
     };
   },
   resetActiveDevice: function() {

@@ -94,10 +94,10 @@ var SessionsList = React.createClass({
 
   onOpen: function (id, index, device) {
     this.props.setActiveSessionIndex(index);
-    
+    /*  
     if (id!==null && device!==null)
       this.props.getDeviceSession(id, device, this.props.time);  
-
+    */
   },
   /*
   onClose: function() {
@@ -121,7 +121,7 @@ var SessionsList = React.createClass({
     return (
       <div style={{margin:50}}>
         <h3>In detail</h3>
-        <h4>{this.props.reducedMetric}</h4>
+        <h4 style={{position: 'absolute', marginTop: -510, marginLeft:305}}>{this.props.reducedMetric}</h4>
         <ul className="sessions-list">
           {
             this.props.sessions.map((session, idx) => (
