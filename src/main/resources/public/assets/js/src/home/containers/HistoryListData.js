@@ -1,77 +1,63 @@
 var React = require('react');
-var connect = require('react-redux').connect;
+var { bindActionCreators } = require('redux');
+var { connect } = require('react-redux');
 var injectIntl = require('react-intl').injectIntl;
 
 var SessionsList = require('../components/SessionsList');
 
-var DeviceActions = require('../actions/DeviceActions');
 var HistoryActions = require('../actions/HistoryActions');
 
-var { getSessionByIndex } = require('../utils/device');
+var { getSessionByIndex,  getReducedDeviceType, getDeviceNameByKey, getDeviceTypeByKey, reduceSessions, reduceMetric } = require('../utils/device');
 var { getFilteredData } = require('../utils/chart');
 var { getFriendlyDuration, getEnergyClass } = require('../utils/general');
 
-var HistoryList = React.createClass({
-  componentWillMount: function() {
-    //this.props.fetchSessionsIfNeeded(this.props.activeDevice, this.props.time);
-  },
-  render: function() {
-    return (
-      <SessionsList {...this.props} />
-    );
-  }
-});
 
 function mapStateToProps(state, ownProps) {
-  let disabledNextSession = true;
-  let disabledPreviousSession = true;
-  if (state.section.history.activeSessionIndex!==null) {
-    if (state.query.data[state.section.history.activeSessionIndex+1]) {
-      disabledNextSession = false;
-    }
-    if (state.query.data[state.section.history.activeSessionIndex-1]) {
-      disabledPreviousSession = false;
-    }
-  }
-  let sessions = state.query.data.map((session, idx, array) => Object.assign({}, session, {better:array[idx+1]?(session.volume<array[idx+1].volume?true:false):null}, {duration:getFriendlyDuration(session.duration)}, {energyClass:getEnergyClass(session.energy)}, {measurements: getFilteredData(session.measurements, state.section.history.sessionFilter)}));
   return {
-    time: state.query.time,
-    activeDevice: state.query.activeDevice,
-    sessionFilter: state.section.history.sessionFilter,
-    sessions: sessions,
-    activeSessionIndex: state.section.history.activeSessionIndex,
-    disabledNext: disabledNextSession,
-    disabledPrevious: disabledPreviousSession,
-    showModal: state.section.history.activeSessionIndex===null?false:true,
+    time: state.section.history.time,
+    activeDevice: state.section.history.activeDevice,
+    activeSessionFilter: state.section.history.activeSessionFilter,
+    data: state.section.history.data,
+    metricFilter: state.section.history.filter,
+    //activeSessionIndex: state.section.history.activeSessionIndex,
+    devices: state.user.profile.devices,
+    //devType: getReducedDeviceType(state.user.profile.devices, state.section.history.activeDevice), 
     };
 }
-
-function mapDispatchToProps(dispatch, ownProps) {
-  return {
-    setActiveSessionIndex: function(sessionIndex) {
-      dispatch(HistoryActions.setActiveSessionIndex(sessionIndex));
-    },
-    resetActiveSessionIndex: function() {
-      dispatch(HistoryActions.resetActiveSessionIndex());
-    },
-    setSessionFilter: function(filter) {
-      dispatch(HistoryActions.setSessionFilter(filter));
-    },
-    fetchSession: function(sessionId, deviceKey, time) {
-      dispatch(DeviceActions.fetchSession(sessionId, deviceKey, time));
-    },
-    getNextSession: function(deviceKey, time) {
-      dispatch(HistoryActions.increaseActiveSessionIndex());
-      dispatch(DeviceActions.fetchActiveSession(deviceKey, time));
-    },
-    getPreviousSession: function(deviceKey, time) {
-      dispatch(HistoryActions.decreaseActiveSessionIndex());
-      dispatch(DeviceActions.fetchActiveSession(deviceKey, time));
-    }
-  };
+function mapDispatchToProps (dispatch) {
+  return bindActionCreators(HistoryActions, dispatch);
 }
 
+function mergeProps(stateProps, dispatchProps, ownProps) {
+ 
+  return Object.assign(
+    {}, 
+    ownProps, 
+    dispatchProps,
+    Object.assign({}, 
+                  stateProps, 
+                  { 
+                    reducedMetric: reduceMetric(stateProps.devices, stateProps.data, stateProps.metricFilter),
+                    sessions: reduceSessions(stateProps.devices, stateProps.data)
+                    .map((session, idx, array) => Object.assign({}, session, 
+                                 {
+                                   next:array[idx+1]?[array[idx+1].id, array[idx+1].device]:null,
+                                   prev:array[idx-1]?[array[idx-1].id, array[idx-1].device]:null
+                                 },
+                                 {
+                                   devName:getDeviceNameByKey(stateProps.devices, session.device),
+                                   devType: getDeviceTypeByKey(stateProps.devices, session.device),
+                                   better:array[idx-1]?(array[idx].volume<=array[idx-1].volume?true:false):null,
+                                   duration:getFriendlyDuration(session.duration), 
+                                   energyClass:getEnergyClass(session.energy), 
+                                   chartData: getFilteredData(session.measurements, stateProps.activeSessionFilter),
 
-HistoryList = connect(mapStateToProps, mapDispatchToProps)(HistoryList);
+                                   hasChartData: session.measurements?true:false 
+                                 }
+                            ))
+                  }));
+}
+
+var HistoryList = connect(mapStateToProps, mapDispatchToProps, mergeProps)(SessionsList);
 HistoryList = injectIntl(HistoryList);
 module.exports = HistoryList;

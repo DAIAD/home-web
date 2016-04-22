@@ -7,6 +7,7 @@ var user = function (state, action) {
         isLoading: false
       },
       isAuthenticated: false,
+      csrf: null,
       profile: {}
     };
   }
@@ -74,6 +75,11 @@ var user = function (state, action) {
           });
         }
         return state;
+
+    case types.USER_SESSION_SET_CSRF:
+      return Object.assign({}, state, {
+        csrf: action.csrf 
+      });
 
     default:
       return state;

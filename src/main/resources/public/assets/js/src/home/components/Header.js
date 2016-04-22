@@ -1,15 +1,14 @@
 var React = require('react');
 var classNames = require('classnames');
+var bs = require('react-bootstrap');
+var { Link } = require('react-router');
+var { injectIntl, FormattedMessage } = require('react-intl');
 
-var injectIntl = require('react-intl').injectIntl;
 var Constants = require('../constants/HomeConstants');
 var LocaleSwitcher = require('./LocaleSwitcher');
-var Logout = require('./LoginForm').Logout;
+var { Logout } = require('./LoginForm');
 
-var FormattedMessage = require('react-intl').FormattedMessage;
-var bs = require('react-bootstrap');
-var Link = require('react-router').Link;
-
+const { STATIC_RECOMMENDATIONS } = require('../constants/HomeConstants'); 
 
 /* DAIAD Logo */
 function MainLogo() {
@@ -69,7 +68,7 @@ function UserInfo(props) {
 }
 
 /* Notification Area */
-
+/*
 var DevicesMenuItem = React.createClass({
   getInitialState: function() {
     return {
@@ -92,6 +91,7 @@ var DevicesMenuItem = React.createClass({
     );
   }
 });
+*/
 
 var NotificationMenuItem = React.createClass({
   getInitialState: function() {
@@ -149,8 +149,8 @@ function NotificationList(props){
         props.notifications.map(function(notification) {
           const notificationClass = notification.unread?"unread":"read";
           return (
-            <li className={notificationClass} >
-              <Link key={notification.id} to={`/notifications/${notification.id}`} >
+            <li key={notification.id} className={notificationClass} >
+              <Link to={`/notifications/${notification.id}`} >
                 {(notification.title.length>maxLength)?(`${notification.title.substring(0, maxLength).trim()}...`):notification.title}
               </Link>
             </li>
@@ -199,11 +199,13 @@ function NotificationArea (props) {
 }
 
 var Header = React.createClass({
+  
   render: function() {
+    const { intl, firstname, isAuthenticated, logout, deviceCount, setLocale, locale } = this.props;
     return (
       <header className="site-header">
         {(() => {
-          if (this.props.isAuthenticated) {
+          if (isAuthenticated) {
             return (
               <div className="container">
                 <div className="header-left">
@@ -212,19 +214,19 @@ var Header = React.createClass({
                 </div>
                 <div className="header-right">
                   <NotificationArea
-                    intl={this.props.intl}
-                    deviceCount={this.props.deviceCount}
-                    notifications={this.props.data.recommendations} />
+                    intl={intl}
+                    deviceCount={deviceCount}
+                    notifications={STATIC_RECOMMENDATIONS} />
                   <UserInfo
-                    intl={this.props.intl}
-                    firstname={this.props.firstname}
+                    intl={intl}
+                    firstname={firstname}
                     />
                   <Logout
-                    isAuthenticated={this.props.isAuthenticated}
-                    onLogout={this.props.onLogout}
+                    intl={intl}   
+                    isAuthenticated={isAuthenticated}
+                    logout={logout}
                     className="navbar logout"
                      />
-                    
                 </div>
               </div>
               );
@@ -237,9 +239,10 @@ var Header = React.createClass({
                 </div>
                 <div className="pull-right">
                   <LocaleSwitcher
-                     onLocaleSwitch={this.props.onLocaleSwitch}
-                     locale={this.props.locale}
-                     /> 
+                    intl={intl}
+                    setLocale={setLocale}
+                    locale={locale}
+                  /> 
 
                 </div>
               </div>

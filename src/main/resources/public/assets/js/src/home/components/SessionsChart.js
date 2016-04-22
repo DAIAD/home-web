@@ -3,6 +3,7 @@ var React = require('react');
 var Chart = require('./Chart');
 
 var SessionsChart = React.createClass({
+
   getDefaultProps: function() { 
     return {
       height: '350px',
@@ -16,16 +17,15 @@ var SessionsChart = React.createClass({
       invertAxis: false,
       sparkline: false,
       fontSize: 15,
-      xMargin: 45,
-      yMargin: 50,
+      xMargin: 75,
+      yMargin: 10,
       x2Margin: 20,
       y2Margin: 30
     };
   },
-  componentWillReceiveProps: function(nextProps) {
-  },
+
   render: function() {
-    const colors = ['#2D3580', '#CD4D3E'];
+    const colors = ['#2D3580', '#CD4D3E', '#564535'];
     const areaStyle = this.props.sparkline?null:{
             color:  'rgba(232,232,237, 0.7)',
             type: 'default'
@@ -41,9 +41,9 @@ var SessionsChart = React.createClass({
         smooth: false,
         itemStyle: {
           normal: {
-            color: colors[i],
+            color: colors[i]?colors[i]:colors[0],
             borderWidth: 2,
-            barBorderColor: colors[i],
+            barBorderColor: colors[i]?colors[i]:colors[0],
             barBorderWidth: 15,
             //barBorderRadius:10,
             lineStyle: {
@@ -114,7 +114,7 @@ var SessionsChart = React.createClass({
             color: '#808285',
             fontSize: this.props.fontSize
           },
-          margin: 12
+          margin: 20
         },
         axisLine: {
           show: false

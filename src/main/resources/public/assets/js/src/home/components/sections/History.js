@@ -1,6 +1,8 @@
 var React = require('react');
 var { FormattedMessage, FormattedDate } = require('react-intl');
 var bs = require('react-bootstrap');
+var Select = require('react-select');
+
 var { Link } = require('react-router');
 
 var MainSection = require('../MainSection');
@@ -11,12 +13,9 @@ var Topbar = require('../Topbar');
 var HistoryChartData = require('../../containers/HistoryChartData');
 var HistoryListData = require('../../containers/HistoryListData');
 
-//actions
-var DeviceActions = require('../../actions/DeviceActions');
-
 //utils
-var { getDeviceByKey } = require('../../utils/device');
 var timeUtil = require('../../utils/time');
+
 
 function TimeNavigator(props) {
     return (
@@ -35,7 +34,16 @@ function TimeNavigator(props) {
 }
 
 var History = React.createClass({
-  
+
+  componentWillMount: function() {
+    const { activeSessionIndex, time, activeDevice, defaultDevice, setActiveDevice, getDeviceOrMeterSessions, getActiveSession } = this.props;
+    const device = activeDevice?activeDevice:[defaultDevice];
+    if (!activeDevice) {
+      setActiveDevice([defaultDevice]);
+    }
+    if (device) 
+      getDeviceOrMeterSessions(device, time).then(() => { if (activeSessionIndex!==null) { return getActiveSession(device, time); } });
+  },
   handleTypeSelect: function(key){
     this.props.setQueryFilter(key); 
   },
@@ -51,44 +59,53 @@ var History = React.createClass({
     }
     else if (key==="year"){
       time = timeUtil.thisYear();
-      time.granularity = 4;
     }
     else if (key==="month"){
       time = timeUtil.thisMonth();
-      time.granularity = 2;
     }
     else if (key==="week"){
       time = timeUtil.thisWeek();
-      time.granularity = 0;
     }
     else if (key==="day"){
       time = timeUtil.today();
-      time.granularity = 0;
     }
     else{
       throw new Error('oops, shouldn\'t be here');
     }
     this.props.setTimeFilter(key);
-    this.props.setTimeAndQuery(time);
-    //this.props.queryDeviceOrMeter(this.props.activeDevice, time); 
+    this.props.setTimeAndQuery(this.props.activeDevice, time);
   },
   handleTimePrevious: function() { 
-    this.props.setTimeAndQuery(this.props.previousPeriod);
+    this.props.setTimeAndQuery(this.props.activeDevice, this.props.previousPeriod);
   },
   handleTimeNext: function() { 
-    this.props.setTimeAndQuery(this.props.nextPeriod);
+    this.props.setTimeAndQuery(this.props.activeDevice, this.props.nextPeriod);
   },
-  handleDeviceChange: function(e, value) {
-    this.props.setActiveAndQuery(value);
+  handleDeviceChange: function(val) {
+    const mapped = val.map(d=>d.value); 
+    this.props.setActiveDeviceAndQuery(mapped, this.props.time);
   },
-  render: function() {
-    const devices = this.props.devices?this.props.devices:[];
-    const activeDevice = this.props.activeDevice;
-    const device = getDeviceByKey(devices, activeDevice);
-    const activeDeviceName = device?(device.name?device.name:device.serial):"None";
-    const devType = this.props.devType;
+  /*
+  componentWillReceiveProps: function(nextProps) {
+    console.log('history receiving props');   
+    //console.log(nextProps);
+    //console.log(this.props);
+    for (let key in nextProps) {
+      let prop = nextProps[key];
+      if (typeof prop === 'function') { continue; }
+      if (this.props[key] === prop) { continue; }
+      console.log('new', key, prop);
+      console.log('old', key, this.props[key]);
+    }
 
-    const _t = this.props.intl.formatMessage;
+   
+  },
+  */
+  render: function() {
+    const { intl, devices, activeDevice, device, devType, timeFilter, time } = this.props;
+    const activeDeviceName = activeDevice?(activeDevice.name?activeDevice.name:activeDevice.serial):"None";
+    const activeDeviceKey = activeDevice?activeDevice.deviceKey:"none";
+    const _t = intl.formatMessage;
     return (
       <div>
         <Topbar> 
@@ -102,17 +119,26 @@ var History = React.createClass({
         <div>
           <Sidebar> 
           {(() => {
-            if (this.props.devType === 'AMPHIRO') {
+            if (devType === 'AMPHIRO') {
               return (
                 <bs.Tabs style={{marginTop: 60}} position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
+                  {
+                    this.props.metrics.map(metric =>
+                                           <bs.Tab key={metric.id} eventKey={metric.id} title={metric.title}/>
+                                           )
+                  }
+                  {
+                  /*
                   <bs.Tab eventKey="showers" title={_t({id: "history.showers"})}/>
                   <bs.Tab eventKey="duration" title={_t({id: "history.duration"})} />
                   <bs.Tab eventKey="volume" title={_t({id: "history.volume"})}/>
                   <bs.Tab eventKey="temperature" title={_t({id: "history.temperature"})}/>
                   <bs.Tab eventKey="energy" title={_t({id: "history.energy"})}/>
+                  */
+                  }
                 </bs.Tabs>);
             }
-            else if (this.props.devType === 'METER') {
+            else if (devType === 'METER') {
               return (
                 <bs.Tabs style={{marginTop: 60}} position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
                   <bs.Tab eventKey="volume" title={_t({id: "history.volume"})}/>
@@ -123,8 +149,9 @@ var History = React.createClass({
           </Sidebar>
           
           <div className="primary">
-            <div className="pull-right">
-              <span style={{marginRight: 10, marginTop: 5, fontFamily:'OpenSansCondensed', fontSize: '1.1em'}}>{devType}</span>
+            <div >
+              {
+                /*
               <bs.DropdownButton
                 title={activeDeviceName}
                 id="device-switcher"
@@ -138,9 +165,52 @@ var History = React.createClass({
                   })
                 } 
               </bs.DropdownButton>
+              <Select 
+                name="device-switcher"
+                value={activeDevice}
+                onChange={this.handleDeviceChange}
+                multi={true}
+                autosize={true}
+                style={{minWidth:120}}
+                options={devices.map(device => {
+                  return { 
+                    value: device.deviceKey,
+                    label: device.name || device.serial || device.macAddress 
+                  };
+                }) }
+              />
+              */
+              }
+              <div
+                style={{
+                  float: 'right',
+                  width: '15%'
+                }}
+                >
+              {
+                devices.map((device, i) => {
+                  console.log('device', device, i);
+                  return (
+                    <div key={i}>
+                    <input
+                      id={device.deviceKey}
+                      style={{marginRight: 7, marginLeft: 5}}
+                      type = "checkbox"
+                      checked={activeDevice.includes(device.deviceKey)}
+                      onChange={(e) => e.target.checked?this.props.addToActiveDevices(device.deviceKey, time):this.props.removeFromActiveDevices(device.deviceKey, time)}
+                      />
+                      
+                    <label >{device.name || macAddress || serial}</label>
+                  </div>
+                  ); 
+                }) 
+              }
             </div>
+          
+          </div>
+          <br/>
 
-            <bs.Tabs  position='top' tabWidth={3} activeKey={this.props.timeFilter} onSelect={this.handleTimeSelect}>
+            <bs.Tabs  position='top' tabWidth={3} activeKey={timeFilter} onSelect={this.handleTimeSelect}>
               
               <bs.Tab eventKey="day" title={_t({id: "history.day"})}/>
               <bs.Tab eventKey="week" title={_t({id: "history.week"})}/>
@@ -150,16 +220,18 @@ var History = React.createClass({
                <bs.Tab eventKey="always" title={_t({id: "history.always"})} />
                }
             </bs.Tabs>
+            <br/>
             
             <TimeNavigator 
               handleTimePrevious={this.handleTimePrevious} 
               handleTimeNext={this.handleTimeNext}
-              time={this.props.time}
+              time={time}
             /> 
             
             <HistoryChartData />
 
             <HistoryListData />
+
 
           </div>
         </div>
