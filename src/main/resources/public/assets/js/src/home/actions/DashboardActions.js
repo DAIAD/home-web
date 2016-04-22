@@ -120,6 +120,7 @@ const DashboardActions = {
   fetchAllInfoboxesData: function() {
     return function(dispatch, getState) {
       getState().section.dashboard.infobox.map(function (infobox) {
+        if (infobox.type === 'chart' || infobox.type === 'stat')
         return dispatch(DashboardActions.fetchInfoboxData(infobox));
       });
     };

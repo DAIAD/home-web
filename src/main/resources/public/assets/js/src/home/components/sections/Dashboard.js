@@ -32,7 +32,7 @@ function InfoBox (props) {
   return (
     <div className='info-box'>
       {(()=>editable?(<a className="info-box-x" onClick={()=>removeInfobox(infobox.id)}><i className="fa fa-times"></i></a>):(<i/>))()}
-      <h3>{infobox.title}</h3>
+      <h4>{infobox.title}</h4>
          <div>
            {
              (()=>{
@@ -44,6 +44,11 @@ function InfoBox (props) {
                else if (infobox.type==='chart') {
                  return (
                    <ChartBox {...props} /> 
+                   );
+               }
+               else if (infobox.type==='tip') {
+                 return (
+                   <TipBox {...props} />
                    );
                }
              })()
@@ -75,6 +80,19 @@ function StatBox (props) {
   );
 }
 
+function TipBox (props) {
+  const { title, type, tip } = props.infobox;
+  return (
+    <div className='row'>
+      <div className='col-md-3'>
+        <h4>image goes here</h4>
+      </div>
+      <div className='col-md-9' style={{fontSize: 14}}>
+        {tip}
+      </div>
+    </div>
+  );
+}
 function ChartBox (props) {
   const { title, type, improved, data, metric, measurements, period, device, deviceDetails, chartData, reducedData, time, index, linkToHistory } = props.infobox;
   return (
@@ -84,7 +102,7 @@ function ChartBox (props) {
           (() => chartData.length>0?(
             <ShowerChart {...props} />
             ):(
-            <h4>Oops, no data available...</h4>
+            <h5>Oops, no data available...</h5>
             ))()
         }
         <span>You consumed a total of <b>{reducedData} lt</b>!</span>

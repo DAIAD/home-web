@@ -12,6 +12,8 @@ var dashboard = function (state, action) {
         {i: "4", x:4, y:0, w:2, h:2, minW:2, minH:2},
         {i: "5", x:4, y:1, w:2, h:1, minW:2, minH:1},
         {i: "6", x:0, y:2, w:2, h:2, minW:2, minH:2},
+        {i: "7", x:0, y:2, w:2, h:1, minW:2, minH:1},
+        {i: "8", x:2, y:2, w:2, h:1, minW:2, minH:1},
       ],
       tempInfoboxData: {
         title: null,
@@ -23,74 +25,64 @@ var dashboard = function (state, action) {
         time: null
       },
       infobox: [
-        /*
-        {
-          id: "1", 
-          title: "Water efficiency Score", 
-          data: [],
-
-          },
-          */
           {
-          id: "1", 
-          title: "Year amphiro consumption",
-          type: "chart",
-          subtype: "total",
-          period: "year",
-          deviceType: "AMPHIRO",
-          metric: "volume",
-          data: [],
+            id: "1", 
+            title: "Year amphiro consumption",
+            type: "chart",
+            subtype: "total",
+            period: "year",
+            deviceType: "AMPHIRO",
+            metric: "volume",
+            data: [],
           },
           {
-          id: "2", 
-          title: "Last Shower", 
-          type: "chart",
-          subtype: "last",
-          deviceType: "AMPHIRO",
-          metric: "volume",
-          data: [],
+            id: "2", 
+            title: "Last Shower", 
+            type: "chart",
+            subtype: "last",
+            deviceType: "AMPHIRO",
+            metric: "volume",
+            data: [],
           },
-        {
-          id: "4", 
-          title: "Year meter consumption", 
-          type: "chart",
-          deviceType: "METER",
-          period: "year",
-          metric: "volume",
-          data: [],
-          },
-         {
-          id: "5", 
-          title: "Last shower consumption", 
-          type: "stat",
-          subtype: "last",
-          deviceType: "AMPHIRO",
-          metric: "volume",
-          data: [],
+          {
+            id: "4", 
+            title: "Year meter consumption", 
+            type: "chart",
+            deviceType: "METER",
+            period: "year",
+            metric: "volume",
+            data: [],
         },
         {
-          id: "6", 
-          title:"Week consumption",
-          type: "chart",
+          id: "5", 
+          title:"Year consumption",
+          type: "stat",
           subtype: "total",
+          deviceType: "AMPHIRO",
+          period: "year",
+          metric: "volume",
+          data: [],
+        
+        },
+        
+        {
+          id: "7", 
+          title: "Tip of the day",
+          type: "tip",
+          data: [],
+        
+        },
+        
+        {
+          id: "8", 
+          title: "Energy week efficiency",
+          type: "stat",
+          subtype: "efficiency",
           deviceType: "AMPHIRO",
           period: "week",
-          metric: "volume",
+          metric: "energy",
           data: [],
-          },
-          /*
-          */
-        /*{
-          i: "6", 
-          title: "Year forecasting", 
-
         },
-        {
-          i: "7", 
-          title: "Water breakdown", 
-          
-          }
-          */
       ]
     };
   }

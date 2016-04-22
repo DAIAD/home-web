@@ -148,6 +148,11 @@ const getDataSessions = function (devices, data) {
   }
 };
 
+const getDataShowersCount = function (devices, data) {
+  return reduceSessions(devices, data).map(s => s.count?s.count:1).reduce((c, p) => c + p, 0);
+  //return data.map(d=>getDataSessions(devices, data).length).reduce((c, p)=> c+p, 0);
+};
+
 const getDataMeasurements = function (devices, data, index) {
   const sessions = getDataSessions(devices, data);
 
@@ -158,8 +163,8 @@ const getDataMeasurements = function (devices, data, index) {
 
 // reduces array of devices with multiple sessions arrays
 // to single array of sessions (including device key)
-const reduceSessions = function(devices, devSessions) {
-  return devSessions.map(device =>  
+const reduceSessions = function(devices, data) {
+  return data.map(device =>  
             getDataSessions(devices, device).map((session, idx) => 
                Object.assign({}, session, 
                              {index:idx},
@@ -170,14 +175,20 @@ const reduceSessions = function(devices, devSessions) {
                         .reduce((c, p) => c.concat(p), []);
 };
 
-const reduceMetric = function(devices, devSessions, metric) {
-  let reduced = devSessions.map(it => getDataSessions(devices, it)
-                                .map(it=>it[metric]?it[metric]:[])
-                                .reduce(((c,p)=>c+p),0))
-                                .reduce(((c, p)=>c+p),0);
+const reduceMetric = function(devices, data, metric) {
+  const showers = getDataShowersCount(devices, data);                     
+  if (metric === 'showers') return showers;
 
-  reduced = !isNaN(parseInt(reduced))?parseInt(reduced).toFixed(1):reduced;
-  return reduced;
+  let reducedMetric = data.map(it => getDataSessions(devices, it)
+                                    .map(it=>it[metric]?it[metric]:[])
+                                    .reduce(((c, p)=>c+p),0))
+                            .reduce(((c, p)=>c+p),0);
+
+                            reducedMetric = (metric === 'temperature')?(reducedMetric / showers):reducedMetric;
+  
+
+  reducedMetric = !isNaN(parseInt(reducedMetric))?parseInt(reducedMetric).toFixed(1):0;
+  return reducedMetric;
 };
 
 module.exports = {
@@ -202,4 +213,5 @@ module.exports = {
   reduceMetric,
   getDataSessions,
   getDataMeasurements,
+  getDataShowersCount,
 };

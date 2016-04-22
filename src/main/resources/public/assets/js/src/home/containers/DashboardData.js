@@ -5,13 +5,17 @@ var { bindActionCreators } = require('redux');
 var { connect } = require('react-redux');
 var { push } = require('react-router-redux');
 
+var HomeConstants = require('../constants/HomeConstants');
 var Dashboard = require('../components/sections/Dashboard');
 
 var HistoryActions = require('../actions/HistoryActions');
 var DashboardActions = require('../actions/DashboardActions');
 
 var timeUtil = require('../utils/time');
-var { getDeviceByKey, getDeviceNameByKey, getDeviceKeysByType, getDeviceTypeByKey, getAvailableDevices, getAvailableDeviceKeys, getAvailableMeters, getDefaultDevice, getLastSession, reduceMetric, reduceSessions, getDataSessions, getDataMeasurements } = require('../utils/device');
+
+var { getDeviceByKey, getDeviceNameByKey, getDeviceKeysByType, getDeviceTypeByKey, getAvailableDevices, getAvailableDeviceKeys, getAvailableMeters, getDefaultDevice, getLastSession, reduceMetric, reduceSessions, getDataSessions, getDataMeasurements, getDataShowersCount } = require('../utils/device');
+
+var { getEnergyClass } = require('../utils/general');
 var { getFilteredData } = require('../utils/chart');
 
 
@@ -120,9 +124,9 @@ function assign(...objects) {
 function transformInfoboxData (infoboxes, devices, link) {
 
   return infoboxes.map(infobox => {
-    const { title, type, time, period, index, deviceType, subtype, data, metric } = infobox;
+    const { id, title, type, time, period, index, deviceType, subtype, data, metric } = infobox;
 
-    let device, chartData, reducedData, linkToHistory;
+    let device, chartData, reducedData, linkToHistory, tip;
     
     if (subtype === 'last') {
       device = infobox.device;
@@ -138,17 +142,26 @@ function transformInfoboxData (infoboxes, devices, link) {
     
       linkToHistory =  () => link({time, period, device:[device], metric, index, data});
     }
+    else if (type==='tip') {
+      tip = HomeConstants.STATIC_RECOMMENDATIONS[Math.floor(Math.random()*3)].description;
+    }
     else {
       device = getDeviceKeysByType(devices, deviceType);
       
       reducedData = reduceSessions(devices, data).map(s=>s[metric]).reduce((c, p)=>c+p, 0); 
+      
+      if (subtype === 'efficiency') { 
+        if (metric === 'energy') {
+          reducedData = getEnergyClass(reducedData / getDataShowersCount(devices, data)); 
+        }
+      }
 
       chartData = data.map(devData => ({ 
         title: getDeviceNameByKey(devices, devData.deviceKey), 
         data:getFilteredData(getDataSessions(devices, devData, subtype, index), infobox.metric, getDeviceTypeByKey(devices, devData.device))
       }));
      
-     linkToHistory =  () => link({time, period, device, metric, index, data});
+     linkToHistory =  () => link({id, time, period, device, metric, index, data});
     }
 
     return Object.assign({}, 
@@ -157,7 +170,8 @@ function transformInfoboxData (infoboxes, devices, link) {
                          device,
                          reducedData,
                          chartData,
-                         linkToHistory
+                         linkToHistory,
+                         tip
                        });
      });
 }
