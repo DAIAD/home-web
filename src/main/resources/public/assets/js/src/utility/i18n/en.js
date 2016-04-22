@@ -35,10 +35,24 @@
 	    "Alerts": "Alerts",
 	    "Announcements" : "Announcements",
 	    "Scheduler": "Job Management",
-	    "Consumers": "Consumers"
+	    "Consumers": "Consumers",
+	    "Debug": "Debug"
 	},
 	"Demographics" : {
-		"Group" : "Groups"
+		"Group" : "Groups",
+		"Favourites" : {
+	    "Type" : "Type",
+	    "Name" : "Name",
+	    "AddedOn" : "Added On"
+	  },
+    "JobManagement" : {
+      "Description" : "Description",
+      "Owner" : "Owner",
+      "CreatedOn" : "Created On",
+      "NextExecution" : "Next Execution",
+      "Status" : "Status",
+      "Progress" : "Progress"
+    }
 	},
 	"Settings" : {
 		"User" : "User Preferences",
@@ -56,7 +70,7 @@
 			"id": "Id",
 			"active": "active",
 			"name": "Name",
-			"email": "E-mail",
+		    "email": "E-mail",
 			"group": "Group",
 			"currentMode": "Current Mode",
 			"viewInfoOnAmphiro": "b1",
@@ -149,9 +163,7 @@
 	  "ValidationError.NO_LAST_NAME": "Last name is missing.",
 	  "ValidationError.NO_EMAIL": "E-mail address is missing.",
 	  "ValidationError.NO_GENDER": "Gender is missing.",
-	  "ValidationError.NO_ADDRESS": "Adress is missing.",
 	  "ValidationError.NO_UTILITY": "Utility is missing.",
-	  "ValidationError.NO_POSTAL_CODE": "Postal code is missing.",
 	  "ValidationError.INVALID_EMAIL": "The E-mail address is invalid.",
     "ValidationError.TOO_LONG_FIRST_NAME" : "First name exceeds maximum length (40 characters).",
     "ValidationError.TOO_LONG_LAST_NAME" : "Last name exceeds maximum length (70 characters).",

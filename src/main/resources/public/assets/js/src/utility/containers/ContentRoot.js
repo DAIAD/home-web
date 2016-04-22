@@ -196,7 +196,7 @@ var ContentRoot = React.createClass({
           				</li>
         				  <li>
         				    <Link to='/debug'>
-        				      <i className='fa fa-bug fa-fw'></i>{' ' + _t({ id: 'Debug'})}
+        				      <i className='fa fa-bug fa-fw'></i>{' ' + _t({ id: 'Section.Debug'})}
       				      </Link>
     				      </li>	            				
   				      </ul>

@@ -35,10 +35,24 @@
 	    "Alerts": "Ειδοποιήσεις",
 	    "Announcements" : "Ανακοινώσεις",
 	    "Scheduler": "Διαχείριση Εργασιών",
-	    "Consumers": "Καταναλωτές"
+	    "Consumers": "Καταναλωτές",
+	    "Debug": "Εκσφαλμάτωση"
 	},
 	"Demographics" : {
-		"Group" : "Ομάδες Καταναλωτών"
+		"Group" : "Ομάδες Καταναλωτών",
+		"Favourites" : {
+	    "Type" : "Τύπος",
+	    "Name" : "Όνομα",
+	    "AddedOn" : "Προστέθηκε"
+	  },
+    "JobManagement" : {
+      "Description" : "Περιγραφή",
+      "Owner" : "Κάτοχος",
+      "CreatedOn" : "Δημιουργήθηκε",
+      "NextExecution" : "Επόμενη Εκτέλεση",
+      "Status" : "Κατάσταση",
+      "Progress" : "Πρόοδος"
+    }
 	},
 	"Settings" : {
 		"User" : "Επιλογές Χρήστη",
@@ -56,7 +70,7 @@
 			"id": "Id",
 			"active": "ενεργός",
 			"name": "Όνομα",
-		  "email": "E-mail",
+		    "email": "E-mail",
 			"group": "Ομάδα",
 			"currentMode": "Τρέχουσα Κατάσταση",
 			"viewInfoOnAmphiro": "b1",
@@ -122,7 +136,7 @@
 				"Part1" : "Είστε σίγουρος ότι θέλετε να απενεργοποιήσετε το χρήστη \"",
 				"Part2" : "\" (με id:\"",
 				"Part3" : "\");"
-			}			
+			}		
 		},
 		"SaveChanges": {
 			"Title": "Αποθήκευση Αλλαγών",

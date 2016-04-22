@@ -38,7 +38,7 @@ public class JpaUtilityRepository implements IUtilityRepository{
 			}
 			
 			return utilitiesInfo;
-			//return 
+
 		} catch (Exception ex) {
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
 		}

@@ -6,6 +6,11 @@ var Breadcrumb = require('../Breadcrumb');
 var Table = require('../Table');
 var Chart = require('../Chart');
 
+var DemographicsActions = require('../../actions/DemographicsActions');
+
+var { connect } = require('react-redux');
+var { bindActionCreators } = require('redux');
+
 var Demographics = React.createClass({
 	contextTypes: {
 	    intl: React.PropTypes.object
@@ -17,6 +22,10 @@ var Demographics = React.createClass({
 			showAddNewUserForm: false
     	};
 	},
+	
+	componentWillMount : function() {
+	  this.props.getGroups();  
+  },
 
 	selectSection(key) {
 		this.setState({key : key});
@@ -29,74 +38,6 @@ var Demographics = React.createClass({
   	render: function() {
   		var _t = this.context.intl.formatMessage;
 
-  		var groups = {
-			fields: [{
-				name: 'id',
-				title: 'Table.Group.id',
-				hidden: true
-			}, {
-				name: 'name',
-				title: 'Table.Group.name',
-				link: '/group/{id}'
-			}, {
-				name: 'size',
-				title: 'Table.Group.size'
-			}, {
-				name: 'createdOn',
-				title: 'Table.Group.createdOn'
-			}, {
-  					name: 'map',
-  					type:'action',
-  					icon: 'map-o',
-  					handler: function() {
-  						console.log(this);
-  					}
-			}, {
-  					name: 'message',
-  					type:'action',
-  					icon: 'envelope-o',
-  					handler: function() {
-  						console.log(this);
-  					}
-			}, {
-  					name: 'add-favourite',
-  					type:'action',
-  					icon: 'bookmark-o',
-  					handler: function() {
-  						console.log(this);
-  					}
-			}, {
-  					name: 'chart',
-  					type:'action',
-  					icon: 'bar-chart',
-  					handler: function() {
-  						console.log(this);
-  					}
-			}, {
-				name: 'remove',
-				type:'action',
-				icon: 'remove',
-				handler: function() {
-					console.log(this);
-				}
-			}],
-			rows: [{
-				id: 1,
-				name: 'Alicante DAIAD Trial',
-				size: 97,
-				createdOn: new Date()
-			}, {
-				id: 2,
-				name: 'St. Albans DAIAD Trial',
-				size: 32,
-				createdOn: new Date()
-			}],
-			pager: {
-				index: 0,
-				size: 10,
-				count:45
-			}
-		};
 
   		var favourites = {
 			fields: [{
@@ -104,10 +45,10 @@ var Demographics = React.createClass({
 				hidden: true
 			}, {
 				name: 'type',
-				title: 'Type'
+				title: 'Demographics.Favourites.Type'
 			}, {
 				name: 'name',
-				title: 'Name',
+				title: 'Demographics.Favourites.Name',
 				link: function(row) {
 					switch(row.type) {
 						case 'User':
@@ -119,7 +60,7 @@ var Demographics = React.createClass({
 				}
 			}, {
 				name: 'addedOn',
-				title: 'Added On',
+				title: 'Demographics.Favourites.AddedOn',
 				type: 'datetime'
 			}, {
 				name: 'map',
@@ -261,24 +202,24 @@ var Demographics = React.createClass({
 				hidden: true
 			}, {
 				name: 'description',
-				title: 'Description'
+				title: 'Demographics.JobManagement.Description'
 			}, {
 				name: 'owner',
-				title: 'Owner'			
+				title: 'Demographics.JobManagement.Owner'			
 			}, {
 				name: 'createdOn',
-				title: 'Created On',
+				title: 'Demographics.JobManagement.CreatedOn',
 				type: 'datetime'
 			}, {
 				name: 'scheduledOn',
-				title: 'Next Execution',
+				title: 'Demographics.JobManagement.NextExecution',
 				type: 'datetime'
 			}, {
 				name: 'status',
-				title: 'Status'
+				title: 'Demographics.JobManagement.Status'
 			}, {
 				name: 'progress',
-				title: 'Progress',
+				title: 'Demographics.JobManagement.Progress',
 				type: 'progress'
 			}, {
 				name: 'edit',
@@ -389,7 +330,7 @@ var Demographics = React.createClass({
 						<Bootstrap.Panel header={groupTitle}>
 							<Bootstrap.ListGroup fill>
 								<Bootstrap.ListGroupItem>
-									<Table data={groups}></Table>
+									<Table data={this.props.groups}></Table>
 								</Bootstrap.ListGroupItem>
 							</Bootstrap.ListGroup>
 						</Bootstrap.Panel>
@@ -446,4 +387,20 @@ var Demographics = React.createClass({
 Demographics.icon = 'bookmark';
 Demographics.title = 'Section.Demographics';
 
-module.exports = Demographics;
+
+function mapStateToProps(state) {
+  return {
+    isLoading : state.demographics.isLoading,
+    groups : state.demographics.groups
+  };
+}
+
+function mapDispatchToProps(dispatch) {
+  return {
+    getGroups : bindActionCreators(DemographicsActions.getGroups, dispatch)
+  };
+}
+
+
+module.exports = connect(mapStateToProps, mapDispatchToProps)(Demographics);
+
