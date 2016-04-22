@@ -9,6 +9,7 @@ var { Responsive, WidthProvider } = require('react-grid-layout');
 var ResponsiveGridLayout = WidthProvider(Responsive);
 var PureRenderMixin = require('react-addons-pure-render-mixin');
 
+const { IMAGES } = require('../../constants/HomeConstants');
 var MainSection = require('../MainSection');
 var SessionsChart = require('../SessionsChart');
 
@@ -62,10 +63,10 @@ function StatBox (props) {
   const { title, type, improved, data, reducedData, metric, measurements, period, device, deviceDetails, index, time, linkToHistory } = props.infobox;
   let improvedDiv = <div/>;
   if (improved === true) {
-    improvedDiv = (<img src="/assets/images/svg/success.svg"/>);
+    improvedDiv = (<img src={`${IMAGES}/success.svg`}/>);
   }
   else if (improved === false) {
-    improvedDiv = (<img src="/assets/images/svg/warning.svg"/>);
+    improvedDiv = (<img src={`${IMAGES}/warning.svg`}/>);
   }
   const duration = data?(Array.isArray(data)?null:data.duration):null;
   return (

@@ -9,6 +9,10 @@ var MainSection = require('../MainSection');
 var Sidebar = require('../Sidebar');
 var Topbar = require('../Topbar');
 
+//var { LineChart } = require('react-echarts');
+var LineChart = require('../ReactEcharts');
+
+const { IMAGES } = require('../../constants/HomeConstants');
 //sub-containers
 var HistoryChartData = require('../../containers/HistoryChartData');
 var HistoryListData = require('../../containers/HistoryListData');
@@ -21,16 +25,54 @@ function TimeNavigator(props) {
     return (
       <div className="time-navigator">
         <a className="pull-left" onClick={props.handleTimePrevious}>
-          <img src="/assets/images/svg/arrow-big-left.svg" />
+          <img src={`${IMAGES}/arrow-big-left.svg`} />
         </a>
         <div className="pull-left" style={{marginLeft:230, marginTop:10}}>
           <FormattedDate value={props.time.startDate} day="numeric" month="long" year="numeric" /> - <FormattedDate value={props.time.endDate} day="numeric" month="long" year="numeric" />
         </div>
         <a className="pull-right" onClick={props.handleTimeNext}>
-          <img src="/assets/images/svg/arrow-big-right.svg" />
+          <img src={`${IMAGES}/arrow-big-right.svg`} />
         </a>
       </div>
     );
+}
+
+function TestLineChart () {
+  return (
+    <LineChart 
+      height={400}
+      width='100%'
+      xAxis={{
+          numTicks: 5,
+          //data: ['Mo','Tu','We','Th','Fr','Sa','Su'],
+      }}
+      yAxis={{
+          name: "Temperature",
+          numTicks: 3,
+          formatter: (y) => (y.toString() + " oC")
+      }} 
+      colors={['#00FF00', '#123543']}
+      series={[
+          {
+              name: 'Athens',
+              smooth: true,
+              symbolSize: 4,
+              symbol: 'emptyCircle',
+              fill: 0.4,
+              data: [[0, 11.0], [1.5, 11.5], [2, 13], [4, 14], [4.6, 13], [5, 15], [6, 17]],
+              mark: {
+                  lines: [{type: "max", name: "Max Temperature"}],
+              },
+          },
+          {
+              name: 'Thesalloniki',
+              //data: [5.0, 8.5, 13.5, 14.7, 16, 19, 21.5],
+              data: [[0, 20.0], [1.5, 21.5], [2, 23]],
+              fill: null,
+              },
+      ]}
+    /> 
+  );
 }
 
 var History = React.createClass({
@@ -200,7 +242,7 @@ var History = React.createClass({
                       onChange={(e) => e.target.checked?this.props.addToActiveDevices(device.deviceKey, time):this.props.removeFromActiveDevices(device.deviceKey, time)}
                       />
                       
-                    <label >{device.name || macAddress || serial}</label>
+                    <label >{device.name || device.macAddress || device.serial}</label>
                   </div>
                   ); 
                 }) 
@@ -232,7 +274,7 @@ var History = React.createClass({
 
             <HistoryListData />
 
-
+            <TestLineChart />
           </div>
         </div>
 

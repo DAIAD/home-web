@@ -9,7 +9,7 @@ var FormattedRelative = require('react-intl').FormattedRelative;
 
 var SessionsChart = require('./SessionsChart');
 
-var { SHOWER_METRICS } = require('../constants/HomeConstants'); 
+var { SHOWER_METRICS, IMAGES } = require('../constants/HomeConstants'); 
 var MainSection = require('./MainSection');
 var Sidebar = require('./Sidebar');
 var timeUtil = require('../utils/time');
@@ -21,12 +21,12 @@ function SessionInfoItem (props) {
     <li className="session-item" >
       {(()=> props.sessionClick?(
         <a onClick={() => props.sessionClick(props.id)} title={_t({id: props.details})}>
-        <h4 style={{float: 'left'}}><img style={{width:props.id==='temperature'?12:24, marginRight:20}} src={`/assets/images/svg/${props.icon}.svg`} /><FormattedMessage id={props.title} /></h4>
+        <h4 style={{float: 'left'}}><img style={{width:props.id==='temperature'?12:24, marginRight:20}} src={`${IMAGES}/${props.icon}.svg`} /><FormattedMessage id={props.title} /></h4>
       <h4 style={{float:'right'}}>{props.data} <span>{props.mu}</span></h4>
     </a>
     ):(
     <span>
-        <h4 style={{float: 'left'}}><img style={{width:props.id==='temperature'?12:24, marginRight:20}} src={`/assets/images/svg/${props.icon}.svg`} /><FormattedMessage id={props.title} /></h4>
+        <h4 style={{float: 'left'}}><img style={{width:props.id==='temperature'?12:24, marginRight:20}} src={`${IMAGES}/${props.icon}.svg`} /><FormattedMessage id={props.title} /></h4>
       <h4 style={{float:'right'}}>{props.data} <span>{props.mu}</span></h4>
     </span>
     ))()

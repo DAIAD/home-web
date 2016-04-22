@@ -8,13 +8,13 @@ var Constants = require('../constants/HomeConstants');
 var LocaleSwitcher = require('./LocaleSwitcher');
 var { Logout } = require('./LoginForm');
 
-const { STATIC_RECOMMENDATIONS } = require('../constants/HomeConstants'); 
+const { STATIC_RECOMMENDATIONS, IMAGES } = require('../constants/HomeConstants'); 
 
 /* DAIAD Logo */
 function MainLogo() {
   return (
     <Link to="/"  className="logo" activeClassName="selected">
-      <img src="/assets/images/svg/daiad-logo2.svg" alt="DAIAD Logo"
+      <img src={`${IMAGES}/daiad-logo2.svg`} alt="DAIAD Logo"
         title="DAIAD"/>
     </Link>
   );
@@ -26,7 +26,7 @@ function MenuItem(props) {
   return (
     <li>
       <Link to={props.item.route} className="menu-item" activeClassName="selected">
-        <img className="menu-icon" src={`/assets/${props.item.image}`} />
+        <img className="menu-icon" src={`${IMAGES}/${props.item.image}`} />
         <span className="menu-span"><FormattedMessage id={props.item.title}/></span>
       </Link>
     </li>
