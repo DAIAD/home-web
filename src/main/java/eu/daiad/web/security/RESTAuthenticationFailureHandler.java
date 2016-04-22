@@ -36,6 +36,8 @@ public class RESTAuthenticationFailureHandler extends SimpleUrlAuthenticationFai
 	@Override
 	public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
 					AuthenticationException exception) throws IOException, ServletException {
+		logger.error(exception);
+
 		if (AjaxUtils.isAjaxRequest(request)) {
 			if (response.isCommitted()) {
 				logger.warn("Response has already been committed. Unable to send JSON response.");

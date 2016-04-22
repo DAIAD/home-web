@@ -1,7 +1,9 @@
 package eu.daiad.web.hbase;
 
 import java.io.IOException;
+import java.io.StringWriter;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -13,6 +15,7 @@ import org.apache.hadoop.hbase.client.Table;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import eu.daiad.web.repository.application.HBaseConfigurationBuilder;
@@ -25,12 +28,25 @@ public class HBaseConnectionManager implements InitializingBean, DisposableBean 
 	private Connection connection = null;
 
 	@Autowired
+	Environment environment;
+
+	@Autowired
 	private HBaseConfigurationBuilder configurationBuilder;
 
 	private synchronized void open() {
 		if (this.connection == null) {
 			try {
 				Configuration config = this.configurationBuilder.build();
+
+				if (ArrayUtils.contains(environment.getActiveProfiles(), "development")) {
+					StringWriter out = new StringWriter();
+					Configuration.dumpConfiguration(config, out);
+
+					logger.warn(out.toString());
+
+					out.close();
+				}
+
 				this.connection = ConnectionFactory.createConnection(config);
 
 				logger.info("HBASE connection has been opened.");

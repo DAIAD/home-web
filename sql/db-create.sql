@@ -691,6 +691,7 @@ CREATE TABLE dynamic_recommendation_translation  (
     locale character(2),
     title character varying(100),
     description character varying,
+    image_link character varying(200),
     CONSTRAINT pk_dynamic_recommendation_translation PRIMARY KEY (id),
     CONSTRAINT fk_dynamic_recommendation_translation_dynamic_recommendation FOREIGN KEY (dynamic_recommendation_id)
         REFERENCES public.dynamic_recommendation (id) MATCH SIMPLE

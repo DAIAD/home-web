@@ -12,6 +12,8 @@ public class RecommendationStatic extends Recommendation {
 	private String prompt;
 
 	private String externaLink;
+        
+        private String source;
 
 	public int getCategory() {
 		return category;
@@ -29,14 +31,6 @@ public class RecommendationStatic extends Recommendation {
 		this.image = image;
 	}
 
-	public String getImageLink() {
-		return imageLink;
-	}
-
-	public void setImageLink(String imageLink) {
-		this.imageLink = imageLink;
-	}
-
 	public String getPrompt() {
 		return prompt;
 	}
@@ -52,5 +46,13 @@ public class RecommendationStatic extends Recommendation {
 	public void setExternaLink(String externaLink) {
 		this.externaLink = externaLink;
 	}
+        
+	public String getSource() {
+		return source;
+	}
+
+	public void setSource(String source) {
+		this.source = source;
+	}        
 
 }
