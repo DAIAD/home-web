@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryResponse;
@@ -53,8 +55,14 @@ public class DataService implements IDataService {
 			DataQueryResponse response = new DataQueryResponse();
 
 			// Get authenticated user
-			AuthenticatedUser authenticatedUser = (AuthenticatedUser) SecurityContextHolder.getContext()
-							.getAuthentication().getPrincipal();
+			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+			AuthenticatedUser authenticatedUser = null;
+
+			if (auth.getPrincipal() instanceof AuthenticatedUser) {
+				authenticatedUser = (AuthenticatedUser) auth.getPrincipal();
+			} else {
+				throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+			}
 
 			ExpandedDataQuery expandedQuery = new ExpandedDataQuery(DateTimeZone.forID(authenticatedUser.getTimezone()));
 

@@ -46,11 +46,11 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 			user = (AuthenticatedUser) userService.loadUserByUsername(username);
 
 			if ((user == null) || (!encoder.matches(password, user.getPassword()))) {
-				throw new BadCredentialsException("Authentication has failed.");
+				throw new BadCredentialsException(String.format("Authentication has failed for user [%s].", username));
 			}
 
 			if (!user.isAccountNonLocked()) {
-				throw new BadCredentialsException("Account is locked.");
+				throw new BadCredentialsException(String.format("Account [%s] is locked.", username));
 			}
 
 			// Check application
@@ -64,7 +64,8 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 				} else if (apiMatcher.matches(sra.getRequest())) {
 					application = EnumApplication.MOBILE;
 				} else {
-					throw new BadCredentialsException("Application is unavailable");
+					throw new BadCredentialsException(String.format("Application is unavailable for user [%s].",
+									username));
 				}
 			}
 
@@ -72,32 +73,46 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 			switch (application) {
 				case UTILITY:
 					if (!user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
-						throw new BadCredentialsException("Authorization has failed.");
+						throw new BadCredentialsException(
+										String.format("Application UTILITY authorization has failed for user [%s] and role ROLE_ADMIN.",
+														username));
 					}
 					if (!user.getUtilityMode().equals(EnumUtilityMode.ACTIVE)) {
-						throw new BadCredentialsException("Application is not enabled.");
+						throw new BadCredentialsException(
+										String.format("Application UTILITY is not enabled for user [%s]. Current application mode [%s].",
+														username, user.getUtilityMode().toString()));
 					}
 					break;
 				case HOME:
 					if (!user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER"))) {
-						throw new BadCredentialsException("Authorization has failed.");
+						throw new BadCredentialsException(String.format(
+										"Application HOME authorization has failed for user [%s] and role ROLE_USER.",
+										username));
 					}
 					if (!user.getWebMode().equals(EnumWebMode.ACTIVE)) {
-						throw new BadCredentialsException("Application is not enabled.");
+						throw new BadCredentialsException(
+										String.format("Application HOME is not enabled for user [%s]. Current application mode [%s].",
+														username, user.getWebMode().toString()));
 					}
 					break;
 				case MOBILE:
 					if (!user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER"))) {
-						throw new BadCredentialsException("Authorization has failed.");
+						throw new BadCredentialsException(
+										String.format("Application MOBILE authorization has failed for user [%s] and role ROLE_USER.",
+														username));
 					}
 					if ((!user.getMobileMode().equals(EnumMobileMode.ACTIVE))
 									&& (!user.getMobileMode().equals(EnumMobileMode.INACTIVE))
 									&& (!user.getMobileMode().equals(EnumMobileMode.LEARNING))) {
-						throw new BadCredentialsException("Application is not enabled.");
+						throw new BadCredentialsException(
+										String.format("Application MOBILE is not enabled for user [%s]. Current application mode [%s].",
+														username, user.getMobileMode().toString()));
 					}
 					break;
 				default:
-					throw new BadCredentialsException("Authorization has failed.");
+					throw new BadCredentialsException(String.format(
+									"Authorization has failed. Application [%s] is not supported.",
+									application.toString()));
 			}
 
 			updateLoginStats(user.getId(), true);
