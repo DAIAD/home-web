@@ -26,10 +26,13 @@ module.exports = function (grunt) {
         },
         jshint: {
             options: {
-				ignores: [],
-				additionalSuffixes: ['.js'],
-                reporter: require('jshint-stylish'),
-                esnext: true
+              ignores: [],
+              //unused: true,
+              eqnull: true,
+              additionalSuffixes: ['.js'],
+                      reporter: require('jshint-stylish'),
+                      esnext: true
+            
             },
             utility: [
 				'src/main/resources/public/assets/js/src/utility/**/*.js',
