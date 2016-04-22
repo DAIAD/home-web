@@ -9,9 +9,6 @@ var MainSection = require('../MainSection');
 var Sidebar = require('../Sidebar');
 var Topbar = require('../Topbar');
 
-//var { LineChart } = require('react-echarts');
-var LineChart = require('../ReactEcharts');
-
 const { IMAGES } = require('../../constants/HomeConstants');
 //sub-containers
 var HistoryChartData = require('../../containers/HistoryChartData');
@@ -35,44 +32,6 @@ function TimeNavigator(props) {
         </a>
       </div>
     );
-}
-
-function TestLineChart () {
-  return (
-    <LineChart 
-      height={400}
-      width='100%'
-      xAxis={{
-          numTicks: 5,
-          //data: ['Mo','Tu','We','Th','Fr','Sa','Su'],
-      }}
-      yAxis={{
-          name: "Temperature",
-          numTicks: 3,
-          formatter: (y) => (y.toString() + " oC")
-      }} 
-      colors={['#00FF00', '#123543']}
-      series={[
-          {
-              name: 'Athens',
-              smooth: true,
-              symbolSize: 4,
-              symbol: 'emptyCircle',
-              fill: 0.4,
-              data: [[0, 11.0], [1.5, 11.5], [2, 13], [4, 14], [4.6, 13], [5, 15], [6, 17]],
-              mark: {
-                  lines: [{type: "max", name: "Max Temperature"}],
-              },
-          },
-          {
-              name: 'Thesalloniki',
-              //data: [5.0, 8.5, 13.5, 14.7, 16, 19, 21.5],
-              data: [[0, 20.0], [1.5, 21.5], [2, 23]],
-              fill: null,
-              },
-      ]}
-    /> 
-  );
 }
 
 var History = React.createClass({
@@ -274,7 +233,6 @@ var History = React.createClass({
 
             <HistoryListData />
 
-            <TestLineChart />
           </div>
         </div>
 
