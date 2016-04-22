@@ -73,13 +73,44 @@ public class DataQueryBuilder {
 		return this;
 	}
 
+	public DataQueryBuilder usersBottom(String label, UUID[] users, EnumMetric metric, int limit) {
+		this.query.getPopulation().add(new UserPopulationFilter(label, users, EnumRankingType.BOTTOM, metric, limit));
+		return this;
+	}
+
+	public DataQueryBuilder usersTop(String label, UUID[] users, EnumMetric metric, int limit) {
+		this.query.getPopulation().add(new UserPopulationFilter(label, users, EnumRankingType.TOP, metric, limit));
+		return this;
+	}
+
 	public DataQueryBuilder group(String label, UUID group) {
 		this.query.getPopulation().add(new GroupPopulationFilter(label, group));
 		return this;
 	}
 
+	public DataQueryBuilder groupBottom(String label, UUID group, EnumMetric metric, int limit) {
+		this.query.getPopulation().add(new GroupPopulationFilter(label, group, EnumRankingType.BOTTOM, metric, limit));
+		return this;
+	}
+
+	public DataQueryBuilder groupTop(String label, UUID group, EnumMetric metric, int limit) {
+		this.query.getPopulation().add(new GroupPopulationFilter(label, group, EnumRankingType.TOP, metric, limit));
+		return this;
+	}
+
 	public DataQueryBuilder utility(String label, UUID utility) {
 		this.query.getPopulation().add(new UtilityPopulationFilter(label, utility));
+		return this;
+	}
+
+	public DataQueryBuilder utilityBottom(String label, UUID utility, EnumMetric metric, int limit) {
+		this.query.getPopulation().add(
+						new UtilityPopulationFilter(label, utility, EnumRankingType.BOTTOM, metric, limit));
+		return this;
+	}
+
+	public DataQueryBuilder utilityTop(String label, UUID utility, EnumMetric metric, int limit) {
+		this.query.getPopulation().add(new UtilityPopulationFilter(label, utility, EnumRankingType.TOP, metric, limit));
 		return this;
 	}
 
@@ -217,11 +248,16 @@ public class DataQueryBuilder {
 			this.count().sum();
 		}
 
+		for (PopulationFilter filter : this.query.getPopulation()) {
+			if ((filter.getRanking() != null) && (!this.metrics.contains(filter.getRanking().getMetric()))) {
+				this.metrics.add(filter.getRanking().getMetric());
+			}
+		}
+
 		EnumMetric[] metricArray = new EnumMetric[this.metrics.size()];
 
 		this.query.setMetrics(this.metrics.toArray(metricArray));
 
 		return this.query;
 	}
-
 }

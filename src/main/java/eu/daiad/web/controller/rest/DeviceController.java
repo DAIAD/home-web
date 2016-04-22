@@ -199,11 +199,25 @@ public class DeviceController extends BaseRestController {
 		try {
 			AuthenticatedUser user = this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
-			DeviceConfigurationResponse configuration = new DeviceConfigurationResponse();
+			DeviceConfigurationResponse configurationResponse = new DeviceConfigurationResponse();
 
-			configuration.setDevices(deviceRepository.getConfiguration(user.getKey(), request.getDeviceKey()));
+			ArrayList<DeviceConfigurationCollection> deviceConfigurations = deviceRepository.getConfiguration(
+							user.getKey(), request.getDeviceKey());
 
-			return configuration;
+			for (int c = deviceConfigurations.size() - 1; c >= 0; c--) {
+				for (int i = deviceConfigurations.get(c).getConfigurations().size() - 1; i >= 0; i--) {
+					if (deviceConfigurations.get(c).getConfigurations().get(i).getAcknowledgedOn() != null) {
+						deviceConfigurations.get(c).getConfigurations().remove(i);
+					}
+				}
+				if (deviceConfigurations.get(c).getConfigurations().size() == 0) {
+					deviceConfigurations.remove(c);
+				}
+			}
+
+			configurationResponse.setDevices(deviceConfigurations);
+
+			return configurationResponse;
 		} catch (ApplicationException ex) {
 			logger.error(ex.getMessage(), ex);
 

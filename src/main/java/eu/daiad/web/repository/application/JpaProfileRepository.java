@@ -294,7 +294,7 @@ public class JpaProfileRepository implements IProfileRepository {
 					defaultconfigurations.put("OFF", defconf);
 				}
 			}
-			
+
 			for (ProfileModesChanges modeChanges : modeChangesObject.getModeChanges()){
 				
 				TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager
@@ -325,6 +325,18 @@ public class JpaProfileRepository implements IProfileRepository {
 									newDefaultConfiguration = defaultconfigurations.get("ON_Metric");
 								}
 							}
+							
+							// Set also mobile mode to OFF, if the user hasn't set explicitly mobile mode
+							boolean mobileModeChangeExists = false;
+							for (ProfileModeChange change : modeChanges.getChanges()){
+								if (change.getMode().equals("mobile")){
+									mobileModeChangeExists = true;
+								}
+							}
+							if (!mobileModeChangeExists){
+								this.setMobileMode(account, EnumMobileMode.INACTIVE.getValue());
+							}
+							
 						} else {
 							newDefaultConfiguration = defaultconfigurations.get("OFF");
 						}
@@ -365,10 +377,7 @@ public class JpaProfileRepository implements IProfileRepository {
 						}
 						
 						break;
-					case "mobile":
-						UUID newVersion = UUID.randomUUID();
-						
-						account.getProfile().setVersion(newVersion);
+					case "mobile":						
 						
 						int newMode = EnumMobileMode.UNDEFINED.getValue();
 						if (modeChange.getValue().equals("ON")){
@@ -376,25 +385,14 @@ public class JpaProfileRepository implements IProfileRepository {
 						} else if (modeChange.getValue().equals("OFF")){
 							newMode = EnumMobileMode.INACTIVE.getValue();
 						}
-						account.getProfile().setMobileMode(newMode);
-						DateTime now = new DateTime();
-						account.getProfile().setUpdatedOn(now);
-						
-						AccountProfileHistoryEntry historyEntry = new AccountProfileHistoryEntry();
-						historyEntry.setProfile(account.getProfile());
-						historyEntry.setUpdatedOn(now);
-						historyEntry.setVersion(newVersion);
-						historyEntry.setMobileMode(newMode);
-						historyEntry.setUtilityMode(account.getProfile().getUtilityMode());
-						historyEntry.setWebMode(account.getProfile().getWebMode());
-						
-						this.entityManager.persist(account);
-						this.entityManager.persist(historyEntry);
+						this.setMobileMode(account, newMode);
 						
 						break;
 					case "social":
 						break;
 					}
+					
+					this.entityManager.persist(account);
 				}
 			}			
 			
@@ -644,5 +642,25 @@ public class JpaProfileRepository implements IProfileRepository {
 		} catch (Exception ex) {
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
 		}
+	}
+
+	private void setMobileMode(Account account, int mode){
+		UUID newVersion = UUID.randomUUID();
+		
+		account.getProfile().setVersion(newVersion);
+		
+		account.getProfile().setMobileMode(mode);
+		DateTime now = new DateTime();
+		account.getProfile().setUpdatedOn(now);
+		
+		AccountProfileHistoryEntry historyEntry = new AccountProfileHistoryEntry();
+		historyEntry.setProfile(account.getProfile());
+		historyEntry.setUpdatedOn(now);
+		historyEntry.setVersion(newVersion);
+		historyEntry.setMobileMode(mode);
+		historyEntry.setUtilityMode(account.getProfile().getUtilityMode());
+		historyEntry.setWebMode(account.getProfile().getWebMode());
+		
+		this.entityManager.persist(historyEntry);
 	}
 }

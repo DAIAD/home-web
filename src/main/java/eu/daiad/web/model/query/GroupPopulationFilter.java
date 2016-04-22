@@ -20,6 +20,18 @@ public class GroupPopulationFilter extends PopulationFilter {
 		this.group = group;
 	}
 
+	public GroupPopulationFilter(String label, UUID group, Ranking ranking) {
+		super(label, ranking);
+
+		this.group = group;
+	}
+
+	public GroupPopulationFilter(String label, UUID group, EnumRankingType ranking, EnumMetric metric, int limit) {
+		super(label, new Ranking(ranking, metric, limit));
+
+		this.group = group;
+	}
+
 	public UUID getGroup() {
 		return group;
 	}

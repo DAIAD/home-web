@@ -38,7 +38,7 @@ public class RESTAuthenticationFailureHandler extends SimpleUrlAuthenticationFai
 					AuthenticationException exception) throws IOException, ServletException {
 		if (AjaxUtils.isAjaxRequest(request)) {
 			if (response.isCommitted()) {
-				logger.debug("Response has already been committed. Unable to send JSON response.");
+				logger.warn("Response has already been committed. Unable to send JSON response.");
 				return;
 			}
 			try {
@@ -52,7 +52,7 @@ public class RESTAuthenticationFailureHandler extends SimpleUrlAuthenticationFai
 				ObjectMapper mapper = new ObjectMapper();
 				response.getWriter().print(mapper.writeValueAsString(r));
 			} catch (Exception ex) {
-				logger.debug(ex);
+				logger.warn(ex);
 			}
 		} else {
 			super.onAuthenticationFailure(request, response, exception);

@@ -9,6 +9,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
 import org.joda.time.DateTime;
+import org.joda.time.Days;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -588,6 +589,12 @@ public class JpaDeviceRepository implements IDeviceRepository {
 						configuration.setNumberOfFrames(p.getNumberOfFrames());
 
 						configuration.setVersion(p.getVersion());
+						if (p.getAcknowledgedOn() != null) {
+							configuration.setAcknowledgedOn(p.getAcknowledgedOn().getMillis());
+						}
+						if (p.getEnabledOn() != null) {
+							configuration.setEnabledOn(p.getEnabledOn().getMillis());
+						}
 
 						deviceConfigurationCollection.getConfigurations().add(configuration);
 					}
@@ -689,6 +696,31 @@ public class JpaDeviceRepository implements IDeviceRepository {
 				eu.daiad.web.domain.application.Device entity = result.get(0);
 
 				if (success) {
+					// Compute aggregates
+					if (entity.getLastDataUploadSuccess() != null) {
+						int interval = Math.max(
+										1,
+										Math.abs(Days.daysBetween(when.toLocalDate(),
+														entity.getLastDataUploadSuccess().toLocalDate()).getDays()));
+
+						if (entity.getTransmissionCount() == null) {
+							entity.setTransmissionCount(1L);
+						} else {
+							entity.setTransmissionCount(entity.getTransmissionCount() + 1L);
+						}
+
+						if (entity.getTransmissionIntervalSum() == null) {
+							entity.setTransmissionIntervalSum((long) interval);
+						} else {
+							entity.setTransmissionIntervalSum(entity.getTransmissionIntervalSum() + interval);
+						}
+
+						if ((entity.getTransmissionIntervalMax() == null)
+										|| (entity.getTransmissionIntervalMax() < interval)) {
+							entity.setTransmissionIntervalMax(interval);
+						}
+					}
+
 					entity.setLastDataUploadSuccess(when);
 				} else {
 					entity.setLastDataUploadFailure(when);
@@ -699,5 +731,4 @@ public class JpaDeviceRepository implements IDeviceRepository {
 			throw ApplicationException.wrap(ex, DeviceErrorCode.LOG_DATA_UPLOAD_FAILED).set("key", deviceKey);
 		}
 	}
-
 }

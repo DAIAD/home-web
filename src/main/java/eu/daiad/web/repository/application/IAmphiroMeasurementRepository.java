@@ -1,6 +1,5 @@
 package eu.daiad.web.repository.application;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -30,10 +29,4 @@ public interface IAmphiroMeasurementRepository {
 	public abstract AmphiroSessionQueryResult getSession(AmphiroSessionQuery query);
 
 	public abstract ArrayList<GroupDataSeries> query(ExpandedDataQuery query) throws ApplicationException;
-
-	public abstract void open() throws IOException;
-
-	public abstract void close();
-
-	public abstract boolean isOpen();
 }

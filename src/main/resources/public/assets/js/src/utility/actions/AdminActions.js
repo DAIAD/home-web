@@ -115,6 +115,18 @@ var AdminActions = {
       type : types.ADMIN_ADD_USER_HIDE
     };
   },
+  
+  addUserSelectGenderMale: function() {
+    return{
+      type : types.ADMIN_ADD_USER_SELECT_GENDER_MALE,
+    };
+  },
+
+  addUserSelectGenderFemale: function() {
+    return{
+      type : types.ADMIN_ADD_USER_SELECT_GENDER_FEMALE,
+    };
+  },
 
   addUserSelectUtility: function(event, utility) {
     return{
@@ -145,16 +157,16 @@ var AdminActions = {
     };
   },
   
-  addUserShowErrorAlert: function(errors) {
+  addUserShowMessageAlert: function(errors) {
     return{
-      type : types.ADMIN_ADD_USER_SHOW_ERROR_ALERT,
+      type : types.ADMIN_ADD_USER_SHOW_MESSAGE_ALERT,
       errors: errors
     };
   },
   
   addUserHideErrorAlert: function() {
     return{
-      type : types.ADMIN_ADD_USER_HIDE_ERROR_ALERT
+      type : types.ADMIN_ADD_USER_HIDE_MESSAGE_ALERT
     };
   },
   

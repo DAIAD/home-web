@@ -60,6 +60,15 @@ public class Device {
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime lastDataUploadSuccess;
 
+	@Column(name = "transmission_count")
+	private Long transmissionCount;
+
+	@Column(name = "transmission_interval_sum")
+	private Long transmissionIntervalSum;
+
+	@Column(name = "transmission_interval_max")
+	private Integer transmissionIntervalMax;
+
 	@Column(name = "last_upload_failure_on")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime lastDataUploadFailure;
@@ -114,6 +123,30 @@ public class Device {
 
 	public long getRowVersion() {
 		return rowVersion;
+	}
+
+	public Long getTransmissionCount() {
+		return transmissionCount;
+	}
+
+	public void setTransmissionCount(Long transmissionCount) {
+		this.transmissionCount = transmissionCount;
+	}
+
+	public Long getTransmissionIntervalSum() {
+		return transmissionIntervalSum;
+	}
+
+	public void setTransmissionIntervalSum(Long transmissionIntervalSum) {
+		this.transmissionIntervalSum = transmissionIntervalSum;
+	}
+
+	public Integer getTransmissionIntervalMax() {
+		return transmissionIntervalMax;
+	}
+
+	public void setTransmissionIntervalMax(Integer transmissionIntervalMax) {
+		this.transmissionIntervalMax = transmissionIntervalMax;
 	}
 
 }

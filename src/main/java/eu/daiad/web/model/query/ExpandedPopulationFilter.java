@@ -9,9 +9,13 @@ public class ExpandedPopulationFilter {
 
 	private ArrayList<UUID> users = new ArrayList<UUID>();
 
+	private ArrayList<String> labels = new ArrayList<String>();
+
 	private ArrayList<byte[]> hashes = new ArrayList<byte[]>();
 
 	private ArrayList<byte[]> serials = new ArrayList<byte[]>();
+
+	private Ranking ranking;
 
 	public ExpandedPopulationFilter() {
 
@@ -21,20 +25,9 @@ public class ExpandedPopulationFilter {
 		this.label = label;
 	}
 
-	public ExpandedPopulationFilter(String label, UUID user, byte[] hash) {
+	public ExpandedPopulationFilter(String label, Ranking ranking) {
 		this.label = label;
-		this.users.add(user);
-		this.hashes.add(hash);
-	}
-
-	public ExpandedPopulationFilter(String label, UUID[] users, byte[] hashes[]) {
-		this.label = label;
-		for (UUID userKey : users) {
-			this.users.add(userKey);
-		}
-		for (byte[] hash : hashes) {
-			this.hashes.add(hash);
-		}
+		this.ranking = ranking;
 	}
 
 	public String getLabel() {
@@ -55,6 +48,14 @@ public class ExpandedPopulationFilter {
 
 	public ArrayList<byte[]> getSerials() {
 		return serials;
+	}
+
+	public ArrayList<String> getLabels() {
+		return labels;
+	}
+
+	public Ranking getRanking() {
+		return ranking;
 	}
 
 }

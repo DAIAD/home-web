@@ -41,7 +41,7 @@ public class RESTAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuc
 
 		if (AjaxUtils.isAjaxRequest(request)) {
 			if (response.isCommitted()) {
-				logger.debug("Response has already been committed. Unable to send JSON response.");
+				logger.warn("Response has already been committed. Unable to send JSON response.");
 				return;
 			}
 			try {
@@ -78,7 +78,7 @@ public class RESTAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuc
 				ObjectMapper mapper = new ObjectMapper();
 				response.getWriter().print(mapper.writeValueAsString(authenticationResponse));
 			} catch (Exception ex) {
-				logger.debug(ex);
+				logger.error(ex);
 			}
 
 		} else {
