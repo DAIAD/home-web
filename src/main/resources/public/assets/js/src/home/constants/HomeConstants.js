@@ -1,12 +1,13 @@
 
 const constants = {
-  STATIC : "/assets/",
+  IMAGES : "/assets/images/home/svg",
+  PNG_IMAGES : "/assets/images/home/png",
   NOTIFICATION_TITLE_LENGTH: 50,
   LOCALES: ["en", "el", "de", "es"],
   MAIN_MENU: [{
     name: "dashboard",
     title: "section.dashboard",
-    image: "images/svg/dashboard.svg",
+    image: "dashboard.svg",
     //image: "images/svg/dashboard-side-off.svg",
     route:"/dashboard"
   },
@@ -14,13 +15,13 @@ const constants = {
     name: "history",
     title: "section.history",
     //image: "images/svg/stats-new-side-off.svg",
-    image: "images/svg/dashboard.svg",
+    image: "dashboard.svg",
     route:"/history"
   },
   {
     name: "commons",
     title: "section.commons",
-    image: "images/svg/dashboard.svg",
+    image: "dashboard.svg",
     route:"/commons"
   }],
   SHOWER_METRICS: [

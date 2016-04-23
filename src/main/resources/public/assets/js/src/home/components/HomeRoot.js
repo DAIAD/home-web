@@ -6,7 +6,7 @@ var { bindActionCreators } = require('redux');
 var { connect } = require('react-redux');
 
 //Constants
-var Constant = require('../constants/HomeConstants');
+var { IMAGES, PNG_IMAGES } = require('../constants/HomeConstants');
 
 // Components
 var Header = require('../components/Header');
@@ -33,15 +33,14 @@ var HomeRoot = React.createClass({
               if (this.props.loading){
                 return (
                   <div>
-                    <img className="preloader" src="/assets/images/png/preloader-counterclock.png" />
-                    <img className="preloader-inner" src="/assets/images/png/preloader-clockwise.png" />
+                    <img className="preloader" src={`${PNG_IMAGES}/preloader-counterclock.png`} />
+                    <img className="preloader-inner" src={`${PNG_IMAGES}/preloader-clockwise.png`} />
                   </div>
                   );
               }
               })()
           }
           <Header
-            data={Constant.data}
             firstname={this.props.user.profile.firstname}
             deviceCount={this.props.deviceCount}
             isAuthenticated={this.props.user.isAuthenticated}

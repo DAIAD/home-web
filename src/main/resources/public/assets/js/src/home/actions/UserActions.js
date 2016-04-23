@@ -43,7 +43,7 @@ const UserActions = {
     return function(dispatch, getState) {
       dispatch(requestedLogin());
 
-      return userAPI.login({username, password})
+      return userAPI.login(username, password)
       .then((response) => {
         const { csrf, success, errors, profile } = response;
 
@@ -53,7 +53,7 @@ const UserActions = {
         return response;
       })
       .catch((errors) => {
-        dispatch(receivedLogin(false, errors.length?errors[0].code:null, {}));
+        console.error('user login failed with errors:', errors);
         return errors;
       });
     };
@@ -70,7 +70,7 @@ const UserActions = {
         return response;
       })
       .catch((errors) => {
-        dispatch(receivedLogin(false, errors.length?errors[0].code:null, {}));
+        console.error('user refresh failed with errors:', errors);
         return errors;
       });
     };
@@ -79,14 +79,17 @@ const UserActions = {
     return function(dispatch, getState) {
       dispatch(requestedLogout());
 
-      return userAPI.logout()
+      const csrf = getState().user.csrf;
+
+      return userAPI.logout({csrf})
         .then((response) => {
           const { success, errors } = response;
+
           dispatch(receivedLogout(success, errors.length?errors[0].code:null));
           return response;
         })
         .catch((errors) => {
-          dispatch(receivedLogout(false, errors.length?errors[0].code:errors));
+          console.error('user logout failed with errors:', errors);
           return errors;
         });
     };

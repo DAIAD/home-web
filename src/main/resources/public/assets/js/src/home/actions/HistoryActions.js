@@ -50,7 +50,8 @@ const HistoryActions = {
       if (metric) dispatch(HistoryActions.setQueryFilter(metric));
       if (period) dispatch(HistoryActions.setTimeFilter(period));
       if (time) dispatch(HistoryActions.setTime(time));
-      if (data) { 
+      
+      if (data && data.length>0) { 
         dispatch(setSessions(data));
         dispatch(setDataSynced());
       }

@@ -9,6 +9,7 @@ var MainSection = require('../MainSection');
 var Sidebar = require('../Sidebar');
 var Topbar = require('../Topbar');
 
+const { IMAGES } = require('../../constants/HomeConstants');
 //sub-containers
 var HistoryChartData = require('../../containers/HistoryChartData');
 var HistoryListData = require('../../containers/HistoryListData');
@@ -21,13 +22,13 @@ function TimeNavigator(props) {
     return (
       <div className="time-navigator">
         <a className="pull-left" onClick={props.handleTimePrevious}>
-          <img src="/assets/images/svg/arrow-big-left.svg" />
+          <img src={`${IMAGES}/arrow-big-left.svg`} />
         </a>
         <div className="pull-left" style={{marginLeft:230, marginTop:10}}>
           <FormattedDate value={props.time.startDate} day="numeric" month="long" year="numeric" /> - <FormattedDate value={props.time.endDate} day="numeric" month="long" year="numeric" />
         </div>
         <a className="pull-right" onClick={props.handleTimeNext}>
-          <img src="/assets/images/svg/arrow-big-right.svg" />
+          <img src={`${IMAGES}/arrow-big-right.svg`} />
         </a>
       </div>
     );
@@ -200,7 +201,7 @@ var History = React.createClass({
                       onChange={(e) => e.target.checked?this.props.addToActiveDevices(device.deviceKey, time):this.props.removeFromActiveDevices(device.deviceKey, time)}
                       />
                       
-                    <label >{device.name || macAddress || serial}</label>
+                    <label >{device.name || device.macAddress || device.serial}</label>
                   </div>
                   ); 
                 }) 
@@ -231,7 +232,6 @@ var History = React.createClass({
             <HistoryChartData />
 
             <HistoryListData />
-
 
           </div>
         </div>
