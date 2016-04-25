@@ -5,6 +5,7 @@ var DemographicsTablesSchema = require('../constants/DemographicsTablesSchema');
 
 var initialState = {
     isLoading : false,
+    groupsFilter : '',
     groups : {
       fields : DemographicsTablesSchema.Groups.fields,
       rows : [],
@@ -14,7 +15,7 @@ var initialState = {
         count : 1
       }
     },
-    
+    favouritesFilter : '',
     favourites : {
       fields : DemographicsTablesSchema.Favourites.fields,
       rows : [],
@@ -96,6 +97,16 @@ var demographics = function(state, action) {
           count : Math.ceil(action.favouritesInfo.length / DemographicsTablesSchema.Favourites.pager.size)
         }
       }
+    });
+    
+  case types.DEMOGRAPHICS_SET_GROUPS_FILTER:
+    return Object.assign({}, state, {
+      groupsFilter : action.groupsFilter
+    });
+    
+  case types.DEMOGRAPHICS_SET_FAVOURITES_FILTER:
+    return Object.assign({}, state, {
+      favouritesFilter : action.favouritesFilter
     });
     
   default:

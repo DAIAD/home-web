@@ -32,6 +32,20 @@ var receivedFavourites = function(success, errors, favouritesInfo) {
 }; 
 
 var DemographicActions = {
+    
+  setGroupsFilter : function(groupsFilter){
+    return {
+      type : types.DEMOGRAPHICS_SET_GROUPS_FILTER,
+      groupsFilter : groupsFilter
+    };
+  },
+  
+  setFavouritesFilter : function(favouritesFilter){
+    return {
+      type : types.DEMOGRAPHICS_SET_FAVOURITES_FILTER,
+      favouritesFilter : favouritesFilter
+    };
+  },
 
   getGroups : function() {
     return function(dispatch, getState) {

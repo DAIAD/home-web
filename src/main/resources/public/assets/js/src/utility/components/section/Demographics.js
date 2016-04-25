@@ -6,6 +6,8 @@ var Breadcrumb = require('../Breadcrumb');
 var Table = require('../Table');
 var Chart = require('../Chart');
 
+var Helpers = require('../../helpers/helpers');
+
 var DemographicsActions = require('../../actions/DemographicsActions');
 
 var { connect } = require('react-redux');
@@ -35,9 +37,48 @@ var Demographics = React.createClass({
   	showAddNewUserForm: function (){
   		this.setState({showAddNewUserForm : true});
   	},
+  	
+  	setGroupsFilter : function(){
+  	  this.props.setGroupsFilter(this.refs.searchGroups.getValue());
+  	},
+  	
+  	clearGroupsFilter : function(){
+  	  this.props.setGroupsFilter('');
+    },
+    
+    setFavouritesFilter : function(){
+      this.props.setFavouritesFilter(this.refs.searchFavourites.getValue());
+    },
+    
+    clearFavouritesFilter : function(){
+      this.props.setFavouritesFilter('');
+    },
+  	
+  	computeVisibleItems : function(items, filter){
+  	  var visibleItems = {
+  	      fields : items.fields,
+  	      rows : [],
+  	      pager : {
+  	        index : items.pager.index,
+  	        size : items.pager.size,
+  	        count : 1
+  	      }
+  	  };
+  	  
+  	  if (filter){
+  	    visibleItems.rows = Helpers.pickQualiffiedOnSusbstring(items.rows, 'name', filter, false);
+  	  } else {
+  	    visibleItems.rows = items.rows;
+  	  }
+  	  visibleItems.pager.count = Math.ceil(visibleItems.rows.length / visibleItems.pager.size);
+  	  return visibleItems;
+  	},
 	
   	render: function() {
   		var _t = this.context.intl.formatMessage;
+  		
+  		var visibleGroups = this.computeVisibleItems(this.props.groups, this.props.groupsFilter);
+  		var visibleFavourites = this.computeVisibleItems(this.props.favourites, this.props.favouritesFilter);
   		
   		var chartData = {
 		    series: [{
@@ -244,14 +285,18 @@ var Demographics = React.createClass({
 				<div className='row'>
 					<div className='col-md-6'>
 					 	<Bootstrap.Input 	type="text" 
-					 						placeholder='Search groups ...' 
-					 						buttonAfter={<Bootstrap.Button><i className='fa fa-search fa-fw'></i></Bootstrap.Button>} 
+					 	          ref="searchGroups"
+					 						placeholder='Search groups ...'
+					 						onChange={this.setGroupsFilter}
+					 						buttonAfter={<Bootstrap.Button onClick={this.clearGroupsFilter}><i className='fa fa-trash fa-fw'></i></Bootstrap.Button>} 
 					 	/>
 			 		</div>
 					<div className='col-md-6'>
 					 	<Bootstrap.Input 	type="text" 
+					 	          ref="searchFavourites"
 					 						placeholder='Search favourites ...' 
-					 						buttonAfter={<Bootstrap.Button><i className='fa fa-search fa-fw'></i></Bootstrap.Button>} 
+					 						onChange={this.setFavouritesFilter}
+					 						buttonAfter={<Bootstrap.Button onClick={this.clearFavouritesFilter}><i className='fa fa-trash fa-fw'></i></Bootstrap.Button>} 
 					 	/>
 			 		</div>
 			 	</div>
@@ -260,7 +305,7 @@ var Demographics = React.createClass({
 						<Bootstrap.Panel header={groupTitle}>
 							<Bootstrap.ListGroup fill>
 								<Bootstrap.ListGroupItem>
-									<Table data={this.props.groups}></Table>
+									<Table data={visibleGroups}></Table>
 								</Bootstrap.ListGroupItem>
 							</Bootstrap.ListGroup>
 						</Bootstrap.Panel>
@@ -269,7 +314,7 @@ var Demographics = React.createClass({
 						<Bootstrap.Panel header={favouriteTitle}>
 							<Bootstrap.ListGroup fill>
 								<Bootstrap.ListGroupItem>	
-									<Table data={this.props.favourites}></Table>
+									<Table data={visibleFavourites}></Table>
 								</Bootstrap.ListGroupItem>
 							</Bootstrap.ListGroup>
 						</Bootstrap.Panel>
@@ -321,7 +366,9 @@ Demographics.title = 'Section.Demographics';
 function mapStateToProps(state) {
   return {
     isLoading : state.demographics.isLoading,
+    groupsFilter : state.demographics.groupsFilter,
     groups : state.demographics.groups,
+    favouritesFilter : state.demographics.favouritesFilter,
     favourites : state.demographics.favourites
   };
 }
@@ -329,7 +376,9 @@ function mapStateToProps(state) {
 function mapDispatchToProps(dispatch) {
   return {
     getGroups : bindActionCreators(DemographicsActions.getGroups, dispatch),
-    getFavourites : bindActionCreators(DemographicsActions.getFavourites, dispatch)
+    getFavourites : bindActionCreators(DemographicsActions.getFavourites, dispatch),
+    setGroupsFilter : bindActionCreators(DemographicsActions.setGroupsFilter, dispatch),
+    setFavouritesFilter : bindActionCreators(DemographicsActions.setFavouritesFilter, dispatch)
   };
 }
 
