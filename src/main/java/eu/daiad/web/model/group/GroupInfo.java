@@ -1,22 +1,27 @@
 package eu.daiad.web.model.group;
 
+import java.util.UUID;
+
 import eu.daiad.web.domain.application.Group;
 
 public class GroupInfo {
 	
-	private int id;
+	private UUID id;
+
 	private String name;
+
 	private int numberOfMembers;
+
 	private long creationDateMils;
 
 	public GroupInfo (Group group) {
-		this.id = group.getId();
+		this.id = group.getKey();
 		this.name = group.getName();		
 		this.numberOfMembers = group.getMembers().size();
 		this.creationDateMils = group.getCreatedOn().getMillis();
 	}
 	
-	public int getId() {
+	public UUID getId() {
 		return id;
 	}
 	public String getName() {

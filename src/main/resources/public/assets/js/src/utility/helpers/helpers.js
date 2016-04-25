@@ -30,6 +30,11 @@ var Helpers = {
 		});
 		return distincts;
 	},
+	
+	// http://stackoverflow.com/questions/196972/convert-string-to-title-case-with-javascript
+	toTitleCase: function(str){
+	    return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+	}
 };
 
 module.exports = Helpers;

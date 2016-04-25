@@ -63,5 +63,4 @@ public class JpaGroupRepository implements IGroupRepository{
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
-	
 }

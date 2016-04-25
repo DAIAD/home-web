@@ -16,7 +16,7 @@ public class GroupInfoResponse extends RestResponse{
 		super(code, description);
 	}
 
-	public List <GroupInfo> getGroupInfo() {
+	public List <GroupInfo> getGroupsInfo() {
 		return groupsInfo;
 	}
 }

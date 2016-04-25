@@ -25,6 +25,7 @@ var Demographics = React.createClass({
 	
 	componentWillMount : function() {
 	  this.props.getGroups();  
+	  this.props.getFavourites();
   },
 
 	selectSection(key) {
@@ -37,77 +38,6 @@ var Demographics = React.createClass({
 	
   	render: function() {
   		var _t = this.context.intl.formatMessage;
-
-
-  		var favourites = {
-			fields: [{
-				name: 'id',
-				hidden: true
-			}, {
-				name: 'type',
-				title: 'Demographics.Favourites.Type'
-			}, {
-				name: 'name',
-				title: 'Demographics.Favourites.Name',
-				link: function(row) {
-					switch(row.type) {
-						case 'User':
-							return '/user/{id}';
-						case 'Commons': case 'Group':
-							return '/group/{id}';
-					}
-					return null;
-				}
-			}, {
-				name: 'addedOn',
-				title: 'Demographics.Favourites.AddedOn',
-				type: 'datetime'
-			}, {
-				name: 'map',
-				type:'action',
-				icon: 'map-o',
-				handler: function() {
-					console.log(this);
-				}
-			}, {
-				name: 'message',
-				type:'action',
-				icon: 'envelope-o',
-				handler: function() {
-					console.log(this);
-				}
-			}, {
-				name: 'chart',
-				type:'action',
-				icon: 'bar-chart',
-				handler: function() {
-					console.log(this);
-				}
-			}, {
-				name: 'remove',
-				type:'action',
-				icon: 'remove',
-				handler: function() {
-					console.log(this);
-				}
-			}],
-			rows: [{
-				id: 1,
-				type: 'User',
-				name: 'User 1',
-				addedOn: new Date((new Date()).getTime() + Math.random() * 3600000)
-			}, {
-				id: 11,
-				type: 'Commons',
-				name: 'Alicante DAIAD Trial',
-				addedOn: new Date((new Date()).getTime() + Math.random() * 3600000)
-			}],
-			pager: {
-				index: 0,
-				size: 1,
-				count:2
-			}
-		};
   		
   		var chartData = {
 		    series: [{
@@ -339,7 +269,7 @@ var Demographics = React.createClass({
 						<Bootstrap.Panel header={favouriteTitle}>
 							<Bootstrap.ListGroup fill>
 								<Bootstrap.ListGroupItem>	
-									<Table data={favourites}></Table>
+									<Table data={this.props.favourites}></Table>
 								</Bootstrap.ListGroupItem>
 							</Bootstrap.ListGroup>
 						</Bootstrap.Panel>
@@ -391,13 +321,15 @@ Demographics.title = 'Section.Demographics';
 function mapStateToProps(state) {
   return {
     isLoading : state.demographics.isLoading,
-    groups : state.demographics.groups
+    groups : state.demographics.groups,
+    favourites : state.demographics.favourites
   };
 }
 
 function mapDispatchToProps(dispatch) {
   return {
-    getGroups : bindActionCreators(DemographicsActions.getGroups, dispatch)
+    getGroups : bindActionCreators(DemographicsActions.getGroups, dispatch),
+    getFavourites : bindActionCreators(DemographicsActions.getFavourites, dispatch)
   };
 }
 

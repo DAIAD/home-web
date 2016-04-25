@@ -16,6 +16,21 @@ var receivedGroups = function(success, errors, groupsInfo) {
   };
 };
 
+var requestedFavourites = function() {
+  return {
+    type : types.DEMOGRAPHICS_REQUEST_FAVOURITES
+  };
+};
+
+var receivedFavourites = function(success, errors, favouritesInfo) {
+  return {
+    type : types.DEMOGRAPHICS_RECEIVE_FAVOURITES,
+    success : success,
+    errors : errors,
+    favouritesInfo : favouritesInfo
+  };
+}; 
+
 var DemographicActions = {
 
   getGroups : function() {
@@ -23,13 +38,28 @@ var DemographicActions = {
       dispatch(requestedGroups());
 
       return demographicsAPI.fetchGroups().then(function(response) {
-        dispatch(receivedGroups(response.success, response.errors, response.groupInfo));
+        dispatch(receivedGroups(response.success, response.errors, response.groupsInfo));
       }, function(error) {
-        dispatch(receivedMeters(false, error, null));
+        dispatch(receivedGroups(false, error, null));
+      });
+    };
+  },
+  
+  getFavourites : function (){
+    return function(dispatch, getState) {
+      dispatch(requestedFavourites());
+      
+      return demographicsAPI.fetchFavourites().then(function(response) {
+        dispatch(receivedFavourites(response.success, response.errors, response.favouritesInfo));
+      }, function(error) {
+        dispatch(receivedFavourites(false, error, null));
       });
     };
   }
 };
+
+
+
 
 
 module.exports = DemographicActions;

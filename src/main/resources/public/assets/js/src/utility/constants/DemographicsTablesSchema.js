@@ -58,6 +58,67 @@ var DemographicsTablesSchema = {
         index: 0,
         size: 10
        }
+    },
+    
+    Favourites: {
+      fields: [{
+        name: 'id',
+        hidden: true
+      }, {
+        name: 'type',
+        title: 'Demographics.Favourites.Type'
+      }, {
+        name: 'name',
+        title: 'Demographics.Favourites.Name',
+        link: function(row) {
+          switch(row.type) {
+            case 'Account':
+              return '/user/{id}';
+            case 'Commons': case 'Group':
+              return '/group/{id}';
+          }
+          return null;
+        }
+      }, {
+        name: 'addedOn',
+        title: 'Demographics.Favourites.AddedOn',
+        type: 'datetime'
+      }, {
+        name: 'map',
+        type:'action',
+        icon: 'map-o',
+        handler: function() {
+          console.log(this);
+        }
+      }, {
+        name: 'message',
+        type:'action',
+        icon: 'envelope-o',
+        handler: function() {
+          console.log(this);
+        }
+      }, {
+        name: 'chart',
+        type:'action',
+        icon: 'bar-chart',
+        handler: function() {
+          console.log(this);
+        }
+      }, {
+        name: 'remove',
+        type:'action',
+        icon: 'remove',
+        handler: function() {
+          console.log(this);
+        }
+      }],
+      
+      rows : [],
+      
+      pager: {
+        index: 0,
+        size: 10
+      }
     }
     
 };

@@ -1,5 +1,7 @@
 var types = require('../constants/ActionTypes');
+var helpers = require('../helpers/helpers');
 var DemographicsTablesSchema = require('../constants/DemographicsTablesSchema');
+
 
 var initialState = {
     isLoading : false,
@@ -9,6 +11,16 @@ var initialState = {
       pager : {
         index : DemographicsTablesSchema.Groups.pager.index,
         size : DemographicsTablesSchema.Groups.pager.size,
+        count : 1
+      }
+    },
+    
+    favourites : {
+      fields : DemographicsTablesSchema.Favourites.fields,
+      rows : [],
+      pager : {
+        index : DemographicsTablesSchema.Favourites.pager.index,
+        size : DemographicsTablesSchema.Favourites.pager.size,
         count : 1
       }
     }
@@ -26,6 +38,20 @@ var createGroupRows = function(groupsInfo){
     groups.push(group);
   });
   return groups;
+};
+
+var createFavouriteRows = function(favouritesInfo){
+  var favourites = [];
+  favouritesInfo.forEach(function(f){
+    var favourite = {
+        id: f.refId,
+        name: f.name,
+        type: helpers.toTitleCase(f.type),
+        addedOn: new Date (f.additionDateMils)
+    };
+    favourites.push(favourite);
+  });
+  return favourites;
 };
 
 var demographics = function(state, action) {
@@ -47,6 +73,27 @@ var demographics = function(state, action) {
           index : DemographicsTablesSchema.Groups.pager.index,
           size : DemographicsTablesSchema.Groups.pager.size,
           count : Math.ceil(action.groupsInfo.length / DemographicsTablesSchema.Groups.pager.size)
+        }
+      }
+    });
+    
+  case types.DEMOGRAPHICS_REQUEST_FAVOURITES:
+    return Object.assign({}, state, {
+      isLoading : true
+    });
+    
+  case types.DEMOGRAPHICS_RECEIVE_FAVOURITES:
+    return Object.assign({}, state, {
+      isLoading : false,
+      success : action.success,
+      errors : action.errors,
+      favourites : {
+        fields : DemographicsTablesSchema.Favourites.fields,
+        rows : createFavouriteRows(action.favouritesInfo),
+        pager : {
+          index : DemographicsTablesSchema.Favourites.pager.index,
+          size : DemographicsTablesSchema.Favourites.pager.size,
+          count : Math.ceil(action.favouritesInfo.length / DemographicsTablesSchema.Favourites.pager.size)
         }
       }
     });

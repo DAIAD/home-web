@@ -20,7 +20,7 @@ import javax.persistence.Version;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-import eu.daiad.web.model.commons.EnumFavouriteType;
+import eu.daiad.web.model.favourite.EnumFavouriteType;
 
 @Entity(name = "favourite")
 @Table(schema = "public", name = "favourite")
