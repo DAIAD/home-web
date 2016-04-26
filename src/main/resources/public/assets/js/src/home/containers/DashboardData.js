@@ -24,7 +24,7 @@ function mapStateToProps(state, ownProps) {
     firstname: state.user.profile.firstname,
     devices: state.user.profile.devices,
     layout: state.section.dashboard.layout,
-    mode: state.section.dashboard.mode,
+    //mode: state.section.dashboard.mode,
     tempInfoboxData: state.section.dashboard.tempInfoboxData,
     infoboxes: state.section.dashboard.infobox,
   };
@@ -33,7 +33,7 @@ function mapStateToProps(state, ownProps) {
 function mapDispatchToProps(dispatch) {
   return Object.assign({},
                         assign(bindActionCreators(DashboardActions, dispatch)),
-                        {linkToHistory: options => dispatch(HistoryActions.linkToHistory(options))}); 
+                        {link: options => dispatch(HistoryActions.linkToHistory(options))}); 
 
 }
 
@@ -74,20 +74,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
 
   const subtypes = chartSubtypes;
   const subtype = subtypes?(stateProps.tempInfoboxData.subtype || subtypes[0].id):"total";
-  
-  let defTitle = "";
-  if (period === 'day') defTitle += "Today's ";
-  else defTitle += "This " + period + "'s ";
-
-  if (subtype === 'last') defTitle += "last shower ";
-
-  if (metric === 'volume') defTitle += "water consumption ";
-  else if (metric === 'energy') defTitle += "energy consumption ";
-  else if (metric === 'temperature') defTitle += "average temperature ";
-  else if (metric === 'duration') defTitle += "duration ";
-
-  //const title = stateProps.tempInfoboxData.title || defTitle;
-  const title = defTitle;
+  const title = "";
   
   time = subtype==='last'?Object.assign(time, {granularity:0}):time;
   //const subtypes = type==='chart'?chartSubtypes:null;
@@ -99,7 +86,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                         chartFormatter: intl => (x) => intl.formatTime(x, { hour:'numeric', minute:'numeric'}),
                           //amphiros: getAvailableDevices(stateProps.devices).map(dev=>dev.deviceKey),
                           //meters: getAvailableMeters(stateProps.devices).map(dev=>dev.deviceKey),
-                        infoboxData: transformInfoboxData(stateProps.infoboxes, stateProps.devices, dispatchProps.linkToHistory),
+                        infoboxData: transformInfoboxData(stateProps.infoboxes, stateProps.devices, dispatchProps.link),
                            periods,
                            types,
                            subtypes,
@@ -124,7 +111,7 @@ function assign(...objects) {
 function transformInfoboxData (infoboxes, devices, link) {
 
   return infoboxes.map(infobox => {
-    const { id, title, type, time, period, index, deviceType, subtype, data, metric } = infobox;
+    const { id, title, type, time, period, index, deviceType, subtype, data, metric, showerId } = infobox;
 
     let device, chartData, reducedData, linkToHistory, tip;
     
@@ -134,13 +121,15 @@ function transformInfoboxData (infoboxes, devices, link) {
       const lastShowerMeasurements = getDataMeasurements(devices, last, index);
       
       reducedData = lastShowerMeasurements.map(s=>s[metric]).reduce((c, p)=>c+p, 0);
+      if (metric === 'volume') reducedData += ' lt';
+      else if (metric === 'energy') reducedData += ' Kwh';
       
       chartData = [{
         title: getDeviceNameByKey(devices, device), 
         data:  getFilteredData(lastShowerMeasurements , infobox.metric)
       }];
     
-      linkToHistory =  () => link({time, period, device:[device], metric, index, data});
+      linkToHistory =  () => link({time, showerId, period, device:[device], metric, index, data});
     }
     else if (type==='tip') {
       tip = HomeConstants.STATIC_RECOMMENDATIONS[Math.floor(Math.random()*3)].description;
@@ -148,17 +137,23 @@ function transformInfoboxData (infoboxes, devices, link) {
     else {
       device = getDeviceKeysByType(devices, deviceType);
       
-      reducedData = reduceSessions(devices, data).map(s=>s[metric]).reduce((c, p)=>c+p, 0); 
+      reducedData = reduceSessions(devices, data)
+      .map(s=>s.devType==='METER'?s.difference:s[metric])
+      .reduce((c, p)=>c+p, 0); 
       
       if (subtype === 'efficiency') { 
         if (metric === 'energy') {
           reducedData = getEnergyClass(reducedData / getDataShowersCount(devices, data)); 
         }
       }
+      else {
+        if (metric === 'volume') reducedData += " lt";
+        else if (metric === 'energy') reducedData += ' Kwh';
+      }
 
       chartData = data.map(devData => ({ 
         title: getDeviceNameByKey(devices, devData.deviceKey), 
-        data:getFilteredData(getDataSessions(devices, devData, subtype, index), infobox.metric, getDeviceTypeByKey(devices, devData.device))
+        data: getFilteredData(getDataSessions(devices, devData, subtype, index), infobox.metric, getDeviceTypeByKey(devices, devData.device))
       }));
      
      linkToHistory =  () => link({id, time, period, device, metric, index, data});

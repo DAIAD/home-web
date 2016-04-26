@@ -22,21 +22,6 @@ const createInfobox = function(data) {
   };
 };
 
-const deleteInfobox = function(id) {
-  return {
-    type: types.DASHBOARD_REMOVE_INFOBOX,
-    id: id
-  };
-};
-
-const updateInfobox = function(id, update) {
-  return {
-    type: types.DASHBOARD_UPDATE_INFOBOX,
-    id,
-    update 
-  };
-};
-
 const appendLayout = function(id, type) {
   let layout = {x:0, y:0, w:1, h:1, i:id};
   if (type==='stat') {
@@ -50,6 +35,7 @@ const appendLayout = function(id, type) {
     layout: layout 
   };
 };
+
 
 const DashboardActions = {
 
@@ -82,9 +68,56 @@ const DashboardActions = {
       return id;
     };
   },
-  removeInfobox: function(id) {
+  updateInfobox: function(id, update) {
     return function(dispatch, getState) {
-      dispatch(deleteInfobox(id));
+      let synced = false;
+      if (update.data!=null) synced = true;
+      
+      dispatch({
+        type: types.DASHBOARD_UPDATE_INFOBOX,
+        id,
+        update: Object.assign({}, update, {synced}),
+      });
+
+      //dispatch(DashboardActions.updateInfobox(id, update));
+      dispatch(DashboardActions.updateLayoutItem(id, update.type));
+      
+      dispatch(DashboardActions.fetchInfoboxData(Object.assign({}, getState().section.dashboard.infobox.find(i=>i.id===id))));
+    };
+  },
+  // updates layout item dimentions if type changed
+  updateLayoutItem: function(id, type) {
+    return function(dispatch, getState) {
+
+      if (type==null) return;
+      
+      let layout = getState().section.dashboard.layout.slice();
+      const layoutItemIdx = layout.findIndex(i=>i.i===id);
+      if (layoutItemIdx==-1) return;
+
+        if (type === 'stat') {
+           layout[layoutItemIdx] = Object.assign({}, layout[layoutItemIdx], {w:2, h:1});
+        }
+        else if (type === 'chart') {
+           layout[layoutItemIdx] = Object.assign({}, layout[layoutItemIdx], {w:2, h:2});
+        }
+        dispatch(DashboardActions.updateLayout(layout));
+    };
+  },
+  /*
+  updateInfoboxAndQuery: function(id, update) {
+    return function(dispatch, getState) {
+      dispatch(DashboardActions.updateInfobox(id, update));
+      dispatch(DashboardActions.updateLayoutItem(id, update.type));
+      
+      dispatch(DashboardActions.fetchInfoboxData(Object.assign({}, getState().section.dashboard.infobox.find(i=>i.id===id))));
+    };
+    },
+    */
+  removeInfobox: function(id) {
+    return {
+      type: types.DASHBOARD_REMOVE_INFOBOX,
+      id: id
     };
   },
   fetchInfoboxData: function(data) {
@@ -97,22 +130,24 @@ const DashboardActions = {
 
       const found = getState().section.dashboard.infobox.find(x => x.id === id);
 
-      if (found && found.data && found.data.length>0){
+      if (found && found.synced===true) {
+      //if (found && found.data && found.data.length>0){
         console.log('found infobox data in memory');
         return new Promise((() => found), (() => getState().query.errors));
+        //}
       }
 
       if (subtype === "last") {
         time = getLastShowerTime();
 
         return dispatch(QueryActions.fetchLastSession(device, time))
-        .then(session => session)
-        .then(response => dispatch(updateInfobox(id, {index: response.index, device:response.device, data:response.data, period: "custom", time})))
+        //.then(session => session)
+        .then(response => dispatch(DashboardActions.updateInfobox(id, {synced: true, index: response.index, showerId: response.id, device:response.device, data:response.data, period: "custom", time})))
         .catch(error => { console.error(error); });
       }
       else {
         return dispatch(QueryActions.queryDeviceOrMeter(device, time))
-        .then(sessions =>  dispatch(updateInfobox(id, {data:sessions, time})))
+        .then(sessions =>  dispatch(DashboardActions.updateInfobox(id, {synced: true, data:sessions, time})))
         .catch(error => { console.error(error); });
       }
     };
@@ -128,7 +163,7 @@ const DashboardActions = {
   updateLayout: function(layout) {
     return {
       type: types.DASHBOARD_UPDATE_LAYOUT,
-      layout: layout
+      layout
     };
   },
 
