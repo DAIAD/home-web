@@ -3,6 +3,7 @@ package eu.daiad.web.model;
 import java.util.ArrayList;
 
 import eu.daiad.web.model.error.Error;
+import eu.daiad.web.model.error.ErrorCode;
 
 public class RestResponse {
 
@@ -29,6 +30,10 @@ public class RestResponse {
 
 	public ArrayList<Error> getErrors() {
 		return this.errors;
+	}
+
+	public void add(ErrorCode code, String description) {
+		this.errors.add(new Error(code.toString(), description));
 	}
 
 	public void add(String code, String description) {

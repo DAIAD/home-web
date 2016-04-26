@@ -43,7 +43,9 @@ public class AdminController extends BaseController {
 
 			response = controllerResponse;
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response = new RestResponse();
 			response.add(this.getError(ex));

@@ -6,6 +6,66 @@ function updateCsrfToken(crsf) {
   $('input[name=_csrf]').val(crsf);
 }
 
+var sendFile = function(url, files, data) {
+  var form = new FormData();
+
+  for ( var prop in data) {
+    form.append(prop, data[prop]);
+  }
+
+  if (files) {
+    for (var f = 0; f < files.length; f++) {
+      form.append('files', files[f]);
+    }
+  }
+
+  var request = {
+    url : url,
+    type : 'POST',
+    data : form,
+    enctype : 'multipart/form-data',
+    processData : false,
+    contentType : false,
+    cache : false,
+    beforeSend : function(xhr) {
+      xhr.setRequestHeader('X-CSRF-TOKEN', $('meta[name=_csrf]').attr('content'));
+    }
+  };
+
+  return new Promise(function(resolve, reject) {
+    $.ajax(request).done(function(data, textStatus, request) {
+      updateCsrfToken(request.getResponseHeader('X-CSRF-TOKEN'));
+
+      resolve(data);
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+      updateCsrfToken(jqXHR.getResponseHeader('X-CSRF-TOKEN'));
+
+      var status;
+
+      switch (jqXHR.status) {
+        case 400:
+        case 403:
+        case 404:
+          status = jqXHR.status;
+          break;
+        default:
+          status = 500;
+          break;
+      }
+
+      var errors = [
+        {
+          code : 'Error.' + status,
+          description : 'Error.' + status,
+          details : errorThrown
+        }
+      ];
+
+      reject(errors);
+    });
+  });
+};
+
 var sendRequest = function(url, data, contentType) {
   var request = {
     type : data ? 'POST' : 'GET',
@@ -68,6 +128,9 @@ var api = {
     }
 
     return sendRequest(url, serializedData, 'application/json; charset=UTF-8');
+  },
+  sendFile: function(url, files, data) {
+    return sendFile(url, files, data);
   }
 };
 

@@ -76,7 +76,9 @@ public class ArduinoDataController extends BaseController {
 		try {
 			return this.arduinoDataRepository.searchData(query);
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}

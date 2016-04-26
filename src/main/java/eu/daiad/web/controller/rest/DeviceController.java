@@ -93,7 +93,9 @@ public class DeviceController extends BaseRestController {
 									.set("type", data.getType().toString());
 			}
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}
@@ -145,7 +147,9 @@ public class DeviceController extends BaseRestController {
 									.set("type", data.getType().toString());
 			}
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}
@@ -167,7 +171,9 @@ public class DeviceController extends BaseRestController {
 
 			return queryResponse;
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}
@@ -184,7 +190,9 @@ public class DeviceController extends BaseRestController {
 
 			deviceRepository.shareDevice(user.getKey(), request.getAssignee(), request.getDevice(), request.isShared());
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}
@@ -219,7 +227,9 @@ public class DeviceController extends BaseRestController {
 
 			return configurationResponse;
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}
@@ -237,7 +247,9 @@ public class DeviceController extends BaseRestController {
 			deviceRepository.notifyConfiguration(user.getKey(), request.getDeviceKey(), request.getVersion(),
 							request.getUpdatedOn());
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}
@@ -254,7 +266,9 @@ public class DeviceController extends BaseRestController {
 
 			this.deviceRepository.removeDevice(request.getDeviceKey());
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}

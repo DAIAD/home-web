@@ -57,6 +57,10 @@ public class DataController extends BaseRestController {
 
 			return dataService.execute(data.getQuery());
 		} catch (ApplicationException ex) {
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
+
 			response.add(this.getError(ex));
 		}
 
@@ -107,7 +111,9 @@ public class DataController extends BaseRestController {
 					break;
 			}
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 

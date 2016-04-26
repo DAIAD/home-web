@@ -21,7 +21,6 @@ import eu.daiad.web.repository.application.IRecommendationRepository;
 import eu.daiad.web.service.IAggregatesService;
 import eu.daiad.web.service.IMessageService;
 
-
 @RestController
 public class RecommendationController extends BaseController {
 
@@ -30,12 +29,12 @@ public class RecommendationController extends BaseController {
 	@Autowired
 	private IRecommendationRepository recommendationRepository;
 
-        @Autowired
-        IAggregatesService messageAggregatesService;   
-        
-        @Autowired
-        IMessageService messageMessageService;  
-        
+	@Autowired
+	IAggregatesService messageAggregatesService;
+
+	@Autowired
+	IMessageService messageMessageService;
+
 	@RequestMapping(value = "/action/recommendation/static/{locale}", method = RequestMethod.GET, produces = "application/json")
 	@Secured("ROLE_USER")
 	public RestResponse getRecommendations(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable String locale) {
@@ -44,52 +43,57 @@ public class RecommendationController extends BaseController {
 		try {
 			response.setRecommendations(this.recommendationRepository.getStaticRecommendations(locale));
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}
 
 		return response;
-	}  
-        
+	}
+
 	@RequestMapping(value = "/utility/e", method = RequestMethod.GET, produces = "application/json")
 	@Secured("ROLE_ADMIN")
 	public RestResponse execute(@AuthenticationPrincipal AuthenticatedUser user) {
-            RestResponse response = new RestResponse();      
-            try {
-                MessageCalculationConfiguration config = new MessageCalculationConfiguration();
-                MessageAggregatesContainer aggregatesContainer = messageAggregatesService.execute(config);   
-                //aggregatesContainer.resetValues();
-                System.out.println( aggregatesContainer.toString());
-                messageMessageService.execute(config);
+		RestResponse response = new RestResponse();
+		try {
+			MessageCalculationConfiguration config = new MessageCalculationConfiguration();
+			MessageAggregatesContainer aggregatesContainer = messageAggregatesService.execute(config);
+			// aggregatesContainer.resetValues();
+			System.out.println(aggregatesContainer.toString());
+			messageMessageService.execute(config);
 
+		} catch (ApplicationException ex) {
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
+			response.add(this.getError(ex));
+		}
+		response.add("execute", "success");
+		return response;
+	}
 
-            } catch (ApplicationException ex) {
-                    logger.error(ex);
-                    response.add(this.getError(ex));
-            }
-            response.add("execute", "success");
-            return response;
-	}         
-        
 	@RequestMapping(value = "/ack/{type}/{stringId}", method = RequestMethod.GET, produces = "application/json")
 	@Secured("ROLE_ADMIN")
-	public RestResponse acknowledgeMessage
-        (@AuthenticationPrincipal AuthenticatedUser user, @PathVariable String type, @PathVariable String stringId) {
-            
-            RestResponse response = new RestResponse();             
-            int id = Integer.parseInt(stringId);
-            try{               
-                //jpaMessageRepository.messageAcknowledged("user",type,  id, DateTime.now());
-                
-            }
-            catch(ApplicationException ex){
-                logger.error(ex);
+	public RestResponse acknowledgeMessage(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable String type,
+					@PathVariable String stringId) {
 
-                response.add(this.getError(ex));                
-            }
-            response.add("acknowledgement", "success");
-            return response;
-	}         
-        
+		RestResponse response = new RestResponse();
+		int id = Integer.parseInt(stringId);
+		try {
+			// jpaMessageRepository.messageAcknowledged("user",type, id,
+			// DateTime.now());
+
+		} catch (ApplicationException ex) {
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
+
+			response.add(this.getError(ex));
+		}
+		response.add("acknowledgement", "success");
+		return response;
+	}
+
 }

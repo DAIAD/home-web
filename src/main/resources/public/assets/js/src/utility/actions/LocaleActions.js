@@ -34,7 +34,7 @@ var requestedMessages = function(locale) {
 	};
 };
 
-var receivedMessages = function(locale, messages) {
+var receivedMessages = function(locale, messages) { 
 	return {
 		type: types.LOCALE_RECEIVED_MESSAGES,
 		locale: locale,

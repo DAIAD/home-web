@@ -166,7 +166,7 @@ public class JpaUserRepository implements IUserRepository {
 			// Create an administrator for any registered utility
 			initializeAdministrators();
 		} catch (ApplicationException ex) {
-			logger.error("Database initialization has failed.", ex);
+			logger.error("Database initialization has failed.");
 		}
 	}
 

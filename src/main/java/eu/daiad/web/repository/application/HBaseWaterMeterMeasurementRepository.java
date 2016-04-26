@@ -22,7 +22,6 @@ import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Repository;
 
 import eu.daiad.web.hbase.HBaseConnectionManager;
@@ -47,7 +46,6 @@ import eu.daiad.web.model.query.RankingDataPoint;
 import eu.daiad.web.model.query.UserDataPoint;
 
 @Repository()
-@Scope("prototype")
 public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurementRepository {
 
 	private static final Log logger = LogFactory.getLog(HBaseWaterMeterMeasurementRepository.class);
@@ -68,11 +66,11 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 		}
 	}
 
-	private String meterTableMeasurementByMeter = "daiad:meter-measurements-by-user";
+	private final String meterTableMeasurementByMeter = "daiad:meter-measurements-by-user";
 
-	private String meterTableMeasurementByTime = "daiad:meter-measurements-by-time";
+	private final String meterTableMeasurementByTime = "daiad:meter-measurements-by-time";
 
-	private String columnFamilyName = "cf";
+	private final String columnFamilyName = "cf";
 
 	@Value("${hbase.data.time.partitions}")
 	private short timePartitions;

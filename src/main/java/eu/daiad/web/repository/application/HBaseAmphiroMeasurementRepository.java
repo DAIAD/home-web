@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.UUID;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.HConstants;
@@ -26,8 +27,9 @@ import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Repository;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import eu.daiad.web.hbase.HBaseConnectionManager;
 import eu.daiad.web.model.TemporalConstants;
@@ -55,7 +57,6 @@ import eu.daiad.web.model.query.ExpandedPopulationFilter;
 import eu.daiad.web.model.query.GroupDataSeries;
 
 @Repository()
-@Scope("prototype")
 public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRepository {
 
 	private static final Log logger = LogFactory.getLog(HBaseAmphiroMeasurementRepository.class);
@@ -82,15 +83,15 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 	@Value("${scanner.cache.size}")
 	private int scanCacheSize = 1;
 
-	private String amphiroTableMeasurements = "daiad:amphiro-measurements";
+	private final String amphiroTableMeasurements = "daiad:amphiro-measurements";
 
-	private String amphiroTableSessionByTime = "daiad:amphiro-sessions-by-time";
+	private final String amphiroTableSessionByTime = "daiad:amphiro-sessions-by-time";
 
-	private String amphiroTableSessionByUser = "daiad:amphiro-sessions-by-user";
+	private final String amphiroTableSessionByUser = "daiad:amphiro-sessions-by-user";
 
-	private String amphiroTableSessionIndex = "daiad:amphiro-sessions-index";
+	private final String amphiroTableSessionIndex = "daiad:amphiro-sessions-index";
 
-	private String columnFamilyName = "cf";
+	private final String columnFamilyName = "cf";
 
 	@Autowired
 	private HBaseConnectionManager connection;
@@ -387,60 +388,17 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 	}
 
 	private void preProcessData(AmphiroMeasurementCollection data) {
-		// Sort sessions
-		ArrayList<AmphiroSession> sessions = data.getSessions();
+		try {
+			// Sort sessions
+			ArrayList<AmphiroSession> sessions = data.getSessions();
 
-		Collections.sort(sessions, new Comparator<AmphiroSession>() {
-
-			@Override
-			public int compare(AmphiroSession s1, AmphiroSession s2) {
-				if (s1.getId() == s2.getId()) {
-					throw new RuntimeException("Session id must be unique.");
-				} else if (s1.getId() < s2.getId()) {
-					return -1;
-				} else {
-					return 1;
-				}
-			}
-		});
-
-		// Check if historical data require a delete operation
-		for (AmphiroSession s : sessions) {
-			if ((s.isHistory()) && (s.getDelete() != null)) {
-				throw new ApplicationException(DataErrorCode.DELETE_NOT_ALLOWED_FOR_HISTORY).set("session", s.getId());
-			}
-		}
-
-		// Sort measurements
-		ArrayList<AmphiroMeasurement> measurements = data.getMeasurements();
-
-		if ((measurements != null) && (measurements.size() > 0)) {
-
-			Collections.sort(measurements, new Comparator<AmphiroMeasurement>() {
+			Collections.sort(sessions, new Comparator<AmphiroSession>() {
 
 				@Override
-				public int compare(AmphiroMeasurement m1, AmphiroMeasurement m2) {
-					if (m1.getSessionId() == m2.getSessionId()) {
-						if (m1.getIndex() == m2.getIndex()) {
-							throw new RuntimeException("Session measurement indexes must be unique.");
-						}
-						if (m1.getTimestamp() == m2.getTimestamp()) {
-							throw new RuntimeException("Session measurement timestamps must be unique.");
-						}
-						if (m1.getIndex() < m2.getIndex()) {
-							if (m1.getTimestamp() > m2.getTimestamp()) {
-								throw new RuntimeException(
-												"Session measurements timestamp and index has ambiguous orderning.");
-							}
-							return -1;
-						} else {
-							if (m1.getTimestamp() < m2.getTimestamp()) {
-								throw new RuntimeException(
-												"Session measurements timestamp and index has ambiguous orderning.");
-							}
-							return 1;
-						}
-					} else if (m1.getSessionId() < m2.getSessionId()) {
+				public int compare(AmphiroSession s1, AmphiroSession s2) {
+					if (s1.getId() == s2.getId()) {
+						throw new RuntimeException("Session id must be unique.");
+					} else if (s1.getId() < s2.getId()) {
 						return -1;
 					} else {
 						return 1;
@@ -448,35 +406,85 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 				}
 			});
 
-			// Compute difference for volume and energy
-			for (int i = measurements.size() - 1; i > 0; i--) {
-				if (measurements.get(i).getSessionId() == measurements.get(i - 1).getSessionId()) {
-					// Set volume
-					float diff = measurements.get(i).getVolume() - measurements.get(i - 1).getVolume();
-					measurements.get(i).setVolume((float) Math.round(diff * 1000f) / 1000f);
-					// Set energy
-					diff = measurements.get(i).getEnergy() - measurements.get(i - 1).getEnergy();
-					measurements.get(i).setEnergy((float) Math.round(diff * 1000f) / 1000f);
+			// Check if historical data require a delete operation
+			for (AmphiroSession s : sessions) {
+				if ((s.isHistory()) && (s.getDelete() != null)) {
+					throw new ApplicationException(DataErrorCode.DELETE_NOT_ALLOWED_FOR_HISTORY).set("session",
+									s.getId());
 				}
 			}
 
-			// Set session for every measurement
-			for (AmphiroMeasurement m : measurements) {
-				for (AmphiroSession s : sessions) {
-					if (m.getSessionId() == s.getId()) {
-						if (s.isHistory()) {
-							throw new ApplicationException(DataErrorCode.HISTORY_SESSION_MEASUREMENT_FOUND).set(
-											"session", m.getSessionId()).set("index", m.getIndex());
+			// Sort measurements
+			ArrayList<AmphiroMeasurement> measurements = data.getMeasurements();
+
+			if ((measurements != null) && (measurements.size() > 0)) {
+
+				Collections.sort(measurements, new Comparator<AmphiroMeasurement>() {
+
+					@Override
+					public int compare(AmphiroMeasurement m1, AmphiroMeasurement m2) {
+						if (m1.getSessionId() == m2.getSessionId()) {
+							if (m1.getIndex() == m2.getIndex()) {
+								throw new RuntimeException("Session measurement indexes must be unique.");
+							}
+							if (m1.getTimestamp() == m2.getTimestamp()) {
+								throw new RuntimeException("Session measurement timestamps must be unique.");
+							}
+							if (m1.getIndex() < m2.getIndex()) {
+								if (m1.getTimestamp() > m2.getTimestamp()) {
+									throw new RuntimeException(
+													"Session measurements timestamp and index has ambiguous orderning.");
+								}
+								return -1;
+							} else {
+								if (m1.getTimestamp() < m2.getTimestamp()) {
+									throw new RuntimeException(
+													"Session measurements timestamp and index has ambiguous orderning.");
+								}
+								return 1;
+							}
+						} else if (m1.getSessionId() < m2.getSessionId()) {
+							return -1;
+						} else {
+							return 1;
 						}
-						m.setSession(s);
-						break;
+					}
+				});
+
+				// Compute difference for volume and energy
+				for (int i = measurements.size() - 1; i > 0; i--) {
+					if (measurements.get(i).getSessionId() == measurements.get(i - 1).getSessionId()) {
+						// Set volume
+						float diff = measurements.get(i).getVolume() - measurements.get(i - 1).getVolume();
+						measurements.get(i).setVolume((float) Math.round(diff * 1000f) / 1000f);
+						// Set energy
+						diff = measurements.get(i).getEnergy() - measurements.get(i - 1).getEnergy();
+						measurements.get(i).setEnergy((float) Math.round(diff * 1000f) / 1000f);
 					}
 				}
-				if (m.getSession() == null) {
-					throw new ApplicationException(DataErrorCode.NO_SESSION_FOUND_FOR_MEASUREMENT).set("session",
-									m.getSessionId()).set("index", m.getIndex());
+
+				// Set session for every measurement
+				for (AmphiroMeasurement m : measurements) {
+					for (AmphiroSession s : sessions) {
+						if (m.getSessionId() == s.getId()) {
+							if (s.isHistory()) {
+								throw new ApplicationException(DataErrorCode.HISTORY_SESSION_MEASUREMENT_FOUND).set(
+												"session", m.getSessionId()).set("index", m.getIndex());
+							}
+							m.setSession(s);
+							break;
+						}
+					}
+					if (m.getSession() == null) {
+						throw new ApplicationException(DataErrorCode.NO_SESSION_FOUND_FOR_MEASUREMENT).set("session",
+										m.getSessionId()).set("index", m.getIndex());
+					}
 				}
 			}
+		} catch (ApplicationException ex) {
+			logger.warn(this.jsonToString(data));
+
+			throw ex;
 		}
 	}
 
@@ -1385,5 +1393,20 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 			index++;
 		}
 		return -1;
+	}
+
+	private String jsonToString(Object value) {
+		if (value == null) {
+			return StringUtils.EMPTY;
+		}
+
+		try {
+			ObjectMapper mapper = new ObjectMapper();
+			return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(value);
+		} catch (Exception ex) {
+			logger.warn(String.format("Failed to serialize object of type [%s]", value.getClass().getName()));
+		}
+
+		return StringUtils.EMPTY;
 	}
 }

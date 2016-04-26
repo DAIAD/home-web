@@ -63,7 +63,11 @@ var constants = keyMirror({
 	DEBUG_CREATE_USER: null,
 	DEBUG_USER_CREATED: null,
 	DEBUG_CREATE_AMPHIRO: null,
-	DEBUG_AMPHIRO_CREATED: null
+	DEBUG_AMPHIRO_CREATED: null,
+	DEBUG_SET_TIMEZONE: null,
+	DEBUG_SET_ERRORS: null,
+	DEBUG_AMPHIRO_DATA_GENERATE_REQUEST: null,
+	DEBUG_AMPHIRO_DATA_GENERATED: null
 });
 
 module.exports = constants;

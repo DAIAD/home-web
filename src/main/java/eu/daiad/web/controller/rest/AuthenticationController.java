@@ -1,5 +1,7 @@
 package eu.daiad.web.controller.rest;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +20,8 @@ import eu.daiad.web.repository.application.IProfileRepository;
 @RestController("RestAuthenticationController")
 public class AuthenticationController extends BaseRestController {
 
+	private static final Log logger = LogFactory.getLog(AuthenticationController.class);
+
 	@Autowired
 	private IProfileRepository profileRepository;
 
@@ -30,8 +34,12 @@ public class AuthenticationController extends BaseRestController {
 
 			Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE);
 
-			return new AuthenticationResponse(profile);
+			return new AuthenticationResponse(this.getRuntime(), profile);
 		} catch (ApplicationException ex) {
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
+
 			response.add(this.getError(ex));
 		}
 

@@ -14,6 +14,10 @@ var i18n = function(state, action) {
 		});
 
 	case types.LOCALE_RECEIVED_MESSAGES:
+	  if(document) {
+	    document.cookie = 'daiad-utility-locale=' + action.locale + '; max-age=' + (60*60*24*365*10) + '; path=/utility/';
+	  }
+	  
 		var newState = Object.assign({}, {
 			isLoading : false,
 			data : Object.keys(state.data).reduce(function(next, locale) {

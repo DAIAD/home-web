@@ -23,67 +23,75 @@ import eu.daiad.web.repository.application.IMessageQueryRepository;
 @RestController("RestRecommendationController")
 public class RecommendationController extends BaseRestController {
 
-    private static final Log logger = LogFactory.getLog(RecommendationController.class);
+	private static final Log logger = LogFactory.getLog(RecommendationController.class);
 
-    @Autowired
-    private IRecommendationRepository recommendationRepository;
+	@Autowired
+	private IRecommendationRepository recommendationRepository;
 
-    @Autowired
-    private IMessageQueryRepository jpaMessageRepository;
+	@Autowired
+	private IMessageQueryRepository jpaMessageRepository;
 
-    @RequestMapping(value = "/api/v1/recommendation/static/{locale}", method = RequestMethod.POST, produces = "application/json")
-    public RestResponse getRecommendations(@PathVariable String locale, @RequestBody Credentials data) {
-        RestResponse response = new RestResponse();
+	@RequestMapping(value = "/api/v1/recommendation/static/{locale}", method = RequestMethod.POST, produces = "application/json")
+	public RestResponse getRecommendations(@PathVariable String locale, @RequestBody Credentials data) {
+		RestResponse response = new RestResponse();
 
-        try {
-            this.authenticate(data, EnumRole.ROLE_USER);
+		try {
+			this.authenticate(data, EnumRole.ROLE_USER);
 
-            StaticRecommendationResponse recommendationResponse = new StaticRecommendationResponse();
+			StaticRecommendationResponse recommendationResponse = new StaticRecommendationResponse();
 
-            recommendationResponse.setRecommendations(this.recommendationRepository.getStaticRecommendations(locale));
+			recommendationResponse.setRecommendations(this.recommendationRepository.getStaticRecommendations(locale));
 
-            return recommendationResponse;
-        } catch (ApplicationException ex) {
-            logger.error(ex.getMessage(), ex);
+			return recommendationResponse;
+		} catch (ApplicationException ex) {
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
-            response.add(this.getError(ex));
-        }
+			response.add(this.getError(ex));
+		}
 
-        return response;
-    }
+		return response;
+	}
 
-    @RequestMapping(value = "/api/v1/get/messages", method = RequestMethod.POST,
-            consumes = "application/json", produces = "application/json")
-    public RestResponse getMessages(@RequestBody Credentials credentials) {
-        MessageResponse response = new MessageResponse();
-        try {
+	@RequestMapping(value = "/api/v1/get/messages", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	public RestResponse getMessages(@RequestBody Credentials credentials) {
+		MessageResponse response = new MessageResponse();
+		try {
 
-            //response.setMessages(jpaMessageRepository.getMessages(credentials.getUsername()));
-            response.setMessages(jpaMessageRepository.testGetMessages());
-            
-        } catch (ApplicationException ex) {
-            logger.error(ex);
+			// response.setMessages(jpaMessageRepository.getMessages(credentials.getUsername()));
+			response.setMessages(jpaMessageRepository.testGetMessages());
 
-            response.add(this.getError(ex));
-        }
+		} catch (ApplicationException ex) {
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
-        return response;
-    }
+			response.add(this.getError(ex));
+		}
 
-    @RequestMapping(value = "/api/v1/ack/{type}/{id}", method = RequestMethod.POST, produces = "application/json")
-    public RestResponse acknowledgeMessage(@RequestBody Credentials credentials, @PathVariable String type, @PathVariable String id) {
+		return response;
+	}
 
-        RestResponse response = new RestResponse();
-        try {
-    
-            jpaMessageRepository.messageAcknowledged(credentials.getUsername(), type,  Integer.parseInt(id), DateTime.now());
+	@RequestMapping(value = "/api/v1/ack/{type}/{id}", method = RequestMethod.POST, produces = "application/json")
+	public RestResponse acknowledgeMessage(@RequestBody Credentials credentials, @PathVariable String type,
+					@PathVariable String id) {
 
-        } catch (ApplicationException ex) {
-            logger.error(ex);
-            response.add(this.getError(ex));
-        }
+		RestResponse response = new RestResponse();
+		try {
 
-        return response;
-    }
+			jpaMessageRepository.messageAcknowledged(credentials.getUsername(), type, Integer.parseInt(id),
+							DateTime.now());
+
+		} catch (ApplicationException ex) {
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
+
+			response.add(this.getError(ex));
+		}
+
+		return response;
+	}
 
 }

@@ -1,4 +1,4 @@
-var userAPI = require('../api/user');
+var sessionAPI = require('../api/session');
 var types = require('../constants/ActionTypes');
 
 var requestedLogin = function() {
@@ -35,7 +35,7 @@ var SessionActions = {
 		return function(dispatch, getState) {
 			dispatch(requestedLogin());
 
-			return userAPI.login(username, password).then(
+			return sessionAPI.login(username, password).then(
 					function(response) {
 						dispatch(receivedLogin(response.success,
 								response.errors, response.profile));
@@ -49,7 +49,7 @@ var SessionActions = {
 		return function(dispatch, getState) {
 			dispatch(requestedLogout());
 
-			return userAPI.logout().then(
+			return sessionAPI.logout().then(
 					function(response) {
 						dispatch(receivedLogout(
 								response.success, response.errors));
@@ -61,10 +61,10 @@ var SessionActions = {
 
 	refreshProfile : function() {
 		return function(dispatch, getState) {
-			return userAPI.getProfile().then(
+			return sessionAPI.getProfile().then(
 					function(response) {
 						dispatch(receivedLogin(response.success,
-								response.erros, response.profile));
+								response.errors, response.profile));
 					}, function(error) {
 						dispatch(receivedLogin(false, error, {}));
 					});

@@ -5,21 +5,21 @@ var { connect } = require('react-redux');
 
 var Bootstrap = require('react-bootstrap');
 
-var Breadcrumb = require('../Breadcrumb');
-var Table = require('../Table');
-var Chart = require('../Chart');
-var DropDown = require('../DropDown');
-var MessageAlert = require('../AlertDismissable');
+var Breadcrumb = require('../../Breadcrumb');
+var Table = require('../../Table');
+var Chart = require('../../Chart');
+var DropDown = require('../../DropDown');
+var MessageAlert = require('../../AlertDismissable');
 
-var errorsCodes = require('../../constants/Errors');
-var successCodes = require('../../constants/Successes');
+var errorsCodes = require('../../../constants/Errors');
+var successCodes = require('../../../constants/Successes');
 
 
 var { getActivity, setFilter, getSessions, getMeters, resetUserData, exportUserData, showAddUserForm, 
       hideAddUserForm, addUserSelectUtility, addUserSelectGenderMale, addUserSelectGenderFemale, addUserFillForm, 
-      addUserValidationsErrorsOccurred, addUserShowMessageAlert, addUserHideErrorAlert, addUser, addUserGetUtilities } = require('../../actions/AdminActions');
+      addUserValidationsErrorsOccurred, addUserShowMessageAlert, addUserHideErrorAlert, addUser, addUserGetUtilities } = require('../../../actions/AdminActions');
 
-var Reporting = React.createClass({
+var Overview = React.createClass({
 	contextTypes: {
 	    intl: React.PropTypes.object
 	},
@@ -443,38 +443,36 @@ var Reporting = React.createClass({
         }
     };
     
-    var addUserButton = null, table = null, filter = null, chart = null;
+    var header = null, filter = null, addUserButton = null, table = null, chart = null;
     if(this.props.data !== null) {
       addUserButton = (
-        <div className='row'>
-          <div className='col-md-12'>
-            <Bootstrap.ListGroup>
-                <div className='clearfix'>
-                  <div style={{ float: 'right'}}>
-                    <Bootstrap.Button bsStyle='success' onClick={this.props.actions.showAddUserForm}>
-                      <i className='fa fa-plus' style={{ paddingRight: 5 }}></i>
-                      {_t({id : 'Buttons.AddNewUser'})}
-                    </Bootstrap.Button>
-                  </div>
-                </div>
-            </Bootstrap.ListGroup>
-          </div>
-        </div>);
+        <div className='col-md-4'>
+          <Bootstrap.ListGroup>
+            <div className='clearfix'>
+              <div style={{ float: 'right'}}>
+                <Bootstrap.Button bsStyle='success' onClick={this.props.actions.showAddUserForm}>
+                  <i className='fa fa-plus' style={{ paddingRight: 5 }}></i>
+                  {_t({id : 'Buttons.AddNewUser'})}
+                </Bootstrap.Button>
+              </div>
+            </div>
+          </Bootstrap.ListGroup>
+        </div>
+      );
       
       filter = (
-        <div className='row'>
-          <div className='col-md-4'>
-            <Bootstrap.Input type='text' 
-                             id='filter' name='filter' ref='filter'
-                             placeholder='Search participants by email ...' 
-                             onChange={this.setFilter}
-                             value={this.props.admin.filter}
-                             buttonAfter={
-                              <Bootstrap.Button onClick={this.clearFilter}><i className='fa fa-trash fa-fw'></i></Bootstrap.Button>
-                            } 
-            />
-          </div>
-        </div>);
+        <div className='col-md-4'>
+          <Bootstrap.Input type='text' 
+                           id='filter' name='filter' ref='filter'
+                           placeholder='Search participants by email ...' 
+                           onChange={this.setFilter}
+                           value={this.props.admin.filter}
+                           buttonAfter={
+                            <Bootstrap.Button onClick={this.clearFilter}><i className='fa fa-trash fa-fw'></i></Bootstrap.Button>
+                          } 
+          />
+        </div>
+      );
           
       table = (
         <div className='row'>
@@ -659,14 +657,20 @@ var Reporting = React.createClass({
         
     );
     
-    var reportBody = (
-        <div>
-        {addUserButton}
+    header = (
+      <div className="row">
         {filter}
+        <div className='col-md-4' />
+        {addUserButton}
+      </div>
+    );
+    var reportBody = (
+      <div>
+        {header}
         {table}
         {chart}
-        </div>
-        );
+      </div>
+    );
     
     var visiblePart = this.props.admin.addUser.show ? addNewUserForm : reportBody;
 
@@ -682,8 +686,8 @@ var Reporting = React.createClass({
   	}
 });
 
-Reporting.icon = 'database';
-Reporting.title = 'Section.Reporting';
+Overview.icon = 'table';
+Overview.title = 'Section.Reports.Overview';
 
 function mapStateToProps(state) {
   return {
@@ -700,4 +704,4 @@ function mapDispatchToProps(dispatch) {
   };
 }
 
-module.exports = connect(mapStateToProps, mapDispatchToProps)(Reporting);
+module.exports = connect(mapStateToProps, mapDispatchToProps)(Overview);

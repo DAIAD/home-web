@@ -6,19 +6,29 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 public class UploadRequest {
 
+	private MultipartFile[] files;
+
 	@JsonDeserialize(using = EnumUploadFileType.Deserializer.class)
 	private EnumUploadFileType type;
 
 	private String timezone;
 
-	private MultipartFile[] files;
+	private Integer srid;
 
-	public EnumUploadFileType getType() {
-		return type;
+	public Integer getSrid() {
+		return srid;
 	}
 
-	public void setType(EnumUploadFileType type) {
-		this.type = type;
+	public void setSrid(Integer srid) {
+		this.srid = srid;
+	}
+
+	public String getTimezone() {
+		return timezone;
+	}
+
+	public void setTimezone(String timezone) {
+		this.timezone = timezone;
 	}
 
 	public MultipartFile[] getFiles() {
@@ -29,12 +39,12 @@ public class UploadRequest {
 		this.files = files;
 	}
 
-	public String getTimezone() {
-		return timezone;
+	public EnumUploadFileType getType() {
+		return type;
 	}
 
-	public void setTimezone(String timezone) {
-		this.timezone = timezone;
+	public void setType(EnumUploadFileType type) {
+		this.type = type;
 	}
 
 }
