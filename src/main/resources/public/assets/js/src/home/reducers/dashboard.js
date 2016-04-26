@@ -27,7 +27,7 @@ var dashboard = function (state, action) {
       infobox: [
           {
             id: "1", 
-            title: "Year amphiro consumption",
+            title: "Water",
             type: "chart",
             subtype: "total",
             period: "year",
@@ -46,7 +46,7 @@ var dashboard = function (state, action) {
           },
           {
             id: "4", 
-            title: "Year meter consumption", 
+            title: "SWM", 
             type: "chart",
             deviceType: "METER",
             period: "year",
@@ -54,32 +54,19 @@ var dashboard = function (state, action) {
             data: [],
         },
         {
-          id: "5", 
-          title:"Year consumption",
-          type: "stat",
-          subtype: "total",
-          deviceType: "AMPHIRO",
-          period: "year",
-          metric: "volume",
-          data: [],
-        
-        },
-        
-        {
           id: "7", 
           title: "Tip of the day",
           type: "tip",
           data: [],
         
         },
-        
         {
           id: "8", 
-          title: "Energy week efficiency",
+          title: "Efficiency",
           type: "stat",
           subtype: "efficiency",
           deviceType: "AMPHIRO",
-          period: "week",
+          period: "month",
           metric: "energy",
           data: [],
         },
