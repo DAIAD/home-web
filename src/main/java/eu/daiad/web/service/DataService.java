@@ -2,25 +2,34 @@ package eu.daiad.web.service;
 
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.UUID;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import com.ibm.icu.text.MessageFormat;
 
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.Error;
+import eu.daiad.web.model.error.ErrorCode;
+import eu.daiad.web.model.error.QueryErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryResponse;
+import eu.daiad.web.model.query.EnumDataField;
 import eu.daiad.web.model.query.EnumMeasurementDataSource;
+import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.EnumRankingType;
 import eu.daiad.web.model.query.ExpandedDataQuery;
 import eu.daiad.web.model.query.ExpandedPopulationFilter;
@@ -38,6 +47,9 @@ import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 public class DataService implements IDataService {
 
 	@Autowired
+	protected MessageSource messageSource;
+
+	@Autowired
 	private IUserRepository userRepository;
 
 	@Autowired
@@ -48,6 +60,124 @@ public class DataService implements IDataService {
 
 	@Autowired
 	IWaterMeterMeasurementRepository meterRepository;
+
+	protected String getMessage(ErrorCode error) {
+		return messageSource.getMessage(error.getMessageKey(), null, error.getMessageKey(), null);
+	}
+
+	private String getMessage(ErrorCode error, Map<String, Object> properties) {
+		String message = messageSource.getMessage(error.getMessageKey(), null, error.getMessageKey(), null);
+
+		MessageFormat msgFmt = new MessageFormat(message);
+
+		return msgFmt.format(properties);
+	}
+
+	protected Error getError(ErrorCode error) {
+		return new Error(error.getMessageKey(), this.getMessage(error));
+	}
+
+	protected Error getError(ErrorCode error, Map<String, Object> properties) {
+		return new Error(error.getMessageKey(), this.getMessage(error, properties));
+	}
+
+	private void validate(DataQuery query, DataQueryResponse response) {
+		// Time
+		if (query.getTime() == null) {
+			response.add(this.getError(QueryErrorCode.TIME_FILTER_NOT_SET));
+		} else {
+			switch (query.getTime().getType()) {
+				case ABSOLUTE:
+					if (query.getTime().getEnd() == null) {
+						response.add(this.getError(QueryErrorCode.TIME_FILTER_ABSOLUTE_END_NOT_SET));
+					}
+					break;
+				case SLIDING:
+					if (query.getTime().getDuration() == null) {
+						response.add(this.getError(QueryErrorCode.TIME_FILTER_SLIDING_DURATION_NOT_SET));
+					}
+					break;
+				default:
+					response.add(this.getError(QueryErrorCode.TIME_FILTER_INVALID));
+					break;
+			}
+		}
+
+		// Spatial
+		if (query.getSpatial() != null) {
+			if (query.getSpatial().getGeometry() == null) {
+				response.add(this.getError(QueryErrorCode.SPATIAL_FILTER_GEOMETRY_NOT_SET));
+			}
+			switch (query.getSpatial().getType()) {
+				case CONTAINS:
+					break;
+				case INTERSECT:
+					break;
+				case DISTANCE:
+					if (query.getSpatial().getDistance() == null) {
+						response.add(this.getError(QueryErrorCode.SPATIAL_FILTER_DISTANCE_NOT_SET));
+					}
+					break;
+				default:
+					break;
+			}
+		}
+
+		// Population
+		if ((query.getPopulation() == null) || (query.getPopulation().size() == 0)) {
+			response.add(this.getError(QueryErrorCode.POPULATION_FILTER_NOT_SET));
+		} else {
+			for (PopulationFilter filter : query.getPopulation()) {
+				switch (filter.getType()) {
+					case USER:
+						UserPopulationFilter userFilter = (UserPopulationFilter) filter;
+						if ((userFilter.getUsers() == null) || (userFilter.getUsers().size() == 0)) {
+							response.add(this.getError(QueryErrorCode.POPULATION_FILTER_IS_EMPTY));
+						}
+						break;
+					case GROUP:
+						GroupPopulationFilter groupFilter = (GroupPopulationFilter) filter;
+						if (groupFilter.getGroup() == null) {
+							response.add(this.getError(QueryErrorCode.POPULATION_FILTER_IS_EMPTY));
+						}
+						break;
+					case UTILITY:
+						UtilityPopulationFilter utilityFilter = (UtilityPopulationFilter) filter;
+						if (utilityFilter.getUtility() == null) {
+							response.add(this.getError(QueryErrorCode.POPULATION_FILTER_IS_EMPTY));
+						}
+						break;
+					default:
+						response.add(this.getError(QueryErrorCode.POPULATION_FILTER_INVALID));
+						break;
+
+				}
+
+				// Ranking
+				if (filter.getRanking() != null) {
+					if (filter.getRanking().getType().equals(EnumRankingType.UNDEFINED)) {
+						response.add(this.getError(QueryErrorCode.RANKING_TYPE_NOT_SET));
+					}
+					if ((filter.getRanking().getLimit() == null) || (filter.getRanking().getLimit() < 1)) {
+						response.add(this.getError(QueryErrorCode.RANKING_INVALID_LIMIT));
+					}
+					if (filter.getRanking().getField().equals(EnumDataField.UNDEFINED)) {
+						response.add(this.getError(QueryErrorCode.RANKING_INVALID_FIELD));
+					}
+					if (filter.getRanking().getMetric().equals(EnumMetric.UNDEFINED)) {
+						response.add(this.getError(QueryErrorCode.RANKING_INVALID_METRIC));
+					}
+				}
+			}
+		}
+
+		// Metrics
+		for (EnumMetric m : query.getMetrics()) {
+			if (m.equals(EnumMetric.UNDEFINED)) {
+				response.add(this.getError(QueryErrorCode.METRIC_INVALID));
+			}
+		}
+	}
 
 	@Override
 	public DataQueryResponse execute(DataQuery query) {
@@ -66,9 +196,9 @@ public class DataService implements IDataService {
 
 			ExpandedDataQuery expandedQuery = new ExpandedDataQuery(DateTimeZone.forID(authenticatedUser.getTimezone()));
 
-			// At least one group or user must be selected. Time constraint is
-			// required
-			if ((query.getTime() == null) || (query.getPopulation() == null)) {
+			// Validate query
+			this.validate(query, response);
+			if (!response.getSuccess()) {
 				return response;
 			}
 
@@ -77,16 +207,6 @@ public class DataService implements IDataService {
 				MessageDigest md = MessageDigest.getInstance("MD5");
 
 				for (PopulationFilter filter : query.getPopulation()) {
-					// Initialize ranking settings
-					if (filter.getRanking() != null) {
-						if (filter.getRanking().getType().equals(EnumRankingType.UNDEFINED)) {
-							filter.getRanking().setType(EnumRankingType.TOP);
-						}
-						if ((filter.getRanking().getLimit() == null) || (filter.getRanking().getLimit() < 1)) {
-							filter.getRanking().setLimit(1);
-						}
-					}
-
 					// Construct expanded population filter
 					ExpandedPopulationFilter expandedPopulationFilter;
 					if (filter.getRanking() == null) {
@@ -124,13 +244,13 @@ public class DataService implements IDataService {
 
 							// Load devices only if there is a spatial filter or
 							// meter values are requested
+							boolean includeUser = false;
+
 							if ((query.getSpatial() != null)
 											|| (query.getSource().equals(EnumMeasurementDataSource.BOTH))
 											|| (query.getSource().equals(EnumMeasurementDataSource.METER))) {
 								ArrayList<Device> devices = deviceRepository.getUserDevices(userKey,
 												new DeviceRegistrationQuery(EnumDeviceType.METER));
-
-								boolean includeUser = false;
 
 								for (Device device : devices) {
 									WaterMeterDevice meter = (WaterMeterDevice) device;
@@ -168,22 +288,19 @@ public class DataService implements IDataService {
 										}
 									}
 								}
-								if (includeUser) {
-									expandedPopulationFilter.getUsers().add(userKey);
-									if (filter.getRanking() != null) {
-										expandedPopulationFilter.getLabels().add(user.getUsername());
-									}
-									expandedPopulationFilter.getHashes().add(
-													md.digest(userKey.toString().getBytes("UTF-8")));
-								}
 							} else {
+								includeUser = true;
+							}
+
+							// Decide if user should be added to the final
+							// result
+							if (includeUser) {
 								expandedPopulationFilter.getUsers().add(userKey);
-								if (filter.getRanking() != null) {
-									expandedPopulationFilter.getLabels().add(user.getUsername());
-								}
+								expandedPopulationFilter.getLabels().add(user.getUsername());
 								expandedPopulationFilter.getHashes().add(
 												md.digest(userKey.toString().getBytes("UTF-8")));
 							}
+
 						}
 
 						expandedQuery.getGroups().add(expandedPopulationFilter);
@@ -226,6 +343,8 @@ public class DataService implements IDataService {
 							return response;
 					}
 
+					// Invert start/end dates if needed e.g. a negative interval
+					// is selected for a sliding time window
 					if (endDateTime < startDateTime) {
 						long temp = startDateTime;
 						startDateTime = endDateTime;

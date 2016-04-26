@@ -15,4 +15,5 @@ public class MeterUserDataPoint extends UserDataPoint {
 	public Map<EnumMetric, Double> getVolume() {
 		return volume;
 	}
+
 }

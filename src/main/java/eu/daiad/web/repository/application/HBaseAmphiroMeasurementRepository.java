@@ -51,10 +51,15 @@ import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DataErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.query.AmphiroDataPoint;
+import eu.daiad.web.model.query.AmphiroUserDataPoint;
+import eu.daiad.web.model.query.DataPoint;
+import eu.daiad.web.model.query.EnumDataField;
 import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.ExpandedDataQuery;
 import eu.daiad.web.model.query.ExpandedPopulationFilter;
 import eu.daiad.web.model.query.GroupDataSeries;
+import eu.daiad.web.model.query.RankingDataPoint;
+import eu.daiad.web.model.query.UserDataPoint;
 
 @Repository()
 public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRepository {
@@ -1297,54 +1302,53 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 						long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 2, 10));
 						byte[] userHash = Arrays.copyOfRange(r.getRow(), 10, 26);
 
+						long timestamp = 0;
+						int duration = 0;
+						float volume = 0, energy = 0, temperature = 0, flow = 0;
+
+						for (Entry<byte[], byte[]> entry : map.entrySet()) {
+							String qualifier = Bytes.toString(entry.getKey());
+
+							switch (qualifier) {
+								case "m:offset":
+									timestamp = (timeBucket + Bytes.toInt(entry.getValue())) * 1000L;
+									break;
+								case "m:v":
+									volume = Bytes.toFloat(entry.getValue());
+									break;
+								case "m:t":
+									temperature = Bytes.toFloat(entry.getValue());
+									break;
+								case "m:e":
+									energy = Bytes.toFloat(entry.getValue());
+									break;
+								case "m:f":
+									flow = Bytes.toFloat(entry.getValue());
+									break;
+								case "m:d":
+									duration = Bytes.toInt(entry.getValue());
+									break;
+								default:
+									// Ignore
+									break;
+							}
+						}
+
 						int filterIndex = 0;
 						for (ExpandedPopulationFilter filter : query.getGroups()) {
 							GroupDataSeries series = result.get(filterIndex);
 
 							int index = inArray(filter.getHashes(), userHash);
 							if (index >= 0) {
-								long timestamp = 0;
-								float volume = 0;
-								float energy = 0;
-								int duration = 0;
-								float temperature = 0;
-								float flow = 0;
-
-								for (Entry<byte[], byte[]> entry : map.entrySet()) {
-									String qualifier = Bytes.toString(entry.getKey());
-
-									switch (qualifier) {
-										case "m:offset":
-											timestamp = (timeBucket + Bytes.toInt(entry.getValue())) * 1000L;
-											break;
-										case "m:v":
-											volume = Bytes.toFloat(entry.getValue());
-											break;
-										case "m:t":
-											temperature = Bytes.toFloat(entry.getValue());
-											break;
-										case "m:e":
-											energy = Bytes.toFloat(entry.getValue());
-											break;
-										case "m:f":
-											flow = Bytes.toFloat(entry.getValue());
-											break;
-										case "m:d":
-											duration = Bytes.toInt(entry.getValue());
-											break;
-										default:
-											// Ignore
-											break;
-									}
-								}
-
 								if (filter.getRanking() == null) {
-									series.addDataPoint(query.getGranularity(), timestamp, volume, energy, duration,
-													temperature, flow, query.getMetrics(), query.getTimezone());
+									series.addAmhiroDataPoint(query.getGranularity(), timestamp, volume, energy,
+													duration, temperature, flow, query.getMetrics(),
+													query.getTimezone());
 								} else {
-									series.addRankingDataPoint(query.getGranularity(), filter.getUsers().get(index),
-													filter.getLabels().get(index), timestamp, volume, energy, duration,
-													temperature, flow, query.getMetrics(), query.getTimezone());
+									series.addAmphiroRankingDataPoint(query.getGranularity(),
+													filter.getUsers().get(index), filter.getLabels().get(index),
+													timestamp, volume, energy, duration, temperature, flow,
+													query.getMetrics(), query.getTimezone());
 								}
 							}
 
@@ -1370,17 +1374,137 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 			}
 		}
 
-		cleanSeries(result);
+		// Post process results
+		int filterIndex = 0;
+		for (final ExpandedPopulationFilter filter : query.getGroups()) {
+			GroupDataSeries series = result.get(filterIndex);
+
+			if (filter.getRanking() != null) {
+				// Truncate (n-k) users and keep top/bottom-k only
+				for (DataPoint point : series.getPoints()) {
+					RankingDataPoint ranking = (RankingDataPoint) point;
+
+					final EnumDataField field = filter.getRanking().getField();
+
+					Collections.sort(ranking.getUsers(), new Comparator<UserDataPoint>() {
+
+						@Override
+						public int compare(UserDataPoint u1, UserDataPoint u2) {
+							AmphiroUserDataPoint m1 = (AmphiroUserDataPoint) u1;
+							AmphiroUserDataPoint m2 = (AmphiroUserDataPoint) u2;
+
+							switch (field) {
+								case VOLUME:
+									if (m1.getVolume().get(filter.getRanking().getMetric()) < m2.getVolume().get(
+													filter.getRanking().getMetric())) {
+										return -1;
+									}
+									if (m1.getVolume().get(filter.getRanking().getMetric()) > m2.getVolume().get(
+													filter.getRanking().getMetric())) {
+										return 1;
+									}
+
+									break;
+								case ENERGY:
+									if (m1.getEnergy().get(filter.getRanking().getMetric()) < m2.getEnergy().get(
+													filter.getRanking().getMetric())) {
+										return -1;
+									}
+									if (m1.getEnergy().get(filter.getRanking().getMetric()) > m2.getEnergy().get(
+													filter.getRanking().getMetric())) {
+										return 1;
+									}
+
+									break;
+								case DURATION:
+									if (m1.getDuration().get(filter.getRanking().getMetric()) < m2.getDuration().get(
+													filter.getRanking().getMetric())) {
+										return -1;
+									}
+									if (m1.getDuration().get(filter.getRanking().getMetric()) > m2.getDuration().get(
+													filter.getRanking().getMetric())) {
+										return 1;
+									}
+
+									break;
+								case TEMPERATURE:
+									if (m1.getTemperature().get(filter.getRanking().getMetric()) < m2.getTemperature()
+													.get(filter.getRanking().getMetric())) {
+										return -1;
+									}
+									if (m1.getTemperature().get(filter.getRanking().getMetric()) > m2.getTemperature()
+													.get(filter.getRanking().getMetric())) {
+										return 1;
+									}
+
+									break;
+								case FLOW:
+									if (m1.getFlow().get(filter.getRanking().getMetric()) < m2.getFlow().get(
+													filter.getRanking().getMetric())) {
+										return -1;
+									}
+									if (m1.getFlow().get(filter.getRanking().getMetric()) > m2.getFlow().get(
+													filter.getRanking().getMetric())) {
+										return 1;
+									}
+
+									break;
+								default:
+									break;
+							}
+							return 0;
+						}
+					});
+
+					int limit = filter.getRanking().getLimit();
+					switch (filter.getRanking().getType()) {
+						case TOP:
+							for (int i = 0, max = ranking.getUsers().size() - limit; i < max; i++) {
+								ranking.getUsers().remove(0);
+							}
+							break;
+						case BOTTOM:
+							for (int i = ranking.getUsers().size() - 1, max = limit - 1; i > max; i--) {
+								ranking.getUsers().remove(i);
+							}
+							break;
+						default:
+							series.getPoints().clear();
+							break;
+					}
+				}
+			}
+			filterIndex++;
+		}
+
+		cleanSeries(query, result);
 
 		return result;
 	}
 
-	private void cleanSeries(ArrayList<GroupDataSeries> result) {
-		for (GroupDataSeries series : result) {
-			for (Object p : series.getPoints()) {
-				((AmphiroDataPoint) p).getTemperature().remove(EnumMetric.SUM);
-				((AmphiroDataPoint) p).getFlow().remove(EnumMetric.SUM);
+	private void cleanSeries(ExpandedDataQuery query, ArrayList<GroupDataSeries> result) {
+		int filterIndex = 0;
+		for (final ExpandedPopulationFilter filter : query.getGroups()) {
+			GroupDataSeries series = result.get(filterIndex);
+			if (filter.getRanking() == null) {
+				for (Object p : series.getPoints()) {
+					AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) p;
+
+					amphiroDataPoint.getTemperature().remove(EnumMetric.SUM);
+					amphiroDataPoint.getFlow().remove(EnumMetric.SUM);
+				}
+			} else {
+				for (Object p : series.getPoints()) {
+					RankingDataPoint rankingDataPoint = (RankingDataPoint) p;
+					for (UserDataPoint userDataPoint : rankingDataPoint.getUsers()) {
+						AmphiroUserDataPoint amphiroUserDataPoint = (AmphiroUserDataPoint) userDataPoint;
+
+						amphiroUserDataPoint.getTemperature().remove(EnumMetric.SUM);
+						amphiroUserDataPoint.getFlow().remove(EnumMetric.SUM);
+					}
+				}
 			}
+			filterIndex++;
 		}
 	}
 

@@ -247,6 +247,12 @@ public class DataQueryBuilder {
 		if (this.metrics.contains(EnumMetric.AVERAGE)) {
 			this.count().sum();
 		}
+		if (this.metrics.contains(EnumMetric.MIN)) {
+			this.max();
+		}
+		if (this.metrics.contains(EnumMetric.MAX)) {
+			this.min();
+		}
 
 		for (PopulationFilter filter : this.query.getPopulation()) {
 			if ((filter.getRanking() != null) && (!this.metrics.contains(filter.getRanking().getMetric()))) {

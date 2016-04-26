@@ -38,6 +38,7 @@ import eu.daiad.web.model.meter.WaterMeterMeasurementQueryResult;
 import eu.daiad.web.model.meter.WaterMeterStatus;
 import eu.daiad.web.model.meter.WaterMeterStatusQueryResult;
 import eu.daiad.web.model.query.DataPoint;
+import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.ExpandedDataQuery;
 import eu.daiad.web.model.query.ExpandedPopulationFilter;
 import eu.daiad.web.model.query.GroupDataSeries;
@@ -690,9 +691,11 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 					long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 2, 10));
 					byte[] serialHash = Arrays.copyOfRange(r.getRow(), 10, 26);
 
+					float difference = 0, volume = 0;
+					long lastTimestamp = 0;
+
 					for (Entry<byte[], byte[]> entry : map.entrySet()) {
 						short offset = Bytes.toShort(Arrays.copyOfRange(entry.getKey(), 0, 2));
-
 						long timestamp = ((Long.MAX_VALUE / 1000) - (timeBucket + (long) offset)) * 1000L;
 
 						if ((startDate.getMillis() <= timestamp) && (timestamp <= endDate.getMillis())) {
@@ -700,9 +703,14 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 							byte[] slice = Arrays.copyOfRange(entry.getKey(), 3, 3 + length);
 
 							String columnQualifier = Bytes.toString(slice);
+							if (columnQualifier.equals("v")) {
+								volume = Bytes.toFloat(entry.getValue());
+							}
 							if (columnQualifier.equals("d")) {
-								float difference = Bytes.toFloat(entry.getValue());
+								difference = Bytes.toFloat(entry.getValue());
+							}
 
+							if (lastTimestamp == timestamp) {
 								if (difference > 0) {
 									int filterIndex = 0;
 									for (ExpandedPopulationFilter filter : query.getGroups()) {
@@ -710,20 +718,18 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 
 										int index = inArray(filter.getSerials(), serialHash);
 										if (index >= 0) {
-											if (filter.getRanking() == null) {
-												series.addDataPoint(query.getGranularity(), timestamp, difference,
-																query.getMetrics(), query.getTimezone());
-											} else {
-												series.addRankingDataPoint(query.getGranularity(), filter.getUsers()
-																.get(index), filter.getLabels().get(index), timestamp,
-																difference, query.getMetrics(), query.getTimezone());
-											}
+											series.addMeterRankingDataPoint(query.getGranularity(), filter.getUsers()
+															.get(index), filter.getLabels().get(index), timestamp,
+															difference, volume, query.getMetrics(), query.getTimezone());
+
 										}
 
 										filterIndex++;
-
 									}
 								}
+								volume = difference = 0;
+							} else {
+								lastTimestamp = timestamp;
 							}
 						}
 					}
@@ -746,12 +752,24 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 			}
 		}
 
-		// Post process ranked results
-		int index = 0;
+		// Post process results
+		int filterIndex = 0;
 		for (final ExpandedPopulationFilter filter : query.getGroups()) {
-			if (filter.getRanking() != null) {
-				GroupDataSeries series = result.get(index);
+			GroupDataSeries series = result.get(filterIndex);
 
+			if (filter.getRanking() == null) {
+				// Aggregate all user data points of a ranking data point to a
+				// single meter data point
+				ArrayList<DataPoint> points = new ArrayList<DataPoint>();
+
+				for (DataPoint point : series.getPoints()) {
+					points.add(((RankingDataPoint) point).aggregate(query.getMetrics(),
+									DataPoint.EnumDataPointType.METER));
+				}
+
+				series.setPoints(points);
+			} else {
+				// Truncate (n-k) users and keep top/bottom-k only
 				for (DataPoint point : series.getPoints()) {
 					RankingDataPoint ranking = (RankingDataPoint) point;
 
@@ -792,10 +810,33 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 					}
 				}
 			}
-			index++;
+			filterIndex++;
 		}
 
+		cleanSeries(query, result);
+
 		return result;
+	}
+
+	private void cleanSeries(ExpandedDataQuery query, ArrayList<GroupDataSeries> result) {
+		int filterIndex = 0;
+		for (final ExpandedPopulationFilter filter : query.getGroups()) {
+			GroupDataSeries series = result.get(filterIndex);
+			if (filter.getRanking() != null) {
+				for (Object p : series.getPoints()) {
+					RankingDataPoint rankingDataPoint = (RankingDataPoint) p;
+					for (UserDataPoint userDataPoint : rankingDataPoint.getUsers()) {
+						MeterUserDataPoint meterUserDataPoint = (MeterUserDataPoint) userDataPoint;
+
+						meterUserDataPoint.getVolume().remove(EnumMetric.MIN);
+						meterUserDataPoint.getVolume().remove(EnumMetric.MAX);
+						meterUserDataPoint.getVolume().remove(EnumMetric.AVERAGE);
+						meterUserDataPoint.getVolume().remove(EnumMetric.COUNT);
+					}
+				}
+			}
+			filterIndex++;
+		}
 	}
 
 	private int inArray(ArrayList<byte[]> array, byte[] hash) {

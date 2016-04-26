@@ -53,7 +53,7 @@ var Development = React.createClass({
         time: {
           type : 'SLIDING',
           start: moment().valueOf(),
-          duration: -30,
+          duration: -60,
           durationTimeUnit: 'DAY',
           granularity: 'DAY'
         },
@@ -65,10 +65,15 @@ var Development = React.createClass({
           }, {
             type :'UTILITY',
             label: 'Alicante',
+            utility: '2b48083d-6f05-488f-9f9b-99607a93c6c3'
+          }, {
+            type :'UTILITY',
+            label: 'Alicante',
             utility: '2b48083d-6f05-488f-9f9b-99607a93c6c3',
             ranking: {
               type: 'TOP',
               metric: 'AVERAGE',
+              field: 'TEMPERATURE',
               limit: 2
             }
           }
@@ -111,8 +116,8 @@ var Development = React.createClass({
             ]
           }
         },
-        source: 'METER',
-        metrics: ['SUM', 'COUNT', 'MIN', 'MAX', 'AVERAGE']
+        source: 'BOTH',
+        metrics: ['COUNT', 'SUM', 'MIN', 'MAX', 'AVERAGE']
     };
     
     this.props.actions.submitQuery({ query : query });
@@ -124,31 +129,6 @@ var Development = React.createClass({
     }
    
     this.props.actions.generateAmphiroData(this.props.debug.timezone, files);
-    /*
-     * var self = this;
-     * 
-     * var data = new FormData();
-     * 
-     * data.append('type', type); data.append('timezone', 'Europe/Madrid');
-     * for(var f=0; f<files.length; f++) { data.append('files', files[f]); }
-     * 
-     * var updateCsrfToken = function(crsf) {
-     * $('meta[name=_csrf]').attr('content', crsf);
-     * $('input[name=_csrf]').val(crsf); };
-     * 
-     * this.setState({ isLoading : type });
-     * 
-     * var request = { url: url, type: 'POST', data: data, enctype:
-     * 'multipart/form-data', processData: false, contentType: false, cache:
-     * false, beforeSend : function(xhr) { xhr.setRequestHeader('X-CSRF-TOKEN',
-     * $('meta[name=_csrf]').attr('content')); } };
-     * 
-     * $.ajax(request).done(function(data, textStatus, request) {
-     * updateCsrfToken(request.getResponseHeader('X-CSRF-TOKEN'));
-     * self.setState({ isLoading : null }); }).fail(function(jqXHR, textStatus,
-     * errorThrown) { updateCsrfToken(jqXHR.getResponseHeader('X-CSRF-TOKEN'));
-     * self.setState({ isLoading : null }); });
-     */
   },
 
   componentDidMount : function() {
@@ -223,6 +203,13 @@ var Development = React.createClass({
                   <div className='row'>
                     <div className='col-md-6'>
                       <Bootstrap.Button bsStyle='primary' onClick={this.createAmphiro}>Create Amphiro</Bootstrap.Button>
+                    </div>
+                  </div>
+                </Bootstrap.ListGroupItem>
+                <Bootstrap.ListGroupItem>
+                  <div className='row'>
+                    <div className='col-md-6'>
+                      <Bootstrap.Button bsStyle='primary' onClick={this.executeQuery}>Execute Query</Bootstrap.Button>
                     </div>
                   </div>
                 </Bootstrap.ListGroupItem>
