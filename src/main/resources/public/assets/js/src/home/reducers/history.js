@@ -14,7 +14,9 @@ var history = function (state, action) {
       activeSessionFilter: "volume",
       activeSessionIndex: null,
       synced: true,
+      comparison: null,
       data: [],
+      comparisonData: [],
     };
     state.time = Object.assign({}, {granularity:2}, thisWeek());
   }
@@ -26,6 +28,11 @@ var history = function (state, action) {
         data: action.sessions
       });
     
+    case types.HISTORY_SET_COMPARISON_SESSIONS:
+      return Object.assign({}, state, {
+        comparisonData: action.sessions
+      });
+
     case types.HISTORY_SET_SESSION:
       const updated = updateOrAppendToSession(state.data, action.session, action.session.id);
       return Object.assign({}, state, {
@@ -101,6 +108,11 @@ var history = function (state, action) {
       }
       return Object.assign({}, state, {
         activeSessionIndex: state.activeSessionIndex-1
+      });
+    
+    case types.HISTORY_SET_COMPARISON:
+      return Object.assign({}, state, {
+        comparison: action.comparison
       });
 
     default:

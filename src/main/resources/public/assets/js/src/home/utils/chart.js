@@ -1,3 +1,5 @@
+var moment = require('moment');
+
 const getCount = function(metrics) {
   return metrics.count?metrics.count:1;
 };
@@ -11,7 +13,7 @@ const addPreviousValues = function(data) {
   return data.map((val, idx, arr) => [val[0], arr.map((array) => array[1]?array[1]:0).reduce((prev, curr, idx2, array, initial) => idx2<=idx?prev+curr:prev)]);
 };
 
-const getFilteredData = function(data, filter, devType='AMPHIRO') {
+const getFilteredData = function(data, filter, devType='AMPHIRO', timeFilter=null, transfer=false) {
   if (!data || !data.length) return [];
   
   let filteredData = [];
@@ -37,7 +39,12 @@ const getFilteredData = function(data, filter, devType='AMPHIRO') {
         if (!dato[filter]){
           return;
         }
-        filteredData.push([dato.timestamp, dato[filter]]);
+
+        let timestamp = dato.timestamp;
+        if (transfer) {
+          timestamp = moment(timestamp).add(1, timeFilter);
+        }
+        filteredData.push([timestamp, dato[filter]]);
       });
       filteredData = filteredData.map(x => [new Date(x[0]),x[1]]);
       
@@ -56,7 +63,11 @@ const getFilteredData = function(data, filter, devType='AMPHIRO') {
         if (!dato[filter]){
           return;
         }
-        filteredData.push([dato.timestamp, dato[filter]]);
+        let timestamp = dato.timestamp;
+        if (transfer) {
+          timestamp = moment(timestamp).add(1, timeFilter);
+        }
+        filteredData.push([timestamp, dato[filter]]);
       });
       
       return filteredData.map(x => [new Date(x[0]),x[1]]);

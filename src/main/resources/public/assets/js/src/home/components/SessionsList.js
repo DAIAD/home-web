@@ -11,24 +11,19 @@ var SessionsChart = require('./SessionsChart');
 
 
 function SessionListItem (props) {
-  const { id, index, device, devType, devName, volume, energyClass, timestamp, duration, better, temperature, history, measurements } = props.data;
+  console.log('session item', props);
+  const { id, index, device, devType, devName, volume, difference, energyClass, timestamp, duration, better, temperature, history, measurements } = props.data;
   const arrowClass = better===null?"":better?"fa-arrow-down green":"fa-arrow-up red";
   return (
     <li className="session-item"> 
       <a onClick={() => props.onOpen(id, props.index, device)} >
-        <div className="session-item-header col-md-3"><h3>{volume}<span style={{fontSize: '0.6em'}}> lt</span> <i className={`fa ${arrowClass}`}/></h3>
-        </div>
+        
+        <div className="session-item-header col-md-3"><h3>{volume}<span style={{fontSize: '0.6em'}}> lt</span> <i className={`fa ${arrowClass}`}/></h3></div>
         <div className="col-md-7">
           <div className="pull-right">
             {(() => {
               if (id) {
                 return <span className="session-item-detail">{id}</span>;
-              }
-            })()}
-            
-            {(() => {
-              if (devType) {
-                return <span className="session-item-detail">{devType}</span>;
               }
             })()}
             
@@ -93,11 +88,7 @@ function SparklineChart (props) {
 var SessionsList = React.createClass({
 
   onOpen: function (id, index, device) {
-    this.props.setActiveSessionIndex(index);
-    /*  
-    if (id!==null && device!==null)
-      this.props.getDeviceSession(id, device, this.props.time);  
-    */
+    this.props.setActiveSessionIndex(index, id, device);
   },
   /*
   onClose: function() {
@@ -121,7 +112,6 @@ var SessionsList = React.createClass({
     return (
       <div style={{margin:50}}>
         <h3>In detail</h3>
-        <h4 style={{position: 'absolute', marginTop: -510, marginLeft:305}}>{this.props.reducedMetric}</h4>
         <ul className="sessions-list">
           {
             this.props.sessions.map((session, idx) => (
@@ -135,7 +125,7 @@ var SessionsList = React.createClass({
               ))
           }
         </ul>
-        <SessionData sessions={this.props.sessions} />
+        <SessionData sessions={this.props.sessions} time={this.props.time}/>
         </div>
     );
   }

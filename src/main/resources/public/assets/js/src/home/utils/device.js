@@ -1,3 +1,5 @@
+var { getFriendlyDuration, getEnergyClass } = require('./general');
+
 const getDefaultDevice = function(devices) {
   const amphiroDevices = getAvailableDevices(devices);
   const meters = getAvailableMeters(devices);
@@ -165,29 +167,54 @@ const getDataMeasurements = function (devices, data, index) {
 // to single array of sessions (including device key)
 const reduceSessions = function(devices, data) {
   return data.map(device =>  
-            getDataSessions(devices, device).map((session, idx) => 
-               Object.assign({}, session, 
-                             {index:idx},
-                             {device:device.deviceKey}
-                            )
+                  getDataSessions(devices, device)
+                  .map((session, idx, array) => {
+                    const devType = getDeviceTypeByKey(devices, device.deviceKey);
+                    return Object.assign({}, session, 
+                             {
+                               index:idx, 
+                               devType,
+                               device: device.deviceKey,
+                               devName:getDeviceNameByKey(devices, session.device),
+                               volume: devType==='METER'?session.difference:session.volume,
+                               duration:getFriendlyDuration(session.duration), 
+                               energyClass:getEnergyClass(session.energy), 
+                               
+                               better:array[idx-1]?(devType==='METER'?(array[idx].difference<=array[idx-1].difference?true:false):(array[idx].volume<=array[idx-1].volume?true:false)):null,
+                               hasChartData: session.measurements?true:false 
+
+                             });
+                  }
                           )
                         )
-                        .reduce((c, p) => c.concat(p), []);
+                        .reduce((c, p) => c.concat(p), [])
+                        .map((session, idx, array) => Object.assign({}, session, 
+                                                      {
+                               next:array[idx+1]?[array[idx+1].id, array[idx+1].device]:null,
+                               prev:array[idx-1]?[array[idx-1].id, array[idx-1].device]:null,
+                                                      }));
 };
 
 const reduceMetric = function(devices, data, metric) {
   const showers = getDataShowersCount(devices, data);                     
-  if (metric === 'showers') return showers;
+  if (metric === 'showers') return `${showers} showers`;
 
   let reducedMetric = data.map(it => getDataSessions(devices, it)
                                     .map(it=>it[metric]?it[metric]:[])
                                     .reduce(((c, p)=>c+p),0))
                             .reduce(((c, p)=>c+p),0);
 
-                            reducedMetric = (metric === 'temperature')?(reducedMetric / showers):reducedMetric;
+                            reducedMetric = (metric === 'temperature' && (data[0]?(data[0].sessions[0]?(data[0].sessions[0].count==null):false):false))?(reducedMetric / showers):reducedMetric;
   
-
   reducedMetric = !isNaN(parseInt(reducedMetric))?parseInt(reducedMetric).toFixed(1):0;
+
+  let mu = '';
+  if (metric === 'volume') mu = 'lt';
+  else if (metric === 'energy') mu = 'kWh';
+  else if (metric === 'duration') mu = 'sec';
+  else if (metric === 'temperature') mu = '°C';
+
+  reducedMetric = `${reducedMetric} ${mu}`;
   return reducedMetric;
 };
 

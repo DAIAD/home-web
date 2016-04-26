@@ -111,7 +111,7 @@ const QueryActions = {
         const devSessions = sessions.find(x=>x.deviceKey === device);
         
         return dispatch(QueryActions.fetchDeviceSession(id, device, time))
-        .then(session => ({data: updateOrAppendToSession([devSessions], Object.assign({}, session, {deviceKey:device})), device:device, index}) )
+        .then(session => ({data: updateOrAppendToSession([devSessions], Object.assign({}, session, {deviceKey:device})), device:device, index, id}) )
         //.then(sessions => {console.log('so sessions are', sessions); return sessions;})
         //.then(session => ({data: updateOrAppendToSession(sessions, Object.assign({}, session, {deviceKey:device})), device:device, index}) )
         .catch(error => error);
@@ -132,9 +132,6 @@ const QueryActions = {
           //TODO: throw new Error returns it
           if (!response || !Array.isArray(response.series)) throw new Error(`fetchMeterHistory with: deviceKey: ${deviceKeys}, time:${time} failed`);
           
-          //return response.series[0].values.map((session, i, array) => Object.assign({}, session, {volume: session.volume-array[0].volume}));
-          //return response.series[0].values;
-          //return response.series.map(meter => meter.values);
           return response.series;
         })
         .catch((errors) => {

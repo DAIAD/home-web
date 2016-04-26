@@ -22,15 +22,23 @@ function mapStateToProps(state, ownProps) {
     devices: state.user.profile.devices,
     devType: getDeviceTypeByKey(state.user.profile.devices, state.section.history.activeDevice), 
     timeFilter: state.section.history.timeFilter,
-    data: state.section.history.data
+    data: state.section.history.data,
+    comparisonData: state.section.history.comparisonData
     };
 }
 function mapDispatchToProps(dispatch) {
   return {};
 }
 function mergeProps(stateProps, dispatchProps, ownProps) {
-  //TODO: devType is null
-  const dataSource = stateProps.devType==="METER"?"values":"sessions";
+  console.log('in history chart data merge props');
+
+  const comparison = stateProps.comparisonData.map(devData =>
+                                                   ({
+                                                     title: `${getDeviceNameByKey(stateProps.devices, devData.deviceKey)} (previous ${stateProps.timeFilter})`, 
+                                                     data:getFilteredData(getDataSessions(stateProps.devices, devData), stateProps.filter, 'METER', stateProps.timeFilter, true)
+                                                   })
+                                                  );
+                                                  
   return Object.assign({},
                        ownProps,
                        dispatchProps,
@@ -38,13 +46,10 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                                      {
                                        data:
                                          stateProps.data.map(devData =>
-                                                                      {
-                                                                        return {
-                                                                          title: getDeviceNameByKey(stateProps.devices, devData.deviceKey), 
-  data:getFilteredData(getDataSessions(stateProps.devices, devData), stateProps.filter)
-                                                                          };
-                                                                          }),
-                                     //                               [{title:stateProps.filter, data:getFilteredData(stateProps.chartData.length?stateProps.chartData[0][value]:[], stateProps.filter, stateProps.devType)}],
+                                                             ({
+                                                             title: getDeviceNameByKey(stateProps.devices, devData.deviceKey), 
+  data: getFilteredData(getDataSessions(stateProps.devices, devData), stateProps.filter)
+                                                             })).concat(comparison),
                          xMin: stateProps.time.startDate,
                          xMax: stateProps.time.endDate,
                          type: stateProps.filter==='showers'?'bar':'line',

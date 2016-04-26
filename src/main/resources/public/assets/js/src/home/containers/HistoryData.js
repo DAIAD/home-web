@@ -7,9 +7,10 @@ var History = require('../components/sections/History');
 
 var HistoryActions = require('../actions/HistoryActions');
 
-var { getReducedDeviceType, getDeviceByKey, getDeviceTypeByKey, getDefaultDevice } = require('../utils/device');
+var { getReducedDeviceType, getDeviceByKey, getDeviceNameByKey, getDeviceTypeByKey, getDefaultDevice, reduceSessions, reduceMetric } = require('../utils/device');
 var timeUtil = require('../utils/time');
-
+var { getFriendlyDuration, getEnergyClass } = require('../utils/general');
+var { getFilteredData } = require('../utils/chart');
 
 function mapStateToProps(state, ownProps) {
   const defaultDevice = getDefaultDevice(state.user.profile.devices);
@@ -17,12 +18,15 @@ function mapStateToProps(state, ownProps) {
 
   return {
     time: state.section.history.time,
-    devType: getReducedDeviceType(state.user.profile.devices, state.section.history.activeDevice),
+    activeDevice: state.section.history.activeDevice,
+    //devType: getReducedDeviceType(state.user.profile.devices, state.section.history.activeDevice),
+    //activeSessionIndex: state.section.history.activeSessionIndex,
+    //activeSessionFilter: state.section.history.activeSessionFilter,
     metricFilter: state.section.history.filter,
     timeFilter: state.section.history.timeFilter,
     devices: state.user.profile.devices?state.user.profile.devices:[],
-    activeDevice: state.section.history.activeDevice,
-    defaultDevice: deviceKey,
+    data: state.section.history.data,
+    comparison: state.section.history.comparison
   };
 }
 
@@ -31,6 +35,8 @@ function mapDispatchToProps(dispatch) {
 }
 
 function mergeProps(stateProps, dispatchProps, ownProps) {
+  
+  const devType = getReducedDeviceType(stateProps.devices, stateProps.activeDevice);
   const allMetrics = [
     {id:'showers', title:'Showers'},
     {id:'volume', title:'Volume'},
@@ -38,6 +44,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
     {id:'duration', title:'Duration'},
     {id:'temperature', title:'Temperature'}
   ];
+
   return Object.assign(
     {}, 
     ownProps, 
@@ -47,11 +54,10 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                   { 
                     nextPeriod: timeUtil.getNextPeriod(stateProps.timeFilter, stateProps.time.startDate), 
                     previousPeriod: timeUtil.getPreviousPeriod(stateProps.timeFilter, stateProps.time.endDate),
-                    metrics: stateProps.devType===-1?allMetrics.filter(m=>m.id!=='volume'):allMetrics,
-                    //activeDevice: getDeviceByKey(stateProps.devices, stateProps.activeDeviceId),
-                  }
-                 )
-  );
+                    metrics: devType==='AMPHIRO'?allMetrics:allMetrics.filter(m=>m.id==='volume'),
+                    reducedMetric: reduceMetric(stateProps.devices, stateProps.data, stateProps.metricFilter),
+                    sessions: reduceSessions(stateProps.devices, stateProps.data)
+                  }));
 }
 
 var HistoryData = connect(mapStateToProps, mapDispatchToProps, mergeProps)(History);

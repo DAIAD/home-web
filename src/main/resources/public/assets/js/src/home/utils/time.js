@@ -85,6 +85,14 @@ const convertGranularityToInt = function (granularity) {
   else return 0;
 };
 
+const convertIntToGranularity = function (int) {
+  if (int === 4) return "year";
+  else if (int === 3) return "month"; //(granularity === "month") return 3;
+  else if (int === 2) return "week"; //(granularity === "week") return 2;
+  else if (int === 1 || int === 0) return "day"; //(granularity === "day") return 0;
+  else return "day";
+};
+
 const getTimeByPeriod = function (period) {
   if (period === "year") return thisYear();
   else if (period === "month") return thisMonth();
@@ -111,5 +119,6 @@ module.exports = {
   getNextPeriod,
   getPreviousPeriod,
   getTimeByPeriod,
+  convertIntToGranularity,
   getLastShowerTime
 };

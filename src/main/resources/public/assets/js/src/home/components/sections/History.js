@@ -9,10 +9,11 @@ var MainSection = require('../MainSection');
 var Sidebar = require('../Sidebar');
 var Topbar = require('../Topbar');
 
+var HistoryList = require('../SessionsList');
 const { IMAGES } = require('../../constants/HomeConstants');
 //sub-containers
 var HistoryChartData = require('../../containers/HistoryChartData');
-var HistoryListData = require('../../containers/HistoryListData');
+//var HistoryListData = require('../../containers/HistoryListData');
 
 //utils
 var timeUtil = require('../../utils/time');
@@ -21,13 +22,13 @@ var timeUtil = require('../../utils/time');
 function TimeNavigator(props) {
     return (
       <div className="time-navigator">
-        <a className="pull-left" onClick={props.handleTimePrevious}>
+        <a className="time-navigator-child pull-left" onClick={props.handleTimePrevious}>
           <img src={`${IMAGES}/arrow-big-left.svg`} />
         </a>
-        <div className="pull-left" style={{marginLeft:230, marginTop:10}}>
+        <div className="time-navigator-child">
           <FormattedDate value={props.time.startDate} day="numeric" month="long" year="numeric" /> - <FormattedDate value={props.time.endDate} day="numeric" month="long" year="numeric" />
         </div>
-        <a className="pull-right" onClick={props.handleTimeNext}>
+        <a className="time-navigator-child pull-right" onClick={props.handleTimeNext}>
           <img src={`${IMAGES}/arrow-big-right.svg`} />
         </a>
       </div>
@@ -74,17 +75,17 @@ var History = React.createClass({
       throw new Error('oops, shouldn\'t be here');
     }
     this.props.setTimeFilter(key);
-    this.props.setTimeAndQuery(this.props.activeDevice, time);
+    this.props.setTime(time);
   },
   handleTimePrevious: function() { 
-    this.props.setTimeAndQuery(this.props.activeDevice, this.props.previousPeriod);
+    this.props.setTime(this.props.previousPeriod);
   },
   handleTimeNext: function() { 
-    this.props.setTimeAndQuery(this.props.activeDevice, this.props.nextPeriod);
+    this.props.setTime(this.props.nextPeriod);
   },
   handleDeviceChange: function(val) {
     const mapped = val.map(d=>d.value); 
-    this.props.setActiveDeviceAndQuery(mapped, this.props.time);
+    this.props.setActiveDevice(mapped);
   },
   /*
   componentWillReceiveProps: function(nextProps) {
@@ -119,34 +120,15 @@ var History = React.createClass({
       <MainSection id="section.history">
         <div>
           <Sidebar> 
-          {(() => {
-            if (devType === 'AMPHIRO') {
-              return (
-                <bs.Tabs style={{marginTop: 60}} position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
-                  {
-                    this.props.metrics.map(metric =>
-                                           <bs.Tab key={metric.id} eventKey={metric.id} title={metric.title}/>
-                                           )
-                  }
-                  {
-                  /*
-                  <bs.Tab eventKey="showers" title={_t({id: "history.showers"})}/>
-                  <bs.Tab eventKey="duration" title={_t({id: "history.duration"})} />
-                  <bs.Tab eventKey="volume" title={_t({id: "history.volume"})}/>
-                  <bs.Tab eventKey="temperature" title={_t({id: "history.temperature"})}/>
-                  <bs.Tab eventKey="energy" title={_t({id: "history.energy"})}/>
-                  */
-                  }
-                </bs.Tabs>);
-            }
-            else if (devType === 'METER') {
-              return (
-                <bs.Tabs style={{marginTop: 60}} position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
-                  <bs.Tab eventKey="volume" title={_t({id: "history.volume"})}/>
-                </bs.Tabs>);
-            }
-          })()
-          }
+            <bs.Tabs style={{marginTop: 60}} position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
+              {
+              
+                this.props.metrics.map(metric =>
+                                       <bs.Tab key={metric.id} eventKey={metric.id} title={metric.title}/> 
+                                      )
+              
+              }
+            </bs.Tabs>
           </Sidebar>
           
           <div className="primary">
@@ -207,7 +189,30 @@ var History = React.createClass({
                 }) 
               }
             </div>
-          
+            
+            <div
+                style={{
+                  position: 'relative',
+                  width: '100px'
+                }}
+                ><span>Compare with</span>
+              {
+                ['last'].map((comparison, i) => {
+                  return (
+                    <div key={i}>
+                    <input
+                      id={comparison}
+                      style={{marginRight: 7, marginLeft: 5}}
+                      type = "checkbox"
+                      checked={['last'].includes(this.props.comparison)}
+                      onChange={(e) => e.target.checked?this.props.setComparison(comparison):this.props.setComparison(null)}
+                      />
+                    <label >{comparison}</label>
+                  </div>
+                  ); 
+                }) 
+              }
+            </div>
           </div>
           <br/>
 
@@ -221,8 +226,7 @@ var History = React.createClass({
                <bs.Tab eventKey="always" title={_t({id: "history.always"})} />
                }
             </bs.Tabs>
-            <br/>
-            
+            <h4 style={{textAlign: 'center', margin: '10px 0 0 0'}}>{this.props.reducedMetric}</h4>
             <TimeNavigator 
               handleTimePrevious={this.handleTimePrevious} 
               handleTimeNext={this.handleTimeNext}
@@ -231,7 +235,7 @@ var History = React.createClass({
             
             <HistoryChartData />
 
-            <HistoryListData />
+            <HistoryList {...this.props} />
 
           </div>
         </div>

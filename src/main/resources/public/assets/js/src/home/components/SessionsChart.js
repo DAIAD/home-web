@@ -25,6 +25,7 @@ var SessionsChart = React.createClass({
   },
 
   render: function() {
+    console.log('rendering chart', this.props.data);
     const colors = ['#2D3580', '#CD4D3E', '#564535'];
     const areaStyle = this.props.sparkline?null:{
             color:  'rgba(232,232,237, 0.7)',
@@ -91,7 +92,6 @@ var SessionsChart = React.createClass({
             fontSize: this.props.fontSize
           },
           margin: 12
-
         },
         splitLine: {
           show: false

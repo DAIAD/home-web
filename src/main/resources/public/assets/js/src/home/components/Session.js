@@ -6,7 +6,6 @@ var FormattedMessage = require('react-intl').FormattedMessage;
 var FormattedTime = require('react-intl').FormattedTime;
 var FormattedRelative = require('react-intl').FormattedRelative;
 
-
 var SessionsChart = require('./SessionsChart');
 
 var { SHOWER_METRICS, IMAGES } = require('../constants/HomeConstants'); 
@@ -37,7 +36,6 @@ function SessionInfoItem (props) {
 
 function SessionInfo (props) {
   const { setSessionFilter, intl, data } = props;
-  console.log('session info data is', data);
   return !data?<div />:(
     <div style={{width: '80%', marginLeft:'auto', marginRight:'auto'}}>
       <h4><FormattedMessage id="shower.details"/></h4>
@@ -58,12 +56,11 @@ function SessionInfo (props) {
 }
 
 function Session (props) {
-  const { history, intl, filter, data, setSessionFilter } = props;
+  const { history, intl, filter, data, chartData, setSessionFilter } = props;
   if (!data) return <div/>;
-  const { hasChartData, chartData } = data;
-  console.log('rendered showerinfo', props);
-  console.log('has chart data?', hasChartData, data);
+  const { hasChartData } = data;
   
+  console.log('session chartData', hasChartData, chartData);
   const _t = intl.formatMessage;
   return hasChartData?(
         <div style={{padding: 30}}>
@@ -101,46 +98,23 @@ function Session (props) {
 }
 
 var SessionModal = React.createClass({
-  componentWillMount: function() {
-
-  },
   
-  componentWillReceiveProps: function(nextProps) {
-    const data = nextProps.data || this.props.data;
-    const fetchSession = nextProps.fetchSession || this.props.fetchSession;
-    console.log('component session modal receiving props', nextProps, data);
-    if (data && !data.measurements) {
-      fetchSession();
-    }
-  },
-  /* 
-  onOpen: function (id, index, device) {
-    this.props.setActiveSessionIndex(index);
-    //this.props.getActiveSession(device, this.props.time);
-    },
-    */
   onClose: function() {
     this.props.resetActiveSessionIndex();
     //set session filter to volume for sparkline
-    this.props.setSessionFilter('volume');
+    //this.props.setSessionFilter('volume');
   },
   onNext: function() {
     const { time } = this.props;
     const { next:[id, device]} = this.props.data;
 
-    this.props.increaseActiveSessionIndex();
-        
-    if (id!==null && device!==null)
-      this.props.getDeviceSession(id, device, this.props.time);  
+    this.props.increaseActiveSessionIndex(id, device);
   },
   onPrevious: function() {
     const { time } = this.props;
     const { prev:[id, device]} = this.props.data;
 
-    this.props.decreaseActiveSessionIndex();
-
-    if (id!==null && device!==null)
-      this.props.getDeviceSession(id, device, this.props.time);  
+    this.props.decreaseActiveSessionIndex(id, device);
   },
   render: function() {
     const { data, intl, filter, setSessionFilter } = this.props;
