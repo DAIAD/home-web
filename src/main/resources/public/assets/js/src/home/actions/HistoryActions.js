@@ -218,7 +218,7 @@ const HistoryActions = {
         type: types.HISTORY_SET_ACTIVE_DEVICE,
         deviceKey: deviceKeys
       });
-      if (getState().section.history.synced && query) { 
+      if (query) { 
         dispatch(setDataUnsynced());
         dispatch(HistoryActions.query());
       }
@@ -234,7 +234,7 @@ const HistoryActions = {
         
         dispatch(HistoryActions.setActiveDevice(active));
         
-        if (getState().section.history.synced && query) { 
+        if (query) { 
           dispatch(setDataUnsynced());
           dispatch(HistoryActions.query());
         } 
@@ -249,7 +249,7 @@ const HistoryActions = {
       if (active.includes(deviceKey)) {
         
         dispatch(HistoryActions.setActiveDevice(active.filter(x=>x!==deviceKey)));
-        if (getState().section.history.synced && query) { 
+        if (query) { 
           dispatch(setDataUnsynced());
           dispatch(HistoryActions.query());
         }
@@ -263,7 +263,7 @@ const HistoryActions = {
         type: types.HISTORY_RESET_ACTIVE_DEVICE,
       });
       
-      if (getState().section.history.synced && query) { 
+      if (query) { 
         dispatch(setDataUnsynced());
         dispatch(HistoryActions.query());
       }
