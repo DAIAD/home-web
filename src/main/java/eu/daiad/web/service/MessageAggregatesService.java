@@ -43,11 +43,9 @@ public class MessageAggregatesService implements IAggregatesService {
     
     private MessageCalculationConfiguration config;
     private boolean cancelled = false;
-    private boolean isRunning = true;
     
     @Override
     public MessageAggregatesContainer execute(MessageCalculationConfiguration config) {
-        isRunning = true;
         this.config = config;
         computeAverageMonthlyConsumptionAmphiro(); 
         computeAverageWeeklyConsumptionAmphiro();
@@ -60,7 +58,6 @@ public class MessageAggregatesService implements IAggregatesService {
         computeAverageTemperatureAmphiro();
         computeAverageDurationAmphiro();
         
-        isRunning = false;
         return messageAggregatesContainer;
     }
 
@@ -72,12 +69,7 @@ public class MessageAggregatesService implements IAggregatesService {
     @Override
     public boolean isCancelled() {
         return cancelled;
-    }
-    
-    @Override
-    public boolean isRunning() {
-        return isRunning;
-    }    
+    }   
     
     private void computeAverageMonthlyConsumptionAmphiro() {
         if(isCancelled()){
@@ -108,9 +100,9 @@ public class MessageAggregatesService implements IAggregatesService {
                     DataPoint dataPoint = points.get(0);
                     AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
                     Map<EnumMetric, Double> ma = amphiroDataPoint.getVolume();
-                    Double tempAverageMonthlyConsumptionAmphiro = ma.get(EnumMetric.SUM);
+                    Double averageMonthlyConsumptionAmphiro = ma.get(EnumMetric.SUM);
                     messageAggregatesContainer.setAverageMonthlyConsumptionAmphiro
-                                    (tempAverageMonthlyConsumptionAmphiro/serie.getPopulation());    
+                                    (averageMonthlyConsumptionAmphiro/serie.getPopulation());    
                     messageAggregatesContainer.setLastDateComputed(DateTime.now()); 
                 }
                 else{
@@ -361,9 +353,9 @@ public class MessageAggregatesService implements IAggregatesService {
                     DataPoint dataPoint = userPoints.get(0);
                     AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;                    
                     Map<EnumMetric, Double> metricsMap = amphiroDataPoint.getVolume();                   
-                    Double tempAverageMonthlyConsumptionAmphiro 
+                    Double averageMonthlyConsumptionAmphiro 
                             = metricsMap.get(EnumMetric.SUM)/serie.getPopulation();
-                    averageConsumptions.add(tempAverageMonthlyConsumptionAmphiro);   
+                    averageConsumptions.add(averageMonthlyConsumptionAmphiro);   
                 }
             }                
             if(!averageConsumptions.isEmpty()){
