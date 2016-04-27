@@ -16,6 +16,7 @@ var Search = require('../components/section/Search');
 var Scheduler = require('../components/section/Scheduler');
 var Alerts = require('../components/section/Alerts');
 var Announcements = require('../components/section/Announcements');
+var ManageAlerts = require('../components/section/ManageAlerts');
 var UserSettings = require('../components/section/settings/UserSettings');
 var SystemSettings = require('../components/section/settings/SystemSettings');
 var Reporting = require('../components/section/Reporting');
@@ -36,6 +37,7 @@ module.exports = (
 		<Route path="/scheduler" component={Scheduler} />
 		<Route path="/alerts" component={Alerts} />
 		<Route path="/announcements" component={Announcements} />
+                <Route path="/manage-alerts" component={ManageAlerts} />
 		<Route path="/settings/user" component={UserSettings}/>
 		<Route path="/settings/system" component={SystemSettings}/>
 		<Route path="/report" component={Reporting}/>
