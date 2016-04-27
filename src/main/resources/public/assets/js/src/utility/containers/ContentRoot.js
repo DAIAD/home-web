@@ -129,7 +129,7 @@ var ContentRoot = React.createClass({
                 								<i className='fa fa-sliders fa-fw'></i>{' ' + _t({ id: 'Section.ModeManagement'})}
               								</span>
                 						</Link>
-            					    </li>
+                                                        </li>
 	                        	</ul>
         						</Collapsible>
         					</li>
@@ -161,6 +161,13 @@ var ContentRoot = React.createClass({
             								</span>
 	            						</Link>
 	            					</li>
+	            					<li>
+	            						<Link to='/manage-alerts'>
+	            							<span  style={{paddingLeft: 18}}>
+	            								<i className='fa fa-server fa-fw'></i>{' ' + _t({ id: 'Section.ManageAlerts'})}
+            								</span>
+	            						</Link>
+	            					</li>                                                
 	                        	</ul>
         						</Collapsible>
         					</li>
