@@ -23,7 +23,7 @@
 		}
 	},
 	"Section": {
-		"Dashboard": "Dashboard",
+            "Dashboard": "Dashboard",
 	    "Analytics":"Analytics",
 	    "Forecasting": "Forecasting",
 	    "Demographics": "Users & Groups",
@@ -34,6 +34,7 @@
 	    "Reporting": "Reporting",
 	    "Alerts": "Alerts",
 	    "Announcements" : "Announcements",
+            "ManageAlerts" : "Manage Alerts",
 	    "Scheduler": "Job Management",
 	    "Consumers": "Consumers"
 	},
