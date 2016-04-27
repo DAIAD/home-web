@@ -23,6 +23,14 @@ public class MessageCalculationConfiguration {
     private double averageGbpPerKwh = 0.15;    
     private double eurosPerLiter = 0.0024;
 
+    private Integer dailyBudget = 50;
+    private Integer weeklyBudget = 350;
+    private Integer monthlyBudget = 1500;
+
+    private Integer dailyBudgetAmphiro = 20;
+    private Integer weeklyBudgetAmphiro = 140;
+    private Integer monthlyBudgetAmphiro = 600;   
+    
     public int getComputeThisDayOfMonth() {        
         return computeThisDayOfMonth;
     }
@@ -109,6 +117,54 @@ public class MessageCalculationConfiguration {
 
     public void setAggregateComputationInterval(int aggregateComputationInterval) {
         this.aggregateComputationInterval = aggregateComputationInterval;
+    }
+
+    public Integer getDailyBudget() {
+        return dailyBudget;
+    }
+
+    public void setDailyBudget(Integer dailyBudget) {
+        this.dailyBudget = dailyBudget;
+    }
+
+    public Integer getWeeklyBudget() {
+        return weeklyBudget;
+    }
+
+    public void setWeeklyBudget(Integer weeklyBudget) {
+        this.weeklyBudget = weeklyBudget;
+    }
+
+    public Integer getMonthlyBudget() {
+        return monthlyBudget;
+    }
+
+    public void setMonthlyBudget(Integer monthlyBudget) {
+        this.monthlyBudget = monthlyBudget;
+    }
+
+    public Integer getDailyBudgetAmphiro() {
+        return dailyBudgetAmphiro;
+    }
+
+    public void setDailyBudgetAmphiro(Integer dailyBudgetAmphiro) {
+        this.dailyBudgetAmphiro = dailyBudgetAmphiro;
+    }
+
+    public Integer getWeeklyBudgetAmphiro() {
+        return weeklyBudgetAmphiro;
+    }
+
+    public void setWeeklyBudgetAmphiro(Integer weeklyBudgetAmphiro) {
+        this.weeklyBudgetAmphiro = weeklyBudgetAmphiro;
+    }
+
+    public Integer getMonthlyBudgetAmphiro() {
+        return monthlyBudgetAmphiro;
+    }
+
+    public void setMonthlyBudgetAmphiro(Integer monthlyBudgetAmphiro) {
+        this.monthlyBudgetAmphiro = monthlyBudgetAmphiro;
     }
     
 }
