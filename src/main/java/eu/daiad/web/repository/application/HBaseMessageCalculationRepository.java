@@ -32,6 +32,7 @@ import org.springframework.context.annotation.PropertySource;
  * @author nkarag
  */
 
+//TODO - change average with SUM and divide with number of days to get the average
 @Repository()
 @Scope("prototype")
 @PropertySource("${hbase.properties}")
@@ -64,18 +65,18 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         boolean fireAlert = true;
         DataQueryBuilder queryBuilder = new DataQueryBuilder();
         queryBuilder.sliding(-48, EnumTimeUnit.HOUR, EnumTimeAggregation.HOUR)
-                .user("user", userKey).meter().min();             
+                .user("user", userKey).meter().sum(); 
 
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
         ArrayList<GroupDataSeries> dataSeriesMeter = queryResponse.getMeters();
 
         for (GroupDataSeries serie : dataSeriesMeter) {
-            if(!serie.getPoints().isEmpty()){ //check for non existent data 
+            if(!serie.getPoints().isEmpty()){ 
                 ArrayList<DataPoint> points = serie.getPoints();
                 for(DataPoint point : points){
                     MeterDataPoint meterPoint = (MeterDataPoint) point;
-                    if(meterPoint.getVolume().get(EnumMetric.MIN) == 0){
+                    if(meterPoint.getVolume().get(EnumMetric.SUM) == 0){
                         fireAlert = false;
                     }
                 }
@@ -620,7 +621,7 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
 
         DataQueryBuilder dataQueryBuilder = new DataQueryBuilder();
         dataQueryBuilder.sliding(-30, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
-                .user("user", userKey).meter().average();
+                .user("user", userKey).meter().sum();
 
         DataQuery query = dataQueryBuilder.build();
         DataQueryResponse result = dataService.execute(query);
@@ -634,7 +635,7 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         DataPoint dataPoint = dataPoints.get(0);
         MeterDataPoint meterDataPoint = (MeterDataPoint) dataPoint;
         Map<EnumMetric, Double> m = meterDataPoint.getVolume();
-        Double currentMonthAverage = m.get(EnumMetric.AVERAGE);  
+        Double currentMonthAverage = (m.get(EnumMetric.SUM))/30;  
         
         SimpleEntry<Boolean, Integer> entry;
         if(currentMonthAverage < baseTop10Consumption){            
@@ -781,7 +782,7 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         Double currentWeekConsumptionSWM = null;
         DataQueryBuilder currentWeekQueryBuilder = new DataQueryBuilder();
         currentWeekQueryBuilder.sliding(-7, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
-                .user("user", userKey).meter().average();             
+                .user("user", userKey).meter().sum();             
 
         DataQuery currentWeekQuery = currentWeekQueryBuilder.build();
         DataQueryResponse currentWeekQueryResponse = dataService.execute(currentWeekQuery);
@@ -793,7 +794,7 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
                 DataPoint dataPoint = points.get(0);
                 MeterDataPoint meterDataPoint = (MeterDataPoint) dataPoint;
                 Map<EnumMetric, Double> metricsMap = meterDataPoint.getVolume();
-                currentWeekConsumptionSWM = metricsMap.get(EnumMetric.AVERAGE);            
+                currentWeekConsumptionSWM = (metricsMap.get(EnumMetric.SUM))/7;            
             }
         }         
         
@@ -811,7 +812,7 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         Double currentWeekConsumptionSWM = null;
         DataQueryBuilder currentWeekQueryBuilder = new DataQueryBuilder();
         currentWeekQueryBuilder.sliding(-7, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
-                .user("user", userKey).meter().average();             
+                .user("user", userKey).meter().sum();             
 
         DataQuery currentWeekQuery = currentWeekQueryBuilder.build();
         DataQueryResponse currentWeekQueryResponse = dataService.execute(currentWeekQuery);
@@ -827,7 +828,7 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
                 DataPoint dataPoint = points.get(0);
                 MeterDataPoint meterDataPoint = (MeterDataPoint) dataPoint;
                 Map<EnumMetric, Double> metricsMap = meterDataPoint.getVolume();
-                currentWeekConsumptionSWM = metricsMap.get(EnumMetric.AVERAGE);            
+                currentWeekConsumptionSWM = (metricsMap.get(EnumMetric.SUM))/7;            
             }
         }                 
         return currentWeekConsumptionSWM < messageAggregatesContainer.getTop10BaseWeekThresholdSWM();
