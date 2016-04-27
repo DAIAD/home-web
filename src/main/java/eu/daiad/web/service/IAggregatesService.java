@@ -1,7 +1,5 @@
 package eu.daiad.web.service;
 
-//import eu.daiad.web.model.query.MessageAggregatesContainer;
-
 import eu.daiad.web.model.query.MessageAggregatesContainer;
 import eu.daiad.web.model.recommendation.MessageCalculationConfiguration;
 
