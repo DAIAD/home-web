@@ -23,7 +23,7 @@
 		}
 	},
 	"Section": {
-		"Dashboard": "Περίληψη",
+            "Dashboard": "Περίληψη",
 	    "Analytics":"Ανάλυση",
 	    "Forecasting": "Πρόβλεψη",
 	    "Demographics": "Ομάδες & Χρήστες",
@@ -34,6 +34,7 @@
 	    "Reporting": "Αναφορές",
 	    "Alerts": "Ειδοποιήσεις",
 	    "Announcements" : "Ανακοινώσεις",
+            "ManageAlerts" : "Διαχείρηση Ειδοποιήσεων",
 	    "Scheduler": "Διαχείριση Εργασιών",
 	    "Consumers": "Καταναλωτές"
 	},
