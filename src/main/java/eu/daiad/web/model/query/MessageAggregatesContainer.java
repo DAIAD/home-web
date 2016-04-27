@@ -22,6 +22,7 @@ public class MessageAggregatesContainer {
     private Double averageTemperatureAmphiro = null;
     private Double averageFlowAmphiro = null;
     private Double averageDurationAmphiro = null;
+    private Double averageSessionConsumptionAmphiro = null;
     
     private Integer showerDurationThresholdMinutes = 30;
     private Float temperatureThreshold = 45f;
@@ -135,7 +136,15 @@ public class MessageAggregatesContainer {
     public void setAverageDurationAmphiro(Double averageDurationAmphiro) {
         this.averageDurationAmphiro = averageDurationAmphiro;
     }
+    
+    public Double getAverageSessionConsumptionAmphiro() {
+        return averageSessionConsumptionAmphiro;
+    }
 
+    public void setAverageSessionConsumptionAmphiro(Double averageSessionConsumptionAmphiro) {
+        this.averageSessionConsumptionAmphiro = averageSessionConsumptionAmphiro;
+    }
+    
     public DateTime getLastDateComputed(){
         return lastDateComputed;
     }

@@ -45,7 +45,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     EntityManager entityManager;
 
     @Autowired
-    IMessageCalculationRepository iMessagesRepository;     
+    IMessageCalculationRepository iMessageCalculationRepository;     
          
     private MessageCalculationConfiguration config;
     private boolean cancelled = false;
@@ -53,6 +53,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     @Override
     public void execute(MessageCalculationConfiguration config) {
         this.config = config;
+        iMessageCalculationRepository.setConfig(config);
         for (Integer groupId : getAllUtilities()) {
             execute(groupId);    
             if(isCancelled()){
@@ -63,7 +64,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
 
     @Override
     public void execute(int utilityId) {
-
+        iMessageCalculationRepository.setConfig(this.config);
         for (Account account : getUsersOfUtility(utilityId)) {
             execute(account);
             if(isCancelled()){
@@ -81,6 +82,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
         computeSmartWaterMeterMessagesForUser(account);
         
     }  
+    
     @Override
     public void cancel() {
         cancelled = true;
@@ -103,11 +105,11 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
         //alertShowerChampionAmphiro(account);      //inactive       
         alertImprovedShowerEfficiencyAmphiro(account);
         
-        recommendLessShowerTimeAmphiro(account); //TODO - change time intervals of computing. Use 3 months data
+        recommendLessShowerTimeAmphiro(account); 
         recommendLowerTemperatureAmphiro(account);
-        recommendLowerFlowAmphiro(account);//TODO - change time intervals of computing. Use 3 months data
-        recommendShowerHeadChangeAmphiro(account);//TODO - change time intervals of computing. Use 3 months data
-        recommendShampooAmphiro(account);//TODO - change time intervals of computing. Use 3 months data
+        recommendLowerFlowAmphiro(account);
+        recommendShowerHeadChangeAmphiro(account);
+        recommendShampooAmphiro(account);
         //recommendReduceFlowWhenNotNeededAmphiro(account); //inactive, moblile only.
         
     }
@@ -137,7 +139,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     private void alertWaterLeakSWM(Account account) {
         if(DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek() 
                 || DateTime.now().getDayOfWeek() == DateTimeConstants.WEDNESDAY){
-            boolean waterLeakFound = iMessagesRepository.alertWaterLeakSWM(account.getKey());        
+            boolean waterLeakFound = iMessageCalculationRepository.alertWaterLeakSWM(account.getKey());        
             if (waterLeakFound) {
                 createAccountAlert(account.getId(), EnumAlerts.WATER_LEAK.getValue(), DateTime.now());
             }
@@ -146,7 +148,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     
     //2 alert - Shower still on!
     private void alertShowerStillOnAmphiro(Account account) {
-        boolean showerStillOn = iMessagesRepository.alertShowerStillOnAmphiro(account.getKey());
+        boolean showerStillOn = iMessageCalculationRepository.alertShowerStillOnAmphiro(account.getKey());
         if (showerStillOn) {
             createAccountAlert(account.getId(), EnumAlerts.SHOWER_ON.getValue(), DateTime.now());    
         }
@@ -158,7 +160,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     //5 alert - Water quality not assured!
     private void alertWaterQualitySWM(Account account) {
         boolean badWaterQuality
-                = iMessagesRepository.alertWaterQualitySWM(account.getKey());
+                = iMessageCalculationRepository.alertWaterQualitySWM(account.getKey());
         if (badWaterQuality) {
             createAccountAlert(account.getId(), EnumAlerts.WATER_QUALITY.getValue(), DateTime.now());
         }
@@ -167,7 +169,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     //6 alert - Water too hot!
     private void alertHotTemperatureAmphiro(Account account) {
         boolean alertHotTemperature        
-                = iMessagesRepository.alertHotTemperatureAmphiro(account.getKey());
+                = iMessageCalculationRepository.alertHotTemperatureAmphiro(account.getKey());
         if (alertHotTemperature) {    
             createAccountAlert(account.getId(), EnumAlerts.HOT_TEMPERATURE.getValue(), DateTime.now());         
         }
@@ -177,7 +179,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     private void alertNearDailyBudgetSWM(Account account){
         
         Map.Entry<Boolean, AbstractMap.SimpleEntry<Integer, Integer>> nearDailyBudget 
-                = iMessagesRepository.alertNearDailyBudgetSWM(account.getKey());
+                = iMessageCalculationRepository.alertNearDailyBudgetSWM(account.getKey());
         
         if (nearDailyBudget.getKey()) {
             int accountAlertId = createAccountAlert
@@ -195,7 +197,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
         
         //compute daily
         Map.Entry<Boolean, AbstractMap.SimpleEntry<Integer, Integer>> nearWeeklyBudget 
-                = iMessagesRepository.alertNearWeeklyBudgetSWM(account.getKey());
+                = iMessageCalculationRepository.alertNearWeeklyBudgetSWM(account.getKey());
 
         if (nearWeeklyBudget.getKey()) {
             int accountAlertId = createAccountAlert
@@ -212,7 +214,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     private void alertNearDailyBudgetAmphiro(Account account){
         
         Map.Entry<Boolean, AbstractMap.SimpleEntry<Integer, Integer>> nearDailyShowerBudget 
-                = iMessagesRepository.alertNearDailyBudgetAmphiro(account.getKey());
+                = iMessageCalculationRepository.alertNearDailyBudgetAmphiro(account.getKey());
         
         if (nearDailyShowerBudget.getKey()) {
 
@@ -231,7 +233,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
         if(DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek() ){
             
             Map.Entry<Boolean, AbstractMap.SimpleEntry<Integer, Integer>> nearWeeklyShowerBudget 
-                    = iMessagesRepository.alertNearWeeklyBudgetAmphiro(account.getKey());
+                    = iMessageCalculationRepository.alertNearWeeklyBudgetAmphiro(account.getKey());
 
             if (nearWeeklyShowerBudget.getKey()) {
                 int accountAlertId = createAccountAlert
@@ -249,7 +251,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     private void alertReachedDailyBudgetSWM(Account account){
         
         Map.Entry<Boolean, Integer> reachedDailyWaterBudget 
-                = iMessagesRepository.alertReachedDailyBudgetSWM(account.getKey());
+                = iMessageCalculationRepository.alertReachedDailyBudgetSWM(account.getKey());
         
         if (reachedDailyWaterBudget.getKey()) {
 
@@ -265,7 +267,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     private void alertReachedDailyBudgetAmphiro(Account account){
         
         Map.Entry<Boolean, Integer> reachedDailyShowerBudget 
-                = iMessagesRepository.alertReachedDailyBudgetSWM(account.getKey());
+                = iMessageCalculationRepository.alertReachedDailyBudgetSWM(account.getKey());
         
         if (reachedDailyShowerBudget.getKey()) {
             int accountAlertId = createAccountAlert
@@ -281,7 +283,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     private void alertWaterChampionSWM(Account account){
         //compute monthly
         if(DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth() ){
-            boolean waterChampion = iMessagesRepository.alertWaterChampionSWM(account.getKey());
+            boolean waterChampion = iMessageCalculationRepository.alertWaterChampionSWM(account.getKey());
 
             if (waterChampion) {
                 createAccountAlert(account.getId(), EnumAlerts.WATER_CHAMPION.getValue(), DateTime.now());
@@ -293,7 +295,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     private void alertShowerChampionAmphiro(Account account){
         //compute monthly
         if(DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth() ){        
-            boolean showerChampion = iMessagesRepository.alertShowerChampionAmphiro(account.getKey());
+            boolean showerChampion = iMessageCalculationRepository.alertShowerChampionAmphiro(account.getKey());
 
             if (showerChampion) {
                 createAccountAlert(account.getId(), EnumAlerts.SHOWER_CHAMPION.getValue(), DateTime.now());
@@ -305,7 +307,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     private void alertTooMuchWaterConsumptionSWM(Account account) {
         if(DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek() ){
             AbstractMap.SimpleEntry<Boolean, Double> tooMuchWater
-                    = iMessagesRepository.alertTooMuchWaterConsumptionSWM(account.getKey());
+                    = iMessageCalculationRepository.alertTooMuchWaterConsumptionSWM(account.getKey());
             if (tooMuchWater.getKey()) {
                 
                 int accountAlertId = createAccountAlert
@@ -320,7 +322,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     private void alertTooMuchWaterConsumptionAmphiro(Account account) {
         if(DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek() ){
             AbstractMap.SimpleEntry<Boolean, Double> tooMuchWater
-                    = iMessagesRepository.alertTooMuchWaterConsumptionAmphiro(account.getKey());
+                    = iMessageCalculationRepository.alertTooMuchWaterConsumptionAmphiro(account.getKey());
             if (tooMuchWater.getKey()) {
 
                 int accountAlertId = createAccountAlert(
@@ -335,7 +337,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     private void alertTooMuchEnergyAmphiro(Account account) {
         if(DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()){
             AbstractMap.SimpleEntry<Boolean, Double> tooMuchEnergy
-                    = iMessagesRepository.alertTooMuchEnergyAmphiro(account.getKey());
+                    = iMessageCalculationRepository.alertTooMuchEnergyAmphiro(account.getKey());
             if (tooMuchEnergy.getKey()) {
 
                 int accountAlertId = createAccountAlert
@@ -371,7 +373,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
             if(DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek() ){
 
                 AbstractMap.SimpleEntry<Boolean, Integer> reducedWaterUseResult
-                        = iMessagesRepository.alertReducedWaterUseSWM(account.getKey(), account.getCreatedOn());
+                    = iMessageCalculationRepository.alertReducedWaterUseSWM(account.getKey(), account.getCreatedOn());
 
                 if (reducedWaterUseResult.getKey()) {
 
@@ -389,7 +391,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
         if(!isAlertAlreadyProducedForUser(EnumAlerts.IMPROVED_SHOWER_EFFICIENCY.getValue(), account)){
             if(DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek() ){
                 AbstractMap.SimpleEntry<Boolean, Integer> improvedShowerEfficiency 
-                        = iMessagesRepository.alertImprovedShowerEfficiencyAmphiro
+                        = iMessageCalculationRepository.alertImprovedShowerEfficiencyAmphiro
                             (account.getKey(), account.getCreatedOn());
 
                 if (improvedShowerEfficiency.getKey()) {
@@ -407,7 +409,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
 
         if(DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth() ){
             AbstractMap.SimpleEntry<Boolean, Integer> waterEfficiencyLeader
-                        = iMessagesRepository.alertWaterEfficiencyLeaderSWM(account.getKey());
+                        = iMessageCalculationRepository.alertWaterEfficiencyLeaderSWM(account.getKey());
             if(waterEfficiencyLeader.getKey()){
                 int accountAlertId = createAccountAlert
                     (account.getId(), EnumAlerts.WATER_EFFICIENCY_LEADER.getValue(), DateTime.now());
@@ -431,7 +433,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
         if(DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth() ){
             //SimpleEntry<Boolean, Integer> promptGoodJob
             boolean promptGoodJob        
-                    = iMessagesRepository.alertPromptGoodJobMonthlySWM(account.getKey());
+                    = iMessageCalculationRepository.alertPromptGoodJobMonthlySWM(account.getKey());
             if (promptGoodJob) {    
                 createAccountAlert(account.getId(), EnumAlerts.GOOD_JOB_MONTHLY.getValue(), DateTime.now());                          
             }
@@ -442,7 +444,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     private void alertLitresSavedSWM(Account account) {       
         if(DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek() ){
             AbstractMap.SimpleEntry<Boolean, Integer> litresSaved     
-                    = iMessagesRepository.alertLitresSavedSWM(account.getKey());
+                    = iMessageCalculationRepository.alertLitresSavedSWM(account.getKey());
 
             if (litresSaved.getKey()) {    
                 int accountAlertId = createAccountAlert
@@ -457,7 +459,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     private void alertTop25SaverSWM(Account account){
         if(DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek() ){
             boolean top25Saver
-                        = iMessagesRepository.alertTop25SaverWeeklySWM(account.getKey());
+                        = iMessageCalculationRepository.alertTop25SaverWeeklySWM(account.getKey());
             if(top25Saver){
                 createAccountAlert(account.getId(), EnumAlerts.TOP_25_PERCENT_OF_SAVERS.getValue(), DateTime.now());            
             }
@@ -468,7 +470,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     private void alertTop10SaverSWM(Account account){
         if(DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek() ){
             boolean top10Saver
-                        = iMessagesRepository.alertTop10SaverSWM(account.getKey());
+                        = iMessageCalculationRepository.alertTop10SaverSWM(account.getKey());
             if(top10Saver){
                 createAccountAlert
                     (account.getId(), EnumAlerts.TOP_10_PERCENT_OF_SAVERS.getValue(), DateTime.now());            
@@ -480,7 +482,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     private void recommendLessShowerTimeAmphiro(Account account) {
         if(DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth() ){
             AbstractMap.SimpleEntry<Boolean, Integer> recommendLessShowerTime 
-                = iMessagesRepository.recommendShampooChangeAmphiro(account.getKey());
+                = iMessageCalculationRepository.recommendShampooChangeAmphiro(account.getKey());
 
             if (recommendLessShowerTime.getKey()) {
 
@@ -504,7 +506,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     private void recommendLowerTemperatureAmphiro(Account account) {
         if(DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth() ){
             AbstractMap.SimpleEntry<Boolean, Integer> recommendLowerTemperature 
-                = iMessagesRepository.recommendLowerTemperatureAmphiro(account.getKey());
+                = iMessageCalculationRepository.recommendLowerTemperatureAmphiro(account.getKey());
 
             if (recommendLowerTemperature.getKey()) {
                 int accountDynamicRecommendationId = createAccountDynamicRecommendation
@@ -556,7 +558,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     private void recommendLowerFlowAmphiro(Account account) {
         if(DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth() ){
             AbstractMap.SimpleEntry<Boolean, Integer> recommendLowerFlow 
-                = iMessagesRepository.recommendLowerFlowAmphiro(account.getKey());
+                = iMessageCalculationRepository.recommendLowerFlowAmphiro(account.getKey());
 
             if (recommendLowerFlow.getKey()) {
                 int accountDynamicRecommendationId = createAccountDynamicRecommendation
@@ -574,7 +576,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     private void recommendShowerHeadChangeAmphiro(Account account) {
         if(DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth() ){
             AbstractMap.SimpleEntry<Boolean, Integer> recommendShowerHeadChange 
-                = iMessagesRepository.recommendShowerHeadChangeAmphiro(account.getKey());
+                = iMessageCalculationRepository.recommendShowerHeadChangeAmphiro(account.getKey());
 
             if (recommendShowerHeadChange.getKey()) {
                 int accountDynamicRecommendationId = createAccountDynamicRecommendation
@@ -594,7 +596,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     private void recommendShampooAmphiro(Account account) {
         if(DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth() ){
             AbstractMap.SimpleEntry<Boolean, Integer> recommendShampooChange 
-                = iMessagesRepository.recommendShampooChangeAmphiro(account.getKey());
+                = iMessageCalculationRepository.recommendShampooChangeAmphiro(account.getKey());
 
             if (recommendShampooChange.getKey()) {
 
@@ -611,7 +613,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
     private void recommendReduceFlowWhenNotNeededAmphiro(Account account) {
         if(DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth() ){
             AbstractMap.SimpleEntry<Boolean, Integer> recommendReduceFlow 
-                = iMessagesRepository.recommendReduceFlowWhenNotNeededAmphiro(account.getKey());
+                = iMessageCalculationRepository.recommendReduceFlowWhenNotNeededAmphiro(account.getKey());
 
             if (recommendReduceFlow.getKey()) {
 

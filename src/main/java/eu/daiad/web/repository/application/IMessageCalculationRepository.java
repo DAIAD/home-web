@@ -1,6 +1,7 @@
 
 package eu.daiad.web.repository.application;
 
+import eu.daiad.web.model.recommendation.MessageCalculationConfiguration;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -12,6 +13,8 @@ import org.joda.time.DateTime;
  */
 public interface IMessageCalculationRepository {
     
+    public void setConfig(MessageCalculationConfiguration config);
+    public MessageCalculationConfiguration getConfig();
     public boolean alertWaterLeakSWM(UUID userKey);
     public boolean alertShowerStillOnAmphiro(UUID userKey);
     public boolean alertWaterQualitySWM(UUID userKey);
@@ -37,9 +40,7 @@ public interface IMessageCalculationRepository {
     //public boolean alertPromptGoodJobWeeklySWM(UUID userKey); //using monthly instead
     public SimpleEntry<Boolean, Integer> alertLitresSavedSWM(UUID userKey); //returns litres saved    
     public boolean alertTop25SaverWeeklySWM(UUID userKey);
-    public boolean alertTop10SaverSWM(UUID userKey);
-    
-    
+    public boolean alertTop10SaverSWM(UUID userKey);    
     
     public SimpleEntry<Boolean, Integer> recommendLessShowerTimeAmphiro(UUID userKey); //returns litres above    
     public SimpleEntry<Boolean, Integer> recommendLowerTemperatureAmphiro(UUID userKey); //returns annual shower consumption(or guess annual from 1 month)
