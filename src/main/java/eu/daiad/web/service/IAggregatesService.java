@@ -14,7 +14,6 @@ public interface IAggregatesService {
     
     public abstract MessageAggregatesContainer execute(MessageCalculationConfiguration config);
 
-    public boolean isRunning();
     public void cancel();
     public boolean isCancelled();
 }
