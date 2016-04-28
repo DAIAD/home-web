@@ -4,7 +4,6 @@ var Bootstrap = require('react-bootstrap');
 var Breadcrumb = require('../Breadcrumb');
 var Table = require('../Table');
 var GroupDropDown = require('../GroupDropDown');
-var MyComponent = require('../Test');
 
 var ManageAlertsActions = require('../../actions/ManageAlertsActions');
 var { connect } = require('react-redux');
