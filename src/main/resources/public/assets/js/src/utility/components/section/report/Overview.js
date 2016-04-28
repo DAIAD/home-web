@@ -229,8 +229,7 @@ var Overview = React.createClass({
               show: true
           },
           dataZoom: {
-            show: true,
-            format: 'day-hour'
+            show: true
           }
         };
 
@@ -244,13 +243,13 @@ var Overview = React.createClass({
           for(var s=0; s < device.sessions.length; s++) {
             data.push({
               volume: device.sessions[s].volume,
-              date: new Date(device.sessions[s].timestamp)
+              id:  device.sessions[s].id
             });
           }
           
           series.push({
             legend: device.name || device.deviceKey,
-            xAxis: 'date',
+            xAxis: 'id',
             yAxis: 'volume',
             data: data,
             yAxisName: 'Volume (lt)'
