@@ -8,6 +8,7 @@ public class MeterDataPoint extends DataPoint {
 	private Map<EnumMetric, Double> volume = new HashMap<EnumMetric, Double>();
 
 	public MeterDataPoint() {
+		super();
 		this.type = EnumDataPointType.METER;
 	}
 

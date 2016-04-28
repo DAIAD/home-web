@@ -19,12 +19,15 @@ var Announcements = require('../components/section/Announcements');
 var ManageAlerts = require('../components/section/ManageAlerts');
 var UserSettings = require('../components/section/settings/UserSettings');
 var SystemSettings = require('../components/section/settings/SystemSettings');
-var Reporting = require('../components/section/Reporting');
-var Debug = require('../components/section/Debug');
+var Overview = require('../components/section/report/Overview');
+var Charts = require('../components/section/report/Charts');
+var DataManagement = require('../components/section/support/Data');
+var Development = require('../components/section/support/Development');
 
 module.exports = (
 	<Route path="/" component={App} >
 		<IndexRoute component={Dashboard} />
+		<Route path="/utility" component={Dashboard} />
 		<Route path="/dashboard" component={Dashboard} />
 		<Route path="/analytics" component={Analytics} />
 		<Route path="/forecasting" component={Forecasting} />
@@ -40,7 +43,9 @@ module.exports = (
                 <Route path="/manage-alerts" component={ManageAlerts} />
 		<Route path="/settings/user" component={UserSettings}/>
 		<Route path="/settings/system" component={SystemSettings}/>
-		<Route path="/report" component={Reporting}/>
-		<Route path="/debug" component={Debug}/>
+		<Route path="/report/overview" component={Overview}/>
+		<Route path="/report/charts" component={Charts}/>
+		<Route path="/support/data" component={DataManagement}/>
+		<Route path="/support/development" component={Development}/>
 	</Route>
 );

@@ -41,12 +41,15 @@ public class ProfileController extends BaseController {
 
 		try {
 			if (user.hasRole("ROLE_ADMIN")) {
-				return new ProfileResponse(profileRepository.getProfileByUsername(EnumApplication.UTILITY));
+				return new ProfileResponse(this.getRuntime(),
+								profileRepository.getProfileByUsername(EnumApplication.UTILITY));
 			}
 
-			return new ProfileResponse(profileRepository.getProfileByUsername(EnumApplication.HOME));
+			return new ProfileResponse(this.getRuntime(), profileRepository.getProfileByUsername(EnumApplication.HOME));
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}
@@ -63,7 +66,10 @@ public class ProfileController extends BaseController {
 		try {
 			return new ProfileModesResponse(profileRepository.getProfileModes(filters));
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
+
 			response.add(this.getError(ex));
 		}
 
@@ -79,7 +85,10 @@ public class ProfileController extends BaseController {
 		try {
 			return new ProfileModesFilterOptionsResponse(profileRepository.getFilterOptions());
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
+
 			response.add(this.getError(ex));
 		}
 
@@ -96,7 +105,10 @@ public class ProfileController extends BaseController {
 			profileRepository.setProfileModes(modeChanges);
 
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
+
 			response.add(this.getError(ex));
 		}
 
@@ -113,7 +125,10 @@ public class ProfileController extends BaseController {
 			profileRepository.deactivateProfile(userDeactId);
 
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
+
 			response.add(this.getError(ex));
 		}
 
@@ -133,7 +148,9 @@ public class ProfileController extends BaseController {
 				this.profileRepository.setProfileConfiguration(EnumApplication.HOME, request.getConfiguration());
 			}
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}

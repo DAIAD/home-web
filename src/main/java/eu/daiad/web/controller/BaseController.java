@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.core.env.Environment;
 import org.springframework.validation.FieldError;
 
 import com.ibm.icu.text.MessageFormat;
@@ -20,6 +21,9 @@ public abstract class BaseController {
 	@Autowired
 	protected MessageSource messageSource;
 
+	@Autowired
+	private Environment environment;
+
 	protected String getMessage(String code) {
 		return messageSource.getMessage(code, null, code, null);
 	}
@@ -33,7 +37,7 @@ public abstract class BaseController {
 	}
 
 	protected String getMessage(ApplicationException ex) {
-		return this.getMessage(ex.getErrorCode().getMessageKey(), ex.getProperties());
+		return this.getMessage(ex.getCode().getMessageKey(), ex.getProperties());
 	}
 
 	protected String getMessage(ErrorCode error) {
@@ -46,7 +50,7 @@ public abstract class BaseController {
 
 	protected Error getError(FieldError error) {
 		String code = error.getCodes()[0];
-		
+
 		return new Error(code, this.getMessage(code));
 	}
 
@@ -59,7 +63,7 @@ public abstract class BaseController {
 	}
 
 	protected Error getError(ApplicationException ex) {
-		return new Error(ex.getErrorCode().getMessageKey(), this.getMessage(ex));
+		return new Error(ex.getCode().getMessageKey(), this.getMessage(ex));
 	}
 
 	protected RestResponse createResponse(ErrorCode error) {
@@ -89,6 +93,14 @@ public abstract class BaseController {
 		response.add(this.getError(error, properties));
 
 		return response;
+	}
+
+	protected eu.daiad.web.model.Runtime getRuntime() {
+		return new eu.daiad.web.model.Runtime(this.getActiveProfiles());
+	}
+
+	protected String[] getActiveProfiles() {
+		return environment.getActiveProfiles();
 	}
 
 }

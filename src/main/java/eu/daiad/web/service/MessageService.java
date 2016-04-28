@@ -34,9 +34,8 @@ public class MessageService implements IMessageService{
 
     @Override
     public void cancel() {
-        if(messageAggregatesService.isRunning()){
-            messageAggregatesService.cancel();
-        }
+
+        messageAggregatesService.cancel();
         jpaMessageManagementRepository.cancel();
         
     }

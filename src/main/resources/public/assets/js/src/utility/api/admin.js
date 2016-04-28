@@ -40,7 +40,7 @@ var AdminAPI = {
       deviceKeys : [],
       startDateTime : null,
       endDateTime : null,
-      timezone : 'Europe/Athens'
+      timezone : null
     });
   },
   

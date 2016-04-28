@@ -24,7 +24,7 @@ const LocaleActions = {
 
   fetchLocaleMessages: function(locale) {
     return function(dispatch, getState) {
-      return localeAPI.fetchLocaleMessages({locale, csrf: getState().query.csrf})
+      return localeAPI.fetchLocaleMessages({locale, csrf: getState().user.csrf})
       .then((messages) => {
           dispatch(receivedMessages(true, null, locale, flattenMessages(messages)));
           return messages;

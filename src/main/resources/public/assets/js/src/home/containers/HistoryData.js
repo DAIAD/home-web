@@ -1,93 +1,59 @@
 var React = require('react');
-var connect = require('react-redux').connect;
+var { bindActionCreators } = require('redux');
+var { connect } = require('react-redux');
 var injectIntl = require('react-intl').injectIntl;
 
 var History = require('../components/sections/History');
 
-var DeviceActions = require('../actions/DeviceActions');
-var MeterActions = require('../actions/MeterActions');
 var HistoryActions = require('../actions/HistoryActions');
 
-var { getAvailableDevices, getDeviceTypeByKey } = require('../utils/device');
+var { getReducedDeviceType, getDeviceByKey, getDeviceTypeByKey, getDefaultDevice } = require('../utils/device');
 var timeUtil = require('../utils/time');
 
-var HistoryData = React.createClass({
-  componentWillMount: function() {
-    if (this.props.activeDevice) {
-      //this.props.queryAndFetchAllSessions(this.props.activeDevice, this.props.time);
-      this.props.querySessions(this.props.activeDevice, this.props.time);
-    }
-  },
-  componentWillReceiveProps: function(nextProps) {
-    if (!this.props.activeDevice && nextProps.activeDevice) {
-      //this.props.queryAndFetchAllSessions(nextProps.activeDevice, this.props.time);
-      this.props.querySessions(nextProps.activeDevice, this.props.time);
-    }
-  },
-
-  render: function() {
-    return (
-      <History {...this.props} />
-    );
-  }
-});
 
 function mapStateToProps(state, ownProps) {
+  const defaultDevice = getDefaultDevice(state.user.profile.devices);
+  const deviceKey = defaultDevice?defaultDevice.deviceKey:null;
+
   return {
-    time: state.query.time,
-    devType: getDeviceTypeByKey(state.user.profile.devices, state.query.activeDevice), 
+    time: state.section.history.time,
+    devType: getReducedDeviceType(state.user.profile.devices, state.section.history.activeDevice),
     metricFilter: state.section.history.filter,
     timeFilter: state.section.history.timeFilter,
-    devices: state.user.profile.devices,
-    activeDevice: state.query.activeDevice,
-    nextPeriod: timeUtil.getNextPeriod(state.section.history.timeFilter, state.query.time.endDate),
-    previousPeriod: timeUtil.getPreviousPeriod(state.section.history.timeFilter, state.query.time.endDate),
-    };
-}
-
-function mapDispatchToProps(dispatch, ownProps) {
-  return {
-    setQueryFilter: function(filter) {
-      return dispatch(HistoryActions.setQueryFilter(filter));
-    },
-    setTimeFilter: function(filter) {
-       return dispatch(HistoryActions.setTimeFilter(filter));
-    },
-    setActiveAndQuery: function(deviceKey) {
-      dispatch(DeviceActions.setActiveDevice(deviceKey));
-      return this.queryDeviceOrMeter(deviceKey, this.time);
-    },
-    setTimeAndQuery: function(time) {
-      dispatch(DeviceActions.setTime(Object.assign({}, this.time, time)));
-      return this.queryDeviceOrMeter(this.activeDevice, time);
-    },  
-    querySessions: function(deviceKey, time) {
-      return dispatch(DeviceActions.querySessions(deviceKey, time));
-    },
-    fetchAllSessions: function(deviceKey, time) {
-      return dispatch(DeviceActions.fetchAllSessions(deviceKey, time));
-    },
-    queryAndFetchAllSessions: function(deviceKey, time) {
-      return this.querySessions(deviceKey, time)
-        .then((response) => this.fetchAllSessions(deviceKey, time));
-    },
-    queryMeter: function(deviceKey, time) {
-      return dispatch(MeterActions.getHistory(deviceKey, time));
-    },
-    queryDeviceOrMeter: function(deviceKey, time) {
-      const devType = getDeviceTypeByKey(this.devices, deviceKey);
-      if (devType === 'AMPHIRO') {
-        this.querySessions(deviceKey, time); 
-      }
-      else if (devType === 'METER') {
-        return this.queryMeter(deviceKey, time)
-          .then(() => this.setQueryFilter('volume'));
-      }
-    }
+    devices: state.user.profile.devices?state.user.profile.devices:[],
+    activeDevice: state.section.history.activeDevice,
+    defaultDevice: deviceKey,
   };
 }
 
+function mapDispatchToProps(dispatch) {
+  return bindActionCreators(HistoryActions, dispatch);
+}
 
-HistoryData = connect(mapStateToProps, mapDispatchToProps)(HistoryData);
+function mergeProps(stateProps, dispatchProps, ownProps) {
+  const allMetrics = [
+    {id:'showers', title:'Showers'},
+    {id:'volume', title:'Volume'},
+    {id:'energy', title:'Energy'},
+    {id:'duration', title:'Duration'},
+    {id:'temperature', title:'Temperature'}
+  ];
+  return Object.assign(
+    {}, 
+    ownProps, 
+    dispatchProps,
+    Object.assign({}, 
+                  stateProps, 
+                  { 
+                    nextPeriod: timeUtil.getNextPeriod(stateProps.timeFilter, stateProps.time.startDate), 
+                    previousPeriod: timeUtil.getPreviousPeriod(stateProps.timeFilter, stateProps.time.endDate),
+                    metrics: stateProps.devType===-1?allMetrics.filter(m=>m.id!=='volume'):allMetrics,
+                    //activeDevice: getDeviceByKey(stateProps.devices, stateProps.activeDeviceId),
+                  }
+                 )
+  );
+}
+
+var HistoryData = connect(mapStateToProps, mapDispatchToProps, mergeProps)(History);
 HistoryData = injectIntl(HistoryData);
 module.exports = HistoryData;

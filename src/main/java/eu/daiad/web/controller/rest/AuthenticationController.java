@@ -12,9 +12,7 @@ import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.ApplicationException;
-import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.profile.Profile;
-import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.AuthenticationResponse;
 import eu.daiad.web.model.security.Credentials;
 import eu.daiad.web.repository.application.IProfileRepository;
@@ -32,17 +30,15 @@ public class AuthenticationController extends BaseRestController {
 		RestResponse response = new RestResponse();
 
 		try {
-			AuthenticatedUser user = this.authenticate(credentials);
+			this.authenticate(credentials);
 
-			if (user != null) {
-				Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE);
+			Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE);
 
-				return new AuthenticationResponse(profile);
-			} else {
-				throw new ApplicationException(SharedErrorCode.AUTHENTICATION);
-			}
+			return new AuthenticationResponse(this.getRuntime(), profile);
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}

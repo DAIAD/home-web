@@ -31,12 +31,21 @@
 	    "Search": "Search",
 	    "Messages": "Messages",
 	    "Settings": "Settings",
-	    "Reporting": "Reporting",
+      "Reports": {
+        "Group": "Reports",
+        "Overview": "Overview",
+        "Charts": "Charts"
+      },
 	    "Alerts": "Alerts",
 	    "Announcements" : "Announcements",
             "ManageAlerts" : "Manage Alerts",
 	    "Scheduler": "Job Management",
-	    "Consumers": "Consumers"
+	    "Consumers": "Consumers",
+      "Support" : {
+        "Group": "Support",
+        "Data": "Data Management",
+        "Development": "Development"
+      }
 	},
 	"Demographics" : {
 		"Group" : "Groups"

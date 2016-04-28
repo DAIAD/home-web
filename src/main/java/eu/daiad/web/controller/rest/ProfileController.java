@@ -34,9 +34,11 @@ public class ProfileController extends BaseRestController {
 		try {
 			this.authenticate(data, EnumRole.ROLE_USER);
 
-			return new ProfileResponse(this.profileRepository.getProfileByUsername(EnumApplication.MOBILE));
+			return new ProfileResponse(this.getRuntime(), this.profileRepository.getProfileByUsername(EnumApplication.MOBILE));
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}
@@ -54,7 +56,9 @@ public class ProfileController extends BaseRestController {
 			this.profileRepository.setProfileConfiguration(EnumApplication.MOBILE, request.getConfiguration());
 
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}
@@ -72,7 +76,9 @@ public class ProfileController extends BaseRestController {
 			this.profileRepository.notifyProfile(EnumApplication.MOBILE, request.getVersion(), request.getUpdatedOn());
 
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}

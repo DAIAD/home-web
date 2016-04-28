@@ -4,70 +4,68 @@ var bs = require('react-bootstrap');
 var { injectIntl } = require('react-intl');
 var { FormattedMessage, FormattedRelative } = require('react-intl');
 
+var SessionData = require('../containers/SessionData');
+
 var Chart = require('./Chart');
-var Shower = require('./Shower');
 var SessionsChart = require('./SessionsChart');
 
-//Actions
-var DeviceActions = require('../actions/DeviceActions');
 
-
-var SessionItem = React.createClass({
-  handleClick: function() {
-    this.props.onOpen(this.refs.link.dataset.id, this.refs.link.dataset.index);
-  },
-  render: function() {
-
-    let arrowClasses = this.props.data.better===null?"":this.props.data.better?"fa-arrow-down green":"fa-arrow-up red";
-    
-    return (
-      <li className="session-item"> 
-        <a onClick={this.handleClick} ref="link" data-id={this.props.data.id} data-index={this.props.index} >
-          <div className="session-item-header col-md-3"><h3>{this.props.data.volume}<span style={{fontSize: '0.6em'}}> lt</span> <i className={`fa ${arrowClasses}`}/></h3>
+function SessionListItem (props) {
+  const { id, index, device, devType, devName, volume, energyClass, timestamp, duration, better, temperature, history, measurements } = props.data;
+  const arrowClass = better===null?"":better?"fa-arrow-down green":"fa-arrow-up red";
+  return (
+    <li className="session-item"> 
+      <a onClick={() => props.onOpen(id, props.index, device)} >
+        <div className="session-item-header col-md-3"><h3>{volume}<span style={{fontSize: '0.6em'}}> lt</span> <i className={`fa ${arrowClass}`}/></h3>
+        </div>
+        <div className="col-md-7">
+          <div className="pull-right">
+            {(() => {
+              if (id) {
+                return <span className="session-item-detail">{id}</span>;
+              }
+            })()}
             
-          </div>
-          <div className="col-md-7">
-            <div className="pull-right">
-
+            {(() => {
+              if (devType) {
+                return <span className="session-item-detail">{devType}</span>;
+              }
+            })()}
+            
+            {(() => {
+              if (devName) {
+                return <span className="session-item-detail">{devName}</span>;
+              }
+            })()}
             <span className="session-item-detail">Stelios</span>
-            <span className="session-item-detail"><i className="fa fa-calendar"/><FormattedRelative value={new Date(this.props.data.timestamp)} /></span> 
+            <span className="session-item-detail"><i className="fa fa-calendar"/><FormattedRelative value={new Date(timestamp)} /></span> 
             {(() => { 
-              if (this.props.data.duration) {
+              if (duration) {
                 return (
-                  <span className="session-item-detail"><i className="fa fa-clock-o"/>{this.props.data.duration}</span>);
-              }
-              else {
-                return (null);
+                  <span className="session-item-detail"><i className="fa fa-clock-o"/>{duration}</span>);
               }
             })()}
             {(() => { 
-              if (this.props.data.energyClass) {
+              if (energyClass) {
                 return (
-              <span className="session-item-detail"><i className="fa fa-flash"/>{this.props.data.energyClass}</span>);
-              }
-              else {
-                return (null);
+              <span className="session-item-detail"><i className="fa fa-flash"/>{energyClass}</span>);
               }
             })()}
             {(() => { 
-              if (this.props.data.temperature) {
+              if (temperature) {
                 return (
-              <span className="session-item-detail"><i className="fa fa-temperature"/>{this.props.data.temperature}ºC</span>);
+              <span className="session-item-detail"><i className="fa fa-temperature"/>{temperature}ºC</span>);
               }
-              else {
-                return (null);
-            }
             })()}
-          </div>
-          </div>
-          <div className="col-md-2">
-            <SparklineChart history={this.props.data.history} data={this.props.data.measurements} intl={this.props.intl}/>
-          </div>
-        </a>
-      </li>
-    );
-  }
-});
+        </div>
+        </div>
+        <div className="col-md-2">
+          <SparklineChart history={history} data={measurements} intl={props.intl}/>
+        </div>
+      </a>
+    </li>
+  );
+}
 
 function SparklineChart (props) {
   if (!props.data || !props.data.length || props.data.length<=1 || props.history) {
@@ -94,33 +92,40 @@ function SparklineChart (props) {
 
 var SessionsList = React.createClass({
 
-  onOpen: function (id, index) {
-
+  onOpen: function (id, index, device) {
     this.props.setActiveSessionIndex(index);
-
-    if (id){
-      this.props.fetchSession(id, this.props.activeDevice, this.props.time);
-    }
+    /*  
+    if (id!==null && device!==null)
+      this.props.getDeviceSession(id, device, this.props.time);  
+    */
   },
+  /*
   onClose: function() {
     this.props.resetActiveSessionIndex();
     //set session filter to volume for sparkline
     this.props.setSessionFilter('volume');
   },
   onNext: function() {
-    this.props.getNextSession(this.props.activeDevice, this.props.time);
+    this.props.increaseActiveSessionIndex();
+    //this.props.getActiveSession(this.props.activeDevice, this.props.time);
+    //this.props.getDeviceSession(this.props.nextSessionId, this.props.nextDevice, this.props.time);  
   },
   onPrevious: function() {
-    this.props.getPreviousSession(this.props.activeDevice, this.props.time);
-  },
+    this.props.decreaseActiveSessionIndex();
+    //this.props.getActiveSession(this.props.activeDevice, this.props.time);
+    //this.props.getDeviceSession(this.props.previousSessionId, this.props.previousDevice, this.props.time);  
+    },
+    */
   render: function() {
+    console.log('session item rendered', this.props.sessions);
     return (
       <div style={{margin:50}}>
         <h3>In detail</h3>
+        <h4 style={{position: 'absolute', marginTop: -510, marginLeft:305}}>{this.props.reducedMetric}</h4>
         <ul className="sessions-list">
           {
             this.props.sessions.map((session, idx) => (
-              <SessionItem
+              <SessionListItem
                 intl={this.props.intl}
                 key={idx}
                 index={idx}
@@ -130,25 +135,8 @@ var SessionsList = React.createClass({
               ))
           }
         </ul>
-        <bs.Modal animation={false} show={this.props.showModal} onHide={this.onClose} bsSize="large">
-          <bs.Modal.Header closeButton>
-            <bs.Modal.Title><FormattedMessage id="section.shower" /></bs.Modal.Title>
-          </bs.Modal.Header>
-          <bs.Modal.Body>
-            <Shower 
-              intl={this.props.intl}
-              setSessionFilter={this.props.setSessionFilter}
-              data={this.props.sessions[this.props.activeSessionIndex]}
-              filter={this.props.sessionFilter}
-              />
-          </bs.Modal.Body>
-          <bs.Modal.Footer>
-            <bs.Button disabled={this.props.disabledPrevious} onClick={this.onPrevious}>Previous</bs.Button>
-            <bs.Button disabled={this.props.disabledNext} onClick={this.onNext}>Next</bs.Button>
-            <bs.Button onClick={this.onClose}>Close</bs.Button>
-          </bs.Modal.Footer>
-        </bs.Modal>
-      </div>
+        <SessionData sessions={this.props.sessions} />
+        </div>
     );
   }
 });

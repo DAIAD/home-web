@@ -136,8 +136,13 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 		try {
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+			AuthenticatedUser user = null;
 
-			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
+			if (auth.getPrincipal() instanceof AuthenticatedUser) {
+				user = (AuthenticatedUser) auth.getPrincipal();
+			} else {
+				throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+			}
 
 			TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager
 							.createQuery("select a from account a where a.username = :username and a.utility.id = :utility_id",
@@ -212,8 +217,13 @@ public class JpaDeviceRepository implements IDeviceRepository {
 	@Override
 	public void updateMeterLocation(String username, String serial, Geometry location) throws ApplicationException {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		AuthenticatedUser user = null;
 
-		AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
+		if (auth.getPrincipal() instanceof AuthenticatedUser) {
+			user = (AuthenticatedUser) auth.getPrincipal();
+		} else {
+			throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+		}
 
 		TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager
 						.createQuery("select a from account a where a.username = :username and a.utility.id = :utility_id",
@@ -427,8 +437,13 @@ public class JpaDeviceRepository implements IDeviceRepository {
 	public Device getWaterMeterDeviceBySerial(String serial) {
 		try {
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+			AuthenticatedUser user = null;
 
-			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
+			if (auth.getPrincipal() instanceof AuthenticatedUser) {
+				user = (AuthenticatedUser) auth.getPrincipal();
+			} else {
+				throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+			}
 
 			TypedQuery<eu.daiad.web.domain.application.DeviceMeter> query = entityManager
 							.createQuery("select d from device_meter d where d.serial = :serial and d.account.utility.id = :utility_id",

@@ -67,7 +67,9 @@ public class UserController extends BaseRestController {
 
 			return registerResponse;
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}
@@ -86,7 +88,9 @@ public class UserController extends BaseRestController {
 
 			return new RestResponse();
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}
@@ -103,7 +107,9 @@ public class UserController extends BaseRestController {
 
 			userService.setRole(data.getUsername(), data.getRole(), true);
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}
@@ -120,7 +126,9 @@ public class UserController extends BaseRestController {
 
 			userService.setRole(data.getUsername(), data.getRole(), false);
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}

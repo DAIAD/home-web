@@ -108,7 +108,9 @@ public class SearchController extends BaseController {
 
 			return result;
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}
@@ -159,7 +161,9 @@ public class SearchController extends BaseController {
 			return waterMeterMeasurementRepository.searchMeasurements(serials, DateTimeZone.forID(user.getTimezone()),
 							query);
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}
@@ -183,7 +187,9 @@ public class SearchController extends BaseController {
 
 			return data;
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}
@@ -233,7 +239,9 @@ public class SearchController extends BaseController {
 
 			return amphiroMeasurementRepository.searchSessions(names, DateTimeZone.forID(user.getTimezone()), query);
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}
@@ -254,7 +262,9 @@ public class SearchController extends BaseController {
 
 			return amphiroMeasurementRepository.getSession(query);
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}

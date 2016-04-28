@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.UUID;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.HConstants;
@@ -26,8 +27,9 @@ import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Repository;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import eu.daiad.web.hbase.HBaseConnectionManager;
 import eu.daiad.web.model.TemporalConstants;
@@ -49,13 +51,17 @@ import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DataErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.query.AmphiroDataPoint;
+import eu.daiad.web.model.query.AmphiroUserDataPoint;
+import eu.daiad.web.model.query.DataPoint;
+import eu.daiad.web.model.query.EnumDataField;
 import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.ExpandedDataQuery;
 import eu.daiad.web.model.query.ExpandedPopulationFilter;
 import eu.daiad.web.model.query.GroupDataSeries;
+import eu.daiad.web.model.query.RankingDataPoint;
+import eu.daiad.web.model.query.UserDataPoint;
 
 @Repository()
-@Scope("prototype")
 public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRepository {
 
 	private static final Log logger = LogFactory.getLog(HBaseAmphiroMeasurementRepository.class);
@@ -82,15 +88,15 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 	@Value("${scanner.cache.size}")
 	private int scanCacheSize = 1;
 
-	private String amphiroTableMeasurements = "daiad:amphiro-measurements";
+	private final String amphiroTableMeasurements = "daiad:amphiro-measurements";
 
-	private String amphiroTableSessionByTime = "daiad:amphiro-sessions-by-time";
+	private final String amphiroTableSessionByTime = "daiad:amphiro-sessions-by-time";
 
-	private String amphiroTableSessionByUser = "daiad:amphiro-sessions-by-user";
+	private final String amphiroTableSessionByUser = "daiad:amphiro-sessions-by-user";
 
-	private String amphiroTableSessionIndex = "daiad:amphiro-sessions-index";
+	private final String amphiroTableSessionIndex = "daiad:amphiro-sessions-index";
 
-	private String columnFamilyName = "cf";
+	private final String columnFamilyName = "cf";
 
 	@Autowired
 	private HBaseConnectionManager connection;
@@ -387,60 +393,17 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 	}
 
 	private void preProcessData(AmphiroMeasurementCollection data) {
-		// Sort sessions
-		ArrayList<AmphiroSession> sessions = data.getSessions();
+		try {
+			// Sort sessions
+			ArrayList<AmphiroSession> sessions = data.getSessions();
 
-		Collections.sort(sessions, new Comparator<AmphiroSession>() {
-
-			@Override
-			public int compare(AmphiroSession s1, AmphiroSession s2) {
-				if (s1.getId() == s2.getId()) {
-					throw new RuntimeException("Session id must be unique.");
-				} else if (s1.getId() < s2.getId()) {
-					return -1;
-				} else {
-					return 1;
-				}
-			}
-		});
-
-		// Check if historical data require a delete operation
-		for (AmphiroSession s : sessions) {
-			if ((s.isHistory()) && (s.getDelete() != null)) {
-				throw new ApplicationException(DataErrorCode.DELETE_NOT_ALLOWED_FOR_HISTORY).set("session", s.getId());
-			}
-		}
-
-		// Sort measurements
-		ArrayList<AmphiroMeasurement> measurements = data.getMeasurements();
-
-		if ((measurements != null) && (measurements.size() > 0)) {
-
-			Collections.sort(measurements, new Comparator<AmphiroMeasurement>() {
+			Collections.sort(sessions, new Comparator<AmphiroSession>() {
 
 				@Override
-				public int compare(AmphiroMeasurement m1, AmphiroMeasurement m2) {
-					if (m1.getSessionId() == m2.getSessionId()) {
-						if (m1.getIndex() == m2.getIndex()) {
-							throw new RuntimeException("Session measurement indexes must be unique.");
-						}
-						if (m1.getTimestamp() == m2.getTimestamp()) {
-							throw new RuntimeException("Session measurement timestamps must be unique.");
-						}
-						if (m1.getIndex() < m2.getIndex()) {
-							if (m1.getTimestamp() > m2.getTimestamp()) {
-								throw new RuntimeException(
-												"Session measurements timestamp and index has ambiguous orderning.");
-							}
-							return -1;
-						} else {
-							if (m1.getTimestamp() < m2.getTimestamp()) {
-								throw new RuntimeException(
-												"Session measurements timestamp and index has ambiguous orderning.");
-							}
-							return 1;
-						}
-					} else if (m1.getSessionId() < m2.getSessionId()) {
+				public int compare(AmphiroSession s1, AmphiroSession s2) {
+					if (s1.getId() == s2.getId()) {
+						throw new RuntimeException("Session id must be unique.");
+					} else if (s1.getId() < s2.getId()) {
 						return -1;
 					} else {
 						return 1;
@@ -448,35 +411,85 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 				}
 			});
 
-			// Compute difference for volume and energy
-			for (int i = measurements.size() - 1; i > 0; i--) {
-				if (measurements.get(i).getSessionId() == measurements.get(i - 1).getSessionId()) {
-					// Set volume
-					float diff = measurements.get(i).getVolume() - measurements.get(i - 1).getVolume();
-					measurements.get(i).setVolume((float) Math.round(diff * 1000f) / 1000f);
-					// Set energy
-					diff = measurements.get(i).getEnergy() - measurements.get(i - 1).getEnergy();
-					measurements.get(i).setEnergy((float) Math.round(diff * 1000f) / 1000f);
+			// Check if historical data require a delete operation
+			for (AmphiroSession s : sessions) {
+				if ((s.isHistory()) && (s.getDelete() != null)) {
+					throw new ApplicationException(DataErrorCode.DELETE_NOT_ALLOWED_FOR_HISTORY).set("session",
+									s.getId());
 				}
 			}
 
-			// Set session for every measurement
-			for (AmphiroMeasurement m : measurements) {
-				for (AmphiroSession s : sessions) {
-					if (m.getSessionId() == s.getId()) {
-						if (s.isHistory()) {
-							throw new ApplicationException(DataErrorCode.HISTORY_SESSION_MEASUREMENT_FOUND).set(
-											"session", m.getSessionId()).set("index", m.getIndex());
+			// Sort measurements
+			ArrayList<AmphiroMeasurement> measurements = data.getMeasurements();
+
+			if ((measurements != null) && (measurements.size() > 0)) {
+
+				Collections.sort(measurements, new Comparator<AmphiroMeasurement>() {
+
+					@Override
+					public int compare(AmphiroMeasurement m1, AmphiroMeasurement m2) {
+						if (m1.getSessionId() == m2.getSessionId()) {
+							if (m1.getIndex() == m2.getIndex()) {
+								throw new RuntimeException("Session measurement indexes must be unique.");
+							}
+							if (m1.getTimestamp() == m2.getTimestamp()) {
+								throw new RuntimeException("Session measurement timestamps must be unique.");
+							}
+							if (m1.getIndex() < m2.getIndex()) {
+								if (m1.getTimestamp() > m2.getTimestamp()) {
+									throw new RuntimeException(
+													"Session measurements timestamp and index has ambiguous orderning.");
+								}
+								return -1;
+							} else {
+								if (m1.getTimestamp() < m2.getTimestamp()) {
+									throw new RuntimeException(
+													"Session measurements timestamp and index has ambiguous orderning.");
+								}
+								return 1;
+							}
+						} else if (m1.getSessionId() < m2.getSessionId()) {
+							return -1;
+						} else {
+							return 1;
 						}
-						m.setSession(s);
-						break;
+					}
+				});
+
+				// Compute difference for volume and energy
+				for (int i = measurements.size() - 1; i > 0; i--) {
+					if (measurements.get(i).getSessionId() == measurements.get(i - 1).getSessionId()) {
+						// Set volume
+						float diff = measurements.get(i).getVolume() - measurements.get(i - 1).getVolume();
+						measurements.get(i).setVolume((float) Math.round(diff * 1000f) / 1000f);
+						// Set energy
+						diff = measurements.get(i).getEnergy() - measurements.get(i - 1).getEnergy();
+						measurements.get(i).setEnergy((float) Math.round(diff * 1000f) / 1000f);
 					}
 				}
-				if (m.getSession() == null) {
-					throw new ApplicationException(DataErrorCode.NO_SESSION_FOUND_FOR_MEASUREMENT).set("session",
-									m.getSessionId()).set("index", m.getIndex());
+
+				// Set session for every measurement
+				for (AmphiroMeasurement m : measurements) {
+					for (AmphiroSession s : sessions) {
+						if (m.getSessionId() == s.getId()) {
+							if (s.isHistory()) {
+								throw new ApplicationException(DataErrorCode.HISTORY_SESSION_MEASUREMENT_FOUND).set(
+												"session", m.getSessionId()).set("index", m.getIndex());
+							}
+							m.setSession(s);
+							break;
+						}
+					}
+					if (m.getSession() == null) {
+						throw new ApplicationException(DataErrorCode.NO_SESSION_FOUND_FOR_MEASUREMENT).set("session",
+										m.getSessionId()).set("index", m.getIndex());
+					}
 				}
 			}
+		} catch (ApplicationException ex) {
+			logger.warn(this.jsonToString(data));
+
+			throw ex;
 		}
 	}
 
@@ -1289,54 +1302,53 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 						long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 2, 10));
 						byte[] userHash = Arrays.copyOfRange(r.getRow(), 10, 26);
 
+						long timestamp = 0;
+						int duration = 0;
+						float volume = 0, energy = 0, temperature = 0, flow = 0;
+
+						for (Entry<byte[], byte[]> entry : map.entrySet()) {
+							String qualifier = Bytes.toString(entry.getKey());
+
+							switch (qualifier) {
+								case "m:offset":
+									timestamp = (timeBucket + Bytes.toInt(entry.getValue())) * 1000L;
+									break;
+								case "m:v":
+									volume = Bytes.toFloat(entry.getValue());
+									break;
+								case "m:t":
+									temperature = Bytes.toFloat(entry.getValue());
+									break;
+								case "m:e":
+									energy = Bytes.toFloat(entry.getValue());
+									break;
+								case "m:f":
+									flow = Bytes.toFloat(entry.getValue());
+									break;
+								case "m:d":
+									duration = Bytes.toInt(entry.getValue());
+									break;
+								default:
+									// Ignore
+									break;
+							}
+						}
+
 						int filterIndex = 0;
 						for (ExpandedPopulationFilter filter : query.getGroups()) {
 							GroupDataSeries series = result.get(filterIndex);
 
 							int index = inArray(filter.getHashes(), userHash);
 							if (index >= 0) {
-								long timestamp = 0;
-								float volume = 0;
-								float energy = 0;
-								int duration = 0;
-								float temperature = 0;
-								float flow = 0;
-
-								for (Entry<byte[], byte[]> entry : map.entrySet()) {
-									String qualifier = Bytes.toString(entry.getKey());
-
-									switch (qualifier) {
-										case "m:offset":
-											timestamp = (timeBucket + Bytes.toInt(entry.getValue())) * 1000L;
-											break;
-										case "m:v":
-											volume = Bytes.toFloat(entry.getValue());
-											break;
-										case "m:t":
-											temperature = Bytes.toFloat(entry.getValue());
-											break;
-										case "m:e":
-											energy = Bytes.toFloat(entry.getValue());
-											break;
-										case "m:f":
-											flow = Bytes.toFloat(entry.getValue());
-											break;
-										case "m:d":
-											duration = Bytes.toInt(entry.getValue());
-											break;
-										default:
-											// Ignore
-											break;
-									}
-								}
-
 								if (filter.getRanking() == null) {
-									series.addDataPoint(query.getGranularity(), timestamp, volume, energy, duration,
-													temperature, flow, query.getMetrics(), query.getTimezone());
+									series.addAmhiroDataPoint(query.getGranularity(), timestamp, volume, energy,
+													duration, temperature, flow, query.getMetrics(),
+													query.getTimezone());
 								} else {
-									series.addRankingDataPoint(query.getGranularity(), filter.getUsers().get(index),
-													filter.getLabels().get(index), timestamp, volume, energy, duration,
-													temperature, flow, query.getMetrics(), query.getTimezone());
+									series.addAmphiroRankingDataPoint(query.getGranularity(),
+													filter.getUsers().get(index), filter.getLabels().get(index),
+													timestamp, volume, energy, duration, temperature, flow,
+													query.getMetrics(), query.getTimezone());
 								}
 							}
 
@@ -1362,17 +1374,137 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 			}
 		}
 
-		cleanSeries(result);
+		// Post process results
+		int filterIndex = 0;
+		for (final ExpandedPopulationFilter filter : query.getGroups()) {
+			GroupDataSeries series = result.get(filterIndex);
+
+			if (filter.getRanking() != null) {
+				// Truncate (n-k) users and keep top/bottom-k only
+				for (DataPoint point : series.getPoints()) {
+					RankingDataPoint ranking = (RankingDataPoint) point;
+
+					final EnumDataField field = filter.getRanking().getField();
+
+					Collections.sort(ranking.getUsers(), new Comparator<UserDataPoint>() {
+
+						@Override
+						public int compare(UserDataPoint u1, UserDataPoint u2) {
+							AmphiroUserDataPoint m1 = (AmphiroUserDataPoint) u1;
+							AmphiroUserDataPoint m2 = (AmphiroUserDataPoint) u2;
+
+							switch (field) {
+								case VOLUME:
+									if (m1.getVolume().get(filter.getRanking().getMetric()) < m2.getVolume().get(
+													filter.getRanking().getMetric())) {
+										return -1;
+									}
+									if (m1.getVolume().get(filter.getRanking().getMetric()) > m2.getVolume().get(
+													filter.getRanking().getMetric())) {
+										return 1;
+									}
+
+									break;
+								case ENERGY:
+									if (m1.getEnergy().get(filter.getRanking().getMetric()) < m2.getEnergy().get(
+													filter.getRanking().getMetric())) {
+										return -1;
+									}
+									if (m1.getEnergy().get(filter.getRanking().getMetric()) > m2.getEnergy().get(
+													filter.getRanking().getMetric())) {
+										return 1;
+									}
+
+									break;
+								case DURATION:
+									if (m1.getDuration().get(filter.getRanking().getMetric()) < m2.getDuration().get(
+													filter.getRanking().getMetric())) {
+										return -1;
+									}
+									if (m1.getDuration().get(filter.getRanking().getMetric()) > m2.getDuration().get(
+													filter.getRanking().getMetric())) {
+										return 1;
+									}
+
+									break;
+								case TEMPERATURE:
+									if (m1.getTemperature().get(filter.getRanking().getMetric()) < m2.getTemperature()
+													.get(filter.getRanking().getMetric())) {
+										return -1;
+									}
+									if (m1.getTemperature().get(filter.getRanking().getMetric()) > m2.getTemperature()
+													.get(filter.getRanking().getMetric())) {
+										return 1;
+									}
+
+									break;
+								case FLOW:
+									if (m1.getFlow().get(filter.getRanking().getMetric()) < m2.getFlow().get(
+													filter.getRanking().getMetric())) {
+										return -1;
+									}
+									if (m1.getFlow().get(filter.getRanking().getMetric()) > m2.getFlow().get(
+													filter.getRanking().getMetric())) {
+										return 1;
+									}
+
+									break;
+								default:
+									break;
+							}
+							return 0;
+						}
+					});
+
+					int limit = filter.getRanking().getLimit();
+					switch (filter.getRanking().getType()) {
+						case TOP:
+							for (int i = 0, max = ranking.getUsers().size() - limit; i < max; i++) {
+								ranking.getUsers().remove(0);
+							}
+							break;
+						case BOTTOM:
+							for (int i = ranking.getUsers().size() - 1, max = limit - 1; i > max; i--) {
+								ranking.getUsers().remove(i);
+							}
+							break;
+						default:
+							series.getPoints().clear();
+							break;
+					}
+				}
+			}
+			filterIndex++;
+		}
+
+		cleanSeries(query, result);
 
 		return result;
 	}
 
-	private void cleanSeries(ArrayList<GroupDataSeries> result) {
-		for (GroupDataSeries series : result) {
-			for (Object p : series.getPoints()) {
-				((AmphiroDataPoint) p).getTemperature().remove(EnumMetric.SUM);
-				((AmphiroDataPoint) p).getFlow().remove(EnumMetric.SUM);
+	private void cleanSeries(ExpandedDataQuery query, ArrayList<GroupDataSeries> result) {
+		int filterIndex = 0;
+		for (final ExpandedPopulationFilter filter : query.getGroups()) {
+			GroupDataSeries series = result.get(filterIndex);
+			if (filter.getRanking() == null) {
+				for (Object p : series.getPoints()) {
+					AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) p;
+
+					amphiroDataPoint.getTemperature().remove(EnumMetric.SUM);
+					amphiroDataPoint.getFlow().remove(EnumMetric.SUM);
+				}
+			} else {
+				for (Object p : series.getPoints()) {
+					RankingDataPoint rankingDataPoint = (RankingDataPoint) p;
+					for (UserDataPoint userDataPoint : rankingDataPoint.getUsers()) {
+						AmphiroUserDataPoint amphiroUserDataPoint = (AmphiroUserDataPoint) userDataPoint;
+
+						amphiroUserDataPoint.getTemperature().remove(EnumMetric.SUM);
+						amphiroUserDataPoint.getFlow().remove(EnumMetric.SUM);
+					}
+				}
 			}
+			filterIndex++;
 		}
 	}
 
@@ -1385,5 +1517,20 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 			index++;
 		}
 		return -1;
+	}
+
+	private String jsonToString(Object value) {
+		if (value == null) {
+			return StringUtils.EMPTY;
+		}
+
+		try {
+			ObjectMapper mapper = new ObjectMapper();
+			return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(value);
+		} catch (Exception ex) {
+			logger.warn(String.format("Failed to serialize object of type [%s]", value.getClass().getName()));
+		}
+
+		return StringUtils.EMPTY;
 	}
 }

@@ -17,6 +17,10 @@ var session = function(state, action) {
     case types.USER_RECEIVED_LOGIN:
       switch (action.status) {
         case true:
+          if(document) {
+            document.cookie = 'daiad-utility-session=true; path=/';
+          }
+          
           return Object.assign({}, state, {
             isAuthenticated : true,
             profile : action.profile,
@@ -40,6 +44,10 @@ var session = function(state, action) {
       });
 
     case types.USER_RECEIVED_LOGOUT:
+      if(document) {
+        document.cookie = 'daiad-utility-session=false; path=/';
+      }
+
       switch (action.status) {
         case true:
           return Object.assign({}, state, {

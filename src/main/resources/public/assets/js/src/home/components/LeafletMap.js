@@ -4,7 +4,6 @@ var PortalMixin = require('./PortalMixin');
 var L = require('leaflet');
 
 var LeafletMap = React.createClass({
-
   mixins: [PortalMixin],
   
   getDefaultProps: function() {
@@ -13,16 +12,11 @@ var LeafletMap = React.createClass({
       zoom: 13
       };
   },
-
-
   render: function() {
-    console.log('hello');
     return (
-
       <div {...this.props} />
     );
   },
-  
   componentDidMount: function() {
     L.Icon.Default.imagePath = '../assets/lib/leaflet/images/';
     
@@ -34,11 +28,9 @@ var LeafletMap = React.createClass({
         attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
       }).addTo(this.map);
   },
-
   componentWillUnmount : function() {
     this.map.remove();
   },
-
 });
 
 module.exports = LeafletMap;

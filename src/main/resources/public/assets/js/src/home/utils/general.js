@@ -27,6 +27,8 @@ const addZero = function(input) {
 };
 
 const getFriendlyDuration = function(seconds) {
+  if (!seconds) { return null; }
+  
   if (seconds>3600) {
     return  (addZero(Math.floor(seconds/3600))) + ":" +
             addZero(Math.floor((seconds % 3600)/60)) + ":" +

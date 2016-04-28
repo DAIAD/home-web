@@ -166,7 +166,7 @@ public class JpaUserRepository implements IUserRepository {
 			// Create an administrator for any registered utility
 			initializeAdministrators();
 		} catch (ApplicationException ex) {
-			logger.error("Database initialization has failed.", ex);
+			logger.error("Database initialization has failed.");
 		}
 	}
 
@@ -490,8 +490,8 @@ public class JpaUserRepository implements IUserRepository {
 	@Override
 	public List<eu.daiad.web.model.admin.AccountActivity> getAccountActivity() {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
 		AuthenticatedUser user = null;
+
 		if (auth.getPrincipal() instanceof AuthenticatedUser) {
 			user = (AuthenticatedUser) auth.getPrincipal();
 		}
@@ -652,8 +652,8 @@ public class JpaUserRepository implements IUserRepository {
 
 		try {
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
 			AuthenticatedUser user = null;
+
 			if (auth.getPrincipal() instanceof AuthenticatedUser) {
 				user = (AuthenticatedUser) auth.getPrincipal();
 			}

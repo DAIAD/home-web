@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -23,7 +24,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,6 +32,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.google.common.collect.ImmutableMap;
+
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.RestResponse;
@@ -39,7 +41,6 @@ import eu.daiad.web.model.admin.AccountActivity;
 import eu.daiad.web.model.debug.DebugUserRegisterRequest;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.loader.UploadRequest;
 import eu.daiad.web.model.user.Account;
@@ -66,9 +67,6 @@ public class DebugController extends BaseController {
 
 	@Autowired
 	private IDeviceRepository deviceRepository;
-
-	@Autowired
-	Environment environment;
 
 	private void saveFile(String filename, byte[] bytes) throws IOException {
 		BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(filename)));
@@ -107,7 +105,7 @@ public class DebugController extends BaseController {
 		RestResponse response = new RestResponse();
 
 		try {
-			if (ArrayUtils.contains(environment.getActiveProfiles(), "development")) {
+			if (ArrayUtils.contains(this.getActiveProfiles(), "development")) {
 				String password = request.getPassword();
 
 				if (StringUtils.isBlank(password)) {
@@ -128,12 +126,12 @@ public class DebugController extends BaseController {
 
 				}
 			} else {
-				response.add("DEBUG_USER_INVALID_PROFILE", "Profile [development] is not enabled.");
+				response.add(SharedErrorCode.UNKNOWN, "Profile [development] is not enabled.");
 			}
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
 
-			response.add("DEBUG_USER_REGISTER_UNKNOWN_ERROR", "Failed to register users.");
+			response.add(SharedErrorCode.UNKNOWN, "Failed to register users.");
 		}
 
 		return response;
@@ -146,7 +144,7 @@ public class DebugController extends BaseController {
 		RestResponse response = new RestResponse();
 
 		try {
-			if (ArrayUtils.contains(environment.getActiveProfiles(), "development")) {
+			if (ArrayUtils.contains(this.getActiveProfiles(), "development")) {
 
 				DeviceRegistrationQuery deviceQuery = new DeviceRegistrationQuery();
 				deviceQuery.setType(EnumDeviceType.AMPHIRO);
@@ -163,12 +161,12 @@ public class DebugController extends BaseController {
 					}
 				}
 			} else {
-				response.add("DEBUG_USER_INVALID_PROFILE", "Profile [development] is not enabled.");
+				response.add(SharedErrorCode.UNKNOWN, "Profile [development] is not enabled.");
 			}
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
 
-			response.add("DEBUG_USER_REGISTER_UNKNOWN_ERROR", "Failed to register users.");
+			response.add(SharedErrorCode.UNKNOWN, "Failed to register users.");
 		}
 
 		return response;
@@ -180,49 +178,56 @@ public class DebugController extends BaseController {
 	public RestResponse upload(UploadRequest request) {
 		RestResponse response = new RestResponse();
 
-		if (ArrayUtils.contains(environment.getActiveProfiles(), "development")) {
-			try {
+		try {
+			if (ArrayUtils.contains(this.getActiveProfiles(), "development")) {
 				if (request.getFiles() != null) {
 					FileUtils.forceMkdir(new File(temporaryPath));
 
-					// Set time zone
-					Set<String> zones = DateTimeZone.getAvailableIDs();
-					if (request.getTimezone() == null) {
-						request.setTimezone("Europe/Athens");
-					}
-					if (!zones.contains(request.getTimezone())) {
-						throw new ApplicationException(SharedErrorCode.TIMEZONE_NOT_FOUND).set("timezone",
-										request.getTimezone());
-					}
-
 					switch (request.getType()) {
 						case AMPHIRO_DATA:
-							if ((request.getFiles() != null) && (request.getFiles().length == 1)) {
-								MultipartFile file = request.getFiles()[0];
-								String filename = Paths.get(temporaryPath,
-												UUID.randomUUID().toString() + "-" + file.getOriginalFilename())
-												.toString();
+							// Check time zone
+							String timezone = request.getTimezone();
 
-								this.saveFile(filename, file.getBytes());
+							Set<String> zones = DateTimeZone.getAvailableIDs();
 
-								this.fileDataLoaderService.importRandomAmphiroSessions(filename,
-												DateTimeZone.forID(request.getTimezone()));
+							if (StringUtils.isBlank(timezone)) {
+								response.add(SharedErrorCode.INVALID_TIME_ZONE,
+												this.getMessage(SharedErrorCode.INVALID_TIME_ZONE));
+							} else if (!zones.contains(timezone)) {
+								Map<String, Object> properties = ImmutableMap.<String, Object> builder()
+												.put("timezone", timezone).build();
+
+								response.add(SharedErrorCode.TIMEZONE_NOT_FOUND,
+												this.getMessage(SharedErrorCode.TIMEZONE_NOT_FOUND, properties));
+							}
+
+							if (response.getSuccess()) {
+								if ((request.getFiles() != null) && (request.getFiles().length == 1)) {
+									MultipartFile file = request.getFiles()[0];
+									String filename = Paths.get(temporaryPath,
+													UUID.randomUUID().toString() + "-" + file.getOriginalFilename())
+													.toString();
+
+									this.saveFile(filename, file.getBytes());
+
+									this.fileDataLoaderService.importRandomAmphiroSessions(filename,
+													DateTimeZone.forID(request.getTimezone()));
+								}
 							}
 							break;
 						default:
 							break;
 					}
 				}
-			} catch (Exception ex) {
-				logger.error(ex.getMessage(), ex);
-
-				response.add("FILE_UPLOAD_ERROR", "Failed to upload file.");
+			} else {
+				response.add(SharedErrorCode.UNKNOWN, "Profile [development] is not enabled.");
 			}
-		} else {
-			response.add("DEBUG_USER_INVALID_PROFILE", "Profile [development] is not enabled.");
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
+
+			response.add(SharedErrorCode.UNKNOWN, "Failed to upload file.");
 		}
 
 		return response;
 	}
-
 }

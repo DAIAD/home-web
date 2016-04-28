@@ -1,6 +1,6 @@
 var api = require('./base');
 
-var UserAPI = {
+var SessionAPI = {
 	login: function(username, password) {
 		return api.submit('/login?application=utility', {username:username, password:password});
 	},
@@ -12,4 +12,4 @@ var UserAPI = {
 	}
 };
 
-module.exports = UserAPI;
+module.exports = SessionAPI;

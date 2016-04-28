@@ -1,14 +1,20 @@
 var React = require('react');
 var bs = require('react-bootstrap');
 var classNames = require('classnames');
-var { FormattedMessage, FormatterRelative } = require('react-intl');
+
+var intl = require('react-intl');
+var { injectIntl, FormattedMessage, FormatterRelative } = require('react-intl');
+
 var { Responsive, WidthProvider } = require('react-grid-layout');
 var ResponsiveGridLayout = WidthProvider(Responsive);
+var PureRenderMixin = require('react-addons-pure-render-mixin');
 
+const { IMAGES } = require('../../constants/HomeConstants');
 var MainSection = require('../MainSection');
 var SessionsChart = require('../SessionsChart');
 
-var Budget = require('../Budget');
+
+var timeUtil = require('../../utils/time');
 
 
 /* Be Polite, greet user */
@@ -21,57 +27,114 @@ function SayHello (props) {
 }
 
 function InfoBox (props) {
-  
-  const { title, highlight, compareText, extraText, improved } = props;
-  const classLeft = props.classLeft || 'col-md-5';
-  const classRight = props.classRight || 'col-md-7';
-  const classContainer = props.classContainer || 'row';
-  
-  let improvedDiv = (<div/>);
-  if (improved === true) {
-    improvedDiv = (<img src="/assets/images/svg/success.svg"/>);
-  }
-  else if (improved === false) {
-    improvedDiv = (<img src="/assets/images/svg/warning.svg"/>);
-  }
+  const { mode, infobox, linkToHistory, removeInfobox, chartFormatter } = props;
+  //const historyLink = 
+  const editable = mode==='edit'?true:false;
   return (
     <div className='info-box'>
-      <h3>{title}</h3>
-      <div className={classContainer}>
-        <div className={classLeft}>
-          {highlight} 
-        </div>
-        <div className={classRight}>
-          {improvedDiv}
-          <span> {compareText}</span>
-          <br/>
-          <a onClick={props.onClick}>{extraText}</a>
-        </div>
+      {(()=>editable?(<a className="info-box-x" onClick={()=>removeInfobox(infobox.id)}><i className="fa fa-times"></i></a>):(<i/>))()}
+      <h4>{infobox.title}</h4>
+         <div>
+           {
+             (()=>{
+               if (infobox.type==='stat') {
+                 return (
+                   <StatBox {...props} /> 
+                 );
+               } 
+               else if (infobox.type==='chart') {
+                 return (
+                   <ChartBox {...props} /> 
+                   );
+               }
+               else if (infobox.type==='tip') {
+                 return (
+                   <TipBox {...props} />
+                   );
+               }
+             })()
+           }
+         </div>
+    </div>
+  );
+}
+
+function StatBox (props) {
+  const { title, type, improved, data, reducedData, metric, measurements, period, device, deviceDetails, index, time, linkToHistory } = props.infobox;
+  let improvedDiv = <div/>;
+  if (improved === true) {
+    improvedDiv = (<img src={`${IMAGES}/success.svg`}/>);
+  }
+  else if (improved === false) {
+    improvedDiv = (<img src={`${IMAGES}/warning.svg`}/>);
+  }
+  const duration = data?(Array.isArray(data)?null:data.duration):null;
+  return (
+    <div className='row'>
+      <div className='col-md-5'>
+        <h2>{reducedData}</h2>
+      </div>
+      <div className='col-md-7'>
+        <a onClick={linkToHistory}>See more</a>
       </div>
     </div>
   );
 }
 
-function LastShowerChart (props) {
-  if (!props.lastShower){
-    return (<div/>);
-  }
-  else if (props.lastShower.history){
-    return (<h4>Oops, can't graph due to limited data..</h4>);  
+function TipBox (props) {
+  const { title, type, tip } = props.infobox;
+  return (
+    <div className='row'>
+      <div className='col-md-3'>
+        <h4>image goes here</h4>
+      </div>
+      <div className='col-md-9' style={{fontSize: 14}}>
+        {tip}
+      </div>
+    </div>
+  );
+}
+function ChartBox (props) {
+  const { title, type, improved, data, metric, measurements, period, device, deviceDetails, chartData, reducedData, time, index, linkToHistory } = props.infobox;
+  return (
+    <div>
+      <div >
+        {
+          (() => chartData.length>0?(
+            <ShowerChart {...props} />
+            ):(
+            <h5>Oops, no data available...</h5>
+            ))()
+        }
+        <span>You consumed a total of <b>{reducedData} lt</b>!</span>
+      </div>
+      <div>
+        <a onClick={linkToHistory}>See more</a>
+      </div>
+    </div>
+  );
+}
+
+
+function ShowerChart (props) {
+  const { chartFormatter, intl, history, infobox:{chartData}, metric } = props;
+  if (history){
+    return (<h4>Oops, cannot graph due to limited data..</h4>);  
   }
   else {
+    //formatter={props.chartFormatter(props.intl)}
     return (
       <SessionsChart
         height={150}
-        width='100%'  
+        width={250}  
         title=""
         subtitle=""
         mu="lt"
-        formatter={props.chartFormatter}
         yMargin={10}
         fontSize={12}
         type="line"
-        data={props.chartData}
+        formatter={chartFormatter(intl)}
+        data={chartData}
       />);
   }
 }
@@ -110,139 +173,245 @@ function BreakdownChart (props) {
     />);
 }
 
-var InfoPanel = React.createClass({
-  onLayoutChange: function(layout) {
-    //console.log('layout changed');
-  },
-  onBreakpointChange: function(breakpoint) {
-  },
-  onResizeStop: function(layout, oldItem, newItem, placeholder, e, element){
-    if (newItem.i === "2") {
-      //this.refs.lastShower.forceUpdate();
-    }
-  },
-  render: function() {
-    const layouts = [
-      {x:0, y:0, w:6, h:1, i:"0"},
-      {x:0, y:1, w:2, h:1, i:"1"}, 
-      {x:2, y:1, w:2, h:2, i:"2"}, 
-      {x:4, y:1, w:2, h:1, i:"3"},
-      {x:0, y:2, w:2, h:1, i:"4"},
-      {x:4, y:2, w:2, h:1, i:"7"},
-      {x:3, y:3, w:3, h:2, i:"5"},
-      {x:0, y:3, w:3, h:2, i:"6"},
-    ];
-    return (
-      <div>
-        <ResponsiveGridLayout className='layout' layouts={{lg:layouts}}
-          breakpoints={{lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0}}
-          onResizeStop={this.onResizeStop}
-          cols={{lg: 12, md: 10, sm: 6, xs: 4, xxs: 2}} >
-        <div key="1">
-        <InfoBox
-          title="Water efficiency Score"
-          improved={true}
-          highlight={(()=>(<h2>B+</h2>))()}
-          compareText="Better since last month"
-          extraText="Learn how to improve"
-        />
-        </div>
-        <div key="2">
-          
-        {(() => {
-          if (!this.props.lastShower) {
-            return null;
-          }
-          else {
-            return (
-              <InfoBox 
-                title="Last Shower"
-                classContainer="padded"
-                classLeft="row"
-                classRight="row padded"
-                improved={true}
-                compareText={<span>You consumed a total of <b>{this.props.lastShower.volume + " lt"}</b> in <b>{this.props.lastShower.duration + " secs"}</b>.</span>}
-                highlight={<LastShowerChart {...this.props} />}
-                extraText=""
-              />);
-          }
-        })()
-        }
-        </div>
-        <div key="3">
-        <InfoBox 
-          title="Week consumption"
-          improved={false}
-          highlight={(()=>(<h2>450lt</h2>))()}
-          compareText={<span><b>23%</b> more than last month</span>}
-          extraText="See more"
-        />
-        </div>
-                    
-      <div key="4">
-      <InfoBox 
-        title="Year energy consumption"
-        classLeft="col-md-7"
-        classRight="col-md-5"
-        improved={false}
-        size="small"
-        highlight={(()=>(<h2>850 kWh</h2>))()}
-        compareText={<span><b>5%</b> more than last year</span>}
-        extraText="See more"
-        onClick={() => this.props.linkToHistory({
-          filter: 'energy',
-          timeFilter: 'year'
-        })}
-        />
-      </div>
 
-      <div key="7">
-      <InfoBox 
-          title="Day consumption"
-          improved={true}
-          highlight={(()=>(<h2>38lt</h2>))()}
-          compareText={<span><b>5%</b> less than yesterday!</span>}
-          extraText="See more"
-        />
-      </div>
-        <div key="5">
-        <InfoBox 
-          title="Year forecasting"
-          classLeft="col-md-8"
-          classRight="col-md-4"
-          improved={true}
-          compareText="Based on your water use so far, we estimate you will use less water this year. Good job!"
-          highlight={<ForecastingChart {...this.props} />}
-          extraText="See more"
-        />
-      </div>
-        
-      <div key="6">
-      <InfoBox 
-        title="Water breakdown"
-          classLeft="col-md-12"
-          classRight="col-md-1"
-          compareText=""
-          highlight={<BreakdownChart {...this.props} />}
-          extraText="See more"
-        />
-      </div>
+function InfoPanel (props) {
+  const { mode, layout, infoboxData, updateLayout, linkToHistory, switchMode, removeInfobox, chartFormatter, intl } = props;
+  const editable = mode==='edit'?true:false;
+  return (
+    <div>
+      <ResponsiveGridLayout 
+        className='layout'
+        layouts={{lg:layout}}
+        breakpoints={{lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0}}
+        cols={{lg: 12, md: 10, sm: 6, xs: 4, xxs: 2}}
+        isDraggable={editable}
+        isResizable={editable}
+        onLayoutChange={(layout, layouts) => { 
+          //updateLayout(layout);  
+        }}
+        onResizeStop={(layout, oldItem, newItem, placeholder) => { 
+          updateLayout(layout);  
+        }}
+        onDragStop={(layout) => {
+          updateLayout(layout); 
+        }}
+       >
+       {
+         infoboxData.map(function(infobox) {
+           return (
+             <div key={infobox.id}>
+               <InfoBox {...{mode, chartFormatter, infobox, linkToHistory, removeInfobox, intl}} /> 
+           </div>
+           );
+         })
+       }
       </ResponsiveGridLayout>
-    </div>
+     </div>
+  );
+}
 
+function InfoboxBuildForm (props) {
+  const { mode, switchMode, tempInfoboxData, updateInfoboxTemp, types, subtypes, periods, metrics, devices, fetchInfoboxData, addInfobox, resetInfoboxTemp } = props;
+  return (
+    <bs.Modal animation={false} show={mode==="add"?true:false} onHide={() => switchMode("normal")} bsSize="sm">
+      <bs.Modal.Header closeButton>
+        <bs.Modal.Title>Add Infobox</bs.Modal.Title>
+      </bs.Modal.Header>
+      <bs.Modal.Body>
+        <div style={{padding: '5px 20px'}}>
+          <bs.Input 
+            type="text" 
+            label="Title" 
+            disabled={true}
+            value={tempInfoboxData.title} 
+            onChange={(e) => 
+              updateInfoboxTemp({title: e.target.value}) 
+            }/>
+          <bs.Input
+            type="select"
+            label="Device"
+            title={tempInfoboxData.device?tempInfoboxData.device:"none"}
+            id="device-switcher"
+            defaultValue={tempInfoboxData.device}
+            onChange={(e) => 
+              updateInfoboxTemp({device: e.target.value})
+            }>
+            {
+              devices.map(function(device) {
+                return (
+                  <option key={device.deviceKey} value={device.deviceKey} >{device.name || device.serial}</option>
+                );
+              })
+            } 
+          </bs.Input>
+          
+          <bs.Input
+            type="select"
+            label="Type"
+            title={tempInfoboxData.type?tempInfoboxData.type:"none"}
+            id="type-switcher"
+            defaultValue={tempInfoboxData.type}
+            onChange={(e) => 
+              updateInfoboxTemp({type: e.target.value})
+            }
+            >
+            {
+              types.map(function(type) {
+                return (
+                  <option key={type.id} value={type.id} >{type.title}</option>
+                );
+              })
+            } 
+          </bs.Input>
+          { 
+            (()=> subtypes?(
+              <bs.Input
+                type="select"
+                label="Sub-type"
+                title={tempInfoboxData.subtype?tempInfoboxData.subtype:"none"}
+                id="subtype-switcher"
+                defaultValue={tempInfoboxData.subtype}
+                onChange={(e) => 
+                  updateInfoboxTemp({subtype: e.target.value})
+                }
+                >
+                {
+                  subtypes.map(function(type) {
+                    return (
+                      <option key={type.id} value={type.id} >{type.title}</option>
+                    );
+                  })
+                } 
+              </bs.Input>):
+                (<div/>)
+            )()
+          }
+
+          <bs.Input
+            type="select"
+            label="Period"
+            title={tempInfoboxData.period?tempInfoboxData.period:"none"}
+            id="period-switcher"
+            defaultValue={tempInfoboxData.period}
+            onChange={(e) => 
+              updateInfoboxTemp({
+                period: e.target.value,
+                time: periods.find(x=> x.id === e.target.value)?periods.find(x=> x.id===e.target.value).value:{}
+                }
+              )
+             }>
+            {
+              periods.map(function(period) {
+                return (
+                  <option key={period.id} value={period.id} >{period.title}</option>
+                );
+              })
+            } 
+          </bs.Input>
+
+          <bs.Input
+            type="select"
+            label="Metric"
+            title={tempInfoboxData.metric?tempInfoboxData.metric:"none"}
+            id="metric-switcher"
+            defaultValue={tempInfoboxData.metric}
+            onChange={(e) => 
+              updateInfoboxTemp({metric: e.target.value})
+            }
+             >
+            {
+              metrics.map(function(metric) {
+                return (
+                  <option key={metric.id} value={metric.id}>{metric.title}</option>
+                );
+              })
+            } 
+          </bs.Input>
+          
+        </div>
+         
+      </bs.Modal.Body>
+      <bs.Modal.Footer>
+        <bs.Button 
+          onClick={()=> { 
+            const { type, subtype, device, time } = tempInfoboxData;
+            const id = addInfobox(tempInfoboxData); 
+            fetchInfoboxData({id, type, subtype, device, time});
+            resetInfoboxTemp(); 
+            switchMode("edit"); 
+          }}>
+          OK
+        </bs.Button>
+        <bs.Button 
+          onClick={()=> 
+            switchMode("normal")
+          }>
+          Cancel
+        </bs.Button>
+      </bs.Modal.Footer>
+    </bs.Modal>
+  );
+}
+
+function ButtonToolbar (props) {
+  const { switchMode, mode } = props;
+  return (
+    <div className="pull-right">
+      <bs.ButtonToolbar>
+        <bs.Button onClick={()=> switchMode("add")} active={false}>Add</bs.Button>
+        {
+          (()=> mode==="edit"?(
+            <bs.Button onClick={()=> switchMode("normal")} bsStyle="primary" active={false}>Done</bs.Button>
+            ):(
+            <bs.Button onClick={()=> switchMode("edit")} active={false}>Edit</bs.Button>
+            ))()
+        }
+      </bs.ButtonToolbar>
+    </div>
+  );
+}
+
+var Dashboard = React.createClass({
+  mixins: [PureRenderMixin],
+
+  componentWillMount: function() {
+    const { fetchAllInfoboxesData, switchMode } = this.props;
+    switchMode("normal");
+    fetchAllInfoboxesData();
+
+  },
+  /*
+  componentWillReceiveProps: function(nextProps) {
+    console.log('history receiving props');   
+    //console.log(nextProps);
+    //console.log(this.props);
+    for (let key in nextProps) {
+      let prop = nextProps[key];
+      if (typeof prop === 'function') { continue; }
+      if (this.props[key] === prop) { continue; }
+      console.log('new', key, prop);
+      console.log('old', key, this.props[key]);
+    }
+
+   
+  },
+  */
+  render: function() {
+    const { firstname, mode, switchMode, amphiros, meters } = this.props;
+    return (
+      <MainSection id="section.dashboard">
+        <br/>
+        <SayHello firstname={firstname} />
+        
+        <ButtonToolbar {...{mode, switchMode}} />
+        <br/>
+        <InfoPanel {...this.props} />
+        
+        <InfoboxBuildForm {...this.props} /> 
+      </MainSection>
     );
   }
 });
 
-
-function Dashboard (props) {
-  return (
-    <MainSection id="section.dashboard">
-      <br/>
-      <SayHello firstname={props.firstname} style={{margin:50}}/>
-      <InfoPanel {...props} />
-    </MainSection>
-  );
-}
-
+//Dashboard = injectIntl(Dashboard);
 module.exports = Dashboard;
