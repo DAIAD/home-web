@@ -4,7 +4,6 @@ require('es6-promise').polyfill();
 var QueryActions = require('./QueryActions');
 var HistoryActions = require('./HistoryActions');
 
-var { getFilteredData } = require('../utils/chart');
 var { getDeviceKeysByType } = require('../utils/device');
 var { getTimeByPeriod, getLastShowerTime } = require('../utils/time');
 
@@ -39,18 +38,6 @@ const appendLayout = function(id, type) {
 
 const DashboardActions = {
 
-  updateInfoboxTemp: function(data) {
-    return {
-      type: types.DASHBOARD_UPDATE_INFOBOX_TEMP,
-      data: data
-    };
-  },
-  resetInfoboxTemp: function() {
-    return {
-      type: types.DASHBOARD_RESET_INFOBOX_TEMP,
-    };
-  },
-
   switchMode: function(mode) {
     return {
       type: types.DASHBOARD_SWITCH_MODE,
@@ -70,13 +57,11 @@ const DashboardActions = {
   },
   updateInfobox: function(id, update) {
     return function(dispatch, getState) {
-      let synced = false;
-      if (update.data!=null) synced = true;
       
       dispatch({
         type: types.DASHBOARD_UPDATE_INFOBOX,
         id,
-        update: Object.assign({}, update, {synced}),
+        update: Object.assign({}, update, {synced:false}),
       });
 
       //dispatch(DashboardActions.updateInfobox(id, update));
@@ -85,7 +70,14 @@ const DashboardActions = {
       dispatch(DashboardActions.fetchInfoboxData(Object.assign({}, getState().section.dashboard.infobox.find(i=>i.id===id))));
     };
   },
-  // updates layout item dimentions if type changed
+  setInfoboxData: function(id, update) {
+    return {
+      type: types.DASHBOARD_UPDATE_INFOBOX,
+      id,
+      update: Object.assign({}, update, {synced:true})
+    };
+  },
+  // updates layout item dimensions if type changed
   updateLayoutItem: function(id, type) {
     return function(dispatch, getState) {
 
@@ -133,7 +125,7 @@ const DashboardActions = {
       if (found && found.synced===true) {
       //if (found && found.data && found.data.length>0){
         console.log('found infobox data in memory');
-        return new Promise((() => found), (() => getState().query.errors));
+        return new Promise((resolve, reject) => resolve());
         //}
       }
 
@@ -142,13 +134,22 @@ const DashboardActions = {
 
         return dispatch(QueryActions.fetchLastSession(device, time))
         //.then(session => session)
-        .then(response => dispatch(DashboardActions.updateInfobox(id, {synced: true, index: response.index, showerId: response.id, device:response.device, data:response.data, period: "custom", time})))
-        .catch(error => { console.error(error); });
+        .then(response => 
+              dispatch(DashboardActions.setInfoboxData(id, {data: response.data, index: response.index, showerId: response.id, time})))
+              //dispatch(DashboardActions.updateInfobox(id, {synced: true, index: response.index, showerId: response.id, device:response.device, data:response.data, period: "custom", time})))
+        .catch(error => { 
+          console.error('Caught error in infobox data fetch:', error); 
+          dispatch(DashboardActions.setInfoboxData(id, {data: [], error})); });
       }
       else {
-        return dispatch(QueryActions.queryDeviceOrMeter(device, time))
-        .then(sessions =>  dispatch(DashboardActions.updateInfobox(id, {synced: true, data:sessions, time})))
-        .catch(error => { console.error(error); });
+        return dispatch(QueryActions.queryDeviceOrMeter(device, deviceType, time))
+        .then(data =>  
+              //dispatch(DashboardActions.updateInfobox(id, {synced: true, data:sessions, time})))
+        dispatch(DashboardActions.setInfoboxData(id, {data})))
+        .catch(error => { 
+          console.error('Caught error in infobox data fetch:', error); 
+          //dispatch(DashboardActions.updateInfobox(id, {error})); });
+          dispatch(DashboardActions.setInfoboxData(id, {data: [], error})); });
       }
     };
   },
