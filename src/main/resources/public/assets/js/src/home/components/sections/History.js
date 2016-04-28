@@ -11,6 +11,7 @@ var { SidebarLeft, SidebarRight } = require('../layout/Sidebars');
 var HistoryList = require('../SessionsList');
 
 //sub-containers
+var SessionData = require('../../containers/SessionData');
 var HistoryChartData = require('../../containers/HistoryChartData');
 
 //utils
@@ -225,6 +226,12 @@ var History = React.createClass({
         </div>
       
       </div>
+      
+      <SessionData 
+          firstname={this.props.firstname}
+          sessions={this.props.sessions} 
+          time={this.props.time} />
+
     </MainSection>
     );
   }

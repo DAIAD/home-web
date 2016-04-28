@@ -4,7 +4,6 @@ var bs = require('react-bootstrap');
 var { injectIntl } = require('react-intl');
 var { FormattedMessage, FormattedRelative } = require('react-intl');
 var { IMAGES } = require('../constants/HomeConstants');
-var SessionData = require('../containers/SessionData');
 
 var SessionsChart = require('./SessionsChart');
 
@@ -141,10 +140,6 @@ var SessionsList = React.createClass({
               ))
           }
         </ul>
-        <SessionData 
-          firstname={this.props.firstname}
-          sessions={this.props.sessions} 
-          time={this.props.time} />
         </div>
     );
   }
