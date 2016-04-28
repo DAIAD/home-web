@@ -9,9 +9,10 @@ var { Responsive, WidthProvider } = require('react-grid-layout');
 var ResponsiveGridLayout = WidthProvider(Responsive);
 var PureRenderMixin = require('react-addons-pure-render-mixin');
 
-const { IMAGES } = require('../../constants/HomeConstants');
-var MainSection = require('../MainSection');
+var MainSection = require('../layout/MainSection');
 var SessionsChart = require('../SessionsChart');
+
+const { IMAGES } = require('../../constants/HomeConstants');
 
 
 var timeUtil = require('../../utils/time');

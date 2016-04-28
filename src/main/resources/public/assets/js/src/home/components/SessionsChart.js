@@ -1,6 +1,6 @@
 var React = require('react');
 
-var Chart = require('./Chart');
+var Chart = require('./helpers/Chart');
 
 var SessionsChart = React.createClass({
 

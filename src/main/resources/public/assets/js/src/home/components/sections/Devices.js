@@ -4,7 +4,7 @@ var connect = require('react-redux').connect;
 var injectIntl = require('react-intl').injectIntl;
 var { FormattedMessage } = require('react-intl');
 
-var MainSection = require('../MainSection');
+var MainSection = require('../layout/MainSection');
 
 
 function Device (props) {
@@ -48,7 +48,7 @@ function DevicesForm (props) {
   const { intl, devices } = props;
   const _t = intl.formatMessage;
   return (
-    <form>
+    <form id="form-devices" style={{width: '100%', margin: '40px auto'}} >
       <bs.Accordion className="col-xs-10">
         {
           devices.map(function(device, i){

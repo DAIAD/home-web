@@ -4,11 +4,11 @@ var bs = require('react-bootstrap');
 var { Link } = require('react-router');
 var { injectIntl, FormattedMessage } = require('react-intl');
 
-var Constants = require('../constants/HomeConstants');
-var LocaleSwitcher = require('./LocaleSwitcher');
-var { Logout } = require('./LoginForm');
+var LocaleSwitcher = require('../LocaleSwitcher');
 
-const { STATIC_RECOMMENDATIONS, IMAGES } = require('../constants/HomeConstants'); 
+var { Logout } = require('../LoginForm');
+
+const { STATIC_RECOMMENDATIONS, IMAGES, NOTIFICATION_TITLE_LENGTH } = require('../../constants/HomeConstants'); 
 
 /* DAIAD Logo */
 function MainLogo() {
@@ -141,7 +141,7 @@ var NotificationMenuItem = React.createClass({
 });
 
 function NotificationList(props){
-  const maxLength = Constants.NOTIFICATION_TITLE_LENGTH;
+  const maxLength = NOTIFICATION_TITLE_LENGTH;
   return (
     <div className="notification-list">
     <ul className="list-unstyled">

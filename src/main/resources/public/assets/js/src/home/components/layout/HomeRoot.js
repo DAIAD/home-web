@@ -7,19 +7,19 @@ var { connect } = require('react-redux');
 var { Link } = require('react-router');
 
 //Constants
-var { IMAGES, PNG_IMAGES, MAIN_MENU } = require('../constants/HomeConstants');
+var { IMAGES, PNG_IMAGES, MAIN_MENU } = require('../../constants/HomeConstants');
 
 // Components
-var Header = require('../components/Header');
-var MainSection = require('../components/MainSection');
-var Footer = require('../components/Footer');
-var LoginPage = require('../components/sections/Login');
+var Header = require('./Header');
+var MainSection = require('./MainSection');
+var Footer = require('./Footer');
+var LoginPage = require('../sections/Login');
 
 // Actions
-var { login, logout } = require('../actions/UserActions');
-var { setLocale } = require('../actions/LocaleActions');
+var { login, logout } = require('../../actions/UserActions');
+var { setLocale } = require('../../actions/LocaleActions');
 
-var { getDeviceCount } = require('../utils/device');
+var { getDeviceCount } = require('../../utils/device');
 
 function MainSidebar (props) {
   const { menuItems } = props;

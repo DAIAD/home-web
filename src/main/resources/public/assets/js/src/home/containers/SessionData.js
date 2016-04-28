@@ -5,8 +5,8 @@ var injectIntl = require('react-intl').injectIntl;
 
 var { getChartDataByFilter } = require('../utils/chart');
 
-//var SessionsList = require('../components/SessionsList');
 var SessionModal = require('../components/Session');
+
 var HistoryActions = require('../actions/HistoryActions');
 
 function mapStateToProps(state, ownProps) {

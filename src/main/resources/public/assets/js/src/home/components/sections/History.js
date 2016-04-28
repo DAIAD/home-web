@@ -1,23 +1,20 @@
 var React = require('react');
+var { Link } = require('react-router');
 var { FormattedMessage, FormattedDate } = require('react-intl');
 var bs = require('react-bootstrap');
 var Select = require('react-select');
-
-var { Link } = require('react-router');
-
-var MainSection = require('../MainSection');
-var Topbar = require('../Topbar');
-var { SidebarLeft, SidebarRight } = require('../Sidebars');
-
-var HistoryList = require('../SessionsList');
 var CheckboxGroup = require('react-checkbox-group');
+
+var MainSection = require('../layout/MainSection');
+var Topbar = require('../layout/Topbar');
+var { SidebarLeft, SidebarRight } = require('../layout/Sidebars');
+var HistoryList = require('../SessionsList');
 
 //sub-containers
 var HistoryChartData = require('../../containers/HistoryChartData');
 
 //utils
 var timeUtil = require('../../utils/time');
-
 const { IMAGES } = require('../../constants/HomeConstants');
 
 function TimeNavigator(props) {

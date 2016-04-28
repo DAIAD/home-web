@@ -169,7 +169,7 @@ button:hover, button:focus, .btn:hover, .btn:focus, .btn[disabled]:focus, .btn[d
   color: #fff;
 }
 
-input[type="text"], input[type="password"] {
+input[type="text"], input[type="password"], input[type="email"] {
   text-align: center;
   border: 1px #2D3580 solid;
   border-radius: 0;
@@ -873,6 +873,11 @@ input[name="amphiro-devices"] {
 .notification-details {
 	margin-top: 50px;
 	font-size: 1.1em;
+}
+
+/* Profile */
+
+div[class^="section.profile"]{
 }
 
 /* React grid layout */

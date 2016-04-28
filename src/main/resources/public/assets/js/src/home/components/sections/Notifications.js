@@ -5,11 +5,11 @@ var bs = require('react-bootstrap');
 
 const { STATIC_RECOMMENDATIONS } = require('../../constants/HomeConstants'); 
 
-var Topbar = require('../Topbar');
-var { SidebarLeft } = require('../Sidebars');
-var MainSection = require('../MainSection');
+var Topbar = require('../layout/Topbar');
+var { SidebarLeft } = require('../layout/Sidebars');
+var MainSection = require('../layout/MainSection');
 
-var { NotificationList } = require('../Header');
+var { NotificationList } = require('../layout/Header');
 
 
 function NotificationMessage (props) {

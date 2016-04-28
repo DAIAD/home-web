@@ -31,9 +31,10 @@ function mapStateToProps(state, ownProps) {
 }
 
 function mapDispatchToProps(dispatch) {
-  return Object.assign({},
-                        assign(bindActionCreators(DashboardActions, dispatch)),
-                        {link: options => dispatch(HistoryActions.linkToHistory(options))}); 
+  return Object.assign({}, 
+                       bindActionCreators(DashboardActions, dispatch),
+                       {link: options => dispatch(HistoryActions.linkToHistory(options))}
+                      ); 
 
 }
 

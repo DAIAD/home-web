@@ -6,7 +6,6 @@ var { FormattedMessage, FormattedRelative } = require('react-intl');
 var { IMAGES } = require('../constants/HomeConstants');
 var SessionData = require('../containers/SessionData');
 
-var Chart = require('./Chart');
 var SessionsChart = require('./SessionsChart');
 
 

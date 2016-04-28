@@ -9,8 +9,7 @@ var FormattedRelative = require('react-intl').FormattedRelative;
 var SessionsChart = require('./SessionsChart');
 
 var { SHOWER_METRICS, IMAGES } = require('../constants/HomeConstants'); 
-var MainSection = require('./MainSection');
-var { SidebarLeft } = require('./Sidebars');
+var { SidebarLeft } = require('./layout/Sidebars');
 var timeUtil = require('../utils/time');
 
 

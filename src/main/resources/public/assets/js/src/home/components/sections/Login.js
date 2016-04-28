@@ -1,7 +1,7 @@
 var React = require('react');
 var { injectIntl, FormattedMessage } = require('react-intl');
 
-var MainSection = require('../MainSection');
+var MainSection = require('../layout/MainSection');
 var { Login } = require('../LoginForm');
 
 
