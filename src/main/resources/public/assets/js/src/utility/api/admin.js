@@ -8,7 +8,7 @@ var AdminAPI = {
   },
 
   getSessions : function(userKey) {
-    return api.json('/action/device/session/query', {
+    return api.json('/action/device/index/session/query', {
       userKey : userKey,
       deviceKey : null,
       type: 'SLIDING',
