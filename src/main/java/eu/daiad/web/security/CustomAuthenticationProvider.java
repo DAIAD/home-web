@@ -31,7 +31,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 	@Autowired
 	private IUserRepository userRepository;
 
-	private RegexRequestMatcher apiMatcher = new RegexRequestMatcher("/api/v1/.*", null);
+	private RegexRequestMatcher apiMatcher = new RegexRequestMatcher("/api/v\\d+/.*", null);
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {

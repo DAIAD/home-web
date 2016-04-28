@@ -8,15 +8,11 @@ var AdminAPI = {
   },
 
   getSessions : function(userKey) {
-    var endDate = moment().valueOf();
-    var startDate = moment().subtract(30, 'days').valueOf();
-
     return api.json('/action/device/session/query', {
       userKey : userKey,
-      granularity : 1,
       deviceKey : null,
-      startDate : startDate,
-      endDate : endDate
+      type: 'SLIDING',
+      length : 100
     });
   },
 

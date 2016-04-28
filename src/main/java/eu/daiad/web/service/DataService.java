@@ -38,7 +38,7 @@ import eu.daiad.web.model.query.PopulationFilter;
 import eu.daiad.web.model.query.UserPopulationFilter;
 import eu.daiad.web.model.query.UtilityPopulationFilter;
 import eu.daiad.web.model.security.AuthenticatedUser;
-import eu.daiad.web.repository.application.IAmphiroMeasurementRepository;
+import eu.daiad.web.repository.application.IAmphiroTimeOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
@@ -56,7 +56,7 @@ public class DataService implements IDataService {
 	private IDeviceRepository deviceRepository;
 
 	@Autowired
-	IAmphiroMeasurementRepository amphiroRepository;
+	IAmphiroTimeOrderedRepository amphiroRepository;
 
 	@Autowired
 	IWaterMeterMeasurementRepository meterRepository;

@@ -42,7 +42,7 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
     EntityManager entityManager;
 
     @Autowired
-    IAmphiroMeasurementRepository iAmphiroMeasurementRepository;
+    IAmphiroTimeOrderedRepository iAmphiroMeasurementRepository;
     
     @Autowired
     MessageAggregatesContainer messageAggregatesContainer;

@@ -32,4 +32,15 @@ public class AmphiroMeasurementCollection extends DeviceMeasurementCollection {
 		return EnumDeviceType.AMPHIRO;
 	}
 
+	public void removeSession(int index) {
+		if (measurements != null) {
+			for (int i = measurements.size() - 1; i >= 0; i--) {
+				if (measurements.get(i).getSessionId() == sessions.get(index).getId()) {
+					measurements.remove(i);
+				}
+			}
+		}
+		sessions.remove(index);
+	}
+
 }

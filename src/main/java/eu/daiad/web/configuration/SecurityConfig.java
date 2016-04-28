@@ -66,7 +66,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 			private Pattern allowedMethods = Pattern.compile("^(GET|HEAD|TRACE|OPTIONS)$");
 
-			private RegexRequestMatcher apiMatcher = new RegexRequestMatcher("/api/v1/.*", null);
+			private RegexRequestMatcher apiMatcher = new RegexRequestMatcher("/api/v\\d+/.*", null);
 
 			@Override
 			public boolean matches(HttpServletRequest request) {
