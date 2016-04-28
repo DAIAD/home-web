@@ -20,17 +20,21 @@ module.exports =
     <Route path="/" component={HomeApp} >
         <IndexRoute component={DashboardData} />
         <Route path="/dashboard" component={DashboardData} />
-        <Route path="/history" component={HistoryData} />
+        <Route path="/history" component={HistoryData}>
+          <IndexRoute component={HistoryData} />
+          <Route path="/history/explore" component={HistoryData} />
+          <Route path="/history/forecast" component={HistoryData} />
+        </Route>
         <Route path="/commons" component={Commons} />
         <Route path="/notifications" component={Notifications} />
         <Route path="/notifications/alerts" component={Notifications} />
         <Route path="/notifications/tips" component={Notifications} />
         <Route path="/notifications/insights" component={Notifications} />
         <Route path="/notifications/:id" component={Notification} />
-        <Route path="/settings" component={Settings} >
-          <IndexRoute component={Devices} />
-          <Route path="profile" component={Profile} />
-          <Route path="devices" component={Devices} />
+        <Route path="/settings" component={Profile} >
+          <IndexRoute component={Profile} />
+          <Route path="/settings/profile" component={Profile} />
         </Route>
+        <Route path="settings/devices" component={Devices} />
       </Route>
     );

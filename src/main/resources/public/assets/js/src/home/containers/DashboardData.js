@@ -13,10 +13,10 @@ var DashboardActions = require('../actions/DashboardActions');
 
 var timeUtil = require('../utils/time');
 
-var { getDeviceByKey, getDeviceNameByKey, getDeviceKeysByType, getDeviceTypeByKey, getAvailableDevices, getAvailableDeviceKeys, getAvailableMeters, getDefaultDevice, getLastSession, reduceMetric, reduceSessions, getDataSessions, getDataMeasurements, getDataShowersCount } = require('../utils/device');
+var { getDeviceByKey, getDeviceNameByKey, getDeviceKeysByType, getDeviceTypeByKey, getAvailableDevices, getAvailableDeviceKeys, getAvailableMeters, getDefaultDevice, getLastSession, reduceMetric, reduceSessions, getDataSessions, getDataMeasurements, getShowersCount } = require('../utils/device');
 
 var { getEnergyClass } = require('../utils/general');
-var { getFilteredData } = require('../utils/chart');
+var { getChartDataByFilter } = require('../utils/chart');
 
 
 function mapStateToProps(state, ownProps) {
@@ -38,69 +38,22 @@ function mapDispatchToProps(dispatch) {
 }
 
 function mergeProps(stateProps, dispatchProps, ownProps) {
-  //available infobox options
   const periods = [
-    { id: "day", title: "Day", value: timeUtil.today() }, 
-    { id: "week", title: "Week", value: timeUtil.thisWeek() }, 
-    { id: "month", title: "Month", value: timeUtil.thisMonth() }, 
-    { id: "year", title: "Year", value: timeUtil.thisYear() }
-  ];
-  
-  let metrics = [
-    { id: "volume", title: "Volume" }, 
-    { id: "energy", title: "Energy" },
-    { id: "temperature", title: "Temperature" },
-    { id: "duration", title: "Duration" }
-  ];
- 
-  const types = [
-    { id: "stat", title: "Statistic" },
-    { id: "chart", title: "Chart" }
-  ];
-
-  const chartSubtypes = [
-    { id: "total", title: "Total" },
-    {  id: "last", title: "Last" }
-  ];
-
-  const device = stateProps.tempInfoboxData.device || (stateProps.devices.length?stateProps.devices[0].deviceKey:"none");
-  metrics = getDeviceTypeByKey(stateProps.devices, device)==='METER'?metrics.filter(x=>x.id==='volume'):metrics;
-
-  //default values 
-  const metric = stateProps.tempInfoboxData.metric || metrics[0].id;
-  let time = stateProps.tempInfoboxData.time || periods[0].value;
-  const period = stateProps.tempInfoboxData.period || periods[0].id;
-  const type = stateProps.tempInfoboxData.type || types[0].id;
-
-  const subtypes = chartSubtypes;
-  const subtype = subtypes?(stateProps.tempInfoboxData.subtype || subtypes[0].id):"total";
-  const title = "";
-  
-  time = subtype==='last'?Object.assign(time, {granularity:0}):time;
-  //const subtypes = type==='chart'?chartSubtypes:null;
-
+      { id: "day", title: "Day", value: timeUtil.today() }, 
+      { id: "week", title: "Week", value: timeUtil.thisWeek() }, 
+      { id: "month", title: "Month", value: timeUtil.thisMonth() }, 
+      { id: "year", title: "Year", value: timeUtil.thisYear() }
+    ];
   return assign(ownProps,
                dispatchProps,
                assign(stateProps,
                       {
                         chartFormatter: intl => (x) => intl.formatTime(x, { hour:'numeric', minute:'numeric'}),
-                          //amphiros: getAvailableDevices(stateProps.devices).map(dev=>dev.deviceKey),
-                          //meters: getAvailableMeters(stateProps.devices).map(dev=>dev.deviceKey),
                         infoboxData: transformInfoboxData(stateProps.infoboxes, stateProps.devices, dispatchProps.link),
-                           periods,
-                           types,
-                           subtypes,
-                           metrics,
-                           tempInfoboxData: { 
-                             title, 
-                             type, 
-                             subtype,
-                             period, 
-                             time, 
-                             metric,
-                             device,
-                           }
-                           
+                        periods,
+                        //  types,
+                        //   subtypes,
+                        //   metrics,
                      }));
 }
 
@@ -126,10 +79,10 @@ function transformInfoboxData (infoboxes, devices, link) {
       
       chartData = [{
         title: getDeviceNameByKey(devices, device), 
-        data:  getFilteredData(lastShowerMeasurements , infobox.metric)
+        data: getChartDataByFilter(lastShowerMeasurements, infobox.metric)
       }];
     
-      linkToHistory =  () => link({time, showerId, period, device:[device], metric, index, data});
+      linkToHistory =  () => link({time, showerId, period, deviceType, device:[device], metric, index, data});
     }
     else if (type==='tip') {
       tip = HomeConstants.STATIC_RECOMMENDATIONS[Math.floor(Math.random()*3)].description;
@@ -143,7 +96,7 @@ function transformInfoboxData (infoboxes, devices, link) {
       
       if (subtype === 'efficiency') { 
         if (metric === 'energy') {
-          reducedData = getEnergyClass(reducedData / getDataShowersCount(devices, data)); 
+          reducedData = getEnergyClass(reducedData / getShowersCount(devices, data)); 
         }
       }
       else {
@@ -153,10 +106,10 @@ function transformInfoboxData (infoboxes, devices, link) {
 
       chartData = data.map(devData => ({ 
         title: getDeviceNameByKey(devices, devData.deviceKey), 
-        data: getFilteredData(getDataSessions(devices, devData, subtype, index), infobox.metric, getDeviceTypeByKey(devices, devData.device))
+        data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, getDeviceTypeByKey(devices, devData.device)) 
       }));
      
-     linkToHistory =  () => link({id, time, period, device, metric, index, data});
+     linkToHistory =  () => link({id, time, period, deviceType, device, metric, index, data});
     }
 
     return Object.assign({}, 

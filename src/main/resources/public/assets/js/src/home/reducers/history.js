@@ -1,24 +1,24 @@
 var types = require('../constants/ActionTypes');
 
 var { updateOrAppendToSession } = require('../utils/device');
-var { thisWeek } = require('../utils/time');
 
 
 var history = function (state, action) {
   //initial state
   if (state === undefined) {
     state = {
-      filter: "volume",
-      timeFilter: "week",
+      filter: "difference",
+      timeFilter: "year",
       activeDevice: [],
+      activeDeviceType: "METER",
       activeSessionFilter: "volume",
       activeSessionIndex: null,
-      synced: true,
+      synced: false,
       comparison: null,
       data: [],
       comparisonData: [],
+      time: {}
     };
-    state.time = Object.assign({}, {granularity:2}, thisWeek());
   }
    
   switch (action.type) {
@@ -58,7 +58,12 @@ var history = function (state, action) {
       return Object.assign({}, state, {
         activeDevice: action.deviceKey
       });
-    
+
+    case types.HISTORY_SET_ACTIVE_DEVICE_TYPE:
+      return Object.assign({}, state, {
+        activeDeviceType: action.deviceType
+      });
+   
     case types.HISTORY_RESET_ACTIVE_DEVICE:
       return Object.assign({}, state, {
         activeDevice: null

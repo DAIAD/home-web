@@ -1,5 +1,5 @@
 
-const constants = {
+module.exports = {
   IMAGES : "/assets/images/home/svg",
   PNG_IMAGES : "/assets/images/home/png",
   NOTIFICATION_TITLE_LENGTH: 50,
@@ -7,23 +7,58 @@ const constants = {
   MAIN_MENU: [{
     name: "dashboard",
     title: "section.dashboard",
-    image: "dashboard.svg",
-    //image: "images/svg/dashboard-side-off.svg",
-    route:"/dashboard"
+    image: "dashboard-side-on.svg",
+    route:"/dashboard",
+    children: []
   },
   {
     name: "history",
     title: "section.history",
-    //image: "images/svg/stats-new-side-off.svg",
-    image: "dashboard.svg",
-    route:"/history"
+    image: "stats-new-side-on.svg",
+    route:"/history",
+    children: [
+      {
+        name: "explore",
+        title: "section.explore",
+        image: "dashboard.svg",
+        route: "/history/explore",
+      },
+      {
+        name: "forecast",
+        title: "section.forecast",
+        image: "goals.svg",
+        route: "/history/forecast",
+      },
+    ]
   },
   {
     name: "commons",
     title: "section.commons",
     image: "dashboard.svg",
-    route:"/commons"
-  }],
+    route:"/commons",
+    children: []
+  },
+  {
+    name: "settings",
+    title: "section.settings",
+    image: "settings.svg",
+    route:"/settings",
+    children: [
+      {
+        name: "profile",
+        title: "section.profile",
+        image: "dashboard.svg",
+        route:"/settings/profile",
+      },
+      {
+        name: "devices",
+        title: "section.devices",
+        image: "dashboard.svg",
+        route:"/settings/devices",
+      },
+    ]
+  }
+  ],
   SHOWER_METRICS: [
       {id:'devName',  mu:'', title:'history.device', details: 'history.durationDetails', clickable: false}, 
       {id:'count',mu:'', title:'history.count', details:'history.countDetails', clickable: true},  
@@ -67,5 +102,4 @@ const constants = {
     }
   ]
 };
-module.exports = constants;
 

@@ -50,7 +50,8 @@ const getAvailableDeviceKeys = function(devices) {
 
 const getDeviceByKey = function(devices, key) {
   //TODO: if !key added below error is thrown, why?
-  if (!devices ||!Array.isArray(devices)) throw new Error (`devices ${devices} must be of type array`);
+  //if (!devices ||!Array.isArray(devices)) throw new Error (`devices ${devices} must be of type array`);
+  if (!devices ||!Array.isArray(devices)) return {};
   return devices.find((device) => (device.deviceKey === key));
 };
 
@@ -150,7 +151,7 @@ const getDataSessions = function (devices, data) {
   }
 };
 
-const getDataShowersCount = function (devices, data) {
+const getShowersCount = function (devices, data) {
   return reduceSessions(devices, data).map(s => s.count?s.count:1).reduce((c, p) => c + p, 0);
   //return data.map(d=>getDataSessions(devices, data).length).reduce((c, p)=> c+p, 0);
 };
@@ -175,12 +176,12 @@ const reduceSessions = function(devices, data) {
                                index:idx, 
                                devType,
                                device: device.deviceKey,
-                               devName:getDeviceNameByKey(devices, session.device),
-                               volume: devType==='METER'?session.difference:session.volume,
-                               duration:getFriendlyDuration(session.duration), 
-                               energyClass:getEnergyClass(session.energy), 
+                               devName:getDeviceNameByKey(devices, device.deviceKey),
+                               //volume: devType==='METER'?session.difference:session.volume,
+                               duration: getFriendlyDuration(session.duration), 
+                               energyClass: getEnergyClass(session.energy), 
                                
-                               better:array[idx-1]?(devType==='METER'?(array[idx].difference<=array[idx-1].difference?true:false):(array[idx].volume<=array[idx-1].volume?true:false)):null,
+                               better: array[idx-1]?(devType==='METER'?(array[idx].difference<=array[idx-1].difference?true:false):(array[idx].volume<=array[idx-1].volume?true:false)):null,
                                hasChartData: session.measurements?true:false 
 
                              });
@@ -196,7 +197,7 @@ const reduceSessions = function(devices, data) {
 };
 
 const reduceMetric = function(devices, data, metric) {
-  const showers = getDataShowersCount(devices, data);                     
+  const showers = getShowersCount(devices, data);                     
   if (metric === 'showers') return `${showers} showers`;
 
   let reducedMetric = data.map(it => getDataSessions(devices, it)
@@ -209,8 +210,8 @@ const reduceMetric = function(devices, data, metric) {
   reducedMetric = !isNaN(parseInt(reducedMetric))?parseInt(reducedMetric).toFixed(1):0;
 
   let mu = '';
-  if (metric === 'volume') mu = 'lt';
-  else if (metric === 'energy') mu = 'kWh';
+  if (metric === 'volume' || metric === 'difference') mu = 'lt';
+  else if (metric === 'energy') mu = 'W';
   else if (metric === 'duration') mu = 'sec';
   else if (metric === 'temperature') mu = '°C';
 
@@ -240,5 +241,5 @@ module.exports = {
   reduceMetric,
   getDataSessions,
   getDataMeasurements,
-  getDataShowersCount,
+  getShowersCount,
 };

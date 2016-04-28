@@ -8,11 +8,27 @@ const getTimestampIndex = function(points, timestamp) {
     return points.findIndex((x) => (x[0]===timestamp));
 };
 
-//TODO: refactor this monster
-const addPreviousValues = function(data) {
-  return data.map((val, idx, arr) => [val[0], arr.map((array) => array[1]?array[1]:0).reduce((prev, curr, idx2, array, initial) => idx2<=idx?prev+curr:prev)]);
+//get session data in ready to chart with echarts form
+const getChartDataByFilter = function(data, filter, devType='AMPHIRO') {
+  if (!data || !data.length) return [];
+  /*  
+  switch (filter) {
+    case "volume":
+    case "difference":
+    case "energy":
+      */
+   return data.map(session => session[filter] == null ? [] :
+                      [new Date(session.timestamp), session[filter]]);
 };
 
+const getTransferredChartDataByFilter = function(data, filter, timeFilter, devType='AMPHIRO') {
+  if (!data || !data.length) return [];
+
+   return data.map(session => session[filter] == null ? [] :
+                      [new Date(moment(session.timestamp).add(1, timeFilter)), session[filter]]);
+};
+
+/*
 const getFilteredData = function(data, filter, devType='AMPHIRO', timeFilter=null, transfer=false) {
   if (!data || !data.length) return [];
   
@@ -34,7 +50,9 @@ const getFilteredData = function(data, filter, devType='AMPHIRO', timeFilter=nul
       return filteredData.map(x => [new Date(x[0]),x[1]]);
 
     case "volume":
+    case "difference":
     case "energy":
+      
       data.forEach(function(dato) {
         if (!dato[filter]){
           return;
@@ -76,7 +94,8 @@ const getFilteredData = function(data, filter, devType='AMPHIRO', timeFilter=nul
   }
   return;
 };
-
+*/
 module.exports = {
-  getFilteredData
+  getChartDataByFilter,
+  getTransferredChartDataByFilter
 };

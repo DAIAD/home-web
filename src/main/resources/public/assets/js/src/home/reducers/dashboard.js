@@ -9,21 +9,13 @@ var dashboard = function (state, action) {
       layout: [
         {i: "1", x:0, y:0, w:2, h:2, minW:2, minH:2},
         {i: "2", x:2, y:0, w:2, h:2, minW:2, minH:2},
+        {i: "3", x:2, y:0, w:2, h:1, minW:2, minH:1},
         {i: "4", x:4, y:0, w:2, h:2, minW:2, minH:2},
         {i: "5", x:4, y:1, w:2, h:1, minW:2, minH:1},
         {i: "6", x:0, y:2, w:2, h:2, minW:2, minH:2},
         {i: "7", x:0, y:2, w:2, h:1, minW:2, minH:1},
         {i: "8", x:2, y:2, w:2, h:1, minW:2, minH:1},
       ],
-      tempInfoboxData: {
-        title: null,
-        type: null,
-        subtype: null,
-        metric: null,
-        device: null,
-        period: null,
-        time: null
-      },
       infobox: [
           {
             id: "1", 
@@ -39,9 +31,20 @@ var dashboard = function (state, action) {
             id: "2", 
             title: "Last Shower", 
             type: "chart",
+            period: "week",
             subtype: "last",
             deviceType: "AMPHIRO",
             metric: "volume",
+            data: [],
+          },
+          {
+            id: "3", 
+            title: "Energy",
+            type: "stat",
+            subtype: "total",
+            period: "year",
+            deviceType: "AMPHIRO",
+            metric: "energy",
             data: [],
           },
           {
@@ -50,7 +53,7 @@ var dashboard = function (state, action) {
             type: "chart",
             deviceType: "METER",
             period: "year",
-            metric: "volume",
+            metric: "difference",
             data: [],
         },
         {
@@ -80,31 +83,6 @@ var dashboard = function (state, action) {
         return Object.assign({}, state, {
           mode: action.mode
         });
-
-    case types.DASHBOARD_UPDATE_INFOBOX_TEMP: {
-      let newTemp = Object.assign({}, state.tempInfoboxData, action.data);
-       //protection against storing values other than supported
-      const { title, type, subtype, time, period, device, metric  } = newTemp;
-      newTemp = { title, type, subtype, period, time, device, metric};
-     
-      return Object.assign({}, state, {
-        tempInfoboxData: newTemp
-      });
-
-    }
-
-    case types.DASHBOARD_RESET_INFOBOX_TEMP: 
-      return Object.assign({}, state, {
-        tempInfoboxData: {
-          title: null,
-          type: null,
-          subtype: null,
-          metric: null,
-          device: null,
-          period: null,
-          time: null
-        },
-      });
 
     case types.DASHBOARD_ADD_INFOBOX: {
       let newInfobox = state.infobox.slice();
@@ -137,7 +115,19 @@ var dashboard = function (state, action) {
         infobox: newInfobox
       });
     }
+  
+    case types.DASHBOARD_SET_INFOBOX_DATA: {
+      let newInfobox = state.infobox.slice();
+      //TODO: same as above 
+      let idx = newInfobox.findIndex(obj => obj.id === action.id);
 
+      newInfobox[idx] = Object.assign({}, newInfobox[idx], action.update);
+      //newInfobox[idx].data = action.data;
+      
+      return Object.assign({}, state, {
+        infobox: newInfobox
+      });
+    }
     case types.DASHBOARD_UPDATE_LAYOUT: {
       return Object.assign({}, state, {
         layout: action.layout

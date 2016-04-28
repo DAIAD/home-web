@@ -7,24 +7,26 @@ var History = require('../components/sections/History');
 
 var HistoryActions = require('../actions/HistoryActions');
 
-var { getReducedDeviceType, getDeviceByKey, getDeviceNameByKey, getDeviceTypeByKey, getDefaultDevice, reduceSessions, reduceMetric } = require('../utils/device');
+var { getDeviceByKey, getDeviceNameByKey, getAvailableDevices, getDeviceTypeByKey, getDefaultDevice, reduceSessions, reduceMetric } = require('../utils/device');
 var timeUtil = require('../utils/time');
 var { getFriendlyDuration, getEnergyClass } = require('../utils/general');
-var { getFilteredData } = require('../utils/chart');
 
 function mapStateToProps(state, ownProps) {
   const defaultDevice = getDefaultDevice(state.user.profile.devices);
   const deviceKey = defaultDevice?defaultDevice.deviceKey:null;
 
   return {
+    firstname: state.user.profile.firstname,
     time: state.section.history.time,
     activeDevice: state.section.history.activeDevice,
-    //devType: getReducedDeviceType(state.user.profile.devices, state.section.history.activeDevice),
+    activeDeviceType: state.section.history.activeDeviceType,
+    errors: state.query.errors,
     //activeSessionIndex: state.section.history.activeSessionIndex,
     //activeSessionFilter: state.section.history.activeSessionFilter,
     metricFilter: state.section.history.filter,
     timeFilter: state.section.history.timeFilter,
     devices: state.user.profile.devices?state.user.profile.devices:[],
+    synced: state.section.history.synced,
     data: state.section.history.data,
     comparison: state.section.history.comparison
   };
@@ -35,16 +37,20 @@ function mapDispatchToProps(dispatch) {
 }
 
 function mergeProps(stateProps, dispatchProps, ownProps) {
-  
-  const devType = getReducedDeviceType(stateProps.devices, stateProps.activeDevice);
-  const allMetrics = [
+  const devType = stateProps.activeDeviceType;
+  const devMetrics = [
     {id:'showers', title:'Showers'},
     {id:'volume', title:'Volume'},
     {id:'energy', title:'Energy'},
     {id:'duration', title:'Duration'},
     {id:'temperature', title:'Temperature'}
   ];
+  
+  const meterMetrics = [
+    {id:'difference', title:'Volume'},
+  ];
 
+  const metrics = devType === 'AMPHIRO' ? devMetrics : (devType === 'METER' ? meterMetrics : [] );
   return Object.assign(
     {}, 
     ownProps, 
@@ -52,11 +58,12 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
     Object.assign({}, 
                   stateProps, 
                   { 
-                    nextPeriod: timeUtil.getNextPeriod(stateProps.timeFilter, stateProps.time.startDate), 
-                    previousPeriod: timeUtil.getPreviousPeriod(stateProps.timeFilter, stateProps.time.endDate),
-                    metrics: devType==='AMPHIRO'?allMetrics:allMetrics.filter(m=>m.id==='volume'),
+                    nextPeriod: stateProps.time?timeUtil.getNextPeriod(stateProps.timeFilter, stateProps.time.startDate):{}, 
+                    previousPeriod: stateProps.time?timeUtil.getPreviousPeriod(stateProps.timeFilter, stateProps.time.endDate):{},
+                    metrics,
                     reducedMetric: reduceMetric(stateProps.devices, stateProps.data, stateProps.metricFilter),
-                    sessions: reduceSessions(stateProps.devices, stateProps.data)
+                    sessions: reduceSessions(stateProps.devices, stateProps.data),
+                    amphiros: getAvailableDevices(stateProps.devices),
                   }));
 }
 

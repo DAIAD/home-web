@@ -7,7 +7,7 @@ var SessionsChart = require('../components/SessionsChart');
 var HistoryActions = require('../actions/HistoryActions');
 
 var { selectTimeFormatter } = require('../utils/time');
-var { getFilteredData } = require('../utils/chart');
+var { getChartDataByFilter, getTransferredChartDataByFilter } = require('../utils/chart');
 var { getDeviceTypeByKey, getDeviceNameByKey, getDataSessions } = require('../utils/device');
 
 
@@ -30,12 +30,11 @@ function mapDispatchToProps(dispatch) {
   return {};
 }
 function mergeProps(stateProps, dispatchProps, ownProps) {
-  console.log('in history chart data merge props');
 
   const comparison = stateProps.comparisonData.map(devData =>
                                                    ({
                                                      title: `${getDeviceNameByKey(stateProps.devices, devData.deviceKey)} (previous ${stateProps.timeFilter})`, 
-                                                     data:getFilteredData(getDataSessions(stateProps.devices, devData), stateProps.filter, 'METER', stateProps.timeFilter, true)
+                                                     data: getTransferredChartDataByFilter(getDataSessions(stateProps.devices, devData), stateProps.filter, stateProps.timeFilter, getDeviceTypeByKey(stateProps.devices, devData.deviceKey))
                                                    })
                                                   );
                                                   
@@ -48,7 +47,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                                          stateProps.data.map(devData =>
                                                              ({
                                                              title: getDeviceNameByKey(stateProps.devices, devData.deviceKey), 
-  data: getFilteredData(getDataSessions(stateProps.devices, devData), stateProps.filter)
+                                                             data: getChartDataByFilter(getDataSessions(stateProps.devices, devData), stateProps.filter, getDeviceTypeByKey(stateProps.devices, devData.deviceKey))
                                                              })).concat(comparison),
                          xMin: stateProps.time.startDate,
                          xMax: stateProps.time.endDate,
