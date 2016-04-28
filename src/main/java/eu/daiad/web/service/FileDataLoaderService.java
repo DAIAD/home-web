@@ -107,25 +107,29 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 					Double longitude = getDoubleFromCell(row, configuration.getLongitudeCellIndex());
 					Double latitude = getDoubleFromCell(row, configuration.getLatitudeCellIndex());
 
-					if ((!StringUtils.isBlank(username)) && (!StringUtils.isBlank(serial)) && (longitude != null)
-									&& (latitude != null)) {
-						Point point = geometryFactory.createPoint(new Coordinate(longitude.doubleValue(), latitude
-										.doubleValue()));
+					// User name (email) and meter serial number are required
+					if ((!StringUtils.isBlank(username)) && (!StringUtils.isBlank(serial))) {
+						// Location is set only if both longitude and latitude
+						// are set
+						Point location = null;
+						if ((longitude != null) && (latitude != null)) {
+							location = geometryFactory.createPoint(new Coordinate(longitude.doubleValue(), latitude
+											.doubleValue()));
 
-						Geometry transformedPoint = point;
-						if (configuration.getSourceReferenceSystem().getSrid() != configuration
-										.getTargetReferenceSystem().getSrid()) {
-							CoordinateReferenceSystem sourceCRS = CRS.decode(configuration.getSourceReferenceSystem()
-											.toString());
-							CoordinateReferenceSystem targetCRS = CRS.decode(configuration.getTargetReferenceSystem()
-											.toString());
+							if (configuration.getSourceReferenceSystem().getSrid() != configuration
+											.getTargetReferenceSystem().getSrid()) {
+								CoordinateReferenceSystem sourceCRS = CRS.decode(configuration
+												.getSourceReferenceSystem().toString());
+								CoordinateReferenceSystem targetCRS = CRS.decode(configuration
+												.getTargetReferenceSystem().toString());
 
-							MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS, false);
-							transformedPoint = JTS.transform(point, transform);
-							transformedPoint.setSRID(configuration.getTargetReferenceSystem().getSrid());
+								MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS, false);
+								location = (Point) JTS.transform(location, transform);
+								location.setSRID(configuration.getTargetReferenceSystem().getSrid());
+							}
 						}
 
-						this.registerMeter(input.getName(), username, serial, transformedPoint);
+						this.registerMeter(input.getName(), username, serial, location);
 					}
 				}
 			} catch (FactoryException fe) {
