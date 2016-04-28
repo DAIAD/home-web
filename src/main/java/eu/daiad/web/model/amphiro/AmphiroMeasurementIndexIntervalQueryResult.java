@@ -4,17 +4,17 @@ import java.util.ArrayList;
 
 import eu.daiad.web.model.RestResponse;
 
-public class AmphiroMeasurementQueryResult extends RestResponse {
+public class AmphiroMeasurementIndexIntervalQueryResult extends RestResponse {
 
 	private ArrayList<AmphiroDataSeries> series = null;
 
-	public AmphiroMeasurementQueryResult() {
+	public AmphiroMeasurementIndexIntervalQueryResult() {
 		super();
-		
+
 		this.series = new ArrayList<AmphiroDataSeries>();
 	}
 
-	public AmphiroMeasurementQueryResult(String code, String description) {
+	public AmphiroMeasurementIndexIntervalQueryResult(String code, String description) {
 		super(code, description);
 	}
 

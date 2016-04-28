@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.amphiro.AmphiroMeasurementQuery;
-import eu.daiad.web.model.amphiro.AmphiroMeasurementQueryResult;
-import eu.daiad.web.model.amphiro.AmphiroSessionCollectionQuery;
-import eu.daiad.web.model.amphiro.AmphiroSessionQuery;
+import eu.daiad.web.model.amphiro.AmphiroMeasurementIndexIntervalQuery;
+import eu.daiad.web.model.amphiro.AmphiroMeasurementIndexIntervalQueryResult;
+import eu.daiad.web.model.amphiro.AmphiroSessionCollectionIndexIntervalQuery;
+import eu.daiad.web.model.amphiro.AmphiroSessionIndexIntervalQuery;
 import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
@@ -33,7 +33,7 @@ import eu.daiad.web.model.meter.WaterMeterStatusQuery;
 import eu.daiad.web.model.meter.WaterMeterStatusQueryResult;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
-import eu.daiad.web.repository.application.IAmphiroMeasurementRepository;
+import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
@@ -50,7 +50,7 @@ public class SearchController extends BaseController {
 	private IDeviceRepository deviceRepository;
 
 	@Autowired
-	private IAmphiroMeasurementRepository amphiroMeasurementRepository;
+	private IAmphiroIndexOrderedRepository amphiroIndexOrderedRepository;
 
 	@Autowired
 	private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
@@ -173,8 +173,8 @@ public class SearchController extends BaseController {
 
 	@RequestMapping(value = "/action/device/measurement/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public RestResponse getAmphiroMeasurements(@AuthenticationPrincipal AuthenticatedUser user,
-					@RequestBody AmphiroMeasurementQuery query) {
+	public RestResponse getAmphiroMeasurements1(@AuthenticationPrincipal AuthenticatedUser user,
+					@RequestBody AmphiroMeasurementIndexIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -182,7 +182,7 @@ public class SearchController extends BaseController {
 
 			query.setUserKey(user.getKey());
 
-			AmphiroMeasurementQueryResult data = amphiroMeasurementRepository.searchMeasurements(
+			AmphiroMeasurementIndexIntervalQueryResult data = amphiroIndexOrderedRepository.searchMeasurements(
 							DateTimeZone.forID(user.getTimezone()), query);
 
 			return data;
@@ -199,8 +199,8 @@ public class SearchController extends BaseController {
 
 	@RequestMapping(value = "/action/device/session/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured({ "ROLE_USER", "ROLE_ADMIN" })
-	public RestResponse getAmphiroSessions(@AuthenticationPrincipal AuthenticatedUser user,
-					@RequestBody AmphiroSessionCollectionQuery query) {
+	public RestResponse getAmphiroSessions1(@AuthenticationPrincipal AuthenticatedUser user,
+					@RequestBody AmphiroSessionCollectionIndexIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -237,7 +237,7 @@ public class SearchController extends BaseController {
 
 			String[] names = this.checkAmphiroOwnership(query.getUserKey(), query.getDeviceKey());
 
-			return amphiroMeasurementRepository.searchSessions(names, DateTimeZone.forID(user.getTimezone()), query);
+			return amphiroIndexOrderedRepository.searchSessions(names, DateTimeZone.forID(user.getTimezone()), query);
 		} catch (ApplicationException ex) {
 			if (!ex.isLogged()) {
 				logger.error(ex.getMessage(), ex);
@@ -251,8 +251,8 @@ public class SearchController extends BaseController {
 
 	@RequestMapping(value = "/action/device/session", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public RestResponse getAmphiroSession(@AuthenticationPrincipal AuthenticatedUser user,
-					@RequestBody AmphiroSessionQuery query) {
+	public RestResponse getAmphiroSession1(@AuthenticationPrincipal AuthenticatedUser user,
+					@RequestBody AmphiroSessionIndexIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -260,7 +260,7 @@ public class SearchController extends BaseController {
 
 			query.setUserKey(user.getKey());
 
-			return amphiroMeasurementRepository.getSession(query);
+			return amphiroIndexOrderedRepository.getSession(query);
 		} catch (ApplicationException ex) {
 			if (!ex.isLogged()) {
 				logger.error(ex.getMessage(), ex);

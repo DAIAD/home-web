@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import eu.daiad.web.model.AuthenticatedRequest;
 
-public class AmphiroSessionQuery extends AuthenticatedRequest {
+public class AmphiroSessionIndexIntervalQuery extends AuthenticatedRequest {
 
 	@JsonIgnore
 	private UUID userKey;
@@ -15,9 +15,13 @@ public class AmphiroSessionQuery extends AuthenticatedRequest {
 
 	private long sessionId;
 
-	private long startDate;
+	public UUID getUserKey() {
+		return userKey;
+	}
 
-	private long endDate;
+	public void setUserKey(UUID userKey) {
+		this.userKey = userKey;
+	}
 
 	public UUID getDeviceKey() {
 		return deviceKey;
@@ -35,27 +39,4 @@ public class AmphiroSessionQuery extends AuthenticatedRequest {
 		this.sessionId = sessionId;
 	}
 
-	public long getStartDate() {
-		return startDate;
-	}
-
-	public void setStartDate(long startDate) {
-		this.startDate = startDate;
-	}
-
-	public long getEndDate() {
-		return endDate;
-	}
-
-	public void setEndDate(long endDate) {
-		this.endDate = endDate;
-	}
-
-	public void setUserKey(UUID userKey) {
-		this.userKey = userKey;
-	}
-
-	public UUID getUserKey() {
-		return userKey;
-	}
 }

@@ -14,12 +14,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.amphiro.AmphiroMeasurementQuery;
-import eu.daiad.web.model.amphiro.AmphiroMeasurementQueryResult;
-import eu.daiad.web.model.amphiro.AmphiroSessionCollectionQuery;
-import eu.daiad.web.model.amphiro.AmphiroSessionCollectionQueryResult;
-import eu.daiad.web.model.amphiro.AmphiroSessionQuery;
-import eu.daiad.web.model.amphiro.AmphiroSessionQueryResult;
+import eu.daiad.web.model.amphiro.AmphiroMeasurementIndexIntervalQuery;
+import eu.daiad.web.model.amphiro.AmphiroMeasurementIndexIntervalQueryResult;
+import eu.daiad.web.model.amphiro.AmphiroMeasurementTimeIntervalQuery;
+import eu.daiad.web.model.amphiro.AmphiroMeasurementTimeIntervalQueryResult;
+import eu.daiad.web.model.amphiro.AmphiroSessionCollectionIndexIntervalQuery;
+import eu.daiad.web.model.amphiro.AmphiroSessionCollectionIndexIntervalQueryResult;
+import eu.daiad.web.model.amphiro.AmphiroSessionCollectionTimeIntervalQuery;
+import eu.daiad.web.model.amphiro.AmphiroSessionCollectionTimeIntervalQueryResult;
+import eu.daiad.web.model.amphiro.AmphiroSessionIndexIntervalQuery;
+import eu.daiad.web.model.amphiro.AmphiroSessionIndexIntervalQueryResult;
+import eu.daiad.web.model.amphiro.AmphiroSessionTimeIntervalQuery;
+import eu.daiad.web.model.amphiro.AmphiroSessionTimeIntervalQueryResult;
 import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.WaterMeterDevice;
@@ -32,7 +38,8 @@ import eu.daiad.web.model.meter.WaterMeterStatusQuery;
 import eu.daiad.web.model.meter.WaterMeterStatusQueryResult;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
-import eu.daiad.web.repository.application.IAmphiroMeasurementRepository;
+import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
+import eu.daiad.web.repository.application.IAmphiroTimeOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 
@@ -45,7 +52,10 @@ public class SearchController extends BaseRestController {
 	private IDeviceRepository deviceRepository;
 
 	@Autowired
-	private IAmphiroMeasurementRepository amphiroMeasurementRepository;
+	private IAmphiroTimeOrderedRepository amphiroTimeOrderedRepository;
+
+	@Autowired
+	private IAmphiroIndexOrderedRepository amphiroIndexOrderedRepository;
 
 	@Autowired
 	private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
@@ -115,7 +125,7 @@ public class SearchController extends BaseRestController {
 	}
 
 	@RequestMapping(value = "/api/v1/device/measurement/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse searchAmphiroMeasurements(@RequestBody AmphiroMeasurementQuery query) {
+	public RestResponse searchAmphiroMeasurements1(@RequestBody AmphiroMeasurementTimeIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -129,7 +139,37 @@ public class SearchController extends BaseRestController {
 
 			this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
 
-			AmphiroMeasurementQueryResult data = amphiroMeasurementRepository.searchMeasurements(
+			AmphiroMeasurementTimeIntervalQueryResult data = amphiroTimeOrderedRepository.searchMeasurements(
+							DateTimeZone.forID(user.getTimezone()), query);
+
+			return data;
+		} catch (ApplicationException ex) {
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
+
+			response.add(this.getError(ex));
+		}
+
+		return response;
+	}
+
+	@RequestMapping(value = "/api/v2/device/measurement/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	public RestResponse searchAmphiroMeasurements2(@RequestBody AmphiroMeasurementIndexIntervalQuery query) {
+		RestResponse response = new RestResponse();
+
+		try {
+			AuthenticatedUser user = this.authenticate(query.getCredentials(), EnumRole.ROLE_USER);
+
+			query.setUserKey(user.getKey());
+
+			if ((query.getDeviceKey() == null) || (query.getDeviceKey().length == 0)) {
+				return new WaterMeterStatusQueryResult();
+			}
+
+			this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
+
+			AmphiroMeasurementIndexIntervalQueryResult data = amphiroIndexOrderedRepository.searchMeasurements(
 							DateTimeZone.forID(user.getTimezone()), query);
 
 			return data;
@@ -145,7 +185,7 @@ public class SearchController extends BaseRestController {
 	}
 
 	@RequestMapping(value = "/api/v1/device/session/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse searchAmphiroSessions(@RequestBody AmphiroSessionCollectionQuery query) {
+	public RestResponse searchAmphiroSessions1(@RequestBody AmphiroSessionCollectionTimeIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -159,7 +199,37 @@ public class SearchController extends BaseRestController {
 
 			String[] names = this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
 
-			AmphiroSessionCollectionQueryResult data = amphiroMeasurementRepository.searchSessions(names,
+			AmphiroSessionCollectionTimeIntervalQueryResult data = amphiroTimeOrderedRepository.searchSessions(names,
+							DateTimeZone.forID(user.getTimezone()), query);
+
+			return data;
+		} catch (ApplicationException ex) {
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
+
+			response.add(this.getError(ex));
+		}
+
+		return response;
+	}
+
+	@RequestMapping(value = "/api/v2/device/session/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	public RestResponse searchAmphiroSessions2(@RequestBody AmphiroSessionCollectionIndexIntervalQuery query) {
+		RestResponse response = new RestResponse();
+
+		try {
+			AuthenticatedUser user = this.authenticate(query.getCredentials(), EnumRole.ROLE_USER);
+
+			query.setUserKey(user.getKey());
+
+			if ((query.getDeviceKey() == null) || (query.getDeviceKey().length == 0)) {
+				return new WaterMeterStatusQueryResult();
+			}
+
+			String[] names = this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
+
+			AmphiroSessionCollectionIndexIntervalQueryResult data = amphiroIndexOrderedRepository.searchSessions(names,
 							DateTimeZone.forID(user.getTimezone()), query);
 
 			return data;
@@ -175,7 +245,7 @@ public class SearchController extends BaseRestController {
 	}
 
 	@RequestMapping(value = "/api/v1/device/session", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse getAmphiroSession(@RequestBody AmphiroSessionQuery query) {
+	public RestResponse getAmphiroSession1(@RequestBody AmphiroSessionTimeIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -189,7 +259,36 @@ public class SearchController extends BaseRestController {
 
 			this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
 
-			AmphiroSessionQueryResult data = amphiroMeasurementRepository.getSession(query);
+			AmphiroSessionTimeIntervalQueryResult data = amphiroTimeOrderedRepository.getSession(query);
+
+			return data;
+		} catch (ApplicationException ex) {
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
+
+			response.add(this.getError(ex));
+		}
+
+		return response;
+	}
+
+	@RequestMapping(value = "/api/v2/device/session", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	public RestResponse getAmphiroSession2(@RequestBody AmphiroSessionIndexIntervalQuery query) {
+		RestResponse response = new RestResponse();
+
+		try {
+			AuthenticatedUser user = this.authenticate(query.getCredentials(), EnumRole.ROLE_USER);
+
+			query.setUserKey(user.getKey());
+
+			if (query.getDeviceKey() == null) {
+				return new WaterMeterStatusQueryResult();
+			}
+
+			this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
+
+			AmphiroSessionIndexIntervalQueryResult data = amphiroIndexOrderedRepository.getSession(query);
 
 			return data;
 		} catch (ApplicationException ex) {

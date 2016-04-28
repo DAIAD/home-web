@@ -2,23 +2,24 @@ package eu.daiad.web.model.amphiro;
 
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import eu.daiad.web.model.AuthenticatedRequest;
 import eu.daiad.web.model.TemporalConstants;
 
-public class AmphiroMeasurementQuery extends AuthenticatedRequest {
+public class AmphiroSessionCollectionTimeIntervalQuery extends AuthenticatedRequest {
 
-	@JsonIgnore
 	private UUID userKey;
 
-	private UUID deviceKey[];
+	private UUID[] deviceKey;
 
-	private long startDate;
+	private Long startDate;
 
-	private long endDate;
+	private Long endDate;
 
 	private int granularity = TemporalConstants.NONE;
+
+	public AmphiroSessionCollectionTimeIntervalQuery() {
+
+	}
 
 	public UUID getUserKey() {
 		return userKey;
@@ -36,19 +37,19 @@ public class AmphiroMeasurementQuery extends AuthenticatedRequest {
 		this.deviceKey = deviceKey;
 	}
 
-	public void setStartDate(long value) {
+	public void setStartDate(Long value) {
 		this.startDate = value;
 	}
 
-	public long getStartDate() {
+	public Long getStartDate() {
 		return this.startDate;
 	}
 
-	public void setEndDate(long value) {
+	public void setEndDate(Long value) {
 		this.endDate = value;
 	}
 
-	public long getEndDate() {
+	public Long getEndDate() {
 		return this.endDate;
 	}
 
@@ -59,4 +60,5 @@ public class AmphiroMeasurementQuery extends AuthenticatedRequest {
 	public int getGranularity() {
 		return this.granularity;
 	}
+
 }

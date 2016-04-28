@@ -10,10 +10,8 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.UUID;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
@@ -29,8 +27,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import eu.daiad.web.hbase.HBaseConnectionManager;
 import eu.daiad.web.model.TemporalConstants;
 import eu.daiad.web.model.amphiro.AmphiroAbstractDataPoint;
@@ -38,15 +34,15 @@ import eu.daiad.web.model.amphiro.AmphiroAbstractSession;
 import eu.daiad.web.model.amphiro.AmphiroDataSeries;
 import eu.daiad.web.model.amphiro.AmphiroMeasurement;
 import eu.daiad.web.model.amphiro.AmphiroMeasurementCollection;
-import eu.daiad.web.model.amphiro.AmphiroMeasurementQuery;
-import eu.daiad.web.model.amphiro.AmphiroMeasurementQueryResult;
+import eu.daiad.web.model.amphiro.AmphiroMeasurementTimeIntervalQuery;
+import eu.daiad.web.model.amphiro.AmphiroMeasurementTimeIntervalQueryResult;
 import eu.daiad.web.model.amphiro.AmphiroSession;
 import eu.daiad.web.model.amphiro.AmphiroSessionCollection;
-import eu.daiad.web.model.amphiro.AmphiroSessionCollectionQuery;
-import eu.daiad.web.model.amphiro.AmphiroSessionCollectionQueryResult;
+import eu.daiad.web.model.amphiro.AmphiroSessionCollectionTimeIntervalQuery;
+import eu.daiad.web.model.amphiro.AmphiroSessionCollectionTimeIntervalQueryResult;
 import eu.daiad.web.model.amphiro.AmphiroSessionDetails;
-import eu.daiad.web.model.amphiro.AmphiroSessionQuery;
-import eu.daiad.web.model.amphiro.AmphiroSessionQueryResult;
+import eu.daiad.web.model.amphiro.AmphiroSessionTimeIntervalQuery;
+import eu.daiad.web.model.amphiro.AmphiroSessionTimeIntervalQueryResult;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DataErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
@@ -62,9 +58,9 @@ import eu.daiad.web.model.query.RankingDataPoint;
 import eu.daiad.web.model.query.UserDataPoint;
 
 @Repository()
-public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRepository {
+public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository implements IAmphiroTimeOrderedRepository {
 
-	private static final Log logger = LogFactory.getLog(HBaseAmphiroMeasurementRepository.class);
+	private static final Log logger = LogFactory.getLog(HBaseAmphiroTimeOrderedRepository.class);
 
 	private final String ERROR_RELEASE_RESOURCES = "Failed to release resources";
 
@@ -88,13 +84,13 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 	@Value("${scanner.cache.size}")
 	private int scanCacheSize = 1;
 
+	private final String amphiroTableSessionIndex = "daiad:amphiro-sessions-index";
+
 	private final String amphiroTableMeasurements = "daiad:amphiro-measurements";
 
 	private final String amphiroTableSessionByTime = "daiad:amphiro-sessions-by-time";
 
 	private final String amphiroTableSessionByUser = "daiad:amphiro-sessions-by-user";
-
-	private final String amphiroTableSessionIndex = "daiad:amphiro-sessions-index";
 
 	private final String columnFamilyName = "cf";
 
@@ -636,8 +632,9 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 	}
 
 	@Override
-	public AmphiroMeasurementQueryResult searchMeasurements(DateTimeZone timezone, AmphiroMeasurementQuery query) {
-		AmphiroMeasurementQueryResult data = new AmphiroMeasurementQueryResult();
+	public AmphiroMeasurementTimeIntervalQueryResult searchMeasurements(DateTimeZone timezone,
+					AmphiroMeasurementTimeIntervalQuery query) {
+		AmphiroMeasurementTimeIntervalQueryResult data = new AmphiroMeasurementTimeIntervalQueryResult();
 
 		DateTime startDate = new DateTime(query.getStartDate(), DateTimeZone.UTC);
 		DateTime endDate = new DateTime(query.getEndDate(), DateTimeZone.UTC);
@@ -802,9 +799,9 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 	}
 
 	@Override
-	public AmphiroSessionCollectionQueryResult searchSessions(String[] names, DateTimeZone timezone,
-					AmphiroSessionCollectionQuery query) {
-		AmphiroSessionCollectionQueryResult data = new AmphiroSessionCollectionQueryResult();
+	public AmphiroSessionCollectionTimeIntervalQueryResult searchSessions(String[] names, DateTimeZone timezone,
+					AmphiroSessionCollectionTimeIntervalQuery query) {
+		AmphiroSessionCollectionTimeIntervalQueryResult data = new AmphiroSessionCollectionTimeIntervalQueryResult();
 
 		DateTime startDate = null;
 		if (query.getStartDate() != null) {
@@ -976,35 +973,9 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 		}
 	}
 
-	private byte[] calculateTheClosestNextRowKeyForPrefix(byte[] rowKeyPrefix) {
-		// Essentially we are treating it like an 'unsigned very very long' and
-		// doing +1 manually.
-		// Search for the place where the trailing 0xFFs start
-		int offset = rowKeyPrefix.length;
-		while (offset > 0) {
-			if (rowKeyPrefix[offset - 1] != (byte) 0xFF) {
-				break;
-			}
-			offset--;
-		}
-
-		if (offset == 0) {
-			// We got an 0xFFFF... (only FFs) stopRow value which is
-			// the last possible prefix before the end of the table.
-			// So set it to stop at the 'end of the table'
-			return HConstants.EMPTY_END_ROW;
-		}
-
-		// Copy the right length of the original
-		byte[] newStopRow = Arrays.copyOfRange(rowKeyPrefix, 0, offset);
-		// And increment the last one
-		newStopRow[newStopRow.length - 1]++;
-		return newStopRow;
-	}
-
 	@Override
-	public AmphiroSessionQueryResult getSession(AmphiroSessionQuery query) {
-		AmphiroSessionQueryResult data = new AmphiroSessionQueryResult();
+	public AmphiroSessionTimeIntervalQueryResult getSession(AmphiroSessionTimeIntervalQuery query) {
+		AmphiroSessionTimeIntervalQueryResult data = new AmphiroSessionTimeIntervalQueryResult();
 
 		// Compute temporal buffer
 		DateTime startDate = new DateTime(query.getStartDate(), DateTimeZone.UTC);
@@ -1105,7 +1076,7 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 		}
 	}
 
-	private ArrayList<AmphiroMeasurement> getSessionMeasurements(AmphiroSessionQuery query) {
+	private ArrayList<AmphiroMeasurement> getSessionMeasurements(AmphiroSessionTimeIntervalQuery query) {
 		ArrayList<AmphiroMeasurement> measurements = new ArrayList<AmphiroMeasurement>();
 
 		DateTime startDate = new DateTime(query.getStartDate(), DateTimeZone.UTC);
@@ -1508,29 +1479,4 @@ public class HBaseAmphiroMeasurementRepository implements IAmphiroMeasurementRep
 		}
 	}
 
-	private int inArray(ArrayList<byte[]> array, byte[] hash) {
-		int index = 0;
-		for (byte[] entry : array) {
-			if (Arrays.equals(entry, hash)) {
-				return index;
-			}
-			index++;
-		}
-		return -1;
-	}
-
-	private String jsonToString(Object value) {
-		if (value == null) {
-			return StringUtils.EMPTY;
-		}
-
-		try {
-			ObjectMapper mapper = new ObjectMapper();
-			return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(value);
-		} catch (Exception ex) {
-			logger.warn(String.format("Failed to serialize object of type [%s]", value.getClass().getName()));
-		}
-
-		return StringUtils.EMPTY;
-	}
 }

@@ -4,17 +4,17 @@ import java.util.ArrayList;
 
 import eu.daiad.web.model.RestResponse;
 
-public class AmphiroSessionCollectionQueryResult extends RestResponse {
+public class AmphiroSessionCollectionIndexIntervalQueryResult extends RestResponse {
 
 	ArrayList<AmphiroSessionCollection> devices = null;
 
-	public AmphiroSessionCollectionQueryResult() {
+	public AmphiroSessionCollectionIndexIntervalQueryResult() {
 		super();
 
 		this.devices = new ArrayList<AmphiroSessionCollection>();
 	}
 
-	public AmphiroSessionCollectionQueryResult(String code, String description) {
+	public AmphiroSessionCollectionIndexIntervalQueryResult(String code, String description) {
 		super(code, description);
 	}
 

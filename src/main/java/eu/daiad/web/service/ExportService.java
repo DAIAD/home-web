@@ -28,8 +28,9 @@ import eu.daiad.web.model.TemporalConstants;
 import eu.daiad.web.model.amphiro.AmphiroAbstractSession;
 import eu.daiad.web.model.amphiro.AmphiroSession;
 import eu.daiad.web.model.amphiro.AmphiroSessionCollection;
-import eu.daiad.web.model.amphiro.AmphiroSessionCollectionQuery;
-import eu.daiad.web.model.amphiro.AmphiroSessionCollectionQueryResult;
+import eu.daiad.web.model.amphiro.AmphiroSessionCollectionIndexIntervalQuery;
+import eu.daiad.web.model.amphiro.AmphiroSessionCollectionIndexIntervalQueryResult;
+import eu.daiad.web.model.amphiro.EnumIndexIntervalQuery;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.export.ExportUserDataQuery;
@@ -37,7 +38,7 @@ import eu.daiad.web.model.meter.WaterMeterDataPoint;
 import eu.daiad.web.model.meter.WaterMeterDataSeries;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQuery;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQueryResult;
-import eu.daiad.web.repository.application.IAmphiroMeasurementRepository;
+import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 
 @Service
@@ -49,7 +50,7 @@ public class ExportService implements IExportService {
 	private String temporaryPath;
 
 	@Autowired
-	private IAmphiroMeasurementRepository amphiroMeasurementRepository;
+	private IAmphiroIndexOrderedRepository amphiroIndexOrderedRepository;
 
 	@Autowired
 	private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
@@ -98,15 +99,14 @@ public class ExportService implements IExportService {
 			UUID[] amphiroArray = new UUID[query.getAmphiroKeys().size()];
 			query.getAmphiroKeys().toArray(amphiroArray);
 
-			AmphiroSessionCollectionQuery sessionQuery = new AmphiroSessionCollectionQuery();
+			AmphiroSessionCollectionIndexIntervalQuery sessionQuery = new AmphiroSessionCollectionIndexIntervalQuery();
 			sessionQuery.setUserKey(query.getUserKey());
 			sessionQuery.setDeviceKey(amphiroArray);
-			sessionQuery.setGranularity(TemporalConstants.NONE);
-			sessionQuery.setStartDate(null);
-			sessionQuery.setEndDate(null);
+			sessionQuery.setType(EnumIndexIntervalQuery.SLIDING);
+			sessionQuery.setLength(Integer.MAX_VALUE);
 
-			AmphiroSessionCollectionQueryResult amphiroCollection = this.amphiroMeasurementRepository.searchSessions(
-							nameArray, DateTimeZone.forID(query.getTimezone()), sessionQuery);
+			AmphiroSessionCollectionIndexIntervalQueryResult amphiroCollection = this.amphiroIndexOrderedRepository
+							.searchSessions(nameArray, DateTimeZone.forID(query.getTimezone()), sessionQuery);
 
 			// Create one sheet per device
 			for (AmphiroSessionCollection device : amphiroCollection.getDevices()) {
