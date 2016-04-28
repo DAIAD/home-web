@@ -11,6 +11,7 @@ import eu.daiad.web.model.query.EnumTimeUnit;
 import eu.daiad.web.model.query.GroupDataSeries;
 import eu.daiad.web.model.query.MessageAggregatesContainer;
 import eu.daiad.web.model.query.MeterDataPoint;
+import eu.daiad.web.model.recommendation.MessageCalculationConfiguration;
 import eu.daiad.web.service.IDataService;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
@@ -48,14 +49,16 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
     
     @Autowired
     IDataService dataService;   
+    
+    private MessageCalculationConfiguration config;
 
-    private final Integer dailyBudget = 50;
-    private final Integer weeklyBudget = 350;
-    private final Integer monthlyBudget = 1500;
-
-    private final Integer dailyBudgetAmphiro = 20;
-    private final Integer weeklyBudgetAmphiro = 140;
-    private final Integer monthlyBudgetAmphiro = 600;        
+//    private final Integer dailyBudget = 50;
+//    private final Integer weeklyBudget = 350;
+//    private final Integer monthlyBudget = 1500;
+//
+//    private final Integer dailyBudgetAmphiro = 20;
+//    private final Integer weeklyBudgetAmphiro = 140;
+//    private final Integer monthlyBudgetAmphiro = 600;        
 
     //1 alert - Check for water leaks!
     @Override
@@ -64,18 +67,18 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         boolean fireAlert = true;
         DataQueryBuilder queryBuilder = new DataQueryBuilder();
         queryBuilder.sliding(-48, EnumTimeUnit.HOUR, EnumTimeAggregation.HOUR)
-                .user("user", userKey).meter().min();             
+                .user("user", userKey).meter().sum(); 
 
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
         ArrayList<GroupDataSeries> dataSeriesMeter = queryResponse.getMeters();
 
         for (GroupDataSeries serie : dataSeriesMeter) {
-            if(!serie.getPoints().isEmpty()){ //check for non existent data 
+            if(!serie.getPoints().isEmpty()){ 
                 ArrayList<DataPoint> points = serie.getPoints();
                 for(DataPoint point : points){
                     MeterDataPoint meterPoint = (MeterDataPoint) point;
-                    if(meterPoint.getVolume().get(EnumMetric.MIN) == 0){
+                    if(meterPoint.getVolume().get(EnumMetric.SUM) == 0){
                         fireAlert = false;
                     }
                 }
@@ -171,7 +174,7 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
     //7 alert - Reached 80% of your daily water budget {integer1} {integer2}
     @Override
     public Entry<Boolean, SimpleEntry<Integer, Integer>> alertNearDailyBudgetSWM(UUID userKey) {
-     
+        
         DataQueryBuilder dataQueryBuilder = new DataQueryBuilder();
         dataQueryBuilder.sliding(-1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL).meter().user("user", userKey).sum();
         DataQuery query = dataQueryBuilder.build();
@@ -186,11 +189,11 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         MeterDataPoint meterPoint = (MeterDataPoint) dataPoint;
         Double lastDaySum = meterPoint.getVolume().get(EnumMetric.SUM);
 
-        double percentUsed = (dailyBudget * lastDaySum) / 100;
+        double percentUsed = (config.getDailyBudget() * lastDaySum) / 100;
         SimpleEntry<Boolean, SimpleEntry<Integer, Integer>> entry;
 
         if (percentUsed > 80) {
-            entry = new SimpleEntry<>(true, new SimpleEntry<>(lastDaySum.intValue(), dailyBudget));
+            entry = new SimpleEntry<>(true, new SimpleEntry<>(lastDaySum.intValue(), config.getDailyBudget()));
         } else {
             entry = new SimpleEntry<>(false, null);
         }
@@ -215,11 +218,11 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         MeterDataPoint meterPoint = (MeterDataPoint) dataPoint;
         Double lastWeekSum = meterPoint.getVolume().get(EnumMetric.SUM);
 
-        double percentUsed = (dailyBudget * lastWeekSum) / 100;
+        double percentUsed = (config.getDailyBudget() * lastWeekSum) / 100;
         SimpleEntry<Boolean, SimpleEntry<Integer, Integer>> entry;
 
         if (percentUsed > 80) {
-            entry = new SimpleEntry<>(true, new SimpleEntry<>(lastWeekSum.intValue(), weeklyBudget));
+            entry = new SimpleEntry<>(true, new SimpleEntry<>(lastWeekSum.intValue(), config.getWeeklyBudget()));
         } else {
             entry = new SimpleEntry<>(false, null);
         }
@@ -244,11 +247,11 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         AmphiroDataPoint amphiroPoint = (AmphiroDataPoint) dataPoint;
         Double lastDaySum = amphiroPoint.getVolume().get(EnumMetric.SUM);
 
-        double percentUsed = (dailyBudgetAmphiro * lastDaySum) / 100;
+        double percentUsed = (config.getDailyBudgetAmphiro() * lastDaySum) / 100;
         SimpleEntry<Boolean, SimpleEntry<Integer, Integer>> entry;
 
         if (percentUsed > 80) {
-            entry = new SimpleEntry<>(true, new SimpleEntry<>(lastDaySum.intValue(), dailyBudgetAmphiro));
+            entry = new SimpleEntry<>(true, new SimpleEntry<>(lastDaySum.intValue(), config.getDailyBudgetAmphiro()));
         } else {
             entry = new SimpleEntry<>(false, null);
         }
@@ -273,11 +276,11 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         AmphiroDataPoint amphiroPoint = (AmphiroDataPoint) dataPoint;
         Double lastWeekSum = amphiroPoint.getVolume().get(EnumMetric.SUM);
 
-        double percentUsed = (weeklyBudgetAmphiro * lastWeekSum) / 100;
+        double percentUsed = (config.getWeeklyBudgetAmphiro() * lastWeekSum) / 100;
         SimpleEntry<Boolean, SimpleEntry<Integer, Integer>> entry;
 
         if (percentUsed > 80) {
-            entry = new SimpleEntry<>(true, new SimpleEntry<>(lastWeekSum.intValue(), weeklyBudgetAmphiro));
+            entry = new SimpleEntry<>(true, new SimpleEntry<>(lastWeekSum.intValue(), config.getWeeklyBudgetAmphiro()));
         } else {
             entry = new SimpleEntry<>(false, null);
         }
@@ -296,17 +299,17 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         GroupDataSeries dataSeriesMeter = queryResponse.getMeters().get(0);
         ArrayList<DataPoint> dataPoints = dataSeriesMeter.getPoints();
         if(dataPoints == null || dataPoints.isEmpty()){
-            return new SimpleEntry<>(false, dailyBudget);
+            return new SimpleEntry<>(false, config.getDailyBudget());
         }
         DataPoint dataPoint = dataPoints.get(0);
         MeterDataPoint meterPoint = (MeterDataPoint) dataPoint;
         Double lastDaySum = meterPoint.getVolume().get(EnumMetric.SUM);       
         SimpleEntry<Boolean, Integer> entry;
 
-        if (lastDaySum > dailyBudget*1.2) {
-            entry = new SimpleEntry<>(true, dailyBudget);
+        if (lastDaySum > config.getDailyBudget()*1.2) {
+            entry = new SimpleEntry<>(true, config.getDailyBudget());
         } else {
-            entry = new SimpleEntry<>(false, dailyBudget);
+            entry = new SimpleEntry<>(false, null);
         }
         return entry;
     } 
@@ -323,17 +326,17 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         GroupDataSeries dataSeriesMeter = queryResponse.getDevices().get(0);
         ArrayList<DataPoint> dataPoints = dataSeriesMeter.getPoints();
         if(dataPoints == null || dataPoints.isEmpty()){
-            return new SimpleEntry<>(false, dailyBudgetAmphiro);
+            return new SimpleEntry<>(false, config.getDailyBudgetAmphiro());
         }
         DataPoint dataPoint = dataPoints.get(0);
         AmphiroDataPoint amphiroPoint = (AmphiroDataPoint) dataPoint;
         Double lastDaySum = amphiroPoint.getVolume().get(EnumMetric.SUM);
         SimpleEntry<Boolean, Integer> entry;
 
-        if (lastDaySum > dailyBudgetAmphiro*1.2) {
-            entry = new SimpleEntry<>(true, dailyBudgetAmphiro);
+        if (lastDaySum > config.getDailyBudgetAmphiro()*1.2) {
+            entry = new SimpleEntry<>(true, config.getDailyBudgetAmphiro());
         } else {
-            entry = new SimpleEntry<>(false, dailyBudgetAmphiro);
+            entry = new SimpleEntry<>(false, config.getDailyBudgetAmphiro());
         }
         return entry;
     } 
@@ -359,7 +362,7 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
             MeterDataPoint meterPoint = (MeterDataPoint) point;
             Double daySum = meterPoint.getVolume().get(EnumMetric.SUM);
             values.add(daySum);
-            if(daySum > dailyBudget){
+            if(daySum > config.getDailyBudget()){
                 fireAlert = false;
             }            
         }
@@ -392,7 +395,7 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
             AmphiroDataPoint amphiroPoint = (AmphiroDataPoint) point;
             Double daySum = amphiroPoint.getVolume().get(EnumMetric.SUM);
             values.add(daySum);
-            if(daySum > dailyBudgetAmphiro){
+            if(daySum > config.getDailyBudgetAmphiro()){
                 fireAlert = false;
             }            
         }
@@ -620,7 +623,7 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
 
         DataQueryBuilder dataQueryBuilder = new DataQueryBuilder();
         dataQueryBuilder.sliding(-30, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
-                .user("user", userKey).meter().average();
+                .user("user", userKey).meter().sum();
 
         DataQuery query = dataQueryBuilder.build();
         DataQueryResponse result = dataService.execute(query);
@@ -634,7 +637,7 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         DataPoint dataPoint = dataPoints.get(0);
         MeterDataPoint meterDataPoint = (MeterDataPoint) dataPoint;
         Map<EnumMetric, Double> m = meterDataPoint.getVolume();
-        Double currentMonthAverage = m.get(EnumMetric.AVERAGE);  
+        Double currentMonthAverage = (m.get(EnumMetric.SUM))/30;  
         
         SimpleEntry<Boolean, Integer> entry;
         if(currentMonthAverage < baseTop10Consumption){            
@@ -781,7 +784,7 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         Double currentWeekConsumptionSWM = null;
         DataQueryBuilder currentWeekQueryBuilder = new DataQueryBuilder();
         currentWeekQueryBuilder.sliding(-7, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
-                .user("user", userKey).meter().average();             
+                .user("user", userKey).meter().sum();             
 
         DataQuery currentWeekQuery = currentWeekQueryBuilder.build();
         DataQueryResponse currentWeekQueryResponse = dataService.execute(currentWeekQuery);
@@ -793,7 +796,7 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
                 DataPoint dataPoint = points.get(0);
                 MeterDataPoint meterDataPoint = (MeterDataPoint) dataPoint;
                 Map<EnumMetric, Double> metricsMap = meterDataPoint.getVolume();
-                currentWeekConsumptionSWM = metricsMap.get(EnumMetric.AVERAGE);            
+                currentWeekConsumptionSWM = (metricsMap.get(EnumMetric.SUM))/7;            
             }
         }         
         
@@ -811,7 +814,7 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         Double currentWeekConsumptionSWM = null;
         DataQueryBuilder currentWeekQueryBuilder = new DataQueryBuilder();
         currentWeekQueryBuilder.sliding(-7, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
-                .user("user", userKey).meter().average();             
+                .user("user", userKey).meter().sum();             
 
         DataQuery currentWeekQuery = currentWeekQueryBuilder.build();
         DataQueryResponse currentWeekQueryResponse = dataService.execute(currentWeekQuery);
@@ -827,7 +830,7 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
                 DataPoint dataPoint = points.get(0);
                 MeterDataPoint meterDataPoint = (MeterDataPoint) dataPoint;
                 Map<EnumMetric, Double> metricsMap = meterDataPoint.getVolume();
-                currentWeekConsumptionSWM = metricsMap.get(EnumMetric.AVERAGE);            
+                currentWeekConsumptionSWM = (metricsMap.get(EnumMetric.SUM))/7;            
             }
         }                 
         return currentWeekConsumptionSWM < messageAggregatesContainer.getTop10BaseWeekThresholdSWM();
@@ -843,9 +846,9 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         }
         
         boolean fireAlert = false;
-        double averageMonthlyConsumption = 0;
+        double userAverageMonthlyConsumption = 0;
         DataQueryBuilder durationQueryBuilder = new DataQueryBuilder();
-        durationQueryBuilder.sliding(-30, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+        durationQueryBuilder.sliding(-3, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
                 .user("user", userKey).amphiro().average();             
 
         DataQuery durationQuery = durationQueryBuilder.build();
@@ -859,7 +862,7 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         for (GroupDataSeries serie : dataSeriesAmphiro) {           
             DataPoint dataPoint = serie.getPoints().get(0); 
             AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-            averageMonthlyConsumption = amphiroDataPoint.getVolume().get(EnumMetric.AVERAGE);                        
+            userAverageMonthlyConsumption = (amphiroDataPoint.getVolume().get(EnumMetric.SUM))/3;                        
             if(amphiroDataPoint.getDuration().get(EnumMetric.AVERAGE) 
                     > messageAggregatesContainer.getAverageDurationAmphiro()){
                 fireAlert = true;
@@ -867,9 +870,9 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         }             
 
         Double averageMonthlyConsumptionAggregate = messageAggregatesContainer.getAverageMonthlyConsumptionAmphiro();        
-        if(averageMonthlyConsumption > averageMonthlyConsumptionAggregate){
+        if(userAverageMonthlyConsumption > averageMonthlyConsumptionAggregate){
             Double annualSavings 
-                = (averageMonthlyConsumption - averageMonthlyConsumptionAggregate)*12;            
+                = (userAverageMonthlyConsumption - averageMonthlyConsumptionAggregate)*12;            
             return new SimpleEntry<>(fireAlert, annualSavings.intValue());
         }
         else{
@@ -885,10 +888,10 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         }
         
         boolean fireAlert = false;
-        double averageMonthlyConsumption = 0;
+        double userAverageMonthlyConsumption = 0;
         DataQueryBuilder durationQueryBuilder = new DataQueryBuilder();
-        durationQueryBuilder.sliding(-30, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
-                .user("user", userKey).amphiro().average();             
+        durationQueryBuilder.sliding(-3, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+                .user("user", userKey).amphiro().sum().average();             
 
         DataQuery durationQuery = durationQueryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(durationQuery);
@@ -901,7 +904,7 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         for (GroupDataSeries serie : dataSeriesAmphiro) {           
             DataPoint p = serie.getPoints().get(0);   
             AmphiroDataPoint amphiroPoint = (AmphiroDataPoint) p;
-            averageMonthlyConsumption = amphiroPoint.getVolume().get(EnumMetric.AVERAGE);                        
+            userAverageMonthlyConsumption = (amphiroPoint.getVolume().get(EnumMetric.SUM))/3;                        
             
             if(amphiroPoint.getTemperature().get(EnumMetric.AVERAGE) 
                     > messageAggregatesContainer.getAverageTemperatureAmphiro()){
@@ -909,7 +912,7 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
             }                        
         }             
    
-        Double annualConsumption = averageMonthlyConsumption*12;
+        Double annualConsumption = userAverageMonthlyConsumption*12;
         return new SimpleEntry<>(fireAlert, annualConsumption.intValue());
     }     
     
@@ -921,14 +924,14 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
             return new SimpleEntry<>(false, null);
         }
         
-        boolean fireAlert = false;
-        double averageMonthlyConsumption = 0;
-        DataQueryBuilder durationQueryBuilder = new DataQueryBuilder();
-        durationQueryBuilder.sliding(-30, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+        double userAverageFlow = 0;
+        double userThreeMonthsConsumption = 0;
+        DataQueryBuilder flowQueryBuilder = new DataQueryBuilder();
+        flowQueryBuilder.sliding(-3, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
                 .user("user", userKey).amphiro().average();             
 
-        DataQuery durationQuery = durationQueryBuilder.build();
-        DataQueryResponse queryResponse = dataService.execute(durationQuery);
+        DataQuery flowQuery = flowQueryBuilder.build();
+        DataQueryResponse queryResponse = dataService.execute(flowQuery);
         ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
 
         if(dataSeriesAmphiro == null || dataSeriesAmphiro.isEmpty()){
@@ -938,13 +941,38 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         for (GroupDataSeries serie : dataSeriesAmphiro) {           
             DataPoint dataPoint = serie.getPoints().get(0); 
             AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-            averageMonthlyConsumption = amphiroDataPoint.getVolume().get(EnumMetric.AVERAGE);                                               
+            userAverageFlow = amphiroDataPoint.getFlow().get(EnumMetric.AVERAGE);                                               
         }             
    
-        //TODO - change condition using average flow, if available from aggregates
-        if(averageMonthlyConsumption > messageAggregatesContainer.getAverageMonthlyConsumptionAmphiro()){
-            Double annualConsumption = averageMonthlyConsumption*12;
-            return new SimpleEntry<>(fireAlert, annualConsumption.intValue());
+        if(userAverageFlow > messageAggregatesContainer.getAverageFlowAmphiro()){
+            DataQueryBuilder volumeQueryBuilder = new DataQueryBuilder();
+            volumeQueryBuilder.sliding(-3, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+                    .user("user", userKey).amphiro().sum();             
+
+            DataQuery volumeQuery = flowQueryBuilder.build();
+            DataQueryResponse volumeQueryResponse = dataService.execute(volumeQuery);
+            ArrayList<GroupDataSeries> volumeDataSeriesAmphiro = volumeQueryResponse.getDevices();
+
+            if(volumeDataSeriesAmphiro == null || volumeDataSeriesAmphiro.isEmpty()){
+                return new SimpleEntry<>(false, null);
+            }
+
+            for (GroupDataSeries serie : volumeDataSeriesAmphiro) {           
+                DataPoint dataPoint = serie.getPoints().get(0); 
+                AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
+                userThreeMonthsConsumption = amphiroDataPoint.getVolume().get(EnumMetric.SUM);                                               
+            }              
+                       
+            Double userAnnualConsumption = userThreeMonthsConsumption*4;
+            Double averageAnnualConsumption = messageAggregatesContainer.getAverageMonthlyConsumptionAmphiro()*12;
+            if(userAnnualConsumption > (averageAnnualConsumption)){
+                Double literSavedAnnualy = userAnnualConsumption - averageAnnualConsumption;
+                
+                return new SimpleEntry<>(true, literSavedAnnualy.intValue());
+            }
+            else{
+                return new SimpleEntry<>(false, null);
+            }            
         }
         else{
             return new SimpleEntry<>(false, null);
@@ -959,13 +987,14 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         }
         
         boolean fireAlert = false;
-        double averageMonthlyConsumption = 0;
-        DataQueryBuilder durationQueryBuilder = new DataQueryBuilder();
-        durationQueryBuilder.sliding(-30, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+        double userAverageFlow = 0;
+        double userThreeMonthsConsumption = 0;
+        DataQueryBuilder flowQueryBuilder = new DataQueryBuilder();
+        flowQueryBuilder.sliding(-3, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
                 .user("user", userKey).amphiro().average();             
 
-        DataQuery durationQuery = durationQueryBuilder.build();
-        DataQueryResponse queryResponse = dataService.execute(durationQuery);
+        DataQuery flowQuery = flowQueryBuilder.build();
+        DataQueryResponse queryResponse = dataService.execute(flowQuery);
         ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
 
         if(dataSeriesAmphiro == null || dataSeriesAmphiro.isEmpty()){
@@ -975,14 +1004,37 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         for (GroupDataSeries serie : dataSeriesAmphiro) {           
             DataPoint dataPoint = serie.getPoints().get(0); 
             AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-            averageMonthlyConsumption = amphiroDataPoint.getVolume().get(EnumMetric.AVERAGE);                                               
+            userAverageFlow = amphiroDataPoint.getFlow().get(EnumMetric.AVERAGE);                                               
         }             
    
-        //TODO - change condition using average flow, if available from aggregates
-        if(averageMonthlyConsumption > messageAggregatesContainer.getAverageMonthlyConsumptionAmphiro()){
-            Double annualLitresSaved = 
-                (averageMonthlyConsumption - messageAggregatesContainer.getAverageMonthlyConsumptionAmphiro())*12;
-            return new SimpleEntry<>(fireAlert, annualLitresSaved.intValue());
+        if(userAverageFlow > messageAggregatesContainer.getAverageFlowAmphiro()){
+            DataQueryBuilder volumeQueryBuilder = new DataQueryBuilder();
+            volumeQueryBuilder.sliding(-3, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+                    .user("user", userKey).amphiro().sum();             
+
+            DataQuery volumeQuery = flowQueryBuilder.build();
+            DataQueryResponse volumeQueryResponse = dataService.execute(volumeQuery);
+            ArrayList<GroupDataSeries> volumeDataSeriesAmphiro = volumeQueryResponse.getDevices();
+
+            if(volumeDataSeriesAmphiro == null || volumeDataSeriesAmphiro.isEmpty()){
+                return new SimpleEntry<>(false, null);
+            }
+
+            for (GroupDataSeries serie : volumeDataSeriesAmphiro) {           
+                DataPoint dataPoint = serie.getPoints().get(0); 
+                AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
+                userThreeMonthsConsumption = amphiroDataPoint.getVolume().get(EnumMetric.SUM);                                               
+            }              
+                        
+            Double userAnnualConsumption = userThreeMonthsConsumption*4;
+            Double averageAnnualConsumption = messageAggregatesContainer.getAverageMonthlyConsumptionAmphiro()*12;
+            if(userAnnualConsumption > (averageAnnualConsumption)){
+                Double literSavedAnnualy = userAnnualConsumption - averageAnnualConsumption;
+                return new SimpleEntry<>(fireAlert, literSavedAnnualy.intValue());
+            }
+            else{
+                return new SimpleEntry<>(false, null);
+            }           
         }
         else{
             return new SimpleEntry<>(false, null);
@@ -998,8 +1050,8 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
 
         double userAverageMonthlyConsumption = 0;
         DataQueryBuilder durationQueryBuilder = new DataQueryBuilder();
-        durationQueryBuilder.sliding(-30, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
-                .user("user", userKey).amphiro().average();
+        durationQueryBuilder.sliding(-3, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+                .user("user", userKey).amphiro().sum();
 
         DataQuery durationQuery = durationQueryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(durationQuery);
@@ -1012,7 +1064,7 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         for (GroupDataSeries serie : dataSeriesAmphiro) {
             DataPoint dataPoint = serie.getPoints().get(0);
             AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-            userAverageMonthlyConsumption = amphiroDataPoint.getVolume().get(EnumMetric.AVERAGE);
+            userAverageMonthlyConsumption = amphiroDataPoint.getVolume().get(EnumMetric.SUM)/3;
         }
 
         Double averageMonthlyConsumptionAmphiro = messageAggregatesContainer.getAverageMonthlyConsumptionAmphiro();
@@ -1030,14 +1082,14 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
     //6 recommendation - When showering, reduce the water flow when you do not need it {integer1} {integer2}
     @Override
     public SimpleEntry<Boolean, Integer> recommendReduceFlowWhenNotNeededAmphiro(UUID userKey) {    
-        if(messageAggregatesContainer.getAverageMonthlyConsumptionAmphiro() == null){
+        if(messageAggregatesContainer.getAverageSessionConsumptionAmphiro() == null){
             return new SimpleEntry<>(false, null);
         }
         
         boolean fireAlert = false;
-        double averageMonthlyConsumption = 0;
+        double averageSessionConsumption = 0;
         DataQueryBuilder durationQueryBuilder = new DataQueryBuilder();
-        durationQueryBuilder.sliding(-30, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+        durationQueryBuilder.sliding(-3, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
                 .user("user", userKey).amphiro().average();             
 
         DataQuery durationQuery = durationQueryBuilder.build();
@@ -1051,15 +1103,18 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
         for (GroupDataSeries serie : dataSeriesAmphiro) {           
             DataPoint dataPoint = serie.getPoints().get(0);   
             AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-            averageMonthlyConsumption = amphiroDataPoint.getVolume().get(EnumMetric.AVERAGE);                                               
+            averageSessionConsumption = amphiroDataPoint.getVolume().get(EnumMetric.AVERAGE);                                               
         }             
    
-        //TODO - change condition using average flow, if available from aggregates
-        if(averageMonthlyConsumption > messageAggregatesContainer.getAverageMonthlyConsumptionAmphiro()){
-            Double moreLitersThanOtherPerYear 
-                = (averageMonthlyConsumption - messageAggregatesContainer.getAverageMonthlyConsumptionAmphiro())*12;
+        //TODO - calculate the number of sessions per year when available
+        //TODO - add additional check for flow adjustments during the session when available
+        int numberOfSessionsPerYear = 100;
+        Double averageSessionConsumptionAggregate = messageAggregatesContainer.getAverageSessionConsumptionAmphiro();
+        if(averageSessionConsumption > averageSessionConsumptionAggregate){
+            Double moreLitersThanOthersPerYear 
+                = (averageSessionConsumption - averageSessionConsumptionAggregate)*numberOfSessionsPerYear;
 
-            return new SimpleEntry<>(fireAlert, moreLitersThanOtherPerYear.intValue());
+            return new SimpleEntry<>(fireAlert, moreLitersThanOthersPerYear.intValue());
         }
         else{
             return new SimpleEntry<>(false, null);
@@ -1082,5 +1137,15 @@ public class HBaseMessageCalculationRepository implements IMessageCalculationRep
             }            
         }
         return maxLength;
-    }           
+    }  
+    
+    @Override
+    public MessageCalculationConfiguration getConfig() {
+        return config;
+    }
+
+    @Override
+    public void setConfig(MessageCalculationConfiguration config) {
+        this.config = config;
+    }
 }    
