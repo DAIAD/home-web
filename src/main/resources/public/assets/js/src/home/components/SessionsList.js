@@ -3,7 +3,7 @@ var Link = require('react-router').Link;
 var bs = require('react-bootstrap');
 var { injectIntl } = require('react-intl');
 var { FormattedMessage, FormattedRelative } = require('react-intl');
-
+var { IMAGES } = require('../constants/HomeConstants');
 var SessionData = require('../containers/SessionData');
 
 var Chart = require('./Chart');
@@ -11,54 +11,71 @@ var SessionsChart = require('./SessionsChart');
 
 
 function SessionListItem (props) {
-  console.log('session item', props);
+  const { firstname } = props;
   const { id, index, device, devType, devName, volume, difference, energyClass, timestamp, duration, better, temperature, history, measurements } = props.data;
   const arrowClass = better===null?"":better?"fa-arrow-down green":"fa-arrow-up red";
+  const highlight = devType === 'METER' ? difference : volume;
+  const mu = ' lt';
   return (
     <li className="session-item"> 
       <a onClick={() => props.onOpen(id, props.index, device)} >
         
-        <div className="session-item-header col-md-3"><h3>{volume}<span style={{fontSize: '0.6em'}}> lt</span> <i className={`fa ${arrowClass}`}/></h3></div>
-        <div className="col-md-7">
-          <div className="pull-right">
-            {(() => {
-              if (id) {
-                return <span className="session-item-detail">{id}</span>;
-              }
-            })()}
-            
-            {(() => {
-              if (devName) {
-                return <span className="session-item-detail">{devName}</span>;
-              }
-            })()}
-            <span className="session-item-detail">Stelios</span>
-            <span className="session-item-detail"><i className="fa fa-calendar"/><FormattedRelative value={new Date(timestamp)} /></span> 
-            {(() => { 
-              if (duration) {
-                return (
-                  <span className="session-item-detail"><i className="fa fa-clock-o"/>{duration}</span>);
-              }
-            })()}
-            {(() => { 
-              if (energyClass) {
-                return (
-              <span className="session-item-detail"><i className="fa fa-flash"/>{energyClass}</span>);
-              }
-            })()}
-            {(() => { 
-              if (temperature) {
-                return (
-              <span className="session-item-detail"><i className="fa fa-temperature"/>{temperature}ºC</span>);
-              }
-            })()}
-        </div>
-        </div>
-        <div className="col-md-2">
-          <SparklineChart history={history} data={measurements} intl={props.intl}/>
-        </div>
-      </a>
-    </li>
+        <ul className="session-item-details"> 
+          <li> 
+            <span style={{fontSize: '2.5em'}}>{highlight}<span style={{fontSize: '0.6em'}}>{mu}</span></span>
+        </li>
+            {(() => devName ?
+            <li>
+              <span>{devName}</span>
+            </li>
+              :
+              <span/>
+            )()}
+            <li>
+              <span>{firstname}</span>
+            </li>
+            <li>
+              <span><i className="fa fa-calendar"/><FormattedRelative value={new Date(timestamp)} /></span> 
+            </li>
+            {(() => duration ? 
+             <li>
+              <span><i className="fa fa-clock-o"/>{duration}</span>
+            </li>
+             :
+             <span/>
+            )()}
+            {(() => energyClass ? 
+             <li>
+              <span><i className="fa fa-flash"/>{energyClass}</span>
+            </li>
+            :
+            <span/>
+            )()}
+            {(() => temperature ? 
+             <li>
+              <span><i className="fa fa-temperature"/>{temperature} ºC</span>
+            </li>
+            :
+            <span/>
+            )()}
+            {(() => id!=null ? 
+               <li>
+                <span style={{fontSize: '0.8m!important'}} >{`#${id}`}</span>
+              </li>
+              :
+              <span/>
+            )()}
+        {
+          /*
+             <SparklineChart history={history} data={measurements} intl={props.intl}/>
+          */
+          }
+          <li className="pull-right">
+            <img src={`${IMAGES}/arrow-big-right.svg`} />
+          </li>
+      </ul>
+    </a>
+  </li>
   );
 }
 
@@ -108,14 +125,14 @@ var SessionsList = React.createClass({
     },
     */
   render: function() {
-    console.log('session item rendered', this.props.sessions);
     return (
-      <div style={{margin:50}}>
-        <h3>In detail</h3>
+      <div className="history-list-area">
+        <h4>In detail</h4>
         <ul className="sessions-list">
           {
             this.props.sessions.map((session, idx) => (
               <SessionListItem
+                firstname={this.props.firstname}
                 intl={this.props.intl}
                 key={idx}
                 index={idx}
@@ -125,7 +142,10 @@ var SessionsList = React.createClass({
               ))
           }
         </ul>
-        <SessionData sessions={this.props.sessions} time={this.props.time}/>
+        <SessionData 
+          firstname={this.props.firstname}
+          sessions={this.props.sessions} 
+          time={this.props.time} />
         </div>
     );
   }

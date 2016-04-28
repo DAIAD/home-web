@@ -16,11 +16,20 @@ var SessionsChart = require('../SessionsChart');
 
 var timeUtil = require('../../utils/time');
 
+function ErrorDisplay (props) {
+  return props.errors ? 
+    <div style={{ zIndex: 100}}>
+      <img src={`${IMAGES}/alert.svg`} /><span>{`${props.errors}`}</span>
+    </div>
+    :
+     (<div/>);
+}
+
 
 /* Be Polite, greet user */
 function SayHello (props) {
   return (
-    <div >
+    <div style={{marginLeft:30}}>
       <h3><FormattedMessage id="dashboard.hello" values={{name:props.firstname}} /></h3>
     </div>
   );
@@ -28,7 +37,7 @@ function SayHello (props) {
 
 function InfoBox (props) {
   const { mode, infobox, periods, updateInfobox, removeInfobox, chartFormatter } = props;
-  const { id, period:defPeriod, type:defType, subtype:defSubtype, linkToHistory } = infobox;
+  const { id, error, period:defPeriod, type:defType, subtype:defSubtype, linkToHistory } = infobox;
   
   return (
     <div className='infobox'>
@@ -47,10 +56,8 @@ function InfoBox (props) {
         }
       </div>
       {
-        //TODO: disabled delete infobox until add is created
-        /* 
+        //TODO: disable delete infobox until add is created
            <a className='infobox-x' style={{float: 'right', marginLeft: 5, marginRight:5}} onClick={()=>removeInfobox(infobox.id)}><i className="fa fa-times"></i></a>
-           */
       }
       <div style={{float: 'right', marginRight: 10, marginTop: 2}}>
         {
@@ -68,20 +75,25 @@ function InfoBox (props) {
       <div className='infobox-body'>
          {
            (()=>{
-             if (infobox.type==='stat') {
-               return (
-                 <StatBox {...props} /> 
-               );
-             } 
-             else if (infobox.type==='chart') {
-               return (
-                 <ChartBox {...props} /> 
+             if (error) {
+               return (<ErrorDisplay errors={error} />);
+               } 
+             else {
+               if (infobox.type==='stat') {
+                 return (
+                   <StatBox {...props} /> 
                  );
-             }
-             else if (infobox.type==='tip') {
-               return (
-                 <TipBox {...props} />
-                 );
+               } 
+               else if (infobox.type==='chart') {
+                 return (
+                   <ChartBox {...props} /> 
+                   );
+               }
+               else if (infobox.type==='tip') {
+                 return (
+                   <TipBox {...props} />
+                   );
+               }
              }
            })()
          }
@@ -94,7 +106,7 @@ function InfoBox (props) {
 }
 
 function StatBox (props) {
-  const { id, title, type, improved, data, reducedData, metric, measurements, period, device, deviceDetails, index, time } = props.infobox;
+  const { id, title, type, improved, data, reducedData, metric, measurements, period, device, deviceDetails, index, time, better } = props.infobox;
   let improvedDiv = <div/>;
   if (improved === true) {
     improvedDiv = (<img src={`${IMAGES}/success.svg`}/>);
@@ -103,10 +115,14 @@ function StatBox (props) {
     improvedDiv = (<img src={`${IMAGES}/warning.svg`}/>);
   }
   const duration = data?(Array.isArray(data)?null:data.duration):null;
+  const arrowClass = better===null?"":better?"fa-arrow-down green":"fa-arrow-up red";
   return (
     <div className='row'>
       <div className='col-md-5'>
         <h2>{reducedData}</h2>
+      </div>
+      <div className='col-md-6'>
+        <div><h5><i className={`fa ${arrowClass}`}/>{better?` better than last ${period}`:` worse than last ${period}`}</h5></div>
       </div>
     </div>
   );
@@ -115,11 +131,8 @@ function StatBox (props) {
 function TipBox (props) {
   const { title, type, tip } = props.infobox;
   return (
-    <div className='row'>
-      <div className='col-md-3'>
-        <h4>image goes here</h4>
-      </div>
-      <div className='col-md-9' style={{fontSize: 14}}>
+    <div >
+      <div style={{fontSize: 14}}>
         {tip}
       </div>
     </div>
@@ -160,7 +173,6 @@ function ShowerChart (props) {
     return (<h4>Oops, cannot graph due to limited data..</h4>);  
   }
   else {
-    //formatter={props.chartFormatter(props.intl)}
     return (
       <SessionsChart
         height={150}
@@ -176,7 +188,7 @@ function ShowerChart (props) {
       />);
   }
 }
-
+/*
 function ForecastingChart (props) {
   return (
     <SessionsChart
@@ -210,17 +222,18 @@ function BreakdownChart (props) {
       data={[{title:'Consumption', data:[23, 25, 10, 20]}]}
     />);
 }
-
+*/
 
 function InfoPanel (props) {
   const { mode, layout, infoboxData, updateLayout, switchMode,  updateInfobox, removeInfobox, chartFormatter, intl, periods } = props;
+
   return (
     <div>
       <ResponsiveGridLayout 
         className='layout'
         layouts={{lg:layout}}
-        breakpoints={{lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0}}
-        cols={{lg: 12, md: 10, sm: 6, xs: 4, xxs: 2}}
+        breakpoints={{xlg: 1400, lg: 1000, md: 700, sm: 600, xs: 480, xxs: 200}}
+        cols={{xlg:8, lg: 6, md: 6, sm: 4, xs: 2, xxs: 1}}
         draggableHandle='.infobox-header'
         isDraggable={true}
         isResizable={false}
@@ -245,149 +258,6 @@ function InfoPanel (props) {
        }
       </ResponsiveGridLayout>
      </div>
-  );
-}
-
-function InfoboxBuildForm (props) {
-  const { mode, switchMode, tempInfoboxData, updateInfoboxTemp, types, subtypes, periods, metrics, devices, fetchInfoboxData, addInfobox, resetInfoboxTemp } = props;
-  return (
-    <bs.Modal animation={false} show={mode==="add"?true:false} onHide={() => switchMode("normal")} bsSize="sm">
-      <bs.Modal.Header closeButton>
-        <bs.Modal.Title>Add Infobox</bs.Modal.Title>
-      </bs.Modal.Header>
-      <bs.Modal.Body>
-        <div style={{padding: '5px 20px'}}>
-          <bs.Input 
-            type="text" 
-            label="Title" 
-            disabled={true}
-            value={tempInfoboxData.title} 
-            onChange={(e) => 
-              updateInfoboxTemp({title: e.target.value}) 
-            }/>
-          <bs.Input
-            type="select"
-            label="Device"
-            title={tempInfoboxData.device?tempInfoboxData.device:"none"}
-            id="device-switcher"
-            defaultValue={tempInfoboxData.device}
-            onChange={(e) => 
-              updateInfoboxTemp({device: e.target.value})
-            }>
-            {
-              devices.map(function(device) {
-                return (
-                  <option key={device.deviceKey} value={device.deviceKey} >{device.name || device.serial}</option>
-                );
-              })
-            } 
-          </bs.Input>
-          
-          <bs.Input
-            type="select"
-            label="Type"
-            title={tempInfoboxData.type?tempInfoboxData.type:"none"}
-            id="type-switcher"
-            defaultValue={tempInfoboxData.type}
-            onChange={(e) => 
-              updateInfoboxTemp({type: e.target.value})
-            }
-            >
-            {
-              types.map(function(type) {
-                return (
-                  <option key={type.id} value={type.id} >{type.title}</option>
-                );
-              })
-            } 
-          </bs.Input>
-          { 
-            (()=> subtypes?(
-              <bs.Input
-                type="select"
-                label="Sub-type"
-                title={tempInfoboxData.subtype?tempInfoboxData.subtype:"none"}
-                id="subtype-switcher"
-                defaultValue={tempInfoboxData.subtype}
-                onChange={(e) => 
-                  updateInfoboxTemp({subtype: e.target.value})
-                }
-                >
-                {
-                  subtypes.map(function(type) {
-                    return (
-                      <option key={type.id} value={type.id} >{type.title}</option>
-                    );
-                  })
-                } 
-              </bs.Input>):
-                (<div/>)
-            )()
-          }
-
-          <bs.Input
-            type="select"
-            label="Period"
-            title={tempInfoboxData.period?tempInfoboxData.period:"none"}
-            id="period-switcher"
-            defaultValue={tempInfoboxData.period}
-            onChange={(e) => 
-              updateInfoboxTemp({
-                period: e.target.value,
-                time: periods.find(x=> x.id === e.target.value)?periods.find(x=> x.id===e.target.value).value:{}
-                }
-              )
-             }>
-            {
-              periods.map(function(period) {
-                return (
-                  <option key={period.id} value={period.id} >{period.title}</option>
-                );
-              })
-            } 
-          </bs.Input>
-
-          <bs.Input
-            type="select"
-            label="Metric"
-            title={tempInfoboxData.metric?tempInfoboxData.metric:"none"}
-            id="metric-switcher"
-            defaultValue={tempInfoboxData.metric}
-            onChange={(e) => 
-              updateInfoboxTemp({metric: e.target.value})
-            }
-             >
-            {
-              metrics.map(function(metric) {
-                return (
-                  <option key={metric.id} value={metric.id}>{metric.title}</option>
-                );
-              })
-            } 
-          </bs.Input>
-          
-        </div>
-         
-      </bs.Modal.Body>
-      <bs.Modal.Footer>
-        <bs.Button 
-          onClick={()=> { 
-            const { type, subtype, device, time } = tempInfoboxData;
-            const id = addInfobox(tempInfoboxData); 
-            fetchInfoboxData({id, type, subtype, device, time});
-            resetInfoboxTemp(); 
-            switchMode("edit"); 
-          }}>
-          OK
-        </bs.Button>
-        <bs.Button 
-          onClick={()=> 
-            switchMode("normal")
-          }>
-          Cancel
-        </bs.Button>
-      </bs.Modal.Footer>
-    </bs.Modal>
   );
 }
 
@@ -443,7 +313,6 @@ var Dashboard = React.createClass({
         
         <InfoPanel {...this.props} />
         
-        <InfoboxBuildForm {...this.props} /> 
       </MainSection>
     );
   }

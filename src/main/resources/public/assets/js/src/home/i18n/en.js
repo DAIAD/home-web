@@ -15,6 +15,7 @@
     "7": "Saturday"
   },
   "errors": {
+    "Error: Internal Server Error": "Oops, something went wrong. Please try again in a while, or send feedback if this error keeps recurring",
     "SharedErrorCode.AUTHENTICATION": "Authentication has failed. Please try again.",
     "SharedErrorCode.UNKNOWN": "We are facing an internal problem, please try again in a while."
   },
@@ -37,7 +38,10 @@
   "section": {
     "dashboard": "Dashboard",
     "history":"Statistics",
+    "explore":"Explore",
+    "forecast":"Forecast",
     "shower": "Shower",
+    "shower-aggregated": "Total data",
     "commons": "Commons",
     "notifications": "Notifications",
     "search": "Search",
@@ -47,7 +51,7 @@
     "settings": "Settings",
     "profile": "Profile",
     "devices": "Devices",
-    "login": "Welcome to DAIAD Home"
+    "login": "Login"
   },
   "dashboard": {
     "hello": "Welcome {name}!"

@@ -4,9 +4,7 @@ function MainSection (props) {
   return (
     <section className="main-section" >
       <div className={props.id}>
-        <div className="container">
-            {props.children}
-          </div>
+        {props.children}
         </div>
       </section>
   );

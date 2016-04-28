@@ -73,6 +73,7 @@ var Devices = React.createClass({
   render: function() {
     return (
       <MainSection id="section.devices">
+        <br/>
         <DevicesForm {...this.props} /> 
       </MainSection>
     );

@@ -10,7 +10,7 @@ var SessionsChart = require('./SessionsChart');
 
 var { SHOWER_METRICS, IMAGES } = require('../constants/HomeConstants'); 
 var MainSection = require('./MainSection');
-var Sidebar = require('./Sidebar');
+var { SidebarLeft } = require('./Sidebars');
 var timeUtil = require('../utils/time');
 
 
@@ -35,13 +35,13 @@ function SessionInfoItem (props) {
 }
 
 function SessionInfo (props) {
-  const { setSessionFilter, intl, data } = props;
+  const { setSessionFilter, intl, data, firstname } = props;
   return !data?<div />:(
-    <div style={{width: '80%', marginLeft:'auto', marginRight:'auto'}}>
-      <h4><FormattedMessage id="shower.details"/></h4>
-      <hr/>
-      <h5 style={{float: 'right'}} ><i style={{marginRight: 10}} className="fa fa-user"/>Stelios</h5>
-      <h5 style={{float: 'left'}}><i style={{marginRight: 10}} className="fa fa-calendar"/><FormattedTime value={new Date(data.timestamp)} date={{day:"numeric", month:"long", year:"numeric"}} time={{hours:"numeric", minutes:"numeric"}} /></h5>
+    <div className="shower-info">
+      <div className="headline">
+        <span className="headline-user"><i className="fa fa-user"/>{firstname}</span>
+        <span className="headline-date"><i className="fa fa-calendar"/><FormattedTime value={new Date(data.timestamp)} date={{day:"numeric", month:"long", year:"numeric"}} time={{hours:"numeric", minutes:"numeric"}} /></span>
+      </div>
       <br/>
       <br/>
       <ul className="sessions-list" >
@@ -56,45 +56,46 @@ function SessionInfo (props) {
 }
 
 function Session (props) {
-  const { history, intl, filter, data, chartData, setSessionFilter } = props;
+  const { history, intl, filter, data, chartData, setSessionFilter, firstname } = props;
   if (!data) return <div/>;
   const { hasChartData } = data;
   
-  console.log('session chartData', hasChartData, chartData);
   const _t = intl.formatMessage;
+  //title = _t({id: `history.${filter}`})
   return hasChartData?(
-        <div style={{padding: 30}}>
-          <SessionsChart 
-              height={300}
-              width='100%'
-              title={_t({id: `history.${filter}`})}
-              mu="lt"
-              xMargin={60}
-              x2Margin={60}
-              type="line"
-              formatter={(x) => intl.formatTime(x, { hour: 'numeric', minute: 'numeric'})}
-              data={[{title:filter, data:chartData}]}
-            />
-          <div style={{marginTop: 30}}/>
-
-          <SessionInfo
-            intl={intl}
-            setSessionFilter={setSessionFilter}
-            data={data} /> 
+    <div className="shower-container">
+      <div className="shower-chart-area">
+        <SessionsChart 
+            height={300}
+            width='100%'
+            title=""
+            mu="lt"
+            xMargin={60}
+            x2Margin={60}
+            type="line"
+            formatter={(x) => intl.formatTime(x, { hour: 'numeric', minute: 'numeric'})}
+            data={[{title:filter, data:chartData}]}
+          />
         </div>
-      ):(
-      <div style={{padding:30}}>
-        <section>
-          <div style={{width:'80%', marginLeft: 'auto', marginRight:'auto'}}>
-            <h3><FormattedMessage id="history.limitedData"/> </h3>
-            <div style={{marginTop: 50}}/>    
-          </div>
-          <SessionInfo
-            intl={intl}
-            data={data} />
-        </section>
-        </div> 
-      );
+        
+        <SessionInfo
+          firstname={firstname}
+          intl={intl}
+          setSessionFilter={setSessionFilter}
+          data={data} /> 
+    </div>
+  ) : (
+  <div className="shower-container">
+    <div className="shower-chart-area">
+      <h3><FormattedMessage id="history.limitedData"/> </h3>
+    </div>
+    
+    <SessionInfo
+      firstname={firstname}
+      intl={intl}
+      data={data} />
+    </div> 
+  );
 }
 
 var SessionModal = React.createClass({
@@ -129,7 +130,16 @@ var SessionModal = React.createClass({
     return (
       <bs.Modal animation={false} show={this.props.showModal} onHide={this.onClose} bsSize="large">
         <bs.Modal.Header closeButton>
-          <bs.Modal.Title><FormattedMessage id="section.shower" /></bs.Modal.Title>
+          <bs.Modal.Title>
+            {(() => data.id ?
+              <span>
+                <FormattedMessage id="section.shower" /><span>{` #${data.id}`}</span>
+              </span>
+              :
+              <FormattedMessage id="section.shower-aggregated" />
+              )()
+            }
+            </bs.Modal.Title>
         </bs.Modal.Header>
         <bs.Modal.Body>
 
@@ -137,9 +147,8 @@ var SessionModal = React.createClass({
 
         </bs.Modal.Body>
         <bs.Modal.Footer>
-          <bs.Button disabled={disabledPrevious} onClick={this.onPrevious}>Previous</bs.Button>
-          <bs.Button disabled={disabledNext} onClick={this.onNext}>Next</bs.Button>
-          <bs.Button onClick={this.onClose}>Close</bs.Button>
+          { (() => disabledPrevious ? <span/> : <a className='pull-left' onClick={this.onPrevious}>Previous</a> )() }
+          { (() => disabledNext ? <span/> : <a className='pull-right' onClick={this.onNext}>Next</a> )() }
         </bs.Modal.Footer>
       </bs.Modal> 
     );

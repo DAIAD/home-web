@@ -3,7 +3,7 @@ var { injectIntl } = require('react-intl');
 var { FormattedMessage } = require('react-intl');
 
 var MainSection = require('../MainSection');
-var Sidebar = require('../Sidebar');
+var { SidebarLeft } = require('../Sidebars');
 
 var Commons = React.createClass({
   render: function() {
