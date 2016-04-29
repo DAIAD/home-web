@@ -11,6 +11,8 @@ public class UploadRequest {
 	@JsonDeserialize(using = EnumUploadFileType.Deserializer.class)
 	private EnumUploadFileType type;
 
+	private boolean firstRowHeader;
+
 	private String timezone;
 
 	private Integer srid;
@@ -45,6 +47,14 @@ public class UploadRequest {
 
 	public void setType(EnumUploadFileType type) {
 		this.type = type;
+	}
+
+	public boolean isFirstRowHeader() {
+		return firstRowHeader;
+	}
+
+	public void setFirstRowHeader(boolean firstRowHeader) {
+		this.firstRowHeader = firstRowHeader;
 	}
 
 }

@@ -127,6 +127,7 @@ public class DataController extends BaseController {
 								ImportWaterMeterFileConfiguration configuration = new ImportWaterMeterFileConfiguration(
 												filename);
 								configuration.setSourceReferenceSystem(new ReferenceSystem(request.getSrid()));
+								configuration.setFirstRowHeader(request.isFirstRowHeader());
 
 								this.fileDataLoaderService.importWaterMeter(configuration);
 							}
@@ -165,6 +166,8 @@ public class DataController extends BaseController {
 						break;
 				}
 			}
+		} catch (ApplicationException ex) {
+			response.add(ex.getCode(), this.getMessage(ex));
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
 

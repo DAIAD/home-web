@@ -18,6 +18,8 @@ public class ImportWaterMeterFileConfiguration {
 
 	private int latitudeCellIndex = 3;
 
+	private boolean firstRowHeader = false;
+
 	public ImportWaterMeterFileConfiguration(String filename) {
 		this.filename = filename;
 
@@ -73,6 +75,14 @@ public class ImportWaterMeterFileConfiguration {
 
 	public void setTargetReferenceSystem(ReferenceSystem targetReferenceSystem) {
 		this.targetReferenceSystem = targetReferenceSystem;
+	}
+
+	public boolean isFirstRowHeader() {
+		return firstRowHeader;
+	}
+
+	public void setFirstRowHeader(boolean firstRowHeader) {
+		this.firstRowHeader = firstRowHeader;
 	}
 
 }

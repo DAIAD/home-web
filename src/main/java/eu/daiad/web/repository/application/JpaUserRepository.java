@@ -33,6 +33,7 @@ import eu.daiad.web.domain.application.AccountProfile;
 import eu.daiad.web.domain.application.AccountProfileHistoryEntry;
 import eu.daiad.web.domain.application.AccountRole;
 import eu.daiad.web.domain.application.AccountWhiteListEntry;
+import eu.daiad.web.domain.application.GroupCluster;
 import eu.daiad.web.domain.application.Role;
 import eu.daiad.web.domain.application.Utility;
 import eu.daiad.web.model.EnumGender;
@@ -44,6 +45,7 @@ import eu.daiad.web.model.error.UserErrorCode;
 import eu.daiad.web.model.profile.EnumMobileMode;
 import eu.daiad.web.model.profile.EnumUtilityMode;
 import eu.daiad.web.model.profile.EnumWebMode;
+import eu.daiad.web.model.query.EnumClusterType;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.user.Account;
@@ -610,7 +612,8 @@ public class JpaUserRepository implements IUserRepository {
 		}
 	}
 
-	public ArrayList<UUID> getUserKeysForGroup(UUID groupKey) {
+	@Override
+	public List<UUID> getUserKeysForGroup(UUID groupKey) {
 		ArrayList<UUID> result = new ArrayList<UUID>();
 		try {
 			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from \"group\" g "
@@ -629,7 +632,8 @@ public class JpaUserRepository implements IUserRepository {
 		return result;
 	}
 
-	public ArrayList<UUID> getUserKeysForUtility(UUID utilityKey) {
+	@Override
+	public List<UUID> getUserKeysForUtility(UUID utilityKey) {
 		ArrayList<UUID> result = new ArrayList<UUID>();
 		try {
 			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from utility u "
@@ -647,7 +651,8 @@ public class JpaUserRepository implements IUserRepository {
 		return result;
 	}
 
-	public ArrayList<UUID> getUserKeysForUtility() {
+	@Override
+	public List<UUID> getUserKeysForUtility() {
 		ArrayList<UUID> result = new ArrayList<UUID>();
 
 		try {
@@ -675,5 +680,53 @@ public class JpaUserRepository implements IUserRepository {
 		}
 
 		return result;
+	}
+
+	@Override
+	public List<GroupCluster> getClusterGroupByKey(UUID key) {
+		TypedQuery<GroupCluster> query = entityManager.createQuery("select g from group_cluster g  "
+						+ "where g.utility.id = :utility_id and g.cluster.key = :key", GroupCluster.class);
+
+		query.setParameter("utility_id", this.getCurrentUtilityId());
+		query.setParameter("key", key);
+
+		return query.getResultList();
+	}
+
+	@Override
+	public List<GroupCluster> getClusterGroupByName(String name) {
+		TypedQuery<GroupCluster> query = entityManager.createQuery("select g from group_cluster g "
+						+ "where g.utility.id = :utility_id and g.cluster.name = :name", GroupCluster.class);
+
+		query.setParameter("utility_id", this.getCurrentUtilityId());
+		query.setParameter("name", name);
+
+		return query.getResultList();
+	}
+
+	@Override
+	public List<GroupCluster> getClusterGroupByType(EnumClusterType type) {
+		TypedQuery<GroupCluster> query = entityManager.createQuery("select g from group_cluster g "
+						+ "where g.utility.id = :utility_id and g.cluster.name = :name", GroupCluster.class);
+
+		query.setParameter("utility_id", this.getCurrentUtilityId());
+		query.setParameter("name", type.getName());
+
+		return query.getResultList();
+	}
+
+	private Integer getCurrentUtilityId() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		AuthenticatedUser user = null;
+
+		if (auth.getPrincipal() instanceof AuthenticatedUser) {
+			user = (AuthenticatedUser) auth.getPrincipal();
+		}
+
+		if (user != null) {
+			return user.getUtilityId();
+		}
+
+		return null;
 	}
 }

@@ -101,6 +101,9 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 				// Iterating over Excel file in Java
 				while (itr.hasNext()) {
 					Row row = itr.next();
+					if ((row.getRowNum() == 0) && (configuration.isFirstRowHeader() == true)) {
+						continue;
+					}
 
 					String username = getStringFromCell(row, configuration.getUsernameCellIndex());
 					String serial = getStringFromCell(row, configuration.getMeterIdCellIndex());
@@ -132,10 +135,10 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 						this.registerMeter(input.getName(), username, serial, location);
 					}
 				}
-			} catch (FactoryException fe) {
-				logger.warn(fe);
-			} catch (Exception ie) {
-				logger.error(ie);
+			} catch (ApplicationException ex) {
+				throw ex;
+			} catch (Exception ex) {
+				throw ApplicationException.wrap(ex);
 			} finally {
 				try {
 					if (book != null) {
@@ -163,14 +166,14 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 				properties.add(new KeyValuePair("import.date", (new DateTime(DateTimeZone.UTC).toString())));
 
 				this.deviceRepository.createMeterDevice(username, serial, properties, location);
-			} else {
+			} else if (location != null) {
 				// Update device location
 				this.deviceRepository.updateMeterLocation(username, serial, location);
 			}
 		} catch (ApplicationException ex) {
-			// Ignore
+			throw ex;
 		} catch (Exception ex) {
-			logger.error(String.format("Failed to register device [%s] to user [%s].", username, serial), ex);
+			throw ApplicationException.wrap(ex).set("user", username).set("serial", serial);
 		}
 	}
 
