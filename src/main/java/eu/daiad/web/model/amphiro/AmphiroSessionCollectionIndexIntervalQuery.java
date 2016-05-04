@@ -3,6 +3,7 @@ package eu.daiad.web.model.amphiro;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import eu.daiad.web.model.AuthenticatedRequest;
@@ -23,10 +24,12 @@ public class AmphiroSessionCollectionIndexIntervalQuery extends AuthenticatedReq
 
 	private Integer length;
 
+	@JsonIgnore
 	public UUID getUserKey() {
 		return userKey;
 	}
 
+	@JsonProperty
 	public void setUserKey(UUID userKey) {
 		this.userKey = userKey;
 	}
