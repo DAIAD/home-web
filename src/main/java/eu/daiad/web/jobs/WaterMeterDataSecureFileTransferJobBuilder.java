@@ -42,17 +42,17 @@ public class WaterMeterDataSecureFileTransferJobBuilder implements IJobBuilder {
 			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
 				try {
 					// Initialize configuration
-					DataTransferConfiguration loaderConfig = new DataTransferConfiguration();
+					DataTransferConfiguration config = new DataTransferConfiguration();
 
 					// File properties
-					loaderConfig.setLocalFolder((String) chunkContext.getStepContext().getJobParameters()
+					config.setLocalFolder((String) chunkContext.getStepContext().getJobParameters()
 									.get("folder.local"));
-					loaderConfig.setRemoteFolder((String) chunkContext.getStepContext().getJobParameters()
+					config.setRemoteFolder((String) chunkContext.getStepContext().getJobParameters()
 									.get("folder.remote"));
-					loaderConfig.setTimezone((String) chunkContext.getStepContext().getJobParameters().get("timezone"));
+					config.setTimezone((String) chunkContext.getStepContext().getJobParameters().get("timezone"));
 
 					// Filter properties
-					loaderConfig.setFilterRegEx((String) chunkContext.getStepContext().getJobParameters()
+					config.setFilterRegEx((String) chunkContext.getStepContext().getJobParameters()
 									.get("filter.regex"));
 
 					// SFTP properties
@@ -62,10 +62,10 @@ public class WaterMeterDataSecureFileTransferJobBuilder implements IJobBuilder {
 					String username = (String) chunkContext.getStepContext().getJobParameters().get("sftp.username");
 					String password = (String) chunkContext.getStepContext().getJobParameters().get("sftp.password");
 
-					loaderConfig.setSftpProperties(new SftpProperties(host, port, username, password));
+					config.setSftpProperties(new SftpProperties(host, port, username, password));
 
 					// Execute data file transfer and import
-					loader.load(loaderConfig);
+					loader.load(config);
 				} catch (Exception ex) {
 					logger.fatal("Failed to load meter data from SFTP server.", ex);
 

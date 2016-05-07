@@ -21,7 +21,6 @@ import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 import org.springframework.beans.factory.annotation.Autowired;

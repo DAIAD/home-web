@@ -15,9 +15,9 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
-@Entity(name = "dynamic_recommendation")
-@Table(schema = "public", name = "dynamic_recommendation")
-public class DynamicRecommendation {
+@Entity(name = "alert")
+@Table(schema = "public", name = "alert")
+public class Alert {
 
 	@Id()
 	@Column(name = "id")
@@ -30,16 +30,8 @@ public class DynamicRecommendation {
 	private int priority;
 
 	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
-	@JoinColumn(name = "dynamic_recommendation_id")
-	private Set<DynamicRecommendationTranslation> translations = new HashSet<DynamicRecommendationTranslation>();
-
-	public EnumMessageMode getMode() {
-		return mode;
-	}
-
-	public void setMode(EnumMessageMode mode) {
-		this.mode = mode;
-	}
+	@JoinColumn(name = "alert_id")
+	private Set<AlertTranslation> translations = new HashSet<AlertTranslation>();
 
 	public int getPriority() {
 		return priority;
@@ -53,7 +45,12 @@ public class DynamicRecommendation {
 		return id;
 	}
 
-	public Set<DynamicRecommendationTranslation> getTranslations() {
+	public EnumMessageMode getMode() {
+		return mode;
+	}
+
+	public Set<AlertTranslation> getTranslations() {
 		return translations;
 	}
+
 }

@@ -26,7 +26,6 @@ import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.Error;
 import eu.daiad.web.model.error.ErrorCode;
 import eu.daiad.web.model.error.QueryErrorCode;
-import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
 import eu.daiad.web.model.query.ClusterPopulationFilter;
 import eu.daiad.web.model.query.DataQuery;
@@ -204,19 +203,32 @@ public class DataService implements IDataService {
 	@Override
 	public DataQueryResponse execute(DataQuery query) {
 		try {
-			DataQueryResponse response = new DataQueryResponse();
-
-			// Get authenticated user
-			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+			// Get authenticated user if any exists
+			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser authenticatedUser = null;
 
-			if (auth.getPrincipal() instanceof AuthenticatedUser) {
-				authenticatedUser = (AuthenticatedUser) auth.getPrincipal();
-			} else {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+			if ((authentication != null) && (authentication.getPrincipal() instanceof AuthenticatedUser)) {
+				authenticatedUser = (AuthenticatedUser) authentication.getPrincipal();
 			}
 
-			ExpandedDataQuery expandedQuery = new ExpandedDataQuery(DateTimeZone.forID(authenticatedUser.getTimezone()));
+			// If time zone is not set, use the current user's time zone
+			DateTimeZone timezone = null;
+
+			if (StringUtils.isBlank(query.getTimezone())) {
+				if (authenticatedUser != null) {
+					timezone = DateTimeZone.forID(authenticatedUser.getTimezone());
+				} else {
+					// If there is no authenticated user, user default UTC time
+					// zone
+					timezone = DateTimeZone.UTC;
+				}
+			} else {
+				timezone = DateTimeZone.forID(query.getTimezone());
+			}
+
+			DataQueryResponse response = new DataQueryResponse(timezone);
+
+			ExpandedDataQuery expandedQuery = new ExpandedDataQuery(timezone);
 
 			// Validate query
 			this.validate(query, response);
@@ -283,8 +295,11 @@ public class DataService implements IDataService {
 
 					if (filterUsers.size() > 0) {
 						for (UUID userKey : filterUsers) {
-							AuthenticatedUser user = userRepository.getUserByUtilityAndKey(
-											authenticatedUser.getUtilityId(), userKey);
+							// Apply utility filter only when an authenticated
+							// user exists
+							AuthenticatedUser user = (authenticatedUser == null ? userRepository.getUserByKey(userKey)
+											: userRepository.getUserByUtilityAndKey(authenticatedUser.getUtilityId(),
+															userKey));
 
 							if (user == null) {
 								throw new ApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username",

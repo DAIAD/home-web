@@ -25,6 +25,8 @@ public interface IUserRepository {
 
 	AuthenticatedUser getUserByName(String username) throws ApplicationException;
 
+	AuthenticatedUser getUserByKey(UUID key) throws ApplicationException;
+
 	AuthenticatedUser getUserByUtilityAndKey(int utilityId, UUID key) throws ApplicationException;
 
 	AccountWhiteListEntry getAccountWhiteListEntry(String username);
@@ -42,6 +44,8 @@ public interface IUserRepository {
 	List<UUID> getUserKeysForUtility();
 
 	List<UUID> getUserKeysForUtility(UUID utilityKey);
+
+	List<UUID> getUserKeysForUtility(int utilityId);
 
 	List<GroupCluster> getClusterGroupByKey(UUID key);
 

@@ -2,6 +2,7 @@ package eu.daiad.web.model.error;
 
 public enum SharedErrorCode implements ErrorCode {
 	UNKNOWN,
+	NOT_IMPLEMENTED,
 	PARSE_ERROR,
 	AUTHENTICATION,
 	AUTHENTICATION_NO_CREDENTIALS,
