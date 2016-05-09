@@ -5,7 +5,7 @@ var QueryActions = require('./QueryActions');
 var HistoryActions = require('./HistoryActions');
 
 var { getDeviceKeysByType } = require('../utils/device');
-var { getTimeByPeriod, getLastShowerTime } = require('../utils/time');
+var { getTimeByPeriod, getLastShowerTime, getPreviousPeriod } = require('../utils/time');
 
 const setLastSession = function(session) {
   return {
@@ -64,8 +64,7 @@ const DashboardActions = {
         update: Object.assign({}, update, {synced:false}),
       });
 
-      //dispatch(DashboardActions.updateInfobox(id, update));
-      dispatch(DashboardActions.updateLayoutItem(id, update.type));
+      dispatch(DashboardActions.updateLayoutItem(id, update.display));
       
       dispatch(DashboardActions.fetchInfoboxData(Object.assign({}, getState().section.dashboard.infobox.find(i=>i.id===id))));
     };
@@ -129,34 +128,43 @@ const DashboardActions = {
         //}
       }
 
-      if (subtype === "last") {
+      if (type === "last") {
         time = getLastShowerTime();
 
         return dispatch(QueryActions.fetchLastSession(device, time))
-        //.then(session => session)
         .then(response => 
               dispatch(DashboardActions.setInfoboxData(id, {data: response.data, index: response.index, showerId: response.id, time})))
-              //dispatch(DashboardActions.updateInfobox(id, {synced: true, index: response.index, showerId: response.id, device:response.device, data:response.data, period: "custom", time})))
         .catch(error => { 
+          //log error in console for debugging and display friendly message
           console.error('Caught error in infobox data fetch:', error); 
-          dispatch(DashboardActions.setInfoboxData(id, {data: [], error})); });
+          dispatch(DashboardActions.setInfoboxData(id, {data: [], error:'Oops, sth went wrong..replace with something friendly'})); });
       }
+      //total or efficiency
       else {
+
+        //fetch previous period data for comparison 
+        let prevTime = getPreviousPeriod(period, time.startDate);
+        dispatch(QueryActions.queryDeviceOrMeter(device, deviceType, prevTime))
+        .then(data => {
+            return dispatch(DashboardActions.setInfoboxData(id, {previous:data, time:prevTime}));})
+          .catch(error => { 
+            console.error('Caught error in infobox previous period data fetch:', error); 
+            dispatch(DashboardActions.setInfoboxData(id, {previous: [], error: 'Oops sth went wrong, replace with sth friendly'})); });
+
         return dispatch(QueryActions.queryDeviceOrMeter(device, deviceType, time))
         .then(data =>  
-              //dispatch(DashboardActions.updateInfobox(id, {synced: true, data:sessions, time})))
-        dispatch(DashboardActions.setInfoboxData(id, {data})))
+          dispatch(DashboardActions.setInfoboxData(id, {data, time})))
         .catch(error => { 
           console.error('Caught error in infobox data fetch:', error); 
-          //dispatch(DashboardActions.updateInfobox(id, {error})); });
-          dispatch(DashboardActions.setInfoboxData(id, {data: [], error})); });
+          dispatch(DashboardActions.setInfoboxData(id, {data: [], error: 'Oops sth went wrong, replace with sth friendly'})); });
       }
     };
   },
   fetchAllInfoboxesData: function() {
     return function(dispatch, getState) {
       getState().section.dashboard.infobox.map(function (infobox) {
-        if (infobox.type === 'chart' || infobox.type === 'stat')
+        const { type } = infobox;
+        if (type === 'total' || type === 'last' || type === 'efficiency')
         return dispatch(DashboardActions.fetchInfoboxData(infobox));
       });
     };

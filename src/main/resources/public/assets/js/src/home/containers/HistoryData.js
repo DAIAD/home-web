@@ -7,7 +7,7 @@ var History = require('../components/sections/History');
 
 var HistoryActions = require('../actions/HistoryActions');
 
-var { getDeviceByKey, getDeviceNameByKey, getAvailableDevices, getDeviceTypeByKey, getDefaultDevice, reduceSessions, reduceMetric } = require('../utils/device');
+var { getDeviceByKey, getDeviceNameByKey, getAvailableDevices, getDeviceTypeByKey, getDefaultDevice, reduceSessions, reduceMetric, getMetricMu, sortByTime } = require('../utils/device');
 var timeUtil = require('../utils/time');
 var { getFriendlyDuration, getEnergyClass } = require('../utils/general');
 
@@ -51,6 +51,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
   ];
 
   const metrics = devType === 'AMPHIRO' ? devMetrics : (devType === 'METER' ? meterMetrics : [] );
+  const comparisons = [{id:'last', title: timeUtil.getLastPeriod(stateProps.timeFilter, stateProps.time.startDate)}];
   return Object.assign(
     {}, 
     ownProps, 
@@ -61,8 +62,9 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                     nextPeriod: stateProps.time?timeUtil.getNextPeriod(stateProps.timeFilter, stateProps.time.startDate):{}, 
                     previousPeriod: stateProps.time?timeUtil.getPreviousPeriod(stateProps.timeFilter, stateProps.time.endDate):{},
                     metrics,
-                    reducedMetric: reduceMetric(stateProps.devices, stateProps.data, stateProps.metricFilter),
-                    sessions: reduceSessions(stateProps.devices, stateProps.data),
+                    comparisons,
+                    reducedMetric: `${reduceMetric(stateProps.devices, stateProps.data, stateProps.metricFilter)} ${getMetricMu(stateProps.metricFilter)}`,
+                    sessions: sortByTime(reduceSessions(stateProps.devices, stateProps.data), 'desc'),
                     amphiros: getAvailableDevices(stateProps.devices),
                   }));
 }

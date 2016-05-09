@@ -20,7 +20,7 @@ var timeUtil = require('../../utils/time');
 function ErrorDisplay (props) {
   return props.errors ? 
     <div style={{ zIndex: 100}}>
-      <img src={`${IMAGES}/alert.svg`} /><span>{`${props.errors}`}</span>
+      <img src={`${IMAGES}/alert.svg`} /><span className="infobox-error">{`${props.errors}`}</span>
     </div>
     :
      (<div/>);
@@ -38,7 +38,7 @@ function SayHello (props) {
 
 function InfoBox (props) {
   const { mode, infobox, periods, updateInfobox, removeInfobox, chartFormatter } = props;
-  const { id, error, period:defPeriod, type:defType, subtype:defSubtype, linkToHistory } = infobox;
+  const { id, error, period, type, display, linkToHistory } = infobox;
   
   return (
     <div className='infobox'>
@@ -47,9 +47,9 @@ function InfoBox (props) {
       
       <div style={{float: 'left'}}>
         {
-          (() => (defSubtype !== 'last' && defType !== 'tip') ?
-            ['chart', 'stat'].map(type => (
-              <a key={type} onClick={() => updateInfobox(id, {type})} style={{marginLeft:5}}>{(type===defType)?(<u>{type}</u>):(type)}</a>
+          (() => (type !== 'last' && type !== 'tip') ?
+            ['chart', 'stat'].map(t => (
+              <a key={t} onClick={() => updateInfobox(id, {display:t})} style={{marginLeft:5}}>{(t===display)?(<u>{t}</u>):(t)}</a>
               ))
               :
                 <div/>
@@ -62,9 +62,9 @@ function InfoBox (props) {
       }
       <div style={{float: 'right', marginRight: 10, marginTop: 2}}>
         {
-          (() => (defType !== 'tip' && defSubtype !== 'last') ?
-            periods.map(period => (
-              <a key={period.id} onClick={() => updateInfobox(id, {period:period.id})} style={{marginLeft:5}}>{(period.id===defPeriod)?(<u>{period.title}</u>):(period.title)}</a>
+          (() => (type !== 'tip' && type !== 'last') ?
+            periods.map(p => (
+              <a key={p.id} onClick={() => updateInfobox(id, {period:p.id})} style={{marginLeft:5}}>{(p.id===period)?(<u>{p.title}</u>):(p.title)}</a>
               ))
                 :
                   <div/>
@@ -80,17 +80,17 @@ function InfoBox (props) {
                return (<ErrorDisplay errors={error} />);
                } 
              else {
-               if (infobox.type==='stat') {
+               if (display==='stat') {
                  return (
                    <StatBox {...props} /> 
                  );
                } 
-               else if (infobox.type==='chart') {
+               else if (display==='chart') {
                  return (
                    <ChartBox {...props} /> 
                    );
                }
-               else if (infobox.type==='tip') {
+               else if (display==='tip') {
                  return (
                    <TipBox {...props} />
                    );
@@ -107,7 +107,7 @@ function InfoBox (props) {
 }
 
 function StatBox (props) {
-  const { id, title, type, improved, data, reducedData, metric, measurements, period, device, deviceDetails, index, time, better } = props.infobox;
+  const { id, title, type, improved, data, highlight, metric, measurements, period, device, deviceDetails, index, time, better, comparePercentage } = props.infobox;
   let improvedDiv = <div/>;
   if (improved === true) {
     improvedDiv = (<img src={`${IMAGES}/success.svg`}/>);
@@ -116,31 +116,40 @@ function StatBox (props) {
     improvedDiv = (<img src={`${IMAGES}/warning.svg`}/>);
   }
   const duration = data?(Array.isArray(data)?null:data.duration):null;
-  const arrowClass = better===null?"":better?"fa-arrow-down green":"fa-arrow-up red";
+  const arrowClass = better?"fa-arrow-down green":"fa-arrow-up red";
+  const bow = (better==null || comparePercentage == null) ? false : true;
   return (
     <div className='row'>
-      <div className='col-md-5'>
-        <h2>{reducedData}</h2>
+      <div className='col-md-6'>
+        <h2>{highlight}</h2>
       </div>
       <div className='col-md-6'>
-        <div><h5><i className={`fa ${arrowClass}`}/>{better?` better than last ${period}`:` worse than last ${period}`}</h5></div>
+        <div>
+          {
+            (() => bow ? 
+             <h5><i className={`fa ${arrowClass}`}/>{better ? `${comparePercentage}% better than last ${period}` : `${comparePercentage}% worse than last ${period}`}</h5>
+             :
+               <h5>No data</h5>
+               )()
+          }
+        </div>
       </div>
     </div>
   );
 }
 
 function TipBox (props) {
-  const { title, type, tip } = props.infobox;
+  const { title, type, highlight } = props.infobox;
   return (
     <div >
       <div style={{fontSize: 14}}>
-        {tip}
+        {highlight}
       </div>
     </div>
   );
 }
 function ChartBox (props) {
-  const { title, type, subtype, improved, data, metric, measurements, period, device, deviceDetails, chartData, reducedData, time, index } = props.infobox;
+  const { title, type, subtype, improved, data, metric, measurements, period, device, deviceDetails, chartData, highlight, time, index } = props.infobox;
   return (
     <div>
       <div >
@@ -152,14 +161,10 @@ function ChartBox (props) {
             )()
         }
         {
-          (() => subtype === 'efficiency' ? 
-           ( reducedData ?
-            <span>Your shower efficiency class this {period} was <b>{reducedData}</b>!</span>
-            :
-              <span>No shower data for this {period}</span>
-              )
+          (() => type === 'efficiency' ? 
+            <span>Your shower efficiency class this {period} was <b>{highlight}</b>!</span>
            :
-             <span>You consumed a total of <b>{reducedData}</b>!</span>
+             <span>You consumed a total of <b>{highlight}</b>!</span>
              )()
         }
       </div>
@@ -169,7 +174,7 @@ function ChartBox (props) {
 
 
 function ShowerChart (props) {
-  const { chartFormatter, intl, history, infobox:{chartData}, metric } = props;
+  const { chartFormatter, intl, history, infobox:{chartData, mu}, metric } = props;
   if (history){
     return (<h4>Oops, cannot graph due to limited data..</h4>);  
   }
@@ -177,10 +182,10 @@ function ShowerChart (props) {
     return (
       <SessionsChart
         height={150}
-        width={250}  
+        width='100%'  
         title=""
         subtitle=""
-        mu="lt"
+        mu={mu}
         yMargin={10}
         fontSize={12}
         type="line"
@@ -309,7 +314,6 @@ var Dashboard = React.createClass({
     const { firstname, mode, switchMode, amphiros, meters } = this.props;
     return (
       <MainSection id="section.dashboard">
-        <br/>
         <SayHello firstname={firstname} />
         
         <InfoPanel {...this.props} />

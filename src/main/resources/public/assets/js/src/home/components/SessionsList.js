@@ -19,10 +19,10 @@ function SessionListItem (props) {
       <a onClick={() => props.onOpen(id, props.index, device)} >
         
         <ul className="session-item-details"> 
-          <li> 
+          <li className='col-md-2'> 
             <span style={{fontSize: '2.5em'}}>{highlight}<span style={{fontSize: '0.6em'}}>{mu}</span></span>
         </li>
-            {(() => devName ?
+            {(() => devType === 'AMPHIRO' ?
             <li>
               <span>{devName}</span>
             </li>

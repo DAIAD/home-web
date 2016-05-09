@@ -102,7 +102,6 @@ var History = React.createClass({
     this.props.setActiveDeviceType(val);
   },
   handleActiveDevicesChanged: function (vals) {
-    console.log('checkbox vals changed to', vals);
     if (this.props.activeDeviceType === 'METER') 
       this.props.setActiveDeviceType('AMPHIRO', false);
     this.props.setActiveDevice(vals);
@@ -128,7 +127,7 @@ var History = React.createClass({
   },
   */
   render: function() {
-    const { intl, devices, amphiros, activeDevice, activeDeviceType, device, devType, timeFilter, time, metrics } = this.props;
+    const { intl, devices, amphiros, activeDevice, activeDeviceType, device, devType, timeFilter, time, metrics, comparisons } = this.props;
     const _t = intl.formatMessage;
     return (
         <MainSection id="section.history">
@@ -188,7 +187,7 @@ var History = React.createClass({
             {
               <bs.Tabs position='left' tabWidth={20} activeKey={this.props.comparison} onSelect={this.handleComparisonSelect}>
                 {
-                  [{id:'last', title: `Your last ${timeFilter}`}].map((comparison, i) => (
+                  comparisons.map((comparison, i) => (
                     <bs.Tab key={comparison.id} eventKey={comparison.id} title={comparison.title} />
                              ))
                 }

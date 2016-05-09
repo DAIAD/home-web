@@ -13,7 +13,7 @@ var DashboardActions = require('../actions/DashboardActions');
 
 var timeUtil = require('../utils/time');
 
-var { getDeviceByKey, getDeviceNameByKey, getDeviceKeysByType, getDeviceTypeByKey, getAvailableDevices, getAvailableDeviceKeys, getAvailableMeters, getDefaultDevice, getLastSession, reduceMetric, reduceSessions, getDataSessions, getDataMeasurements, getShowersCount } = require('../utils/device');
+var { getDeviceByKey, getDeviceNameByKey, getDeviceKeysByType, getDeviceTypeByKey, getAvailableDevices, getAvailableDeviceKeys, getAvailableMeters, getDefaultDevice, getLastSession, reduceMetric, reduceSessions, getDataSessions, getDataMeasurements, getShowersCount, getMetricMu } = require('../utils/device');
 
 var { getEnergyClass } = require('../utils/general');
 var { getChartDataByFilter } = require('../utils/chart');
@@ -52,9 +52,6 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                         chartFormatter: intl => (x) => intl.formatTime(x, { hour:'numeric', minute:'numeric'}),
                         infoboxData: transformInfoboxData(stateProps.infoboxes, stateProps.devices, dispatchProps.link),
                         periods,
-                        //  types,
-                        //   subtypes,
-                        //   metrics,
                      }));
 }
 
@@ -65,19 +62,24 @@ function assign(...objects) {
 function transformInfoboxData (infoboxes, devices, link) {
 
   return infoboxes.map(infobox => {
-    const { id, title, type, time, period, index, deviceType, subtype, data, metric, showerId } = infobox;
+    const { id, title, type, time, period, index, deviceType, subtype, data, previous, metric, showerId } = infobox;
 
-    let device, chartData, reducedData, linkToHistory, tip;
+    let device, chartData, reduced, linkToHistory, highlight, previousReduced, better, comparePercentage;
     
-    if (subtype === 'last') {
+    const showers = getShowersCount(devices, data);
+    const mu = getMetricMu(metric);
+    if (type==='tip') {
+      highlight = HomeConstants.STATIC_RECOMMENDATIONS[Math.floor(Math.random()*3)].description;
+    }
+    else if (type === 'last') {
       device = infobox.device;
       const last = data.find(d=>d.deviceKey===device);
       const lastShowerMeasurements = getDataMeasurements(devices, last, index);
       
-      reducedData = lastShowerMeasurements.map(s=>s[metric]).reduce((c, p)=>c+p, 0);
-      if (metric === 'volume') reducedData += ' lt';
-      else if (metric === 'energy') reducedData += ' Kwh';
-      
+      reduced = lastShowerMeasurements.map(s=>s[metric]).reduce((c, p)=>c+p, 0);
+
+      highlight = `${reduced} ${mu}`;
+
       chartData = [{
         title: getDeviceNameByKey(devices, device), 
         data: getChartDataByFilter(lastShowerMeasurements, infobox.metric)
@@ -85,25 +87,15 @@ function transformInfoboxData (infoboxes, devices, link) {
     
       linkToHistory =  () => link({time, showerId, period, deviceType, device:[device], metric, index, data});
     }
-    else if (type==='tip') {
-      tip = HomeConstants.STATIC_RECOMMENDATIONS[Math.floor(Math.random()*3)].description;
-    }
-    else {
+    
+    else if (type === 'total') {
       device = getDeviceKeysByType(devices, deviceType);
-      
-      reducedData = reduceSessions(devices, data)
-      .map(s=>s.devType==='METER'?s.difference:s[metric])
-      .reduce((c, p)=>c+p, 0); 
-      
-      if (subtype === 'efficiency') { 
-        if (metric === 'energy') {
-          reducedData = getEnergyClass(reducedData / getShowersCount(devices, data)); 
-        }
-      }
-      else {
-        if (metric === 'volume') reducedData += " lt";
-        else if (metric === 'energy') reducedData += ' Kwh';
-      }
+      reduced = data ? reduceMetric(devices, data, metric) : 0;
+      previousReduced = previous ? reduceMetric(devices, previous, metric) : 0; 
+
+      highlight = `${reduced} ${mu}`;
+      better = reduced < previousReduced;
+      comparePercentage = previousReduced === 0 ? null : Math.round((Math.abs(reduced - previousReduced) / previousReduced)*100);
 
       chartData = data.map(devData => ({ 
         title: getDeviceNameByKey(devices, devData.deviceKey), 
@@ -112,15 +104,41 @@ function transformInfoboxData (infoboxes, devices, link) {
      
      linkToHistory =  () => link({id, time, period, deviceType, device, metric, index, data});
     }
+    else if (type === 'efficiency') {
+      device = getDeviceKeysByType(devices, deviceType);
+      reduced = data ? reduceMetric(devices, data, metric) : 0;
+      previousReduced = previous ? reduceMetric(devices, previous, metric) : 0; 
 
+      better = reduced < previousReduced;
+
+      comparePercentage = previousReduced === 0 ? null : Math.round((Math.abs(reduced - previousReduced) / previousReduced)*100);
+
+      if (metric === 'energy') {
+        highlight = (showers === 0 || reduced === 0) ? null : getEnergyClass(reduced / showers);
+      }
+      else {
+        throw new Error('only energy efficiency supported');
+      }
+      
+      chartData = data.map(devData => ({ 
+        title: getDeviceNameByKey(devices, devData.deviceKey), 
+        data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, getDeviceTypeByKey(devices, devData.device)) 
+      }));
+     
+      
+      linkToHistory =  () => link({id, time, period, deviceType, device, metric, index, data});
+
+    }
     return Object.assign({}, 
                        infobox,
                        {
                          device,
-                         reducedData,
+                         highlight,
                          chartData,
                          linkToHistory,
-                         tip
+                         better,
+                         comparePercentage,
+                         mu,
                        });
      });
 }

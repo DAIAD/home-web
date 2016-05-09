@@ -8,7 +8,7 @@ var HistoryActions = require('../actions/HistoryActions');
 
 var { selectTimeFormatter } = require('../utils/time');
 var { getChartDataByFilter, getTransferredChartDataByFilter } = require('../utils/chart');
-var { getDeviceTypeByKey, getDeviceNameByKey, getDataSessions } = require('../utils/device');
+var { getDeviceTypeByKey, getDeviceNameByKey, getDataSessions, getMetricMu } = require('../utils/device');
 
 
 function mapStateToProps(state, ownProps) {
@@ -53,6 +53,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                          xMax: stateProps.time.endDate,
                          type: stateProps.filter==='showers'?'bar':'line',
                          formatter: selectTimeFormatter(stateProps.timeFilter, ownProps.intl),
+                         mu: getMetricMu(stateProps.filter),
                          fontSize: 13
                                      }
                                     ));

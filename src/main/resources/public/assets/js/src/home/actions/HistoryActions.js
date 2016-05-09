@@ -2,7 +2,7 @@ var types = require('../constants/ActionTypes');
 require('es6-promise').polyfill();
 var { push } = require('react-router-redux');
 var { getSessionById, getDeviceKeysByType, getDeviceTypeByKey } = require('../utils/device');
-var { getPreviousPeriod, convertIntToGranularity } = require('../utils/time');
+var { getPreviousPeriod, convertGranularityToPeriod } = require('../utils/time');
 
 var QueryActions = require('./QueryActions');
 
@@ -116,7 +116,7 @@ const HistoryActions = {
           });
 
         if (getState().section.history.comparison === 'last') {
-          dispatch(QueryActions.queryDeviceOrMeter(getState().section.history.activeDevice, getState().section.history.activeDeviceType, getPreviousPeriod(convertIntToGranularity(getState().section.history.time.granularity), getState().section.history.time.startDate)))
+          dispatch(QueryActions.queryDeviceOrMeter(getState().section.history.activeDevice, getState().section.history.activeDeviceType, getPreviousPeriod(convertGranularityToPeriod(getState().section.history.time.granularity), getState().section.history.time.startDate)))
           .then(sessions => dispatch(setComparisonSessions(sessions)))
           .catch(error => { 
             dispatch(setComparisonSessions([]));
@@ -155,7 +155,6 @@ const HistoryActions = {
         deviceType
       });
       dispatch(HistoryActions.setActiveDevice(getDeviceKeysByType(getState().user.profile.devices, deviceType), false));
-      console.log('just set active devices', getState().section.history.activeDevice);
       if (deviceType === 'AMPHIRO') dispatch(HistoryActions.setQueryFilter('volume'));
       else if (deviceType === 'METER') dispatch(HistoryActions.setQueryFilter('difference'));
       
