@@ -57,7 +57,14 @@ var constants = keyMirror({
 	ADMIN_ADD_USER_GET_UTILITIES_MAKE_REQUEST: null,
 	ADMIN_ADD_USER_GET_UTILITIES_RECEIVE_RESPONSE: null,
         
-        ALERTS_GROUP_SELECTED: null,
+        
+        ADMIN_REQUESTED_TIPS: null,
+        ADMIN_RECEIVED_TIPS: null,
+        
+        
+        ALERTS_UTILITY_SELECTED: null,
+        GET_UTILITIES_REQUEST: null,
+        ALERTS_GET_UTILITIES_RECEIVE_RESPONSE: null,
  
 	QUERY_SUBMIT: null,
 	QUERY_RESPONSE: null,
