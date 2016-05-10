@@ -30,6 +30,8 @@ import eu.daiad.web.domain.application.DynamicRecommendationTranslation;
 import eu.daiad.web.domain.application.StaticRecommendation;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.model.message.EnumAlertType;
+import eu.daiad.web.model.message.EnumDynamicRecommendationType;
 import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.security.AuthenticatedUser;
@@ -132,7 +134,8 @@ public class JpaMessageRepository implements IMessageRepository {
 									new Locale(locale));
 					description = descriptionTemplate.format(formatProperties);
 				}
-				eu.daiad.web.model.message.Alert message = new eu.daiad.web.model.message.Alert();
+				eu.daiad.web.model.message.Alert message = new eu.daiad.web.model.message.Alert(
+								EnumAlertType.fromInteger(accountAlert.getAlert().getId()));
 
 				message.setId(accountAlert.getId());
 				message.setPriority(accountAlert.getAlert().getPriority());
@@ -192,7 +195,9 @@ public class JpaMessageRepository implements IMessageRepository {
 				String description = descriptionTemplate.format(formatProperties);
 
 				// Create recommendation
-				eu.daiad.web.model.message.DynamicRecommendation message = new eu.daiad.web.model.message.DynamicRecommendation();
+				eu.daiad.web.model.message.DynamicRecommendation message = new eu.daiad.web.model.message.DynamicRecommendation(
+								EnumDynamicRecommendationType.fromInteger(accountRecommendation.getRecommendation()
+												.getId()));
 
 				message.setId(accountRecommendation.getId());
 				message.setPriority(accountRecommendation.getRecommendation().getPriority());

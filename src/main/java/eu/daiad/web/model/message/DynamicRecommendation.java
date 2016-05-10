@@ -6,6 +6,8 @@ public class DynamicRecommendation extends Message {
 
 	private int id;
 
+	private EnumDynamicRecommendationType recommendation;
+
 	private int priority;
 
 	private String title;
@@ -15,6 +17,10 @@ public class DynamicRecommendation extends Message {
 	private String imageLink;
 
 	private DateTime createdOn;
+
+	public DynamicRecommendation(EnumDynamicRecommendationType recommendation) {
+		this.recommendation = recommendation;
+	}
 
 	@Override
 	public EnumMessageType getType() {
@@ -67,6 +73,10 @@ public class DynamicRecommendation extends Message {
 
 	public void setImageLink(String imageLink) {
 		this.imageLink = imageLink;
+	}
+
+	public EnumDynamicRecommendationType getRecommendation() {
+		return recommendation;
 	}
 
 }

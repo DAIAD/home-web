@@ -6,6 +6,8 @@ public class Alert extends Message {
 
 	private int id;
 
+	private EnumAlertType alert;
+
 	private int priority;
 
 	private String title;
@@ -15,6 +17,10 @@ public class Alert extends Message {
 	private String imageLink;
 
 	private DateTime createdOn;
+
+	public Alert(EnumAlertType alert) {
+		this.alert = alert;
+	}
 
 	@Override
 	public EnumMessageType getType() {
@@ -67,6 +73,10 @@ public class Alert extends Message {
 
 	public void setImageLink(String imageLink) {
 		this.imageLink = imageLink;
+	}
+
+	public EnumAlertType getAlert() {
+		return alert;
 	}
 
 }
