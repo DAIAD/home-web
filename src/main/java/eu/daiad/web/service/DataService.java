@@ -2,9 +2,11 @@ package eu.daiad.web.service;
 
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import com.ibm.icu.text.MessageFormat;
 
+import eu.daiad.web.domain.application.GroupCluster;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -23,10 +26,11 @@ import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.Error;
 import eu.daiad.web.model.error.ErrorCode;
 import eu.daiad.web.model.error.QueryErrorCode;
-import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
+import eu.daiad.web.model.query.ClusterPopulationFilter;
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryResponse;
+import eu.daiad.web.model.query.EnumClusterType;
 import eu.daiad.web.model.query.EnumDataField;
 import eu.daiad.web.model.query.EnumMeasurementDataSource;
 import eu.daiad.web.model.query.EnumMetric;
@@ -141,6 +145,23 @@ public class DataService implements IDataService {
 							response.add(this.getError(QueryErrorCode.POPULATION_FILTER_IS_EMPTY));
 						}
 						break;
+					case CLUSTER:
+						ClusterPopulationFilter clusterFilter = (ClusterPopulationFilter) filter;
+						int propertyCount = 0;
+						if (clusterFilter.getCluster() != null) {
+							propertyCount++;
+						}
+						if (!StringUtils.isBlank(clusterFilter.getName())) {
+							propertyCount++;
+						}
+						if ((clusterFilter.getClusterType() != null)
+										&& (!clusterFilter.getClusterType().equals(EnumClusterType.UNDEFINED))) {
+							propertyCount++;
+						}
+						if (propertyCount != 1) {
+							response.add(this.getError(QueryErrorCode.POPULATION_FILTER_INVALID_CLUSTER));
+						}
+						break;
 					case UTILITY:
 						UtilityPopulationFilter utilityFilter = (UtilityPopulationFilter) filter;
 						if (utilityFilter.getUtility() == null) {
@@ -182,19 +203,32 @@ public class DataService implements IDataService {
 	@Override
 	public DataQueryResponse execute(DataQuery query) {
 		try {
-			DataQueryResponse response = new DataQueryResponse();
-
-			// Get authenticated user
-			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+			// Get authenticated user if any exists
+			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser authenticatedUser = null;
 
-			if (auth.getPrincipal() instanceof AuthenticatedUser) {
-				authenticatedUser = (AuthenticatedUser) auth.getPrincipal();
-			} else {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+			if ((authentication != null) && (authentication.getPrincipal() instanceof AuthenticatedUser)) {
+				authenticatedUser = (AuthenticatedUser) authentication.getPrincipal();
 			}
 
-			ExpandedDataQuery expandedQuery = new ExpandedDataQuery(DateTimeZone.forID(authenticatedUser.getTimezone()));
+			// If time zone is not set, use the current user's time zone
+			DateTimeZone timezone = null;
+
+			if (StringUtils.isBlank(query.getTimezone())) {
+				if (authenticatedUser != null) {
+					timezone = DateTimeZone.forID(authenticatedUser.getTimezone());
+				} else {
+					// If there is no authenticated user, user default UTC time
+					// zone
+					timezone = DateTimeZone.UTC;
+				}
+			} else {
+				timezone = DateTimeZone.forID(query.getTimezone());
+			}
+
+			DataQueryResponse response = new DataQueryResponse(timezone);
+
+			ExpandedDataQuery expandedQuery = new ExpandedDataQuery(timezone);
 
 			// Validate query
 			this.validate(query, response);
@@ -206,16 +240,10 @@ public class DataService implements IDataService {
 			if ((query.getPopulation() != null) && (query.getPopulation().size() != 0)) {
 				MessageDigest md = MessageDigest.getInstance("MD5");
 
-				for (PopulationFilter filter : query.getPopulation()) {
-					// Construct expanded population filter
-					ExpandedPopulationFilter expandedPopulationFilter;
-					if (filter.getRanking() == null) {
-						expandedPopulationFilter = new ExpandedPopulationFilter(filter.getLabel());
-					} else {
-						expandedPopulationFilter = new ExpandedPopulationFilter(filter.getLabel(), filter.getRanking());
-					}
+				for (int p = 0; p < query.getPopulation().size(); p++) {
+					PopulationFilter filter = query.getPopulation().get(p);
 
-					ArrayList<UUID> filterUsers = null;
+					List<UUID> filterUsers = null;
 					switch (filter.getType()) {
 						case USER:
 							filterUsers = ((UserPopulationFilter) filter).getUsers();
@@ -224,6 +252,31 @@ public class DataService implements IDataService {
 							filterUsers = userRepository.getUserKeysForGroup(((GroupPopulationFilter) filter)
 											.getGroup());
 							break;
+						case CLUSTER:
+							ClusterPopulationFilter clusterFilter = (ClusterPopulationFilter) filter;
+
+							List<GroupCluster> groups = null;
+
+							if (clusterFilter.getCluster() != null) {
+								groups = userRepository.getClusterGroupByKey(clusterFilter.getCluster());
+							} else if ((clusterFilter.getClusterType() != null)
+											&& (!clusterFilter.getClusterType().equals(EnumClusterType.UNDEFINED))) {
+								groups = userRepository.getClusterGroupByType(clusterFilter.getClusterType());
+							} else if (!StringUtils.isBlank(clusterFilter.getName())) {
+								groups = userRepository.getClusterGroupByName(clusterFilter.getName());
+							}
+
+							for (GroupCluster group : groups) {
+								if (clusterFilter.getRanking() == null) {
+									query.getPopulation().add(
+													new GroupPopulationFilter(group.getName(), group.getKey()));
+								} else {
+									query.getPopulation().add(
+													new GroupPopulationFilter(group.getName(), group.getKey(),
+																	clusterFilter.getRanking()));
+								}
+							}
+							continue;
 						case UTILITY:
 							filterUsers = userRepository.getUserKeysForUtility(((UtilityPopulationFilter) filter)
 											.getUtility());
@@ -232,10 +285,21 @@ public class DataService implements IDataService {
 							// Ignore
 					}
 
+					// Construct expanded population filter
+					ExpandedPopulationFilter expandedPopulationFilter;
+					if (filter.getRanking() == null) {
+						expandedPopulationFilter = new ExpandedPopulationFilter(filter.getLabel());
+					} else {
+						expandedPopulationFilter = new ExpandedPopulationFilter(filter.getLabel(), filter.getRanking());
+					}
+
 					if (filterUsers.size() > 0) {
 						for (UUID userKey : filterUsers) {
-							AuthenticatedUser user = userRepository.getUserByUtilityAndKey(
-											authenticatedUser.getUtilityId(), userKey);
+							// Apply utility filter only when an authenticated
+							// user exists
+							AuthenticatedUser user = (authenticatedUser == null ? userRepository.getUserByKey(userKey)
+											: userRepository.getUserByUtilityAndKey(authenticatedUser.getUtilityId(),
+															userKey));
 
 							if (user == null) {
 								throw new ApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username",

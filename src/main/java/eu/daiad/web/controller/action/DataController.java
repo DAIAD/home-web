@@ -50,6 +50,7 @@ import eu.daiad.web.model.export.ExportUserDataQuery;
 import eu.daiad.web.model.export.ExportUserDataRequest;
 import eu.daiad.web.model.loader.ImportWaterMeterFileConfiguration;
 import eu.daiad.web.model.loader.UploadRequest;
+import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.spatial.ReferenceSystem;
@@ -127,6 +128,7 @@ public class DataController extends BaseController {
 								ImportWaterMeterFileConfiguration configuration = new ImportWaterMeterFileConfiguration(
 												filename);
 								configuration.setSourceReferenceSystem(new ReferenceSystem(request.getSrid()));
+								configuration.setFirstRowHeader(request.isFirstRowHeader());
 
 								this.fileDataLoaderService.importWaterMeter(configuration);
 							}
@@ -165,6 +167,8 @@ public class DataController extends BaseController {
 						break;
 				}
 			}
+		} catch (ApplicationException ex) {
+			response.add(ex.getCode(), this.getMessage(ex));
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
 
@@ -177,11 +181,20 @@ public class DataController extends BaseController {
 	@RequestMapping(value = "/action/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@ResponseBody
 	@Secured({ "ROLE_ADMIN" })
-	public RestResponse query(@RequestBody DataQueryRequest data) {
+	public RestResponse query(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody DataQueryRequest data) {
 		RestResponse response = new RestResponse();
 
 		try {
-			return dataService.execute(data.getQuery());
+			// Set defaults if needed
+			DataQuery query = data.getQuery();
+			if (query != null) {
+				// Initialize time zone
+				if (StringUtils.isBlank(query.getTimezone())) {
+					query.setTimezone(user.getTimezone());
+				}
+			}
+
+			return dataService.execute(query);
 		} catch (ApplicationException ex) {
 			if (!ex.isLogged()) {
 				logger.error(ex.getMessage(), ex);

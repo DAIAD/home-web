@@ -49,6 +49,45 @@ var Development = React.createClass({
     var end = moment().valueOf();
     var start = moment().subtract(30, 'days').valueOf();
     
+    var spatialFilter = {
+      type: 'CONTAINS',
+      geometry: {
+        'type': 'Polygon',
+        'coordinates': [
+          [
+            [
+              -0.525970458984375,
+              38.329537722849636
+            ],
+            [
+              -0.5233955383300781,
+              38.36386812314455
+            ],
+            [
+              -0.4821968078613281,
+              38.37651914591569
+            ],
+            [
+              -0.4440879821777344,
+              38.33963658855894
+            ],
+            [
+              -0.46966552734375,
+              38.31647443592999
+            ],
+            [
+              -0.5089759826660156,
+              38.313511301083466
+            ],
+            [
+              -0.525970458984375,
+              38.329537722849636
+            ]
+          ]
+        ]
+      }
+    };
+
     var query = {
         time: {
           type : 'SLIDING',
@@ -63,12 +102,18 @@ var Development = React.createClass({
             label: 'User 1',
             users: ['63078a88-f75a-4c5e-8d75-b4472ba456bb']
           }, {
+            type :'CLUSTER',
+            label: 'Income',
+            //cluster: 'bd1a6ad7-6419-44a1-b951-bf6f1a4200d5',
+            //name: 'Income',
+            clusterType: 'INCOME'
+          }, {
             type :'UTILITY',
-            label: 'Alicante',
+            label: 'Alicante (all)',
             utility: '2b48083d-6f05-488f-9f9b-99607a93c6c3'
           }, {
             type :'UTILITY',
-            label: 'Alicante',
+            label: 'Alicante (top 2)',
             utility: '2b48083d-6f05-488f-9f9b-99607a93c6c3',
             ranking: {
               type: 'TOP',
@@ -78,45 +123,9 @@ var Development = React.createClass({
             }
           }
         ],
-        spatial : {
-          type: 'CONTAINS',
-          geometry: {
-            'type': 'Polygon',
-            'coordinates': [
-              [
-                [
-                  -0.525970458984375,
-                  38.329537722849636
-                ],
-                [
-                  -0.5233955383300781,
-                  38.36386812314455
-                ],
-                [
-                  -0.4821968078613281,
-                  38.37651914591569
-                ],
-                [
-                  -0.4440879821777344,
-                  38.33963658855894
-                ],
-                [
-                  -0.46966552734375,
-                  38.31647443592999
-                ],
-                [
-                  -0.5089759826660156,
-                  38.313511301083466
-                ],
-                [
-                  -0.525970458984375,
-                  38.329537722849636
-                ]
-              ]
-            ]
-          }
-        },
-        source: 'BOTH',
+        spatial : null, //spatialFilter,
+        //source: 'BOTH',
+        source: 'METER',
         metrics: ['COUNT', 'SUM', 'MIN', 'MAX', 'AVERAGE']
     };
     

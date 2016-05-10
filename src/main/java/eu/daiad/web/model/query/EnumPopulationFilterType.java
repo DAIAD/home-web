@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
 public enum EnumPopulationFilterType {
-	UNDEFINED(0), USER(1), GROUP(2), UTILITY(3);
+	UNDEFINED(0), USER(1), GROUP(2), CLUSTER(3), UTILITY(4);
 
 	private final int value;
 

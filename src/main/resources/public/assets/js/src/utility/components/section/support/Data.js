@@ -12,6 +12,7 @@ var Dropzone = require('react-dropzone');
 var moment = require('moment');
 
 var Breadcrumb = require('../../Breadcrumb');
+var Checkbox = require('../..//Checkbox');
 
 var { submitQuery } = require('../../../actions/QueryActions');
 var { createUser, createAmphiro } = require('../../../actions/DebugActions');
@@ -62,13 +63,20 @@ var DataManagement = React.createClass({
       isLoading: null,
       srid: srid,
       timezone: timezone,
-      errors: null
+      errors: null,
+      isFirstRowProfile: false
     };
   },
-   
+
+  onFirstRowIsHeaderClick: function(checked) {
+    console.log(checked);
+    this.setState({ isFirstRowProfile : checked });
+  },
+
   onDropMeter: function (files) {
     var data = new FormData();
     data.append('srid', this.state.srid);
+    data.append('firstRowHeader', this.state.isFirstRowProfile);
     
     this.onDrop('/action/upload', files, data, 'METER');
   },
@@ -184,6 +192,17 @@ var DataManagement = React.createClass({
                             clearable={false} 
                       />
                       <span className='help-block'>Select Coordinates Reference System for meter location</span>  
+                    </div>
+                  </div>
+                  <div className='row'>
+                    <div className='form-group col-md-3'>
+                      <label className='control-label' htmlFor='srid'>First row is header</label>
+                    </div>
+                    <div className='col-md-9' style={{ paddingLeft: 19 }}>
+                      <div style={{ paddingLeft: 1 }}>
+                        <Checkbox checked={this.state.isFirstRowProfile}
+                                  onChange={this.onFirstRowIsHeaderClick} />
+                        </div>
                     </div>
                   </div>
                   <div className='row'>

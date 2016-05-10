@@ -16,7 +16,6 @@ import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.query.ExpandedDataQuery;
 import eu.daiad.web.model.query.GroupDataSeries;
 
-@Deprecated
 public interface IAmphiroTimeOrderedRepository {
 
 	public void storeData(UUID userKey, AmphiroMeasurementCollection data) throws ApplicationException;

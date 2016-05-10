@@ -24,6 +24,16 @@ module.exports = function (grunt) {
 								],
             }
         },
+        apidoc: {
+			utility: {
+				src: "apidoc/src",
+				dest: "apidoc/docs",
+				options: {
+					debug: false,
+					includeFilters: [ ".*\\.js$" ]
+				}
+			}
+		},
         jshint: {
             options: {
               ignores: [],
@@ -32,7 +42,7 @@ module.exports = function (grunt) {
               additionalSuffixes: ['.js'],
                       reporter: require('jshint-stylish'),
                       esnext: true
-            
+
             },
             utility: [
 				'src/main/resources/public/assets/js/src/utility/**/*.js',
@@ -255,7 +265,7 @@ module.exports = function (grunt) {
 
     // Events
 	grunt.event.on('watch', function(action, filepath, target) {
-		//grunt.log.writeln(target + ': ' + filepath + ' has ' + action);
+		grunt.log.writeln(target + ': ' + filepath + ' has ' + action);
 	});
 
     // Load the plugins
@@ -266,12 +276,14 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-sync');
     grunt.loadNpmTasks('grunt-contrib-watch');
-
+    grunt.loadNpmTasks('grunt-apidoc');
     grunt.loadNpmTasks('grunt-jsxhint');
 
     // Default task(s).
     grunt.registerTask('build', ['clean', 'jshint', 'browserify', 'uglify', 'concat', 'sync:utility']);
 
 	grunt.registerTask('develop', ['clean', 'jshint', 'browserify', 'sync:home', 'sync:utility', 'sync:debug', 'watch']);
+
+	grunt.registerTask('docs', ['apidoc:utility']);
 
 };
