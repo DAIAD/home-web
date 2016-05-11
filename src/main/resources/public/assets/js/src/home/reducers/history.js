@@ -9,6 +9,8 @@ var history = function (state, action) {
     state = {
       filter: "difference",
       timeFilter: "year",
+      sortFilter: "timestamp",
+      sortOrder: "desc",
       activeDevice: [],
       activeDeviceType: "METER",
       activeSessionFilter: "volume",
@@ -119,7 +121,16 @@ var history = function (state, action) {
       return Object.assign({}, state, {
         comparison: action.comparison
       });
-
+    
+    case types.HISTORY_SET_SORT_FILTER:
+      return Object.assign({}, state, {
+        sortFilter: action.filter
+      });
+    
+    case types.HISTORY_SET_SORT_ORDER:
+      return Object.assign({}, state, {
+        sortOrder: action.order
+      });
     default:
       return state;
   }

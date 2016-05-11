@@ -7,7 +7,7 @@ var History = require('../components/sections/History');
 
 var HistoryActions = require('../actions/HistoryActions');
 
-var { getDeviceByKey, getDeviceNameByKey, getAvailableDevices, getDeviceTypeByKey, getDefaultDevice, reduceSessions, reduceMetric, getMetricMu, sortByTime } = require('../utils/device');
+var { getDeviceByKey, getDeviceNameByKey, getAvailableDevices, getDeviceTypeByKey, getDefaultDevice, reduceSessions, reduceMetric, getMetricMu, sortSessions } = require('../utils/device');
 var timeUtil = require('../utils/time');
 var { getFriendlyDuration, getEnergyClass } = require('../utils/general');
 
@@ -25,6 +25,8 @@ function mapStateToProps(state, ownProps) {
     //activeSessionFilter: state.section.history.activeSessionFilter,
     metricFilter: state.section.history.filter,
     timeFilter: state.section.history.timeFilter,
+    sortFilter: state.section.history.sortFilter,
+    sortOrder: state.section.history.sortOrder,
     devices: state.user.profile.devices?state.user.profile.devices:[],
     synced: state.section.history.synced,
     data: state.section.history.data,
@@ -51,7 +53,14 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
   ];
 
   const metrics = devType === 'AMPHIRO' ? devMetrics : (devType === 'METER' ? meterMetrics : [] );
-  const comparisons = [{id:'last', title: timeUtil.getLastPeriod(stateProps.timeFilter, stateProps.time.startDate)}];
+
+  const deviceSortOptions = [{id: 'timestamp', title: 'Time'}, {id:'volume', title: 'Volume'}, {id:'devName', title: 'Device'}, {id: 'energy', title: 'Energy'}, {id:'temperature', title:'Temperature'}, {id:'duration', title: 'Duration'}];
+
+  const meterSortOptions = [{id: 'timestamp', title: 'Time'}, {id:'difference', title: 'Volume'}];
+  const sortOptions = devType === 'AMPHIRO' ? deviceSortOptions : meterSortOptions;
+
+  const comparisons = stateProps.timeFilter !== 'custom' ? [{id:'last', title: timeUtil.getLastPeriod(stateProps.timeFilter, stateProps.time.startDate)}] : [];
+
   return Object.assign(
     {}, 
     ownProps, 
@@ -63,8 +72,9 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                     previousPeriod: stateProps.time?timeUtil.getPreviousPeriod(stateProps.timeFilter, stateProps.time.endDate):{},
                     metrics,
                     comparisons,
+                    sortOptions,
                     reducedMetric: `${reduceMetric(stateProps.devices, stateProps.data, stateProps.metricFilter)} ${getMetricMu(stateProps.metricFilter)}`,
-                    sessions: sortByTime(reduceSessions(stateProps.devices, stateProps.data), 'desc'),
+                  sessions: sortSessions(reduceSessions(stateProps.devices, stateProps.data), stateProps.sortFilter, stateProps.sortOrder),
                     amphiros: getAvailableDevices(stateProps.devices),
                   }));
 }

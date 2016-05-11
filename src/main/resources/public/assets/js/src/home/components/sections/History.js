@@ -143,6 +143,9 @@ var History = React.createClass({
    this.props.setComparison(val); 
     //onChange={(e) => e.target.checked?this.props.setComparison(comparison.id):this.props.setComparison(null)}
   },
+  handleSortSelect: function(e, val) {
+    this.props.setSortFilter(val);
+  },
   /*
   componentWillReceiveProps: function(nextProps) {
     console.log('history receiving props');   
@@ -263,7 +266,9 @@ var History = React.createClass({
         
         </div>        
 
-        <HistoryList {...this.props} />
+        <HistoryList 
+          handleSortSelect={this.handleSortSelect}
+          {...this.props} />
 
         </div>
       

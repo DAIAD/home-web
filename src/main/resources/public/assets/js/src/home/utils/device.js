@@ -206,8 +206,8 @@ const calculateIndexes = function(sessions) {
                      }));
 };
 
-const sortByTime = function(sessions, order='desc') {
-  const sorted = order === 'asc' ? sessions.sort((curr, prev) => curr.timestamp > prev.timestamp) : sessions.sort((curr, prev) => curr.timestamp < prev.timestamp);
+const sortSessions = function(sessions, by='timestamp', order='desc') {
+  const sorted = order === 'asc' ? sessions.sort((a, b) => a[by] - b[by]) : sessions.sort((a, b) => b[by] - a[by]);
   return calculateIndexes(sorted);
 };
 
@@ -267,5 +267,5 @@ module.exports = {
   getDataMeasurements,
   getShowersCount,
   getMetricMu,
-  sortByTime,
+  sortSessions,
 };

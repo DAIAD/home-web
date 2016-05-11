@@ -254,6 +254,19 @@ const HistoryActions = {
       filter
     };
   },  
+  setSortFilter: function(filter) {
+    return {
+      type: types.HISTORY_SET_SORT_FILTER,
+      filter
+    };
+  },
+  setSortOrder: function(order) {
+    if (order !== 'asc' && order !== 'desc') throw new Error('order must be asc or desc');
+    return {
+      type: types.HISTORY_SET_SORT_ORDER,
+      order
+    };
+  },
 };
 
 module.exports = HistoryActions;

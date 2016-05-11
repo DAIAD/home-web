@@ -63,6 +63,7 @@ module.exports = {
       {id:'devName',  mu:'', title:'history.device', details: 'history.durationDetails', clickable: false}, 
       {id:'count',mu:'', title:'history.count', details:'history.countDetails', clickable: true},  
       {id:'volume', mu:'lt',title:'history.volume', details:'history.volumeDetails', clickable: true}, 
+      {id:'difference', mu:'lt',title:'history.volume', details:'history.volumeDetails', clickable: true},
       {id:'temperature', mu:'ºC', title:'history.temperature', details: 'history.temperatureDetails', clickable: true}, 
       {id:'energy',mu:'W', title:'history.energy', details: 'history.energyDetails', clickable: true}, 
       {id:'duration', icon:'timer-on', mu:'sec', title:'history.duration', details: 'history.durationDetails', clickable: true}, 

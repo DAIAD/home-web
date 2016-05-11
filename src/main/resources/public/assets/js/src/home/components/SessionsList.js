@@ -33,7 +33,7 @@ function SessionListItem (props) {
               <span>{firstname}</span>
             </li>
             <li>
-              <span><i className="fa fa-calendar"/><FormattedRelative value={new Date(timestamp)} /></span> 
+              <span><i className="fa fa-calendar"/><FormattedRelative value={timestamp}/></span> 
             </li>
             {(() => duration ? 
              <li>
@@ -123,9 +123,40 @@ var SessionsList = React.createClass({
     },
     */
   render: function() {
+    const { sortOptions, sortFilter, sortOrder, handleSortSelect } = this.props;
     return (
       <div className="history-list-area">
-        <h4>In detail</h4>
+        <div className="history-list-header">
+          <h3 style={{float: 'left'}}>In detail</h3>
+
+          <div style={{float: 'right'}}>
+            <h5 style={{float: 'left', marginTop: 5}}>Sort by:</h5>
+            <div className="sort-options" style={{float: 'right', marginLeft:10, textAlign: 'right'}}>
+              <bs.DropdownButton
+                title={sortOptions.find(sort=> sort.id===sortFilter)?sortOptions.find(sort=> sort.id===sortFilter).title:'Volume'}
+                id="sort-by"
+                defaultValue={sortFilter}
+                onSelect={handleSortSelect}>
+                {
+                  sortOptions.map(sort => 
+                     <bs.MenuItem key={sort.id} eventKey={sort.id} value={sort.id} >{sort.title}</bs.MenuItem>)
+                } 
+              </bs.DropdownButton>
+
+            <div style={{float: 'right', marginLeft: 10}}>
+              {
+                (() => sortOrder === 'asc' ? 
+                 <a onClick={()=> this.props.setSortOrder('desc')}><i className="fa fa-arrow-down"/></a>
+                   :
+                     <a onClick={()=> this.props.setSortOrder('asc')}> <i className="fa fa-arrow-up"/></a>
+                 )()
+              }
+            </div>
+          </div>
+        
+        </div>
+      </div>
+
         <ul className="sessions-list">
           {
             this.props.sessions.map((session, idx) => (
