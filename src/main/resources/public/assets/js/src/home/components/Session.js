@@ -19,7 +19,7 @@ function SessionInfoItem (props) {
     <li className="session-item" >
       {(()=> props.sessionClick?(
         <a onClick={() => props.sessionClick(props.id)} title={_t({id: props.details})}>
-        <h4 style={{float: 'left'}}><img style={{width:props.id==='temperature'?12:24, marginRight:20}} src={`${IMAGES}/${props.icon}.svg`} /><FormattedMessage id={props.title} /></h4>
+        <h4 style={{float: 'left'}}><img style={{width:24, marginRight:20}} src={`${IMAGES}/${props.icon}.svg`} /><FormattedMessage id={props.title} /></h4>
       <h4 style={{float:'right'}}>{props.data} <span>{props.mu}</span></h4>
     </a>
     ):(
@@ -39,7 +39,7 @@ function SessionInfo (props) {
     <div className="shower-info">
       <div className="headline">
         <span className="headline-user"><i className="fa fa-user"/>{firstname}</span>
-        <span className="headline-date"><i className="fa fa-calendar"/><FormattedTime value={new Date(data.timestamp)} date={{day:"numeric", month:"long", year:"numeric"}} time={{hours:"numeric", minutes:"numeric"}} /></span>
+        <span className="headline-date"><i className="fa fa-calendar"/>{new Date(data.timestamp).toString()}</span>
       </div>
       <br/>
       <br/>

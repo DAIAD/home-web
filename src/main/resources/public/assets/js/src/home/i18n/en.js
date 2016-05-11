@@ -73,6 +73,7 @@
     "durationDetails": "The duration of the shower",
     "limitedData": "Oops, limited data...",
     "always": "Since the beginning of time",
+    "custom": "Custom",
     "year": "Year",
     "month": "Month",
     "week": "Week",

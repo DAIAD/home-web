@@ -2,7 +2,7 @@ var types = require('../constants/ActionTypes');
 require('es6-promise').polyfill();
 var { push } = require('react-router-redux');
 var { getSessionById, getDeviceKeysByType, getDeviceTypeByKey } = require('../utils/device');
-var { getPreviousPeriod, convertGranularityToPeriod } = require('../utils/time');
+var { getPreviousPeriod, convertGranularityToPeriod, getGranularityByDiff } = require('../utils/time');
 
 var QueryActions = require('./QueryActions');
 
@@ -104,15 +104,28 @@ const HistoryActions = {
       }
     };
   },
+  // update time used to calculate granularity and update time with
+  // startDate and/or endDate
+  updateTime: function(time, query=true) {
+    return function(dispatch, getState) {
+      let { startDate, endDate } = time;
+      startDate = startDate || getState().section.history.time.startDate;
+      endDate = endDate || getState().section.history.time.endDate;
+
+      const granularity = getGranularityByDiff(startDate, endDate);
+
+      dispatch(HistoryActions.setTime({startDate, endDate, granularity}, query));
+    };
+  },
   query: function () {
     return function(dispatch, getState) {
       dispatch(QueryActions.queryDeviceOrMeter(getState().section.history.activeDevice, getState().section.history.activeDeviceType, getState().section.history.time))
         .then(sessions => dispatch(setSessions(sessions)))
         .then(sessions => dispatch(setDataSynced()))
         .catch(error => { 
+          console.error('Caught error in history query:', error); 
           dispatch(setSessions([]));
           dispatch(setDataSynced());
-          console.error('Caught error in history query:', error); 
           });
 
         if (getState().section.history.comparison === 'last') {
@@ -240,8 +253,7 @@ const HistoryActions = {
       type: types.HISTORY_SET_SESSION_FILTER,
       filter
     };
-  },
-  
+  },  
 };
 
 module.exports = HistoryActions;

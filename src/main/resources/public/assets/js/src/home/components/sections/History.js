@@ -4,6 +4,7 @@ var { FormattedMessage, FormattedDate } = require('react-intl');
 var bs = require('react-bootstrap');
 var Select = require('react-select');
 var CheckboxGroup = require('react-checkbox-group');
+var DatetimeInput = require('react-datetime');
 
 var MainSection = require('../layout/MainSection');
 var Topbar = require('../layout/Topbar');
@@ -19,8 +20,39 @@ var timeUtil = require('../../utils/time');
 const { IMAGES } = require('../../constants/HomeConstants');
 
 function TimeNavigator(props) {
-    const { time, handleTimePrevious, handleTimeNext } = props;
-    return time.startDate ? 
+    const { time, period, updateTime, handleTimePrevious, handleTimeNext } = props;
+    if (!time.startDate || !time.endDate) return (<div/>);
+
+    return period === 'custom' ? 
+      (
+        <div className="time-navigator">
+          <div className="time-navigator-child"> 
+            <div style={{float: 'left', marginRight:5}}>
+              <DatetimeInput
+                dateFormat="DD/MM/YYYY"
+                timeFormat="HH:mm"
+                inputProps={{ size: 18 }}
+                value={time.startDate} 
+                isValidDate={(curr) => curr.valueOf() <= time.endDate}
+                onChange={(val) => updateTime({startDate: val.valueOf()})}
+             /> 
+            </div>
+            - 
+            <div style={{float: 'right', marginLeft:5}}>
+              <DatetimeInput 
+                closeOnSelect={true}
+                dateFormat="DD/MM/YYYY"
+                timeFormat="HH:mm"
+                inputProps={{ size: 18 }}
+                value={time.endDate} 
+                isValidDate={(curr) => curr.valueOf() >= time.startDate}
+                onChange={(val) => updateTime({endDate: val.valueOf()})}
+              />
+          </div>
+        </div>
+      </div> 
+      )
+      :
       (
       <div className="time-navigator">
         <a className="time-navigator-child pull-left" onClick={handleTimePrevious}>
@@ -33,9 +65,7 @@ function TimeNavigator(props) {
           <img src={`${IMAGES}/arrow-big-right.svg`} />
         </a>
       </div>
-      )
-        :
-          (<div/>);
+      );
 }
 
 function ErrorDisplay (props) {
@@ -80,6 +110,9 @@ var History = React.createClass({
       time = timeUtil.thisWeek();
     }
     else if (key==="day"){
+      time = timeUtil.today();
+    }
+    else if (key==="custom"){
       time = timeUtil.today();
     }
     else{
@@ -139,8 +172,9 @@ var History = React.createClass({
               <bs.Tab eventKey="week" title={_t({id: "history.week"})}/>
               <bs.Tab eventKey="month" title={_t({id: "history.month"})}/>
               <bs.Tab eventKey="year" title={_t({id: "history.year"})}/>
+              <bs.Tab eventKey="custom" title={_t({id: "history.custom"})}/>
               {
-                   <bs.Tab eventKey="always" title={_t({id: "history.always"})} />
+                //  <bs.Tab eventKey="always" title={_t({id: "history.always"})} />
                }
             </bs.Tabs>
           </Topbar>
@@ -161,7 +195,7 @@ var History = React.createClass({
             <bs.Tabs position='left' tabWidth={20} activeKey={this.props.activeDeviceType} onSelect={this.handleDeviceTypeSelect}>
               {
                 [{id:'METER', title: 'Water meter', image: 'swm.svg'}, {id:'AMPHIRO', title:'Shower devices', image: 'amphiro_small.svg'}].map((devType, i) => ( 
-                                                                                                                                                               <bs.Tab key={devType.id} eventKey={devType.id} title={devType.title} /> 
+                  <bs.Tab key={devType.id} eventKey={devType.id} title={devType.title} /> 
                            ))
               }
             </bs.Tabs>
@@ -183,7 +217,12 @@ var History = React.createClass({
             </CheckboxGroup>
    
             <br/>
-            <h5 style={{marginLeft:20}}>Compare with</h5>
+            { (() => comparisons && comparisons.length > 0 ?
+               <h5 style={{marginLeft:20}}>Compare with</h5>
+               :
+                 <span/>
+                 )()
+            }
             {
               <bs.Tabs position='left' tabWidth={20} activeKey={this.props.comparison} onSelect={this.handleComparisonSelect}>
                 {
@@ -206,11 +245,15 @@ var History = React.createClass({
         <div className="primary"> 
 
           <ErrorDisplay errors={this.props.errors} />
+
           <div className="history-chart-area">
             <h4 style={{textAlign: 'center', margin: '10px 0 0 0'}}>{this.props.reducedMetric}</h4>
+
             <TimeNavigator 
               handleTimePrevious={this.handleTimePrevious} 
               handleTimeNext={this.handleTimeNext}
+              updateTime={this.props.updateTime}
+              period={timeFilter}
               time={time}
             /> 
 
@@ -218,7 +261,7 @@ var History = React.createClass({
             <HistoryChartData />
           </div>
         
-        </div>
+        </div>        
 
         <HistoryList {...this.props} />
 

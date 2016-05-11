@@ -55,6 +55,14 @@ const getPreviousPeriod = function(period, timestamp=moment().valueOf()) {
   };
 };
 
+const getPreviousPeriodSoFar = function(period, timestamp=moment().valueOf()) {
+  return {
+    startDate: moment(timestamp).startOf(period).subtract(1, period).valueOf(),
+    endDate: moment(timestamp).subtract(1, period).valueOf(),
+    granularity: convertPeriodToGranularity(period)
+  };
+};
+
 const defaultFormatter = function(timestamp){
   const date = new Date(timestamp);
   return `${date.getDate()}/${date.getMonth()+1}/${date.getFullYear()}`;
@@ -112,6 +120,20 @@ const getLastShowerTime = function () {
   };
 };
 
+const getGranularityByDiff = function(start, end) {
+  const diff = moment.duration(end - start);
+
+  const years = diff.years(); 
+  const months = diff.months();
+  const days = diff.days();
+  const milliseconds = diff.milliseconds();
+
+  if (years > 0 || months > 6) return 4;
+  else if (months > 0) return 3;
+  else if (days > 0) return 2;
+  else return 0;
+};
+
 module.exports = {
   defaultFormatter,
   selectTimeFormatter,
@@ -122,8 +144,10 @@ module.exports = {
   getPeriod,
   getNextPeriod,
   getPreviousPeriod,
+  getPreviousPeriodSoFar,
   getTimeByPeriod,
   convertGranularityToPeriod,
+  getGranularityByDiff,
   getLastShowerTime,
   getLastPeriod,
 };
