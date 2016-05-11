@@ -208,7 +208,7 @@ var Header = React.createClass({
         {(() => isAuthenticated ? (
           <div>
             <MainLogo />
-            <div className="header-right">
+            <div className="top-header-right">
               <NotificationArea
                 intl={intl}
                 deviceCount={deviceCount}
@@ -228,7 +228,7 @@ var Header = React.createClass({
           ) : (
           <div>
             <MainLogo />
-            <div className="header-right">
+            <div className="top-header-right">
               <LocaleSwitcher
                 intl={intl}
                 setLocale={setLocale}

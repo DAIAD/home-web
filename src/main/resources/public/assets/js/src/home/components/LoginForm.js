@@ -17,7 +17,7 @@ var Login = React.createClass({
       <div/>
     ) : (
     <div className="form-login-container">
-      <h5><FormattedMessage id="section.login" /></h5>
+      <h3><FormattedMessage id="section.login" /></h3>
       <form key="login" className="form-login" action={this.props.action}>
         <div className="form-group">
           <input id="username" name="username" type="text" ref="username"
