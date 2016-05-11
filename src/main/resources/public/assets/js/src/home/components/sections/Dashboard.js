@@ -30,7 +30,7 @@ function ErrorDisplay (props) {
 /* Be Polite, greet user */
 function SayHello (props) {
   return (
-    <div style={{marginLeft:30}}>
+    <div style={{margin: '40px 30px 20px 30px'}}>
       <h3><FormattedMessage id="dashboard.hello" values={{name:props.firstname}} /></h3>
     </div>
   );
@@ -43,35 +43,40 @@ function InfoBox (props) {
   return (
     <div className='infobox'>
       <div className='infobox-header'>
-      <span style={{float: 'left', fontSize: 20, marginLeft: 10, marginRight:10}}>{infobox.title}</span>
-      
-      <div style={{float: 'left'}}>
-        {
-          (() => (type !== 'last' && type !== 'tip') ?
-            ['chart', 'stat'].map(t => (
-              <a key={t} onClick={() => updateInfobox(id, {display:t})} style={{marginLeft:5}}>{(t===display)?(<u>{t}</u>):(t)}</a>
-              ))
-              :
-                <div/>
-                )()
-        }
+        <div className='header-left'>
+          <h4>{infobox.title}</h4>
+        </div>
+
+        <div className='header-right'>
+          <div style={{marginRight:10}}>
+            {
+              (() => (type !== 'last' && type !== 'tip') ?
+                ['chart', 'stat'].map(t => t!==display?(
+                  <a key={t} onClick={() => updateInfobox(id, {display:t})} style={{marginLeft:5}}>{t}</a>
+                  ):<span key={t}/>)
+                  :
+                    <div/>
+                    )()
+            }
+          </div>
+          
+          <div>
+            {
+              (() => (type !== 'tip' && type !== 'last') ?
+                periods.map(p => (
+                  <a key={p.id} onClick={() => updateInfobox(id, {period:p.id})} style={{marginLeft:5}}>{(p.id===period)?(<u>{p.title}</u>):(p.title)}</a>
+                  ))
+                    :
+                      <div/>
+                      )()
+            }
+          </div>
+          {
+            //TODO: disable delete infobox until add is created
+               <a className='infobox-x' style={{float: 'right', marginLeft: 5, marginRight:5}} onClick={()=>removeInfobox(infobox.id)}><i className="fa fa-times"></i></a>
+          }
+        </div>
       </div>
-      {
-        //TODO: disable delete infobox until add is created
-           <a className='infobox-x' style={{float: 'right', marginLeft: 5, marginRight:5}} onClick={()=>removeInfobox(infobox.id)}><i className="fa fa-times"></i></a>
-      }
-      <div style={{float: 'right', marginRight: 10, marginTop: 2}}>
-        {
-          (() => (type !== 'tip' && type !== 'last') ?
-            periods.map(p => (
-              <a key={p.id} onClick={() => updateInfobox(id, {period:p.id})} style={{marginLeft:5}}>{(p.id===period)?(<u>{p.title}</u>):(p.title)}</a>
-              ))
-                :
-                  <div/>
-                  )()
-        }
-      </div>
-    </div>
       
       <div className='infobox-body'>
          {
@@ -107,7 +112,7 @@ function InfoBox (props) {
 }
 
 function StatBox (props) {
-  const { id, title, type, improved, data, highlight, metric, measurements, period, device, deviceDetails, index, time, better, comparePercentage } = props.infobox;
+  const { id, title, type, improved, data, highlight, metric, measurements, period, device, deviceDetails, index, time, better, comparePercentage, mu } = props.infobox;
   let improvedDiv = <div/>;
   if (improved === true) {
     improvedDiv = (<img src={`${IMAGES}/success.svg`}/>);
@@ -119,17 +124,17 @@ function StatBox (props) {
   const arrowClass = better?"fa-arrow-down green":"fa-arrow-up red";
   const bow = (better==null || comparePercentage == null) ? false : true;
   return (
-    <div className='row'>
-      <div className='col-md-6'>
-        <h2>{highlight}</h2>
+    <div>
+      <div style={{float: 'left', width: '50%'}}>
+        <h2>{highlight}<span style={{fontSize:'0.5em', marginLeft:5}}>{mu}</span></h2>
       </div>
-      <div className='col-md-6'>
+      <div style={{float: 'left', width: '50%'}}>
         <div>
           {
             (() => bow ? 
-             <h5><i className={`fa ${arrowClass}`}/>{better ? `${comparePercentage}% better than last ${period}` : `${comparePercentage}% worse than last ${period}`}</h5>
+             <span><i className={`fa ${arrowClass}`}/>{better ? `${comparePercentage}% better than last ${period} so far!` : `${comparePercentage}% worse than last ${period} so far`}</span>
              :
-               <h5>No data</h5>
+               <span>No data</span>
                )()
           }
         </div>
@@ -142,30 +147,43 @@ function TipBox (props) {
   const { title, type, highlight } = props.infobox;
   return (
     <div >
-      <div style={{fontSize: 14}}>
-        {highlight}
-      </div>
+      <p>{highlight}</p>
     </div>
   );
 }
+
 function ChartBox (props) {
-  const { title, type, subtype, improved, data, metric, measurements, period, device, deviceDetails, chartData, highlight, time, index } = props.infobox;
+  const { intl, history, infobox } = props;
+  const { title, type, subtype, improved, data, metric, measurements, period, device, deviceDetails, chartData, chartFormatter, highlight, time, index, mu } = infobox;
   return (
     <div>
       <div >
         {
           (() => chartData.length>0 ? 
-            <ShowerChart {...props} />
+            <SessionsChart
+              height={200}
+              width='100%'  
+              title=""
+              subtitle=""
+              mu={mu}
+              yMargin={10}
+              fontSize={12}
+              type="line"
+              formatter={chartFormatter(intl)}
+              data={chartData}
+            />
             :
-            <h5>Oops, no data available...</h5>
+            <span>Oops, no data available...</span>
             )()
         }
         {
+          /*
           (() => type === 'efficiency' ? 
             <span>Your shower efficiency class this {period} was <b>{highlight}</b>!</span>
            :
              <span>You consumed a total of <b>{highlight}</b>!</span>
              )()
+             */
         }
       </div>
     </div>
@@ -173,27 +191,6 @@ function ChartBox (props) {
 }
 
 
-function ShowerChart (props) {
-  const { chartFormatter, intl, history, infobox:{chartData, mu}, metric } = props;
-  if (history){
-    return (<h4>Oops, cannot graph due to limited data..</h4>);  
-  }
-  else {
-    return (
-      <SessionsChart
-        height={150}
-        width='100%'  
-        title=""
-        subtitle=""
-        mu={mu}
-        yMargin={10}
-        fontSize={12}
-        type="line"
-        formatter={chartFormatter(intl)}
-        data={chartData}
-      />);
-  }
-}
 /*
 function ForecastingChart (props) {
   return (
@@ -238,8 +235,8 @@ function InfoPanel (props) {
       <ResponsiveGridLayout 
         className='layout'
         layouts={{lg:layout}}
-        breakpoints={{xlg: 1400, lg: 1000, md: 700, sm: 600, xs: 480, xxs: 200}}
-        cols={{xlg:8, lg: 6, md: 6, sm: 4, xs: 2, xxs: 1}}
+        breakpoints={{lg:1370, md: 900, sm: 600, xs: 480, xxs: 200}}
+        cols={{lg:8, md: 6, sm: 4, xs: 2, xxs: 1}}
         draggableHandle='.infobox-header'
         isDraggable={true}
         isResizable={false}

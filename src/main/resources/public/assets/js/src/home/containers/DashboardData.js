@@ -44,41 +44,51 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
       { id: "week", title: "Week", value: timeUtil.thisWeek() }, 
       { id: "month", title: "Month", value: timeUtil.thisMonth() }, 
       { id: "year", title: "Year", value: timeUtil.thisYear() }
-    ];
-  return assign(ownProps,
+  ];
+  
+  return Object.assign({}, ownProps,
                dispatchProps,
-               assign(stateProps,
-                      {
-                        chartFormatter: intl => (x) => intl.formatTime(x, { hour:'numeric', minute:'numeric'}),
-                        infoboxData: transformInfoboxData(stateProps.infoboxes, stateProps.devices, dispatchProps.link),
-                        periods,
-                     }));
+               stateProps,
+               {
+                 infoboxData: transformInfoboxData(stateProps.infoboxes, stateProps.devices, dispatchProps.link),
+                 periods,
+               });
 }
 
-function assign(...objects) {
-  return Object.assign({}, ...objects);
-}
 
 function transformInfoboxData (infoboxes, devices, link) {
 
   return infoboxes.map(infobox => {
-    const { id, title, type, time, period, index, deviceType, subtype, data, previous, metric, showerId } = infobox;
+    const { id, title, type, period, index, deviceType, subtype, data, previous, metric, showerId } = infobox;
 
-    let device, chartData, reduced, linkToHistory, highlight, previousReduced, better, comparePercentage;
+    let device, chartData, reduced, time, linkToHistory, highlight, previousReduced, better, comparePercentage, mu;
     
     const showers = getShowersCount(devices, data);
-    const mu = getMetricMu(metric);
+    
+    let chartFormatter = intl => (x) => intl.formatTime(x, { hour:'numeric', minute:'numeric'});
+
+  if (period === 'year') 
+    chartFormatter = intl => (x) => intl.formatTime(x, { month:'numeric', year:'numeric'});
+  else if (period === 'month') 
+    chartFormatter = intl => (x) => intl.formatTime(x, { day:'numeric'});
+  else if (period === 'week')
+    chartFormatter = intl => (x) => intl.formatTime(x, { day:'numeric'});
+  else if (period === 'day')
+    chartFormatter = intl => (x) => intl.formatTime(x, { hour:'numeric', minute:'numeric'});
+
     if (type==='tip') {
       highlight = HomeConstants.STATIC_RECOMMENDATIONS[Math.floor(Math.random()*3)].description;
     }
     else if (type === 'last') {
       device = infobox.device;
+      time = infobox.time;
       const last = data.find(d=>d.deviceKey===device);
       const lastShowerMeasurements = getDataMeasurements(devices, last, index);
       
       reduced = lastShowerMeasurements.map(s=>s[metric]).reduce((c, p)=>c+p, 0);
-
-      highlight = `${reduced} ${mu}`;
+      highlight = reduced;
+      mu = getMetricMu(metric);
+      //highlight = `${reduced} ${mu}`;
 
       chartData = [{
         title: getDeviceNameByKey(devices, device), 
@@ -90,12 +100,17 @@ function transformInfoboxData (infoboxes, devices, link) {
     
     else if (type === 'total') {
       device = getDeviceKeysByType(devices, deviceType);
+      time = timeUtil.getTimeByPeriod(period);
+
       reduced = data ? reduceMetric(devices, data, metric) : 0;
       previousReduced = previous ? reduceMetric(devices, previous, metric) : 0; 
 
-      highlight = `${reduced} ${mu}`;
+      highlight = reduced;
+      mu = getMetricMu(metric);
+      //highlight = `${reduced} ${mu}`;
       better = reduced < previousReduced;
       comparePercentage = previousReduced === 0 ? null : Math.round((Math.abs(reduced - previousReduced) / previousReduced)*100);
+      console.log('total better?', id, better, reduced, previousReduced, comparePercentage);
 
       chartData = data.map(devData => ({ 
         title: getDeviceNameByKey(devices, devData.deviceKey), 
@@ -135,6 +150,7 @@ function transformInfoboxData (infoboxes, devices, link) {
                          device,
                          highlight,
                          chartData,
+                         chartFormatter,
                          linkToHistory,
                          better,
                          comparePercentage,

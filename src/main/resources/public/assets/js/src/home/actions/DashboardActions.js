@@ -5,7 +5,7 @@ var QueryActions = require('./QueryActions');
 var HistoryActions = require('./HistoryActions');
 
 var { getDeviceKeysByType } = require('../utils/device');
-var { getTimeByPeriod, getLastShowerTime, getPreviousPeriod } = require('../utils/time');
+var { getTimeByPeriod, getLastShowerTime, getPreviousPeriodSoFar } = require('../utils/time');
 
 const setLastSession = function(session) {
   return {
@@ -143,7 +143,7 @@ const DashboardActions = {
       else {
 
         //fetch previous period data for comparison 
-        let prevTime = getPreviousPeriod(period, time.startDate);
+        let prevTime = getPreviousPeriodSoFar(period);
         dispatch(QueryActions.queryDeviceOrMeter(device, deviceType, prevTime))
         .then(data => {
             return dispatch(DashboardActions.setInfoboxData(id, {previous:data, time:prevTime}));})
