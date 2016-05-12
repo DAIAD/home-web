@@ -664,6 +664,9 @@ CREATE TABLE static_recommendation  (
     image_link character varying(200),
     prompt character varying(200),
     externa_link character varying(200),
+    created_on timestamp without time zone,
+    modified_on timestamp without time zone,
+    active boolean DEFAULT true NOT NULL,
     source character varying(200),
     CONSTRAINT pk_static_recommendation PRIMARY KEY (id),
     CONSTRAINT fk_static_recommendation_static_recommendation_category FOREIGN KEY (category_id)
