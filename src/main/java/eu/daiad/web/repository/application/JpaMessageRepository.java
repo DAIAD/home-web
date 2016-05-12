@@ -223,8 +223,9 @@ public class JpaMessageRepository implements IMessageRepository {
 		return messages;
 	}
 
-	private List<Message> getAdvisoryMessages(String locale) {
-		List<Message> messages = new ArrayList<Message>();
+        @Override
+	public List<Message> getAdvisoryMessages(String locale) {
+		List<Message> messages = new ArrayList<>();
 
 		switch (locale) {
 			case "en":
@@ -245,6 +246,7 @@ public class JpaMessageRepository implements IMessageRepository {
 			eu.daiad.web.model.message.StaticRecommendation message = new eu.daiad.web.model.message.StaticRecommendation();
 
 			message.setId(staticRecommendation.getId());
+                        message.setIndex(staticRecommendation.getIndex());
 			message.setTitle(staticRecommendation.getTitle());
 			message.setDescription(staticRecommendation.getDescription());
 			message.setImageEncoded(staticRecommendation.getImage());
