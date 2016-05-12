@@ -67,5 +67,23 @@ public class RecommendationController extends BaseController {
 		}
 		return response;
 	}
+        
+        @RequestMapping(value = "/action/recommendation/static/{locale}", method = RequestMethod.GET, produces = "application/json")
+        @Secured("ROLE_ADMIN")
+	public RestResponse getRecommendations(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable String locale) {
+		MessageResponse recommendations = new MessageResponse();
+
+		try {
+			recommendations.setMessages(this.messageRepository.getAdvisoryMessages(locale));
+		} catch (ApplicationException ex) {
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
+
+			recommendations.add(this.getError(ex));
+		}
+
+		return recommendations;
+	}
 
 }
