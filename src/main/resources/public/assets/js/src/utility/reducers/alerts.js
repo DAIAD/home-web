@@ -9,22 +9,29 @@ var initialState = {
 
 var alerts = function(state, action) {
     switch (action.type) {
-        case types.ALERTS_UTILITY_SELECTED:
-            console.log('reducer: ALERTS_UTILITY_SELECTED');  
+        case types.ADMIN_REQUESTED_UTILITIES:
+          return Object.assign({}, state, { 
+              isLoading : true,
+              utilities : null
+          });
+        case types.ADMIN_RECEIVED_UTILITIES:
+            return Object.assign({}, state, { 
+                isLoading : false,
+                utilities : action.utilities
+            });
+        case types.ADMIN_SELECTED_UTILITY_FILTER: 
             return Object.assign({}, state, { 
                 isLoading : true,
                 utility : action.utility
             });
 
-        case types.ADMIN_REQUESTED_TIPS:
-            console.log('reducer: ADMIN_REQUESTED_TIPS');
+        case types.ADMIN_REQUESTED_STATIC_TIPS:
             return Object.assign({}, state, { 
                 isLoading : true,
                 tips : null
             });
 
-        case types.ADMIN_RECEIVED_TIPS:
-            console.log('reducer: ADMIN_RECEIVED_TIPS');
+        case types.ADMIN_RECEIVED_STATIC_TIPS:
             return Object.assign({}, state, { 
                 isLoading : false,
                 tips : action.tips
