@@ -249,7 +249,10 @@ public class JpaMessageRepository implements IMessageRepository {
 			message.setPrompt(staticRecommendation.getPrompt());
 			message.setExternaLink(staticRecommendation.getExternaLink());
 			message.setSource(staticRecommendation.getSource());
-
+                        message.setCreatedOn(staticRecommendation.getCreatedOn());
+                        message.setModifiedOn(staticRecommendation.getModifiedOn());
+                        message.setActive(staticRecommendation.isActive());
+                        
 			messages.add(message);
 		}
 
