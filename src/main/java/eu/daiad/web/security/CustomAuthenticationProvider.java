@@ -1,5 +1,6 @@
 package eu.daiad.web.security;
 
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -30,7 +31,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 	@Autowired
 	private IUserRepository userRepository;
 
-	private RegexRequestMatcher apiMatcher = new RegexRequestMatcher("/api/v1/.*", null);
+	private RegexRequestMatcher apiMatcher = new RegexRequestMatcher("/api/v\\d+/.*", null);
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
@@ -41,6 +42,10 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 			String username = authentication.getName();
 			String password = authentication.getCredentials().toString();
 
+			// Set authentication name
+			MDC.put("session.username", username);
+
+			// Check credentials
 			BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
 			user = (AuthenticatedUser) userService.loadUserByUsername(username);

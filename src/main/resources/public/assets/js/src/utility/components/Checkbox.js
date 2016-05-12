@@ -11,11 +11,16 @@ var Checkbox = React.createClass({
 	},
 	
 	handleChange: function(){
-		this.props.onUserClick(
-			this.props.rowId,
-			this.props.propertyName,
-			this.refs.checkbox.defaultChecked
-		);
+	  if(typeof this.props.onChange === 'function') {
+	    this.props.onChange(this.refs.checkbox.checked);
+	  }
+	  if(typeof this.props.onUserClick === 'function') {
+	    this.props.onUserClick(
+        this.props.rowId,
+        this.props.propertyName,
+        this.refs.checkbox.defaultChecked
+	    );
+	  }
 	},
 	
   	render: function() {

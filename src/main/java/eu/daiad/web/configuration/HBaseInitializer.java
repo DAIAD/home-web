@@ -23,9 +23,10 @@ public class HBaseInitializer implements CommandLineRunner {
 
 	private final String namespace = "daiad";
 
-	private final String tables[] = { "amphiro-measurements", "amphiro-sessions-by-time", "amphiro-sessions-by-user",
-					"meter-measurements-by-time", "meter-measurements-by-user", "arduino-measurements",
-					"amphiro-sessions-index" };
+	private final String tables[] = { "amphiro-sessions-index", "amphiro-sessions-by-time", "amphiro-sessions-by-user",
+					"amphiro-measurements", "meter-measurements-by-time", "meter-measurements-by-user",
+					"arduino-measurements", "amphiro-sessions-index-v2", "amphiro-sessions-by-time-v2",
+					"amphiro-sessions-by-user-v2", "amphiro-measurements-v2" };
 
 	private final String columnFamily = "cf";
 

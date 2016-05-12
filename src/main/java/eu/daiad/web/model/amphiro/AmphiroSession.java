@@ -79,4 +79,5 @@ public class AmphiroSession extends AmphiroAbstractSession {
 	public void setDelete(AmphiroSessionDeleteAction delete) {
 		this.delete = delete;
 	}
+
 }

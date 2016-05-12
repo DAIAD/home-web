@@ -27,6 +27,14 @@ var expandSettings = function(e) {
 	this.setState({ expandSettings : !this.state.expandSettings});
 };
 
+var expandReports = function(e) {
+  this.setState({ expandReports : !this.state.expandReports});
+};
+
+var expandSupport = function (e) {
+  this.setState({ expandSupport : !this.state.expandSupport});
+};
+
 var ContentRoot = React.createClass({
 	contextTypes: {
 	    intl: React.PropTypes.object
@@ -36,8 +44,10 @@ var ContentRoot = React.createClass({
 		return {
 			expandMessages: false,
 			expandSettings: false,
-			expandConsumers: false
-	    };
+			expandConsumers: false,
+			expandReports: false,
+			expandSupport: false
+    };
 	},
 
 	render: function() {
@@ -74,14 +84,11 @@ var ContentRoot = React.createClass({
 								<img alt='DAIAD' src='/assets/images/shared/daiad-logo.svg' style={{ marginTop: 15 }} />
 							</a>
 						</div>
-						<div style={{ float: 'right', marginTop: 8, marginLeft: 10, paddingRight: 45}}>
-							<button id='logout'
-				   				type='submit'
-				   				className='btn btn-primary'
-		   						style={{ height: 33 }}
-			   					onClick={this.props.actions.logout}>
-				   				<FormattedMessage id='LoginForm.button.signout' />
-				   			</button>
+						<div style={{ float: 'right', marginTop: 12, marginLeft: 10, paddingRight: 45}}>
+						  <span style={{marginRight: 10}}>
+						    {this.props.session.username}
+						  </span>
+						  <i className='fa fa-sign-out fa-fw' style={{color : '#d9534f', cursor : 'pointer'}} onClick={this.props.actions.logout}></i>
 						</div>
 						<div className='navbar-default navbar-static-side' role='navigation'>
 							<div className='sidebar-collapse'>
@@ -190,15 +197,55 @@ var ContentRoot = React.createClass({
             				</Collapsible>
           				</li>
           				<li>
-          					<Link to='/report'>
-          						<i className='fa fa-database fa-fw'></i>{' ' + _t({ id: 'Section.Reporting'})}
-          					</Link>
+          				  <a href='#' onClick={expandReports.bind(this)}>
+                      <i className='fa fa-database fa-fw'></i>
+                      {' ' + _t({ id: 'Section.Reports.Group'}) + ' '}
+                      { this.state.expandReports ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)}
+                    </a>
+                    <Collapsible open={this.state.expandReports}>
+                      <ul className='nav'>
+                        <li>
+                          <Link to='/report/overview'>
+                            <span  style={{paddingLeft: 18}}>
+                            <i className='fa fa-table fa-fw'></i>{' ' + _t({ id: 'Section.Reports.Overview'})}
+                            </span>
+                          </Link>
+                        </li>
+                        <li>
+                          <Link to='/report/charts'>
+                            <span  style={{paddingLeft: 18}}>
+                              <i className='fa fa-pie-chart fa-fw'></i>{' ' + _t({ id: 'Section.Reports.Charts'})}
+                            </span>
+                          </Link>
+                        </li>
+                      </ul>
+                    </Collapsible>
           				</li>
-        				  <li>
-        				    <Link to='/debug'>
-        				      <i className='fa fa-bug fa-fw'></i>{' ' + _t({ id: 'Debug'})}
-      				      </Link>
-    				      </li>	            				
+                  <li>
+                    <a href='#' onClick={expandSupport.bind(this)}>
+                      <i className='fa fa-support fa-fw'></i>
+                      {' ' + _t({ id: 'Section.Support.Group'}) + ' '}
+                      { this.state.expandSupport ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)}
+                    </a>
+                    <Collapsible open={this.state.expandSupport}>
+                      <ul className='nav'>
+                        <li>
+                          <Link to='/support/data'>
+                            <span  style={{paddingLeft: 18}}>
+                            <i className='fa fa-database fa-fw'></i>{' ' + _t({ id: 'Section.Support.Data'})}
+                            </span>
+                          </Link>
+                        </li>
+                        <li>
+                          <Link to='/support/development'>
+                            <span  style={{paddingLeft: 18}}>
+                              <i className='fa fa-bug fa-fw'></i>{' ' + _t({ id: 'Section.Support.Development'})}
+                            </span>
+                          </Link>
+                        </li>
+                      </ul>
+                    </Collapsible>
+                  </li>            				
   				      </ul>
             	</div>
           	</div>
@@ -224,7 +271,8 @@ function mapStateToProps(state) {
 	    isAuthenticated: state.session.isAuthenticated,
 	    session: {
 	    	errors: state.session.errors,
-	    	isLoading: state.session.isLoading
+	    	isLoading: state.session.isLoading,
+	    	username: (state.session.profile ? state.session.profile.username : '')
 	    },
 	    routing: state.routing
 	};

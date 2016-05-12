@@ -31,7 +31,7 @@ var App = React.createClass({
 function mapStateToProps(state) {
 	return {
 		locale: state.i18n.locale,
-	    messages: state.i18n.data[state.i18n.locale].messages
+    messages: state.i18n.data[state.i18n.locale].messages
 	};
 }
 

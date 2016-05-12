@@ -33,6 +33,7 @@ public class SchedulerConfig implements SchedulingConfigurer {
 		ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
 		scheduler.setPoolSize(this.poolSize);
 		scheduler.setThreadNamePrefix(this.threadNamePrefix);
+		scheduler.setRemoveOnCancelPolicy(true);
 		return scheduler;
 	}
 

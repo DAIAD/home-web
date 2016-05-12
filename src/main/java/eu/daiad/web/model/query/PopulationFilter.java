@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type")
 @JsonSubTypes({ @Type(value = UserPopulationFilter.class, name = "USER"),
 				@Type(value = GroupPopulationFilter.class, name = "GROUP"),
+				@Type(value = ClusterPopulationFilter.class, name = "CLUSTER"),
 				@Type(value = UtilityPopulationFilter.class, name = "UTILITY") })
 public abstract class PopulationFilter {
 

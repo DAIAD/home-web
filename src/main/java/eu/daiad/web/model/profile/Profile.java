@@ -11,7 +11,7 @@ public class Profile {
 	private UUID key;
 
 	private UUID version;
-	
+
 	private EnumApplication application;
 
 	private String username;
@@ -23,6 +23,8 @@ public class Profile {
 	private String email;
 
 	private byte[] photo;
+
+	private String locale;
 
 	private String timezone;
 
@@ -143,6 +145,14 @@ public class Profile {
 
 	public void setVersion(UUID version) {
 		this.version = version;
+	}
+
+	public String getLocale() {
+		return locale;
+	}
+
+	public void setLocale(String locale) {
+		this.locale = locale;
 	}
 
 }

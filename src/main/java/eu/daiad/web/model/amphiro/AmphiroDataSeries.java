@@ -20,6 +20,13 @@ public class AmphiroDataSeries {
 
 	private ArrayList<AmphiroAbstractDataPoint> points;
 
+	public AmphiroDataSeries(UUID deviceKey) {
+		this.deviceKey = deviceKey;
+		this.granularity = TemporalConstants.NONE;
+
+		this.points = new ArrayList<AmphiroAbstractDataPoint>();
+	}
+
 	public AmphiroDataSeries(UUID deviceKey, int granularity) {
 		this.deviceKey = deviceKey;
 		this.granularity = granularity;

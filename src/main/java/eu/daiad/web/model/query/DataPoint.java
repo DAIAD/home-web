@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class DataPoint {
 
-	enum EnumDataPointType {
+	public enum EnumDataPointType {
 		UNDEFINED, METER, AMPHIRO, RANKING;
 	}
 

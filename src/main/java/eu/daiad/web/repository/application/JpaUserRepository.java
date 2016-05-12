@@ -33,6 +33,7 @@ import eu.daiad.web.domain.application.AccountProfile;
 import eu.daiad.web.domain.application.AccountProfileHistoryEntry;
 import eu.daiad.web.domain.application.AccountRole;
 import eu.daiad.web.domain.application.AccountWhiteListEntry;
+import eu.daiad.web.domain.application.GroupCluster;
 import eu.daiad.web.domain.application.Role;
 import eu.daiad.web.domain.application.Utility;
 import eu.daiad.web.model.EnumGender;
@@ -44,6 +45,7 @@ import eu.daiad.web.model.error.UserErrorCode;
 import eu.daiad.web.model.profile.EnumMobileMode;
 import eu.daiad.web.model.profile.EnumUtilityMode;
 import eu.daiad.web.model.profile.EnumWebMode;
+import eu.daiad.web.model.query.EnumClusterType;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.user.Account;
@@ -166,7 +168,7 @@ public class JpaUserRepository implements IUserRepository {
 			// Create an administrator for any registered utility
 			initializeAdministrators();
 		} catch (ApplicationException ex) {
-			logger.error("Database initialization has failed.", ex);
+			logger.error("Database initialization has failed.");
 		}
 	}
 
@@ -364,8 +366,10 @@ public class JpaUserRepository implements IUserRepository {
 				user = new AuthenticatedUser(account.getId(), account.getKey(), account.getUsername(),
 								account.getPassword(), account.getUtility().getId(), account.isLocked(), authorities);
 
+				user.setCreatedOn(account.getCreatedOn());
 				user.setBirthdate(account.getBirthdate());
 				user.setCountry(account.getCountry());
+				user.setLocale(account.getLocale());
 				user.setFirstname(account.getFirstname());
 				user.setLastname(account.getLastname());
 				user.setGender(account.getGender());
@@ -375,6 +379,53 @@ public class JpaUserRepository implements IUserRepository {
 				user.setWebMode(EnumWebMode.fromInteger(account.getProfile().getWebMode()));
 				user.setMobileMode(EnumMobileMode.fromInteger(account.getProfile().getMobileMode()));
 				user.setUtilityMode(EnumUtilityMode.fromInteger(account.getProfile().getUtilityMode()));
+
+				user.setStaticTipSentOn(account.getProfile().getStaticTipSentOn());
+			}
+
+			return user;
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		}
+	}
+
+	@Override
+	public AuthenticatedUser getUserByKey(UUID key) throws ApplicationException {
+		try {
+			AuthenticatedUser user = null;
+
+			TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager
+							.createQuery("select a from account a where a.key = :key",
+											eu.daiad.web.domain.application.Account.class).setFirstResult(0)
+							.setMaxResults(1);
+			query.setParameter("key", key);
+
+			List<eu.daiad.web.domain.application.Account> result = query.getResultList();
+			if (result.size() != 0) {
+				eu.daiad.web.domain.application.Account account = result.get(0);
+
+				List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
+				for (AccountRole r : account.getRoles()) {
+					authorities.add(new SimpleGrantedAuthority(r.getRole().getName()));
+				}
+				user = new AuthenticatedUser(account.getId(), account.getKey(), account.getUsername(),
+								account.getPassword(), account.getUtility().getId(), account.isLocked(), authorities);
+
+				user.setCreatedOn(account.getCreatedOn());
+				user.setBirthdate(account.getBirthdate());
+				user.setCountry(account.getCountry());
+				user.setLocale(account.getLocale());
+				user.setFirstname(account.getFirstname());
+				user.setLastname(account.getLastname());
+				user.setGender(account.getGender());
+				user.setPostalCode(account.getPostalCode());
+				user.setTimezone(account.getTimezone());
+
+				user.setWebMode(EnumWebMode.fromInteger(account.getProfile().getWebMode()));
+				user.setMobileMode(EnumMobileMode.fromInteger(account.getProfile().getMobileMode()));
+				user.setUtilityMode(EnumUtilityMode.fromInteger(account.getProfile().getUtilityMode()));
+
+				user.setStaticTipSentOn(account.getProfile().getStaticTipSentOn());
 			}
 
 			return user;
@@ -406,8 +457,10 @@ public class JpaUserRepository implements IUserRepository {
 				user = new AuthenticatedUser(account.getId(), account.getKey(), account.getUsername(),
 								account.getPassword(), account.getUtility().getId(), account.isLocked(), authorities);
 
+				user.setCreatedOn(account.getCreatedOn());
 				user.setBirthdate(account.getBirthdate());
 				user.setCountry(account.getCountry());
+				user.setLocale(account.getLocale());
 				user.setFirstname(account.getFirstname());
 				user.setLastname(account.getLastname());
 				user.setGender(account.getGender());
@@ -417,6 +470,8 @@ public class JpaUserRepository implements IUserRepository {
 				user.setWebMode(EnumWebMode.fromInteger(account.getProfile().getWebMode()));
 				user.setMobileMode(EnumMobileMode.fromInteger(account.getProfile().getMobileMode()));
 				user.setUtilityMode(EnumUtilityMode.fromInteger(account.getProfile().getUtilityMode()));
+
+				user.setStaticTipSentOn(account.getProfile().getStaticTipSentOn());
 			}
 
 			return user;
@@ -610,7 +665,8 @@ public class JpaUserRepository implements IUserRepository {
 		}
 	}
 
-	public ArrayList<UUID> getUserKeysForGroup(UUID groupKey) {
+	@Override
+	public List<UUID> getUserKeysForGroup(UUID groupKey) {
 		ArrayList<UUID> result = new ArrayList<UUID>();
 		try {
 			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from \"group\" g "
@@ -629,7 +685,8 @@ public class JpaUserRepository implements IUserRepository {
 		return result;
 	}
 
-	public ArrayList<UUID> getUserKeysForUtility(UUID utilityKey) {
+	@Override
+	public List<UUID> getUserKeysForUtility(UUID utilityKey) {
 		ArrayList<UUID> result = new ArrayList<UUID>();
 		try {
 			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from utility u "
@@ -647,7 +704,27 @@ public class JpaUserRepository implements IUserRepository {
 		return result;
 	}
 
-	public ArrayList<UUID> getUserKeysForUtility() {
+	@Override
+	public List<UUID> getUserKeysForUtility(int utilityId) {
+		ArrayList<UUID> result = new ArrayList<UUID>();
+		try {
+			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from utility u "
+							+ "inner join account a on u.id = a.utility_id where u.id = :utilityId");
+			query.setParameter("utilityId", utilityId);
+
+			List<?> keys = query.getResultList();
+			for (Object key : keys) {
+				result.add(UUID.fromString((String) key));
+			}
+		} catch (Exception ex) {
+			logger.error(String.format("Failed to load user keys for utility [%d]", utilityId), ex);
+		}
+
+		return result;
+	}
+
+	@Override
+	public List<UUID> getUserKeysForUtility() {
 		ArrayList<UUID> result = new ArrayList<UUID>();
 
 		try {
@@ -675,5 +752,53 @@ public class JpaUserRepository implements IUserRepository {
 		}
 
 		return result;
+	}
+
+	@Override
+	public List<GroupCluster> getClusterGroupByKey(UUID key) {
+		TypedQuery<GroupCluster> query = entityManager.createQuery("select g from group_cluster g  "
+						+ "where g.utility.id = :utility_id and g.cluster.key = :key", GroupCluster.class);
+
+		query.setParameter("utility_id", this.getCurrentUtilityId());
+		query.setParameter("key", key);
+
+		return query.getResultList();
+	}
+
+	@Override
+	public List<GroupCluster> getClusterGroupByName(String name) {
+		TypedQuery<GroupCluster> query = entityManager.createQuery("select g from group_cluster g "
+						+ "where g.utility.id = :utility_id and g.cluster.name = :name", GroupCluster.class);
+
+		query.setParameter("utility_id", this.getCurrentUtilityId());
+		query.setParameter("name", name);
+
+		return query.getResultList();
+	}
+
+	@Override
+	public List<GroupCluster> getClusterGroupByType(EnumClusterType type) {
+		TypedQuery<GroupCluster> query = entityManager.createQuery("select g from group_cluster g "
+						+ "where g.utility.id = :utility_id and g.cluster.name = :name", GroupCluster.class);
+
+		query.setParameter("utility_id", this.getCurrentUtilityId());
+		query.setParameter("name", type.getName());
+
+		return query.getResultList();
+	}
+
+	private Integer getCurrentUtilityId() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		AuthenticatedUser user = null;
+
+		if (auth.getPrincipal() instanceof AuthenticatedUser) {
+			user = (AuthenticatedUser) auth.getPrincipal();
+		}
+
+		if (user != null) {
+			return user.getUtilityId();
+		}
+
+		return null;
 	}
 }

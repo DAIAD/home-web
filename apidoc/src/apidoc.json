@@ -1,0 +1,15 @@
+{
+  "name": "DAIAD HTTP RPC Interface",
+  "version": "0.0.1",
+  "title": "DAIAD HTTP RPC Interface",
+  "description": "This document describes the DAIAD HTTP Remote Procedure Call Interface",
+  "url" : "https://app.dev.daiad.eu/api/v1",
+  "order": [
+    "GetUser",
+    "PostUser"
+  ],
+  "template": {
+  	"withCompare": false,
+  	"withGenerator": false
+  }
+}

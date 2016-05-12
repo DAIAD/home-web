@@ -173,10 +173,7 @@ public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService
 
 		// Set time zone
 		Set<String> zones = DateTimeZone.getAvailableIDs();
-		if (StringUtils.isBlank(timezone)) {
-			timezone = "UTC";
-		}
-		if (!zones.contains(timezone)) {
+		if ((StringUtils.isBlank(timezone)) || (!zones.contains(timezone))) {
 			throw new ApplicationException(SharedErrorCode.TIMEZONE_NOT_FOUND).set("timezone", timezone);
 		}
 

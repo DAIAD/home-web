@@ -1,7 +1,5 @@
 package eu.daiad.web.jobs;
 
-import eu.daiad.web.model.error.ApplicationException;
-import eu.daiad.web.model.recommendation.MessageCalculationConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.batch.core.Job;
@@ -14,13 +12,14 @@ import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.StoppableTasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
-import eu.daiad.web.service.IMessageService;
+import org.springframework.stereotype.Component;
 
-/**
- *
- * @author nkarag
- */
-public class MessageGeneratorJob implements IJobBuilder{
+import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.message.MessageCalculationConfiguration;
+import eu.daiad.web.service.message.IMessageService;
+
+@Component
+public class MessageGeneratorJob implements IJobBuilder {
 	private static final Log logger = LogFactory.getLog(MessageGeneratorJob.class);
 
 	@Autowired
@@ -29,41 +28,67 @@ public class MessageGeneratorJob implements IJobBuilder{
 	@Autowired
 	private StepBuilderFactory stepBuilderFactory;
 
-        @Autowired
-        private IMessageService iMessageService;
-        
+	@Autowired
+	private IMessageService messageService;
+
 	public MessageGeneratorJob() {
 
 	}
 
-    private Step generateMessages() {
-        return stepBuilderFactory.get("generateMessages").tasklet(new StoppableTasklet() {
-            @Override
-            public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
-                try {
-                    
-                    MessageCalculationConfiguration config = new MessageCalculationConfiguration();
-                    
-                    //config is initialized with default values. 
-                    iMessageService.execute(config);
-                    
-                } catch (Exception ex) {
-                    logger.fatal("Failed to complete message calculation process.", ex);
+	private Step generateMessages() {
+		return stepBuilderFactory.get("generateMessages").tasklet(new StoppableTasklet() {
+			@Override
+			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
+				try {
+					// Initialize configuration
+					MessageCalculationConfiguration config = new MessageCalculationConfiguration();
 
-                    throw ApplicationException.wrap(ex);
-                }
-                return RepeatStatus.FINISHED;
-            }
+					config.setStaticTipInterval(Integer.parseInt((String) chunkContext.getStepContext()
+									.getJobParameters().get("static.tip.interval")));
+					config.setAggregateComputationInterval(Integer.parseInt((String) chunkContext.getStepContext()
+									.getJobParameters().get("aggregate.computation.interval")));
 
-            @Override
-            public void stop() {               
-                iMessageService.cancel();
-            }
-        }).build();
-    }
+					config.setEurosPerKwh(Double.parseDouble((String) chunkContext.getStepContext().getJobParameters()
+									.get("euros.per.kwh")));
+					config.setAverageGbpPerKwh(Double.parseDouble((String) chunkContext.getStepContext()
+									.getJobParameters().get("average.gbp.per.kwh")));
+					config.setEurosPerLiter(Double.parseDouble((String) chunkContext.getStepContext()
+									.getJobParameters().get("euros.per.liter")));
+
+					config.setDailyBudget(Integer.parseInt((String) chunkContext.getStepContext().getJobParameters()
+									.get("daily.budget")));
+					config.setWeeklyBudget(Integer.parseInt((String) chunkContext.getStepContext().getJobParameters()
+									.get("weekly.budget")));
+					config.setMonthlyBudget(Integer.parseInt((String) chunkContext.getStepContext().getJobParameters()
+									.get("monthly.budget")));
+
+					config.setDailyBudgetAmphiro(Integer.parseInt((String) chunkContext.getStepContext()
+									.getJobParameters().get("daily.budget.amphiro")));
+					config.setWeeklyBudgetAmphiro(Integer.parseInt((String) chunkContext.getStepContext()
+									.getJobParameters().get("weekly.budget.amphiro")));
+					config.setMonthlyBudgetAmphiro(Integer.parseInt((String) chunkContext.getStepContext()
+									.getJobParameters().get("monthly.budget.amphiro")));
+
+					// Execute message generation
+					messageService.executeAll(config);
+				} catch (Exception ex) {
+					logger.fatal("Failed to complete message calculation process.", ex);
+
+					throw ApplicationException.wrap(ex);
+				}
+				return RepeatStatus.FINISHED;
+			}
+
+			@Override
+			public void stop() {
+				// TODO: Add business logic for stopping processing
+			}
+
+		}).build();
+	}
 
 	@Override
 	public Job build(String name, JobParametersIncrementer incrementer) throws Exception {
 		return jobBuilderFactory.get(name).incrementer(incrementer).start(generateMessages()).build();
-	}    
+	}
 }

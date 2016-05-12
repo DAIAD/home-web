@@ -17,6 +17,7 @@ import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
+import eu.daiad.web.logging.MappedDiagnosticContextFilter;
 import eu.daiad.web.security.CsrfTokenResponseHeaderBindingFilter;
 import eu.daiad.web.security.CustomAccessDeniedHandler;
 import eu.daiad.web.security.CustomAuthenticationProvider;
@@ -65,7 +66,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 			private Pattern allowedMethods = Pattern.compile("^(GET|HEAD|TRACE|OPTIONS)$");
 
-			private RegexRequestMatcher apiMatcher = new RegexRequestMatcher("/api/v1/.*", null);
+			private RegexRequestMatcher apiMatcher = new RegexRequestMatcher("/api/v\\d+/.*", null);
 
 			@Override
 			public boolean matches(HttpServletRequest request) {
@@ -98,5 +99,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 		// Refresh CSRF token
 		http.addFilterAfter(new CsrfTokenResponseHeaderBindingFilter(), CsrfFilter.class);
+
+		// Set MDC before CSRF filter
+		http.addFilterBefore(new MappedDiagnosticContextFilter(), CsrfFilter.class);
 	}
 }

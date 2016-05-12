@@ -1,10 +1,8 @@
 package eu.daiad.web.model.security;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
 
-import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.SpringSecurityCoreVersion;
@@ -26,6 +24,8 @@ public class AuthenticatedUser extends User {
 
 	private int utilityId;
 
+	private DateTime createdOn;
+
 	private String firstname;
 
 	private String lastname;
@@ -33,6 +33,8 @@ public class AuthenticatedUser extends User {
 	private EnumGender gender;
 
 	private DateTime birthdate;
+
+	private String locale;
 
 	private String country;
 
@@ -45,6 +47,8 @@ public class AuthenticatedUser extends User {
 	private EnumMobileMode mobileMode = EnumMobileMode.INACTIVE;
 
 	private EnumUtilityMode utilityMode = EnumUtilityMode.INACTIVE;
+
+	private DateTime staticTipSentOn;
 
 	public AuthenticatedUser(int id, UUID key, String username, String password, int utilityId, boolean isLocked,
 					Collection<? extends GrantedAuthority> authorities) {
@@ -124,18 +128,6 @@ public class AuthenticatedUser extends User {
 		return this.getAuthorities().contains(new SimpleGrantedAuthority(role.toString()));
 	}
 
-	@Override
-	public String toString() {
-		Object[] authorities = this.getAuthorities().toArray();
-		ArrayList<String> roles = new ArrayList<String>();
-		for (int index = 0, count = authorities.length; index < count; index++) {
-			roles.add(((GrantedAuthority) authorities[index]).getAuthority());
-		}
-		return "DaiadUser [key=" + key + ", username=" + this.getUsername() + ", firstname=" + firstname
-						+ ", lastname=" + lastname + ", gender=" + gender + ", birthdate=" + birthdate + ", country="
-						+ country + ", postalCode=" + postalCode + ", roles=" + StringUtils.join(roles, ",") + "]";
-	}
-
 	public EnumWebMode getWebMode() {
 		return webMode;
 	}
@@ -166,5 +158,29 @@ public class AuthenticatedUser extends User {
 
 	public int getId() {
 		return id;
+	}
+
+	public String getLocale() {
+		return locale;
+	}
+
+	public void setLocale(String locale) {
+		this.locale = locale;
+	}
+
+	public DateTime getStaticTipSentOn() {
+		return staticTipSentOn;
+	}
+
+	public void setStaticTipSentOn(DateTime staticTipSentOn) {
+		this.staticTipSentOn = staticTipSentOn;
+	}
+
+	public DateTime getCreatedOn() {
+		return createdOn;
+	}
+
+	public void setCreatedOn(DateTime createdOn) {
+		this.createdOn = createdOn;
 	}
 }

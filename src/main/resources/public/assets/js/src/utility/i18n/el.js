@@ -31,11 +31,20 @@
 	    "Search": "Αναζήτηση",
 	    "Messages": "Μηνύματα",
 	    "Settings": "Ρυθμίσεις",
-	    "Reporting": "Αναφορές",
+	    "Reports": {
+	      "Group": "Αναφορές",
+	      "Overview": "Επισκόπηση",
+	      "Charts": "Γραφήματα"
+	    },
 	    "Alerts": "Ειδοποιήσεις",
-	    "Announcements" : "Ανακοινώσεις",
+	    "Announcements": "Ανακοινώσεις",
 	    "Scheduler": "Διαχείριση Εργασιών",
-	    "Consumers": "Καταναλωτές"
+	    "Consumers": "Καταναλωτές",
+	    "Support" : {
+        "Group": "Υποστήριξη",
+        "Data": "Διαχείριση Δεδομένων",
+        "Development": "Ανάπτυξη"
+	    }
 	},
 	"Demographics" : {
 		"Group" : "Ομάδες Καταναλωτών"

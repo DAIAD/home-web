@@ -45,9 +45,9 @@ public class HBaseArduinoDataRepository implements IArduinoDataRepository {
 		}
 	}
 
-	private String arduinoTableMeasurements = "daiad:arduino-measurements";
+	private final String arduinoTableMeasurements = "daiad:arduino-measurements";
 
-	private String columnFamilyName = "cf";
+	private final String columnFamilyName = "cf";
 
 	private static final Log logger = LogFactory.getLog(HBaseArduinoDataRepository.class);
 

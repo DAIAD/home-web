@@ -12,6 +12,13 @@ var DebugAPI = {
 
   createAmphiro : function() {
     return api.json('/action/debug/amphiro/create');
+  },
+
+  generateAmphiroData : function(timezone, files) {
+    return api.sendFile('/action/debug/amphiro/data/generate', files, {
+      timezone : timezone,
+      type: 'AMPHIRO_DATA'
+    });
   }
 
 };

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import com.vividsolutions.jts.geom.Geometry;
 
@@ -13,9 +14,26 @@ public class DataQueryBuilder {
 
 	ArrayList<EnumMetric> metrics = new ArrayList<EnumMetric>();
 
+	public static DataQueryBuilder create() {
+		return new DataQueryBuilder();
+	}
+
+	public static DataQueryBuilder create(DataQuery query) {
+		return new DataQueryBuilder(query);
+	}
+
 	public DataQueryBuilder() {
 		this.query = new DataQuery();
 		this.query.setTime(new TimeFilter());
+	}
+
+	public DataQueryBuilder(DataQuery query) {
+		if (query == null) {
+			this.query = new DataQuery();
+			this.query.setTime(new TimeFilter());
+		} else {
+			this.query = query;
+		}
 	}
 
 	public DataQueryBuilder reset() {
@@ -243,9 +261,27 @@ public class DataQueryBuilder {
 		return this;
 	}
 
+	public DataQueryBuilder timezone(String timezone) {
+		this.query.setTimezone(timezone);
+
+		return this;
+	}
+
+	public DataQueryBuilder timezone(DateTimeZone timezone) {
+		this.query.setTimezone(timezone.toString());
+
+		return this;
+	}
+
 	public DataQuery build() {
 		if (this.metrics.contains(EnumMetric.AVERAGE)) {
 			this.count().sum();
+		}
+		if (this.metrics.contains(EnumMetric.MIN)) {
+			this.max();
+		}
+		if (this.metrics.contains(EnumMetric.MAX)) {
+			this.min();
 		}
 
 		for (PopulationFilter filter : this.query.getPopulation()) {
