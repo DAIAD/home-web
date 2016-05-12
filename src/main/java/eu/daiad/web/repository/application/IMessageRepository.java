@@ -13,4 +13,5 @@ public interface IMessageRepository {
 
 	public abstract void setMessageAcknowledgement(EnumMessageType type, int id, DateTime acknowledgedOn);
 
+        public List<Message> getAdvisoryMessages(String locale);
 }
