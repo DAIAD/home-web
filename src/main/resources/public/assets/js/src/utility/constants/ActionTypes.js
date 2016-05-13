@@ -36,7 +36,7 @@ var constants = keyMirror({
 	ADMIN_RECEIVED_SESSIONS: null,
 	
 	ADMIN_REQUESTED_METERS: null,
-  ADMIN_RECEIVED_METERS: null,
+        ADMIN_RECEIVED_METERS: null,
 	
 	ADMIN_FILTER_USER: null,
 
@@ -56,6 +56,15 @@ var constants = keyMirror({
 	ADMIN_ADD_USER_RECEIVE_RESPONSE: null,
 	ADMIN_ADD_USER_GET_UTILITIES_MAKE_REQUEST: null,
 	ADMIN_ADD_USER_GET_UTILITIES_RECEIVE_RESPONSE: null,
+        
+        
+        //manage alerts
+        ADMIN_REQUESTED_UTILITIES: null,
+        ADMIN_RECEIVED_UTILITIES: null,        
+        ADMIN_SELECTED_UTILITY_FILTER: null,      
+        ADMIN_REQUESTED_STATIC_TIPS: null,
+        ADMIN_RECEIVED_STATIC_TIPS: null,
+        // \manage alerts
  
 	QUERY_SUBMIT: null,
 	QUERY_RESPONSE: null,

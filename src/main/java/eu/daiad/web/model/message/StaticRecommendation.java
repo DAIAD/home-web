@@ -1,9 +1,13 @@
 package eu.daiad.web.model.message;
 
+import org.joda.time.DateTime;
+
 public class StaticRecommendation extends Message {
 
 	private int id;
 
+        private int index;
+        
 	private String title;
 
 	private String description;
@@ -17,7 +21,13 @@ public class StaticRecommendation extends Message {
 	private String externaLink;
 
 	private String source;
+        
+        private DateTime createdOn;
+        
+        private DateTime modifiedOn;
 
+        private boolean active;
+        
 	@Override
 	public EnumMessageType getType() {
 		return EnumMessageType.RECOMMENDATION_STATIC;
@@ -31,6 +41,14 @@ public class StaticRecommendation extends Message {
 		this.id = id;
 	}
 
+        public int getIndex() {
+		return index;
+	}
+
+	public void setIndex(int index) {
+		this.index = index;
+	}
+        
 	public String getTitle() {
 		return title;
 	}
@@ -86,4 +104,28 @@ public class StaticRecommendation extends Message {
 	public void setSource(String source) {
 		this.source = source;
 	}
+
+        public DateTime getCreatedOn() {
+                return createdOn;
+        }
+
+        public void setCreatedOn(DateTime createdOn) {
+                this.createdOn = createdOn;
+        }
+
+        public DateTime getModifiedOn() {
+                return modifiedOn;
+        }
+
+        public void setModifiedOn(DateTime modifiedOn) {
+                this.modifiedOn = modifiedOn;
+        }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
 }
