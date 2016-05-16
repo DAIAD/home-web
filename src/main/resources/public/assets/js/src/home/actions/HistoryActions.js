@@ -1,7 +1,7 @@
 var types = require('../constants/ActionTypes');
 require('es6-promise').polyfill();
 var { push } = require('react-router-redux');
-var { getSessionById, getDeviceKeysByType, getDeviceTypeByKey } = require('../utils/device');
+var { getSessionById, getDeviceKeysByType, getDeviceTypeByKey, lastNFilterToLength, getIdRangeByIndex } = require('../utils/device');
 var { getPreviousPeriod, convertGranularityToPeriod, getGranularityByDiff } = require('../utils/time');
 
 var QueryActions = require('./QueryActions');
@@ -68,7 +68,7 @@ const HistoryActions = {
     };
   },
   
-  getDeviceSession: function (id, deviceKey, time) {
+  getDeviceSession: function (id, deviceKey) {
     return function(dispatch, getState) {
       const devFound = getState().section.history.data.find(d=>d.deviceKey===deviceKey);
       const sessions = devFound?devFound.sessions:[];
@@ -78,7 +78,7 @@ const HistoryActions = {
         console.log('found session in memory');
         return new Promise((resolve, reject) => resolve());
       }
-      return dispatch(QueryActions.fetchDeviceSession(id, deviceKey, time))
+      return dispatch(QueryActions.fetchDeviceSession(id, deviceKey))
       .then(session => { 
           dispatch(setSession(Object.assign({}, session, {deviceKey})));
           return session;
@@ -119,14 +119,34 @@ const HistoryActions = {
   },
   query: function () {
     return function(dispatch, getState) {
-      dispatch(QueryActions.queryDeviceOrMeter(getState().section.history.activeDevice, getState().section.history.activeDeviceType, getState().section.history.time))
-        .then(sessions => dispatch(setSessions(sessions)))
-        .then(sessions => dispatch(setDataSynced()))
-        .catch(error => { 
-          console.error('Caught error in history query:', error); 
+      if (getState().section.history.activeDeviceType === 'AMPHIRO') {
+        
+        if (getState().section.history.activeDevice.length === 0) {
           dispatch(setSessions([]));
           dispatch(setDataSynced());
+          return;
+        }
+
+        dispatch(QueryActions.queryDeviceSessions(getState().section.history.activeDevice, {type: 'SLIDING', length: lastNFilterToLength(getState().section.history.timeFilter)}))
+          .then(sessions => dispatch(setSessions(sessions)))
+          .then(() => dispatch(setDataSynced()))
+          .catch(error => { 
+            console.error('Caught error in history device query:', error); 
+            dispatch(setSessions([]));
+            dispatch(setDataSynced());
           });
+      }
+      else if (getState().section.history.activeDeviceType === 'METER') {
+        dispatch(QueryActions.fetchMeterHistory(getState().section.history.activeDevice, getState().section.history.time))
+          .then(sessions => dispatch(setSessions(sessions)))
+          .then(() => dispatch(setDataSynced()))
+          .catch(error => { 
+            console.error('Caught error in history meter query:', error); 
+            dispatch(setSessions([]));
+            dispatch(setDataSynced());
+          });
+      }
+
 
         if (getState().section.history.comparison === 'last') {
           dispatch(QueryActions.queryDeviceOrMeter(getState().section.history.activeDevice, getState().section.history.activeDeviceType, getPreviousPeriod(convertGranularityToPeriod(getState().section.history.time.granularity), getState().section.history.time.startDate)))
@@ -150,11 +170,13 @@ const HistoryActions = {
     };
   },
   setActiveDevice: function(deviceKeys, query=true) {
+    
     return function(dispatch, getState) {
       dispatch({
         type: types.HISTORY_SET_ACTIVE_DEVICE,
         deviceKey: deviceKeys
       });
+      
       if (query) { 
         dispatch(setDataUnsynced());
         dispatch(HistoryActions.query());
@@ -168,8 +190,18 @@ const HistoryActions = {
         deviceType
       });
       dispatch(HistoryActions.setActiveDevice(getDeviceKeysByType(getState().user.profile.devices, deviceType), false));
-      if (deviceType === 'AMPHIRO') dispatch(HistoryActions.setQueryFilter('volume'));
-      else if (deviceType === 'METER') dispatch(HistoryActions.setQueryFilter('difference'));
+      
+      //set default options when switching
+      if (deviceType === 'AMPHIRO') {
+        dispatch(HistoryActions.setQueryFilter('volume'));
+        dispatch(HistoryActions.setTimeFilter('ten'));
+        dispatch(HistoryActions.setSortFilter('id'));
+      }
+      else if (deviceType === 'METER') {
+        dispatch(HistoryActions.setQueryFilter('difference'));
+        dispatch(HistoryActions.setTimeFilter('year'));
+        dispatch(HistoryActions.setSortFilter('timestamp'));
+      }
       
       if (query) { 
         dispatch(setDataUnsynced());

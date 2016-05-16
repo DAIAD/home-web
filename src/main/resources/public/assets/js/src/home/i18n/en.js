@@ -71,13 +71,18 @@
     "energyDetails": "Estimated energy used for hot water",
     "countDetails": "The total number of aggregated showers",
     "durationDetails": "The duration of the shower",
-    "limitedData": "Oops, limited data...",
+    "limitedData": "Oops, limited data..."
+  },
+  "periods": {
     "always": "Since the beginning of time",
     "custom": "Custom",
     "year": "Year",
     "month": "Month",
     "week": "Week",
-    "day": "Day"
+    "day": "Day",
+    "ten": "Last 10",
+    "twenty": "Last 20",
+    "fifty": "Last 50"
   },
   "notifications": {
     "showAll": "Show all"

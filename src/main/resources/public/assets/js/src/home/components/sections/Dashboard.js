@@ -37,9 +37,10 @@ function SayHello (props) {
 }
 
 function InfoBox (props) {
-  const { mode, infobox, periods, updateInfobox, removeInfobox, chartFormatter } = props;
-  const { id, error, period, type, display, linkToHistory } = infobox;
+  const { mode, infobox, updateInfobox, removeInfobox, chartFormatter, intl } = props;
+  const { id, error, period, type, display, linkToHistory, periods, displays } = infobox;
   
+  const _t = intl.formatMessage;
   return (
     <div className='infobox'>
       <div className='infobox-header'>
@@ -50,25 +51,17 @@ function InfoBox (props) {
         <div className='header-right'>
           <div style={{marginRight:10}}>
             {
-              (() => (type !== 'last' && type !== 'tip') ?
-                ['chart', 'stat'].map(t => t!==display?(
-                  <a key={t} onClick={() => updateInfobox(id, {display:t})} style={{marginLeft:5}}>{t}</a>
-                  ):<span key={t}/>)
-                  :
-                    <div/>
-                    )()
+              displays.map(t => t.id!==display?(
+                <a key={t.id} onClick={() => updateInfobox(id, {display:t.id})} style={{marginLeft:5}}>{t.title}</a>
+                ):<span key={t}/>)
             }
           </div>
           
           <div>
             {
-              (() => (type !== 'tip' && type !== 'last') ?
-                periods.map(p => (
-                  <a key={p.id} onClick={() => updateInfobox(id, {period:p.id})} style={{marginLeft:5}}>{(p.id===period)?(<u>{p.title}</u>):(p.title)}</a>
-                  ))
-                    :
-                      <div/>
-                      )()
+              periods.map(p => (
+                <a key={p.id} onClick={() => updateInfobox(id, {period:p.id})} style={{marginLeft:5}}>{(p.id===period)?(<u>{_t({id: p.title})}</u>):(_t({id: p.title}))}</a>
+                ))
             }
           </div>
           {

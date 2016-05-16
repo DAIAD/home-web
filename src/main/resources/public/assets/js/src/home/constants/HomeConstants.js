@@ -68,6 +68,45 @@ module.exports = {
       {id:'energy',mu:'W', title:'history.energy', details: 'history.energyDetails', clickable: true}, 
       {id:'duration', icon:'timer-on', mu:'sec', title:'history.duration', details: 'history.durationDetails', clickable: true}, 
   ],
+  METER_PERIODS: [
+    {id: 'day', title: 'periods.day'},
+    {id: 'week', title: 'periods.week'},
+    {id: 'month', title: 'periods.month'},
+    {id: 'year', title: 'periods.year'},
+    {id: 'custom', title: 'periods.custom'},
+  ],
+  DEV_PERIODS: [
+    {id: 'ten', title: 'periods.ten'},
+    {id: 'twenty', title: 'periods.twenty'},
+    {id: 'fifty', title: 'periods.fifty'},
+  ],
+  METER_METRICS: [
+    {id:'difference', title:'Volume'},
+  ],
+  DEV_METRICS: [
+    {id:'showers', title:'Showers'},
+    {id:'volume', title:'Volume'},
+    {id:'energy', title:'Energy'},
+    {id:'duration', title:'Duration'},
+    {id:'temperature', title:'Temperature'}
+  ],
+  METER_SORT: [
+    {id: 'timestamp', title: 'Time'}, 
+    {id:'difference', title: 'Volume'}
+  ],
+  DEV_SORT: [
+    {id: 'id', title: 'ID'}, 
+    {id: 'timestamp', title: 'Time'}, 
+    {id:'volume', title: 'Volume'}, 
+    {id:'devName', title: 'Device'}, 
+    {id: 'energy', title: 'Energy'}, 
+    {id:'temperature', title:'Temperature'}, 
+    {id:'duration', title: 'Duration'}
+  ],
+  STATBOX_DISPLAYS: [
+    {id: 'stat', title: 'Stat'}, 
+    {id: 'chart', title: 'Chart'}
+  ],
   STATIC_RECOMMENDATIONS: [
     {
        "id": 1,

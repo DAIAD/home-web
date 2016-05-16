@@ -243,6 +243,13 @@ const reduceMetric = function(devices, data, metric) {
   return reducedMetric;
 };
 
+const lastNFilterToLength = function (filter) {
+  if (filter === 'ten') return 10;
+  else if (filter === 'twenty') return 20;
+  else if (filter === 'fifty') return 50;
+  else throw new Error('unrecognized filter', filter);
+};
+
 module.exports = {
   getSessionById,
   getSessionByIndex,
@@ -266,6 +273,7 @@ module.exports = {
   getDataSessions,
   getDataMeasurements,
   getShowersCount,
+  lastNFilterToLength,
   getMetricMu,
   sortSessions,
 };

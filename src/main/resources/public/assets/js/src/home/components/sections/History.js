@@ -19,53 +19,63 @@ var HistoryChartData = require('../../containers/HistoryChartData');
 var timeUtil = require('../../utils/time');
 const { IMAGES } = require('../../constants/HomeConstants');
 
-function TimeNavigator(props) {
-    const { time, period, updateTime, handleTimePrevious, handleTimeNext } = props;
-    if (!time.startDate || !time.endDate) return (<div/>);
 
-    return period === 'custom' ? 
-      (
-        <div className="time-navigator">
-          <div className="time-navigator-child"> 
-            <div style={{float: 'left', marginRight:5}}>
-              <DatetimeInput
-                dateFormat="DD/MM/YYYY"
-                timeFormat="HH:mm"
-                inputProps={{ size: 18 }}
-                value={time.startDate} 
-                isValidDate={(curr) => curr.valueOf() <= time.endDate}
-                onChange={(val) => updateTime({startDate: val.valueOf()})}
-             /> 
-            </div>
-            - 
-            <div style={{float: 'right', marginLeft:5}}>
-              <DatetimeInput 
-                closeOnSelect={true}
-                dateFormat="DD/MM/YYYY"
-                timeFormat="HH:mm"
-                inputProps={{ size: 18 }}
-                value={time.endDate} 
-                isValidDate={(curr) => curr.valueOf() >= time.startDate}
-                onChange={(val) => updateTime({endDate: val.valueOf()})}
-              />
+function CustomTimeNavigator (props) {
+  const { time, updateTime } = props;
+
+  return (
+    <div className="time-navigator">
+        <div className="time-navigator-child"> 
+          <div style={{float: 'left', marginRight:5}}>
+            <DatetimeInput
+              dateFormat="DD/MM/YYYY"
+              timeFormat="HH:mm"
+              inputProps={{ size: 18 }}
+              value={time.startDate} 
+              isValidDate={(curr) => curr.valueOf() <= time.endDate}
+              onChange={(val) => updateTime({startDate: val.valueOf()})}
+           /> 
           </div>
+          - 
+          <div style={{float: 'right', marginLeft:5}}>
+            <DatetimeInput 
+              closeOnSelect={true}
+              dateFormat="DD/MM/YYYY"
+              timeFormat="HH:mm"
+              inputProps={{ size: 18 }}
+              value={time.endDate} 
+              isValidDate={(curr) => curr.valueOf() >= time.startDate}
+              onChange={(val) => updateTime({endDate: val.valueOf()})}
+            />
         </div>
-      </div> 
-      )
-      :
-      (
-      <div className="time-navigator">
-        <a className="time-navigator-child pull-left" onClick={handleTimePrevious}>
-          <img src={`${IMAGES}/arrow-big-left.svg`} />
-        </a>
-        <div className="time-navigator-child">
-          <FormattedDate value={time.startDate} day="numeric" month="long" year="numeric" /> - <FormattedDate value={time.endDate} day="numeric" month="long" year="numeric" />
-        </div>
-        <a className="time-navigator-child pull-right" onClick={handleTimeNext}>
-          <img src={`${IMAGES}/arrow-big-right.svg`} />
-        </a>
       </div>
-      );
+    </div>
+  ); 
+}
+
+function TimeNavigator(props) {
+  const { time, handlePrevious, handleNext } = props;
+
+  if (!time.startDate || !time.endDate) return (<div/>);
+
+  return (
+    <div className="time-navigator">
+      <a className="time-navigator-child pull-left" onClick={handlePrevious}>
+        <img src={`${IMAGES}/arrow-big-left.svg`} />
+      </a>
+      <div className="time-navigator-child">
+        <FormattedDate value={time.startDate} day="numeric" month="long" year="numeric" />
+          - 
+         <FormattedDate value={time.endDate} day="numeric" month="long" year="numeric" />
+        {
+          //<span>#{start} - #{end}</span>
+            }
+      </div>
+      <a className="time-navigator-child pull-right" onClick={handleNext}>
+        <img src={`${IMAGES}/arrow-big-right.svg`} />
+      </a>
+    </div>
+    );
 }
 
 function ErrorDisplay (props) {
@@ -76,6 +86,7 @@ function ErrorDisplay (props) {
     :
      (<div/>);
 }
+
 var History = React.createClass({
 
   componentWillMount: function() {
@@ -83,16 +94,18 @@ var History = React.createClass({
     if (!synced) {
         //set active device and dont query cause we havent set time yet!
         setActiveDeviceType(activeDeviceType, false);
-        this.handleTimeSelect(timeFilter);
+        this.handlePeriodSelect(timeFilter);
       
       }
   },
   handleTypeSelect: function(key){
     this.props.setQueryFilter(key); 
   },
-  
-  handleTimeSelect: function(key){
-    let time = {};
+  handleLastXSelect: function(key) {
+
+  }, 
+  handlePeriodSelect: function(key){
+    let time = null;
     if (key==="always"){
       time = {
         startDate: new Date("2000-02-18").getTime(),
@@ -113,18 +126,35 @@ var History = React.createClass({
       time = timeUtil.today();
     }
     else if (key==="custom"){
-      time = timeUtil.today();
+      //time = timeUtil.today();
+    }
+    else if (key === "ten") {
+
+    }
+    else if (key === "twenty") {
+
+    }
+    else if (key === "fifty") {
+
+    }
+    else if (key === "customSliding") {
+
     }
     else{
       throw new Error('oops, shouldn\'t be here');
     }
     this.props.setTimeFilter(key);
-    this.props.setTime(time);
+
+    if (time) this.props.setTime(time, false);
+    this.props.query();
   },
-  handleTimePrevious: function() { 
+  handlePrevious: function() { 
+    console.log('handling prev');
+    //this.props.decreaseNavIndex();
     this.props.setTime(this.props.previousPeriod);
   },
-  handleTimeNext: function() { 
+  handleNext: function() { 
+    //this.props.increaseNavIndex();
     this.props.setTime(this.props.nextPeriod);
   },
   handleDeviceChange: function(val) {
@@ -158,24 +188,20 @@ var History = React.createClass({
       console.log('new', key, prop);
       console.log('old', key, this.props[key]);
     }
-
-   
   },
   */
   render: function() {
-    const { intl, devices, amphiros, activeDevice, activeDeviceType, device, devType, timeFilter, time, metrics, comparisons } = this.props;
+    const { intl, devices, amphiros, activeDevice, activeDeviceType, device, devType, timeFilter, time, metrics, periods, comparisons } = this.props;
     const _t = intl.formatMessage;
     return (
         <MainSection id="section.history">
            
            <Topbar> 
-            <bs.Tabs className="history-time-nav" position='top' tabWidth={3} activeKey={timeFilter} onSelect={this.handleTimeSelect}>
-              
-              <bs.Tab eventKey="day" title={_t({id: "history.day"})}/>
-              <bs.Tab eventKey="week" title={_t({id: "history.week"})}/>
-              <bs.Tab eventKey="month" title={_t({id: "history.month"})}/>
-              <bs.Tab eventKey="year" title={_t({id: "history.year"})}/>
-              <bs.Tab eventKey="custom" title={_t({id: "history.custom"})}/>
+             <bs.Tabs className="history-time-nav" position='top' tabWidth={3} activeKey={timeFilter} onSelect={this.handlePeriodSelect}>
+               {
+                periods.map(period =>
+                            <bs.Tab key={period.id} eventKey={period.id} title={_t({id: period.title})} />)
+               } 
               {
                 //  <bs.Tab eventKey="always" title={_t({id: "history.always"})} />
                }
@@ -252,13 +278,19 @@ var History = React.createClass({
           <div className="history-chart-area">
             <h4 style={{textAlign: 'center', margin: '10px 0 0 0'}}>{this.props.reducedMetric}</h4>
 
-            <TimeNavigator 
-              handleTimePrevious={this.handleTimePrevious} 
-              handleTimeNext={this.handleTimeNext}
-              updateTime={this.props.updateTime}
-              period={timeFilter}
-              time={time}
-            /> 
+            {(() => activeDeviceType === 'AMPHIRO' ? <div/> :
+              (timeFilter === 'custom' ? 
+                <CustomTimeNavigator 
+                  updateTime={this.props.updateTime}
+                  time={time}
+                /> 
+                :
+                <TimeNavigator 
+                  handlePrevious={this.handlePrevious} 
+                  handleNext={this.handleNext}
+                  time={time}
+                /> )
+             )()}
 
           <div className="history-chart">
             <HistoryChartData />

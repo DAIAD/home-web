@@ -5,7 +5,8 @@ var { bindActionCreators } = require('redux');
 var { connect } = require('react-redux');
 var { push } = require('react-router-redux');
 
-var HomeConstants = require('../constants/HomeConstants');
+var { STATIC_RECOMMENDATIONS, STATBOX_DISPLAYS, DEV_METRICS, METER_METRICS, DEV_PERIODS, METER_PERIODS, DEV_SORT, METER_SORT } = require('../constants/HomeConstants');
+
 var Dashboard = require('../components/sections/Dashboard');
 
 var HistoryActions = require('../actions/HistoryActions');
@@ -39,19 +40,12 @@ function mapDispatchToProps(dispatch) {
 }
 
 function mergeProps(stateProps, dispatchProps, ownProps) {
-  const periods = [
-      { id: "day", title: "Day", value: timeUtil.today() }, 
-      { id: "week", title: "Week", value: timeUtil.thisWeek() }, 
-      { id: "month", title: "Month", value: timeUtil.thisMonth() }, 
-      { id: "year", title: "Year", value: timeUtil.thisYear() }
-  ];
-  
+
   return Object.assign({}, ownProps,
                dispatchProps,
                stateProps,
                {
                  infoboxData: transformInfoboxData(stateProps.infoboxes, stateProps.devices, dispatchProps.link),
-                 periods,
                });
 }
 
@@ -61,8 +55,12 @@ function transformInfoboxData (infoboxes, devices, link) {
   return infoboxes.map(infobox => {
     const { id, title, type, period, index, deviceType, subtype, data, previous, metric, showerId } = infobox;
 
+    const meterPeriods = METER_PERIODS.filter(x => x.id !== 'custom');
+    const devPeriods = DEV_PERIODS;
+
     let device, chartData, reduced, time, linkToHistory, highlight, previousReduced, better, comparePercentage, mu;
-    
+    let periods = [], displays = []; 
+
     const showers = getShowersCount(devices, data);
     
     let chartFormatter = intl => (x) => intl.formatTime(x, { hour:'numeric', minute:'numeric'});
@@ -77,7 +75,7 @@ function transformInfoboxData (infoboxes, devices, link) {
     chartFormatter = intl => (x) => intl.formatTime(x, { hour:'numeric', minute:'numeric'});
 
     if (type==='tip') {
-      highlight = HomeConstants.STATIC_RECOMMENDATIONS[Math.floor(Math.random()*3)].description;
+      highlight = STATIC_RECOMMENDATIONS[Math.floor(Math.random()*3)].description;
     }
     else if (type === 'last') {
       device = infobox.device;
@@ -101,6 +99,9 @@ function transformInfoboxData (infoboxes, devices, link) {
     else if (type === 'total') {
       device = getDeviceKeysByType(devices, deviceType);
       time = timeUtil.getTimeByPeriod(period);
+      
+      periods = deviceType === 'AMPHIRO' ? devPeriods : meterPeriods;
+      displays = STATBOX_DISPLAYS;
 
       reduced = data ? reduceMetric(devices, data, metric) : 0;
       previousReduced = previous ? reduceMetric(devices, previous, metric) : 0; 
@@ -110,7 +111,6 @@ function transformInfoboxData (infoboxes, devices, link) {
       //highlight = `${reduced} ${mu}`;
       better = reduced < previousReduced;
       comparePercentage = previousReduced === 0 ? null : Math.round((Math.abs(reduced - previousReduced) / previousReduced)*100);
-      console.log('total better?', id, better, reduced, previousReduced, comparePercentage);
 
       chartData = data.map(devData => ({ 
         title: getDeviceNameByKey(devices, devData.deviceKey), 
@@ -122,6 +122,10 @@ function transformInfoboxData (infoboxes, devices, link) {
     else if (type === 'efficiency') {
       device = getDeviceKeysByType(devices, deviceType);
       reduced = data ? reduceMetric(devices, data, metric) : 0;
+
+      periods = deviceType === 'AMPHIRO' ? devPeriods : meterPeriods;
+      displays = STATBOX_DISPLAYS;
+
       previousReduced = previous ? reduceMetric(devices, previous, metric) : 0; 
 
       better = reduced < previousReduced;
@@ -147,6 +151,8 @@ function transformInfoboxData (infoboxes, devices, link) {
     return Object.assign({}, 
                        infobox,
                        {
+                         periods,
+                         displays,
                          device,
                          highlight,
                          chartData,

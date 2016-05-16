@@ -4,7 +4,7 @@ require('es6-promise').polyfill();
 var QueryActions = require('./QueryActions');
 var HistoryActions = require('./HistoryActions');
 
-var { getDeviceKeysByType } = require('../utils/device');
+var { getDeviceKeysByType, lastNFilterToLength } = require('../utils/device');
 var { getTimeByPeriod, getLastShowerTime, getPreviousPeriodSoFar } = require('../utils/time');
 
 const setLastSession = function(session) {
@@ -129,11 +129,10 @@ const DashboardActions = {
       }
 
       if (type === "last") {
-        time = getLastShowerTime();
 
-        return dispatch(QueryActions.fetchLastSession(device, time))
+        return dispatch(QueryActions.fetchLastDeviceSession(device))
         .then(response => 
-              dispatch(DashboardActions.setInfoboxData(id, {data: response.data, index: response.index, showerId: response.id, time})))
+              dispatch(DashboardActions.setInfoboxData(id, {data: response.data, index: response.index, showerId: response.id})))
         .catch(error => { 
           //log error in console for debugging and display friendly message
           console.error('Caught error in infobox data fetch:', error); 
@@ -143,20 +142,31 @@ const DashboardActions = {
       else {
 
         //fetch previous period data for comparison 
-        let prevTime = getPreviousPeriodSoFar(period);
-        dispatch(QueryActions.queryDeviceOrMeter(device, deviceType, prevTime))
-        .then(data => {
-            return dispatch(DashboardActions.setInfoboxData(id, {previous:data, time:prevTime}));})
-          .catch(error => { 
-            console.error('Caught error in infobox previous period data fetch:', error); 
-            dispatch(DashboardActions.setInfoboxData(id, {previous: [], error: 'Oops sth went wrong, replace with sth friendly'})); });
+        if (deviceType === 'METER') {
+          let prevTime = getPreviousPeriodSoFar(period);
+          dispatch(QueryActions.queryDeviceOrMeter(device, deviceType, prevTime))
+          .then(data => {
+              return dispatch(DashboardActions.setInfoboxData(id, {previous:data, time:prevTime}));})
+            .catch(error => { 
+              console.error('Caught error in infobox previous period data fetch:', error); 
+              dispatch(DashboardActions.setInfoboxData(id, {previous: [], error: 'Oops sth went wrong, replace with sth friendly'})); });
+               
 
-        return dispatch(QueryActions.queryDeviceOrMeter(device, deviceType, time))
+        return dispatch(QueryActions.fetchMeterHistory(device, time))
         .then(data =>  
           dispatch(DashboardActions.setInfoboxData(id, {data, time})))
         .catch(error => { 
           console.error('Caught error in infobox data fetch:', error); 
           dispatch(DashboardActions.setInfoboxData(id, {data: [], error: 'Oops sth went wrong, replace with sth friendly'})); });
+        }
+        else {
+          return dispatch(QueryActions.queryDeviceSessions(device, {type: 'SLIDING', length:lastNFilterToLength(period)}))
+          .then(data =>  
+            dispatch(DashboardActions.setInfoboxData(id, {data})))
+          .catch(error => { 
+            console.error('Caught error in infobox data fetch:', error); 
+            dispatch(DashboardActions.setInfoboxData(id, {data: [], error: 'Oops sth went wrong, replace with sth friendly'})); });
+        }
       }
     };
   },

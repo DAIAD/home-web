@@ -11,9 +11,9 @@ var { getDeviceByKey, getDeviceNameByKey, getAvailableDevices, getDeviceTypeByKe
 var timeUtil = require('../utils/time');
 var { getFriendlyDuration, getEnergyClass } = require('../utils/general');
 
+var { DEV_METRICS, METER_METRICS, DEV_PERIODS, METER_PERIODS, DEV_SORT, METER_SORT } = require('../constants/HomeConstants');
+
 function mapStateToProps(state, ownProps) {
-  const defaultDevice = getDefaultDevice(state.user.profile.devices);
-  const deviceKey = defaultDevice?defaultDevice.deviceKey:null;
 
   return {
     firstname: state.user.profile.firstname,
@@ -21,8 +21,6 @@ function mapStateToProps(state, ownProps) {
     activeDevice: state.section.history.activeDevice,
     activeDeviceType: state.section.history.activeDeviceType,
     errors: state.query.errors,
-    //activeSessionIndex: state.section.history.activeSessionIndex,
-    //activeSessionFilter: state.section.history.activeSessionFilter,
     metricFilter: state.section.history.filter,
     timeFilter: state.section.history.timeFilter,
     sortFilter: state.section.history.sortFilter,
@@ -39,27 +37,20 @@ function mapDispatchToProps(dispatch) {
 }
 
 function mergeProps(stateProps, dispatchProps, ownProps) {
-  const devType = stateProps.activeDeviceType;
-  const devMetrics = [
-    {id:'showers', title:'Showers'},
-    {id:'volume', title:'Volume'},
-    {id:'energy', title:'Energy'},
-    {id:'duration', title:'Duration'},
-    {id:'temperature', title:'Temperature'}
-  ];
+  const devType = stateProps.activeDeviceType;  
+  const sessions = sortSessions(reduceSessions(stateProps.devices, stateProps.data), stateProps.sortFilter, stateProps.sortOrder);
+
+  const metrics = devType === 'AMPHIRO' ? DEV_METRICS : METER_METRICS;
+
+  const periods = devType === 'AMPHIRO' ? DEV_PERIODS : METER_PERIODS;
   
-  const meterMetrics = [
-    {id:'difference', title:'Volume'},
-  ];
+  const sortOptions = devType === 'AMPHIRO' ? DEV_SORT : METER_SORT;
 
-  const metrics = devType === 'AMPHIRO' ? devMetrics : (devType === 'METER' ? meterMetrics : [] );
-
-  const deviceSortOptions = [{id: 'timestamp', title: 'Time'}, {id:'volume', title: 'Volume'}, {id:'devName', title: 'Device'}, {id: 'energy', title: 'Energy'}, {id:'temperature', title:'Temperature'}, {id:'duration', title: 'Duration'}];
-
-  const meterSortOptions = [{id: 'timestamp', title: 'Time'}, {id:'difference', title: 'Volume'}];
-  const sortOptions = devType === 'AMPHIRO' ? deviceSortOptions : meterSortOptions;
-
-  const comparisons = stateProps.timeFilter !== 'custom' ? [{id:'last', title: timeUtil.getLastPeriod(stateProps.timeFilter, stateProps.time.startDate)}] : [];
+  const comparisons = stateProps.timeFilter !== 'custom' ?
+    (devType === 'AMPHIRO' ? [] : 
+     [{id: 'last', title: timeUtil.getLastPeriod(stateProps.timeFilter, stateProps.time.startDate)}]
+    ) 
+      : [];
 
   return Object.assign(
     {}, 
@@ -70,12 +61,13 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                   { 
                     nextPeriod: stateProps.time?timeUtil.getNextPeriod(stateProps.timeFilter, stateProps.time.startDate):{}, 
                     previousPeriod: stateProps.time?timeUtil.getPreviousPeriod(stateProps.timeFilter, stateProps.time.endDate):{},
+                    amphiros: getAvailableDevices(stateProps.devices),
+                    periods,
                     metrics,
                     comparisons,
                     sortOptions,
+                    sessions,
                     reducedMetric: `${reduceMetric(stateProps.devices, stateProps.data, stateProps.metricFilter)} ${getMetricMu(stateProps.metricFilter)}`,
-                  sessions: sortSessions(reduceSessions(stateProps.devices, stateProps.data), stateProps.sortFilter, stateProps.sortOrder),
-                    amphiros: getAvailableDevices(stateProps.devices),
                   }));
 }
 

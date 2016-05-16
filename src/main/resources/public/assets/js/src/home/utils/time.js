@@ -109,7 +109,7 @@ const getTimeByPeriod = function (period) {
 };
 
 const getLastPeriod = function(period, timestamp) {
-  return moment(timestamp).subtract(period, 1).get(period);
+  return moment(timestamp).subtract(period, 1).get(period).toString();
 };
 
 const getLastShowerTime = function () {
