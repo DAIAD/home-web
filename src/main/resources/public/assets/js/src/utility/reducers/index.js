@@ -8,7 +8,9 @@ var group = require('./group');
 var upsertFavouriteForm = require('./upsertFavouriteForm');
 var mode_management = require('./mode_management');
 var admin = require('./admin');
+var alerts = require('./alerts');
 var query = require('./query');
+var scheduler = require('./scheduler');
 var debug = require('./debug');
 
 
@@ -20,7 +22,9 @@ var rootReducer = combineReducers({
 	upsertFavouriteForm,
 	mode_management,
 	admin,
+	alerts,
 	query,
+	scheduler,
 	debug,
 	routing: routerReducer
 });

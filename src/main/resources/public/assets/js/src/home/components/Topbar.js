@@ -1,15 +1,13 @@
 var React = require('react');
 
-var Topbar = React.createClass({
-  render: function() {
-    return (
-      <div className="top-bar">
-        <div className="container">
-          { this.props.children }
-        </div>
+function Topbar (props) {
+  return (
+    <div className="top-bar">
+      <div className="container">
+        { props.children }
       </div>
-    );
-  }
-});
+    </div>
+  );
+}
 
 module.exports = Topbar;

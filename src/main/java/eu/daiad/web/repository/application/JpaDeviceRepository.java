@@ -66,8 +66,10 @@ public class JpaDeviceRepository implements IDeviceRepository {
 			amphiro.setMacAddress(macAddress);
 			amphiro.setAesKey(aesKey);
 
-			for (KeyValuePair p : properties) {
-				amphiro.getProperties().add(new DeviceProperty(p.getKey(), p.getValue()));
+			if (properties != null) {
+				for (KeyValuePair p : properties) {
+					amphiro.getProperties().add(new DeviceProperty(p.getKey(), p.getValue()));
+				}
 			}
 
 			TypedQuery<DeviceAmphiroConfigurationDefault> configQuery = entityManager
@@ -136,8 +138,13 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 		try {
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+			AuthenticatedUser user = null;
 
-			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
+			if (auth.getPrincipal() instanceof AuthenticatedUser) {
+				user = (AuthenticatedUser) auth.getPrincipal();
+			} else {
+				throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+			}
 
 			TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager
 							.createQuery("select a from account a where a.username = :username and a.utility.id = :utility_id",
@@ -212,8 +219,13 @@ public class JpaDeviceRepository implements IDeviceRepository {
 	@Override
 	public void updateMeterLocation(String username, String serial, Geometry location) throws ApplicationException {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		AuthenticatedUser user = null;
 
-		AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
+		if (auth.getPrincipal() instanceof AuthenticatedUser) {
+			user = (AuthenticatedUser) auth.getPrincipal();
+		} else {
+			throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+		}
 
 		TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager
 						.createQuery("select a from account a where a.username = :username and a.utility.id = :utility_id",
@@ -262,6 +274,66 @@ public class JpaDeviceRepository implements IDeviceRepository {
 											eu.daiad.web.domain.application.Device.class).setFirstResult(0)
 							.setMaxResults(1);
 			query.setParameter("user_key", userKey);
+			query.setParameter("device_key", deviceKey);
+
+			List<eu.daiad.web.domain.application.Device> result = query.getResultList();
+
+			if (result.size() == 1) {
+				eu.daiad.web.domain.application.Device entity = result.get(0);
+
+				switch (entity.getType()) {
+					case AMPHIRO:
+						eu.daiad.web.domain.application.DeviceAmphiro amphiroEntity = (eu.daiad.web.domain.application.DeviceAmphiro) entity;
+
+						AmphiroDevice amphiro = new AmphiroDevice(amphiroEntity.getAccount().getId(),
+										amphiroEntity.getKey(), amphiroEntity.getName(), amphiroEntity.getMacAddress(),
+										amphiroEntity.getAesKey());
+
+						for (eu.daiad.web.domain.application.DeviceProperty p : amphiroEntity.getProperties()) {
+							amphiro.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
+						}
+
+						return amphiro;
+					case METER:
+						eu.daiad.web.domain.application.DeviceMeter meterEntity = (eu.daiad.web.domain.application.DeviceMeter) entity;
+
+						WaterMeterDevice meter = new WaterMeterDevice(meterEntity.getAccount().getId(),
+										meterEntity.getKey(), meterEntity.getSerial(), meterEntity.getLocation());
+
+						for (eu.daiad.web.domain.application.DeviceProperty p : meterEntity.getProperties()) {
+							meter.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
+						}
+
+						return meter;
+					default:
+						break;
+				}
+
+			}
+
+			return null;
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		}
+	}
+
+	public Device getDeviceByKey(UUID deviceKey) throws ApplicationException {
+		try {
+			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+			AuthenticatedUser user = null;
+
+			if (auth.getPrincipal() instanceof AuthenticatedUser) {
+				user = (AuthenticatedUser) auth.getPrincipal();
+			} else {
+				throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+			}
+
+			TypedQuery<eu.daiad.web.domain.application.Device> query = entityManager
+							.createQuery("select d from device d "
+											+ "where d.key = :device_key and d.account.utility.id = :utility_id",
+											eu.daiad.web.domain.application.Device.class).setFirstResult(0)
+							.setMaxResults(1);
+			query.setParameter("utility_id", user.getUtilityId());
 			query.setParameter("device_key", deviceKey);
 
 			List<eu.daiad.web.domain.application.Device> result = query.getResultList();
@@ -427,8 +499,13 @@ public class JpaDeviceRepository implements IDeviceRepository {
 	public Device getWaterMeterDeviceBySerial(String serial) {
 		try {
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+			AuthenticatedUser user = null;
 
-			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
+			if (auth.getPrincipal() instanceof AuthenticatedUser) {
+				user = (AuthenticatedUser) auth.getPrincipal();
+			} else {
+				throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+			}
 
 			TypedQuery<eu.daiad.web.domain.application.DeviceMeter> query = entityManager
 							.createQuery("select d from device_meter d where d.serial = :serial and d.account.utility.id = :utility_id",
@@ -589,6 +666,12 @@ public class JpaDeviceRepository implements IDeviceRepository {
 						configuration.setNumberOfFrames(p.getNumberOfFrames());
 
 						configuration.setVersion(p.getVersion());
+						if (p.getAcknowledgedOn() != null) {
+							configuration.setAcknowledgedOn(p.getAcknowledgedOn().getMillis());
+						}
+						if (p.getEnabledOn() != null) {
+							configuration.setEnabledOn(p.getEnabledOn().getMillis());
+						}
 
 						deviceConfigurationCollection.getConfigurations().add(configuration);
 					}

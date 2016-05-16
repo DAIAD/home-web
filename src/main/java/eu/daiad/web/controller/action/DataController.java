@@ -6,11 +6,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -29,6 +33,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.google.common.collect.ImmutableMap;
+
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.device.AmphiroDevice;
@@ -38,11 +44,13 @@ import eu.daiad.web.model.device.WaterMeterDevice;
 import eu.daiad.web.model.error.ActionErrorCode;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.ResourceNotFoundException;
+import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.export.DownloadFileResponse;
 import eu.daiad.web.model.export.ExportUserDataQuery;
 import eu.daiad.web.model.export.ExportUserDataRequest;
 import eu.daiad.web.model.loader.ImportWaterMeterFileConfiguration;
 import eu.daiad.web.model.loader.UploadRequest;
+import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.spatial.ReferenceSystem;
@@ -102,37 +110,69 @@ public class DataController extends BaseController {
 
 				switch (request.getType()) {
 					case METER:
-						for (MultipartFile file : request.getFiles()) {
-							String filename = Paths.get(temporaryPath,
-											UUID.randomUUID().toString() + "-" + file.getOriginalFilename()).toString();
+						// Check SRID
+						Integer srid = request.getSrid();
 
-							this.saveFile(filename, file.getBytes());
+						if (srid == null) {
+							response.add(SharedErrorCode.INVALID_SRID, this.getMessage(SharedErrorCode.INVALID_SRID));
+						}
 
-							ImportWaterMeterFileConfiguration configuration = new ImportWaterMeterFileConfiguration(
-											filename);
-							configuration.setSourceReferenceSystem(new ReferenceSystem(25830));
+						if (response.getSuccess()) {
+							for (MultipartFile file : request.getFiles()) {
+								String filename = Paths.get(temporaryPath,
+												UUID.randomUUID().toString() + "-" + file.getOriginalFilename())
+												.toString();
 
-							this.fileDataLoaderService.importWaterMeter(configuration);
+								this.saveFile(filename, file.getBytes());
+
+								ImportWaterMeterFileConfiguration configuration = new ImportWaterMeterFileConfiguration(
+												filename);
+								configuration.setSourceReferenceSystem(new ReferenceSystem(request.getSrid()));
+								configuration.setFirstRowHeader(request.isFirstRowHeader());
+
+								this.fileDataLoaderService.importWaterMeter(configuration);
+							}
 						}
 						break;
 					case METER_DATA:
-						for (MultipartFile file : request.getFiles()) {
-							String filename = Paths.get(temporaryPath,
-											UUID.randomUUID().toString() + "-" + file.getOriginalFilename()).toString();
+						// Check time zone
+						String timezone = request.getTimezone();
 
-							this.saveFile(filename, file.getBytes());
+						Set<String> zones = DateTimeZone.getAvailableIDs();
 
-							this.waterMeterDataLoaderService.parse(filename, request.getTimezone());
+						if (StringUtils.isBlank(timezone)) {
+							response.add(SharedErrorCode.INVALID_TIME_ZONE,
+											this.getMessage(SharedErrorCode.INVALID_TIME_ZONE));
+						} else if (!zones.contains(timezone)) {
+							Map<String, Object> properties = ImmutableMap.<String, Object> builder()
+											.put("timezone", timezone).build();
+
+							response.add(SharedErrorCode.TIMEZONE_NOT_FOUND,
+											this.getMessage(SharedErrorCode.TIMEZONE_NOT_FOUND, properties));
+						}
+
+						if (response.getSuccess()) {
+							for (MultipartFile file : request.getFiles()) {
+								String filename = Paths.get(temporaryPath,
+												UUID.randomUUID().toString() + "-" + file.getOriginalFilename())
+												.toString();
+
+								this.saveFile(filename, file.getBytes());
+
+								this.waterMeterDataLoaderService.parse(filename, request.getTimezone());
+							}
 						}
 						break;
 					default:
 						break;
 				}
 			}
+		} catch (ApplicationException ex) {
+			response.add(ex.getCode(), this.getMessage(ex));
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
 
-			response.add("FILE_UPLOAD_ERROR", "Failed to upload file.");
+			response.add(SharedErrorCode.UNKNOWN, "Failed to upload file.");
 		}
 
 		return response;
@@ -141,13 +181,24 @@ public class DataController extends BaseController {
 	@RequestMapping(value = "/action/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@ResponseBody
 	@Secured({ "ROLE_ADMIN" })
-	public RestResponse query(@RequestBody DataQueryRequest data) {
+	public RestResponse query(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody DataQueryRequest data) {
 		RestResponse response = new RestResponse();
 
 		try {
-			return dataService.execute(data.getQuery());
+			// Set defaults if needed
+			DataQuery query = data.getQuery();
+			if (query != null) {
+				// Initialize time zone
+				if (StringUtils.isBlank(query.getTimezone())) {
+					query.setTimezone(user.getTimezone());
+				}
+			}
+
+			return dataService.execute(query);
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}
@@ -211,7 +262,12 @@ public class DataController extends BaseController {
 					// Set time constraints
 					userQuery.setStartDateTime(data.getStartDateTime());
 					userQuery.setEndDateTime(data.getEndDateTime());
-					userQuery.setTimezone(data.getTimezone());
+
+					if (StringUtils.isBlank(data.getTimezone())) {
+						userQuery.setTimezone(owner.getTimezone());
+					} else {
+						userQuery.setTimezone(data.getTimezone());
+					}
 
 					String token = this.exportService.export(userQuery);
 
@@ -223,7 +279,9 @@ public class DataController extends BaseController {
 									data.getType());
 			}
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}

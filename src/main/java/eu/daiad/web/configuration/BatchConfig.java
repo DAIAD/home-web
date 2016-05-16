@@ -19,14 +19,14 @@ public class BatchConfig {
 	private JobRepository jobRepository;
 
 	@Autowired
-	private TaskExecutor taskScheduler;
+	private TaskExecutor taskExecutor;
 
 	@Bean
 	public JobLauncher jobLauncher() {
 		final SimpleJobLauncher jobLauncher = new SimpleJobLauncher();
-		jobLauncher.setJobRepository(jobRepository);
 
-		jobLauncher.setTaskExecutor(this.taskScheduler);
+		jobLauncher.setJobRepository(this.jobRepository);
+		jobLauncher.setTaskExecutor(this.taskExecutor);
 
 		return jobLauncher;
 	}

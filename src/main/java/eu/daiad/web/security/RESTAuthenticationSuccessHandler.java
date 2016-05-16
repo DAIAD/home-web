@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import eu.daiad.web.model.EnumApplication;
+import eu.daiad.web.model.Runtime;
 import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.AuthenticationResponse;
@@ -34,6 +36,9 @@ public class RESTAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuc
 	@Autowired
 	private IProfileRepository profileRepository;
 
+	@Autowired
+	private Environment environment;
+
 	@Override
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
 					Authentication authentication) throws IOException, ServletException {
@@ -41,7 +46,7 @@ public class RESTAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuc
 
 		if (AjaxUtils.isAjaxRequest(request)) {
 			if (response.isCommitted()) {
-				logger.debug("Response has already been committed. Unable to send JSON response.");
+				logger.warn("Response has already been committed. Unable to send JSON response.");
 				return;
 			}
 			try {
@@ -51,13 +56,14 @@ public class RESTAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuc
 				AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
 				Profile profile;
-				if(user.hasRole("ROLE_ADMIN")) {
+				if (user.hasRole("ROLE_ADMIN")) {
 					profile = profileRepository.getProfileByUsername(EnumApplication.UTILITY);
 				} else {
 					profile = profileRepository.getProfileByUsername(EnumApplication.HOME);
 				}
 
-				AuthenticationResponse authenticationResponse = new AuthenticationResponse(profile);
+				AuthenticationResponse authenticationResponse = new AuthenticationResponse(new Runtime(
+								environment.getActiveProfiles()), profile);
 
 				CsrfToken sessionToken = (CsrfToken) request.getSession().getAttribute(
 								CsrfConstants.DEFAULT_CSRF_TOKEN_ATTR_NAME);
@@ -78,7 +84,7 @@ public class RESTAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuc
 				ObjectMapper mapper = new ObjectMapper();
 				response.getWriter().print(mapper.writeValueAsString(authenticationResponse));
 			} catch (Exception ex) {
-				logger.debug(ex);
+				logger.error(ex);
 			}
 
 		} else {

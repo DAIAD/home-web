@@ -357,7 +357,7 @@ var Dashboard = React.createClass({
 				</Bootstrap.ListGroup>
 			</Bootstrap.Panel>
 		);
-
+        
 		var counters = (
 			<div className='row'>
 				<div className='col-md-2'>

@@ -14,6 +14,8 @@ public class ApplicationException extends RuntimeException {
 
 	private ErrorCode code;
 
+	private boolean isLogged = false;
+
 	private Map<String, Object> properties = new HashMap<String, Object>();
 
 	public ApplicationException(ErrorCode code) {
@@ -22,16 +24,37 @@ public class ApplicationException extends RuntimeException {
 		this.code = code;
 	}
 
+	public ApplicationException(ErrorCode code, boolean isLogged) {
+		super();
+
+		this.code = code;
+		this.isLogged = isLogged;
+	}
+
 	public ApplicationException(String message, ErrorCode code) {
 		super(message);
 
 		this.code = code;
 	}
 
+	public ApplicationException(String message, ErrorCode code, boolean isLogged) {
+		super(message);
+
+		this.code = code;
+		this.isLogged = isLogged;
+	}
+
 	public ApplicationException(String message, Throwable cause, ErrorCode code) {
 		super(message, cause);
 
 		this.code = code;
+	}
+
+	public ApplicationException(String message, Throwable cause, ErrorCode code, boolean isLogged) {
+		super(message, cause);
+
+		this.code = code;
+		this.isLogged = isLogged;
 	}
 
 	public static ApplicationException wrap(Throwable ex, ErrorCode code) {
@@ -41,22 +64,19 @@ public class ApplicationException extends RuntimeException {
 
 		if (ex instanceof ApplicationException) {
 			ApplicationException appEx = (ApplicationException) ex;
+			appEx.isLogged = true;
 
-			if (code != SharedErrorCode.UNKNOWN && code != appEx.getErrorCode()) {
-				return new ApplicationException(ex.getMessage(), ex, appEx.getErrorCode());
+			if (code != SharedErrorCode.UNKNOWN && code != appEx.getCode()) {
+				return new ApplicationException(ex.getMessage(), ex, appEx.getCode(), true);
 			}
 			return appEx;
 		} else {
-			return new ApplicationException(ex.getMessage(), ex, code);
+			return new ApplicationException(ex.getMessage(), ex, code, true);
 		}
 	}
 
 	public static ApplicationException wrap(Throwable ex) {
 		return ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
-	}
-
-	public ErrorCode getErrorCode() {
-		return code;
 	}
 
 	public Map<String, Object> getProperties() {
@@ -73,12 +93,6 @@ public class ApplicationException extends RuntimeException {
 		return this;
 	}
 
-	public ApplicationException setCode(ErrorCode code) {
-		this.code = code;
-
-		return this;
-	}
-
 	@Override
 	public StackTraceElement[] getStackTrace() {
 		if (this.getCause() != null) {
@@ -91,15 +105,23 @@ public class ApplicationException extends RuntimeException {
 	public String getMessage() {
 		if (StringUtils.isBlank(super.getMessage())) {
 			StrBuilder builder = new StrBuilder();
-			
-			builder.appendln(this.getErrorCode().getMessageKey());
-			
+
+			builder.appendln(this.getCode().getMessageKey());
+
 			for (String key : this.properties.keySet()) {
 				builder.appendln(String.format("%s - %s", key, this.properties.get(key)));
 			}
-			
+
 			return builder.toString();
 		}
 		return super.getMessage();
+	}
+
+	public ErrorCode getCode() {
+		return code;
+	}
+
+	public boolean isLogged() {
+		return isLogged;
 	}
 }

@@ -22,6 +22,15 @@ public class AmphiroSessionCollection {
 
 	private ArrayList<AmphiroAbstractSession> sessions;
 
+	public AmphiroSessionCollection(UUID deviceKey, String name) {
+		this.deviceKey = deviceKey;
+		this.name = name;
+
+		this.granularity = TemporalConstants.NONE;
+
+		this.sessions = new ArrayList<AmphiroAbstractSession>();
+	}
+
 	public AmphiroSessionCollection(UUID deviceKey, String name, int granularity) {
 		this.deviceKey = deviceKey;
 		this.name = name;

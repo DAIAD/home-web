@@ -1,8 +1,6 @@
 var userAPI = require('../api/user');
 var types = require('../constants/ActionTypes');
 
-var DeviceActions = require('../actions/DeviceActions');
-
 const requestedLogin = function() {
   return {
     type:types.USER_REQUESTED_LOGIN,
@@ -32,22 +30,30 @@ const receivedLogout = function(status, errors) {
   };
 };
 
+const setCsrf = function(csrf) {
+  return {
+    type: types.USER_SESSION_SET_CSRF,
+    csrf: csrf 
+  };
+};
+
 const UserActions = {
 
   login: function(username, password) {
     return function(dispatch, getState) {
       dispatch(requestedLogin());
 
-      return userAPI.login({username, password})
+      return userAPI.login(username, password)
       .then((response) => {
-        
         const { csrf, success, errors, profile } = response;
-        if (csrf) { dispatch(DeviceActions.setCsrf(csrf)); }
+
+        if (csrf) { dispatch(setCsrf(csrf)); }
+        
         dispatch(receivedLogin(success, errors.length?errors[0].code:null, profile));
         return response;
       })
       .catch((errors) => {
-        dispatch(receivedLogin(false, errors.length?errors[0].code:null, {}));
+        console.error('user login failed with errors:', errors);
         return errors;
       });
     };
@@ -56,15 +62,15 @@ const UserActions = {
     return function(dispatch, getState) {
       return userAPI.getProfile()
       .then((response) => {
-         
         const { csrf, success, errors, profile } = response;
-        if (csrf) { dispatch(DeviceActions.setCsrf(csrf)); }
+        
+        if (csrf) { dispatch(setCsrf(csrf)); }
 
         dispatch(receivedLogin(success, errors.length?errors[0].code:null, profile));
         return response;
       })
       .catch((errors) => {
-        dispatch(receivedLogin(false, errors.length?errors[0].code:null, {}));
+        console.error('user refresh failed with errors:', errors);
         return errors;
       });
     };
@@ -73,19 +79,22 @@ const UserActions = {
     return function(dispatch, getState) {
       dispatch(requestedLogout());
 
-      return userAPI.logout()
+      const csrf = getState().user.csrf;
+
+      return userAPI.logout({csrf})
         .then((response) => {
           const { success, errors } = response;
+
           dispatch(receivedLogout(success, errors.length?errors[0].code:null));
           return response;
         })
         .catch((errors) => {
-          dispatch(receivedLogout(false, errors.length?errors[0].code:errors));
+          console.error('user logout failed with errors:', errors);
           return errors;
         });
     };
   },
-
+  
 };
 
 

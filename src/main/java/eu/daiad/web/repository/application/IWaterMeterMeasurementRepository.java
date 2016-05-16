@@ -1,6 +1,5 @@
 package eu.daiad.web.repository.application;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 import org.joda.time.DateTimeZone;
@@ -23,12 +22,6 @@ public interface IWaterMeterMeasurementRepository {
 
 	public abstract WaterMeterMeasurementQueryResult searchMeasurements(String serials[], DateTimeZone timezone,
 					WaterMeterMeasurementQuery query);
-
-	public abstract void open() throws IOException;
-
-	public abstract void close();
-
-	public abstract boolean isOpen();
 
 	public abstract ArrayList<GroupDataSeries> query(ExpandedDataQuery query) throws ApplicationException;
 

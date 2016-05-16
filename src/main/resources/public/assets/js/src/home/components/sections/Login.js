@@ -1,5 +1,5 @@
 var React = require('react');
-var { FormattedMessage } = require('react-intl');
+var { injectIntl, FormattedMessage } = require('react-intl');
 
 var MainSection = require('../MainSection');
 var Login = require('../LoginForm').Login;
@@ -16,4 +16,5 @@ var LoginPage = React.createClass({
   }
 });
 
+LoginPage = injectIntl(LoginPage);
 module.exports = LoginPage;

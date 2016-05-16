@@ -11,8 +11,8 @@ const addPreviousValues = function(data) {
   return data.map((val, idx, arr) => [val[0], arr.map((array) => array[1]?array[1]:0).reduce((prev, curr, idx2, array, initial) => idx2<=idx?prev+curr:prev)]);
 };
 
-const getFilteredData = function(data, filter) {
-  if (!data) return [];
+const getFilteredData = function(data, filter, devType='AMPHIRO') {
+  if (!data || !data.length) return [];
   
   let filteredData = [];
   switch (filter) {
@@ -40,7 +40,14 @@ const getFilteredData = function(data, filter) {
         filteredData.push([dato.timestamp, dato[filter]]);
       });
       filteredData = filteredData.map(x => [new Date(x[0]),x[1]]);
-      filteredData = addPreviousValues(filteredData); 
+      
+      if (devType === 'AMPHIRO') {
+        //filteredData = addPreviousValues(filteredData); 
+      }
+      else if (devType === 'METER') {
+        //filteredData = filteredData.map((x, i, array) => array[i-1]?[x[0],imer(array[i][1] - array[0][1])]:array[i]);
+        //filteredData = filteredData.map((x, i, array) => array[i-1]?[x[0], (array[i][1]-array[i-1][1])]:array[i]);
+      }
 
       return filteredData;
 

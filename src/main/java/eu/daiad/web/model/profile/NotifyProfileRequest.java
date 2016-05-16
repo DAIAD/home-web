@@ -8,15 +8,15 @@ import eu.daiad.web.model.AuthenticatedRequest;
 
 public class NotifyProfileRequest extends AuthenticatedRequest {
 
-	private DateTime updatedOn;
+	private Long updatedOn;
 
 	private UUID version;
 
-	public DateTime getUpdatedOn() {
+	public Long getUpdatedOn() {
 		return updatedOn;
 	}
 
-	public void setUpdatedOn(DateTime updatedOn) {
+	public void setUpdatedOn(Long updatedOn) {
 		this.updatedOn = updatedOn;
 	}
 

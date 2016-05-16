@@ -7,15 +7,19 @@ import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
+import org.hibernate.annotations.Type;
+import org.joda.time.DateTime;
 
 @Entity(name = "scheduled_job")
 @Table(schema = "public", name = "scheduled_job")
@@ -27,9 +31,24 @@ public class ScheduledJob {
 	@GeneratedValue(generator = "scheduled_job_id_seq", strategy = GenerationType.SEQUENCE)
 	private long id;
 
-	@ManyToOne(cascade = { CascadeType.ALL })
-	@JoinColumn(name = "job_id", nullable = false)
-	private Job job;
+	@Enumerated(EnumType.STRING)
+	private EnumJobCategory category;
+
+	@Enumerated(EnumType.STRING)
+	private EnumExecutionContainer container;
+
+	@Basic
+	private String bean;
+
+	@Basic
+	private String name;
+
+	@Basic
+	private String description;
+
+	@Column(name = "date_created")
+	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+	private DateTime createdOn;
 
 	@Basic
 	private Long period;
@@ -37,9 +56,60 @@ public class ScheduledJob {
 	@Column(name = "cron_expression")
 	private String cronExpression;
 
+	@Basic
+	private boolean enabled;
+
 	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
 	@JoinColumn(name = "scheduled_job_id")
 	private Set<ScheduledJobParameter> parameters = new HashSet<ScheduledJobParameter>();
+
+	public EnumJobCategory getCategory() {
+		return category;
+	}
+
+	public void setCategory(EnumJobCategory category) {
+		this.category = category;
+	}
+
+	public EnumExecutionContainer getContainer() {
+		return container;
+	}
+
+	public void setContainer(EnumExecutionContainer container) {
+		this.container = container;
+	}
+
+	public String getBean() {
+		return bean;
+	}
+
+	public void setBean(String bean) {
+		this.bean = bean;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public DateTime getCreatedOn() {
+		return createdOn;
+	}
+
+	public void setCreatedOn(DateTime createdOn) {
+		this.createdOn = createdOn;
+	}
 
 	public Long getPeriod() {
 		return period;
@@ -47,10 +117,6 @@ public class ScheduledJob {
 
 	public void setPeriod(Long period) {
 		this.period = period;
-	}
-
-	public long getId() {
-		return id;
 	}
 
 	public String getCronExpression() {
@@ -61,20 +127,20 @@ public class ScheduledJob {
 		this.cronExpression = cronExpression;
 	}
 
-	public Job getJob() {
-		return job;
+	public boolean isEnabled() {
+		return enabled;
 	}
 
-	public void setJob(Job job) {
-		this.job = job;
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+
+	public long getId() {
+		return id;
 	}
 
 	public Set<ScheduledJobParameter> getParameters() {
 		return parameters;
-	}
-
-	public void setParameters(Set<ScheduledJobParameter> parameters) {
-		this.parameters = parameters;
 	}
 
 }

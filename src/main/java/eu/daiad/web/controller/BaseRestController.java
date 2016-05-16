@@ -20,25 +20,36 @@ public class BaseRestController extends BaseController {
 
 	protected AuthenticatedUser authenticate(Credentials credentials, EnumRole... roles) throws ApplicationException {
 		try {
+			if (credentials == null) {
+				throw new ApplicationException(SharedErrorCode.AUTHENTICATION_NO_CREDENTIALS);
+			}
+
 			UsernamePasswordAuthenticationToken authentication = (UsernamePasswordAuthenticationToken) this.authenticationProvider
-							.authenticate(new UsernamePasswordAuthenticationToken(credentials.getUsername(), credentials.getPassword()));
+							.authenticate(new UsernamePasswordAuthenticationToken(credentials.getUsername(),
+											credentials.getPassword()));
 
 			if (authentication == null) {
-				throw new ApplicationException(SharedErrorCode.AUTHENTICATION);
+				throw new ApplicationException(SharedErrorCode.AUTHENTICATION_USERNAME).set("username",
+								credentials.getUsername());
 			}
 
 			// Check permissions
-			for (EnumRole role : roles) {
-				if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority(role.toString()))) {
-					throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+			if (roles != null) {
+				for (EnumRole role : roles) {
+					if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority(role.toString()))) {
+						throw new ApplicationException(SharedErrorCode.AUTHORIZATION_MISSING_ROLE).set("role",
+										role.toString());
+					}
 				}
 			}
+
 			// Store authenticated user
 			SecurityContextHolder.getContext().setAuthentication(authentication);
 
 			return (AuthenticatedUser) authentication.getPrincipal();
 		} catch (BadCredentialsException ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.AUTHORIZATION);
+			throw ApplicationException.wrap(ex, SharedErrorCode.AUTHENTICATION_USERNAME).set("username",
+							credentials.getUsername());
 		}
 	}
 }

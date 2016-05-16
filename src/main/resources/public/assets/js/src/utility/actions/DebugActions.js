@@ -29,6 +29,20 @@ var amphiroCreated = function(success, errors) {
   };
 };
 
+var generateAmphiroData = function(timezone) {
+  return {
+    type : types.DEBUG_AMPHIRO_DATA_GENERATE_REQUEST
+  };
+};
+
+var amphiroDataGenerated = function(success, errors) {
+  return {
+    type : types.DEBUG_AMPHIRO_DATA_GENERATED,
+    success : success,
+    errors : errors
+  };
+};
+
 var DebugActions = {
   createUser : function(password) {
     return function(dispatch, getState) {
@@ -50,6 +64,29 @@ var DebugActions = {
       }, function(error) {
         dispatch(amphiroCreated(false, error));
       });
+    };
+  },
+  generateAmphiroData : function(timezone, files) {
+    return function(dispatch, getState) {
+      dispatch(generateAmphiroData());
+
+      return debugAPI.generateAmphiroData(timezone, files).then(function(response) {
+        dispatch(amphiroDataGenerated(response.success, response.errors));
+      }, function(error) {
+        dispatch(amphiroDataGenerated(false, error));
+      });
+    };
+  },
+  setTimezone : function(timezone) {
+    return {
+      type : types.DEBUG_SET_TIMEZONE,
+      timezone : timezone
+    };
+  },
+  setErrors : function(errors) {
+    return {
+      type : types.DEBUG_SET_ERRORS,
+      errors : errors
     };
   }
 };

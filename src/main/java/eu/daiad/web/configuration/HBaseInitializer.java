@@ -2,19 +2,16 @@ package eu.daiad.web.configuration;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import eu.daiad.web.repository.application.HBaseConfigurationBuilder;
+import eu.daiad.web.hbase.HBaseConnectionManager;
 
 @Component
 public class HBaseInitializer implements CommandLineRunner {
@@ -22,25 +19,22 @@ public class HBaseInitializer implements CommandLineRunner {
 	private static final Log logger = LogFactory.getLog(HBaseInitializer.class);
 
 	@Autowired
-	private HBaseConfigurationBuilder configurationBuilder;
+	private HBaseConnectionManager connection;
 
 	private final String namespace = "daiad";
 
-	private final String tables[] = { "amphiro-measurements", "amphiro-sessions-by-time", "amphiro-sessions-by-user",
-					"meter-measurements-by-time", "meter-measurements-by-user", "arduino-measurements",
-					"amphiro-sessions-index" };
+	private final String tables[] = { "amphiro-sessions-index", "amphiro-sessions-by-time", "amphiro-sessions-by-user",
+					"amphiro-measurements", "meter-measurements-by-time", "meter-measurements-by-user",
+					"arduino-measurements", "amphiro-sessions-index-v2", "amphiro-sessions-by-time-v2",
+					"amphiro-sessions-by-user-v2", "amphiro-measurements-v2" };
 
 	private final String columnFamily = "cf";
 
 	@Override
 	public void run(String... args) throws Exception {
-		Connection connection = null;
 		Admin admin = null;
 
 		try {
-			Configuration config = this.configurationBuilder.build();
-			connection = ConnectionFactory.createConnection(config);
-
 			if (connection.isAborted()) {
 				throw new Exception("aborted");
 			}
@@ -83,9 +77,7 @@ public class HBaseInitializer implements CommandLineRunner {
 			try {
 				if (admin != null) {
 					admin.close();
-				}
-				if ((connection != null) && (!connection.isClosed())) {
-					connection.close();
+					admin = null;
 				}
 			} catch (Exception ex) {
 				logger.error("Failed to release HBASE connection resources.", ex);

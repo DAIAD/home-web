@@ -1,20 +1,43 @@
-var React = require('react');
-
 var Checkbox = React.createClass({
   getDefaultProps: function() {
     return {
       disabled: false,
       text: '',
-      checked: false
+      checked: false,
+      onChange: null
       };
   },
   
+  handleChange: function(){
+    if(typeof this.props.onChange === 'function') {
+      this.props.onChange(this.refs.checkbox.checked);
+    }
+    if(typeof this.props.onUserClick === 'function') {
+      this.props.onUserClick(
+        this.props.rowId,
+        this.props.propertyName,
+        this.refs.checkbox.defaultChecked
+      );
+    }
+  },
+  
     render: function() {
+      var classNames = 'checkbox c-checkbox';
+      if (this.props.draftFlag){
+        classNames = classNames + ' c-checkbox-warning';
+      } else if (this.props.disabled){
+        classNames = classNames + ' c-checkbox-disabled';
+      }
+      
       if(this.props.text) {
         return (
-        <div className='checkbox c-checkbox'>
+        <div className={classNames}>
           <label>
-            <input type='checkbox' disabled={this.props.disabled ? "disabled" : false} defaultChecked={this.props.checked}/>
+            <input type='checkbox' 
+              disabled={this.props.disabled ? "disabled" : false} checked={this.props.checked}
+                ref="checkbox"
+              onChange={this.handleChange}
+              />
               <span className='fa fa-check' style={{ marginRight: 30 }}></span>
               {' ' + this.props.text}
           </label>
@@ -22,9 +45,13 @@ var Checkbox = React.createClass({
       );
       }
       return (
-      <div className='checkbox c-checkbox'>
+      <div className={classNames}>
         <label>
-          <input type='checkbox' disabled={this.props.disabled ? "disabled" : false} defaultChecked={this.props.checked}/>
+          <input type='checkbox' 
+            disabled={this.props.disabled ? "disabled" : false} checked={this.props.checked}
+            ref="checkbox"
+            onChange={this.handleChange}
+            />
             <span className='fa fa-check' style={{ marginRight: 0 }}></span>
         </label>
       </div>

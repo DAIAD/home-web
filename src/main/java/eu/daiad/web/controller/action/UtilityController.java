@@ -16,22 +16,24 @@ import eu.daiad.web.repository.application.IUtilityRepository;
 
 @RestController
 public class UtilityController extends BaseController {
-	
+
 	private static final Log logger = LogFactory.getLog(UtilityController.class);
-	
+
 	@Autowired
 	private IUtilityRepository repository;
-	
+
 	@RequestMapping(value = "/action/utility/fetch/all", method = RequestMethod.GET, produces = "application/json")
-	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN" })
+	@Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
 	public RestResponse getUtilityInfo() {
 		RestResponse response = new RestResponse();
-		
-		try{						
+
+		try {
 			return new UtilityInfoResponse(repository.getUtilities());
-			
+
 		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+			if (!ex.isLogged()) {
+				logger.error(ex.getMessage(), ex);
+			}
 
 			response.add(this.getError(ex));
 		}

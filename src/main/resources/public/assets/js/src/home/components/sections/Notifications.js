@@ -7,32 +7,13 @@ var Constants = require('../../constants/HomeConstants');
 var Topbar = require('../Topbar');
 var Sidebar = require('../Sidebar');
 var MainSection = require('../MainSection');
-var NotificationList = require('../Header').NotificationList;
+var Notification = require('../Notification');
+
+const { STATIC_RECOMMENDATIONS } = require('../../constants/HomeConstants'); 
 
 
-var NotificationMessage = React.createClass({
-  render: function() {
-    if (!this.props.notification){
-      return (<div />);
-    }
-    const { notification } = this.props;
-    return (
-      <div className="notification">
-        <h3 className="notification-header">{notification.title}</h3>
-        {
-          notification.imageLink?(<img className="notification-img" src={notification.imageLink} />):null
-        }
-        <p className="notification-details">{notification.description}</p>
-      </div>
-    );
-    }
-});
 var Notifications = React.createClass({
-  
   render: function() {
-    const notId = parseInt(this.props.params.id);
-    const notificationItem = Constants.data.recommendations.find((item) => (item.id === notId));
-
     return (
       <section>
         <Topbar> 
@@ -43,19 +24,12 @@ var Notifications = React.createClass({
             <li><Link to="/notifications/tips">Tips</Link></li>
           </ul>
         </Topbar>
-
-        <MainSection id="section.notifications">
-          <div className="primary" >
-            <NotificationList notifications={Constants.data.recommendations} />   
-
-            <input 
-              type="hidden" 
-              ref= {
-                function(i) { if (i!==null){ i.click(); } } 
-              } />
-
-          </div>
-        </MainSection>
+        <Notification {...this.props} />
+    
+        <input 
+          type="hidden" 
+          ref= {i => { if (i!==null){ i.click(); }} } 
+        />
       </section>
     );
   }

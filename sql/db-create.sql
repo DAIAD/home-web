@@ -370,11 +370,12 @@ CREATE TABLE "group" (
     spatial geometry,
     size integer,
     CONSTRAINT pk_group PRIMARY KEY (id),
+    CONSTRAINT uq_group_name_utility UNIQUE (utility_id, name),
     CONSTRAINT enforce_dims_spatial CHECK (st_ndims(spatial) = 2),
     CONSTRAINT enforce_srid_spatial CHECK (st_srid(spatial) = 4326),
 	CONSTRAINT fk_utility FOREIGN KEY (utility_id)
 		REFERENCES public.utility (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE NO ACTION
+		ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE SEQUENCE group_member_id_seq
@@ -405,7 +406,7 @@ CREATE TABLE group_community (
     CONSTRAINT pk_group_community PRIMARY KEY (id),
     CONSTRAINT fk_group_community_group FOREIGN KEY (id)
         REFERENCES public."group" (id) MATCH SIMPLE
-            ON UPDATE CASCADE ON DELETE SET NULL
+            ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE group_set (
@@ -417,7 +418,7 @@ CREATE TABLE group_set (
             ON UPDATE CASCADE ON DELETE SET NULL,
     CONSTRAINT fk_group_cluster_group FOREIGN KEY (owner_id)
         REFERENCES public.account (id) MATCH SIMPLE
-            ON UPDATE CASCADE ON DELETE SET NULL
+            ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- clusters
@@ -436,9 +437,10 @@ CREATE TABLE "cluster" (
     name character varying(100),
     created_on timestamp without time zone,
     CONSTRAINT pk_cluster PRIMARY KEY (id),
+    CONSTRAINT uq_cluster_name_utility UNIQUE (utility_id, name),
 	CONSTRAINT fk_cluster_utility FOREIGN KEY (utility_id)
 		REFERENCES public.utility (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE NO ACTION
+		ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE group_cluster (
@@ -447,10 +449,10 @@ CREATE TABLE group_cluster (
     CONSTRAINT pk_group_cluster PRIMARY KEY (id),
     CONSTRAINT fk_group_cluster_group FOREIGN KEY (id)
         REFERENCES public."group" (id) MATCH SIMPLE
-            ON UPDATE CASCADE ON DELETE SET NULL,
+            ON UPDATE CASCADE ON DELETE CASCADE,
 	CONSTRAINT fk_group_cluster_cluster FOREIGN KEY (cluster_id)
 		REFERENCES public."cluster" (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE NO ACTION
+			ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- favourite
@@ -471,7 +473,7 @@ CREATE TABLE favourite (
     CONSTRAINT pk_favourite PRIMARY KEY (id),
 	CONSTRAINT fk_favourite_account FOREIGN KEY (owner_id)
 		REFERENCES public.account (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE NO ACTION
+			ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE public.favourite_account
@@ -662,6 +664,9 @@ CREATE TABLE static_recommendation  (
     image_link character varying(200),
     prompt character varying(200),
     externa_link character varying(200),
+    created_on timestamp without time zone,
+    modified_on timestamp without time zone,
+    active boolean DEFAULT true NOT NULL,
     source character varying(200),
     CONSTRAINT pk_static_recommendation PRIMARY KEY (id),
     CONSTRAINT fk_static_recommendation_static_recommendation_category FOREIGN KEY (category_id)
@@ -691,6 +696,7 @@ CREATE TABLE dynamic_recommendation_translation  (
     locale character(2),
     title character varying(100),
     description character varying,
+    image_link character varying(200),
     CONSTRAINT pk_dynamic_recommendation_translation PRIMARY KEY (id),
     CONSTRAINT fk_dynamic_recommendation_translation_dynamic_recommendation FOREIGN KEY (dynamic_recommendation_id)
         REFERENCES public.dynamic_recommendation (id) MATCH SIMPLE

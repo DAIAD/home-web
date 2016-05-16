@@ -2,9 +2,14 @@ package eu.daiad.web.model.query;
 
 import java.util.ArrayList;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 public class DataQuery {
+
+	@JsonIgnore
+	String timezone;
 
 	TimeFilter time;
 
@@ -52,4 +57,15 @@ public class DataQuery {
 	public ArrayList<PopulationFilter> getPopulation() {
 		return population;
 	}
+
+	@JsonIgnore
+	public String getTimezone() {
+		return timezone;
+	}
+
+	@JsonProperty
+	public void setTimezone(String timezone) {
+		this.timezone = timezone;
+	}
+
 }

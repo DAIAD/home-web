@@ -4,8 +4,6 @@ All files and folders in `/configuration` must copied to folder `/src/main/resou
 
 * `log4j.properties`: Log4j configuration properties.
 
-* `messages.properties`: Application messages.
-
 * `config/scheduler.properties`: Scheduler configuration properties.
 
 * `config/hbase.properties`: HBASE configuration properties. At least the `hbase.zookeeper.quorum` property must be set.

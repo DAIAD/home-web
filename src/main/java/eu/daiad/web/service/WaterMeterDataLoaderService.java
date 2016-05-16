@@ -2,7 +2,6 @@ package eu.daiad.web.service;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.rmi.server.ExportException;
 import java.util.ArrayList;
 import java.util.List;
@@ -174,10 +173,7 @@ public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService
 
 		// Set time zone
 		Set<String> zones = DateTimeZone.getAvailableIDs();
-		if (StringUtils.isBlank(timezone)) {
-			timezone = "UTC";
-		}
-		if (!zones.contains(timezone)) {
+		if ((StringUtils.isBlank(timezone)) || (!zones.contains(timezone))) {
 			throw new ApplicationException(SharedErrorCode.TIMEZONE_NOT_FOUND).set("timezone", timezone);
 		}
 
@@ -200,8 +196,6 @@ public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService
 
 			// Process rows
 			scan = new Scanner(new File(filename));
-
-			this.waterMeterMeasurementRepository.open();
 
 			index = 0;
 			while (scan.hasNextLine()) {
@@ -262,11 +256,7 @@ public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService
 			}
 		} catch (FileNotFoundException fileEx) {
 			logger.error(String.format("File [%s] was not found.", filename), fileEx);
-		} catch (IOException ioEx) {
-			logger.error("Failed to open connection to HBASE.", ioEx);
 		} finally {
-			this.waterMeterMeasurementRepository.close();
-
 			if (scan != null) {
 				scan.close();
 			}

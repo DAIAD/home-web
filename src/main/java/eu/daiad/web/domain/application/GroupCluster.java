@@ -15,18 +15,18 @@ public class GroupCluster extends Group {
 
 	@ManyToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
 	@JoinColumn(name = "cluster_id", nullable = false)
-	private Account cluster;
+	private Cluster cluster;
 
 	@Override
 	public EnumGroupType getType() {
 		return EnumGroupType.CLUSTER;
 	}
 
-	public Account getCluster() {
+	public Cluster getCluster() {
 		return cluster;
 	}
 
-	public void setCluster(Account cluster) {
+	public void setCluster(Cluster cluster) {
 		this.cluster = cluster;
 	}
 

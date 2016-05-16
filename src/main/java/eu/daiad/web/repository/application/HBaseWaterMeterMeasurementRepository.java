@@ -1,6 +1,5 @@
 package eu.daiad.web.repository.application;
 
-import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,11 +10,7 @@ import java.util.NavigableMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -27,9 +22,9 @@ import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Repository;
 
+import eu.daiad.web.hbase.HBaseConnectionManager;
 import eu.daiad.web.model.TemporalConstants;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DataErrorCode;
@@ -43,6 +38,7 @@ import eu.daiad.web.model.meter.WaterMeterMeasurementQueryResult;
 import eu.daiad.web.model.meter.WaterMeterStatus;
 import eu.daiad.web.model.meter.WaterMeterStatusQueryResult;
 import eu.daiad.web.model.query.DataPoint;
+import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.ExpandedDataQuery;
 import eu.daiad.web.model.query.ExpandedPopulationFilter;
 import eu.daiad.web.model.query.GroupDataSeries;
@@ -51,7 +47,6 @@ import eu.daiad.web.model.query.RankingDataPoint;
 import eu.daiad.web.model.query.UserDataPoint;
 
 @Repository()
-@Scope("prototype")
 public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurementRepository {
 
 	private static final Log logger = LogFactory.getLog(HBaseWaterMeterMeasurementRepository.class);
@@ -72,11 +67,11 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 		}
 	}
 
-	private String meterTableMeasurementByMeter = "daiad:meter-measurements-by-user";
+	private final String meterTableMeasurementByMeter = "daiad:meter-measurements-by-user";
 
-	private String meterTableMeasurementByTime = "daiad:meter-measurements-by-time";
+	private final String meterTableMeasurementByTime = "daiad:meter-measurements-by-time";
 
-	private String columnFamilyName = "cf";
+	private final String columnFamilyName = "cf";
 
 	@Value("${hbase.data.time.partitions}")
 	private short timePartitions;
@@ -85,46 +80,13 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 	private int scanCacheSize = 1;
 
 	@Autowired
-	private HBaseConfigurationBuilder configurationBuilder;
-
-	private Connection connection = null;
-
-	@Override
-	public void open() throws IOException {
-		if (this.connection == null) {
-			Configuration config = this.configurationBuilder.build();
-			this.connection = ConnectionFactory.createConnection(config);
-		}
-	}
-
-	@Override
-	public boolean isOpen() {
-		return ((this.connection != null) && (!this.connection.isClosed()));
-	}
-
-	@Override
-	public void close() {
-		try {
-			if ((this.connection != null) && (!this.connection.isClosed())) {
-				this.connection.close();
-				this.connection = null;
-			}
-		} catch (Exception ex) {
-			logger.error(ERROR_RELEASE_RESOURCES, ex);
-		}
-	}
+	private HBaseConnectionManager connection;
 
 	@Override
 	public void storeData(String serial, WaterMeterMeasurementCollection data) {
-		boolean autoClose = false;
-
 		try {
 			if ((data == null) || (data.getMeasurements() == null) || (data.getMeasurements().size() == 0)) {
 				return;
-			}
-			if (!this.isOpen()) {
-				this.open();
-				autoClose = true;
 			}
 
 			// Sort measurements
@@ -161,24 +123,18 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 												- data.getMeasurements().get(i - 1).getVolume());
 			}
 
-			this.storeDataByMeter(connection, serial, data);
-			this.storeDataByTime(connection, serial, data);
+			this.storeDataByMeter(serial, data);
+			this.storeDataByTime(serial, data);
 		} catch (Exception ex) {
-			autoClose = true;
-
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
-		} finally {
-			if (autoClose) {
-				this.close();
-			}
 		}
 	}
 
 	@SuppressWarnings("resource")
-	private void storeDataByMeter(Connection connection, String serial, WaterMeterMeasurementCollection data) {
+	private void storeDataByMeter(String serial, WaterMeterMeasurementCollection data) {
 		Table table = null;
 		try {
-			table = connection.getTable(TableName.valueOf(this.meterTableMeasurementByMeter));
+			table = connection.getTable(this.meterTableMeasurementByMeter);
 
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
@@ -238,11 +194,11 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 	}
 
 	@SuppressWarnings("resource")
-	private void storeDataByTime(Connection connection, String serial, WaterMeterMeasurementCollection data) {
+	private void storeDataByTime(String serial, WaterMeterMeasurementCollection data) {
 		Table table = null;
 
 		try {
-			table = connection.getTable(TableName.valueOf(this.meterTableMeasurementByTime));
+			table = connection.getTable(this.meterTableMeasurementByTime);
 
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
@@ -352,22 +308,15 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 
 	@Override
 	public WaterMeterStatusQueryResult getStatus(String serials[], long maxDateTime) {
-		boolean autoClose = false;
-
 		WaterMeterStatusQueryResult data = new WaterMeterStatusQueryResult();
 
 		Table table = null;
 		ResultScanner scanner = null;
 
 		try {
-			if (!this.isOpen()) {
-				this.open();
-				autoClose = true;
-			}
-
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
-			table = connection.getTable(TableName.valueOf(this.meterTableMeasurementByMeter));
+			table = connection.getTable(this.meterTableMeasurementByMeter);
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			for (int deviceIndex = 0; deviceIndex < serials.length; deviceIndex++) {
@@ -455,12 +404,11 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 			try {
 				if (scanner != null) {
 					scanner.close();
+					scanner = null;
 				}
 				if (table != null) {
 					table.close();
-				}
-				if (autoClose) {
-					this.close();
+					table = null;
 				}
 			} catch (Exception ex) {
 				logger.error(ERROR_RELEASE_RESOURCES, ex);
@@ -471,7 +419,6 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 	@Override
 	public WaterMeterMeasurementQueryResult searchMeasurements(String serials[], DateTimeZone timezone,
 					WaterMeterMeasurementQuery query) {
-		Connection connection = null;
 		Table table = null;
 		ResultScanner scanner = null;
 
@@ -537,13 +484,9 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 		WaterMeterMeasurementQueryResult data = new WaterMeterMeasurementQueryResult();
 
 		try {
-			Configuration config = this.configurationBuilder.build();
-
-			connection = ConnectionFactory.createConnection(config);
-
 			MessageDigest md = MessageDigest.getInstance("MD5");
 
-			table = connection.getTable(TableName.valueOf(this.meterTableMeasurementByMeter));
+			table = connection.getTable(this.meterTableMeasurementByMeter);
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			for (int deviceIndex = 0; deviceIndex < serials.length; deviceIndex++) {
@@ -617,12 +560,11 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 			try {
 				if (scanner != null) {
 					scanner.close();
+					scanner = null;
 				}
 				if (table != null) {
 					table.close();
-				}
-				if ((connection != null) && (!connection.isClosed())) {
-					connection.close();
+					table = null;
 				}
 			} catch (Exception ex) {
 				logger.error(ERROR_RELEASE_RESOURCES, ex);
@@ -657,7 +599,6 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 	}
 
 	public ArrayList<GroupDataSeries> query(ExpandedDataQuery query) throws ApplicationException {
-		Connection connection = null;
 		Table table = null;
 		ResultScanner scanner = null;
 
@@ -666,10 +607,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 			result.add(new GroupDataSeries(filter.getLabel(), filter.getUsers().size()));
 		}
 		try {
-			Configuration config = this.configurationBuilder.build();
-			connection = ConnectionFactory.createConnection(config);
-
-			table = connection.getTable(TableName.valueOf(this.meterTableMeasurementByTime));
+			table = connection.getTable(this.meterTableMeasurementByTime);
 			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
 
 			DateTime startDate = new DateTime(query.getStartDateTime(), DateTimeZone.UTC);
@@ -753,9 +691,11 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 					long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 2, 10));
 					byte[] serialHash = Arrays.copyOfRange(r.getRow(), 10, 26);
 
+					float difference = 0, volume = 0;
+					long lastTimestamp = 0;
+
 					for (Entry<byte[], byte[]> entry : map.entrySet()) {
 						short offset = Bytes.toShort(Arrays.copyOfRange(entry.getKey(), 0, 2));
-
 						long timestamp = ((Long.MAX_VALUE / 1000) - (timeBucket + (long) offset)) * 1000L;
 
 						if ((startDate.getMillis() <= timestamp) && (timestamp <= endDate.getMillis())) {
@@ -763,9 +703,14 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 							byte[] slice = Arrays.copyOfRange(entry.getKey(), 3, 3 + length);
 
 							String columnQualifier = Bytes.toString(slice);
+							if (columnQualifier.equals("v")) {
+								volume = Bytes.toFloat(entry.getValue());
+							}
 							if (columnQualifier.equals("d")) {
-								float difference = Bytes.toFloat(entry.getValue());
+								difference = Bytes.toFloat(entry.getValue());
+							}
 
+							if (lastTimestamp == timestamp) {
 								if (difference > 0) {
 									int filterIndex = 0;
 									for (ExpandedPopulationFilter filter : query.getGroups()) {
@@ -773,20 +718,18 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 
 										int index = inArray(filter.getSerials(), serialHash);
 										if (index >= 0) {
-											if (filter.getRanking() == null) {
-												series.addDataPoint(query.getGranularity(), timestamp, difference,
-																query.getMetrics(), query.getTimezone());
-											} else {
-												series.addRankingDataPoint(query.getGranularity(), filter.getUsers()
-																.get(index), filter.getLabels().get(index), timestamp,
-																difference, query.getMetrics(), query.getTimezone());
-											}
+											series.addMeterRankingDataPoint(query.getGranularity(), filter.getUsers()
+															.get(index), filter.getLabels().get(index), timestamp,
+															difference, volume, query.getMetrics(), query.getTimezone());
+
 										}
 
 										filterIndex++;
-
 									}
 								}
+								volume = difference = 0;
+							} else {
+								lastTimestamp = timestamp;
 							}
 						}
 					}
@@ -798,24 +741,35 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 			try {
 				if (scanner != null) {
 					scanner.close();
+					scanner = null;
 				}
 				if (table != null) {
 					table.close();
-				}
-				if ((connection != null) && (!connection.isClosed())) {
-					connection.close();
+					table = null;
 				}
 			} catch (Exception ex) {
 				logger.error(ERROR_RELEASE_RESOURCES, ex);
 			}
 		}
 
-		// Post process ranked results
-		int index = 0;
+		// Post process results
+		int filterIndex = 0;
 		for (final ExpandedPopulationFilter filter : query.getGroups()) {
-			if (filter.getRanking() != null) {
-				GroupDataSeries series = result.get(index);
+			GroupDataSeries series = result.get(filterIndex);
 
+			if (filter.getRanking() == null) {
+				// Aggregate all user data points of a ranking data point to a
+				// single meter data point
+				ArrayList<DataPoint> points = new ArrayList<DataPoint>();
+
+				for (DataPoint point : series.getPoints()) {
+					points.add(((RankingDataPoint) point).aggregate(query.getMetrics(),
+									DataPoint.EnumDataPointType.METER));
+				}
+
+				series.setPoints(points);
+			} else {
+				// Truncate (n-k) users and keep top/bottom-k only
 				for (DataPoint point : series.getPoints()) {
 					RankingDataPoint ranking = (RankingDataPoint) point;
 
@@ -826,12 +780,10 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 							MeterUserDataPoint m1 = (MeterUserDataPoint) u1;
 							MeterUserDataPoint m2 = (MeterUserDataPoint) u2;
 
-							if (m1.getVolume().get(filter.getRanking().getMetric()) < m2.getVolume().get(
-											filter.getRanking().getMetric())) {
+							if (m1.getVolume().get(EnumMetric.SUM) < m2.getVolume().get(EnumMetric.SUM)) {
 								return -1;
 							}
-							if (m1.getVolume().get(filter.getRanking().getMetric()) > m2.getVolume().get(
-											filter.getRanking().getMetric())) {
+							if (m1.getVolume().get(EnumMetric.SUM) > m2.getVolume().get(EnumMetric.SUM)) {
 								return 1;
 							}
 							return 0;
@@ -856,10 +808,33 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 					}
 				}
 			}
-			index++;
+			filterIndex++;
 		}
 
+		cleanSeries(query, result);
+
 		return result;
+	}
+
+	private void cleanSeries(ExpandedDataQuery query, ArrayList<GroupDataSeries> result) {
+		int filterIndex = 0;
+		for (final ExpandedPopulationFilter filter : query.getGroups()) {
+			GroupDataSeries series = result.get(filterIndex);
+			if (filter.getRanking() != null) {
+				for (Object p : series.getPoints()) {
+					RankingDataPoint rankingDataPoint = (RankingDataPoint) p;
+					for (UserDataPoint userDataPoint : rankingDataPoint.getUsers()) {
+						MeterUserDataPoint meterUserDataPoint = (MeterUserDataPoint) userDataPoint;
+
+						meterUserDataPoint.getVolume().remove(EnumMetric.MIN);
+						meterUserDataPoint.getVolume().remove(EnumMetric.MAX);
+						meterUserDataPoint.getVolume().remove(EnumMetric.AVERAGE);
+						meterUserDataPoint.getVolume().remove(EnumMetric.COUNT);
+					}
+				}
+			}
+			filterIndex++;
+		}
 	}
 
 	private int inArray(ArrayList<byte[]> array, byte[] hash) {

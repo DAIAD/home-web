@@ -21,7 +21,6 @@ import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,16 +35,20 @@ import com.vividsolutions.jts.geom.PrecisionModel;
 
 import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.amphiro.AmphiroMeasurementCollection;
-import eu.daiad.web.model.amphiro.AmphiroMeasurementQuery;
-import eu.daiad.web.model.amphiro.AmphiroMeasurementQueryResult;
+import eu.daiad.web.model.amphiro.AmphiroMeasurementIndexIntervalQuery;
+import eu.daiad.web.model.amphiro.AmphiroMeasurementIndexIntervalQueryResult;
+import eu.daiad.web.model.amphiro.AmphiroMeasurementTimeIntervalQuery;
+import eu.daiad.web.model.amphiro.AmphiroMeasurementTimeIntervalQueryResult;
 import eu.daiad.web.model.amphiro.AmphiroSession;
+import eu.daiad.web.model.amphiro.EnumIndexIntervalQuery;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.loader.ImportWaterMeterFileConfiguration;
-import eu.daiad.web.repository.application.IAmphiroMeasurementRepository;
+import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
+import eu.daiad.web.repository.application.IAmphiroTimeOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 
@@ -64,7 +67,10 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 	private IDeviceRepository deviceRepository;
 
 	@Autowired
-	private IAmphiroMeasurementRepository amphiroMeasurementRepository;
+	private IAmphiroTimeOrderedRepository amphiroTimeOrderedRepository;
+
+	@Autowired
+	private IAmphiroIndexOrderedRepository amphiroIndexOrderedRepository;
 
 	@Override
 	public void importWaterMeter(ImportWaterMeterFileConfiguration configuration) throws ApplicationException {
@@ -94,37 +100,44 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 				// Iterating over Excel file in Java
 				while (itr.hasNext()) {
 					Row row = itr.next();
+					if ((row.getRowNum() == 0) && (configuration.isFirstRowHeader() == true)) {
+						continue;
+					}
 
 					String username = getStringFromCell(row, configuration.getUsernameCellIndex());
 					String serial = getStringFromCell(row, configuration.getMeterIdCellIndex());
 					Double longitude = getDoubleFromCell(row, configuration.getLongitudeCellIndex());
 					Double latitude = getDoubleFromCell(row, configuration.getLatitudeCellIndex());
 
-					if ((!StringUtils.isBlank(username)) && (!StringUtils.isBlank(serial)) && (longitude != null)
-									&& (latitude != null)) {
-						Point point = geometryFactory.createPoint(new Coordinate(longitude.doubleValue(), latitude
-										.doubleValue()));
+					// User name (email) and meter serial number are required
+					if ((!StringUtils.isBlank(username)) && (!StringUtils.isBlank(serial))) {
+						// Location is set only if both longitude and latitude
+						// are set
+						Point location = null;
+						if ((longitude != null) && (latitude != null)) {
+							location = geometryFactory.createPoint(new Coordinate(longitude.doubleValue(), latitude
+											.doubleValue()));
 
-						Geometry transformedPoint = point;
-						if (configuration.getSourceReferenceSystem().getSrid() != configuration
-										.getTargetReferenceSystem().getSrid()) {
-							CoordinateReferenceSystem sourceCRS = CRS.decode(configuration.getSourceReferenceSystem()
-											.toString());
-							CoordinateReferenceSystem targetCRS = CRS.decode(configuration.getTargetReferenceSystem()
-											.toString());
+							if (configuration.getSourceReferenceSystem().getSrid() != configuration
+											.getTargetReferenceSystem().getSrid()) {
+								CoordinateReferenceSystem sourceCRS = CRS.decode(configuration
+												.getSourceReferenceSystem().toString());
+								CoordinateReferenceSystem targetCRS = CRS.decode(configuration
+												.getTargetReferenceSystem().toString());
 
-							MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS, false);
-							transformedPoint = JTS.transform(point, transform);
-							transformedPoint.setSRID(configuration.getTargetReferenceSystem().getSrid());
+								MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS, false);
+								location = (Point) JTS.transform(location, transform);
+								location.setSRID(configuration.getTargetReferenceSystem().getSrid());
+							}
 						}
 
-						this.registerMeter(input.getName(), username, serial, transformedPoint);
+						this.registerMeter(input.getName(), username, serial, location);
 					}
 				}
-			} catch (FactoryException fe) {
-				logger.warn(fe);
-			} catch (Exception ie) {
-				logger.error(ie);
+			} catch (ApplicationException ex) {
+				throw ex;
+			} catch (Exception ex) {
+				throw ApplicationException.wrap(ex);
 			} finally {
 				try {
 					if (book != null) {
@@ -152,14 +165,14 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 				properties.add(new KeyValuePair("import.date", (new DateTime(DateTimeZone.UTC).toString())));
 
 				this.deviceRepository.createMeterDevice(username, serial, properties, location);
-			} else {
+			} else if (location != null) {
 				// Update device location
 				this.deviceRepository.updateMeterLocation(username, serial, location);
 			}
 		} catch (ApplicationException ex) {
-			// Ignore
+			throw ex;
 		} catch (Exception ex) {
-			logger.error(String.format("Failed to register device [%s] to user [%s].", username, serial), ex);
+			throw ApplicationException.wrap(ex).set("user", username).set("serial", serial);
 		}
 	}
 
@@ -229,74 +242,132 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 			if (samples.size() == 0) {
 				return;
 			}
-			// Initialize interval
-			DateTime now = new DateTime();
 
-			long startDate = (new DateTime(now.getYear(), now.getMonthOfYear(), 1, 0, 0, 0, DateTimeZone.UTC))
-							.getMillis();
-			long endDate = (new DateTime(now.getYear(), now.getMonthOfYear(), now.dayOfMonth().getMaximumValue(), 23,
-							59, 59, DateTimeZone.UTC)).getMillis();
+			this.generateTimeOrderedSessions(samples, timezone);
 
-			// Process users
-			Random rand = new Random();
-			int sampleIndex = 0;
-
-			amphiroMeasurementRepository.open();
-
-			AmphiroMeasurementQuery sessionQuery = new AmphiroMeasurementQuery();
-			sessionQuery.setStartDate(startDate);
-			sessionQuery.setEndDate(endDate);
-			sessionQuery.setGranularity(4);
-
-			DeviceRegistrationQuery deviceQuery = new DeviceRegistrationQuery();
-			deviceQuery.setType(EnumDeviceType.AMPHIRO);
-
-			for (UUID userKey : userRepository.getUserKeysForUtility()) {
-				sessionQuery.setUserKey(userKey);
-
-				for (Device device : deviceRepository.getUserDevices(userKey, deviceQuery)) {
-					sessionQuery.setDeviceKey(new UUID[] { device.getKey() });
-
-					AmphiroMeasurementQueryResult existingSessions = amphiroMeasurementRepository.searchMeasurements(
-									timezone, sessionQuery);
-					if ((existingSessions.getSeries() == null)
-									|| (existingSessions.getSeries().get(0).getPoints().size() == 0)) {
-						long showerId = 0;
-
-						AmphiroMeasurementCollection data = new AmphiroMeasurementCollection();
-						data.setDeviceKey(device.getKey());
-						ArrayList<AmphiroSession> sessions = new ArrayList<AmphiroSession>();
-
-						for (int i = 0; i < 1000; i++) {
-							sampleIndex = (sampleIndex + rand.nextInt(samples.size())) % samples.size();
-							showerId++;
-
-							AmphiroSession session = new AmphiroSession();
-							session.setDuration(samples.get(sampleIndex).duration);
-							session.setEnergy(samples.get(sampleIndex).energy);
-							session.setFlow(samples.get(sampleIndex).flow);
-							session.setHistory(false);
-							session.setId(showerId);
-							session.setTemperature(samples.get(sampleIndex).temperature);
-							session.setVolume(samples.get(sampleIndex).volume);
-
-							session.setTimestamp(startDate + (long) ((endDate - startDate) * (rand.nextFloat())));
-
-							sessions.add(session);
-						}
-
-						data.setSessions(sessions);
-						amphiroMeasurementRepository.storeData(userKey, data);
-					}
-				}
-			}
+			this.generateIndexOrderedSessions(samples, timezone);
 		} catch (ApplicationException ex) {
 			// Ignore
 		} catch (Exception ex) {
 			logger.error(String.format("Failed to load random Amphiro data from file [%s].", filename), ex);
-		} finally {
-			if (amphiroMeasurementRepository.isOpen()) {
-				amphiroMeasurementRepository.close();
+		}
+	}
+
+	private void generateTimeOrderedSessions(ArrayList<AmphiroSampleSession> samples, DateTimeZone timezone) {
+		DateTime now = new DateTime();
+
+		long startDate = (new DateTime(now.getYear(), 1, 1, 0, 0, 0, DateTimeZone.UTC)).getMillis();
+		long endDate = (new DateTime(now.getYear(), 12, now.dayOfMonth().getMaximumValue(), 23, 59, 59,
+						DateTimeZone.UTC)).getMillis();
+
+		// Process users
+		Random rand = new Random();
+		int sampleIndex = 0;
+
+		AmphiroMeasurementTimeIntervalQuery sessionQuery = new AmphiroMeasurementTimeIntervalQuery();
+		sessionQuery.setStartDate(startDate);
+		sessionQuery.setEndDate(endDate);
+		sessionQuery.setGranularity(4);
+
+		DeviceRegistrationQuery deviceQuery = new DeviceRegistrationQuery();
+		deviceQuery.setType(EnumDeviceType.AMPHIRO);
+
+		for (UUID userKey : userRepository.getUserKeysForUtility()) {
+			sessionQuery.setUserKey(userKey);
+
+			for (Device device : deviceRepository.getUserDevices(userKey, deviceQuery)) {
+				sessionQuery.setDeviceKey(new UUID[] { device.getKey() });
+
+				AmphiroMeasurementTimeIntervalQueryResult existingSessions = amphiroTimeOrderedRepository
+								.searchMeasurements(timezone, sessionQuery);
+				if ((existingSessions.getSeries() == null)
+								|| (existingSessions.getSeries().get(0).getPoints().size() == 0)) {
+					long showerId = 0;
+
+					AmphiroMeasurementCollection data = new AmphiroMeasurementCollection();
+					data.setDeviceKey(device.getKey());
+					ArrayList<AmphiroSession> sessions = new ArrayList<AmphiroSession>();
+
+					for (int i = 0; i < 1500; i++) {
+						sampleIndex = (sampleIndex + rand.nextInt(samples.size())) % samples.size();
+						showerId++;
+
+						AmphiroSession session = new AmphiroSession();
+						session.setDuration(samples.get(sampleIndex).duration);
+						session.setEnergy(samples.get(sampleIndex).energy);
+						session.setFlow(samples.get(sampleIndex).flow);
+						session.setHistory(false);
+						session.setId(showerId);
+						session.setTemperature(samples.get(sampleIndex).temperature);
+						session.setVolume(samples.get(sampleIndex).volume);
+
+						session.setTimestamp(startDate + (long) ((endDate - startDate) * (rand.nextFloat())));
+
+						sessions.add(session);
+					}
+
+					data.setSessions(sessions);
+					amphiroTimeOrderedRepository.storeData(userKey, data);
+				}
+			}
+		}
+	}
+
+	private void generateIndexOrderedSessions(ArrayList<AmphiroSampleSession> samples, DateTimeZone timezone) {
+		DateTime now = new DateTime();
+
+		long startDate = (new DateTime(now.getYear(), 1, 1, 0, 0, 0, DateTimeZone.UTC)).getMillis();
+		long endDate = (new DateTime(now.getYear(), 12, now.dayOfMonth().getMaximumValue(), 23, 59, 59,
+						DateTimeZone.UTC)).getMillis();
+
+		Random rand = new Random();
+		int sampleIndex = 0;
+
+		AmphiroMeasurementIndexIntervalQuery sessionQuery = new AmphiroMeasurementIndexIntervalQuery();
+		sessionQuery.setType(EnumIndexIntervalQuery.SLIDING);
+		sessionQuery.setLength(10);
+
+		DeviceRegistrationQuery deviceQuery = new DeviceRegistrationQuery();
+		deviceQuery.setType(EnumDeviceType.AMPHIRO);
+
+		for (UUID userKey : userRepository.getUserKeysForUtility()) {
+			sessionQuery.setUserKey(userKey);
+
+			for (Device device : deviceRepository.getUserDevices(userKey, deviceQuery)) {
+				sessionQuery.setDeviceKey(new UUID[] { device.getKey() });
+
+				AmphiroMeasurementIndexIntervalQueryResult existingSessions = amphiroIndexOrderedRepository
+								.searchMeasurements(timezone, sessionQuery);
+
+				if ((existingSessions.getSeries() == null)
+								|| (existingSessions.getSeries().get(0).getPoints().size() == 0)) {
+					long showerId = 0;
+
+					AmphiroMeasurementCollection data = new AmphiroMeasurementCollection();
+					data.setDeviceKey(device.getKey());
+					ArrayList<AmphiroSession> sessions = new ArrayList<AmphiroSession>();
+
+					for (int i = 0; i < 1500; i++) {
+						sampleIndex = (sampleIndex + rand.nextInt(samples.size())) % samples.size();
+						showerId++;
+
+						AmphiroSession session = new AmphiroSession();
+						session.setDuration(samples.get(sampleIndex).duration);
+						session.setEnergy(samples.get(sampleIndex).energy);
+						session.setFlow(samples.get(sampleIndex).flow);
+						session.setHistory(false);
+						session.setId(showerId);
+						session.setTemperature(samples.get(sampleIndex).temperature);
+						session.setVolume(samples.get(sampleIndex).volume);
+
+						session.setTimestamp(startDate + (long) ((endDate - startDate) * (rand.nextFloat())));
+
+						sessions.add(session);
+					}
+
+					data.setSessions(sessions);
+					amphiroIndexOrderedRepository.storeData(userKey, data);
+				}
 			}
 		}
 	}
