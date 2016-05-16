@@ -12,6 +12,8 @@ public class Announcement extends Message {
 
 	private String link;
 
+	private Long createdOn;
+
 	@Override
 	public EnumMessageType getType() {
 		return EnumMessageType.ANNOUNCEMENT;
@@ -55,5 +57,13 @@ public class Announcement extends Message {
 
 	public void setLink(String link) {
 		this.link = link;
+	}
+
+	public Long getCreatedOn() {
+		return createdOn;
+	}
+
+	public void setCreatedOn(Long createdOn) {
+		this.createdOn = createdOn;
 	}
 }

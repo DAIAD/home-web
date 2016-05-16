@@ -2,6 +2,7 @@ package eu.daiad.web.controller.api;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,7 +35,8 @@ public class ProfileController extends BaseRestController {
 		try {
 			this.authenticate(data, EnumRole.ROLE_USER);
 
-			return new ProfileResponse(this.getRuntime(), this.profileRepository.getProfileByUsername(EnumApplication.MOBILE));
+			return new ProfileResponse(this.getRuntime(),
+							this.profileRepository.getProfileByUsername(EnumApplication.MOBILE));
 		} catch (ApplicationException ex) {
 			if (!ex.isLogged()) {
 				logger.error(ex.getMessage(), ex);
@@ -73,7 +75,8 @@ public class ProfileController extends BaseRestController {
 		try {
 			this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
-			this.profileRepository.notifyProfile(EnumApplication.MOBILE, request.getVersion(), request.getUpdatedOn());
+			this.profileRepository.notifyProfile(EnumApplication.MOBILE, request.getVersion(),
+							new DateTime(request.getUpdatedOn()));
 
 		} catch (ApplicationException ex) {
 			if (!ex.isLogged()) {

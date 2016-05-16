@@ -188,6 +188,15 @@ public class DataService implements IDataService {
 					if (filter.getRanking().getMetric().equals(EnumMetric.UNDEFINED)) {
 						response.add(this.getError(QueryErrorCode.RANKING_INVALID_METRIC));
 					}
+					if ((query.getSource().equals(EnumMeasurementDataSource.METER))
+									|| (query.getSource().equals(EnumMeasurementDataSource.BOTH))) {
+						if (!filter.getRanking().getMetric().equals(EnumMetric.SUM)) {
+							response.add(this.getError(QueryErrorCode.RANKING_INVALID_METRIC));
+						}
+						if (!filter.getRanking().getField().equals(EnumDataField.VOLUME)) {
+							response.add(this.getError(QueryErrorCode.RANKING_INVALID_FIELD));
+						}
+					}
 				}
 			}
 		}
@@ -419,11 +428,37 @@ public class DataService implements IDataService {
 					return response;
 			}
 
+			// Set metrics and add any required dependencies
+			List<EnumMetric> metrics = new ArrayList<EnumMetric>();
+
+			for (EnumMetric m : query.getMetrics()) {
+				metrics.add(m);
+			}
+
+			if (metrics.contains(EnumMetric.AVERAGE)) {
+				if (!metrics.contains(EnumMetric.COUNT)) {
+					metrics.add(EnumMetric.COUNT);
+				}
+				if (!metrics.contains(EnumMetric.SUM)) {
+					metrics.add(EnumMetric.SUM);
+				}
+			}
+			if (metrics.contains(EnumMetric.MIN)) {
+				if (!metrics.contains(EnumMetric.MAX)) {
+					metrics.add(EnumMetric.MAX);
+				}
+			}
+			if (metrics.contains(EnumMetric.MAX)) {
+				if (!metrics.contains(EnumMetric.MIN)) {
+					metrics.add(EnumMetric.MIN);
+				}
+			}
+
 			// Construct expanded query
 			expandedQuery.setStartDateTime(startDateTime);
 			expandedQuery.setEndDateTime(endDateTime);
 			expandedQuery.setGranularity(query.getTime().getGranularity());
-			expandedQuery.setMetrics(query.getMetrics());
+			expandedQuery.setMetrics(metrics);
 
 			switch (query.getSource()) {
 				case BOTH:

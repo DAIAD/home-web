@@ -86,33 +86,45 @@ public class DataController extends BaseRestController {
 	public RestResponse storeUsingAmphiroTimeOrdering(@RequestBody DeviceMeasurementCollection data) {
 		RestResponse response = new RestResponse();
 
-		AuthenticatedUser user = null;
+		AuthenticatedUser authenticatedUser = null;
 		Device device = null;
 
 		boolean success = true;
 
 		try {
-			user = this.authenticate(data.getCredentials(), EnumRole.ROLE_USER);
-
-			device = this.deviceRepository.getUserDeviceByKey(user.getKey(), data.getDeviceKey());
-
-			if (device == null) {
-				throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", data.getDeviceKey().toString());
-			}
-
 			switch (data.getType()) {
 				case AMPHIRO:
 					if (data instanceof AmphiroMeasurementCollection) {
+						authenticatedUser = this.authenticate(data.getCredentials(), EnumRole.ROLE_USER);
+
+						device = this.deviceRepository.getUserDeviceByKey(authenticatedUser.getKey(),
+										data.getDeviceKey());
+
+						if (device == null) {
+							throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", data.getDeviceKey()
+											.toString());
+						}
+
 						if (!device.getType().equals(EnumDeviceType.AMPHIRO)) {
 							throw new ApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type", data.getType()
 											.toString());
 						}
-						amphiroTimeOrderedRepository.storeData(((AuthenticatedUser) user).getKey(),
+
+						amphiroTimeOrderedRepository.storeData(((AuthenticatedUser) authenticatedUser).getKey(),
 										(AmphiroMeasurementCollection) data);
 					}
 					break;
 				case METER:
 					if (data instanceof WaterMeterMeasurementCollection) {
+						authenticatedUser = this.authenticate(data.getCredentials(), EnumRole.ROLE_ADMIN);
+
+						device = this.deviceRepository.getDeviceByKey(data.getDeviceKey());
+
+						if (device == null) {
+							throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", data.getDeviceKey()
+											.toString());
+						}
+
 						if (!device.getType().equals(EnumDeviceType.METER)) {
 							throw new ApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type", data.getType()
 											.toString());
@@ -134,7 +146,7 @@ public class DataController extends BaseRestController {
 
 			success = false;
 		} finally {
-			logDataUploadSession(user, device, success);
+			logDataUploadSession(authenticatedUser, device, success);
 		}
 
 		return response;
@@ -144,33 +156,45 @@ public class DataController extends BaseRestController {
 	public RestResponse storeUsingAmphiroIndexOredering(@RequestBody DeviceMeasurementCollection data) {
 		RestResponse response = new RestResponse();
 
-		AuthenticatedUser user = null;
+		AuthenticatedUser authenticatedUser = null;
 		Device device = null;
 
 		boolean success = true;
 
 		try {
-			user = this.authenticate(data.getCredentials(), EnumRole.ROLE_USER);
-
-			device = this.deviceRepository.getUserDeviceByKey(user.getKey(), data.getDeviceKey());
-
-			if (device == null) {
-				throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", data.getDeviceKey().toString());
-			}
-
 			switch (data.getType()) {
 				case AMPHIRO:
 					if (data instanceof AmphiroMeasurementCollection) {
+						authenticatedUser = this.authenticate(data.getCredentials(), EnumRole.ROLE_USER);
+
+						device = this.deviceRepository.getUserDeviceByKey(authenticatedUser.getKey(),
+										data.getDeviceKey());
+
+						if (device == null) {
+							throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", data.getDeviceKey()
+											.toString());
+						}
+
 						if (!device.getType().equals(EnumDeviceType.AMPHIRO)) {
 							throw new ApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type", data.getType()
 											.toString());
 						}
-						response = amphiroIndexOrderedRepository.storeData(((AuthenticatedUser) user).getKey(),
+						response = amphiroIndexOrderedRepository.storeData(
+										((AuthenticatedUser) authenticatedUser).getKey(),
 										(AmphiroMeasurementCollection) data);
 					}
 					break;
 				case METER:
 					if (data instanceof WaterMeterMeasurementCollection) {
+						authenticatedUser = this.authenticate(data.getCredentials(), EnumRole.ROLE_ADMIN);
+
+						device = this.deviceRepository.getDeviceByKey(data.getDeviceKey());
+
+						if (device == null) {
+							throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", data.getDeviceKey()
+											.toString());
+						}
+
 						if (!device.getType().equals(EnumDeviceType.METER)) {
 							throw new ApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type", data.getType()
 											.toString());
@@ -192,7 +216,7 @@ public class DataController extends BaseRestController {
 
 			success = false;
 		} finally {
-			logDataUploadSession(user, device, success);
+			logDataUploadSession(authenticatedUser, device, success);
 		}
 
 		return response;

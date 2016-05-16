@@ -19,8 +19,8 @@ import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.service.message.IMessageService;
 
 @Component
-public class MessageGeneratorJob implements IJobBuilder {
-	private static final Log logger = LogFactory.getLog(MessageGeneratorJob.class);
+public class MessageGeneratorJobBuilder implements IJobBuilder {
+	private static final Log logger = LogFactory.getLog(MessageGeneratorJobBuilder.class);
 
 	@Autowired
 	private JobBuilderFactory jobBuilderFactory;
@@ -31,7 +31,7 @@ public class MessageGeneratorJob implements IJobBuilder {
 	@Autowired
 	private IMessageService messageService;
 
-	public MessageGeneratorJob() {
+	public MessageGeneratorJobBuilder() {
 
 	}
 

@@ -20,6 +20,7 @@ src/main/resources/config/*
 !src/main/resources/config/sql
 src/main/resources/public/assets/js/build
 src/main/resources/public/assets/images
+src/main/resources/public/docs
 
 bower_components
 jspm_packages

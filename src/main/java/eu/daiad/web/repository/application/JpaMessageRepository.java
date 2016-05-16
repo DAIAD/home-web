@@ -71,7 +71,7 @@ public class JpaMessageRepository implements IMessageRepository {
 			case ANNOUNCEMENT:
 				throw new ApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
 			default:
-				throw new ApplicationException(SharedErrorCode.UNKNOWN).set("Unknown message acknowledgement type",
+				throw new ApplicationException(SharedErrorCode.UNKNOWN).set("Unknown message acknowledgement type.",
 								type);
 		}
 	}
@@ -142,7 +142,7 @@ public class JpaMessageRepository implements IMessageRepository {
 				message.setTitle(title);
 				message.setDescription(description);
 				message.setImageLink(alertTranslation.getImageLink());
-				message.setCreatedOn(accountAlert.getCreatedOn());
+				message.setCreatedOn(accountAlert.getCreatedOn().getMillis());
 
 				messages.add(message);
 
@@ -204,7 +204,7 @@ public class JpaMessageRepository implements IMessageRepository {
 				message.setTitle(title);
 				message.setDescription(description);
 				message.setImageLink(recommendationTranslation.getImageLink());
-				message.setCreatedOn(accountRecommendation.getCreatedOn());
+				message.setCreatedOn(accountRecommendation.getCreatedOn().getMillis());
 
 				messages.add(message);
 
@@ -223,7 +223,7 @@ public class JpaMessageRepository implements IMessageRepository {
 		return messages;
 	}
 
-        @Override
+	@Override
 	public List<Message> getAdvisoryMessages(String locale) {
 		List<Message> messages = new ArrayList<>();
 
@@ -246,7 +246,7 @@ public class JpaMessageRepository implements IMessageRepository {
 			eu.daiad.web.model.message.StaticRecommendation message = new eu.daiad.web.model.message.StaticRecommendation();
 
 			message.setId(staticRecommendation.getId());
-                        message.setIndex(staticRecommendation.getIndex());
+			message.setIndex(staticRecommendation.getIndex());
 			message.setTitle(staticRecommendation.getTitle());
 			message.setDescription(staticRecommendation.getDescription());
 			message.setImageEncoded(staticRecommendation.getImage());
@@ -254,10 +254,14 @@ public class JpaMessageRepository implements IMessageRepository {
 			message.setPrompt(staticRecommendation.getPrompt());
 			message.setExternaLink(staticRecommendation.getExternaLink());
 			message.setSource(staticRecommendation.getSource());
-                        message.setCreatedOn(staticRecommendation.getCreatedOn());
-                        message.setModifiedOn(staticRecommendation.getModifiedOn());
-                        message.setActive(staticRecommendation.isActive());
-                        
+			if (staticRecommendation.getCreatedOn() != null) {
+				message.setCreatedOn(staticRecommendation.getCreatedOn().getMillis());
+			}
+			if (staticRecommendation.getModifiedOn() != null) {
+				message.setModifiedOn(staticRecommendation.getModifiedOn().getMillis());
+			}
+			message.setActive(staticRecommendation.isActive());
+
 			messages.add(message);
 		}
 

@@ -1,6 +1,7 @@
 package eu.daiad.web.model.query;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class RankingDataPoint extends DataPoint {
 
@@ -19,7 +20,7 @@ public class RankingDataPoint extends DataPoint {
 		return users;
 	}
 
-	public DataPoint aggregate(EnumMetric[] metrics, DataPoint.EnumDataPointType type) {
+	public DataPoint aggregate(List<EnumMetric> metrics, DataPoint.EnumDataPointType type) {
 		switch (type) {
 			case METER:
 				MeterDataPoint p = (this.getTimestamp() == null ? new MeterDataPoint() : new MeterDataPoint(

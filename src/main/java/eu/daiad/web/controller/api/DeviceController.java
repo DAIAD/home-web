@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -245,7 +246,7 @@ public class DeviceController extends BaseRestController {
 			AuthenticatedUser user = this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
 			deviceRepository.notifyConfiguration(user.getKey(), request.getDeviceKey(), request.getVersion(),
-							request.getUpdatedOn());
+							new DateTime(request.getUpdatedOn()));
 		} catch (ApplicationException ex) {
 			if (!ex.isLogged()) {
 				logger.error(ex.getMessage(), ex);

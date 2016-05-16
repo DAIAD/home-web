@@ -36,7 +36,7 @@ var constants = keyMirror({
 	ADMIN_RECEIVED_SESSIONS: null,
 	
 	ADMIN_REQUESTED_METERS: null,
-        ADMIN_RECEIVED_METERS: null,
+  ADMIN_RECEIVED_METERS: null,
 	
 	ADMIN_FILTER_USER: null,
 
@@ -57,14 +57,11 @@ var constants = keyMirror({
 	ADMIN_ADD_USER_GET_UTILITIES_MAKE_REQUEST: null,
 	ADMIN_ADD_USER_GET_UTILITIES_RECEIVE_RESPONSE: null,
         
-        
-        //manage alerts
-        ADMIN_REQUESTED_UTILITIES: null,
-        ADMIN_RECEIVED_UTILITIES: null,        
-        ADMIN_SELECTED_UTILITY_FILTER: null,      
-        ADMIN_REQUESTED_STATIC_TIPS: null,
-        ADMIN_RECEIVED_STATIC_TIPS: null,
-        // \manage alerts
+  ADMIN_REQUESTED_UTILITIES: null,
+  ADMIN_RECEIVED_UTILITIES: null,        
+  ADMIN_SELECTED_UTILITY_FILTER: null,      
+  ADMIN_REQUESTED_STATIC_TIPS: null,
+  ADMIN_RECEIVED_STATIC_TIPS: null,
  
 	QUERY_SUBMIT: null,
 	QUERY_RESPONSE: null,
@@ -76,7 +73,10 @@ var constants = keyMirror({
 	DEBUG_SET_TIMEZONE: null,
 	DEBUG_SET_ERRORS: null,
 	DEBUG_AMPHIRO_DATA_GENERATE_REQUEST: null,
-	DEBUG_AMPHIRO_DATA_GENERATED: null
+	DEBUG_AMPHIRO_DATA_GENERATED: null,
+
+  SCHEDULER_STATUS_REQUEST : null,
+  SCHEDULER_STATUS_RESPONSE : null
 });
 
 module.exports = constants;

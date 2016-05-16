@@ -1,6 +1,5 @@
 package eu.daiad.web.model.message;
 
-import org.joda.time.DateTime;
 
 public class DynamicRecommendation extends Message {
 
@@ -16,7 +15,7 @@ public class DynamicRecommendation extends Message {
 
 	private String imageLink;
 
-	private DateTime createdOn;
+	private Long createdOn;
 
 	public DynamicRecommendation(EnumDynamicRecommendationType recommendation) {
 		this.recommendation = recommendation;
@@ -59,11 +58,11 @@ public class DynamicRecommendation extends Message {
 		this.description = description;
 	}
 
-	public DateTime getCreatedOn() {
+	public Long getCreatedOn() {
 		return createdOn;
 	}
 
-	public void setCreatedOn(DateTime createdOn) {
+	public void setCreatedOn(Long createdOn) {
 		this.createdOn = createdOn;
 	}
 

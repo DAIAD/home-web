@@ -26,9 +26,9 @@ import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.repository.application.HBaseConfigurationBuilder;
 
 @Component
-public class HBaseStatusMonitorJob implements IJobBuilder {
+public class HBaseStatusMonitorJobBuilder implements IJobBuilder {
 
-	private static final Log logger = LogFactory.getLog(HBaseStatusMonitorJob.class);
+	private static final Log logger = LogFactory.getLog(HBaseStatusMonitorJobBuilder.class);
 
 	@Autowired
 	private JobBuilderFactory jobBuilderFactory;
@@ -39,7 +39,7 @@ public class HBaseStatusMonitorJob implements IJobBuilder {
 	@Autowired
 	private HBaseConfigurationBuilder configurationBuilder;
 
-	public HBaseStatusMonitorJob() {
+	public HBaseStatusMonitorJobBuilder() {
 
 	}
 
