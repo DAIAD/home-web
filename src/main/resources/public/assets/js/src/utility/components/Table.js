@@ -6,6 +6,7 @@ var { Link } = require('react-router');
 
 var Bootstrap = require('react-bootstrap');
 var Checkbox = require('./Checkbox');
+var CellCheckbox = require('./CellCheckbox');
 
 var Table = React.createClass({
 	getInitialState: function() {
@@ -163,6 +164,10 @@ var Cell = React.createClass({
   	render: function() {
   		var value= this.props.row[this.props.field.name];
   		var text = (<span>{value}</span>);
+  		  		
+  		var rowId = null;
+  		if(this.props.row.hasOwnProperty('id'))
+  		  rowId = this.props.row.id;
  		
   		if(this.props.field.hasOwnProperty('type')) {
   			switch(this.props.field.type) {
@@ -207,6 +212,15 @@ var Cell = React.createClass({
   			case 'boolean':
   				text = (<Checkbox checked={value} disabled={true} />);
   				break;
+  			case 'alterable-boolean':
+  			  text = (<CellCheckbox 
+  			            checked={value}
+  			            rowId={rowId}
+  			            propertyName={this.props.field.name}
+  			            disabled={false} 
+  			            onUserClick={this.props.field.handler}
+  			          />);
+          break;
   			case 'date':
   				text = (<FormattedDate value={value} day='numeric' month='long' year='numeric' />);
   				break;

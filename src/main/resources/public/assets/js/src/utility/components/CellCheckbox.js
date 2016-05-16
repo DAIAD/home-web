@@ -1,6 +1,6 @@
 var React = require('react');
 
-var Checkbox = React.createClass({
+var CellCheckbox = React.createClass({
 	getDefaultProps: function() {
 		return {
 			disabled: false,
@@ -14,7 +14,7 @@ var Checkbox = React.createClass({
 		this.props.onUserClick(
 			this.props.rowId,
 			this.props.propertyName,
-			this.refs.checkbox.defaultChecked
+			this.props.checked
 		);
 	},
 	
@@ -56,4 +56,4 @@ var Checkbox = React.createClass({
   	}
 });
 
-module.exports = Checkbox;
+module.exports = CellCheckbox;

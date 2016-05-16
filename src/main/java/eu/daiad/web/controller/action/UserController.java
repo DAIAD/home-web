@@ -43,7 +43,7 @@ public class UserController extends BaseController {
 	
 	@RequestMapping(value = "/action/user/create", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN"})
-	public @ResponseBody RestResponse deactivateProfileTest(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody AccountWhiteListInfo userInfo){
+	public @ResponseBody RestResponse addUserToWhiteList(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody AccountWhiteListInfo userInfo){
 		RestResponse response = new RestResponse();
 		
 		try {

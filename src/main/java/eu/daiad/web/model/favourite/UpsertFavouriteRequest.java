@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-public class CreateFavouriteRequest {
+public class UpsertFavouriteRequest {
 
 	@JsonDeserialize(using = EnumFavouriteType.Deserializer.class)
 	private EnumFavouriteType type;

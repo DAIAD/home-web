@@ -7,8 +7,9 @@ import eu.daiad.web.domain.application.FavouriteAccount;
 import eu.daiad.web.domain.application.FavouriteGroup;
 
 
-
 public class FavouriteInfo {
+	
+	private UUID key;
 	
 	private UUID refId;
 
@@ -18,10 +19,20 @@ public class FavouriteInfo {
 
 	private long additionDateMils;
 	
+	public FavouriteInfo(UUID refKey){
+		this.key = null;
+		this.refId = refKey;
+		this.name = null;
+		this.type = null;
+		this.additionDateMils = -1;
+	}
+		
 	public FavouriteInfo (Favourite favourite) {
+		this.key = favourite.getKey();
 		this.name = favourite.getLabel();		
 		this.type = favourite.getType();
 		this.additionDateMils = favourite.getCreatedOn().getMillis();
+
 		switch (favourite.getType()){
 		
 		case ACCOUNT :
@@ -54,4 +65,9 @@ public class FavouriteInfo {
 	public long getAdditionDateMils() {
 		return additionDateMils;
 	}
+
+	public UUID getKey() {
+		return key;
+	}
+
 }

@@ -33,9 +33,7 @@ var DemographicsTablesSchema = {
             name: 'add-favourite',
             type:'action',
             icon: 'bookmark-o',
-            handler: function() {
-              console.log(this);
-            }
+            handler: function() {}
       }, {
             name: 'chart',
             type:'action',
@@ -118,6 +116,34 @@ var DemographicsTablesSchema = {
       pager: {
         index: 0,
         size: 10
+      }
+    },
+    
+    GroupMembers : {
+      fields: [{
+        name: 'id',
+        hidden: true
+      }, {
+        name: 'name',
+        title: 'Demographics.GroupMembers.Name'
+      }, {
+        name: 'email',
+        title: 'Demographics.GroupMembers.Email'     
+      }, {
+        name: 'registeredOn',
+        title: 'Demographics.GroupMembers.RegisteredOn',
+        type: 'datetime'
+      }, {
+        name: 'selected',
+        type: 'alterable-boolean',
+        handler: null
+      }],
+      
+      rows: [],
+      
+      pager: {
+        index: 0,
+        size: 10      
       }
     }
     

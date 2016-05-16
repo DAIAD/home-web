@@ -5,14 +5,14 @@ import java.util.List;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.favourite.FavouriteInfo;
 
-public class FavouriteInfoResponse extends RestResponse {
+public class FavouritesListInfoResponse extends RestResponse {
 	private List <FavouriteInfo> favouritesInfo;
 
-	public FavouriteInfoResponse(List <FavouriteInfo> favouritesInfo) {
+	public FavouritesListInfoResponse(List <FavouriteInfo> favouritesInfo) {
 		this.favouritesInfo = favouritesInfo;
 	}
 
-	public FavouriteInfoResponse(String code, String description) {
+	public FavouritesListInfoResponse(String code, String description) {
 		super(code, description);
 	}
 

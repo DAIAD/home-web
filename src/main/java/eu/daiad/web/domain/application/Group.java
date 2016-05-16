@@ -26,7 +26,7 @@ import org.joda.time.DateTime;
 
 import com.vividsolutions.jts.geom.Geometry;
 
-import eu.daiad.web.model.commons.EnumGroupType;
+import eu.daiad.web.model.group.EnumGroupType;
 
 @Entity(name = "group")
 @Table(schema = "public", name = "group")

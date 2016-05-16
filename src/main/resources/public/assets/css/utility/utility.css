@@ -307,6 +307,28 @@ a .disabled{
 	outline: none;
 }
 
+.div-centered {
+    float: none;
+    width: 51px;
+    margin: 0 auto;
+}
+
+.equal-height-row {
+	overflow: hidden;
+}
+
+.equal-height-col {
+    margin-bottom: -99999px;
+    padding-bottom: 99999px;
+}
+
+.added-row {
+	background-color: #cef8ce;
+}
+
+.deleted-row {
+	background-color: #f8d6ce;
+}
 
 .rc-input-number {
   margin: 0;

@@ -1,4 +1,4 @@
-package eu.daiad.web.model.commons;
+package eu.daiad.web.model.group;
 
 import java.io.IOException;
 import java.util.HashMap;

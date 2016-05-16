@@ -13,12 +13,15 @@ public class GroupInfo {
 	private int numberOfMembers;
 
 	private long creationDateMils;
+	
+	private String country;
 
 	public GroupInfo (Group group) {
 		this.id = group.getKey();
 		this.name = group.getName();		
 		this.numberOfMembers = group.getMembers().size();
 		this.creationDateMils = group.getCreatedOn().getMillis();
+		this.country = group.getUtility().getCountry();
 	}
 	
 	public UUID getId() {
@@ -34,6 +37,10 @@ public class GroupInfo {
 
 	public long getCreationDateMils() {
 		return creationDateMils;
+	}
+
+	public String getCountry() {
+		return country;
 	}
 	
 }

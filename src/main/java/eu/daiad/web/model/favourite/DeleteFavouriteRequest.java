@@ -1,8 +1,8 @@
-package eu.daiad.web.model.commons;
+package eu.daiad.web.model.favourite;
 
 import java.util.UUID;
 
-public class DeleteGroupRequest {
+public class DeleteFavouriteRequest {
 
 	private UUID key;
 
