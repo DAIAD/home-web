@@ -64,6 +64,14 @@ var constants = keyMirror({
         ADMIN_SELECTED_UTILITY_FILTER: null,      
         ADMIN_REQUESTED_STATIC_TIPS: null,
         ADMIN_RECEIVED_STATIC_TIPS: null,
+        
+        SAVE_BUTTON_DISABLE: null,
+        SAVE_BUTTON_CLICKED: null,
+        
+        ADMIN_CLICKED_SAVE_BUTTON: null,
+        ADMIN_SAVE_BUTTON_RESPONSE: null,
+        ADMIN_SAVED_ACTIVE_TIPS: null,
+        MESSAGES_SET_ACTIVE_PAGE: null,
         // \manage alerts
  
 	QUERY_SUBMIT: null,
