@@ -1,8 +1,9 @@
-package eu.daiad.web.scheduling;
+package eu.daiad.web.service.scheduling;
 
 import java.util.Date;
 import java.util.List;
 
+import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.scheduling.JobExecutionInfo;
 import eu.daiad.web.model.scheduling.JobInfo;
 
@@ -22,7 +23,9 @@ public interface ISchedulerService {
 
 	abstract Date scheduleCronJob(long jobId, String cronExpression);
 
-	abstract void launch(long jobId) throws Exception;
+	abstract void launch(long jobId) throws ApplicationException;
+
+	abstract void launch(String jobName) throws ApplicationException;
 
 	abstract boolean stop(Long executionId);
 

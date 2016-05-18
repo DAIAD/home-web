@@ -77,7 +77,7 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 		File input = new File(configuration.getFilename());
 
 		if (!input.exists()) {
-			throw new ApplicationException(SharedErrorCode.FILE_DOES_NOT_EXIST).set("filename",
+			throw new ApplicationException(SharedErrorCode.RESOURCE_DOES_NOT_EXIST).set("resource",
 							configuration.getFilename());
 		}
 
@@ -210,7 +210,7 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 		Scanner scan = null;
 
 		if (!input.exists()) {
-			throw new ApplicationException(SharedErrorCode.FILE_DOES_NOT_EXIST).set("filename", filename);
+			throw new ApplicationException(SharedErrorCode.RESOURCE_DOES_NOT_EXIST).set("resource", filename);
 		}
 
 		try {

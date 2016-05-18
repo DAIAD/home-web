@@ -1,4 +1,4 @@
-package eu.daiad.web.scheduling;
+package eu.daiad.web.service.scheduling;
 
 import java.util.List;
 
@@ -40,6 +40,26 @@ public class SchedulerRepository implements ISchedulerRepository {
 							ScheduledJob.class);
 
 			query.setParameter("id", jobId);
+
+			List<ScheduledJob> result = query.getResultList();
+
+			if (!result.isEmpty()) {
+				return result.get(0);
+			}
+
+			return null;
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		}
+	}
+
+	@Override
+	public ScheduledJob getJobByName(String jobName) {
+		try {
+			TypedQuery<ScheduledJob> query = entityManager.createQuery("select j from scheduled_job j where j.name= :jobName",
+							ScheduledJob.class);
+
+			query.setParameter("jobName", jobName);
 
 			List<ScheduledJob> result = query.getResultList();
 

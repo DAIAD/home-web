@@ -2,8 +2,6 @@ package eu.daiad.web.model.profile;
 
 import java.util.UUID;
 
-import org.joda.time.DateTime;
-
 import eu.daiad.web.model.AuthenticatedRequest;
 
 public class NotifyProfileRequest extends AuthenticatedRequest {

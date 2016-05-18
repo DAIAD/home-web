@@ -13,7 +13,7 @@ import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.scheduling.JobCollectionResponse;
 import eu.daiad.web.model.scheduling.JobResponse;
-import eu.daiad.web.scheduling.ISchedulerService;
+import eu.daiad.web.service.scheduling.ISchedulerService;
 
 @RestController
 public class SchedulerController extends BaseController {

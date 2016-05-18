@@ -1,4 +1,4 @@
-package eu.daiad.web.scheduling;
+package eu.daiad.web.service.scheduling;
 
 import java.util.List;
 
@@ -10,6 +10,8 @@ public interface ISchedulerRepository {
 	abstract List<ScheduledJob> getJobs();
 
 	abstract ScheduledJob getJobById(long jobId);
+
+	abstract ScheduledJob getJobByName(String jobName);
 
 	abstract List<ScheduledJobExecution> getExecutions(String jobName, int startPosition, int maxResult);
 

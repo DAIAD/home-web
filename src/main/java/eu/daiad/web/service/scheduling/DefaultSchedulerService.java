@@ -1,4 +1,4 @@
-package eu.daiad.web.scheduling;
+package eu.daiad.web.service.scheduling;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,6 +43,7 @@ import eu.daiad.web.domain.admin.ScheduledJob;
 import eu.daiad.web.domain.admin.ScheduledJobExecution;
 import eu.daiad.web.jobs.IJobBuilder;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.SchedulerErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.scheduling.JobExecutionInfo;
 import eu.daiad.web.model.scheduling.JobInfo;
@@ -319,27 +320,38 @@ public class DefaultSchedulerService implements ISchedulerService, InitializingB
 	}
 
 	@Override
-	public void launch(long jobId) throws Exception {
-		ScheduledJob scheduledJob = this.schedulerRepository.getJobById(jobId);
+	public void launch(String jobName) throws ApplicationException {
+		ScheduledJob job = this.schedulerRepository.getJobByName(jobName);
 
-		// Get job builder from the context
-		IJobBuilder jobBuilder = (IJobBuilder) ctx.getBean(scheduledJob.getBean());
+		this.launch(job.getId());
+	}
 
-		Job job = jobBuilder.build(scheduledJob.getName(), jobParametersIncrementer);
+	@Override
+	public void launch(long jobId) throws ApplicationException {
+		try {
+			ScheduledJob scheduledJob = this.schedulerRepository.getJobById(jobId);
 
-		// Register job thus making it accessible to JobOperator
-		if (!jobRegistry.getJobNames().contains(scheduledJob.getName())) {
-			jobRegistry.register(new ReferenceJobFactory(job));
+			// Get job builder from the context
+			IJobBuilder jobBuilder = (IJobBuilder) ctx.getBean(scheduledJob.getBean());
+
+			Job job = jobBuilder.build(scheduledJob.getName(), jobParametersIncrementer);
+
+			// Register job thus making it accessible to JobOperator
+			if (!jobRegistry.getJobNames().contains(scheduledJob.getName())) {
+				jobRegistry.register(new ReferenceJobFactory(job));
+			}
+
+			// Initialize job parameters
+			JobParametersBuilder parameterBuilder = new JobParametersBuilder();
+			for (eu.daiad.web.domain.admin.ScheduledJobParameter parameter : scheduledJob.getParameters()) {
+				parameterBuilder.addString(parameter.getName(), parameter.getValue());
+			}
+			JobParameters parameters = parameterBuilder.toJobParameters();
+
+			jobLauncher.run(job, job.getJobParametersIncrementer().getNext(parameters));
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex, SchedulerErrorCode.SCHEDULER_JOB_LAUNCH_FAIL).set("job", jobId);
 		}
-
-		// Initialize job parameters
-		JobParametersBuilder parameterBuilder = new JobParametersBuilder();
-		for (eu.daiad.web.domain.admin.ScheduledJobParameter parameter : scheduledJob.getParameters()) {
-			parameterBuilder.addString(parameter.getName(), parameter.getValue());
-		}
-		JobParameters parameters = parameterBuilder.toJobParameters();
-
-		jobLauncher.run(job, job.getJobParametersIncrementer().getNext(parameters));
 	}
 
 	@Override
