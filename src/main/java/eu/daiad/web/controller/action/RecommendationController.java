@@ -20,7 +20,6 @@ import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageResponse;
 import eu.daiad.web.model.message.StaticRecommendation;
-import eu.daiad.web.model.query.DataQueryRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IMessageRepository;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -116,15 +115,10 @@ public class RecommendationController extends BaseController {
         @Secured("ROLE_ADMIN")
 	public RestResponse setActiveAdvisoryMessage(@AuthenticationPrincipal AuthenticatedUser user, 
                 @RequestBody List<StaticRecommendation> data, @PathVariable String locale) {
-            
-            
+   
 		RestResponse setActiveResponse = new MessageResponse();
-                
-
-                
 		try {
-                   
-                    
+
                     for(StaticRecommendation d: data){
                         System.out.println("success? " + d.getIndex() + " locale " + locale + " active:" + d.isActive());
                         this.messageRepository.persistActiveAdvisoryMessage(locale, d.getIndex(), d.isActive());
