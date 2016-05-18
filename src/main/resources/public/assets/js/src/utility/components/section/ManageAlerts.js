@@ -11,7 +11,14 @@ var { bindActionCreators } = require('redux');
 var { getUtilities } = require('../../actions/ManageAlertsActions');
 var Helpers = require('../../helpers/helpers');
 var EditTable = require('../EditTable');
+var TipsEditTable = require('../TipsEditTable');
 var {FormattedMessage, FormattedTime, FormattedDate} = require('react-intl');
+
+var self;
+var saveDisabled = true;
+var rowsOriginal = [];
+var tempRows = [];
+var savedTips = [];
 
 var ManageAlerts = React.createClass({
   contextTypes: {
@@ -20,43 +27,22 @@ var ManageAlerts = React.createClass({
   getDefaultProps: function() {
     console.log('getDefaultProps');
     return {  
-        defaultDropDownTitle: 'Select Utility',        
+        defaultDropDownTitle: 'Select Utility', 
+        rowsChanged : [],
+        saveButtonDisabled : true
     };
-  },      
+  },
   getInitialState: function(){
-    //console.log('initial state');    
-    return {value:"initial state"};
+    console.log('initial state');    
+    return {value:"initial state", saveButtonDisabled : false, rowsChanged : []};//TODO, change this to true and resolve state
   },
   componentWillMount : function() {
-    console.log('fetching utilities');
     this.props.fetchUtilities();    
   },
-  handleCheckboxChange: function (rowId, propertyName, currentValue){
-    var truthTable = {
-      'ACTIVE': true,
-      'INACTIVE': false
-    };
-
-    var inverseTruthTable = {
-      true: 'ACTIVE',
-      false: 'INACTIVE'
-    };
-
-    var currentModesState = Object.assign({}, this.props.modes);
-
-    if (currentModesState[rowId].modes[propertyName].value === 'NOT_APPLICABLE'){
-      return;
-    } else {
-      currentModesState[rowId].modes[propertyName] = {
-        value: inverseTruthTable[!truthTable[this.props.modes[rowId].modes[propertyName].value]],
-        draft: !this.props.modes[rowId].modes[propertyName].draft								  
-      };
-    }
-
-    this.props.setModes(currentModesState);
-  },
   render: function() {
-
+    self = this;
+    console.log('RENDERING MANAGE ALERTS');
+    self = this;
     if (!this.props.isLoading && this.props.utilities){ 
 
       var _t = this.context.intl.formatMessage;            
@@ -85,13 +71,45 @@ var ManageAlerts = React.createClass({
             name: 'modifiedOn',
             title: 'Modified',
             type: 'datetime'
-        }, {
+        },{
             name: 'active',
             title: 'Active',
-            type: 'boolean',
+            type: 'action',
+            icon: 'check-square',
             handler: function() {
               console.log(this);
+              console.log(this.props.row.index);
+              
+              for (var i = 0; i < tempRows.length; i++) {                             
+                var rowToChange = tempRows[i];
+                
+                if(rowToChange.index == this.props.row.index){                  
+                  if(rowToChange.active === true){
+                    rowToChange.active = false;
+                    this.props.field.icon = 'square-o';
+                    console.log('index: ' + rowToChange.index + ', active:' + rowToChange.active);                    
+                  }
+                  else{
+                    rowToChange.active = true;
+                    this.props.field.icon = 'check-square';
+                    console.log('index: ' + rowToChange.index + ', active:' + rowToChange.active);                    
+                  }
+                  break;                 
+                }                                
+              }              
 
+              var la;
+              //Enable-disable save button
+              if(!_.isEqual(rowsOriginal, tempRows)){               
+                saveDisabled = false;    
+                console.log('should enable save button..');
+              }   
+              else{
+                console.log('should disable save button..');
+                saveDisabled = true;
+              }    
+              //self.setState({saveButtonDisabled : saveDisabled});//this works but breaks the checkboxes TODO
+              this.forceUpdate(); //toggle comment with setState above
             }
         }, {
           name: 'edit',
@@ -160,7 +178,8 @@ var ManageAlerts = React.createClass({
                           type='submit'
                           className='btn btn-primary'
                                   style={{ height: 33 }}
-                                  onClick={this.saveModeChanges}>
+                                  disabled={this.state.saveButtonDisabled}
+                                  onClick={this.props.saveActive}>
                           <FormattedMessage id='Table.Save' />
                   </button>
                 </div>  
@@ -170,7 +189,13 @@ var ManageAlerts = React.createClass({
               < Bootstrap.Panel header = {staticTipsTitle} >
                 < Bootstrap.ListGroup fill >
                   < Bootstrap.ListGroupItem >
-                    < Table data = {data} > < /Table>
+                    < Table //TODO this was "Table" and had only data={data} // togle with TipsEditTable
+                      data = {data} 
+                      //saveAction={this.showModalSaveChanges}
+                      //activePage={this.props.activePage}
+                      //setActivePage={this.props.setActivePage}                        
+                                    > 
+                    < /Table>
                   < /Bootstrap.ListGroupItem>
                 < /Bootstrap.ListGroup>
               < /Bootstrap.Panel>                 
@@ -210,7 +235,7 @@ function populateUtilityOptions(utilities){
   return utilityOptions;
 }
 
-function populateTips(object){
+function populateTips(object){ 
   var element = {}, populatedTips = [];   
   if(object.props.tips == null){
     return []; //admin has not selected a utility, return empty tips
@@ -236,34 +261,86 @@ function populateTips(object){
             currentModifiedOn = object.props.tips[obj][prop];
         }  
         else if(prop == "active"){
-            currentActive = object.props.tips[obj][prop];
-        } 
+            currentActive = object.props.tips[obj][prop];                    
+        }
       }
+      rowsOriginal.push({index : currentIndex, active : currentActive});
+      tempRows.push({index : currentIndex, active : currentActive});
+      
       element = {index : currentIndex, title : currentTitle, description : currentDescription, 
         createdOn : currentCreatedOn, modifiedOn : currentModifiedOn, active : currentActive};
       populatedTips.push(element);
     } 
+    
+    for (var i = 0; i < tempRows.length; i++) {
+      var row = tempRows[i];
+      console.log('index: ' + row.index + ', active:' + row.active);
+    }
+    
+    populatedTips.sort(sortBy('index', true));
+    
     return populatedTips;
   }
 }
 
+var sortBy = function(field, reverse){
+   var key = function (x) {return x[field];};
+
+   return function (a,b) {
+	  var keyA = key(a), keyB = key(b);
+	  return ( (keyA < keyB) ? -1 : ((keyA > keyB) ? 1 : 0) ) * [-1,1][+!!reverse];                  
+   };
+};
+
 function mapStateToProps(state) {  
+  console.log('mapStateToProps, state.alerts.saveButtonDisabled ' + state.alerts.saveButtonDisabled);
+
   return {
     utility: state.alerts.utility,
     tips: state.alerts.tips,
     utilities: state.alerts.utilities,
-    isLoading: state.alerts.isLoading
-
+    isLoading: state.alerts.isLoading,
+    rowsChanged: state.alerts.rowsChanged,
+    saveButtonDisabled : state.alerts.saveButtonDisabled,
+    activePage: state.alerts.activePage
   };
 }
 
 function mapDispatchToProps(dispatch) {
+  console.log('mapDispatchToProps ' );   
   return {
     setUtility: function (event, utility){
       dispatch(ManageAlertsActions.setUtility(event, utility));
       dispatch(ManageAlertsActions.getStaticTips(event, utility));
     },
-    fetchUtilities : bindActionCreators(ManageAlertsActions.fetchUtilities, dispatch)
+    fetchUtilities : bindActionCreators(ManageAlertsActions.fetchUtilities, dispatch),
+    saveChanges: function(rowsChanged){
+      //save changes
+    },
+    setActivePage: function(activePage){
+            dispatch(ManageAlertsActions.setActivePage(activePage));
+    },
+    saveActive : function(event){
+      
+      
+      if(_.isEqual(rowsOriginal, tempRows)){ 
+        return;//nothing to save
+      }
+      var toBeSaved = tempRows.filter(function(obj) {
+        return !rowsOriginal.some(function(obj2) {
+            return obj.active == obj2.active;
+        });   
+      });
+      console.log("number of rows to save: " + toBeSaved.length);
+      var locale;
+      if(self.props.utility.label == 'Alicante'){
+        locale = "es";
+      }
+      else{
+        locale = "en";
+      }
+      dispatch(ManageAlertsActions.saveActiveTips(event, toBeSaved, locale));
+    }
   };
 }
 
