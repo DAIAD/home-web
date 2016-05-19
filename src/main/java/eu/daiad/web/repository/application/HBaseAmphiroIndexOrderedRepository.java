@@ -832,9 +832,9 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 
 			UUID deviceKeys[] = query.getDeviceKey();
 
-			int totalSessions = 0;
-
 			for (int deviceIndex = 0; deviceIndex < deviceKeys.length; deviceIndex++) {
+				int totalSessions = 0;
+
 				AmphiroSessionCollection collection = new AmphiroSessionCollection(deviceKeys[deviceIndex],
 								names[deviceIndex]);
 
