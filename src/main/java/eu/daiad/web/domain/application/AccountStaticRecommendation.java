@@ -1,32 +1,27 @@
 package eu.daiad.web.domain.application;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-@Entity(name = "account_alert")
-@Table(schema = "public", name = "account_alert")
-public class AccountAlert {
+@Entity(name = "account_static_recommendation")
+@Table(schema = "public", name = "account_static_recommendation")
+public class AccountStaticRecommendation {
 
 	@Id()
 	@Column(name = "id")
-	@SequenceGenerator(sequenceName = "account_alert_id_seq", name = "account_alert_id_seq", allocationSize = 1, initialValue = 1)
-	@GeneratedValue(generator = "account_alert_id_seq", strategy = GenerationType.SEQUENCE)
+	@SequenceGenerator(sequenceName = "account_static_recommendation_id_seq", name = "account_static_recommendation_id_seq", allocationSize = 1, initialValue = 1)
+	@GeneratedValue(generator = "account_static_recommendation_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
 
 	@ManyToOne(cascade = { CascadeType.ALL })
@@ -34,12 +29,8 @@ public class AccountAlert {
 	private Account account;
 
 	@ManyToOne(cascade = { CascadeType.ALL })
-	@JoinColumn(name = "alert_id", nullable = false)
-	private Alert alert;
-
-	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
-	@JoinColumn(name = "account_alert_id")
-	private Set<AccountAlertProperty> properties = new HashSet<AccountAlertProperty>();
+	@JoinColumn(name = "static_recommendation_id", nullable = false)
+	private StaticRecommendation recommendation;
 
 	@Column(name = "created_on")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
@@ -61,12 +52,12 @@ public class AccountAlert {
 		this.account = account;
 	}
 
-	public Alert getAlert() {
-		return alert;
+	public StaticRecommendation getRecommendation() {
+		return recommendation;
 	}
 
-	public void setAlert(Alert alert) {
-		this.alert = alert;
+	public void setRecommendation(StaticRecommendation recommendation) {
+		this.recommendation = recommendation;
 	}
 
 	public DateTime getCreatedOn() {
@@ -87,10 +78,6 @@ public class AccountAlert {
 
 	public int getId() {
 		return id;
-	}
-
-	public Set<AccountAlertProperty> getProperties() {
-		return properties;
 	}
 
 	public DateTime getReceiveAcknowledgedOn() {
