@@ -13,6 +13,7 @@ var Helpers = require('../../helpers/helpers');
 var EditTable = require('../EditTable');
 var TipsEditTable = require('../TipsEditTable');
 var {FormattedMessage, FormattedTime, FormattedDate} = require('react-intl');
+var Schema = require('../../constants/ModeManagementTableSchema');
 
 var self;
 var saveDisabled = true;
@@ -42,18 +43,42 @@ var ManageAlerts = React.createClass({
   render: function() {
     self = this;
     console.log('RENDERING MANAGE ALERTS');
-    self = this;
+
     if (!this.props.isLoading && this.props.utilities){ 
 
+      var tipDeactivate = function(){
+              var title = _t({ id:'Modal.DeactivateUser.Title'});
+
+              var body = _t({ id:'Modal.DeactivateUser.Body.Part1'}) +
+                      this.props.row.name +
+              _t({ id:'Modal.DeactivateUser.Body.Part2'}) +
+              this.props.row.id +
+              _t({ id:'Modal.DeactivateUser.Body.Part3'});
+
+              var actions = [{
+                      action: self.closeModal,
+                      name: _t({id:'Buttons.Cancel'})
+              },  {
+                      action: self.decativateUser,
+                      name: _t({id:'Buttons.Deactivate'}),
+                      style: 'danger'
+              }
+      ];
+              self.openModal(title, body, actions);
+              self.props.markUserForDeactivation(this.props.row);	
+
+      };
+
+//      for (let i=0; i < data.fields.length; i++){
+//              if (this.props.tips[i].active === true){
+//                      this.props.tips[i].handler = tipDeactivate;
+//              }
+//      }
+                
+                
       var _t = this.context.intl.formatMessage;            
       var data = { 
-        filters: [{
-          id: 'utilityName',
-          name: 'Utility',
-          field: 'utilityName',
-          icon: 'utility',
-          type: 'text'
-        }],
+        filters: Schema.filters,
         fields: [{
           name: 'index',
           title: 'ID'
@@ -74,42 +99,21 @@ var ManageAlerts = React.createClass({
         },{
             name: 'active',
             title: 'Active',
-            type: 'action',
+            type: 'boolean',
             icon: 'check-square',
+            onClick: function(){
+              console.log(this);
+              console.log(this.props.row.index);
+              //console.log('deactivated id 1 ' + self.props.tips[1].active);             
+              console.log('this.props.row' +this.props.row);
+              self.props.checkBoxClicked(this.props.row, self.props.tips);              
+            },
             handler: function() {
               console.log(this);
               console.log(this.props.row.index);
-              
-              for (var i = 0; i < tempRows.length; i++) {                             
-                var rowToChange = tempRows[i];
-                
-                if(rowToChange.index == this.props.row.index){                  
-                  if(rowToChange.active === true){
-                    rowToChange.active = false;
-                    this.props.field.icon = 'square-o';
-                    console.log('index: ' + rowToChange.index + ', active:' + rowToChange.active);                    
-                  }
-                  else{
-                    rowToChange.active = true;
-                    this.props.field.icon = 'check-square';
-                    console.log('index: ' + rowToChange.index + ', active:' + rowToChange.active);                    
-                  }
-                  break;                 
-                }                                
-              }              
-
-              var la;
-              //Enable-disable save button
-              if(!_.isEqual(rowsOriginal, tempRows)){               
-                saveDisabled = false;    
-                console.log('should enable save button..');
-              }   
-              else{
-                console.log('should disable save button..');
-                saveDisabled = true;
-              }    
-              //self.setState({saveButtonDisabled : saveDisabled});//this works but breaks the checkboxes TODO
-              this.forceUpdate(); //toggle comment with setState above
+              //console.log('deactivated id 1 ' + self.props.tips[1].active);             
+              console.log('this.props.row' +this.props.row);
+              self.props.checkBoxClicked(this.props.row, self.props.tips);
             }
         }, {
           name: 'edit',
@@ -189,13 +193,18 @@ var ManageAlerts = React.createClass({
               < Bootstrap.Panel header = {staticTipsTitle} >
                 < Bootstrap.ListGroup fill >
                   < Bootstrap.ListGroupItem >
-                    < Table //TODO this was "Table" and had only data={data} // togle with TipsEditTable
+                    < TipsEditTable //TODO this was "Table" and had only data={data} // togle with TipsEditTable
                       data = {data} 
                       //saveAction={this.showModalSaveChanges}
-                      //activePage={this.props.activePage}
-                      //setActivePage={this.props.setActivePage}                        
+                      //setActivePage={this.props.setActivePage}           
+                      saveAction={this.showModalSaveChanges}
+                      activePage={this.props.activePage}
+                      modes={this.props.modes}
+                      setModes={this.props.setModes}                     
+                      
+                      
                                     > 
-                    < /Table>
+                    < /TipsEditTable>
                   < /Bootstrap.ListGroupItem>
                 < /Bootstrap.ListGroup>
               < /Bootstrap.Panel>                 
@@ -272,10 +281,10 @@ function populateTips(object){
       populatedTips.push(element);
     } 
     
-    for (var i = 0; i < tempRows.length; i++) {
-      var row = tempRows[i];
-      console.log('index: ' + row.index + ', active:' + row.active);
-    }
+//    for (var i = 0; i < tempRows.length; i++) {
+//      var row = tempRows[i];
+//      console.log('index: ' + row.index + ', active:' + row.active);
+//    }
     
     populatedTips.sort(sortBy('index', true));
     
@@ -320,9 +329,12 @@ function mapDispatchToProps(dispatch) {
     setActivePage: function(activePage){
             dispatch(ManageAlertsActions.setActivePage(activePage));
     },
+    checkBoxClicked: function(tip, tips){
+      console.log('dispatching checkBoxClicked ' + tip.index);
+      dispatch(ManageAlertsActions.checkBoxClicked(event, tip, tips));
+    },
     saveActive : function(event){
-      
-      
+
       if(_.isEqual(rowsOriginal, tempRows)){ 
         return;//nothing to save
       }
