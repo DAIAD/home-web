@@ -11,26 +11,26 @@ var IndeterminateCheckbox = require('./IndeterminateCheckbox');
 
 var EditTable = React.createClass({
 	
-	onPageIndexChange(event, selectedEvent) {
-		this.props.setActivePage(selectedEvent.eventKey - 1);
-	},
+  onPageIndexChange(event, selectedEvent) {
+          this.props.setActivePage(selectedEvent.eventKey - 1);
+  },
 
-	syncStateData: function (){
-		var syncdData = this.props.data;
-		var syncdRows = syncdData.rows;
-		var self = this;
-		for (var r = 0, len = syncdRows.length; r < len; r++){
-			var row = syncdRows[r];
-			
+  syncStateData: function (){
+          var syncdData = this.props.data;
+          var syncdRows = syncdData.rows;
+          var self = this;
+          for (var r = 0, len = syncdRows.length; r < len; r++){
+                  var row = syncdRows[r];
+
 //			for (var m in self.props.modes[row.id].modes){
 //				if(self.props.modes[row.id].modes.hasOwnProperty(m)){
 //					row[m] = self.props.modes[row.id].modes[m].value;
 //				}
 //			}
-		}
-		syncdData.rows = syncdRows;	
-		return syncdData;
-	},
+          }
+          syncdData.rows = syncdRows;	
+          return syncdData;
+  },
 	
 	getVisibleCellsDraftFlags: function(visibleRows){
 		var visibleCellDraftFlags = {};
@@ -230,7 +230,7 @@ var EditTable = React.createClass({
 								  toggleCheckBoxes = {this.toggleCheckBoxes}>
 					  </EditTable.Header>
 					<EditTable.Body data = {visibleData}
-								draftFlags = {this.getVisibleCellsDraftFlags(visibleData.rows)}
+								//draftFlags = {this.getVisibleCellsDraftFlags(visibleData.rows)}
 								checkboxHandler = {this.handleCheckboxChange}></EditTable.Body>			
 				</Bootstrap.Table>
 				{saveButton}
@@ -306,7 +306,7 @@ var Body = React.createClass({
         <EditTable.Row   key={rowIndex} 
               fields={self.props.data.fields} 
               row={row}
-              draftFlags={self.props.draftFlags[row.id]}
+              //draftFlags={self.props.draftFlags[row.id]}
               checkboxHandler={self.props.checkboxHandler}>
         </EditTable.Row>
       );
@@ -332,7 +332,7 @@ var Row = React.createClass({
 							<EditTable.Cell key={columnIndex} 
 										row={self.props.row} 
 										field={field}
-										draftFlag={self.props.draftFlags[field.name]}
+										//draftFlag={self.props.draftFlags[field.name]}
 										checkboxHandler={self.props.checkboxHandler}>
 							</EditTable.Cell>
 						);
