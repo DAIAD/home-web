@@ -76,8 +76,11 @@ public class PendingMessageStatus {
 	// returns percent of usage above others
 	private SimpleEntry<Boolean, Integer> recommendShampooChangeAmphiro;
 
-	// return liters more than average
+	// returns liters more than average
 	private SimpleEntry<Boolean, Integer> recommendReduceFlowWhenNotNeededAmphiro;
+        
+        // returns random static tip
+	private boolean produceStaticTip;
 
 	public boolean isAlertWaterLeakSWM() {
 		return alertWaterLeakSWM;
@@ -251,6 +254,10 @@ public class PendingMessageStatus {
 	public boolean isAlertTop10SaverSWM() {
 		return alertTop10SaverSWM;
 	}
+        
+        public boolean isStaticTipToBeProduced() {
+		return produceStaticTip;
+	}
 
 	public void setAlertTop10SaverSWM(boolean alertTop10SaverSWM) {
 		this.alertTop10SaverSWM = alertTop10SaverSWM;
@@ -304,5 +311,8 @@ public class PendingMessageStatus {
 					SimpleEntry<Boolean, Integer> recommendReduceFlowWhenNotNeededAmphiro) {
 		this.recommendReduceFlowWhenNotNeededAmphiro = recommendReduceFlowWhenNotNeededAmphiro;
 	}
-
+        
+        public void setStaticTip(boolean produceStaticTip){
+                this.produceStaticTip = produceStaticTip;
+        }
 }
