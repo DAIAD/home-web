@@ -149,7 +149,6 @@ var History = React.createClass({
     this.props.query();
   },
   handlePrevious: function() { 
-    console.log('handling prev');
     //this.props.decreaseNavIndex();
     this.props.setTime(this.props.previousPeriod);
   },

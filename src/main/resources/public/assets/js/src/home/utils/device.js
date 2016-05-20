@@ -250,6 +250,11 @@ const lastNFilterToLength = function (filter) {
   else throw new Error('unrecognized filter', filter);
 };
 
+const getSessionsIdOffset = function(sessions) {
+  if (!sessions) return null;
+  return sessions[0] ? sessions[0].id : null;
+};
+
 module.exports = {
   getSessionById,
   getSessionByIndex,
@@ -276,4 +281,5 @@ module.exports = {
   lastNFilterToLength,
   getMetricMu,
   sortSessions,
+  getSessionsIdOffset
 };

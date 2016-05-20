@@ -147,7 +147,9 @@ function TipBox (props) {
 
 function ChartBox (props) {
   const { intl, history, infobox } = props;
-  const { title, type, subtype, improved, data, metric, measurements, period, device, deviceDetails, chartData, chartFormatter, highlight, time, index, mu } = infobox;
+  const { title, type, subtype, improved, data, metric, measurements, period, device, deviceDetails, chartData, chartFormatter, chartType, chartCategories, chartXAxis, highlight, time, index, mu } = infobox;
+  const invertAxis = type === 'breakdown' ? true : false;
+  //const chartTitle = type === 'last' ? new Date(time).toString() : '';
   return (
     <div>
       <div >
@@ -156,12 +158,16 @@ function ChartBox (props) {
             <SessionsChart
               height={200}
               width='100%'  
-              title=""
+              title=''
               subtitle=""
-              mu={mu}
               yMargin={10}
+              y2Margin={40}
               fontSize={12}
-              type="line"
+              mu={mu}
+              invertAxis={invertAxis}
+              type={chartType}
+              xAxis={chartXAxis}
+              xAxisData={chartCategories}
               formatter={chartFormatter(intl)}
               data={chartData}
             />
@@ -183,45 +189,8 @@ function ChartBox (props) {
   );
 }
 
-
-/*
-function ForecastingChart (props) {
-  return (
-    <SessionsChart
-      height={180}
-      width={250} 
-      title=""
-      subtitle=""
-      mu="lt"
-      type="bar"
-      xMargin={50}
-      yMargin={10}
-      xAxis="category"
-      xAxisData={[2014, 2015, 2016]}
-      data={[{title:'Consumption', data:[100, 200, 150]}]}
-    />);
-}
-
-function BreakdownChart (props) {
-  return (
-    <SessionsChart
-      height={250}
-      width={400}
-      mu="lt"
-      type="bar"
-      invertAxis={true}
-      xMargin={80}
-      yMargin={10}
-      y2Margin={50}
-      xAxis="category"
-      xAxisData={["toilet", "faucet", "shower", "kitchen"]}
-      data={[{title:'Consumption', data:[23, 25, 10, 20]}]}
-    />);
-}
-*/
-
 function InfoPanel (props) {
-  const { mode, layout, infoboxData, updateLayout, switchMode,  updateInfobox, removeInfobox, chartFormatter, intl, periods } = props;
+  const { mode, layout, infoboxData, updateLayout, switchMode,  updateInfobox, removeInfobox, chartFormatter, intl, periods, displays } = props;
 
   return (
     <div>
@@ -247,7 +216,7 @@ function InfoPanel (props) {
          infoboxData.map(function(infobox) {
            return (
              <div key={infobox.id}>
-               <InfoBox {...{mode, periods, chartFormatter, infobox, updateInfobox, removeInfobox, intl}} /> 
+               <InfoBox {...{mode, periods, displays, chartFormatter, infobox, updateInfobox, removeInfobox, intl}} /> 
            </div>
            );
          })

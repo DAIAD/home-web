@@ -84,7 +84,6 @@ module.exports = {
     {id:'difference', title:'Volume'},
   ],
   DEV_METRICS: [
-    {id:'showers', title:'Showers'},
     {id:'volume', title:'Volume'},
     {id:'energy', title:'Energy'},
     {id:'duration', title:'Duration'},

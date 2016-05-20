@@ -23,7 +23,7 @@ function mapDispatchToProps (dispatch) {
 
 function mergeProps(stateProps, dispatchProps, ownProps) {
   const data = ownProps.sessions?(stateProps.activeSessionIndex!==null?ownProps.sessions[stateProps.activeSessionIndex]:{}):{};
-  
+
   return Object.assign(
     {}, 
     ownProps, 
@@ -32,7 +32,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                   stateProps, 
                   {
                     data,
-                    chartData: getChartDataByFilter(data?data.measurements:[], stateProps.activeSessionFilter),
+                    chartData: getChartDataByFilter(data.measurements?data.measurements:[], stateProps.activeSessionFilter, null),
                     showModal: stateProps.activeSessionIndex===null?false:true,
                   })
   );

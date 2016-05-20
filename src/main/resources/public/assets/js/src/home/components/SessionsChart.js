@@ -12,32 +12,46 @@ var SessionsChart = React.createClass({
       subtitle: "",
       mu: "",
       type: "line",
-      xAxis: "time",
-      xAxisData: [],
+      xAxis: "category",
+      //xTicks: 12,
+      xAxisData: null,
       invertAxis: false,
-      sparkline: false,
       fontSize: 15,
       xMargin: 75,
       yMargin: 10,
       x2Margin: 20,
-      y2Margin: 30
+      y2Margin: 50
     };
   },
-
+  // sanity check function from
+  // https://github.com/DAIAD/react-echarts/blob/master/src/js/components/line.js#L304
+  _checkData: function (xaxisData, data) {
+    // Check if supplied (series) data is according to x-axis type
+    if (xaxisData) {
+      // Expect array of numbers paired to x-axis data (aAxis.type=category)
+      data = data.map(v => ((v == '-' || v == null)? null : Number(v)));
+      if (data.length != xaxisData.length || data.some(v => isNaN(v)) || data.every(v => v===null))
+        data = null; // invalidate the entire array
+    } else {
+      // Expect array of [x, y] pairs (xAxis.type=value)
+      data = data.filter(p => (Array.isArray(p) && p.length == 2))
+        .map(p => ([Number(p[0]), Number(p[1])]));
+    }
+    return data;
+  }, 
   render: function() {
     const colors = ['#2D3580', '#CD4D3E', '#564535'];
-    const areaStyle = this.props.sparkline?null:{
+    const areaStyle = {
             color:  'rgba(232,232,237, 0.7)',
             type: 'default'
-          };
+    };
     const seriesArray = this.props.data.map((x, i) => { 
+      const data = this._checkData(this.props.xAxisData, x.data);
       return {
         name: x.title,
         type: this.props.type,
-        stack: this.props.type==='bar'?'name':null,
-        showAllSymbols: false,
-        symbolSize: this.props.sparkline?0:5,
-        //symbolSize: this.props.sparkline?0:0,
+        showAllSymbol: true,
+        symbolSize: 5,
         smooth: false,
         itemStyle: {
           normal: {
@@ -47,7 +61,7 @@ var SessionsChart = React.createClass({
             barBorderWidth: 15,
             //barBorderRadius:10,
             lineStyle: {
-              width: this.props.sparkline?2:1
+              width: 1
             },
             label : {
                 show: false, 
@@ -65,7 +79,7 @@ var SessionsChart = React.createClass({
             borderWidth: 1,
           }
         },
-        data: x.data,
+        data,
         //markLine : {
         //    data : [
         //        {type : 'average', name: 'Average'}
@@ -73,18 +87,18 @@ var SessionsChart = React.createClass({
         //}
     };
     });
-
     const xAxis = [
       {
-        show: this.props.sparkline?false:true,
+        show: true,
         type : this.props.xAxis,
-        data: this.props.xAxisData,
-        splitNumber: 0,
-        scale: true,
-        min: this.props.xMin,
-        max: this.props.xMax,
+        data: this.props.xAxisData ? this.props.xAxisData : [],
+        //splitNumber: 12,
+        scale:false,
+        //scale: true,
+        //min: this.props.xMin,
+        //max: this.props.xMax,
         axisLabel : {
-          formatter: this.props.formatter,
+          formatter: this.props.xAxis === 'time' ? this.props.formatter : null,
           textStyle: {
             //fontFamily: "OpenSansCondensed",
             color: '#808285',
@@ -98,13 +112,17 @@ var SessionsChart = React.createClass({
         axisLine: {
           show: true
         },
-        boundaryGap: [0, 0.1]
+        // axistTick: {
+          //show: true
+        //},
+        //boundaryGap: [50,50]
+        boundaryGap: true
       },
     ];
 
     const yAxis = [
       {
-        show: this.props.sparkline?false:true,
+        show: true,
         type : 'value',
         axisLabel : {
           formatter: `{value}  ${this.props.mu}`,
@@ -149,7 +167,7 @@ var SessionsChart = React.createClass({
             subtext: this.props.subtitle
           },
           tooltip : {
-            //trigger: 'axis'
+            formatter: (params) => this.props.xAxis === 'time' ? `${new Date(params.value[0])}: ${params.value[1]}` : `${params.name}: ${params.value}`,
             trigger: 'item',
             backgroundColor: '#2D3580',
             borderColor: '#2D3580',
@@ -180,7 +198,6 @@ var SessionsChart = React.createClass({
             handleColor: '#2D3580'
           },
           grid: {
-            //show: this.props.sparkline?false:true,
             x: this.props.xMargin,
             y: this.props.yMargin,
             x2: this.props.x2Margin,

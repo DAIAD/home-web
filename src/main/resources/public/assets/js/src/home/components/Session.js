@@ -55,13 +55,12 @@ function SessionInfo (props) {
 }
 
 function Session (props) {
-  const { history, intl, filter, data, chartData, setSessionFilter, firstname } = props;
+  const { intl, filter, data, chartData, setSessionFilter, firstname } = props;
   if (!data) return <div/>;
-  const { hasChartData } = data;
-  
+  const { hasChartData, history, id } = data;
   const _t = intl.formatMessage;
   //title = _t({id: `history.${filter}`})
-  return hasChartData?(
+  return history===false?(
     <div className="shower-container">
       <div className="shower-chart-area">
         <SessionsChart 
@@ -73,7 +72,8 @@ function Session (props) {
             x2Margin={60}
             type="line"
             formatter={(x) => intl.formatTime(x, { hour: 'numeric', minute: 'numeric'})}
-            data={[{title:filter, data:chartData}]}
+            xAxis="time"
+            data={[{title:`#${id}`, data:chartData}]}
           />
         </div>
         

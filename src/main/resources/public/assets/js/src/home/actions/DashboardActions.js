@@ -132,7 +132,7 @@ const DashboardActions = {
 
         return dispatch(QueryActions.fetchLastDeviceSession(device))
         .then(response => 
-              dispatch(DashboardActions.setInfoboxData(id, {data: response.data, index: response.index, showerId: response.id})))
+              dispatch(DashboardActions.setInfoboxData(id, {data: response.data, index: response.index, device: response.device, showerId: response.id, time: response.timestamp})))
         .catch(error => { 
           //log error in console for debugging and display friendly message
           console.error('Caught error in infobox data fetch:', error); 

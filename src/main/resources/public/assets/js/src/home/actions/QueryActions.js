@@ -96,13 +96,13 @@ const QueryActions = {
         //find last
         const lastSession = reduced.reduce((curr, prev) => (curr.timestamp>prev.timestamp)?curr:prev, {});
          
-        const { device, id, index } = lastSession;
+        const { device, id, index, timestamp } = lastSession;
 
         if (!id) throw new Error(`last session id doesnt exist in response: ${response}`);
         const devSessions = sessions.find(x=>x.deviceKey === device);
         
         return dispatch(QueryActions.fetchDeviceSession(id, device))
-        .then(session => ({data: updateOrAppendToSession([devSessions], Object.assign({}, session, {deviceKey:device})), device:device, index, id}) )
+        .then(session => ({data: updateOrAppendToSession([devSessions], Object.assign({}, session, {deviceKey:device})), device, index, id, timestamp}) )
         .catch(error => { throw error; });
       });
     };

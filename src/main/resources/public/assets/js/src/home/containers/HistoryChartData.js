@@ -7,8 +7,8 @@ var SessionsChart = require('../components/SessionsChart');
 var HistoryActions = require('../actions/HistoryActions');
 
 var { selectTimeFormatter } = require('../utils/time');
-var { getChartDataByFilter, getTransferredChartDataByFilter } = require('../utils/chart');
-var { getDeviceTypeByKey, getDeviceNameByKey, getDataSessions, getMetricMu } = require('../utils/device');
+var { getChartTimeDataByFilter, getChartDataByFilter, getChartMeterCategories, getChartAmphiroCategories } = require('../utils/chart');
+var { getDeviceTypeByKey, getDeviceNameByKey, getDataSessions, getMetricMu, getSessionsIdOffset } = require('../utils/device');
 
 
 function mapStateToProps(state, ownProps) {
@@ -20,7 +20,7 @@ function mapStateToProps(state, ownProps) {
     time: state.section.history.time,
     filter: state.section.history.filter,
     devices: state.user.profile.devices,
-    devType: getDeviceTypeByKey(state.user.profile.devices, state.section.history.activeDevice), 
+    activeDeviceType: state.section.history.activeDeviceType,
     timeFilter: state.section.history.timeFilter,
     data: state.section.history.data,
     comparisonData: state.section.history.comparisonData
@@ -30,35 +30,41 @@ function mapDispatchToProps(dispatch) {
   return {};
 }
 function mergeProps(stateProps, dispatchProps, ownProps) {
+  
+  const xAxisData = stateProps.activeDeviceType === 'METER' ? 
+    (stateProps.timeFilter === 'custom' ? null : getChartMeterCategories(stateProps.timeFilter, ownProps.intl)) : 
+      getChartAmphiroCategories(stateProps.timeFilter, getSessionsIdOffset(stateProps.data[0] ? stateProps.data[0].sessions : []));
 
-  const comparison = stateProps.comparisonData.map(devData =>
+    
+   const comparison = stateProps.comparisonData.map(devData =>
                                                    ({
                                                      title: `${getDeviceNameByKey(stateProps.devices, devData.deviceKey)} (previous ${stateProps.timeFilter})`, 
-                                                     data: getTransferredChartDataByFilter(getDataSessions(stateProps.devices, devData), stateProps.filter, stateProps.timeFilter, getDeviceTypeByKey(stateProps.devices, devData.deviceKey))
+                                                     data: getChartDataByFilter(getDataSessions(stateProps.devices, devData), stateProps.filter, xAxisData)
                                                    })
-                                                  );
-                                                  
+                                                 );
   return Object.assign({},
                        ownProps,
-                       dispatchProps,
-                       Object.assign({}, stateProps, 
-                                     {
-                                       data:
-                                         stateProps.data.map(devData =>
-                                                             ({
-                                                             title: getDeviceNameByKey(stateProps.devices, devData.deviceKey), 
-                                                             data: getChartDataByFilter(getDataSessions(stateProps.devices, devData), stateProps.filter, getDeviceTypeByKey(stateProps.devices, devData.deviceKey))
-                                                             })).concat(comparison),
-                         xMin: stateProps.time.startDate,
-                         xMax: stateProps.time.endDate,
-                         type: stateProps.filter==='showers'?'bar':'line',
-                         formatter: selectTimeFormatter(stateProps.timeFilter, ownProps.intl),
+                       //dispatchProps,
+                       stateProps, 
+                       {
+                         data: stateProps.data.map(devData =>
+                             ({
+                               title: getDeviceNameByKey(stateProps.devices, devData.deviceKey), 
+                               data: stateProps.activeDeviceType === 'METER' ? getChartDataByFilter(getDataSessions(stateProps.devices, devData), stateProps.filter, xAxisData) : getChartDataByFilter(getDataSessions(stateProps.devices, devData), stateProps.filter, xAxisData)
+                             })).concat(comparison),
+                             xMin: stateProps.timeFilter === 'custom' ? stateProps.time.startDate : 0,
+                             xMax: stateProps.timeFilter === 'custom' ? stateProps.time.endDate : xAxisData.length-1,
+                         type: 'line',
+                         xAxis: stateProps.timeFilter === 'custom' ? 'time' : 'category',
+                         xAxisData,
+                         //xTicks: xAxisData.length,
                          mu: getMetricMu(stateProps.filter),
-                         fontSize: 13
-                                     }
-                                    ));
+                         fontSize: 13,
+                       }
+                      );
 }
 
 var HistoryChart = connect(mapStateToProps, mapDispatchToProps, mergeProps)(SessionsChart);
 HistoryChart = injectIntl(HistoryChart);
+
 module.exports = HistoryChart;

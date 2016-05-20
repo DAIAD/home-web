@@ -6,13 +6,27 @@
     "de": "Deutsche"
   },
   "weekdays": {
-    "1": "Sunday",
-    "2": "Monday",
-    "3": "Tuesday",
-    "4": "Wednesday",
-    "5": "Thursday",
-    "6": "Friday",
-    "7": "Saturday"
+    "0": "Sunday",
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday"
+  },
+  "months": {
+    "0": "January",
+    "1": "February",
+    "2": "March",
+    "3": "April",
+    "4": "May",
+    "5": "June",
+    "6": "July",
+    "7": "August",
+    "8": "September",
+    "9": "October",
+    "10": "November",
+    "11": "December"
   },
   "errors": {
     "Error: Internal Server Error": "Oops, something went wrong. Please try again in a while, or send feedback if this error keeps recurring",

@@ -7,14 +7,16 @@ var dashboard = function (state, action) {
     state = {
       mode: "normal",
       layout: [
-        {i: "1", x:0, y:0, w:2, h:2, minW:2, minH:2},
-        {i: "2", x:2, y:0, w:2, h:2, minW:2, minH:2},
-        {i: "3", x:2, y:0, w:2, h:1, minW:2, minH:1},
-        {i: "4", x:4, y:0, w:2, h:2, minW:2, minH:2},
-        {i: "5", x:4, y:1, w:2, h:1, minW:2, minH:1},
-        {i: "6", x:0, y:2, w:2, h:2, minW:2, minH:2},
-        {i: "7", x:0, y:2, w:2, h:1, minW:2, minH:1},
-        {i: "8", x:2, y:2, w:2, h:1, minW:2, minH:1},
+        {i: "1", x:0, y:0, w:2, h:2},
+        {i: "2", x:2, y:0, w:2, h:2},
+        {i: "3", x:2, y:0, w:2, h:1},
+        {i: "4", x:4, y:0, w:2, h:2},
+        {i: "5", x:4, y:1, w:2, h:1},
+        {i: "6", x:0, y:2, w:2, h:2},
+        {i: "7", x:0, y:2, w:2, h:1},
+        {i: "8", x:4, y:2, w:2, h:1},
+        {i: "9", x:0, y:3, w:2, h:2},
+        {i: "10", x:4, y:3, w:2, h:2},
       ],
       infobox: [
           {
@@ -75,6 +77,27 @@ var dashboard = function (state, action) {
           metric: "energy",
           data: [],
         },
+        {
+          id: "9", 
+          title: "Breakdown",
+          type: "breakdown",
+          display: "chart",
+          deviceType: "METER",
+          period: "year",
+          metric: "difference",
+          data: [],
+        },
+        {
+          id: "10", 
+          title: "Forecast",
+          type: "forecast",
+          display: "chart",
+          deviceType: "METER",
+          period: "year",
+          metric: "difference",
+          data: [],
+        },
+
       ]
     };
   }

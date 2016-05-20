@@ -1,4 +1,5 @@
 var moment = require('moment');
+var { getPeriodByTimestamp, getLowerGranularityPeriod } = require('./time');
 
 const getCount = function(metrics) {
   return metrics.count?metrics.count:1;
@@ -8,94 +9,58 @@ const getTimestampIndex = function(points, timestamp) {
     return points.findIndex((x) => (x[0]===timestamp));
 };
 
-//get session data in ready to chart with echarts form
-const getChartDataByFilter = function(data, filter, devType='AMPHIRO') {
-  if (!data || !data.length) return [];
-  /*  
-  switch (filter) {
-    case "volume":
-    case "difference":
-    case "energy":
-      */
-   return data.map(session => session[filter] == null ? [] :
-                      [new Date(session.timestamp), session[filter]]);
-};
-
-const getTransferredChartDataByFilter = function(data, filter, timeFilter, devType='AMPHIRO') {
-  if (!data || !data.length) return [];
-
-   return data.map(session => session[filter] == null ? [] :
-                      [new Date(moment(session.timestamp).add(1, timeFilter)), session[filter]]);
-};
-
-/*
-const getFilteredData = function(data, filter, devType='AMPHIRO', timeFilter=null, transfer=false) {
-  if (!data || !data.length) return [];
-  
-  let filteredData = [];
-  switch (filter) {
-    case "showers":
-      data.forEach(function(dato, i)  {
-        const count = getCount(dato);
-        const index = getTimestampIndex(filteredData, dato.timestamp);
-        
-        //increment or append
-        if (index>-1){
-          filteredData[index] = [filteredData[index][0], filteredData[index][1]+count]; 
-        }
-        else{
-          filteredData.push([dato.timestamp, count]);     
-        } 
-      });
-      return filteredData.map(x => [new Date(x[0]),x[1]]);
-
-    case "volume":
-    case "difference":
-    case "energy":
-      
-      data.forEach(function(dato) {
-        if (!dato[filter]){
-          return;
-        }
-
-        let timestamp = dato.timestamp;
-        if (transfer) {
-          timestamp = moment(timestamp).add(1, timeFilter);
-        }
-        filteredData.push([timestamp, dato[filter]]);
-      });
-      filteredData = filteredData.map(x => [new Date(x[0]),x[1]]);
-      
-      if (devType === 'AMPHIRO') {
-        //filteredData = addPreviousValues(filteredData); 
-      }
-      else if (devType === 'METER') {
-        //filteredData = filteredData.map((x, i, array) => array[i-1]?[x[0],imer(array[i][1] - array[0][1])]:array[i]);
-        //filteredData = filteredData.map((x, i, array) => array[i-1]?[x[0], (array[i][1]-array[i-1][1])]:array[i]);
-      }
-
-      return filteredData;
-
-    default:
-      data.forEach(function(dato) {
-        if (!dato[filter]){
-          return;
-        }
-        let timestamp = dato.timestamp;
-        if (transfer) {
-          timestamp = moment(timestamp).add(1, timeFilter);
-        }
-        filteredData.push([timestamp, dato[filter]]);
-      });
-      
-      return filteredData.map(x => [new Date(x[0]),x[1]]);
-      
-
+const getChartMeterCategories = function(period, intl) {
+  if (period === 'year') {
+    return Array.from({length: 12}, (v, i) => intl.formatMessage({id:`months.${i}`}));
   }
-  return;
+  else if (period === 'month') {
+    return Array.from({length: 4}, (v, i) => `Week ${i+1}`);
+  }
+  else if (period === 'week') {
+    return Array.from({length: 7}, (v, i) => intl.formatMessage({id: `weekdays.${i}`}));
+  }
+  else if (period === 'day') {
+    return Array.from({length: 24}, (v, i) => `${i}:00`);
+  }
+  else return [];
 };
-*/
+
+const getChartAmphiroCategories = function(period, offset) {
+  if (period === 'ten') {
+    return Array.from({length: 10}, (v, i) => `#${offset+i}`);
+  }
+  else if (period === 'twenty') {
+    return Array.from({length: 20}, (v, i) => `#${offset+i}`);
+  }
+  else if (period === 'fifty') {
+    return Array.from({length: 50}, (v, i) => `#${offset+i}`);
+  }
+  else return [];
+};
+
+const getChartTimeDataByFilter = function(data, filter, period, intl) {
+  return getChartCategoriesByPeriod(period, intl).map((v, i) =>
+            data.find(session => getPeriodByTimestamp(period, session.timestamp) === i) ? (data[i] == null ? null : data[i][filter]) : null);
+};
+
+//TODO: have to make sure data is ALWAYS fetched in order of ascending ids for amphiro, ascending timestamps for meters
+const getChartDataByFilter = function(data, filter, xAxisData) {
+  //if not x axis data then x axis time
+  if (xAxisData === null) {
+    return data.map(session => session[filter] == null ? [] :
+                      [new Date(session.timestamp), session[filter]]);
+  }
+  //else x axis is category
+  else {
+    return xAxisData.map((v, i) =>
+      data[i] ? data[i][filter] : null);
+  }
+};
+
+
 module.exports = {
+  getChartTimeDataByFilter,
   getChartDataByFilter,
-  getTransferredChartDataByFilter
+  getChartMeterCategories,
+  getChartAmphiroCategories,
 };

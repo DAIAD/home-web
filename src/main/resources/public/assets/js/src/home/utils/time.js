@@ -134,6 +134,19 @@ const getGranularityByDiff = function(start, end) {
   else return 0;
 };
 
+const getPeriodByTimestamp = function(period, timestamp) {
+  return moment(timestamp).get(getLowerGranularityPeriod(period));
+};
+
+const getLowerGranularityPeriod = function(period) {
+  if (period === 'year') return 'month';
+  else if (period === 'month') return 'week';
+  else if (period === 'week') return 'day';
+  else if (period === 'day') return 'hour';
+  else throw new Error('error in get lower granularity period with', period);
+
+};
+
 module.exports = {
   defaultFormatter,
   selectTimeFormatter,
@@ -150,4 +163,6 @@ module.exports = {
   getGranularityByDiff,
   getLastShowerTime,
   getLastPeriod,
+  getPeriodByTimestamp,
+  getLowerGranularityPeriod
 };

@@ -14,10 +14,10 @@ var DashboardActions = require('../actions/DashboardActions');
 
 var timeUtil = require('../utils/time');
 
-var { getDeviceByKey, getDeviceNameByKey, getDeviceKeysByType, getDeviceTypeByKey, getAvailableDevices, getAvailableDeviceKeys, getAvailableMeters, getDefaultDevice, getLastSession, reduceMetric, reduceSessions, getDataSessions, getDataMeasurements, getShowersCount, getMetricMu } = require('../utils/device');
+var { getDeviceByKey, getDeviceNameByKey, getDeviceKeysByType, getDeviceTypeByKey, getAvailableDevices, getAvailableDeviceKeys, getAvailableMeters, getDefaultDevice, getLastSession, reduceMetric, reduceSessions, getDataSessions, getDataMeasurements, getShowersCount, getMetricMu, getSessionsIdOffset } = require('../utils/device');
 
 var { getEnergyClass } = require('../utils/general');
-var { getChartDataByFilter } = require('../utils/chart');
+var { getChartTimeDataByFilter, getChartDataByFilter, getChartMeterCategories, getChartAmphiroCategories } = require('../utils/chart');
 
 
 function mapStateToProps(state, ownProps) {
@@ -45,12 +45,12 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                dispatchProps,
                stateProps,
                {
-                 infoboxData: transformInfoboxData(stateProps.infoboxes, stateProps.devices, dispatchProps.link),
+                 infoboxData: transformInfoboxData(stateProps.infoboxes, stateProps.devices, dispatchProps.link, ownProps.intl),
                });
 }
 
 
-function transformInfoboxData (infoboxes, devices, link) {
+function transformInfoboxData (infoboxes, devices, link, intl) {
 
   return infoboxes.map(infobox => {
     const { id, title, type, period, index, deviceType, subtype, data, previous, metric, showerId } = infobox;
@@ -64,6 +64,11 @@ function transformInfoboxData (infoboxes, devices, link) {
     const showers = getShowersCount(devices, data);
     
     let chartFormatter = intl => (x) => intl.formatTime(x, { hour:'numeric', minute:'numeric'});
+    let chartType = 'line';
+    let chartXAxis = 'category';
+    let chartCategories = deviceType === 'METER' ? 
+      getChartMeterCategories(period, intl) : 
+        getChartAmphiroCategories(period, getSessionsIdOffset(data[0] ? data[0].sessions : []));
 
   if (period === 'year') 
     chartFormatter = intl => (x) => intl.formatTime(x, { month:'numeric', year:'numeric'});
@@ -80,6 +85,9 @@ function transformInfoboxData (infoboxes, devices, link) {
     else if (type === 'last') {
       device = infobox.device;
       time = infobox.time;
+      
+      chartCategories = null;
+
       const last = data.find(d=>d.deviceKey===device);
       const lastShowerMeasurements = getDataMeasurements(devices, last, index);
       
@@ -90,8 +98,9 @@ function transformInfoboxData (infoboxes, devices, link) {
 
       chartData = [{
         title: getDeviceNameByKey(devices, device), 
-        data: getChartDataByFilter(lastShowerMeasurements, infobox.metric)
+        data: getChartDataByFilter(lastShowerMeasurements, infobox.metric, chartCategories)
       }];
+      chartXAxis = 'time';
     
       linkToHistory =  () => link({time, showerId, period, deviceType, device:[device], metric, index, data});
     }
@@ -114,7 +123,7 @@ function transformInfoboxData (infoboxes, devices, link) {
 
       chartData = data.map(devData => ({ 
         title: getDeviceNameByKey(devices, devData.deviceKey), 
-        data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, getDeviceTypeByKey(devices, devData.device)) 
+        data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, chartCategories)
       }));
      
      linkToHistory =  () => link({id, time, period, deviceType, device, metric, index, data});
@@ -141,12 +150,25 @@ function transformInfoboxData (infoboxes, devices, link) {
       
       chartData = data.map(devData => ({ 
         title: getDeviceNameByKey(devices, devData.deviceKey), 
-        data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, getDeviceTypeByKey(devices, devData.device)) 
+        data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, chartCategories)
       }));
-     
       
       linkToHistory =  () => link({id, time, period, deviceType, device, metric, index, data});
 
+    }
+    else if (type === 'forecast') {
+      chartType = 'bar';
+      //dummy data
+      chartCategories=[2014, 2015, 2016];
+      chartData=[{title:'Consumption', data:[100, 200, 150]}];
+      mu = getMetricMu(metric);
+    }
+    else if (type === 'breakdown') {
+      chartType = 'bar';
+      //dummy data
+      chartData=[{title:'Consumption', data:[23, 25, 10, 20]}];
+      chartCategories = ["toilet", "faucet", "shower", "kitchen"];
+      mu = getMetricMu(metric);
     }
     return Object.assign({}, 
                        infobox,
@@ -157,6 +179,9 @@ function transformInfoboxData (infoboxes, devices, link) {
                          highlight,
                          chartData,
                          chartFormatter,
+                         chartType,
+                         chartCategories,
+                         chartXAxis,
                          linkToHistory,
                          better,
                          comparePercentage,
