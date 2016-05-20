@@ -104,6 +104,26 @@ var ManageAlertsActions = {
           dispatch(receivedTips(false, error, null));
         });
       };                   
+    },
+    checkBoxClicked: function(event, tip, tips) {
+      console.log('tip clicked: ' + tip.index + " active: " + tip.active);
+      //replace modified tip in tips
+      for(var obj2 in tips){
+        for(var prop2 in tips[obj2]){
+          if(prop2 == "index"){
+            if(tips[obj2][prop2] == tip.index){
+              console.log('found checked tip: ' + tips[obj2][prop2]);
+              console.log('is it active?: ' + tips[obj2].active);
+              tips[obj2].active = false;
+              break;
+            }
+          }        
+        }
+      }
+        return{
+          type : types.CHECKBOX_CLICKED,
+          tips : tips
+        }; 
     }
 };
 
