@@ -60,7 +60,11 @@ var alerts = function(state, action) {
             return Object.assign({}, state, {
 		activePage : action.activePage
             });          
-            
+        case types.CHECKBOX_CLICKED:
+          console.log('checkbox clicked');
+          return Object.assign({}, state, {
+              tips : action.tips
+            });           
         default:
           return state || initialState;
     }
