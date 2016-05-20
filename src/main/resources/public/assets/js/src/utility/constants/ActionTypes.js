@@ -72,6 +72,7 @@ var constants = keyMirror({
         ADMIN_SAVE_BUTTON_RESPONSE: null,
         ADMIN_SAVED_ACTIVE_TIPS: null,
         MESSAGES_SET_ACTIVE_PAGE: null,
+        CHECKBOX_CLICKED: null,
         // \manage alerts
  
 	QUERY_SUBMIT: null,
