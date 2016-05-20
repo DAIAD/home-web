@@ -48,8 +48,6 @@ public class AuthenticatedUser extends User {
 
 	private EnumUtilityMode utilityMode = EnumUtilityMode.INACTIVE;
 
-	private DateTime staticTipSentOn;
-
 	public AuthenticatedUser(int id, UUID key, String username, String password, int utilityId, boolean isLocked,
 					Collection<? extends GrantedAuthority> authorities) {
 		super(username, password, true, true, true, !isLocked, authorities);
@@ -166,14 +164,6 @@ public class AuthenticatedUser extends User {
 
 	public void setLocale(String locale) {
 		this.locale = locale;
-	}
-
-	public DateTime getStaticTipSentOn() {
-		return staticTipSentOn;
-	}
-
-	public void setStaticTipSentOn(DateTime staticTipSentOn) {
-		this.staticTipSentOn = staticTipSentOn;
 	}
 
 	public DateTime getCreatedOn() {
