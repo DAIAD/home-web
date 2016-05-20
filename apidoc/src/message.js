@@ -196,10 +196,20 @@ function message() { return; }
  * @apiParam (MessageAcknowledgement)   {Number}   timestamp              Time stamp the message was read by the user i.e. the time stamp at the mobile device.
  * 
  * @apiParamExample {json} Request Example
- * POST /v1/message/acknowledge/alert/12 HTTP/1.1
  * {
- *   username: "user@daiad.eu",
- *   password: "****"
+ *   "credentials": {
+ *     "username":"canogil.ana@gmail.com",
+ *     "password":"123"
+ *   },
+ *   "messages": [{
+ *     "id": 1625,
+ *     "timestamp": 1463667895000,
+ *     "type": "ALERT"
+ *   }, {
+ *     "id": 1797,
+ *     "timestamp": 1463667895000,
+ *     "type": "ALERT"
+ *   }]
  * }
  * 
  * @apiSuccess {Boolean}  success                  <code>true</code> or <code>false</code> indicating success of the operation.
