@@ -92,8 +92,6 @@ var Demographics = React.createClass({
   	},
   	
   	showDeleteGroupModal: function(group_id){
-  	  console.log(group_id);
-  	  console.log(this.props.deleteGroupModal);
   	  
   	  var _t = this.context.intl.formatMessage;
   	  var title = _t({id:'Modal.DeleteGroup.Title'});
