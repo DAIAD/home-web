@@ -188,7 +188,6 @@ h1, h2, h3, h4, h5 {
 }
 
 h1 {
-  border-bottom: 1px solid #ddd;
   font-size: 3.5em;
   font-weight: bold;
   margin: 0 0 15px;
@@ -196,7 +195,6 @@ h1 {
 }
 
 h2 {
-  border-bottom: 1px solid #eee;
   font-size: 3em;
 }
 
