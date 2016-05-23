@@ -1,4 +1,4 @@
-package eu.daiad.web.jobs;
+package eu.daiad.web.service.scheduling;
 
 import java.util.HashMap;
 import java.util.Map;

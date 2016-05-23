@@ -1,6 +1,5 @@
 package eu.daiad.web.model.message;
 
-
 public class StaticRecommendation extends Message {
 
 	private int id;
@@ -17,7 +16,7 @@ public class StaticRecommendation extends Message {
 
 	private String prompt;
 
-	private String externaLink;
+	private String externalLink;
 
 	private String source;
 
@@ -30,14 +29,6 @@ public class StaticRecommendation extends Message {
 	@Override
 	public EnumMessageType getType() {
 		return EnumMessageType.RECOMMENDATION_STATIC;
-	}
-
-	public int getId() {
-		return id;
-	}
-
-	public void setId(int id) {
-		this.id = id;
 	}
 
 	public int getIndex() {
@@ -88,14 +79,6 @@ public class StaticRecommendation extends Message {
 		this.prompt = prompt;
 	}
 
-	public String getExternaLink() {
-		return externaLink;
-	}
-
-	public void setExternaLink(String externaLink) {
-		this.externaLink = externaLink;
-	}
-
 	public String getSource() {
 		return source;
 	}
@@ -127,4 +110,21 @@ public class StaticRecommendation extends Message {
 	public void setActive(boolean active) {
 		this.active = active;
 	}
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getExternalLink() {
+		return externalLink;
+	}
+
+	public void setExternalLink(String externalLink) {
+		this.externalLink = externalLink;
+	}
+
 }

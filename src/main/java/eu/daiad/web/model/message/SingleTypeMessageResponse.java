@@ -5,15 +5,18 @@ import java.util.List;
 
 import eu.daiad.web.model.RestResponse;
 
-public class MessageResponse extends RestResponse {
-	List<Message> messages = new ArrayList<>();
+public class SingleTypeMessageResponse extends RestResponse {
 
-	public MessageResponse() {
+	private EnumMessageType type;
 
+	private List<Message> messages = new ArrayList<>();
+
+	public EnumMessageType getType() {
+		return type;
 	}
 
-	public MessageResponse(List<Message> messages) {
-		this.messages = messages;
+	public void setType(EnumMessageType type) {
+		this.type = type;
 	}
 
 	public List<Message> getMessages() {

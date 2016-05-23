@@ -25,14 +25,6 @@ public class Alert extends Message {
 		return EnumMessageType.ALERT;
 	}
 
-	public int getId() {
-		return id;
-	}
-
-	public void setId(int id) {
-		this.id = id;
-	}
-
 	public int getPriority() {
 		return priority;
 	}
@@ -75,6 +67,14 @@ public class Alert extends Message {
 
 	public EnumAlertType getAlert() {
 		return alert;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
 	}
 
 }

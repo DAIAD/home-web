@@ -1,4 +1,4 @@
-package eu.daiad.web.scheduling;
+package eu.daiad.web.service.scheduling;
 
 import java.util.concurrent.ScheduledFuture;
 

@@ -16,7 +16,7 @@
  * @apiParam {Object} credentials          User credentials used for authentication.
  * @apiParam {String} credentials.username User name
  * @apiParam {String} credentials.password User password
- * 
+ *
  * @apiParam {String} [timezone] Results are converted to the specified time zone.
  * @apiParam {Object} time Time constraint.
  * @apiParam {String} time.type Time constraint type. Valid values are <code>ABSOLUTE</code> or <code>SLIDING</code>. An absolute time constraint requires the <code>start</code> and <code>end</code> parameters. A sliding time constraint requires <code>start</code>, <code>duration</code> and <code>durationTimeUnit</code> parameters.
@@ -27,7 +27,7 @@
  * @apiParam {String} time.durationTimeUnit Time interval duration unit. Required only by <code>SLIDING</code> time constraints.
  *
  * @apiParam {Object[]} population Consumer selection filter. An new data series is returned for every population filter. Population filter classes derive from <code>PopulationFilter</code>. Concrete implementations are <code>UserPopulationFilter</code>, <code>GroupPopulationFilter</code>, <code>ClusterPopulationFilter</code> and <code>UtilityPopulationFilter</code>.<br/></br>For additional details see specific types below.
- * 
+ *
  * @apiParam {Object} spatial Spatial constraint used for filtering consumers.
  * @apiParam {String} spatial.type Spatial filter operation. Valid values are <code>CONTAINS</code>, <code>INTERSECT</code> and <code>DISTANCE</code>.
  * @apiParam {Object} spatial.geometry Geometry used in spatial filter expressed in GeoJSON.
@@ -42,9 +42,9 @@
  * <br/><br/><code>GROUP</code> applies the computation on all members of a group.
  * <br/><br/><code>CLUSTER</code> applies the computation on all groups of a cluster. It is equivelant of creating a <code>GROUP</code> filter for every cluster group. If more than one of the properties <code>cluster</code>, <code>clusterType</code>, <code>name</code> is set in the implementation class <code>ClusterPopulationFilter</code>, the first in the list overrides the next ones.
  * <br/><br/><code>UTILITY</code> applies the computation on all users of a utility.
- * 
+ *
  * @apiParam (PopulationFilter) {String} label User friendly name returned for each data series.
- * 
+ *
  * @apiParam (PopulationFilter) {Object} ranking When present instead of aggregating data from all users, user sorted ranking is computed.
  * @apiParam (PopulationFilter) {String} ranking.type Ordering. Can be <code>TOP</code> or <code>BOTTOM</code>,
  * @apiParam (PopulationFilter) {String} ranking.field Field that the computation is applied on. Valid values are <code>VOLUME</code>, <code>ENERGY</code>, <code>DURATION</code>, <code>TEMPERATURE</code> or <code>FLOW</code>.
@@ -62,7 +62,7 @@
  * @apiParam (ClusterPopulationFilter extends PopulationFilter) {String} name Cluster user friendly name.
  *
  * @apiParam (UtilityPopulationFilter extends PopulationFilter) {String} utility Utility unique identifier (UUID). Required when type is <code>UTILITY</code>.
- * 
+ *
  * @apiParamExample {json} Request Example
  *   {
  *      time: {
@@ -135,21 +135,21 @@
  * @apiSuccess {Object[]} errors                   Empty array of error messages.
  * @apiSuccess {Object[]} devices                  Collection of <code>DataSeries</code> series with Amphiro data.
  * @apiSuccess {Object[]} meters                   Collection of <code>DataSeries</code> series with smart water meter data.
- * 
+ *
  * @apiSuccess (DataSeries) {String} label            Result user friendly name as declared in the query.
  * @apiSuccess (DataSeries) {Number} population       Number of unique users found. This field is the number of users that contributed data to the final result. For instance a group may have 100 members but the <code>population</code> value may be less than 100. This may occur if a spatial field has been applied.
  * @apiSuccess (DataSeries) {Object[]} points           Data points. All data point classes dervice from <code>DataPoint</code>. A response may contain instances of <code>MeterDataPoint</code>, <code>AmphiroDataPoint</code> or <code>RankingDataPoint</code>.
- * 
+ *
  * @apiSuccess (DataPoint) {String} type Data point type. Valid values are <code>METER</code>, <code>AMPHIRO</code>, <code>RANKING</code>. Based on the type, the implementing class is <code>MeterDataPoint</code>, <code>AmphiroDataPoint</code> and <code>RankingDataPoint</code> respectively.<br/><br/>Instances of <code>MeterDataPoint</code> are returned for meter results.<br/><br/>Instances of <code>AmphiroDataPoint</code> are returned for Amphiro results.<br/><br/>Instances of <code>RankingDataPoint</code> are returned in any series for which the <code>ranking</code> property is set for the corresponding <code>population</code> filter.
  * @apiSuccess (DataPoint) {Number} timestamp Time stamp.
- * 
+ *
  * @apiSuccess (MeterDataPoint extends DataPoint) {Object} volume Volume data.
  * @apiSuccess (MeterDataPoint extends DataPoint) {Object} [volume.MIN] Minimum total water consumption.
  * @apiSuccess (MeterDataPoint extends DataPoint) {Object} [volume.MAX] Maximum total water consumption.
  * @apiSuccess (MeterDataPoint extends DataPoint) {Object} [volume.SUM] Total water consumption.
  * @apiSuccess (MeterDataPoint extends DataPoint) {Object} [volume.COUNT] Number of unique users that contributed to the result.
- * @apiSuccess (MeterDataPoint extends DataPoint) {Object} [volume.AVERAGE] Average water consumption. 
- * 
+ * @apiSuccess (MeterDataPoint extends DataPoint) {Object} [volume.AVERAGE] Average water consumption.
+ *
  * @apiSuccess (AmphiroDataPoint extends DataPoint) {Object} volume Volume data.
  * @apiSuccess (AmphiroDataPoint extends DataPoint) {Number} [volume.MIN] Minimum session consumption.
  * @apiSuccess (AmphiroDataPoint extends DataPoint) {Number} [volume.MAX] Maximum session consumption.
@@ -167,26 +167,26 @@
  * @apiSuccess (AmphiroDataPoint extends DataPoint) {Number} [duration.MAX] Maximum session duration.
  * @apiSuccess (AmphiroDataPoint extends DataPoint) {Number} [duration.SUM] Total duration of all sessions.
  * @apiSuccess (AmphiroDataPoint extends DataPoint) {Number} [duration.COUNT] Number of sessions.
- * @apiSuccess (AmphiroDataPoint extends DataPoint) {Number} [duration.AVERAGE] Average session duration. 
+ * @apiSuccess (AmphiroDataPoint extends DataPoint) {Number} [duration.AVERAGE] Average session duration.
  * @apiSuccess (AmphiroDataPoint extends DataPoint) {Object} temperature Temperature data.
  * @apiSuccess (AmphiroDataPoint extends DataPoint) {Number} [temperature.MIN] Minimum water temperature.
  * @apiSuccess (AmphiroDataPoint extends DataPoint) {Number} [temperature.MAX] Maximum water temperature.
  * @apiSuccess (AmphiroDataPoint extends DataPoint) {Number} [temperature.COUNT] Number of sessions.
- * @apiSuccess (AmphiroDataPoint extends DataPoint) {Number} [temperature.AVERAGE] Average water temperature for all sessions. 
+ * @apiSuccess (AmphiroDataPoint extends DataPoint) {Number} [temperature.AVERAGE] Average water temperature for all sessions.
  * @apiSuccess (AmphiroDataPoint extends DataPoint) {Object} flow Flow data.
  * @apiSuccess (AmphiroDataPoint extends DataPoint) {Number} [flow.MIN] Minimum water flow.
  * @apiSuccess (AmphiroDataPoint extends DataPoint) {Number} [flow.MAX] Maximum water flow.
  * @apiSuccess (AmphiroDataPoint extends DataPoint) {Number} [flow.COUNT] Number of sessions.
- * @apiSuccess (AmphiroDataPoint extends DataPoint) {Number} [flow.AVERAGE] Average water flow for all sessions. 
- * 
+ * @apiSuccess (AmphiroDataPoint extends DataPoint) {Number} [flow.AVERAGE] Average water flow for all sessions.
+ *
  * @apiSuccess (RankingDataPoint) {Object[]} users Unique users. Depending on the source of data (<code>METER</code> or <code>AMPHIRO</code>), the user data points are of type <code>MeterUserDataPoint</code> or <code>AmphiroUserDataPoint</code>. Both classes derive from <code>UserDataPoint</code>.
- * 
+ *
  * @apiSuccess (UserDataPoint) {String} key Unique user key (UUID).
  * @apiSuccess (UserDataPoint) {String} label User friendly name. The username account is returned by default.
- * 
+ *
  * @apiSuccess (MeterUserDataPoint extends UserDataPoint) {Object} volume Volume data.
  * @apiSuccess (MeterUserDataPoint extends UserDataPoint) {Number} volume.SUM Total water consumption.
- * 
+ *
  * @apiSuccess (AmphiroUserDataPoint extends UserDataPoint) {Object} volume Volume data.
  * @apiSuccess (AmphiroUserDataPoint extends UserDataPoint) {Number} [volume.MIN] Minimum session consumption.
  * @apiSuccess (AmphiroUserDataPoint extends UserDataPoint) {Number} [volume.MAX] Maximum session consumption.
@@ -204,18 +204,18 @@
  * @apiSuccess (AmphiroUserDataPoint extends UserDataPoint) {Number} [duration.MAX] Maximum session duration.
  * @apiSuccess (AmphiroUserDataPoint extends UserDataPoint) {Number} [duration.SUM] Total duration of all sessions.
  * @apiSuccess (AmphiroUserDataPoint extends UserDataPoint) {Number} [duration.COUNT] Number of sessions.
- * @apiSuccess (AmphiroUserDataPoint extends UserDataPoint) {Number} [duration.AVERAGE] Average session duration. 
+ * @apiSuccess (AmphiroUserDataPoint extends UserDataPoint) {Number} [duration.AVERAGE] Average session duration.
  * @apiSuccess (AmphiroUserDataPoint extends UserDataPoint) {Object} temperature Temperature data.
  * @apiSuccess (AmphiroUserDataPoint extends UserDataPoint) {Number} [temperature.MIN] Minimum water temperature.
  * @apiSuccess (AmphiroUserDataPoint extends UserDataPoint) {Number} [temperature.MAX] Maximum water temperature.
  * @apiSuccess (AmphiroUserDataPoint extends UserDataPoint) {Number} [temperature.COUNT] Number of sessions.
- * @apiSuccess (AmphiroUserDataPoint extends UserDataPoint) {Number} [temperature.AVERAGE] Average water temperature for all sessions. 
+ * @apiSuccess (AmphiroUserDataPoint extends UserDataPoint) {Number} [temperature.AVERAGE] Average water temperature for all sessions.
  * @apiSuccess (AmphiroUserDataPoint extends UserDataPoint) {Object} flow Flow data.
  * @apiSuccess (AmphiroUserDataPoint extends UserDataPoint) {Number} [flow.MIN] Minimum water flow.
  * @apiSuccess (AmphiroUserDataPoint extends UserDataPoint) {Number} [flow.MAX] Maximum water flow.
  * @apiSuccess (AmphiroUserDataPoint extends UserDataPoint) {Number} [flow.COUNT] Number of sessions.
- * @apiSuccess (AmphiroUserDataPoint extends UserDataPoint) {Number} [flow.AVERAGE] Average water flow for all sessions. 
- * 
+ * @apiSuccess (AmphiroUserDataPoint extends UserDataPoint) {Number} [flow.AVERAGE] Average water flow for all sessions.
+ *
  * @apiSuccessExample {json} Response Example
  * HTTP/1.1 200 OK
  * {
@@ -323,7 +323,7 @@
  *   ],
  *   "success": true
  * }
- * 
+ *
  * @apiSuccessExample {json} Response Example
  * HTTP/1.1 200 OK
  * {
@@ -388,14 +388,14 @@
  *      } ]
  *   } ],
  *   "success": true
- * } 
- * 
+ * }
+ *
  * @apiError {Boolean} success Always <code>false</code>.
  * @apiError {Object[]} errors Array of <code>Error</code> objects.
- * 
+ *
  * @apiError (Error) {String} code          Unique error code.
  * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
- * 
+ *
  * @apiErrorExample Error Response Example
  *     HTTP/1.1 200 OK
  *     {
@@ -414,7 +414,7 @@ function query() { return; }
  * @apiName DataStoreByTime
  * @apiGroup Data
  * @apiPermission ROLE_USER, ROLE_ADMIN
- * 
+ *
  * @apiDescription Store data for Smart Water Meter or Amphiro devices. Accessing Amphiro devices requires <code>ROLE_USER</code> permission. Accessing Smart Water Meter devices requires <code>ROLE_ADMIN</code> permission. Data for meters and Amphiro devices are of type <code>AmphiroMeasurementCollection</code> and <code>WaterMeterMeasurementCollection</code> respectively. Both classes extend <code>DeviceMeasurementCollection</code>. <b><span class="note">Amphiro session ordering is time based.</span></b>
  *
  * @apiParam (DeviceMeasurementCollection) {Object} credentials     User credentials
@@ -422,16 +422,16 @@ function query() { return; }
  * @apiParam (DeviceMeasurementCollection) {String} credentials.password        User password
  * @apiParam (DeviceMeasurementCollection) {String} type            Device type. Valid values are <code>METER</code> and <code>AMPHIRO</code>.
  * @apiParam (DeviceMeasurementCollection) {String} deviceKey       Device unique id (UUID).
- * 
+ *
  * @apiParam (WaterMeterMeasurementCollection extends DeviceMeasurementCollection) {Object[]} measurements      Array of <code>WaterMeterMeasurement</code> representing meter measurements.
- * 
+ *
  * @apiParam (WaterMeterMeasurement) {Number}   timestamp   Measurement time stamp.
  * @apiParam (WaterMeterMeasurement) {Number}   volume      Volume.
  * @apiParam (WaterMeterMeasurement) {Number}   difference  Difference between the current and previous measurements.
- * 
+ *
  * @apiParam (AmphiroMeasurementCollection extends DeviceMeasurementCollection) {Object[]} sessions      Array of <code>AmphiroSession</code> representing Amphiro sessions.
  * @apiParam (AmphiroMeasurementCollection extends DeviceMeasurementCollection) {Object[]} measurements  Array of <code>AmphiroMeasurement</code> representing Amphiro detailed measurements.
- * 
+ *
  * @apiParam (AmphiroSession) {Number}       id                    Unique per device session id.
  * @apiParam (AmphiroSession) {Boolean}      history               Set to <code>false</code> for real time sessions; Otherwise <code>true</code>.
  * @apiParam (AmphiroSession) {Object[]}     properties            Session properties represented by an array of <code>KeyValuePair</code> objects.
@@ -443,10 +443,10 @@ function query() { return; }
  * @apiParam (AmphiroSession) {Number}       flow                  Average flow.
  * @apiParam (AmphiroSession) {Object}       delete                If present, existing data for this session must be replaced. This property is used for converting historical sessions to real time ones.
  * @apiParam (AmphiroSession) {Number}       delete.timestamp      Time stamp of the session to be replaced.
- * 
+ *
  * @apiParam (KeyValuePair) {String}         key                   Key.
  * @apiParam (KeyValuePair) {String}         value                 Value.
- * 
+ *
  * @apiParam (AmphiroMeasurement) {Number}   sessionId             Session id.
  * @apiParam (AmphiroMeasurement) {Number}   index                 Measurement index.
  * @apiParam (AmphiroMeasurement) {Boolean}  history               Set to <code>false</code> for real time sessions; Otherwise <code>true</code>.
@@ -454,7 +454,7 @@ function query() { return; }
  * @apiParam (AmphiroMeasurement) {Number}   temperature           Temperature.
  * @apiParam (AmphiroMeasurement) {Number}   volume                Total water volume.
  * @apiParam (AmphiroMeasurement) {Number}   energy                Total energy.
- * 
+ *
  * @apiParamExample {json} Request Example (Amphiro)
  * {
  *   "deviceKey": "4b6bb490-1c03-4c9d-b5d0-1dbb758bf71a",
@@ -487,7 +487,7 @@ function query() { return; }
  *      }
  *   }]
  * }
- * 
+ *
  * @apiParamExample {json} Request Example (Meter)
  * {
  *   "deviceKey":"dea05a8c-79ac-4f1c-ade0-b47c5af4b7fb",
@@ -510,20 +510,20 @@ function query() { return; }
  * @apiSuccess {Boolean}  success           Returns <code>true</code> or <code>false</code> indicating success of the operation.
  * @apiSuccess {Object[]} errors            Array of <code>Error</code>.
  *
- * 
+ *
  * @apiSuccessExample {json} Response Example
  * HTTP/1.1 200 OK
  * {
  *   "errors": [],
  *   "success": true
  * }
- * 
+ *
  * @apiError {Boolean} success Always <code>false</code>.
  * @apiError {Object[]} errors Array of <code>Error</code> objects.
- * 
+ *
  * @apiError (Error) {String} code          Unique error code.
  * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
- * 
+ *
  * @apiErrorExample Error Response Example
  * HTTP/1.1 200 OK
  * {
@@ -542,7 +542,7 @@ function query() { return; }
  * @apiName DataStoreByIndex
  * @apiGroup Data
  * @apiPermission ROLE_USER, ROLE_ADMIN
- * 
+ *
  * @apiDescription Store data for Smart Water Meter or Amphiro devices. Accessing Amphiro devices requires <code>ROLE_USER</code> permission. Accessing Smart Water Meter devices requires <code>ROLE_ADMIN</code> permission. Data for meters and Amphiro devices are of type <code>AmphiroMeasurementCollection</code> and <code>WaterMeterMeasurementCollection</code> respectively. Both classes extend <code>DeviceMeasurementCollection</code>.<br/><br/>A historical session should not contain any measurements. If measurements are found for a historical session, an error will be returned. Moreover, all session identifiers and measurement indexes (for a specific parent session) must be unique. <b><span class="note">Amphiro session ordering is index based.</span></b>
  *
  * @apiParam (DeviceMeasurementCollection) {Object} credentials     User credentials
@@ -550,16 +550,16 @@ function query() { return; }
  * @apiParam (DeviceMeasurementCollection) {String} credentials.password        User password
  * @apiParam (DeviceMeasurementCollection) {String} type            Device type. Valid values are <code>METER</code> and <code>AMPHIRO</code>.
  * @apiParam (DeviceMeasurementCollection) {String} deviceKey       Device unique id (UUID).
- * 
+ *
  * @apiParam (WaterMeterMeasurementCollection extends DeviceMeasurementCollection) {Object[]} measurements      Array of <code>WaterMeterMeasurement</code> representing meter measurements.
- * 
+ *
  * @apiParam (WaterMeterMeasurement) {Number}   timestamp   Measurement time stamp.
  * @apiParam (WaterMeterMeasurement) {Number}   volume      Volume.
  * @apiParam (WaterMeterMeasurement) {Number}   difference  Difference between the current and previous measurements.
- * 
+ *
  * @apiParam (AmphiroMeasurementCollection extends DeviceMeasurementCollection) {Object[]} sessions      Array of <code>AmphiroSession</code> representing Amphiro sessions.
  * @apiParam (AmphiroMeasurementCollection extends DeviceMeasurementCollection) {Object[]} measurements  Array of <code>AmphiroMeasurement</code> representing Amphiro detailed measurements.
- * 
+ *
  * @apiParam (AmphiroSession) {Number}       id                    Unique per device session id.
  * @apiParam (AmphiroSession) {Boolean}      history               Set to <code>false</code> for real time sessions; Otherwise <code>true</code>.
  * @apiParam (AmphiroSession) {Object[]}     properties            Session properties represented by an array of <code>KeyValuePair</code> objects.
@@ -569,10 +569,10 @@ function query() { return; }
  * @apiParam (AmphiroSession) {Number}       duration              Session duration.
  * @apiParam (AmphiroSession) {Number}       temperature           Average temperature.
  * @apiParam (AmphiroSession) {Number}       flow                  Average flow.
- * 
+ *
  * @apiParam (KeyValuePair) {String}         key                   Key.
  * @apiParam (KeyValuePair) {String}         value                 Value.
- * 
+ *
  * @apiParam (AmphiroMeasurement) {Number}   sessionId             Session id.
  * @apiParam (AmphiroMeasurement) {Number}   index                 Measurement index.
  * @apiParam (AmphiroMeasurement) {Boolean}  history               Set to <code>false</code> for real time sessions; Otherwise <code>true</code>.
@@ -580,7 +580,7 @@ function query() { return; }
  * @apiParam (AmphiroMeasurement) {Number}   temperature           Temperature.
  * @apiParam (AmphiroMeasurement) {Number}   volume                Total water volume.
  * @apiParam (AmphiroMeasurement) {Number}   energy                Total energy.
- * 
+ *
  * @apiParamExample {json} Request Example (Amphiro)
  * {
  *   "deviceKey": "4b6bb490-1c03-4c9d-b5d0-1dbb758bf71a",
@@ -610,7 +610,7 @@ function query() { return; }
  *      "energy":0.4
  *   }]
  * }
- * 
+ *
  * @apiParamExample {json} Request Example (Meter)
  * {
  *   "deviceKey":"dea05a8c-79ac-4f1c-ade0-b47c5af4b7fb",
@@ -631,22 +631,42 @@ function query() { return; }
  * }
  *
  * @apiSuccess {Boolean}  success                 Returns <code>true</code> or <code>false</code> indicating success of the operation.
- * @apiSuccess {Object[]} errors                  Array of <code>Error</code>
- * 
- * 
- * @apiSuccessExample {json} Response Example
+ * @apiSuccess {Object[]} errors                  Array of <code>Error</code> objects.
+ * @apiSuccess {Object[]} [updates]               Array of <code>AmphiroSessionUpdate</code> objects. Property <code>updates</code> is returned only when Amphiro data is being stored. If an instance of <code>WaterMeterMeasurement</code> is specified, this property is <code>undefined</code>.<br/><br/>Property <code>updates</code> contains information about existing sessions on the server that have been updated e.g. when a historical session is converted to a real-time one or the time stamp of a historical session is updated (due to multiple clients reading the session data at different times).
+ *
+ * @apiSuccess (AmphiroSessionUpdate) {Number}       sessionId           Id of the updated session.
+ * @apiSuccess (AmphiroSessionUpdate) {Number}       timestamp           Session new time stamp.
+ *
+ * @apiSuccessExample {json} Response Example (Meter)
  * HTTP/1.1 200 OK
  * {
  *   "errors": [],
  *   "success": true
  * }
- * 
+ *
+ * @apiSuccessExample {json} Response Example (Amphiro)
+ * HTTP/1.1 200 OK
+ * {
+ *   "errors": [],
+ *   "updates": [{
+ *     "sessionId": 3,
+ *     "timestamp": 1461063910000
+ *   }, {
+ *     "sessionId": 2,
+ *     "timestamp": 1461060300000
+ *   }, {
+ *     "sessionId": 1,
+ *     "timestamp": 1461060000000
+ *   }],
+ *   "success": true
+ * }
+ *
  * @apiError {Boolean} success Always <code>false</code>.
  * @apiError {Object[]} errors Array of <code>Error</code> objects.
- * 
+ *
  * @apiError (Error) {String} code          Unique error code.
  * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
- * 
+ *
  * @apiErrorExample Error Response Example
  * HTTP/1.1 200 OK
  * {

@@ -20,7 +20,7 @@ import eu.daiad.web.model.error.ApplicationException;
 @Component
 public class TestJobBuilder implements IJobBuilder {
 
-	private static final Log logger = LogFactory.getLog(HBaseStatusMonitorJobBuilder.class);
+	private static final Log logger = LogFactory.getLog(TestJobBuilder.class);
 
 	@Autowired
 	private JobBuilderFactory jobBuilderFactory;

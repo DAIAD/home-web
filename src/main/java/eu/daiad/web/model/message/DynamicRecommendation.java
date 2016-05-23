@@ -1,6 +1,5 @@
 package eu.daiad.web.model.message;
 
-
 public class DynamicRecommendation extends Message {
 
 	private int id;
@@ -24,14 +23,6 @@ public class DynamicRecommendation extends Message {
 	@Override
 	public EnumMessageType getType() {
 		return EnumMessageType.RECOMMENDATION_DYNAMIC;
-	}
-
-	public int getId() {
-		return id;
-	}
-
-	public void setId(int id) {
-		this.id = id;
 	}
 
 	public int getPriority() {
@@ -76,6 +67,14 @@ public class DynamicRecommendation extends Message {
 
 	public EnumDynamicRecommendationType getRecommendation() {
 		return recommendation;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
 	}
 
 }

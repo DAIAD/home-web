@@ -2,16 +2,15 @@ package eu.daiad.web.repository.application;
 
 import java.util.List;
 
-import org.joda.time.DateTime;
-
-import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.Message;
+import eu.daiad.web.model.message.MessageAcknowledgement;
+import eu.daiad.web.model.message.MessageRequest;
 
 public interface IMessageRepository {
 
-	public abstract List<Message> getMessages();
+	public abstract List<Message> getMessages(MessageRequest request);
 
-	public abstract void setMessageAcknowledgement(EnumMessageType type, int id, DateTime acknowledgedOn);
+	public abstract void setMessageAcknowledgement(List<MessageAcknowledgement> messages);
 
-        public List<Message> getAdvisoryMessages(String locale);
+	public List<Message> getAdvisoryMessages(String locale);
 }

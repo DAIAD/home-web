@@ -19,14 +19,6 @@ public class Announcement extends Message {
 		return EnumMessageType.ANNOUNCEMENT;
 	}
 
-	public int getId() {
-		return id;
-	}
-
-	public void setId(int id) {
-		this.id = id;
-	}
-
 	public int getPriority() {
 		return priority;
 	}
@@ -65,5 +57,13 @@ public class Announcement extends Message {
 
 	public void setCreatedOn(Long createdOn) {
 		this.createdOn = createdOn;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
 	}
 }
