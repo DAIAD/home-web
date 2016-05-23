@@ -1,7 +1,7 @@
 package eu.daiad.web.model.error;
 
 public enum FavouriteErrorCode implements ErrorCode {
-	INVALID_FAVOURITE_TYPE;
+	INVALID_FAVOURITE_TYPE, FAVOURITE_DOES_NOT_EXIST, FAVOURITE_ACCESS_RESTRICTED;
 
 	@Override
 	public String getMessageKey() {

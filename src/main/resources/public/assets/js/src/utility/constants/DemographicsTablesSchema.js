@@ -62,6 +62,9 @@ var DemographicsTablesSchema = {
       fields: [{
         name: 'id',
         hidden: true
+      },{
+        name: 'refId',
+        hidden: true
       }, {
         name: 'type',
         title: 'Demographics.Favourites.Type'
@@ -71,9 +74,9 @@ var DemographicsTablesSchema = {
         link: function(row) {
           switch(row.type) {
             case 'Account':
-              return '/user/{id}';
+              return '/user/{refId}';
             case 'Commons': case 'Group':
-              return '/group/{id}';
+              return '/group/{refId}';
           }
           return null;
         }

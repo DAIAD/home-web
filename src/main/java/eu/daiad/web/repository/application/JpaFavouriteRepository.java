@@ -316,4 +316,50 @@ public class JpaFavouriteRepository implements IFavouriteRepository {
 		}
 		
 	}
+
+	@Override
+	public void deleteFavourite(UUID favourite_id) {
+		try{
+			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
+			
+			if (!user.hasRole("ROLE_ADMIN") && !user.hasRole("ROLE_SUPERUSER")) {
+				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+			}
+			
+			Favourite favourite = null;
+			// Check if favourite exists
+			try{
+				TypedQuery<Favourite> favouriteQuery = entityManager
+						.createQuery("select f from favourite f where f.key = :favourite_id",
+								Favourite.class).setFirstResult(0)
+						.setMaxResults(1);
+				favouriteQuery.setParameter("favourite_id", favourite_id);
+				favourite = favouriteQuery.getSingleResult();
+				
+				// Check that admin is the owner of the group
+					// Get admin's account
+				TypedQuery<eu.daiad.web.domain.application.Account> adminAccountQuery = entityManager
+								.createQuery("select a from account a where a.id = :adminId",
+										eu.daiad.web.domain.application.Account.class).setFirstResult(0)
+								.setMaxResults(1);
+				adminAccountQuery.setParameter("adminId", user.getId());
+				Account adminAccount = adminAccountQuery.getSingleResult();
+				
+				if(favourite.getOwner() == adminAccount){
+					this.entityManager.remove(favourite);
+					
+				} else {
+					throw new ApplicationException(FavouriteErrorCode.FAVOURITE_ACCESS_RESTRICTED).set("favouriteId", favourite_id);
+				}
+				
+				
+			} catch (NoResultException ex) {
+				throw ApplicationException.wrap(ex, FavouriteErrorCode.FAVOURITE_DOES_NOT_EXIST).set("favouriteId", favourite_id);
+			}
+			
+		}catch (Exception ex) {
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		}
+	}
 }

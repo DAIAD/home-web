@@ -127,4 +127,20 @@ public class GroupController extends BaseController {
 
 		return response;
 	}
+	
+	@RequestMapping(value = "/action/group/delete/{group_id}", method = RequestMethod.GET, produces = "application/json")
+	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN"})
+	public @ResponseBody RestResponse deleteGroup(@PathVariable UUID group_id){
+		RestResponse response = new RestResponse();
+		
+		try{
+			repository.deleteGroup(group_id);
+			
+		} catch (ApplicationException ex) {
+			logger.error(ex.getMessage(), ex);
+
+			response.add(this.getError(ex));
+		}
+		return response;
+	}
 }

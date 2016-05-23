@@ -30,6 +30,11 @@ var getCookie = function(name) {
   }
 };
 
+let unsubscribe = store.subscribe( function() {
+    console.log(store.getState().demographics);
+  }
+);
+
 var locale = getCookie('daiad-utility-locale') || 'en';
 var reload = (getCookie('daiad-utility-session') === 'true') || false;
 

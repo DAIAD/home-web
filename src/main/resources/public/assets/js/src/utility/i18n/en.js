@@ -187,7 +187,8 @@
     "CreateGroup" : "Create Group",
     "AddFavourite" : "Add Favourite",
     "UpdateFavourite" : "Update Favourite",
-    "Actions" : "Actions" 
+    "Actions" : "Actions",
+    "DeleteGroup" : "Delete Group"
   },
   "Form" : {
     "ErrorsDetected" : "Errors were detected:",
@@ -202,12 +203,19 @@
 				"Part3" : "\")?"
 			}
 		},
-		"SaveChanges": {
+		"SaveUserModeChanges": {
 			"Title": "Save Changes",
 			"Body" : {
 				"singular": " row has been modified. Are you sure you want to save this change?",
 				"plural": " rows have been modified. Are you sure you want to save these changes?"
 			}
+		},
+		"DeleteGroup": {
+		  "Title" : "Delete Group",
+		  "Body" : {
+		    "Part1" : "Are you sure you wish to delete group \"",
+		    "Part2" : "\" ?"
+		  }
 		}
 	},
   "FilterBar" : {

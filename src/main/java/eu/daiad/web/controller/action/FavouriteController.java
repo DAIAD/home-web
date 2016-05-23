@@ -82,7 +82,7 @@ public class FavouriteController extends BaseController {
 	
 	@RequestMapping(value = "/action/favourite/upsert", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN"})
-	public @ResponseBody RestResponse createGroupSet(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody UpsertFavouriteRequest favouriteInfo){
+	public @ResponseBody RestResponse upsertFavourite(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody UpsertFavouriteRequest favouriteInfo){
 		RestResponse response = new RestResponse();
 		
 		try {
@@ -96,4 +96,19 @@ public class FavouriteController extends BaseController {
 		return response;
 	}
 	
+	@RequestMapping(value = "/action/favourite/delete/{favourite_id}", method = RequestMethod.GET, consumes = "application/json", produces = "application/json")
+	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN"})
+	public @ResponseBody RestResponse deleteFavourite(@PathVariable UUID favourite_id){
+		RestResponse response = new RestResponse();
+		
+		try {
+			repository.deleteFavourite(favourite_id);
+			
+		} catch (ApplicationException ex) {
+			logger.error(ex.getMessage(), ex);
+			response.add(this.getError(ex));
+		}
+
+		return response;
+	}
 }

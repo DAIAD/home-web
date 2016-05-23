@@ -8,6 +8,7 @@ var Chart = require('../Chart');
 var UpsertFavouriteForm = require('./demographics/UpsertFavouriteForm');
 var CreateGroupForm = require('./demographics/CreateGroupForm');
 var MessageAlert = require('../AlertDismissable');
+var Modal = require('../Modal');
 
 var errorsCodes = require('../../constants/Errors');
 var successCodes = require('../../constants/Successes');
@@ -85,9 +86,43 @@ var Demographics = React.createClass({
   	  return visibleItems;
   	},
   	
+  	deleteGroup: function (group_id){
+  	  this.props.hideModal();
+  	  this.props.deleteGroup(this.props.deleteGroupForm.id);
+  	},
+  	
+  	showDeleteGroupModal: function(group_id){
+  	  console.log(group_id);
+  	  console.log(this.props.deleteGroupModal);
+  	  
+  	  var _t = this.context.intl.formatMessage;
+  	  var title = _t({id:'Modal.DeleteGroup.Title'});
+  	  
+  	  var group = Helpers.pickQualiffiedOnEquality(this.props.groups.rows, 'id', group_id);
+  	    	  
+  	  var body;
+  	  if (group){
+  	    body = _t({id:'Modal.DeleteGroup.Body.Part1'}) + group[0].name + _t({id:'Modal.DeleteGroup.Body.Part2'});
+      } else {
+        body = _t({id:'Modal.DeleteGroup.Body.Part1'}) + group_id + _t({id:'Modal.DeleteGroup.Body.Part2'});
+      }  	  
+  	  
+  	  
+  	  var actions = [{
+        action: this.props.hideModal,
+        name: _t({id:'Buttons.Cancel'})
+        }, {
+          action: this.deleteGroup,
+          name: _t({id:'Buttons.DeleteGroup'}),
+          style: 'danger'
+        }
+      ];
+  	  
+  	  this.props.showModal(group_id, title, body, actions);
+  	},
+  	
 	
   	render: function() {
-  	    	  
   	  var _t = this.context.intl.formatMessage;
   		var self = this;
   		
@@ -97,11 +132,14 @@ var Demographics = React.createClass({
   		    field.handler = function (){
   		      self.props.showFavouriteGroupForm(this.props.row.id);
   		    };
-  		  }
+  		  } else if (field.hasOwnProperty('name') && field.name === 'remove'){
+          field.handler = function (){
+            self.showDeleteGroupModal(this.props.row.id);
+          };
+        }
   		});
   		
   		var visibleFavourites = this.computeVisibleItems(this.props.favourites, this.props.favouritesFilter);
-
   		
   		var chartData = {
 		    series: [{
@@ -327,6 +365,43 @@ var Demographics = React.createClass({
   			</span>
   		);	
   		
+  		const groupMessageAlert = (
+          <MessageAlert
+            show = {true}
+            title = {'Dummy Errors'}
+            i18nNamespace={'Error.'}
+            bsStyle={'danger' }
+            format='list'
+            messages={[{code: 'Unknown.Error'}]}
+            dismissFunc={function(){}}
+          />
+        );
+  		
+  		var modal;
+  		if (this.props.hasOwnProperty('deleteGroupForm') && 
+  		    this.props.deleteGroupForm.hasOwnProperty('modal') &&
+  		    this.props.deleteGroupForm.modal.hasOwnProperty('show') &&
+  		    this.props.deleteGroupForm.modal.show){
+
+  		  modal = (
+  		      <Modal show = {true}
+              onClose = {self.props.hideModal}
+              title = {this.props.deleteGroupForm.modal.title}
+              text = {this.props.deleteGroupForm.modal.body}
+  		        actions = {this.props.deleteGroupForm.modal.actions}
+  		      />
+  		      );
+  		} else {
+  		  modal = (
+            <Modal show = {false}
+              onClose = {function(){}}
+              title = {''}
+              text = {''}
+              actions = {[]}
+            />
+            );
+  		}
+  		
   		if (this.props.application === 'addNewGroup'){
   		  return (
 		      <div className="container-fluid" style={{ paddingTop: 10 }}>
@@ -339,8 +414,8 @@ var Demographics = React.createClass({
             
               messageAlert = {{
                 show: this.props.showMessageAlert,
-                success: this.props.success,
-                errors: this.props.errors,
+                success: this.props.asyncResponse.success,
+                errors: this.props.asyncResponse.errors,
                 dismissFunc : this.props.addGroupHideErrorAlert
               }}
               actions = {{
@@ -369,83 +444,98 @@ var Demographics = React.createClass({
             </div>
         );
       } else {
-    		return (
-    			<div className="container-fluid" style={{ paddingTop: 10 }}>
-    			  {breadCrumb}
-    				<div className='row'>
-    					<div className='col-md-6'>
-    					 	<Bootstrap.Input 	type="text" 
-    					 	          ref="searchGroups"
-    					 						placeholder='Search groups ...'
-    					 						onChange={this.setGroupsFilter}
-    					 						buttonAfter={<Bootstrap.Button onClick={this.clearGroupsFilter}><i className='fa fa-trash fa-fw'></i></Bootstrap.Button>} 
-    					 	/>
-    			 		</div>
-    					<div className='col-md-6'>
-    					 	<Bootstrap.Input 	type="text" 
-    					 	          ref="searchFavourites"
-    					 						placeholder='Search favourites ...' 
-    					 						onChange={this.setFavouritesFilter}
-    					 						buttonAfter={<Bootstrap.Button onClick={this.clearFavouritesFilter}><i className='fa fa-trash fa-fw'></i></Bootstrap.Button>} 
-    					 	/>
-    			 		</div>
-    			 	</div>
-    				<div className='row'>
-    					<div className='col-md-6'>
-    						<Bootstrap.Panel header={groupTitle}>
-    							<Bootstrap.ListGroup fill>
-    								<Bootstrap.ListGroupItem>
-    									<Table data={visibleGroups}></Table>
-    								</Bootstrap.ListGroupItem>
-    							</Bootstrap.ListGroup>
-    						</Bootstrap.Panel>
-    					</div>
-    					<div className='col-md-6'>
-    						<Bootstrap.Panel header={favouriteTitle}>
-    							<Bootstrap.ListGroup fill>
-    								<Bootstrap.ListGroupItem>	
-    									<Table data={visibleFavourites}></Table>
-    								</Bootstrap.ListGroupItem>
-    							</Bootstrap.ListGroup>
-    						</Bootstrap.Panel>
-    					</div>
-    				</div>
-    				<div className="row">
-    					<div className="col-md-12">
-    						<Bootstrap.Panel header={chartTitle}>
-    							<Bootstrap.ListGroup fill>
-    								<Bootstrap.ListGroupItem>
-    									<Chart 	style={{ width: '100%', height: 400 }} 
-    											elementClassName='mixin'
-    											prefix='chart'
-    											options={chartOptions}
-    											data={chartData}/>
-    								</Bootstrap.ListGroupItem>
-    								<Bootstrap.ListGroupItem>
-    									<span style={{ paddingLeft : 7}}> </span>
-    									<Link to='/analytics' style={{ paddingLeft : 7, float: 'right'}}>View analytics</Link>
-    								</Bootstrap.ListGroupItem>
-    							</Bootstrap.ListGroup>
-    						</Bootstrap.Panel>
-    					</div>
-    				</div>
-    				<div className="row">
-    					<div className='col-md-12'>
-    						<Bootstrap.Panel header={scheduleTitle}>
-    							<Bootstrap.ListGroup fill>
-    								<Bootstrap.ListGroupItem>	
-    									<Table data={jobs}></Table>
-    								</Bootstrap.ListGroupItem>
-    								<Bootstrap.ListGroupItem>
-    									<span style={{ paddingLeft : 7}}> </span>
-    									<Link to='/scheduler' style={{ paddingLeft : 7, float: 'right'}}>View job management</Link>
-    								</Bootstrap.ListGroupItem>
-    							</Bootstrap.ListGroup>
-    						</Bootstrap.Panel>
-    					</div>
-    				</div>
-    			</div>
-    		);
+    		if (!this.props.isLoading){
+    		  return (
+      			<div className="container-fluid" style={{ paddingTop: 10 }}>
+      			  {breadCrumb}
+      			  {groupMessageAlert}
+      			  <div className='row'>
+                <div className='col-md-12'>           
+                  {modal}
+                </div>
+              </div>
+      				<div className='row'>
+      					<div className='col-md-6'>
+      					 	<Bootstrap.Input 	type="text" 
+      					 	          ref="searchGroups"
+      					 						placeholder='Search groups ...'
+      					 						onChange={this.setGroupsFilter}
+      					 						buttonAfter={<Bootstrap.Button onClick={this.clearGroupsFilter}><i className='fa fa-trash fa-fw'></i></Bootstrap.Button>} 
+      					 	/>
+      			 		</div>
+      					<div className='col-md-6'>
+      					 	<Bootstrap.Input 	type="text" 
+      					 	          ref="searchFavourites"
+      					 						placeholder='Search favourites ...' 
+      					 						onChange={this.setFavouritesFilter}
+      					 						buttonAfter={<Bootstrap.Button onClick={this.clearFavouritesFilter}><i className='fa fa-trash fa-fw'></i></Bootstrap.Button>} 
+      					 	/>
+      			 		</div>
+      			 	</div>
+      				<div className='row'>
+      					<div className='col-md-6'>
+      						<Bootstrap.Panel header={groupTitle}>
+      							<Bootstrap.ListGroup fill>
+      								<Bootstrap.ListGroupItem>
+      									<Table data={visibleGroups}></Table>
+      								</Bootstrap.ListGroupItem>
+      							</Bootstrap.ListGroup>
+      						</Bootstrap.Panel>
+      					</div>
+      					<div className='col-md-6'>
+      						<Bootstrap.Panel header={favouriteTitle}>
+      							<Bootstrap.ListGroup fill>
+      								<Bootstrap.ListGroupItem>	
+      									<Table data={visibleFavourites}></Table>
+      								</Bootstrap.ListGroupItem>
+      							</Bootstrap.ListGroup>
+      						</Bootstrap.Panel>
+      					</div>
+      				</div>
+      				<div className="row">
+      					<div className="col-md-12">
+      						<Bootstrap.Panel header={chartTitle}>
+      							<Bootstrap.ListGroup fill>
+      								<Bootstrap.ListGroupItem>
+      									<Chart 	style={{ width: '100%', height: 400 }} 
+      											elementClassName='mixin'
+      											prefix='chart'
+      											options={chartOptions}
+      											data={chartData}/>
+      								</Bootstrap.ListGroupItem>
+      								<Bootstrap.ListGroupItem>
+      									<span style={{ paddingLeft : 7}}> </span>
+      									<Link to='/analytics' style={{ paddingLeft : 7, float: 'right'}}>View analytics</Link>
+      								</Bootstrap.ListGroupItem>
+      							</Bootstrap.ListGroup>
+      						</Bootstrap.Panel>
+      					</div>
+      				</div>
+      				<div className="row">
+      					<div className='col-md-12'>
+      						<Bootstrap.Panel header={scheduleTitle}>
+      							<Bootstrap.ListGroup fill>
+      								<Bootstrap.ListGroupItem>	
+      									<Table data={jobs}></Table>
+      								</Bootstrap.ListGroupItem>
+      								<Bootstrap.ListGroupItem>
+      									<span style={{ paddingLeft : 7}}> </span>
+      									<Link to='/scheduler' style={{ paddingLeft : 7, float: 'right'}}>View job management</Link>
+      								</Bootstrap.ListGroupItem>
+      							</Bootstrap.ListGroup>
+      						</Bootstrap.Panel>
+      					</div>
+      				</div>
+      			</div>
+      		);
+		    } else {
+	        return (
+	          <div>
+	            <img className='preloader' src='/assets/images/utility/preloader-counterclock.png' />
+	            <img className='preloader-inner' src='/assets/images/utility/preloader-clockwise.png' />
+	          </div>
+	        );
+		    }
   		}
   	}
 });
@@ -457,8 +547,7 @@ Demographics.title = 'Section.Demographics';
 function mapStateToProps(state) {
   return {
     isLoading : state.demographics.isLoading,
-    success : state.demographics.success,
-    errors : state.demographics.errors,
+    asyncResponse : state.demographics.asyncResponse,
     showMessageAlert : state.demographics.newGroup.showMessageAlert,
     newGroupName : state.demographics.newGroup.newGroupName,
     application : state.demographics.application,
@@ -468,7 +557,9 @@ function mapStateToProps(state) {
     favourites : state.demographics.favourites,
     currentMembers : state.demographics.newGroup.currentMembers,
     possibleMembers : state.demographics.newGroup.possibleMembers,
-    favouriteGroupId : state.demographics.favouriteGroupId
+    favouriteGroupId : state.demographics.favouriteGroupId,
+    
+    deleteGroupForm : state.demographics.deleteGroupForm
   };
 }
 
@@ -491,6 +582,11 @@ function mapDispatchToProps(dispatch) {
     showFavouriteGroupForm : bindActionCreators(DemographicsActions.showFavouriteGroupForm, dispatch),
     hideFavouriteGroupForm : bindActionCreators(DemographicsActions.hideFavouriteGroupForm, dispatch),
     resetDemograhpics : bindActionCreators(DemographicsActions.resetDemograhpics, dispatch),
+    
+    deleteGroup : bindActionCreators(DemographicsActions.deleteGroup, dispatch),
+    showModal : bindActionCreators(DemographicsActions.showModal, dispatch),
+    hideModal : bindActionCreators(DemographicsActions.hideModal, dispatch),
+    deleteFavourite : bindActionCreators(DemographicsActions.deleteFavourite, dispatch),
   };
 }
 

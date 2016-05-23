@@ -1,3 +1,5 @@
+var React = require('react');
+
 var Checkbox = React.createClass({
   getDefaultProps: function() {
     return {

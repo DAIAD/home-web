@@ -44,12 +44,12 @@ var ModeManagementComponent = React.createClass({
 	
 	showModalSaveChanges: function(changedModes){
 		var _t = this.context.intl.formatMessage;
-		var title = _t({id:'Modal.SaveChanges.Title'});
+		var title = _t({id:'Modal.SaveUserModeChanges.Title'});
 		var body;
 		if(changedModes.length === 1){
-			body = changedModes.length + _t({id:'Modal.SaveChanges.Body.singular'});
+			body = changedModes.length + _t({id:'Modal.SaveUserModeChanges.Body.singular'});
 		} else {
-			body = changedModes.length + _t({id:'Modal.SaveChanges.Body.plural'});
+			body = changedModes.length + _t({id:'Modal.SaveUserModeChanges.Body.plural'});
 		}
 		var actions = [{
 				action: this.closeModal,

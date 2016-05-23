@@ -70,6 +70,36 @@ var groupSetCreateReceiveResponse = function(success, errors) {
 };
 
 
+var requestedGroupDeletion = function (){
+  return {
+    type : types.DEMOGRAPHICS_DELETE_GROUP_REQUEST_MADE
+  };
+};
+
+var receivedGroupDeletionResponse = function(success, errors){
+  return {
+    type : types.DEMOGRAPHICS_DELETE_GROUP_RESPONSE_RECEIVED,
+    success : success,
+    errors : errors
+  };
+};
+
+
+var requestedFavouriteDeletion = function (){
+  return {
+    type : types.DEMOGRAPHICS_DELETE_FAVOURITE_REQUEST_MADE
+  };
+};
+
+var receivedFavouriteDeletionResponse = function(success, errors){
+  return {
+    type : types.DEMOGRAPHICS_DELETE_FAVOURITE_RESPONSE_RECEIVED,
+    success : success,
+    errors : errors
+  };
+};
+
+
 var DemographicActions = {
     
   setGroupsFilter : function(groupsFilter){
@@ -211,6 +241,48 @@ var DemographicActions = {
   resetDemograhpics : function() {
     return {
       type : types.DEMOGRAPHICS_RESET_COMPONENT
+    };
+  },
+  
+  deleteGroup : function(groupId){
+    return function (dispatch, getState) {
+      dispatch(requestedGroupDeletion());
+      return demographicsAPI.deleteGroup(groupId).then(function(response) {
+        
+        dispatch(receivedGroupDeletionResponse(response.success, response.errors));
+      }, function(error){
+        
+        dispatch(receivedGroupDeletionResponse(false, error));
+      });
+    };
+  },
+  
+  showModal : function(groupId, title, body, actions){
+    return {
+      type : types.DEMOGRAPHICS_SHOW_MODAL,
+      groupId : groupId,
+      title : title,
+      body : body,
+      actions : actions
+    };
+  },
+  
+  hideModal : function(){
+    return {
+      type : types.DEMOGRAPHICS_HIDE_MODAL
+    };
+  },
+  
+  deleteFavourite : function(favouriteId){
+    return function (dispatch, getState) {
+      dispatch(requestedFavouriteDeletion());
+      return demographicsAPI.deleteFavourite(favouriteId).then(function(response) {
+        
+        dispatch(receivedFavouriteDeletionResponse(response.success, response.errors));
+      }, function(error){
+        
+        dispatch(receivedFavouriteDeletionResponse(false, error));
+      });
     };
   },
   

@@ -22,7 +22,15 @@ var DemographicsAPI = {
     
     createGroupSet : function(groupSetInfo) {
       return api.json('/action/group/set/create', groupSetInfo);
-    }
+    },
+    
+    deleteGroup: function(group_id) {
+      return api.json('/action/group/delete/' + group_id);
+    },
+    
+    deleteFavourite : function(favourite_id) {
+      return api.json('/action/favourite/delete/' + favourite_id);
+    },
   };
 
 module.exports = DemographicsAPI;

@@ -18,5 +18,7 @@ public interface IGroupRepository{
 	public abstract void createGroupSet(CreateGroupSetRequest groupSetInfo);
 
 	public abstract GroupInfo getSingleGroupByKey(UUID group_id);
+
+	public abstract void deleteGroup(UUID group_id);
 		
 }

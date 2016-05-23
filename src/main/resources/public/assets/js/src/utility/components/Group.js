@@ -5,6 +5,7 @@ var { Link } = require('react-router');
 var Table = require('./Table');
 var Chart = require('./Chart');
 
+
 var UpsertFavouriteForm = require('./section/demographics/UpsertFavouriteForm');
 
 
@@ -324,8 +325,7 @@ function mapDispatchToProps(dispatch) {
     resetGroup : bindActionCreators(GroupActions.resetDemograhpics, dispatch),
     
     showFavouriteAccountForm : bindActionCreators(GroupActions.showFavouriteAccountForm, dispatch),
-    hideFavouriteAccountForm : bindActionCreators(GroupActions.hideFavouriteAccountForm, dispatch)
-    
+    hideFavouriteAccountForm : bindActionCreators(GroupActions.hideFavouriteAccountForm, dispatch),    
   };
 }
 

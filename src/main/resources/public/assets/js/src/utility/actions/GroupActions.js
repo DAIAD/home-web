@@ -3,7 +3,7 @@ var GroupAPI = require('../api/group');
 
 var requestedGroup = function (){
   return {
-    type : types.GROUP_REQUEST_GROUP 
+    type : types.GROUP_REQUEST_GROUP
   };
 };
 
@@ -77,7 +77,7 @@ var GroupActions = {
     return {
       type : types.GROUP_HIDE_FAVOURITE_ACCOUNT_FORM
     };
-  },
+  }
   
 };
 

@@ -5,8 +5,11 @@ var DemographicsTablesSchema = require('../constants/DemographicsTablesSchema');
 
 var initialState = {
     isLoading : false,
-    success : null,
-    errors : null,
+    asyncResponse : {
+      action : null,
+      success : null,
+      errors : null,
+    },
     application : 'default',
     groupsFilter : '',
     groups : {
@@ -37,6 +40,12 @@ var initialState = {
       candidateMembersToAdd : [],
       candidateMembersToRemove : []
     },
+    deleteGroupForm : {
+      id : null,
+      modal : {
+        show : false
+      }
+    },
     newFavourite : null
 };
 
@@ -58,7 +67,8 @@ var createFavouriteRows = function(favouritesInfo){
   var favourites = [];
   favouritesInfo.forEach(function(f){
     var favourite = {
-        id: f.refId,
+        id: f.key,
+        refId: f.refId,
         name: f.name,
         type: helpers.toTitleCase(f.type),
         addedOn: new Date (f.additionDateMils)
@@ -112,8 +122,11 @@ var demographics = function(state, action) {
     
     var fields = DemographicsTablesSchema.Groups.fields;
     return Object.assign({}, state, {
-      success : action.success,
-      errors : action.errors,
+      asyncResponse : {
+        action : 'GetGroups',
+        success : action.success,
+        errors : action.errors,
+      },
       groups : {
         fields : fields,
         rows : createGroupRows(action.groupsInfo),
@@ -128,8 +141,11 @@ var demographics = function(state, action) {
   case types.DEMOGRAPHICS_RECEIVE_FAVOURITES:
     return Object.assign({}, state, {
       isLoading : false,
-      success : action.success,
-      errors : action.errors,
+      asyncResponse : {
+        action : 'GetFavourites',
+        success : action.success,
+        errors : action.errors,
+      },
       favourites : {
         fields : DemographicsTablesSchema.Favourites.fields,
         rows : createFavouriteRows(action.favouritesInfo),
@@ -163,8 +179,11 @@ var demographics = function(state, action) {
     
     return Object.assign({}, state, {
       isLoading : false,
-      success : action.success,
-      errors : action.errors,
+      asyncResponse : {
+        action : 'GetPossibleGroupMembers',
+        success : action.success,
+        errors : action.errors,
+      },
       newGroup : newGroup
     });
     
@@ -192,8 +211,11 @@ var demographics = function(state, action) {
   case types.DEMOGRAPHICS_RECEIVE_GROUP_MEMBERS:    
     return Object.assign({}, state, {
       isLoading : false,
-      success : action.success,
-      errors : action.errors,
+      asyncResponse : {
+        action : 'GetGroupMembers',
+        success : action.success,
+        errors : action.errors,
+      },
       possibleMembers : createPossibleMembersRows(action.possibleMembersInfo)
      
     });
@@ -311,8 +333,11 @@ var demographics = function(state, action) {
     
     return Object.assign({}, state, {
       isLoading : false,
-      success : false,
-      errors : action.errors,
+      asyncResponse : {
+        action : 'CreateGroupSet',
+        success : action.success,
+        errors : action.errors,
+      },
       newGroup : newGroup
     });
     
@@ -344,8 +369,11 @@ var demographics = function(state, action) {
     }
     return Object.assign({}, state, {
       isLoading : false,
-      success : action.success,
-      errors : action.errors,
+      asyncResponse : {
+        action : 'CreateGroupSet',
+        success : action.success,
+        errors : action.errors,
+      },
       newGroup : newGroup
     });
    
@@ -364,6 +392,62 @@ var demographics = function(state, action) {
   case types.DEMOGRAPHICS_RESET_COMPONENT:
     return Object.assign({}, state, {
       application : 'default'
+    });
+    
+  case types.DEMOGRAPHICS_SHOW_MODAL:
+    return Object.assign({}, state, {
+      deleteGroupForm : {
+        id : action.groupId,
+        modal : {
+          show : true,
+          title : action.title,
+          body : action.body,
+          actions : action.actions
+        }
+      }
+    });
+    
+  case types.DEMOGRAPHICS_HIDE_MODAL:
+    return Object.assign({}, state, {
+      deleteGroupForm : {
+        id : null,
+        modal : {
+          show : false
+        }
+      }
+    });
+    
+    
+  case types.DEMOGRAPHICS_DELETE_GROUP_REQUEST_MADE:
+    return Object.assign({}, state, {
+      isLoading : true
+    });
+    
+  case types.DEMOGRAPHICS_DELETE_GROUP_RESPONSE_RECEIVED:
+    
+    return Object.assign({}, state, {
+      isLoading : false,
+      asyncResponse : {
+        action : 'DeleteGroup',
+        success : action.success,
+        errors : action.errors,
+      },
+    });
+    
+  case types.DEMOGRAPHICS_DELETE_FAVOURITE_REQUEST_MADE:
+    return Object.assign({}, state, {
+      isLoading : true
+    });
+    
+  case types.DEMOGRAPHICS_DELETE_FAVOURITE_RESPONSE_RECEIVED:
+    
+    return Object.assign({}, state, {
+      isLoading : false,
+      asyncResponse : {
+        action : 'DeleteFavourite',
+        success : action.success,
+        errors : action.errors,
+      },
     });
     
     

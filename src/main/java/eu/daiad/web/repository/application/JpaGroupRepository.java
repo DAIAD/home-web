@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
@@ -16,6 +17,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.domain.application.Account;
+import eu.daiad.web.domain.application.Favourite;
+import eu.daiad.web.domain.application.FavouriteGroup;
 import eu.daiad.web.domain.application.Group;
 import eu.daiad.web.domain.application.GroupMember;
 import eu.daiad.web.domain.application.GroupSet;
@@ -23,7 +26,9 @@ import eu.daiad.web.domain.application.Utility;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.GroupErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.model.favourite.EnumFavouriteType;
 import eu.daiad.web.model.group.CreateGroupSetRequest;
+import eu.daiad.web.model.group.EnumGroupType;
 import eu.daiad.web.model.group.GroupInfo;
 import eu.daiad.web.model.group.GroupMemberInfo;
 import eu.daiad.web.model.security.AuthenticatedUser;
@@ -41,7 +46,7 @@ public class JpaGroupRepository implements IGroupRepository{
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 			
-			if (!user.hasRole("ROLE_ADMIN")) {
+			if (!user.hasRole("ROLE_ADMIN") && !user.hasRole("ROLE_SUPERUSER")) {
 				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 			
@@ -79,7 +84,7 @@ public class JpaGroupRepository implements IGroupRepository{
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 			
-			if (!user.hasRole("ROLE_ADMIN")) {
+			if (!user.hasRole("ROLE_ADMIN") && !user.hasRole("ROLE_SUPERUSER")) {
 				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
@@ -106,7 +111,7 @@ public class JpaGroupRepository implements IGroupRepository{
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 			
-			if (!user.hasRole("ROLE_ADMIN")) {
+			if (!user.hasRole("ROLE_ADMIN") && !user.hasRole("ROLE_SUPERUSER")) {
 				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 			
@@ -157,7 +162,7 @@ public class JpaGroupRepository implements IGroupRepository{
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 			
-			if (!user.hasRole("ROLE_ADMIN")) {
+			if (!user.hasRole("ROLE_ADMIN") && !user.hasRole("ROLE_SUPERUSER")) {
 				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 			
@@ -172,7 +177,7 @@ public class JpaGroupRepository implements IGroupRepository{
 				throw new ApplicationException(GroupErrorCode.GROUP_EXISTS).set("groupName", groupSetInfo.getName());
 			}
 			
-			// Get admin's utility
+			// Get admin's account
 			TypedQuery<eu.daiad.web.domain.application.Account> adminAccountQuery = entityManager
 							.createQuery("select a from account a where a.id = :adminId",
 									eu.daiad.web.domain.application.Account.class).setFirstResult(0)
@@ -225,7 +230,7 @@ public class JpaGroupRepository implements IGroupRepository{
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 			
-			if (!user.hasRole("ROLE_ADMIN")) {
+			if (!user.hasRole("ROLE_ADMIN") && !user.hasRole("ROLE_SUPERUSER")) {
 				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 			
@@ -247,10 +252,75 @@ public class JpaGroupRepository implements IGroupRepository{
 			if (group.getUtility() != adminUtility){
 				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
+			
+			
 
 			return new GroupInfo(group);
 		} catch (Exception ex) {
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
 		}
+	}
+
+	@Override
+	public void deleteGroup(UUID group_id) {
+		try{
+			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
+			
+			if (!user.hasRole("ROLE_ADMIN") && !user.hasRole("ROLE_SUPERUSER")) {
+				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+			}
+			
+			Group group = null;
+			// Check if group exists
+			try{
+				TypedQuery<Group> groupQuery = entityManager
+						.createQuery("select g from group g where g.key = :group_id",
+								Group.class).setFirstResult(0)
+						.setMaxResults(1);
+				groupQuery.setParameter("group_id", group_id);
+				group = groupQuery.getSingleResult();
+			} catch (NoResultException ex) {
+				throw ApplicationException.wrap(ex, GroupErrorCode.GROUP_DOES_NOT_EXIST).set("groupId", group_id);
+			}
+			
+			// Check that admin is the owner of the group
+			if(group.getType() == EnumGroupType.SET){
+				// Get admin's account
+				TypedQuery<eu.daiad.web.domain.application.Account> adminAccountQuery = entityManager
+								.createQuery("select a from account a where a.id = :adminId",
+										eu.daiad.web.domain.application.Account.class).setFirstResult(0)
+								.setMaxResults(1);
+				adminAccountQuery.setParameter("adminId", user.getId());
+				Account adminAccount = adminAccountQuery.getSingleResult();
+				GroupSet groupSet = (GroupSet) group;
+				
+				if(groupSet.getOwner() == adminAccount){
+					this.entityManager.remove(group);
+					
+					//check if this group is someone's favourite, in order to delete these favourites as well
+					TypedQuery<Favourite> favouriteQuery = entityManager
+							.createQuery("select f from favourite f",
+									Favourite.class).setFirstResult(0);
+					
+					List <Favourite> favourites = favouriteQuery.getResultList();
+					for (Favourite f : favourites){
+						if(f.getType().equals(EnumFavouriteType.GROUP)){
+							FavouriteGroup fg = (FavouriteGroup) f;
+							if(fg.getGroup().getId() == group.getId()){
+								this.entityManager.remove(f);
+							}
+						}
+						
+					}
+				} else {
+					throw new ApplicationException(GroupErrorCode.GROUP_ACCESS_RESTRICTED).set("groupId", group_id);
+				}
+			}
+			
+		}catch (Exception ex) {
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		}
+		
 	}
 }

@@ -17,5 +17,7 @@ public interface IFavouriteRepository {
 	public abstract FavouriteGroupInfo checkFavouriteGroup(UUID group_id);
 
 	public abstract void upsertFavourite(UpsertFavouriteRequest favouriteInfo);
+
+	public abstract void deleteFavourite(UUID favourite_id);
 	
 }
