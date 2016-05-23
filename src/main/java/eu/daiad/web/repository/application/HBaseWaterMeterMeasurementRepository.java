@@ -780,12 +780,10 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 							MeterUserDataPoint m1 = (MeterUserDataPoint) u1;
 							MeterUserDataPoint m2 = (MeterUserDataPoint) u2;
 
-							if (m1.getVolume().get(filter.getRanking().getMetric()) < m2.getVolume().get(
-											filter.getRanking().getMetric())) {
+							if (m1.getVolume().get(EnumMetric.SUM) < m2.getVolume().get(EnumMetric.SUM)) {
 								return -1;
 							}
-							if (m1.getVolume().get(filter.getRanking().getMetric()) > m2.getVolume().get(
-											filter.getRanking().getMetric())) {
+							if (m1.getVolume().get(EnumMetric.SUM) > m2.getVolume().get(EnumMetric.SUM)) {
 								return 1;
 							}
 							return 0;

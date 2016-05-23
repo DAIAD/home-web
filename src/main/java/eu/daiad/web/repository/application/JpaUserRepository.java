@@ -379,8 +379,6 @@ public class JpaUserRepository implements IUserRepository {
 				user.setWebMode(EnumWebMode.fromInteger(account.getProfile().getWebMode()));
 				user.setMobileMode(EnumMobileMode.fromInteger(account.getProfile().getMobileMode()));
 				user.setUtilityMode(EnumUtilityMode.fromInteger(account.getProfile().getUtilityMode()));
-
-				user.setStaticTipSentOn(account.getProfile().getStaticTipSentOn());
 			}
 
 			return user;
@@ -424,8 +422,6 @@ public class JpaUserRepository implements IUserRepository {
 				user.setWebMode(EnumWebMode.fromInteger(account.getProfile().getWebMode()));
 				user.setMobileMode(EnumMobileMode.fromInteger(account.getProfile().getMobileMode()));
 				user.setUtilityMode(EnumUtilityMode.fromInteger(account.getProfile().getUtilityMode()));
-
-				user.setStaticTipSentOn(account.getProfile().getStaticTipSentOn());
 			}
 
 			return user;
@@ -470,8 +466,6 @@ public class JpaUserRepository implements IUserRepository {
 				user.setWebMode(EnumWebMode.fromInteger(account.getProfile().getWebMode()));
 				user.setMobileMode(EnumMobileMode.fromInteger(account.getProfile().getMobileMode()));
 				user.setUtilityMode(EnumUtilityMode.fromInteger(account.getProfile().getUtilityMode()));
-
-				user.setStaticTipSentOn(account.getProfile().getStaticTipSentOn());
 			}
 
 			return user;
@@ -740,11 +734,10 @@ public class JpaUserRepository implements IUserRepository {
 								.createNativeQuery("select CAST(a.key as char varying) from account a where a.utility_id = :utility_id");
 				query.setParameter("utility_id", user.getUtilityId());
 
-				@SuppressWarnings("unchecked")
-				List<String> keys = query.getResultList();
+				List<?> keys = query.getResultList();
 
-				for (String key : keys) {
-					result.add(UUID.fromString(key));
+				for (Object key : keys) {
+					result.add(UUID.fromString((String) key));
 				}
 			}
 		} catch (Exception ex) {

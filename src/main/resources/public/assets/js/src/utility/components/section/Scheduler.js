@@ -1,10 +1,18 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
+var { bindActionCreators } = require('redux');
+var { connect } = require('react-redux');
+
 var Bootstrap = require('react-bootstrap');
-var { Link } = require('react-router');
+
 var Breadcrumb = require('../Breadcrumb');
+
+var { Link } = require('react-router');
+
 var Table = require('../Table');
 var RadialChart = require('../RadialChart');
+
+var { getStatus } = require('../../actions/SchedulerActions');
 
 var Scheduler = React.createClass({
 	contextTypes: {
@@ -13,9 +21,15 @@ var Scheduler = React.createClass({
 	
 	getInitialState() {
 		return {
-			key: 1
-    	};
+		  key: 1
+  	};
 	},
+
+  componentWillMount : function() {
+    if(!this.props.scheduler.jobs) {
+      this.props.actions.getStatus();
+    }
+  },
 
 	selectSection(key) {
 		this.setState({key : key});
@@ -26,23 +40,29 @@ var Scheduler = React.createClass({
 
   		var jobs = {
 			fields: [{
-				name: 'id',
+				name: 'jobId',
 				hidden: true
 			}, {
-				name: 'type',
-				title: 'Type'
+        name: 'scheduledJobId',
+        hidden: true
+      }, {
+				name: 'category',
+				title: 'Category'
 			}, {
-				name: 'description',
-				title: 'Description'
+				name: 'name',
+				title: 'Name'			
 			}, {
-				name: 'owner',
-				title: 'Owner'			
-			}, {
-				name: 'createdOn',
-				title: 'Created On',
+        name: 'description',
+        title: 'Description'
+      }, {
+        name: 'title',
+        title: 'Title'     
+      }, {
+				name: 'lastExecution',
+				title: 'Last Execution',
 				type: 'datetime'
 			}, {
-				name: 'scheduledOn',
+				name: 'nextExecution',
 				title: 'Next Execution',
 				type: 'datetime'
 			}, {
@@ -53,7 +73,7 @@ var Scheduler = React.createClass({
 				title: 'Progress',
 				type: 'progress'
 			}, {
-				name: 'edit',
+				name: 'enablee',
 				type:'action',
 				icon: 'pencil',
 				handler: function() {
@@ -209,4 +229,17 @@ var Scheduler = React.createClass({
 Scheduler.icon = 'clock-o';
 Scheduler.title = 'Section.Scheduler';
 
-module.exports = Scheduler;
+function mapStateToProps(state) {
+  return {
+      scheduler: state.scheduler,
+      routing: state.routing
+  };
+}
+
+function mapDispatchToProps(dispatch) {
+  return {
+    actions : bindActionCreators(Object.assign({}, { getStatus }) , dispatch)
+  };
+}
+
+module.exports = connect(mapStateToProps, mapDispatchToProps)(Scheduler);

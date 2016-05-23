@@ -28,6 +28,7 @@ import eu.daiad.web.model.amphiro.AmphiroSessionTimeIntervalQuery;
 import eu.daiad.web.model.amphiro.AmphiroSessionTimeIntervalQueryResult;
 import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.device.Device;
+import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DeviceErrorCode;
@@ -125,7 +126,7 @@ public class SearchController extends BaseRestController {
 	}
 
 	@RequestMapping(value = "/api/v1/device/measurement/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse searchAmphiroMeasurements1(@RequestBody AmphiroMeasurementTimeIntervalQuery query) {
+	public RestResponse searchAmphiroMeasurementsByTime(@RequestBody AmphiroMeasurementTimeIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -134,7 +135,7 @@ public class SearchController extends BaseRestController {
 			query.setUserKey(user.getKey());
 
 			if ((query.getDeviceKey() == null) || (query.getDeviceKey().length == 0)) {
-				return new WaterMeterStatusQueryResult();
+				return new AmphiroMeasurementTimeIntervalQueryResult();
 			}
 
 			this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
@@ -155,7 +156,7 @@ public class SearchController extends BaseRestController {
 	}
 
 	@RequestMapping(value = "/api/v2/device/measurement/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse searchAmphiroMeasurements2(@RequestBody AmphiroMeasurementIndexIntervalQuery query) {
+	public RestResponse searchAmphiroMeasurementsByIndex(@RequestBody AmphiroMeasurementIndexIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -164,7 +165,7 @@ public class SearchController extends BaseRestController {
 			query.setUserKey(user.getKey());
 
 			if ((query.getDeviceKey() == null) || (query.getDeviceKey().length == 0)) {
-				return new WaterMeterStatusQueryResult();
+				return new AmphiroMeasurementIndexIntervalQueryResult();
 			}
 
 			this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
@@ -185,7 +186,8 @@ public class SearchController extends BaseRestController {
 	}
 
 	@RequestMapping(value = "/api/v1/device/session/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse searchAmphiroSessions1(@RequestBody AmphiroSessionCollectionTimeIntervalQuery query) {
+	public RestResponse searchAmphiroSessionsWithTimeOrdering(
+					@RequestBody AmphiroSessionCollectionTimeIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -194,7 +196,7 @@ public class SearchController extends BaseRestController {
 			query.setUserKey(user.getKey());
 
 			if ((query.getDeviceKey() == null) || (query.getDeviceKey().length == 0)) {
-				return new WaterMeterStatusQueryResult();
+				return new AmphiroSessionCollectionTimeIntervalQueryResult();
 			}
 
 			String[] names = this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
@@ -215,7 +217,8 @@ public class SearchController extends BaseRestController {
 	}
 
 	@RequestMapping(value = "/api/v2/device/session/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse searchAmphiroSessions2(@RequestBody AmphiroSessionCollectionIndexIntervalQuery query) {
+	public RestResponse searchAmphiroSessionsWithIndexOrdering(
+					@RequestBody AmphiroSessionCollectionIndexIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -224,7 +227,7 @@ public class SearchController extends BaseRestController {
 			query.setUserKey(user.getKey());
 
 			if ((query.getDeviceKey() == null) || (query.getDeviceKey().length == 0)) {
-				return new WaterMeterStatusQueryResult();
+				return new AmphiroSessionCollectionIndexIntervalQueryResult();
 			}
 
 			String[] names = this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
@@ -245,7 +248,7 @@ public class SearchController extends BaseRestController {
 	}
 
 	@RequestMapping(value = "/api/v1/device/session", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse getAmphiroSession1(@RequestBody AmphiroSessionTimeIntervalQuery query) {
+	public RestResponse getAmphiroSessionByTime(@RequestBody AmphiroSessionTimeIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -254,7 +257,7 @@ public class SearchController extends BaseRestController {
 			query.setUserKey(user.getKey());
 
 			if (query.getDeviceKey() == null) {
-				return new WaterMeterStatusQueryResult();
+				return new AmphiroSessionTimeIntervalQueryResult();
 			}
 
 			this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
@@ -274,7 +277,7 @@ public class SearchController extends BaseRestController {
 	}
 
 	@RequestMapping(value = "/api/v2/device/session", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse getAmphiroSession2(@RequestBody AmphiroSessionIndexIntervalQuery query) {
+	public RestResponse getAmphiroSessionByIndex(@RequestBody AmphiroSessionIndexIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -283,7 +286,7 @@ public class SearchController extends BaseRestController {
 			query.setUserKey(user.getKey());
 
 			if (query.getDeviceKey() == null) {
-				return new WaterMeterStatusQueryResult();
+				return new AmphiroSessionIndexIntervalQueryResult();
 			}
 
 			this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
@@ -317,7 +320,7 @@ public class SearchController extends BaseRestController {
 			for (UUID deviceKey : devices) {
 				Device device = this.deviceRepository.getUserDeviceByKey(userKey, deviceKey);
 
-				if (device == null) {
+				if ((device == null) || (!device.getType().equals(EnumDeviceType.AMPHIRO))) {
 					throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
 				}
 
@@ -337,7 +340,7 @@ public class SearchController extends BaseRestController {
 			for (UUID deviceKey : devices) {
 				Device device = this.deviceRepository.getUserDeviceByKey(userKey, deviceKey);
 
-				if (device == null) {
+				if ((device == null) || (!device.getType().equals(EnumDeviceType.METER))) {
 					throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
 				}
 

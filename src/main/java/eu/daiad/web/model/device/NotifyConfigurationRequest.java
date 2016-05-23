@@ -2,23 +2,21 @@ package eu.daiad.web.model.device;
 
 import java.util.UUID;
 
-import org.joda.time.DateTime;
-
 import eu.daiad.web.model.AuthenticatedRequest;
 
 public class NotifyConfigurationRequest extends AuthenticatedRequest {
 
-	private DateTime updatedOn;
+	private long updatedOn;
 
 	private UUID version;
 
 	private UUID deviceKey;
 
-	public DateTime getUpdatedOn() {
+	public long getUpdatedOn() {
 		return updatedOn;
 	}
 
-	public void setUpdatedOn(DateTime updatedOn) {
+	public void setUpdatedOn(long updatedOn) {
 		this.updatedOn = updatedOn;
 	}
 

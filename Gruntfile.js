@@ -28,6 +28,7 @@ module.exports = function (grunt) {
 			utility: {
 				src: "apidoc/src",
 				dest: "apidoc/docs",
+				template: "apidoc/template",
 				options: {
 					debug: false,
 					includeFilters: [ ".*\\.js$" ]
@@ -238,6 +239,12 @@ module.exports = function (grunt) {
 					src: ['*.js'],
 					dest: 'src/main/resources/public/assets/js/build/utility/i18n/',
 					filter: 'isFile'
+				}, {
+					expand: true,
+					cwd: 'apidoc/docs/',
+					src: ['**/*'],
+					dest: 'src/main/resources/public/docs/api/',
+					filter: 'isFile'
 				}]
 			},
 			home: {
@@ -280,7 +287,7 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-jsxhint');
 
     // Default task(s).
-    grunt.registerTask('build', ['clean', 'jshint', 'browserify', 'uglify', 'concat', 'sync:utility']);
+    grunt.registerTask('build', ['clean', 'jshint', 'browserify', 'uglify', 'concat', 'docs', 'sync:utility']);
 
 	grunt.registerTask('develop', ['clean', 'jshint', 'browserify', 'sync:home', 'sync:utility', 'sync:debug', 'watch']);
 

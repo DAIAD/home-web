@@ -1,6 +1,7 @@
 package eu.daiad.web.model.query;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.joda.time.DateTimeZone;
 
@@ -16,7 +17,7 @@ public class ExpandedDataQuery {
 
 	private ArrayList<ExpandedPopulationFilter> groups = new ArrayList<ExpandedPopulationFilter>();
 
-	private EnumMetric metrics[];
+	private List<EnumMetric> metrics;
 
 	public ExpandedDataQuery(DateTimeZone timezone) {
 		this.timezone = timezone;
@@ -46,11 +47,11 @@ public class ExpandedDataQuery {
 		this.granularity = granularity;
 	}
 
-	public EnumMetric[] getMetrics() {
+	public List<EnumMetric> getMetrics() {
 		return metrics;
 	}
 
-	public void setMetrics(EnumMetric[] metrics) {
+	public void setMetrics(List<EnumMetric> metrics) {
 		this.metrics = metrics;
 	}
 

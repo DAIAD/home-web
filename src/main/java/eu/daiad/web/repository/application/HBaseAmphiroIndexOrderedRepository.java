@@ -155,6 +155,12 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 			for (int i = data.getSessions().size() - 1; i >= 0; i--) {
 				AmphiroSession s = data.getSessions().get(i);
 
+				// Ignore any delete operation from the client. We have to set
+				// this property to null since the client can always send an
+				// invalid delete operation. We set this property manually only
+				// when we want to replace a session explicitly.
+				s.setDelete(null);
+
 				byte[] rowKey;
 
 				byte[] userKeyBytes = userKey.toString().getBytes("UTF-8");
@@ -699,7 +705,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 						currentSessionId = sessionId;
 						totalSessions++;
 					}
-					if (totalSessions >= maxTotalSessions) {
+					if (totalSessions > maxTotalSessions) {
 						break;
 					}
 
@@ -826,9 +832,9 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 
 			UUID deviceKeys[] = query.getDeviceKey();
 
-			int totalSessions = 0;
-
 			for (int deviceIndex = 0; deviceIndex < deviceKeys.length; deviceIndex++) {
+				int totalSessions = 0;
+
 				AmphiroSessionCollection collection = new AmphiroSessionCollection(deviceKeys[deviceIndex],
 								names[deviceIndex]);
 

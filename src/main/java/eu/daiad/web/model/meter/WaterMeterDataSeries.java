@@ -9,10 +9,13 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import eu.daiad.web.model.TemporalConstants;
 
 public class WaterMeterDataSeries {
 
+	@JsonIgnore
 	private int granularity = TemporalConstants.NONE;
 
 	private UUID deviceKey;

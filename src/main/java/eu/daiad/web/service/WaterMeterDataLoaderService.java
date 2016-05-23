@@ -161,7 +161,7 @@ public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService
 	public FileProcessingStatus parse(String filename, String timezone) throws ApplicationException {
 		File file = new File(filename);
 		if (!file.exists()) {
-			throw new ApplicationException(SharedErrorCode.FILE_DOES_NOT_EXIST).set("filename", filename);
+			throw new ApplicationException(SharedErrorCode.RESOURCE_DOES_NOT_EXIST).set("resource", filename);
 		}
 
 		Scanner scan = null;

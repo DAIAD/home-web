@@ -14,6 +14,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Type;
+import org.joda.time.DateTime;
 
 @Entity(name = "static_recommendation")
 @Table(schema = "public", name = "static_recommendation")
@@ -58,6 +59,17 @@ public class StaticRecommendation {
 	@Basic()
 	private String source;
 
+        @Column(name = "created_on")
+	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+	private DateTime createdOn;
+
+        @Column(name = "modified_on")
+	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+	private DateTime modifiedOn;
+        
+        @Column(name = "active")
+	private boolean active;
+        
 	public int getId() {
 		return id;
 	}
@@ -145,5 +157,29 @@ public class StaticRecommendation {
 	public void setSource(String source) {
 		this.source = source;
 	}
+
+        public DateTime getCreatedOn() {
+                return createdOn;
+        }
+
+        public void setCreatedOn(DateTime createdOn) {
+                this.createdOn = createdOn;
+        }
+
+    public DateTime getModifiedOn() {
+        return modifiedOn;
+    }
+
+    public void setModifiedOn(DateTime modifiedOn) {
+        this.modifiedOn = modifiedOn;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
 
 }
