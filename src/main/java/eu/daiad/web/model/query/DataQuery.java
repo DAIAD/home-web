@@ -20,7 +20,6 @@ public class DataQuery {
 	@JsonDeserialize(using = EnumMeasurementDataSource.Deserializer.class)
 	EnumMeasurementDataSource source = EnumMeasurementDataSource.BOTH;
 
-	@JsonDeserialize(using = EnumMetric.Deserializer.class)
 	EnumMetric[] metrics = {};
 
 	public TimeFilter getTime() {
