@@ -174,7 +174,7 @@ const DashboardActions = {
     return function(dispatch, getState) {
       getState().section.dashboard.infobox.map(function (infobox) {
         const { type } = infobox;
-        if (type === 'total' || type === 'last' || type === 'efficiency')
+        if (type === 'total' || type === 'last' || type === 'efficiency' || type === 'comparison' || type === 'breakdown')
         return dispatch(DashboardActions.fetchInfoboxData(infobox));
       });
     };

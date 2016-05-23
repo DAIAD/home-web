@@ -69,15 +69,7 @@ function transformInfoboxData (infoboxes, devices, link, intl) {
     let chartCategories = deviceType === 'METER' ? 
       getChartMeterCategories(period, intl) : 
         getChartAmphiroCategories(period, getSessionsIdOffset(data[0] ? data[0].sessions : []));
-
-  if (period === 'year') 
-    chartFormatter = intl => (x) => intl.formatTime(x, { month:'numeric', year:'numeric'});
-  else if (period === 'month') 
-    chartFormatter = intl => (x) => intl.formatTime(x, { day:'numeric'});
-  else if (period === 'week')
-    chartFormatter = intl => (x) => intl.formatTime(x, { day:'numeric'});
-  else if (period === 'day')
-    chartFormatter = intl => (x) => intl.formatTime(x, { hour:'numeric', minute:'numeric'});
+    let invertAxis = false;
 
     if (type==='tip') {
       highlight = STATIC_RECOMMENDATIONS[Math.floor(Math.random()*3)].description;
@@ -158,6 +150,7 @@ function transformInfoboxData (infoboxes, devices, link, intl) {
     }
     else if (type === 'forecast') {
       chartType = 'bar';
+
       //dummy data
       chartCategories=[2014, 2015, 2016];
       chartData=[{title:'Consumption', data:[100, 200, 150]}];
@@ -165,10 +158,46 @@ function transformInfoboxData (infoboxes, devices, link, intl) {
     }
     else if (type === 'breakdown') {
       chartType = 'bar';
+
+      periods = deviceType === 'AMPHIRO' ? devPeriods : meterPeriods;
+
+      reduced = data ? reduceMetric(devices, data, metric) : 0;
       //dummy data
-      chartData=[{title:'Consumption', data:[23, 25, 10, 20]}];
+      chartData=[{title:'Consumption', data:[Math.floor(reduced/4), Math.floor(reduced/4), Math.floor(reduced/3), Math.floor(reduced/2-reduced/3)]}];
       chartCategories = ["toilet", "faucet", "shower", "kitchen"];
       mu = getMetricMu(metric);
+      invertAxis = true;
+
+      linkToHistory =  () => link({id, time, period, deviceType, device, metric, index, data});
+    }
+    else if (type === 'comparison') {
+      chartType = 'bar';
+
+      periods = deviceType === 'AMPHIRO' ? devPeriods : meterPeriods;
+
+      reduced = data ? reduceMetric(devices, data, metric) : 0;
+      mu = getMetricMu(metric);
+      //dummy data based on real user data
+      chartData=[{title:'Comparison', data:[reduced-0.2*reduced, reduced+0.5*reduced, reduced/2, reduced]}];
+      chartCategories = ["City", "Neighbors", "Similar", "You"];
+      mu = getMetricMu(metric);
+      invertAxis = true;
+
+      linkToHistory =  () => link({id, time, period, deviceType, device, metric, index, data});
+    }
+    else if (type === 'budget') {
+      chartType = 'pie';
+
+      periods = deviceType === 'AMPHIRO' ? devPeriods : meterPeriods;
+
+      reduced = data ? reduceMetric(devices, data, metric) : 0;
+      mu = getMetricMu(metric);
+      chartCategories = null; 
+      //dummy data based on real user data
+      chartData=[{title:'Comparison', data:[{value: 345, name: 'consumed'}, {value: 250, name: 'remaining'}]}];
+      mu = getMetricMu(metric);
+
+      linkToHistory =  () => link({id, time, period, deviceType, device, metric, index, data});
     }
     return Object.assign({}, 
                        infobox,
@@ -182,6 +211,7 @@ function transformInfoboxData (infoboxes, devices, link, intl) {
                          chartType,
                          chartCategories,
                          chartXAxis,
+                         invertAxis,
                          linkToHistory,
                          better,
                          comparePercentage,

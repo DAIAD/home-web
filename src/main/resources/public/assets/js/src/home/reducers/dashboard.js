@@ -17,6 +17,8 @@ var dashboard = function (state, action) {
         {i: "8", x:4, y:2, w:2, h:1},
         {i: "9", x:0, y:3, w:2, h:2},
         {i: "10", x:4, y:3, w:2, h:2},
+        {i: "11", x:2, y:3, w:2, h:2},
+        {i: "12", x:0, y:3, w:2, h:2},
       ],
       infobox: [
           {
@@ -97,7 +99,26 @@ var dashboard = function (state, action) {
           metric: "difference",
           data: [],
         },
-
+        {
+          id: "11", 
+          title: "Comparison",
+          type: "comparison",
+          display: "chart",
+          deviceType: "METER",
+          period: "year",
+          metric: "difference",
+          data: [],
+        },
+        {
+          id: "12", 
+          title: "Budget",
+          type: "budget",
+          display: "chart",
+          deviceType: "METER",
+          period: "month",
+          metric: "difference",
+          data: [],
+        },
       ]
     };
   }

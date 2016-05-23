@@ -5,7 +5,7 @@ var { injectIntl } = require('react-intl');
 var { FormattedMessage, FormattedRelative } = require('react-intl');
 var { IMAGES } = require('../constants/HomeConstants');
 
-var SessionsChart = require('./SessionsChart');
+//var SessionsChart = require('./SessionsChart');
 
 
 function SessionListItem (props) {
@@ -77,6 +77,7 @@ function SessionListItem (props) {
   );
 }
 
+/*
 function SparklineChart (props) {
   if (!props.data || !props.data.length || props.data.length<=1 || props.history) {
     return (<h3>-</h3>);
@@ -98,7 +99,7 @@ function SparklineChart (props) {
       data={[{title: 'Consumption', data:props.data}]}
     />);
 }
-
+*/
 
 var SessionsList = React.createClass({
 

@@ -1,8 +1,8 @@
 var React = require('react');
 
-var Chart = require('./helpers/Chart');
+var Chart = require('./Chart');
 
-var SessionsChart = React.createClass({
+var BarChart = React.createClass({
 
   getDefaultProps: function() { 
     return {
@@ -11,7 +11,6 @@ var SessionsChart = React.createClass({
       title: "",
       subtitle: "",
       mu: "",
-      type: "line",
       xAxis: "category",
       //xTicks: 12,
       xAxisData: null,
@@ -46,10 +45,11 @@ var SessionsChart = React.createClass({
             type: 'default'
     };
     const seriesArray = this.props.data.map((x, i) => { 
-      const data = this._checkData(this.props.xAxisData, x.data);
+      //const data = this._checkData(this.props.xAxisData, x.data);
+      const data = x.data;
       return {
         name: x.title,
-        type: this.props.type,
+        type: 'bar',
         showAllSymbol: true,
         symbolSize: 5,
         smooth: false,
@@ -64,10 +64,13 @@ var SessionsChart = React.createClass({
               width: 1
             },
             label : {
-                show: false, 
-                position: 'insideTop',
+                show: true, 
+                position: this.props.invertAxis? 'insideLeft' : 'insideBottom',
+                formatter: '{b}: {c}',
+                textStyle: {
+                  color: '#fff',
+                },
                 //fontFamily: "OpenSansCondensed",
-                textStyle: '#666'
             },
             textStyle: {
               //fontFamily: "OpenSansCondensed",
@@ -80,16 +83,11 @@ var SessionsChart = React.createClass({
           }
         },
         data,
-        //markLine : {
-        //    data : [
-        //        {type : 'average', name: 'Average'}
-        //    ]
-        //}
-    };
+      };
     });
     const xAxis = [
       {
-        show: true,
+        show: false,
         type : this.props.xAxis,
         data: this.props.xAxisData ? this.props.xAxisData : [],
         //splitNumber: 12,
@@ -99,6 +97,7 @@ var SessionsChart = React.createClass({
         //max: this.props.xMax,
         axisLabel : {
           formatter: this.props.xAxis === 'time' ? this.props.formatter : null,
+          position: 'insideLeft',
           textStyle: {
             //fontFamily: "OpenSansCondensed",
             color: '#808285',
@@ -110,7 +109,10 @@ var SessionsChart = React.createClass({
           show: false
         },
         axisLine: {
-          show: true
+          show: false
+        },
+        axisTick: {
+          show: false
         },
         // axistTick: {
           //show: true
@@ -122,7 +124,7 @@ var SessionsChart = React.createClass({
 
     const yAxis = [
       {
-        show: true,
+        show: false,
         type : 'value',
         axisLabel : {
           formatter: `{value}  ${this.props.mu}`,
@@ -149,6 +151,7 @@ var SessionsChart = React.createClass({
         boundaryGap: [0, 0.1]
       }
     ];
+    console.log('rendering chart', seriesArray, xAxis);
     return (
       <Chart
         style={{
@@ -203,8 +206,8 @@ var SessionsChart = React.createClass({
             x2: this.props.x2Margin,
             y2: this.props.y2Margin
           },
-          xAxis : this.props.invertAxis?yAxis:xAxis,
-          yAxis : this.props.invertAxis?xAxis:yAxis,
+          xAxis : this.props.invertAxis?[{show: false}]:xAxis,
+          yAxis : this.props.invertAxis?xAxis:[{show: false}],
           series : seriesArray
         }}  
       />
@@ -212,4 +215,4 @@ var SessionsChart = React.createClass({
   }
 });
 
-module.exports = SessionsChart;
+module.exports = BarChart;

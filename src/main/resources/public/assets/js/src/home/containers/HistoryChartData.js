@@ -2,7 +2,8 @@ var React = require('react');
 var connect = require('react-redux').connect;
 var injectIntl = require('react-intl').injectIntl;
 
-var SessionsChart = require('../components/SessionsChart');
+//var LineChart = require('../components/SessionsChart');
+var LineChart = require('../components/helpers/LineChart');
 
 var HistoryActions = require('../actions/HistoryActions');
 
@@ -54,7 +55,6 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                              })).concat(comparison),
                              xMin: stateProps.timeFilter === 'custom' ? stateProps.time.startDate : 0,
                              xMax: stateProps.timeFilter === 'custom' ? stateProps.time.endDate : xAxisData.length-1,
-                         type: 'line',
                          xAxis: stateProps.timeFilter === 'custom' ? 'time' : 'category',
                          xAxisData,
                          //xTicks: xAxisData.length,
@@ -64,7 +64,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                       );
 }
 
-var HistoryChart = connect(mapStateToProps, mapDispatchToProps, mergeProps)(SessionsChart);
+var HistoryChart = connect(mapStateToProps, mapDispatchToProps, mergeProps)(LineChart);
 HistoryChart = injectIntl(HistoryChart);
 
 module.exports = HistoryChart;

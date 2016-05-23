@@ -3,14 +3,17 @@ var bs = require('react-bootstrap');
 var classNames = require('classnames');
 
 var intl = require('react-intl');
-var { injectIntl, FormattedMessage, FormatterRelative } = require('react-intl');
+var { injectIntl, FormattedMessage, FormattedRelative } = require('react-intl');
 
 var { Responsive, WidthProvider } = require('react-grid-layout');
 var ResponsiveGridLayout = WidthProvider(Responsive);
 var PureRenderMixin = require('react-addons-pure-render-mixin');
 
 var MainSection = require('../layout/MainSection');
-var SessionsChart = require('../SessionsChart');
+
+var LineChart = require('../helpers/LineChart');
+var BarChart = require('../helpers/BarChart');
+var PieChart = require('../helpers/PieChart');
 
 const { IMAGES } = require('../../constants/HomeConstants');
 
@@ -38,7 +41,7 @@ function SayHello (props) {
 
 function InfoBox (props) {
   const { mode, infobox, updateInfobox, removeInfobox, chartFormatter, intl } = props;
-  const { id, error, period, type, display, linkToHistory, periods, displays } = infobox;
+  const { id, error, period, type, display, linkToHistory, periods, displays, time } = infobox;
   
   const _t = intl.formatMessage;
   return (
@@ -64,6 +67,11 @@ function InfoBox (props) {
                 ))
             }
           </div>
+          {
+            (() => type === 'last' && time ? 
+             <FormattedRelative value={time} /> : <span/>
+             )()
+          }
           {
             //TODO: disable delete infobox until add is created
                <a className='infobox-x' style={{float: 'right', marginLeft: 5, marginRight:5}} onClick={()=>removeInfobox(infobox.id)}><i className="fa fa-times"></i></a>
@@ -147,30 +155,57 @@ function TipBox (props) {
 
 function ChartBox (props) {
   const { intl, history, infobox } = props;
-  const { title, type, subtype, improved, data, metric, measurements, period, device, deviceDetails, chartData, chartFormatter, chartType, chartCategories, chartXAxis, highlight, time, index, mu } = infobox;
-  const invertAxis = type === 'breakdown' ? true : false;
-  //const chartTitle = type === 'last' ? new Date(time).toString() : '';
+  const { title, type, subtype, improved, data, metric, measurements, period, device, deviceDetails, chartData, chartFormatter, chartType, chartCategories, chartXAxis, highlight, time, index, mu, invertAxis } = infobox;
+  console.log('chart data', chartData, chartType, infobox);
   return (
     <div>
       <div >
         {
           (() => chartData.length>0 ? 
-            <SessionsChart
+           (type === 'budget' ? 
+           <PieChart
               height={200}
               width='100%'  
               title=''
               subtitle=""
-              yMargin={10}
-              y2Margin={40}
               fontSize={12}
               mu={mu}
-              invertAxis={invertAxis}
-              type={chartType}
-              xAxis={chartXAxis}
-              xAxisData={chartCategories}
-              formatter={chartFormatter(intl)}
               data={chartData}
-            />
+            /> :
+              ((type === 'breakdown' || type === 'forecast' || type === 'comparison') ?
+                <BarChart
+                  height={200}
+                  width='100%'  
+                  title=''
+                  subtitle=""
+                  xMargin={0}
+                  y2Margin={0}  
+                  yMargin={0}
+                  x2Margin={0}
+                  fontSize={12}
+                  mu={mu}
+                  invertAxis={invertAxis}
+                  xAxis={chartXAxis}
+                  xAxisData={chartCategories}
+                  formatter={chartFormatter(intl)}
+                  data={chartData}
+                /> :
+              <LineChart
+                height={200}
+                width='100%'  
+                title=''
+                subtitle=""
+                yMargin={10}
+                y2Margin={40}
+                fontSize={12}
+                mu={mu}
+                invertAxis={invertAxis}
+                xAxis={chartXAxis}
+                xAxisData={chartCategories}
+                formatter={chartFormatter(intl)}
+                data={chartData}
+              />))
+
             :
             <span>Oops, no data available...</span>
             )()
