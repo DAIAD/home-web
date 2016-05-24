@@ -131,7 +131,6 @@ public class Account {
 	@Column(name = "locale", columnDefinition = "bpchar", length = 2)
 	private String locale;
 
-	@Type(type = "org.hibernate.spatial.GeometryType")
 	@Column(name = "location")
 	private Geometry location;
 

@@ -65,7 +65,6 @@ public class Group {
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime createdOn = new DateTime();
 
-	@Type(type = "org.hibernate.spatial.GeometryType")
 	@Column(name = "spatial")
 	private Geometry geometry;
 
