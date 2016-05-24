@@ -9,9 +9,10 @@ public interface IFileDataLoaderService {
 
 	public abstract void importWaterMeter(ImportWaterMeterFileConfiguration configuration) throws ApplicationException;
 
-	public abstract void importRandomAmphiroSessions(String filename, String timezone) throws ApplicationException;
+	public abstract void importRandomAmphiroSessions(int utilityId, String filename, String timezone)
+					throws ApplicationException;
 
-	public abstract void importRandomAmphiroSessions(String filename, DateTimeZone timezone)
+	public abstract void importRandomAmphiroSessions(int utilityId, String filename, DateTimeZone timezone)
 					throws ApplicationException;
 
 }

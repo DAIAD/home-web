@@ -50,6 +50,7 @@ import eu.daiad.web.model.loader.ImportWaterMeterFileConfiguration;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 import eu.daiad.web.repository.application.IAmphiroTimeOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
+import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 
 @Service
@@ -62,6 +63,9 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 
 	@Autowired
 	private IUserRepository userRepository;
+
+	@Autowired
+	private IGroupRepository groupRepository;
 
 	@Autowired
 	private IDeviceRepository deviceRepository;
@@ -195,13 +199,15 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 	}
 
 	@Override
-	public void importRandomAmphiroSessions(String filename, String timezone) throws ApplicationException {
+	public void importRandomAmphiroSessions(int utilityId, String filename, String timezone)
+					throws ApplicationException {
 
-		this.importRandomAmphiroSessions(filename, DateTimeZone.forID(timezone));
+		this.importRandomAmphiroSessions(utilityId, filename, DateTimeZone.forID(timezone));
 	}
 
 	@Override
-	public void importRandomAmphiroSessions(String filename, DateTimeZone timezone) throws ApplicationException {
+	public void importRandomAmphiroSessions(int utilityId, String filename, DateTimeZone timezone)
+					throws ApplicationException {
 		if (!ArrayUtils.contains(environment.getActiveProfiles(), "development")) {
 			return;
 		}
@@ -243,9 +249,9 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 				return;
 			}
 
-			this.generateTimeOrderedSessions(samples, timezone);
+			this.generateTimeOrderedSessions(utilityId, samples, timezone);
 
-			this.generateIndexOrderedSessions(samples, timezone);
+			this.generateIndexOrderedSessions(utilityId, samples, timezone);
 		} catch (ApplicationException ex) {
 			// Ignore
 		} catch (Exception ex) {
@@ -253,7 +259,8 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 		}
 	}
 
-	private void generateTimeOrderedSessions(ArrayList<AmphiroSampleSession> samples, DateTimeZone timezone) {
+	private void generateTimeOrderedSessions(int utilityId, ArrayList<AmphiroSampleSession> samples,
+					DateTimeZone timezone) {
 		DateTime now = new DateTime();
 
 		long startDate = (new DateTime(now.getYear(), 1, 1, 0, 0, 0, DateTimeZone.UTC)).getMillis();
@@ -272,7 +279,7 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 		DeviceRegistrationQuery deviceQuery = new DeviceRegistrationQuery();
 		deviceQuery.setType(EnumDeviceType.AMPHIRO);
 
-		for (UUID userKey : userRepository.getUserKeysForUtility()) {
+		for (UUID userKey : groupRepository.getUtilityByIdMemberKeys(utilityId)) {
 			sessionQuery.setUserKey(userKey);
 
 			for (Device device : deviceRepository.getUserDevices(userKey, deviceQuery)) {
@@ -313,7 +320,8 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 		}
 	}
 
-	private void generateIndexOrderedSessions(ArrayList<AmphiroSampleSession> samples, DateTimeZone timezone) {
+	private void generateIndexOrderedSessions(int utilityId, ArrayList<AmphiroSampleSession> samples,
+					DateTimeZone timezone) {
 		DateTime now = new DateTime();
 
 		long startDate = (new DateTime(now.getYear(), 1, 1, 0, 0, 0, DateTimeZone.UTC)).getMillis();
@@ -330,7 +338,7 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 		DeviceRegistrationQuery deviceQuery = new DeviceRegistrationQuery();
 		deviceQuery.setType(EnumDeviceType.AMPHIRO);
 
-		for (UUID userKey : userRepository.getUserKeysForUtility()) {
+		for (UUID userKey : groupRepository.getUtilityByIdMemberKeys(utilityId)) {
 			sessionQuery.setUserKey(userKey);
 
 			for (Device device : deviceRepository.getUserDevices(userKey, deviceQuery)) {

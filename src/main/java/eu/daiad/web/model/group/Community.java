@@ -1,6 +1,6 @@
 package eu.daiad.web.model.group;
 
-public class GroupCommunity extends Group {
+public class Community extends Group {
 
 	private String description;
 

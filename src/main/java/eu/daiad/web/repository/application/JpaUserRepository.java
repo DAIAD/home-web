@@ -9,7 +9,6 @@ import java.util.UUID;
 import javax.persistence.EntityManager;
 import javax.persistence.ParameterMode;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
 import javax.persistence.StoredProcedureQuery;
 import javax.persistence.TypedQuery;
 
@@ -33,7 +32,6 @@ import eu.daiad.web.domain.application.AccountProfile;
 import eu.daiad.web.domain.application.AccountProfileHistoryEntry;
 import eu.daiad.web.domain.application.AccountRole;
 import eu.daiad.web.domain.application.AccountWhiteListEntry;
-import eu.daiad.web.domain.application.GroupSegment;
 import eu.daiad.web.domain.application.Role;
 import eu.daiad.web.domain.application.Utility;
 import eu.daiad.web.model.EnumGender;
@@ -45,7 +43,6 @@ import eu.daiad.web.model.error.UserErrorCode;
 import eu.daiad.web.model.profile.EnumMobileMode;
 import eu.daiad.web.model.profile.EnumUtilityMode;
 import eu.daiad.web.model.profile.EnumWebMode;
-import eu.daiad.web.model.query.EnumClusterType;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.user.Account;
@@ -657,141 +654,5 @@ public class JpaUserRepository implements IUserRepository {
 		} catch (Exception ex) {
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
 		}
-	}
-
-	@Override
-	public List<UUID> getUserKeysForGroup(UUID groupKey) {
-		ArrayList<UUID> result = new ArrayList<UUID>();
-		try {
-			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from \"group\" g "
-							+ "inner join group_member gm on g.id = gm.group_id "
-							+ "inner join account a on gm.account_id = a.id where g.key = CAST(? as uuid)");
-			query.setParameter(1, groupKey.toString());
-
-			List<?> keys = query.getResultList();
-			for (Object key : keys) {
-				result.add(UUID.fromString((String) key));
-			}
-		} catch (Exception ex) {
-			logger.error(String.format("Failed to load user keys for group [%s].", groupKey), ex);
-		}
-
-		return result;
-	}
-
-	@Override
-	public List<UUID> getUserKeysForUtility(UUID utilityKey) {
-		ArrayList<UUID> result = new ArrayList<UUID>();
-		try {
-			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from utility u "
-							+ "inner join account a on u.id = a.utility_id where u.key = CAST(? as uuid)");
-			query.setParameter(1, utilityKey.toString());
-
-			List<?> keys = query.getResultList();
-			for (Object key : keys) {
-				result.add(UUID.fromString((String) key));
-			}
-		} catch (Exception ex) {
-			logger.error(String.format("Failed to load user keys for utility [%s]", utilityKey), ex);
-		}
-
-		return result;
-	}
-
-	@Override
-	public List<UUID> getUserKeysForUtility(int utilityId) {
-		ArrayList<UUID> result = new ArrayList<UUID>();
-		try {
-			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from utility u "
-							+ "inner join account a on u.id = a.utility_id where u.id = :utilityId");
-			query.setParameter("utilityId", utilityId);
-
-			List<?> keys = query.getResultList();
-			for (Object key : keys) {
-				result.add(UUID.fromString((String) key));
-			}
-		} catch (Exception ex) {
-			logger.error(String.format("Failed to load user keys for utility [%d]", utilityId), ex);
-		}
-
-		return result;
-	}
-
-	@Override
-	public List<UUID> getUserKeysForUtility() {
-		ArrayList<UUID> result = new ArrayList<UUID>();
-
-		try {
-			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-			AuthenticatedUser user = null;
-
-			if (auth.getPrincipal() instanceof AuthenticatedUser) {
-				user = (AuthenticatedUser) auth.getPrincipal();
-			}
-
-			if (user != null) {
-				Query query = entityManager
-								.createNativeQuery("select CAST(a.key as char varying) from account a where a.utility_id = :utility_id");
-				query.setParameter("utility_id", user.getUtilityId());
-
-				List<?> keys = query.getResultList();
-
-				for (Object key : keys) {
-					result.add(UUID.fromString((String) key));
-				}
-			}
-		} catch (Exception ex) {
-			logger.error("Failed to load user keys for utility.", ex);
-		}
-
-		return result;
-	}
-
-	@Override
-	public List<GroupSegment> getClusterGroupByKey(UUID key) {
-		TypedQuery<GroupSegment> query = entityManager.createQuery("select g from group_cluster g  "
-						+ "where g.utility.id = :utility_id and g.cluster.key = :key", GroupSegment.class);
-
-		query.setParameter("utility_id", this.getCurrentUtilityId());
-		query.setParameter("key", key);
-
-		return query.getResultList();
-	}
-
-	@Override
-	public List<GroupSegment> getClusterGroupByName(String name) {
-		TypedQuery<GroupSegment> query = entityManager.createQuery("select g from group_cluster g "
-						+ "where g.utility.id = :utility_id and g.cluster.name = :name", GroupSegment.class);
-
-		query.setParameter("utility_id", this.getCurrentUtilityId());
-		query.setParameter("name", name);
-
-		return query.getResultList();
-	}
-
-	@Override
-	public List<GroupSegment> getClusterGroupByType(EnumClusterType type) {
-		TypedQuery<GroupSegment> query = entityManager.createQuery("select g from group_cluster g "
-						+ "where g.utility.id = :utility_id and g.cluster.name = :name", GroupSegment.class);
-
-		query.setParameter("utility_id", this.getCurrentUtilityId());
-		query.setParameter("name", type.getName());
-
-		return query.getResultList();
-	}
-
-	private Integer getCurrentUtilityId() {
-		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		AuthenticatedUser user = null;
-
-		if (auth.getPrincipal() instanceof AuthenticatedUser) {
-			user = (AuthenticatedUser) auth.getPrincipal();
-		}
-
-		if (user != null) {
-			return user.getUtilityId();
-		}
-
-		return null;
 	}
 }

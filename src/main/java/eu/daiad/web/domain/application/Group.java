@@ -47,7 +47,7 @@ public class Group {
 	@Column(name = "row_version")
 	private long rowVersion;
 
-	@ManyToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+	@ManyToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
 	@JoinColumn(name = "utility_id", nullable = false)
 	private Utility utility;
 

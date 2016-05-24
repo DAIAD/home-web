@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 
 import com.ibm.icu.text.MessageFormat;
 
-import eu.daiad.web.domain.application.GroupSegment;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -44,6 +43,7 @@ import eu.daiad.web.model.query.UtilityPopulationFilter;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IAmphiroTimeOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
+import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 
@@ -55,6 +55,9 @@ public class DataService implements IDataService {
 
 	@Autowired
 	private IUserRepository userRepository;
+
+	@Autowired
+	private IGroupRepository groupRepository;
 
 	@Autowired
 	private IDeviceRepository deviceRepository;
@@ -258,24 +261,24 @@ public class DataService implements IDataService {
 							filterUsers = ((UserPopulationFilter) filter).getUsers();
 							break;
 						case GROUP:
-							filterUsers = userRepository.getUserKeysForGroup(((GroupPopulationFilter) filter)
+							filterUsers = groupRepository.getGroupMemberKeys(((GroupPopulationFilter) filter)
 											.getGroup());
 							break;
 						case CLUSTER:
 							ClusterPopulationFilter clusterFilter = (ClusterPopulationFilter) filter;
 
-							List<GroupSegment> groups = null;
+							List<eu.daiad.web.model.group.Group> groups = null;
 
 							if (clusterFilter.getCluster() != null) {
-								groups = userRepository.getClusterGroupByKey(clusterFilter.getCluster());
+								groups = groupRepository.getClusterByKeySegments(clusterFilter.getCluster());
 							} else if ((clusterFilter.getClusterType() != null)
 											&& (!clusterFilter.getClusterType().equals(EnumClusterType.UNDEFINED))) {
-								groups = userRepository.getClusterGroupByType(clusterFilter.getClusterType());
+								groups = groupRepository.getClusterByTypeSegments(clusterFilter.getClusterType());
 							} else if (!StringUtils.isBlank(clusterFilter.getName())) {
-								groups = userRepository.getClusterGroupByName(clusterFilter.getName());
+								groups = groupRepository.getClusterByNameSegments(clusterFilter.getName());
 							}
 
-							for (GroupSegment group : groups) {
+							for (eu.daiad.web.model.group.Group group : groups) {
 								if (clusterFilter.getRanking() == null) {
 									query.getPopulation().add(
 													new GroupPopulationFilter(group.getName(), group.getKey()));
@@ -287,7 +290,7 @@ public class DataService implements IDataService {
 							}
 							continue;
 						case UTILITY:
-							filterUsers = userRepository.getUserKeysForUtility(((UtilityPopulationFilter) filter)
+							filterUsers = groupRepository.getUtilityByKeyMemberKeys(((UtilityPopulationFilter) filter)
 											.getUtility());
 							break;
 						default:

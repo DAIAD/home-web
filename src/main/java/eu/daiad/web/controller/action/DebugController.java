@@ -25,6 +25,7 @@ import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,8 +44,10 @@ import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.loader.UploadRequest;
+import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.user.Account;
 import eu.daiad.web.repository.application.IDeviceRepository;
+import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IFileDataLoaderService;
 
@@ -64,6 +67,9 @@ public class DebugController extends BaseController {
 
 	@Autowired
 	private IUserRepository userRepository;
+
+	@Autowired
+	private IGroupRepository groupRepository;
 
 	@Autowired
 	private IDeviceRepository deviceRepository;
@@ -140,7 +146,7 @@ public class DebugController extends BaseController {
 	@RequestMapping(value = "/action/debug/amphiro/create", method = RequestMethod.GET, produces = "application/json")
 	@ResponseBody
 	@Secured({ "ROLE_ADMIN" })
-	public RestResponse registerAmphiro() {
+	public RestResponse registerAmphiro(@AuthenticationPrincipal AuthenticatedUser user) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -152,7 +158,7 @@ public class DebugController extends BaseController {
 				ArrayList<KeyValuePair> properties = new ArrayList<KeyValuePair>();
 				properties.add(new KeyValuePair("debug.autogenerate", (new DateTime(DateTimeZone.UTC)).toString()));
 
-				for (UUID userKey : userRepository.getUserKeysForUtility()) {
+				for (UUID userKey : groupRepository.getUtilityByIdMemberKeys(user.getId())) {
 					if (deviceRepository.getUserDevices(userKey, deviceQuery).size() == 0) {
 
 						deviceRepository.createAmphiroDevice(userKey, "Amphiro #1", generateRandomMacAddress(),
@@ -175,7 +181,7 @@ public class DebugController extends BaseController {
 	@RequestMapping(value = "/action/debug/amphiro/data/generate", method = RequestMethod.POST, produces = "application/json")
 	@ResponseBody
 	@Secured({ "ROLE_ADMIN" })
-	public RestResponse upload(UploadRequest request) {
+	public RestResponse upload(@AuthenticationPrincipal AuthenticatedUser user, UploadRequest request) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -210,8 +216,8 @@ public class DebugController extends BaseController {
 
 									this.saveFile(filename, file.getBytes());
 
-									this.fileDataLoaderService.importRandomAmphiroSessions(filename,
-													DateTimeZone.forID(request.getTimezone()));
+									this.fileDataLoaderService.importRandomAmphiroSessions(user.getUtilityId(),
+													filename, DateTimeZone.forID(request.getTimezone()));
 								}
 							}
 							break;
