@@ -137,22 +137,12 @@ public class JpaDeviceRepository implements IDeviceRepository {
 		UUID deviceKey = null;
 
 		try {
-			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-			AuthenticatedUser user = null;
-
-			if (auth.getPrincipal() instanceof AuthenticatedUser) {
-				user = (AuthenticatedUser) auth.getPrincipal();
-			} else {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
-			}
-
 			TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager
-							.createQuery("select a from account a where a.username = :username and a.utility.id = :utility_id",
+							.createQuery("select a from account a where a.username = :username",
 											eu.daiad.web.domain.application.Account.class).setFirstResult(0)
 							.setMaxResults(1);
 
 			accountQuery.setParameter("username", username);
-			accountQuery.setParameter("utility_id", user.getUtilityId());
 
 			List<eu.daiad.web.domain.application.Account> accounts = accountQuery.getResultList();
 
