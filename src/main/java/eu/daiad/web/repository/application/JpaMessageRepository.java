@@ -35,6 +35,7 @@ import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageAcknowledgement;
 import eu.daiad.web.model.message.MessageRequest;
+import eu.daiad.web.model.message.MessageResult;
 import eu.daiad.web.model.security.AuthenticatedUser;
 
 @Repository
@@ -94,7 +95,9 @@ public class JpaMessageRepository implements IMessageRepository {
 	}
 
 	@Override
-	public List<Message> getMessages(MessageRequest request) {
+	public MessageResult getMessages(MessageRequest request) {
+		MessageResult result = new MessageResult();
+
 		AuthenticatedUser user = this.getCurrentAuthenticatedUser();
 
 		String locale = resolveLocale(user.getLocale());
@@ -107,6 +110,20 @@ public class JpaMessageRepository implements IMessageRepository {
 		MessageRequest.DataPagingOptions options = this.getMessageDataPagingOptions(request, EnumMessageType.ALERT);
 
 		if (options != null) {
+			// Get total count
+			Integer totalAlerts;
+
+			TypedQuery<Number> countAccountAlertsQuery = entityManager
+							.createQuery("select count(a.id) from account_alert a "
+											+ "where a.account.id = :accountId and a.id > :minMessageId ", Number.class);
+
+			countAccountAlertsQuery.setParameter("accountId", user.getId());
+			countAccountAlertsQuery.setParameter("minMessageId", options.getMinMessageId());
+
+			totalAlerts = ((Number) countAccountAlertsQuery.getSingleResult()).intValue();
+
+			result.setTotalAlerts(totalAlerts);
+
 			// Build query
 			TypedQuery<eu.daiad.web.domain.application.AccountAlert> accountAlertsQuery;
 
@@ -187,6 +204,20 @@ public class JpaMessageRepository implements IMessageRepository {
 		options = this.getMessageDataPagingOptions(request, EnumMessageType.RECOMMENDATION_DYNAMIC);
 
 		if (options != null) {
+			// Get total count
+			Integer totalRecommendations;
+
+			TypedQuery<Number> countAccountAlertsQuery = entityManager
+							.createQuery("select count(a.id) from account_dynamic_recommendation a "
+											+ "where a.account.id = :accountId and a.id > :minMessageId ", Number.class);
+
+			countAccountAlertsQuery.setParameter("accountId", user.getId());
+			countAccountAlertsQuery.setParameter("minMessageId", options.getMinMessageId());
+
+			totalRecommendations = ((Number) countAccountAlertsQuery.getSingleResult()).intValue();
+
+			result.setTotalRecommendations(totalRecommendations);
+
 			// Build query
 			TypedQuery<eu.daiad.web.domain.application.AccountDynamicRecommendation> accountRecommendationQuery;
 
@@ -269,6 +300,20 @@ public class JpaMessageRepository implements IMessageRepository {
 		options = this.getMessageDataPagingOptions(request, EnumMessageType.RECOMMENDATION_STATIC);
 
 		if (options != null) {
+			// Get total count
+			Integer totalTips;
+
+			TypedQuery<Number> countAccountAlertsQuery = entityManager
+							.createQuery("select count(a.id) from account_static_recommendation a "
+											+ "where a.account.id = :accountId and a.id > :minMessageId ", Number.class);
+
+			countAccountAlertsQuery.setParameter("accountId", user.getId());
+			countAccountAlertsQuery.setParameter("minMessageId", options.getMinMessageId());
+
+			totalTips = ((Number) countAccountAlertsQuery.getSingleResult()).intValue();
+
+			result.setTotalTips(totalTips);
+
 			// Build query
 			TypedQuery<eu.daiad.web.domain.application.AccountStaticRecommendation> accountTipQuery;
 
@@ -316,7 +361,10 @@ public class JpaMessageRepository implements IMessageRepository {
 				messages.add(message);
 			}
 		}
-		return messages;
+
+		result.setMessages(messages);
+
+		return result;
 	}
 
 	@Override

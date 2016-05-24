@@ -14,6 +14,7 @@ import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageAcknowledgementRequest;
 import eu.daiad.web.model.message.MessageRequest;
+import eu.daiad.web.model.message.MessageResult;
 import eu.daiad.web.model.message.MultiTypeMessageResponse;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.application.IMessageRepository;
@@ -33,7 +34,14 @@ public class MessageController extends BaseRestController {
 
 			MultiTypeMessageResponse messageResponse = new MultiTypeMessageResponse();
 
-			for (Message message : this.messageRepository.getMessages(request)) {
+			MessageResult result = this.messageRepository.getMessages(request);
+
+			messageResponse.setTotalAlerts(result.getTotalAlerts());
+			messageResponse.setTotalAnnouncements(result.getTotalAnnouncements());
+			messageResponse.setTotalRecommendations(result.getTotalRecommendations());
+			messageResponse.setTotalTips(result.getTotalTips());
+
+			for (Message message : result.getMessages()) {
 				switch (message.getType()) {
 					case ALERT:
 						messageResponse.getAlerts().add(message);

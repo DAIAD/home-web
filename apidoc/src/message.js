@@ -46,6 +46,10 @@
  * @apiSuccess {Object[]} recommendations          Array of <code>DynamicRecommendation</code> objects.
  * @apiSuccess {Object[]} tips                     Array of <code>StaticRecommendation</code> objects.
  * @apiSuccess {Object[]} announcements            Array of <code>Announcement</code> objects.
+ * @apiSuccess {Number}   totalAlerts              Total number of alerts.
+ * @apiSuccess {Number}   totalRecommendations     Total number of recommendations.
+ * @apiSuccess {Number}   totalTips                Total number of tips.
+ * @apiSuccess {Number}   totalAnnouncements       Total number of announcements.
  *
  *
  * @apiSuccess (Message) {String} type             Message type. Valid values are <code>ALERT</code>, <code>RECOMMENDATION_STATIC</code>, <code>RECOMMENDATION_DYNAMIC</code> and <code>ANNOUNCEMENT</code>.
