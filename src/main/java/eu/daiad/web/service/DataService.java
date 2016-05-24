@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 
 import com.ibm.icu.text.MessageFormat;
 
-import eu.daiad.web.domain.application.GroupCluster;
+import eu.daiad.web.domain.application.GroupSegment;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -264,7 +264,7 @@ public class DataService implements IDataService {
 						case CLUSTER:
 							ClusterPopulationFilter clusterFilter = (ClusterPopulationFilter) filter;
 
-							List<GroupCluster> groups = null;
+							List<GroupSegment> groups = null;
 
 							if (clusterFilter.getCluster() != null) {
 								groups = userRepository.getClusterGroupByKey(clusterFilter.getCluster());
@@ -275,7 +275,7 @@ public class DataService implements IDataService {
 								groups = userRepository.getClusterGroupByName(clusterFilter.getName());
 							}
 
-							for (GroupCluster group : groups) {
+							for (GroupSegment group : groups) {
 								if (clusterFilter.getRanking() == null) {
 									query.getPopulation().add(
 													new GroupPopulationFilter(group.getName(), group.getKey()));

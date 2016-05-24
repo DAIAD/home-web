@@ -22,15 +22,15 @@ import eu.daiad.web.model.group.GroupInfoResponse;
 import eu.daiad.web.model.group.GroupListInfoResponse;
 import eu.daiad.web.model.group.GroupMemberInfoResponse;
 import eu.daiad.web.model.security.AuthenticatedUser;
-import eu.daiad.web.repository.application.IGroupRepository;
+import eu.daiad.web.repository.application.IUserGroupRepository;
 
 @RestController
-public class GroupController extends BaseController {
+public class UserGroupController extends BaseController {
 	
-	private static final Log logger = LogFactory.getLog(GroupController.class);
+	private static final Log logger = LogFactory.getLog(UserGroupController.class);
 	
 	@Autowired
-	private IGroupRepository repository;
+	private IUserGroupRepository repository;
 	
 	@RequestMapping(value = "/action/group/list", method = RequestMethod.GET, produces = "application/json")
 	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN" })

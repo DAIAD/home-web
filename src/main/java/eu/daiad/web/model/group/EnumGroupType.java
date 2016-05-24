@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
 public enum EnumGroupType {
-	UNDEFINED(0), COMMONS(1), CLUSTER(2), SET(3);
+	UNDEFINED(0), COMMONS(1), SEGMENT(2), SET(3);
 
 	private final int value;
 

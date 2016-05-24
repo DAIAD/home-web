@@ -9,9 +9,9 @@ import javax.persistence.Table;
 
 import eu.daiad.web.model.group.EnumGroupType;
 
-@Entity(name = "group_cluster")
-@Table(schema = "public", name = "group_cluster")
-public class GroupCluster extends Group {
+@Entity(name = "group_segment")
+@Table(schema = "public", name = "group_segment")
+public class GroupSegment extends Group {
 
 	@ManyToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
 	@JoinColumn(name = "cluster_id", nullable = false)
@@ -19,7 +19,7 @@ public class GroupCluster extends Group {
 
 	@Override
 	public EnumGroupType getType() {
-		return EnumGroupType.CLUSTER;
+		return EnumGroupType.SEGMENT;
 	}
 
 	public Cluster getCluster() {

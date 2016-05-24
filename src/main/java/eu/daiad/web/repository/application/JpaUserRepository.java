@@ -33,7 +33,7 @@ import eu.daiad.web.domain.application.AccountProfile;
 import eu.daiad.web.domain.application.AccountProfileHistoryEntry;
 import eu.daiad.web.domain.application.AccountRole;
 import eu.daiad.web.domain.application.AccountWhiteListEntry;
-import eu.daiad.web.domain.application.GroupCluster;
+import eu.daiad.web.domain.application.GroupSegment;
 import eu.daiad.web.domain.application.Role;
 import eu.daiad.web.domain.application.Utility;
 import eu.daiad.web.model.EnumGender;
@@ -748,9 +748,9 @@ public class JpaUserRepository implements IUserRepository {
 	}
 
 	@Override
-	public List<GroupCluster> getClusterGroupByKey(UUID key) {
-		TypedQuery<GroupCluster> query = entityManager.createQuery("select g from group_cluster g  "
-						+ "where g.utility.id = :utility_id and g.cluster.key = :key", GroupCluster.class);
+	public List<GroupSegment> getClusterGroupByKey(UUID key) {
+		TypedQuery<GroupSegment> query = entityManager.createQuery("select g from group_cluster g  "
+						+ "where g.utility.id = :utility_id and g.cluster.key = :key", GroupSegment.class);
 
 		query.setParameter("utility_id", this.getCurrentUtilityId());
 		query.setParameter("key", key);
@@ -759,9 +759,9 @@ public class JpaUserRepository implements IUserRepository {
 	}
 
 	@Override
-	public List<GroupCluster> getClusterGroupByName(String name) {
-		TypedQuery<GroupCluster> query = entityManager.createQuery("select g from group_cluster g "
-						+ "where g.utility.id = :utility_id and g.cluster.name = :name", GroupCluster.class);
+	public List<GroupSegment> getClusterGroupByName(String name) {
+		TypedQuery<GroupSegment> query = entityManager.createQuery("select g from group_cluster g "
+						+ "where g.utility.id = :utility_id and g.cluster.name = :name", GroupSegment.class);
 
 		query.setParameter("utility_id", this.getCurrentUtilityId());
 		query.setParameter("name", name);
@@ -770,9 +770,9 @@ public class JpaUserRepository implements IUserRepository {
 	}
 
 	@Override
-	public List<GroupCluster> getClusterGroupByType(EnumClusterType type) {
-		TypedQuery<GroupCluster> query = entityManager.createQuery("select g from group_cluster g "
-						+ "where g.utility.id = :utility_id and g.cluster.name = :name", GroupCluster.class);
+	public List<GroupSegment> getClusterGroupByType(EnumClusterType type) {
+		TypedQuery<GroupSegment> query = entityManager.createQuery("select g from group_cluster g "
+						+ "where g.utility.id = :utility_id and g.cluster.name = :name", GroupSegment.class);
 
 		query.setParameter("utility_id", this.getCurrentUtilityId());
 		query.setParameter("name", type.getName());

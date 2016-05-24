@@ -3,7 +3,7 @@ package eu.daiad.web.repository.application;
 import java.util.List;
 import java.util.UUID;
 
-import eu.daiad.web.domain.application.GroupCluster;
+import eu.daiad.web.domain.application.GroupSegment;
 import eu.daiad.web.model.admin.AccountActivity;
 import eu.daiad.web.model.admin.AccountWhiteListEntry;
 import eu.daiad.web.model.admin.AccountWhiteListInfo;
@@ -47,10 +47,10 @@ public interface IUserRepository {
 
 	List<UUID> getUserKeysForUtility(int utilityId);
 
-	List<GroupCluster> getClusterGroupByKey(UUID key);
+	List<GroupSegment> getClusterGroupByKey(UUID key);
 
-	List<GroupCluster> getClusterGroupByName(String name);
+	List<GroupSegment> getClusterGroupByName(String name);
 
-	List<GroupCluster> getClusterGroupByType(EnumClusterType type);
+	List<GroupSegment> getClusterGroupByType(EnumClusterType type);
 
 }

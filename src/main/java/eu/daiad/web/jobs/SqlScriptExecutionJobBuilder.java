@@ -30,18 +30,18 @@ public class SqlScriptExecutionJobBuilder implements IJobBuilder {
 	@Autowired
 	private DataSource dataSource;
 
-	private Step executeSCripts() {
+	private Step executeScripts() {
 		SqlScriptExecutionTasklet sqlScriptExecutionTasklet = new SqlScriptExecutionTasklet();
 
 		sqlScriptExecutionTasklet.setApplicationContext(this.applicationContext);
 		sqlScriptExecutionTasklet.setDataSource(this.dataSource);
 		sqlScriptExecutionTasklet.setLocationParameter(PARAMETER_LOCATIONS);
 
-		return stepBuilderFactory.get("transferData").tasklet(sqlScriptExecutionTasklet).build();
+		return stepBuilderFactory.get("executeScripts").tasklet(sqlScriptExecutionTasklet).build();
 	}
 
 	@Override
 	public Job build(String name, JobParametersIncrementer incrementer) throws Exception {
-		return jobBuilderFactory.get(name).incrementer(incrementer).start(executeSCripts()).build();
+		return jobBuilderFactory.get(name).incrementer(incrementer).start(executeScripts()).build();
 	}
 }

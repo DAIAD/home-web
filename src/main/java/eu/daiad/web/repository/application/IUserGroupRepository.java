@@ -7,7 +7,7 @@ import eu.daiad.web.model.group.CreateGroupSetRequest;
 import eu.daiad.web.model.group.GroupInfo;
 import eu.daiad.web.model.group.GroupMemberInfo;
 
-public interface IGroupRepository{
+public interface IUserGroupRepository{
 	
 	public abstract List <GroupInfo> getGroups();
 	
