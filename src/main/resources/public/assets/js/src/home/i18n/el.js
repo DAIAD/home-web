@@ -49,7 +49,7 @@
     "devices": "Συσκευές",
     "reporting": "Reporting",
     "export": "Export",
-    "login": "Καλώς ήρθατε στο DAIAD"
+    "login": "Σύνδεση"
   },
   "dashboard": {
     "hello": "Γειά σου {name}!"

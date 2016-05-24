@@ -6,7 +6,7 @@ var { bindActionCreators } = require('redux');
 var { connect } = require('react-redux');
 
 // Components
-var HomeRoot = require('../components/HomeRoot');
+var HomeRoot = require('../components/layout/HomeRoot');
 
 // Actions
 var { login, logout } = require('../actions/UserActions');

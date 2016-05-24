@@ -6,15 +6,30 @@
     "de": "Deutsche"
   },
   "weekdays": {
-    "1": "Sunday",
-    "2": "Monday",
-    "3": "Tuesday",
-    "4": "Wednesday",
-    "5": "Thursday",
-    "6": "Friday",
-    "7": "Saturday"
+    "0": "Sunday",
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday"
+  },
+  "months": {
+    "0": "January",
+    "1": "February",
+    "2": "March",
+    "3": "April",
+    "4": "May",
+    "5": "June",
+    "6": "July",
+    "7": "August",
+    "8": "September",
+    "9": "October",
+    "10": "November",
+    "11": "December"
   },
   "errors": {
+    "Error: Internal Server Error": "Oops, something went wrong. Please try again in a while, or send feedback if this error keeps recurring",
     "SharedErrorCode.AUTHENTICATION": "Authentication has failed. Please try again.",
     "SharedErrorCode.UNKNOWN": "We are facing an internal problem, please try again in a while."
   },
@@ -37,7 +52,10 @@
   "section": {
     "dashboard": "Dashboard",
     "history":"Statistics",
+    "explore":"Explore",
+    "forecast":"Forecast",
     "shower": "Shower",
+    "shower-aggregated": "Total data",
     "commons": "Commons",
     "notifications": "Notifications",
     "search": "Search",
@@ -47,7 +65,7 @@
     "settings": "Settings",
     "profile": "Profile",
     "devices": "Devices",
-    "login": "Welcome to DAIAD Home"
+    "login": "Login"
   },
   "dashboard": {
     "hello": "Welcome {name}!"
@@ -67,12 +85,18 @@
     "energyDetails": "Estimated energy used for hot water",
     "countDetails": "The total number of aggregated showers",
     "durationDetails": "The duration of the shower",
-    "limitedData": "Oops, limited data...",
+    "limitedData": "Oops, limited data..."
+  },
+  "periods": {
     "always": "Since the beginning of time",
+    "custom": "Custom",
     "year": "Year",
     "month": "Month",
     "week": "Week",
-    "day": "Day"
+    "day": "Day",
+    "ten": "Last 10",
+    "twenty": "Last 20",
+    "fifty": "Last 50"
   },
   "notifications": {
     "showAll": "Show all"

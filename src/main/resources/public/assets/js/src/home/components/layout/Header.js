@@ -4,17 +4,17 @@ var bs = require('react-bootstrap');
 var { Link } = require('react-router');
 var { injectIntl, FormattedMessage } = require('react-intl');
 
-var Constants = require('../constants/HomeConstants');
-var LocaleSwitcher = require('./LocaleSwitcher');
-var { Logout } = require('./LoginForm');
+var LocaleSwitcher = require('../LocaleSwitcher');
 
-const { STATIC_RECOMMENDATIONS, IMAGES } = require('../constants/HomeConstants'); 
+var { Logout } = require('../LoginForm');
+
+const { STATIC_RECOMMENDATIONS, IMAGES, NOTIFICATION_TITLE_LENGTH } = require('../../constants/HomeConstants'); 
 
 /* DAIAD Logo */
 function MainLogo() {
   return (
     <Link to="/"  className="logo" activeClassName="selected">
-      <img src={`${IMAGES}/daiad-logo2.svg`} alt="DAIAD Logo"
+      <img src={`${IMAGES}/daiad-logo-navy.svg`} alt="DAIAD Logo"
         title="DAIAD"/>
     </Link>
   );
@@ -60,7 +60,7 @@ function UserInfo(props) {
     <div className="user-menu" >
         <div title={_t({id: "section.profile"})}>
         <Link to="settings/profile">
-          <span>{props.firstname}</span>
+          <span><b>{props.firstname}</b></span>
         </Link>
       </div>
     </div>
@@ -132,7 +132,7 @@ var NotificationMenuItem = React.createClass({
             onMouseLeave={() => {this.setState({hover:false});}} >
             <span className={classNames(hasUnread, "red")}>{unreadNotifications}</span> 
             <i className={
-              classNames("fa", "fa-md", "white", (this.state.hover || this.state.popover)?"fa-bell":"fa-bell-o")
+              classNames("fa", "fa-md", "navy", (this.state.hover || this.state.popover)?"fa-bell":"fa-bell-o")
             } />
           </a>
         </bs.OverlayTrigger>  
@@ -141,7 +141,7 @@ var NotificationMenuItem = React.createClass({
 });
 
 function NotificationList(props){
-  const maxLength = Constants.NOTIFICATION_TITLE_LENGTH;
+  const maxLength = NOTIFICATION_TITLE_LENGTH;
   return (
     <div className="notification-list">
     <ul className="list-unstyled">
@@ -202,53 +202,41 @@ var Header = React.createClass({
   
   render: function() {
     const { intl, firstname, isAuthenticated, logout, deviceCount, setLocale, locale } = this.props;
+    //<MainMenu items={Constants.MAIN_MENU}/>
     return (
       <header className="site-header">
-        {(() => {
-          if (isAuthenticated) {
-            return (
-              <div className="container">
-                <div className="header-left">
-                  <MainLogo />
-                  <MainMenu items={Constants.MAIN_MENU}/>
-                </div>
-                <div className="header-right">
-                  <NotificationArea
-                    intl={intl}
-                    deviceCount={deviceCount}
-                    notifications={STATIC_RECOMMENDATIONS} />
-                  <UserInfo
-                    intl={intl}
-                    firstname={firstname}
-                    />
-                  <Logout
-                    intl={intl}   
-                    isAuthenticated={isAuthenticated}
-                    logout={logout}
-                    className="navbar logout"
-                     />
-                </div>
-              </div>
-              );
-          }
-          else{
-            return (
-              <div className="container">
-                <div className="pull-left">
-                  <MainLogo />
-                </div>
-                <div className="pull-right">
-                  <LocaleSwitcher
-                    intl={intl}
-                    setLocale={setLocale}
-                    locale={locale}
-                  /> 
-
-                </div>
-              </div>
-              );
-          }
-        })() 
+        {(() => isAuthenticated ? (
+          <div>
+            <MainLogo />
+            <div className="top-header-right">
+              <NotificationArea
+                intl={intl}
+                deviceCount={deviceCount}
+                notifications={STATIC_RECOMMENDATIONS} />
+              <UserInfo
+                intl={intl}
+                firstname={firstname}
+                />
+              <Logout
+                intl={intl}   
+                isAuthenticated={isAuthenticated}
+                logout={logout}
+                className="navbar logout"
+                 />
+            </div>
+          </div>
+          ) : (
+          <div>
+            <MainLogo />
+            <div className="top-header-right">
+              <LocaleSwitcher
+                intl={intl}
+                setLocale={setLocale}
+                locale={locale}
+              /> 
+          </div>
+        </div>
+        ))() 
         }
       </header>
     );

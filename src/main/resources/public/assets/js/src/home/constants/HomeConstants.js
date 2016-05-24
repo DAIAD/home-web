@@ -1,5 +1,5 @@
 
-const constants = {
+module.exports = {
   IMAGES : "/assets/images/home/svg",
   PNG_IMAGES : "/assets/images/home/png",
   NOTIFICATION_TITLE_LENGTH: 50,
@@ -7,30 +7,104 @@ const constants = {
   MAIN_MENU: [{
     name: "dashboard",
     title: "section.dashboard",
-    image: "dashboard.svg",
-    //image: "images/svg/dashboard-side-off.svg",
-    route:"/dashboard"
+    image: "dashboard-side-on.svg",
+    route:"/dashboard",
+    children: []
   },
   {
     name: "history",
     title: "section.history",
-    //image: "images/svg/stats-new-side-off.svg",
-    image: "dashboard.svg",
-    route:"/history"
+    image: "stats-new-side-on.svg",
+    route:"/history",
+    children: [
+      {
+        name: "explore",
+        title: "section.explore",
+        image: "dashboard.svg",
+        route: "/history/explore",
+      },
+      {
+        name: "forecast",
+        title: "section.forecast",
+        image: "goals.svg",
+        route: "/history/forecast",
+      },
+    ]
   },
   {
     name: "commons",
     title: "section.commons",
     image: "dashboard.svg",
-    route:"/commons"
-  }],
+    route:"/commons",
+    children: []
+  },
+  {
+    name: "settings",
+    title: "section.settings",
+    image: "settings.svg",
+    route:"/settings",
+    children: [
+      {
+        name: "profile",
+        title: "section.profile",
+        image: "dashboard.svg",
+        route:"/settings/profile",
+      },
+      {
+        name: "devices",
+        title: "section.devices",
+        image: "dashboard.svg",
+        route:"/settings/devices",
+      },
+    ]
+  }
+  ],
   SHOWER_METRICS: [
       {id:'devName',  mu:'', title:'history.device', details: 'history.durationDetails', clickable: false}, 
       {id:'count',mu:'', title:'history.count', details:'history.countDetails', clickable: true},  
       {id:'volume', mu:'lt',title:'history.volume', details:'history.volumeDetails', clickable: true}, 
+      {id:'difference', mu:'lt',title:'history.volume', details:'history.volumeDetails', clickable: true},
       {id:'temperature', mu:'ºC', title:'history.temperature', details: 'history.temperatureDetails', clickable: true}, 
       {id:'energy',mu:'W', title:'history.energy', details: 'history.energyDetails', clickable: true}, 
       {id:'duration', icon:'timer-on', mu:'sec', title:'history.duration', details: 'history.durationDetails', clickable: true}, 
+  ],
+  METER_PERIODS: [
+    {id: 'day', title: 'periods.day'},
+    {id: 'week', title: 'periods.week'},
+    {id: 'month', title: 'periods.month'},
+    {id: 'year', title: 'periods.year'},
+    {id: 'custom', title: 'periods.custom'},
+  ],
+  DEV_PERIODS: [
+    {id: 'ten', title: 'periods.ten'},
+    {id: 'twenty', title: 'periods.twenty'},
+    {id: 'fifty', title: 'periods.fifty'},
+  ],
+  METER_METRICS: [
+    {id:'difference', title:'Volume'},
+  ],
+  DEV_METRICS: [
+    {id:'volume', title:'Volume'},
+    {id:'energy', title:'Energy'},
+    {id:'duration', title:'Duration'},
+    {id:'temperature', title:'Temperature'}
+  ],
+  METER_SORT: [
+    {id: 'timestamp', title: 'Time'}, 
+    {id:'difference', title: 'Volume'}
+  ],
+  DEV_SORT: [
+    {id: 'id', title: 'ID'}, 
+    {id: 'timestamp', title: 'Time'}, 
+    {id:'volume', title: 'Volume'}, 
+    {id:'devName', title: 'Device'}, 
+    {id: 'energy', title: 'Energy'}, 
+    {id:'temperature', title:'Temperature'}, 
+    {id:'duration', title: 'Duration'}
+  ],
+  STATBOX_DISPLAYS: [
+    {id: 'stat', title: 'Stat'}, 
+    {id: 'chart', title: 'Chart'}
   ],
   STATIC_RECOMMENDATIONS: [
     {
@@ -67,5 +141,4 @@ const constants = {
     }
   ]
 };
-module.exports = constants;
 
