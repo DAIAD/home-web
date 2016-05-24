@@ -26,7 +26,7 @@ import org.joda.time.DateTime;
 
 import com.vividsolutions.jts.geom.Geometry;
 
-import eu.daiad.web.model.commons.EnumGroupType;
+import eu.daiad.web.model.group.EnumGroupType;
 
 @Entity(name = "group")
 @Table(schema = "public", name = "group")
@@ -52,7 +52,7 @@ public class Group {
 	private Utility utility;
 
 	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
-	@JoinColumn(name = "account_id")
+	@JoinColumn(name = "group_id")
 	private Set<GroupMember> members = new HashSet<GroupMember>();
 
 	@Basic()

@@ -58,7 +58,7 @@ public class ProfileModes {
 
 	private SocialModeState social = SocialModeState.NOT_APPLICABLE;
 
-	private int groupId = -1;
+	private UUID groupId = null;
 
 	private String groupName = null;
 
@@ -112,12 +112,12 @@ public class ProfileModes {
 		this.social = social;
 	}
 
-	public int getGroupId() {
+	public UUID getGroupId() {
 		return groupId;
 	}
 
-	public void setGroupId(int groupId) {
-		this.groupId = groupId;
+	public void setGroupId(UUID uuid) {
+		this.groupId = uuid;
 	}
 
 	public String getGroupName() {

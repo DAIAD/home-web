@@ -207,7 +207,7 @@ public class JpaProfileRepository implements IProfileRepository {
 
 				// Utility name & Id
 				Utility utility = account.getUtility();
-				profileModes.setGroupId(utility.getId());
+				profileModes.setGroupId(utility.getKey());
 				profileModes.setGroupName(utility.getName());
 				// Applying Utility filter
 				if (filters.getGroupName() != null && !filters.getGroupName().equals(profileModes.getGroupName())) {

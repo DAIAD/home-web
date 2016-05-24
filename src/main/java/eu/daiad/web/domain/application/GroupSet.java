@@ -7,7 +7,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
-import eu.daiad.web.model.commons.EnumGroupType;
+import eu.daiad.web.model.group.EnumGroupType;
 
 @Entity(name = "group_set")
 @Table(schema = "public", name = "group_set")

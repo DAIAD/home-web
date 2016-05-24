@@ -1,4 +1,4 @@
-package eu.daiad.web.model.commons;
+package eu.daiad.web.model.group;
 
 public class GroupCommunity extends Group {
 

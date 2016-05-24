@@ -22,7 +22,7 @@ import javax.persistence.Version;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-import eu.daiad.web.model.commons.EnumGroupType;
+import eu.daiad.web.model.group.EnumGroupType;
 
 @Entity(name = "cluster")
 @Table(schema = "public", name = "cluster")

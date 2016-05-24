@@ -22,7 +22,7 @@ var initialState = {
 var computeModesState = function (data){
 	var modesState = {};
 	var propertyNames = Helpers.pluck(
-					Helpers.pickQualiffied(data.fields, 'type', 'property'),
+					Helpers.pickQualiffiedOnEquality(data.fields, 'type', 'property'),
 					'name'
 				);
 	var self = this;
