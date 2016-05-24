@@ -26,6 +26,7 @@ import eu.daiad.web.model.query.EnumTimeUnit;
 import eu.daiad.web.model.query.GroupDataSeries;
 import eu.daiad.web.model.query.MeterDataPoint;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.repository.application.IMessageManagementRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IDataService;
 
@@ -37,11 +38,15 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 
 	@Autowired
 	IUserRepository userRepository;
+        
+        @Autowired
+        IMessageManagementRepository messageManagementRepository;
 
+        @Override
 	public PendingMessageStatus resolve(MessageCalculationConfiguration config,
 					ConsumptionAggregateContainer aggregates, UUID accountKey) {
 		AuthenticatedUser account = this.userRepository.getUserByKey(accountKey);
-
+                
 		PendingMessageStatus status = new PendingMessageStatus();
 
 		status.setAlertWaterLeakSWM(this.alertWaterLeakSWM(accountKey, config.getTimezone()));
@@ -110,10 +115,24 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 
 		status.setRecommendReduceFlowWhenNotNeededAmphiro(this.recommendReduceFlowWhenNotNeededAmphiro(aggregates,
 						accountKey, config.getTimezone()));
+               
+                status.setStaticTip(this.produceStaticTipForAccount(accountKey, config.getStaticTipInterval()));
 
 		return status;
 	}
 
+        //random static tip
+        private boolean produceStaticTipForAccount(UUID accountKey, int staticTipInterval) {         
+            boolean produceStaticTip = false;
+            AuthenticatedUser user = userRepository.getUserByKey(accountKey);
+            DateTime lastCreatedOn = messageManagementRepository.getLastDateOfAccountStaticRecommendation(user);
+            
+            if(lastCreatedOn == null || lastCreatedOn.isBefore(DateTime.now().minusDays(staticTipInterval))){
+                produceStaticTip = true;
+            }
+            return produceStaticTip;
+        }
+        
 	// 1 alert - Check for water leaks!
 	private boolean alertWaterLeakSWM(UUID accountKey, DateTimeZone timezone) {
 		boolean fireAlert = true;
