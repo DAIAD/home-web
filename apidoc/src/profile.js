@@ -4,12 +4,12 @@
  * @apiName ProfileLoad
  * @apiGroup Profile
  * @apiPermission ROLE_USER
- * 
+ *
  * @apiDescription Loads user profile as an instance of <code>ProfileResponse</code> with information about the system runtime, application configuration and user devices.
  *
  * @apiParam {String} username User name
  * @apiParam {String} password User password
- * 
+ *
  * @apiParamExample {json} Request Example
  * {
  *   username: "user@daiad.eu",
@@ -20,9 +20,9 @@
  * @apiSuccess (ProfileResponse) {Object[]} errors                  Array of <code>Error</code>.
  * @apiSuccess (ProfileResponse) {Object} runtime                   Information about the application runtime i.e. active application profile. If <code>success</code> is <code>false</code> this property will be <code>undefined</code>.
  * @apiSuccess (ProfileResponse) {Object} profile                   Authenticated user information. If <code>success</code> is <code>false</code> this property will be <code>undefined</code>.
- * 
+ *
  * @apiSuccess (Runtime) {String[]} profile       Active application profiles i.e. <code>development</code> or <code>production</code>.
- * 
+ *
  * @apiSuccess (Profile) {String} key             User unique identifier (UUID).
  * @apiSuccess (Profile) {String} version         Profie current version (UUID).
  * @apiSuccess (Profile) {String} application     Identifier of the application to which the user has been authenticated. Valid values are <code>HOME</code>, <code>UTILITY</code> and <code>MOBILE</code>. Users can override the application by adding any of the aformentioned values to the query request parameter <code>application</code>. If not application is set, users with role <code>ROLE_ADMIN</code> are automatically authenticated to the <code>UTILITY</code> application. If users have no sufficient permissions, authentication is performed against the <code>MOBILE</code> application.
@@ -48,20 +48,20 @@
  * <br/>4: <code>BLOCK</code>
  * @apiSuccess (Profile) {String} configuration   Application configuration serialized as a JSON object.
  * @apiSuccess (Profile) {Object[]} devices       Array of <code>DeviceRegistration</code> objects representing the Amphiro or Smart Water Meter devices registered to the authenticated user. Instances are implemented by classes <code>WaterMeterDeviceRegistration</code> and <code>AmphiroDeviceRegistration</code>.
- * 
+ *
  * @apiSuccess (DeviceRegistration) {String}     type              Device type. Valid values are <code>METER</code> and <code>AMPHIRO</code>.
  * @apiSuccess (DeviceRegistration) {String}     deviceKey         Unique device id (UUID).
  * @apiSuccess (DeviceRegistration) {Object[]}   properties        Array of <code>KeyValuePair</code> objects representing device properties.
- * 
+ *
  * @apiSuccess (KeyValuePair) {String}           key               Key.
  * @apiSuccess (KeyValuePair) {String}           value             Value.
- * 
+ *
  * @apiSuccess (WaterMeterDeviceRegistration extends DeviceRegistration) {String}     serial     Smart Water Meter unique serial Id.
- * 
+ *
  * @apiSuccess (AmphiroDeviceRegistration extends DeviceRegistration)    {String}     name       User friendly name for the device i.e. Shower #1.
  * @apiSuccess (AmphiroDeviceRegistration extends DeviceRegistration)    {String}     macAddress Device unique MAC address.
  * @apiSuccess (AmphiroDeviceRegistration extends DeviceRegistration)    {String}     aesKey     Device AES key.
- * 
+ *
  * @apiSuccessExample {json} Response Example
  * HTTP/1.1 200 OK
  * {
@@ -108,13 +108,13 @@
  *   },
  *   "success": true
  * }
- * 
+ *
  * @apiError {Boolean} success Always <code>false</code>.
  * @apiError {Object[]} errors Array of <code>Error</code> objects.
- * 
+ *
  * @apiError (Error) {String} code          Unique error code.
  * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
- * 
+ *
  * @apiErrorExample Error Response Example
  * HTTP/1.1 200 OK
  * {
@@ -124,7 +124,7 @@
  *   }],
  *   success: false
  * }
- * 
+ *
  */
 function profileLoad() { return; }
 
@@ -134,14 +134,14 @@ function profileLoad() { return; }
  * @apiName ProfileSave
  * @apiGroup Profile
  * @apiPermission ROLE_USER
- * 
+ *
  * @apiDescription Saves profile information. This operation is schema agnostic and expects a simple string. By convention this string is a serialized JSON object. The saved profile is loaded by <code>/api/v1/profile/load</code> operation in property <code>profile</code>.<code>configuration</code>. When API endpoint is used, profile is always assumed to be referring the <code>MOBILE</code> application. Updating <code>HOME</code> or <code>UTILITY</code> profile configuration requires using the corresponding action endpoint.
  *
  * @apiParam (DeviceRegistrationRequest) {Object}     credentials                 User credentials
  * @apiParam (DeviceRegistrationRequest) {String}     credentials.username        User name.
  * @apiParam (DeviceRegistrationRequest) {String}     credentials.password        Password.
  * @apiParam (DeviceRegistrationRequest) {String}     configuration               Profile data
- * 
+ *
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
@@ -150,7 +150,7 @@ function profileLoad() { return; }
  *   },
  *   "configuration": "{\"property1\":1,\"property2\":\"value2\"}"}"
  * }
- * 
+ *
  * @apiSuccess {Boolean}  success             Returns <code>true</code> or <code>false</code> indicating success of the operation.
  * @apiSuccess {Object[]} errors              Array of <code>Error</code>
  *
@@ -160,13 +160,13 @@ function profileLoad() { return; }
  *   "errors": [],
  *   "success": true
  * }
- * 
+ *
  * @apiError {Boolean} success Always <code>false</code>.
  * @apiError {Object[]} errors Array of <code>Error</code> objects.
- * 
+ *
  * @apiError (Error) {String} code          Unique error code.
  * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
- * 
+ *
  * @apiErrorExample Error Response Example
  * HTTP/1.1 200 OK
  * {
@@ -176,7 +176,7 @@ function profileLoad() { return; }
  *   }],
  *   success: false
  * }
- * 
+ *
  */
 function profileSave() { return; }
 
@@ -186,7 +186,7 @@ function profileSave() { return; }
  * @apiName ProfileNotify
  * @apiGroup Profile
  * @apiPermission ROLE_USER
- * 
+ *
  * @apiDescription Notifies server that an application profile has been applied. This operation is called by the mobile application when application mode has been updated.
  *
  * @apiParam {Object}     credentials                 User credentials
@@ -194,7 +194,7 @@ function profileSave() { return; }
  * @apiParam {String}     credentials.password        Password.
  * @apiParam {String}     updatedOn                   Date time stamp of the configuration update.
  * @apiParam {String}     version                     Configuration unique version (UUID).
- * 
+ *
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
@@ -204,7 +204,7 @@ function profileSave() { return; }
  *   "updatedOn": 1457365253000,
  *   "version": "aeea36cc-cefb-47db-ac0f-8c5dbc95b0f9",
  * }
- * 
+ *
  * @apiSuccess {Boolean}  success             Returns <code>true</code> or <code>false</code> indicating success of the operation.
  * @apiSuccess {Object[]} errors              Array of <code>Error</code>
  *
@@ -214,13 +214,13 @@ function profileSave() { return; }
  *   "errors": [],
  *   "success": true
  * }
- * 
+ *
  * @apiError {Boolean} success Always <code>false</code>.
  * @apiError {Object[]} errors Array of <code>Error</code> objects.
- * 
+ *
  * @apiError (Error) {String} code          Unique error code.
  * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
- * 
+ *
  * @apiErrorExample Error Response Example
  * HTTP/1.1 200 OK
  * {
@@ -230,6 +230,6 @@ function profileSave() { return; }
  *   }],
  *   success: false
  * }
- * 
+ *
  */
 function profileNotify() { return; }
