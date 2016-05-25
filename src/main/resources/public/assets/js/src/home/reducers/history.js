@@ -14,7 +14,7 @@ var history = function (state, action) {
       activeDevice: [],
       activeDeviceType: "METER",
       activeSessionFilter: "volume",
-      activeSessionIndex: null,
+      activeSession: null,
       synced: false,
       comparison: null,
       data: [],
@@ -85,38 +85,18 @@ var history = function (state, action) {
       return Object.assign({}, state, {
         activeSessionFilter: action.filter
       });
+
     
-    case types.HISTORY_SET_ACTIVE_SESSION_INDEX:
-      const intId = parseInt(action.id);
-      if (typeof(intId) !== "number") {
-        throw new Error('can\'t set non-integer as index');
-      }
+    case types.HISTORY_SET_ACTIVE_SESSION:
       return Object.assign({}, state, {
-        activeSessionIndex: intId
+        activeSession: [action.device, action.id]
       });
 
-    case types.HISTORY_RESET_ACTIVE_SESSION_INDEX:
+    case types.HISTORY_RESET_ACTIVE_SESSION:
       return Object.assign({}, state, {
-        activeSessionIndex: null
+        activeSession: null
       });
 
-    case types.HISTORY_INCREASE_ACTIVE_SESSION_INDEX:
-      if (state.activeSessionIndex===null) {
-        return state;
-      }
-
-      return Object.assign({}, state, {
-        activeSessionIndex: state.activeSessionIndex+1
-      });
-    
-    case types.HISTORY_DECREASE_ACTIVE_SESSION_INDEX:
-      if (state.activeSessionIndex===null) {
-        return state;
-      }
-      return Object.assign({}, state, {
-        activeSessionIndex: state.activeSessionIndex-1
-      });
-    
     case types.HISTORY_SET_COMPARISON:
       return Object.assign({}, state, {
         comparison: action.comparison

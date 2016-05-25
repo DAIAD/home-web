@@ -8,6 +8,7 @@ var FormattedRelative = require('react-intl').FormattedRelative;
 
 //var SessionsChart = require('./SessionsChart');
 var LineChart = require('./helpers/LineChart');
+//var Chart = require('./helpers/Chart');
 
 var { SHOWER_METRICS, IMAGES } = require('../constants/HomeConstants'); 
 var { SidebarLeft } = require('./layout/Sidebars');
@@ -67,6 +68,7 @@ function Session (props) {
         <LineChart 
             height={300}
             width='100%'
+            type='line'
             title=""
             mu="lt"
             xMargin={60}
@@ -100,21 +102,15 @@ function Session (props) {
 var SessionModal = React.createClass({
   
   onClose: function() {
-    this.props.resetActiveSessionIndex();
-    //set session filter to volume for sparkline
-    //this.props.setSessionFilter('volume');
+    this.props.resetActiveSession();
   },
   onNext: function() {
-    const { time } = this.props;
-    const { next:[id, device]} = this.props.data;
-
-    this.props.increaseActiveSessionIndex(id, device);
+    const { next:[device, id, timestamp]} = this.props.data;
+    this.props.setActiveSession(device, id, timestamp);
   },
   onPrevious: function() {
-    const { time } = this.props;
-    const { prev:[id, device]} = this.props.data;
-
-    this.props.decreaseActiveSessionIndex(id, device);
+    const { prev:[device, id, timestamp]} = this.props.data;
+    this.props.setActiveSession(device, id, timestamp);
   },
   render: function() {
     const { data, intl, filter, setSessionFilter } = this.props;
@@ -122,8 +118,6 @@ var SessionModal = React.createClass({
     const { next, prev } = data;
     const disabledNext = Array.isArray(next)?false:true;
     const disabledPrevious = Array.isArray(prev)?false:true;
-
-    //const history = this.props.data?this.props.data.history:null;
 
     const _t = intl.formatMessage;
     return (

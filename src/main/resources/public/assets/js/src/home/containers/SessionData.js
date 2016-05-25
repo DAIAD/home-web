@@ -4,6 +4,7 @@ var { connect } = require('react-redux');
 var injectIntl = require('react-intl').injectIntl;
 
 var { getChartDataByFilter } = require('../utils/chart');
+var { getDataSessions } = require('../utils/device');
 
 var SessionModal = require('../components/Session');
 
@@ -11,10 +12,9 @@ var HistoryActions = require('../actions/HistoryActions');
 
 function mapStateToProps(state, ownProps) {
   return {
-    //time: state.section.history.time,
+    data: state.section.history.data,
     activeSessionFilter: state.section.history.activeSessionFilter,
-    activeSessionIndex: state.section.history.activeSessionIndex,
-    activeSessionId: state.section.history.activeSessionId,
+    activeSession: state.section.history.activeSession,
     };
 }
 function mapDispatchToProps (dispatch) {
@@ -22,7 +22,10 @@ function mapDispatchToProps (dispatch) {
 }
 
 function mergeProps(stateProps, dispatchProps, ownProps) {
-  const data = ownProps.sessions?(stateProps.activeSessionIndex!==null?ownProps.sessions[stateProps.activeSessionIndex]:{}):{};
+  const data = ownProps.sessions?
+  (stateProps.activeSession!==null?
+    ownProps.sessions.find(s=> s.device===stateProps.activeSession[0] && s.id===stateProps.activeSession[1] || s.timestamp===stateProps.activeSession[1]):{})
+  :{};
 
   return Object.assign(
     {}, 
@@ -32,8 +35,8 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                   stateProps, 
                   {
                     data,
-                    chartData: getChartDataByFilter(data.measurements?data.measurements:[], stateProps.activeSessionFilter, null),
-                    showModal: stateProps.activeSessionIndex===null?false:true,
+                    chartData: data ? getChartDataByFilter(data.measurements?data.measurements:[], stateProps.activeSessionFilter, null) : [],
+                    showModal: stateProps.activeSession===null?false:true,
                   })
   );
 }
