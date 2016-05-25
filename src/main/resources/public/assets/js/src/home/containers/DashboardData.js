@@ -193,8 +193,8 @@ function transformInfoboxData (infoboxes, devices, link, intl) {
       reduced = data ? reduceMetric(devices, data, metric) : 0;
       mu = getMetricMu(metric);
       chartCategories = null; 
-      //dummy data based on real user data
-      chartData=[{title:'Comparison', data:[{value: 345, name: 'consumed'}, {value: 250, name: 'remaining'}]}];
+      //dummy data
+      chartData=[{title:'66%', data:[{value: 345, name: 'consumed', color: '#2D3580'}, {value: 250, name: 'remaining', color: '#D0EAFA'}]}];
       mu = getMetricMu(metric);
 
       linkToHistory =  () => link({id, time, period, deviceType, device, metric, index, data});

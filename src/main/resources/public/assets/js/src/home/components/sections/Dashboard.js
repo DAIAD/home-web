@@ -11,9 +11,7 @@ var PureRenderMixin = require('react-addons-pure-render-mixin');
 
 var MainSection = require('../layout/MainSection');
 
-var LineChart = require('../helpers/LineChart');
-var BarChart = require('../helpers/BarChart');
-var PieChart = require('../helpers/PieChart');
+var Chart = require('../helpers/Chart');
 
 const { IMAGES } = require('../../constants/HomeConstants');
 
@@ -163,20 +161,31 @@ function ChartBox (props) {
         {
           (() => chartData.length>0 ? 
            (type === 'budget' ? 
-           <PieChart
-              height={200}
-              width='100%'  
-              title=''
-              subtitle=""
-              fontSize={12}
-              mu={mu}
-              data={chartData}
-            /> :
+            <div>
+              <div 
+                style={{float: 'left', width: '50%'}}>
+              <Chart
+                height={70}
+                width='100%'
+                type='pie'
+                title={chartData[0].title}
+                subtitle=""
+                fontSize={17}
+                mu=''
+                data={chartData}
+              /> 
+            </div>
+            <div style={{width: '50%', float: 'right', textAlign: 'center'}}>
+              <b>{chartData[0].data[0].value} lt</b> consumed<br/>
+              <b>{chartData[0].data[1].value} lt</b> remaining
+            </div>
+          </div>:
               ((type === 'breakdown' || type === 'forecast' || type === 'comparison') ?
-                <BarChart
+                <Chart
                   height={200}
                   width='100%'  
                   title=''
+                  type='bar'
                   subtitle=""
                   xMargin={0}
                   y2Margin={0}  
@@ -190,11 +199,12 @@ function ChartBox (props) {
                   formatter={chartFormatter(intl)}
                   data={chartData}
                 /> :
-              <LineChart
+              <Chart
                 height={200}
                 width='100%'  
                 title=''
                 subtitle=""
+                type='line'
                 yMargin={10}
                 y2Margin={40}
                 fontSize={12}
@@ -233,6 +243,7 @@ function InfoPanel (props) {
         className='layout'
         layouts={{lg:layout}}
         breakpoints={{lg:1370, md: 900, sm: 600, xs: 480, xxs: 200}}
+        rowHeight={160}
         cols={{lg:8, md: 6, sm: 4, xs: 2, xxs: 1}}
         draggableHandle='.infobox-header'
         isDraggable={true}

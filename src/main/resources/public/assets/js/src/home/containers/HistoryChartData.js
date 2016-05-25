@@ -1,15 +1,15 @@
 var React = require('react');
-var connect = require('react-redux').connect;
-var injectIntl = require('react-intl').injectIntl;
+var { connect } = require('react-redux');
+var { bindActionCreators } = require('redux');
+var { injectIntl } = require('react-intl');
 
-//var LineChart = require('../components/SessionsChart');
-var LineChart = require('../components/helpers/LineChart');
+var Chart = require('../components/helpers/Chart');
 
 var HistoryActions = require('../actions/HistoryActions');
 
 var { selectTimeFormatter } = require('../utils/time');
 var { getChartTimeDataByFilter, getChartDataByFilter, getChartMeterCategories, getChartAmphiroCategories } = require('../utils/chart');
-var { getDeviceTypeByKey, getDeviceNameByKey, getDataSessions, getMetricMu, getSessionsIdOffset } = require('../utils/device');
+var { getDeviceTypeByKey, getDeviceKeyByName, getDeviceNameByKey, getDataSessions, getMetricMu, getSessionsIdOffset } = require('../utils/device');
 
 
 function mapStateToProps(state, ownProps) {
@@ -28,7 +28,7 @@ function mapStateToProps(state, ownProps) {
     };
 }
 function mapDispatchToProps(dispatch) {
-  return {};
+  return bindActionCreators(HistoryActions, dispatch);
 }
 function mergeProps(stateProps, dispatchProps, ownProps) {
   
@@ -45,7 +45,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                                                  );
   return Object.assign({},
                        ownProps,
-                       //dispatchProps,
+                       dispatchProps,
                        stateProps, 
                        {
                          data: stateProps.data.map(devData =>
@@ -57,14 +57,21 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                              xMax: stateProps.timeFilter === 'custom' ? stateProps.time.endDate : xAxisData.length-1,
                          xAxis: stateProps.timeFilter === 'custom' ? 'time' : 'category',
                          xAxisData,
+                         type: 'line',
                          //xTicks: xAxisData.length,
                          mu: getMetricMu(stateProps.filter),
+                         clickable: false,
+                         onClick: (series, x) => {
+                            const dev = getDeviceKeyByName(stateProps.devices, series.seriesName);
+                            const id = parseInt(x.substring(1));
+                            dispatchProps.setActiveSession(dev, id);
+                           },
                          fontSize: 13,
                        }
                       );
 }
 
-var HistoryChart = connect(mapStateToProps, mapDispatchToProps, mergeProps)(LineChart);
+var HistoryChart = connect(mapStateToProps, mapDispatchToProps, mergeProps)(Chart);
 HistoryChart = injectIntl(HistoryChart);
 
 module.exports = HistoryChart;

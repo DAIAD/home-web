@@ -53,10 +53,10 @@ const HistoryActions = {
 
       if (index != null && showerId != null) { 
         dispatch(HistoryActions.setSessionFilter(metric)); 
-        dispatch(HistoryActions.setActiveSessionIndex(index)); 
+        dispatch(HistoryActions.setActiveSession(Array.isArray(device)?device[0]:device, showerId)); 
       }
       else { 
-        dispatch(HistoryActions.resetActiveSessionIndex()); 
+        dispatch(HistoryActions.resetActiveSession()); 
       }
       
       if (data && data.length>0) { 
@@ -232,42 +232,26 @@ const HistoryActions = {
       }
     };
   },
-  setActiveSessionIndex: function(index, id, device) {
+  
+  setActiveSession: function(device, id, timestamp) {
     return function(dispatch, getState) {
       dispatch({
-        type: types.HISTORY_SET_ACTIVE_SESSION_INDEX,
-        id: index
+        type: types.HISTORY_SET_ACTIVE_SESSION,
+        device,
+        id: id || timestamp
       });
       if (id != null && device != null) {
         dispatch(HistoryActions.getDeviceSession(id, device, getState().section.history.time));
       }
-      //getDeviceSession: function (id, deviceKey, time) {
     };
   },
-  resetActiveSessionIndex: function() {
+  
+  resetActiveSession: function() {
     return {
-      type: types.HISTORY_RESET_ACTIVE_SESSION_INDEX
+      type: types.HISTORY_RESET_ACTIVE_SESSION
     };
   },
-  increaseActiveSessionIndex: function(id, device) {
-    return function(dispatch, getState) {
-      dispatch({
-        type: types.HISTORY_INCREASE_ACTIVE_SESSION_INDEX
-      });
-      if (id != null) 
-        dispatch(HistoryActions.getDeviceSession(id, device, getState().section.history.time));
-    };
-  },
-  decreaseActiveSessionIndex: function(id, device) {
-    return function(dispatch, getState) {
-      dispatch({
-        type: types.HISTORY_DECREASE_ACTIVE_SESSION_INDEX
-      });
-      if (id != null)
-        dispatch(HistoryActions.getDeviceSession(id, device, getState().section.history.time));
 
-    };
-  },
   setQueryFilter: function(filter) {
     return {
       type: types.HISTORY_SET_FILTER,
