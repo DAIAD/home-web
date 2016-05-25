@@ -115,6 +115,10 @@
 
 			<exclusions>
 				<exclusion>
+					<groupId>postgresql</groupId>
+					<artifactId>postgresql</artifactId>
+				</exclusion>
+				<exclusion>
 					<groupId>ch.qos.logback</groupId>
 					<artifactId>logback-classic</artifactId>
 				</exclusion>
