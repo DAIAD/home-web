@@ -14,27 +14,28 @@ public class WaterMeterDevice extends Device {
 
 	private Geometry location;
 
-	public WaterMeterDevice(int ownerId, UUID key, String serial) {
-		super(ownerId, key);
+	public WaterMeterDevice(int ownerId, UUID key, String serial, long registeredOn) {
+		super(ownerId, key, registeredOn);
 
 		this.serial = serial;
 	}
 
-	public WaterMeterDevice(int ownerId, UUID key, String serial, ArrayList<KeyValuePair> properties) {
-		super(ownerId, key, properties);
+	public WaterMeterDevice(int ownerId, UUID key, String serial, ArrayList<KeyValuePair> properties, long registeredOn) {
+		super(ownerId, key, properties, registeredOn);
 
 		this.serial = serial;
 	}
 
-	public WaterMeterDevice(int ownerId, UUID key, String serial, Geometry location) {
-		super(ownerId, key);
+	public WaterMeterDevice(int ownerId, UUID key, String serial, Geometry location, long registeredOn) {
+		super(ownerId, key, registeredOn);
 
 		this.serial = serial;
 		this.location = location;
 	}
 
-	public WaterMeterDevice(int ownerId, UUID key, String serial, ArrayList<KeyValuePair> properties, Geometry location) {
-		super(ownerId, key, properties);
+	public WaterMeterDevice(int ownerId, UUID key, String serial, ArrayList<KeyValuePair> properties,
+					Geometry location, long registeredOn) {
+		super(ownerId, key, properties, registeredOn);
 
 		this.serial = serial;
 		this.location = location;
@@ -59,6 +60,7 @@ public class WaterMeterDevice extends Device {
 
 		r.setDeviceKey(this.getKey());
 		r.setSerial(this.getSerial());
+		r.setRegisteredOn(this.getRegisteredOn());
 
 		for (Iterator<KeyValuePair> p = this.getProperties().iterator(); p.hasNext();) {
 			KeyValuePair property = p.next();

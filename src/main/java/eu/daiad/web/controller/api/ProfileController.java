@@ -69,7 +69,7 @@ public class ProfileController extends BaseRestController {
 	}
 
 	@RequestMapping(value = "/api/v1/profile/notify", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse saveProfile(@RequestBody NotifyProfileRequest request) {
+	public RestResponse notifyProfile(@RequestBody NotifyProfileRequest request) {
 		RestResponse response = new RestResponse();
 
 		try {
