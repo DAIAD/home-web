@@ -280,7 +280,9 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 
 					} else {
 						// Session already exists and is a real-time one!
-						updates.getUpdates().add(new AmphiroSessionUpdate(s.getId(), existingTimestamp.longValue()));
+						updates.getUpdates().add(
+										new AmphiroSessionUpdate(data.getDeviceKey(), s.getId(), existingTimestamp
+														.longValue()));
 
 						// Stop propagation to time indexed table
 						data.removeSession(i);
