@@ -6,9 +6,7 @@ var FormattedMessage = require('react-intl').FormattedMessage;
 var FormattedTime = require('react-intl').FormattedTime;
 var FormattedRelative = require('react-intl').FormattedRelative;
 
-//var SessionsChart = require('./SessionsChart');
-var LineChart = require('./helpers/LineChart');
-//var Chart = require('./helpers/Chart');
+var Chart = require('./helpers/Chart');
 
 var { SHOWER_METRICS, IMAGES } = require('../constants/HomeConstants'); 
 var { SidebarLeft } = require('./layout/Sidebars');
@@ -65,7 +63,7 @@ function Session (props) {
   return history===false?(
     <div className="shower-container">
       <div className="shower-chart-area">
-        <LineChart 
+        <Chart 
             height={300}
             width='100%'
             type='line'

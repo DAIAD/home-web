@@ -44,6 +44,14 @@ var PortalMixin = {
     }
   },
   
+  _onResizeInternalHandler: function() {
+    //this.getElement().style.width = this.getContainer().offsetWidth + 'px';
+	  
+	  if(typeof this.onResize === 'function') {
+	    this.onResize();
+	  }
+	},
+
   _createContainer : function(id) {
     let parent = ReactDOM.findDOMNode(this) || document.body;
     this._element = parent.appendChild(document.createElement('div'));
@@ -53,12 +61,21 @@ var PortalMixin = {
     if (this.props.elementClassName) {
       this._addClass(this.props.elementClassName);
     }
+    
+    if((window) && (this.onResize)) {
+      window.addEventListener('resize', this._onResizeInternalHandler);
+    }
   },
 
   _destroyContainer : function() {
     if (this._element) {
       this._element.parentNode.removeChild(this._element);
     }
+    
+    if((window) && (this.onResize)) {
+			  window.removeEventListener('resize', this._onResizeInternalHandler);
+			}
+
   },
 
   componentDidMount : function() {
