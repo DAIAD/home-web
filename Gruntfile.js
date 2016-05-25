@@ -257,8 +257,8 @@ module.exports = function (grunt) {
             },
             {
               expand: true,
-              cwd: 'node_modules/react-datetime/',
-              src: ['**/*.css'],
+              cwd: 'node_modules/react-datetime/css/',
+              src: ['*.css'],
               dest: 'src/main/resources/public/assets/lib/react-datetime/',
               filter: 'isFile'
             }
