@@ -287,7 +287,7 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-jsxhint');
 
     // Default task(s).
-    grunt.registerTask('build', ['clean', 'jshint', 'browserify', 'uglify', 'concat', 'docs', 'sync:utility']);
+    grunt.registerTask('build', ['clean', 'jshint', 'browserify', 'uglify', 'concat', 'docs', 'sync:home', 'sync:utility']);
 
 	grunt.registerTask('develop', ['clean', 'jshint', 'browserify', 'sync:home', 'sync:utility', 'sync:debug', 'watch']);
 
