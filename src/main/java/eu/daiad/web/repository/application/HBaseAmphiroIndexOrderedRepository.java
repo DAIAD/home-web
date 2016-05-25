@@ -450,21 +450,28 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 					public int compare(AmphiroMeasurement m1, AmphiroMeasurement m2) {
 						if (m1.getSessionId() == m2.getSessionId()) {
 							if (m1.getIndex() == m2.getIndex()) {
-								throw new RuntimeException("Session measurement indexes must be unique.");
+								throw new ApplicationException(DataErrorCode.MEASUREMENT_NO_UNIQUE_INDEX).set(
+												"session", m1.getSessionId()).set("index", m1.getIndex());
 							}
 							if (m1.getTimestamp() == m2.getTimestamp()) {
-								throw new RuntimeException("Session measurement timestamps must be unique.");
+								throw new ApplicationException(DataErrorCode.MEASUREMENT_NO_UNIQUE_TIMESTAMP)
+												.set("session", m1.getSessionId()).set("index", m1.getIndex())
+												.set("timestamp", m1.getTimestamp());
 							}
 							if (m1.getIndex() < m2.getIndex()) {
 								if (m1.getTimestamp() > m2.getTimestamp()) {
-									throw new RuntimeException(
-													"Session measurements timestamp and index has ambiguous orderning.");
+									throw new ApplicationException(DataErrorCode.MEASUREMENT_AMBIGUOUS_ORDERING)
+													.set("s1", m1.getSessionId()).set("s2", m2.getSessionId())
+													.set("ts1", m1.getTimestamp()).set("ts2", m2.getTimestamp())
+													.set("index1", m1.getIndex()).set("index2", m2.getIndex());
 								}
 								return -1;
 							} else {
 								if (m1.getTimestamp() < m2.getTimestamp()) {
-									throw new RuntimeException(
-													"Session measurements timestamp and index has ambiguous orderning.");
+									throw new ApplicationException(DataErrorCode.MEASUREMENT_AMBIGUOUS_ORDERING)
+													.set("s1", m1.getSessionId()).set("s2", m2.getSessionId())
+													.set("ts1", m1.getTimestamp()).set("ts2", m2.getTimestamp())
+													.set("index1", m1.getIndex()).set("index2", m2.getIndex());
 								}
 								return 1;
 							}
