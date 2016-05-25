@@ -52,6 +52,7 @@
  * @apiSuccess (DeviceRegistration) {String}     type              Device type. Valid values are <code>METER</code> and <code>AMPHIRO</code>.
  * @apiSuccess (DeviceRegistration) {String}     deviceKey         Unique device id (UUID).
  * @apiSuccess (DeviceRegistration) {Object[]}   properties        Array of <code>KeyValuePair</code> objects representing device properties.
+ * @apiSuccess (DeviceRegistration) {Number}     registeredOn      Device registration time stamp.
  *
  * @apiSuccess (KeyValuePair) {String}           key               Key.
  * @apiSuccess (KeyValuePair) {String}           value             Value.
@@ -89,6 +90,7 @@
  *       "name": "Amphiro #1",
  *       "macAddress": "9a:94:69:12:a1:f0",
  *       "aesKey": "Qz9-tZUDRQSHBEV7S50V3zjlH7lDL840QLJop-TgEVA",
+ *       "registeredOn": 1461152246546,
  *       "properties": [ {
  *         "key": "debug.autogenerate",
  *         "value": "2016-04-20T11:36:50.111Z"
@@ -96,7 +98,8 @@
  *     }, {
  *       "type": "METER",
  *       "deviceKey": "48944e9f-471d-4a9a-a926-f23dee64ae6a",
- *       "serial": "C12FA154674"
+ *       "serial": "C12FA154674",
+ *       "registeredOn": 1461152246546,
  *       "properties": [ {
  *         "key": "import.date",
  *         "value": "2016-04-20T11:37:33.589Z"
@@ -126,7 +129,7 @@
  * }
  *
  */
-function profileLoad() { return; }
+function loadProfile() { return; }
 
 /**
  * @api {post} /v1/profile/save Save profile
@@ -178,7 +181,7 @@ function profileLoad() { return; }
  * }
  *
  */
-function profileSave() { return; }
+function saveProfile() { return; }
 
 /**
  * @api {post} /v1/profile/notify Notify mode update
@@ -232,4 +235,4 @@ function profileSave() { return; }
  * }
  *
  */
-function profileNotify() { return; }
+function notifyProfile() { return; }

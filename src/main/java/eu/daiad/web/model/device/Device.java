@@ -16,14 +16,18 @@ public abstract class Device {
 
 	private ArrayList<KeyValuePair> properties;
 
-	public Device(int ownerId, UUID key) {
+	private long registeredOn;
+
+	public Device(int ownerId, UUID key, long registeredOn) {
 		this.key = key;
 		this.properties = new ArrayList<KeyValuePair>();
+		this.registeredOn = registeredOn;
 	}
 
-	public Device(int ownerId, UUID key, ArrayList<KeyValuePair> properties) {
+	public Device(int ownerId, UUID key, ArrayList<KeyValuePair> properties, long registeredOn) {
 		this.key = key;
 		this.setProperties(properties);
+		this.registeredOn = registeredOn;
 	}
 
 	public UUID getKey() {
@@ -53,5 +57,9 @@ public abstract class Device {
 
 	public int getOwnerId() {
 		return ownerId;
+	}
+
+	public long getRegisteredOn() {
+		return registeredOn;
 	}
 }
