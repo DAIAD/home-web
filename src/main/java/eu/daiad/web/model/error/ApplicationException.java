@@ -7,6 +7,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.slf4j.MDC;
 
 public class ApplicationException extends RuntimeException {
 
@@ -58,6 +59,16 @@ public class ApplicationException extends RuntimeException {
 	}
 
 	public static ApplicationException wrap(Throwable ex, ErrorCode code) {
+		MDC.put("error.category", code.getClass().getSimpleName());
+		MDC.put("error.code", code.toString());
+
+		if ((code != null) && (!code.equals(SharedErrorCode.UNKNOWN))) {
+
+			Log jdbcLogger = LogFactory.getLog(ApplicationException.class);
+
+			jdbcLogger.error(ex.getMessage(), ex);
+		}
+
 		Log logger = LogFactory.getLog(ex.getStackTrace()[0].getClassName());
 
 		logger.error(ex.getMessage(), ex);
