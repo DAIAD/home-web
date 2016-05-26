@@ -25,37 +25,11 @@ public class ApplicationException extends RuntimeException {
 		this.code = code;
 	}
 
-	public ApplicationException(ErrorCode code, boolean isLogged) {
-		super();
-
-		this.code = code;
-		this.isLogged = isLogged;
-	}
-
-	public ApplicationException(String message, ErrorCode code) {
-		super(message);
-
-		this.code = code;
-	}
-
-	public ApplicationException(String message, ErrorCode code, boolean isLogged) {
-		super(message);
-
-		this.code = code;
-		this.isLogged = isLogged;
-	}
-
-	public ApplicationException(String message, Throwable cause, ErrorCode code) {
+	protected ApplicationException(String message, Throwable cause, ErrorCode code) {
 		super(message, cause);
 
 		this.code = code;
-	}
-
-	public ApplicationException(String message, Throwable cause, ErrorCode code, boolean isLogged) {
-		super(message, cause);
-
-		this.code = code;
-		this.isLogged = isLogged;
+		this.isLogged = true;
 	}
 
 	public static ApplicationException wrap(Throwable ex, ErrorCode code) {
@@ -78,11 +52,11 @@ public class ApplicationException extends RuntimeException {
 			appEx.isLogged = true;
 
 			if (code != SharedErrorCode.UNKNOWN && code != appEx.getCode()) {
-				return new ApplicationException(ex.getMessage(), ex, appEx.getCode(), true);
+				return new ApplicationException(ex.getMessage(), ex, appEx.getCode());
 			}
 			return appEx;
 		} else {
-			return new ApplicationException(ex.getMessage(), ex, code, true);
+			return new ApplicationException(ex.getMessage(), ex, code);
 		}
 	}
 
