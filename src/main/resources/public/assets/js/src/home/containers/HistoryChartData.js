@@ -8,7 +8,7 @@ var Chart = require('../components/helpers/Chart');
 var HistoryActions = require('../actions/HistoryActions');
 
 var { selectTimeFormatter } = require('../utils/time');
-var { getChartTimeDataByFilter, getChartDataByFilter, getChartMeterCategories, getChartAmphiroCategories } = require('../utils/chart');
+var { getChartTimeDataByFilter, getChartDataByFilter, getChartMeterCategories, getChartAmphiroCategories, getChartMetadata } = require('../utils/chart');
 var { getDeviceTypeByKey, getDeviceKeyByName, getDeviceNameByKey, getDataSessions, getMetricMu, getSessionsIdOffset } = require('../utils/device');
 
 
@@ -36,23 +36,33 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
     (stateProps.timeFilter === 'custom' ? null : getChartMeterCategories(stateProps.timeFilter, ownProps.intl)) : 
       getChartAmphiroCategories(stateProps.timeFilter, getSessionsIdOffset(stateProps.data[0] ? stateProps.data[0].sessions : []));
 
-    
-   const comparison = stateProps.comparisonData.map(devData =>
-                                                   ({
-                                                     title: `${getDeviceNameByKey(stateProps.devices, devData.deviceKey)} (previous ${stateProps.timeFilter})`, 
-                                                     data: getChartDataByFilter(getDataSessions(stateProps.devices, devData), stateProps.filter, xAxisData)
-                                                   })
+
+      const chartData = stateProps.data.map(devData => {
+         const sessions = getDataSessions(stateProps.devices, devData);
+         return ({
+           title: getDeviceNameByKey(stateProps.devices, devData.deviceKey), 
+           data: getChartDataByFilter(sessions, stateProps.filter, xAxisData),
+           metadata: {
+             device: devData.deviceKey,
+             ids: getChartMetadata(sessions , xAxisData)
+           }
+         });
+   });
+   
+   const comparison = stateProps.comparisonData.map(devData => {
+     const sessions = getDataSessions(stateProps.devices, devData);
+     return ({
+       title: `${getDeviceNameByKey(stateProps.devices, devData.deviceKey)} (previous ${stateProps.timeFilter})`, 
+       data: getChartDataByFilter(sessions, stateProps.filter, xAxisData)
+     });
+   }
                                                  );
   return Object.assign({},
                        ownProps,
                        dispatchProps,
                        stateProps, 
                        {
-                         data: stateProps.data.map(devData =>
-                             ({
-                               title: getDeviceNameByKey(stateProps.devices, devData.deviceKey), 
-                               data: stateProps.activeDeviceType === 'METER' ? getChartDataByFilter(getDataSessions(stateProps.devices, devData), stateProps.filter, xAxisData) : getChartDataByFilter(getDataSessions(stateProps.devices, devData), stateProps.filter, xAxisData)
-                             })).concat(comparison),
+                         data: chartData.concat(comparison),
                              xMin: stateProps.timeFilter === 'custom' ? stateProps.time.startDate : 0,
                              xMax: stateProps.timeFilter === 'custom' ? stateProps.time.endDate : xAxisData.length-1,
                          xAxis: stateProps.timeFilter === 'custom' ? 'time' : 'category',
@@ -60,11 +70,13 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                          type: 'line',
                          //xTicks: xAxisData.length,
                          mu: getMetricMu(stateProps.filter),
-                         clickable: false,
-                         onClick: (series, x) => {
-                            const dev = getDeviceKeyByName(stateProps.devices, series.seriesName);
-                            const id = parseInt(x.substring(1));
-                            dispatchProps.setActiveSession(dev, id);
+                         clickable: true,
+                         onPointClick: (series, index) => {
+                           const device = chartData[series] ? chartData[series].metadata.device : null;
+                           const [id, timestamp] = chartData[series] ? (chartData[series].metadata.ids[index] ? chartData[series].metadata.ids[index] : [null, null]) : [null, null];
+                           //console.log('clicked x', series, index, chartData[series].metadata.device, chartData[series].metadata.ids[index]);
+                            
+                           dispatchProps.setActiveSession(device, id, timestamp);
                            },
                          fontSize: 13,
                        }

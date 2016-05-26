@@ -27,13 +27,13 @@ const getChartMeterCategories = function(period, intl) {
 
 const getChartAmphiroCategories = function(period, offset) {
   if (period === 'ten') {
-    return Array.from({length: 10}, (v, i) => `#${offset+i}`);
+    return Array.from({length: 10}, (v, i) => `${10-i}`);
   }
   else if (period === 'twenty') {
-    return Array.from({length: 20}, (v, i) => `#${offset+i}`);
+    return Array.from({length: 20}, (v, i) => `${20-i}`); 
   }
   else if (period === 'fifty') {
-    return Array.from({length: 50}, (v, i) => `#${offset+i}`);
+    return Array.from({length: 50}, (v, i) => `${50-i}`);
   }
   else return [];
 };
@@ -57,10 +57,20 @@ const getChartDataByFilter = function(data, filter, xAxisData) {
   }
 };
 
+const getChartMetadata = function(data, xAxisData) {
+  if (xAxisData === null) {
+    return data.map(session => [session.id, session.timestamp]);
+  }
+  else {
+    return xAxisData.map((v, i) => 
+      data[i] ? [data[i].id, data[i].timestamp] : []);
+  }
+};
 
 module.exports = {
   getChartTimeDataByFilter,
   getChartDataByFilter,
+  getChartMetadata,
   getChartMeterCategories,
   getChartAmphiroCategories,
 };

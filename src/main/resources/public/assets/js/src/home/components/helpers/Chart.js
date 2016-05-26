@@ -29,6 +29,7 @@ var Chart = React.createClass({
       colors: ['#2D3580', '#CD4D3E', '#564535'],
       data: [],
       clickable: false,
+      onPointClick: () => null,
       //xTicks: 12,
       xAxisData: null,
       invertAxis: false,
@@ -46,8 +47,7 @@ var Chart = React.createClass({
     const { setActiveSession, devices } = this.props;
     if (this.props.clickable) {
       this._chart.on('CLICK', (p => { 
-        //console.log('EVENT!', p); 
-        this.props.onClick(p.seriesName, p.name);
+        this.props.onPointClick(p.seriesIndex, p.dataIndex);
       }));
     }
     this._updateOptions(this.props);
