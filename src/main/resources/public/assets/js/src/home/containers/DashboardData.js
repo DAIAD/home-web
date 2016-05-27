@@ -83,7 +83,7 @@ function transformInfoboxData (infoboxes, devices, link, intl) {
       const last = data.find(d=>d.deviceKey===device);
       const lastShowerMeasurements = getDataMeasurements(devices, last, index);
       
-      reduced = lastShowerMeasurements.map(s=>s[metric]).reduce((c, p)=>c+p, 0);
+      reduced = lastShowerMeasurements.map(s=>s[metric]).reduce((p, c)=>p+c, 0);
       highlight = reduced;
       mu = getMetricMu(metric);
       //highlight = `${reduced} ${mu}`;

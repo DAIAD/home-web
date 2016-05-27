@@ -159,12 +159,12 @@ const getDataSessions = function (devices, data) {
 };
 
 const getSessionsCount = function (devices, data) {
-  return reduceSessions(devices, data).map(s => 1).reduce((c, p) => c + p, 0);
+  return reduceSessions(devices, data).map(s => 1).reduce((p, c) => p + c, 0);
   //return data.map(d=>getDataSessions(devices, data).length).reduce((c, p)=> c+p, 0);
 };
 
 const getShowersCount = function (devices, data) {
-  return reduceSessions(devices, data).map(s => s.count?s.count:1).reduce((c, p) => c + p, 0);
+  return reduceSessions(devices, data).map(s => s.count?s.count:1).reduce((p, c) => p + c, 0);
   //return data.map(d=>getDataSessions(devices, data).length).reduce((c, p)=> c+p, 0);
 };
 
@@ -201,7 +201,7 @@ const reduceSessions = function(devices, data) {
                   }
                           )
                         )
-                        .reduce((c, p) => c.concat(p), []);
+                        .reduce((p, c) => p.concat(c), []);
 };
 
 const calculateIndexes = function(sessions) { 
@@ -234,8 +234,8 @@ const reduceMetric = function(devices, data, metric) {
   
   reducedMetric = data.map(it => getDataSessions(devices, it)
                                     .map(it=>it[metric]?it[metric]:0)
-                                    .reduce(((c, p)=>c+p),0))
-                        .reduce(((c, p)=>c+p),0);
+                                    .reduce(((p, c)=>p+c),0))
+                        .reduce(((p, c)=>p+c),0);
 
     if (metric === 'temperature') {
       reducedMetric = reducedMetric / sessions;
