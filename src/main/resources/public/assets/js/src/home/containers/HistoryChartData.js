@@ -75,10 +75,12 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                            const device = chartData[series] ? chartData[series].metadata.device : null;
                            const [id, timestamp] = chartData[series] ? (chartData[series].metadata.ids[index] ? chartData[series].metadata.ids[index] : [null, null]) : [null, null];
                            //console.log('clicked x', series, index, chartData[series].metadata.device, chartData[series].metadata.ids[index]);
-                            
                            dispatchProps.setActiveSession(device, id, timestamp);
                            },
+                         dataZoom: true,
                          fontSize: 13,
+                         y2Margin: 70,
+                         height: 380
                        }
                       );
 }

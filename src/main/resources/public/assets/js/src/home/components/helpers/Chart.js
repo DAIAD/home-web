@@ -29,7 +29,10 @@ var Chart = React.createClass({
       colors: ['#2D3580', '#CD4D3E', '#564535'],
       data: [],
       clickable: false,
+      dataZoom: false,
       onPointClick: () => null,
+      onDataZoom: () => null,
+      dataZoomY: 'bottom',
       //xTicks: 12,
       xAxisData: null,
       invertAxis: false,
@@ -49,6 +52,12 @@ var Chart = React.createClass({
       this._chart.on('CLICK', (p => { 
         this.props.onPointClick(p.seriesIndex, p.dataIndex);
       }));
+      
+      this._chart.on('DATA_ZOOM', (p => { 
+        console.log('DATA ZOOM!', p);
+        //this.props.onPointClick(p.seriesIndex, p.dataIndex);
+      }));
+
     }
     this._updateOptions(this.props);
       //}
@@ -333,14 +342,14 @@ var Chart = React.createClass({
       color: ['#2D3580', '#A45476'],
       calculable : false,
       dataZoom: {
-        show: false,
-        y: 'bottom',  
+        show: this.props.dataZoom,
+        y: this.props.dataZoomY,  
         realtime: true,
         start: 0,
         end: 100,
-        //backgroundColor: 'rgba(0,0,0,0)',
-        //dataBackgroundColor: '#E8F5FD',
-        //fillerColor: 'rgba(0,0,0,0.4)',
+        //backgroundColor: '#fff',
+        dataBackgroundColor: '#2D3580',
+        fillerColor: 'rgba(0,0,0,0.1)',
         handleColor: '#2D3580'
       },
       grid: {
