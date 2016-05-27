@@ -195,10 +195,8 @@ public class DataController extends BaseController {
 			}
 
 			return dataService.execute(query);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -275,13 +273,11 @@ public class DataController extends BaseController {
 
 					break;
 				default:
-					throw new ApplicationException(ActionErrorCode.EXPORT_TYPE_NOT_SUPPORTED).set("type",
+					throw createApplicationException(ActionErrorCode.EXPORT_TYPE_NOT_SUPPORTED).set("type",
 									data.getType());
 			}
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

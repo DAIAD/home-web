@@ -16,7 +16,6 @@ import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.admin.AccountActivity;
 import eu.daiad.web.model.admin.AccountActivityResponse;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.group.GroupQueryRequest;
 import eu.daiad.web.model.group.GroupQueryResponse;
 import eu.daiad.web.model.security.AuthenticatedUser;
@@ -49,10 +48,8 @@ public class AdminController extends BaseController {
 			}
 
 			response = controllerResponse;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response = new RestResponse();
 			response.add(this.getError(ex));
@@ -68,10 +65,8 @@ public class AdminController extends BaseController {
 
 		try {
 			return new GroupQueryResponse(this.groupRepository.getAll());
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response = new RestResponse();
 			response.add(this.getError(ex));

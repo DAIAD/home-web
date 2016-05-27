@@ -12,6 +12,6 @@ public interface IMessageManagementRepository {
 
 	public void executeAccount(MessageCalculationConfiguration config, ConsumptionAggregateContainer aggregates,
 					PendingMessageStatus status, UUID accountkey);
-        
-        public DateTime getLastDateOfAccountStaticRecommendation(AuthenticatedUser user);
+
+	public DateTime getLastDateOfAccountStaticRecommendation(AuthenticatedUser user);
 }

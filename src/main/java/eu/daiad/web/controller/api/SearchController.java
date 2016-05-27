@@ -30,7 +30,6 @@ import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQuery;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQueryResult;
@@ -86,10 +85,8 @@ public class SearchController extends BaseRestController {
 			}
 
 			return result;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -114,10 +111,8 @@ public class SearchController extends BaseRestController {
 							DateTimeZone.forID(user.getTimezone()), query);
 
 			return data;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -144,10 +139,8 @@ public class SearchController extends BaseRestController {
 							DateTimeZone.forID(user.getTimezone()), query);
 
 			return data;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -174,10 +167,8 @@ public class SearchController extends BaseRestController {
 							DateTimeZone.forID(user.getTimezone()), query);
 
 			return data;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -205,10 +196,8 @@ public class SearchController extends BaseRestController {
 							DateTimeZone.forID(user.getTimezone()), query);
 
 			return data;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -236,10 +225,8 @@ public class SearchController extends BaseRestController {
 							DateTimeZone.forID(user.getTimezone()), query);
 
 			return data;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -265,10 +252,8 @@ public class SearchController extends BaseRestController {
 			AmphiroSessionTimeIntervalQueryResult data = amphiroTimeOrderedRepository.getSession(query);
 
 			return data;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -294,10 +279,8 @@ public class SearchController extends BaseRestController {
 			AmphiroSessionIndexIntervalQueryResult data = amphiroIndexOrderedRepository.getSession(query);
 
 			return data;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -321,7 +304,7 @@ public class SearchController extends BaseRestController {
 				Device device = this.deviceRepository.getUserDeviceByKey(userKey, deviceKey);
 
 				if ((device == null) || (!device.getType().equals(EnumDeviceType.AMPHIRO))) {
-					throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
+					throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
 				}
 
 				nameList.add(((AmphiroDevice) device).getName());
@@ -341,7 +324,7 @@ public class SearchController extends BaseRestController {
 				Device device = this.deviceRepository.getUserDeviceByKey(userKey, deviceKey);
 
 				if ((device == null) || (!device.getType().equals(EnumDeviceType.METER))) {
-					throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
+					throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
 				}
 
 				serialList.add(((WaterMeterDevice) device).getSerial());

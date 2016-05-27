@@ -18,7 +18,7 @@ var dashboard = function (state, action) {
         {i: "9", x:0, y:3, w:2, h:2},
         {i: "10", x:4, y:3, w:2, h:2},
         {i: "11", x:2, y:3, w:2, h:2},
-        {i: "12", x:0, y:3, w:2, h:2},
+        {i: "12", x:0, y:3, w:2, h:1},
       ],
       infobox: [
           {
@@ -60,7 +60,8 @@ var dashboard = function (state, action) {
             period: "year",
             metric: "difference",
             data: [],
-        },
+          },
+          /*
         {
           id: "7", 
           title: "Tip of the day",
@@ -68,7 +69,8 @@ var dashboard = function (state, action) {
           display: "tip",
           data: [],
         
-        },
+          },
+          */
         {
           id: "8", 
           title: "Efficiency",

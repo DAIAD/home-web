@@ -20,6 +20,12 @@ const getDeviceTypeByKey = function(devices, key) {
   return device.type;
 };
 
+const getDeviceKeyByName = function(devices, name) {
+  const device = devices.find(d => d.name === name || d.serial === name);
+  if (device) return device.deviceKey;
+  else return null;
+};
+
 const getDeviceCount = function(devices) {
   if (!devices.length) return 0;
   return getAvailableDevices(devices).length;
@@ -201,8 +207,8 @@ const reduceSessions = function(devices, data) {
 const calculateIndexes = function(sessions) { 
   return sessions.map((session, idx, array) => Object.assign({}, session, 
                      {
-                       next:array[idx+1]?[array[idx+1].id, array[idx+1].device]:null,
-                       prev:array[idx-1]?[array[idx-1].id, array[idx-1].device]:null,
+                       next:array[idx+1]?[array[idx+1].device, array[idx+1].id, array[idx+1].timestamp]:null,
+                       prev:array[idx-1]?[array[idx-1].device, array[idx-1].id, array[idx-1].timestamp]:null,
                      }));
 };
 
@@ -271,6 +277,7 @@ module.exports = {
   getAvailableMeters,
   getDeviceNameByKey,
   getDeviceByKey,
+  getDeviceKeyByName,
   getDeviceKeysByType,
   getReducedDeviceType,
   reduceSessions,

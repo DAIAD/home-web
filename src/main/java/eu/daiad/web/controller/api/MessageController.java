@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageAcknowledgementRequest;
 import eu.daiad.web.model.message.MessageRequest;
@@ -61,10 +60,8 @@ public class MessageController extends BaseRestController {
 			}
 
 			return messageResponse;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			RestResponse response = new RestResponse();
 			response.add(this.getError(ex));
@@ -81,10 +78,8 @@ public class MessageController extends BaseRestController {
 			this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
 			this.messageRepository.setMessageAcknowledgement(request.getMessages());
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

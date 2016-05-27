@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageAcknowledgementRequest;
@@ -65,10 +64,8 @@ public class MessageController extends BaseController {
 			}
 
 			return messageResponse;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			RestResponse response = new RestResponse();
 			response.add(this.getError(ex));
@@ -83,10 +80,8 @@ public class MessageController extends BaseController {
 
 		try {
 			this.messageRepository.setMessageAcknowledgement(request.getMessages());
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -103,10 +98,8 @@ public class MessageController extends BaseController {
 			messages.setMessages(this.messageRepository.getAdvisoryMessages(locale));
 
 			return messages;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			RestResponse response = new RestResponse();
 			response.add(this.getError(ex));

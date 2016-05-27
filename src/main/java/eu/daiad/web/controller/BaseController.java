@@ -15,6 +15,7 @@ import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.Error;
 import eu.daiad.web.model.error.ErrorCode;
+import eu.daiad.web.model.error.SharedErrorCode;
 
 public abstract class BaseController {
 
@@ -62,8 +63,14 @@ public abstract class BaseController {
 		return new Error(error.getMessageKey(), this.getMessage(error, properties));
 	}
 
-	protected Error getError(ApplicationException ex) {
-		return new Error(ex.getCode().getMessageKey(), this.getMessage(ex));
+	protected Error getError(Exception ex) {
+		if (ex instanceof ApplicationException) {
+			ApplicationException applicationException = (ApplicationException) ex;
+
+			return new Error(applicationException.getCode().getMessageKey(), this.getMessage(applicationException));
+		}
+		return new Error(SharedErrorCode.UNKNOWN.getMessageKey(), this.getMessage(SharedErrorCode.UNKNOWN
+						.getMessageKey()));
 	}
 
 	protected RestResponse createResponse(ErrorCode error) {
@@ -103,4 +110,15 @@ public abstract class BaseController {
 		return environment.getActiveProfiles();
 	}
 
+	protected ApplicationException createApplicationException(ErrorCode code) {
+		String pattern = messageSource.getMessage(code.getMessageKey(), null, code.getMessageKey(), null);
+
+		return ApplicationException.create(code, pattern);
+	}
+
+	protected ApplicationException wrapApplicationException(Exception ex, ErrorCode code) {
+		String pattern = messageSource.getMessage(code.getMessageKey(), null, code.getMessageKey(), null);
+
+		return ApplicationException.wrap(ex, code, pattern);
+	}
 }

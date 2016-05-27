@@ -410,7 +410,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
 			// Check if historical data require a delete operation
 			for (AmphiroSession s : sessions) {
 				if ((s.isHistory()) && (s.getDelete() != null)) {
-					throw new ApplicationException(DataErrorCode.DELETE_NOT_ALLOWED_FOR_HISTORY).set("session",
+					throw createApplicationException(DataErrorCode.DELETE_NOT_ALLOWED_FOR_HISTORY).set("session",
 									s.getId());
 				}
 			}
@@ -469,7 +469,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
 					for (AmphiroSession s : sessions) {
 						if (m.getSessionId() == s.getId()) {
 							if (s.isHistory()) {
-								throw new ApplicationException(DataErrorCode.HISTORY_SESSION_MEASUREMENT_FOUND).set(
+								throw createApplicationException(DataErrorCode.HISTORY_SESSION_MEASUREMENT_FOUND).set(
 												"session", m.getSessionId()).set("index", m.getIndex());
 							}
 							m.setSession(s);
@@ -477,7 +477,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
 						}
 					}
 					if (m.getSession() == null) {
-						throw new ApplicationException(DataErrorCode.NO_SESSION_FOUND_FOR_MEASUREMENT).set("session",
+						throw createApplicationException(DataErrorCode.NO_SESSION_FOUND_FOR_MEASUREMENT).set("session",
 										m.getSessionId()).set("index", m.getIndex());
 					}
 				}
@@ -575,7 +575,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
 				}
 			}
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -674,7 +674,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
 				endDate = new DateTime(endDate.getYear(), 12, 31, 23, 59, 59, DateTimeZone.UTC);
 				break;
 			default:
-				throw new ApplicationException(DataErrorCode.TIME_GRANULARITY_NOT_SUPPORTED).set("level",
+				throw createApplicationException(DataErrorCode.TIME_GRANULARITY_NOT_SUPPORTED).set("level",
 								query.getGranularity());
 		}
 
@@ -781,7 +781,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
 
 			return data;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (scanner != null) {
@@ -851,7 +851,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
 				endDate = new DateTime(endDate.getYear(), 12, 31, 23, 59, 59, DateTimeZone.UTC);
 				break;
 			default:
-				throw new ApplicationException(DataErrorCode.TIME_GRANULARITY_NOT_SUPPORTED).set("level",
+				throw createApplicationException(DataErrorCode.TIME_GRANULARITY_NOT_SUPPORTED).set("level",
 								query.getGranularity());
 		}
 
@@ -956,7 +956,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
 
 			return data;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (scanner != null) {
@@ -1059,7 +1059,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
 
 			return data;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (scanner != null) {
@@ -1159,7 +1159,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
 
 			return measurements;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (scanner != null) {
@@ -1227,7 +1227,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
 					// Ignore
 					break;
 				default:
-					throw new ApplicationException(DataErrorCode.TIME_GRANULARITY_NOT_SUPPORTED).set("level",
+					throw createApplicationException(DataErrorCode.TIME_GRANULARITY_NOT_SUPPORTED).set("level",
 									query.getGranularity());
 			}
 
@@ -1329,7 +1329,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
 				}
 			}
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (scanner != null) {

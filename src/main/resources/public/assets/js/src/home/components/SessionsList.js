@@ -16,7 +16,7 @@ function SessionListItem (props) {
   const mu = ' lt';
   return (
     <li className="session-item"> 
-      <a onClick={() => props.onOpen(id, props.index, device)} >
+      <a onClick={() => props.onOpen(device, id, timestamp)} >
         
         <ul className="session-item-details"> 
           <li className='col-md-2'> 
@@ -103,8 +103,8 @@ function SparklineChart (props) {
 
 var SessionsList = React.createClass({
 
-  onOpen: function (id, index, device) {
-    this.props.setActiveSessionIndex(index, id, device);
+  onOpen: function (device, id, timestamp) {
+    this.props.setActiveSession(device, id, timestamp);
   },
   /*
   onClose: function() {

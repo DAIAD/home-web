@@ -21,7 +21,6 @@ import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.Error;
 import eu.daiad.web.model.error.ErrorCode;
 import eu.daiad.web.model.error.QueryErrorCode;
@@ -48,7 +47,7 @@ import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 
 @Service
-public class DataService implements IDataService {
+public class DataService extends BaseService implements IDataService {
 
 	@Autowired
 	protected MessageSource messageSource;
@@ -314,7 +313,7 @@ public class DataService implements IDataService {
 															userKey));
 
 							if (user == null) {
-								throw new ApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username",
+								throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username",
 												userKey);
 							}
 
@@ -478,7 +477,7 @@ public class DataService implements IDataService {
 
 			return response;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex);
+			throw wrapApplicationException(ex);
 		}
 	}
 }

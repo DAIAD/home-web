@@ -12,13 +12,13 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.domain.application.Utility;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.utility.UtilityInfo;
+import eu.daiad.web.repository.BaseRepository;
 
 @Repository
-@Transactional("transactionManager")
-public class JpaUtilityRepository implements IUtilityRepository {
+@Transactional("applicationTransactionManager")
+public class JpaUtilityRepository extends BaseRepository implements IUtilityRepository {
 
 	@PersistenceContext(unitName = "default")
 	EntityManager entityManager;
@@ -40,7 +40,7 @@ public class JpaUtilityRepository implements IUtilityRepository {
 			return utilitiesInfo;
 
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -54,7 +54,7 @@ public class JpaUtilityRepository implements IUtilityRepository {
 
 			return new UtilityInfo(utilityQuery.getSingleResult());
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -68,7 +68,7 @@ public class JpaUtilityRepository implements IUtilityRepository {
 
 			return new UtilityInfo(utilityQuery.getSingleResult());
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 }

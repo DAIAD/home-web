@@ -19,7 +19,6 @@ import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.arduino.ArduinoIntervalQuery;
 import eu.daiad.web.model.arduino.ArduinoMeasurement;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.repository.application.IArduinoDataRepository;
 
 @RestController("RestArduinoDataController")
@@ -75,10 +74,8 @@ public class ArduinoDataController extends BaseController {
 
 		try {
 			return this.arduinoDataRepository.searchData(query);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

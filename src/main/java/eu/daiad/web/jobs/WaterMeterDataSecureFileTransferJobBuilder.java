@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import eu.daiad.web.connector.SftpProperties;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.loader.DataTransferConfiguration;
 import eu.daiad.web.service.IWaterMeterDataLoaderService;
 
@@ -45,15 +44,13 @@ public class WaterMeterDataSecureFileTransferJobBuilder implements IJobBuilder {
 					DataTransferConfiguration config = new DataTransferConfiguration();
 
 					// File properties
-					config.setLocalFolder((String) chunkContext.getStepContext().getJobParameters()
-									.get("folder.local"));
+					config.setLocalFolder((String) chunkContext.getStepContext().getJobParameters().get("folder.local"));
 					config.setRemoteFolder((String) chunkContext.getStepContext().getJobParameters()
 									.get("folder.remote"));
 					config.setTimezone((String) chunkContext.getStepContext().getJobParameters().get("timezone"));
 
 					// Filter properties
-					config.setFilterRegEx((String) chunkContext.getStepContext().getJobParameters()
-									.get("filter.regex"));
+					config.setFilterRegEx((String) chunkContext.getStepContext().getJobParameters().get("filter.regex"));
 
 					// SFTP properties
 					String host = (String) chunkContext.getStepContext().getJobParameters().get("sftp.host");
@@ -69,7 +66,7 @@ public class WaterMeterDataSecureFileTransferJobBuilder implements IJobBuilder {
 				} catch (Exception ex) {
 					logger.fatal("Failed to load meter data from SFTP server.", ex);
 
-					throw ApplicationException.wrap(ex);
+					throw ex;
 				}
 				return RepeatStatus.FINISHED;
 			}

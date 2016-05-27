@@ -29,7 +29,6 @@ import eu.daiad.web.model.device.DeviceResetRequest;
 import eu.daiad.web.model.device.NotifyConfigurationRequest;
 import eu.daiad.web.model.device.ShareDeviceRequest;
 import eu.daiad.web.model.device.WaterMeterDeviceRegistrationRequest;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
@@ -65,7 +64,7 @@ public class DeviceController extends BaseRestController {
 										amphiroData.getMacAddress());
 
 						if (device != null) {
-							throw new ApplicationException(DeviceErrorCode.ALREADY_EXISTS).set("id",
+							throw createApplicationException(DeviceErrorCode.ALREADY_EXISTS).set("id",
 											amphiroData.getMacAddress());
 						}
 
@@ -90,13 +89,11 @@ public class DeviceController extends BaseRestController {
 					}
 					break;
 				default:
-					throw new ApplicationException(DeviceErrorCode.NOT_SUPPORTED)
-									.set("type", data.getType().toString());
+					throw createApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type",
+									data.getType().toString());
 			}
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -122,7 +119,7 @@ public class DeviceController extends BaseRestController {
 										meterData.getUserKey());
 
 						if (owner == null) {
-							throw new ApplicationException(DeviceErrorCode.DEVICE_OWNER_NOT_FOUND).set("meter",
+							throw createApplicationException(DeviceErrorCode.DEVICE_OWNER_NOT_FOUND).set("meter",
 											meterData.getSerial()).set("key",
 											(meterData.getUserKey() == null ? "" : meterData.getUserKey().toString()));
 						}
@@ -130,7 +127,7 @@ public class DeviceController extends BaseRestController {
 						Device device = deviceRepository.getWaterMeterDeviceBySerial(meterData.getSerial());
 
 						if (device != null) {
-							throw new ApplicationException(DeviceErrorCode.ALREADY_EXISTS).set("id",
+							throw createApplicationException(DeviceErrorCode.ALREADY_EXISTS).set("id",
 											meterData.getSerial());
 						}
 
@@ -144,13 +141,11 @@ public class DeviceController extends BaseRestController {
 					}
 					break;
 				default:
-					throw new ApplicationException(DeviceErrorCode.NOT_SUPPORTED)
-									.set("type", data.getType().toString());
+					throw createApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type",
+									data.getType().toString());
 			}
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -171,10 +166,8 @@ public class DeviceController extends BaseRestController {
 			queryResponse.setDevices(devices);
 
 			return queryResponse;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -190,10 +183,8 @@ public class DeviceController extends BaseRestController {
 			AuthenticatedUser user = this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
 			deviceRepository.shareDevice(user.getKey(), request.getAssignee(), request.getDevice(), request.isShared());
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -227,10 +218,8 @@ public class DeviceController extends BaseRestController {
 			configurationResponse.setDevices(deviceConfigurations);
 
 			return configurationResponse;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -247,10 +236,8 @@ public class DeviceController extends BaseRestController {
 
 			deviceRepository.notifyConfiguration(user.getKey(), request.getDeviceKey(), request.getVersion(),
 							new DateTime(request.getUpdatedOn()));
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -266,10 +253,8 @@ public class DeviceController extends BaseRestController {
 			this.authenticate(request.getCredentials(), EnumRole.ROLE_ADMIN);
 
 			this.deviceRepository.removeDevice(request.getDeviceKey());
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

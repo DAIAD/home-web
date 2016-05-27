@@ -10,7 +10,9 @@ import org.apache.hadoop.hbase.HConstants;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public abstract class HBaseBaseRepository {
+import eu.daiad.web.repository.BaseRepository;
+
+public abstract class HBaseBaseRepository extends BaseRepository {
 
 	private static final Log logger = LogFactory.getLog(HBaseBaseRepository.class);
 

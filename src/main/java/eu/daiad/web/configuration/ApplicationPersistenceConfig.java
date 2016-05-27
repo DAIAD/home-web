@@ -21,7 +21,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Configuration
-@EnableJpaRepositories(basePackages = { "eu.daiad.web.repository.application" }, entityManagerFactoryRef = "entityManagerFactory", transactionManagerRef = "transactionManager")
+@EnableJpaRepositories(basePackages = { "eu.daiad.web.repository.application" }, entityManagerFactoryRef = "applicationEntityManagerFactory", transactionManagerRef = "applicationTransactionManager")
 @EnableTransactionManagement
 public class ApplicationPersistenceConfig {
 
@@ -34,32 +34,33 @@ public class ApplicationPersistenceConfig {
 	@Value("${daiad.flyway.baseline-description}")
 	private String baselineDescription;
 
-	@Bean(name = "dataSource")
+	@Bean(name = "applicationDataSource")
 	@Primary
 	@ConfigurationProperties(prefix = "datasource.default")
-	public DataSource dataSource() {
+	public DataSource applicationDataSource() {
 		return DataSourceBuilder.create().build();
 	}
 
-	@Bean(name = "entityManagerFactory")
+	@Bean(name = "applicationEntityManagerFactory")
 	@DependsOn("flyway")
 	@Primary
-	public LocalContainerEntityManagerFactoryBean entityManagerFactory(EntityManagerFactoryBuilder builder) {
-		return builder.dataSource(dataSource()).packages("eu.daiad.web.domain.application").persistenceUnit("default")
-						.build();
+	public LocalContainerEntityManagerFactoryBean applicationEntityManagerFactory(EntityManagerFactoryBuilder builder) {
+		return builder.dataSource(applicationDataSource()).packages("eu.daiad.web.domain.application")
+						.persistenceUnit("default").build();
 	}
 
-	@Bean(name = "entityManager")
+	@Bean(name = "applicationEntityManager")
 	@Primary
-	public EntityManager entityManager(@Qualifier("entityManagerFactory") EntityManagerFactory entityManagerFactory) {
-		return entityManagerFactory.createEntityManager();
+	public EntityManager applicationEntityManager(
+					@Qualifier("applicationEntityManagerFactory") EntityManagerFactory applicationEntityManagerFactory) {
+		return applicationEntityManagerFactory.createEntityManager();
 	}
 
-	@Bean(name = "transactionManager")
+	@Bean(name = "applicationTransactionManager")
 	@Primary
-	public PlatformTransactionManager transactionManager(
-					@Qualifier("entityManagerFactory") EntityManagerFactory entityManagerFactory) {
-		return new JpaTransactionManager(entityManagerFactory);
+	public PlatformTransactionManager applicationTransactionManager(
+					@Qualifier("applicationEntityManagerFactory") EntityManagerFactory applicationEntityManagerFactory) {
+		return new JpaTransactionManager(applicationEntityManagerFactory);
 	}
 
 	@Bean(name = "flyway", initMethod = "migrate")
@@ -72,7 +73,7 @@ public class ApplicationPersistenceConfig {
 
 		flyway.setLocations(this.locations);
 
-		flyway.setDataSource(dataSource());
+		flyway.setDataSource(applicationDataSource());
 
 		return flyway;
 	}

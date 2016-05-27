@@ -28,7 +28,7 @@ import eu.daiad.web.model.query.EnumClusterType;
 import eu.daiad.web.model.security.AuthenticatedUser;
 
 @Repository
-@Transactional("transactionManager")
+@Transactional("applicationTransactionManager")
 public class JpaGroupRepository implements IGroupRepository {
 
 	private static final Log logger = LogFactory.getLog(JpaGroupRepository.class);

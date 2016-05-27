@@ -8,7 +8,9 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 
 import eu.daiad.web.service.scheduling.tasklet.SqlScriptExecutionTasklet;
@@ -22,18 +24,23 @@ public class SqlScriptExecutionJobBuilder implements IJobBuilder {
 	private ApplicationContext applicationContext;
 
 	@Autowired
+	private MessageSource messageSource;
+
+	@Autowired
 	private JobBuilderFactory jobBuilderFactory;
 
 	@Autowired
 	private StepBuilderFactory stepBuilderFactory;
 
 	@Autowired
+	@Qualifier("applicationDataSource")
 	private DataSource dataSource;
 
 	private Step executeScripts() {
 		SqlScriptExecutionTasklet sqlScriptExecutionTasklet = new SqlScriptExecutionTasklet();
 
 		sqlScriptExecutionTasklet.setApplicationContext(this.applicationContext);
+		sqlScriptExecutionTasklet.setMessageSource(this.messageSource);
 		sqlScriptExecutionTasklet.setDataSource(this.dataSource);
 		sqlScriptExecutionTasklet.setLocationParameter(PARAMETER_LOCATIONS);
 
