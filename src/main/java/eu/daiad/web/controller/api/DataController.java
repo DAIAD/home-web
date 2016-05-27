@@ -18,7 +18,6 @@ import eu.daiad.web.model.amphiro.AmphiroMeasurementCollection;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.meter.WaterMeterMeasurementCollection;
 import eu.daiad.web.model.query.DataQuery;
@@ -71,10 +70,8 @@ public class DataController extends BaseRestController {
 			}
 
 			return dataService.execute(query);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -101,13 +98,13 @@ public class DataController extends BaseRestController {
 										data.getDeviceKey());
 
 						if (device == null) {
-							throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", data.getDeviceKey()
-											.toString());
+							throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key",
+											data.getDeviceKey().toString());
 						}
 
 						if (!device.getType().equals(EnumDeviceType.AMPHIRO)) {
-							throw new ApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type", data.getType()
-											.toString());
+							throw createApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type",
+											data.getType().toString());
 						}
 
 						amphiroTimeOrderedRepository.storeData(((AuthenticatedUser) authenticatedUser).getKey(),
@@ -121,13 +118,13 @@ public class DataController extends BaseRestController {
 						device = this.deviceRepository.getDeviceByKey(data.getDeviceKey());
 
 						if (device == null) {
-							throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", data.getDeviceKey()
-											.toString());
+							throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key",
+											data.getDeviceKey().toString());
 						}
 
 						if (!device.getType().equals(EnumDeviceType.METER)) {
-							throw new ApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type", data.getType()
-											.toString());
+							throw createApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type",
+											data.getType().toString());
 						}
 
 						waterMeterMeasurementRepository.storeData(((WaterMeterDevice) device).getSerial(),
@@ -137,10 +134,8 @@ public class DataController extends BaseRestController {
 				default:
 					break;
 			}
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 
@@ -171,13 +166,13 @@ public class DataController extends BaseRestController {
 										data.getDeviceKey());
 
 						if (device == null) {
-							throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", data.getDeviceKey()
-											.toString());
+							throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key",
+											data.getDeviceKey().toString());
 						}
 
 						if (!device.getType().equals(EnumDeviceType.AMPHIRO)) {
-							throw new ApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type", data.getType()
-											.toString());
+							throw createApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type",
+											data.getType().toString());
 						}
 						response = amphiroIndexOrderedRepository.storeData(
 										((AuthenticatedUser) authenticatedUser).getKey(),
@@ -191,13 +186,13 @@ public class DataController extends BaseRestController {
 						device = this.deviceRepository.getDeviceByKey(data.getDeviceKey());
 
 						if (device == null) {
-							throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", data.getDeviceKey()
-											.toString());
+							throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key",
+											data.getDeviceKey().toString());
 						}
 
 						if (!device.getType().equals(EnumDeviceType.METER)) {
-							throw new ApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type", data.getType()
-											.toString());
+							throw createApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type",
+											data.getType().toString());
 						}
 
 						waterMeterMeasurementRepository.storeData(((WaterMeterDevice) device).getSerial(),
@@ -207,10 +202,8 @@ public class DataController extends BaseRestController {
 				default:
 					break;
 			}
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 

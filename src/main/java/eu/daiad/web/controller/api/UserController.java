@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.security.RoleUpdateRequest;
 import eu.daiad.web.model.user.Account;
@@ -66,10 +65,8 @@ public class UserController extends BaseRestController {
 			registerResponse.setUserKey(userKey.toString());
 
 			return registerResponse;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -87,10 +84,8 @@ public class UserController extends BaseRestController {
 			userService.setPassword(data.getCredentials().getUsername(), data.getPassword());
 
 			return new RestResponse();
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -106,10 +101,8 @@ public class UserController extends BaseRestController {
 			this.authenticate(data.getCredentials(), EnumRole.ROLE_ADMIN);
 
 			userService.setRole(data.getUsername(), data.getRole(), true);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -125,10 +118,8 @@ public class UserController extends BaseRestController {
 			this.authenticate(data.getCredentials(), EnumRole.ROLE_ADMIN);
 
 			userService.setRole(data.getUsername(), data.getRole(), false);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

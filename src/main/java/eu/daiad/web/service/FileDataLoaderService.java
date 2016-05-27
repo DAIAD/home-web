@@ -54,7 +54,7 @@ import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 
 @Service
-public class FileDataLoaderService implements IFileDataLoaderService {
+public class FileDataLoaderService extends BaseService implements IFileDataLoaderService {
 
 	private static final Log logger = LogFactory.getLog(FileDataLoaderService.class);
 
@@ -81,7 +81,7 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 		File input = new File(configuration.getFilename());
 
 		if (!input.exists()) {
-			throw new ApplicationException(SharedErrorCode.RESOURCE_DOES_NOT_EXIST).set("resource",
+			throw createApplicationException(SharedErrorCode.RESOURCE_DOES_NOT_EXIST).set("resource",
 							configuration.getFilename());
 		}
 
@@ -141,7 +141,7 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 			} catch (ApplicationException ex) {
 				throw ex;
 			} catch (Exception ex) {
-				throw ApplicationException.wrap(ex);
+				throw wrapApplicationException(ex);
 			} finally {
 				try {
 					if (book != null) {
@@ -176,7 +176,7 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 		} catch (ApplicationException ex) {
 			throw ex;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex).set("user", username).set("serial", serial);
+			throw wrapApplicationException(ex).set("user", username).set("serial", serial);
 		}
 	}
 
@@ -216,7 +216,7 @@ public class FileDataLoaderService implements IFileDataLoaderService {
 		Scanner scan = null;
 
 		if (!input.exists()) {
-			throw new ApplicationException(SharedErrorCode.RESOURCE_DOES_NOT_EXIST).set("resource", filename);
+			throw createApplicationException(SharedErrorCode.RESOURCE_DOES_NOT_EXIST).set("resource", filename);
 		}
 
 		try {

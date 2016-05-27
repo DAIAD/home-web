@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.profile.NotifyProfileRequest;
 import eu.daiad.web.model.profile.ProfileResponse;
 import eu.daiad.web.model.profile.UpdateProfileRequest;
@@ -37,10 +36,8 @@ public class ProfileController extends BaseRestController {
 
 			return new ProfileResponse(this.getRuntime(),
 							this.profileRepository.getProfileByUsername(EnumApplication.MOBILE));
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -57,10 +54,8 @@ public class ProfileController extends BaseRestController {
 
 			this.profileRepository.setProfileConfiguration(EnumApplication.MOBILE, request.getConfiguration());
 
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -78,10 +73,8 @@ public class ProfileController extends BaseRestController {
 			this.profileRepository.notifyProfile(EnumApplication.MOBILE, request.getVersion(),
 							new DateTime(request.getUpdatedOn()));
 
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

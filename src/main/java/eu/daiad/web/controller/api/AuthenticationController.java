@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.security.AuthenticationResponse;
 import eu.daiad.web.model.security.Credentials;
@@ -35,10 +34,8 @@ public class AuthenticationController extends BaseRestController {
 			Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE);
 
 			return new AuthenticationResponse(this.getRuntime(), profile);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

@@ -26,7 +26,6 @@ import eu.daiad.web.domain.application.AccountDynamicRecommendationProperty;
 import eu.daiad.web.domain.application.AlertTranslation;
 import eu.daiad.web.domain.application.DynamicRecommendationTranslation;
 import eu.daiad.web.domain.application.StaticRecommendation;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.MessageErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.message.EnumAlertType;
@@ -37,10 +36,11 @@ import eu.daiad.web.model.message.MessageAcknowledgement;
 import eu.daiad.web.model.message.MessageRequest;
 import eu.daiad.web.model.message.MessageResult;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.repository.BaseRepository;
 
 @Repository
 @Transactional("transactionManager")
-public class JpaMessageRepository implements IMessageRepository {
+public class JpaMessageRepository extends BaseRepository implements IMessageRepository {
 
 	@PersistenceContext(unitName = "default")
 	EntityManager entityManager;
@@ -54,7 +54,7 @@ public class JpaMessageRepository implements IMessageRepository {
 		if (auth.getPrincipal() instanceof AuthenticatedUser) {
 			return (AuthenticatedUser) auth.getPrincipal();
 		} else {
-			throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+			throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
 		}
 	}
 
@@ -73,9 +73,9 @@ public class JpaMessageRepository implements IMessageRepository {
 					case RECOMMENDATION_STATIC:
 						break;
 					case ANNOUNCEMENT:
-						throw new ApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
+						throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
 					default:
-						throw new ApplicationException(MessageErrorCode.MESSAGE_TYPE_NOT_SUPPORTED).set("type.",
+						throw createApplicationException(MessageErrorCode.MESSAGE_TYPE_NOT_SUPPORTED).set("type.",
 										message.getType());
 				}
 			}

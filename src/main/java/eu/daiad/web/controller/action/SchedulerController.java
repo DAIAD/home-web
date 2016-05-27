@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.scheduling.JobCollectionResponse;
 import eu.daiad.web.model.scheduling.JobResponse;
 import eu.daiad.web.service.scheduling.ISchedulerService;
@@ -30,10 +29,8 @@ public class SchedulerController extends BaseController {
 
 		try {
 			return new JobCollectionResponse(this.jobService.getJobs());
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response = new RestResponse();
 			response.add(this.getError(ex));
@@ -54,10 +51,8 @@ public class SchedulerController extends BaseController {
 			controllerResponse.setExecutions(this.jobService.getJobExecutions(jobId, startPosition, maxResult));
 
 			return controllerResponse;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response = new RestResponse();
 			response.add(this.getError(ex));
@@ -73,10 +68,8 @@ public class SchedulerController extends BaseController {
 
 		try {
 			this.jobService.enable(jobId);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -91,10 +84,8 @@ public class SchedulerController extends BaseController {
 
 		try {
 			this.jobService.disable(jobId);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -109,10 +100,8 @@ public class SchedulerController extends BaseController {
 
 		try {
 			this.jobService.stop(executionId);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

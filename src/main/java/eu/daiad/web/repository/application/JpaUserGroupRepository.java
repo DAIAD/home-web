@@ -23,7 +23,6 @@ import eu.daiad.web.domain.application.Group;
 import eu.daiad.web.domain.application.GroupMember;
 import eu.daiad.web.domain.application.GroupSet;
 import eu.daiad.web.domain.application.Utility;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.GroupErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.favourite.EnumFavouriteType;
@@ -33,10 +32,11 @@ import eu.daiad.web.model.group.GroupInfo;
 import eu.daiad.web.model.group.GroupMemberInfo;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
+import eu.daiad.web.repository.BaseRepository;
 
 @Repository
 @Transactional("transactionManager")
-public class JpaUserGroupRepository implements IUserGroupRepository {
+public class JpaUserGroupRepository extends BaseRepository implements IUserGroupRepository {
 
 	@PersistenceContext(unitName = "default")
 	EntityManager entityManager;
@@ -48,7 +48,7 @@ public class JpaUserGroupRepository implements IUserGroupRepository {
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
 			if (!user.hasRole(EnumRole.ROLE_ADMIN) && !user.hasRole(EnumRole.ROLE_SUPERUSER)) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
 			TypedQuery<GroupSet> groupQuery = entityManager.createQuery(
@@ -66,7 +66,7 @@ public class JpaUserGroupRepository implements IUserGroupRepository {
 			return groupsInfo;
 
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -77,7 +77,7 @@ public class JpaUserGroupRepository implements IUserGroupRepository {
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
 			if (!user.hasRole(EnumRole.ROLE_ADMIN) && !user.hasRole(EnumRole.ROLE_SUPERUSER)) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
 			TypedQuery<Account> groupMemberQuery = entityManager.createQuery(
@@ -93,7 +93,7 @@ public class JpaUserGroupRepository implements IUserGroupRepository {
 
 			return groupMembersInfo;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -104,7 +104,7 @@ public class JpaUserGroupRepository implements IUserGroupRepository {
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
 			if (!user.hasRole(EnumRole.ROLE_ADMIN) && !user.hasRole(EnumRole.ROLE_SUPERUSER)) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
 			TypedQuery<Account> groupPossibleMemberQuery;
@@ -134,7 +134,7 @@ public class JpaUserGroupRepository implements IUserGroupRepository {
 
 			return groupMembersInfo;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -145,7 +145,7 @@ public class JpaUserGroupRepository implements IUserGroupRepository {
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
 			if (!user.hasRole(EnumRole.ROLE_ADMIN) && !user.hasRole(EnumRole.ROLE_SUPERUSER)) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
 			TypedQuery<eu.daiad.web.domain.application.Group> groupQuery = entityManager
@@ -156,7 +156,7 @@ public class JpaUserGroupRepository implements IUserGroupRepository {
 			List<Group> groupEntries = groupQuery.getResultList();
 
 			if (!groupEntries.isEmpty()) {
-				throw new ApplicationException(GroupErrorCode.GROUP_EXISTS).set("groupName", groupSetInfo.getName());
+				throw createApplicationException(GroupErrorCode.GROUP_EXISTS).set("groupName", groupSetInfo.getName());
 			}
 
 			// Get admin's account
@@ -201,7 +201,7 @@ public class JpaUserGroupRepository implements IUserGroupRepository {
 			}
 
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -212,7 +212,7 @@ public class JpaUserGroupRepository implements IUserGroupRepository {
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
 			if (!user.hasRole(EnumRole.ROLE_ADMIN) && !user.hasRole(EnumRole.ROLE_SUPERUSER)) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
 			TypedQuery<Utility> utilityQuery = entityManager
@@ -230,12 +230,12 @@ public class JpaUserGroupRepository implements IUserGroupRepository {
 			Group group = groupQuery.getSingleResult();
 
 			if (group.getUtility() != adminUtility) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
 			return new GroupInfo(group);
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -246,7 +246,7 @@ public class JpaUserGroupRepository implements IUserGroupRepository {
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
 			if (!user.hasRole(EnumRole.ROLE_ADMIN) && !user.hasRole(EnumRole.ROLE_SUPERUSER)) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
 			GroupSet group = null;
@@ -258,7 +258,7 @@ public class JpaUserGroupRepository implements IUserGroupRepository {
 				groupQuery.setParameter("group_id", group_id);
 				group = groupQuery.getSingleResult();
 			} catch (NoResultException ex) {
-				throw ApplicationException.wrap(ex, GroupErrorCode.GROUP_DOES_NOT_EXIST).set("groupId", group_id);
+				throw wrapApplicationException(ex, GroupErrorCode.GROUP_DOES_NOT_EXIST).set("groupId", group_id);
 			}
 
 			// Check that administrator is the owner of the group
@@ -282,12 +282,12 @@ public class JpaUserGroupRepository implements IUserGroupRepository {
 
 					}
 				} else {
-					throw new ApplicationException(GroupErrorCode.GROUP_ACCESS_RESTRICTED).set("groupId", group_id);
+					throw createApplicationException(GroupErrorCode.GROUP_ACCESS_RESTRICTED).set("groupId", group_id);
 				}
 			}
 
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 
 	}

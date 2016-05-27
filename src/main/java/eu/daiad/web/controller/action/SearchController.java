@@ -29,7 +29,6 @@ import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQuery;
 import eu.daiad.web.model.meter.WaterMeterStatus;
@@ -81,7 +80,7 @@ public class SearchController extends BaseController {
 				AuthenticatedUser deviceOwner = userRepository.getUserByUtilityAndKey(user.getUtilityId(),
 								query.getUserKey());
 				if (deviceOwner == null) {
-					throw new ApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
+					throw createApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
 									.set("owner", query.getUserKey());
 				}
 			}
@@ -115,10 +114,8 @@ public class SearchController extends BaseController {
 			}
 
 			return result;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -144,7 +141,7 @@ public class SearchController extends BaseController {
 				AuthenticatedUser deviceOwner = userRepository.getUserByUtilityAndKey(user.getUtilityId(),
 								query.getUserKey());
 				if (deviceOwner == null) {
-					throw new ApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
+					throw createApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
 									.set("owner", query.getUserKey());
 				}
 			}
@@ -168,10 +165,8 @@ public class SearchController extends BaseController {
 
 			return waterMeterMeasurementRepository.searchMeasurements(serials, DateTimeZone.forID(user.getTimezone()),
 							query);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -194,10 +189,8 @@ public class SearchController extends BaseController {
 							DateTimeZone.forID(user.getTimezone()), query);
 
 			return data;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -220,10 +213,8 @@ public class SearchController extends BaseController {
 							DateTimeZone.forID(user.getTimezone()), query);
 
 			return data;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -249,7 +240,7 @@ public class SearchController extends BaseController {
 				AuthenticatedUser deviceOwner = userRepository.getUserByUtilityAndKey(user.getUtilityId(),
 								query.getUserKey());
 				if (deviceOwner == null) {
-					throw new ApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
+					throw createApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
 									.set("owner", query.getUserKey());
 				}
 			}
@@ -272,10 +263,8 @@ public class SearchController extends BaseController {
 			String[] names = this.checkAmphiroOwnership(query.getUserKey(), query.getDeviceKey());
 
 			return amphiroIndexOrderedRepository.searchSessions(names, DateTimeZone.forID(user.getTimezone()), query);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -301,7 +290,7 @@ public class SearchController extends BaseController {
 				AuthenticatedUser deviceOwner = userRepository.getUserByUtilityAndKey(user.getUtilityId(),
 								query.getUserKey());
 				if (deviceOwner == null) {
-					throw new ApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
+					throw createApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
 									.set("owner", query.getUserKey());
 				}
 			}
@@ -324,10 +313,8 @@ public class SearchController extends BaseController {
 			String[] names = this.checkAmphiroOwnership(query.getUserKey(), query.getDeviceKey());
 
 			return amphiroTimeOrderedRepository.searchSessions(names, DateTimeZone.forID(user.getTimezone()), query);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -347,10 +334,8 @@ public class SearchController extends BaseController {
 			query.setUserKey(user.getKey());
 
 			return amphiroIndexOrderedRepository.getSession(query);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -370,10 +355,8 @@ public class SearchController extends BaseController {
 			query.setUserKey(user.getKey());
 
 			return amphiroTimeOrderedRepository.getSession(query);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -397,7 +380,7 @@ public class SearchController extends BaseController {
 				Device device = this.deviceRepository.getUserDeviceByKey(userKey, deviceKey);
 
 				if (device == null) {
-					throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
+					throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
 				}
 
 				nameList.add(((AmphiroDevice) device).getName());
@@ -417,7 +400,7 @@ public class SearchController extends BaseController {
 				Device device = this.deviceRepository.getUserDeviceByKey(userKey, deviceKey);
 
 				if (device == null) {
-					throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
+					throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
 				}
 
 				serialList.add(((WaterMeterDevice) device).getSerial());

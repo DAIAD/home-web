@@ -22,7 +22,6 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.repository.application.HBaseConfigurationBuilder;
 
 @Component
@@ -76,7 +75,7 @@ public class HBaseStatusMonitorJobBuilder implements IJobBuilder {
 			} catch (Exception ex) {
 				logger.fatal("HBASE Master node is offline or could not be reached.", ex);
 
-				throw ApplicationException.wrap(ex);
+				throw ex;
 			} finally {
 				try {
 					if (admin != null) {

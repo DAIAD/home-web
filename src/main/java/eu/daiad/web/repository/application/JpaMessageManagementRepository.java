@@ -3,6 +3,7 @@ package eu.daiad.web.repository.application;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 import java.util.UUID;
 
 import javax.persistence.EntityManager;
@@ -24,7 +25,6 @@ import eu.daiad.web.domain.application.AccountStaticRecommendation;
 import eu.daiad.web.domain.application.Alert;
 import eu.daiad.web.domain.application.DynamicRecommendation;
 import eu.daiad.web.domain.application.StaticRecommendation;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.message.ConsumptionAggregateContainer;
 import eu.daiad.web.model.message.EnumAlertType;
@@ -33,11 +33,11 @@ import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.model.message.PendingMessageStatus;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
-import java.util.Random;
+import eu.daiad.web.repository.BaseRepository;
 
 @Repository
 @Transactional("transactionManager")
-public class JpaMessageManagementRepository implements IMessageManagementRepository {
+public class JpaMessageManagementRepository extends BaseRepository implements IMessageManagementRepository {
 
 	@PersistenceContext(unitName = "default")
 	EntityManager entityManager;
@@ -54,26 +54,27 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
 					PendingMessageStatus status, Account account) {
 		computeAmphiroMessagesForUser(config, aggregates, status, account);
 		computeSmartWaterMeterMessagesForUser(config, aggregates, status, account);
-                computeStaticTipForUser(config, status, account);
+		computeStaticTipForUser(config, status, account);
 	}
 
-        @Override
-        public DateTime getLastDateOfAccountStaticRecommendation(AuthenticatedUser user){
-            DateTime lastCreatedOn = null;
-            TypedQuery<AccountStaticRecommendation> accountStaticRecommendationQuery = entityManager
-                    .createQuery("select a from account_static_recommendation a where a.account.id = :accountId order by a.createdOn desc",
-                                                                            eu.daiad.web.domain.application.AccountStaticRecommendation.class);   
-            accountStaticRecommendationQuery.setParameter("accountId", user.getId());
-            
-            List<AccountStaticRecommendation> accountStaticRecommendations = accountStaticRecommendationQuery.getResultList();           
+	@Override
+	public DateTime getLastDateOfAccountStaticRecommendation(AuthenticatedUser user) {
+		DateTime lastCreatedOn = null;
+		TypedQuery<AccountStaticRecommendation> accountStaticRecommendationQuery = entityManager
+						.createQuery("select a from account_static_recommendation a where a.account.id = :accountId order by a.createdOn desc",
+										eu.daiad.web.domain.application.AccountStaticRecommendation.class);
+		accountStaticRecommendationQuery.setParameter("accountId", user.getId());
 
-            if(!accountStaticRecommendations.isEmpty()){
-                lastCreatedOn = accountStaticRecommendations.get(0).getCreatedOn();
-            }
+		List<AccountStaticRecommendation> accountStaticRecommendations = accountStaticRecommendationQuery
+						.getResultList();
 
-           return lastCreatedOn;
-        } 
-        
+		if (!accountStaticRecommendations.isEmpty()) {
+			lastCreatedOn = accountStaticRecommendations.get(0).getCreatedOn();
+		}
+
+		return lastCreatedOn;
+	}
+
 	private void computeAmphiroMessagesForUser(MessageCalculationConfiguration config,
 					ConsumptionAggregateContainer aggregates, PendingMessageStatus status, Account account) {
 		// alertHotTemperatureAmphiro(account); //inactive
@@ -139,47 +140,49 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
 		return query.getSingleResult();
 	}
 
-	private StaticRecommendation getRandomStaticRecommendationForLocale(String accountLocale) {           
-            String locale;
-            switch (accountLocale) {
-                case "en":
-                    locale = accountLocale;
-                    break;
-                case "es":
-                    locale = accountLocale;
-                    break;
-                default:
-                    locale = "en";                                
-            }
+	private StaticRecommendation getRandomStaticRecommendationForLocale(String accountLocale) {
+		String locale;
+		switch (accountLocale) {
+			case "en":
+				locale = accountLocale;
+				break;
+			case "es":
+				locale = accountLocale;
+				break;
+			default:
+				locale = "en";
+		}
 
-            TypedQuery<eu.daiad.web.domain.application.StaticRecommendation> accountAlertsQuery = entityManager
-                    .createQuery("select a from static_recommendation a where a.locale = :locale",
-                            eu.daiad.web.domain.application.StaticRecommendation.class);    
-            accountAlertsQuery.setParameter("locale", locale);
+		TypedQuery<eu.daiad.web.domain.application.StaticRecommendation> accountAlertsQuery = entityManager
+						.createQuery("select a from static_recommendation a where a.locale = :locale",
+										eu.daiad.web.domain.application.StaticRecommendation.class);
+		accountAlertsQuery.setParameter("locale", locale);
 
-            List<StaticRecommendation> res = accountAlertsQuery.getResultList();   
+		List<StaticRecommendation> res = accountAlertsQuery.getResultList();
 
-            Random random = new Random();
-            int max = res.size();
-            int min = res.get(0).getIndex();
-            int range = max - min;        
-            int randomId = random.nextInt(range) + min;
+		Random random = new Random();
+		int max = res.size();
+		int min = res.get(0).getIndex();
+		int range = max - min;
+		int randomId = random.nextInt(range) + min;
 
-            StaticRecommendation singleRandomStaticRecommendation = res.get(randomId);
-        
-            return singleRandomStaticRecommendation;
-	}                     
-        
-        //random static tip
-        private void computeStaticTipForUser(MessageCalculationConfiguration config, PendingMessageStatus status, Account account) {
+		StaticRecommendation singleRandomStaticRecommendation = res.get(randomId);
+
+		return singleRandomStaticRecommendation;
+	}
+
+	// random static tip
+	private void computeStaticTipForUser(MessageCalculationConfiguration config, PendingMessageStatus status,
+					Account account) {
 		if (DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()
-						|| DateTime.now().getDayOfWeek() == DateTimeConstants.WEDNESDAY) {                                                                  
+						|| DateTime.now().getDayOfWeek() == DateTimeConstants.WEDNESDAY) {
 			if (status.isStaticTipToBeProduced()) {
-				createAccountStaticRecommendation(account, getRandomStaticRecommendationForLocale(account.getLocale()), DateTime.now());
+				createAccountStaticRecommendation(account, getRandomStaticRecommendationForLocale(account.getLocale()),
+								DateTime.now());
 			}
 		}
 	}
-        
+
 	// 1 alert - Check for water leaks!
 	private void alertWaterLeakSWM(MessageCalculationConfiguration config, PendingMessageStatus status, Account account) {
 		if (DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()
@@ -649,7 +652,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
 			}
 			return groups;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -671,7 +674,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
 			}
 			return userAccounts;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -767,7 +770,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
 
 		return accountDynamicRecommendation;
 	}
-        
+
 	private AccountStaticRecommendation createAccountStaticRecommendation(Account account,
 					StaticRecommendation recommendation, DateTime createdOn) {
 
@@ -780,7 +783,7 @@ public class JpaMessageManagementRepository implements IMessageManagementReposit
 		this.entityManager.persist(accountStaticRecommendation);
 
 		return accountStaticRecommendation;
-	}                
+	}
 
 	private float convertCurrencyIfNeed(float euros, Locale currencySymbol) {
 		// this is dummy method for future use. Currently returns only euros.

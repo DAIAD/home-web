@@ -30,7 +30,6 @@ import eu.daiad.web.model.amphiro.AmphiroSessionTimeIntervalQueryResult;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
@@ -186,8 +185,8 @@ public class UpdateAmphiroDataSchemaJobBuilder implements IJobBuilder {
 																deviceKeys[0], data);
 
 												if ((totalSessions % 1000) == 0) {
-													logger.info(String.format("Inserted %d sessions ...",
-																	totalSessions));
+													logger.info(String
+																	.format("Inserted %d sessions ...", totalSessions));
 												}
 												if ((totalMeasurements > 0) && ((totalMeasurements % 1000) == 0)) {
 													logger.info(String.format("Inserted %d sessions ...",
@@ -205,7 +204,7 @@ public class UpdateAmphiroDataSchemaJobBuilder implements IJobBuilder {
 				} catch (Exception ex) {
 					logger.fatal("Failed to transfer data from schema v1 tables to schema v2 tables.", ex);
 
-					throw ApplicationException.wrap(ex);
+					throw ex;
 				}
 
 				logger.info(String.format("Utilities     : %d", totalUtilities));

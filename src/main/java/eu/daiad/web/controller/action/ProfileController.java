@@ -15,7 +15,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.profile.ProfileDeactivateRequest;
 import eu.daiad.web.model.profile.ProfileModesFilterOptionsResponse;
 import eu.daiad.web.model.profile.ProfileModesRequest;
@@ -46,10 +45,8 @@ public class ProfileController extends BaseController {
 			}
 
 			return new ProfileResponse(this.getRuntime(), profileRepository.getProfileByUsername(EnumApplication.HOME));
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -65,10 +62,8 @@ public class ProfileController extends BaseController {
 
 		try {
 			return new ProfileModesResponse(profileRepository.getProfileModes(filters));
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -84,10 +79,8 @@ public class ProfileController extends BaseController {
 
 		try {
 			return new ProfileModesFilterOptionsResponse(profileRepository.getFilterOptions());
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -103,11 +96,8 @@ public class ProfileController extends BaseController {
 
 		try {
 			profileRepository.setProfileModes(modeChanges);
-
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -123,11 +113,8 @@ public class ProfileController extends BaseController {
 
 		try {
 			profileRepository.deactivateProfile(userDeactId);
-
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -147,10 +134,8 @@ public class ProfileController extends BaseController {
 			} else {
 				this.profileRepository.setProfileConfiguration(EnumApplication.HOME, request.getConfiguration());
 			}
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

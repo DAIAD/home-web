@@ -3,6 +3,7 @@ package eu.daiad.web.configuration;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.db.jdbc.ColumnConfig;
 import org.apache.logging.log4j.core.appender.db.jdbc.ConnectionSource;
@@ -16,16 +17,23 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
-import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.logging.ErrorCodeFilter;
+import eu.daiad.web.logging.MappedDiagnosticContextKeys;
 
 @Component
 public class LoggingConfigurer implements InitializingBean {
+
+	@Value("${log4j2.logger.jdbc.name:eu.daiad}")
+	private String loggerName;
 
 	@Value("${log4j2.appender.jdbc.name:PostgreSQL}")
 	private String appenderName;
 
 	@Value("${log4j2.appender.jdbc.table:log4j_message}")
 	private String tableName;
+
+	@Value("${log4j2.appender.jdbc.categories:}")
+	private String categories;
 
 	@Autowired
 	ApplicationContext applicationContext;
@@ -40,13 +48,14 @@ public class LoggingConfigurer implements InitializingBean {
 
 		// Declare table columns
 		ColumnConfig[] columnConfigs = {
-						ColumnConfig.createColumnConfig(config, "account", "%X{session.remote-address}", null, null,
-										"false", null),
-						ColumnConfig.createColumnConfig(config, "remote_address", "%X{session.username}", null, null,
-										"false", null),
-						ColumnConfig.createColumnConfig(config, "category", "%X{error.category}", null, null, "false",
-										null),
-						ColumnConfig.createColumnConfig(config, "code", "%X{error.code}", null, null, "false", null),
+						ColumnConfig.createColumnConfig(config, "account", "%X{" + MappedDiagnosticContextKeys.USERNAME
+										+ "}", null, null, "false", null),
+						ColumnConfig.createColumnConfig(config, "remote_address", "%X{"
+										+ MappedDiagnosticContextKeys.IP_ADDRESS + "}", null, null, "false", null),
+						ColumnConfig.createColumnConfig(config, "category", "%X{"
+										+ MappedDiagnosticContextKeys.ERROR_CATEGORY + "}", null, null, "false", null),
+						ColumnConfig.createColumnConfig(config, "code", "%X{" + MappedDiagnosticContextKeys.ERROR_CODE
+										+ "}", null, null, "false", null),
 						ColumnConfig.createColumnConfig(config, "level", "%level", null, null, "false", null),
 						ColumnConfig.createColumnConfig(config, "logger", "%logger", null, null, "false", null),
 						ColumnConfig.createColumnConfig(config, "message", "%message", null, null, "false", null),
@@ -60,14 +69,17 @@ public class LoggingConfigurer implements InitializingBean {
 		appender.start();
 		config.addAppender(appender);
 
+		// Create Filter
+		Filter filter = ErrorCodeFilter.createFilter(categories);
+
 		// Add logger
 		AppenderRef ref = AppenderRef.createAppenderRef(appenderName, null, null);
 		AppenderRef[] refs = new AppenderRef[] { ref };
-		LoggerConfig loggerConfig = LoggerConfig.createLogger("false", Level.ERROR,
-						ApplicationException.class.getCanonicalName(), null, refs, null, config, null);
-		loggerConfig.addAppender(appender, null, null);
+		LoggerConfig loggerConfig = LoggerConfig.createLogger("true", Level.ERROR, loggerName, null, refs, null,
+						config, null);
+		loggerConfig.addAppender(appender, null, filter);
 
-		config.addLogger(ApplicationException.class.getCanonicalName(), loggerConfig);
+		config.addLogger(loggerName, loggerConfig);
 
 		// Refresh context
 		loggerContext.updateLoggers();

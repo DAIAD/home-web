@@ -21,7 +21,7 @@ public class BaseRestController extends BaseController {
 	protected AuthenticatedUser authenticate(Credentials credentials, EnumRole... roles) throws ApplicationException {
 		try {
 			if (credentials == null) {
-				throw new ApplicationException(SharedErrorCode.AUTHENTICATION_NO_CREDENTIALS);
+				throw createApplicationException(SharedErrorCode.AUTHENTICATION_NO_CREDENTIALS);
 			}
 
 			UsernamePasswordAuthenticationToken authentication = (UsernamePasswordAuthenticationToken) this.authenticationProvider
@@ -29,7 +29,7 @@ public class BaseRestController extends BaseController {
 											credentials.getPassword()));
 
 			if (authentication == null) {
-				throw new ApplicationException(SharedErrorCode.AUTHENTICATION_USERNAME).set("username",
+				throw createApplicationException(SharedErrorCode.AUTHENTICATION_USERNAME).set("username",
 								credentials.getUsername());
 			}
 
@@ -37,7 +37,7 @@ public class BaseRestController extends BaseController {
 			if (roles != null) {
 				for (EnumRole role : roles) {
 					if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority(role.toString()))) {
-						throw new ApplicationException(SharedErrorCode.AUTHORIZATION_MISSING_ROLE).set("role",
+						throw createApplicationException(SharedErrorCode.AUTHORIZATION_MISSING_ROLE).set("role",
 										role.toString());
 					}
 				}
@@ -48,7 +48,7 @@ public class BaseRestController extends BaseController {
 
 			return (AuthenticatedUser) authentication.getPrincipal();
 		} catch (BadCredentialsException ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.AUTHENTICATION_USERNAME).set("username",
+			throw wrapApplicationException(ex, SharedErrorCode.AUTHENTICATION_USERNAME).set("username",
 							credentials.getUsername());
 		}
 	}

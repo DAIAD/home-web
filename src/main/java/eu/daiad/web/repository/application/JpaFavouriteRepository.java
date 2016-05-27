@@ -20,235 +20,234 @@ import eu.daiad.web.domain.application.Favourite;
 import eu.daiad.web.domain.application.FavouriteAccount;
 import eu.daiad.web.domain.application.FavouriteGroup;
 import eu.daiad.web.domain.application.Group;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.FavouriteErrorCode;
 import eu.daiad.web.model.error.GroupErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
 import eu.daiad.web.model.favourite.CandidateFavouriteAccountInfo;
 import eu.daiad.web.model.favourite.CandidateFavouriteGroupInfo;
-import eu.daiad.web.model.favourite.UpsertFavouriteRequest;
 import eu.daiad.web.model.favourite.EnumFavouriteType;
 import eu.daiad.web.model.favourite.FavouriteAccountInfo;
 import eu.daiad.web.model.favourite.FavouriteGroupInfo;
 import eu.daiad.web.model.favourite.FavouriteInfo;
+import eu.daiad.web.model.favourite.UpsertFavouriteRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.repository.BaseRepository;
 
 @Repository
 @Transactional("transactionManager")
-public class JpaFavouriteRepository implements IFavouriteRepository {
-	
-	@PersistenceContext(unitName="default")
+public class JpaFavouriteRepository extends BaseRepository implements IFavouriteRepository {
+
+	@PersistenceContext(unitName = "default")
 	EntityManager entityManager;
 
 	@Override
 	public List<FavouriteInfo> getFavourites() {
-		try{
+		try {
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
-			
-			//Retrieve admin's account
-			TypedQuery<Account> accountQuery = entityManager.createQuery(
-					"SELECT a FROM account a WHERE a.key = :key",
-					Account.class).setFirstResult(0).setMaxResults(1);
+
+			// Retrieve admin's account
+			TypedQuery<Account> accountQuery = entityManager
+							.createQuery("SELECT a FROM account a WHERE a.key = :key", Account.class).setFirstResult(0)
+							.setMaxResults(1);
 			accountQuery.setParameter("key", user.getKey());
-			
+
 			Account adminAccount = accountQuery.getSingleResult();
-			
+
 			TypedQuery<Favourite> favouriteQuery = entityManager.createQuery(
-					"SELECT f FROM favourite f WHERE f.owner = :owner",
-					Favourite.class).setFirstResult(0);
+							"SELECT f FROM favourite f WHERE f.owner = :owner", Favourite.class).setFirstResult(0);
 			favouriteQuery.setParameter("owner", adminAccount);
-			
-			List <Favourite> favourites = favouriteQuery.getResultList();
-			List <FavouriteInfo> favouritesInfo = new ArrayList <FavouriteInfo>();
-			
-			for (Favourite favourite : favourites){
+
+			List<Favourite> favourites = favouriteQuery.getResultList();
+			List<FavouriteInfo> favouritesInfo = new ArrayList<FavouriteInfo>();
+
+			for (Favourite favourite : favourites) {
 				FavouriteInfo favouriteInfo = new FavouriteInfo(favourite);
 				favouritesInfo.add(favouriteInfo);
 			}
-	
+
 			return favouritesInfo;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
-	
+
 	@Override
 	public FavouriteAccountInfo checkFavouriteAccount(UUID account_id) {
-		try{
+		try {
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
-			
+
 			FavouriteAccountInfo favouriteAccountInfo = null;
-			
-			//Retrieve admin's account
-			TypedQuery<Account> adminAccountQuery = entityManager.createQuery(
-					"SELECT a FROM account a WHERE a.key = :key",
-					Account.class).setFirstResult(0).setMaxResults(1);
+
+			// Retrieve admin's account
+			TypedQuery<Account> adminAccountQuery = entityManager
+							.createQuery("SELECT a FROM account a WHERE a.key = :key", Account.class).setFirstResult(0)
+							.setMaxResults(1);
 			adminAccountQuery.setParameter("key", user.getKey());
-			
+
 			Account adminAccount = adminAccountQuery.getSingleResult();
-			
+
 			TypedQuery<Favourite> favouriteQuery = entityManager.createQuery(
-					"SELECT f FROM favourite f WHERE f.owner = :owner",
-					Favourite.class).setFirstResult(0);
+							"SELECT f FROM favourite f WHERE f.owner = :owner", Favourite.class).setFirstResult(0);
 			favouriteQuery.setParameter("owner", adminAccount);
-			
-			List <Favourite> favourites = favouriteQuery.getResultList();
-			
-			for(Favourite favourite : favourites){
-				if (favourite.getType() == EnumFavouriteType.ACCOUNT){
+
+			List<Favourite> favourites = favouriteQuery.getResultList();
+
+			for (Favourite favourite : favourites) {
+				if (favourite.getType() == EnumFavouriteType.ACCOUNT) {
 					FavouriteAccount favouriteAccount = (FavouriteAccount) favourite;
-					if (favouriteAccount.getAccount().getKey().equals(account_id)){
+					if (favouriteAccount.getAccount().getKey().equals(account_id)) {
 						favouriteAccountInfo = new FavouriteAccountInfo(favouriteAccount);
 					}
 				}
 			}
-			
-			// If the given account does not match with any existing favourite we try to retrieve it 
-			//  in order to send a CandidateFavouriteAccountInfo Object
-			if (favouriteAccountInfo == null){
+
+			// If the given account does not match with any existing favourite
+			// we try to retrieve it
+			// in order to send a CandidateFavouriteAccountInfo Object
+			if (favouriteAccountInfo == null) {
 				try {
-					TypedQuery<Account> accountQuery = entityManager.createQuery(
-							"SELECT a FROM account a WHERE a.key = :key",
-							Account.class).setFirstResult(0).setMaxResults(1);
+					TypedQuery<Account> accountQuery = entityManager
+									.createQuery("SELECT a FROM account a WHERE a.key = :key", Account.class)
+									.setFirstResult(0).setMaxResults(1);
 					accountQuery.setParameter("key", account_id);
-					
+
 					Account account = accountQuery.getSingleResult();
-					
+
 					return new CandidateFavouriteAccountInfo(account);
-					
+
 				} catch (NoResultException ex) {
-					throw ApplicationException.wrap(ex, UserErrorCode.USERID_NOT_FOUND).set("account_id", account_id);
+					throw wrapApplicationException(ex, UserErrorCode.USERID_NOT_FOUND).set("account_id", account_id);
 				}
 			}
-			
+
 			return favouriteAccountInfo;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
-	
+
 	@Override
 	public FavouriteGroupInfo checkFavouriteGroup(UUID group_id) {
-		try{
+		try {
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
-			
+
 			FavouriteGroupInfo favouriteGroupInfo = null;
-			
-			//Retrieve admin's account
-			TypedQuery<Account> accountQuery = entityManager.createQuery(
-					"SELECT a FROM account a WHERE a.key = :key",
-					Account.class).setFirstResult(0).setMaxResults(1);
+
+			// Retrieve admin's account
+			TypedQuery<Account> accountQuery = entityManager
+							.createQuery("SELECT a FROM account a WHERE a.key = :key", Account.class).setFirstResult(0)
+							.setMaxResults(1);
 			accountQuery.setParameter("key", user.getKey());
-			
+
 			Account adminAccount = accountQuery.getSingleResult();
-			
+
 			TypedQuery<Favourite> favouriteQuery = entityManager.createQuery(
-					"SELECT f FROM favourite f WHERE f.owner = :owner",
-					Favourite.class).setFirstResult(0);
+							"SELECT f FROM favourite f WHERE f.owner = :owner", Favourite.class).setFirstResult(0);
 			favouriteQuery.setParameter("owner", adminAccount);
-			
-			List <Favourite> favourites = favouriteQuery.getResultList();
-			
-			for(Favourite favourite : favourites){
-				if (favourite.getType() == EnumFavouriteType.GROUP){
+
+			List<Favourite> favourites = favouriteQuery.getResultList();
+
+			for (Favourite favourite : favourites) {
+				if (favourite.getType() == EnumFavouriteType.GROUP) {
 					FavouriteGroup favouriteGroup = (FavouriteGroup) favourite;
-					if (favouriteGroup.getGroup().getKey().equals(group_id)){
+					if (favouriteGroup.getGroup().getKey().equals(group_id)) {
 						favouriteGroupInfo = new FavouriteGroupInfo(favouriteGroup);
 					}
 				}
 			}
-			
-			// If the given group does not match with any existing favourite we try to retrieve it 
-			//  in order to send a CandidateFavouriteGroupInfo Object
-			if (favouriteGroupInfo == null){
+
+			// If the given group does not match with any existing favourite we
+			// try to retrieve it
+			// in order to send a CandidateFavouriteGroupInfo Object
+			if (favouriteGroupInfo == null) {
 				try {
-					TypedQuery<Group> groupQuery = entityManager.createQuery(
-							"SELECT g FROM group g WHERE g.key = :key",
-							Group.class).setFirstResult(0).setMaxResults(1);
+					TypedQuery<Group> groupQuery = entityManager
+									.createQuery("SELECT g FROM group g WHERE g.key = :key", Group.class)
+									.setFirstResult(0).setMaxResults(1);
 					groupQuery.setParameter("key", group_id);
-					
+
 					Group group = groupQuery.getSingleResult();
-					
+
 					return new CandidateFavouriteGroupInfo(group);
-					
+
 				} catch (NoResultException ex) {
-					throw ApplicationException.wrap(ex, GroupErrorCode.GROUP_DOES_NOT_EXIST).set("groupId", group_id);
+					throw wrapApplicationException(ex, GroupErrorCode.GROUP_DOES_NOT_EXIST).set("groupId", group_id);
 				}
 			}
-			
+
 			return favouriteGroupInfo;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
-		
+
 	}
 
 	@Override
 	public void upsertFavourite(UpsertFavouriteRequest favouriteInfo) {
-		try{
+		try {
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
-			
+
 			// Retrieve admin's account
-			TypedQuery<Account> adminAccountQuery = entityManager.createQuery(
-					"SELECT a FROM account a WHERE a.key = :key",
-					Account.class).setFirstResult(0).setMaxResults(1);
+			TypedQuery<Account> adminAccountQuery = entityManager
+							.createQuery("SELECT a FROM account a WHERE a.key = :key", Account.class).setFirstResult(0)
+							.setMaxResults(1);
 			adminAccountQuery.setParameter("key", user.getKey());
-			
+
 			Account adminAccount = adminAccountQuery.getSingleResult();
-			
+
 			// Checking if the Favourite's type is invalid
-			if (favouriteInfo.getType() != EnumFavouriteType.GROUP &&
-					favouriteInfo.getType() != EnumFavouriteType.ACCOUNT){
-				throw new ApplicationException(FavouriteErrorCode.INVALID_FAVOURITE_TYPE);
+			if (favouriteInfo.getType() != EnumFavouriteType.GROUP
+							&& favouriteInfo.getType() != EnumFavouriteType.ACCOUNT) {
+				throw createApplicationException(FavouriteErrorCode.INVALID_FAVOURITE_TYPE);
 			}
-			
-			if (favouriteInfo.getType() == EnumFavouriteType.ACCOUNT){
+
+			if (favouriteInfo.getType() == EnumFavouriteType.ACCOUNT) {
 				// checking if the Account exists at all
 				Account account = null;
 				try {
-					TypedQuery<Account> accountQuery = entityManager.createQuery(
-							"SELECT a FROM account a WHERE a.key = :key",
-							Account.class).setFirstResult(0).setMaxResults(1);
+					TypedQuery<Account> accountQuery = entityManager
+									.createQuery("SELECT a FROM account a WHERE a.key = :key", Account.class)
+									.setFirstResult(0).setMaxResults(1);
 					accountQuery.setParameter("key", favouriteInfo.getKey());
-					
+
 					account = accountQuery.getSingleResult();
 				} catch (NoResultException ex) {
-					throw ApplicationException.wrap(ex, UserErrorCode.USERID_NOT_FOUND).set("accountId", favouriteInfo.getKey());
+					throw wrapApplicationException(ex, UserErrorCode.USERID_NOT_FOUND).set("accountId",
+									favouriteInfo.getKey());
 				}
-				
-				// Checking if the selected account belongs to the same utility as admin 
-				if(account.getUtility().getId() != adminAccount.getUtility().getId()){
-					throw new ApplicationException(UserErrorCode.ACCOUNT_ACCESS_RESTRICTED);
+
+				// Checking if the selected account belongs to the same utility
+				// as admin
+				if (account.getUtility().getId() != adminAccount.getUtility().getId()) {
+					throw createApplicationException(UserErrorCode.ACCOUNT_ACCESS_RESTRICTED);
 				}
-				
+
 				// Checking if the account is already an admin's favourite
 				TypedQuery<Favourite> favouriteQuery = entityManager.createQuery(
-						"SELECT f FROM favourite f WHERE f.owner = :owner",
-						Favourite.class).setFirstResult(0);
+								"SELECT f FROM favourite f WHERE f.owner = :owner", Favourite.class).setFirstResult(0);
 				favouriteQuery.setParameter("owner", adminAccount);
-				
-				List <Favourite> favourites = favouriteQuery.getResultList();
-				
+
+				List<Favourite> favourites = favouriteQuery.getResultList();
+
 				FavouriteAccount selectedFavourite = null;
-				for(Favourite favourite : favourites){
-					if (favourite.getType() == EnumFavouriteType.ACCOUNT){
+				for (Favourite favourite : favourites) {
+					if (favourite.getType() == EnumFavouriteType.ACCOUNT) {
 						FavouriteAccount favouriteAccount = (FavouriteAccount) favourite;
-						if(favouriteAccount.getAccount().getId() == account.getId()){
+						if (favouriteAccount.getAccount().getId() == account.getId()) {
 							selectedFavourite = favouriteAccount;
 						}
 					}
 				}
-				
+
 				// Favourite already exists just set the label
-				if (selectedFavourite != null){
+				if (selectedFavourite != null) {
 					selectedFavourite.setLabel(favouriteInfo.getLabel());
-					
-					
+
 				} else {
 					selectedFavourite = new FavouriteAccount();
 					selectedFavourite.setLabel(favouriteInfo.getLabel());
@@ -256,49 +255,50 @@ public class JpaFavouriteRepository implements IFavouriteRepository {
 					selectedFavourite.setCreatedOn(new DateTime());
 					selectedFavourite.setAccount(account);
 				}
-				
+
 				this.entityManager.persist(selectedFavourite);
-			}  else {
+			} else {
 				// checking if the Group exists at all
 				Group group = null;
 				try {
-					TypedQuery<Group> groupQuery = entityManager.createQuery(
-							"SELECT g FROM group g WHERE g.key = :key",
-							Group.class).setFirstResult(0).setMaxResults(1);
+					TypedQuery<Group> groupQuery = entityManager
+									.createQuery("SELECT g FROM group g WHERE g.key = :key", Group.class)
+									.setFirstResult(0).setMaxResults(1);
 					groupQuery.setParameter("key", favouriteInfo.getKey());
-					
+
 					group = groupQuery.getSingleResult();
 				} catch (NoResultException ex) {
-					throw ApplicationException.wrap(ex, GroupErrorCode.GROUP_DOES_NOT_EXIST).set("groupId", favouriteInfo.getKey());
+					throw wrapApplicationException(ex, GroupErrorCode.GROUP_DOES_NOT_EXIST).set("groupId",
+									favouriteInfo.getKey());
 				}
-				
-				// Checking if the selected group belongs to the same utility as admin 
-				if(group.getUtility().getId() != adminAccount.getUtility().getId()){
-					throw new ApplicationException(GroupErrorCode.GROUP_ACCESS_RESTRICTED);
+
+				// Checking if the selected group belongs to the same utility as
+				// admin
+				if (group.getUtility().getId() != adminAccount.getUtility().getId()) {
+					throw createApplicationException(GroupErrorCode.GROUP_ACCESS_RESTRICTED);
 				}
-				
+
 				// Checking if the group is already an admin's favourite
 				TypedQuery<Favourite> favouriteQuery = entityManager.createQuery(
-						"SELECT f FROM favourite f WHERE f.owner = :owner",
-						Favourite.class).setFirstResult(0);
+								"SELECT f FROM favourite f WHERE f.owner = :owner", Favourite.class).setFirstResult(0);
 				favouriteQuery.setParameter("owner", adminAccount);
-				
-				List <Favourite> favourites = favouriteQuery.getResultList();
-				
+
+				List<Favourite> favourites = favouriteQuery.getResultList();
+
 				FavouriteGroup selectedFavourite = null;
-				for(Favourite favourite : favourites){
-					if (favourite.getType() == EnumFavouriteType.GROUP){
+				for (Favourite favourite : favourites) {
+					if (favourite.getType() == EnumFavouriteType.GROUP) {
 						FavouriteGroup favouriteGroup = (FavouriteGroup) favourite;
-						if(favouriteGroup.getGroup().getId() == group.getId()){
+						if (favouriteGroup.getGroup().getId() == group.getId()) {
 							selectedFavourite = favouriteGroup;
 						}
 					}
 				}
-				
+
 				// Favourite already exists just set the label
-				if (selectedFavourite != null){
+				if (selectedFavourite != null) {
 					selectedFavourite.setLabel(favouriteInfo.getLabel());
-					
+
 				} else {
 					selectedFavourite = new FavouriteGroup();
 					selectedFavourite.setLabel(favouriteInfo.getLabel());
@@ -306,60 +306,59 @@ public class JpaFavouriteRepository implements IFavouriteRepository {
 					selectedFavourite.setCreatedOn(new DateTime());
 					selectedFavourite.setGroup(group);
 				}
-				
+
 				this.entityManager.persist(selectedFavourite);
-			} 
-						
-			
+			}
+
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
-		
+
 	}
 
 	@Override
 	public void deleteFavourite(UUID favourite_id) {
-		try{
+		try {
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
-			
+
 			if (!user.hasRole("ROLE_ADMIN") && !user.hasRole("ROLE_SUPERUSER")) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
-			
+
 			Favourite favourite = null;
 			// Check if favourite exists
-			try{
+			try {
 				TypedQuery<Favourite> favouriteQuery = entityManager
-						.createQuery("select f from favourite f where f.key = :favourite_id",
-								Favourite.class).setFirstResult(0)
-						.setMaxResults(1);
+								.createQuery("select f from favourite f where f.key = :favourite_id", Favourite.class)
+								.setFirstResult(0).setMaxResults(1);
 				favouriteQuery.setParameter("favourite_id", favourite_id);
 				favourite = favouriteQuery.getSingleResult();
-				
+
 				// Check that admin is the owner of the group
-					// Get admin's account
+				// Get admin's account
 				TypedQuery<eu.daiad.web.domain.application.Account> adminAccountQuery = entityManager
 								.createQuery("select a from account a where a.id = :adminId",
-										eu.daiad.web.domain.application.Account.class).setFirstResult(0)
+												eu.daiad.web.domain.application.Account.class).setFirstResult(0)
 								.setMaxResults(1);
 				adminAccountQuery.setParameter("adminId", user.getId());
 				Account adminAccount = adminAccountQuery.getSingleResult();
-				
-				if(favourite.getOwner() == adminAccount){
+
+				if (favourite.getOwner() == adminAccount) {
 					this.entityManager.remove(favourite);
-					
+
 				} else {
-					throw new ApplicationException(FavouriteErrorCode.FAVOURITE_ACCESS_RESTRICTED).set("favouriteId", favourite_id);
+					throw createApplicationException(FavouriteErrorCode.FAVOURITE_ACCESS_RESTRICTED).set("favouriteId",
+									favourite_id);
 				}
-				
-				
+
 			} catch (NoResultException ex) {
-				throw ApplicationException.wrap(ex, FavouriteErrorCode.FAVOURITE_DOES_NOT_EXIST).set("favouriteId", favourite_id);
+				throw wrapApplicationException(ex, FavouriteErrorCode.FAVOURITE_DOES_NOT_EXIST).set("favouriteId",
+								favourite_id);
 			}
-			
-		}catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+
+		} catch (Exception ex) {
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 }

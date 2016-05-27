@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.group.GroupQueryRequest;
 import eu.daiad.web.model.group.GroupQueryResponse;
 import eu.daiad.web.model.security.Credentials;
@@ -38,10 +37,8 @@ public class AdminController extends BaseRestController {
 			this.authenticate(credentials, EnumRole.ROLE_ADMIN);
 
 			this.schedulerService.launch(jobName);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -57,10 +54,8 @@ public class AdminController extends BaseRestController {
 			this.authenticate(request.getCredentials(), EnumRole.ROLE_ADMIN);
 
 			return new GroupQueryResponse(this.groupRepository.getAll());
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response = new RestResponse();
 			response.add(this.getError(ex));
