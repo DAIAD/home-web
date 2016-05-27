@@ -62,22 +62,22 @@ public class LoggingConfigurer implements InitializingBean {
 						ColumnConfig.createColumnConfig(config, "exception", "%rEx{full}", null, null, "false", null),
 						ColumnConfig.createColumnConfig(config, "timestamp", null, null, "true", null, null) };
 
+		// Create Filter
+		Filter filter = ErrorCodeFilter.createFilter(categories);
+
 		// Create JDBC appender
-		Appender appender = JdbcAppender.createAppender(appenderName, null, null, connectionSource, null, tableName,
+		Appender appender = JdbcAppender.createAppender(appenderName, null, filter, connectionSource, null, tableName,
 						columnConfigs);
 
 		appender.start();
 		config.addAppender(appender);
 
-		// Create Filter
-		Filter filter = ErrorCodeFilter.createFilter(categories);
-
 		// Add logger
 		AppenderRef ref = AppenderRef.createAppenderRef(appenderName, null, null);
 		AppenderRef[] refs = new AppenderRef[] { ref };
-		LoggerConfig loggerConfig = LoggerConfig.createLogger("true", Level.ERROR, loggerName, null, refs, null,
-						config, null);
-		loggerConfig.addAppender(appender, null, filter);
+		LoggerConfig loggerConfig = LoggerConfig.createLogger("true", Level.INFO, loggerName, null, refs, null, config,
+						null);
+		loggerConfig.addAppender(appender, null, null);
 
 		config.addLogger(loggerName, loggerConfig);
 

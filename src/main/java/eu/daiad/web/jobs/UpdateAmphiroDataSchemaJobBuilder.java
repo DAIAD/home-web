@@ -1,6 +1,8 @@
 package eu.daiad.web.jobs;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.UUID;
 
 import org.apache.commons.logging.Log;
@@ -94,20 +96,66 @@ public class UpdateAmphiroDataSchemaJobBuilder implements IJobBuilder {
 		sessions.add(session);
 		request.setSessions(sessions);
 
-		// Create measurements
-		for (AmphiroMeasurement m : data.getSession().getMeasurements()) {
-			AmphiroMeasurement measurement = new AmphiroMeasurement();
+		// Skip measurements for historical sessions
+		if ((!session.isHistory()) && (data.getSession().getMeasurements() != null)
+						&& (!data.getSession().getMeasurements().isEmpty())) {
 
-			measurement.setEnergy(m.getEnergy());
-			measurement.setHistory(m.isHistory());
-			measurement.setIndex(m.getIndex());
-			measurement.setSessionId(m.getSessionId());
-			measurement.setTemperature(m.getTemperature());
-			measurement.setTimestamp(m.getTimestamp());
-			measurement.setVolume(m.getVolume());
+			// Create measurements
+			for (AmphiroMeasurement m : data.getSession().getMeasurements()) {
+				AmphiroMeasurement measurement = new AmphiroMeasurement();
 
-			measurements.add(measurement);
+				measurement.setEnergy(m.getEnergy());
+				measurement.setHistory(m.isHistory());
+				measurement.setIndex(m.getIndex());
+				measurement.setSessionId(m.getSessionId());
+				measurement.setTemperature(m.getTemperature());
+				measurement.setTimestamp(m.getTimestamp());
+				measurement.setVolume(m.getVolume());
+
+				measurements.add(measurement);
+			}
+
+			// Sort measurements
+			Collections.sort(measurements, new Comparator<AmphiroMeasurement>() {
+
+				@Override
+				public int compare(AmphiroMeasurement m1, AmphiroMeasurement m2) {
+					if (m1.getIndex() < m2.getIndex()) {
+						return -1;
+					}
+					if (m1.getIndex() > m2.getIndex()) {
+						return 1;
+					}
+
+					if (m1.getTimestamp() < m2.getTimestamp()) {
+						return -1;
+					}
+					if (m1.getTimestamp() > m2.getTimestamp()) {
+						return 1;
+					}
+					return 0;
+				}
+			});
+
+			// Compute aggregates
+			for (int i = 0, count = measurements.size() - 1; i < count; i++) {
+				// Set volume
+				measurements.get(i + 1)
+								.setVolume(measurements.get(i).getVolume() + measurements.get(i + 1).getVolume());
+				// Set energy
+				measurements.get(i + 1)
+								.setEnergy(measurements.get(i).getEnergy() + measurements.get(i + 1).getEnergy());
+			}
+
+			// Eliminate duplicates
+			for (int i = 0; i < measurements.size() - 1; i++) {
+				if (measurements.get(i).getIndex() == measurements.get(i + 1).getIndex()) {
+					measurements.remove(i);
+				}
+			}
 		}
+
+		// Set measurements
 		request.setMeasurements(measurements);
 
 		return request;
@@ -184,6 +232,8 @@ public class UpdateAmphiroDataSchemaJobBuilder implements IJobBuilder {
 												AmphiroMeasurementCollection request = createInsertRequest(
 																deviceKeys[0], data);
 
+												amphiroIndexOrderedRepository.storeData(userKey, request);
+
 												if ((totalSessions % 1000) == 0) {
 													logger.info(String
 																	.format("Inserted %d sessions ...", totalSessions));
@@ -192,8 +242,6 @@ public class UpdateAmphiroDataSchemaJobBuilder implements IJobBuilder {
 													logger.info(String.format("Inserted %d sessions ...",
 																	totalMeasurements));
 												}
-
-												amphiroIndexOrderedRepository.storeData(userKey, request);
 											}
 										}
 									}

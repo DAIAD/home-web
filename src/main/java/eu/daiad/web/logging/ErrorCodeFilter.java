@@ -47,12 +47,36 @@ public class ErrorCodeFilter extends AbstractFilter {
 	@Override
 	public Result filter(final LogEvent event) {
 		final Throwable t = event.getThrown();
+		if (t == null) {
+			return Result.DENY;
+		}
 		if (t instanceof ApplicationException) {
 			if ((categories.isEmpty())
 							|| (categories.contains(((ApplicationException) t).getCode().getClass().getSimpleName()))) {
 				return Result.ACCEPT;
 			}
 			return Result.DENY;
+		}
+		return Result.NEUTRAL;
+	}
+
+	@Override
+	public Result filter(final Logger logger, final Level level, final Marker marker, final Object msg,
+					final Throwable t) {
+		if (t instanceof ApplicationException) {
+			if (categories.contains(((ApplicationException) t).getCode().getClass().getSimpleName())) {
+				return Result.ACCEPT;
+			}
+			return Result.DENY;
+		}
+		return Result.NEUTRAL;
+	}
+
+	@Override
+	public Result filter(final Logger logger, final Level level, final Marker marker, final String msg,
+					final Object... params) {
+		if (level.isMoreSpecificThan(Level.ERROR)) {
+			return Result.ACCEPT;
 		}
 		return Result.NEUTRAL;
 	}
