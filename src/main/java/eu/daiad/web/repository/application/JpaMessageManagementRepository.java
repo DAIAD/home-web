@@ -35,8 +35,8 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.BaseRepository;
 
-@Repository
-@Transactional("transactionManager")
+@Repository()
+@Transactional("applicationTransactionManager")
 public class JpaMessageManagementRepository extends BaseRepository implements IMessageManagementRepository {
 
 	@PersistenceContext(unitName = "default")

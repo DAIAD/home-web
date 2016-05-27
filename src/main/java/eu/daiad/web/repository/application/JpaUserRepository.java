@@ -49,7 +49,7 @@ import eu.daiad.web.model.user.Account;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository
-@Transactional("transactionManager")
+@Transactional("applicationTransactionManager")
 public class JpaUserRepository extends BaseRepository implements IUserRepository {
 
 	private static final Log logger = LogFactory.getLog(JpaUserRepository.class);

@@ -17,7 +17,7 @@ import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository
-@Transactional("transactionManager")
+@Transactional("applicationTransactionManager")
 public class JpaUtilityRepository extends BaseRepository implements IUtilityRepository {
 
 	@PersistenceContext(unitName = "default")

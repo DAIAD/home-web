@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 public class SpringJdbcAppenderConnectionSource implements ConnectionSource {
 
 	@Autowired
-	@Qualifier("dataSource")
+	@Qualifier("applicationDataSource")
 	DataSource dataSource;
 
 	@Override

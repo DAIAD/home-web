@@ -40,7 +40,7 @@ public class UserService extends BaseService implements IUserService {
 	private IDeviceRepository deviceRepository;
 
 	@Override
-	@Transactional("transactionManager")
+	@Transactional("applicationTransactionManager")
 	public UUID createUser(UserRegistrationRequest request) throws ApplicationException {
 		try {
 			Account account = request.getAccount();
@@ -100,13 +100,13 @@ public class UserService extends BaseService implements IUserService {
 	}
 
 	@Override
-	@Transactional("transactionManager")
+	@Transactional("applicationTransactionManager")
 	public void setPassword(String username, String password) throws ApplicationException {
 		userRepository.setPassword(username, password);
 	}
 
 	@Override
-	@Transactional("transactionManager")
+	@Transactional("applicationTransactionManager")
 	public void setRole(String username, EnumRole role, boolean set) throws ApplicationException {
 		AuthenticatedUser user = this.userRepository.getUserByName(username);
 		if (user == null) {

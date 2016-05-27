@@ -38,7 +38,7 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository()
-@Transactional("transactionManager")
+@Transactional("applicationTransactionManager")
 public class JpaDeviceRepository extends BaseRepository implements IDeviceRepository {
 
 	@Value("${security.white-list}")

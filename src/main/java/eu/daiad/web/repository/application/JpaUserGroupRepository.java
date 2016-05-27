@@ -35,7 +35,7 @@ import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository
-@Transactional("transactionManager")
+@Transactional("applicationTransactionManager")
 public class JpaUserGroupRepository extends BaseRepository implements IUserGroupRepository {
 
 	@PersistenceContext(unitName = "default")

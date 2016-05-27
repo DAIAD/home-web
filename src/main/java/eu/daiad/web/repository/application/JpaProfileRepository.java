@@ -48,7 +48,7 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository()
-@Transactional("transactionManager")
+@Transactional("applicationTransactionManager")
 public class JpaProfileRepository extends BaseRepository implements IProfileRepository {
 
 	@PersistenceContext(unitName = "default")
