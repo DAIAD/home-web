@@ -44,7 +44,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 
         @Override
 	public PendingMessageStatus resolve(MessageCalculationConfiguration config,
-					ConsumptionAggregateContainer aggregates, UUID accountKey) {
+					ConsumptionAggregateContainer aggregates, UUID accountKey) {      
 		AuthenticatedUser account = this.userRepository.getUserByKey(accountKey);
                 
 		PendingMessageStatus status = new PendingMessageStatus();
@@ -117,7 +117,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 						accountKey, config.getTimezone()));
                
                 status.setStaticTip(this.produceStaticTipForAccount(accountKey, config.getStaticTipInterval()));
-
+                
 		return status;
 	}
 
@@ -276,7 +276,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		}
 	}
 
-	// 8 alert - Reached 80% of your daily water budget {integer1} {integer2}
+	// 8 alert - Reached 80% of your weekly water budget {integer1} {integer2}
 	public SimpleEntry<Integer, Integer> alertNearWeeklyBudgetSWM(MessageCalculationConfiguration config,
 					UUID accountKey, DateTimeZone timezone) {
 
@@ -299,7 +299,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		MeterDataPoint meterPoint = (MeterDataPoint) dataPoint;
 		Double lastWeekSum = meterPoint.getVolume().get(EnumMetric.SUM);
 
-		double percentUsed = (config.getDailyBudget() * lastWeekSum) / 100;
+		double percentUsed = (config.getWeeklyBudget() * lastWeekSum) / 100;
 
 		if (percentUsed > 80) {
 			return new SimpleEntry<>(lastWeekSum.intValue(), config.getWeeklyBudget());
