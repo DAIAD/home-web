@@ -81,7 +81,19 @@ public class PendingMessageStatus {
         
         // returns random static tip
 	private boolean produceStaticTip;
+        
+        private boolean meterInstalled;
+        
+        private boolean amphiroInstalled;
 
+        public boolean isMeterInstalled() {
+		return meterInstalled;
+	}
+        
+        public boolean isAmphiroInstalled() {
+		return amphiroInstalled;
+	}        
+                
 	public boolean isAlertWaterLeakSWM() {
 		return alertWaterLeakSWM;
 	}
@@ -315,4 +327,12 @@ public class PendingMessageStatus {
         public void setStaticTip(boolean produceStaticTip){
                 this.produceStaticTip = produceStaticTip;
         }
+        
+        public void setMeterInstalled(boolean meterInstalled){
+                this.meterInstalled = meterInstalled;
+        }
+        
+        public void setAmphiroInstalled(boolean amphiroInstalled){
+                this.amphiroInstalled = amphiroInstalled;
+        }        
 }
