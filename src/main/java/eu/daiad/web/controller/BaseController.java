@@ -63,6 +63,10 @@ public abstract class BaseController {
 		return new Error(error.getMessageKey(), this.getMessage(error, properties));
 	}
 
+	protected Error getError(Throwable t) {
+		return this.getError((Exception) t.getCause());
+	}
+
 	protected Error getError(Exception ex) {
 		if (ex instanceof ApplicationException) {
 			ApplicationException applicationException = (ApplicationException) ex;

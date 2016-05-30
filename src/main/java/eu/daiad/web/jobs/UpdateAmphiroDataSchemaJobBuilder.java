@@ -137,6 +137,18 @@ public class UpdateAmphiroDataSchemaJobBuilder implements IJobBuilder {
 				}
 			});
 
+			// Eliminate duplicates
+			int duplicates = 0;
+			for (int i = measurements.size() - 1; i > 0; i--) {
+				if (measurements.get(i).getIndex() == measurements.get(i - 1).getIndex()) {
+					measurements.remove(i);
+					duplicates++;
+				}
+			}
+			if (duplicates > 0) {
+				logger.info(String.format("Eliminated %d duplicates from session %d", duplicates, session.getId()));
+			}
+
 			// Compute aggregates
 			for (int i = 0, count = measurements.size() - 1; i < count; i++) {
 				// Set volume
@@ -147,12 +159,6 @@ public class UpdateAmphiroDataSchemaJobBuilder implements IJobBuilder {
 								.setEnergy(measurements.get(i).getEnergy() + measurements.get(i + 1).getEnergy());
 			}
 
-			// Eliminate duplicates
-			for (int i = 0; i < measurements.size() - 1; i++) {
-				if (measurements.get(i).getIndex() == measurements.get(i + 1).getIndex()) {
-					measurements.remove(i);
-				}
-			}
 		}
 
 		// Set measurements

@@ -548,7 +548,6 @@ public class HBaseWaterMeterMeasurementRepository extends BaseRepository impleme
 						volume = 0;
 						difference = 0;
 					}
-
 				}
 
 				series.sort();
