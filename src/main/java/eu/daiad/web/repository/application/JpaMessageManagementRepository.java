@@ -52,8 +52,8 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
 	private void executeAccount(MessageCalculationConfiguration config, ConsumptionAggregateContainer aggregates,
 					PendingMessageStatus status, Account account) {
-		computeAmphiroMessagesForUser(config, aggregates, status, account);
-		computeSmartWaterMeterMessagesForUser(config, aggregates, status, account);
+		computeAmphiroMessagesForUser(config, aggregates, status, account);                
+		computeSmartWaterMeterMessagesForUser(config, aggregates, status, account);                
 		computeStaticTipForUser(config, status, account);
 	}
 
@@ -77,6 +77,11 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
 	private void computeAmphiroMessagesForUser(MessageCalculationConfiguration config,
 					ConsumptionAggregateContainer aggregates, PendingMessageStatus status, Account account) {
+               
+                if(!status.isAmphiroInstalled()){
+                        return;
+                }            
+            
 		// alertHotTemperatureAmphiro(account); //inactive
 		// alertShowerStillOnAmphiro(account); //inactive
 		alertTooMuchWaterConsumptionAmphiro(config, aggregates, status, account);
@@ -99,6 +104,10 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
 	private void computeSmartWaterMeterMessagesForUser(MessageCalculationConfiguration config,
 					ConsumptionAggregateContainer aggregates, PendingMessageStatus status, Account account) {
+                if(!status.isMeterInstalled()){
+                        return;
+                }
+            
 		alertWaterLeakSWM(config, status, account);
 		alertWaterQualitySWM(config, status, account);
 		alertPromptGoodJobMonthlySWM(config, aggregates, status, account);
