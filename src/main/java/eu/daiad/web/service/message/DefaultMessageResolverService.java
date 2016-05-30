@@ -26,9 +26,12 @@ import eu.daiad.web.model.query.EnumTimeUnit;
 import eu.daiad.web.model.query.GroupDataSeries;
 import eu.daiad.web.model.query.MeterDataPoint;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IMessageManagementRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IDataService;
+import eu.daiad.web.model.device.DeviceRegistrationQuery;
+import eu.daiad.web.model.device.EnumDeviceType;
 
 @Service()
 public class DefaultMessageResolverService implements IMessageResolverService {
@@ -41,14 +44,21 @@ public class DefaultMessageResolverService implements IMessageResolverService {
         
         @Autowired
         IMessageManagementRepository messageManagementRepository;
-
+        
+        @Autowired 
+        IDeviceRepository deviceRepository;
+        
         @Override
 	public PendingMessageStatus resolve(MessageCalculationConfiguration config,
 					ConsumptionAggregateContainer aggregates, UUID accountKey) {      
 		AuthenticatedUser account = this.userRepository.getUserByKey(accountKey);
-                
+
 		PendingMessageStatus status = new PendingMessageStatus();
 
+                status.setMeterInstalled(this.isMeterInstalledForUser(accountKey));
+                
+                status.setAmphiroInstalled(this.isAmphiroInstalledForUser(accountKey));                
+                
 		status.setAlertWaterLeakSWM(this.alertWaterLeakSWM(accountKey, config.getTimezone()));
 
 		status.setAlertWaterQualitySWM(this.alertWaterQualitySWM(accountKey, config.getTimezone()));
@@ -116,15 +126,14 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		status.setRecommendReduceFlowWhenNotNeededAmphiro(this.recommendReduceFlowWhenNotNeededAmphiro(aggregates,
 						accountKey, config.getTimezone()));
                
-                status.setStaticTip(this.produceStaticTipForAccount(accountKey, config.getStaticTipInterval()));
+                status.setStaticTip(this.produceStaticTipForAccount(account, config.getStaticTipInterval()));
                 
 		return status;
 	}
 
         //random static tip
-        private boolean produceStaticTipForAccount(UUID accountKey, int staticTipInterval) {         
-            boolean produceStaticTip = false;
-            AuthenticatedUser user = userRepository.getUserByKey(accountKey);
+        private boolean produceStaticTipForAccount(AuthenticatedUser user, int staticTipInterval) {                        
+            boolean produceStaticTip = false;            
             DateTime lastCreatedOn = messageManagementRepository.getLastDateOfAccountStaticRecommendation(user);
             
             if(lastCreatedOn == null || lastCreatedOn.isBefore(DateTime.now().minusDays(staticTipInterval))){
@@ -1267,6 +1276,16 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		}
 	}
 
+        private boolean isMeterInstalledForUser(UUID userKey){
+                DeviceRegistrationQuery query = new DeviceRegistrationQuery(EnumDeviceType.METER);
+                return deviceRepository.getUserDevices(userKey, query).isEmpty(); 
+        }
+        
+        private boolean isAmphiroInstalledForUser(UUID userKey){
+                DeviceRegistrationQuery query = new DeviceRegistrationQuery(EnumDeviceType.AMPHIRO);
+                return deviceRepository.getUserDevices(userKey, query).isEmpty(); 
+        }        
+                
 	private int computeConsecutiveZeroConsumptions(List<Double> values) {
 		int maxLength = 0;
 		int tempLength = 0;
