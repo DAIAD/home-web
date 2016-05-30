@@ -77,7 +77,7 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
 	public List<ScheduledJobExecution> getExecutions(String jobName, int startPosition, int maxResult) {
 		TypedQuery<ScheduledJobExecution> query = entityManager
 						.createQuery("select e from scheduled_job_execution e "
-										+ "where e.jobName = :jobName e.jobInstanceId desc, e.jobExecutionId desc",
+										+ "where e.jobName = :jobName order by e.jobInstanceId desc, e.jobExecutionId desc",
 										ScheduledJobExecution.class).setMaxResults(maxResult)
 						.setFirstResult(startPosition);
 
@@ -91,7 +91,7 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
 		ScheduledJob job = this.getJobById(jobId);
 
 		TypedQuery<ScheduledJobExecution> query = entityManager.createQuery("select e from scheduled_job_execution e "
-						+ "where e.jobName = :jobName e.jobInstanceId desc, e.jobExecutionId desc",
+						+ "where e.jobName = :jobName order by e.jobInstanceId desc, e.jobExecutionId desc",
 						ScheduledJobExecution.class);
 
 		query.setParameter("jobName", job.getName());
@@ -103,7 +103,7 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
 	public ScheduledJobExecution getLastExecution(String jobName) {
 		TypedQuery<ScheduledJobExecution> query = entityManager
 						.createQuery("select e from scheduled_job_execution e "
-										+ "where e.jobName = :jobName e.jobInstanceId desc, e.jobExecutionId desc",
+										+ "where e.jobName = :jobName order by e.jobInstanceId desc, e.jobExecutionId desc",
 										ScheduledJobExecution.class).setMaxResults(1).setFirstResult(0);
 
 		query.setParameter("job_name", jobName);
@@ -123,7 +123,7 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
 
 		TypedQuery<ScheduledJobExecution> query = entityManager
 						.createQuery("select e from scheduled_job_execution e "
-										+ "where e.jobName = :jobName e.jobInstanceId desc, e.jobExecutionId desc",
+										+ "where e.jobName = :jobName order by e.jobInstanceId desc, e.jobExecutionId desc",
 										ScheduledJobExecution.class).setMaxResults(1).setFirstResult(0);
 
 		query.setParameter("job_name", job.getName());
