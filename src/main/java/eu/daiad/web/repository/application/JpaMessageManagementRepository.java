@@ -110,7 +110,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
             
 		alertWaterLeakSWM(config, status, account);
 		alertWaterQualitySWM(config, status, account);
-		alertPromptGoodJobMonthlySWM(config, aggregates, status, account);
+		//alertPromptGoodJobMonthlySWM(config, aggregates, status, account); //inactive prompt
 		// promptGoodJobWeeklySWM(account); using monthly for now.
 		alertTooMuchWaterConsumptionSWM(config, aggregates, status, account);
 		alertReducedWaterUseSWM(config, status, account);
@@ -121,11 +121,11 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 		alertWaterChampionSWM(config, status, account);
 
 		alertWaterEfficiencyLeaderSWM(config, aggregates, status, account);
-		alertKeepUpSavingWaterSWM(config, status, account);
+		//alertKeepUpSavingWaterSWM(config, status, account); //inactive prompt
 
-		alertLitresSavedSWM(config, status, account);
-		alertTop25SaverSWM(config, aggregates, status, account);
-		alertTop10SaverSWM(config, aggregates, status, account);
+		//alertLitresSavedSWM(config, status, account); //inactive prompt
+		//alertTop25SaverSWM(config, aggregates, status, account); //inactive prompt
+		//alertTop10SaverSWM(config, aggregates, status, account); //inactive prompt
 	}
 
 	private Alert getAlertByType(EnumAlertType type) {
@@ -166,16 +166,19 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 						.createQuery("select a from static_recommendation a where a.locale = :locale",
 										eu.daiad.web.domain.application.StaticRecommendation.class);
 		accountAlertsQuery.setParameter("locale", locale);
-
-		List<StaticRecommendation> res = accountAlertsQuery.getResultList();
+		List<StaticRecommendation> staticRecommendations = accountAlertsQuery.getResultList();
 
 		Random random = new Random();
-		int max = res.size();
-		int min = res.get(0).getIndex();
+		int max = staticRecommendations.size();
+		int min = staticRecommendations.get(0).getIndex();
 		int range = max - min;
 		int randomId = random.nextInt(range) + min;
+                
+                while (!staticRecommendations.get(randomId).isActive()){
+                        randomId = random.nextInt(range) + min;
+                }
 
-		StaticRecommendation singleRandomStaticRecommendation = res.get(randomId);
+		StaticRecommendation singleRandomStaticRecommendation = staticRecommendations.get(randomId);
 
 		return singleRandomStaticRecommendation;
 	}
