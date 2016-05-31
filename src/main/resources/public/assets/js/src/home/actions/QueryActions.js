@@ -109,7 +109,7 @@ const QueryActions = {
   },
   fetchMeterHistory: function(deviceKeys, time) {
     return function(dispatch, getState) {
-      if (!deviceKeys || !time) throw new Error(`Not sufficient data provided for meter history query: deviceKey:${deviceKeys}, time: ${time}`);
+      if (!deviceKeys || !time || !time.startDate || !time.endDate) throw new Error(`Not sufficient data provided for meter history query: deviceKey:${deviceKeys}, time: ${time}`);
 
       dispatch(requestedQuery());
       

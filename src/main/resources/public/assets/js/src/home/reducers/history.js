@@ -1,7 +1,7 @@
 var types = require('../constants/ActionTypes');
 
 var { updateOrAppendToSession } = require('../utils/device');
-
+var { thisYear } = require('../utils/time');
 
 var history = function (state, action) {
   //initial state
@@ -19,7 +19,7 @@ var history = function (state, action) {
       comparison: null,
       data: [],
       comparisonData: [],
-      time: {}
+      time: thisYear()
     };
   }
    
