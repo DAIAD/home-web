@@ -153,7 +153,7 @@ function TipBox (props) {
 
 function ChartBox (props) {
   const { intl, history, infobox } = props;
-  const { title, type, subtype, improved, data, metric, measurements, period, device, deviceDetails, chartData, chartFormatter, chartType, chartCategories, chartXAxis, highlight, time, index, mu, invertAxis } = infobox;
+  const { title, type, subtype, improved, data, metric, measurements, period, device, deviceDetails, chartData, chartFormatter, chartType, chartCategories, chartColors, chartXAxis, highlight, time, index, mu, invertAxis } = infobox;
   console.log('chart data', chartData, chartType, infobox);
   return (
     <div>
@@ -172,6 +172,7 @@ function ChartBox (props) {
                 subtitle=""
                 fontSize={17}
                 mu=''
+                colors={chartColors}
                 data={chartData}
               /> 
             </div>
@@ -196,6 +197,7 @@ function ChartBox (props) {
                   invertAxis={invertAxis}
                   xAxis={chartXAxis}
                   xAxisData={chartCategories}
+                  colors={chartColors}
                   formatter={chartFormatter(intl)}
                   data={chartData}
                 /> :
@@ -212,6 +214,7 @@ function ChartBox (props) {
                 invertAxis={invertAxis}
                 xAxis={chartXAxis}
                 xAxisData={chartCategories}
+                colors={chartColors}
                 formatter={chartFormatter(intl)}
                 data={chartData}
               />))

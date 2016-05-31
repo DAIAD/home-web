@@ -69,6 +69,9 @@ function transformInfoboxData (infoboxes, devices, link, intl) {
     let chartCategories = deviceType === 'METER' ? 
       getChartMeterCategories(period, intl) : 
         getChartAmphiroCategories(period, getSessionsIdOffset(data[0] ? data[0].sessions : []));
+        
+        
+    let chartColors = ['#2d3480', '#abaecc', '#7AD3AB', '#CD4D3E'];
     let invertAxis = false;
 
     if (type==='tip') {
@@ -151,6 +154,7 @@ function transformInfoboxData (infoboxes, devices, link, intl) {
     else if (type === 'forecast') {
       chartType = 'bar';
 
+      //periods = deviceType === 'AMPHIRO' ? devPeriods : meterPeriods;
       //dummy data
       chartCategories=[2014, 2015, 2016];
       chartData=[{title:'Consumption', data:[100, 200, 150]}];
@@ -165,6 +169,7 @@ function transformInfoboxData (infoboxes, devices, link, intl) {
       //dummy data
       chartData=[{title:'Consumption', data:[Math.floor(reduced/4), Math.floor(reduced/4), Math.floor(reduced/3), Math.floor(reduced/2-reduced/3)]}];
       chartCategories = ["toilet", "faucet", "shower", "kitchen"];
+      chartColors = ['#abaecc', '#8185b2', '#575d99', '#2d3480'];
       mu = getMetricMu(metric);
       invertAxis = true;
 
@@ -180,6 +185,7 @@ function transformInfoboxData (infoboxes, devices, link, intl) {
       //dummy data based on real user data
       chartData=[{title:'Comparison', data:[reduced-0.2*reduced, reduced+0.5*reduced, reduced/2, reduced]}];
       chartCategories = ["City", "Neighbors", "Similar", "You"];
+      chartColors = ['#f5dbd8', '#ebb7b1','#a3d4f4', '#2d3480'];
       mu = getMetricMu(metric);
       invertAxis = true;
 
@@ -193,6 +199,8 @@ function transformInfoboxData (infoboxes, devices, link, intl) {
       reduced = data ? reduceMetric(devices, data, metric) : 0;
       mu = getMetricMu(metric);
       chartCategories = null; 
+
+      chartColors = ['#2d3480', '#abaecc'];
       //dummy data
       chartData=[{title:'66%', data:[{value: 345, name: 'consumed', color: '#2D3580'}, {value: 250, name: 'remaining', color: '#D0EAFA'}]}];
       mu = getMetricMu(metric);
@@ -210,6 +218,7 @@ function transformInfoboxData (infoboxes, devices, link, intl) {
                          chartFormatter,
                          chartType,
                          chartCategories,
+                         chartColors,
                          chartXAxis,
                          invertAxis,
                          linkToHistory,

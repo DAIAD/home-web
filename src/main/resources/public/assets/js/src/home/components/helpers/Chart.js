@@ -26,7 +26,7 @@ var Chart = React.createClass({
       subtitle: "",
       mu: "",
       xAxis: "category",
-      colors: ['#2D3580', '#CD4D3E', '#564535'],
+      colors: ['#2d3480', '#abaecc', '#7AD3AB', '#CD4D3E'],
       data: [],
       clickable: false,
       dataZoom: false,
@@ -111,6 +111,7 @@ var Chart = React.createClass({
   },
   _getSeriesArray: function(options, series, index) {
       const data = this._checkData(options.xAxisData, series.data);
+      //if (!data) return {};
       //const data = series.data;
       if (options.type === 'pie') 
         return {
@@ -137,19 +138,25 @@ var Chart = React.createClass({
               labelLine: {
                 show: false
               },
-            }
+            },
+            
+
         },
-        data: series.data.map(x => Object.assign({}, series, {itemStyle: { normal: {color: x.color, lineStyle: {width:1}}}}))
+        data: series.data.map((x, i) => Object.assign({}, x, {itemStyle: { normal: {color: this.props.colors[i]?this.props.colors[i]:this.props.colors[0]}}}))
         };
       else if (options.type === 'bar') 
         return {
           name: series.title,
           type: options.type,
+          barGap: 0,
+          barCategoryGap: 0,
+          //barWidth: 50,
+          //barMaxWidth: '10%',
           itemStyle: {
             normal: {
               color: this.props.colors[0],
               barBorderColor: this.props.colors[0],
-              barBorderWidth: 15,
+              barBorderWidth: 0,
               //barBorderRadius:10,
               lineStyle: {
                 width: 1
@@ -157,7 +164,8 @@ var Chart = React.createClass({
               label : {
                 show: true, 
                 position: options.invertAxis? 'insideLeft' : 'insideBottom',
-                formatter: '{b}: {c}',
+                //formatter: '{b}: {c}',
+                formatter: '{b}',
                 textStyle: {
                   color: '#fff',
                 },
@@ -175,8 +183,7 @@ var Chart = React.createClass({
             },
             
           },
-
-          data,
+          data: series.data.map((x, i) => Object.assign({}, {value:x}, {itemStyle: {normal: {color: this.props.colors[i]?this.props.colors[i]:this.props.colors[0]}}}) )
         };
       else
         return {
@@ -271,6 +278,7 @@ var Chart = React.createClass({
         show: false
       },
       splitLine: {
+        show: options.type === 'bar' ? false : true,
         lineStyle: {
           color: ['#ccc'],
           width: 1,
@@ -307,6 +315,7 @@ var Chart = React.createClass({
   },
   _getBarOptions: function(options) {
     return {
+
     };
   },
   _getBaseOptions: function(options) {
@@ -338,7 +347,8 @@ var Chart = React.createClass({
       toolbox: {
         show : false,
       },
-      backgroundColor: 'rgba(55,230,123,0.0)',
+      backgroundColor: '#fff',
+      //backgroundColor: 'rgba(55,230,123,0.0)',
       color: ['#2D3580', '#A45476'],
       calculable : false,
       dataZoom: {
