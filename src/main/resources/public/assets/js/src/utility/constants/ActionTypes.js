@@ -56,6 +56,7 @@ var constants = keyMirror({
 	ADMIN_ADD_USER_RECEIVE_RESPONSE: null,
 	ADMIN_ADD_USER_GET_UTILITIES_MAKE_REQUEST: null,
 	ADMIN_ADD_USER_GET_UTILITIES_RECEIVE_RESPONSE: null,
+
 	
   ADMIN_REQUESTED_UTILITIES: null,
   ADMIN_RECEIVED_UTILITIES: null,        
@@ -110,6 +111,26 @@ var constants = keyMirror({
   GROUP_RESET_COMPONENT: null,
   GROUP_SHOW_FAVOURITE_ACCOUNT_FORM: null,
   GROUP_HIDE_FAVOURITE_ACCOUNT_FORM: null,
+
+        
+        
+        //manage alerts
+        ADMIN_REQUESTED_UTILITIES: null,
+        ADMIN_RECEIVED_UTILITIES: null,        
+        ADMIN_SELECTED_UTILITY_FILTER: null,      
+        ADMIN_REQUESTED_STATIC_TIPS: null,
+        ADMIN_RECEIVED_STATIC_TIPS: null,
+        
+        SAVE_BUTTON_DISABLE: null,
+        SAVE_BUTTON_CLICKED: null,
+        
+        ADMIN_CLICKED_SAVE_BUTTON: null,
+        ADMIN_SAVE_BUTTON_RESPONSE: null,
+        ADMIN_SAVED_ACTIVE_TIPS: null,
+        MESSAGES_SET_ACTIVE_PAGE: null,
+        CHECKBOX_CLICKED: null,
+        // \manage alerts
+
  
 	QUERY_SUBMIT: null,
 	QUERY_RESPONSE: null,

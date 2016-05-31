@@ -412,6 +412,21 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 		return messages;
 	}
 
+        @Override
+        public void persistActiveAdvisoryMessage(String locale, int index, boolean active){
+            TypedQuery<eu.daiad.web.domain.application.StaticRecommendation> advisoryMessage = entityManager
+                    .createQuery("select s from static_recommendation s where s.index = :index and s.locale = :locale",
+                                    eu.daiad.web.domain.application.StaticRecommendation.class);    
+            advisoryMessage.setParameter("index", index);
+            advisoryMessage.setParameter("locale", locale);
+
+            List<StaticRecommendation> advisoryMessages = advisoryMessage.getResultList();
+            
+            if(!advisoryMessages.isEmpty()){
+                advisoryMessages.get(0).setActive(active);
+            }
+        }
+        
 	// TODO : When sending an acknowledgement for an alert of a specific type,
 	// an older (not acknowledged) alert of the same type may appear in the next
 	// get messages call

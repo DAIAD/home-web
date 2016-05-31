@@ -1,8 +1,5 @@
-//var queryAPI = require('../api/query');
 var types = require('../constants/ActionTypes');
-//var adminAPI = require('../api/admin');
 var alertsAPI = require('../api/alerts');
-//var api = require('../api/base');
 
 var receivedTips = function(success, errors, tips) {
   console.log('action: receivedTips');  
@@ -23,7 +20,6 @@ var requestedTips = function(locale) {
 };
 
 var requestedUtilities = function() {
-   console.log('action: requestedUtilities');
   return {
     type : types.ADMIN_REQUESTED_UTILITIES,
   };
@@ -37,8 +33,41 @@ var receivedUtilities = function(success, errors, utilities) {
     utilities : utilities
   };
 };
- 
+
+var clickedSaveButton = function() {
+  console.log('clickedSaveButton');
+  return {
+    type : types.ADMIN_CLICKED_SAVE_BUTTON
+  };  
+};
+
+var saveButtonResponse = function(success, errors) {
+  return {
+    type : types.ADMIN_SAVE_BUTTON_RESPONSE,
+    success : success,
+    errors : errors
+  };  
+};
+
 var ManageAlertsActions = {
+    disableSaveButton : function(event, disable){
+      console.log('ACTION disableSaveButton');
+        return{
+          type : types.SAVE_BUTTON_DISABLE,
+          saveButtonDisabled : disable
+        };      
+    },
+    saveActiveTips : function(event, changedTips, locale){
+      //console.log('saveActiveTips, length ' + changedTips.length);
+      return function(dispatch, getState) {
+        dispatch(clickedSaveButton());
+        return alertsAPI.saveActiveTips(changedTips, locale).then(function(response) {   
+          console.log('response.success ' + response.success);
+            dispatch(saveButtonResponse(response.success, response.errors));
+        }, function(error) {saveButtonResponse(false, error, null);
+          });
+      };      
+    },
     setUtility: function(event, utility) {
         return{
           type : types.ADMIN_SELECTED_UTILITY_FILTER,
@@ -70,15 +99,31 @@ var ManageAlertsActions = {
         dispatch(requestedTips(locale));
 
         return alertsAPI.getTips(locale).then(function(response) {
-
-          for (var key in response){
-              console.log("response["+ key +"]="+ response[key]);
-          }
           dispatch(receivedTips(response.success, response.errors, response.messages));
         }, function(error) {
           dispatch(receivedTips(false, error, null));
         });
       };                   
+    },
+    checkBoxClicked: function(event, tip, tips) {
+      console.log('tip clicked: ' + tip.index + " active: " + tip.active);
+      //replace modified tip in tips
+      for(var obj2 in tips){
+        for(var prop2 in tips[obj2]){
+          if(prop2 == "index"){
+            if(tips[obj2][prop2] == tip.index){
+              console.log('found checked tip: ' + tips[obj2][prop2]);
+              console.log('is it active?: ' + tips[obj2].active);
+              tips[obj2].active = false;
+              break;
+            }
+          }        
+        }
+      }
+        return{
+          type : types.CHECKBOX_CLICKED,
+          tips : tips
+        }; 
     }
 };
 

@@ -11,7 +11,15 @@ var { bindActionCreators } = require('redux');
 var { getUtilities } = require('../../actions/ManageAlertsActions');
 var Helpers = require('../../helpers/helpers');
 var EditTable = require('../EditTable');
+var TipsEditTable = require('../TipsEditTable');
 var {FormattedMessage, FormattedTime, FormattedDate} = require('react-intl');
+var Schema = require('../../constants/ModeManagementTableSchema');
+
+var self;
+var saveDisabled = true;
+var rowsOriginal = [];
+var tempRows = [];
+var savedTips = [];
 
 var ManageAlerts = React.createClass({
   contextTypes: {
@@ -20,54 +28,57 @@ var ManageAlerts = React.createClass({
   getDefaultProps: function() {
     console.log('getDefaultProps');
     return {  
-        defaultDropDownTitle: 'Select Utility',        
+        defaultDropDownTitle: 'Select Utility', 
+        rowsChanged : [],
+        saveButtonDisabled : true
     };
-  },      
+  },
   getInitialState: function(){
-    //console.log('initial state');    
-    return {value:"initial state"};
+    console.log('initial state');    
+    return {value:"initial state", saveButtonDisabled : false, rowsChanged : []};//TODO, change this to true and resolve state
   },
   componentWillMount : function() {
-    console.log('fetching utilities');
     this.props.fetchUtilities();    
   },
-  handleCheckboxChange: function (rowId, propertyName, currentValue){
-    var truthTable = {
-      'ACTIVE': true,
-      'INACTIVE': false
-    };
-
-    var inverseTruthTable = {
-      true: 'ACTIVE',
-      false: 'INACTIVE'
-    };
-
-    var currentModesState = Object.assign({}, this.props.modes);
-
-    if (currentModesState[rowId].modes[propertyName].value === 'NOT_APPLICABLE'){
-      return;
-    } else {
-      currentModesState[rowId].modes[propertyName] = {
-        value: inverseTruthTable[!truthTable[this.props.modes[rowId].modes[propertyName].value]],
-        draft: !this.props.modes[rowId].modes[propertyName].draft								  
-      };
-    }
-
-    this.props.setModes(currentModesState);
-  },
   render: function() {
+    self = this;
+    console.log('RENDERING MANAGE ALERTS');
 
     if (!this.props.isLoading && this.props.utilities){ 
 
+      var tipDeactivate = function(){
+              var title = _t({ id:'Modal.DeactivateUser.Title'});
+
+              var body = _t({ id:'Modal.DeactivateUser.Body.Part1'}) +
+                      this.props.row.name +
+              _t({ id:'Modal.DeactivateUser.Body.Part2'}) +
+              this.props.row.id +
+              _t({ id:'Modal.DeactivateUser.Body.Part3'});
+
+              var actions = [{
+                      action: self.closeModal,
+                      name: _t({id:'Buttons.Cancel'})
+              },  {
+                      action: self.decativateUser,
+                      name: _t({id:'Buttons.Deactivate'}),
+                      style: 'danger'
+              }
+      ];
+              self.openModal(title, body, actions);
+              self.props.markUserForDeactivation(this.props.row);	
+
+      };
+
+//      for (let i=0; i < data.fields.length; i++){
+//              if (this.props.tips[i].active === true){
+//                      this.props.tips[i].handler = tipDeactivate;
+//              }
+//      }
+                
+                
       var _t = this.context.intl.formatMessage;            
       var data = { 
-        filters: [{
-          id: 'utilityName',
-          name: 'Utility',
-          field: 'utilityName',
-          icon: 'utility',
-          type: 'text'
-        }],
+        filters: Schema.filters,
         fields: [{
           name: 'index',
           title: 'ID'
@@ -85,13 +96,24 @@ var ManageAlerts = React.createClass({
             name: 'modifiedOn',
             title: 'Modified',
             type: 'datetime'
-        }, {
+        },{
             name: 'active',
             title: 'Active',
             type: 'boolean',
+            icon: 'check-square',
+            onClick: function(){
+              console.log(this);
+              console.log(this.props.row.index);
+              //console.log('deactivated id 1 ' + self.props.tips[1].active);             
+              console.log('this.props.row' +this.props.row);
+              self.props.checkBoxClicked(this.props.row, self.props.tips);              
+            },
             handler: function() {
               console.log(this);
-
+              console.log(this.props.row.index);
+              //console.log('deactivated id 1 ' + self.props.tips[1].active);             
+              console.log('this.props.row' +this.props.row);
+              self.props.checkBoxClicked(this.props.row, self.props.tips);
             }
         }, {
           name: 'edit',
@@ -160,7 +182,8 @@ var ManageAlerts = React.createClass({
                           type='submit'
                           className='btn btn-primary'
                                   style={{ height: 33 }}
-                                  onClick={this.saveModeChanges}>
+                                  disabled={this.state.saveButtonDisabled}
+                                  onClick={this.props.saveActive}>
                           <FormattedMessage id='Table.Save' />
                   </button>
                 </div>  
@@ -170,7 +193,18 @@ var ManageAlerts = React.createClass({
               < Bootstrap.Panel header = {staticTipsTitle} >
                 < Bootstrap.ListGroup fill >
                   < Bootstrap.ListGroupItem >
-                    < Table data = {data} > < /Table>
+                    < TipsEditTable //TODO this was "Table" and had only data={data} // togle with TipsEditTable
+                      data = {data} 
+                      //saveAction={this.showModalSaveChanges}
+                      //setActivePage={this.props.setActivePage}           
+                      saveAction={this.showModalSaveChanges}
+                      activePage={this.props.activePage}
+                      modes={this.props.modes}
+                      setModes={this.props.setModes}                     
+                      
+                      
+                                    > 
+                    < /TipsEditTable>
                   < /Bootstrap.ListGroupItem>
                 < /Bootstrap.ListGroup>
               < /Bootstrap.Panel>                 
@@ -210,7 +244,7 @@ function populateUtilityOptions(utilities){
   return utilityOptions;
 }
 
-function populateTips(object){
+function populateTips(object){ 
   var element = {}, populatedTips = [];   
   if(object.props.tips == null){
     return []; //admin has not selected a utility, return empty tips
@@ -236,34 +270,89 @@ function populateTips(object){
             currentModifiedOn = object.props.tips[obj][prop];
         }  
         else if(prop == "active"){
-            currentActive = object.props.tips[obj][prop];
-        } 
+            currentActive = object.props.tips[obj][prop];                    
+        }
       }
+      rowsOriginal.push({index : currentIndex, active : currentActive});
+      tempRows.push({index : currentIndex, active : currentActive});
+      
       element = {index : currentIndex, title : currentTitle, description : currentDescription, 
         createdOn : currentCreatedOn, modifiedOn : currentModifiedOn, active : currentActive};
       populatedTips.push(element);
     } 
+    
+//    for (var i = 0; i < tempRows.length; i++) {
+//      var row = tempRows[i];
+//      console.log('index: ' + row.index + ', active:' + row.active);
+//    }
+    
+    populatedTips.sort(sortBy('index', true));
+    
     return populatedTips;
   }
 }
 
+var sortBy = function(field, reverse){
+   var key = function (x) {return x[field];};
+
+   return function (a,b) {
+	  var keyA = key(a), keyB = key(b);
+	  return ( (keyA < keyB) ? -1 : ((keyA > keyB) ? 1 : 0) ) * [-1,1][+!!reverse];                  
+   };
+};
+
 function mapStateToProps(state) {  
+  console.log('mapStateToProps, state.alerts.saveButtonDisabled ' + state.alerts.saveButtonDisabled);
+
   return {
     utility: state.alerts.utility,
     tips: state.alerts.tips,
     utilities: state.alerts.utilities,
-    isLoading: state.alerts.isLoading
-
+    isLoading: state.alerts.isLoading,
+    rowsChanged: state.alerts.rowsChanged,
+    saveButtonDisabled : state.alerts.saveButtonDisabled,
+    activePage: state.alerts.activePage
   };
 }
 
 function mapDispatchToProps(dispatch) {
+  console.log('mapDispatchToProps ' );   
   return {
     setUtility: function (event, utility){
       dispatch(ManageAlertsActions.setUtility(event, utility));
       dispatch(ManageAlertsActions.getStaticTips(event, utility));
     },
-    fetchUtilities : bindActionCreators(ManageAlertsActions.fetchUtilities, dispatch)
+    fetchUtilities : bindActionCreators(ManageAlertsActions.fetchUtilities, dispatch),
+    saveChanges: function(rowsChanged){
+      //save changes
+    },
+    setActivePage: function(activePage){
+            dispatch(ManageAlertsActions.setActivePage(activePage));
+    },
+    checkBoxClicked: function(tip, tips){
+      console.log('dispatching checkBoxClicked ' + tip.index);
+      dispatch(ManageAlertsActions.checkBoxClicked(event, tip, tips));
+    },
+    saveActive : function(event){
+
+      if(_.isEqual(rowsOriginal, tempRows)){ 
+        return;//nothing to save
+      }
+      var toBeSaved = tempRows.filter(function(obj) {
+        return !rowsOriginal.some(function(obj2) {
+            return obj.active == obj2.active;
+        });   
+      });
+      console.log("number of rows to save: " + toBeSaved.length);
+      var locale;
+      if(self.props.utility.label == 'Alicante'){
+        locale = "es";
+      }
+      else{
+        locale = "en";
+      }
+      dispatch(ManageAlertsActions.saveActiveTips(event, toBeSaved, locale));
+    }
   };
 }
 
