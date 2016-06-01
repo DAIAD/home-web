@@ -7,16 +7,19 @@ var mode_management = require('./mode_management');
 var admin = require('./admin');
 var query = require('./query');
 var debug = require('./debug');
-
+var reports = require('./reports');
+var config = require('./config');
 
 var rootReducer = combineReducers({
 	i18n,
+  config,
 	session,
 	mode_management,
 	admin,
 	query,
 	debug,
-	routing: routerReducer
+	routing: routerReducer,
+  reports,
 });
 
 module.exports = rootReducer;

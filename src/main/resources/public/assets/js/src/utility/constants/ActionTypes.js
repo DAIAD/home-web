@@ -1,7 +1,8 @@
-var keyMirror = require('keymirror');
+var mirrorToPath = require('../helpers/path-mirror.js');
 
-var constants = keyMirror({
-	LOCALE_CHANGE : null,
+var types = mirrorToPath({
+	
+  LOCALE_CHANGE : null,
 	LOCALE_REQUEST_MESSAGES: null,
 	LOCALE_RECEIVED_MESSAGES: null,
 	
@@ -67,7 +68,44 @@ var constants = keyMirror({
 	DEBUG_SET_TIMEZONE: null,
 	DEBUG_SET_ERRORS: null,
 	DEBUG_AMPHIRO_DATA_GENERATE_REQUEST: null,
-	DEBUG_AMPHIRO_DATA_GENERATED: null
+	DEBUG_AMPHIRO_DATA_GENERATED: null,
+
+  // Client Configuration
+
+  config: {
+    utility: {
+      REQUEST_CONFIGURATION: null,
+      SET_CONFIGURATION: null,
+    },
+    reports: {
+      SET_CONFIGURATION: null,
+    },
+  },
+
+  // Reports
+
+  reports: {
+    
+    // Reports on measurements 
+    
+    measurements: {
+      INITIALIZE: null,
+      SET_SOURCE: null,
+      SET_TIMESPAN: null,
+      SET_POPULATION: null,
+      REQUEST_DATA: null,
+      SET_DATA: null,
+    },
+
+    // Reports on system utilization
+
+    system: {
+      INITIALIZE: null, 
+      REQUEST_DATA: null,
+      SET_DATA: null,
+    },
+  },
+
 });
 
-module.exports = constants;
+module.exports = types;

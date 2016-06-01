@@ -32,3 +32,5 @@ src/main/resources/log4j.properties
 src/main/resources/config/*.properties
 
 apidoc/docs
+
+Gruntfile-local.js

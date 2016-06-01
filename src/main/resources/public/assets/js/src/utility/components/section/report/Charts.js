@@ -23,6 +23,13 @@ var Charts = React.createClass({
             <Breadcrumb routes={this.props.routes}/>
           </div>
         </div>
+        
+        <div className="row">
+          <div className="col-md-12">
+            Hello <strong>Daiad!!!</strong>
+          </div>
+        </div>
+
       </div>);
     }
 });

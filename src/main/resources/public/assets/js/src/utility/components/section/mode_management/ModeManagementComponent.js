@@ -7,7 +7,7 @@ var EditTable = require('../../EditTable');
 var Modal = require('../../Modal');
 var FilterPanel = require('../../FilterPanel');
 
-var Helpers = require('../../../helpers/helpers');
+var Helpers = require('../../../helpers/array-funcs');
 
 var ModeManagementActions = require('../../../actions/ModeManagementActions');
 var { connect } = require('react-redux');
