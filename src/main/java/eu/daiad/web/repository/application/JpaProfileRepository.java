@@ -114,6 +114,9 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 			profile.setLocale(account.getLocale());
 			profile.setApplication(application);
 
+			profile.setMeterBudget(account.getProfile().getMeterBudget());
+			profile.setAmphiroBudget(account.getProfile().getAmphiroBudget());
+
 			ArrayList<DeviceRegistration> registrations = new ArrayList<DeviceRegistration>();
 			for (Iterator<Device> d = devices.iterator(); d.hasNext();) {
 				registrations.add(d.next().toDeviceRegistration());
