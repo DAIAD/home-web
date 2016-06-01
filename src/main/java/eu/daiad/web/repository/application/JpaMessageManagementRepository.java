@@ -168,6 +168,20 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 		accountAlertsQuery.setParameter("locale", locale);
 		List<StaticRecommendation> staticRecommendations = accountAlertsQuery.getResultList();
 
+                //TODO - This is a temporal fix for the case that all static tips have been deactivated
+                //change query to return only active tips. Change range of random based on id
+                boolean isAtLeastOneActiveTip = false;
+                for(StaticRecommendation staticRecommendation : staticRecommendations){
+                    if(staticRecommendation.isActive()){
+                        isAtLeastOneActiveTip = true;
+                        break;
+                    }                   
+                }
+                
+                if(!isAtLeastOneActiveTip){
+                    return null;
+                }
+                
 		Random random = new Random();
 		int max = staticRecommendations.size();
 		int min = staticRecommendations.get(0).getIndex();
@@ -189,8 +203,10 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 		if (DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()
 						|| DateTime.now().getDayOfWeek() == DateTimeConstants.WEDNESDAY) {
 			if (status.isStaticTipToBeProduced()) {
-				createAccountStaticRecommendation(account, getRandomStaticRecommendationForLocale(account.getLocale()),
-								DateTime.now());
+                            StaticRecommendation randomTip = getRandomStaticRecommendationForLocale(account.getLocale());
+                            if(randomTip != null){
+                                createAccountStaticRecommendation(account, randomTip, DateTime.now());
+                            }				
 			}
 		}
 	}
