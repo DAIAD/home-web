@@ -12,10 +12,12 @@ var ManageAlertsAPI = {
       return api.json('/action/recommendation/static/save/'+ locale, changedTips);
     },
     editTip: function(tip){
-      return api.json('/action/recommendation/static/edit', tip);
+      console.log("editing tip " + tip);
+      //return api.json('/action/recommendation/static/edit', tip);
     },
     addTip: function(tip){
-      return api.json('/action/recommendation/static/add', tip);
+      console.log("adding tip " + tip);
+      //return api.json('/action/recommendation/static/add', tip);
     }
 };
 

@@ -49,9 +49,23 @@ var saveButtonResponse = function(success, errors) {
   };  
 };
 
+var requestAddTip = function() {
+  return {
+    type : types.ADMIN_REQUESTED_ADD_TIP,
+  };
+};
+
+var addTipResponse = function(success, errors) {
+  return {
+    type : types.ADMIN_REQUESTED_ADD_TIP,
+    success : success,
+    errors : errors
+  };
+};
+
+
 var ManageAlertsActions = {
     disableSaveButton : function(event, disable){
-      console.log('ACTION disableSaveButton');
         return{
           type : types.SAVE_BUTTON_DISABLE,
           saveButtonDisabled : disable
@@ -84,7 +98,6 @@ var ManageAlertsActions = {
       };
     },
     getStaticTips: function(event, utility) {   
-      console.log('action: getStaticTips');
       var locale;    
       if(utility.label == "DAIAD"){
         locale = "en";
@@ -124,7 +137,42 @@ var ManageAlertsActions = {
           type : types.CHECKBOX_CLICKED,
           tips : tips
         }; 
-    }
+    },
+    addTip : function(event, tip) {
+      return function(dispatch, getState) {
+      dispatch(requestAddTip);
+      //show modal after request
+      return alertsAPI.addTip().then(function(response) {
+        dispatch(addTipResponse(response.success, response.errors));
+      }, function(error) {
+        dispatch(addTipResponse(false, error, null));
+      });
+    };
+  },
+  showAddTipForm: function() {
+    return{
+      type : types.ADMIN_ADD_TIP_SHOW,
+      saveButtonDisabled : true
+    };
+  },
+  cancelAddTip: function() {
+    return{
+      type : types.ADMIN_CANCEL_ADD_TIP_SHOW,
+      saveButtonDisabled : false
+    };
+  },
+  setActivePage: function(activePage){
+    return {
+      type: types.STATIC_TIPS_ACTIVE_PAGE,
+      activePage: activePage
+    };
+  },
+  setModes: function(modes){
+    return {
+            type: types.ADMIN_TIPS_ACTIVE_STATUS_CHANGE,
+            modes: modes
+    };
+  }
 };
 
 module.exports = ManageAlertsActions;

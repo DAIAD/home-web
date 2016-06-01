@@ -8,12 +8,12 @@ var UtilityDropDown = require('../UtilityDropDown');
 var ManageAlertsActions = require('../../actions/ManageAlertsActions');
 var { connect } = require('react-redux');
 var { bindActionCreators } = require('redux');
-var { getUtilities } = require('../../actions/ManageAlertsActions');
-var Helpers = require('../../helpers/helpers');
-var EditTable = require('../EditTable');
 var TipsEditTable = require('../TipsEditTable');
 var {FormattedMessage, FormattedTime, FormattedDate} = require('react-intl');
-var Schema = require('../../constants/ModeManagementTableSchema');
+var Schema = require('../../constants/ManageAlertsTableSchema');
+var { getUtilities, addTip, cancelAddTip, showAddTipForm } = require('../../actions/ManageAlertsActions');
+
+var Helpers = require('../../helpers/helpers');
 
 var self;
 var saveDisabled = true;
@@ -22,64 +22,101 @@ var tempRows = [];
 var savedTips = [];
 
 var ManageAlerts = React.createClass({
+  changedModes: [],
   contextTypes: {
     intl: React.PropTypes.object
   },
   getDefaultProps: function() {
-    console.log('getDefaultProps');
     return {  
         defaultDropDownTitle: 'Select Utility', 
         rowsChanged : [],
         saveButtonDisabled : true
     };
   },
-  getInitialState: function(){
-    console.log('initial state');    
+  getInitialState: function(){   
     return {value:"initial state", saveButtonDisabled : false, rowsChanged : []};//TODO, change this to true and resolve state
   },
   componentWillMount : function() {
     this.props.fetchUtilities();    
   },
+  computeModesState: function (data){
+          var modesState = {};
+          var propertyNames = Helpers.pluck(
+                                          Helpers.pickQualiffiedOnEquality(data.fields, 'type', 'property'),
+                                          'name'
+                                  );
+          var self = this;
+          var rowIds = Helpers.pluck(data.rows, 'id');
+
+          for (var i = 0, len = rowIds.length; i < len; i++){
+                  var modeEntry = {};
+                  modeEntry.active = data.rows[i].active;
+                  modeEntry.modes = {};
+                  for (var p = 0, len2 = propertyNames.length; p < len2; p++){
+                          var mode = {
+                                  value: data.rows[i][propertyNames[p]],
+                                  draft: false
+                          };
+                          modeEntry.modes[propertyNames[p]] = mode;
+                  }
+                  modesState[rowIds[i]] = modeEntry;
+          }
+          return modesState;
+  },
+
+  validateNewTipForm: function(title, description, image){
+    var errors = [];   
+//    if (this.props.admin.addUser.selectedUtility === null){
+//      errors.push({code: errorsCodes['ValidationError.Alerts.NO_UTILITY']});
+//    }    
+//    if (!title){
+//      errors.push({code: errorsCodes['ValidationError.Alerts.NO_TITLE']});
+//    }
+//    if (!description){
+//      errors.push({code: errorsCodes['ValidationError.Alerts.NO_DESCRIPTION']});
+//    }   
+    return errors;
+  },  
+  
+  processAddNewTipForm: function(){    
+
+    var inputFieldsFormValues = {
+        title : this.refs.title.getValue(),
+        description : this.description.lastName.getValue(),
+        image : this.refs.image.getValue()
+    };
+    
+    var errors = this.validateNewTipForm(
+          this.refs.title.getValue(),
+          this.refs.description.getValue(),
+          this.refs.image.getValue()
+        );
+
+    if (errors.length === 0){
+      this.props.actions.addTipFillForm(inputFieldsFormValues);
+      var userInfo = {
+          title : this.refs.lastName.getValue(),
+          description : this.refs.email.getValue(),
+          image : this.refs.address.getValue() === '' ? null : this.refs.address.getValue(),
+      };    
+      this.props.actions.addTip(tipInfo);
+    } else {
+      this.props.actions.addTipValidationsErrorsOccurred(errors);
+    }
+  },  
+  
+  
   render: function() {
     self = this;
-    console.log('RENDERING MANAGE ALERTS');
-
+    var _t = this.context.intl.formatMessage;
     if (!this.props.isLoading && this.props.utilities){ 
-
-      var tipDeactivate = function(){
-              var title = _t({ id:'Modal.DeactivateUser.Title'});
-
-              var body = _t({ id:'Modal.DeactivateUser.Body.Part1'}) +
-                      this.props.row.name +
-              _t({ id:'Modal.DeactivateUser.Body.Part2'}) +
-              this.props.row.id +
-              _t({ id:'Modal.DeactivateUser.Body.Part3'});
-
-              var actions = [{
-                      action: self.closeModal,
-                      name: _t({id:'Buttons.Cancel'})
-              },  {
-                      action: self.decativateUser,
-                      name: _t({id:'Buttons.Deactivate'}),
-                      style: 'danger'
-              }
-      ];
-              self.openModal(title, body, actions);
-              self.props.markUserForDeactivation(this.props.row);	
-
-      };
 
 //      for (let i=0; i < data.fields.length; i++){
 //              if (this.props.tips[i].active === true){
 //                      this.props.tips[i].handler = tipDeactivate;
 //              }
 //      }
-                
-                
-      var _t = this.context.intl.formatMessage;            
-      var data = { 
-        filters: Schema.filters,
-        fields: [{
+     var fieldsData = [{
           name: 'index',
           title: 'ID'
         }, {
@@ -101,26 +138,12 @@ var ManageAlerts = React.createClass({
             title: 'Active',
             type: 'boolean',
             icon: 'check-square',
-            onClick: function(){
-              console.log(this);
-              console.log(this.props.row.index);
-              //console.log('deactivated id 1 ' + self.props.tips[1].active);             
-              console.log('this.props.row' +this.props.row);
-              self.props.checkBoxClicked(this.props.row, self.props.tips);              
-            },
-            handler: function() {
-              console.log(this);
-              console.log(this.props.row.index);
-              //console.log('deactivated id 1 ' + self.props.tips[1].active);             
-              console.log('this.props.row' +this.props.row);
-              self.props.checkBoxClicked(this.props.row, self.props.tips);
-            }
         }, {
           name: 'edit',
           type:'action',
           icon: 'pencil',
           handler: function() {
-            console.log(this);
+            console.log(this);           
           }
         }, {
         name: 'cancel',
@@ -129,30 +152,22 @@ var ManageAlerts = React.createClass({
             handler: function() {
               console.log(this);
             }
-        }], 
+        }];
+      
+      var data = { 
+        filters: Schema.filters,
+        fields: fieldsData, 
         rows: populateTips(this),
         pager: {
           index: 0,
-          size: 60,
+          size: 5,
           count:1
         }
       };
 
       var utilityOptions = populateUtilityOptions(this.props.utilities);
 
-      const staticTipsTitle = (
-        < span >
-          < i className = 'fa fa-list-ol fa-fw' > < /i>
-          < span style = {{ paddingLeft: 4 }} > Static Tips < /span>
-              < span style = {{float: 'right', marginTop: - 3, marginLeft: 5 }} >
-                < Bootstrap.Button	bsStyle = "default" className = "btn-circle" >
-                    < Bootstrap.Glyphicon glyph = "plus" />
-                < /Bootstrap.Button>
-          < /span>
-        < /span>
-      );
-
-      const filter = (
+      var filterTitle = (
         < span >
           < i className = 'fa fa-filter fa-fw' > < /i>
           < span style = {{ paddingLeft: 4 }} > Filter < /span>
@@ -160,17 +175,9 @@ var ManageAlerts = React.createClass({
           < /span>
         < /span>
       );
-      return (
-
-        < div className = "container-fluid" style = {{ paddingTop: 10 }} >       
-          < div className = "row" >
+      var filter = (
             < div className = "row" >
-                < Breadcrumb routes = {this.props.routes} />
-            < /div>
-          < /div>
-          < div className = "row" >
-            < div className = "row" >
-              < Bootstrap.Panel header = {filter} >       
+              < Bootstrap.Panel header = {filterTitle} >       
                 <UtilityDropDown  
                   title = {this.props.utility ? this.props.utility.label : this.props.defaultDropDownTitle}                                   
                   options={utilityOptions}
@@ -182,36 +189,143 @@ var ManageAlerts = React.createClass({
                           type='submit'
                           className='btn btn-primary'
                                   style={{ height: 33 }}
-                                  disabled={this.state.saveButtonDisabled}
+                                  disabled={this.props.saveButtonDisabled}
                                   onClick={this.props.saveActive}>
                           <FormattedMessage id='Table.Save' />
                   </button>
                 </div>  
                 < /Bootstrap.Panel>
-            < /div>
-            < div className = "row" >
-              < Bootstrap.Panel header = {staticTipsTitle} >
-                < Bootstrap.ListGroup fill >
-                  < Bootstrap.ListGroupItem >
-                    < TipsEditTable //TODO this was "Table" and had only data={data} // togle with TipsEditTable
-                      data = {data} 
-                      //saveAction={this.showModalSaveChanges}
-                      //setActivePage={this.props.setActivePage}           
-                      saveAction={this.showModalSaveChanges}
-                      activePage={this.props.activePage}
-                      modes={this.props.modes}
-                      setModes={this.props.setModes}                     
-                      
-                      
-                                    > 
-                    < /TipsEditTable>
-                  < /Bootstrap.ListGroupItem>
-                < /Bootstrap.ListGroup>
-              < /Bootstrap.Panel>                 
-            < /div>
-          < /div>      
-        < /div>    
-      );                
+            < /div>      
+      );
+    
+      var staticTipsTitle = (
+        < span >
+          < i className = 'fa fa-list-ol fa-fw' > < /i>
+          < span style = {{ paddingLeft: 4 }} > Static Tips < /span>
+              < span style = {{float: 'right', marginTop: - 3, marginLeft: 5 }} >          
+                < Bootstrap.Button  bsStyle = "default" className = "btn-circle" onClick={this.props.actions.showAddTipForm} >    
+                    < Bootstrap.Glyphicon glyph = "plus" />
+                < /Bootstrap.Button>              
+             
+          < /span>
+        < /span>
+      );
+
+      var table = (
+        < div className = "row" >
+         < Bootstrap.Panel header = {staticTipsTitle} >
+           < Bootstrap.ListGroup fill >
+             < Bootstrap.ListGroupItem >
+               < TipsEditTable //TODO this was "Table" and had only data={data} // togle with TipsEditTable
+                 data = {data} 
+                 //saveAction={this.showModalSaveChanges}
+                 setActivePage={this.props.setActivePage} 
+                 activePage={this.props.activePage}
+
+                 modes={this.props.modes}
+                 setModes={this.props.setModes}  
+                 
+                 saveAction={this.showModalSaveChanges}               
+                   
+                               > 
+               < /TipsEditTable>
+             < /Bootstrap.ListGroupItem>
+           < /Bootstrap.ListGroup>
+         < /Bootstrap.Panel>                 
+       < /div>
+      );
+
+   
+    
+    
+      var tipsBody = (
+        < div className = "container-fluid" style = {{ paddingTop: 10 }} >   
+            {filter}
+            {table}
+        < /div>
+      );
+      
+      var tipForm = (
+        <div>
+          <Bootstrap.Row>
+            <Bootstrap.Col xs={6}>
+              <Bootstrap.Input 
+                type='text' 
+                label={'Title'} />
+            </Bootstrap.Col>
+          </Bootstrap.Row> 
+           <Bootstrap.Row>
+            <Bootstrap.Col xs={6}>
+              <Bootstrap.Input 
+                type='text' 
+                label={'Description'} />
+            </Bootstrap.Col>
+          </Bootstrap.Row>    
+           <Bootstrap.Row>
+            <Bootstrap.Col xs={6}>
+              <Bootstrap.Input 
+                type='text'
+                value={''}
+                label={'Image path'}  />
+            </Bootstrap.Col>
+            <Bootstrap.Col xs={6}>
+              <div className='pull-left' style={{ marginTop : 25}}>
+                  <button id='Browse'
+                    type='submit'
+                    className='btn btn-primary'
+                      style={{ height: 33 }}
+                      disabled={this.state.saveButtonDisabled}
+                      onClick={this.props.saveActive}>
+                    <FormattedMessage id='Browse' />
+                  </button>
+                </div>
+            </Bootstrap.Col>          
+          </Bootstrap.Row>          
+           <Bootstrap.Row>
+            <Bootstrap.Col xs={6}>
+                <div>
+                  <button id='browse'
+                          label = 'Browse'
+                          type = 'browse'
+                          className = 'btn btn-primary'
+                                  style={{ height: 33 }}
+                                  onClick={this.props.saveActive}>
+                          <FormattedMessage id='Add Static Tip' />
+                  </button>
+                  <button id='cancel'
+                          label = 'Cancel'
+                          type = 'cancel'
+                          className = 'btn btn-primary'
+                                  style={{ height: 33, marginLeft : 10 }}
+                                  onClick={this.props.actions.cancelAddTip}>
+                          <FormattedMessage id='Cancel' />
+                  </button>  
+                </div>
+            </Bootstrap.Col>         
+          </Bootstrap.Row>           
+        </div>  
+        );
+      
+      var addTipForm = (
+        < div className = "container-fluid" style = {{ paddingTop: 10 }} >   
+            {filter}
+            {tipForm}
+        < /div>        
+      );       
+      
+      var visiblePart = this.props.show ? addTipForm : tipsBody; //lala
+
+      return (
+      <div className="container-fluid" style={{ paddingTop: 10 }}>
+        <div className="row">
+          <div className="col-md-12">
+                  <Breadcrumb routes={this.props.routes}/>
+          </div>
+        </div>
+        {visiblePart}
+      </div>);
+
+    
     } else {
       return (
         <div>
@@ -303,7 +417,7 @@ var sortBy = function(field, reverse){
 
 function mapStateToProps(state) {  
   console.log('mapStateToProps, state.alerts.saveButtonDisabled ' + state.alerts.saveButtonDisabled);
-
+  console.log('mapStateToProps, state.alerts.show ' + state.alerts.show);
   return {
     utility: state.alerts.utility,
     tips: state.alerts.tips,
@@ -311,27 +425,28 @@ function mapStateToProps(state) {
     isLoading: state.alerts.isLoading,
     rowsChanged: state.alerts.rowsChanged,
     saveButtonDisabled : state.alerts.saveButtonDisabled,
-    activePage: state.alerts.activePage
+    activePage: state.alerts.activePage,
+    show: state.alerts.show,
+    modes: state.alerts.modes
   };
 }
 
-function mapDispatchToProps(dispatch) {
-  console.log('mapDispatchToProps ' );   
+function mapDispatchToProps(dispatch) {  
   return {
+    actions : bindActionCreators(Object.assign({}, {addTip, showAddTipForm, cancelAddTip}) , dispatch),    
     setUtility: function (event, utility){
       dispatch(ManageAlertsActions.setUtility(event, utility));
       dispatch(ManageAlertsActions.getStaticTips(event, utility));
     },
     fetchUtilities : bindActionCreators(ManageAlertsActions.fetchUtilities, dispatch),
+    setActivePage: function(activePage){
+      dispatch(ManageAlertsActions.setActivePage(activePage));
+    }, 
+    setModes: function (modes){
+      dispatch(ManageAlertsActions.setModes(modes));
+    },
     saveChanges: function(rowsChanged){
       //save changes
-    },
-    setActivePage: function(activePage){
-            dispatch(ManageAlertsActions.setActivePage(activePage));
-    },
-    checkBoxClicked: function(tip, tips){
-      console.log('dispatching checkBoxClicked ' + tip.index);
-      dispatch(ManageAlertsActions.checkBoxClicked(event, tip, tips));
     },
     saveActive : function(event){
 

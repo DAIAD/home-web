@@ -1,4 +1,5 @@
 var types = require('../constants/ActionTypes');
+var Helpers = require('../helpers/helpers');
 
 var initialState = {
   isLoading : false,
@@ -6,7 +7,9 @@ var initialState = {
   utilities : null,
   tips : null,
   activePage: 0,
-  saveButtonDisabled : true
+  saveButtonDisabled : true,
+  show: false,
+  modes: null
 };
 
 var alerts = function(state, action) {
@@ -32,7 +35,6 @@ var alerts = function(state, action) {
                 isLoading : true,
                 utility : action.utility
             });
-
         case types.ADMIN_REQUESTED_STATIC_TIPS:
             return Object.assign({}, state, { 
                 isLoading : true,
@@ -55,16 +57,37 @@ var alerts = function(state, action) {
         case types.ADMIN_SAVE_BUTTON_RESPONSE:
             return Object.assign({}, state, { 
                 isLoading : false
-            }); 
-	case types.MESSAGES_SET_ACTIVE_PAGE:
-            return Object.assign({}, state, {
-		activePage : action.activePage
             });          
         case types.CHECKBOX_CLICKED:
           console.log('checkbox clicked');
           return Object.assign({}, state, {
               tips : action.tips
-            });           
+            }); 
+	case types.ADMIN_REQUESTED_ADD_TIP:
+          console.log('reducer requested add tip');
+            return Object.assign({}, state, {
+		isLoading : true
+            }); 
+	case types.ADMIN_ADD_TIP_RESPONSE:
+          console.log('reducer add tip response');
+            return Object.assign({}, state, {
+		isLoading : false
+            });   
+	case types.ADMIN_ADD_TIP_SHOW:
+          console.log('reducer show form');
+            return Object.assign({}, state, {
+              show : true
+            }); 
+	case types.ADMIN_CANCEL_ADD_TIP_SHOW:
+          console.log('reducer cancel add');
+            return Object.assign({}, state, {
+              show : false
+            });   
+	case types.STATIC_TIPS_ACTIVE_PAGE:
+          console.log('reducer active page');
+            return Object.assign({}, state, {
+                    activePage : action.activePage
+            });         
         default:
           return state || initialState;
     }
