@@ -14,6 +14,10 @@ import org.springframework.stereotype.Component;
 import eu.daiad.web.model.error.ErrorCode;
 import eu.daiad.web.repository.application.JpaUserRepository;
 
+/**
+ * During the application initialization verifies that all error codes are
+ * unique.
+ */
 @Component
 public class ErrorCodeInitializer implements CommandLineRunner {
 

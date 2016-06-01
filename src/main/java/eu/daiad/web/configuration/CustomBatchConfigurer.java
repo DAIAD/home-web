@@ -20,6 +20,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.util.StringUtils;
 
+/**
+ * 
+ * Custom {@link BatchConfigurer} for creating components needed by Spring Batch system. 
+ *
+ */
 @Component
 public class CustomBatchConfigurer implements BatchConfigurer {
 
@@ -49,26 +54,41 @@ public class CustomBatchConfigurer implements BatchConfigurer {
 	CustomBatchConfigurer() {
 	}
 
+	/**
+	 * Registers {@link JobRepository} bean.
+	 */
 	@Override
 	public JobRepository getJobRepository() {
 		return this.jobRepository;
 	}
 
+	/**
+	 * Registers {@link PlatformTransactionManager} bean.
+	 */
 	@Override
 	public PlatformTransactionManager getTransactionManager() {
 		return this.transactionManager;
 	}
 
+	/**
+	 * Registers {@link JobLauncher} bean.
+	 */
 	@Override
 	public JobLauncher getJobLauncher() {
 		return this.jobLauncher;
 	}
 
+	/**
+	 * Registers {@link JobExplorer} bean. This bean is actually created in {@link BatchConfig}.
+	 */
 	@Override
 	public JobExplorer getJobExplorer() throws Exception {
 		return this.jobExplorer;
 	}
-
+	
+	/**
+	 * Initializes Spring Batch components.
+	 */
 	@PostConstruct
 	public void initialize() {
 		try {
@@ -99,7 +119,7 @@ public class CustomBatchConfigurer implements BatchConfigurer {
 		return jobLauncher;
 	}
 
-	protected JobRepository createJobRepository() throws Exception {
+	private JobRepository createJobRepository() throws Exception {
 		JobRepositoryFactoryBean factory = new JobRepositoryFactoryBean();
 		factory.setDataSource(this.dataSource);
 		if (this.entityManagerFactory != null) {
@@ -115,7 +135,7 @@ public class CustomBatchConfigurer implements BatchConfigurer {
 		return factory.getObject();
 	}
 
-	protected PlatformTransactionManager createTransactionManager() {
+	private PlatformTransactionManager createTransactionManager() {
 		return this.transactionManager;
 	}
 

@@ -38,6 +38,13 @@ public class UserController extends BaseRestController {
 	@Value("${security.white-list}")
 	private boolean enforceWhiteListCheck;
 
+	/**
+	 * Creates a new user.
+	 * 
+	 * @param request the request.
+	 * @param results the binding results.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/api/v1/user/register", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse register(@RequestBody UserRegistrationRequest request, BindingResult results) {
 		RestResponse response = new RestResponse();
@@ -74,8 +81,14 @@ public class UserController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Changes a user's password.
+	 * 
+	 * @param data the request.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/api/v1/user/password", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse changePassword(@RequestBody PasswordChangeRequest data, BindingResult results) {
+	public RestResponse changePassword(@RequestBody PasswordChangeRequest data) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -93,8 +106,14 @@ public class UserController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Grants a role to a user.
+	 * 
+	 * @param data the request.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/api/v1/user/role/grant", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse addRole(@RequestBody RoleUpdateRequest data, BindingResult results) {
+	public RestResponse addRole(@RequestBody RoleUpdateRequest data) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -110,8 +129,14 @@ public class UserController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Revokes a role to a user.
+	 * 
+	 * @param data the request.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/api/v1/user/role/revoke", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse revokeRole(@RequestBody RoleUpdateRequest data, BindingResult results) {
+	public RestResponse revokeRole(@RequestBody RoleUpdateRequest data) {
 		RestResponse response = new RestResponse();
 
 		try {

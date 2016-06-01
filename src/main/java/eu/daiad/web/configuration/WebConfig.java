@@ -13,15 +13,32 @@ import com.fasterxml.jackson.datatype.joda.JodaModule;
 
 import eu.daiad.web.controller.ErrorController;
 
+/**
+ * 
+ * Provides basic application configuration.
+ *
+ */
 @Configuration
 public class WebConfig extends WebMvcConfigurerAdapter {
 
+	/**
+	 * Override the default implementation {BasicErrorController}.
+	 * 
+	 * @param errorAttributes provides access to error attributes which can be logged or presented to the user.
+	 * @param errorProperties configuration properties for web error handling.
+	 * @return the error controller.
+	 */
 	@Bean
 	public ErrorController errorController(ErrorAttributes errorAttributes, ErrorProperties errorProperties) {
 		// Override default implementation for ErrorController
 		return new ErrorController(errorAttributes, errorProperties);
 	}
 
+	/**
+	 * Overrides the default {@link Jackson2ObjectMapperBuilder}.
+	 * 
+	 * @return the object mapper builder.
+	 */
 	@Bean
 	public Jackson2ObjectMapperBuilder objectMapperBuilder() {
 		Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
@@ -32,6 +49,9 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 		return builder;
 	}
 
+	/**
+	 * Configure simple automated controllers. 
+	 */
 	@Override
 	public void addViewControllers(ViewControllerRegistry registry) {
 		// Add error pages

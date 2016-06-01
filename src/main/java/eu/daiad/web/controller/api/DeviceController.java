@@ -35,6 +35,11 @@ import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 
+/**
+ * 
+ * Provides actions for configuring Amphiro B1 devices and smart water meters.
+ *
+ */
 @RestController("RestDeviceController")
 public class DeviceController extends BaseRestController {
 
@@ -46,6 +51,12 @@ public class DeviceController extends BaseRestController {
 	@Autowired
 	private IDeviceRepository deviceRepository;
 
+	/**
+	 * Registers an Amphiro B1 devices.
+	 * 
+	 * @param data the registration data.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/api/v1/device/register", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse registerAmphiro(@RequestBody DeviceRegistrationRequest data) {
 		RestResponse response = new RestResponse();
@@ -101,6 +112,12 @@ public class DeviceController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Registers a smart water meter to a user.
+	 * 
+	 * @param data the smart water meter registration data.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/api/v1/meter/register", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse registerMeter(@RequestBody DeviceRegistrationRequest data) {
 		RestResponse response = new RestResponse();
@@ -153,6 +170,13 @@ public class DeviceController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Loads all registered devices including Amphiro B1 devices and smart water meters. Optionally
+	 * the devices are filtered.
+	 * 
+	 * @param query the query to filter the devices.
+	 * @return the devices.
+	 */
 	@RequestMapping(value = "/api/v1/device/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse list(@RequestBody DeviceRegistrationQuery query) {
 		RestResponse response = new RestResponse();
@@ -175,6 +199,12 @@ public class DeviceController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Shares data of an Amphiro B1 device between two user accounts.
+	 * 
+	 * @param request the share request.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/api/v1/device/share", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse share(@RequestBody ShareDeviceRequest request) {
 		RestResponse response = new RestResponse();
@@ -192,6 +222,12 @@ public class DeviceController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Loads all Amphiro B1 configurations.
+	 * 
+	 * @param request the configuration request.
+	 * @return the Amphiro B1 configurations.
+	 */
 	@RequestMapping(value = "/api/v1/device/config", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse configuration(@RequestBody DeviceConfigurationRequest request) {
 		RestResponse response = new RestResponse();
@@ -227,6 +263,13 @@ public class DeviceController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Notifies the server that a set of configuration parameters has been applied by the
+	 * mobile client to an Amphiro device.
+	 *  
+	 * @param request the notification request.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/api/v1/device/notify", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse notify(@RequestBody NotifyConfigurationRequest request) {
 		RestResponse response = new RestResponse();
@@ -245,6 +288,12 @@ public class DeviceController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Deletes a device registration from a user's profile.
+	 * 
+	 * @param request the registration delete request.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/api/v1/device/reset", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse remove(@RequestBody DeviceResetRequest request) {
 		RestResponse response = new RestResponse();

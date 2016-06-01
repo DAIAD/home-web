@@ -62,6 +62,13 @@ public class SearchController extends BaseController {
 	@Autowired
 	private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
 
+	/**
+	 * Returns the status of one or more smart water meters.
+	 * 
+	 * @param user the currently authenticated user.
+	 * @param query the query.
+	 * @return the meter status.
+	 */
 	@RequestMapping(value = "/action/meter/status", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured({ "ROLE_USER", "ROLE_ADMIN" })
 	public RestResponse getMeterStatus(@AuthenticationPrincipal AuthenticatedUser user,
@@ -123,9 +130,16 @@ public class SearchController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Loads smart water meter readings on a given query.
+	 * 
+	 * @param user the currently authenticated user.
+	 * @param query the query.
+	 * @return the meter readings.
+	 */
 	@RequestMapping(value = "/action/meter/history", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured({ "ROLE_USER", "ROLE_ADMIN" })
-	public RestResponse getMeterMeasurements(@AuthenticationPrincipal AuthenticatedUser user,
+	public RestResponse searchWaterMeterMeasurements(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody WaterMeterMeasurementQuery query) {
 		RestResponse response = new RestResponse();
 
@@ -174,9 +188,16 @@ public class SearchController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Loads Amphiro B1 session measurements based on a given query. Amphiro B1 sessions are indexed by id.
+	 * 
+	 * @param user the currently authenticated user.
+	 * @param query the query.
+	 * @return the measurements.
+	 */
 	@RequestMapping(value = "/action/device/index/measurement/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public RestResponse getAmphiroMeasurements1(@AuthenticationPrincipal AuthenticatedUser user,
+	public RestResponse searchAmphiroMeasurementsByIndex(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody AmphiroMeasurementIndexIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
@@ -198,9 +219,16 @@ public class SearchController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Loads Amphiro B1 session measurements based on a given query. Amphiro B1 sessions are indexed by time.
+	 * 
+	 * @param user the currently authenticated user.
+	 * @param query the query.
+	 * @return the measurements.
+	 */
 	@RequestMapping(value = "/action/device/time/measurement/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public RestResponse getAmphiroMeasurements2(@AuthenticationPrincipal AuthenticatedUser user,
+	public RestResponse searchAmphiroMeasurementsByTime(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody AmphiroMeasurementTimeIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
@@ -222,9 +250,16 @@ public class SearchController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Loads Amphiro B1 sessions based on a given query. Amphiro B1 sessions are indexed by id.
+	 * 
+	 * @param user the currently authenticated user.
+	 * @param query the query.
+	 * @return the measurements.
+	 */
 	@RequestMapping(value = "/action/device/index/session/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured({ "ROLE_USER", "ROLE_ADMIN" })
-	public RestResponse getAmphiroSessions1(@AuthenticationPrincipal AuthenticatedUser user,
+	public RestResponse searchAmphiroSessionsWithIndexOrdering(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody AmphiroSessionCollectionIndexIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
@@ -272,9 +307,16 @@ public class SearchController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Loads Amphiro B1 sessions based on a given query. Amphiro B1 sessions are indexed by time.
+	 * 
+	 * @param user the currently authenticated user.
+	 * @param query the query.
+	 * @return the measurements.
+	 */
 	@RequestMapping(value = "/action/device/time/session/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured({ "ROLE_USER", "ROLE_ADMIN" })
-	public RestResponse getAmphiroSessions2(@AuthenticationPrincipal AuthenticatedUser user,
+	public RestResponse searchAmphiroSessionsWithTimeOrdering(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody AmphiroSessionCollectionTimeIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
@@ -322,9 +364,16 @@ public class SearchController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Loads an Amphiro B1 session based on a given query. Amphiro B1 session is indexed by id.
+	 * 
+	 * @param user the currently authenticated user.
+	 * @param query the query
+	 * @return the sessions
+	 */
 	@RequestMapping(value = "/action/device/index/session", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public RestResponse getAmphiroSession1(@AuthenticationPrincipal AuthenticatedUser user,
+	public RestResponse getAmphiroSessionByIndex(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody AmphiroSessionIndexIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
@@ -343,9 +392,16 @@ public class SearchController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Loads an Amphiro B1 session based on a given query. Amphiro B1 session is indexed by time.
+	 * 
+	 * @param user the currently authenticated user.
+	 * @param query the query
+	 * @return the sessions
+	 */
 	@RequestMapping(value = "/action/device/time/session", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public RestResponse getAmphiroSession2(@AuthenticationPrincipal AuthenticatedUser user,
+	public RestResponse getAmphiroSessionByTime(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody AmphiroSessionTimeIntervalQuery query) {
 		RestResponse response = new RestResponse();
 

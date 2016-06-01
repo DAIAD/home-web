@@ -20,6 +20,10 @@ import org.springframework.stereotype.Component;
 import eu.daiad.web.logging.ErrorCodeFilter;
 import eu.daiad.web.logging.MappedDiagnosticContextKeys;
 
+/**
+ * Configures application logging system.
+ *
+ */
 @Component
 public class LoggingConfigurer implements InitializingBean {
 
@@ -38,6 +42,9 @@ public class LoggingConfigurer implements InitializingBean {
 	@Autowired
 	ApplicationContext applicationContext;
 
+	/**
+	 * Adds a {@link JdbcAppender} to the logging system configuration.
+	 */
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		ConnectionSource connectionSource = applicationContext.getBean(ConnectionSource.class);

@@ -10,6 +10,7 @@ import org.springframework.boot.autoconfigure.web.ErrorProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -25,6 +26,9 @@ import eu.daiad.web.security.RESTAuthenticationFailureHandler;
 import eu.daiad.web.security.RESTAuthenticationSuccessHandler;
 import eu.daiad.web.security.RESTLogoutSuccessHandler;
 
+/**
+ * Configures application security.
+ */
 @Configuration
 @Order(SecurityProperties.ACCESS_OVERRIDE_ORDER)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
@@ -49,18 +53,29 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Autowired
 	private CustomAccessDeniedHandler accessDeniedHandler;
 
+	/**
+	 * Adds authentication based upon the custom {@link AuthenticationProvider}
+	 * 
+	 * @param auth
+	 *            the authentication manager builder.
+	 */
 	@Override
 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 		auth.authenticationProvider(authenticationProvider);
 	}
 
+	/**
+	 * Configures the {@link HttpSecurity}.
+	 * 
+	 * @param http
+	 *            the configuration for modifying web based security.
+	 */
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		// Allow anonymous access to selected requests
 		http.authorizeRequests()
 						.antMatchers("/", "/login", "/logout", "/error/**", "/home/**", "/utility/**", "/assets/**",
-										"/api/**").permitAll().antMatchers("/docs/**")
-						.access("hasRole('ROLE_ADMIN')");
+										"/api/**").permitAll().antMatchers("/docs/**").access("hasRole('ROLE_ADMIN')");
 
 		// Disable CSRF for API requests
 		http.csrf().requireCsrfProtectionMatcher(new RequestMatcher() {

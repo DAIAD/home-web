@@ -20,6 +20,12 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+/**
+ * 
+ * Provides configuration for the DAIAD database by declaring a set of beans. Moreover, it
+ * configures the database migration process.
+ *
+ */
 @Configuration
 @EnableJpaRepositories(basePackages = { "eu.daiad.web.repository.application" }, entityManagerFactoryRef = "applicationEntityManagerFactory", transactionManagerRef = "applicationTransactionManager")
 @EnableTransactionManagement
@@ -63,6 +69,11 @@ public class ApplicationPersistenceConfig {
 		return new JpaTransactionManager(applicationEntityManagerFactory);
 	}
 
+	/**
+	 * Configures the data migration process.
+	 * 
+	 * @return the object that implements the database migration process 
+	 */
 	@Bean(name = "flyway", initMethod = "migrate")
 	Flyway flyway() {
 		Flyway flyway = new Flyway();

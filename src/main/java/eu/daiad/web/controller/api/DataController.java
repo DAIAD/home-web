@@ -30,6 +30,11 @@ import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 import eu.daiad.web.service.IDataService;
 
+/**
+ * 
+ * Provides actions for storing Amphiro B1 data to the server and querying stored data.
+ *
+ */
 @RestController("RestDataController")
 public class DataController extends BaseRestController {
 
@@ -53,6 +58,13 @@ public class DataController extends BaseRestController {
 	@Autowired
 	private IDataService dataService;
 
+	/**
+	 * General purpose method for querying data using a set of filtering criteria. Depending on the given
+	 * criteria, more than one data series may be returned.
+	 * 
+	 * @param data the query.
+	 * @return the data series.
+	 */
 	@RequestMapping(value = "/api/v1/data/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse query(@RequestBody DataQueryRequest data) {
 		RestResponse response = new RestResponse();
@@ -79,6 +91,12 @@ public class DataController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Stores Amphiro B1 session and measurement data. Sessions are index by time.
+	 * 
+	 * @param data the data to store.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/api/v1/data/store", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse storeUsingAmphiroTimeOrdering(@RequestBody DeviceMeasurementCollection data) {
 		RestResponse response = new RestResponse();
@@ -147,6 +165,12 @@ public class DataController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Stores Amphiro B1 session and measurement data. Sessions are index by id.
+	 * 
+	 * @param data the data to store
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/api/v2/data/store", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse storeUsingAmphiroIndexOredering(@RequestBody DeviceMeasurementCollection data) {
 		RestResponse response = new RestResponse();

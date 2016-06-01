@@ -27,6 +27,10 @@ import org.springframework.web.servlet.ModelAndView;
 import eu.daiad.web.model.error.Error;
 import eu.daiad.web.model.error.SharedErrorCode;
 
+/**
+ * Provides actions for returning errors to the clients.
+ *
+ */
 @Controller
 @RequestMapping("${server.error.path:${error.path:/error}}")
 public class ErrorController extends BasicErrorController {
@@ -59,6 +63,9 @@ public class ErrorController extends BasicErrorController {
 		}
 	}
 
+	/**
+	 * Generates error pages for web clients.
+	 */
 	@Override
 	@RequestMapping(produces = "text/html")
 	public ModelAndView errorHtml(HttpServletRequest request, HttpServletResponse response) {
@@ -81,6 +88,9 @@ public class ErrorController extends BasicErrorController {
 		}
 	}
 
+	/**
+	 * Generates errors for clients using the HTTP API.
+	 */
 	@Override
 	@RequestMapping
 	@ResponseBody

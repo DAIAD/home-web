@@ -3,12 +3,34 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>1.4.0.M3</version>
+		<relativePath />
+		<!-- no parent resolution -->
+	</parent>
+
 	<groupId>eu.daiad</groupId>
 	<artifactId>web-application</artifactId>
 	<version>0.0.2-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>DAIAD Project Web Application</name>
+
+	<description>DAIAD goal is to address the challenge of improving the management of water resources through real-time knowledge of water consumption, in order to improve societal awareness, induce sustainable changes in consumer behaviour, and explore new water demand management strategies. This project contains the server side implementation of the DAIAD system.</description>
+
+	<url>http://daiad.eu/</url>
+	<inceptionYear>2014</inceptionYear>
+	<organization>
+		<name>IMIS, Institute for the Management of Information Systems</name>
+		<url>http://www.ipsyp.gr/en</url>
+	</organization>
+	<scm>
+		<url>https://github.com/DAIAD/home-web</url>
+		<connection>scm:git:git@github.com:DAIAD/home-web.git</connection>
+		<developerConnection>scm:git:git@github.com:DAIAD/home-web.git</developerConnection>
+	</scm>
 
 	<properties>
 		<java-version>1.7</java-version>
@@ -20,6 +42,8 @@
 		<hibernate-spatial.version>5.1.0.Final</hibernate-spatial.version>
 		<apache.poi.version>3.14</apache.poi.version>
 		<org.jadira.usertype.version>5.0.0.GA</org.jadira.usertype.version>
+
+		<dependency.locations.enabled>false</dependency.locations.enabled>
 	</properties>
 
 	<repositories>
@@ -49,12 +73,6 @@
 			</snapshots>
 		</pluginRepository>
 	</pluginRepositories>
-
-	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.4.0.M3</version>
-	</parent>
 
 	<dependencies>
 		<dependency>
@@ -223,6 +241,7 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+
 		<dependency>
 			<groupId>org.apache.hbase</groupId>
 			<artifactId>hbase-server</artifactId>
@@ -258,6 +277,7 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+
 		<dependency>
 			<groupId>org.apache.hbase</groupId>
 			<artifactId>hbase-client</artifactId>
@@ -352,6 +372,13 @@
 			<version>4.0.1</version>
 		</dependency>
 
+        <!--
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-tomcat</artifactId>
+			<scope>provided</scope>
+		</dependency>
+        -->
 	</dependencies>
 
 	<build>
@@ -369,6 +396,7 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+
 			<plugin>
 				<groupId>com.github.eirslett</groupId>
 				<artifactId>frontend-maven-plugin</artifactId>
@@ -404,7 +432,45 @@
 					</execution>
 				</executions>
 			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-site-plugin</artifactId>
+				<version>3.5</version>
+			</plugin>
 		</plugins>
 
 	</build>
+
+	<reporting>
+		<outputDirectory>${project.build.directory}/site</outputDirectory>
+
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-project-info-reports-plugin</artifactId>
+				<version>2.9</version>
+				<reportSets>
+					<reportSet>
+						<reports>
+						</reports>
+					</reportSet>
+				</reportSets>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.10.3</version>
+				<reportSets>
+					<reportSet>
+						<reports>
+							<report>javadoc</report>
+						</reports>
+					</reportSet>
+				</reportSets>
+			</plugin>
+		</plugins>
+	</reporting>
+
 </project>

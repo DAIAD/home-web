@@ -45,8 +45,6 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
 
 	private static final Log logger = LogFactory.getLog(WaterMeterDataLoaderService.class);
 
-	private boolean cancelled = false;
-
 	@Autowired
 	SecureFileTransferConnector sftConnector;
 
@@ -110,9 +108,6 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
 					// Filter file names based on a regular expression
 					if ((allowedFilenames != null) && (!allowedFilenames.matcher(f.getFilename()).matches())) {
 						continue;
-					}
-					if (this.cancelled) {
-						return;
 					}
 
 					// Create upload record
@@ -265,14 +260,4 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
 		return status;
 	}
 
-	@Override
-	public void cancel() {
-		this.cancelled = true;
-
-	}
-
-	@Override
-	public boolean isCancelled() {
-		return cancelled;
-	}
 }

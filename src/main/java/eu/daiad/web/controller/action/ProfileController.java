@@ -25,6 +25,10 @@ import eu.daiad.web.model.profile.UpdateProfileRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IProfileRepository;
 
+/**
+ * Provides methods for managing user profile.
+ *
+ */
 @RestController
 public class ProfileController extends BaseController {
 
@@ -105,10 +109,18 @@ public class ProfileController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Deactivates a user.
+	 * 
+	 * @param user the authenticated user.
+	 * @param userDeactId the user to deactivate
+	 * @return the controller's response.
+	 * @throws JsonProcessingException
+	 */
 	@RequestMapping(value = "/action/profile/deactivate", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
 	public RestResponse deactivateProfile(@AuthenticationPrincipal AuthenticatedUser user,
-					@RequestBody ProfileDeactivateRequest userDeactId) throws JsonProcessingException {
+					@RequestBody ProfileDeactivateRequest userDeactId) {
 		RestResponse response = new RestResponse();
 
 		try {

@@ -19,6 +19,11 @@ import eu.daiad.web.model.security.Credentials;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.application.IProfileRepository;
 
+/**
+ * 
+ * Provides actions for loading and updating user profile.
+ *
+ */
 @RestController("RestProfileController")
 public class ProfileController extends BaseRestController {
 
@@ -27,6 +32,12 @@ public class ProfileController extends BaseRestController {
 	@Autowired
 	private IProfileRepository profileRepository;
 
+	/**
+	 * Loads user profile data.
+	 * 
+	 * @param data user credentials.
+	 * @return the user profile.
+	 */
 	@RequestMapping(value = "/api/v1/profile/load", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse loadProfile(@RequestBody Credentials data) {
 		RestResponse response = new RestResponse();
@@ -45,6 +56,12 @@ public class ProfileController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Saves client application specific information e.g. the web application layout to the server.
+	 * 
+	 * @param request the profile data to store
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/api/v1/profile/save", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse saveProfile(@RequestBody UpdateProfileRequest request) {
 		RestResponse response = new RestResponse();
@@ -63,6 +80,13 @@ public class ProfileController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Updates user profile that a specific application configuration version has been applied to 
+	 * the mobile client.
+	 * 
+	 * @param request the notification request.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/api/v1/profile/notify", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse notifyProfile(@RequestBody NotifyProfileRequest request) {
 		RestResponse response = new RestResponse();

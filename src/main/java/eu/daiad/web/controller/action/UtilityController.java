@@ -13,6 +13,10 @@ import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.utility.UtilityInfoResponse;
 import eu.daiad.web.repository.application.IUtilityRepository;
 
+/**
+ * Provides actions for querying utility data
+ *
+ */
 @RestController
 public class UtilityController extends BaseController {
 
@@ -21,6 +25,11 @@ public class UtilityController extends BaseController {
 	@Autowired
 	private IUtilityRepository repository;
 
+	/**
+	 * Loads all utilities.
+	 * 
+	 * @return the utilities.
+	 */
 	@RequestMapping(value = "/action/utility/fetch/all", method = RequestMethod.GET, produces = "application/json")
 	@Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
 	public RestResponse getUtilityInfo() {

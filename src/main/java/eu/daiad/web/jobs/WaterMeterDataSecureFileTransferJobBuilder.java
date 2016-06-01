@@ -73,7 +73,7 @@ public class WaterMeterDataSecureFileTransferJobBuilder implements IJobBuilder {
 
 			@Override
 			public void stop() {
-				loader.cancel();
+
 			}
 		}).build();
 	}

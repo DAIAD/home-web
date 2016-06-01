@@ -43,6 +43,11 @@ import eu.daiad.web.repository.application.IAmphiroTimeOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 
+/**
+ * 
+ * Provides actions for searching Amphiro B1 sessions and smart water meter readings.
+ *
+ */
 @RestController("RestSearchController")
 public class SearchController extends BaseRestController {
 
@@ -60,6 +65,12 @@ public class SearchController extends BaseRestController {
 	@Autowired
 	private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
 
+	/**
+	 * Returns the status of one or more smart water meters.
+	 * 
+	 * @param query the query.
+	 * @return the meter status.
+	 */
 	@RequestMapping(value = "/api/v1/meter/status", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse getWaterMeterStatus(@RequestBody WaterMeterStatusQuery query) {
 		RestResponse response = new RestResponse();
@@ -94,6 +105,12 @@ public class SearchController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Loads smart water meter readings on a given query.
+	 * 
+	 * @param query the query.
+	 * @return the meter readings.
+	 */
 	@RequestMapping(value = "/api/v1/meter/history", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse searchWaterMeterMeasurements(@RequestBody WaterMeterMeasurementQuery query) {
 		RestResponse response = new RestResponse();
@@ -120,6 +137,12 @@ public class SearchController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Loads Amphiro B1 session measurements based on a given query. Amphiro B1 sessions are indexed by time.
+	 * 
+	 * @param query the query.
+	 * @return the measurements.
+	 */
 	@RequestMapping(value = "/api/v1/device/measurement/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse searchAmphiroMeasurementsByTime(@RequestBody AmphiroMeasurementTimeIntervalQuery query) {
 		RestResponse response = new RestResponse();
@@ -148,6 +171,12 @@ public class SearchController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Loads Amphiro B1 session measurements based on a given query. Amphiro B1 sessions are indexed by id.
+	 * 
+	 * @param query the query.
+	 * @return the measurements.
+	 */
 	@RequestMapping(value = "/api/v2/device/measurement/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse searchAmphiroMeasurementsByIndex(@RequestBody AmphiroMeasurementIndexIntervalQuery query) {
 		RestResponse response = new RestResponse();
@@ -176,6 +205,12 @@ public class SearchController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Loads Amphiro B1 sessions based on a given query. Amphiro B1 sessions are indexed by time.
+	 * 
+	 * @param query the query.
+	 * @return the measurements.
+	 */
 	@RequestMapping(value = "/api/v1/device/session/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse searchAmphiroSessionsWithTimeOrdering(
 					@RequestBody AmphiroSessionCollectionTimeIntervalQuery query) {
@@ -205,6 +240,12 @@ public class SearchController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Loads Amphiro B1 sessions based on a given query. Amphiro B1 sessions are indexed by id.
+	 * 
+	 * @param query the query.
+	 * @return the measurements.
+	 */
 	@RequestMapping(value = "/api/v2/device/session/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse searchAmphiroSessionsWithIndexOrdering(
 					@RequestBody AmphiroSessionCollectionIndexIntervalQuery query) {
@@ -234,6 +275,12 @@ public class SearchController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Loads an Amphiro B1 session based on a given query. Amphiro B1 session is indexed by time.
+	 * 
+	 * @param query the query
+	 * @return the sessions
+	 */
 	@RequestMapping(value = "/api/v1/device/session", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse getAmphiroSessionByTime(@RequestBody AmphiroSessionTimeIntervalQuery query) {
 		RestResponse response = new RestResponse();
@@ -261,6 +308,12 @@ public class SearchController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Loads an Amphiro B1 session based on a given query. Amphiro B1 session is indexed by id.
+	 * 
+	 * @param query the query
+	 * @return the sessions
+	 */
 	@RequestMapping(value = "/api/v2/device/session", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse getAmphiroSessionByIndex(@RequestBody AmphiroSessionIndexIntervalQuery query) {
 		RestResponse response = new RestResponse();

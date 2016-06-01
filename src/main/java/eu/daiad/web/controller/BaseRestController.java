@@ -13,11 +13,27 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.Credentials;
 import eu.daiad.web.model.security.EnumRole;
 
+/**
+ * Base controller class providing helper methods for generating application messages and errors.
+ *
+ */
 public class BaseRestController extends BaseController {
 
+	/**
+	 * A class that can process a specific {@link org.springframework.security.core.Authentication} implementation.
+	 */
 	@Autowired
 	private AuthenticationProvider authenticationProvider;
 
+	/**
+	 * Authenticates a user and optionally, if authentication is successful, sets the 
+	 * {@link org.springframework.security.core.Authentication} in the security context.
+	 * 
+	 * @param credentials the user credentials.
+	 * @param roles the requested roles.
+	 * @return the authenticated user.
+	 * @throws ApplicationException if authentication fails.
+	 */
 	protected AuthenticatedUser authenticate(Credentials credentials, EnumRole... roles) throws ApplicationException {
 		try {
 			if (credentials == null) {

@@ -18,6 +18,11 @@ import eu.daiad.web.model.message.MultiTypeMessageResponse;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.application.IMessageRepository;
 
+/**
+ * 
+ * Provides actions for loading messages and saving acknowledgments.
+ *
+ */
 @RestController("RestRecommendationController")
 public class MessageController extends BaseRestController {
 
@@ -26,6 +31,12 @@ public class MessageController extends BaseRestController {
 	@Autowired
 	private IMessageRepository messageRepository;
 
+	/**
+	 * Loads messages i.e. alerts, recommendations and tips. Optionally filters messages.
+	 * 
+	 * @param request the request.
+	 * @return the messages.
+	 */
 	@RequestMapping(value = "/api/v1/message", method = RequestMethod.POST, produces = "application/json")
 	public RestResponse getMessages(@RequestBody MessageRequest request) {
 		try {
@@ -70,6 +81,12 @@ public class MessageController extends BaseRestController {
 
 	}
 
+	/**
+	 * Saves one or more message acknowledgments.
+	 * 
+	 * @param request the messages to acknowledge.
+	 * @return the controller response.
+	 */
 	@RequestMapping(value = "/api/v1/message/acknowledge", method = RequestMethod.POST, produces = "application/json")
 	public RestResponse acknowledgeMessage(@RequestBody MessageAcknowledgementRequest request) {
 		RestResponse response = new RestResponse();

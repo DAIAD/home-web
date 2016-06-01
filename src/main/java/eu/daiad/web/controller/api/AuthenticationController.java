@@ -16,6 +16,9 @@ import eu.daiad.web.model.security.AuthenticationResponse;
 import eu.daiad.web.model.security.Credentials;
 import eu.daiad.web.repository.application.IProfileRepository;
 
+/**
+ * Provides actions for authenticating a user.
+ */
 @RestController("RestAuthenticationController")
 public class AuthenticationController extends BaseRestController {
 
@@ -24,8 +27,14 @@ public class AuthenticationController extends BaseRestController {
 	@Autowired
 	private IProfileRepository profileRepository;
 
+	/**
+	 * Authenticates a user.
+	 * 
+	 * @param credentials the user credentials
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/api/v1/auth/login", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse login(@RequestBody Credentials credentials) throws Exception {
+	public RestResponse login(@RequestBody Credentials credentials) {
 		RestResponse response = new RestResponse();
 
 		try {
