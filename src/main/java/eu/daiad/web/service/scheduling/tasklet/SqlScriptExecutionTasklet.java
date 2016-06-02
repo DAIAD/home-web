@@ -13,20 +13,14 @@ import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.scope.context.StepContext;
 import org.springframework.batch.core.step.tasklet.StoppableTasklet;
 import org.springframework.batch.repeat.RepeatStatus;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.StreamUtils;
 import org.thymeleaf.util.StringUtils;
 
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
 
-public class SqlScriptExecutionTasklet implements StoppableTasklet, ApplicationContextAware {
-
-	private ApplicationContext applicationContext;
+public class SqlScriptExecutionTasklet extends BaseTasklet implements StoppableTasklet {
 
 	private JdbcTemplate jdbcTemplate;
 
@@ -60,11 +54,6 @@ public class SqlScriptExecutionTasklet implements StoppableTasklet, ApplicationC
 		this.stopped.set(true);
 	}
 
-	@Override
-	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-		this.applicationContext = applicationContext;
-	}
-
 	public void setDataSource(DataSource dataSource) {
 		this.jdbcTemplate = new JdbcTemplate(dataSource);
 	}
@@ -79,7 +68,7 @@ public class SqlScriptExecutionTasklet implements StoppableTasklet, ApplicationC
 			if (resource.exists()) {
 				this.locations.add(resource);
 			} else {
-				throw new ApplicationException(SharedErrorCode.RESOURCE_DOES_NOT_EXIST).set("resource", location);
+				throw createApplicationException(SharedErrorCode.RESOURCE_DOES_NOT_EXIST).set("resource", location);
 			}
 		}
 	}

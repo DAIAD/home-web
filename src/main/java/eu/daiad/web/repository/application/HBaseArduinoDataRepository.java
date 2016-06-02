@@ -25,9 +25,10 @@ import eu.daiad.web.model.arduino.ArduinoIntervalQueryResult;
 import eu.daiad.web.model.arduino.ArduinoMeasurement;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.repository.BaseRepository;
 
 @Repository()
-public class HBaseArduinoDataRepository implements IArduinoDataRepository {
+public class HBaseArduinoDataRepository extends BaseRepository implements IArduinoDataRepository {
 
 	private final String ERROR_RELEASE_RESOURCES = "Failed to release resources";
 
@@ -102,7 +103,7 @@ public class HBaseArduinoDataRepository implements IArduinoDataRepository {
 				table.put(p);
 			}
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (table != null) {
@@ -234,7 +235,7 @@ public class HBaseArduinoDataRepository implements IArduinoDataRepository {
 
 			return data;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (scanner != null) {

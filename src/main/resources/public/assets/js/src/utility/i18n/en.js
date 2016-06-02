@@ -23,16 +23,16 @@
 		}
 	},
 	"Section": {
-            "Dashboard": "Dashboard",
+      "Dashboard": "Dashboard",
 	    "Analytics":"Analytics",
-	    "Forecasting": "Forecasting",
+	    "Forecasting": "Forecasting - Learning Mode",
 	    "Demographics": "Users & Groups",
 	    "ModeManagement": "Mode Management",
 	    "Search": "Search",
 	    "Messages": "Messages",
 	    "Settings": "Settings",
       "Reports": {
-        "Group": "Reports",
+        "Group": "Trial Management",
         "Overview": "Overview",
         "Charts": "Charts"
       },
@@ -255,5 +255,4 @@
     "FavouriteSuccess.FAVOURITE_ADDED" : "Favourite was succesfully added.",
     "FavouriteSuccess.FAVOURITE_UPDATED" : "Favourite was succesfully updated."
   }
-
 }

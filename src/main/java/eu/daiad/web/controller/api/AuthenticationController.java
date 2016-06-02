@@ -11,12 +11,14 @@ import org.springframework.web.bind.annotation.RestController;
 import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.security.AuthenticationResponse;
 import eu.daiad.web.model.security.Credentials;
 import eu.daiad.web.repository.application.IProfileRepository;
 
+/**
+ * Provides actions for authenticating a user.
+ */
 @RestController("RestAuthenticationController")
 public class AuthenticationController extends BaseRestController {
 
@@ -25,8 +27,14 @@ public class AuthenticationController extends BaseRestController {
 	@Autowired
 	private IProfileRepository profileRepository;
 
+	/**
+	 * Authenticates a user.
+	 * 
+	 * @param credentials the user credentials
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/api/v1/auth/login", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse login(@RequestBody Credentials credentials) throws Exception {
+	public RestResponse login(@RequestBody Credentials credentials) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -35,10 +43,8 @@ public class AuthenticationController extends BaseRestController {
 			Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE);
 
 			return new AuthenticationResponse(this.getRuntime(), profile);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import eu.daiad.web.logging.MappedDiagnosticContextKeys;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.profile.EnumMobileMode;
 import eu.daiad.web.model.profile.EnumUtilityMode;
@@ -43,7 +44,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 			String password = authentication.getCredentials().toString();
 
 			// Set authentication name
-			MDC.put("session.username", username);
+			MDC.put(MappedDiagnosticContextKeys.USERNAME, username);
 
 			// Check credentials
 			BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();

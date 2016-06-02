@@ -51,6 +51,9 @@ import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IFileDataLoaderService;
 
+/**
+ * Provides helper methods for developers.
+ */
 @Controller
 public class DebugController extends BaseController {
 
@@ -104,6 +107,12 @@ public class DebugController extends BaseController {
 		return Base64.encodeBase64URLSafeString(keyGen.generateKey().getEncoded());
 	}
 
+	/**
+	 * Registers all users found in the white list that have not yet been assigned to an account.
+	 * 
+	 * @param request a default password for all new accounts.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/action/debug/user/create", method = RequestMethod.POST, produces = "application/json")
 	@ResponseBody
 	@Secured({ "ROLE_ADMIN" })
@@ -143,6 +152,13 @@ public class DebugController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Registers a new Amphiro B1 device to all registered users that have no device registrations 
+	 * in their profile.
+	 * 
+	 * @param user the currently authenticated user.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/action/debug/amphiro/create", method = RequestMethod.GET, produces = "application/json")
 	@ResponseBody
 	@Secured({ "ROLE_ADMIN" })
@@ -178,6 +194,14 @@ public class DebugController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Uploads a data file to the server and perform an action on it e.g. import test data
+	 * for Amphiro B1 devices.
+	 * 
+	 * @param user the currently authenticated user. 
+	 * @param request the upload file and action.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/action/debug/amphiro/data/generate", method = RequestMethod.POST, produces = "application/json")
 	@ResponseBody
 	@Secured({ "ROLE_ADMIN" })

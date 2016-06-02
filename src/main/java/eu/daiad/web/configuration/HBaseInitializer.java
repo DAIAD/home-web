@@ -13,6 +13,10 @@ import org.springframework.stereotype.Component;
 
 import eu.daiad.web.hbase.HBaseConnectionManager;
 
+/**
+ * Initializes HBASE tables.
+ *
+ */
 @Component
 public class HBaseInitializer implements CommandLineRunner {
 
@@ -30,6 +34,10 @@ public class HBaseInitializer implements CommandLineRunner {
 
 	private final String columnFamily = "cf";
 
+	/**
+	 * On application start and after the Spring Application context is configured, this method creates
+	 * all missing HBASE table required by the application.
+	 */
 	@Override
 	public void run(String... args) throws Exception {
 		Admin admin = null;

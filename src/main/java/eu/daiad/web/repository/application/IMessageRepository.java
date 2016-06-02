@@ -14,4 +14,7 @@ public interface IMessageRepository {
 	public abstract void setMessageAcknowledgement(List<MessageAcknowledgement> messages);
 
 	public List<Message> getAdvisoryMessages(String locale);
+        
+        public void persistActiveAdvisoryMessage(String locale, int index, boolean active);
+
 }

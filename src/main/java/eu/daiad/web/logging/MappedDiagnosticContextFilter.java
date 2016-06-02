@@ -16,14 +16,14 @@ public class MappedDiagnosticContextFilter extends OncePerRequestFilter {
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
 					javax.servlet.FilterChain filterChain) throws ServletException, IOException {
 		// Set default anonymous user
-		MDC.put("session.username", "(null)");
+		MDC.put(MappedDiagnosticContextKeys.USERNAME, "(null)");
 
 		// Set remote address
 		String remoteAddress = request.getHeader("X-FORWARDED-FOR");
 		if (StringUtils.isBlank(remoteAddress)) {
 			remoteAddress = request.getRemoteAddr();
 		}
-		MDC.put("session.remote-address", remoteAddress);
+		MDC.put(MappedDiagnosticContextKeys.IP_ADDRESS, remoteAddress);
 
 		try {
 			filterChain.doFilter(request, response);

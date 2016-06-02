@@ -3,6 +3,14 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>1.4.0.M3</version>
+		<relativePath />
+		<!-- no parent resolution -->
+	</parent>
+
 	<groupId>eu.daiad</groupId>
 	<artifactId>web-application</artifactId>
 	<version>0.0.2-SNAPSHOT</version>
@@ -10,15 +18,32 @@
 
 	<name>DAIAD Project Web Application</name>
 
+	<description>DAIAD goal is to address the challenge of improving the management of water resources through real-time knowledge of water consumption, in order to improve societal awareness, induce sustainable changes in consumer behaviour, and explore new water demand management strategies. This project contains the server side implementation of the DAIAD system.</description>
+
+	<url>http://daiad.eu/</url>
+	<inceptionYear>2014</inceptionYear>
+	<organization>
+		<name>IMIS, Institute for the Management of Information Systems</name>
+		<url>http://www.ipsyp.gr/en</url>
+	</organization>
+	<scm>
+		<url>https://github.com/DAIAD/home-web</url>
+		<connection>scm:git:git@github.com:DAIAD/home-web.git</connection>
+		<developerConnection>scm:git:git@github.com:DAIAD/home-web.git</developerConnection>
+	</scm>
+
 	<properties>
 		<java-version>1.7</java-version>
 		<spring.boot.version>1.4.0.M3</spring.boot.version>
 		<jackson.version>2.5.4</jackson.version>
+		<hadoop.version>2.6.0</hadoop.version>
 		<hbase.version>1.0.0</hbase.version>
 		<geotools.version>14.2</geotools.version>
 		<hibernate-spatial.version>5.1.0.Final</hibernate-spatial.version>
 		<apache.poi.version>3.14</apache.poi.version>
 		<org.jadira.usertype.version>5.0.0.GA</org.jadira.usertype.version>
+
+		<dependency.locations.enabled>false</dependency.locations.enabled>
 	</properties>
 
 	<repositories>
@@ -49,12 +74,6 @@
 		</pluginRepository>
 	</pluginRepositories>
 
-	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.4.0.M3</version>
-	</parent>
-
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -64,13 +83,29 @@
 					<groupId>org.springframework.boot</groupId>
 					<artifactId>spring-boot-starter-logging</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-log4j</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-log4j</artifactId>
-			<version>1.3.5.RELEASE</version>
+			<artifactId>spring-boot-starter-log4j2</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-1.2-api</artifactId>
+			<version>2.5</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-web</artifactId>
+			<version>2.5</version>
+			<scope>runtime</scope>
 		</dependency>
 
 		<dependency>
@@ -135,9 +170,129 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-common</artifactId>
+			<version>${hadoop.version}</version>
+
+			<exclusions>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.mortbay.jetty</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>tomcat</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>javax.servlet</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>javax.servlet.jsp</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.sun.jersey</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-hdfs</artifactId>
+			<version>${hadoop.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.mortbay.jetty</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>tomcat</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>javax.servlet</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>javax.servlet.jsp</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.sun.jersey</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.hbase</groupId>
+			<artifactId>hbase-server</artifactId>
+			<version>${hbase.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.mortbay.jetty</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>tomcat</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>javax.servlet</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>javax.servlet.jsp</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.sun.jersey</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
 			<groupId>org.apache.hbase</groupId>
 			<artifactId>hbase-client</artifactId>
 			<version>${hbase.version}</version>
+
+			<exclusions>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>
@@ -217,6 +372,13 @@
 			<version>4.0.1</version>
 		</dependency>
 
+        <!--
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-tomcat</artifactId>
+			<scope>provided</scope>
+		</dependency>
+        -->
 	</dependencies>
 
 	<build>
@@ -239,32 +401,26 @@
 				<groupId>com.github.eirslett</groupId>
 				<artifactId>frontend-maven-plugin</artifactId>
 				<version>0.0.28</version>
-
 				<executions>
-
 					<execution>
 						<id>node-isntall</id>
 						<goals>
 							<goal>install-node-and-npm</goal>
 						</goals>
 						<configuration>
-							<!-- https://nodejs.org/dist/ -->
 							<nodeVersion>v0.12.9</nodeVersion>
 							<npmVersion>3.8.0</npmVersion>
 						</configuration>
 					</execution>
-
 					<execution>
 						<id>npm-install</id>
 						<goals>
 							<goal>npm</goal>
 						</goals>
-						<!-- Optional configuration which provides for running any npm command -->
 						<configuration>
 							<arguments>install</arguments>
 						</configuration>
 					</execution>
-
 					<execution>
 						<id>npm-run-build</id>
 						<goals>
@@ -275,9 +431,46 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
 
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-site-plugin</artifactId>
+				<version>3.5</version>
 			</plugin>
 		</plugins>
 
 	</build>
+
+	<reporting>
+		<outputDirectory>${project.build.directory}/site</outputDirectory>
+
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-project-info-reports-plugin</artifactId>
+				<version>2.9</version>
+				<reportSets>
+					<reportSet>
+						<reports>
+						</reports>
+					</reportSet>
+				</reportSets>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.10.3</version>
+				<reportSets>
+					<reportSet>
+						<reports>
+							<report>javadoc</report>
+						</reports>
+					</reportSet>
+				</reportSets>
+			</plugin>
+		</plugins>
+	</reporting>
+
 </project>

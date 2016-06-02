@@ -41,11 +41,9 @@ import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 
 @Service
 @Transactional("managementTransactionManager")
-public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService {
+public class WaterMeterDataLoaderService extends BaseService implements IWaterMeterDataLoaderService {
 
 	private static final Log logger = LogFactory.getLog(WaterMeterDataLoaderService.class);
-
-	private boolean cancelled = false;
 
 	@Autowired
 	SecureFileTransferConnector sftConnector;
@@ -111,9 +109,6 @@ public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService
 					if ((allowedFilenames != null) && (!allowedFilenames.matcher(f.getFilename()).matches())) {
 						continue;
 					}
-					if (this.cancelled) {
-						return;
-					}
 
 					// Create upload record
 					Upload upload = new Upload();
@@ -153,7 +148,7 @@ public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService
 				}
 			}
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex);
+			throw wrapApplicationException(ex);
 		}
 	}
 
@@ -161,7 +156,7 @@ public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService
 	public FileProcessingStatus parse(String filename, String timezone) throws ApplicationException {
 		File file = new File(filename);
 		if (!file.exists()) {
-			throw new ApplicationException(SharedErrorCode.RESOURCE_DOES_NOT_EXIST).set("resource", filename);
+			throw createApplicationException(SharedErrorCode.RESOURCE_DOES_NOT_EXIST).set("resource", filename);
 		}
 
 		Scanner scan = null;
@@ -174,7 +169,7 @@ public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService
 		// Set time zone
 		Set<String> zones = DateTimeZone.getAvailableIDs();
 		if ((StringUtils.isBlank(timezone)) || (!zones.contains(timezone))) {
-			throw new ApplicationException(SharedErrorCode.TIMEZONE_NOT_FOUND).set("timezone", timezone);
+			throw createApplicationException(SharedErrorCode.TIMEZONE_NOT_FOUND).set("timezone", timezone);
 		}
 
 		DateTimeFormatter formatter = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss").withZone(
@@ -265,14 +260,4 @@ public class WaterMeterDataLoaderService implements IWaterMeterDataLoaderService
 		return status;
 	}
 
-	@Override
-	public void cancel() {
-		this.cancelled = true;
-
-	}
-
-	@Override
-	public boolean isCancelled() {
-		return cancelled;
-	}
 }

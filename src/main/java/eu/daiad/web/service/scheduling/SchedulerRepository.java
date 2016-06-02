@@ -11,12 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.domain.admin.ScheduledJob;
 import eu.daiad.web.domain.admin.ScheduledJobExecution;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.repository.BaseRepository;
 
 @Repository
 @Transactional("managementTransactionManager")
-public class SchedulerRepository implements ISchedulerRepository {
+public class SchedulerRepository extends BaseRepository implements ISchedulerRepository {
 
 	@PersistenceContext(unitName = "management")
 	EntityManager entityManager;
@@ -29,7 +29,7 @@ public class SchedulerRepository implements ISchedulerRepository {
 
 			return query.getResultList();
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -49,15 +49,15 @@ public class SchedulerRepository implements ISchedulerRepository {
 
 			return null;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
 	@Override
 	public ScheduledJob getJobByName(String jobName) {
 		try {
-			TypedQuery<ScheduledJob> query = entityManager.createQuery("select j from scheduled_job j where j.name= :jobName",
-							ScheduledJob.class);
+			TypedQuery<ScheduledJob> query = entityManager.createQuery(
+							"select j from scheduled_job j where j.name= :jobName", ScheduledJob.class);
 
 			query.setParameter("jobName", jobName);
 
@@ -69,7 +69,7 @@ public class SchedulerRepository implements ISchedulerRepository {
 
 			return null;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -77,7 +77,7 @@ public class SchedulerRepository implements ISchedulerRepository {
 	public List<ScheduledJobExecution> getExecutions(String jobName, int startPosition, int maxResult) {
 		TypedQuery<ScheduledJobExecution> query = entityManager
 						.createQuery("select e from scheduled_job_execution e "
-										+ "where e.jobName = :jobName e.jobInstanceId desc, e.jobExecutionId desc",
+										+ "where e.jobName = :jobName order by e.jobInstanceId desc, e.jobExecutionId desc",
 										ScheduledJobExecution.class).setMaxResults(maxResult)
 						.setFirstResult(startPosition);
 
@@ -91,7 +91,7 @@ public class SchedulerRepository implements ISchedulerRepository {
 		ScheduledJob job = this.getJobById(jobId);
 
 		TypedQuery<ScheduledJobExecution> query = entityManager.createQuery("select e from scheduled_job_execution e "
-						+ "where e.jobName = :jobName e.jobInstanceId desc, e.jobExecutionId desc",
+						+ "where e.jobName = :jobName order by e.jobInstanceId desc, e.jobExecutionId desc",
 						ScheduledJobExecution.class);
 
 		query.setParameter("jobName", job.getName());
@@ -103,7 +103,7 @@ public class SchedulerRepository implements ISchedulerRepository {
 	public ScheduledJobExecution getLastExecution(String jobName) {
 		TypedQuery<ScheduledJobExecution> query = entityManager
 						.createQuery("select e from scheduled_job_execution e "
-										+ "where e.jobName = :jobName e.jobInstanceId desc, e.jobExecutionId desc",
+										+ "where e.jobName = :jobName order by e.jobInstanceId desc, e.jobExecutionId desc",
 										ScheduledJobExecution.class).setMaxResults(1).setFirstResult(0);
 
 		query.setParameter("job_name", jobName);
@@ -123,7 +123,7 @@ public class SchedulerRepository implements ISchedulerRepository {
 
 		TypedQuery<ScheduledJobExecution> query = entityManager
 						.createQuery("select e from scheduled_job_execution e "
-										+ "where e.jobName = :jobName e.jobInstanceId desc, e.jobExecutionId desc",
+										+ "where e.jobName = :jobName order by e.jobInstanceId desc, e.jobExecutionId desc",
 										ScheduledJobExecution.class).setMaxResults(1).setFirstResult(0);
 
 		query.setParameter("job_name", job.getName());
@@ -149,7 +149,7 @@ public class SchedulerRepository implements ISchedulerRepository {
 
 			return job;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -175,7 +175,7 @@ public class SchedulerRepository implements ISchedulerRepository {
 			job.setPeriod(period);
 			job.setCronExpression(null);
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -191,7 +191,7 @@ public class SchedulerRepository implements ISchedulerRepository {
 			job.setPeriod(null);
 			job.setCronExpression(cronExpression);
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 

@@ -26,7 +26,6 @@ import eu.daiad.web.domain.application.AccountDynamicRecommendationProperty;
 import eu.daiad.web.domain.application.AlertTranslation;
 import eu.daiad.web.domain.application.DynamicRecommendationTranslation;
 import eu.daiad.web.domain.application.StaticRecommendation;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.MessageErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.message.EnumAlertType;
@@ -37,10 +36,11 @@ import eu.daiad.web.model.message.MessageAcknowledgement;
 import eu.daiad.web.model.message.MessageRequest;
 import eu.daiad.web.model.message.MessageResult;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.repository.BaseRepository;
 
 @Repository
-@Transactional("transactionManager")
-public class JpaMessageRepository implements IMessageRepository {
+@Transactional("applicationTransactionManager")
+public class JpaMessageRepository extends BaseRepository implements IMessageRepository {
 
 	@PersistenceContext(unitName = "default")
 	EntityManager entityManager;
@@ -54,7 +54,7 @@ public class JpaMessageRepository implements IMessageRepository {
 		if (auth.getPrincipal() instanceof AuthenticatedUser) {
 			return (AuthenticatedUser) auth.getPrincipal();
 		} else {
-			throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+			throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
 		}
 	}
 
@@ -73,9 +73,9 @@ public class JpaMessageRepository implements IMessageRepository {
 					case RECOMMENDATION_STATIC:
 						break;
 					case ANNOUNCEMENT:
-						throw new ApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
+						throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
 					default:
-						throw new ApplicationException(MessageErrorCode.MESSAGE_TYPE_NOT_SUPPORTED).set("type.",
+						throw createApplicationException(MessageErrorCode.MESSAGE_TYPE_NOT_SUPPORTED).set("type.",
 										message.getType());
 				}
 			}
@@ -347,9 +347,10 @@ public class JpaMessageRepository implements IMessageRepository {
 				message.setTitle(tip.getRecommendation().getTitle());
 				message.setDescription(tip.getRecommendation().getDescription());
 				message.setImageEncoded(tip.getRecommendation().getImage());
+				message.setImageMimeType(tip.getRecommendation().getImageMimeType());
 				message.setImageLink(tip.getRecommendation().getImageLink());
 				message.setPrompt(tip.getRecommendation().getPrompt());
-				message.setExternalLink(tip.getRecommendation().getExternaLink());
+				message.setExternalLink(tip.getRecommendation().getExternalLink());
 				message.setSource(tip.getRecommendation().getSource());
 				message.setCreatedOn(tip.getCreatedOn().getMillis());
 				if (tip.getRecommendation().getModifiedOn() != null) {
@@ -394,9 +395,10 @@ public class JpaMessageRepository implements IMessageRepository {
 			message.setTitle(staticRecommendation.getTitle());
 			message.setDescription(staticRecommendation.getDescription());
 			message.setImageEncoded(staticRecommendation.getImage());
+			message.setImageMimeType(staticRecommendation.getImageMimeType());
 			message.setImageLink(staticRecommendation.getImageLink());
 			message.setPrompt(staticRecommendation.getPrompt());
-			message.setExternalLink(staticRecommendation.getExternaLink());
+			message.setExternalLink(staticRecommendation.getExternalLink());
 			message.setSource(staticRecommendation.getSource());
 			if (staticRecommendation.getCreatedOn() != null) {
 				message.setCreatedOn(staticRecommendation.getCreatedOn().getMillis());
@@ -412,6 +414,21 @@ public class JpaMessageRepository implements IMessageRepository {
 		return messages;
 	}
 
+        @Override
+        public void persistActiveAdvisoryMessage(String locale, int index, boolean active){
+            TypedQuery<eu.daiad.web.domain.application.StaticRecommendation> advisoryMessage = entityManager
+                    .createQuery("select s from static_recommendation s where s.index = :index and s.locale = :locale",
+                                    eu.daiad.web.domain.application.StaticRecommendation.class);    
+            advisoryMessage.setParameter("index", index);
+            advisoryMessage.setParameter("locale", locale);
+
+            List<StaticRecommendation> advisoryMessages = advisoryMessage.getResultList();
+            
+            if(!advisoryMessages.isEmpty()){
+                advisoryMessages.get(0).setActive(active);
+            }
+        }
+        
 	// TODO : When sending an acknowledgement for an alert of a specific type,
 	// an older (not acknowledged) alert of the same type may appear in the next
 	// get messages call

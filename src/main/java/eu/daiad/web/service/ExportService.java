@@ -42,7 +42,7 @@ import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 
 @Service
-public class ExportService implements IExportService {
+public class ExportService extends BaseService implements IExportService {
 
 	private static final Log logger = LogFactory.getLog(ExportService.class);
 
@@ -68,7 +68,7 @@ public class ExportService implements IExportService {
 			outputFolder.mkdirs();
 
 			if (!outputFolder.exists()) {
-				throw new ApplicationException(SharedErrorCode.DIR_CREATION_FAILED).set("path", outputFolderName);
+				throw createApplicationException(SharedErrorCode.DIR_CREATION_FAILED).set("path", outputFolderName);
 			}
 
 			// Create new file name
@@ -83,7 +83,8 @@ public class ExportService implements IExportService {
 				query.setTimezone("Europe/Athens");
 			}
 			if (!zones.contains(query.getTimezone())) {
-				throw new ApplicationException(SharedErrorCode.TIMEZONE_NOT_FOUND).set("timezone", query.getTimezone());
+				throw createApplicationException(SharedErrorCode.TIMEZONE_NOT_FOUND).set("timezone",
+								query.getTimezone());
 			}
 
 			DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZone(
@@ -239,7 +240,7 @@ public class ExportService implements IExportService {
 
 			return token;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex);
+			throw wrapApplicationException(ex);
 		} finally {
 			try {
 				if (workbook != null) {

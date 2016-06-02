@@ -14,7 +14,6 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.service.message.IMessageService;
 
@@ -74,7 +73,7 @@ public class MessageGeneratorJobBuilder implements IJobBuilder {
 				} catch (Exception ex) {
 					logger.fatal("Failed to complete message calculation process.", ex);
 
-					throw ApplicationException.wrap(ex);
+					throw ex;
 				}
 				return RepeatStatus.FINISHED;
 			}

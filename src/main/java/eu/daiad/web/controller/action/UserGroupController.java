@@ -24,6 +24,10 @@ import eu.daiad.web.model.group.GroupMemberInfoResponse;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IUserGroupRepository;
 
+/**
+ * Provides actions for managing user defined groups.
+ *
+ */
 @RestController
 public class UserGroupController extends BaseController {
 	
@@ -32,6 +36,11 @@ public class UserGroupController extends BaseController {
 	@Autowired
 	private IUserGroupRepository repository;
 	
+	/**
+	 * Enumerates user defined groups.
+	 * 
+	 * @return the available groups.
+	 */
 	@RequestMapping(value = "/action/group/list", method = RequestMethod.GET, produces = "application/json")
 	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN" })
 	public RestResponse getGroupsInfo() {
@@ -48,6 +57,12 @@ public class UserGroupController extends BaseController {
 		return response;
 	}
 	
+	/**
+	 * Get a group by its id.
+	 * 
+	 * @param group_id the group id.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/action/group/{group_id}", method = RequestMethod.GET, produces = "application/json")
 	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN" })
 	public RestResponse getGroupInfoByKey(@PathVariable UUID group_id) {
@@ -64,6 +79,12 @@ public class UserGroupController extends BaseController {
 		return response;
 	}
 	
+	/**
+	 * Gets the members of a group.
+	 * 
+	 * @param group_id the group id.
+	 * @return the contrller's response.
+	 */
 	@RequestMapping(value = "/action/group/members/current/{group_id}", method = RequestMethod.GET, produces = "application/json")
 	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN" })
 	public RestResponse getGroupCurrentMemberInfo(@PathVariable UUID group_id) {
@@ -80,6 +101,11 @@ public class UserGroupController extends BaseController {
 		return response;
 	}
 	
+	/**
+	 * Returns all the users that are eligible to join a new user defined group.
+	 * 
+	 * @return the users.
+	 */
 	@RequestMapping(value = "/action/group/members/possible/", method = RequestMethod.GET, produces = "application/json")
 	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN" })
 	public RestResponse getNewGroupPossibleMemberInfo() {
@@ -96,6 +122,12 @@ public class UserGroupController extends BaseController {
 		return response;
 	}
 	
+	/**
+	 * Returns the members that are eligible for joining a group.
+	 * 
+	 * @param group_id the group id.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/action/group/members/possible/{group_id}", method = RequestMethod.GET, produces = "application/json")
 	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN" })
 	public RestResponse getGroupPossibleMemberInfo(@PathVariable UUID group_id) {
@@ -112,6 +144,13 @@ public class UserGroupController extends BaseController {
 		return response;
 	}
 	
+	/**
+	 * Creates a new user defined set.
+	 * 
+	 * @param user the currently authenticated user
+	 * @param groupSetInfo the group to create
+	 * @return the controller's response
+	 */
 	@RequestMapping(value = "/action/group/set/create", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN"})
 	public @ResponseBody RestResponse createGroupSet(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody CreateGroupSetRequest groupSetInfo){
@@ -128,6 +167,12 @@ public class UserGroupController extends BaseController {
 		return response;
 	}
 	
+	/**
+	 * Deletes a user defined group by its id.
+	 * 
+	 * @param group_id the group id.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/action/group/delete/{group_id}", method = RequestMethod.GET, produces = "application/json")
 	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN"})
 	public @ResponseBody RestResponse deleteGroup(@PathVariable UUID group_id){

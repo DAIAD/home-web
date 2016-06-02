@@ -452,7 +452,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 					public int compare(AmphiroMeasurement m1, AmphiroMeasurement m2) {
 						if (m1.getSessionId() == m2.getSessionId()) {
 							if (m1.getIndex() == m2.getIndex()) {
-								throw new ApplicationException(DataErrorCode.MEASUREMENT_NO_UNIQUE_INDEX).set(
+								throw createApplicationException(DataErrorCode.MEASUREMENT_NO_UNIQUE_INDEX).set(
 												"session", m1.getSessionId()).set("index", m1.getIndex());
 							}
 							if (m1.getIndex() < m2.getIndex()) {
@@ -485,7 +485,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 					for (AmphiroSession s : sessions) {
 						if (m.getSessionId() == s.getId()) {
 							if (s.isHistory()) {
-								throw new ApplicationException(DataErrorCode.HISTORY_SESSION_MEASUREMENT_FOUND).set(
+								throw createApplicationException(DataErrorCode.HISTORY_SESSION_MEASUREMENT_FOUND).set(
 												"session", m.getSessionId()).set("index", m.getIndex());
 							}
 							m.setSession(s);
@@ -493,7 +493,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 						}
 					}
 					if (m.getSession() == null) {
-						throw new ApplicationException(DataErrorCode.NO_SESSION_FOUND_FOR_MEASUREMENT).set("session",
+						throw createApplicationException(DataErrorCode.NO_SESSION_FOUND_FOR_MEASUREMENT).set("session",
 										m.getSessionId()).set("index", m.getIndex());
 					}
 				}
@@ -588,7 +588,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 				}
 			}
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 
 		return updates;
@@ -771,7 +771,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 
 			return data;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (scanner != null) {
@@ -943,7 +943,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 
 			return data;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (scanner != null) {
@@ -1042,7 +1042,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 
 			return data;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (scanner != null) {
@@ -1140,7 +1140,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 
 			return measurements;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (scanner != null) {

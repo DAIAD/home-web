@@ -46,10 +46,11 @@ import eu.daiad.web.model.profile.EnumWebMode;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.user.Account;
+import eu.daiad.web.repository.BaseRepository;
 
 @Repository
-@Transactional("transactionManager")
-public class JpaUserRepository implements IUserRepository {
+@Transactional("applicationTransactionManager")
+public class JpaUserRepository extends BaseRepository implements IUserRepository {
 
 	private static final Log logger = LogFactory.getLog(JpaUserRepository.class);
 
@@ -79,7 +80,7 @@ public class JpaUserRepository implements IUserRepository {
 				}
 			}
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, UserErrorCode.ROLE_INITIALIZATION);
+			throw wrapApplicationException(ex, UserErrorCode.ROLE_INITIALIZATION);
 		}
 	}
 
@@ -151,7 +152,7 @@ public class JpaUserRepository implements IUserRepository {
 				}
 			}
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, UserErrorCode.ADMIN_INITIALIZATION);
+			throw wrapApplicationException(ex, UserErrorCode.ADMIN_INITIALIZATION);
 		}
 	}
 
@@ -185,11 +186,11 @@ public class JpaUserRepository implements IUserRepository {
 
 		try {
 			if (this.isUsernameReserved(user.getUsername())) {
-				throw new ApplicationException(UserErrorCode.USERNANE_RESERVED).set("username", user.getUsername());
+				throw createApplicationException(UserErrorCode.USERNANE_RESERVED).set("username", user.getUsername());
 			}
 			if (this.getUserByName(user.getUsername()) != null) {
-				throw new ApplicationException(UserErrorCode.USERNANE_NOT_AVAILABLE)
-								.set("username", user.getUsername());
+				throw createApplicationException(UserErrorCode.USERNANE_NOT_AVAILABLE).set("username",
+								user.getUsername());
 			}
 
 			AccountWhiteListEntry whiteListEntry = null;
@@ -203,8 +204,8 @@ public class JpaUserRepository implements IUserRepository {
 
 				List<eu.daiad.web.domain.application.AccountWhiteListEntry> result = query.getResultList();
 				if (result.size() == 0) {
-					throw new ApplicationException(UserErrorCode.WHITELIST_MISMATCH)
-									.set("username", user.getUsername());
+					throw createApplicationException(UserErrorCode.WHITELIST_MISMATCH).set("username",
+									user.getUsername());
 				} else {
 					whiteListEntry = result.get(0);
 				}
@@ -325,7 +326,7 @@ public class JpaUserRepository implements IUserRepository {
 
 			return account.getKey();
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -380,7 +381,7 @@ public class JpaUserRepository implements IUserRepository {
 
 			return user;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -423,7 +424,7 @@ public class JpaUserRepository implements IUserRepository {
 
 			return user;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -467,7 +468,7 @@ public class JpaUserRepository implements IUserRepository {
 
 			return user;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -618,7 +619,7 @@ public class JpaUserRepository implements IUserRepository {
 			List<AccountWhiteListEntry> whitelistEntries = whitelistQuery.getResultList();
 
 			if (!whitelistEntries.isEmpty()) {
-				throw new ApplicationException(UserErrorCode.USERNAME_EXISTS_IN_WHITELIST).set("username",
+				throw createApplicationException(UserErrorCode.USERNAME_EXISTS_IN_WHITELIST).set("username",
 								userInfo.getEmail());
 			}
 
@@ -636,7 +637,8 @@ public class JpaUserRepository implements IUserRepository {
 			List<Utility> utilityEntry = utilityQuery.getResultList();
 
 			if (utilityEntry.isEmpty()) {
-				throw new ApplicationException(UserErrorCode.UTILITY_DOES_NOT_EXIST).set("id", userInfo.getUtilityId());
+				throw createApplicationException(UserErrorCode.UTILITY_DOES_NOT_EXIST).set("id",
+								userInfo.getUtilityId());
 			}
 			newEntry.setUtility(utilityEntry.get(0));
 			newEntry.setCountry(utilityEntry.get(0).getCountry());
@@ -652,7 +654,7 @@ public class JpaUserRepository implements IUserRepository {
 			this.entityManager.persist(newEntry);
 
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 }

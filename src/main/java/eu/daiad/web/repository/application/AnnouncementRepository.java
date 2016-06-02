@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author nkarag
  */
 @Repository
-@Transactional("transactionManager")
+@Transactional("applicationTransactionManager")
 @Scope("prototype")
 public class AnnouncementRepository implements IAnnouncementRepository{
     

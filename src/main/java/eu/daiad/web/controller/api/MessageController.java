@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageAcknowledgementRequest;
 import eu.daiad.web.model.message.MessageRequest;
@@ -19,6 +18,11 @@ import eu.daiad.web.model.message.MultiTypeMessageResponse;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.application.IMessageRepository;
 
+/**
+ * 
+ * Provides actions for loading messages and saving acknowledgments.
+ *
+ */
 @RestController("RestRecommendationController")
 public class MessageController extends BaseRestController {
 
@@ -27,6 +31,12 @@ public class MessageController extends BaseRestController {
 	@Autowired
 	private IMessageRepository messageRepository;
 
+	/**
+	 * Loads messages i.e. alerts, recommendations and tips. Optionally filters messages.
+	 * 
+	 * @param request the request.
+	 * @return the messages.
+	 */
 	@RequestMapping(value = "/api/v1/message", method = RequestMethod.POST, produces = "application/json")
 	public RestResponse getMessages(@RequestBody MessageRequest request) {
 		try {
@@ -61,10 +71,8 @@ public class MessageController extends BaseRestController {
 			}
 
 			return messageResponse;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			RestResponse response = new RestResponse();
 			response.add(this.getError(ex));
@@ -73,6 +81,12 @@ public class MessageController extends BaseRestController {
 
 	}
 
+	/**
+	 * Saves one or more message acknowledgments.
+	 * 
+	 * @param request the messages to acknowledge.
+	 * @return the controller response.
+	 */
 	@RequestMapping(value = "/api/v1/message/acknowledge", method = RequestMethod.POST, produces = "application/json")
 	public RestResponse acknowledgeMessage(@RequestBody MessageAcknowledgementRequest request) {
 		RestResponse response = new RestResponse();
@@ -81,10 +95,8 @@ public class MessageController extends BaseRestController {
 			this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
 			this.messageRepository.setMessageAcknowledgement(request.getMessages());
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

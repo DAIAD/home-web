@@ -24,6 +24,9 @@ import eu.daiad.web.model.favourite.FavouritesListInfoResponse;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IFavouriteRepository;
 
+/**
+ * Provides actions for managing user favorites.
+ */
 @RestController
 public class FavouriteController extends BaseController {
 	
