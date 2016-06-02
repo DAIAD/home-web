@@ -233,6 +233,9 @@ ul {
 .list-unstyled{
 	list-style: none;
 }
+label {
+  margin-right: 10px;
+}
 
 .preloader {
 	display: block;
@@ -762,15 +765,18 @@ div[class^="section.login"]{
   width: 100%;
   height: 100%;
 }
+
 .infobox-header {
   flex-grow: 0;
   padding: 5px;
   min-height: 37px;
   border-bottom: 1px #2D3580 solid;
 }
+
 .infobox-header h4 {
   margin: 0;
 }
+
 .infobox-header span, .infobox-header div, .infobox-header a {
   display: inline-block;
   font-size: 0.95em;
@@ -782,12 +788,15 @@ div[class^="section.login"]{
   flex-shrink: 1;
   padding: 10px 20px;
 }
+
 .infobox-body span {
   font-size: 1.02em;
 }
+
 .infobox-body p {
   margin: 0;
 }
+
 .infobox-footer {
   flex-grow: 0;
   text-align: center;
@@ -795,16 +804,46 @@ div[class^="section.login"]{
   min-height: 37px;
   border-top: 1px #2D3580 solid;
 }
+
 .infobox-x {
   font-weight: normal;
   color: lightgrey;
 }
+
 .infobox-x:hover {
   color: lightgrey;
 }
+
 .infobox-error {
   font-size: 1.1em;
 }
+
+.add-infobox-modal .history-time-nav {
+  background: #E8F5FD;
+}
+.add-infobox-modal .modal-content {
+  background: #E8F5FD;
+}
+.add-infobox-modal .modal-body {
+  padding: 0;
+}
+
+.add-infobox {
+  display: flex;
+  flex-direction: row;
+}
+
+.add-infobox-left {
+  flex-grow: 1;
+  padding: 10px 0;
+  background: #fff;
+}
+.add-infobox-right {
+  flex-grow: 0;
+  flex-basis: 220px;
+  padding: 10px 0;
+}
+
 /* History */
 
 .history-chart-area {

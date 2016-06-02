@@ -4,6 +4,7 @@ var { injectIntl } = require('react-intl');
 var { bindActionCreators } = require('redux');
 var { connect } = require('react-redux');
 var { push } = require('react-router-redux');
+const { getValues } = require('redux-form');
 
 var { STATIC_RECOMMENDATIONS, STATBOX_DISPLAYS, DEV_METRICS, METER_METRICS, DEV_PERIODS, METER_PERIODS, DEV_SORT, METER_SORT } = require('../constants/HomeConstants');
 
@@ -25,9 +26,10 @@ function mapStateToProps(state, ownProps) {
     firstname: state.user.profile.firstname,
     devices: state.user.profile.devices,
     layout: state.section.dashboard.layout,
-    //mode: state.section.dashboard.mode,
+    mode: state.section.dashboard.mode,
     tempInfoboxData: state.section.dashboard.tempInfoboxData,
     infoboxes: state.section.dashboard.infobox,
+    infoboxToAdd: getValues(state.form.addInfobox)
   };
 }
 
@@ -40,12 +42,31 @@ function mapDispatchToProps(dispatch) {
 }
 
 function mergeProps(stateProps, dispatchProps, ownProps) {
+  
+  const deviceType = (stateProps.infoboxToAdd && stateProps.infoboxToAdd.deviceType) ? stateProps.infoboxToAdd.deviceType : null;
+
+  const deviceTypes = [{id: 'AMPHIRO', title: 'Shower'}, {id: 'METER', title: 'Smart Water Meter'}];
+
+  const types = [
+    {id: 'totalVolume', title: 'Total Volume', devType: 'AMPHIRO', data: {type: 'total', metric: 'volume', display: 'chart'}},
+    {id: 'totalEnergy', title: 'Total Energy', devType: 'AMPHIRO', data: {type: 'total', metric: 'energy', display: 'chart'}},
+    {id: 'totalTemperature', title: 'Total Temperature', devType: 'AMPHIRO', data: {type: 'total', metric: 'temperature', display: 'chart'}},
+    {id: 'totalDifference', title: 'Total Volume', devType:'METER', data: {type: 'total', metric: 'difference', display: 'chart'}}, 
+    {id: 'last', title: 'Last shower', devType: 'AMPHIRO', data: {type: 'last', metric: 'volume', display: 'chart'}},
+    {id:'efficiencyEnergy', title: 'Energy efficiency', devType: 'AMPHIRO', data: {type: 'efficiency', metric: 'energy', display: 'stat'}},
+    {id: 'breakdown', title: 'Water breakdown', devType: 'METER', data: {type: 'breakdown', metric: 'difference', display: 'chart'}},
+    {id: 'forecast', title: 'Forecast', devType: 'METER', data: {type: 'forecast', metric: 'difference', display: 'chart'}}
+  ].filter(x => deviceType ? stateProps.infoboxToAdd.deviceType === x.devType: null);
 
   return Object.assign({}, ownProps,
                dispatchProps,
                stateProps,
                {
+                 
                  infoboxData: transformInfoboxData(stateProps.infoboxes, stateProps.devices, dispatchProps.link, ownProps.intl),
+                 addInfobox: () => dispatchProps.addInfobox(Object.assign({}, {data: [], period: (deviceType === 'AMPHIRO' ? 'ten' : 'month')}, stateProps.infoboxToAdd, types.find(x => x.id === stateProps.infoboxToAdd.type) ?  types.find(x => x.id === stateProps.infoboxToAdd.type).data : {} )),
+                 deviceTypes,
+                 types,
                });
 }
 

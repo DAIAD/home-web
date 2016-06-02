@@ -17,21 +17,21 @@ const setLastSession = function(session) {
 const createInfobox = function(data) {
   return {
     type: types.DASHBOARD_ADD_INFOBOX,
-    data: data
+    data
   };
 };
 
-const appendLayout = function(id, type) {
+const appendLayout = function(id, display) {
   let layout = {x:0, y:0, w:1, h:1, i:id};
-  if (type==='stat') {
-    Object.assign(layout, {w:2, h:1, minW:2, minH:1});
+  if (display==='stat') {
+    Object.assign(layout, {w:2, h:1});
   }
-  else if (type === 'chart') {
-    Object.assign(layout, {w:2, h:2, minW:2, minH:2});
+  else if (display === 'chart') {
+    Object.assign(layout, {w:2, h:2});
   }
   return {
     type: types.DASHBOARD_APPEND_LAYOUT,
-    layout: layout 
+    layout
   };
 };
 
@@ -41,17 +41,20 @@ const DashboardActions = {
   switchMode: function(mode) {
     return {
       type: types.DASHBOARD_SWITCH_MODE,
-      mode: mode
+      mode
     };
   },
   addInfobox: function(data) {
     return function(dispatch, getState) {
       const infobox = getState().section.dashboard.infobox;
-      const lastId = infobox.length?Math.max.apply(Math, infobox.map(info => parseInt(info.id))):0;
-      const id = (lastId+1).toString();
-      const type = data.type;
+      const maxId = infobox.length?Math.max.apply(Math, infobox.map(info => parseInt(info.id))):0;
+      const id = (maxId+1).toString();
+      const display = data.display;
       dispatch (createInfobox(Object.assign(data, {id})));
-      dispatch(appendLayout(id, type));
+      dispatch(appendLayout(id, display));
+      
+      dispatch(DashboardActions.fetchInfoboxData(Object.assign({}, getState().section.dashboard.infobox.find(i=>i.id===id))));
+
       return id;
     };
   },

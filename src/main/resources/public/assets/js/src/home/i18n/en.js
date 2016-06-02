@@ -68,7 +68,8 @@
     "login": "Login"
   },
   "dashboard": {
-    "hello": "Welcome {name}!"
+    "hello": "Welcome {name}!",
+    "add": "Add widget"
   },
   "shower": {
     "details": "Shower details"
