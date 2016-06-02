@@ -126,8 +126,10 @@ var constants = keyMirror({
   ADMIN_ADD_TIP_RESPONSE: null,
   ADMIN_ADD_TIP_SHOW: null,
   ADMIN_CANCEL_ADD_TIP_SHOW: null,
+  ADMIN_EDIT_TIP: null,
   STATIC_TIPS_ACTIVE_PAGE: null,
   ADMIN_TIPS_ACTIVE_STATUS_CHANGE: null,
+  ADMIN_EDITED_TIP: null,
   // \manage alerts
 
 

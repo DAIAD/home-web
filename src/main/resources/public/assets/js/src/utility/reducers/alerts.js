@@ -7,19 +7,15 @@ var initialState = {
   utilities : null,
   tips : null,
   activePage: 0,
-  saveButtonDisabled : true,
+  currentTip: null,
   show: false,
-  modes: null
+  modes: null,
+  saveOff: true,
+  saveTipDisabled: false
 };
 
 var alerts = function(state, action) {
     switch (action.type) {
-        case types.SAVE_BUTTON_DISABLE:
-          console.log('reducer SAVE_BUTTON_DISABLE');
-          return Object.assign({}, state, { 
-              isLoading : false,
-              saveButtonDisabled : action.saveButtonDisabled
-          });
         case types.ADMIN_REQUESTED_UTILITIES:
           return Object.assign({}, state, { 
               isLoading : true,
@@ -59,7 +55,6 @@ var alerts = function(state, action) {
                 isLoading : false
             });          
         case types.CHECKBOX_CLICKED:
-          console.log('checkbox clicked');
           return Object.assign({}, state, {
               tips : action.tips
             }); 
@@ -74,20 +69,32 @@ var alerts = function(state, action) {
 		isLoading : false
             });   
 	case types.ADMIN_ADD_TIP_SHOW:
-          console.log('reducer show form');
             return Object.assign({}, state, {
               show : true
             }); 
 	case types.ADMIN_CANCEL_ADD_TIP_SHOW:
           console.log('reducer cancel add');
             return Object.assign({}, state, {
-              show : false
+              show : false,
+              currentTip : null
             });   
+	case types.ADMIN_EDIT_TIP:
+          console.log('reducer edit tip ' + action.editTip);
+            return Object.assign({}, state, {
+              show : true,
+              currentTip : action.currentTip,
+              saveOff : false
+            });             
 	case types.STATIC_TIPS_ACTIVE_PAGE:
           console.log('reducer active page');
             return Object.assign({}, state, {
                     activePage : action.activePage
-            });         
+            });   
+	case types.ADMIN_EDITED_TIP:
+          console.log('reducer admin edited tip');
+            return Object.assign({}, state, {
+                saveTipDisabled : false
+            });           
         default:
           return state || initialState;
     }
