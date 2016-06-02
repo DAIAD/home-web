@@ -52,5 +52,10 @@ module.exports = keyMirror({
   DASHBOARD_APPEND_LAYOUT: null,
   DASHBOARD_UPDATE_LAYOUT: null,
 
+  MESSAGE_REQUEST_START: null,
+  MESSAGE_REQUEST_END: null,
+  MESSAGE_ACK_REQUEST_START: null,
+  MESSAGE_ACK_REQUEST_END: null
+
 });
 

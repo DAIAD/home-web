@@ -4,6 +4,7 @@ var user = require('./user');
 var query = require('./query');
 var history = require('./history');
 var dashboard = require('./dashboard');
+var message = require('./message');
 
 var { routerReducer } = require('react-router-redux');
 
@@ -15,7 +16,8 @@ var rootReducer = combineReducers({
   section: combineReducers({
     history,
     dashboard
-  })
+  }),
+  message
 });
 
 module.exports = rootReducer;
