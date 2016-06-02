@@ -347,9 +347,10 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 				message.setTitle(tip.getRecommendation().getTitle());
 				message.setDescription(tip.getRecommendation().getDescription());
 				message.setImageEncoded(tip.getRecommendation().getImage());
+				message.setImageMimeType(tip.getRecommendation().getImageMimeType());
 				message.setImageLink(tip.getRecommendation().getImageLink());
 				message.setPrompt(tip.getRecommendation().getPrompt());
-				message.setExternalLink(tip.getRecommendation().getExternaLink());
+				message.setExternalLink(tip.getRecommendation().getExternalLink());
 				message.setSource(tip.getRecommendation().getSource());
 				message.setCreatedOn(tip.getCreatedOn().getMillis());
 				if (tip.getRecommendation().getModifiedOn() != null) {
@@ -394,9 +395,10 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 			message.setTitle(staticRecommendation.getTitle());
 			message.setDescription(staticRecommendation.getDescription());
 			message.setImageEncoded(staticRecommendation.getImage());
+			message.setImageMimeType(staticRecommendation.getImageMimeType());
 			message.setImageLink(staticRecommendation.getImageLink());
 			message.setPrompt(staticRecommendation.getPrompt());
-			message.setExternalLink(staticRecommendation.getExternaLink());
+			message.setExternalLink(staticRecommendation.getExternalLink());
 			message.setSource(staticRecommendation.getSource());
 			if (staticRecommendation.getCreatedOn() != null) {
 				message.setCreatedOn(staticRecommendation.getCreatedOn().getMillis());

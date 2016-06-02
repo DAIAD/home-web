@@ -12,6 +12,8 @@ public class StaticRecommendation extends Message {
 
 	private byte imageEncoded[];
 
+	private String imageMimeType;
+
 	private String imageLink;
 
 	private String prompt;
@@ -125,6 +127,14 @@ public class StaticRecommendation extends Message {
 
 	public void setExternalLink(String externalLink) {
 		this.externalLink = externalLink;
+	}
+
+	public String getImageMimeType() {
+		return imageMimeType;
+	}
+
+	public void setImageMimeType(String imageMimeType) {
+		this.imageMimeType = imageMimeType;
 	}
 
 }
