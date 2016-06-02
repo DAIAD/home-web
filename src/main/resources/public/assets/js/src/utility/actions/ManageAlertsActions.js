@@ -1,8 +1,7 @@
 var types = require('../constants/ActionTypes');
 var alertsAPI = require('../api/alerts');
 
-var receivedTips = function(success, errors, tips) {
-  console.log('action: receivedTips');  
+var receivedTips = function(success, errors, tips) { 
   return {
     type : types.ADMIN_RECEIVED_STATIC_TIPS,
     success : success,
@@ -12,7 +11,6 @@ var receivedTips = function(success, errors, tips) {
 };
 
 var requestedTips = function(locale) {
-   console.log('action: requestedTips');
   return {
     type : types.ADMIN_REQUESTED_STATIC_TIPS,
     locale : locale
@@ -52,12 +50,14 @@ var saveButtonResponse = function(success, errors) {
 var requestAddTip = function() {
   return {
     type : types.ADMIN_REQUESTED_ADD_TIP,
+    saveTipDisabled : false
   };
 };
 
 var addTipResponse = function(success, errors) {
   return {
     type : types.ADMIN_REQUESTED_ADD_TIP,
+    saveTipDisabled : false,
     success : success,
     errors : errors
   };
@@ -65,12 +65,6 @@ var addTipResponse = function(success, errors) {
 
 
 var ManageAlertsActions = {
-    disableSaveButton : function(event, disable){
-        return{
-          type : types.SAVE_BUTTON_DISABLE,
-          saveButtonDisabled : disable
-        };      
-    },
     saveActiveTips : function(event, changedTips, locale){
       //console.log('saveActiveTips, length ' + changedTips.length);
       return function(dispatch, getState) {
@@ -139,10 +133,9 @@ var ManageAlertsActions = {
         }; 
     },
     addTip : function(event, tip) {
-      return function(dispatch, getState) {
+      return function(dispatch, getState) {  
       dispatch(requestAddTip);
-      //show modal after request
-      return alertsAPI.addTip().then(function(response) {
+      return alertsAPI.addTip(tip).then(function(response) {
         dispatch(addTipResponse(response.success, response.errors));
       }, function(error) {
         dispatch(addTipResponse(false, error, null));
@@ -152,15 +145,30 @@ var ManageAlertsActions = {
   showAddTipForm: function() {
     return{
       type : types.ADMIN_ADD_TIP_SHOW,
-      saveButtonDisabled : true
+      currentTip : null,
+      saveOff : false
     };
   },
   cancelAddTip: function() {
     return{
       type : types.ADMIN_CANCEL_ADD_TIP_SHOW,
-      saveButtonDisabled : false
+      saveOff : true
     };
-  },
+  }, 
+  beganEditingTip: function() {
+    return{
+      type : types.ADMIN_EDITED_TIP,
+      saveTipDisabled : false
+    };
+  },   
+  editTip: function(currentTip) {
+    return{
+      type : types.ADMIN_EDIT_TIP,
+      currentTip : currentTip,
+      show : true,
+      saveOff : false
+    };
+  },  
   setActivePage: function(activePage){
     return {
       type: types.STATIC_TIPS_ACTIVE_PAGE,
