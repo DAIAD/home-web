@@ -25,20 +25,20 @@
 	"Section": {
             "Dashboard": "Περίληψη",
 	    "Analytics":"Ανάλυση",
-	    "Forecasting": "Πρόβλεψη",
+	    "Forecasting": "Πρόβλεψη - Learning Mode",
 	    "Demographics": "Ομάδες & Χρήστες",
 	    "ModeManagement": "Διαχείριση Κατάστασης",
 	    "Search": "Αναζήτηση",
 	    "Messages": "Μηνύματα",
 	    "Settings": "Ρυθμίσεις",
 	    "Reports": {
-	      "Group": "Αναφορές",
+	      "Group": "Δοκιμές",
 	      "Overview": "Επισκόπηση",
 	      "Charts": "Γραφήματα"
 	    },
 	    "Alerts": "Ειδοποιήσεις",
 	    "Announcements" : "Ανακοινώσεις",
-            "ManageAlerts" : "Διαχείρηση Ειδοποιήσεων",
+      "ManageAlerts" : "Διαχείρηση Ειδοποιήσεων",
 	    "Scheduler": "Διαχείριση Εργασιών",
 	    "Consumers": "Καταναλωτές",
 	    "Support" : {
@@ -254,5 +254,4 @@
     "FavouriteSuccess.FAVOURITE_ADDED" : "Το αγαπημένο προστέθηκε επιτυχώς.",
     "FavouriteSuccess.FAVOURITE_UPDATED" : "Το αγαπημένο ενημερώθηκε επιτυχώς."
   }
-
 }

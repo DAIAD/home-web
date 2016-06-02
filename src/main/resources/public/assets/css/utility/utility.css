@@ -288,6 +288,15 @@ a .disabled{
 	background: #fff;
 }
 
+.disabled-link {
+    border-color: transparent;
+    border-top-color: #337ab7;
+    border-bottom-color: #ddd;
+    color: #cecece!important;
+    background-color: #34495e !important;
+    cursor: not-allowed;
+}
+
 .nav-tabs>li>a:focus {
 	outline: none;
 	border-top-color: #337ab7;
