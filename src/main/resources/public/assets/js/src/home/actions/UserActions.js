@@ -1,5 +1,6 @@
 var userAPI = require('../api/user');
 var types = require('../constants/ActionTypes');
+var DashboardActions = require('./DashboardActions');
 
 const requestedLogin = function() {
   return {
@@ -47,8 +48,13 @@ const UserActions = {
       .then((response) => {
         const { csrf, success, errors, profile } = response;
 
-        if (csrf) { dispatch(setCsrf(csrf)); }
-        
+        if (csrf) dispatch(setCsrf(csrf));
+
+        if (success && profile.configuration) {
+          const configuration = JSON.parse(profile.configuration);
+          if (configuration.infoboxes) dispatch(DashboardActions.setInfoboxes(configuration.infoboxes));
+          if (configuration.layout) dispatch(DashboardActions.updateLayout(configuration.layout));
+        }
         dispatch(receivedLogin(success, errors.length?errors[0].code:null, profile));
         return response;
       })
@@ -71,6 +77,24 @@ const UserActions = {
       })
       .catch((errors) => {
         console.error('User refresh failed with errors:', errors);
+        return errors;
+      });
+    };
+  },
+  saveToProfile: function(configuration) {
+    return function(dispatch, getState) {
+
+      const data = Object.assign({}, {configuration}, {csrf: getState().user.csrf});
+      console.log('gonna save...', data);
+
+      return userAPI.saveToProfile(data)
+      .then((response) => {
+        console.log('saved to profile', response);
+        return response;
+
+      })
+      .catch((errors) => {
+        console.error('User save to profile failed with errors:', errors);
         return errors;
       });
     };

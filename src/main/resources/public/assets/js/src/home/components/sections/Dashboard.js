@@ -285,7 +285,7 @@ function ButtonToolbar (props) {
           (()=> mode==="save"?(
             <bs.Button onClick={()=> saveToProfile()} bsStyle="primary" active={false}>Save</bs.Button>
             ):(
-            <span/>
+            <bs.Button onClick={()=> saveToProfile()} bsStyle="primary" active={false}>Save</bs.Button>
             ))()
         }
       </bs.ButtonToolbar>

@@ -44,6 +44,12 @@ const DashboardActions = {
       mode
     };
   },
+  setInfoboxes: function(infoboxes) {
+    return {
+      type: types.DASHBOARD_SET_INFOBOXES,
+      infoboxes
+    };
+  },
   addInfobox: function(data) {
     return function(dispatch, getState) {
       const infobox = getState().section.dashboard.infobox;

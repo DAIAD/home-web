@@ -131,6 +131,13 @@ var dashboard = function (state, action) {
         return Object.assign({}, state, {
           mode: action.mode
         });
+      
+      
+    case types.DASHBOARD_SET_INFOBOXES: {
+      return Object.assign({}, state, {
+        infobox: action.infoboxes 
+      });
+    }
 
     case types.DASHBOARD_ADD_INFOBOX: {
       let newInfobox = state.infobox.slice();

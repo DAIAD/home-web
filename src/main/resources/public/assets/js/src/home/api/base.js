@@ -23,7 +23,11 @@ var callAPI = function(url, data, method="POST") {
     else 
       throw new Error(response.statusText); 
   })
-  .then(response => response.json().then(json => Object.assign({}, json, {csrf:response.headers.get('X-CSRF-TOKEN')})));
+  .then(response => response.json()
+      .then(json => 
+            Object.assign({}, json, {csrf:response.headers.get('X-CSRF-TOKEN')})
+           )
+       );
 };
 
 module.exports = callAPI;

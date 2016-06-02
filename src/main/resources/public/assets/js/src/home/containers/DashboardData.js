@@ -11,6 +11,7 @@ var { STATIC_RECOMMENDATIONS, STATBOX_DISPLAYS, DEV_METRICS, METER_METRICS, DEV_
 var Dashboard = require('../components/sections/Dashboard');
 
 var HistoryActions = require('../actions/HistoryActions');
+var UserActions = require('../actions/UserActions');
 var DashboardActions = require('../actions/DashboardActions');
 
 var timeUtil = require('../utils/time');
@@ -27,7 +28,7 @@ function mapStateToProps(state, ownProps) {
     devices: state.user.profile.devices,
     layout: state.section.dashboard.layout,
     mode: state.section.dashboard.mode,
-    tempInfoboxData: state.section.dashboard.tempInfoboxData,
+    //tempInfoboxData: state.section.dashboard.tempInfoboxData,
     infoboxes: state.section.dashboard.infobox,
     infoboxToAdd: getValues(state.form.addInfobox)
   };
@@ -36,7 +37,10 @@ function mapStateToProps(state, ownProps) {
 function mapDispatchToProps(dispatch) {
   return Object.assign({}, 
                        bindActionCreators(DashboardActions, dispatch),
-                       {link: options => dispatch(HistoryActions.linkToHistory(options))}
+                       {
+                         link: options => dispatch(HistoryActions.linkToHistory(options)),
+                         saveToProfile: data => dispatch(UserActions.saveToProfile(data))
+                       }
                       ); 
 
 }
@@ -46,6 +50,8 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
   const deviceType = (stateProps.infoboxToAdd && stateProps.infoboxToAdd.deviceType) ? stateProps.infoboxToAdd.deviceType : null;
 
   const deviceTypes = [{id: 'AMPHIRO', title: 'Shower'}, {id: 'METER', title: 'Smart Water Meter'}];
+
+  const saveData = {infoboxes: stateProps.infoboxes.map(x => Object.assign({}, {id:x.id, deviceType:x.deviceType, display:x.display, metric:x.metric, period:x.period, title:x.title, type:x.type})), layout: stateProps.layout};
 
   const types = [
     {id: 'totalVolume', title: 'Total Volume', devType: 'AMPHIRO', data: {type: 'total', metric: 'volume', display: 'chart'}},
@@ -65,6 +71,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                  
                  infoboxData: transformInfoboxData(stateProps.infoboxes, stateProps.devices, dispatchProps.link, ownProps.intl),
                  addInfobox: () => dispatchProps.addInfobox(Object.assign({}, {data: [], period: (deviceType === 'AMPHIRO' ? 'ten' : 'month')}, stateProps.infoboxToAdd, types.find(x => x.id === stateProps.infoboxToAdd.type) ?  types.find(x => x.id === stateProps.infoboxToAdd.type).data : {} )),
+                 saveToProfile: () => dispatchProps.saveToProfile(saveData),
                  deviceTypes,
                  types,
                });
