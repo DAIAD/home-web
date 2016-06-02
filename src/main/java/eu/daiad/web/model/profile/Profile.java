@@ -34,9 +34,9 @@ public class Profile {
 
 	private String configuration;
 
-	private Integer meterBudget;
+	private Integer dailyMeterBudget;
 
-	private Integer amphiroBudget;
+	private Integer dailyAmphiroBudget;
 
 	private ArrayList<DeviceRegistration> devices;
 
@@ -159,20 +159,20 @@ public class Profile {
 		this.locale = locale;
 	}
 
-	public Integer getMeterBudget() {
-		return meterBudget;
+	public Integer getDailyMeterBudget() {
+		return dailyMeterBudget;
 	}
 
-	public void setMeterBudget(Integer meterBudget) {
-		this.meterBudget = meterBudget;
+	public void setDailyMeterBudget(Integer dailyMeterBudget) {
+		this.dailyMeterBudget = dailyMeterBudget;
 	}
 
-	public Integer getAmphiroBudget() {
-		return amphiroBudget;
+	public Integer getDailyAmphiroBudget() {
+		return dailyAmphiroBudget;
 	}
 
-	public void setAmphiroBudget(Integer amphiroBudget) {
-		this.amphiroBudget = amphiroBudget;
+	public void setDailyAmphiroBudget(Integer dailyAmphiroBudget) {
+		this.dailyAmphiroBudget = dailyAmphiroBudget;
 	}
 
 }

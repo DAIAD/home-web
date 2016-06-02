@@ -112,8 +112,10 @@ public class ProfileController extends BaseController {
 	/**
 	 * Deactivates a user.
 	 * 
-	 * @param user the authenticated user.
-	 * @param userDeactId the user to deactivate
+	 * @param user
+	 *            the authenticated user.
+	 * @param userDeactId
+	 *            the user to deactivate
 	 * @return the controller's response.
 	 * @throws JsonProcessingException
 	 */
@@ -136,15 +138,17 @@ public class ProfileController extends BaseController {
 
 	@RequestMapping(value = "/action/profile/save", method = RequestMethod.POST, produces = "application/json")
 	@Secured({ "ROLE_USER", "ROLE_SUPERUSER", "ROLE_ADMIN" })
-	public RestResponse setProfile(@AuthenticationPrincipal AuthenticatedUser user,
+	public RestResponse saveProfile(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody UpdateProfileRequest request) {
 		RestResponse response = new RestResponse();
 
 		try {
 			if (user.hasRole("ROLE_ADMIN")) {
-				this.profileRepository.setProfileConfiguration(EnumApplication.UTILITY, request.getConfiguration());
+				request.setApplication(EnumApplication.UTILITY);
+				this.profileRepository.saveProfile(request);
 			} else {
-				this.profileRepository.setProfileConfiguration(EnumApplication.HOME, request.getConfiguration());
+				request.setApplication(EnumApplication.HOME);
+				this.profileRepository.saveProfile(request);
 			}
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);

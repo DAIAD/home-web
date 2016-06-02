@@ -46,6 +46,8 @@
  * <br/>2: <code>INACTIVE</code>
  * <br/>3: <code>LEARNING</code>
  * <br/>4: <code>BLOCK</code>
+ * @apiSuccess (Profile) {Number}     dailyMeterBudget            Daily smart water meter water consumption budget.
+ * @apiSuccess (Profile) {Number}     dailyAmphiroBudget          Daily Amphiro B1 water consumption budget.
  * @apiSuccess (Profile) {String} configuration   Application configuration serialized as a JSON object.
  * @apiSuccess (Profile) {Object[]} devices       Array of <code>DeviceRegistration</code> objects representing the Amphiro or Smart Water Meter devices registered to the authenticated user. Instances are implemented by classes <code>WaterMeterDeviceRegistration</code> and <code>AmphiroDeviceRegistration</code>.
  *
@@ -83,6 +85,8 @@
  *     "timezone": "Europe/Athens",
  *     "country": "Greece",
  *     "mode": 1,
+ *     "dailyMeterBudget": null,
+ *     "dailyAmphiroBudget": 80,
  *     "configuration": null,
  *     "devices": [ {
  *       "type": "AMPHIRO",
@@ -138,12 +142,14 @@ function loadProfile() { return; }
  * @apiGroup Profile
  * @apiPermission ROLE_USER
  *
- * @apiDescription Saves profile information. This operation is schema agnostic and expects a simple string. By convention this string is a serialized JSON object. The saved profile is loaded by <code>/api/v1/profile/load</code> operation in property <code>profile</code>.<code>configuration</code>. When API endpoint is used, profile is always assumed to be referring the <code>MOBILE</code> application. Updating <code>HOME</code> or <code>UTILITY</code> profile configuration requires using the corresponding action endpoint.
+ * @apiDescription Saves profile information. This operation allows users to update their profile. Among other fields such as daily meter water consumption budget, the operation supports persistence of arbitrary client state data. For the latter, the operation is schema agnostic and expects a simple string. By convention this string is a serialized JSON object. The saved profile is loaded by <code>/api/v1/profile/load</code> operation in property <code>profile</code>.<code>configuration</code>. When API endpoint is used, profile is always assumed to be referring the <code>MOBILE</code> application. Updating <code>HOME</code> or <code>UTILITY</code> profile configuration requires using the corresponding action endpoint.
  *
- * @apiParam (DeviceRegistrationRequest) {Object}     credentials                 User credentials
- * @apiParam (DeviceRegistrationRequest) {String}     credentials.username        User name.
- * @apiParam (DeviceRegistrationRequest) {String}     credentials.password        Password.
- * @apiParam (DeviceRegistrationRequest) {String}     configuration               Profile data
+ * @apiParam (UpdateProfileRequest) {Object}     credentials                 User credentials
+ * @apiParam (UpdateProfileRequest) {String}     credentials.username        User name.
+ * @apiParam (UpdateProfileRequest) {String}     credentials.password        Password.
+ * @apiParam (UpdateProfileRequest) {String}     configuration               Client state expressed as a JSON serialized object.
+ * @apiParam (UpdateProfileRequest) {Number}     dailyMeterBudget            Daily smart water meter water consumption budget.
+ * @apiParam (UpdateProfileRequest) {Number}     dailyAmphiroBudget          Daily Amphiro B1 water consumption budget.
  *
  * @apiParamExample {json} Request Example
  * {
@@ -151,7 +157,9 @@ function loadProfile() { return; }
  *     "username":"george.papadopoulos@daiad.eu",
  *     "password":"****",
  *   },
- *   "configuration": "{\"property1\":1,\"property2\":\"value2\"}"}"
+ *   "configuration": "{\"property1\":1,\"property2\":\"value2\"}"}",
+ *   "dailyMeterBudget": 300,
+ *   "dailyAmphiroBudget": 80
  * }
  *
  * @apiSuccess {Boolean}  success             Returns <code>true</code> or <code>false</code> indicating success of the operation.

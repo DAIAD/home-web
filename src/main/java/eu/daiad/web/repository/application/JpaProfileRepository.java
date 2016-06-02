@@ -44,6 +44,7 @@ import eu.daiad.web.model.profile.ProfileModesChanges;
 import eu.daiad.web.model.profile.ProfileModesFilterOptions;
 import eu.daiad.web.model.profile.ProfileModesRequest;
 import eu.daiad.web.model.profile.ProfileModesSubmitChangesRequest;
+import eu.daiad.web.model.profile.UpdateProfileRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.BaseRepository;
 
@@ -114,8 +115,8 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 			profile.setLocale(account.getLocale());
 			profile.setApplication(application);
 
-			profile.setMeterBudget(account.getProfile().getMeterBudget());
-			profile.setAmphiroBudget(account.getProfile().getAmphiroBudget());
+			profile.setDailyMeterBudget(account.getProfile().getDailyMeterBudget());
+			profile.setDailyAmphiroBudget(account.getProfile().getDailyAmphiroBudget());
 
 			ArrayList<DeviceRegistration> registrations = new ArrayList<DeviceRegistration>();
 			for (Iterator<Device> d = devices.iterator(); d.hasNext();) {
@@ -627,7 +628,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 	}
 
 	@Override
-	public void setProfileConfiguration(EnumApplication application, String value) throws ApplicationException {
+	public void saveProfile(UpdateProfileRequest updates) throws ApplicationException {
 		try {
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser user = null;
@@ -645,17 +646,20 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
 			Account account = query.getSingleResult();
 
-			switch (application) {
+			switch (updates.getApplication()) {
 				case HOME:
-					account.getProfile().setWebConfiguration(value);
+					account.getProfile().setWebConfiguration(updates.getConfiguration());
 					break;
 				case MOBILE:
-					account.getProfile().setMobileConfiguration(value);
+					account.getProfile().setMobileConfiguration(updates.getConfiguration());
 					break;
 				default:
 					throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
-									application);
+									updates.getApplication());
 			}
+
+			account.getProfile().setDailyMeterBudget(updates.getDailyMeterBudget());
+			account.getProfile().setDailyAmphiroBudget(updates.getDailyAmphiroBudget());
 		} catch (Exception ex) {
 			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}

@@ -35,7 +35,8 @@ public class ProfileController extends BaseRestController {
 	/**
 	 * Loads user profile data.
 	 * 
-	 * @param data user credentials.
+	 * @param data
+	 *            user credentials.
 	 * @return the user profile.
 	 */
 	@RequestMapping(value = "/api/v1/profile/load", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
@@ -57,9 +58,11 @@ public class ProfileController extends BaseRestController {
 	}
 
 	/**
-	 * Saves client application specific information e.g. the web application layout to the server.
+	 * Saves client application specific information e.g. the web application
+	 * layout to the server.
 	 * 
-	 * @param request the profile data to store
+	 * @param request
+	 *            the profile data to store
 	 * @return the controller's response.
 	 */
 	@RequestMapping(value = "/api/v1/profile/save", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
@@ -69,7 +72,9 @@ public class ProfileController extends BaseRestController {
 		try {
 			this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
-			this.profileRepository.setProfileConfiguration(EnumApplication.MOBILE, request.getConfiguration());
+			request.setApplication(EnumApplication.MOBILE);
+
+			this.profileRepository.saveProfile(request);
 
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
@@ -81,10 +86,11 @@ public class ProfileController extends BaseRestController {
 	}
 
 	/**
-	 * Updates user profile that a specific application configuration version has been applied to 
-	 * the mobile client.
+	 * Updates user profile that a specific application configuration version
+	 * has been applied to the mobile client.
 	 * 
-	 * @param request the notification request.
+	 * @param request
+	 *            the notification request.
 	 * @return the controller's response.
 	 */
 	@RequestMapping(value = "/api/v1/profile/notify", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
