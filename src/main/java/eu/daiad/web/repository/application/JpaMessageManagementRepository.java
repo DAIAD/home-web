@@ -34,6 +34,7 @@ import eu.daiad.web.model.message.PendingMessageStatus;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.BaseRepository;
+import java.util.Collections;
 
 @Repository()
 @Transactional("applicationTransactionManager")
@@ -54,7 +55,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 					PendingMessageStatus status, Account account) {
 		computeAmphiroMessagesForUser(config, aggregates, status, account);                
 		computeSmartWaterMeterMessagesForUser(config, aggregates, status, account);                
-		computeStaticTipForUser(config, status, account);
+		computeStaticTipsForUser(config, status, account);
 	}
 
 	@Override
@@ -163,34 +164,73 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 		}
 
 		TypedQuery<eu.daiad.web.domain.application.StaticRecommendation> accountAlertsQuery = entityManager
-						.createQuery("select a from static_recommendation a where a.locale = :locale",
+						.createQuery("select a from static_recommendation a where a.locale = :locale and a.active = :active",
 										eu.daiad.web.domain.application.StaticRecommendation.class);
 		accountAlertsQuery.setParameter("locale", locale);
+                accountAlertsQuery.setParameter("active", true);
 		List<StaticRecommendation> staticRecommendations = accountAlertsQuery.getResultList();
 
-		Random random = new Random();
-		int max = staticRecommendations.size();
-		int min = staticRecommendations.get(0).getIndex();
-		int range = max - min;
-		int randomId = random.nextInt(range) + min;
+                if(staticRecommendations.isEmpty()){
+                        return null;
+                }   
                 
-                while (!staticRecommendations.get(randomId).isActive()){
-                        randomId = random.nextInt(range) + min;
-                }
+                Collections.shuffle(staticRecommendations);                   
 
-		StaticRecommendation singleRandomStaticRecommendation = staticRecommendations.get(randomId);
+                StaticRecommendation singleRandomStaticRecommendation = staticRecommendations.get(0);
 
 		return singleRandomStaticRecommendation;
 	}
+        
+	private List<StaticRecommendation> getInitialRandomStaticRecommendationForLocale(String accountLocale) {
+                List<StaticRecommendation> initialTips = new ArrayList<>();
+		String locale;
+		switch (accountLocale) {
+			case "en":
+				locale = accountLocale;
+				break;
+			case "es":
+				locale = accountLocale;
+				break;
+			default:
+				locale = "en";
+		}
+
+		TypedQuery<eu.daiad.web.domain.application.StaticRecommendation> accountAlertsQuery = entityManager
+						.createQuery("select a from static_recommendation a where a.locale = :locale and a.active = :active",
+										eu.daiad.web.domain.application.StaticRecommendation.class);
+		accountAlertsQuery.setParameter("locale", locale);
+                accountAlertsQuery.setParameter("active", true);
+		List<StaticRecommendation> staticRecommendations = accountAlertsQuery.getResultList();
+               
+                if(staticRecommendations.size() <= 3){
+                        initialTips = staticRecommendations;
+                }
+                else{
+                        Collections.shuffle(staticRecommendations);                   
+                        for(int i = 0; i<3; i++){
+                                initialTips.add(staticRecommendations.get(i));
+                        }                                                            
+                }
+		return initialTips;
+	}        
 
 	// random static tip
-	private void computeStaticTipForUser(MessageCalculationConfiguration config, PendingMessageStatus status,
+	private void computeStaticTipsForUser(MessageCalculationConfiguration config, PendingMessageStatus status,
 					Account account) {
-		if (DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()
+            
+                if(status.isInitialStaticTips()){
+                    List<StaticRecommendation> randomTips = getInitialRandomStaticRecommendationForLocale(account.getLocale());
+                    for(StaticRecommendation randomTip : randomTips){
+                        createAccountStaticRecommendation(account, randomTip, DateTime.now());
+                    }	                    
+                }                                       
+                else if (DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()
 						|| DateTime.now().getDayOfWeek() == DateTimeConstants.WEDNESDAY) {
 			if (status.isStaticTipToBeProduced()) {
-				createAccountStaticRecommendation(account, getRandomStaticRecommendationForLocale(account.getLocale()),
-								DateTime.now());
+                            StaticRecommendation randomTip = getRandomStaticRecommendationForLocale(account.getLocale());
+                            if(randomTip != null){
+                                createAccountStaticRecommendation(account, randomTip, DateTime.now());
+                            }				
 			}
 		}
 	}
