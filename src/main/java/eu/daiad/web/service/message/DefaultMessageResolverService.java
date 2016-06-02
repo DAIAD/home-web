@@ -125,21 +125,35 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 
 		status.setRecommendReduceFlowWhenNotNeededAmphiro(this.recommendReduceFlowWhenNotNeededAmphiro(aggregates,
 						accountKey, config.getTimezone()));
-               
+                
+                status.setInitialStaticTips(this.initialStaticTipsForAccount(account));
+                
                 status.setStaticTip(this.produceStaticTipForAccount(account, config.getStaticTipInterval()));
                 
 		return status;
 	}
+        
+        //random three initial static tips
+        private boolean initialStaticTipsForAccount(AuthenticatedUser user) {                        
+                boolean initialStaticTips = false;            
+                DateTime lastCreatedOn = messageManagementRepository.getLastDateOfAccountStaticRecommendation(user);
 
+                if(lastCreatedOn == null ){
+                        initialStaticTips = true;
+                }
+                return initialStaticTips;
+        }
+        
+        
         //random static tip
         private boolean produceStaticTipForAccount(AuthenticatedUser user, int staticTipInterval) {                        
-            boolean produceStaticTip = false;            
-            DateTime lastCreatedOn = messageManagementRepository.getLastDateOfAccountStaticRecommendation(user);
-            
-            if(lastCreatedOn == null || lastCreatedOn.isBefore(DateTime.now().minusDays(staticTipInterval))){
-                produceStaticTip = true;
-            }
-            return produceStaticTip;
+                boolean produceStaticTip = false;            
+                DateTime lastCreatedOn = messageManagementRepository.getLastDateOfAccountStaticRecommendation(user);
+
+                if(lastCreatedOn == null || lastCreatedOn.isBefore(DateTime.now().minusDays(staticTipInterval))){
+                    produceStaticTip = true;
+                }
+                return produceStaticTip;
         }
         
 	// 1 alert - Check for water leaks!
