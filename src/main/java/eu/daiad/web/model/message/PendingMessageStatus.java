@@ -79,6 +79,8 @@ public class PendingMessageStatus {
 	// returns liters more than average
 	private SimpleEntry<Boolean, Integer> recommendReduceFlowWhenNotNeededAmphiro;
         
+        private boolean initialStaticTips;
+        
         // returns random static tip
 	private boolean produceStaticTip;
         
@@ -86,6 +88,10 @@ public class PendingMessageStatus {
         
         private boolean amphiroInstalled;
 
+        public boolean isInitialStaticTips(){
+                return initialStaticTips;
+        }
+        
         public boolean isMeterInstalled() {
 		return meterInstalled;
 	}
@@ -323,6 +329,10 @@ public class PendingMessageStatus {
 					SimpleEntry<Boolean, Integer> recommendReduceFlowWhenNotNeededAmphiro) {
 		this.recommendReduceFlowWhenNotNeededAmphiro = recommendReduceFlowWhenNotNeededAmphiro;
 	}
+        
+        public void setInitialStaticTips(boolean initialStaticTips){
+            this.initialStaticTips = initialStaticTips;
+        }
         
         public void setStaticTip(boolean produceStaticTip){
                 this.produceStaticTip = produceStaticTip;
