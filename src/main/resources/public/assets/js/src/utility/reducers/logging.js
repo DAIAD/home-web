@@ -17,7 +17,7 @@ var createInitialeState = function() {
       size : 10,
       events : null
     },
-    timeout: null
+    timeout : null
   };
 };
 
@@ -36,7 +36,8 @@ var logging = function(state, action) {
 
       return Object.assign({}, state, {
         query : Object.assign({}, state.query, {
-          account : action.account || ''
+          account : action.account || '',
+          index : 0
         })
       });
 
@@ -44,7 +45,8 @@ var logging = function(state, action) {
 
       return Object.assign({}, state, {
         query : Object.assign({}, state.query, {
-          level : action.level || null
+          level : action.level || null,
+          index : 0
         })
       });
 
@@ -58,13 +60,13 @@ var logging = function(state, action) {
       });
 
     case types.LOG_EVENT_REQUEST_INIT:
-      if(state.timeout) {
+      if (state.timeout) {
         clearTimeout(timeout);
       }
-      
+
       return Object.assign({}, state, {
         isLoading : true,
-        timeout: null
+        timeout : null
       });
 
     case types.LOG_EVENT_REQUEST_COMPLETE:
