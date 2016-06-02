@@ -11,7 +11,7 @@ var { bindActionCreators } = require('redux');
 var TipsEditTable = require('../TipsEditTable');
 var {FormattedMessage, FormattedTime, FormattedDate} = require('react-intl');
 var Schema = require('../../constants/ManageAlertsTableSchema');
-var { getUtilities, addTip, cancelAddTip, showAddTipForm } = require('../../actions/ManageAlertsActions');
+var { getUtilities, addTip, cancelAddTip, showAddTipForm, beganEditingTip } = require('../../actions/ManageAlertsActions');
 
 var Helpers = require('../../helpers/helpers');
 
@@ -37,31 +37,11 @@ var ManageAlerts = React.createClass({
     return {value:"initial state", saveButtonDisabled : false, rowsChanged : []};//TODO, change this to true and resolve state
   },
   componentWillMount : function() {
-    this.props.fetchUtilities();    
+    this.props.fetchUtilities();   
   },
-  computeModesState: function (data){
-          var modesState = {};
-          var propertyNames = Helpers.pluck(
-                                          Helpers.pickQualiffiedOnEquality(data.fields, 'type', 'property'),
-                                          'name'
-                                  );
-          var self = this;
-          var rowIds = Helpers.pluck(data.rows, 'id');
 
-          for (var i = 0, len = rowIds.length; i < len; i++){
-                  var modeEntry = {};
-                  modeEntry.active = data.rows[i].active;
-                  modeEntry.modes = {};
-                  for (var p = 0, len2 = propertyNames.length; p < len2; p++){
-                          var mode = {
-                                  value: data.rows[i][propertyNames[p]],
-                                  draft: false
-                          };
-                          modeEntry.modes[propertyNames[p]] = mode;
-                  }
-                  modesState[rowIds[i]] = modeEntry;
-          }
-          return modesState;
+  editClickedTip : function(tip) {
+    this.props.editTip(tip);
   },
 
   validateNewTipForm: function(title, description, image){
@@ -142,8 +122,8 @@ var ManageAlerts = React.createClass({
           name: 'edit',
           type:'action',
           icon: 'pencil',
-          handler: function() {
-            console.log(this);           
+          handler: function() {           
+            self.editClickedTip(this.props.row);
           }
         }, {
         name: 'cancel',
@@ -160,7 +140,7 @@ var ManageAlerts = React.createClass({
         rows: populateTips(this),
         pager: {
           index: 0,
-          size: 5,
+          size: 7,
           count:1
         }
       };
@@ -189,7 +169,7 @@ var ManageAlerts = React.createClass({
                           type='submit'
                           className='btn btn-primary'
                                   style={{ height: 33 }}
-                                  disabled={this.props.saveButtonDisabled}
+                                  disabled={this.props.saveOff}
                                   onClick={this.props.saveActive}>
                           <FormattedMessage id='Table.Save' />
                   </button>
@@ -249,54 +229,43 @@ var ManageAlerts = React.createClass({
         <div>
           <Bootstrap.Row>
             <Bootstrap.Col xs={6}>
-              <Bootstrap.Input 
-                type='text' 
-                label={'Title'} />
+              <label>Title</label>
+            
+              <textarea name="Title" 
+                rows="2" cols="120" 
+                ref="editedTitle"
+                defaultValue={this.props.currentTip ? this.props.currentTip.title : ""}
+              />
             </Bootstrap.Col>
           </Bootstrap.Row> 
            <Bootstrap.Row>
             <Bootstrap.Col xs={6}>
-              <Bootstrap.Input 
-                type='text' 
-                label={'Description'} />
+              <label>Description</label>
+              <textarea name="Description" 
+                rows="8" cols="120" 
+                defaultValue={this.props.currentTip ? this.props.currentTip.description : ""}
+              />
             </Bootstrap.Col>
           </Bootstrap.Row>    
-           <Bootstrap.Row>
-            <Bootstrap.Col xs={6}>
-              <Bootstrap.Input 
-                type='text'
-                value={''}
-                label={'Image path'}  />
-            </Bootstrap.Col>
-            <Bootstrap.Col xs={6}>
-              <div className='pull-left' style={{ marginTop : 25}}>
-                  <button id='Browse'
-                    type='submit'
-                    className='btn btn-primary'
-                      style={{ height: 33 }}
-                      disabled={this.state.saveButtonDisabled}
-                      onClick={this.props.saveActive}>
-                    <FormattedMessage id='Browse' />
-                  </button>
-                </div>
-            </Bootstrap.Col>          
-          </Bootstrap.Row>          
+        
            <Bootstrap.Row>
             <Bootstrap.Col xs={6}>
                 <div>
-                  <button id='browse'
-                          label = 'Browse'
-                          type = 'browse'
+                  <button id='add'
+                          label = 'Add'
+                          type = 'submit'
                           className = 'btn btn-primary'
-                                  style={{ height: 33 }}
-                                  onClick={this.props.saveActive}>
-                          <FormattedMessage id='Add Static Tip' />
+                                  style={{ height: 33}}
+                                  onClick={this.props.saveCurrentTip}
+                                  disabled={this.props.saveTipDisabled} >
+                                   
+                          <FormattedMessage id='Save Static Tip' />
                   </button>
                   <button id='cancel'
                           label = 'Cancel'
                           type = 'cancel'
                           className = 'btn btn-primary'
-                                  style={{ height: 33, marginLeft : 10 }}
+                                  style={{ height: 33, marginLeft : 10}}
                                   onClick={this.props.actions.cancelAddTip}>
                           <FormattedMessage id='Cancel' />
                   </button>  
@@ -415,28 +384,58 @@ var sortBy = function(field, reverse){
    };
 };
 
+  var computeModesState = function (data){
+          var modesState = {};
+          var propertyNames = Helpers.pluck(
+                                          Helpers.pickQualiffiedOnEquality(data.fields, 'type', 'property'),
+                                          'name'
+                                  );
+          var self = this;
+          var rowIds = Helpers.pluck(data.rows, 'id');
+
+          for (var i = 0, len = rowIds.length; i < len; i++){
+                  var modeEntry = {};
+                  modeEntry.active = data.rows[i].active;
+                  modeEntry.modes = {};
+                  for (var p = 0, len2 = propertyNames.length; p < len2; p++){
+                          var mode = {
+                                  value: data.rows[i][propertyNames[p]],
+                                  draft: false
+                          };
+                          modeEntry.modes[propertyNames[p]] = mode;
+                  }
+                  modesState[rowIds[i]] = modeEntry;
+          }
+          return modesState;
+  };
+
 function mapStateToProps(state) {  
-  console.log('mapStateToProps, state.alerts.saveButtonDisabled ' + state.alerts.saveButtonDisabled);
-  console.log('mapStateToProps, state.alerts.show ' + state.alerts.show);
   return {
     utility: state.alerts.utility,
     tips: state.alerts.tips,
     utilities: state.alerts.utilities,
     isLoading: state.alerts.isLoading,
     rowsChanged: state.alerts.rowsChanged,
-    saveButtonDisabled : state.alerts.saveButtonDisabled,
     activePage: state.alerts.activePage,
     show: state.alerts.show,
-    modes: state.alerts.modes
+    modes: state.alerts.modes,
+    currentTip: state.alerts.currentTip,
+    saveOff: state.alerts.saveOff,
+    saveTipDisabled: state.alerts.saveTipDisabled
   };
 }
 
 function mapDispatchToProps(dispatch) {  
   return {
-    actions : bindActionCreators(Object.assign({}, {addTip, showAddTipForm, cancelAddTip}) , dispatch),    
+    actions : bindActionCreators(Object.assign({}, {beganEditingTip, showAddTipForm, cancelAddTip}) , dispatch), 
+    editTip : bindActionCreators(ManageAlertsActions.editTip, dispatch),
     setUtility: function (event, utility){
       dispatch(ManageAlertsActions.setUtility(event, utility));
       dispatch(ManageAlertsActions.getStaticTips(event, utility));
+    },
+    saveCurrentTip : function (){
+      self.props.currentTip.title = self.refs.editedTitle.value;
+      dispatch(ManageAlertsActions.addTip(event, self.props.currentTip));
     },
     fetchUtilities : bindActionCreators(ManageAlertsActions.fetchUtilities, dispatch),
     setActivePage: function(activePage){

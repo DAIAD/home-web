@@ -23,6 +23,7 @@ import eu.daiad.web.domain.application.AccountAlert;
 import eu.daiad.web.domain.application.AccountAlertProperty;
 import eu.daiad.web.domain.application.AccountDynamicRecommendation;
 import eu.daiad.web.domain.application.AccountDynamicRecommendationProperty;
+import eu.daiad.web.domain.application.AccountStaticRecommendation;
 import eu.daiad.web.domain.application.AlertTranslation;
 import eu.daiad.web.domain.application.DynamicRecommendationTranslation;
 import eu.daiad.web.domain.application.StaticRecommendation;
@@ -59,7 +60,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 	}
 
 	@Override
-	public void setMessageAcknowledgement(List<MessageAcknowledgement> messages) {
+	public void setMessageAcknowledgement(List<MessageAcknowledgement> messages) {            
 		if (messages != null) {
 			for (MessageAcknowledgement message : messages) {
 				switch (message.getType()) {
@@ -71,6 +72,8 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 										new DateTime(message.getTimestamp()));
 						break;
 					case RECOMMENDATION_STATIC:
+                                                persistStaticRecommendationAcknowledgement(message.getId(),
+										new DateTime(message.getTimestamp()));
 						break;
 					case ANNOUNCEMENT:
 						throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
@@ -446,6 +449,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 
 		List<AccountAlert> alerts = accountAlertsQuery.getResultList();
 
+                System.out.println("persisting.. size" + alerts.size());
 		if (alerts.size() == 1) {
 			alerts.get(0).setAcknowledgedOn(acknowledgedOn);
 			alerts.get(0).setReceiveAcknowledgedOn(DateTime.now());
@@ -470,6 +474,25 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 			recommendations.get(0).setReceiveAcknowledgedOn(DateTime.now());
 		}
 	}
+        
+	private void persistStaticRecommendationAcknowledgement(int id, DateTime acknowledgedOn) {
+		AuthenticatedUser user = this.getCurrentAuthenticatedUser();
+
+		TypedQuery<eu.daiad.web.domain.application.AccountStaticRecommendation> accountStaticRecommendationQuery = entityManager
+						.createQuery("select a from account_static_recommendation a "
+                                                                                + "where a.account.id = :accountId and a.id = :staticRecommendationId and a.acknowledgedOn is null",
+										eu.daiad.web.domain.application.AccountStaticRecommendation.class);
+
+		accountStaticRecommendationQuery.setParameter("accountId", user.getId());
+		accountStaticRecommendationQuery.setParameter("staticRecommendationId", id);
+
+		List<AccountStaticRecommendation> staticRecommendations = accountStaticRecommendationQuery.getResultList();
+
+		if (staticRecommendations.size() == 1) {
+			staticRecommendations.get(0).setAcknowledgedOn(acknowledgedOn);
+			staticRecommendations.get(0).setReceiveAcknowledgedOn(DateTime.now());
+		}
+	}        
 
 	private Locale resolveCurrency(String country) {
 		Locale currency;

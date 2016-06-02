@@ -55,15 +55,34 @@ var EditTable = React.createClass({
                     false: 'deactivated'
     };
 
-    var currentModesState = Object.assign({}, this.props.modes);
-
-
+    //var currentModesState = Object.assign({}, this.props.modes);
+    var currentModesState = [];
     console.log('rowId '+ rowId +' propertyName ' + propertyName + ' currentValue ' + currentValue);
+    var obj = self.props;
+    function iter(obj) {
+      for (var key in obj) {
+        if (typeof(obj[key]) == 'object') {
+          iter(obj[key]);
+        } else {
+          alert("Key: " + key + " Values: " + obj[key]);
+        }
+      }
+    }  
+
+    var propValue;
+    for(var propName in this.props) {
+        propValue = currentModesState[propName];
+
+        console.log(propName +' -> ' + propValue);
+    }    
 
     currentModesState[rowId].modes[propertyName] = {
-                    value: inverseTruthTable[!truthTable[this.props.modes[rowId].modes[propertyName].value]], 
+                    value: inverseTruthTable[!truthTable[true]],
                     draft: !this.props.modes[rowId].modes[propertyName].draft								  
     };
+        
+    console.log('value ' + currentModesState[rowId].modes[propertyName].value);
+    console.log('draft' + currentModesState[rowId].modes[propertyName].draft);
     this.props.setModes(currentModesState);
   },
 	
@@ -84,6 +103,8 @@ var EditTable = React.createClass({
     }
 
     var currentModesState = Object.assign({}, this.props.modes);
+    console.log('toggleState ' + toggleState);
+    console.log('this.props.modes ' + this.props.modes);
     switch(toggleState) {
     case 'selectAll':
         for (let r = 0, len = visibleRowIds.length; r < len; r++){
@@ -128,7 +149,7 @@ var EditTable = React.createClass({
         rows: [],
         pager: {
           index: 0,
-          size: 5
+          size: 7
         }
       }
     };
@@ -215,7 +236,7 @@ var EditTable = React.createClass({
             checkboxHandler = {this.handleCheckboxChange}>
           </EditTable.Body>			
         </Bootstrap.Table>
-        {saveButton}
+        {saveButton} 
         <div style={{float:'right'}}>
           <Bootstrap.Pagination prev  next  first last  ellipsis  
             items={numberOfPages}
@@ -240,6 +261,9 @@ var Header = React.createClass({
 		var header = this.props.data.fields.filter((f) => { return !!!f.hidden; }).map(function(field) {
 			switch(field.type ) {
 				case 'action':
+                                  if(field.name === 'edit'){
+                                    console.log('field type: action' + field.name);
+                                  }                                  
 					return (
 						<th key={field.name} style={{ width: 24 }}>{field.title ? _t({ id: field.title}) : ''}</th>
 					);
@@ -321,12 +345,6 @@ var Row = React.createClass({
   }
 });
 
-var formatLink = function(route, row) {
-	return Object.keys(row).reduce(function(link, key) {
-		return link.replace(new RegExp('\{' + key + '\}'), row[key]);
-	}, route);
-};
-
 var Cell = React.createClass({
   	render: function() {
           
@@ -343,7 +361,7 @@ var Cell = React.createClass({
   		if(this.props.field.hasOwnProperty('type')) {
   			switch(this.props.field.type) { 
   			case 'action':
-
+                          console.log();
                           text = (<i className={'fa fa-' + this.props.field.icon + ' fa-fw table-action'} onClick={this.props.field.handler.bind(this)}></i>);
                           break;
   			case 'datetime':
