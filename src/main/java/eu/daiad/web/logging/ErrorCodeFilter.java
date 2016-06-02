@@ -48,7 +48,11 @@ public class ErrorCodeFilter extends AbstractFilter {
 	public Result filter(final LogEvent event) {
 		final Throwable t = event.getThrown();
 		if (t == null) {
-			return Result.DENY;
+			if (event.getLevel().isMoreSpecificThan(Level.INFO)) {
+				return Result.NEUTRAL;
+			} else {
+				return Result.DENY;
+			}
 		}
 		if (t instanceof ApplicationException) {
 			if ((categories.isEmpty())
@@ -75,7 +79,7 @@ public class ErrorCodeFilter extends AbstractFilter {
 	@Override
 	public Result filter(final Logger logger, final Level level, final Marker marker, final String msg,
 					final Object... params) {
-		if (level.isMoreSpecificThan(Level.ERROR)) {
+		if (level.isMoreSpecificThan(Level.WARN)) {
 			return Result.ACCEPT;
 		}
 		return Result.NEUTRAL;

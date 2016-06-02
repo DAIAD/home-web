@@ -16,7 +16,7 @@ public class MappedDiagnosticContextFilter extends OncePerRequestFilter {
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
 					javax.servlet.FilterChain filterChain) throws ServletException, IOException {
 		// Set default anonymous user
-		MDC.put(MappedDiagnosticContextKeys.USERNAME, "(null)");
+		MDC.put(MappedDiagnosticContextKeys.USERNAME, MappedDiagnosticContextValues.UNKNOWN_USERNAME);
 
 		// Set remote address
 		String remoteAddress = request.getHeader("X-FORWARDED-FOR");

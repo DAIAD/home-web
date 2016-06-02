@@ -298,7 +298,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
 								"Failed to scheduler job [%s]. Both trigger options are set to [%d] and [%s].",
 								scheduledJob.getName(), scheduledJob.getPeriod(), scheduledJob.getCronExpression()));
 			} else if (scheduledJob.getPeriod() != null) {
-				logger.warn(String.format("Initializing job [%s] with periodic trigger [%d].", scheduledJob.getName(),
+				logger.info(String.format("Initializing job [%s] with periodic trigger [%d].", scheduledJob.getName(),
 								scheduledJob.getPeriod()));
 
 				ScheduledFuture<?> future = taskScheduler.schedule(new RunnableJob(this.activeExecutions, jobLauncher,
@@ -306,7 +306,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
 
 				this.scheduledJobs.put(scheduledJob.getId(), new JobSchedulingProperties(scheduledJob.getId(), future));
 			} else if (!StringUtils.isBlank(scheduledJob.getCronExpression())) {
-				logger.warn(String.format("Initializing job [%s] with CRON trigger expression [%s].",
+				logger.info(String.format("Initializing job [%s] with CRON trigger expression [%s].",
 								scheduledJob.getName(), scheduledJob.getCronExpression()));
 
 				ScheduledFuture<?> future = taskScheduler.schedule(new RunnableJob(this.activeExecutions, jobLauncher,
@@ -388,7 +388,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
 		@Override
 		public void run() {
 			try {
-				logger.warn(String.format("Launching job [%s].", job.getName()));
+				logger.info(String.format("Launching job [%s].", job.getName()));
 
 				JobExecution jobExecution = jobLauncher.run(job, job.getJobParametersIncrementer().getNext(parameters));
 

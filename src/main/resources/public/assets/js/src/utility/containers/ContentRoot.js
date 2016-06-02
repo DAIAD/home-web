@@ -176,9 +176,9 @@ var ContentRoot = React.createClass({
                     <Collapsible open={this.state.expandSupport}>
                       <ul className='nav'>
                         <li>
-                          <Link to='/alerts'>
+                          <Link to='/support/logging'>
                             <span  style={{paddingLeft: 18}}>
-                              <i className='fa fa-bell fa-fw'></i>{' ' + _t({ id: 'Section.Alerts'})}
+                              <i className='fa fa-history fa-fw'></i>{' ' + _t({ id: 'Section.Support.Logging'})}
                             </span>
                           </Link>
                         </li>

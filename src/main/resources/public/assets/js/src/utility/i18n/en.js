@@ -36,13 +36,13 @@
         "Overview": "Overview",
         "Charts": "Charts"
       },
-	    "Alerts": "Alerts",
 	    "Announcements" : "Announcements",
       "ManageAlerts" : "Manage Alerts",
 	    "Scheduler": "Job Management",
 	    "Consumers": "Consumers",
       "Support" : {
         "Group": "Support",
+        "Logging": "Logs",
         "Data": "Data Management",
         "Development": "Development"
       }

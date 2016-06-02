@@ -9,11 +9,14 @@ import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTimeZone;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import eu.daiad.web.logging.MappedDiagnosticContextKeys;
+import eu.daiad.web.logging.MappedDiagnosticContextValues;
 import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.admin.AccountWhiteListEntry;
 import eu.daiad.web.model.device.Device;
@@ -79,8 +82,8 @@ public class UserService extends BaseService implements IUserService {
 					Device device = deviceRepository.getWaterMeterDeviceBySerial(entry.getMeterSerial());
 
 					if (device != null) {
-						throw createApplicationException(DeviceErrorCode.ALREADY_EXISTS)
-										.set("id", entry.getMeterSerial());
+						throw createApplicationException(DeviceErrorCode.ALREADY_EXISTS).set("id",
+										entry.getMeterSerial());
 					}
 
 					ArrayList<KeyValuePair> properties = new ArrayList<KeyValuePair>();
@@ -94,6 +97,14 @@ public class UserService extends BaseService implements IUserService {
 			}
 
 			return userKey;
+		} catch (ApplicationException ex) {
+			if (ex.getCode().equals(UserErrorCode.USERNANE_NOT_AVAILABLE)) {
+				if (MDC.get(MappedDiagnosticContextKeys.USERNAME)
+								.equals(MappedDiagnosticContextValues.UNKNOWN_USERNAME)) {
+					MDC.put(MappedDiagnosticContextKeys.USERNAME, request.getAccount().getUsername());
+				}
+			}
+			throw ex;
 		} catch (Exception ex) {
 			throw wrapApplicationException(ex);
 		}
