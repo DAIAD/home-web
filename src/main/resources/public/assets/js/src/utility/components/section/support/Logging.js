@@ -57,6 +57,7 @@ var Logging = React.createClass({
       }, {
         name: 'level',
         title: 'Level',
+        align: 'center',
         className: function(value) {
           switch(value) {
             case "FATAL": case "ERROR":

@@ -90,34 +90,37 @@ var Header = React.createClass({
 	    intl: React.PropTypes.object
 	},
 
-  	render: function() {	
-  		var _t = this.context.intl.formatMessage;
+	render: function() {	
+		var _t = this.context.intl.formatMessage;
 
 		var header = this.props.data.fields.filter((f) => { return !!!f.hidden; }).map(function(field) {
+		  var style =  {};
+      if(field.hasOwnProperty('align')) {
+        style.textAlign = field.align;
+      }
+      
 			switch(field.type ) {
 				case 'action':
-					return (
-						<th key={field.name} style={{ width: 24 }}>{field.title ? _t({ id: field.title}) : ''}</th>
-					);
+				  style.width = 24;
+				  break;
 				case 'boolean':
-					return (
-						<th key={field.name} style={{ width: 90 }}>{field.title ? _t({ id: field.title}) : ''}</th>
-					);
+				  style.width = 90;
+				  break;
 			}
 
-			return (
-				<th key={field.name}>{field.title ? _t({ id: field.title}) : ''}</th>
-			);
+      return (
+        <th key={field.name} style={style}>{field.title ? _t({ id: field.title}) : ''}</th>
+      );
 		});
 		
-  		return (
+		return (
 			<thead>
 				<tr>
 					{header}
 				</tr>	
 			</thead>
  		);
-  	}
+	}
 });
 
 var Body = React.createClass({
@@ -283,7 +286,7 @@ var Cell = React.createClass({
 		return (
 			<td>{text}</td>
 		);
-  	}
+	}
 });
 
 Table.Header = Header;
