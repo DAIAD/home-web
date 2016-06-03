@@ -1,10 +1,10 @@
 package eu.daiad.web.model.message;
 
-import org.joda.time.DateTime;
-
 public class Alert extends Message {
 
 	private int id;
+
+	private EnumAlertType alert;
 
 	private int priority;
 
@@ -14,19 +14,15 @@ public class Alert extends Message {
 
 	private String imageLink;
 
-	private DateTime createdOn;
+	private Long createdOn;
+
+	public Alert(EnumAlertType alert) {
+		this.alert = alert;
+	}
 
 	@Override
 	public EnumMessageType getType() {
 		return EnumMessageType.ALERT;
-	}
-
-	public int getId() {
-		return id;
-	}
-
-	public void setId(int id) {
-		this.id = id;
 	}
 
 	public int getPriority() {
@@ -53,11 +49,11 @@ public class Alert extends Message {
 		this.description = description;
 	}
 
-	public DateTime getCreatedOn() {
+	public Long getCreatedOn() {
 		return createdOn;
 	}
 
-	public void setCreatedOn(DateTime createdOn) {
+	public void setCreatedOn(Long createdOn) {
 		this.createdOn = createdOn;
 	}
 
@@ -67,6 +63,18 @@ public class Alert extends Message {
 
 	public void setImageLink(String imageLink) {
 		this.imageLink = imageLink;
+	}
+
+	public EnumAlertType getAlert() {
+		return alert;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
 	}
 
 }

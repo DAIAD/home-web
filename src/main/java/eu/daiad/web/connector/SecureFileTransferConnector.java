@@ -16,10 +16,10 @@ import com.jcraft.jsch.ChannelSftp.LsEntry;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 
-import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.service.BaseService;
 
 @Service
-public class SecureFileTransferConnector {
+public class SecureFileTransferConnector extends BaseService {
 
 	public ArrayList<RemoteFileAttributes> ls(SftpProperties properties, String path) {
 		Session session = null;
@@ -54,7 +54,7 @@ public class SecureFileTransferConnector {
 
 			return filenames;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex).set("path", path);
+			throw wrapApplicationException(ex).set("path", path);
 		} finally {
 
 			channelSftp.exit();
@@ -96,7 +96,7 @@ public class SecureFileTransferConnector {
 
 			FileUtils.copyInputStreamToFile(input, output);
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex).set("path", path).set("filename", filename);
+			throw wrapApplicationException(ex).set("path", path).set("filename", filename);
 		} finally {
 			channelSftp.exit();
 			channelSftp = null;

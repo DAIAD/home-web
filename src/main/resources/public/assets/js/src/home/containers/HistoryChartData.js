@@ -1,14 +1,15 @@
 var React = require('react');
-var connect = require('react-redux').connect;
-var injectIntl = require('react-intl').injectIntl;
+var { connect } = require('react-redux');
+var { bindActionCreators } = require('redux');
+var { injectIntl } = require('react-intl');
 
-var SessionsChart = require('../components/SessionsChart');
+var Chart = require('../components/helpers/Chart');
 
 var HistoryActions = require('../actions/HistoryActions');
 
 var { selectTimeFormatter } = require('../utils/time');
-var { getFilteredData } = require('../utils/chart');
-var { getDeviceTypeByKey, getDeviceNameByKey, getDataSessions } = require('../utils/device');
+var { getChartTimeDataByFilter, getChartDataByFilter, getChartMeterCategories, getChartAmphiroCategories } = require('../utils/chart');
+var { getDeviceTypeByKey, getDeviceKeyByName, getDeviceNameByKey, getDataSessions, getMetricMu, getSessionsIdOffset } = require('../utils/device');
 
 
 function mapStateToProps(state, ownProps) {
@@ -20,40 +21,57 @@ function mapStateToProps(state, ownProps) {
     time: state.section.history.time,
     filter: state.section.history.filter,
     devices: state.user.profile.devices,
-    devType: getDeviceTypeByKey(state.user.profile.devices, state.section.history.activeDevice), 
+    activeDeviceType: state.section.history.activeDeviceType,
     timeFilter: state.section.history.timeFilter,
-    data: state.section.history.data
+    data: state.section.history.data,
+    comparisonData: state.section.history.comparisonData
     };
 }
 function mapDispatchToProps(dispatch) {
-  return {};
+  return bindActionCreators(HistoryActions, dispatch);
 }
 function mergeProps(stateProps, dispatchProps, ownProps) {
-  //TODO: devType is null
-  const dataSource = stateProps.devType==="METER"?"values":"sessions";
+  
+  const xAxisData = stateProps.activeDeviceType === 'METER' ? 
+    (stateProps.timeFilter === 'custom' ? null : getChartMeterCategories(stateProps.timeFilter, ownProps.intl)) : 
+      getChartAmphiroCategories(stateProps.timeFilter, getSessionsIdOffset(stateProps.data[0] ? stateProps.data[0].sessions : []));
+
+    
+   const comparison = stateProps.comparisonData.map(devData =>
+                                                   ({
+                                                     title: `${getDeviceNameByKey(stateProps.devices, devData.deviceKey)} (previous ${stateProps.timeFilter})`, 
+                                                     data: getChartDataByFilter(getDataSessions(stateProps.devices, devData), stateProps.filter, xAxisData)
+                                                   })
+                                                 );
   return Object.assign({},
                        ownProps,
                        dispatchProps,
-                       Object.assign({}, stateProps, 
-                                     {
-                                       data:
-                                         stateProps.data.map(devData =>
-                                                                      {
-                                                                        return {
-                                                                          title: getDeviceNameByKey(stateProps.devices, devData.deviceKey), 
-  data:getFilteredData(getDataSessions(stateProps.devices, devData), stateProps.filter)
-                                                                          };
-                                                                          }),
-                                     //                               [{title:stateProps.filter, data:getFilteredData(stateProps.chartData.length?stateProps.chartData[0][value]:[], stateProps.filter, stateProps.devType)}],
-                         xMin: stateProps.time.startDate,
-                         xMax: stateProps.time.endDate,
-                         type: stateProps.filter==='showers'?'bar':'line',
-                         formatter: selectTimeFormatter(stateProps.timeFilter, ownProps.intl),
-                         fontSize: 13
-                                     }
-                                    ));
+                       stateProps, 
+                       {
+                         data: stateProps.data.map(devData =>
+                             ({
+                               title: getDeviceNameByKey(stateProps.devices, devData.deviceKey), 
+                               data: stateProps.activeDeviceType === 'METER' ? getChartDataByFilter(getDataSessions(stateProps.devices, devData), stateProps.filter, xAxisData) : getChartDataByFilter(getDataSessions(stateProps.devices, devData), stateProps.filter, xAxisData)
+                             })).concat(comparison),
+                             xMin: stateProps.timeFilter === 'custom' ? stateProps.time.startDate : 0,
+                             xMax: stateProps.timeFilter === 'custom' ? stateProps.time.endDate : xAxisData.length-1,
+                         xAxis: stateProps.timeFilter === 'custom' ? 'time' : 'category',
+                         xAxisData,
+                         type: 'line',
+                         //xTicks: xAxisData.length,
+                         mu: getMetricMu(stateProps.filter),
+                         clickable: false,
+                         onClick: (series, x) => {
+                            const dev = getDeviceKeyByName(stateProps.devices, series.seriesName);
+                            const id = parseInt(x.substring(1));
+                            dispatchProps.setActiveSession(dev, id);
+                           },
+                         fontSize: 13,
+                       }
+                      );
 }
 
-var HistoryChart = connect(mapStateToProps, mapDispatchToProps, mergeProps)(SessionsChart);
+var HistoryChart = connect(mapStateToProps, mapDispatchToProps, mergeProps)(Chart);
 HistoryChart = injectIntl(HistoryChart);
+
 module.exports = HistoryChart;

@@ -61,6 +61,9 @@ import eu.daiad.web.service.IExportService;
 import eu.daiad.web.service.IFileDataLoaderService;
 import eu.daiad.web.service.IWaterMeterDataLoaderService;
 
+/**
+ * Provides methods for managing, querying and exporting data.
+ */
 @Controller
 public class DataController extends BaseController {
 
@@ -96,6 +99,13 @@ public class DataController extends BaseController {
 		stream.close();
 	}
 
+	/**
+	 * Uploads a data file to the server and perform an action on it e.g. import smart water meter data, assigne
+	 * users to smart water meters etc.
+	 * 
+	 * @param request the upload file and action.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/action/upload", method = RequestMethod.POST, produces = "application/json")
 	@ResponseBody
 	@Secured({ "ROLE_ADMIN" })
@@ -178,6 +188,13 @@ public class DataController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Query Amphiro B1 session data and smart water meter readings using one or more filtering
+	 * criteria. Depending on the search criteria, one or more data series may be returned.
+	 * @param user the currently authenticated user.
+	 * @param data the data query.
+	 * @return the data series.
+	 */
 	@RequestMapping(value = "/action/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@ResponseBody
 	@Secured({ "ROLE_ADMIN" })
@@ -195,10 +212,8 @@ public class DataController extends BaseController {
 			}
 
 			return dataService.execute(query);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -206,6 +221,13 @@ public class DataController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Exports Amphiro B1 sessions and smart water meter data for a single user based on a query.
+	 * 
+	 * @param user the currently authenticated user.
+	 * @param data the query for selecting the data to export.
+	 * @return a token for downloading the generated file.
+	 */
 	@RequestMapping(value = "/action/data/export", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@ResponseBody
 	@Secured({ "ROLE_ADMIN" })
@@ -275,13 +297,11 @@ public class DataController extends BaseController {
 
 					break;
 				default:
-					throw new ApplicationException(ActionErrorCode.EXPORT_TYPE_NOT_SUPPORTED).set("type",
+					throw createApplicationException(ActionErrorCode.EXPORT_TYPE_NOT_SUPPORTED).set("type",
 									data.getType());
 			}
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -289,6 +309,12 @@ public class DataController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Downloads a file that contains exported user data based on a unique token.
+	 * 
+	 * @param token the token used to identify the file to download.
+	 * @return the file.
+	 */
 	@RequestMapping(value = "/action/data/download/{token}", method = RequestMethod.GET)
 	@Secured({ "ROLE_ADMIN" })
 	public ResponseEntity<InputStreamResource> download(@PathVariable("token") String token) {

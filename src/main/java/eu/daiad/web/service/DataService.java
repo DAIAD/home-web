@@ -17,12 +17,10 @@ import org.springframework.stereotype.Service;
 
 import com.ibm.icu.text.MessageFormat;
 
-import eu.daiad.web.domain.application.GroupCluster;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.Error;
 import eu.daiad.web.model.error.ErrorCode;
 import eu.daiad.web.model.error.QueryErrorCode;
@@ -44,17 +42,21 @@ import eu.daiad.web.model.query.UtilityPopulationFilter;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IAmphiroTimeOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
+import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 
 @Service
-public class DataService implements IDataService {
+public class DataService extends BaseService implements IDataService {
 
 	@Autowired
 	protected MessageSource messageSource;
 
 	@Autowired
 	private IUserRepository userRepository;
+
+	@Autowired
+	private IGroupRepository groupRepository;
 
 	@Autowired
 	private IDeviceRepository deviceRepository;
@@ -188,6 +190,15 @@ public class DataService implements IDataService {
 					if (filter.getRanking().getMetric().equals(EnumMetric.UNDEFINED)) {
 						response.add(this.getError(QueryErrorCode.RANKING_INVALID_METRIC));
 					}
+					if ((query.getSource().equals(EnumMeasurementDataSource.METER))
+									|| (query.getSource().equals(EnumMeasurementDataSource.BOTH))) {
+						if (!filter.getRanking().getMetric().equals(EnumMetric.SUM)) {
+							response.add(this.getError(QueryErrorCode.RANKING_INVALID_METRIC));
+						}
+						if (!filter.getRanking().getField().equals(EnumDataField.VOLUME)) {
+							response.add(this.getError(QueryErrorCode.RANKING_INVALID_FIELD));
+						}
+					}
 				}
 			}
 		}
@@ -249,24 +260,24 @@ public class DataService implements IDataService {
 							filterUsers = ((UserPopulationFilter) filter).getUsers();
 							break;
 						case GROUP:
-							filterUsers = userRepository.getUserKeysForGroup(((GroupPopulationFilter) filter)
+							filterUsers = groupRepository.getGroupMemberKeys(((GroupPopulationFilter) filter)
 											.getGroup());
 							break;
 						case CLUSTER:
 							ClusterPopulationFilter clusterFilter = (ClusterPopulationFilter) filter;
 
-							List<GroupCluster> groups = null;
+							List<eu.daiad.web.model.group.Group> groups = null;
 
 							if (clusterFilter.getCluster() != null) {
-								groups = userRepository.getClusterGroupByKey(clusterFilter.getCluster());
+								groups = groupRepository.getClusterByKeySegments(clusterFilter.getCluster());
 							} else if ((clusterFilter.getClusterType() != null)
 											&& (!clusterFilter.getClusterType().equals(EnumClusterType.UNDEFINED))) {
-								groups = userRepository.getClusterGroupByType(clusterFilter.getClusterType());
+								groups = groupRepository.getClusterByTypeSegments(clusterFilter.getClusterType());
 							} else if (!StringUtils.isBlank(clusterFilter.getName())) {
-								groups = userRepository.getClusterGroupByName(clusterFilter.getName());
+								groups = groupRepository.getClusterByNameSegments(clusterFilter.getName());
 							}
 
-							for (GroupCluster group : groups) {
+							for (eu.daiad.web.model.group.Group group : groups) {
 								if (clusterFilter.getRanking() == null) {
 									query.getPopulation().add(
 													new GroupPopulationFilter(group.getName(), group.getKey()));
@@ -278,7 +289,7 @@ public class DataService implements IDataService {
 							}
 							continue;
 						case UTILITY:
-							filterUsers = userRepository.getUserKeysForUtility(((UtilityPopulationFilter) filter)
+							filterUsers = groupRepository.getUtilityByKeyMemberKeys(((UtilityPopulationFilter) filter)
 											.getUtility());
 							break;
 						default:
@@ -302,7 +313,7 @@ public class DataService implements IDataService {
 															userKey));
 
 							if (user == null) {
-								throw new ApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username",
+								throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username",
 												userKey);
 							}
 
@@ -419,11 +430,37 @@ public class DataService implements IDataService {
 					return response;
 			}
 
+			// Set metrics and add any required dependencies
+			List<EnumMetric> metrics = new ArrayList<EnumMetric>();
+
+			for (EnumMetric m : query.getMetrics()) {
+				metrics.add(m);
+			}
+
+			if (metrics.contains(EnumMetric.AVERAGE)) {
+				if (!metrics.contains(EnumMetric.COUNT)) {
+					metrics.add(EnumMetric.COUNT);
+				}
+				if (!metrics.contains(EnumMetric.SUM)) {
+					metrics.add(EnumMetric.SUM);
+				}
+			}
+			if (metrics.contains(EnumMetric.MIN)) {
+				if (!metrics.contains(EnumMetric.MAX)) {
+					metrics.add(EnumMetric.MAX);
+				}
+			}
+			if (metrics.contains(EnumMetric.MAX)) {
+				if (!metrics.contains(EnumMetric.MIN)) {
+					metrics.add(EnumMetric.MIN);
+				}
+			}
+
 			// Construct expanded query
 			expandedQuery.setStartDateTime(startDateTime);
 			expandedQuery.setEndDateTime(endDateTime);
 			expandedQuery.setGranularity(query.getTime().getGranularity());
-			expandedQuery.setMetrics(query.getMetrics());
+			expandedQuery.setMetrics(metrics);
 
 			switch (query.getSource()) {
 				case BOTH:
@@ -440,7 +477,7 @@ public class DataService implements IDataService {
 
 			return response;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex);
+			throw wrapApplicationException(ex);
 		}
 	}
 }

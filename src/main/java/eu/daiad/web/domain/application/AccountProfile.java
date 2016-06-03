@@ -52,10 +52,6 @@ public class AccountProfile {
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime updatedOn;
 
-	@Column(name = "static_tip_sent_on")
-	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-	private DateTime staticTipSentOn;
-
 	@Column(name = "mobile_mode")
 	private int mobileMode;
 
@@ -73,6 +69,12 @@ public class AccountProfile {
 
 	@Column(name = "utility_config")
 	private String utilityConfiguration;
+
+	@Column(name = "daily_amphiro_budget")
+	private Integer dailyAmphiroBudget;
+
+	@Column(name = "daily_meter_budget")
+	private Integer dailyMeterBudget;
 
 	public int getId() {
 		return id;
@@ -154,12 +156,20 @@ public class AccountProfile {
 		return rowVersion;
 	}
 
-	public DateTime getStaticTipSentOn() {
-		return staticTipSentOn;
+	public Integer getDailyAmphiroBudget() {
+		return dailyAmphiroBudget;
 	}
 
-	public void setStaticTipSentOn(DateTime staticTipSentOn) {
-		this.staticTipSentOn = staticTipSentOn;
+	public void setDailyAmphiroBudget(Integer dailyAmphiroBudget) {
+		this.dailyAmphiroBudget = dailyAmphiroBudget;
+	}
+
+	public Integer getDailyMeterBudget() {
+		return dailyMeterBudget;
+	}
+
+	public void setDailyMeterBudget(Integer dailyMeterBudget) {
+		this.dailyMeterBudget = dailyMeterBudget;
 	}
 
 }

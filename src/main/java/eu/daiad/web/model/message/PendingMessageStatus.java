@@ -76,9 +76,30 @@ public class PendingMessageStatus {
 	// returns percent of usage above others
 	private SimpleEntry<Boolean, Integer> recommendShampooChangeAmphiro;
 
-	// return liters more than average
+	// returns liters more than average
 	private SimpleEntry<Boolean, Integer> recommendReduceFlowWhenNotNeededAmphiro;
+        
+        private boolean initialStaticTips;
+        
+        // returns random static tip
+	private boolean produceStaticTip;
+        
+        private boolean meterInstalled;
+        
+        private boolean amphiroInstalled;
 
+        public boolean isInitialStaticTips(){
+                return initialStaticTips;
+        }
+        
+        public boolean isMeterInstalled() {
+		return meterInstalled;
+	}
+        
+        public boolean isAmphiroInstalled() {
+		return amphiroInstalled;
+	}        
+                
 	public boolean isAlertWaterLeakSWM() {
 		return alertWaterLeakSWM;
 	}
@@ -251,6 +272,10 @@ public class PendingMessageStatus {
 	public boolean isAlertTop10SaverSWM() {
 		return alertTop10SaverSWM;
 	}
+        
+        public boolean isStaticTipToBeProduced() {
+		return produceStaticTip;
+	}
 
 	public void setAlertTop10SaverSWM(boolean alertTop10SaverSWM) {
 		this.alertTop10SaverSWM = alertTop10SaverSWM;
@@ -304,5 +329,20 @@ public class PendingMessageStatus {
 					SimpleEntry<Boolean, Integer> recommendReduceFlowWhenNotNeededAmphiro) {
 		this.recommendReduceFlowWhenNotNeededAmphiro = recommendReduceFlowWhenNotNeededAmphiro;
 	}
-
+        
+        public void setInitialStaticTips(boolean initialStaticTips){
+            this.initialStaticTips = initialStaticTips;
+        }
+        
+        public void setStaticTip(boolean produceStaticTip){
+                this.produceStaticTip = produceStaticTip;
+        }
+        
+        public void setMeterInstalled(boolean meterInstalled){
+                this.meterInstalled = meterInstalled;
+        }
+        
+        public void setAmphiroInstalled(boolean amphiroInstalled){
+                this.amphiroInstalled = amphiroInstalled;
+        }        
 }

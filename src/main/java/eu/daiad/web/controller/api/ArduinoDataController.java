@@ -19,9 +19,13 @@ import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.arduino.ArduinoIntervalQuery;
 import eu.daiad.web.model.arduino.ArduinoMeasurement;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.repository.application.IArduinoDataRepository;
 
+/**
+ * Provides actions for storing and querying smart water meter readings
+ * collected by an Arduino controller.
+ *
+ */
 @RestController("RestArduinoDataController")
 public class ArduinoDataController extends BaseController {
 
@@ -30,6 +34,12 @@ public class ArduinoDataController extends BaseController {
 	@Autowired
 	private IArduinoDataRepository arduinoDataRepository;
 
+	/**
+	 * Stores smart water meter data.
+	 * 
+	 * @param data the data to store.
+	 * @return an empty string if save operation was successful; Otherwise an error message is returned.
+	 */
 	@RequestMapping(value = "/api/v1/arduino/store", method = RequestMethod.POST, consumes = "text/plain", produces = "text/plain")
 	public ResponseEntity<String> storeData(@RequestBody String data) {
 
@@ -69,16 +79,20 @@ public class ArduinoDataController extends BaseController {
 		return new ResponseEntity<String>(message, headers, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
+	/**
+	 * Load smart water meter readings based on a query.
+	 * 
+	 * @param query the query.
+	 * @return the smart water meter data.
+	 */
 	@RequestMapping(value = "/api/v1/arduino/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse loadData(@RequestBody ArduinoIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
 			return this.arduinoDataRepository.searchData(query);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

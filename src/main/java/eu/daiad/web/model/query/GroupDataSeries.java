@@ -1,6 +1,7 @@
 package eu.daiad.web.model.query;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.joda.time.DateTime;
@@ -28,7 +29,7 @@ public class GroupDataSeries {
 		return points;
 	}
 
-	private DataPoint createDataPoint(EnumMetric[] metrics, DataPoint.EnumDataPointType type, Long timestamp) {
+	private DataPoint createDataPoint(List<EnumMetric> metrics, DataPoint.EnumDataPointType type, Long timestamp) {
 		switch (type) {
 			case METER:
 				MeterDataPoint mp = (timestamp == null ? new MeterDataPoint() : new MeterDataPoint(timestamp));
@@ -72,7 +73,7 @@ public class GroupDataSeries {
 		}
 	}
 
-	private DataPoint getDataPoint(EnumTimeAggregation granularity, long timestamp, EnumMetric[] metrics,
+	private DataPoint getDataPoint(EnumTimeAggregation granularity, long timestamp, List<EnumMetric> metrics,
 					DataPoint.EnumDataPointType type, DateTimeZone timezone) {
 		DateTime date = new DateTime(timestamp, timezone);
 
@@ -129,7 +130,7 @@ public class GroupDataSeries {
 	}
 
 	public void addAmhiroDataPoint(EnumTimeAggregation granularity, long timestamp, double volume, double energy,
-					double duration, double temperature, double flow, EnumMetric[] metrics, DateTimeZone timezone) {
+					double duration, double temperature, double flow, List<EnumMetric> metrics, DateTimeZone timezone) {
 		AmphiroDataPoint point = (AmphiroDataPoint) this.getDataPoint(granularity, timestamp, metrics,
 						DataPoint.EnumDataPointType.AMPHIRO, timezone);
 
@@ -209,7 +210,7 @@ public class GroupDataSeries {
 	}
 
 	public void addMeterRankingDataPoint(EnumTimeAggregation granularity, UUID key, String label, long timestamp,
-					double difference, double volume, EnumMetric[] metrics, DateTimeZone timezone) {
+					double difference, double volume, List<EnumMetric> metrics, DateTimeZone timezone) {
 		MeterUserDataPoint point = (MeterUserDataPoint) this.getUserDataPoint(granularity, key, label, timestamp,
 						metrics, DataPoint.EnumDataPointType.METER, timezone);
 
@@ -222,8 +223,8 @@ public class GroupDataSeries {
 					point.getVolume().put(m, point.getVolume().get(m) + difference);
 					break;
 				case MIN:
-					if (point.getVolume().get(m) > (volume - difference)) {
-						point.getVolume().put(m, (volume - difference));
+					if (point.getVolume().get(m) > volume) {
+						point.getVolume().put(m, volume);
 					}
 					break;
 				case MAX:
@@ -239,7 +240,7 @@ public class GroupDataSeries {
 
 	public void addAmphiroRankingDataPoint(EnumTimeAggregation granularity, UUID key, String label, long timestamp,
 					double volume, double energy, double duration, double temperature, double flow,
-					EnumMetric[] metrics, DateTimeZone timezone) {
+					List<EnumMetric> metrics, DateTimeZone timezone) {
 		AmphiroUserDataPoint point = (AmphiroUserDataPoint) this.getUserDataPoint(granularity, key, label, timestamp,
 						metrics, DataPoint.EnumDataPointType.AMPHIRO, timezone);
 
@@ -370,7 +371,7 @@ public class GroupDataSeries {
 	}
 
 	private UserDataPoint getUserDataPoint(EnumTimeAggregation granularity, UUID key, String label, long timestamp,
-					EnumMetric[] metrics, DataPoint.EnumDataPointType type, DateTimeZone timezone) {
+					List<EnumMetric> metrics, DataPoint.EnumDataPointType type, DateTimeZone timezone) {
 		RankingDataPoint ranking = this.getRankingDataPoint(granularity, timestamp, timezone);
 
 		for (UserDataPoint point : ranking.getUsers()) {

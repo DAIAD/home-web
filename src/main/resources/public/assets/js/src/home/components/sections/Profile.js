@@ -5,8 +5,9 @@ var { bindActionCreators } = require('redux');
 var { connect } = require('react-redux');
 var { injectIntl, FormattedMessage } = require('react-intl');
 
-var MainSection = require('../MainSection');
+var MainSection = require('../layout/MainSection');
 var LocaleSwitcher = require('../LocaleSwitcher');
+
 var { setLocale } = require('../../actions/LocaleActions');
 
 
@@ -14,7 +15,7 @@ function ProfileForm (props) {
   const { intl, profile, setLocale, locale } = props;
   const _t = intl.formatMessage;
   return (
-    <form id="form-profile" className="col-xs-5" >
+    <form id="form-profile" style={{width: '60%', margin: '40px auto'}} >
       <div className="form-group">
         <label className="control-label">
           <span>Select language</span>

@@ -22,99 +22,88 @@ const receivedQuery = function(success, errors) {
 };
 
 const QueryActions = {
-
-  queryDeviceOrMeter: function(deviceKeys, time) {
+ 
+  queryDeviceOrMeter: function(deviceKeys, type, time) {
     return function(dispatch, getState) {
-      //const type = getDeviceTypeByKey(getState().user.profile.devices, deviceKey);
       if (!Array.isArray(deviceKeys)) throw Error('device keys ', deviceKeys, 'must be of type Array');
-      const type = deviceKeys.map(deviceKey => getDeviceTypeByKey(getState().user.profile.devices, deviceKey)).reduce((prev, curr) => prev!==curr?-1:curr);
 
-      if (!type) throw new Error('type not found');
-      else if (type === -1) throw new Error('device keys of unequal type');
-      
+      if (!deviceKeys.length) return new Promise(resolve => resolve([]));
+      if (!type || !(type === 'AMPHIRO' || type === 'METER')) throw new Error('type not found');
+
       if (type === 'AMPHIRO') {
-        return dispatch(QueryActions.queryDeviceSessions(deviceKeys, time));
+        return dispatch(QueryActions.queryDeviceSessions(deviceKeys, {type: 'SLIDING', length: 10}))
+               .catch(error => { throw error; });
       }
       else if (type === 'METER') {
-        return dispatch(QueryActions.fetchMeterHistory(deviceKeys, time));
-      }
-      else {
-        throw new Error('type is of unrecognized type', type);
+        return dispatch(QueryActions.fetchMeterHistory(deviceKeys, time))
+               .catch(error => { throw error; });
       }
     };
   },
-  queryDeviceSessions: function(deviceKeys, time) {
+  queryDeviceSessions: function(deviceKeys, options) {
     return function(dispatch, getState) {
       
-      if (!deviceKeys || !time) throw new Error(`Not sufficient data provided for device sessions query: deviceKey:${deviceKeys}, time: ${time}`);
+      if (!deviceKeys) throw new Error(`Not sufficient data provided for device sessions query: deviceKey:${deviceKeys}`);
 
       dispatch(requestedQuery());
 
-      //const data = Object.assign({}, time, {deviceKey: [ deviceKey ] }, {csrf: getState().user.csrf});
-      const data = Object.assign({}, time, {deviceKey:deviceKeys}, {csrf: getState().user.csrf});
-      
+      const data = Object.assign({}, options, {deviceKey:deviceKeys}, {csrf: getState().user.csrf});
+
       return deviceAPI.querySessions(data)
       .then(response => {
         dispatch(receivedQuery(response.success, response.errors, response.devices) );
         
-        if (!response || response.success === false) {
-          throw new Error (`device sessions query was not successful`);
+        if (!response.success) {
+          throw new Error (response.errors);
         }
-        if (!Array.isArray(response.devices) || !Array.isArray(response.devices[0].sessions)) throw new Error(`response of queryDeviceSessions with:  ${deviceKeys}, ${time} is not of type array`);
-
           return response.devices;
         })
-        .catch((errors) => {
-          console.error(errors);
-          dispatch(receivedQuery(false, errors));
-          return errors;
+        .catch((error) => {
+          dispatch(receivedQuery(false, error));
+          throw error;
         });
     };
   },
-  fetchDeviceSession: function(id, deviceKey, time) {
+  fetchDeviceSession: function(id, deviceKey) {
     return function(dispatch, getState) {
       
-      if (!id || !deviceKey || !time) throw new Error(`Not sufficient data provided for device session fetch: id: ${id}, deviceKey:${deviceKey}, time: ${time}`);
-      //if (id===null || id===undefined) throw new Error('cannot fetch device sessions without valid id:', id);
+      if (!id || !deviceKey) throw new Error(`Not sufficient data provided for device session fetch: id: ${id}, deviceKey:${deviceKey}`);
       
-      else if (!deviceKey) throw new Error('device key must be given:', deviceKey);
       dispatch(requestedQuery());
 
-      const data = Object.assign({}, time,  {sessionId:id, deviceKey: deviceKey}, {csrf: getState().user.csrf});
+      const data = Object.assign({}, {sessionId:id, deviceKey: deviceKey}, {csrf: getState().user.csrf});
 
       return deviceAPI.getSession(data)
         .then((response) => {
           dispatch(receivedQuery(response.success, response.errors, response.session));
-          //if (!response.session) { return {}; }
-          if (!response || !response.session) throw new Error('response of fetchDeviceSession with:', id, deviceKey, time, 'doesnt exist');
+          if (!response.success) {
+            throw new Error (response.errors);
+          }
           return response.session;
         })
-        .catch((errors) => {
-          dispatch(receivedQuery(false, errors));
-          return errors;
+        .catch((error) => {
+          dispatch(receivedQuery(false, error));
+          throw error;
         });
     };
   },
-  fetchLastSession: function(deviceKeys, time) {
+  fetchLastDeviceSession: function(deviceKeys) {
     return function(dispatch, getState) {
-      return dispatch(QueryActions.queryDeviceSessions(deviceKeys, time))
-      .then(response => {
+      return dispatch(QueryActions.queryDeviceSessions(deviceKeys, {type: 'SLIDING', length: 1}))
+      .then(sessions => {
         
-        const sessions = response;
         const reduced = reduceSessions(getState().user.profile.devices, sessions);        
-        
         //find last
-        const lastSession = reduced.reduce((curr, prev) => (curr.timestamp>prev.timestamp)?curr:prev);
+        const lastSession = reduced.reduce((curr, prev) => (curr.timestamp>prev.timestamp)?curr:prev, {});
          
-        const { device, id, index } = lastSession;
+        const { device, id, index, timestamp } = lastSession;
+
         if (!id) throw new Error(`last session id doesnt exist in response: ${response}`);
         const devSessions = sessions.find(x=>x.deviceKey === device);
         
-        return dispatch(QueryActions.fetchDeviceSession(id, device, time))
-        .then(session => ({data: updateOrAppendToSession([devSessions], Object.assign({}, session, {deviceKey:device})), device:device, index}) )
-        //.then(sessions => {console.log('so sessions are', sessions); return sessions;})
-        //.then(session => ({data: updateOrAppendToSession(sessions, Object.assign({}, session, {deviceKey:device})), device:device, index}) )
-        .catch(error => error);
+        return dispatch(QueryActions.fetchDeviceSession(id, device))
+        .then(session => ({data: updateOrAppendToSession([devSessions], Object.assign({}, session, {deviceKey:device})), device, index, id, timestamp}) )
+        .catch(error => { throw error; });
       });
     };
   },
@@ -123,23 +112,19 @@ const QueryActions = {
       if (!deviceKeys || !time) throw new Error(`Not sufficient data provided for meter history query: deviceKey:${deviceKeys}, time: ${time}`);
 
       dispatch(requestedQuery());
-      //const data = Object.assign({}, time, {deviceKey: [ deviceKey ] }, {csrf: getState().user.csrf});
+      
       const data = Object.assign({}, time, {deviceKey:deviceKeys}, {csrf: getState().user.csrf});
       return meterAPI.getHistory(data)
         .then((response) => {
           dispatch(receivedQuery(response.success, response.errors, response.session));
-          //if (!response.series.length || !response.series[0].values) return []; 
-          //TODO: throw new Error returns it
-          if (!response || !Array.isArray(response.series)) throw new Error(`fetchMeterHistory with: deviceKey: ${deviceKeys}, time:${time} failed`);
-          
-          //return response.series[0].values.map((session, i, array) => Object.assign({}, session, {volume: session.volume-array[0].volume}));
-          //return response.series[0].values;
-          //return response.series.map(meter => meter.values);
+          if (!response.success) {
+            throw new Error (response.errors);
+          }
           return response.series;
         })
-        .catch((errors) => {
-          dispatch(receivedQuery(false, errors));
-          return errors;
+        .catch((error) => {
+          dispatch(receivedQuery(false, error));
+          throw error;
         });
     };
   },
@@ -154,12 +139,15 @@ const QueryActions = {
       return meterAPI.getStatus(data)
         .then((response) => {
           dispatch(receivedMeterStatus(response.success, response.errors, response.devices?response.devices:[]) );
-
+          
+          if (!response.success) {
+            throw new Error (response.errors);
+          }
           return response;
         })
-        .catch((errors) => {
-          dispatch(receivedMeterStatus(false, errors, {}));
-          return errors;
+        .catch((error) => {
+          dispatch(receivedQuery(false, error));
+          throw error;
         });
     };
   }

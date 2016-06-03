@@ -1,6 +1,7 @@
 // Dependencies
 var React = require('react');
 var FormattedMessage = require('react-intl').FormattedMessage;
+const { IMAGES } = require('../constants/HomeConstants');
 var classNames = require('classnames');
 
 
@@ -8,14 +9,15 @@ var Login = React.createClass({
   onLogin: function(e) {
     e.preventDefault();
     this.props.login(this.refs.username.value, this.refs.password.value);
-
   },
   render: function() {
-    const _t = this.props.intl.formatMessage;
-    if(this.props.isAuthenticated) {
-      return (<div/>);
-    }
-    return (
+    const { intl, isAuthenticated, action } = this.props;
+    const _t = intl.formatMessage;
+    return isAuthenticated ? (
+      <div/>
+    ) : (
+    <div className="form-login-container">
+      <h3><FormattedMessage id="section.login" /></h3>
       <form key="login" className="form-login" action={this.props.action}>
         <div className="form-group">
           <input id="username" name="username" type="text" ref="username"
@@ -27,17 +29,17 @@ var Login = React.createClass({
         </div>
         <button type="submit"
             className="btn btn-primary action-login"
-            onClick={this.onLogin}
-            style={{width: 80, height: 33}}>
+            onClick={this.onLogin} >
           <FormattedMessage id="loginForm.button.signin" />
-        </button>
-        <br/>
-        <div className="login-errors">
+        </button> 
+      </form>
+      
+      <div className="login-errors">
           {
-            this.props.errors?(<FormattedMessage id={`errors.${this.props.errors}`} />):(<div/>)
+            this.props.errors?<span><img src={`${IMAGES}/warning.svg`}/><FormattedMessage id={`errors.${this.props.errors}`} /></span>:<div/>
         }
       </div>
-    </form>
+  </div>
     );
   }
 
@@ -61,7 +63,7 @@ var Logout = React.createClass({
         title={_t({id: "loginForm.button.signout"})}
         onClick={this.onLogout}
         type="submit">
-          <i className={classNames("fa", "fa-md", "fa-sign-out", "white")} style={{marginLeft: 5}} />
+          <i className={classNames("fa", "fa-md", "fa-sign-out", "navy")}/>
         </a>
       );
     } 

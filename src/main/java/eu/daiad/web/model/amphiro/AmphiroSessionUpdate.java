@@ -1,12 +1,17 @@
 package eu.daiad.web.model.amphiro;
 
+import java.util.UUID;
+
 public class AmphiroSessionUpdate {
+
+	private UUID deviceKey;
 
 	private long sessionId;
 
 	private long timestamp;
 
-	public AmphiroSessionUpdate(long sessionId, long timestamp) {
+	public AmphiroSessionUpdate(UUID deviceKey, long sessionId, long timestamp) {
+		this.deviceKey = deviceKey;
 		this.sessionId = sessionId;
 		this.timestamp = timestamp;
 	}
@@ -25,6 +30,14 @@ public class AmphiroSessionUpdate {
 
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
+	}
+
+	public UUID getDeviceKey() {
+		return deviceKey;
+	}
+
+	public void setDeviceKey(UUID deviceKey) {
+		this.deviceKey = deviceKey;
 	}
 
 }

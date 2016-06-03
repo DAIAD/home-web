@@ -3,13 +3,38 @@
   "version": "0.0.1",
   "title": "DAIAD HTTP RPC Interface",
   "description": "This document describes the DAIAD HTTP Remote Procedure Call Interface",
-  "url" : "https://app.dev.daiad.eu/api/v1",
+  "url" : "https://app.dev.daiad.eu/api",
   "order": [
-    "GetUser",
-    "PostUser"
+	"Authentication",
+	"User",
+	"Profile",
+	"ProfileLoad",
+	"ProfileSave",
+	"ProfileNotify",
+	"Device",
+	"AmphiroRegister",
+	"MeterRegister",
+	"DeviceQuery",
+	"DeviceConfig",
+	"DeviceNotify",
+	"DeviceReset",
+	"Data",
+	"DataStoreByTime",
+	"DataStoreByIndex",
+	"Search",
+	"MeterStatus",
+	"MeterMeasurements",
+	"AmphiroMeasurementByTime",
+	"AmphiroMeasurementByIndex",
+	"AmphiroSessionByTime",
+	"AmphiroSessionByIndex",
+	"AmphiroSingleSessionByTime",
+	"AmphiroSingleSessionByIndex",
+    "Message",
+	"Admin"
   ],
   "template": {
-  	"withCompare": false,
+  	"withCompare": true,
   	"withGenerator": false
   }
 }

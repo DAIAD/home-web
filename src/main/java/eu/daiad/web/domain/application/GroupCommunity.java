@@ -7,7 +7,7 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.Type;
 
-import eu.daiad.web.model.commons.EnumGroupType;
+import eu.daiad.web.model.group.EnumGroupType;
 
 @Entity(name = "group_community")
 @Table(schema = "public", name = "group_community")

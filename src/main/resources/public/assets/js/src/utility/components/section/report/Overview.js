@@ -55,42 +55,42 @@ var Overview = React.createClass({
     var errors = [];
         
     if (!firstName){
-      errors.push({code: errorsCodes['ValidationError.NO_FIRST_NAME']});
+      errors.push({code: errorsCodes['ValidationError.User.NO_FIRST_NAME']});
     } else if (firstName.length > 40){
-      errors.push({code: errorsCodes['ValidationError.TOO_LONG_FIRST_NAME']});
+      errors.push({code: errorsCodes['ValidationError.User.TOO_LONG_FIRST_NAME']});
     }
     
     if (!lastName){
-      errors.push({code: errorsCodes['ValidationError.NO_LAST_NAME']});
+      errors.push({code: errorsCodes['ValidationError.User.NO_LAST_NAME']});
     } else if (lastName.length > 70){
-      errors.push({code: errorsCodes['ValidationError.TOO_LONG_LAST_NAME']});
+      errors.push({code: errorsCodes['ValidationError.User.TOO_LONG_LAST_NAME']});
     }
     
     if (!email){
-      errors.push({code: errorsCodes['ValidationError.NO_EMAIL']});
+      errors.push({code: errorsCodes['ValidationError.User.NO_EMAIL']});
     } else if (email.length > 100){
-      errors.push({code: errorsCodes['ValidationError.TOO_LONG_EMAIL']});
+      errors.push({code: errorsCodes['ValidationError.User.TOO_LONG_EMAIL']});
     } else {
       var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
         if (!re.test(email)){
-          errors.push({code: errorsCodes['ValidationError.INVALID_EMAIL']});
+          errors.push({code: errorsCodes['ValidationError.User.INVALID_EMAIL']});
         }
     } 
 
     if (!gender){
-      errors.push({code: errorsCodes['ValidationError.NO_GENDER']});
+      errors.push({code: errorsCodes['ValidationError.User.NO_GENDER']});
     }
     
     if (address && address.length > 90){
-      errors.push({code: errorsCodes['ValidationError.TOO_LONG_ADDRESS']});
+      errors.push({code: errorsCodes['ValidationError.User.TOO_LONG_ADDRESS']});
     }
     
     if (this.props.admin.addUser.selectedUtility === null){
-      errors.push({code: errorsCodes['ValidationError.NO_UTILITY']});
+      errors.push({code: errorsCodes['ValidationError.User.NO_UTILITY']});
     }
     
     if (postalCode && postalCode.length > 10){
-      errors.push({code: errorsCodes['ValidationError.TOO_LONG_POSTAL_CODE']});
+      errors.push({code: errorsCodes['ValidationError.User.TOO_LONG_POSTAL_CODE']});
     }
     
     return errors;
@@ -166,10 +166,17 @@ var Overview = React.createClass({
         </span>
       );
     }
+    
+    var titleText = 'Activity';
+    if(this.props.admin.user.meters) {
+      titleText = this.props.admin.user.name + ' - Last 30 days';
+    } else if(this.props.admin.user.devices) {
+      titleText = this.props.admin.user.name + ' - Last 100 sessions';
+    }  
     const chartTitle = (
       <span>
         <i className='fa fa-bar-chart fa-fw'></i>
-        <span style={{ paddingLeft: 4 }}>{ (this.props.admin.user.name || 'Activity') }</span>
+        <span style={{ paddingLeft: 4 }}>{ titleText }</span>
         {closeSessionChartButton}
       </span>
     );
@@ -223,7 +230,7 @@ var Overview = React.createClass({
     var series = [], data = [];
     if(!this.props.admin.isLoading) {
       if(this.props.admin.user.devices) {
-        model.chart.type = 'line';
+        model.chart.type = 'bar';
         model.chart.options = {
           tooltip: {
               show: true
@@ -235,16 +242,25 @@ var Overview = React.createClass({
 
         
         var devices = this.props.admin.user.devices;
-          
-        for(var d=0; d<devices.length; d++) {
+        
+        var maxSerieSize = 0, d;
+        for(d=0; d<devices.length; d++) {
+          if(devices[d].sessions.length > maxSerieSize) { 
+            maxSerieSize = devices[d].sessions.length;
+          }
+        }
+
+        for(d=0; d<devices.length; d++) {
           var device = devices[d];
           data = [];
-          
-          for(var s=0; s < device.sessions.length; s++) {
+   
+          var index = 1;
+          for(var s=0; s < maxSerieSize; s++) {
             data.push({
-              volume: device.sessions[s].volume,
-              id:  device.sessions[s].id
+              volume: (s < device.sessions.length ? device.sessions[s].volume : 0.0),
+              id:  index
             });
+            index++;
           }
           
           series.push({
@@ -621,7 +637,7 @@ var Overview = React.createClass({
                   </div>
                   <MessageAlert
                     show={this.props.admin.addUser.showMessageAlert}
-                    title={!this.props.admin.addUser.response.success ? _t({id: 'AddUserForm.ErrorsDetected'}) : _t({id: 'AddUserForm.Success'})}
+                    title={!this.props.admin.addUser.response.success ? _t({id: 'Form.ErrorsDetected'}) : _t({id: 'Form.Success'})}
                     i18nNamespace={this.props.admin.addUser.response.success ? 'Success.' : 'Error.'}
                     bsStyle={this.props.admin.addUser.response.success ? 'success' : 'danger' }
                     format='list'

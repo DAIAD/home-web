@@ -5,6 +5,7 @@ var {FormattedMessage, FormattedTime, FormattedDate} = require('react-intl');
 var { Link } = require('react-router');
 
 var Bootstrap = require('react-bootstrap');
+var CellCheckbox = require('./CellCheckbox');
 var Checkbox = require('./Checkbox');
 var IndeterminateCheckbox = require('./IndeterminateCheckbox');
 
@@ -401,7 +402,7 @@ var Cell = React.createClass({
   				break;
 			case 'property':
 				if (typeof value === 'boolean'){
-	  				text = (<Checkbox checked={value} 
+	  				text = (<CellCheckbox checked={value} 
 	  								disabled={disabled} 
 	  								rowId={rowId}
 	  								propertyName={this.props.field.name}
@@ -426,7 +427,7 @@ var Cell = React.createClass({
 								value = false;
 								break;
 						}
-						text = (<Checkbox checked={value} 
+						text = (<CellCheckbox checked={value} 
 							disabled={disabled} 
 							rowId={rowId}
 							propertyName={this.props.field.name}

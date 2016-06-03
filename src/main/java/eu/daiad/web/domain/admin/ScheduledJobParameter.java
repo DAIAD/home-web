@@ -32,6 +32,9 @@ public class ScheduledJobParameter {
 	@Basic
 	private String value;
 
+	@Basic
+	private boolean hidden;
+
 	public String getName() {
 		return name;
 	}
@@ -58,6 +61,14 @@ public class ScheduledJobParameter {
 
 	public long getId() {
 		return id;
+	}
+
+	public boolean isHidden() {
+		return hidden;
+	}
+
+	public void setHidden(boolean hidden) {
+		this.hidden = hidden;
 	}
 
 }

@@ -6,6 +6,10 @@ var { Link } = require('react-router');
 
 var Bootstrap = require('react-bootstrap');
 var Checkbox = require('./Checkbox');
+var CellCheckbox = require('./CellCheckbox');
+
+let PAGING_CLIENT_SIDE = 'client';
+let PAGING_SERVER_SIDE = 'server';
 
 var Table = React.createClass({
 	getInitialState: function() {
@@ -31,8 +35,12 @@ var Table = React.createClass({
 				pager: {
 					index: 0,
 					size: 10,
-					count:0
+					count:0,
+					mode: PAGING_CLIENT_SIDE
 				}
+			},
+			template: {
+			  empty: null
 			}
 		};
 	},
@@ -45,12 +53,21 @@ var Table = React.createClass({
   		this.setState({ loading : true});
   	},
 
-  	render: function() { 		
+  	render: function() {
+  	  var totalPages = Math.ceil(this.props.data.pager.count / this.props.data.pager.size);
+  	  var currentPageIndex = ((this.state.activePage + 1) > totalPages ? totalPages : (this.state.activePage + 1));
+
+      if((this.props.data.rows.length === 0) && (this.props.template.empty)) {
+        return(
+          this.props.template.empty
+        );
+      }
+
   		return (
 			<div className='clearfix'>
 				<Bootstrap.Table hover style={{margin: 0, padding: 0}}>
 					<Table.Header data = {this.props.data}></Table.Header>
-					<Table.Body data={this.props.data} activePageIndex={this.state.activePage} ></Table.Body>			
+					<Table.Body data={this.props.data} activePageIndex={currentPageIndex - 1}></Table.Body>			
 				</Bootstrap.Table>
 				<div style={{float:'right'}}>
 					<Bootstrap.Pagination 	prev
@@ -58,9 +75,9 @@ var Table = React.createClass({
 											first
 											last
 											ellipsis
-											items={Math.ceil(this.props.data.pager.count / this.props.data.pager.size)}
+											items={totalPages}
 			        						maxButtons={7}
-			        						activePage={this.state.activePage + 1}
+			        						activePage={currentPageIndex}
 			        						onSelect={this.onPageIndexChange} />	
 				</div>
 			</div>
@@ -104,18 +121,22 @@ var Header = React.createClass({
 });
 
 var Body = React.createClass({
-  	render: function() { 		
-  		var self = this;
-
-  		var filtered = this.props.data.rows.reduce(function(newArray, currentValue, currentIndex) {
-  		  var pager = self.props.data.pager;
+  	render: function() {
+  	  var self = this;
+  	  
+      var pager = self.props.data.pager;
+  		var filtered = self.props.data.rows;
+  		
+  		if((!pager.mode) || (pager.mode === PAGING_CLIENT_SIDE)) {
+  		  filtered = self.props.data.rows.reduce(function(newArray, currentValue, currentIndex) {
   		  
-  		  if(((self.props.activePageIndex*pager.size) <= currentIndex) && (currentIndex < ((self.props.activePageIndex+1)*pager.size))) {
-          newArray.push(currentValue);
-  		  }
+  		    if(((self.props.activePageIndex*pager.size) <= currentIndex) && (currentIndex < ((self.props.activePageIndex+1)*pager.size))) {
+  		      newArray.push(currentValue);
+  		    }
 
-  		  return newArray;
-  		}, []);
+  		    return newArray;
+  		  }, []);
+  		}
   		
   		var rows = filtered.map(function(row, rowIndex) {
   			return (
@@ -125,12 +146,12 @@ var Body = React.createClass({
   				</Table.Row>
   			);
   		});
-		
+ 		
   		return (
-			<tbody>
-				{rows}
-			</tbody>
- 		);
+		    <tbody>
+				  {rows}
+			  </tbody>
+  		);
   	}
 });
 
@@ -163,6 +184,10 @@ var Cell = React.createClass({
   	render: function() {
   		var value= this.props.row[this.props.field.name];
   		var text = (<span>{value}</span>);
+  		  		
+  		var rowId = null;
+  		if(this.props.row.hasOwnProperty('id'))
+  		  rowId = this.props.row.id;
  		
   		if(this.props.field.hasOwnProperty('type')) {
   			switch(this.props.field.type) {
@@ -207,6 +232,15 @@ var Cell = React.createClass({
   			case 'boolean':
   				text = (<Checkbox checked={value} disabled={true} />);
   				break;
+  			case 'alterable-boolean':
+  			  text = (<CellCheckbox 
+  			            checked={value}
+  			            rowId={rowId}
+  			            propertyName={this.props.field.name}
+  			            disabled={false} 
+  			            onUserClick={this.props.field.handler}
+  			          />);
+          break;
   			case 'date':
   				text = (<FormattedDate value={value} day='numeric' month='long' year='numeric' />);
   				break;
@@ -236,7 +270,7 @@ var Cell = React.createClass({
 
   		if(typeof this.props.field.className === 'function') {
   			return (
-				<td className={this.props.field.className(value)}>{text}</td>
+				<td><div className={this.props.field.className(value)}>{text}</div></td>
 			);	
   		}
   		
@@ -259,5 +293,8 @@ Table.Body = Body;
 Table.Row = Row;
 
 Table.Cell = Cell;
+
+Table.PAGING_CLIENT_SIDE = PAGING_CLIENT_SIDE;
+Table.PAGING_SERVER_SIDE = PAGING_SERVER_SIDE;
 
 module.exports = Table;

@@ -26,8 +26,12 @@ import eu.daiad.web.model.query.EnumTimeUnit;
 import eu.daiad.web.model.query.GroupDataSeries;
 import eu.daiad.web.model.query.MeterDataPoint;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.repository.application.IDeviceRepository;
+import eu.daiad.web.repository.application.IMessageManagementRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IDataService;
+import eu.daiad.web.model.device.DeviceRegistrationQuery;
+import eu.daiad.web.model.device.EnumDeviceType;
 
 @Service()
 public class DefaultMessageResolverService implements IMessageResolverService {
@@ -37,13 +41,24 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 
 	@Autowired
 	IUserRepository userRepository;
-
+        
+        @Autowired
+        IMessageManagementRepository messageManagementRepository;
+        
+        @Autowired 
+        IDeviceRepository deviceRepository;
+        
+        @Override
 	public PendingMessageStatus resolve(MessageCalculationConfiguration config,
-					ConsumptionAggregateContainer aggregates, UUID accountKey) {
+					ConsumptionAggregateContainer aggregates, UUID accountKey) {      
 		AuthenticatedUser account = this.userRepository.getUserByKey(accountKey);
 
 		PendingMessageStatus status = new PendingMessageStatus();
 
+                status.setMeterInstalled(this.isMeterInstalledForUser(accountKey));
+                
+                status.setAmphiroInstalled(this.isAmphiroInstalledForUser(accountKey));                
+                
 		status.setAlertWaterLeakSWM(this.alertWaterLeakSWM(accountKey, config.getTimezone()));
 
 		status.setAlertWaterQualitySWM(this.alertWaterQualitySWM(accountKey, config.getTimezone()));
@@ -110,10 +125,37 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 
 		status.setRecommendReduceFlowWhenNotNeededAmphiro(this.recommendReduceFlowWhenNotNeededAmphiro(aggregates,
 						accountKey, config.getTimezone()));
-
+                
+                status.setInitialStaticTips(this.initialStaticTipsForAccount(account));
+                
+                status.setStaticTip(this.produceStaticTipForAccount(account, config.getStaticTipInterval()));
+                
 		return status;
 	}
+        
+        //random three initial static tips
+        private boolean initialStaticTipsForAccount(AuthenticatedUser user) {                        
+                boolean initialStaticTips = false;            
+                DateTime lastCreatedOn = messageManagementRepository.getLastDateOfAccountStaticRecommendation(user);
 
+                if(lastCreatedOn == null ){
+                        initialStaticTips = true;
+                }
+                return initialStaticTips;
+        }
+        
+        
+        //random static tip
+        private boolean produceStaticTipForAccount(AuthenticatedUser user, int staticTipInterval) {                        
+                boolean produceStaticTip = false;            
+                DateTime lastCreatedOn = messageManagementRepository.getLastDateOfAccountStaticRecommendation(user);
+
+                if(lastCreatedOn == null || lastCreatedOn.isBefore(DateTime.now().minusDays(staticTipInterval))){
+                    produceStaticTip = true;
+                }
+                return produceStaticTip;
+        }
+        
 	// 1 alert - Check for water leaks!
 	private boolean alertWaterLeakSWM(UUID accountKey, DateTimeZone timezone) {
 		boolean fireAlert = true;
@@ -154,14 +196,15 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
 
 		for (GroupDataSeries serie : dataSeriesAmphiro) {
-
-			ArrayList<DataPoint> points = serie.getPoints();
-			for (DataPoint point : points) {
-				AmphiroDataPoint amphiroPoint = (AmphiroDataPoint) point;
-				if (amphiroPoint.getDuration().get(EnumMetric.MAX) > durationThresholdMinutes) {
-					fireAlert = true;
-				}
-			}
+                        if (!serie.getPoints().isEmpty()) {
+                                ArrayList<DataPoint> points = serie.getPoints();
+                                for (DataPoint point : points) {
+                                        AmphiroDataPoint amphiroPoint = (AmphiroDataPoint) point;
+                                        if (amphiroPoint.getDuration().get(EnumMetric.MAX) > durationThresholdMinutes) {
+                                                fireAlert = true;
+                                        }
+                                }
+                        }
 		}
 		return fireAlert;
 	}
@@ -234,6 +277,10 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQuery query = dataQueryBuilder.build();
 		DataQueryResponse queryResponse = dataService.execute(query);
 
+                if(queryResponse.getMeters().isEmpty()){
+                        return null;
+                }
+                
 		GroupDataSeries dataSeriesMeter = queryResponse.getMeters().get(0);
 		ArrayList<DataPoint> dataPoints = dataSeriesMeter.getPoints();
 		if (dataPoints == null || dataPoints.isEmpty()) {
@@ -252,7 +299,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		}
 	}
 
-	// 8 alert - Reached 80% of your daily water budget {integer1} {integer2}
+	// 8 alert - Reached 80% of your weekly water budget {integer1} {integer2}
 	public SimpleEntry<Integer, Integer> alertNearWeeklyBudgetSWM(MessageCalculationConfiguration config,
 					UUID accountKey, DateTimeZone timezone) {
 
@@ -262,6 +309,10 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQuery query = dataQueryBuilder.build();
 		DataQueryResponse queryResponse = dataService.execute(query);
 
+                if(queryResponse.getMeters().isEmpty()){
+                        return null;
+                }
+                                
 		GroupDataSeries dataSeriesMeter = queryResponse.getMeters().get(0);
 		ArrayList<DataPoint> dataPoints = dataSeriesMeter.getPoints();
 		if (dataPoints == null || dataPoints.isEmpty()) {
@@ -271,7 +322,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		MeterDataPoint meterPoint = (MeterDataPoint) dataPoint;
 		Double lastWeekSum = meterPoint.getVolume().get(EnumMetric.SUM);
 
-		double percentUsed = (config.getDailyBudget() * lastWeekSum) / 100;
+		double percentUsed = (config.getWeeklyBudget() * lastWeekSum) / 100;
 
 		if (percentUsed > 80) {
 			return new SimpleEntry<>(lastWeekSum.intValue(), config.getWeeklyBudget());
@@ -290,8 +341,12 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQuery query = dataQueryBuilder.build();
 		DataQueryResponse queryResponse = dataService.execute(query);
 
-		GroupDataSeries dataSeriesMeter = queryResponse.getDevices().get(0);
-		ArrayList<DataPoint> dataPoints = dataSeriesMeter.getPoints();
+                if(queryResponse.getDevices().isEmpty()){
+                        return null;
+                }
+                
+		GroupDataSeries dataSeriesAmphiro = queryResponse.getDevices().get(0);
+		ArrayList<DataPoint> dataPoints = dataSeriesAmphiro.getPoints();
 		if (dataPoints == null || dataPoints.isEmpty()) {
 			return null;
 		}
@@ -318,8 +373,12 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQuery query = dataQueryBuilder.build();
 		DataQueryResponse queryResponse = dataService.execute(query);
 
-		GroupDataSeries dataSeriesMeter = queryResponse.getDevices().get(0);
-		ArrayList<DataPoint> dataPoints = dataSeriesMeter.getPoints();
+                if(queryResponse.getDevices().isEmpty()){
+                        return null;
+                }
+                
+		GroupDataSeries dataSeriesAmphiro = queryResponse.getDevices().get(0);
+		ArrayList<DataPoint> dataPoints = dataSeriesAmphiro.getPoints();
 		if (dataPoints == null || dataPoints.isEmpty()) {
 			return null;
 		}
@@ -346,6 +405,10 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQuery query = dataQueryBuilder.build();
 		DataQueryResponse queryResponse = dataService.execute(query);
 
+                if(queryResponse.getMeters().isEmpty()){
+                        return null;
+                }
+                
 		GroupDataSeries dataSeriesMeter = queryResponse.getMeters().get(0);
 		ArrayList<DataPoint> dataPoints = dataSeriesMeter.getPoints();
 		if (dataPoints == null || dataPoints.isEmpty()) {
@@ -374,8 +437,12 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQuery query = dataQueryBuilder.build();
 		DataQueryResponse queryResponse = dataService.execute(query);
 
-		GroupDataSeries dataSeriesMeter = queryResponse.getDevices().get(0);
-		ArrayList<DataPoint> dataPoints = dataSeriesMeter.getPoints();
+                if(queryResponse.getDevices().isEmpty()){
+                        return null;
+                }
+                
+		GroupDataSeries dataSeriesAmphiro = queryResponse.getDevices().get(0);
+		ArrayList<DataPoint> dataPoints = dataSeriesAmphiro.getPoints();
 		if (dataPoints == null || dataPoints.isEmpty()) {
 			return new SimpleEntry<>(false, config.getDailyBudgetAmphiro());
 		}
@@ -400,6 +467,10 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQuery query = dataQueryBuilder.build();
 		DataQueryResponse queryResponse = dataService.execute(query);
 
+                if(queryResponse.getMeters().isEmpty()){
+                        return false;
+                }
+                
 		GroupDataSeries dataSeriesMeter = queryResponse.getMeters().get(0);
 		ArrayList<DataPoint> dataPoints = dataSeriesMeter.getPoints();
 		if (dataPoints == null || dataPoints.isEmpty()) {
@@ -434,8 +505,12 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQuery query = dataQueryBuilder.build();
 		DataQueryResponse queryResponse = dataService.execute(query);
 
-		GroupDataSeries dataSeriesMeter = queryResponse.getDevices().get(0);
-		ArrayList<DataPoint> dataPoints = dataSeriesMeter.getPoints();
+                if(queryResponse.getDevices().isEmpty()){
+                        return false;
+                }
+                
+		GroupDataSeries dataSeriesAmphiro = queryResponse.getDevices().get(0);
+		ArrayList<DataPoint> dataPoints = dataSeriesAmphiro.getPoints();
 		if (dataPoints == null || dataPoints.isEmpty()) {
 			return false;
 		}
@@ -471,6 +546,10 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQuery query = dataQueryBuilder.build();
 		DataQueryResponse queryResponse = dataService.execute(query);
 
+                if(queryResponse.getMeters().isEmpty()){
+                        return new SimpleEntry<>(false, null);
+                }                
+                
 		GroupDataSeries dataSeriesMeter = queryResponse.getMeters().get(0);
 		ArrayList<DataPoint> dataPoints = dataSeriesMeter.getPoints();
 		if (dataPoints == null || dataPoints.isEmpty()) {
@@ -502,8 +581,12 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQuery query = dataQueryBuilder.build();
 		DataQueryResponse queryResponse = dataService.execute(query);
 
-		GroupDataSeries dataSeriesMeter = queryResponse.getDevices().get(0);
-		ArrayList<DataPoint> dataPoints = dataSeriesMeter.getPoints();
+                if(queryResponse.getDevices().isEmpty()){
+                        return new SimpleEntry<>(false, null);
+                }                
+                                
+		GroupDataSeries dataSeriesAmphiro = queryResponse.getDevices().get(0);
+		ArrayList<DataPoint> dataPoints = dataSeriesAmphiro.getPoints();
 		if (dataPoints == null || dataPoints.isEmpty()) {
 			return new SimpleEntry<>(false, null);
 		}
@@ -576,6 +659,9 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 						.user("user", accountKey).sum();
 		DataQuery firstWeekQuery = firstWeekDataQueryBuilder.build();
 		DataQueryResponse firstWeekQueryResponse = dataService.execute(firstWeekQuery);
+                if(firstWeekQueryResponse.getMeters().isEmpty()){
+                        return new SimpleEntry<>(false, null);
+                }
 		GroupDataSeries firstWeekDataSeriesMeter = firstWeekQueryResponse.getMeters().get(0);
 		ArrayList<DataPoint> firstWeekDataPoints = firstWeekDataSeriesMeter.getPoints();
 		if (firstWeekDataPoints == null || firstWeekDataPoints.isEmpty()) {
@@ -590,6 +676,9 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 						.user("user", accountKey).sum();
 		DataQuery lastWeekQuery = lastWeekDataQueryBuilder.build();
 		DataQueryResponse lastWeekQueryResponse = dataService.execute(lastWeekQuery);
+                if(lastWeekQueryResponse.getMeters().isEmpty()){
+                        return new SimpleEntry<>(false, null);
+                }
 		GroupDataSeries lastWeekDataSeriesMeter = lastWeekQueryResponse.getMeters().get(0);
 		ArrayList<DataPoint> lastWeekDataPoints = lastWeekDataSeriesMeter.getPoints();
 
@@ -623,6 +712,11 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 						.user("user", accountKey).sum();
 		DataQuery firstWeekQuery = firstWeekDataQueryBuilder.build();
 		DataQueryResponse firstWeekQueryResponse = dataService.execute(firstWeekQuery);
+                
+                if(firstWeekQueryResponse.getDevices().isEmpty()){
+                        return new SimpleEntry<>(false, null);
+                }
+                
 		GroupDataSeries firstWeekDataSeriesMeter = firstWeekQueryResponse.getDevices().get(0);
 		ArrayList<DataPoint> firstWeekDataPoints = firstWeekDataSeriesMeter.getPoints();
 
@@ -639,6 +733,11 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 						.user("user", accountKey).sum();
 		DataQuery lastWeekQuery = lastWeekDataQueryBuilder.build();
 		DataQueryResponse lastWeekQueryResponse = dataService.execute(lastWeekQuery);
+                
+                if(lastWeekQueryResponse.getDevices().isEmpty()){
+                        return new SimpleEntry<>(false, null);
+                }
+                
 		GroupDataSeries lastWeekDataSeriesMeter = lastWeekQueryResponse.getDevices().get(0);
 		ArrayList<DataPoint> lastWeekDataPoints = lastWeekDataSeriesMeter.getPoints();
 
@@ -680,6 +779,11 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 
 		DataQuery query = dataQueryBuilder.build();
 		DataQueryResponse result = dataService.execute(query);
+                
+                if(result.getMeters().isEmpty()){
+                    return new SimpleEntry<>(false, null);
+                }
+                
 		GroupDataSeries meter = result.getMeters().get(0);
 		ArrayList<DataPoint> dataPoints = meter.getPoints();
 
@@ -913,12 +1017,14 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		}
 
 		for (GroupDataSeries serie : dataSeriesAmphiro) {
-			DataPoint dataPoint = serie.getPoints().get(0);
-			AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-			userAverageMonthlyConsumption = (amphiroDataPoint.getVolume().get(EnumMetric.SUM)) / 3;
-			if (amphiroDataPoint.getDuration().get(EnumMetric.AVERAGE) > aggregates.getAverageDurationAmphiro()) {
-				fireAlert = true;
-			}
+                        if (!serie.getPoints().isEmpty()) {
+                                DataPoint dataPoint = serie.getPoints().get(0);
+                                AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
+                                userAverageMonthlyConsumption = (amphiroDataPoint.getVolume().get(EnumMetric.SUM)) / 3;
+                                if (amphiroDataPoint.getDuration().get(EnumMetric.AVERAGE) > aggregates.getAverageDurationAmphiro()) {
+                                        fireAlert = true;
+                                }
+                        }
 		}
 
 		Double averageMonthlyConsumptionAggregate = aggregates.getAverageMonthlyConsumptionAmphiro();
@@ -954,13 +1060,15 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		}
 
 		for (GroupDataSeries serie : dataSeriesAmphiro) {
-			DataPoint p = serie.getPoints().get(0);
-			AmphiroDataPoint amphiroPoint = (AmphiroDataPoint) p;
-			userAverageMonthlyConsumption = (amphiroPoint.getVolume().get(EnumMetric.SUM)) / 3;
+                        if (!serie.getPoints().isEmpty()) {
+                                DataPoint p = serie.getPoints().get(0);
+                                AmphiroDataPoint amphiroPoint = (AmphiroDataPoint) p;
+                                userAverageMonthlyConsumption = (amphiroPoint.getVolume().get(EnumMetric.SUM)) / 3;
 
-			if (amphiroPoint.getTemperature().get(EnumMetric.AVERAGE) > aggregates.getAverageTemperatureAmphiro()) {
-				fireAlert = true;
-			}
+                                if (amphiroPoint.getTemperature().get(EnumMetric.AVERAGE) > aggregates.getAverageTemperatureAmphiro()) {
+                                        fireAlert = true;
+                                }
+                        }
 		}
 
 		Double annualConsumption = userAverageMonthlyConsumption * 12;
@@ -991,9 +1099,11 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		}
 
 		for (GroupDataSeries serie : dataSeriesAmphiro) {
-			DataPoint dataPoint = serie.getPoints().get(0);
-			AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-			userAverageFlow = amphiroDataPoint.getFlow().get(EnumMetric.AVERAGE);
+                        if (!serie.getPoints().isEmpty()) {
+                                DataPoint dataPoint = serie.getPoints().get(0);
+                                AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
+                                userAverageFlow = amphiroDataPoint.getFlow().get(EnumMetric.AVERAGE);
+                        }
 		}
 
 		if (userAverageFlow > aggregates.getAverageFlowAmphiro()) {
@@ -1010,9 +1120,11 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 			}
 
 			for (GroupDataSeries serie : volumeDataSeriesAmphiro) {
-				DataPoint dataPoint = serie.getPoints().get(0);
-				AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-				userThreeMonthsConsumption = amphiroDataPoint.getVolume().get(EnumMetric.SUM);
+                                if (!serie.getPoints().isEmpty()) {
+                                        DataPoint dataPoint = serie.getPoints().get(0);
+                                        AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
+                                        userThreeMonthsConsumption = amphiroDataPoint.getVolume().get(EnumMetric.SUM);
+                                }
 			}
 
 			Double userAnnualConsumption = userThreeMonthsConsumption * 4;
@@ -1052,9 +1164,11 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		}
 
 		for (GroupDataSeries serie : dataSeriesAmphiro) {
-			DataPoint dataPoint = serie.getPoints().get(0);
-			AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-			userAverageFlow = amphiroDataPoint.getFlow().get(EnumMetric.AVERAGE);
+                        if (!serie.getPoints().isEmpty()) {
+                                DataPoint dataPoint = serie.getPoints().get(0);
+                                AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
+                                userAverageFlow = amphiroDataPoint.getFlow().get(EnumMetric.AVERAGE);
+                        }
 		}
 
 		if (userAverageFlow > aggregates.getAverageFlowAmphiro()) {
@@ -1071,9 +1185,11 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 			}
 
 			for (GroupDataSeries serie : volumeDataSeriesAmphiro) {
-				DataPoint dataPoint = serie.getPoints().get(0);
-				AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-				userThreeMonthsConsumption = amphiroDataPoint.getVolume().get(EnumMetric.SUM);
+                                if (!serie.getPoints().isEmpty()) {
+                                        DataPoint dataPoint = serie.getPoints().get(0);
+                                        AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
+                                        userThreeMonthsConsumption = amphiroDataPoint.getVolume().get(EnumMetric.SUM);
+                                }
 			}
 
 			Double userAnnualConsumption = userThreeMonthsConsumption * 4;
@@ -1111,9 +1227,11 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		}
 
 		for (GroupDataSeries serie : dataSeriesAmphiro) {
-			DataPoint dataPoint = serie.getPoints().get(0);
-			AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-			userAverageMonthlyConsumption = amphiroDataPoint.getVolume().get(EnumMetric.SUM) / 3;
+                        if (!serie.getPoints().isEmpty()) {
+                                DataPoint dataPoint = serie.getPoints().get(0);
+                                AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
+                                userAverageMonthlyConsumption = amphiroDataPoint.getVolume().get(EnumMetric.SUM) / 3;
+                        }
 		}
 
 		Double averageMonthlyConsumptionAmphiro = aggregates.getAverageMonthlyConsumptionAmphiro();
@@ -1150,9 +1268,11 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		}
 
 		for (GroupDataSeries serie : dataSeriesAmphiro) {
-			DataPoint dataPoint = serie.getPoints().get(0);
-			AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-			averageSessionConsumption = amphiroDataPoint.getVolume().get(EnumMetric.AVERAGE);
+                        if (!serie.getPoints().isEmpty()) {
+                                DataPoint dataPoint = serie.getPoints().get(0);
+                                AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
+                                averageSessionConsumption = amphiroDataPoint.getVolume().get(EnumMetric.AVERAGE);
+                        }
 		}
 
 		// TODO - calculate the number of sessions per year when available
@@ -1170,6 +1290,16 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		}
 	}
 
+        private boolean isMeterInstalledForUser(UUID userKey){
+                DeviceRegistrationQuery query = new DeviceRegistrationQuery(EnumDeviceType.METER);
+                return deviceRepository.getUserDevices(userKey, query).isEmpty(); 
+        }
+        
+        private boolean isAmphiroInstalledForUser(UUID userKey){
+                DeviceRegistrationQuery query = new DeviceRegistrationQuery(EnumDeviceType.AMPHIRO);
+                return deviceRepository.getUserDevices(userKey, query).isEmpty(); 
+        }        
+                
 	private int computeConsecutiveZeroConsumptions(List<Double> values) {
 		int maxLength = 0;
 		int tempLength = 0;

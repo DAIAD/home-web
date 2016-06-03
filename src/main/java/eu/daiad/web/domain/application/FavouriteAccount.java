@@ -6,7 +6,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
-import eu.daiad.web.model.commons.EnumFavouriteType;
+import eu.daiad.web.model.favourite.EnumFavouriteType;
 
 @Entity(name = "favourite_account")
 @Table(schema = "public", name = "favourite_account")

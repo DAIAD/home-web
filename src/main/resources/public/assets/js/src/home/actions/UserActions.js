@@ -53,7 +53,7 @@ const UserActions = {
         return response;
       })
       .catch((errors) => {
-        console.error('user login failed with errors:', errors);
+        console.error('User login failed with errors:', errors);
         return errors;
       });
     };
@@ -70,7 +70,7 @@ const UserActions = {
         return response;
       })
       .catch((errors) => {
-        console.error('user refresh failed with errors:', errors);
+        console.error('User refresh failed with errors:', errors);
         return errors;
       });
     };
@@ -89,7 +89,7 @@ const UserActions = {
           return response;
         })
         .catch((errors) => {
-          console.error('user logout failed with errors:', errors);
+          console.error('User logout failed with errors:', errors);
           return errors;
         });
     };

@@ -28,8 +28,8 @@ import eu.daiad.web.model.amphiro.AmphiroSessionTimeIntervalQuery;
 import eu.daiad.web.model.amphiro.AmphiroSessionTimeIntervalQueryResult;
 import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.device.Device;
+import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQuery;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQueryResult;
@@ -43,6 +43,11 @@ import eu.daiad.web.repository.application.IAmphiroTimeOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 
+/**
+ * 
+ * Provides actions for searching Amphiro B1 sessions and smart water meter readings.
+ *
+ */
 @RestController("RestSearchController")
 public class SearchController extends BaseRestController {
 
@@ -60,6 +65,12 @@ public class SearchController extends BaseRestController {
 	@Autowired
 	private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
 
+	/**
+	 * Returns the status of one or more smart water meters.
+	 * 
+	 * @param query the query.
+	 * @return the meter status.
+	 */
 	@RequestMapping(value = "/api/v1/meter/status", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse getWaterMeterStatus(@RequestBody WaterMeterStatusQuery query) {
 		RestResponse response = new RestResponse();
@@ -85,10 +96,8 @@ public class SearchController extends BaseRestController {
 			}
 
 			return result;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -96,6 +105,12 @@ public class SearchController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Loads smart water meter readings on a given query.
+	 * 
+	 * @param query the query.
+	 * @return the meter readings.
+	 */
 	@RequestMapping(value = "/api/v1/meter/history", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse searchWaterMeterMeasurements(@RequestBody WaterMeterMeasurementQuery query) {
 		RestResponse response = new RestResponse();
@@ -113,10 +128,8 @@ public class SearchController extends BaseRestController {
 							DateTimeZone.forID(user.getTimezone()), query);
 
 			return data;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -124,8 +137,14 @@ public class SearchController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Loads Amphiro B1 session measurements based on a given query. Amphiro B1 sessions are indexed by time.
+	 * 
+	 * @param query the query.
+	 * @return the measurements.
+	 */
 	@RequestMapping(value = "/api/v1/device/measurement/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse searchAmphiroMeasurements1(@RequestBody AmphiroMeasurementTimeIntervalQuery query) {
+	public RestResponse searchAmphiroMeasurementsByTime(@RequestBody AmphiroMeasurementTimeIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -134,7 +153,7 @@ public class SearchController extends BaseRestController {
 			query.setUserKey(user.getKey());
 
 			if ((query.getDeviceKey() == null) || (query.getDeviceKey().length == 0)) {
-				return new WaterMeterStatusQueryResult();
+				return new AmphiroMeasurementTimeIntervalQueryResult();
 			}
 
 			this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
@@ -143,10 +162,8 @@ public class SearchController extends BaseRestController {
 							DateTimeZone.forID(user.getTimezone()), query);
 
 			return data;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -154,8 +171,14 @@ public class SearchController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Loads Amphiro B1 session measurements based on a given query. Amphiro B1 sessions are indexed by id.
+	 * 
+	 * @param query the query.
+	 * @return the measurements.
+	 */
 	@RequestMapping(value = "/api/v2/device/measurement/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse searchAmphiroMeasurements2(@RequestBody AmphiroMeasurementIndexIntervalQuery query) {
+	public RestResponse searchAmphiroMeasurementsByIndex(@RequestBody AmphiroMeasurementIndexIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -164,7 +187,7 @@ public class SearchController extends BaseRestController {
 			query.setUserKey(user.getKey());
 
 			if ((query.getDeviceKey() == null) || (query.getDeviceKey().length == 0)) {
-				return new WaterMeterStatusQueryResult();
+				return new AmphiroMeasurementIndexIntervalQueryResult();
 			}
 
 			this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
@@ -173,10 +196,8 @@ public class SearchController extends BaseRestController {
 							DateTimeZone.forID(user.getTimezone()), query);
 
 			return data;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -184,8 +205,15 @@ public class SearchController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Loads Amphiro B1 sessions based on a given query. Amphiro B1 sessions are indexed by time.
+	 * 
+	 * @param query the query.
+	 * @return the measurements.
+	 */
 	@RequestMapping(value = "/api/v1/device/session/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse searchAmphiroSessions1(@RequestBody AmphiroSessionCollectionTimeIntervalQuery query) {
+	public RestResponse searchAmphiroSessionsWithTimeOrdering(
+					@RequestBody AmphiroSessionCollectionTimeIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -194,7 +222,7 @@ public class SearchController extends BaseRestController {
 			query.setUserKey(user.getKey());
 
 			if ((query.getDeviceKey() == null) || (query.getDeviceKey().length == 0)) {
-				return new WaterMeterStatusQueryResult();
+				return new AmphiroSessionCollectionTimeIntervalQueryResult();
 			}
 
 			String[] names = this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
@@ -203,10 +231,8 @@ public class SearchController extends BaseRestController {
 							DateTimeZone.forID(user.getTimezone()), query);
 
 			return data;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -214,8 +240,15 @@ public class SearchController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Loads Amphiro B1 sessions based on a given query. Amphiro B1 sessions are indexed by id.
+	 * 
+	 * @param query the query.
+	 * @return the measurements.
+	 */
 	@RequestMapping(value = "/api/v2/device/session/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse searchAmphiroSessions2(@RequestBody AmphiroSessionCollectionIndexIntervalQuery query) {
+	public RestResponse searchAmphiroSessionsWithIndexOrdering(
+					@RequestBody AmphiroSessionCollectionIndexIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -224,7 +257,7 @@ public class SearchController extends BaseRestController {
 			query.setUserKey(user.getKey());
 
 			if ((query.getDeviceKey() == null) || (query.getDeviceKey().length == 0)) {
-				return new WaterMeterStatusQueryResult();
+				return new AmphiroSessionCollectionIndexIntervalQueryResult();
 			}
 
 			String[] names = this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
@@ -233,10 +266,8 @@ public class SearchController extends BaseRestController {
 							DateTimeZone.forID(user.getTimezone()), query);
 
 			return data;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -244,8 +275,14 @@ public class SearchController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Loads an Amphiro B1 session based on a given query. Amphiro B1 session is indexed by time.
+	 * 
+	 * @param query the query
+	 * @return the sessions
+	 */
 	@RequestMapping(value = "/api/v1/device/session", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse getAmphiroSession1(@RequestBody AmphiroSessionTimeIntervalQuery query) {
+	public RestResponse getAmphiroSessionByTime(@RequestBody AmphiroSessionTimeIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -254,7 +291,7 @@ public class SearchController extends BaseRestController {
 			query.setUserKey(user.getKey());
 
 			if (query.getDeviceKey() == null) {
-				return new WaterMeterStatusQueryResult();
+				return new AmphiroSessionTimeIntervalQueryResult();
 			}
 
 			this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
@@ -262,10 +299,8 @@ public class SearchController extends BaseRestController {
 			AmphiroSessionTimeIntervalQueryResult data = amphiroTimeOrderedRepository.getSession(query);
 
 			return data;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -273,8 +308,14 @@ public class SearchController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Loads an Amphiro B1 session based on a given query. Amphiro B1 session is indexed by id.
+	 * 
+	 * @param query the query
+	 * @return the sessions
+	 */
 	@RequestMapping(value = "/api/v2/device/session", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse getAmphiroSession2(@RequestBody AmphiroSessionIndexIntervalQuery query) {
+	public RestResponse getAmphiroSessionByIndex(@RequestBody AmphiroSessionIndexIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -283,7 +324,7 @@ public class SearchController extends BaseRestController {
 			query.setUserKey(user.getKey());
 
 			if (query.getDeviceKey() == null) {
-				return new WaterMeterStatusQueryResult();
+				return new AmphiroSessionIndexIntervalQueryResult();
 			}
 
 			this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
@@ -291,10 +332,8 @@ public class SearchController extends BaseRestController {
 			AmphiroSessionIndexIntervalQueryResult data = amphiroIndexOrderedRepository.getSession(query);
 
 			return data;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -317,8 +356,8 @@ public class SearchController extends BaseRestController {
 			for (UUID deviceKey : devices) {
 				Device device = this.deviceRepository.getUserDeviceByKey(userKey, deviceKey);
 
-				if (device == null) {
-					throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
+				if ((device == null) || (!device.getType().equals(EnumDeviceType.AMPHIRO))) {
+					throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
 				}
 
 				nameList.add(((AmphiroDevice) device).getName());
@@ -337,8 +376,8 @@ public class SearchController extends BaseRestController {
 			for (UUID deviceKey : devices) {
 				Device device = this.deviceRepository.getUserDeviceByKey(userKey, deviceKey);
 
-				if (device == null) {
-					throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
+				if ((device == null) || (!device.getType().equals(EnumDeviceType.METER))) {
+					throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
 				}
 
 				serialList.add(((WaterMeterDevice) device).getSerial());

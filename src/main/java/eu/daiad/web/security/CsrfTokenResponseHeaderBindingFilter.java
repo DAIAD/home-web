@@ -14,30 +14,23 @@ import eu.daiad.web.model.security.CsrfConstants;
 
 public class CsrfTokenResponseHeaderBindingFilter extends OncePerRequestFilter {
 
-	private RegexRequestMatcher apiMatcher = new RegexRequestMatcher(
-			"/api/v1/.*", null);
+	private RegexRequestMatcher apiMatcher = new RegexRequestMatcher("/api/v\\d+/.*", null);
 
 	@Override
-	protected void doFilterInternal(HttpServletRequest request,
-			HttpServletResponse response, javax.servlet.FilterChain filterChain)
-			throws ServletException, IOException {
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+					javax.servlet.FilterChain filterChain) throws ServletException, IOException {
 		// Do not add CSRF token to API calls
 		if (!apiMatcher.matches(request)) {
-			CsrfToken requestToken = (CsrfToken) request
-					.getAttribute(CsrfConstants.REQUEST_ATTRIBUTE_NAME);
-			CsrfToken sessionToken = (CsrfToken) request.getSession()
-					.getAttribute(CsrfConstants.DEFAULT_CSRF_TOKEN_ATTR_NAME);
+			CsrfToken requestToken = (CsrfToken) request.getAttribute(CsrfConstants.REQUEST_ATTRIBUTE_NAME);
+			CsrfToken sessionToken = (CsrfToken) request.getSession().getAttribute(
+							CsrfConstants.DEFAULT_CSRF_TOKEN_ATTR_NAME);
 
-			CsrfToken token = (sessionToken == null ? requestToken
-					: sessionToken);
+			CsrfToken token = (sessionToken == null ? requestToken : sessionToken);
 
 			if (token != null) {
-				response.setHeader(CsrfConstants.RESPONSE_HEADER_NAME,
-						token.getHeaderName());
-				response.setHeader(CsrfConstants.RESPONSE_PARAM_NAME,
-						token.getParameterName());
-				response.setHeader(CsrfConstants.RESPONSE_TOKEN_NAME,
-						token.getToken());
+				response.setHeader(CsrfConstants.RESPONSE_HEADER_NAME, token.getHeaderName());
+				response.setHeader(CsrfConstants.RESPONSE_PARAM_NAME, token.getParameterName());
+				response.setHeader(CsrfConstants.RESPONSE_TOKEN_NAME, token.getToken());
 			}
 		}
 		filterChain.doFilter(request, response);

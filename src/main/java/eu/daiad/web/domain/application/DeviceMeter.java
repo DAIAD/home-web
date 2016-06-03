@@ -5,8 +5,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.Type;
-
 import com.vividsolutions.jts.geom.Geometry;
 
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -18,7 +16,6 @@ public class DeviceMeter extends Device {
 	@Basic()
 	private String serial;
 
-	@Type(type = "org.hibernate.spatial.GeometryType")
 	@Column(name = "location")
 	private Geometry location;
 

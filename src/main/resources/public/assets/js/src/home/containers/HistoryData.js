@@ -7,22 +7,28 @@ var History = require('../components/sections/History');
 
 var HistoryActions = require('../actions/HistoryActions');
 
-var { getReducedDeviceType, getDeviceByKey, getDeviceTypeByKey, getDefaultDevice } = require('../utils/device');
+var { getDeviceByKey, getDeviceNameByKey, getAvailableDevices, getDeviceTypeByKey, getDefaultDevice, reduceSessions, reduceMetric, getMetricMu, sortSessions } = require('../utils/device');
 var timeUtil = require('../utils/time');
+var { getFriendlyDuration, getEnergyClass } = require('../utils/general');
 
+var { DEV_METRICS, METER_METRICS, DEV_PERIODS, METER_PERIODS, DEV_SORT, METER_SORT } = require('../constants/HomeConstants');
 
 function mapStateToProps(state, ownProps) {
-  const defaultDevice = getDefaultDevice(state.user.profile.devices);
-  const deviceKey = defaultDevice?defaultDevice.deviceKey:null;
 
   return {
+    firstname: state.user.profile.firstname,
     time: state.section.history.time,
-    devType: getReducedDeviceType(state.user.profile.devices, state.section.history.activeDevice),
+    activeDevice: state.section.history.activeDevice,
+    activeDeviceType: state.section.history.activeDeviceType,
+    errors: state.query.errors,
     metricFilter: state.section.history.filter,
     timeFilter: state.section.history.timeFilter,
+    sortFilter: state.section.history.sortFilter,
+    sortOrder: state.section.history.sortOrder,
     devices: state.user.profile.devices?state.user.profile.devices:[],
-    activeDevice: state.section.history.activeDevice,
-    defaultDevice: deviceKey,
+    synced: state.section.history.synced,
+    data: state.section.history.data,
+    comparison: state.section.history.comparison
   };
 }
 
@@ -31,13 +37,21 @@ function mapDispatchToProps(dispatch) {
 }
 
 function mergeProps(stateProps, dispatchProps, ownProps) {
-  const allMetrics = [
-    {id:'showers', title:'Showers'},
-    {id:'volume', title:'Volume'},
-    {id:'energy', title:'Energy'},
-    {id:'duration', title:'Duration'},
-    {id:'temperature', title:'Temperature'}
-  ];
+  const devType = stateProps.activeDeviceType;  
+  const sessions = sortSessions(reduceSessions(stateProps.devices, stateProps.data), stateProps.sortFilter, stateProps.sortOrder);
+
+  const metrics = devType === 'AMPHIRO' ? DEV_METRICS : METER_METRICS;
+
+  const periods = devType === 'AMPHIRO' ? DEV_PERIODS : METER_PERIODS;
+  
+  const sortOptions = devType === 'AMPHIRO' ? DEV_SORT : METER_SORT;
+
+  const comparisons = stateProps.timeFilter !== 'custom' ?
+    (devType === 'AMPHIRO' ? [] : 
+     [{id: 'last', title: timeUtil.getLastPeriod(stateProps.timeFilter, stateProps.time.startDate)}]
+    ) 
+      : [];
+
   return Object.assign(
     {}, 
     ownProps, 
@@ -45,13 +59,16 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
     Object.assign({}, 
                   stateProps, 
                   { 
-                    nextPeriod: timeUtil.getNextPeriod(stateProps.timeFilter, stateProps.time.startDate), 
-                    previousPeriod: timeUtil.getPreviousPeriod(stateProps.timeFilter, stateProps.time.endDate),
-                    metrics: stateProps.devType===-1?allMetrics.filter(m=>m.id!=='volume'):allMetrics,
-                    //activeDevice: getDeviceByKey(stateProps.devices, stateProps.activeDeviceId),
-                  }
-                 )
-  );
+                    nextPeriod: stateProps.time?timeUtil.getNextPeriod(stateProps.timeFilter, stateProps.time.startDate):{}, 
+                    previousPeriod: stateProps.time?timeUtil.getPreviousPeriod(stateProps.timeFilter, stateProps.time.endDate):{},
+                    amphiros: getAvailableDevices(stateProps.devices),
+                    periods,
+                    metrics,
+                    comparisons,
+                    sortOptions,
+                    sessions,
+                    reducedMetric: `${reduceMetric(stateProps.devices, stateProps.data, stateProps.metricFilter)} ${getMetricMu(stateProps.metricFilter)}`,
+                  }));
 }
 
 var HistoryData = connect(mapStateToProps, mapDispatchToProps, mergeProps)(History);

@@ -14,6 +14,9 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.jdbc.support.MetaDataAccessException;
 import org.springframework.stereotype.Component;
 
+/**
+ * Provides custom configuration for Spring Batch database.
+ */
 @Component
 public class CustomBatchDatabaseInitializer extends BatchDatabaseInitializer {
 

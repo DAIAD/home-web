@@ -5,7 +5,8 @@ var { bindActionCreators } = require('redux');
 var { connect } = require('react-redux');
 var { push } = require('react-router-redux');
 
-var HomeConstants = require('../constants/HomeConstants');
+var { STATIC_RECOMMENDATIONS, STATBOX_DISPLAYS, DEV_METRICS, METER_METRICS, DEV_PERIODS, METER_PERIODS, DEV_SORT, METER_SORT } = require('../constants/HomeConstants');
+
 var Dashboard = require('../components/sections/Dashboard');
 
 var HistoryActions = require('../actions/HistoryActions');
@@ -13,10 +14,10 @@ var DashboardActions = require('../actions/DashboardActions');
 
 var timeUtil = require('../utils/time');
 
-var { getDeviceByKey, getDeviceNameByKey, getDeviceKeysByType, getDeviceTypeByKey, getAvailableDevices, getAvailableDeviceKeys, getAvailableMeters, getDefaultDevice, getLastSession, reduceMetric, reduceSessions, getDataSessions, getDataMeasurements, getDataShowersCount } = require('../utils/device');
+var { getDeviceByKey, getDeviceNameByKey, getDeviceKeysByType, getDeviceTypeByKey, getAvailableDevices, getAvailableDeviceKeys, getAvailableMeters, getDefaultDevice, getLastSession, reduceMetric, reduceSessions, getDataSessions, getDataMeasurements, getShowersCount, getMetricMu, getSessionsIdOffset } = require('../utils/device');
 
 var { getEnergyClass } = require('../utils/general');
-var { getFilteredData } = require('../utils/chart');
+var { getChartTimeDataByFilter, getChartDataByFilter, getChartMeterCategories, getChartAmphiroCategories } = require('../utils/chart');
 
 
 function mapStateToProps(state, ownProps) {
@@ -24,154 +25,197 @@ function mapStateToProps(state, ownProps) {
     firstname: state.user.profile.firstname,
     devices: state.user.profile.devices,
     layout: state.section.dashboard.layout,
-    mode: state.section.dashboard.mode,
+    //mode: state.section.dashboard.mode,
     tempInfoboxData: state.section.dashboard.tempInfoboxData,
     infoboxes: state.section.dashboard.infobox,
   };
 }
 
 function mapDispatchToProps(dispatch) {
-  return Object.assign({},
-                        assign(bindActionCreators(DashboardActions, dispatch)),
-                        {linkToHistory: options => dispatch(HistoryActions.linkToHistory(options))}); 
+  return Object.assign({}, 
+                       bindActionCreators(DashboardActions, dispatch),
+                       {link: options => dispatch(HistoryActions.linkToHistory(options))}
+                      ); 
 
 }
 
 function mergeProps(stateProps, dispatchProps, ownProps) {
-  //available infobox options
-  const periods = [
-    { id: "day", title: "Day", value: timeUtil.today() }, 
-    { id: "week", title: "Week", value: timeUtil.thisWeek() }, 
-    { id: "month", title: "Month", value: timeUtil.thisMonth() }, 
-    { id: "year", title: "Year", value: timeUtil.thisYear() }
-  ];
-  
-  let metrics = [
-    { id: "volume", title: "Volume" }, 
-    { id: "energy", title: "Energy" },
-    { id: "temperature", title: "Temperature" },
-    { id: "duration", title: "Duration" }
-  ];
- 
-  const types = [
-    { id: "stat", title: "Statistic" },
-    { id: "chart", title: "Chart" }
-  ];
 
-  const chartSubtypes = [
-    { id: "total", title: "Total" },
-    {  id: "last", title: "Last" }
-  ];
-
-  const device = stateProps.tempInfoboxData.device || (stateProps.devices.length?stateProps.devices[0].deviceKey:"none");
-  metrics = getDeviceTypeByKey(stateProps.devices, device)==='METER'?metrics.filter(x=>x.id==='volume'):metrics;
-
-  //default values 
-  const metric = stateProps.tempInfoboxData.metric || metrics[0].id;
-  let time = stateProps.tempInfoboxData.time || periods[0].value;
-  const period = stateProps.tempInfoboxData.period || periods[0].id;
-  const type = stateProps.tempInfoboxData.type || types[0].id;
-
-  const subtypes = chartSubtypes;
-  const subtype = subtypes?(stateProps.tempInfoboxData.subtype || subtypes[0].id):"total";
-  
-  let defTitle = "";
-  if (period === 'day') defTitle += "Today's ";
-  else defTitle += "This " + period + "'s ";
-
-  if (subtype === 'last') defTitle += "last shower ";
-
-  if (metric === 'volume') defTitle += "water consumption ";
-  else if (metric === 'energy') defTitle += "energy consumption ";
-  else if (metric === 'temperature') defTitle += "average temperature ";
-  else if (metric === 'duration') defTitle += "duration ";
-
-  //const title = stateProps.tempInfoboxData.title || defTitle;
-  const title = defTitle;
-  
-  time = subtype==='last'?Object.assign(time, {granularity:0}):time;
-  //const subtypes = type==='chart'?chartSubtypes:null;
-
-  return assign(ownProps,
+  return Object.assign({}, ownProps,
                dispatchProps,
-               assign(stateProps,
-                      {
-                        chartFormatter: intl => (x) => intl.formatTime(x, { hour:'numeric', minute:'numeric'}),
-                          //amphiros: getAvailableDevices(stateProps.devices).map(dev=>dev.deviceKey),
-                          //meters: getAvailableMeters(stateProps.devices).map(dev=>dev.deviceKey),
-                        infoboxData: transformInfoboxData(stateProps.infoboxes, stateProps.devices, dispatchProps.linkToHistory),
-                           periods,
-                           types,
-                           subtypes,
-                           metrics,
-                           tempInfoboxData: { 
-                             title, 
-                             type, 
-                             subtype,
-                             period, 
-                             time, 
-                             metric,
-                             device,
-                           }
-                           
-                     }));
+               stateProps,
+               {
+                 infoboxData: transformInfoboxData(stateProps.infoboxes, stateProps.devices, dispatchProps.link, ownProps.intl),
+               });
 }
 
-function assign(...objects) {
-  return Object.assign({}, ...objects);
-}
 
-function transformInfoboxData (infoboxes, devices, link) {
+function transformInfoboxData (infoboxes, devices, link, intl) {
 
   return infoboxes.map(infobox => {
-    const { id, title, type, time, period, index, deviceType, subtype, data, metric } = infobox;
+    const { id, title, type, period, index, deviceType, subtype, data, previous, metric, showerId } = infobox;
 
-    let device, chartData, reducedData, linkToHistory, tip;
+    const meterPeriods = METER_PERIODS.filter(x => x.id !== 'custom');
+    const devPeriods = DEV_PERIODS;
+
+    let device, chartData, reduced, time, linkToHistory, highlight, previousReduced, better, comparePercentage, mu;
+    let periods = [], displays = []; 
+
+    const showers = getShowersCount(devices, data);
     
-    if (subtype === 'last') {
+    let chartFormatter = intl => (x) => intl.formatTime(x, { hour:'numeric', minute:'numeric'});
+    let chartType = 'line';
+    let chartXAxis = 'category';
+    let chartCategories = deviceType === 'METER' ? 
+      getChartMeterCategories(period, intl) : 
+        getChartAmphiroCategories(period, getSessionsIdOffset(data[0] ? data[0].sessions : []));
+    let invertAxis = false;
+
+    if (type==='tip') {
+      highlight = STATIC_RECOMMENDATIONS[Math.floor(Math.random()*3)].description;
+    }
+    else if (type === 'last') {
       device = infobox.device;
+      time = infobox.time;
+      
+      chartCategories = null;
+
       const last = data.find(d=>d.deviceKey===device);
       const lastShowerMeasurements = getDataMeasurements(devices, last, index);
       
-      reducedData = lastShowerMeasurements.map(s=>s[metric]).reduce((c, p)=>c+p, 0);
-      
+      reduced = lastShowerMeasurements.map(s=>s[metric]).reduce((c, p)=>c+p, 0);
+      highlight = reduced;
+      mu = getMetricMu(metric);
+      //highlight = `${reduced} ${mu}`;
+
       chartData = [{
         title: getDeviceNameByKey(devices, device), 
-        data:  getFilteredData(lastShowerMeasurements , infobox.metric)
+        data: getChartDataByFilter(lastShowerMeasurements, infobox.metric, chartCategories)
       }];
+      chartXAxis = 'time';
     
-      linkToHistory =  () => link({time, period, device:[device], metric, index, data});
+      linkToHistory =  () => link({time, showerId, period, deviceType, device:[device], metric, index, data});
     }
-    else if (type==='tip') {
-      tip = HomeConstants.STATIC_RECOMMENDATIONS[Math.floor(Math.random()*3)].description;
-    }
-    else {
+    
+    else if (type === 'total') {
       device = getDeviceKeysByType(devices, deviceType);
+      time = timeUtil.getTimeByPeriod(period);
       
-      reducedData = reduceSessions(devices, data).map(s=>s[metric]).reduce((c, p)=>c+p, 0); 
-      
-      if (subtype === 'efficiency') { 
-        if (metric === 'energy') {
-          reducedData = getEnergyClass(reducedData / getDataShowersCount(devices, data)); 
-        }
-      }
+      periods = deviceType === 'AMPHIRO' ? devPeriods : meterPeriods;
+      displays = STATBOX_DISPLAYS;
+
+      reduced = data ? reduceMetric(devices, data, metric) : 0;
+      previousReduced = previous ? reduceMetric(devices, previous, metric) : 0; 
+
+      highlight = reduced;
+      mu = getMetricMu(metric);
+      //highlight = `${reduced} ${mu}`;
+      better = reduced < previousReduced;
+      comparePercentage = previousReduced === 0 ? null : Math.round((Math.abs(reduced - previousReduced) / previousReduced)*100);
 
       chartData = data.map(devData => ({ 
         title: getDeviceNameByKey(devices, devData.deviceKey), 
-        data:getFilteredData(getDataSessions(devices, devData, subtype, index), infobox.metric, getDeviceTypeByKey(devices, devData.device))
+        data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, chartCategories)
       }));
      
-     linkToHistory =  () => link({id, time, period, device, metric, index, data});
+     linkToHistory =  () => link({id, time, period, deviceType, device, metric, index, data});
     }
+    else if (type === 'efficiency') {
+      device = getDeviceKeysByType(devices, deviceType);
+      reduced = data ? reduceMetric(devices, data, metric) : 0;
 
+      periods = deviceType === 'AMPHIRO' ? devPeriods : meterPeriods;
+      displays = STATBOX_DISPLAYS;
+
+      previousReduced = previous ? reduceMetric(devices, previous, metric) : 0; 
+
+      better = reduced < previousReduced;
+
+      comparePercentage = previousReduced === 0 ? null : Math.round((Math.abs(reduced - previousReduced) / previousReduced)*100);
+
+      if (metric === 'energy') {
+        highlight = (showers === 0 || reduced === 0) ? null : getEnergyClass(reduced / showers);
+      }
+      else {
+        throw new Error('only energy efficiency supported');
+      }
+      
+      chartData = data.map(devData => ({ 
+        title: getDeviceNameByKey(devices, devData.deviceKey), 
+        data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, chartCategories)
+      }));
+      
+      linkToHistory =  () => link({id, time, period, deviceType, device, metric, index, data});
+
+    }
+    else if (type === 'forecast') {
+      chartType = 'bar';
+
+      //dummy data
+      chartCategories=[2014, 2015, 2016];
+      chartData=[{title:'Consumption', data:[100, 200, 150]}];
+      mu = getMetricMu(metric);
+    }
+    else if (type === 'breakdown') {
+      chartType = 'bar';
+
+      periods = deviceType === 'AMPHIRO' ? devPeriods : meterPeriods;
+
+      reduced = data ? reduceMetric(devices, data, metric) : 0;
+      //dummy data
+      chartData=[{title:'Consumption', data:[Math.floor(reduced/4), Math.floor(reduced/4), Math.floor(reduced/3), Math.floor(reduced/2-reduced/3)]}];
+      chartCategories = ["toilet", "faucet", "shower", "kitchen"];
+      mu = getMetricMu(metric);
+      invertAxis = true;
+
+      linkToHistory =  () => link({id, time, period, deviceType, device, metric, index, data});
+    }
+    else if (type === 'comparison') {
+      chartType = 'bar';
+
+      periods = deviceType === 'AMPHIRO' ? devPeriods : meterPeriods;
+
+      reduced = data ? reduceMetric(devices, data, metric) : 0;
+      mu = getMetricMu(metric);
+      //dummy data based on real user data
+      chartData=[{title:'Comparison', data:[reduced-0.2*reduced, reduced+0.5*reduced, reduced/2, reduced]}];
+      chartCategories = ["City", "Neighbors", "Similar", "You"];
+      mu = getMetricMu(metric);
+      invertAxis = true;
+
+      linkToHistory =  () => link({id, time, period, deviceType, device, metric, index, data});
+    }
+    else if (type === 'budget') {
+      chartType = 'pie';
+
+      periods = deviceType === 'AMPHIRO' ? devPeriods : meterPeriods;
+
+      reduced = data ? reduceMetric(devices, data, metric) : 0;
+      mu = getMetricMu(metric);
+      chartCategories = null; 
+      //dummy data
+      chartData=[{title:'66%', data:[{value: 345, name: 'consumed', color: '#2D3580'}, {value: 250, name: 'remaining', color: '#D0EAFA'}]}];
+      mu = getMetricMu(metric);
+
+      linkToHistory =  () => link({id, time, period, deviceType, device, metric, index, data});
+    }
     return Object.assign({}, 
                        infobox,
                        {
+                         periods,
+                         displays,
                          device,
-                         reducedData,
+                         highlight,
                          chartData,
+                         chartFormatter,
+                         chartType,
+                         chartCategories,
+                         chartXAxis,
+                         invertAxis,
                          linkToHistory,
-                         tip
+                         better,
+                         comparePercentage,
+                         mu,
                        });
      });
 }

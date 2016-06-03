@@ -1,14 +1,11 @@
 package eu.daiad.web.model.query;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 public class DataPoint {
 
 	public enum EnumDataPointType {
 		UNDEFINED, METER, AMPHIRO, RANKING;
 	}
 
-	@JsonIgnore
 	protected EnumDataPointType type;
 
 	private Long timestamp = null;

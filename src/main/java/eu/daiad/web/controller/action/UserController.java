@@ -15,10 +15,13 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.admin.AccountWhiteListInfo;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IUserRepository;
 
+/**
+ * Provides actions for managing users.
+ *
+ */
 @Controller
 public class UserController extends BaseController {
 
@@ -40,19 +43,24 @@ public class UserController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Adds a user to the white list.
+	 * 
+	 * @param user the currently authenticated user.
+	 * @param userInfo the user to add.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/action/user/create", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
-	public @ResponseBody RestResponse deactivateProfileTest(@AuthenticationPrincipal AuthenticatedUser user,
+	public @ResponseBody RestResponse addUserToWhiteList(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody AccountWhiteListInfo userInfo) {
 		RestResponse response = new RestResponse();
 
 		try {
 			repository.insertAccountWhiteListEntry(userInfo);
 
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

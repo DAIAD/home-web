@@ -288,6 +288,15 @@ a .disabled{
 	background: #fff;
 }
 
+.disabled-link {
+    border-color: transparent;
+    border-top-color: #337ab7;
+    border-bottom-color: #ddd;
+    color: #cecece!important;
+    background-color: #34495e !important;
+    cursor: not-allowed;
+}
+
 .nav-tabs>li>a:focus {
 	outline: none;
 	border-top-color: #337ab7;
@@ -307,6 +316,28 @@ a .disabled{
 	outline: none;
 }
 
+.div-centered {
+    float: none;
+    width: 51px;
+    margin: 0 auto;
+}
+
+.equal-height-row {
+	overflow: hidden;
+}
+
+.equal-height-col {
+    margin-bottom: -99999px;
+    padding-bottom: 99999px;
+}
+
+.added-row {
+	background-color: #cef8ce;
+}
+
+.deleted-row {
+	background-color: #f8d6ce;
+}
 
 .rc-input-number {
   margin: 0;
@@ -416,4 +447,46 @@ a .disabled{
 
 .draggable {
 	cursor: move;
+}
+
+/* log levels */
+.log_error {
+    padding: 4px 4px;
+    background: yellow;
+    border-radius: 4px;
+    margin-left: -4px;
+    color: #D8000C;
+background-color: #FFBABA;
+}
+
+.log_warn {
+    padding: 4px 4px;
+    background: yellow;
+    border-radius: 4px;
+    margin-left: -4px;
+    color: #9F6000;
+    background-color: #FEEFB3;
+}
+
+.log_info {
+    padding: 4px 4px;
+    background: yellow;
+    border-radius: 4px;
+    margin-left: -4px;
+    color: #00529B;
+    background-color: #BDE5F8;
+}
+
+.log_gray {
+    padding: 4px 4px;
+    background: yellow;
+    border-radius: 4px;
+    margin-left: -4px;
+    background-color: #d0d0d0;
+}
+
+/* Bootstrap forms */
+
+.form-control {
+    height: 36px;
 }

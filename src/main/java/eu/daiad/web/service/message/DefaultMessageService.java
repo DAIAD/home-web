@@ -10,6 +10,7 @@ import eu.daiad.web.model.message.ConsumptionAggregateContainer;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.model.message.PendingMessageStatus;
 import eu.daiad.web.model.utility.UtilityInfo;
+import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IMessageManagementRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IUtilityRepository;
@@ -22,6 +23,9 @@ public class DefaultMessageService implements IMessageService {
 
 	@Autowired
 	IUserRepository userRepository;
+
+	@Autowired
+	IGroupRepository groupRepository;
 
 	@Autowired
 	IMessageManagementRepository messageManagementRepository;
@@ -52,7 +56,7 @@ public class DefaultMessageService implements IMessageService {
 	}
 
 	private void executeUtility(MessageCalculationConfiguration config, ConsumptionAggregateContainer aggregates) {
-		for (UUID accountKey : userRepository.getUserKeysForUtility(config.getUtilityId())) {
+		for (UUID accountKey : groupRepository.getUtilityByIdMemberKeys(config.getUtilityId())) {
 			executeAccount(config, aggregates, accountKey);
 		}
 	}
@@ -63,7 +67,7 @@ public class DefaultMessageService implements IMessageService {
 
 		config.setUtilityId(utility.getId());
 		config.setTimezone(DateTimeZone.forID(utility.getTimezone()));
-		
+
 		ConsumptionAggregateContainer aggregates = aggregationService.execute(config);
 
 		this.executeAccount(config, aggregates, accountKey);

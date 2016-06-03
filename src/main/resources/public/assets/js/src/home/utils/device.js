@@ -1,3 +1,5 @@
+var { getFriendlyDuration, getEnergyClass } = require('./general');
+
 const getDefaultDevice = function(devices) {
   const amphiroDevices = getAvailableDevices(devices);
   const meters = getAvailableMeters(devices);
@@ -17,6 +19,13 @@ const getDeviceTypeByKey = function(devices, key) {
   if (!device) return null;
   return device.type;
 };
+
+const getDeviceKeyByName = function(devices, name) {
+  const device = devices.find(d => d.name === name || d.serial === name);
+  if (device) return device.deviceKey;
+  else return null;
+};
+
 const getDeviceCount = function(devices) {
   if (!devices.length) return 0;
   return getAvailableDevices(devices).length;
@@ -48,7 +57,8 @@ const getAvailableDeviceKeys = function(devices) {
 
 const getDeviceByKey = function(devices, key) {
   //TODO: if !key added below error is thrown, why?
-  if (!devices ||!Array.isArray(devices)) throw new Error (`devices ${devices} must be of type array`);
+  //if (!devices ||!Array.isArray(devices)) throw new Error (`devices ${devices} must be of type array`);
+  if (!devices ||!Array.isArray(devices)) return {};
   return devices.find((device) => (device.deviceKey === key));
 };
 
@@ -148,7 +158,12 @@ const getDataSessions = function (devices, data) {
   }
 };
 
-const getDataShowersCount = function (devices, data) {
+const getSessionsCount = function (devices, data) {
+  return reduceSessions(devices, data).map(s => 1).reduce((c, p) => c + p, 0);
+  //return data.map(d=>getDataSessions(devices, data).length).reduce((c, p)=> c+p, 0);
+};
+
+const getShowersCount = function (devices, data) {
   return reduceSessions(devices, data).map(s => s.count?s.count:1).reduce((c, p) => c + p, 0);
   //return data.map(d=>getDataSessions(devices, data).length).reduce((c, p)=> c+p, 0);
 };
@@ -165,30 +180,85 @@ const getDataMeasurements = function (devices, data, index) {
 // to single array of sessions (including device key)
 const reduceSessions = function(devices, data) {
   return data.map(device =>  
-            getDataSessions(devices, device).map((session, idx) => 
-               Object.assign({}, session, 
-                             {index:idx},
-                             {device:device.deviceKey}
-                            )
+                  getDataSessions(devices, device)
+                  .map((session, idx, array) => {
+                    const devType = getDeviceTypeByKey(devices, device.deviceKey);
+                    return Object.assign({}, session, 
+                             {
+                               index:idx, 
+                               devType,
+                               device: device.deviceKey,
+                               devName:getDeviceNameByKey(devices, device.deviceKey),
+                               //volume: devType==='METER'?session.difference:session.volume,
+                               duration: getFriendlyDuration(session.duration), 
+                               temperature: session.temperature ? Math.round(session.temperature * 10)/10 : null,
+                               energyClass: getEnergyClass(session.energy), 
+                               
+                               better: array[idx-1]?(devType==='METER'?(array[idx].difference<=array[idx-1].difference?true:false):(array[idx].volume<=array[idx-1].volume?true:false)):null,
+                               hasChartData: session.measurements?true:false 
+
+                             });
+                  }
                           )
                         )
                         .reduce((c, p) => c.concat(p), []);
 };
 
+const calculateIndexes = function(sessions) { 
+  return sessions.map((session, idx, array) => Object.assign({}, session, 
+                     {
+                       next:array[idx+1]?[array[idx+1].device, array[idx+1].id, array[idx+1].timestamp]:null,
+                       prev:array[idx-1]?[array[idx-1].device, array[idx-1].id, array[idx-1].timestamp]:null,
+                     }));
+};
+
+const sortSessions = function(sessions, by='timestamp', order='desc') {
+  const sorted = order === 'asc' ? sessions.sort((a, b) => a[by] - b[by]) : sessions.sort((a, b) => b[by] - a[by]);
+  return calculateIndexes(sorted);
+};
+
+const getMetricMu = function(metric) {
+  if (metric === 'showers') return '';
+  else if (metric === 'volume' || metric === 'difference') return 'lt';
+  else if (metric === 'energy') return 'W';
+  else if (metric === 'duration') return 'sec';
+  else if (metric === 'temperature') return '°C';
+};
+
 const reduceMetric = function(devices, data, metric) {
-  const showers = getDataShowersCount(devices, data);                     
+  const showers = getShowersCount(devices, data);                     
+  const sessions = getSessionsCount(devices, data);
+  let reducedMetric;
+  //if (metric === 'showers') return `${showers} showers`;
   if (metric === 'showers') return showers;
-
-  let reducedMetric = data.map(it => getDataSessions(devices, it)
-                                    .map(it=>it[metric]?it[metric]:[])
-                                    .reduce(((c, p)=>c+p),0))
-                            .reduce(((c, p)=>c+p),0);
-
-                            reducedMetric = (metric === 'temperature')?(reducedMetric / showers):reducedMetric;
   
+  reducedMetric = data.map(it => getDataSessions(devices, it)
+                                    .map(it=>it[metric]?it[metric]:0)
+                                    .reduce(((c, p)=>c+p),0))
+                        .reduce(((c, p)=>c+p),0);
 
-  reducedMetric = !isNaN(parseInt(reducedMetric))?parseInt(reducedMetric).toFixed(1):0;
+    if (metric === 'temperature') {
+      reducedMetric = reducedMetric / sessions;
+      //reducedMetric = showers>0 ? reducedMetric / showers: 0;
+    }
+      //(metric === 'temperature' && (data[0]?(data[0].sessions[0]?(data[0].sessions[0].count==null):false):false))?(reducedMetric / showers):reducedMetric;
+    
+
+  reducedMetric = !isNaN(reducedMetric)?(Math.round(reducedMetric * 10)/10):0;
+  //reducedMetric = `${reducedMetric} ${mu}`;
   return reducedMetric;
+};
+
+const lastNFilterToLength = function (filter) {
+  if (filter === 'ten') return 10;
+  else if (filter === 'twenty') return 20;
+  else if (filter === 'fifty') return 50;
+  else throw new Error('unrecognized filter', filter);
+};
+
+const getSessionsIdOffset = function(sessions) {
+  if (!sessions) return null;
+  return sessions[0] ? sessions[0].id : null;
 };
 
 module.exports = {
@@ -207,11 +277,16 @@ module.exports = {
   getAvailableMeters,
   getDeviceNameByKey,
   getDeviceByKey,
+  getDeviceKeyByName,
   getDeviceKeysByType,
   getReducedDeviceType,
   reduceSessions,
   reduceMetric,
   getDataSessions,
   getDataMeasurements,
-  getDataShowersCount,
+  getShowersCount,
+  lastNFilterToLength,
+  getMetricMu,
+  sortSessions,
+  getSessionsIdOffset
 };

@@ -16,10 +16,10 @@ var store = configureStore(history);
 history = syncHistoryWithStore(history, store);
 
 var renderRoot = function() {
-	ReactDOM.render(
-		<Root store={store} history={history} />,
-		document.getElementById('root')
-	);
+  ReactDOM.render(
+    <Root store={store} history={history} />,
+    document.getElementById('root')
+  );
 };
 
 // http://stackoverflow.com/questions/10730362/get-cookie-by-name
@@ -32,9 +32,9 @@ var getCookie = function(name) {
 };
 
 var locale = getCookie('daiad-utility-locale') || 'en';
-var mustRefresh = (getCookie('daiad-utility-session') === 'true') || false;
+var mustRefresh = (getCookie('daiad-utility-session') === 'true');
 
-// Chain preliminary actions needed before rendering
+// Chain preliminary actions needed before any rendering takes place
 
 store.dispatch(setLocale(locale, true))
 .then(() => (mustRefresh? store.dispatch(refreshProfile()) : Promise.resolve()))

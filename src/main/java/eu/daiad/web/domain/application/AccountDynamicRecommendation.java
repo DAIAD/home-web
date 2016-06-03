@@ -49,6 +49,10 @@ public class AccountDynamicRecommendation {
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime acknowledgedOn;
 
+	@Column(name = "receive_acknowledged_on")
+	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+	private DateTime receiveAcknowledgedOn;
+
 	public Account getAccount() {
 		return account;
 	}
@@ -87,6 +91,14 @@ public class AccountDynamicRecommendation {
 
 	public Set<AccountDynamicRecommendationProperty> getProperties() {
 		return properties;
+	}
+
+	public DateTime getReceiveAcknowledgedOn() {
+		return receiveAcknowledgedOn;
+	}
+
+	public void setReceiveAcknowledgedOn(DateTime receiveAcknowledgedOn) {
+		this.receiveAcknowledgedOn = receiveAcknowledgedOn;
 	}
 
 }

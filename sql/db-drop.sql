@@ -4,6 +4,9 @@ DROP FUNCTION IF EXISTS sp_account_update_stats(account_id integer, success bool
 -- views
 DROP VIEW IF EXISTS public.trial_account_activity;
 
+-- survey
+DROP TABLE IF EXISTS public.survey;
+
 -- alert
 DROP TABLE IF EXISTS public.account_alert_property;
 

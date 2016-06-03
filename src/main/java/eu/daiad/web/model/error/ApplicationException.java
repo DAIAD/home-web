@@ -4,9 +4,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.text.StrBuilder;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.MDC;
+
+import com.ibm.icu.text.MessageFormat;
+
+import eu.daiad.web.logging.MappedDiagnosticContextKeys;
 
 public class ApplicationException extends RuntimeException {
 
@@ -14,69 +16,49 @@ public class ApplicationException extends RuntimeException {
 
 	private ErrorCode code;
 
-	private boolean isLogged = false;
+	private String pattern;
 
 	private Map<String, Object> properties = new HashMap<String, Object>();
 
-	public ApplicationException(ErrorCode code) {
+	private ApplicationException(ErrorCode code, String pattern) {
 		super();
 
 		this.code = code;
+		this.pattern = pattern;
 	}
 
-	public ApplicationException(ErrorCode code, boolean isLogged) {
-		super();
+	public static ApplicationException create(ErrorCode code, String pattern) {
+		MDC.put(MappedDiagnosticContextKeys.ERROR_CATEGORY, code.getClass().getSimpleName());
+		MDC.put(MappedDiagnosticContextKeys.ERROR_CODE, code.toString());
+
+		return new ApplicationException(code, pattern);
+	}
+
+	private ApplicationException(Throwable cause, ErrorCode code, String pattern) {
+		super(cause);
 
 		this.code = code;
-		this.isLogged = isLogged;
+		this.pattern = pattern;
 	}
 
-	public ApplicationException(String message, ErrorCode code) {
-		super(message);
+	public static ApplicationException wrap(Throwable cause, ErrorCode code, String pattern) {
+		if (cause instanceof ApplicationException) {
+			ApplicationException applicationException = (ApplicationException) cause;
 
-		this.code = code;
-	}
+			if (code != SharedErrorCode.UNKNOWN && code != applicationException.getCode()) {
 
-	public ApplicationException(String message, ErrorCode code, boolean isLogged) {
-		super(message);
+				MDC.put(MappedDiagnosticContextKeys.ERROR_CATEGORY, code.getClass().getSimpleName());
+				MDC.put(MappedDiagnosticContextKeys.ERROR_CODE, code.toString());
 
-		this.code = code;
-		this.isLogged = isLogged;
-	}
-
-	public ApplicationException(String message, Throwable cause, ErrorCode code) {
-		super(message, cause);
-
-		this.code = code;
-	}
-
-	public ApplicationException(String message, Throwable cause, ErrorCode code, boolean isLogged) {
-		super(message, cause);
-
-		this.code = code;
-		this.isLogged = isLogged;
-	}
-
-	public static ApplicationException wrap(Throwable ex, ErrorCode code) {
-		Log logger = LogFactory.getLog(ex.getStackTrace()[0].getClassName());
-
-		logger.error(ex.getMessage(), ex);
-
-		if (ex instanceof ApplicationException) {
-			ApplicationException appEx = (ApplicationException) ex;
-			appEx.isLogged = true;
-
-			if (code != SharedErrorCode.UNKNOWN && code != appEx.getCode()) {
-				return new ApplicationException(ex.getMessage(), ex, appEx.getCode(), true);
+				return new ApplicationException(cause, code, pattern);
 			}
-			return appEx;
+			return applicationException;
 		} else {
-			return new ApplicationException(ex.getMessage(), ex, code, true);
-		}
-	}
+			MDC.put(MappedDiagnosticContextKeys.ERROR_CATEGORY, code.getClass().getSimpleName());
+			MDC.put(MappedDiagnosticContextKeys.ERROR_CODE, code.toString());
 
-	public static ApplicationException wrap(Throwable ex) {
-		return ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			return new ApplicationException(cause, code, pattern);
+		}
 	}
 
 	public Map<String, Object> getProperties() {
@@ -103,25 +85,20 @@ public class ApplicationException extends RuntimeException {
 
 	@Override
 	public String getMessage() {
-		if (StringUtils.isBlank(super.getMessage())) {
-			StrBuilder builder = new StrBuilder();
-
-			builder.appendln(this.getCode().getMessageKey());
-
-			for (String key : this.properties.keySet()) {
-				builder.appendln(String.format("%s - %s", key, this.properties.get(key)));
-			}
-
-			return builder.toString();
+		if (StringUtils.isEmpty(this.pattern)) {
+			return this.code.getMessageKey();
 		}
-		return super.getMessage();
+
+		MessageFormat messageFormat = new MessageFormat(pattern);
+
+		return messageFormat.format(properties);
 	}
 
 	public ErrorCode getCode() {
 		return code;
 	}
 
-	public boolean isLogged() {
-		return isLogged;
+	public String getPattern() {
+		return this.pattern;
 	}
 }

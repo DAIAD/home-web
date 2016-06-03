@@ -1,56 +1,111 @@
 var React = require('react');
+var { Link } = require('react-router');
 var { FormattedMessage, FormattedDate } = require('react-intl');
 var bs = require('react-bootstrap');
 var Select = require('react-select');
+var CheckboxGroup = require('react-checkbox-group');
+var DatetimeInput = require('react-datetime');
 
-var { Link } = require('react-router');
+var MainSection = require('../layout/MainSection');
+var Topbar = require('../layout/Topbar');
+var { SidebarLeft, SidebarRight } = require('../layout/Sidebars');
+var HistoryList = require('../SessionsList');
 
-var MainSection = require('../MainSection');
-var Sidebar = require('../Sidebar');
-var Topbar = require('../Topbar');
-
-const { IMAGES } = require('../../constants/HomeConstants');
 //sub-containers
+var SessionData = require('../../containers/SessionData');
 var HistoryChartData = require('../../containers/HistoryChartData');
-var HistoryListData = require('../../containers/HistoryListData');
 
 //utils
 var timeUtil = require('../../utils/time');
+const { IMAGES } = require('../../constants/HomeConstants');
 
+
+function CustomTimeNavigator (props) {
+  const { time, updateTime } = props;
+
+  return (
+    <div className="time-navigator">
+        <div className="time-navigator-child"> 
+          <div style={{float: 'left', marginRight:5}}>
+            <DatetimeInput
+              dateFormat="DD/MM/YYYY"
+              timeFormat="HH:mm"
+              inputProps={{ size: 18 }}
+              value={time.startDate} 
+              isValidDate={(curr) => curr.valueOf() <= time.endDate}
+              onChange={(val) => updateTime({startDate: val.valueOf()})}
+           /> 
+          </div>
+          - 
+          <div style={{float: 'right', marginLeft:5}}>
+            <DatetimeInput 
+              closeOnSelect={true}
+              dateFormat="DD/MM/YYYY"
+              timeFormat="HH:mm"
+              inputProps={{ size: 18 }}
+              value={time.endDate} 
+              isValidDate={(curr) => curr.valueOf() >= time.startDate}
+              onChange={(val) => updateTime({endDate: val.valueOf()})}
+            />
+        </div>
+      </div>
+    </div>
+  ); 
+}
 
 function TimeNavigator(props) {
-    return (
-      <div className="time-navigator">
-        <a className="pull-left" onClick={props.handleTimePrevious}>
-          <img src={`${IMAGES}/arrow-big-left.svg`} />
-        </a>
-        <div className="pull-left" style={{marginLeft:230, marginTop:10}}>
-          <FormattedDate value={props.time.startDate} day="numeric" month="long" year="numeric" /> - <FormattedDate value={props.time.endDate} day="numeric" month="long" year="numeric" />
-        </div>
-        <a className="pull-right" onClick={props.handleTimeNext}>
-          <img src={`${IMAGES}/arrow-big-right.svg`} />
-        </a>
+  const { time, handlePrevious, handleNext } = props;
+
+  if (!time.startDate || !time.endDate) return (<div/>);
+
+  return (
+    <div className="time-navigator">
+      <a className="time-navigator-child pull-left" onClick={handlePrevious}>
+        <img src={`${IMAGES}/arrow-big-left.svg`} />
+      </a>
+      <div className="time-navigator-child">
+        <FormattedDate value={time.startDate} day="numeric" month="long" year="numeric" />
+          - 
+         <FormattedDate value={time.endDate} day="numeric" month="long" year="numeric" />
+        {
+          //<span>#{start} - #{end}</span>
+            }
       </div>
+      <a className="time-navigator-child pull-right" onClick={handleNext}>
+        <img src={`${IMAGES}/arrow-big-right.svg`} />
+      </a>
+    </div>
     );
+}
+
+function ErrorDisplay (props) {
+  return props.errors ? 
+    <div style={{position: 'absolute', marginLeft: '20vw', marginTop: '25vh', zIndex: 100}}>
+      <img src={`${IMAGES}/alert.svg`} /><span>{`${props.errors}`}</span>
+    </div>
+    :
+     (<div/>);
 }
 
 var History = React.createClass({
 
   componentWillMount: function() {
-    const { activeSessionIndex, time, activeDevice, defaultDevice, setActiveDevice, getDeviceOrMeterSessions, getActiveSession } = this.props;
-    const device = activeDevice?activeDevice:[defaultDevice];
-    if (!activeDevice) {
-      setActiveDevice([defaultDevice]);
-    }
-    if (device) 
-      getDeviceOrMeterSessions(device, time).then(() => { if (activeSessionIndex!==null) { return getActiveSession(device, time); } });
+    const { synced, setActiveDeviceType, activeDeviceType, timeFilter } = this.props;
+    if (!synced) {
+        //set active device and dont query cause we havent set time yet!
+        setActiveDeviceType(activeDeviceType, false);
+        this.handlePeriodSelect(timeFilter);
+      
+      }
   },
   handleTypeSelect: function(key){
     this.props.setQueryFilter(key); 
   },
-  
-  handleTimeSelect: function(key){
-    let time = {};
+  handleLastXSelect: function(key) {
+
+  }, 
+  handlePeriodSelect: function(key){
+    let time = null;
     if (key==="always"){
       time = {
         startDate: new Date("2000-02-18").getTime(),
@@ -70,21 +125,55 @@ var History = React.createClass({
     else if (key==="day"){
       time = timeUtil.today();
     }
+    else if (key==="custom"){
+      //time = timeUtil.today();
+    }
+    else if (key === "ten") {
+
+    }
+    else if (key === "twenty") {
+
+    }
+    else if (key === "fifty") {
+
+    }
+    else if (key === "customSliding") {
+
+    }
     else{
       throw new Error('oops, shouldn\'t be here');
     }
     this.props.setTimeFilter(key);
-    this.props.setTimeAndQuery(this.props.activeDevice, time);
+
+    if (time) this.props.setTime(time, false);
+    this.props.query();
   },
-  handleTimePrevious: function() { 
-    this.props.setTimeAndQuery(this.props.activeDevice, this.props.previousPeriod);
+  handlePrevious: function() { 
+    //this.props.decreaseNavIndex();
+    this.props.setTime(this.props.previousPeriod);
   },
-  handleTimeNext: function() { 
-    this.props.setTimeAndQuery(this.props.activeDevice, this.props.nextPeriod);
+  handleNext: function() { 
+    //this.props.increaseNavIndex();
+    this.props.setTime(this.props.nextPeriod);
   },
   handleDeviceChange: function(val) {
     const mapped = val.map(d=>d.value); 
-    this.props.setActiveDeviceAndQuery(mapped, this.props.time);
+    this.props.setActiveDevice(mapped);
+  },
+  handleDeviceTypeSelect: function(val) {
+    this.props.setActiveDeviceType(val);
+  },
+  handleActiveDevicesChanged: function (vals) {
+    if (this.props.activeDeviceType === 'METER') 
+      this.props.setActiveDeviceType('AMPHIRO', false);
+    this.props.setActiveDevice(vals);
+  },
+  handleComparisonSelect: function(val) {
+   this.props.setComparison(val); 
+    //onChange={(e) => e.target.checked?this.props.setComparison(comparison.id):this.props.setComparison(null)}
+  },
+  handleSortSelect: function(e, val) {
+    this.props.setSortFilter(val);
   },
   /*
   componentWillReceiveProps: function(nextProps) {
@@ -98,146 +187,130 @@ var History = React.createClass({
       console.log('new', key, prop);
       console.log('old', key, this.props[key]);
     }
-
-   
   },
   */
   render: function() {
-    const { intl, devices, activeDevice, device, devType, timeFilter, time } = this.props;
-    const activeDeviceName = activeDevice?(activeDevice.name?activeDevice.name:activeDevice.serial):"None";
-    const activeDeviceKey = activeDevice?activeDevice.deviceKey:"none";
+    const { intl, devices, amphiros, activeDevice, activeDeviceType, device, devType, timeFilter, time, metrics, periods, comparisons } = this.props;
     const _t = intl.formatMessage;
     return (
-      <div>
-        <Topbar> 
-          <ul className="list-unstyled">
-            <li><Link to="/history">Explore</Link></li>
-            <li><Link to="/history">Compare</Link></li>
-            <li><Link to="/history">Forecast</Link></li>
-          </ul>
-        </Topbar>
-      <MainSection id="section.history">
-        <div>
-          <Sidebar> 
-          {(() => {
-            if (devType === 'AMPHIRO') {
-              return (
-                <bs.Tabs style={{marginTop: 60}} position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
-                  {
-                    this.props.metrics.map(metric =>
-                                           <bs.Tab key={metric.id} eventKey={metric.id} title={metric.title}/>
-                                           )
-                  }
-                  {
-                  /*
-                  <bs.Tab eventKey="showers" title={_t({id: "history.showers"})}/>
-                  <bs.Tab eventKey="duration" title={_t({id: "history.duration"})} />
-                  <bs.Tab eventKey="volume" title={_t({id: "history.volume"})}/>
-                  <bs.Tab eventKey="temperature" title={_t({id: "history.temperature"})}/>
-                  <bs.Tab eventKey="energy" title={_t({id: "history.energy"})}/>
-                  */
-                  }
-                </bs.Tabs>);
-            }
-            else if (devType === 'METER') {
-              return (
-                <bs.Tabs style={{marginTop: 60}} position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
-                  <bs.Tab eventKey="volume" title={_t({id: "history.volume"})}/>
-                </bs.Tabs>);
-            }
-          })()
-          }
-          </Sidebar>
-          
-          <div className="primary">
-            <div >
+        <MainSection id="section.history">
+           
+           <Topbar> 
+             <bs.Tabs className="history-time-nav" position='top' tabWidth={3} activeKey={timeFilter} onSelect={this.handlePeriodSelect}>
+               {
+                periods.map(period =>
+                            <bs.Tab key={period.id} eventKey={period.id} title={_t({id: period.title})} />)
+               } 
               {
-                /*
-              <bs.DropdownButton
-                title={activeDeviceName}
-                id="device-switcher"
-                defaultValue={activeDevice}
-                onSelect={this.handleDeviceChange}>
-                {
-                  devices.map(function(device) {
-                    return (
-                      <bs.MenuItem key={device.deviceKey} eventKey={device.deviceKey} value={device.deviceKey} >{device.name || device.serial}</bs.MenuItem>
-                    );
-                  })
-                } 
-              </bs.DropdownButton>
-              <Select 
-                name="device-switcher"
-                value={activeDevice}
-                onChange={this.handleDeviceChange}
-                multi={true}
-                autosize={true}
-                style={{minWidth:120}}
-                options={devices.map(device => {
-                  return { 
-                    value: device.deviceKey,
-                    label: device.name || device.serial || device.macAddress 
-                  };
-                }) }
-              />
-              */
-              }
-              <div
-                style={{
-                  float: 'right',
-                  width: '15%'
-                }}
-                >
-              {
-                devices.map((device, i) => {
-                  console.log('device', device, i);
-                  return (
-                    <div key={i}>
-                    <input
-                      id={device.deviceKey}
-                      style={{marginRight: 7, marginLeft: 5}}
-                      type = "checkbox"
-                      checked={activeDevice.includes(device.deviceKey)}
-                      onChange={(e) => e.target.checked?this.props.addToActiveDevices(device.deviceKey, time):this.props.removeFromActiveDevices(device.deviceKey, time)}
-                      />
-                      
-                    <label >{device.name || device.macAddress || device.serial}</label>
-                  </div>
-                  ); 
-                }) 
-              }
-            </div>
-          
-          </div>
-          <br/>
-
-            <bs.Tabs  position='top' tabWidth={3} activeKey={timeFilter} onSelect={this.handleTimeSelect}>
-              
-              <bs.Tab eventKey="day" title={_t({id: "history.day"})}/>
-              <bs.Tab eventKey="week" title={_t({id: "history.week"})}/>
-              <bs.Tab eventKey="month" title={_t({id: "history.month"})}/>
-              <bs.Tab eventKey="year" title={_t({id: "history.year"})}/>
-              {
-               <bs.Tab eventKey="always" title={_t({id: "history.always"})} />
+                //  <bs.Tab eventKey="always" title={_t({id: "history.always"})} />
                }
             </bs.Tabs>
+          </Topbar>
+          
+         <div className="section-row-container">
+          <SidebarLeft> 
+            <bs.Tabs position='left' tabWidth={20} activeKey={this.props.metricFilter} onSelect={this.handleTypeSelect}>
+              {
+                metrics.map(metric =>
+                            <bs.Tab key={metric.id} eventKey={metric.id} title={metric.title}/> 
+                           )
+              }
+            </bs.Tabs>
+          </SidebarLeft>
+          
+          <SidebarRight> 
+            {
+            <bs.Tabs position='left' tabWidth={20} activeKey={this.props.activeDeviceType} onSelect={this.handleDeviceTypeSelect}>
+              {
+                [{id:'METER', title: 'Water meter', image: 'swm.svg'}, {id:'AMPHIRO', title:'Shower devices', image: 'amphiro_small.svg'}].map((devType, i) => ( 
+                  <bs.Tab key={devType.id} eventKey={devType.id} title={devType.title} /> 
+                           ))
+              }
+            </bs.Tabs>
+            }
+            <CheckboxGroup name="amphiro-devices" className="amphiro-devices" value={activeDeviceType==='AMPHIRO'?activeDevice:[]} onChange={this.handleActiveDevicesChanged}>
+              {
+                Checkbox => (
+                  <div>
+                    {
+                      amphiros.map((device, i) => 
+                      <label key={device.deviceKey}>
+                        <Checkbox value={device.deviceKey} /> {device.name || device.macAddress || device.serial}
+                      </label>
+                      )
+                    }
+                  </div>
+                  )
+              }
+            </CheckboxGroup>
+   
             <br/>
-            
-            <TimeNavigator 
-              handleTimePrevious={this.handleTimePrevious} 
-              handleTimeNext={this.handleTimeNext}
-              time={time}
-            /> 
-            
+            { (() => comparisons && comparisons.length > 0 ?
+               <h5 style={{marginLeft:20}}>Compare with</h5>
+               :
+                 <span/>
+                 )()
+            }
+            {
+              <bs.Tabs position='left' tabWidth={20} activeKey={this.props.comparison} onSelect={this.handleComparisonSelect}>
+                {
+                  comparisons.map((comparison, i) => (
+                    <bs.Tab key={comparison.id} eventKey={comparison.id} title={comparison.title} />
+                             ))
+                }
+              </bs.Tabs>
+              }
+              {
+                (() => this.props.comparison ? 
+                 <a style={{marginLeft: 20, marginTop:20}} onClick={()=>this.props.setComparison(null)}>Clear</a>
+                 :
+                   <div/>
+                   )()
+              }
+
+        </SidebarRight>
+
+        <div className="primary"> 
+
+          <ErrorDisplay errors={this.props.errors} />
+
+          <div className="history-chart-area">
+            <h4 style={{textAlign: 'center', margin: '10px 0 0 0'}}>{this.props.reducedMetric}</h4>
+
+            {(() => activeDeviceType === 'AMPHIRO' ? <div/> :
+              (timeFilter === 'custom' ? 
+                <CustomTimeNavigator 
+                  updateTime={this.props.updateTime}
+                  time={time}
+                /> 
+                :
+                <TimeNavigator 
+                  handlePrevious={this.handlePrevious} 
+                  handleNext={this.handleNext}
+                  time={time}
+                /> )
+             )()}
+
+          <div className="history-chart">
             <HistoryChartData />
-
-            <HistoryListData />
-
           </div>
-        </div>
+        
+        </div>        
 
-      </MainSection>
-    </div>
+        <HistoryList 
+          handleSortSelect={this.handleSortSelect}
+          {...this.props} />
+
+        </div>
+      
+      </div>
+      
+      <SessionData 
+          firstname={this.props.firstname}
+          sessions={this.props.sessions} 
+          time={this.props.time} />
+
+    </MainSection>
     );
   }
 });

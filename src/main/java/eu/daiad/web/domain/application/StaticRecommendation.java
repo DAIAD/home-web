@@ -14,6 +14,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Type;
+import org.joda.time.DateTime;
 
 @Entity(name = "static_recommendation")
 @Table(schema = "public", name = "static_recommendation")
@@ -46,6 +47,9 @@ public class StaticRecommendation {
 	@Type(type = "org.hibernate.type.BinaryType")
 	private byte image[];
 
+	@Column(name = "image_mime_type")
+	private String imageMimeType;
+
 	@Column(name = "image_link")
 	private String imageLink;
 
@@ -53,10 +57,21 @@ public class StaticRecommendation {
 	private String prompt;
 
 	@Column(name = "externa_link")
-	private String externaLink;
+	private String externalLink;
 
 	@Basic()
 	private String source;
+
+	@Column(name = "created_on")
+	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+	private DateTime createdOn;
+
+	@Column(name = "modified_on")
+	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+	private DateTime modifiedOn;
+
+	@Column(name = "active")
+	private boolean active;
 
 	public int getId() {
 		return id;
@@ -130,12 +145,12 @@ public class StaticRecommendation {
 		this.prompt = prompt;
 	}
 
-	public String getExternaLink() {
-		return externaLink;
+	public String getExternalLink() {
+		return externalLink;
 	}
 
-	public void setExternaLink(String externaLink) {
-		this.externaLink = externaLink;
+	public void setExternalLink(String externalLink) {
+		this.externalLink = externalLink;
 	}
 
 	public String getSource() {
@@ -144,6 +159,38 @@ public class StaticRecommendation {
 
 	public void setSource(String source) {
 		this.source = source;
+	}
+
+	public DateTime getCreatedOn() {
+		return createdOn;
+	}
+
+	public void setCreatedOn(DateTime createdOn) {
+		this.createdOn = createdOn;
+	}
+
+	public DateTime getModifiedOn() {
+		return modifiedOn;
+	}
+
+	public void setModifiedOn(DateTime modifiedOn) {
+		this.modifiedOn = modifiedOn;
+	}
+
+	public boolean isActive() {
+		return active;
+	}
+
+	public void setActive(boolean active) {
+		this.active = active;
+	}
+
+	public String getImageMimeType() {
+		return imageMimeType;
+	}
+
+	public void setImageMimeType(String imageMimeType) {
+		this.imageMimeType = imageMimeType;
 	}
 
 }

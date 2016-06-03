@@ -29,7 +29,6 @@ import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQuery;
 import eu.daiad.web.model.meter.WaterMeterStatus;
@@ -63,6 +62,13 @@ public class SearchController extends BaseController {
 	@Autowired
 	private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
 
+	/**
+	 * Returns the status of one or more smart water meters.
+	 * 
+	 * @param user the currently authenticated user.
+	 * @param query the query.
+	 * @return the meter status.
+	 */
 	@RequestMapping(value = "/action/meter/status", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured({ "ROLE_USER", "ROLE_ADMIN" })
 	public RestResponse getMeterStatus(@AuthenticationPrincipal AuthenticatedUser user,
@@ -81,7 +87,7 @@ public class SearchController extends BaseController {
 				AuthenticatedUser deviceOwner = userRepository.getUserByUtilityAndKey(user.getUtilityId(),
 								query.getUserKey());
 				if (deviceOwner == null) {
-					throw new ApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
+					throw createApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
 									.set("owner", query.getUserKey());
 				}
 			}
@@ -115,10 +121,8 @@ public class SearchController extends BaseController {
 			}
 
 			return result;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -126,9 +130,16 @@ public class SearchController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Loads smart water meter readings on a given query.
+	 * 
+	 * @param user the currently authenticated user.
+	 * @param query the query.
+	 * @return the meter readings.
+	 */
 	@RequestMapping(value = "/action/meter/history", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured({ "ROLE_USER", "ROLE_ADMIN" })
-	public RestResponse getMeterMeasurements(@AuthenticationPrincipal AuthenticatedUser user,
+	public RestResponse searchWaterMeterMeasurements(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody WaterMeterMeasurementQuery query) {
 		RestResponse response = new RestResponse();
 
@@ -144,7 +155,7 @@ public class SearchController extends BaseController {
 				AuthenticatedUser deviceOwner = userRepository.getUserByUtilityAndKey(user.getUtilityId(),
 								query.getUserKey());
 				if (deviceOwner == null) {
-					throw new ApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
+					throw createApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
 									.set("owner", query.getUserKey());
 				}
 			}
@@ -168,10 +179,8 @@ public class SearchController extends BaseController {
 
 			return waterMeterMeasurementRepository.searchMeasurements(serials, DateTimeZone.forID(user.getTimezone()),
 							query);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -179,9 +188,16 @@ public class SearchController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Loads Amphiro B1 session measurements based on a given query. Amphiro B1 sessions are indexed by id.
+	 * 
+	 * @param user the currently authenticated user.
+	 * @param query the query.
+	 * @return the measurements.
+	 */
 	@RequestMapping(value = "/action/device/index/measurement/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public RestResponse getAmphiroMeasurements1(@AuthenticationPrincipal AuthenticatedUser user,
+	public RestResponse searchAmphiroMeasurementsByIndex(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody AmphiroMeasurementIndexIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
@@ -194,10 +210,8 @@ public class SearchController extends BaseController {
 							DateTimeZone.forID(user.getTimezone()), query);
 
 			return data;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -205,9 +219,16 @@ public class SearchController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Loads Amphiro B1 session measurements based on a given query. Amphiro B1 sessions are indexed by time.
+	 * 
+	 * @param user the currently authenticated user.
+	 * @param query the query.
+	 * @return the measurements.
+	 */
 	@RequestMapping(value = "/action/device/time/measurement/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public RestResponse getAmphiroMeasurements2(@AuthenticationPrincipal AuthenticatedUser user,
+	public RestResponse searchAmphiroMeasurementsByTime(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody AmphiroMeasurementTimeIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
@@ -220,10 +241,8 @@ public class SearchController extends BaseController {
 							DateTimeZone.forID(user.getTimezone()), query);
 
 			return data;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -231,9 +250,16 @@ public class SearchController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Loads Amphiro B1 sessions based on a given query. Amphiro B1 sessions are indexed by id.
+	 * 
+	 * @param user the currently authenticated user.
+	 * @param query the query.
+	 * @return the measurements.
+	 */
 	@RequestMapping(value = "/action/device/index/session/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured({ "ROLE_USER", "ROLE_ADMIN" })
-	public RestResponse getAmphiroSessions1(@AuthenticationPrincipal AuthenticatedUser user,
+	public RestResponse searchAmphiroSessionsWithIndexOrdering(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody AmphiroSessionCollectionIndexIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
@@ -249,7 +275,7 @@ public class SearchController extends BaseController {
 				AuthenticatedUser deviceOwner = userRepository.getUserByUtilityAndKey(user.getUtilityId(),
 								query.getUserKey());
 				if (deviceOwner == null) {
-					throw new ApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
+					throw createApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
 									.set("owner", query.getUserKey());
 				}
 			}
@@ -272,10 +298,8 @@ public class SearchController extends BaseController {
 			String[] names = this.checkAmphiroOwnership(query.getUserKey(), query.getDeviceKey());
 
 			return amphiroIndexOrderedRepository.searchSessions(names, DateTimeZone.forID(user.getTimezone()), query);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -283,9 +307,16 @@ public class SearchController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Loads Amphiro B1 sessions based on a given query. Amphiro B1 sessions are indexed by time.
+	 * 
+	 * @param user the currently authenticated user.
+	 * @param query the query.
+	 * @return the measurements.
+	 */
 	@RequestMapping(value = "/action/device/time/session/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured({ "ROLE_USER", "ROLE_ADMIN" })
-	public RestResponse getAmphiroSessions2(@AuthenticationPrincipal AuthenticatedUser user,
+	public RestResponse searchAmphiroSessionsWithTimeOrdering(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody AmphiroSessionCollectionTimeIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
@@ -301,7 +332,7 @@ public class SearchController extends BaseController {
 				AuthenticatedUser deviceOwner = userRepository.getUserByUtilityAndKey(user.getUtilityId(),
 								query.getUserKey());
 				if (deviceOwner == null) {
-					throw new ApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
+					throw createApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
 									.set("owner", query.getUserKey());
 				}
 			}
@@ -324,10 +355,8 @@ public class SearchController extends BaseController {
 			String[] names = this.checkAmphiroOwnership(query.getUserKey(), query.getDeviceKey());
 
 			return amphiroTimeOrderedRepository.searchSessions(names, DateTimeZone.forID(user.getTimezone()), query);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -335,9 +364,16 @@ public class SearchController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Loads an Amphiro B1 session based on a given query. Amphiro B1 session is indexed by id.
+	 * 
+	 * @param user the currently authenticated user.
+	 * @param query the query
+	 * @return the sessions
+	 */
 	@RequestMapping(value = "/action/device/index/session", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public RestResponse getAmphiroSession1(@AuthenticationPrincipal AuthenticatedUser user,
+	public RestResponse getAmphiroSessionByIndex(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody AmphiroSessionIndexIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
@@ -347,10 +383,8 @@ public class SearchController extends BaseController {
 			query.setUserKey(user.getKey());
 
 			return amphiroIndexOrderedRepository.getSession(query);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -358,9 +392,16 @@ public class SearchController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Loads an Amphiro B1 session based on a given query. Amphiro B1 session is indexed by time.
+	 * 
+	 * @param user the currently authenticated user.
+	 * @param query the query
+	 * @return the sessions
+	 */
 	@RequestMapping(value = "/action/device/time/session", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_USER")
-	public RestResponse getAmphiroSession2(@AuthenticationPrincipal AuthenticatedUser user,
+	public RestResponse getAmphiroSessionByTime(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody AmphiroSessionTimeIntervalQuery query) {
 		RestResponse response = new RestResponse();
 
@@ -370,10 +411,8 @@ public class SearchController extends BaseController {
 			query.setUserKey(user.getKey());
 
 			return amphiroTimeOrderedRepository.getSession(query);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -397,7 +436,7 @@ public class SearchController extends BaseController {
 				Device device = this.deviceRepository.getUserDeviceByKey(userKey, deviceKey);
 
 				if (device == null) {
-					throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
+					throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
 				}
 
 				nameList.add(((AmphiroDevice) device).getName());
@@ -417,7 +456,7 @@ public class SearchController extends BaseController {
 				Device device = this.deviceRepository.getUserDeviceByKey(userKey, deviceKey);
 
 				if (device == null) {
-					throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
+					throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
 				}
 
 				serialList.add(((WaterMeterDevice) device).getSerial());

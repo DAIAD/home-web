@@ -15,7 +15,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.profile.ProfileDeactivateRequest;
 import eu.daiad.web.model.profile.ProfileModesFilterOptionsResponse;
 import eu.daiad.web.model.profile.ProfileModesRequest;
@@ -26,6 +25,10 @@ import eu.daiad.web.model.profile.UpdateProfileRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IProfileRepository;
 
+/**
+ * Provides methods for managing user profile.
+ *
+ */
 @RestController
 public class ProfileController extends BaseController {
 
@@ -46,10 +49,8 @@ public class ProfileController extends BaseController {
 			}
 
 			return new ProfileResponse(this.getRuntime(), profileRepository.getProfileByUsername(EnumApplication.HOME));
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -65,10 +66,8 @@ public class ProfileController extends BaseController {
 
 		try {
 			return new ProfileModesResponse(profileRepository.getProfileModes(filters));
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -84,10 +83,8 @@ public class ProfileController extends BaseController {
 
 		try {
 			return new ProfileModesFilterOptionsResponse(profileRepository.getFilterOptions());
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -103,11 +100,8 @@ public class ProfileController extends BaseController {
 
 		try {
 			profileRepository.setProfileModes(modeChanges);
-
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -115,19 +109,26 @@ public class ProfileController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Deactivates a user.
+	 * 
+	 * @param user
+	 *            the authenticated user.
+	 * @param userDeactId
+	 *            the user to deactivate
+	 * @return the controller's response.
+	 * @throws JsonProcessingException
+	 */
 	@RequestMapping(value = "/action/profile/deactivate", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
 	public RestResponse deactivateProfile(@AuthenticationPrincipal AuthenticatedUser user,
-					@RequestBody ProfileDeactivateRequest userDeactId) throws JsonProcessingException {
+					@RequestBody ProfileDeactivateRequest userDeactId) {
 		RestResponse response = new RestResponse();
 
 		try {
 			profileRepository.deactivateProfile(userDeactId);
-
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -137,20 +138,20 @@ public class ProfileController extends BaseController {
 
 	@RequestMapping(value = "/action/profile/save", method = RequestMethod.POST, produces = "application/json")
 	@Secured({ "ROLE_USER", "ROLE_SUPERUSER", "ROLE_ADMIN" })
-	public RestResponse setProfile(@AuthenticationPrincipal AuthenticatedUser user,
+	public RestResponse saveProfile(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody UpdateProfileRequest request) {
 		RestResponse response = new RestResponse();
 
 		try {
 			if (user.hasRole("ROLE_ADMIN")) {
-				this.profileRepository.setProfileConfiguration(EnumApplication.UTILITY, request.getConfiguration());
+				request.setApplication(EnumApplication.UTILITY);
+				this.profileRepository.saveProfile(request);
 			} else {
-				this.profileRepository.setProfileConfiguration(EnumApplication.HOME, request.getConfiguration());
+				request.setApplication(EnumApplication.HOME);
+				this.profileRepository.saveProfile(request);
 			}
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

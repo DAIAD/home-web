@@ -44,11 +44,13 @@ import eu.daiad.web.model.profile.ProfileModesChanges;
 import eu.daiad.web.model.profile.ProfileModesFilterOptions;
 import eu.daiad.web.model.profile.ProfileModesRequest;
 import eu.daiad.web.model.profile.ProfileModesSubmitChangesRequest;
+import eu.daiad.web.model.profile.UpdateProfileRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.repository.BaseRepository;
 
 @Repository()
-@Transactional("transactionManager")
-public class JpaProfileRepository implements IProfileRepository {
+@Transactional("applicationTransactionManager")
+public class JpaProfileRepository extends BaseRepository implements IProfileRepository {
 
 	@PersistenceContext(unitName = "default")
 	EntityManager entityManager;
@@ -68,25 +70,25 @@ public class JpaProfileRepository implements IProfileRepository {
 			if (auth.getPrincipal() instanceof AuthenticatedUser) {
 				user = (AuthenticatedUser) auth.getPrincipal();
 			} else {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
 			}
 
 			switch (application) {
 				case HOME:
 				case MOBILE:
 					if (!user.hasRole("ROLE_USER")) {
-						throw new ApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
+						throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
 										application);
 					}
 					break;
 				case UTILITY:
 					if (!user.hasRole("ROLE_ADMIN")) {
-						throw new ApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
+						throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
 										application);
 					}
 					break;
 				default:
-					throw new ApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
+					throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
 									application);
 			}
 
@@ -113,6 +115,9 @@ public class JpaProfileRepository implements IProfileRepository {
 			profile.setLocale(account.getLocale());
 			profile.setApplication(application);
 
+			profile.setDailyMeterBudget(account.getProfile().getDailyMeterBudget());
+			profile.setDailyAmphiroBudget(account.getProfile().getDailyAmphiroBudget());
+
 			ArrayList<DeviceRegistration> registrations = new ArrayList<DeviceRegistration>();
 			for (Iterator<Device> d = devices.iterator(); d.hasNext();) {
 				registrations.add(d.next().toDeviceRegistration());
@@ -133,13 +138,13 @@ public class JpaProfileRepository implements IProfileRepository {
 					profile.setConfiguration(account.getProfile().getUtilityConfiguration());
 					break;
 				default:
-					throw new ApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
+					throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
 									application);
 			}
 
 			return profile;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -153,11 +158,11 @@ public class JpaProfileRepository implements IProfileRepository {
 			if (auth.getPrincipal() instanceof AuthenticatedUser) {
 				user = (AuthenticatedUser) auth.getPrincipal();
 			} else {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
 			}
 
 			if (!user.hasRole("ROLE_ADMIN")) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
 			TypedQuery<eu.daiad.web.domain.application.Account> userQuery = null;
@@ -207,7 +212,7 @@ public class JpaProfileRepository implements IProfileRepository {
 
 				// Utility name & Id
 				Utility utility = account.getUtility();
-				profileModes.setGroupId(utility.getId());
+				profileModes.setGroupId(utility.getKey());
 				profileModes.setGroupName(utility.getName());
 				// Applying Utility filter
 				if (filters.getGroupName() != null && !filters.getGroupName().equals(profileModes.getGroupName())) {
@@ -292,7 +297,7 @@ public class JpaProfileRepository implements IProfileRepository {
 
 			return profileModesList;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -306,11 +311,11 @@ public class JpaProfileRepository implements IProfileRepository {
 			if (auth.getPrincipal() instanceof AuthenticatedUser) {
 				user = (AuthenticatedUser) auth.getPrincipal();
 			} else {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
 			}
 
 			if (!user.hasRole("ROLE_ADMIN")) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
 			List<DeviceAmphiroConfigurationDefault> configurations = this.deviceRepository
@@ -433,7 +438,7 @@ public class JpaProfileRepository implements IProfileRepository {
 			}
 
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -447,11 +452,11 @@ public class JpaProfileRepository implements IProfileRepository {
 			if (auth.getPrincipal() instanceof AuthenticatedUser) {
 				user = (AuthenticatedUser) auth.getPrincipal();
 			} else {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
 			}
 
 			if (!user.hasRole("ROLE_ADMIN")) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
 			TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager
@@ -491,7 +496,7 @@ public class JpaProfileRepository implements IProfileRepository {
 			}
 
 			if (offConfiguration == null) {
-				throw new ApplicationException(DeviceErrorCode.OFF_AMPHIRO_CONFIGURATION_NOT_FOUND);
+				throw createApplicationException(DeviceErrorCode.OFF_AMPHIRO_CONFIGURATION_NOT_FOUND);
 			}
 
 			// Get the current (active and inactive) configurations and set them
@@ -534,7 +539,7 @@ public class JpaProfileRepository implements IProfileRepository {
 			this.entityManager.persist(historyEntry);
 
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -547,11 +552,11 @@ public class JpaProfileRepository implements IProfileRepository {
 			if (auth.getPrincipal() instanceof AuthenticatedUser) {
 				user = (AuthenticatedUser) auth.getPrincipal();
 			} else {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
 			}
 
 			if (!user.hasRole("ROLE_ADMIN")) {
-				throw new ApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED);
+				throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED);
 			}
 
 			ProfileModesFilterOptions profileModesFilterOptions = new ProfileModesFilterOptions();
@@ -618,12 +623,12 @@ public class JpaProfileRepository implements IProfileRepository {
 
 			return profileModesFilterOptions;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
 	@Override
-	public void setProfileConfiguration(EnumApplication application, String value) throws ApplicationException {
+	public void saveProfile(UpdateProfileRequest updates) throws ApplicationException {
 		try {
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser user = null;
@@ -631,7 +636,7 @@ public class JpaProfileRepository implements IProfileRepository {
 			if (auth.getPrincipal() instanceof AuthenticatedUser) {
 				user = (AuthenticatedUser) auth.getPrincipal();
 			} else {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
 			}
 
 			TypedQuery<Account> query = entityManager
@@ -641,19 +646,22 @@ public class JpaProfileRepository implements IProfileRepository {
 
 			Account account = query.getSingleResult();
 
-			switch (application) {
+			switch (updates.getApplication()) {
 				case HOME:
-					account.getProfile().setWebConfiguration(value);
+					account.getProfile().setWebConfiguration(updates.getConfiguration());
 					break;
 				case MOBILE:
-					account.getProfile().setMobileConfiguration(value);
+					account.getProfile().setMobileConfiguration(updates.getConfiguration());
 					break;
 				default:
-					throw new ApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
-									application);
+					throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
+									updates.getApplication());
 			}
+
+			account.getProfile().setDailyMeterBudget(updates.getDailyMeterBudget());
+			account.getProfile().setDailyAmphiroBudget(updates.getDailyAmphiroBudget());
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -668,7 +676,7 @@ public class JpaProfileRepository implements IProfileRepository {
 			if (auth.getPrincipal() instanceof AuthenticatedUser) {
 				user = (AuthenticatedUser) auth.getPrincipal();
 			} else {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
 			}
 
 			TypedQuery<Account> query = entityManager
@@ -680,7 +688,7 @@ public class JpaProfileRepository implements IProfileRepository {
 
 			switch (application) {
 				case HOME:
-					throw new ApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
+					throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
 									application);
 				case MOBILE:
 					for (AccountProfileHistoryEntry h : account.getProfile().getHistory()) {
@@ -694,14 +702,14 @@ public class JpaProfileRepository implements IProfileRepository {
 					}
 					break;
 				default:
-					throw new ApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
+					throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
 									application);
 			}
 			if (!found) {
-				throw new ApplicationException(ProfileErrorCode.PROFILE_VERSION_NOT_FOUND).set("version", version);
+				throw createApplicationException(ProfileErrorCode.PROFILE_VERSION_NOT_FOUND).set("version", version);
 			}
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 

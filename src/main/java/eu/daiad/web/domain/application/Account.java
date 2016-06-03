@@ -22,6 +22,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Version;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.net.util.Base64;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
@@ -131,7 +132,6 @@ public class Account {
 	@Column(name = "locale", columnDefinition = "bpchar", length = 2)
 	private String locale;
 
-	@Type(type = "org.hibernate.spatial.GeometryType")
 	@Column(name = "location")
 	private Geometry location;
 
@@ -346,4 +346,14 @@ public class Account {
 		this.location = location;
 	}
 
+	public String getFullname() {
+		String fullname = (StringUtils.isBlank(this.firstname) ? "" : this.firstname) + " "
+						+ (StringUtils.isBlank(this.lastname) ? "" : this.lastname);
+
+		if (StringUtils.isBlank(fullname)) {
+			return null;
+		}
+
+		return fullname.trim();
+	}
 }

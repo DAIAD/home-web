@@ -3,17 +3,20 @@ var keyMirror = require('keymirror');
 const constants = keyMirror({
 	'SharedErrorCode.AUTHENTICATION' : null,
 	
-	'ValidationError.NO_FIRST_NAME' : null,
-	'ValidationError.NO_LAST_NAME' : null,
-	'ValidationError.NO_EMAIL' : null,
-	'ValidationError.NO_GENDER' : null,
-	'ValidationError.NO_UTILITY' : null,
-	'ValidationError.INVALID_EMAIL' : null,
-	'ValidationError.TOO_LONG_FIRST_NAME' : null,
-	'ValidationError.TOO_LONG_LAST_NAME' : null,
-	'ValidationError.TOO_LONG_EMAIL' : null,
-	'ValidationError.TOO_LONG_ADDRESS' : null,
-	'ValidationError.TOO_LONG_POSTAL_CODE' : null
+	'ValidationError.User.NO_FIRST_NAME' : null,
+	'ValidationError.User.NO_LAST_NAME' : null,
+	'ValidationError.User.NO_EMAIL' : null,
+	'ValidationError.User.NO_GENDER' : null,
+	'ValidationError.User.NO_UTILITY' : null,
+	'ValidationError.User.INVALID_EMAIL' : null,
+	'ValidationError.User.TOO_LONG_FIRST_NAME' : null,
+	'ValidationError.User.TOO_LONG_LAST_NAME' : null,
+	'ValidationError.User.TOO_LONG_EMAIL' : null,
+	'ValidationError.User.TOO_LONG_ADDRESS' : null,
+	'ValidationError.User.TOO_LONG_POSTAL_CODE' : null,
+	'ValidationError.Group.NO_GROUP_NAME' : null,
+	'ValidationError.Group.NO_GROUP_MEMBERS' : null,
+	'ValidationError.Favourite.NO_LABEL' : null
 });
 
 module.exports = constants;

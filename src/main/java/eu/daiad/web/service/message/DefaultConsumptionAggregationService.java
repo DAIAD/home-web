@@ -22,6 +22,7 @@ import eu.daiad.web.model.query.EnumTimeAggregation;
 import eu.daiad.web.model.query.EnumTimeUnit;
 import eu.daiad.web.model.query.GroupDataSeries;
 import eu.daiad.web.model.query.MeterDataPoint;
+import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IDataService;
 
@@ -32,6 +33,9 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 
 	@Autowired
 	IUserRepository userRepository;
+
+	@Autowired
+	IGroupRepository groupRepository;
 
 	@Autowired
 	IDataService dataService;
@@ -62,7 +66,7 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 						|| container.getLastDateComputed().isBefore(
 										DateTime.now().minusDays(config.getAggregateComputationInterval()))) {
 
-			List<UUID> uuidList = userRepository.getUserKeysForUtility(config.getUtilityId());
+			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
 			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
 
 			DataQueryBuilder queryBuilder = new DataQueryBuilder();
@@ -99,7 +103,7 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 						|| container.getLastDateComputed().isBefore(
 										DateTime.now().minusDays(config.getAggregateComputationInterval()))) {
 
-			List<UUID> uuidList = userRepository.getUserKeysForUtility(config.getUtilityId());
+			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
 			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
 
 			DataQueryBuilder queryBuilder = new DataQueryBuilder();
@@ -137,7 +141,7 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 						|| container.getLastDateComputed().isBefore(
 										DateTime.now().minusDays(config.getAggregateComputationInterval()))) {
 
-			List<UUID> uuidList = userRepository.getUserKeysForUtility(config.getUtilityId());
+			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
 			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
 
 			DataQueryBuilder queryBuilder = new DataQueryBuilder();
@@ -172,7 +176,7 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 						|| container.getLastDateComputed().isBefore(
 										DateTime.now().minusDays(config.getAggregateComputationInterval()))) {
 
-			List<UUID> uuidList = userRepository.getUserKeysForUtility(config.getUtilityId());
+			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
 			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
 
 			DataQueryBuilder queryBuilder = new DataQueryBuilder();
@@ -210,7 +214,7 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 						|| container.getLastDateComputed().isBefore(
 										DateTime.now().minusDays(config.getAggregateComputationInterval()))) {
 
-			List<UUID> uuidList = userRepository.getUserKeysForUtility(config.getUtilityId());
+			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
 			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
 			List<Double> averageConsumptions = new ArrayList<>();
 
@@ -252,7 +256,7 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 						|| container.getLastDateComputed().isBefore(
 										DateTime.now().minusDays(config.getAggregateComputationInterval()))) {
 
-			List<UUID> uuidList = userRepository.getUserKeysForUtility(config.getUtilityId());
+			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
 			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
 			List<Double> averageConsumptions = new ArrayList<>();
 
@@ -294,7 +298,7 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 						|| container.getLastDateComputed().isBefore(
 										DateTime.now().minusDays(config.getAggregateComputationInterval()))) {
 
-			List<UUID> uuidList = userRepository.getUserKeysForUtility(config.getUtilityId());
+			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
 			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
 			List<Double> averageConsumptions = new ArrayList<>();
 
@@ -337,7 +341,7 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 						|| container.getLastDateComputed().isBefore(
 										DateTime.now().minusDays(config.getAggregateComputationInterval()))) {
 
-			List<UUID> uuidList = userRepository.getUserKeysForUtility(config.getUtilityId());
+			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
 			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
 			List<Double> averageConsumptions = new ArrayList<>();
 
@@ -380,7 +384,7 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 						|| container.getLastDateComputed().isBefore(
 										DateTime.now().minusDays(config.getAggregateComputationInterval()))) {
 
-			List<UUID> uuidList = userRepository.getUserKeysForUtility(config.getUtilityId());
+			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
 			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
 
 			DataQueryBuilder queryBuilder = new DataQueryBuilder();
@@ -417,7 +421,7 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 						|| container.getLastDateComputed().isBefore(
 										DateTime.now().minusDays(config.getAggregateComputationInterval()))) {
 
-			List<UUID> uuidList = userRepository.getUserKeysForUtility(config.getUtilityId());
+			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
 			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
 
 			DataQueryBuilder queryBuilder = new DataQueryBuilder();
@@ -454,7 +458,7 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 						|| container.getLastDateComputed().isBefore(
 										DateTime.now().minusDays(config.getAggregateComputationInterval()))) {
 
-			List<UUID> uuidList = userRepository.getUserKeysForUtility(config.getUtilityId());
+			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
 			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
 
 			DataQueryBuilder queryBuilder = new DataQueryBuilder();
@@ -491,7 +495,7 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 						|| container.getLastDateComputed().isBefore(
 										DateTime.now().minusDays(config.getAggregateComputationInterval()))) {
 
-			List<UUID> uuidList = userRepository.getUserKeysForUtility(config.getUtilityId());
+			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
 			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
 
 			DataQueryBuilder queryBuilder = new DataQueryBuilder();

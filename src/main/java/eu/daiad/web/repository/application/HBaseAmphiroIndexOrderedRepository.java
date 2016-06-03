@@ -155,6 +155,12 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 			for (int i = data.getSessions().size() - 1; i >= 0; i--) {
 				AmphiroSession s = data.getSessions().get(i);
 
+				// Ignore any delete operation from the client. We have to set
+				// this property to null since the client can always send an
+				// invalid delete operation. We set this property manually only
+				// when we want to replace a session explicitly.
+				s.setDelete(null);
+
 				byte[] rowKey;
 
 				byte[] userKeyBytes = userKey.toString().getBytes("UTF-8");
@@ -274,7 +280,9 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 
 					} else {
 						// Session already exists and is a real-time one!
-						updates.getUpdates().add(new AmphiroSessionUpdate(s.getId(), existingTimestamp.longValue()));
+						updates.getUpdates().add(
+										new AmphiroSessionUpdate(data.getDeviceKey(), s.getId(), existingTimestamp
+														.longValue()));
 
 						// Stop propagation to time indexed table
 						data.removeSession(i);
@@ -444,22 +452,12 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 					public int compare(AmphiroMeasurement m1, AmphiroMeasurement m2) {
 						if (m1.getSessionId() == m2.getSessionId()) {
 							if (m1.getIndex() == m2.getIndex()) {
-								throw new RuntimeException("Session measurement indexes must be unique.");
-							}
-							if (m1.getTimestamp() == m2.getTimestamp()) {
-								throw new RuntimeException("Session measurement timestamps must be unique.");
+								throw createApplicationException(DataErrorCode.MEASUREMENT_NO_UNIQUE_INDEX).set(
+												"session", m1.getSessionId()).set("index", m1.getIndex());
 							}
 							if (m1.getIndex() < m2.getIndex()) {
-								if (m1.getTimestamp() > m2.getTimestamp()) {
-									throw new RuntimeException(
-													"Session measurements timestamp and index has ambiguous orderning.");
-								}
 								return -1;
 							} else {
-								if (m1.getTimestamp() < m2.getTimestamp()) {
-									throw new RuntimeException(
-													"Session measurements timestamp and index has ambiguous orderning.");
-								}
 								return 1;
 							}
 						} else if (m1.getSessionId() < m2.getSessionId()) {
@@ -487,7 +485,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 					for (AmphiroSession s : sessions) {
 						if (m.getSessionId() == s.getId()) {
 							if (s.isHistory()) {
-								throw new ApplicationException(DataErrorCode.HISTORY_SESSION_MEASUREMENT_FOUND).set(
+								throw createApplicationException(DataErrorCode.HISTORY_SESSION_MEASUREMENT_FOUND).set(
 												"session", m.getSessionId()).set("index", m.getIndex());
 							}
 							m.setSession(s);
@@ -495,7 +493,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 						}
 					}
 					if (m.getSession() == null) {
-						throw new ApplicationException(DataErrorCode.NO_SESSION_FOUND_FOR_MEASUREMENT).set("session",
+						throw createApplicationException(DataErrorCode.NO_SESSION_FOUND_FOR_MEASUREMENT).set("session",
 										m.getSessionId()).set("index", m.getIndex());
 					}
 				}
@@ -590,7 +588,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 				}
 			}
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 
 		return updates;
@@ -699,7 +697,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 						currentSessionId = sessionId;
 						totalSessions++;
 					}
-					if (totalSessions >= maxTotalSessions) {
+					if (totalSessions > maxTotalSessions) {
 						break;
 					}
 
@@ -773,7 +771,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 
 			return data;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (scanner != null) {
@@ -826,9 +824,9 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 
 			UUID deviceKeys[] = query.getDeviceKey();
 
-			int totalSessions = 0;
-
 			for (int deviceIndex = 0; deviceIndex < deviceKeys.length; deviceIndex++) {
+				int totalSessions = 0;
+
 				AmphiroSessionCollection collection = new AmphiroSessionCollection(deviceKeys[deviceIndex],
 								names[deviceIndex]);
 
@@ -945,7 +943,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 
 			return data;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (scanner != null) {
@@ -1044,7 +1042,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 
 			return data;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (scanner != null) {
@@ -1142,7 +1140,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 
 			return measurements;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (scanner != null) {

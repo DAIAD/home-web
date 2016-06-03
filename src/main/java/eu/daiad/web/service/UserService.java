@@ -9,11 +9,14 @@ import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTimeZone;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import eu.daiad.web.logging.MappedDiagnosticContextKeys;
+import eu.daiad.web.logging.MappedDiagnosticContextValues;
 import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.admin.AccountWhiteListEntry;
 import eu.daiad.web.model.device.Device;
@@ -28,7 +31,7 @@ import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 
 @Service
-public class UserService implements IUserService {
+public class UserService extends BaseService implements IUserService {
 
 	@Value("${security.white-list}")
 	private boolean enforceWhiteListCheck;
@@ -40,7 +43,7 @@ public class UserService implements IUserService {
 	private IDeviceRepository deviceRepository;
 
 	@Override
-	@Transactional("transactionManager")
+	@Transactional("applicationTransactionManager")
 	public UUID createUser(UserRegistrationRequest request) throws ApplicationException {
 		try {
 			Account account = request.getAccount();
@@ -79,8 +82,8 @@ public class UserService implements IUserService {
 					Device device = deviceRepository.getWaterMeterDeviceBySerial(entry.getMeterSerial());
 
 					if (device != null) {
-						throw new ApplicationException(DeviceErrorCode.ALREADY_EXISTS)
-										.set("id", entry.getMeterSerial());
+						throw createApplicationException(DeviceErrorCode.ALREADY_EXISTS).set("id",
+										entry.getMeterSerial());
 					}
 
 					ArrayList<KeyValuePair> properties = new ArrayList<KeyValuePair>();
@@ -94,30 +97,38 @@ public class UserService implements IUserService {
 			}
 
 			return userKey;
+		} catch (ApplicationException ex) {
+			if (ex.getCode().equals(UserErrorCode.USERNANE_NOT_AVAILABLE)) {
+				if (MDC.get(MappedDiagnosticContextKeys.USERNAME)
+								.equals(MappedDiagnosticContextValues.UNKNOWN_USERNAME)) {
+					MDC.put(MappedDiagnosticContextKeys.USERNAME, request.getAccount().getUsername());
+				}
+			}
+			throw ex;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex);
+			throw wrapApplicationException(ex);
 		}
 	}
 
 	@Override
-	@Transactional("transactionManager")
+	@Transactional("applicationTransactionManager")
 	public void setPassword(String username, String password) throws ApplicationException {
 		userRepository.setPassword(username, password);
 	}
 
 	@Override
-	@Transactional("transactionManager")
+	@Transactional("applicationTransactionManager")
 	public void setRole(String username, EnumRole role, boolean set) throws ApplicationException {
 		AuthenticatedUser user = this.userRepository.getUserByName(username);
 		if (user == null) {
 			Map<String, Object> properties = new HashMap<String, Object>();
 			properties.put("username", username);
 
-			throw new ApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
+			throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
 		}
 
 		if (role == null) {
-			throw new ApplicationException(UserErrorCode.NO_ROLE_SELECTED);
+			throw createApplicationException(UserErrorCode.NO_ROLE_SELECTED);
 		} else {
 			userRepository.setRole(username, role, set);
 		}

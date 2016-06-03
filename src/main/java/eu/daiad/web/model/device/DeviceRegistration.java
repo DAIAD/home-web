@@ -9,6 +9,8 @@ public abstract class DeviceRegistration {
 
 	private UUID deviceKey;
 
+	private long registeredOn;
+
 	private ArrayList<KeyValuePair> properties;
 
 	public DeviceRegistration() {
@@ -35,4 +37,12 @@ public abstract class DeviceRegistration {
 	}
 
 	public abstract EnumDeviceType getType();
+
+	public long getRegisteredOn() {
+		return registeredOn;
+	}
+
+	public void setRegisteredOn(long registeredOn) {
+		this.registeredOn = registeredOn;
+	}
 }
