@@ -3,7 +3,7 @@ var _ = require('lodash');
 var sprintf = require('sprintf');
 
 var ActionTypes = require('../action-types');
-var configureEntity = require('../service/configure');
+var {getGroups} = require('../api/admin');
 
 var actions = {
 
@@ -24,17 +24,41 @@ var actions = {
     var state = getState();
 
     if (!_.isEmpty(state.config.utility)) {
-      console.info('Configuration for "utility" is already present; Skipping');
+      console.info('Configuration for utility is already present; Skipping');
       return Promise.resolve();
     }
 
     dispatch(actions.requestConfiguration());
     
-    return configureEntity('utility').then(
-      res => (dispatch(actions.setConfiguration(res.utility))),
-      reason => (
-        console.error('Cannot configure "utility": %s', reason), null
-      )
+    return getGroups().then(
+      res => {
+        
+        if (res.errors.length) {
+          throw new Error(sprintf(
+            'Cannot configure utility: %s', _.first(res.errors).description
+          ));
+        }
+        
+        var {name, key} = _.first(res.groups.filter(g => g.type == 'UTILITY'));
+        var clusters = res.groups.filter(g => g.utilityKey == key && g.type == 'CLUSTER');
+
+        var config = {
+          name,
+          key,
+          clusters: clusters.map(c => ({
+            key: c.key,
+            name: c.name,
+            groups: c.segments.map(g => ({
+              clusterKey: c.key,
+              key: g.key,
+              name: g.name,
+              size: g.size,
+            })),
+          })),
+        };
+
+        actions.setConfiguration(config);
+      }
     );
   },
 };

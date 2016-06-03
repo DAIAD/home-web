@@ -23,11 +23,9 @@
 <link href="/assets/css/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
 <link href="/assets/css/utility/utility.css" rel="stylesheet" />
 
-<!-- custom builds for vendor libraries -->
 <script src="/assets/js/build/vendor/util.js"></script>
 <script src="/assets/js/build/vendor/jquery.js"></script>
 <script src="/assets/js/build/vendor/react.js"></script>
-<script src="/assets/js/build/vendor/leaflet.js"></script>
 
 <script th:inline="javascript">
     var properties = {
@@ -44,11 +42,11 @@
         </div>
 	</div>
 	
-    <script th:if="${@environment.getActiveProfiles()[0] == 'production'}"
-		src="/assets/js/build/utility/bundle.min.js"></script>
-	<script th:if="${@environment.getActiveProfiles()[0] == 'development'}"
-		src="/assets/lib/echarts/echarts.min.js"></script>
-	<script th:if="${@environment.getActiveProfiles()[0] == 'development'}"
-		src="/assets/js/build/utility/bundle.js"></script>
+    <script src="/assets/lib/echarts/echarts.min.js"></script>
+    <script src="/assets/js/build/vendor/leaflet.js"></script>
+    
+    <script th:if="${@environment.getActiveProfiles()[0] == 'production'}" src="/assets/js/build/utility/bundle.min.js"></script>
+    <script th:if="${@environment.getActiveProfiles()[0] == 'development'}" src="/assets/js/build/utility/bundle.js"></script>
+	
 </body>
 </html>

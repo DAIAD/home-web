@@ -41,3 +41,6 @@ store.dispatch(setLocale(locale, true))
 .then(() => store.dispatch(configure()))
 .then(renderRoot);
 
+global.$a = {
+  api: require('./api/base'),
+};
