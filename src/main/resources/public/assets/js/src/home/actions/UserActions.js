@@ -1,7 +1,7 @@
 var userAPI = require('../api/user');
 var types = require('../constants/ActionTypes');
 
-const { fetch:fetchMessages } = require('./MessageActions');
+const { fetchAll } = require('./MessageActions');
 const { MESSAGE_TYPES } = require('../constants/HomeConstants');
 
 const requestedLogin = function() {
@@ -54,7 +54,7 @@ const UserActions = {
         
         dispatch(receivedLogin(success, errors.length?errors[0].code:null, profile));
 
-        if (success) dispatch(fetchMessages(MESSAGE_TYPES));
+        if (success) dispatch(fetchAll());
 
         return response;
       })
@@ -74,7 +74,7 @@ const UserActions = {
 
         dispatch(receivedLogin(success, errors.length?errors[0].code:null, profile));
 
-        if (success) dispatch(fetchMessages(MESSAGE_TYPES));
+        if (success) dispatch(fetchAll());
 
         return response;
       })
