@@ -1,5 +1,4 @@
 var types = require('../constants/ActionTypes');
-var Helpers = require('../helpers/helpers');
 
 var initialState = {
   isLoading : false,

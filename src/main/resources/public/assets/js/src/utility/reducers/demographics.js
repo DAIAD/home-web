@@ -1,5 +1,6 @@
+var _ = require('lodash');
+
 var types = require('../constants/ActionTypes');
-var helpers = require('../helpers/helpers');
 var DemographicsTablesSchema = require('../constants/DemographicsTablesSchema');
 
 
@@ -70,7 +71,7 @@ var createFavouriteRows = function(favouritesInfo){
         id: f.key,
         refId: f.refId,
         name: f.name,
-        type: helpers.toTitleCase(f.type),
+        type: f.type.replace(/\w\S*/g, _.capitalize),
         addedOn: new Date (f.additionDateMils)
     };
     favourites.push(favourite);
