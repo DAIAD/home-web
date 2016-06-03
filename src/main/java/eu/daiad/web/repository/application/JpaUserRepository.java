@@ -7,6 +7,7 @@ import java.util.Locale;
 import java.util.UUID;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.ParameterMode;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -33,6 +34,7 @@ import eu.daiad.web.domain.application.AccountProfile;
 import eu.daiad.web.domain.application.AccountProfileHistoryEntry;
 import eu.daiad.web.domain.application.AccountRole;
 import eu.daiad.web.domain.application.AccountWhiteListEntry;
+import eu.daiad.web.domain.application.Group;
 import eu.daiad.web.domain.application.GroupCluster;
 import eu.daiad.web.domain.application.Role;
 import eu.daiad.web.domain.application.Utility;
@@ -40,8 +42,10 @@ import eu.daiad.web.model.EnumGender;
 import eu.daiad.web.model.EnumValueDescription;
 import eu.daiad.web.model.admin.AccountWhiteListInfo;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.GroupErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
+import eu.daiad.web.model.group.GroupInfo;
 import eu.daiad.web.model.profile.EnumMobileMode;
 import eu.daiad.web.model.profile.EnumUtilityMode;
 import eu.daiad.web.model.profile.EnumWebMode;
@@ -49,6 +53,7 @@ import eu.daiad.web.model.query.EnumClusterType;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.user.Account;
+import eu.daiad.web.model.user.UserInfo;
 
 @Repository
 @Transactional("transactionManager")
@@ -793,5 +798,30 @@ public class JpaUserRepository implements IUserRepository {
 		}
 
 		return null;
+	}
+
+	@Override
+	public UserInfo getUserInfoByKey(UUID user_id) {
+		try{
+			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
+			
+			if (!user.hasRole("ROLE_ADMIN") && !user.hasRole("ROLE_SUPERUSER")) {
+				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+			}
+			
+			TypedQuery<eu.daiad.web.domain.application.Account> userQuery = entityManager.createQuery(
+					"SELECT a FROM account a WHERE a.key = :user_id",
+					eu.daiad.web.domain.application.Account.class).setFirstResult(0).setMaxResults(1);
+			userQuery.setParameter("user_id", user_id);
+						
+			eu.daiad.web.domain.application.Account account = userQuery.getSingleResult();
+			
+			return new UserInfo(account);
+		}catch (NoResultException ex) {
+			throw ApplicationException.wrap(ex, UserErrorCode.USERID_NOT_FOUND).set("accountId", user_id);
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		}
 	}
 }

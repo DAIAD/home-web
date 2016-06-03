@@ -18,17 +18,14 @@ var ManageAlerts = React.createClass({
     intl: React.PropTypes.object
   },
   getDefaultProps: function() {
-    console.log('getDefaultProps');
     return {  
         defaultDropDownTitle: 'Select Utility',        
     };
   },      
   getInitialState: function(){
-    //console.log('initial state');    
     return {value:"initial state"};
   },
   componentWillMount : function() {
-    console.log('fetching utilities');
     this.props.fetchUtilities();    
   },
   handleCheckboxChange: function (rowId, propertyName, currentValue){

@@ -1,25 +1,29 @@
 package eu.daiad.web.controller.action;
 
+import java.util.UUID;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.admin.AccountWhiteListInfo;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.user.UserInfoResponse;
 import eu.daiad.web.repository.application.IUserRepository;
 
-@Controller
+@RestController
 public class UserController extends BaseController {
 
 	private static final Log logger = LogFactory.getLog(UserController.class);
@@ -58,6 +62,22 @@ public class UserController extends BaseController {
 			response.add(this.getError(ex));
 		}
 
+		return response;
+	}
+	
+	@RequestMapping(value = "/action/user/{user_id}", method = RequestMethod.GET, produces = "application/json")
+	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN" })
+	public RestResponse getUserInfoByKey(@PathVariable UUID user_id) {
+		RestResponse response = new RestResponse();
+		try{
+			
+			return new UserInfoResponse(repository.getUserInfoByKey(user_id));
+			
+		} catch (ApplicationException ex) {
+			logger.error(ex.getMessage(), ex);
+
+			response.add(this.getError(ex));
+		}
 		return response;
 	}
 }

@@ -100,7 +100,6 @@ public class FavouriteController extends BaseController {
 	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN"})
 	public @ResponseBody RestResponse deleteFavourite(@PathVariable UUID favourite_id){
 		RestResponse response = new RestResponse();
-		
 		try {
 			repository.deleteFavourite(favourite_id);
 			

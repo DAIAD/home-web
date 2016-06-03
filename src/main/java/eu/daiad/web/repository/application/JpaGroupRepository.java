@@ -26,6 +26,7 @@ import eu.daiad.web.domain.application.Utility;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.GroupErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.model.error.UserErrorCode;
 import eu.daiad.web.model.favourite.EnumFavouriteType;
 import eu.daiad.web.model.group.CreateGroupSetRequest;
 import eu.daiad.web.model.group.EnumGroupType;
@@ -322,5 +323,35 @@ public class JpaGroupRepository implements IGroupRepository{
 			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
 		}
 		
+	}
+
+	@Override
+	public List<GroupInfo> getGroupsByMember(UUID user_id) {
+		try {
+			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+			AuthenticatedUser requestingUser = (AuthenticatedUser) auth.getPrincipal();
+			
+			if (!requestingUser.hasRole("ROLE_ADMIN") && !requestingUser.hasRole("ROLE_SUPERUSER")) {
+				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+			}
+			
+			TypedQuery<Group> userGroupQuery = entityManager.createQuery(
+					"SELECT g FROM group_member m JOIN m.group g JOIN m.account a WHERE a.key = :user_key",
+					Group.class).setFirstResult(0);
+			userGroupQuery.setParameter("user_key", user_id);
+			
+			List <Group> groups = userGroupQuery.getResultList();
+			List <GroupInfo> groupsInfo = new ArrayList <GroupInfo>();
+			
+			for (Group group : groups){
+				GroupInfo groupInfo = new GroupInfo(group);
+				groupsInfo.add(groupInfo);
+			}
+
+			return groupsInfo;
+			
+		} catch (Exception ex) {
+			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+		}
 	}
 }

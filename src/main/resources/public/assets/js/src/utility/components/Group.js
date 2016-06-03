@@ -5,9 +5,7 @@ var { Link } = require('react-router');
 var Table = require('./Table');
 var Chart = require('./Chart');
 
-
 var UpsertFavouriteForm = require('./section/demographics/UpsertFavouriteForm');
-
 
 var { connect } = require('react-redux');
 var { bindActionCreators } = require('redux');

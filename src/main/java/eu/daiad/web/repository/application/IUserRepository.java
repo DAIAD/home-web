@@ -12,6 +12,7 @@ import eu.daiad.web.model.query.EnumClusterType;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.user.Account;
+import eu.daiad.web.model.user.UserInfo;
 
 public interface IUserRepository {
 
@@ -52,5 +53,7 @@ public interface IUserRepository {
 	List<GroupCluster> getClusterGroupByName(String name);
 
 	List<GroupCluster> getClusterGroupByType(EnumClusterType type);
+
+	UserInfo getUserInfoByKey(UUID user_id);
 
 }

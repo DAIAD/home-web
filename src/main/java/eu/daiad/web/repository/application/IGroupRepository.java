@@ -6,6 +6,7 @@ import java.util.UUID;
 import eu.daiad.web.model.group.CreateGroupSetRequest;
 import eu.daiad.web.model.group.GroupInfo;
 import eu.daiad.web.model.group.GroupMemberInfo;
+import eu.daiad.web.model.user.UserInfo;
 
 public interface IGroupRepository{
 	
@@ -20,5 +21,7 @@ public interface IGroupRepository{
 	public abstract GroupInfo getSingleGroupByKey(UUID group_id);
 
 	public abstract void deleteGroup(UUID group_id);
+
+	public abstract List <GroupInfo> getGroupsByMember(UUID user_id);
 		
 }
