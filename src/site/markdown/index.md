@@ -8,5 +8,3 @@ better services, can be a catalyst for large-scale changes in efficient water ma
 <p style="text-align: justify;">The DAIAD project constitutes an innovative approach for addressing the challenge of efficient water management through real-time knowledge of residential water consumption, bringing together leading members of the water and ICT domains. Our goal is to research and develop innovative low cost, inclusive technologies for real-time, high granularity water monitoring and knowledge extraction. We will devise multi-modal feedback
 interfaces, recommendation, and analysis services to communicate knowledge and incur behavioural changes to consumers in residential settings. We will apply big data management and analysis technologies to provide efficient management and analysis of real-time water consumption data, as well as multiple relevant data sources. This will enable water stakeholders to gain novel insight and explore the hidden correlations of the parameters that shape water demand strategies and water pricing, thus leading to more efficient water
 management.</p>
-
- 
