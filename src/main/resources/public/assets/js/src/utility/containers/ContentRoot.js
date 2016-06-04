@@ -230,6 +230,12 @@ var ContentRoot = React.createClass({
     return content;
   },
 
+  componentDidMount: function () {
+    if (this.props.isAuthenticated) {
+      this.props.actions.configure();
+    }
+  },
+
   componentDidUpdate: function (prevProps, prevState) {
   
     // Detect a succesfull login, and try to configure the client side. 
