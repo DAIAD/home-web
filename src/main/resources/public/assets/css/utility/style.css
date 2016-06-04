@@ -486,3 +486,171 @@ a .disabled{
 .form-control {
     height: 36px;
 }
+
+/* Reports (charts/panels) */
+
+div.stats-page {
+  width: 100%;
+}
+
+form.report-panel {
+  margin: 4px 0px;
+  padding: 4px 0px;
+  width: 100%;
+}
+
+.report-info {
+  margin: 8px 0px;
+}
+
+.report-info p.help,
+.report-panel p.help {
+  margin: 0px 0px;
+  font-size: 0.9em;
+}
+
+.report-info p.help.inline,
+.report-panel p.help.inline {
+  display: inline-block;
+}
+
+.select-dropdown .dropdown-toggle > span.empty-value,
+.select-dropdown .dropdown-menu li.empty-value > a {
+  font-style: oblique;
+}
+
+form.report-panel.form-inline .form-group {
+  margin: 8px 12px 8px 0px;
+}
+
+.reports > h3 {
+  margin: 5px 0px;
+  font-size: 22px;
+}
+
+.reports > h3 span.delimiter {
+  font-weight: bolder;
+  font-size: 1.3em;
+}
+
+.report-panel .form-group > label {
+  vertical-align: text-top;
+}
+
+.report-panel .dropdown.select-source button > span.text {
+  width: 3.1em;
+}
+
+.report-panel .dropdown.select-timespan button > span.text {
+  width: 5.5em;
+}
+
+.report-panel .dropdown.select-granularity button > span.text {
+  width: 5em;
+}
+
+.report-panel .dropdown.select-cluster button > span.text {
+  width: 7.5em;
+}
+
+.report-panel .dropdown.select-cluster-group button > span.text {
+  width: 7.5em;
+}
+
+.chart.portal {
+  margin: 0px 0px;
+  padding: 0px 0px;
+  background-color: #fff;
+  border: solid 1px silver;
+}
+
+.overview .panel .panel-title {
+  font-weight: bold;
+}
+
+.overview .panel-body h4 {
+  margin: 12px 0px;
+}
+
+div.measurement-value {
+  display: inline-block;
+  border-style: solid;
+  border-color: rgb(191, 212, 222);
+  border-width: 1px 1px 1px 5px;
+}
+
+div.measurement-value > .wrapper {
+  padding: 0px 0px;
+  min-height: 150px;
+  min-width: 11em;
+}
+
+div.measurement-value .title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  padding: 8px 5px 8px 5px;
+  border-color: rgb(191, 212, 222);
+  border-width: 0px 0px 1px 0px;
+  border-style: solid;
+}
+
+div.measurement-value .subtitle {
+  font-size: 1.2rem;
+  padding: 9px 5px 0px 5px;
+}
+
+div.measurement-value .current-value > .value,
+div.measurement-value .current-value > .unit,
+div.measurement-value .delta > .value, 
+div.measurement-value .delta > .unit {
+  font-family: 'Inconsolata', monospace;
+  /*font-family: monospace;*/
+}
+
+div.measurement-value .current-value {
+  padding: 0px 5px 0px 5px; 
+}
+
+div.measurement-value .current-value .value { 
+  font-size: 3.3rem;
+  font-weight: normal;
+}
+
+div.measurement-value .current-value .unit {
+  font-size: 2rem;
+}
+
+div.measurement-value .delta { 
+  position: relative;
+  top: -5px;
+  padding: 0px 5px 0px 5px; 
+  font-size: 1.4rem;
+  color: #545E63;
+}
+
+div.measurement-value .delta > .value,
+div.measurement-value .delta > .unit {
+  vertical-align: baseline; 
+}
+div.measurement-value .delta > .unit {
+  font-size: 1rem;
+}
+
+div.measurement-value .delta > .sign {
+  vertical-align: text-top; 
+}
+
+.overview-utility .level > .measurement-value,
+.overview-utility .level > .chart {
+  display: block;
+  float: left;
+  border-style: solid;
+  border-color: rgb(191, 212, 222);
+  border-width: 1px 1px 1px 5px;
+  margin: 0px 8px 0px 0px;
+}
+
+.overview-utility .level > .chart {
+  width: 455px;
+  height: 230px;
+}

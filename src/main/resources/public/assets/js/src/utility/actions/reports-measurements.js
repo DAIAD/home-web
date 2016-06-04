@@ -3,9 +3,9 @@ var _ = require('lodash');
 var sprintf = require('sprintf');
 
 var ActionTypes = require('../action-types');
-var TimeSpan = require('../timespan');
 var {computeKey} = require('../reports').measurements;
-var population = require('../population');
+var TimeSpan = require('../model/timespan');
+var population = require('../model/population');
 var {queryMeasurements} = require('../service/query');
 
 // Define actions

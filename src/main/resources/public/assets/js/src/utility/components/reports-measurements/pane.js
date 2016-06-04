@@ -1,6 +1,8 @@
 
 var _ = require('lodash');
 var moment = require('moment');
+var numeral = require('numeral');
+
 var React = require('react');
 var ReactRedux = require('react-redux');
 var ReactBootstrap = require('react-bootstrap');
@@ -13,22 +15,19 @@ var Select = require('react-controls/select-dropdown');
 var Granularity = require('../../model/granularity');
 var TimeSpan = require('../../model/timespan');
 var population = require('../../model/population');
-var reports = require('../../reports');
-var consolidateFn = require('../../consolidate');
+var {computeKey, consolidateFuncs} = require('../../reports').measurements;
 var {timespanPropType, populationPropType, seriesPropType} = require('../../prop-types');
 
 var PropTypes = React.PropTypes;
 var commonPropTypes = { 
-  field: PropTypes.string,
-  level: PropTypes.string,
-  reportName: PropTypes.string,
+  field: PropTypes.string.isRequired,
+  level: PropTypes.string.isRequired,
+  reportName: PropTypes.string.isRequired,
 };
 
 var toOptionElement = ({value, text}) => (
   <option value={value} key={value}>{text}</option>
 );
-
-var {computeKey} = reports.measurements;
 
 const REPORT_KEY = 'pane';
 
@@ -268,9 +267,10 @@ var Panel = React.createClass({
             </optgroup>
           </Select>
         </div>
+        <br />
         <div className="form-group">
           <Button onClick={this._refresh} bsStyle="primary" disabled={!!error} title="Refresh">
-            {/*<Glyphicon glyph="repeat" />&nbsp;*/}Refresh
+            <Glyphicon glyph="repeat" />&nbsp; Refresh
           </Button>
         </div>
         {this._markupHelp()}
@@ -360,11 +360,11 @@ var Panel = React.createClass({
     var paragraph;
     
     if (errorMessage) {
-      paragraph = (<p className="help text-danger">{errorMessage}</p>);
+      paragraph = (<p className="inline help text-danger">{errorMessage}</p>);
     } else if (dirty) {
-      paragraph = (<p className="help text-info">Parameters have changed. Refresh to redraw data!</p>); 
+      paragraph = (<p className="inline help text-info">Parameters have changed. Refresh to redraw data!</p>); 
     } else {
-      paragraph = (<p className="help text-muted">Refresh to redraw data.</p>);
+      paragraph = (<p className="inline help text-muted">Refresh to redraw data.</p>);
     }
     return paragraph;
   },
@@ -385,8 +385,8 @@ var Chart = React.createClass({
         dateformat: {
           'minute': 'HH:mm',
           'hour': 'HH:00',
-          'day': 'DD/MM',
-          'week': '[W]W/YY', //'dd DD/MM/YYYY',
+          'day': 'DD/MMM',
+          'week': 'DD/MMM',
           'month': 'MM/YYYY',
           'quarter': 'Qo YYYY',
           'year': 'YYYY',
@@ -450,7 +450,7 @@ var Chart = React.createClass({
             height={this.props.height}
             loading={this.props.finished? null : {text: 'Loading data...'}}
             tooltip={false}
-            lineWidth={2}
+            lineWidth={1}
             xAxis={{
               data: xaxisData,
               boundaryGap: true, 
@@ -459,7 +459,7 @@ var Chart = React.createClass({
             yAxis={{
               name: title + (unit? (' (' + unit + ')') : ''),
               numTicks: 4,
-              formatter: unit? ((y) => (y.toFixed(1) + ' ' + unit)) : null,
+              formatter: unit? ((y) => (numeral(y).format('0.0a') + ' ' + unit)) : null,
             }}
             series={series}
         />
@@ -531,7 +531,7 @@ var Chart = React.createClass({
       return yb;
     };
 
-    var cf = consolidateFn[report.consolidate]; 
+    var cf = consolidateFuncs[report.consolidate]; 
     result.series = series.map(s => (
       _.extend({}, s, {
         data: groupInBuckets(s.data, result.xaxisData).map(cf)

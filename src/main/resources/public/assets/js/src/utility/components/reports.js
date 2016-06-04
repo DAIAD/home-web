@@ -7,27 +7,19 @@ var ReactBootstrap = require('react-bootstrap');
 var ReactRedux = require('react-redux');
 
 var PropTypes = React.PropTypes;
-var {Nav, Navbar, NavItem, NavDropdown, MenuItem} = ReactBootstrap;
-var {Router, Route, IndexRoute, Link, hashHistory} = ReactRouter;
-
 var _configPropType = PropTypes.shape({
   utility: PropTypes.object,
   reports: PropTypes.object,
+  overview: PropTypes.object,
 });
 
-//
-// Presentational components
-//
-
-var MeasurementReportsPage = React.createClass({
+var MeasurementReport = React.createClass({
   
   propTypes: {
     config: _configPropType,
-    params: PropTypes.shape({
-      field: PropTypes.string,
-      level: PropTypes.string,
-      reportName: PropTypes.string,
-    }) 
+    field: PropTypes.string,
+    level: PropTypes.string,
+    reportName: PropTypes.string,
   },
   
   childContextTypes: {
@@ -39,20 +31,25 @@ var MeasurementReportsPage = React.createClass({
   },
 
   render: function () {
+    var {config, field, level, reportName} = this.props;
+
+    if (_.isEmpty(config) || _.isEmpty(config.reports) || _.isEmpty(config.utility)) {
+      return (<div>Loading configuration...</div>);
+    }
+
     var {Panel, Chart, Info} = require('./reports-measurements/pane');
- 
-    var {config, params: {field, level, reportName}} = this.props; 
     var _config = config.reports.byType.measurements; 
     
     var heading = (
-      <h2>
+      <h3>
         {_config.fields[field].title}
         <span className="delimiter">&nbsp;/&nbsp;</span>
         {_config.levels[level].title}
         <span className="delimiter">&nbsp;/&nbsp;</span>
         {_config.levels[level].reports[reportName].title}
-      </h2>
+      </h3>
     );
+    
     return (
       <div className="reports reports-measurements">
         {heading}
@@ -65,14 +62,12 @@ var MeasurementReportsPage = React.createClass({
 
 });
 
-var SystemReportsPage = React.createClass({
+var SystemReport = React.createClass({
   
   propTypes: {
     config: _configPropType,
-    params: PropTypes.shape({
-      level: PropTypes.string,
-      reportName: PropTypes.string,
-    }),
+    level: PropTypes.string,
+    reportName: PropTypes.string,
   },
   
   childContextTypes: {
@@ -84,17 +79,22 @@ var SystemReportsPage = React.createClass({
   },
 
   render: function () {
-    var {config, params: {level, reportName}} = this.props; 
+    var {config, level, reportName} = this.props; 
+    
+    if (_.isEmpty(config)) {
+      return (<div>Loading configuration...</div>);
+    }
+
     var _config = config.reports.byType.system; 
    
     var heading = (
-      <h2>
+      <h3>
         {_config.title} 
         <span className="delimiter">&nbsp;/&nbsp;</span>
         {_config.levels[level].title}
         <span className="delimiter">&nbsp;/&nbsp;</span>
         {_config.levels[level].reports[reportName].title}
-      </h2>
+      </h3>
     );
     
     var Report;
@@ -116,10 +116,12 @@ var SystemReportsPage = React.createClass({
   },
 });
 
-var OverviewPage = React.createClass({
+var Overview = React.createClass({
   
   propTypes: {
     config: _configPropType,
+    section: PropTypes.string,
+    now: PropTypes.number,
   },
  
   childContextTypes: {
@@ -132,10 +134,9 @@ var OverviewPage = React.createClass({
  
   render: function () { 
     var overview = require('./reports-measurements/overview');
-    var {config, params: {section}, location: {query: q}} = this.props; 
+    var {config, section, now} = this.props; 
     
-    var now = Number(q.now); 
-    now = _.isNaN(now)? moment().valueOf() : now;
+    now = (now == null)? moment().valueOf() : now;
 
     var body;
     switch (section) {
@@ -160,13 +161,13 @@ var OverviewPage = React.createClass({
     }
   
     var heading = (
-       <h2>
+       <h3>
         {'Overview'}
         <span className="delimiter">&nbsp;/&nbsp;</span>
         {'Water Consumption'}
         <span className="delimiter">&nbsp;/&nbsp;</span>
         {config.overview.sections[section].title}
-      </h2>
+      </h3>
     );
 
     return (
@@ -178,21 +179,5 @@ var OverviewPage = React.createClass({
   },
 });
 
-//
-// Container components:
-//
+module.exports = {MeasurementReport, SystemReport, Overview};
 
-// Inject global configuration to basic page components
-var injectConfigToProps = (state, ownProps) => ({config: state.config});
-
-var {connect} = ReactRedux;
-
-MeasurementReportsPage = connect(injectConfigToProps, null)(MeasurementReportsPage); 
-
-SystemReportsPage = connect(injectConfigToProps, null)(SystemReportsPage); 
-
-OverviewPage = connect(injectConfigToProps, null)(OverviewPage); 
-
-// Export
-
-module.exports = {MeasurementReportsPage, SystemReportsPage, OverviewPage};

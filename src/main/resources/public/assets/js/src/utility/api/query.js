@@ -2,7 +2,7 @@
 var api = require('./base');
 
 var QueryAPI = {
-  submitQuery : function(query) {
+  queryMeasurements: function(query) {
     return api.json('/action/query', query);
   }
 };

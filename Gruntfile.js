@@ -106,10 +106,15 @@ module.exports = function(grunt) {
             'react-router',
             'react-datetime',
             'react-intl',
+            'react-intl/locale-data/de',
+            'react-intl/locale-data/el',
+            'react-intl/locale-data/en',
+            'react-intl/locale-data/es',
             'react-grid-layout',
             'react-select',
             'react-bootstrap',
             'react-router-bootstrap',
+            'react-router-redux',
             'react-bootstrap-daterangepicker',
             'react-bootstrap-datetimepicker',
             'react-scroll-up',
@@ -169,10 +174,15 @@ module.exports = function(grunt) {
             'react-router',
             'react-datetime',
             'react-intl',
+            'react-intl/locale-data/de',
+            'react-intl/locale-data/el',
+            'react-intl/locale-data/en',
+            'react-intl/locale-data/es',
             'react-grid-layout',
             'react-select',
             'react-bootstrap',
             'react-router-bootstrap',
+            'react-router-redux',
             'react-bootstrap-daterangepicker',
             'react-bootstrap-datetimepicker',
             'react-scroll-up',
@@ -392,13 +402,21 @@ module.exports = function(grunt) {
         files: [
           'src/main/resources/public/assets/js/src/utility/**/*.js'
         ],
-        tasks: ['jshint:utility', 'browserify:utility', 'sync']
+        tasks: [
+          'jshint:utility', 
+          'browserify:utility',
+          'sync'
+        ],
       },
       home: {
         files: [
           'src/main/resources/public/assets/js/src/home/**/*.js'
         ],
-        tasks: ['jshint:home', 'browserify:home', 'sync']
+        tasks: [
+          'jshint:home',
+          'browserify:home',
+          'sync'
+        ],
       },
     }
   });

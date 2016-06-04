@@ -10,10 +10,10 @@ var PropTypes = React.PropTypes;
 var {seriesPropType, timespanPropType} = require('../../prop-types');
 
 var reportPropType = PropTypes.shape({
-  level: PropTypes.string,
-  reportName: PropTypes.string,
-  startsAt: PropTypes.string,
-  duration: PropTypes.array,
+  level: PropTypes.string.isRequired,
+  reportName: PropTypes.string.isRequired,
+  startsAt: PropTypes.string.isRequired,
+  duration: PropTypes.array.isRequired,
 });    
 
 const FIELD = 'volume';

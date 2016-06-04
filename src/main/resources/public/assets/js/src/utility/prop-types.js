@@ -1,8 +1,8 @@
 
 var React = require('react');
 
-var population = require('./population');
-var TimeSpan = require('./timespan');
+var population = require('./model/population');
+var TimeSpan = require('./model/timespan');
 
 var PropTypes = React.PropTypes;
 

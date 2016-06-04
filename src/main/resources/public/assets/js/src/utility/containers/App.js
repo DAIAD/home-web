@@ -17,22 +17,22 @@ ReactIntl.addLocaleData(Locale.de);
 var ContentRoot = require('./ContentRoot');
 
 var App = React.createClass({
-	render: function() {
-		return (
-			<ReactIntl.IntlProvider locale = { this.props.locale } messages = { this.props.messages } >
-				<ContentRoot locale = { this.props.locale } >
-					{this.props.children}
-				</ContentRoot>
-			</ReactIntl.IntlProvider>
-		);
-	}
+  render: function() {
+    return (
+      <ReactIntl.IntlProvider locale={this.props.locale} messages={this.props.messages} >
+        <ContentRoot locale={this.props.locale} >
+          {this.props.children}
+        </ContentRoot>
+      </ReactIntl.IntlProvider>
+    );
+  }
 });
 
 function mapStateToProps(state) {
-	return {
-		locale: state.i18n.locale,
+  return {
+    locale: state.i18n.locale,
     messages: state.i18n.data[state.i18n.locale].messages
-	};
+  };
 }
 
 module.exports = connect(mapStateToProps)(App);

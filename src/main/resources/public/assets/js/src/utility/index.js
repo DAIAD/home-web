@@ -1,3 +1,4 @@
+const develop = (process.env.NODE_ENV !== 'production');
 
 var React = require('react');
 var ReactDOM = require('react-dom');
@@ -35,12 +36,13 @@ var locale = getCookie('daiad-utility-locale') || 'en';
 var mustRefresh = (getCookie('daiad-utility-session') === 'true');
 
 // Chain preliminary actions needed before any rendering takes place
-
 store.dispatch(setLocale(locale, true))
 .then(() => (mustRefresh? store.dispatch(refreshProfile()) : Promise.resolve()))
-.then(() => store.dispatch(configure()))
 .then(renderRoot);
 
-global.$a = {
-  api: require('./api/base'),
-};
+// If under development, shortcut some modules into global namespace (window)
+if (develop) {
+  global.$a = {
+    api: require('./api/base'),
+  };
+}

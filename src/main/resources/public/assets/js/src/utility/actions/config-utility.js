@@ -30,9 +30,9 @@ var actions = {
 
     dispatch(actions.requestConfiguration());
     
+    // Fetch all groups inside this utility
     return getGroups().then(
       res => {
-        
         if (res.errors.length) {
           throw new Error(sprintf(
             'Cannot configure utility: %s', _.first(res.errors).description
@@ -41,7 +41,6 @@ var actions = {
         
         var {name, key} = _.first(res.groups.filter(g => g.type == 'UTILITY'));
         var clusters = res.groups.filter(g => g.utilityKey == key && g.type == 'CLUSTER');
-
         var config = {
           name,
           key,
@@ -57,7 +56,7 @@ var actions = {
           })),
         };
 
-        actions.setConfiguration(config);
+        dispatch(actions.setConfiguration(config));
       }
     );
   },

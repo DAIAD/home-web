@@ -57,7 +57,7 @@ var queryMeasurements = function (source, field, q, config={}) {
 
   // Send query, shape result
 
-  return api.queryMeasurements(q1).then(
+  return api.queryMeasurements({query: q1}).then(
     res => {
       if (res.errors.length) 
         throw 'The request is rejected: ' + res.errors[0].description; 

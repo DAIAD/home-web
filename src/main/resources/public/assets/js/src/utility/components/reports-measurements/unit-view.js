@@ -4,20 +4,19 @@ var numeral = require('numeral');
 var sprintf = require('sprintf');
 var moment = require('moment');
 var React = require('react');
+var echarts = require('react-echarts');
 
-var echarts = require('../react-echarts');
 var MeasurementValue = require('./measurement-value');
+var {pairWithNext, padRight: padArrayRight, padLeft: padArrayLeft} = require('../../helpers/array-funcs');
+var {generateTimestamps} = require('../../helpers/timestamps');
 
 var PropTypes = React.PropTypes;
 var {seriesPropType} = require('../../prop-types');
 
-var {pairWithNext, padRight: padArrayRight, padLeft: padArrayLeft} = require('../../util/array-func');
-var {generateTimestamps} = require('../../util/timestamps');
-
 const FIELD = 'volume';
 
 //
-// Report components based on a time unit (e.g by day, week ...)
+// Presentational components for reports based on a time unit (e.g by day, week ...)
 //
 
 class _View extends React.Component {
@@ -179,7 +178,7 @@ class _View extends React.Component {
 
   static _checkData(data, keys, k0, level) {
     
-    var {diffNumber} = require('../../util/array-func');
+    var {diffNumber} = require('../../helpers/array-funcs');
     var {unit} = this;
     
     if (!keys.every(k => _.isNumber(k)))
