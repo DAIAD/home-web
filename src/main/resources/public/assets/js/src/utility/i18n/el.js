@@ -230,6 +230,7 @@
 		"403" : "Η πιστοποίηση απέτυχε",
 		"404" : "Not found",
 		"500" : "Internal server error",
+		"SharedErrorCode.SESSION_EXPIRED": "Η συνεδρία έχει λήξει.",
     "ValidationError.User.NO_FIRST_NAME": "Λείπει το Όνομα.",
     "ValidationError.User.NO_LAST_NAME": "Λείπει το Επώνυμο.",
     "ValidationError.User.NO_EMAIL": "Λείπει το E-mail.",
