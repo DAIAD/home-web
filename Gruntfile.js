@@ -1,4 +1,7 @@
 module.exports = function(grunt) {
+  
+  //require('time-grunt')(grunt);
+  
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     clean: {
@@ -67,7 +70,7 @@ module.exports = function(grunt) {
         watch: false, 
         keepAlive: !grunt.option('no-watchify'),
         browserifyOptions: {
-          debug: false
+          debug: false,
         },
         exclude: [
           'echarts'
@@ -301,7 +304,13 @@ module.exports = function(grunt) {
           src: ['*.js'],
           dest: 'target/classes/public/assets/js/build/home/i18n/',
           filter: 'isFile'
-        }]
+        }, {
+          expand: true,
+          cwd: 'src/main/resources/public/assets/css/utility/',
+          src: ['*.css'],
+          dest: 'target/classes/public/assets/css/utility/',
+          filter: 'isFile'
+        }],
       },
       utility: {
         files: [{
@@ -398,14 +407,25 @@ module.exports = function(grunt) {
       options: {
         interrupt: true
       },
-      utility: {
+      'utility-scripts': {
         files: [
-          'src/main/resources/public/assets/js/src/utility/**/*.js'
+          'src/main/resources/public/assets/js/src/utility/**/*.js',
         ],
         tasks: [
           'jshint:utility', 
           'browserify:utility',
-          'sync'
+          'sync:utility',
+          'sync:debug',
+        ],
+      },
+      'utility-stylesheets': {
+        files: [
+          'src/main/resources/public/assets/css/*.css',
+          'src/main/resources/public/assets/css/utility/*.css',
+        ],
+        tasks: [
+          'sync:utility',
+          'sync:debug',
         ],
       },
       home: {
@@ -415,7 +435,8 @@ module.exports = function(grunt) {
         tasks: [
           'jshint:home',
           'browserify:home',
-          'sync'
+          'sync:home',
+          'sync:debug',
         ],
       },
     }
