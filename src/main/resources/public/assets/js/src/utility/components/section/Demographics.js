@@ -478,7 +478,7 @@ var Demographics = React.createClass({
                 itemId = {this.props.favouriteGroupId}
                 actions = {{
                   cancelAction : this.props.hideFavouriteGroupForm,
-                  getGroupsAndFavourites : this.props.getGroupsAndFavourites
+                  refreshParentForm : this.props.getGroupsAndFavourites
                 }}
                 
               />

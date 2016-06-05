@@ -35,6 +35,11 @@ public class FavouriteController extends BaseController {
 	@Autowired
 	private IFavouriteRepository repository;
 	
+	/**
+	 * It returns the list of the user's favourites
+	 * 
+	 * @return the users favourites list
+	 */
 	@RequestMapping(value = "/action/favourite/list", method = RequestMethod.GET, produces = "application/json")
 	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN" })
 	public RestResponse getFavouriteInfo() {
@@ -51,6 +56,14 @@ public class FavouriteController extends BaseController {
 		return response;
 	}
 	
+	/**
+	 * It checks if a given account is favourite. 
+	 * If it is, related info like the account's favourite label is returned.
+	 * If it is not, account info is returned.
+	 * 
+	 * @param account_id the account id
+	 * @return a favourite's (or a candidate favourite's) info
+	 */
 	@RequestMapping(value = "/action/favourite/check/account/{account_id}", method = RequestMethod.GET, produces = "application/json")
 	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN" })
 	public RestResponse checkFavouriteAccountStatus(@PathVariable UUID account_id) {
@@ -67,6 +80,14 @@ public class FavouriteController extends BaseController {
 		return response;
 	}
 	
+	/**
+	 * It checks if a given group is favourite. 
+	 * If it is, related info like the group's favourite label is returned.
+	 * If it is not, group info is returned.
+	 * 
+	 * @param group_id the group id.
+	 * @return a favourite's (or a candidate favourite's) info
+	 */
 	@RequestMapping(value = "/action/favourite/check/group/{group_id}", method = RequestMethod.GET, produces = "application/json")
 	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN" })
 	public RestResponse checkFavouriteGroupStatus(@PathVariable UUID group_id) {
@@ -82,6 +103,14 @@ public class FavouriteController extends BaseController {
 		}
 		return response;
 	}
+	
+	/**
+	 * It inserts/updates a new/existing favourite given its info
+	 * 
+	 * @param user the authenticated user.
+	 * @param favouriteInfo the favourite's info
+	 * @return the controller's response.
+	 */
 	
 	@RequestMapping(value = "/action/favourite/upsert", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN"})
@@ -99,6 +128,13 @@ public class FavouriteController extends BaseController {
 		return response;
 	}
 	
+	/**
+	 * It deletes a given favourite. This means that the specific account/group 
+	 * will not be a favourite any more, and not that it will be literally deleted
+	 * 
+	 * @param favourite_id the favourites id
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/action/favourite/delete/{favourite_id}", method = RequestMethod.GET, consumes = "application/json", produces = "application/json")
 	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN"})
 	public @ResponseBody RestResponse deleteFavourite(@PathVariable UUID favourite_id){

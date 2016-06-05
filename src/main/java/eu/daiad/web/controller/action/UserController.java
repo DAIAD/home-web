@@ -73,6 +73,14 @@ public class UserController extends BaseController {
 		return response;
 	}
 	
+	/**
+	 * Returns basic info for a user given his key.
+	 * Notice that it does not provide info, regarding the groups it participates or the devices he owns.
+	 *  
+	 * @param user_id
+	 * @return
+	 */
+	
 	@RequestMapping(value = "/action/user/{user_id}", method = RequestMethod.GET, produces = "application/json")
 	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN" })
 	public @ResponseBody RestResponse getUserInfoByKey(@PathVariable UUID user_id) {
@@ -88,4 +96,5 @@ public class UserController extends BaseController {
 		}
 		return response;
 	}
+	
 }

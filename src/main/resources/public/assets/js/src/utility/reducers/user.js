@@ -43,6 +43,16 @@ var user = function(state, action) {
       groupListInfo : action.groupListInfo
     });
     
+  case types.USER_SHOW_FAVOURITE_ACCOUNT_FORM:
+    return Object.assign({}, state, {
+      application : 'favouriteAccountForm'
+    });
+    
+  case types.USER_HIDE_FAVOURITE_ACCOUNT_FORM:
+    return Object.assign({}, state, {
+      application : 'default'
+    });
+    
   default:
     return state || initialState;
   }

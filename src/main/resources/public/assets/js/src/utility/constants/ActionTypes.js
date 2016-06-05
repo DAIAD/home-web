@@ -110,6 +110,8 @@ var constants = keyMirror({
   USER_REQUEST_USER: null,
   USER_RECEIVE_USER_INFO: null,
   USER_RECEIVE_GROUP_MEMBERSHIP_INFO: null,
+  USER_SHOW_FAVOURITE_ACCOUNT_FORM: null,
+  USER_HIDE_FAVOURITE_ACCOUNT_FORM: null,
         
   //manage alerts
   ADMIN_REQUESTED_UTILITIES: null,

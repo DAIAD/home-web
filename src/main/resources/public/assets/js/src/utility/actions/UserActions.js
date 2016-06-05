@@ -44,6 +44,20 @@ var UserActions = {
       });
     };
   },
+  
+  showFavouriteAccountForm : function(accountId){
+    return {
+      type : types.USER_SHOW_FAVOURITE_ACCOUNT_FORM,
+      accountId : accountId
+    };
+  },
+  
+  hideFavouriteAccountForm : function(){
+    return {
+      type : types.USER_HIDE_FAVOURITE_ACCOUNT_FORM
+    };
+  },
+  
 };
 
 module.exports = UserActions;

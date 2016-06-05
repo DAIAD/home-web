@@ -33,7 +33,7 @@ var UpsertFavouriteForm = React.createClass({
       itemId: null,
       actions : {
         cancelAction : function(){},
-        getGroupsAndFavourites : function(){}
+        refreshParentForm : function(){}
       }
       
      };
@@ -72,7 +72,7 @@ var UpsertFavouriteForm = React.createClass({
 
   
   render: function(){
-
+    
     var self = this;
     var _t = this.context.intl.formatMessage;
     
@@ -141,7 +141,7 @@ var UpsertFavouriteForm = React.createClass({
           <Bootstrap.Button onClick={
               function (){
                 self.props.actions.cancelAction();
-                self.props.actions.getGroupsAndFavourites();
+                self.props.actions.refreshParentForm();
              }}>
             {_t({ id:'Buttons.Cancel'})}
           </Bootstrap.Button>

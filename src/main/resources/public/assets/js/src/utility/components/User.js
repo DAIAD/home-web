@@ -5,6 +5,8 @@ var { Link } = require('react-router');
 var Table = require('./Table');
 var Chart = require('./Chart');
 
+var UpsertFavouriteForm = require('./section/demographics/UpsertFavouriteForm');
+
 var { connect } = require('react-redux');
 var { bindActionCreators } = require('redux');
 
@@ -54,7 +56,7 @@ var User = React.createClass({
   },
 
 	render: function() {
-	  
+	  console.log('--p1--');
 	  var currentUserGroups = {
 	      fields : UserTablesSchema.Groups.fields,
 	      rows : UserTablesSchema.Groups.rows,
@@ -71,7 +73,7 @@ var User = React.createClass({
       };
 	    
 	  }
-	  
+	  console.log('--p2--');
 		var chartData = {
 			    series: [{
 			        legend: 'Amphiro Shower #1',
@@ -242,6 +244,9 @@ var User = React.createClass({
 	  					count:2
 	  				}
 	  			};
+	  		
+	  		console.log('--p3--');
+	  		
 			const profileTitle = (
 					<span>
 						<i className='fa fa-user fa-fw'></i>
@@ -256,7 +261,7 @@ var User = React.createClass({
 								<i className='fa fa-user-plus fa-fw'></i>
 								<span style={{ paddingLeft: 4 }}>Add to group</span>
 							</Bootstrap.MenuItem>
-							<Bootstrap.MenuItem eventKey='1'>
+							<Bootstrap.MenuItem eventKey='1' onSelect={this.props.showFavouriteAccountForm}>
 								<i className='fa fa-bookmark-o fa-fw'></i>
 								<span style={{ paddingLeft: 4 }}>Add to favourites</span>
 							</Bootstrap.MenuItem>
@@ -290,114 +295,132 @@ var User = React.createClass({
 						<span style={{ paddingLeft: 4 }}>Devices</span>
 					</span>
 				);
-			
+			console.log('--p4--');
+			console.log(this.props.isLoading);
+			console.log(this.props.application);
+			console.log(this.props.userInfo);
 		if (!this.props.isLoading && this.props.userInfo){
-  		return (
-    		<div className='container-fluid' style={{ paddingTop: 10 }}>
-    			<div className='row'>
-    				<div className='col-md-5'>
-    					<div className='row'>
-    						<div className='col-md-12'>
-    							<Bootstrap.Panel header={profileTitle}>
-    								<Bootstrap.ListGroup fill>
-    									<Bootstrap.ListGroupItem>
-    										<div className='row'>
-    											<div className='col-md-4'>
-    												<div style={{width: '100px', height: '100px',  border: '#3498db solid 3px', borderRadius: '50%', padding: 3 }}>
-    													<img src='/assets/images/utility/profile.png' style={{borderRadius: '50%', width: '100%', height: '100%'}} />
-    												</div>
-    											</div>
-    											<div className='col-md-8'>
-    												<table className='table table-profile'>
-    													<tbody>
-    														<tr>
-    															<td>First name</td>
-    															<td>{this.props.userInfo.firstName}</td>
-    														</tr>
-    														<tr>
-    															<td>Last name</td>
-    															<td>{this.props.userInfo.lastName}</td>
-    														</tr>
-    														<tr>
-    															<td>Email</td>
-    															<td>{this.props.userInfo.email}</td>
-    														</tr>
-    														<tr>
-                                  <td>Gender</td>
-                                  <td>{this.props.userInfo.gender}</td>
-                                </tr>
-    														<tr>
-    															<td>Registered on</td>
-    															<td><FormattedDate value={this.props.userInfo.registeredOn} day='numeric' month='long' year='numeric' /></td>
-    														</tr>
+		  if (this.props.application === 'favouriteAccountForm'){
+		    console.log('--p5--');
+		    return (
+            <UpsertFavouriteForm
+              type = 'ACCOUNT'
+              itemId = {this.props.params.id}
+              actions = {{
+                cancelAction : this.props.hideFavouriteAccountForm,
+                refreshParentForm : function (){}
+              }}
+            />
+        );
+		  } else if(this.props.application === 'default'){
+		    console.log('--p6--');
+    		return (
+      		<div className='container-fluid' style={{ paddingTop: 10 }}>
+      			<div className='row'>
+      				<div className='col-md-5'>
+      					<div className='row'>
+      						<div className='col-md-12'>
+      							<Bootstrap.Panel header={profileTitle}>
+      								<Bootstrap.ListGroup fill>
+      									<Bootstrap.ListGroupItem>
+      										<div className='row'>
+      											<div className='col-md-4'>
+      												<div style={{width: '100px', height: '100px',  border: '#3498db solid 3px', borderRadius: '50%', padding: 3 }}>
+      													<img src='/assets/images/utility/profile.png' style={{borderRadius: '50%', width: '100%', height: '100%'}} />
+      												</div>
+      											</div>
+      											<div className='col-md-8'>
+      												<table className='table table-profile'>
+      													<tbody>
       														<tr>
-                                  <td>Addrerss</td>
-                                  <td>{this.props.userInfo.address}</td>
-                                </tr>
-                                  <tr>
-                                  <td>City</td>
-                                  <td>{this.props.userInfo.city}</td>
-                                </tr>
-    														<tr>
-    															<td>Country</td>
-    															<td>{this.props.userInfo.country}</td>
-    														</tr>
-    														<tr>
-    															<td>Postal code</td>
-    															<td>{this.props.userInfo.postalCode}</td>
-    														</tr>	
-    													</tbody>
-    												</table>
-    											</div>
-    										</div>
-    									</Bootstrap.ListGroupItem>
-    								</Bootstrap.ListGroup>
-    							</Bootstrap.Panel>
-    						</div>
-    					</div>
-    					<div className="row">
-    						<div className='col-md-12'>
-    							<Bootstrap.Panel header={groupTitle}>
-    								<Bootstrap.ListGroup fill>
-    									<Bootstrap.ListGroupItem>
-    										<Table data={currentUserGroups}></Table>
-    									</Bootstrap.ListGroupItem>
-    								</Bootstrap.ListGroup>
-    							</Bootstrap.Panel>
-    						</div>
-    					</div>
-    					<div className="row">
-    						<div className='col-md-12'>
-    							<Bootstrap.Panel header={deviceTitle}>
-    								<Bootstrap.ListGroup fill>
-    									<Bootstrap.ListGroupItem>
-    										<Table data={devices}></Table>
-    									</Bootstrap.ListGroupItem>
-    								</Bootstrap.ListGroup>
-    							</Bootstrap.Panel>
-    						</div>
-    					</div>
-    				</div>
-    				<div className='col-md-7'>
-    					<div className='row'>
-    						<div className='col-md-12'>
-    							<Bootstrap.Panel header={consumptionTitle}>
-    								<Bootstrap.ListGroup fill>
-    									<Bootstrap.ListGroupItem>
-    										<Chart 	style={{ width: '100%', height: 400 }} 
-    												elementClassName='mixin'
-    												prefix='chart'
-    												options={chartOptions}
-    												data={chartData}/>
-    									</Bootstrap.ListGroupItem>
-    								</Bootstrap.ListGroup>
-    							</Bootstrap.Panel>
-    						</div>
-    					</div>
-    				</div>
-    			</div>
-    		</div>
-  		);
+      															<td>First name</td>
+      															<td>{this.props.userInfo.firstName}</td>
+      														</tr>
+      														<tr>
+      															<td>Last name</td>
+      															<td>{this.props.userInfo.lastName}</td>
+      														</tr>
+      														<tr>
+      															<td>Email</td>
+      															<td>{this.props.userInfo.email}</td>
+      														</tr>
+      														<tr>
+                                    <td>Gender</td>
+                                    <td>{this.props.userInfo.gender}</td>
+                                  </tr>
+      														<tr>
+      															<td>Registered on</td>
+      															<td><FormattedDate value={this.props.userInfo.registeredOn} day='numeric' month='long' year='numeric' /></td>
+      														</tr>
+        														<tr>
+                                    <td>Addrerss</td>
+                                    <td>{this.props.userInfo.address}</td>
+                                  </tr>
+                                    <tr>
+                                    <td>City</td>
+                                    <td>{this.props.userInfo.city}</td>
+                                  </tr>
+      														<tr>
+      															<td>Country</td>
+      															<td>{this.props.userInfo.country}</td>
+      														</tr>
+      														<tr>
+      															<td>Postal code</td>
+      															<td>{this.props.userInfo.postalCode}</td>
+      														</tr>	
+      													</tbody>
+      												</table>
+      											</div>
+      										</div>
+      									</Bootstrap.ListGroupItem>
+      								</Bootstrap.ListGroup>
+      							</Bootstrap.Panel>
+      						</div>
+      					</div>
+      					<div className="row">
+      						<div className='col-md-12'>
+      							<Bootstrap.Panel header={groupTitle}>
+      								<Bootstrap.ListGroup fill>
+      									<Bootstrap.ListGroupItem>
+      										<Table data={currentUserGroups}></Table>
+      									</Bootstrap.ListGroupItem>
+      								</Bootstrap.ListGroup>
+      							</Bootstrap.Panel>
+      						</div>
+      					</div>
+      					<div className="row">
+      						<div className='col-md-12'>
+      							<Bootstrap.Panel header={deviceTitle}>
+      								<Bootstrap.ListGroup fill>
+      									<Bootstrap.ListGroupItem>
+      										<Table data={devices}></Table>
+      									</Bootstrap.ListGroupItem>
+      								</Bootstrap.ListGroup>
+      							</Bootstrap.Panel>
+      						</div>
+      					</div>
+      				</div>
+      				<div className='col-md-7'>
+      					<div className='row'>
+      						<div className='col-md-12'>
+      							<Bootstrap.Panel header={consumptionTitle}>
+      								<Bootstrap.ListGroup fill>
+      									<Bootstrap.ListGroupItem>
+      										<Chart 	style={{ width: '100%', height: 400 }} 
+      												elementClassName='mixin'
+      												prefix='chart'
+      												options={chartOptions}
+      												data={chartData}/>
+      									</Bootstrap.ListGroupItem>
+      								</Bootstrap.ListGroup>
+      							</Bootstrap.Panel>
+      						</div>
+      					</div>
+      				</div>
+      			</div>
+      		</div>
+    		);
+		  }
 		} else {
 		  return (
           <div>
@@ -422,6 +445,8 @@ function mapStateToProps(state) {
 function mapDispatchToProps(dispatch) {
   return {
     showUser: bindActionCreators(UserActions.showUser, dispatch),
+    showFavouriteAccountForm : bindActionCreators(UserActions.showFavouriteAccountForm, dispatch),
+    hideFavouriteAccountForm : bindActionCreators(UserActions.hideFavouriteAccountForm, dispatch),
   };
 }
 
