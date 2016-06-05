@@ -101,11 +101,16 @@ var Header = React.createClass({
       
 			switch(field.type ) {
 				case 'action':
-				  style.width = 24;
+				  style.width = field.width || 24;
 				  break;
 				case 'boolean':
-				  style.width = 90;
+				  style.width = field.width || 90;
 				  break;
+			  default:
+		      if((field.width) && (field.width >0)) {
+		        style.width = field.width;
+		      }
+			    break;
 			}
 
       return (
@@ -184,108 +189,128 @@ var formatLink = function(route, row) {
 };
 
 var Cell = React.createClass({
-  	render: function() {
-  		var value= this.props.row[this.props.field.name];
-  		var text = (<span>{value}</span>);
-  		  		
-  		var rowId = null;
-  		if(this.props.row.hasOwnProperty('id'))
-  		  rowId = this.props.row.id;
- 		
-  		if(this.props.field.hasOwnProperty('type')) {
-  			switch(this.props.field.type) {
-  			case 'action':
-  			  var visible = true;
-  			  if(typeof this.props.field.visible === 'function') {
-  			    visible = this.props.field.visible(this.props.row);
-  			  }
-  			  if(visible) {
-  			    if(this.props.field.icon) {
-  			      var color = this.props.field.color || '#000000';
-  			      text = (<i className={'fa fa-' + this.props.field.icon + ' fa-fw table-action'} style={{color : color}} onClick={this.props.field.handler.bind(this)}></i>);
-  			    } else {
-  			      text = (<i className="table-action" onClick={this.props.field.handler.bind(this)}><img src={this.props.field.image} /></i>);
-  			    }
-  			  }
-  				break;
-  			case 'datetime':
-  				if(value) {
-  					text = (<FormattedTime 	value={value} 
-  										day='numeric' 
-  										month='numeric' 
-  										year='numeric'
-  										hour='numeric' 
-  										minute='numeric' />);
-  				} else {
-  					text = '';
-  				}
-  				break;
-  			case 'time':
-  				text = (<FormattedTime 	value={value} 
+	render: function() {
+		var value= this.props.row[this.props.field.name];
+		var text = (<span>{value}</span>);
+		  		
+		var rowId = null;
+		if(this.props.row.hasOwnProperty('id')) {
+		  rowId = this.props.row.id;
+		}
+	
+		if(this.props.field.hasOwnProperty('type')) {
+			switch(this.props.field.type) {
+			case 'action':
+			  var visible = true;
+			  if(typeof this.props.field.visible === 'function') {
+			    visible = this.props.field.visible(this.props.field, this.props.row);
+			  }
+			  if(visible) {
+			    if(this.props.field.icon) {
+			      var color = this.props.field.color || '#000000';
+			      if(typeof color === 'function') {
+			        color = color(this.props.field, this.props.row) || '#000000';
+			      }
+			      var icon =  this.props.field.icon;
+			      if(typeof icon === 'function') {
+			        icon = icon(this.props.field, this.props.row);
+			      }
+			      text = (
+		          <i  className={'fa fa-' + icon + ' fa-fw table-action'}
+		              style={{color : color}}
+		              onClick={this.props.field.handler.bind(this, this.props.field, this.props.row)}>
+		          </i>
+	          );
+			    } else {
+			      text = (
+		          <i  className="table-action" 
+		              onClick={this.props.field.handler.bind(this, this.props.field, this.props.row)}>
+		            <img src={this.props.field.image} />
+              </i>
+            );
+			    }
+			  }
+				break;
+			case 'datetime':
+				if(value) {
+					text = (<FormattedTime 	value={value} 
+										day='numeric' 
+										month='numeric' 
+										year='numeric'
 										hour='numeric' 
 										minute='numeric' />);
-  				break;
-  			case 'progress':
-  				if(value !== null) {
-  					text = (<Bootstrap.ProgressBar now={value} label="%(percent)s%" />);
-  				} else {
-  					text = (<span />);
-  				}
-  				break;
-  			case 'boolean':
-  				text = (<Checkbox checked={value} disabled={true} />);
-  				break;
-  			case 'alterable-boolean':
-  			  text = (<CellCheckbox 
-  			            checked={value}
-  			            rowId={rowId}
-  			            propertyName={this.props.field.name}
-  			            disabled={false} 
-  			            onUserClick={this.props.field.handler}
-  			          />);
-          break;
-  			case 'date':
-  				text = (<FormattedDate value={value} day='numeric' month='long' year='numeric' />);
-  				break;
+				} else {
+					text = '';
+				}
+				break;
+			case 'time':
+				text = (<FormattedTime 	value={value} 
+									hour='numeric' 
+									minute='numeric' />);
+				break;
+			case 'progress':
+				if(value !== null) {
+					text = (<Bootstrap.ProgressBar now={value} label="%(percent)s%" />);
+				} else {
+					text = (<span />);
+				}
+				break;
+			case 'boolean':
+				text = (<Checkbox checked={value} disabled={true} />);
+				break;
+			case 'alterable-boolean':
+			  text = (<CellCheckbox 
+			            checked={value}
+			            rowId={rowId}
+			            propertyName={this.props.field.name}
+			            disabled={false} 
+			            onUserClick={this.props.field.handler}
+			          />);
+        break;
+			case 'date':
+				text = (<FormattedDate value={value} day='numeric' month='long' year='numeric' />);
+				break;
 			default:
 				console.log('Cell type [' + this.props.field.type + '] is not supported.');
 				break;
-  			}
-  		} else {
-	  		if(value instanceof Date) {
-	  			text = (<FormattedDate value={value} day='numeric' month='long' year='numeric' />);
-	  		} else if(typeof value === 'boolean') {
-	  			text = (<Checkbox checked={value} disabled={true} />);
-	  		}
-  		} 
-
-  		if(this.props.field.hasOwnProperty('link')) { 	
-  			if(typeof this.props.field.link === 'function') {
-  			  var href = this.props.field.link(this.props.row);
-  			  if(href) {
-            text = (<Link to={formatLink(this.props.field.link(this.props.row), this.props.row)}>{text}</Link>);  			    
-  			  }
-  			} else {
-  				text = (<Link to={formatLink(this.props.field.link, this.props.row)}>{text}</Link>);
-  			}
-  			
+			}
+  	} else {
+  		if(value instanceof Date) {
+  			text = (<FormattedDate value={value} day='numeric' month='long' year='numeric' />);
+  		} else if(typeof value === 'boolean') {
+  			text = (<Checkbox checked={value} disabled={true} />);
   		}
+  	} 
 
-  		if(typeof this.props.field.className === 'function') {
-  			return (
-				<td><div className={this.props.field.className(value)}>{text}</div></td>
+		if(this.props.field.hasOwnProperty('link')) { 	
+			if(typeof this.props.field.link === 'function') {
+			  var href = this.props.field.link(this.props.row);
+			  if(href) {
+          text = (<Link to={formatLink(this.props.field.link(this.props.row), this.props.row)}>{text}</Link>);  			    
+			  }
+			} else {
+				text = (<Link to={formatLink(this.props.field.link, this.props.row)}>{text}</Link>);
+			}
+			
+		}
+
+		var style = {};
+    if((this.props.field.width) && (this.props.field.width > 0)) {
+      style.width = this.props.field.width;
+    }
+    if(this.props.field.hasOwnProperty('align')) {
+      style.textAlign = this.props.field.align;
+    }
+
+		if(typeof this.props.field.className === 'function') {
+			return (
+		    <td><div style={style} className={this.props.field.className(value)}>{text}</div></td>
 			);	
-  		}
-  		
-  		if(this.props.field.hasOwnProperty('align')) {
-  			return (
-  					<td style={{ textAlign: this.props.field.align}}>{text}</td>
-  				);
-  		}
-
-		return (
-			<td>{text}</td>
-		);
+		} else {
+		  return (
+        <td><div style={style}>{text}</div></td>
+      );  
+		}
 	}
 });
 

@@ -1,198 +1,342 @@
 package eu.daiad.web.service.scheduling;
 
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
+import javax.sql.DataSource;
 
+import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
+import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.ExitStatus;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.domain.admin.ScheduledJob;
 import eu.daiad.web.domain.admin.ScheduledJobExecution;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.model.scheduling.EnumExecutionExitCode;
+import eu.daiad.web.model.scheduling.ExecutionQuery;
+import eu.daiad.web.model.scheduling.ExecutionQueryResult;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository
 @Transactional("managementTransactionManager")
 public class SchedulerRepository extends BaseRepository implements ISchedulerRepository {
 
-	@PersistenceContext(unitName = "management")
-	EntityManager entityManager;
+    @PersistenceContext(unitName = "management")
+    EntityManager entityManager;
 
-	@Override
-	public List<ScheduledJob> getJobs() {
-		try {
-			TypedQuery<ScheduledJob> query = entityManager.createQuery("select j from scheduled_job j",
-							ScheduledJob.class);
+    @Value("${spring.batch.table-prefix}")
+    private String batchSchemaPrefix;
 
-			return query.getResultList();
-		} catch (Exception ex) {
-			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
-		}
-	}
+    @Autowired
+    @Qualifier("managementDataSource")
+    private DataSource dataSource;
 
-	@Override
-	public ScheduledJob getJobById(long jobId) {
-		try {
-			TypedQuery<ScheduledJob> query = entityManager.createQuery("select j from scheduled_job j where j.id= :id",
-							ScheduledJob.class);
+    @Override
+    public List<ScheduledJob> getJobs() {
+        try {
+            TypedQuery<ScheduledJob> query = entityManager.createQuery("select j from scheduled_job j order by name",
+                            ScheduledJob.class);
 
-			query.setParameter("id", jobId);
+            return query.getResultList();
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        }
+    }
 
-			List<ScheduledJob> result = query.getResultList();
+    @Override
+    public ScheduledJob getJobById(long jobId) {
+        try {
+            TypedQuery<ScheduledJob> query = entityManager.createQuery("select j from scheduled_job j where j.id= :id",
+                            ScheduledJob.class);
 
-			if (!result.isEmpty()) {
-				return result.get(0);
-			}
+            query.setParameter("id", jobId);
 
-			return null;
-		} catch (Exception ex) {
-			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
-		}
-	}
+            List<ScheduledJob> result = query.getResultList();
 
-	@Override
-	public ScheduledJob getJobByName(String jobName) {
-		try {
-			TypedQuery<ScheduledJob> query = entityManager.createQuery(
-							"select j from scheduled_job j where j.name= :jobName", ScheduledJob.class);
+            if (!result.isEmpty()) {
+                return result.get(0);
+            }
 
-			query.setParameter("jobName", jobName);
+            return null;
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        }
+    }
 
-			List<ScheduledJob> result = query.getResultList();
+    @Override
+    public ScheduledJob getJobByName(String jobName) {
+        try {
+            TypedQuery<ScheduledJob> query = entityManager.createQuery(
+                            "select j from scheduled_job j where j.name= :jobName", ScheduledJob.class);
 
-			if (!result.isEmpty()) {
-				return result.get(0);
-			}
+            query.setParameter("jobName", jobName);
 
-			return null;
-		} catch (Exception ex) {
-			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
-		}
-	}
+            List<ScheduledJob> result = query.getResultList();
 
-	@Override
-	public List<ScheduledJobExecution> getExecutions(String jobName, int startPosition, int maxResult) {
-		TypedQuery<ScheduledJobExecution> query = entityManager
-						.createQuery("select e from scheduled_job_execution e "
-										+ "where e.jobName = :jobName order by e.jobInstanceId desc, e.jobExecutionId desc",
-										ScheduledJobExecution.class).setMaxResults(maxResult)
-						.setFirstResult(startPosition);
+            if (!result.isEmpty()) {
+                return result.get(0);
+            }
 
-		query.setParameter("jobName", jobName);
+            return null;
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        }
+    }
 
-		return query.getResultList();
-	}
+    @Override
+    public List<ScheduledJobExecution> getExecutions(String jobName, int startPosition, int maxResult) {
+        TypedQuery<ScheduledJobExecution> query = entityManager
+                        .createQuery("select e from scheduled_job_execution e "
+                                        + "where e.jobName = :jobName order by e.jobInstanceId desc, e.jobExecutionId desc",
+                                        ScheduledJobExecution.class).setMaxResults(maxResult).setFirstResult(
+                                        startPosition);
 
-	@Override
-	public List<ScheduledJobExecution> getExecutions(long jobId, int startPosition, int size) {
-		ScheduledJob job = this.getJobById(jobId);
+        query.setParameter("jobName", jobName);
 
-		TypedQuery<ScheduledJobExecution> query = entityManager.createQuery("select e from scheduled_job_execution e "
-						+ "where e.jobName = :jobName order by e.jobInstanceId desc, e.jobExecutionId desc",
-						ScheduledJobExecution.class);
+        return query.getResultList();
+    }
 
-		query.setParameter("jobName", job.getName());
+    @Override
+    public String getExecutionMessage(long executionId) {
+        TypedQuery<ScheduledJobExecution> query = entityManager.createQuery(
+                        "select e from scheduled_job_execution e where e.job_execution_id = :job_execution_id",
+                        ScheduledJobExecution.class).setMaxResults(1);
 
-		return query.getResultList();
-	}
+        query.setParameter("job_execution_id", executionId);
 
-	@Override
-	public ScheduledJobExecution getLastExecution(String jobName) {
-		TypedQuery<ScheduledJobExecution> query = entityManager
-						.createQuery("select e from scheduled_job_execution e "
-										+ "where e.jobName = :jobName order by e.jobInstanceId desc, e.jobExecutionId desc",
-										ScheduledJobExecution.class).setMaxResults(1).setFirstResult(0);
+        List<ScheduledJobExecution> executions = query.getResultList();
 
-		query.setParameter("job_name", jobName);
+        if (executions.isEmpty()) {
+            return null;
+        }
+        return executions.get(0).getExitMessage();
+    }
 
-		List<ScheduledJobExecution> result = query.getResultList();
+    @Override
+    public ExecutionQueryResult getExecutions(ExecutionQuery query) {
+        ExecutionQueryResult result = new ExecutionQueryResult();
 
-		if (!result.isEmpty()) {
-			return result.get(0);
-		}
+        // Load data
+        String command = "";
 
-		return null;
-	}
+        try {
+            // Resolve filters
+            List<String> filters = new ArrayList<String>();
 
-	@Override
-	public ScheduledJobExecution getLastExecution(long jobId) {
-		ScheduledJob job = this.getJobById(jobId);
+            if (!StringUtils.isBlank(query.getJobName())) {
+                filters.add("e.jobName = :jobName");
+            }
+            if (query.getStartDate() != null) {
+                filters.add("e.startedOn >= :start_date");
+            }
+            if (query.getEndDate() != null) {
+                filters.add("e.startedOn <= :end_date");
+            }
+            if (!query.getExitCode().equals(EnumExecutionExitCode.UNDEFINED)) {
+                filters.add("e.exitCode = :exit_code");
+            }
 
-		TypedQuery<ScheduledJobExecution> query = entityManager
-						.createQuery("select e from scheduled_job_execution e "
-										+ "where e.jobName = :jobName order by e.jobInstanceId desc, e.jobExecutionId desc",
-										ScheduledJobExecution.class).setMaxResults(1).setFirstResult(0);
+            // Count total number of records
+            Integer totalEvents;
 
-		query.setParameter("job_name", job.getName());
+            command = "select count(e.id) from scheduled_job_execution e ";
+            if (!filters.isEmpty()) {
+                command += "where " + StringUtils.join(filters, " and ");
+            }
 
-		List<ScheduledJobExecution> result = query.getResultList();
+            TypedQuery<Number> countQuery = entityManager.createQuery(command, Number.class);
 
-		if (!result.isEmpty()) {
-			return result.get(0);
-		}
+            if (!StringUtils.isBlank(query.getJobName())) {
+                countQuery.setParameter("jobName", query.getJobName());
+            }
+            if (query.getStartDate() != null) {
+                filters.add("e.startedOn >= :start_date");
+                countQuery.setParameter("start_date", new DateTime(query.getStartDate()));
+            }
+            if (query.getEndDate() != null) {
+                countQuery.setParameter("end_date", new DateTime(query.getEndDate()));
+            }
+            if (!query.getExitCode().equals(EnumExecutionExitCode.UNDEFINED)) {
+                countQuery.setParameter("exit_code", query.getExitCode());
+            }
 
-		return null;
-	}
+            totalEvents = ((Number) countQuery.getSingleResult()).intValue();
 
-	private ScheduledJob setScheduledJobEnabled(long scheduledJobId, boolean enabled) {
-		try {
-			TypedQuery<ScheduledJob> query = entityManager.createQuery(
-							"select j from scheduled_job j where j.id = :id", ScheduledJob.class).setMaxResults(1);
+            result.setTotal(totalEvents);
 
-			query.setParameter("id", scheduledJobId);
+            // Load data
+            command = "select e from scheduled_job_execution e ";
+            if (!filters.isEmpty()) {
+                command += "where " + StringUtils.join(filters, " and ");
+            }
+            command += " order by e.startedOn desc, e.jobExecutionId desc ";
 
-			ScheduledJob job = query.getSingleResult();
-			job.setEnabled(enabled);
+            TypedQuery<ScheduledJobExecution> entityQuery = entityManager.createQuery(command,
+                            ScheduledJobExecution.class);
 
-			return job;
-		} catch (Exception ex) {
-			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
-		}
-	}
+            if (!StringUtils.isBlank(query.getJobName())) {
+                entityQuery.setParameter("jobName", query.getJobName());
+            }
+            if (query.getStartDate() != null) {
+                filters.add("e.startedOn >= :start_date");
+                entityQuery.setParameter("start_date", new DateTime(query.getStartDate()));
+            }
+            if (query.getEndDate() != null) {
+                entityQuery.setParameter("end_date", new DateTime(query.getEndDate()));
+            }
+            if (!query.getExitCode().equals(EnumExecutionExitCode.UNDEFINED)) {
+                entityQuery.setParameter("exit_code", query.getExitCode());
+            }
 
-	@Override
-	public ScheduledJob enable(long scheduledJobId) {
-		return this.setScheduledJobEnabled(scheduledJobId, true);
-	}
+            entityQuery.setFirstResult(query.getIndex() * query.getSize());
+            entityQuery.setMaxResults(query.getSize());
 
-	@Override
-	public void disable(long scheduledJobId) {
-		this.setScheduledJobEnabled(scheduledJobId, false);
-	}
+            result.setExecutions(entityQuery.getResultList());
 
-	@Override
-	public void schedulePeriodicJob(long scheduledJobId, long period) {
-		try {
-			TypedQuery<ScheduledJob> query = entityManager.createQuery(
-							"select j from scheduled_job j where j.id = :id", ScheduledJob.class).setMaxResults(1);
+            return result;
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        }
+    }
 
-			query.setParameter("id", scheduledJobId);
+    @Override
+    public List<ScheduledJobExecution> getExecutions(long jobId, int startPosition, int size) {
+        ScheduledJob job = this.getJobById(jobId);
 
-			ScheduledJob job = query.getSingleResult();
-			job.setPeriod(period);
-			job.setCronExpression(null);
-		} catch (Exception ex) {
-			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
-		}
-	}
+        TypedQuery<ScheduledJobExecution> query = entityManager.createQuery("select e from scheduled_job_execution e "
+                        + "where e.jobName = :jobName order by e.jobInstanceId desc, e.jobExecutionId desc",
+                        ScheduledJobExecution.class);
 
-	@Override
-	public void scheduleCronJob(long scheduledJobId, String cronExpression) {
-		try {
-			TypedQuery<ScheduledJob> query = entityManager.createQuery(
-							"select j from scheduled_job j where j.id = :id", ScheduledJob.class).setMaxResults(1);
+        query.setParameter("jobName", job.getName());
 
-			query.setParameter("id", scheduledJobId);
+        return query.getResultList();
+    }
 
-			ScheduledJob job = query.getSingleResult();
-			job.setPeriod(null);
-			job.setCronExpression(cronExpression);
-		} catch (Exception ex) {
-			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
-		}
-	}
+    @Override
+    public ScheduledJobExecution getLastExecution(String jobName) {
+        TypedQuery<ScheduledJobExecution> query = entityManager
+                        .createQuery("select e from scheduled_job_execution e "
+                                        + "where e.jobName = :jobName order by e.jobInstanceId desc, e.jobExecutionId desc",
+                                        ScheduledJobExecution.class).setMaxResults(1).setFirstResult(0);
 
+        query.setParameter("jobName", jobName);
+
+        List<ScheduledJobExecution> result = query.getResultList();
+
+        if (!result.isEmpty()) {
+            return result.get(0);
+        }
+
+        return null;
+    }
+
+    @Override
+    public ScheduledJobExecution getLastExecution(long jobId) {
+        ScheduledJob job = this.getJobById(jobId);
+
+        TypedQuery<ScheduledJobExecution> query = entityManager
+                        .createQuery("select e from scheduled_job_execution e "
+                                        + "where e.jobName = :jobName order by e.jobInstanceId desc, e.jobExecutionId desc",
+                                        ScheduledJobExecution.class).setMaxResults(1).setFirstResult(0);
+
+        query.setParameter("jobName", job.getName());
+
+        List<ScheduledJobExecution> result = query.getResultList();
+
+        if (!result.isEmpty()) {
+            return result.get(0);
+        }
+
+        return null;
+    }
+
+    private ScheduledJob setScheduledJobEnabled(long scheduledJobId, boolean enabled) {
+        try {
+            TypedQuery<ScheduledJob> query = entityManager.createQuery(
+                            "select j from scheduled_job j where j.id = :id", ScheduledJob.class).setMaxResults(1);
+
+            query.setParameter("id", scheduledJobId);
+
+            ScheduledJob job = query.getSingleResult();
+            job.setEnabled(enabled);
+
+            return job;
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        }
+    }
+
+    @Override
+    public ScheduledJob enable(long scheduledJobId) {
+        return this.setScheduledJobEnabled(scheduledJobId, true);
+    }
+
+    @Override
+    public void disable(long scheduledJobId) {
+        this.setScheduledJobEnabled(scheduledJobId, false);
+    }
+
+    @Override
+    public void schedulePeriodicJob(long scheduledJobId, long period) {
+        TypedQuery<ScheduledJob> query = entityManager.createQuery("select j from scheduled_job j where j.id = :id",
+                        ScheduledJob.class).setMaxResults(1);
+
+        query.setParameter("id", scheduledJobId);
+
+        ScheduledJob job = query.getSingleResult();
+        job.setPeriod(period);
+        job.setCronExpression(null);
+    }
+
+    @Override
+    public void scheduleCronJob(long scheduledJobId, String cronExpression) {
+        TypedQuery<ScheduledJob> query = entityManager.createQuery("select j from scheduled_job j where j.id = :id",
+                        ScheduledJob.class).setMaxResults(1);
+
+        query.setParameter("id", scheduledJobId);
+
+        ScheduledJob job = query.getSingleResult();
+        job.setPeriod(null);
+        job.setCronExpression(cronExpression);
+    }
+
+    @Override
+    public List<ScheduledJobExecution> getExecutionByExitStatus(ExitStatus exitStatus) {
+        TypedQuery<ScheduledJobExecution> query = entityManager.createQuery("select e from scheduled_job_execution e "
+                        + "where e.exitCode = :exit_code", ScheduledJobExecution.class);
+
+        query.setParameter("exit_code", EnumExecutionExitCode.fromExistStatus(exitStatus));
+
+        return query.getResultList();
+    }
+
+    @Override
+    public int updateJobExecutionStatus(long jobExecutionId, BatchStatus status) {
+        String command = "UPDATE %PREFIX%JOB_EXECUTION "
+                        + "set END_TIME = ?, STATUS = ?, VERSION = VERSION + 1, LAST_UPDATED = ? "
+                        + "where JOB_EXECUTION_ID = ?";
+
+        command = StringUtils.replace(command, "%PREFIX%", batchSchemaPrefix);
+
+        Object[] parameters = new Object[] { new Date(System.currentTimeMillis()), status.toString(),
+                        new Date(System.currentTimeMillis()), jobExecutionId };
+
+        int[] types = new int[] { Types.TIMESTAMP, Types.VARCHAR, Types.TIMESTAMP, Types.BIGINT };
+        
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+
+        return jdbcTemplate.update(command, parameters, types);
+    }
 }

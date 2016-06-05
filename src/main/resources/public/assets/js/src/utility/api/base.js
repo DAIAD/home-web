@@ -110,8 +110,8 @@ var sendRequest = function(url, data, contentType, method) {
       }
 
       var errorCodeSuffix = status;
-
-      if ((jqXHR.responseJSON) && (jqXHR.responseJSON.errors) && (jqXHR.responseJSON.errors.length > 0)) {
+      
+      if((jqXHR.responseJSON) && (jqXHR.responseJSON.errors) && (jqXHR.responseJSON.errors.length > 0)) {
         errorCodeSuffix = jqXHR.responseJSON.errors[0].code;
       }
 

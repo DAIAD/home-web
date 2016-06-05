@@ -2,105 +2,122 @@ package eu.daiad.web.domain.admin;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDateTime;
+
+import eu.daiad.web.model.scheduling.EnumExecutionExitCode;
 
 @Entity(name = "scheduled_job_execution")
 @Table(schema = "batch", name = "scheduled_job_execution")
 public class ScheduledJobExecution {
 
-	@Id()
-	@Column(name = "job_instance_id")
-	private long jobInstanceId;
+    @Id()
+    @Column(name = "job_instance_id")
+    private long jobInstanceId;
 
-	@Column(name = "job_execution_id")
-	private long jobExecutionId;
+    @Column(name = "job_id")
+    private Long jobId;
 
-	@Column(name = "start_time")
-	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-	private DateTime startedOn;
+    @Column(name = "job_execution_id")
+    private long jobExecutionId;
 
-	@Column(name = "end_time")
-	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-	private DateTime completedOn;
+    @Column(name = "start_time")
+    @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentLocalDateTime")
+    private LocalDateTime startedOn;
 
-	@Column(name = "job_name")
-	private String jobName;
+    @Column(name = "end_time")
+    @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentLocalDateTime")
+    private LocalDateTime completedOn;
 
-	@Column(name = "status")
-	private String statusCode;
+    @Column(name = "job_name")
+    private String jobName;
 
-	@Column(name = "exit_code")
-	private String exitCode;
+    @Column(name = "status")
+    private String statusCode;
 
-	@Column(name = "exit_message")
-	private String exitMessage;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "exit_code")
+    private EnumExecutionExitCode exitCode;
 
-	public long getJobInstanceId() {
-		return jobInstanceId;
-	}
+    @Column(name = "exit_message")
+    private String exitMessage;
 
-	public void setJobInstanceId(long jobInstanceId) {
-		this.jobInstanceId = jobInstanceId;
-	}
+    public long getJobInstanceId() {
+        return jobInstanceId;
+    }
 
-	public long getJobExecutionId() {
-		return jobExecutionId;
-	}
+    public void setJobInstanceId(long jobInstanceId) {
+        this.jobInstanceId = jobInstanceId;
+    }
 
-	public void setJobExecutionId(long jobExecutionId) {
-		this.jobExecutionId = jobExecutionId;
-	}
+    public long getJobExecutionId() {
+        return jobExecutionId;
+    }
 
-	public DateTime getStartedOn() {
-		return startedOn;
-	}
+    public void setJobExecutionId(long jobExecutionId) {
+        this.jobExecutionId = jobExecutionId;
+    }
 
-	public void setStartedOn(DateTime startedOn) {
-		this.startedOn = startedOn;
-	}
+    public LocalDateTime getStartedOn() {
+        return startedOn;
+    }
 
-	public DateTime getCompletedOn() {
-		return completedOn;
-	}
+    public void setStartedOn(LocalDateTime startedOn) {
+        this.startedOn = startedOn;
+    }
 
-	public void setCompletedOn(DateTime completedOn) {
-		this.completedOn = completedOn;
-	}
+    public LocalDateTime getCompletedOn() {
+        return completedOn;
+    }
 
-	public String getStatusCode() {
-		return statusCode;
-	}
+    public void setCompletedOn(LocalDateTime completedOn) {
+        this.completedOn = completedOn;
+    }
 
-	public void setStatusCode(String statusCode) {
-		this.statusCode = statusCode;
-	}
+    public String getStatusCode() {
+        return statusCode;
+    }
 
-	public String getExitCode() {
-		return exitCode;
-	}
+    public void setStatusCode(String statusCode) {
+        this.statusCode = statusCode;
+    }
 
-	public void setExitCode(String exitCode) {
-		this.exitCode = exitCode;
-	}
+    public EnumExecutionExitCode getExitCode() {
+        return exitCode;
+    }
 
-	public String getExitMessage() {
-		return exitMessage;
-	}
+    public void setExitCode(EnumExecutionExitCode exitCode) {
+        this.exitCode = exitCode;
+    }
 
-	public void setExitMessage(String exitMessage) {
-		this.exitMessage = exitMessage;
-	}
+    public String getExitMessage() {
+        return exitMessage;
+    }
 
-	public String getJobName() {
-		return jobName;
-	}
+    public void setExitMessage(String exitMessage) {
+        this.exitMessage = exitMessage;
+    }
 
-	public void setJobName(String jobName) {
-		this.jobName = jobName;
-	}
+    public String getJobName() {
+        return jobName;
+    }
+
+    public void setJobName(String jobName) {
+        this.jobName = jobName;
+    }
+
+    public Long getJobId() {
+        return jobId;
+    }
+
+    public void setJobId(Long jobId) {
+        this.jobId = jobId;
+    }
 
 }
