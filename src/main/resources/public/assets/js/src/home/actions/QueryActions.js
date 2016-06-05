@@ -184,11 +184,21 @@ const queryMeterStatus = function(deviceKeys) {
       });
   };
 };
+  
+ /**
+ * Dismiss error after acknowledgement
+ */
+const dismissError = function() {
+  return {
+    type: types.QUERY_DISMISS_ERROR
+  };
+};
 
 module.exports = {
   queryDeviceSessions,
   fetchDeviceSession,
   fetchLastDeviceSession,
   queryMeterHistory,
-  queryMeterStatus
+  queryMeterStatus,
+  dismissError
 };

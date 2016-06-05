@@ -20,7 +20,6 @@ function mapStateToProps(state, ownProps) {
     time: state.section.history.time,
     activeDevice: state.section.history.activeDevice,
     activeDeviceType: state.section.history.activeDeviceType,
-    errors: state.query.errors,
     metricFilter: state.section.history.filter,
     timeFilter: state.section.history.timeFilter,
     sortFilter: state.section.history.sortFilter,

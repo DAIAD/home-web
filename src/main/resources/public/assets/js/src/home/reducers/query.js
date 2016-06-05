@@ -37,7 +37,12 @@ var query = function (state, action) {
           });
         }
         break;
-      
+
+    case types.QUERY_DISMISS_ERROR:
+      return Object.assign({}, state, {
+        errors: null
+      });
+                  
     default:
       return state;
   }

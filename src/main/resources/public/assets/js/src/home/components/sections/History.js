@@ -78,14 +78,6 @@ function TimeNavigator(props) {
     );
 }
 
-function ErrorDisplay (props) {
-  return props.errors ? 
-    <div style={{position: 'absolute', marginLeft: '20vw', marginTop: '25vh', zIndex: 100}}>
-      <img src={`${IMAGES}/alert.svg`} /><span>{`${props.errors}`}</span>
-    </div>
-    :
-     (<div/>);
-}
 
 var History = React.createClass({
 
@@ -271,8 +263,6 @@ var History = React.createClass({
         </SidebarRight>
 
         <div className="primary"> 
-
-          <ErrorDisplay errors={this.props.errors} />
 
           <div className="history-chart-area">
             <h4 style={{textAlign: 'center', margin: '10px 0 0 0'}}>{this.props.reducedMetric}</h4>
