@@ -47,11 +47,12 @@ import eu.daiad.web.model.error.SchedulerErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.scheduling.JobExecutionInfo;
 import eu.daiad.web.model.scheduling.JobInfo;
+import eu.daiad.web.service.BaseService;
 
 // https://github.com/spring-projects/spring-batch-admin/blob/master/spring-batch-admin-manager/src/main/java/org/springframework/batch/admin/service/SimpleJobService.java
 
 @Service
-public class DefaultSchedulerService implements ISchedulerService, InitializingBean {
+public class DefaultSchedulerService extends BaseService implements ISchedulerService, InitializingBean {
 
 	private static final Log logger = LogFactory.getLog(DefaultSchedulerService.class);
 
@@ -113,7 +114,7 @@ public class DefaultSchedulerService implements ISchedulerService, InitializingB
 				}
 			} catch (Exception ex) {
 				if (firstException == null) {
-					firstException = ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+					firstException = wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 				}
 			}
 		}
@@ -232,7 +233,7 @@ public class DefaultSchedulerService implements ISchedulerService, InitializingB
 
 			this.schedule(scheduledJob);
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -246,7 +247,7 @@ public class DefaultSchedulerService implements ISchedulerService, InitializingB
 				this.scheduledJobs.remove(jobId);
 			}
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -264,7 +265,7 @@ public class DefaultSchedulerService implements ISchedulerService, InitializingB
 
 			return cronSequenceGenerator.next(new Date());
 		} catch (IllegalArgumentException ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -297,7 +298,7 @@ public class DefaultSchedulerService implements ISchedulerService, InitializingB
 								"Failed to scheduler job [%s]. Both trigger options are set to [%d] and [%s].",
 								scheduledJob.getName(), scheduledJob.getPeriod(), scheduledJob.getCronExpression()));
 			} else if (scheduledJob.getPeriod() != null) {
-				logger.warn(String.format("Initializing job [%s] with periodic trigger [%d].", scheduledJob.getName(),
+				logger.info(String.format("Initializing job [%s] with periodic trigger [%d].", scheduledJob.getName(),
 								scheduledJob.getPeriod()));
 
 				ScheduledFuture<?> future = taskScheduler.schedule(new RunnableJob(this.activeExecutions, jobLauncher,
@@ -305,7 +306,7 @@ public class DefaultSchedulerService implements ISchedulerService, InitializingB
 
 				this.scheduledJobs.put(scheduledJob.getId(), new JobSchedulingProperties(scheduledJob.getId(), future));
 			} else if (!StringUtils.isBlank(scheduledJob.getCronExpression())) {
-				logger.warn(String.format("Initializing job [%s] with CRON trigger expression [%s].",
+				logger.info(String.format("Initializing job [%s] with CRON trigger expression [%s].",
 								scheduledJob.getName(), scheduledJob.getCronExpression()));
 
 				ScheduledFuture<?> future = taskScheduler.schedule(new RunnableJob(this.activeExecutions, jobLauncher,
@@ -350,7 +351,7 @@ public class DefaultSchedulerService implements ISchedulerService, InitializingB
 
 			jobLauncher.run(job, job.getJobParametersIncrementer().getNext(parameters));
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SchedulerErrorCode.SCHEDULER_JOB_LAUNCH_FAIL).set("job", jobId);
+			throw wrapApplicationException(ex, SchedulerErrorCode.SCHEDULER_JOB_LAUNCH_FAIL).set("job", jobId);
 		}
 	}
 
@@ -362,7 +363,7 @@ public class DefaultSchedulerService implements ISchedulerService, InitializingB
 			}
 			return this.jobOperator.stop(executionId);
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -387,7 +388,7 @@ public class DefaultSchedulerService implements ISchedulerService, InitializingB
 		@Override
 		public void run() {
 			try {
-				logger.warn(String.format("Launching job [%s].", job.getName()));
+				logger.info(String.format("Launching job [%s].", job.getName()));
 
 				JobExecution jobExecution = jobLauncher.run(job, job.getJobParametersIncrementer().getNext(parameters));
 

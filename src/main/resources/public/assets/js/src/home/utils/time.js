@@ -31,27 +31,35 @@ const thisYear = function() {
   };
 };
 
-const getPeriod = function(granularity, timestamp=moment().valueOf()) {
+const getPeriod = function(period, timestamp=moment().valueOf()) {
   return {
-    startDate: moment().startOf(granularity).valueOf(),
-    endDate: Object.assign({}, moment(timestamp)).endOf(granularity).valueOf(),
-    granularity: convertGranularityToInt(granularity)
+    startDate: moment().startOf(period).valueOf(),
+    endDate: Object.assign({}, moment(timestamp)).endOf(period).valueOf(),
+    granularity: convertPeriodToGranularity(period)
   };
 };
 
-const getNextPeriod = function(granularity, timestamp=moment().valueOf()) {
+const getNextPeriod = function(period, timestamp=moment().valueOf()) {
   return {
-    startDate: moment(timestamp).startOf(granularity).add(1, granularity).valueOf(),
-    endDate: Object.assign(moment(), moment(timestamp)).endOf(granularity).add(1, granularity).valueOf(),
-    granularity: convertGranularityToInt(granularity)
+    startDate: moment(timestamp).startOf(period).add(1, period).valueOf(),
+    endDate: Object.assign(moment(), moment(timestamp)).endOf(period).add(1, period).valueOf(),
+    granularity: convertPeriodToGranularity(period)
   };
 };
 
-const getPreviousPeriod = function(granularity, timestamp=moment().valueOf()) {
+const getPreviousPeriod = function(period, timestamp=moment().valueOf()) {
   return {
-    startDate: moment(timestamp).startOf(granularity).subtract(1, granularity).valueOf(),
-    endDate: moment(timestamp).endOf(granularity).subtract(1, granularity).valueOf(),
-    granularity: convertGranularityToInt(granularity)
+    startDate: moment(timestamp).startOf(period).subtract(1, period).valueOf(),
+    endDate: moment(timestamp).endOf(period).subtract(1, period).valueOf(),
+    granularity: convertPeriodToGranularity(period)
+  };
+};
+
+const getPreviousPeriodSoFar = function(period, timestamp=moment().valueOf()) {
+  return {
+    startDate: moment(timestamp).startOf(period).subtract(1, period).valueOf(),
+    endDate: moment(timestamp).subtract(1, period).valueOf(),
+    granularity: convertPeriodToGranularity(period)
   };
 };
 
@@ -77,12 +85,20 @@ const selectTimeFormatter = function(key, intl) {
   }
 };
 
-const convertGranularityToInt = function (granularity) {
-  if (granularity === "year") return 4;
-  else if (granularity === "month") return 3;
-  else if (granularity === "week") return 2;
-  else if (granularity === "day") return 0;
+const convertPeriodToGranularity = function (period) {
+  if (period === "year") return 4;
+  else if (period === "month") return 3;
+  else if (period === "week") return 2;
+  else if (period === "day") return 0;
   else return 0;
+};
+
+const convertGranularityToPeriod = function (granularity) {
+  if (granularity === 4) return "year";
+  else if (granularity === 3) return "month"; //(period === "month") return 3;
+  else if (granularity === 2) return "week"; //(period === "week") return 2;
+  else if (granularity === 1 || granularity === 0) return "day"; //(period === "day") return 0;
+  else return "day";
 };
 
 const getTimeByPeriod = function (period) {
@@ -92,12 +108,43 @@ const getTimeByPeriod = function (period) {
   else if (period === "day") return today();
 };
 
+const getLastPeriod = function(period, timestamp) {
+  return moment(timestamp).subtract(period, 1).get(period).toString();
+};
+
 const getLastShowerTime = function () {
   return {
-    startDate: moment().subtract(1, 'week').valueOf(),
+    startDate: moment().subtract(3, 'month').valueOf(),
     endDate: moment().valueOf(),
     granularity: 0
   };
+};
+
+const getGranularityByDiff = function(start, end) {
+  const diff = moment.duration(end - start);
+
+  const years = diff.years(); 
+  const months = diff.months();
+  const days = diff.days();
+  const milliseconds = diff.milliseconds();
+
+  if (years > 0 || months > 6) return 4;
+  else if (months > 0) return 3;
+  else if (days > 0) return 2;
+  else return 0;
+};
+
+const getPeriodByTimestamp = function(period, timestamp) {
+  return moment(timestamp).get(getLowerGranularityPeriod(period));
+};
+
+const getLowerGranularityPeriod = function(period) {
+  if (period === 'year') return 'month';
+  else if (period === 'month') return 'week';
+  else if (period === 'week') return 'day';
+  else if (period === 'day') return 'hour';
+  else throw new Error('error in get lower granularity period with', period);
+
 };
 
 module.exports = {
@@ -110,6 +157,12 @@ module.exports = {
   getPeriod,
   getNextPeriod,
   getPreviousPeriod,
+  getPreviousPeriodSoFar,
   getTimeByPeriod,
-  getLastShowerTime
+  convertGranularityToPeriod,
+  getGranularityByDiff,
+  getLastShowerTime,
+  getLastPeriod,
+  getPeriodByTimestamp,
+  getLowerGranularityPeriod
 };

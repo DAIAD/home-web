@@ -47,6 +47,8 @@
  * <br/>4: <code>BLOCK</code>
  * @apiSuccess (Profile) {String} configuration   Application configuration serialized as a JSON object.
  * @apiSuccess (Profile) {Object[]} devices       Array of <code>DeviceRegistration</code> objects representing the Amphiro or Smart Water Meter devices registered to the authenticated user. Instances are implemented by classes <code>WaterMeterDeviceRegistration</code> and <code>AmphiroDeviceRegistration</code>.
+ * @apiSuccess (Profile) {Number}     dailyMeterBudget            Daily smart water meter water consumption budget.
+ * @apiSuccess (Profile) {Number}     dailyAmphiroBudget          Daily Amphiro B1 water consumption budget
  * 
  * @apiSuccess (DeviceRegistration) {String}     type              Device type. Valid values are <code>METER</code> and <code>AMPHIRO</code>.
  * @apiSuccess (DeviceRegistration) {String}     deviceKey         Unique device id (UUID).
@@ -81,6 +83,8 @@
  *     "timezone": "Europe/Athens",
  *     "country": "Greece",
  *     "mode": 1,
+ *     "dailyMeterBudget": null,
+ *     "dailyAmphiroBudget": 80,
  *     "configuration": null,
  *     "devices": [ {
  *       "type": "AMPHIRO",

@@ -115,7 +115,7 @@ var Chart = React.createClass({
             	data : getLabels(series),
             	name: series.xAxisName || '',
         	});
-            
+
     		chartOptions.yAxis.push({
               type : 'value',
             	name: series.yAxisName || 'Volume',

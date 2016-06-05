@@ -4,9 +4,8 @@ require('es6-promise').polyfill();
 var QueryActions = require('./QueryActions');
 var HistoryActions = require('./HistoryActions');
 
-var { getFilteredData } = require('../utils/chart');
-var { getDeviceKeysByType } = require('../utils/device');
-var { getTimeByPeriod, getLastShowerTime } = require('../utils/time');
+var { getDeviceKeysByType, lastNFilterToLength } = require('../utils/device');
+var { getTimeByPeriod, getLastShowerTime, getPreviousPeriodSoFar } = require('../utils/time');
 
 const setLastSession = function(session) {
   return {
@@ -19,21 +18,6 @@ const createInfobox = function(data) {
   return {
     type: types.DASHBOARD_ADD_INFOBOX,
     data: data
-  };
-};
-
-const deleteInfobox = function(id) {
-  return {
-    type: types.DASHBOARD_REMOVE_INFOBOX,
-    id: id
-  };
-};
-
-const updateInfobox = function(id, update) {
-  return {
-    type: types.DASHBOARD_UPDATE_INFOBOX,
-    id,
-    update 
   };
 };
 
@@ -51,19 +35,8 @@ const appendLayout = function(id, type) {
   };
 };
 
-const DashboardActions = {
 
-  updateInfoboxTemp: function(data) {
-    return {
-      type: types.DASHBOARD_UPDATE_INFOBOX_TEMP,
-      data: data
-    };
-  },
-  resetInfoboxTemp: function() {
-    return {
-      type: types.DASHBOARD_RESET_INFOBOX_TEMP,
-    };
-  },
+const DashboardActions = {
 
   switchMode: function(mode) {
     return {
@@ -82,9 +55,60 @@ const DashboardActions = {
       return id;
     };
   },
-  removeInfobox: function(id) {
+  updateInfobox: function(id, update) {
     return function(dispatch, getState) {
-      dispatch(deleteInfobox(id));
+      
+      dispatch({
+        type: types.DASHBOARD_UPDATE_INFOBOX,
+        id,
+        update: Object.assign({}, update, {synced:false}),
+      });
+
+      dispatch(DashboardActions.updateLayoutItem(id, update.display));
+      
+      dispatch(DashboardActions.fetchInfoboxData(Object.assign({}, getState().section.dashboard.infobox.find(i=>i.id===id))));
+    };
+  },
+  setInfoboxData: function(id, update) {
+    return {
+      type: types.DASHBOARD_UPDATE_INFOBOX,
+      id,
+      update: Object.assign({}, update, {synced:true})
+    };
+  },
+  // updates layout item dimensions if type changed
+  updateLayoutItem: function(id, type) {
+    return function(dispatch, getState) {
+
+      if (type==null) return;
+      
+      let layout = getState().section.dashboard.layout.slice();
+      const layoutItemIdx = layout.findIndex(i=>i.i===id);
+      if (layoutItemIdx==-1) return;
+
+        if (type === 'stat') {
+           layout[layoutItemIdx] = Object.assign({}, layout[layoutItemIdx], {w:2, h:1});
+        }
+        else if (type === 'chart') {
+           layout[layoutItemIdx] = Object.assign({}, layout[layoutItemIdx], {w:2, h:2});
+        }
+        dispatch(DashboardActions.updateLayout(layout));
+    };
+  },
+  /*
+  updateInfoboxAndQuery: function(id, update) {
+    return function(dispatch, getState) {
+      dispatch(DashboardActions.updateInfobox(id, update));
+      dispatch(DashboardActions.updateLayoutItem(id, update.type));
+      
+      dispatch(DashboardActions.fetchInfoboxData(Object.assign({}, getState().section.dashboard.infobox.find(i=>i.id===id))));
+    };
+    },
+    */
+  removeInfobox: function(id) {
+    return {
+      type: types.DASHBOARD_REMOVE_INFOBOX,
+      id: id
     };
   },
   fetchInfoboxData: function(data) {
@@ -97,30 +121,60 @@ const DashboardActions = {
 
       const found = getState().section.dashboard.infobox.find(x => x.id === id);
 
-      if (found && found.data && found.data.length>0){
+      if (found && found.synced===true) {
+      //if (found && found.data && found.data.length>0){
         console.log('found infobox data in memory');
-        return new Promise((() => found), (() => getState().query.errors));
+        return new Promise((resolve, reject) => resolve());
+        //}
       }
 
-      if (subtype === "last") {
-        time = getLastShowerTime();
+      if (type === "last") {
 
-        return dispatch(QueryActions.fetchLastSession(device, time))
-        .then(session => session)
-        .then(response => dispatch(updateInfobox(id, {index: response.index, device:response.device, data:response.data, period: "custom", time})))
-        .catch(error => { console.error(error); });
+        return dispatch(QueryActions.fetchLastDeviceSession(device))
+        .then(response => 
+              dispatch(DashboardActions.setInfoboxData(id, {data: response.data, index: response.index, device: response.device, showerId: response.id, time: response.timestamp})))
+        .catch(error => { 
+          //log error in console for debugging and display friendly message
+          console.error('Caught error in infobox data fetch:', error); 
+          dispatch(DashboardActions.setInfoboxData(id, {data: [], error:'Oops, sth went wrong..replace with something friendly'})); });
       }
+      //total or efficiency
       else {
-        return dispatch(QueryActions.queryDeviceOrMeter(device, time))
-        .then(sessions =>  dispatch(updateInfobox(id, {data:sessions, time})))
-        .catch(error => { console.error(error); });
+
+        //fetch previous period data for comparison 
+        if (deviceType === 'METER') {
+          let prevTime = getPreviousPeriodSoFar(period);
+          dispatch(QueryActions.queryDeviceOrMeter(device, deviceType, prevTime))
+          .then(data => {
+              return dispatch(DashboardActions.setInfoboxData(id, {previous:data, time:prevTime}));})
+            .catch(error => { 
+              console.error('Caught error in infobox previous period data fetch:', error); 
+              dispatch(DashboardActions.setInfoboxData(id, {previous: [], error: 'Oops sth went wrong, replace with sth friendly'})); });
+               
+
+        return dispatch(QueryActions.fetchMeterHistory(device, time))
+        .then(data =>  
+          dispatch(DashboardActions.setInfoboxData(id, {data, time})))
+        .catch(error => { 
+          console.error('Caught error in infobox data fetch:', error); 
+          dispatch(DashboardActions.setInfoboxData(id, {data: [], error: 'Oops sth went wrong, replace with sth friendly'})); });
+        }
+        else {
+          return dispatch(QueryActions.queryDeviceSessions(device, {type: 'SLIDING', length:lastNFilterToLength(period)}))
+          .then(data =>  
+            dispatch(DashboardActions.setInfoboxData(id, {data})))
+          .catch(error => { 
+            console.error('Caught error in infobox data fetch:', error); 
+            dispatch(DashboardActions.setInfoboxData(id, {data: [], error: 'Oops sth went wrong, replace with sth friendly'})); });
+        }
       }
     };
   },
   fetchAllInfoboxesData: function() {
     return function(dispatch, getState) {
       getState().section.dashboard.infobox.map(function (infobox) {
-        if (infobox.type === 'chart' || infobox.type === 'stat')
+        const { type } = infobox;
+        if (type === 'total' || type === 'last' || type === 'efficiency' || type === 'comparison' || type === 'breakdown')
         return dispatch(DashboardActions.fetchInfoboxData(infobox));
       });
     };
@@ -128,7 +182,7 @@ const DashboardActions = {
   updateLayout: function(layout) {
     return {
       type: types.DASHBOARD_UPDATE_LAYOUT,
-      layout: layout
+      layout
     };
   },
 

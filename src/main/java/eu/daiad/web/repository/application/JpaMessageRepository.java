@@ -23,10 +23,10 @@ import eu.daiad.web.domain.application.AccountAlert;
 import eu.daiad.web.domain.application.AccountAlertProperty;
 import eu.daiad.web.domain.application.AccountDynamicRecommendation;
 import eu.daiad.web.domain.application.AccountDynamicRecommendationProperty;
+import eu.daiad.web.domain.application.AccountStaticRecommendation;
 import eu.daiad.web.domain.application.AlertTranslation;
 import eu.daiad.web.domain.application.DynamicRecommendationTranslation;
 import eu.daiad.web.domain.application.StaticRecommendation;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.MessageErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.message.EnumAlertType;
@@ -35,11 +35,13 @@ import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageAcknowledgement;
 import eu.daiad.web.model.message.MessageRequest;
+import eu.daiad.web.model.message.MessageResult;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.repository.BaseRepository;
 
 @Repository
-@Transactional("transactionManager")
-public class JpaMessageRepository implements IMessageRepository {
+@Transactional("applicationTransactionManager")
+public class JpaMessageRepository extends BaseRepository implements IMessageRepository {
 
 	@PersistenceContext(unitName = "default")
 	EntityManager entityManager;
@@ -53,12 +55,12 @@ public class JpaMessageRepository implements IMessageRepository {
 		if (auth.getPrincipal() instanceof AuthenticatedUser) {
 			return (AuthenticatedUser) auth.getPrincipal();
 		} else {
-			throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+			throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
 		}
 	}
 
 	@Override
-	public void setMessageAcknowledgement(List<MessageAcknowledgement> messages) {
+	public void setMessageAcknowledgement(List<MessageAcknowledgement> messages) {            
 		if (messages != null) {
 			for (MessageAcknowledgement message : messages) {
 				switch (message.getType()) {
@@ -70,11 +72,13 @@ public class JpaMessageRepository implements IMessageRepository {
 										new DateTime(message.getTimestamp()));
 						break;
 					case RECOMMENDATION_STATIC:
+                                                persistStaticRecommendationAcknowledgement(message.getId(),
+										new DateTime(message.getTimestamp()));
 						break;
 					case ANNOUNCEMENT:
-						throw new ApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
+						throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
 					default:
-						throw new ApplicationException(MessageErrorCode.MESSAGE_TYPE_NOT_SUPPORTED).set("type.",
+						throw createApplicationException(MessageErrorCode.MESSAGE_TYPE_NOT_SUPPORTED).set("type.",
 										message.getType());
 				}
 			}
@@ -94,7 +98,9 @@ public class JpaMessageRepository implements IMessageRepository {
 	}
 
 	@Override
-	public List<Message> getMessages(MessageRequest request) {
+	public MessageResult getMessages(MessageRequest request) {
+		MessageResult result = new MessageResult();
+
 		AuthenticatedUser user = this.getCurrentAuthenticatedUser();
 
 		String locale = resolveLocale(user.getLocale());
@@ -107,6 +113,20 @@ public class JpaMessageRepository implements IMessageRepository {
 		MessageRequest.DataPagingOptions options = this.getMessageDataPagingOptions(request, EnumMessageType.ALERT);
 
 		if (options != null) {
+			// Get total count
+			Integer totalAlerts;
+
+			TypedQuery<Number> countAccountAlertsQuery = entityManager
+							.createQuery("select count(a.id) from account_alert a "
+											+ "where a.account.id = :accountId and a.id > :minMessageId ", Number.class);
+
+			countAccountAlertsQuery.setParameter("accountId", user.getId());
+			countAccountAlertsQuery.setParameter("minMessageId", options.getMinMessageId());
+
+			totalAlerts = ((Number) countAccountAlertsQuery.getSingleResult()).intValue();
+
+			result.setTotalAlerts(totalAlerts);
+
 			// Build query
 			TypedQuery<eu.daiad.web.domain.application.AccountAlert> accountAlertsQuery;
 
@@ -187,6 +207,20 @@ public class JpaMessageRepository implements IMessageRepository {
 		options = this.getMessageDataPagingOptions(request, EnumMessageType.RECOMMENDATION_DYNAMIC);
 
 		if (options != null) {
+			// Get total count
+			Integer totalRecommendations;
+
+			TypedQuery<Number> countAccountAlertsQuery = entityManager
+							.createQuery("select count(a.id) from account_dynamic_recommendation a "
+											+ "where a.account.id = :accountId and a.id > :minMessageId ", Number.class);
+
+			countAccountAlertsQuery.setParameter("accountId", user.getId());
+			countAccountAlertsQuery.setParameter("minMessageId", options.getMinMessageId());
+
+			totalRecommendations = ((Number) countAccountAlertsQuery.getSingleResult()).intValue();
+
+			result.setTotalRecommendations(totalRecommendations);
+
 			// Build query
 			TypedQuery<eu.daiad.web.domain.application.AccountDynamicRecommendation> accountRecommendationQuery;
 
@@ -269,6 +303,20 @@ public class JpaMessageRepository implements IMessageRepository {
 		options = this.getMessageDataPagingOptions(request, EnumMessageType.RECOMMENDATION_STATIC);
 
 		if (options != null) {
+			// Get total count
+			Integer totalTips;
+
+			TypedQuery<Number> countAccountAlertsQuery = entityManager
+							.createQuery("select count(a.id) from account_static_recommendation a "
+											+ "where a.account.id = :accountId and a.id > :minMessageId ", Number.class);
+
+			countAccountAlertsQuery.setParameter("accountId", user.getId());
+			countAccountAlertsQuery.setParameter("minMessageId", options.getMinMessageId());
+
+			totalTips = ((Number) countAccountAlertsQuery.getSingleResult()).intValue();
+
+			result.setTotalTips(totalTips);
+
 			// Build query
 			TypedQuery<eu.daiad.web.domain.application.AccountStaticRecommendation> accountTipQuery;
 
@@ -302,9 +350,10 @@ public class JpaMessageRepository implements IMessageRepository {
 				message.setTitle(tip.getRecommendation().getTitle());
 				message.setDescription(tip.getRecommendation().getDescription());
 				message.setImageEncoded(tip.getRecommendation().getImage());
+				message.setImageMimeType(tip.getRecommendation().getImageMimeType());
 				message.setImageLink(tip.getRecommendation().getImageLink());
 				message.setPrompt(tip.getRecommendation().getPrompt());
-				message.setExternalLink(tip.getRecommendation().getExternaLink());
+				message.setExternalLink(tip.getRecommendation().getExternalLink());
 				message.setSource(tip.getRecommendation().getSource());
 				message.setCreatedOn(tip.getCreatedOn().getMillis());
 				if (tip.getRecommendation().getModifiedOn() != null) {
@@ -316,7 +365,10 @@ public class JpaMessageRepository implements IMessageRepository {
 				messages.add(message);
 			}
 		}
-		return messages;
+
+		result.setMessages(messages);
+
+		return result;
 	}
 
 	@Override
@@ -346,9 +398,10 @@ public class JpaMessageRepository implements IMessageRepository {
 			message.setTitle(staticRecommendation.getTitle());
 			message.setDescription(staticRecommendation.getDescription());
 			message.setImageEncoded(staticRecommendation.getImage());
+			message.setImageMimeType(staticRecommendation.getImageMimeType());
 			message.setImageLink(staticRecommendation.getImageLink());
 			message.setPrompt(staticRecommendation.getPrompt());
-			message.setExternalLink(staticRecommendation.getExternaLink());
+			message.setExternalLink(staticRecommendation.getExternalLink());
 			message.setSource(staticRecommendation.getSource());
 			if (staticRecommendation.getCreatedOn() != null) {
 				message.setCreatedOn(staticRecommendation.getCreatedOn().getMillis());
@@ -364,6 +417,21 @@ public class JpaMessageRepository implements IMessageRepository {
 		return messages;
 	}
 
+        @Override
+        public void persistActiveAdvisoryMessage(String locale, int index, boolean active){
+            TypedQuery<eu.daiad.web.domain.application.StaticRecommendation> advisoryMessage = entityManager
+                    .createQuery("select s from static_recommendation s where s.index = :index and s.locale = :locale",
+                                    eu.daiad.web.domain.application.StaticRecommendation.class);    
+            advisoryMessage.setParameter("index", index);
+            advisoryMessage.setParameter("locale", locale);
+
+            List<StaticRecommendation> advisoryMessages = advisoryMessage.getResultList();
+            
+            if(!advisoryMessages.isEmpty()){
+                advisoryMessages.get(0).setActive(active);
+            }
+        }
+        
 	// TODO : When sending an acknowledgement for an alert of a specific type,
 	// an older (not acknowledged) alert of the same type may appear in the next
 	// get messages call
@@ -381,6 +449,7 @@ public class JpaMessageRepository implements IMessageRepository {
 
 		List<AccountAlert> alerts = accountAlertsQuery.getResultList();
 
+                System.out.println("persisting.. size" + alerts.size());
 		if (alerts.size() == 1) {
 			alerts.get(0).setAcknowledgedOn(acknowledgedOn);
 			alerts.get(0).setReceiveAcknowledgedOn(DateTime.now());
@@ -405,6 +474,25 @@ public class JpaMessageRepository implements IMessageRepository {
 			recommendations.get(0).setReceiveAcknowledgedOn(DateTime.now());
 		}
 	}
+        
+	private void persistStaticRecommendationAcknowledgement(int id, DateTime acknowledgedOn) {
+		AuthenticatedUser user = this.getCurrentAuthenticatedUser();
+
+		TypedQuery<eu.daiad.web.domain.application.AccountStaticRecommendation> accountStaticRecommendationQuery = entityManager
+						.createQuery("select a from account_static_recommendation a "
+                                                                                + "where a.account.id = :accountId and a.id = :staticRecommendationId and a.acknowledgedOn is null",
+										eu.daiad.web.domain.application.AccountStaticRecommendation.class);
+
+		accountStaticRecommendationQuery.setParameter("accountId", user.getId());
+		accountStaticRecommendationQuery.setParameter("staticRecommendationId", id);
+
+		List<AccountStaticRecommendation> staticRecommendations = accountStaticRecommendationQuery.getResultList();
+
+		if (staticRecommendations.size() == 1) {
+			staticRecommendations.get(0).setAcknowledgedOn(acknowledgedOn);
+			staticRecommendations.get(0).setReceiveAcknowledgedOn(DateTime.now());
+		}
+	}        
 
 	private Locale resolveCurrency(String country) {
 		Locale currency;

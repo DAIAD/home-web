@@ -254,7 +254,15 @@ module.exports = function (grunt) {
 							src: ['*.js'],
 							dest: 'src/main/resources/public/assets/js/build/home/i18n/',
 							filter: 'isFile'
-						}]
+            },
+            {
+              expand: true,
+              cwd: 'node_modules/react-datetime/css/',
+              src: ['*.css'],
+              dest: 'src/main/resources/public/assets/lib/react-datetime/',
+              filter: 'isFile'
+            }
+            ]
 					}
 		},
 		watch: {
@@ -287,7 +295,7 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-jsxhint');
 
     // Default task(s).
-    grunt.registerTask('build', ['clean', 'jshint', 'browserify', 'uglify', 'concat', 'docs', 'sync:utility']);
+    grunt.registerTask('build', ['clean', 'jshint', 'browserify', 'uglify', 'concat', 'docs', 'sync:home', 'sync:utility', 'sync:home']);
 
 	grunt.registerTask('develop', ['clean', 'jshint', 'browserify', 'sync:home', 'sync:utility', 'sync:debug', 'watch']);
 

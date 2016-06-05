@@ -9,6 +9,7 @@ var user = require('./user');
 var upsertFavouriteForm = require('./upsertFavouriteForm');
 var mode_management = require('./mode_management');
 var admin = require('./admin');
+var logging = require('./logging');
 var alerts = require('./alerts');
 var query = require('./query');
 var scheduler = require('./scheduler');
@@ -28,7 +29,9 @@ var rootReducer = combineReducers({
 	query,
 	scheduler,
 	debug,
+	logging,
 	routing: routerReducer
+	
 });
 
 module.exports = rootReducer;

@@ -1,16 +1,14 @@
 package eu.daiad.web.model.group;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 import com.vividsolutions.jts.geom.Geometry;
 
-public class Group {
+public abstract class Group {
 
 	private UUID key;
 
-	private Utility utility;
+	private UUID utilityKey;
 
 	private String name;
 
@@ -18,9 +16,7 @@ public class Group {
 
 	private Geometry geometry;
 
-	private Set<GroupMember> members = new HashSet<GroupMember>();
-
-	private int size;
+	private Integer size;
 
 	public UUID getKey() {
 		return key;
@@ -28,14 +24,6 @@ public class Group {
 
 	public void setKey(UUID key) {
 		this.key = key;
-	}
-
-	public Utility getUtility() {
-		return utility;
-	}
-
-	public void setUtility(Utility utility) {
-		this.utility = utility;
 	}
 
 	public String getName() {
@@ -62,59 +50,24 @@ public class Group {
 		this.geometry = geometry;
 	}
 
-	public int getSize() {
+	public Integer getSize() {
 		return size;
 	}
 
-	public void setSize(int size) {
+	public void setSize(Integer size) {
 		this.size = size;
 	}
 
-	public Set<GroupMember> getMembers() {
-		return members;
+	public UUID getUtilityKey() {
+		return utilityKey;
 	}
 
-	public static class GroupMember {
-
-		private UUID key;
-
-		private String username;
-
-		private long addeOn;
-
-		private String fullname;
-
-		public UUID getKey() {
-			return key;
-		}
-
-		public void setKey(UUID key) {
-			this.key = key;
-		}
-
-		public String getUsername() {
-			return username;
-		}
-
-		public void setUsername(String username) {
-			this.username = username;
-		}
-
-		public long getAddeOn() {
-			return addeOn;
-		}
-
-		public void setAddeOn(long addeOn) {
-			this.addeOn = addeOn;
-		}
-
-		public String getFullname() {
-			return fullname;
-		}
-
-		public void setFullname(String fullname) {
-			this.fullname = fullname;
-		}
-
+	public void setUtilityKey(UUID utilityKey) {
+		this.utilityKey = utilityKey;
 	}
+
+	public EnumGroupType getType() {
+		return EnumGroupType.UNDEFINED;
+	}
+
 }

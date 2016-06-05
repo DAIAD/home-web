@@ -1,357 +1,348 @@
 package eu.daiad.web.repository.application;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
-import org.joda.time.DateTime;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import eu.daiad.web.domain.application.Account;
-import eu.daiad.web.domain.application.Favourite;
-import eu.daiad.web.domain.application.FavouriteGroup;
-import eu.daiad.web.domain.application.Group;
-import eu.daiad.web.domain.application.GroupMember;
-import eu.daiad.web.domain.application.GroupSet;
-import eu.daiad.web.domain.application.Utility;
+import eu.daiad.web.domain.application.GroupCommunity;
+import eu.daiad.web.domain.application.GroupSegment;
 import eu.daiad.web.model.error.ApplicationException;
-import eu.daiad.web.model.error.GroupErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
-import eu.daiad.web.model.error.UserErrorCode;
-import eu.daiad.web.model.favourite.EnumFavouriteType;
-import eu.daiad.web.model.group.CreateGroupSetRequest;
-import eu.daiad.web.model.group.EnumGroupType;
+import eu.daiad.web.model.group.Account;
+import eu.daiad.web.model.group.Cluster;
+import eu.daiad.web.model.group.Community;
+import eu.daiad.web.model.group.Group;
 import eu.daiad.web.model.group.GroupInfo;
-import eu.daiad.web.model.group.GroupMemberInfo;
+import eu.daiad.web.model.group.Segment;
+import eu.daiad.web.model.group.Utility;
+import eu.daiad.web.model.query.EnumClusterType;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.repository.BaseRepository;
 
 @Repository
-@Transactional("transactionManager")
-public class JpaGroupRepository implements IGroupRepository{
-	
-	@PersistenceContext(unitName="default")
+@Transactional("applicationTransactionManager")
+public class JpaGroupRepository extends BaseRepository implements IGroupRepository {
+
+	private static final Log logger = LogFactory.getLog(JpaGroupRepository.class);
+
+	@PersistenceContext(unitName = "default")
 	EntityManager entityManager;
 
 	@Override
-	public List<GroupInfo> getGroups() {
-		try{
-			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
-			
-			if (!user.hasRole("ROLE_ADMIN") && !user.hasRole("ROLE_SUPERUSER")) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
-			}
-			
-			TypedQuery<Utility> utilityQuery = entityManager.createQuery(
-					"SELECT u FROM utility u WHERE u.id = :admin_utility_id",
-					Utility.class).setFirstResult(0).setMaxResults(1);
-			utilityQuery.setParameter("admin_utility_id", user.getUtilityId());
-			
-			Utility adminUtility = utilityQuery.getSingleResult();
-			
-			
-			TypedQuery<Group> groupQuery = entityManager.createQuery(
-					"SELECT g FROM group g WHERE g.utility = :utility",
-					Group.class).setFirstResult(0);
-			groupQuery.setParameter("utility", adminUtility);
-			
-			List <Group> groups = groupQuery.getResultList();
-			List <GroupInfo> groupsInfo = new ArrayList <GroupInfo>();
-			
-			for (Group group : groups){
-				GroupInfo groupInfo = new GroupInfo(group);
-				groupsInfo.add(groupInfo);
-			}
+	public List<Group> getAll() {
+		TypedQuery<eu.daiad.web.domain.application.Group> query = entityManager.createQuery("select g from group g ",
+				eu.daiad.web.domain.application.Group.class);
 
-			return groupsInfo;
-			
-		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
-		}
+		List<Group> groups = groupEntityToGroupObject(query.getResultList());
+
+		groups.addAll(getClusters());
+
+		groups.addAll(getUtilities());
+
+		return groups;
 	}
 
 	@Override
-	public List<GroupMemberInfo> getGroupCurrentMembers(UUID group_id) {
-		try{
-			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
-			
-			if (!user.hasRole("ROLE_ADMIN") && !user.hasRole("ROLE_SUPERUSER")) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
-			}
+	public List<Group> getUtilities() {
+		TypedQuery<eu.daiad.web.domain.application.Utility> query = entityManager
+				.createQuery("select u from utility u ", eu.daiad.web.domain.application.Utility.class);
 
-			TypedQuery<Account> groupMemberQuery = entityManager.createQuery(
-					"SELECT a FROM group_member m JOIN m.account a JOIN m.group g WHERE g.key = :group_key",
-					Account.class).setFirstResult(0);
-			groupMemberQuery.setParameter("group_key", group_id);
-
-			List <Account> members = groupMemberQuery.getResultList();
-			List <GroupMemberInfo> groupMembersInfo = new ArrayList <GroupMemberInfo> ();
-			for (Account member : members){
-				groupMembersInfo.add(new GroupMemberInfo(member));
-			}
-			
-			return groupMembersInfo;
-		}catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
-		}
-	}
-	
-	@Override
-	public List<GroupMemberInfo> getGroupPossibleMembers(UUID group_id) {
-		try{
-			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
-			
-			if (!user.hasRole("ROLE_ADMIN") && !user.hasRole("ROLE_SUPERUSER")) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
-			}
-			
-			TypedQuery<Account> groupPossibleMemberQuery;
-			
-			if (group_id != null){
-				groupPossibleMemberQuery = entityManager.createQuery(
-						"SELECT a FROM account a, group g JOIN a.utility u JOIN a.roles ar JOIN ar.role r "
-								+ "WHERE a.utility = g.utility AND g.key = :group_key "
-								+ "AND a.id NOT IN (SELECT m.account.id FROM group_member m JOIN m.group g WHERE g.key = :group_key) "
-								+ "AND r.name = :user_role",
-						Account.class).setFirstResult(0);
-				groupPossibleMemberQuery.setParameter("group_key", group_id);
-				groupPossibleMemberQuery.setParameter("user_role", "ROLE_USER");
-			} else {
-				
-				TypedQuery<Utility> utilityQuery = entityManager.createQuery(
-						"SELECT u FROM utility u WHERE u.id = :admin_utility_id",
-						Utility.class).setFirstResult(0).setMaxResults(1);
-				utilityQuery.setParameter("admin_utility_id", user.getUtilityId());
-				
-				Utility adminUtility = utilityQuery.getSingleResult();
-				
-				groupPossibleMemberQuery = entityManager.createQuery(
-						"SELECT a FROM account a JOIN a.utility u JOIN a.roles ar JOIN ar.role r "
-								+ "WHERE r.name = :user_role "
-								+ "AND a.utility = :admin_utility",
-						Account.class).setFirstResult(0);
-				groupPossibleMemberQuery.setParameter("admin_utility", adminUtility);
-				groupPossibleMemberQuery.setParameter("user_role", "ROLE_USER");
-			}
-			
-			List <Account> possibleMembers = groupPossibleMemberQuery.getResultList();
-			List <GroupMemberInfo> groupMembersInfo = new ArrayList <GroupMemberInfo> ();
-			for (Account possibleMember : possibleMembers){
-				groupMembersInfo.add(new GroupMemberInfo(possibleMember));
-			}
-			
-			return groupMembersInfo;
-		}catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
-		}
+		return utilityEntityToUtilityObject(query.getResultList());
 	}
 
 	@Override
-	public void createGroupSet(CreateGroupSetRequest groupSetInfo) {
-		try{
-			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
-			
-			if (!user.hasRole("ROLE_ADMIN") && !user.hasRole("ROLE_SUPERUSER")) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
-			}
-			
-			TypedQuery<eu.daiad.web.domain.application.Group> groupQuery = entityManager
-					.createQuery("select g from group g where g.name = :groupName",
-									eu.daiad.web.domain.application.Group.class)
-					.setFirstResult(0).setMaxResults(1);
-			groupQuery.setParameter("groupName", groupSetInfo.getName());
-			List<Group> groupEntries = groupQuery.getResultList();
-			
-			if (!groupEntries.isEmpty()) {
-				throw new ApplicationException(GroupErrorCode.GROUP_EXISTS).set("groupName", groupSetInfo.getName());
-			}
-			
-			// Get admin's account
-			TypedQuery<eu.daiad.web.domain.application.Account> adminAccountQuery = entityManager
-							.createQuery("select a from account a where a.id = :adminId",
-									eu.daiad.web.domain.application.Account.class).setFirstResult(0)
-							.setMaxResults(1);
-			adminAccountQuery.setParameter("adminId", user.getId());
-			Account adminAccount = adminAccountQuery.getSingleResult();
-			
-			// Get admin's utility
-			TypedQuery<eu.daiad.web.domain.application.Utility> utilityQuery = entityManager
-							.createQuery("select a.utility from account a where a.id = :adminId",
-									eu.daiad.web.domain.application.Utility.class).setFirstResult(0)
-							.setMaxResults(1);
-			utilityQuery.setParameter("adminId", user.getId());
-			Utility utilityEntry = utilityQuery.getSingleResult();
-			
-			// Get Members
-			TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager
-					.createQuery("select a from account a where a.key IN :memberKeys",
-							eu.daiad.web.domain.application.Account.class).setFirstResult(0);
-			accountQuery.setParameter("memberKeys", Arrays.asList(groupSetInfo.getMembers()));
-			List <Account> memberAccounts = accountQuery.getResultList();
-			
-			
-			GroupSet newGroupSet = new GroupSet();
-			newGroupSet.setUtility(utilityEntry);
-			newGroupSet.setName(groupSetInfo.getName());
-			newGroupSet.setOwner(adminAccount);
-			newGroupSet.setCreatedOn(new DateTime());
-			newGroupSet.setSize(memberAccounts.size());
-			
-			this.entityManager.persist(newGroupSet);
-			this.entityManager.flush();
-			
-			for (Account memberAcccount : memberAccounts){
-				GroupMember member = new GroupMember();
-				member.setGroup(newGroupSet);
-				member.setAccount(memberAcccount);
-				member.setCreatetOn(new DateTime());
-				this.entityManager.persist(member);
-			}
-			
-		}catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
-		}
+	public List<Group> getClusters() {
+		TypedQuery<eu.daiad.web.domain.application.Cluster> query = entityManager
+				.createQuery("select c from cluster c ", eu.daiad.web.domain.application.Cluster.class);
+
+		return clusterEntityToClusterObject(query.getResultList());
 	}
 
 	@Override
-	public GroupInfo getSingleGroupByKey(UUID group_id) {
-		try{
-			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
-			
-			if (!user.hasRole("ROLE_ADMIN") && !user.hasRole("ROLE_SUPERUSER")) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
-			}
-			
-			TypedQuery<Utility> utilityQuery = entityManager.createQuery(
-					"SELECT u FROM utility u WHERE u.id = :admin_utility_id",
-					Utility.class).setFirstResult(0).setMaxResults(1);
-			utilityQuery.setParameter("admin_utility_id", user.getUtilityId());
-			
-			Utility adminUtility = utilityQuery.getSingleResult();
-			
-			
-			TypedQuery<Group> groupQuery = entityManager.createQuery(
-					"SELECT g FROM group g WHERE g.key = :group_id",
-					Group.class).setFirstResult(0).setMaxResults(1);
-			groupQuery.setParameter("group_id", group_id);
-			
-			Group group = groupQuery.getSingleResult();
-			
-			if (group.getUtility() != adminUtility){
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
-			}
-			
-			
+	public List<Group> getClusterByKeySegments(UUID clusterKey) {
+		TypedQuery<GroupSegment> query = entityManager.createQuery(
+				"select g from group_cluster g  " + "where g.utility.id = :utility_id and g.cluster.key = :key",
+				GroupSegment.class);
 
-			return new GroupInfo(group);
-		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
-		}
+		query.setParameter("utility_id", this.getCurrentUtilityId());
+		query.setParameter("key", clusterKey);
+
+		return groupToSegmentList(query.getResultList());
 	}
 
 	@Override
-	public void deleteGroup(UUID group_id) {
-		try{
-			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
-			
-			if (!user.hasRole("ROLE_ADMIN") && !user.hasRole("ROLE_SUPERUSER")) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
-			}
-			
-			Group group = null;
-			// Check if group exists
-			try{
-				TypedQuery<Group> groupQuery = entityManager
-						.createQuery("select g from group g where g.key = :group_id",
-								Group.class).setFirstResult(0)
-						.setMaxResults(1);
-				groupQuery.setParameter("group_id", group_id);
-				group = groupQuery.getSingleResult();
-			} catch (NoResultException ex) {
-				throw ApplicationException.wrap(ex, GroupErrorCode.GROUP_DOES_NOT_EXIST).set("groupId", group_id);
-			}
-			
-			// Check that admin is the owner of the group
-			if(group.getType() == EnumGroupType.SET){
-				// Get admin's account
-				TypedQuery<eu.daiad.web.domain.application.Account> adminAccountQuery = entityManager
-								.createQuery("select a from account a where a.id = :adminId",
-										eu.daiad.web.domain.application.Account.class).setFirstResult(0)
-								.setMaxResults(1);
-				adminAccountQuery.setParameter("adminId", user.getId());
-				Account adminAccount = adminAccountQuery.getSingleResult();
-				GroupSet groupSet = (GroupSet) group;
-				
-				if(groupSet.getOwner() == adminAccount){
-					this.entityManager.remove(group);
-					
-					//check if this group is someone's favourite, in order to delete these favourites as well
-					TypedQuery<Favourite> favouriteQuery = entityManager
-							.createQuery("select f from favourite f",
-									Favourite.class).setFirstResult(0);
-					
-					List <Favourite> favourites = favouriteQuery.getResultList();
-					for (Favourite f : favourites){
-						if(f.getType().equals(EnumFavouriteType.GROUP)){
-							FavouriteGroup fg = (FavouriteGroup) f;
-							if(fg.getGroup().getId() == group.getId()){
-								this.entityManager.remove(f);
-							}
-						}
-						
-					}
-				} else {
-					throw new ApplicationException(GroupErrorCode.GROUP_ACCESS_RESTRICTED).set("groupId", group_id);
-				}
-			}
-			
-		}catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
-		}
-		
+	public List<Group> getClusterByNameSegments(String name) {
+		TypedQuery<GroupSegment> query = entityManager.createQuery(
+				"select g from group_cluster g " + "where g.utility.id = :utility_id and g.cluster.name = :name",
+				GroupSegment.class);
+
+		query.setParameter("utility_id", this.getCurrentUtilityId());
+		query.setParameter("name", name);
+
+		return groupToSegmentList(query.getResultList());
 	}
 
 	@Override
-	public List<GroupInfo> getGroupsByMember(UUID user_id) {
+	public List<Group> getClusterByTypeSegments(EnumClusterType type) {
+		TypedQuery<GroupSegment> query = entityManager.createQuery(
+				"select g from group_cluster g " + "where g.utility.id = :utility_id and g.cluster.name = :name",
+				GroupSegment.class);
+
+		query.setParameter("utility_id", this.getCurrentUtilityId());
+		query.setParameter("name", type.getName());
+
+		return groupToSegmentList(query.getResultList());
+	}
+
+	@Override
+	public List<Group> getSets() {
+		TypedQuery<eu.daiad.web.domain.application.GroupSet> query = entityManager
+				.createQuery("select g from group_set g ", eu.daiad.web.domain.application.GroupSet.class);
+
+		List<Group> groups = new ArrayList<Group>();
+
+		for (eu.daiad.web.domain.application.GroupSet entity : query.getResultList()) {
+			groups.add(groupEntityToGroupObject(entity));
+		}
+
+		return groups;
+	}
+
+	public List<Group> getCommunities() {
+		TypedQuery<eu.daiad.web.domain.application.GroupCommunity> query = entityManager
+				.createQuery("select g from group_community g ", eu.daiad.web.domain.application.GroupCommunity.class);
+
+		List<Group> groups = new ArrayList<Group>();
+
+		for (eu.daiad.web.domain.application.GroupCommunity entity : query.getResultList()) {
+			groups.add(groupEntityToGroupObject(entity));
+		}
+
+		return groups;
+	}
+
+	public List<Account> getGroupMembers(UUID groupKey) {
+		List<Account> accounts = new ArrayList<Account>();
+
+		TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager.createQuery(
+				"select m.account from group_member m where m.group.key = :groupKey",
+				eu.daiad.web.domain.application.Account.class);
+
+		query.setParameter("groupKey", groupKey);
+
+		for (eu.daiad.web.domain.application.Account entity : query.getResultList()) {
+			Account account = new Account();
+
+			account.setKey(entity.getKey());
+			account.setLocation(entity.getLocation());
+			account.setUsername(entity.getUsername());
+			account.setFullName(entity.getFullname());
+
+			accounts.add(account);
+		}
+
+		return accounts;
+
+	}
+
+	@Override
+	public List<UUID> getGroupMemberKeys(UUID groupKey) {
+		ArrayList<UUID> result = new ArrayList<UUID>();
 		try {
-			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-			AuthenticatedUser requestingUser = (AuthenticatedUser) auth.getPrincipal();
-			
-			if (!requestingUser.hasRole("ROLE_ADMIN") && !requestingUser.hasRole("ROLE_SUPERUSER")) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from \"group\" g "
+					+ "inner join group_member gm on g.id = gm.group_id "
+					+ "inner join account a on gm.account_id = a.id where g.key = CAST(? as uuid)");
+			query.setParameter(1, groupKey.toString());
+
+			List<?> keys = query.getResultList();
+			for (Object key : keys) {
+				result.add(UUID.fromString((String) key));
 			}
-			
-			TypedQuery<Group> userGroupQuery = entityManager.createQuery(
-					"SELECT g FROM group_member m JOIN m.group g JOIN m.account a WHERE a.key = :user_key",
-					Group.class).setFirstResult(0);
-			userGroupQuery.setParameter("user_key", user_id);
-			
-			List <Group> groups = userGroupQuery.getResultList();
-			List <GroupInfo> groupsInfo = new ArrayList <GroupInfo>();
-			
-			for (Group group : groups){
-				GroupInfo groupInfo = new GroupInfo(group);
-				groupsInfo.add(groupInfo);
+		} catch (Exception ex) {
+			logger.error(String.format("Failed to load user keys for group [%s].", groupKey), ex);
+		}
+
+		return result;
+	}
+
+	@Override
+	public List<UUID> getUtilityByKeyMemberKeys(UUID utilityKey) {
+		ArrayList<UUID> result = new ArrayList<UUID>();
+		try {
+			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from utility u "
+					+ "inner join account a on u.id = a.utility_id where u.key = CAST(? as uuid)");
+			query.setParameter(1, utilityKey.toString());
+
+			List<?> keys = query.getResultList();
+			for (Object key : keys) {
+				result.add(UUID.fromString((String) key));
+			}
+		} catch (Exception ex) {
+			logger.error(String.format("Failed to load user keys for utility [%s]", utilityKey), ex);
+		}
+
+		return result;
+	}
+
+	@Override
+	public List<UUID> getUtilityByIdMemberKeys(int utilityId) {
+		ArrayList<UUID> result = new ArrayList<UUID>();
+		try {
+			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from utility u "
+					+ "inner join account a on u.id = a.utility_id where u.id = :utilityId");
+			query.setParameter("utilityId", utilityId);
+
+			List<?> keys = query.getResultList();
+			for (Object key : keys) {
+				result.add(UUID.fromString((String) key));
+			}
+		} catch (Exception ex) {
+			logger.error(String.format("Failed to load user keys for utility [%d]", utilityId), ex);
+		}
+
+		return result;
+	}
+
+	private Integer getCurrentUtilityId() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		AuthenticatedUser user = null;
+
+		if (auth.getPrincipal() instanceof AuthenticatedUser) {
+			user = (AuthenticatedUser) auth.getPrincipal();
+		}
+
+		if (user != null) {
+			return user.getUtilityId();
+		}
+
+		return null;
+	}
+
+	private List<Group> groupToSegmentList(List<eu.daiad.web.domain.application.GroupSegment> groups) {
+		List<Group> segments = new ArrayList<Group>();
+
+		for (eu.daiad.web.domain.application.GroupSegment group : groups) {
+			Segment segment = new Segment();
+
+			segment.setCreatedOn(group.getCreatedOn().getMillis());
+			segment.setGeometry(group.getGeometry());
+			segment.setKey(group.getKey());
+			segment.setName(group.getName());
+			segment.setSize(group.getSize());
+			segment.setUtilityKey(group.getUtility().getKey());
+
+			segments.add(segment);
+		}
+
+		return segments;
+	}
+
+	private List<Group> utilityEntityToUtilityObject(List<eu.daiad.web.domain.application.Utility> entities) {
+		List<Group> utilities = new ArrayList<Group>();
+
+		for (eu.daiad.web.domain.application.Utility entity : entities) {
+			Utility utility = new Utility();
+
+			utility.setCreatedOn(entity.getCreatedOn().getMillis());
+			utility.setKey(entity.getKey());
+			utility.setName(entity.getName());
+			utility.setUtilityKey(entity.getKey());
+
+			utilities.add(utility);
+		}
+
+		return utilities;
+	}
+
+	private List<Group> clusterEntityToClusterObject(List<eu.daiad.web.domain.application.Cluster> entities) {
+		List<Group> clusters = new ArrayList<Group>();
+
+		for (eu.daiad.web.domain.application.Cluster entity : entities) {
+			Cluster cluster = new Cluster();
+
+			cluster.setCreatedOn(entity.getCreatedOn().getMillis());
+			cluster.setKey(entity.getKey());
+			cluster.setName(entity.getName());
+			cluster.setUtilityKey(entity.getUtility().getKey());
+
+			List<Segment> segments = new ArrayList<Segment>();
+
+			for (GroupSegment groupSegment : ((eu.daiad.web.domain.application.Cluster) entity).getGroups()) {
+				Segment segment = new Segment();
+
+				segment.setCreatedOn(groupSegment.getCreatedOn().getMillis());
+				segment.setGeometry(groupSegment.getGeometry());
+				segment.setKey(groupSegment.getKey());
+				segment.setName(groupSegment.getName());
+				segment.setSize(groupSegment.getSize());
+				segment.setUtilityKey(groupSegment.getUtility().getKey());
+
+				segments.add(segment);
 			}
 
-			return groupsInfo;
-			
-		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			cluster.setSegments(segments);
+
+			clusters.add(cluster);
+		}
+
+		return clusters;
+	}
+
+	private List<Group> groupEntityToGroupObject(List<eu.daiad.web.domain.application.Group> entities) {
+		List<Group> groups = new ArrayList<Group>();
+
+		for (eu.daiad.web.domain.application.Group entity : entities) {
+			groups.add(groupEntityToGroupObject(entity));
+		}
+
+		return groups;
+	}
+
+	private Group groupEntityToGroupObject(eu.daiad.web.domain.application.Group entity) {
+		switch (entity.getType()) {
+		case SEGMENT:
+		case SET:
+			Segment segment = new Segment();
+
+			segment.setCreatedOn(entity.getCreatedOn().getMillis());
+			segment.setGeometry(entity.getGeometry());
+			segment.setKey(entity.getKey());
+			segment.setName(entity.getName());
+			segment.setSize(entity.getSize());
+			segment.setUtilityKey(entity.getUtility().getKey());
+
+			return segment;
+		case COMMONS:
+			Community community = new Community();
+
+			community.setCreatedOn(entity.getCreatedOn().getMillis());
+			community.setGeometry(entity.getGeometry());
+			community.setKey(entity.getKey());
+			community.setName(entity.getName());
+			community.setSize(entity.getSize());
+			community.setUtilityKey(entity.getUtility().getKey());
+
+			GroupCommunity communityEntity = (GroupCommunity) entity;
+
+			community.setDescription(communityEntity.getDescription());
+			community.setImage(communityEntity.getImage());
+
+			return community;
+		default:
+			return null;
 		}
 	}
+
 }

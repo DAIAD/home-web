@@ -15,8 +15,6 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import eu.daiad.web.model.error.ApplicationException;
-
 @Component
 public class TestJobBuilder implements IJobBuilder {
 
@@ -43,7 +41,7 @@ public class TestJobBuilder implements IJobBuilder {
 					logger.warn(DateTime.now().toString());
 				}
 			} catch (Exception ex) {
-				throw ApplicationException.wrap(ex);
+				throw ex;
 			}
 			return RepeatStatus.FINISHED;
 		}

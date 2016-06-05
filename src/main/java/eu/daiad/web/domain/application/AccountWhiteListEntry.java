@@ -58,7 +58,6 @@ public class AccountWhiteListEntry {
 	@Column(name = "meter_serial")
 	private String meterSerial;
 
-	@Type(type = "org.hibernate.spatial.GeometryType")
 	@Column(name = "meter_location")
 	private Geometry meterLocation;
 
@@ -95,7 +94,6 @@ public class AccountWhiteListEntry {
 	@Column(name = "default_web_mode")
 	private int defaultWebMode;
 
-	@Type(type = "org.hibernate.spatial.GeometryType")
 	@Column(name = "location")
 	private Geometry location;
 

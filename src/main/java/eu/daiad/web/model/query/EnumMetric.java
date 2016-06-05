@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -36,10 +37,13 @@ public enum EnumMetric {
 		return type;
 	}
 
+	@JsonCreator
 	public static EnumMetric fromString(String value) {
-		for (EnumMetric item : EnumMetric.values()) {
-			if (item.name().equalsIgnoreCase(value)) {
-				return item;
+		if (value != null) {
+			for (EnumMetric item : EnumMetric.values()) {
+				if (item.name().equalsIgnoreCase(value)) {
+					return item;
+				}
 			}
 		}
 		return EnumMetric.UNDEFINED;

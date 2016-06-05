@@ -13,16 +13,20 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageAcknowledgementRequest;
 import eu.daiad.web.model.message.MessageRequest;
+import eu.daiad.web.model.message.MessageResult;
 import eu.daiad.web.model.message.MultiTypeMessageResponse;
 import eu.daiad.web.model.message.SingleTypeMessageResponse;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IMessageRepository;
 
+/**
+ * Provides actions for loading messages and saving acknowledgments.
+ *
+ */
 @RestController
 public class MessageController extends BaseController {
 
@@ -31,13 +35,26 @@ public class MessageController extends BaseController {
 	@Autowired
 	private IMessageRepository messageRepository;
 
+	/**
+	 * Loads messages i.e. alerts, recommendations and tips. Optionally filters messages.
+	 * 
+	 * @param request the request.
+	 * @return the messages.
+	 */
 	@RequestMapping(value = "/action/message", method = RequestMethod.POST, produces = "application/json")
 	@Secured("ROLE_USER")
 	public RestResponse getMessages(@RequestBody MessageRequest request) {
 		try {
 			MultiTypeMessageResponse messageResponse = new MultiTypeMessageResponse();
 
-			for (Message message : this.messageRepository.getMessages(request)) {
+			MessageResult result = this.messageRepository.getMessages(request);
+
+			messageResponse.setTotalAlerts(result.getTotalAlerts());
+			messageResponse.setTotalAnnouncements(result.getTotalAnnouncements());
+			messageResponse.setTotalRecommendations(result.getTotalRecommendations());
+			messageResponse.setTotalTips(result.getTotalTips());
+
+			for (Message message : result.getMessages()) {
 				switch (message.getType()) {
 					case ALERT:
 						messageResponse.getAlerts().add(message);
@@ -57,10 +74,8 @@ public class MessageController extends BaseController {
 			}
 
 			return messageResponse;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			RestResponse response = new RestResponse();
 			response.add(this.getError(ex));
@@ -68,23 +83,34 @@ public class MessageController extends BaseController {
 		}
 	}
 
+	/**
+	 * Saves one or more message acknowledgments.
+	 * 
+	 * @param request the messages to acknowledge.
+	 * @return the controller response.
+	 */
 	@RequestMapping(value = "/action/message/acknowledge", method = RequestMethod.POST, produces = "application/json")
 	@Secured("ROLE_USER")
-	public RestResponse recieveMessageAcknowledge(@RequestBody MessageAcknowledgementRequest request) {
+	public RestResponse acknowledgeMessage(@RequestBody MessageAcknowledgementRequest request) {
 		RestResponse response = new RestResponse();
 
 		try {
 			this.messageRepository.setMessageAcknowledgement(request.getMessages());
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
 		return response;
 	}
 
+	/**
+	 * Gets static localized recommendations (tips) for a single user.
+	 * 
+	 * @param user the user
+	 * @param locale the locale
+	 * @return the static recommendations.
+	 */
 	@RequestMapping(value = "/action/recommendation/static/{locale}", method = RequestMethod.GET, produces = "application/json")
 	@Secured("ROLE_ADMIN")
 	public RestResponse getRecommendations(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable String locale) {
@@ -95,10 +121,8 @@ public class MessageController extends BaseController {
 			messages.setMessages(this.messageRepository.getAdvisoryMessages(locale));
 
 			return messages;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			RestResponse response = new RestResponse();
 			response.add(this.getError(ex));

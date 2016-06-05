@@ -166,10 +166,17 @@ var Overview = React.createClass({
         </span>
       );
     }
+    
+    var titleText = 'Activity';
+    if(this.props.admin.user.meters) {
+      titleText = this.props.admin.user.name + ' - Last 30 days';
+    } else if(this.props.admin.user.devices) {
+      titleText = this.props.admin.user.name + ' - Last 100 sessions';
+    }  
     const chartTitle = (
       <span>
         <i className='fa fa-bar-chart fa-fw'></i>
-        <span style={{ paddingLeft: 4 }}>{ (this.props.admin.user.name || 'Activity') }</span>
+        <span style={{ paddingLeft: 4 }}>{ titleText }</span>
         {closeSessionChartButton}
       </span>
     );
@@ -223,7 +230,7 @@ var Overview = React.createClass({
     var series = [], data = [];
     if(!this.props.admin.isLoading) {
       if(this.props.admin.user.devices) {
-        model.chart.type = 'line';
+        model.chart.type = 'bar';
         model.chart.options = {
           tooltip: {
               show: true
@@ -235,16 +242,25 @@ var Overview = React.createClass({
 
         
         var devices = this.props.admin.user.devices;
-          
-        for(var d=0; d<devices.length; d++) {
+        
+        var maxSerieSize = 0, d;
+        for(d=0; d<devices.length; d++) {
+          if(devices[d].sessions.length > maxSerieSize) { 
+            maxSerieSize = devices[d].sessions.length;
+          }
+        }
+
+        for(d=0; d<devices.length; d++) {
           var device = devices[d];
           data = [];
-          
-          for(var s=0; s < device.sessions.length; s++) {
+   
+          var index = 1;
+          for(var s=0; s < maxSerieSize; s++) {
             data.push({
-              volume: device.sessions[s].volume,
-              id:  device.sessions[s].id
+              volume: (s < device.sessions.length ? device.sessions[s].volume : 0.0),
+              id:  index
             });
+            index++;
           }
           
           series.push({

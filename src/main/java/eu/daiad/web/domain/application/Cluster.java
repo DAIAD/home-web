@@ -48,7 +48,7 @@ public class Cluster {
 
 	@OneToMany(cascade = { CascadeType.ALL })
 	@JoinColumn(name = "cluster_id")
-	private Set<GroupCluster> groups = new HashSet<GroupCluster>();
+	private Set<GroupSegment> groups = new HashSet<GroupSegment>();
 
 	@Basic()
 	private String name;
@@ -97,7 +97,7 @@ public class Cluster {
 		return EnumGroupType.UNDEFINED;
 	}
 
-	public Set<GroupCluster> getGroups() {
+	public Set<GroupSegment> getGroups() {
 		return groups;
 	}
 

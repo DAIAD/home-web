@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.security.RoleUpdateRequest;
 import eu.daiad.web.model.user.Account;
@@ -39,6 +38,13 @@ public class UserController extends BaseRestController {
 	@Value("${security.white-list}")
 	private boolean enforceWhiteListCheck;
 
+	/**
+	 * Creates a new user.
+	 * 
+	 * @param request the request.
+	 * @param results the binding results.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/api/v1/user/register", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public RestResponse register(@RequestBody UserRegistrationRequest request, BindingResult results) {
 		RestResponse response = new RestResponse();
@@ -66,10 +72,8 @@ public class UserController extends BaseRestController {
 			registerResponse.setUserKey(userKey.toString());
 
 			return registerResponse;
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -77,8 +81,14 @@ public class UserController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Changes a user's password.
+	 * 
+	 * @param data the request.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/api/v1/user/password", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse changePassword(@RequestBody PasswordChangeRequest data, BindingResult results) {
+	public RestResponse changePassword(@RequestBody PasswordChangeRequest data) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -87,10 +97,8 @@ public class UserController extends BaseRestController {
 			userService.setPassword(data.getCredentials().getUsername(), data.getPassword());
 
 			return new RestResponse();
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -98,18 +106,22 @@ public class UserController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Grants a role to a user.
+	 * 
+	 * @param data the request.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/api/v1/user/role/grant", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse addRole(@RequestBody RoleUpdateRequest data, BindingResult results) {
+	public RestResponse addRole(@RequestBody RoleUpdateRequest data) {
 		RestResponse response = new RestResponse();
 
 		try {
 			this.authenticate(data.getCredentials(), EnumRole.ROLE_ADMIN);
 
 			userService.setRole(data.getUsername(), data.getRole(), true);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}
@@ -117,18 +129,22 @@ public class UserController extends BaseRestController {
 		return response;
 	}
 
+	/**
+	 * Revokes a role to a user.
+	 * 
+	 * @param data the request.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/api/v1/user/role/revoke", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse revokeRole(@RequestBody RoleUpdateRequest data, BindingResult results) {
+	public RestResponse revokeRole(@RequestBody RoleUpdateRequest data) {
 		RestResponse response = new RestResponse();
 
 		try {
 			this.authenticate(data.getCredentials(), EnumRole.ROLE_ADMIN);
 
 			userService.setRole(data.getUsername(), data.getRole(), false);
-		} catch (ApplicationException ex) {
-			if (!ex.isLogged()) {
-				logger.error(ex.getMessage(), ex);
-			}
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 
 			response.add(this.getError(ex));
 		}

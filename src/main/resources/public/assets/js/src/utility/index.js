@@ -30,7 +30,6 @@ var getCookie = function(name) {
   }
 };
 
-
 var locale = getCookie('daiad-utility-locale') || 'en';
 var reload = (getCookie('daiad-utility-session') === 'true') || false;
 

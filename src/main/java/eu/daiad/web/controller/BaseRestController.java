@@ -13,15 +13,31 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.Credentials;
 import eu.daiad.web.model.security.EnumRole;
 
+/**
+ * Base controller class providing helper methods for generating application messages and errors.
+ *
+ */
 public class BaseRestController extends BaseController {
 
+	/**
+	 * A class that can process a specific {@link org.springframework.security.core.Authentication} implementation.
+	 */
 	@Autowired
 	private AuthenticationProvider authenticationProvider;
 
+	/**
+	 * Authenticates a user and optionally, if authentication is successful, sets the 
+	 * {@link org.springframework.security.core.Authentication} in the security context.
+	 * 
+	 * @param credentials the user credentials.
+	 * @param roles the requested roles.
+	 * @return the authenticated user.
+	 * @throws ApplicationException if authentication fails.
+	 */
 	protected AuthenticatedUser authenticate(Credentials credentials, EnumRole... roles) throws ApplicationException {
 		try {
 			if (credentials == null) {
-				throw new ApplicationException(SharedErrorCode.AUTHENTICATION_NO_CREDENTIALS);
+				throw createApplicationException(SharedErrorCode.AUTHENTICATION_NO_CREDENTIALS);
 			}
 
 			UsernamePasswordAuthenticationToken authentication = (UsernamePasswordAuthenticationToken) this.authenticationProvider
@@ -29,7 +45,7 @@ public class BaseRestController extends BaseController {
 											credentials.getPassword()));
 
 			if (authentication == null) {
-				throw new ApplicationException(SharedErrorCode.AUTHENTICATION_USERNAME).set("username",
+				throw createApplicationException(SharedErrorCode.AUTHENTICATION_USERNAME).set("username",
 								credentials.getUsername());
 			}
 
@@ -37,7 +53,7 @@ public class BaseRestController extends BaseController {
 			if (roles != null) {
 				for (EnumRole role : roles) {
 					if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority(role.toString()))) {
-						throw new ApplicationException(SharedErrorCode.AUTHORIZATION_MISSING_ROLE).set("role",
+						throw createApplicationException(SharedErrorCode.AUTHORIZATION_MISSING_ROLE).set("role",
 										role.toString());
 					}
 				}
@@ -48,7 +64,7 @@ public class BaseRestController extends BaseController {
 
 			return (AuthenticatedUser) authentication.getPrincipal();
 		} catch (BadCredentialsException ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.AUTHENTICATION_USERNAME).set("username",
+			throw wrapApplicationException(ex, SharedErrorCode.AUTHENTICATION_USERNAME).set("username",
 							credentials.getUsername());
 		}
 	}

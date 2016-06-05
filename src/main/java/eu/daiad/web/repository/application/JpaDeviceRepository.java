@@ -35,10 +35,11 @@ import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.repository.BaseRepository;
 
 @Repository()
-@Transactional("transactionManager")
-public class JpaDeviceRepository implements IDeviceRepository {
+@Transactional("applicationTransactionManager")
+public class JpaDeviceRepository extends BaseRepository implements IDeviceRepository {
 
 	@Value("${security.white-list}")
 	private boolean enforceWhiteListCheck;
@@ -108,7 +109,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 			deviceKey = amphiro.getKey();
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 
 		return deviceKey;
@@ -125,7 +126,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 			configurations = configQuery.getResultList();
 
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 
 		return configurations;
@@ -137,22 +138,12 @@ public class JpaDeviceRepository implements IDeviceRepository {
 		UUID deviceKey = null;
 
 		try {
-			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-			AuthenticatedUser user = null;
-
-			if (auth.getPrincipal() instanceof AuthenticatedUser) {
-				user = (AuthenticatedUser) auth.getPrincipal();
-			} else {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
-			}
-
 			TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager
-							.createQuery("select a from account a where a.username = :username and a.utility.id = :utility_id",
+							.createQuery("select a from account a where a.username = :username",
 											eu.daiad.web.domain.application.Account.class).setFirstResult(0)
 							.setMaxResults(1);
 
 			accountQuery.setParameter("username", username);
-			accountQuery.setParameter("utility_id", user.getUtilityId());
 
 			List<eu.daiad.web.domain.application.Account> accounts = accountQuery.getResultList();
 
@@ -201,16 +192,16 @@ public class JpaDeviceRepository implements IDeviceRepository {
 					}
 					this.entityManager.persist(entry);
 				} else {
-					throw new ApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
+					throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
 				}
 			} else {
-				throw new ApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
+				throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
 			}
 
 		} catch (ApplicationException appEx) {
 			throw appEx;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 
 		return deviceKey;
@@ -224,7 +215,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 		if (auth.getPrincipal() instanceof AuthenticatedUser) {
 			user = (AuthenticatedUser) auth.getPrincipal();
 		} else {
-			throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+			throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
 		}
 
 		TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager
@@ -258,10 +249,10 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 				this.entityManager.flush();
 			} else {
-				throw new ApplicationException(DeviceErrorCode.METER_NOT_FOUND).set("serial", serial);
+				throw createApplicationException(DeviceErrorCode.METER_NOT_FOUND).set("serial", serial);
 			}
 		} else {
-			throw new ApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
+			throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
 		}
 
 	}
@@ -287,7 +278,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 						AmphiroDevice amphiro = new AmphiroDevice(amphiroEntity.getAccount().getId(),
 										amphiroEntity.getKey(), amphiroEntity.getName(), amphiroEntity.getMacAddress(),
-										amphiroEntity.getAesKey());
+										amphiroEntity.getAesKey(), entity.getRegisteredOn().getMillis());
 
 						for (eu.daiad.web.domain.application.DeviceProperty p : amphiroEntity.getProperties()) {
 							amphiro.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
@@ -298,7 +289,8 @@ public class JpaDeviceRepository implements IDeviceRepository {
 						eu.daiad.web.domain.application.DeviceMeter meterEntity = (eu.daiad.web.domain.application.DeviceMeter) entity;
 
 						WaterMeterDevice meter = new WaterMeterDevice(meterEntity.getAccount().getId(),
-										meterEntity.getKey(), meterEntity.getSerial(), meterEntity.getLocation());
+										meterEntity.getKey(), meterEntity.getSerial(), meterEntity.getLocation(),
+										entity.getRegisteredOn().getMillis());
 
 						for (eu.daiad.web.domain.application.DeviceProperty p : meterEntity.getProperties()) {
 							meter.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
@@ -313,7 +305,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 			return null;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -325,7 +317,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 			if (auth.getPrincipal() instanceof AuthenticatedUser) {
 				user = (AuthenticatedUser) auth.getPrincipal();
 			} else {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
 			}
 
 			TypedQuery<eu.daiad.web.domain.application.Device> query = entityManager
@@ -347,7 +339,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 						AmphiroDevice amphiro = new AmphiroDevice(amphiroEntity.getAccount().getId(),
 										amphiroEntity.getKey(), amphiroEntity.getName(), amphiroEntity.getMacAddress(),
-										amphiroEntity.getAesKey());
+										amphiroEntity.getAesKey(), entity.getRegisteredOn().getMillis());
 
 						for (eu.daiad.web.domain.application.DeviceProperty p : amphiroEntity.getProperties()) {
 							amphiro.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
@@ -358,7 +350,8 @@ public class JpaDeviceRepository implements IDeviceRepository {
 						eu.daiad.web.domain.application.DeviceMeter meterEntity = (eu.daiad.web.domain.application.DeviceMeter) entity;
 
 						WaterMeterDevice meter = new WaterMeterDevice(meterEntity.getAccount().getId(),
-										meterEntity.getKey(), meterEntity.getSerial(), meterEntity.getLocation());
+										meterEntity.getKey(), meterEntity.getSerial(), meterEntity.getLocation(),
+										entity.getRegisteredOn().getMillis());
 
 						for (eu.daiad.web.domain.application.DeviceProperty p : meterEntity.getProperties()) {
 							meter.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
@@ -373,7 +366,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 			return null;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -383,7 +376,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 		try {
 			TypedQuery<eu.daiad.web.domain.application.Device> typedQuery = entityManager.createQuery(
-							"select d from device d where d.account.key = :user_key",
+							"select d from device d where d.account.key = :user_key order by d.registeredOn",
 							eu.daiad.web.domain.application.Device.class).setFirstResult(0);
 			typedQuery.setParameter("user_key", userKey);
 
@@ -397,7 +390,8 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 							AmphiroDevice amphiro = new AmphiroDevice(amphiroEntity.getAccount().getId(),
 											amphiroEntity.getKey(), amphiroEntity.getName(),
-											amphiroEntity.getMacAddress(), amphiroEntity.getAesKey());
+											amphiroEntity.getMacAddress(), amphiroEntity.getAesKey(), entity
+															.getRegisteredOn().getMillis());
 
 							for (eu.daiad.web.domain.application.DeviceProperty p : amphiroEntity.getProperties()) {
 								amphiro.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
@@ -411,7 +405,8 @@ public class JpaDeviceRepository implements IDeviceRepository {
 							eu.daiad.web.domain.application.DeviceMeter meterEntity = (eu.daiad.web.domain.application.DeviceMeter) entity;
 
 							WaterMeterDevice meter = new WaterMeterDevice(meterEntity.getAccount().getId(),
-											meterEntity.getKey(), meterEntity.getSerial(), meterEntity.getLocation());
+											meterEntity.getKey(), meterEntity.getSerial(), meterEntity.getLocation(),
+											entity.getRegisteredOn().getMillis());
 
 							for (eu.daiad.web.domain.application.DeviceProperty p : meterEntity.getProperties()) {
 								meter.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
@@ -426,7 +421,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 			}
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 
 		return devices;
@@ -448,7 +443,8 @@ public class JpaDeviceRepository implements IDeviceRepository {
 				eu.daiad.web.domain.application.DeviceAmphiro entity = result.get(0);
 
 				AmphiroDevice amphiro = new AmphiroDevice(entity.getAccount().getId(), entity.getKey(),
-								entity.getName(), entity.getMacAddress(), entity.getAesKey());
+								entity.getName(), entity.getMacAddress(), entity.getAesKey(), entity.getRegisteredOn()
+												.getMillis());
 
 				for (eu.daiad.web.domain.application.DeviceProperty p : entity.getProperties()) {
 					amphiro.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
@@ -459,7 +455,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 			return null;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -479,7 +475,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 				eu.daiad.web.domain.application.DeviceMeter entity = result.get(0);
 
 				WaterMeterDevice meter = new WaterMeterDevice(entity.getAccount().getId(), entity.getKey(),
-								entity.getSerial(), entity.getLocation());
+								entity.getSerial(), entity.getLocation(), entity.getRegisteredOn().getMillis());
 
 				for (eu.daiad.web.domain.application.DeviceProperty p : entity.getProperties()) {
 					meter.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
@@ -491,7 +487,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 			return null;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -504,7 +500,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 			if (auth.getPrincipal() instanceof AuthenticatedUser) {
 				user = (AuthenticatedUser) auth.getPrincipal();
 			} else {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
 			}
 
 			TypedQuery<eu.daiad.web.domain.application.DeviceMeter> query = entityManager
@@ -520,7 +516,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 				eu.daiad.web.domain.application.DeviceMeter entity = result.get(0);
 
 				WaterMeterDevice meter = new WaterMeterDevice(entity.getAccount().getId(), entity.getKey(),
-								entity.getSerial(), entity.getLocation());
+								entity.getSerial(), entity.getLocation(), entity.getRegisteredOn().getMillis());
 
 				for (eu.daiad.web.domain.application.DeviceProperty p : entity.getProperties()) {
 					meter.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
@@ -532,7 +528,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 			return null;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -550,14 +546,14 @@ public class JpaDeviceRepository implements IDeviceRepository {
 			List<eu.daiad.web.domain.application.DeviceAmphiro> devices = deviceQuery.getResultList();
 
 			if (devices.size() != 1) {
-				throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
+				throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
 			}
 
 			// Check owner
 			eu.daiad.web.domain.application.DeviceAmphiro device = devices.get(0);
 
 			if (!device.getAccount().getKey().equals(ownerID)) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
 			// Get assignee
@@ -571,7 +567,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 			List<eu.daiad.web.domain.application.Account> users = userQuery.getResultList();
 
 			if (users.size() == 0) {
-				throw new ApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", assigneeUsername);
+				throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", assigneeUsername);
 			}
 
 			eu.daiad.web.domain.application.Account assignee = users.get(0);
@@ -612,7 +608,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 			}
 
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -632,7 +628,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 				List<eu.daiad.web.domain.application.DeviceAmphiro> devices = deviceQuery.getResultList();
 
 				if (devices.size() != 1) {
-					throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
+					throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
 				}
 
 				DeviceAmphiro device = devices.get(0);
@@ -681,7 +677,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 				}
 			}
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 
 		return collections;
@@ -703,7 +699,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 			List<eu.daiad.web.domain.application.DeviceAmphiro> devices = deviceQuery.getResultList();
 
 			if (devices.size() != 1) {
-				throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
+				throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
 			}
 
 			eu.daiad.web.domain.application.DeviceAmphiro device = devices.get(0);
@@ -718,11 +714,11 @@ public class JpaDeviceRepository implements IDeviceRepository {
 			}
 
 			if (!found) {
-				throw new ApplicationException(DeviceErrorCode.CONFIGURATION_NOT_FOUND).set("version",
+				throw createApplicationException(DeviceErrorCode.CONFIGURATION_NOT_FOUND).set("version",
 								version.toString());
 			}
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -739,7 +735,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 			List<eu.daiad.web.domain.application.Device> result = deviceQuery.getResultList();
 
 			if (result.size() != 1) {
-				throw new ApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey);
+				throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey);
 			}
 
 			for (eu.daiad.web.domain.application.Device d : result) {
@@ -750,11 +746,11 @@ public class JpaDeviceRepository implements IDeviceRepository {
 						this.entityManager.remove(d);
 						break;
 					default:
-						throw new ApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type", d.getType());
+						throw createApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type", d.getType());
 				}
 			}
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -805,7 +801,7 @@ public class JpaDeviceRepository implements IDeviceRepository {
 
 			}
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, DeviceErrorCode.LOG_DATA_UPLOAD_FAILED).set("key", deviceKey);
+			throw wrapApplicationException(ex, DeviceErrorCode.LOG_DATA_UPLOAD_FAILED).set("key", deviceKey);
 		}
 	}
 }

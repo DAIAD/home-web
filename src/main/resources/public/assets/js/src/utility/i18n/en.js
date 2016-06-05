@@ -23,26 +23,26 @@
 		}
 	},
 	"Section": {
-            "Dashboard": "Dashboard",
+      "Dashboard": "Dashboard",
 	    "Analytics":"Analytics",
-	    "Forecasting": "Forecasting",
+	    "Forecasting": "Forecasting - Learning Mode",
 	    "Demographics": "Users & Groups",
 	    "ModeManagement": "Mode Management",
 	    "Search": "Search",
 	    "Messages": "Messages",
 	    "Settings": "Settings",
       "Reports": {
-        "Group": "Reports",
+        "Group": "Trial Management",
         "Overview": "Overview",
         "Charts": "Charts"
       },
-	    "Alerts": "Alerts",
 	    "Announcements" : "Announcements",
       "ManageAlerts" : "Manage Alerts",
 	    "Scheduler": "Job Management",
 	    "Consumers": "Consumers",
       "Support" : {
         "Group": "Support",
+        "Logging": "Logs",
         "Data": "Data Management",
         "Development": "Development"
       }
@@ -264,5 +264,4 @@
     "FavouriteSuccess.FAVOURITE_ADDED" : "Favourite was succesfully added.",
     "FavouriteSuccess.FAVOURITE_UPDATED" : "Favourite was succesfully updated."
   }
-
 }

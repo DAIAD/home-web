@@ -1,8 +1,8 @@
 var types = require('../constants/ActionTypes');
 require('es6-promise').polyfill();
 var { push } = require('react-router-redux');
-
-var { getSessionById, getReducedDeviceType, getDeviceTypeByKey } = require('../utils/device');
+var { getSessionById, getDeviceKeysByType, getDeviceTypeByKey, lastNFilterToLength, getIdRangeByIndex } = require('../utils/device');
+var { getPreviousPeriod, convertGranularityToPeriod, getGranularityByDiff } = require('../utils/time');
 
 var QueryActions = require('./QueryActions');
 
@@ -10,16 +10,24 @@ var QueryActions = require('./QueryActions');
 const setSessions = function (sessions) {
   return {
     type: types.HISTORY_SET_SESSIONS,
-    sessions: sessions
+    sessions
+  };
+};
+
+const setComparisonSessions = function (sessions) {
+  return {
+    type: types.HISTORY_SET_COMPARISON_SESSIONS,
+    sessions
   };
 };
 
 const setSession = function (session) {
   return {
     type: types.HISTORY_SET_SESSION,
-    session: session,
+    session,
   };
 };
+
 const setDataSynced = function () {
   return {
     type: types.HISTORY_SET_DATA_SYNCED
@@ -36,30 +44,31 @@ const HistoryActions = {
   
   linkToHistory: function(options) {
     return function(dispatch, getState) {
-      const { id, device, metric, period, time, index, data } = options;
+      const { id, showerId, device, deviceType, metric, period, time, index, data } = options;
       
-      if ((index !== null && index !==undefined)) { 
-        dispatch(HistoryActions.setSessionFilter(metric)); 
-        dispatch(HistoryActions.setActiveSessionIndex(index)); 
-      }
-      else { 
-        dispatch(HistoryActions.resetActiveSessionIndex()); 
-      }
-
-      if (device) dispatch(HistoryActions.setActiveDevice(device));
+      if (deviceType) dispatch(HistoryActions.setActiveDeviceType(deviceType, false));
       if (metric) dispatch(HistoryActions.setQueryFilter(metric));
       if (period) dispatch(HistoryActions.setTimeFilter(period));
-      if (time) dispatch(HistoryActions.setTime(time));
+      if (time) dispatch(HistoryActions.setTime(time, false));
+
+      if (index != null && showerId != null) { 
+        dispatch(HistoryActions.setSessionFilter(metric)); 
+        dispatch(HistoryActions.setActiveSession(Array.isArray(device)?device[0]:device, showerId)); 
+      }
+      else { 
+        dispatch(HistoryActions.resetActiveSession()); 
+      }
       
       if (data && data.length>0) { 
         dispatch(setSessions(data));
         dispatch(setDataSynced());
-      }
+        }
+ 
       dispatch(push('/history'));
     };
   },
   
-  getDeviceSession: function (id, deviceKey, time) {
+  getDeviceSession: function (id, deviceKey) {
     return function(dispatch, getState) {
       const devFound = getState().section.history.data.find(d=>d.deviceKey===deviceKey);
       const sessions = devFound?devFound.sessions:[];
@@ -67,173 +76,150 @@ const HistoryActions = {
       
       if (found && found.measurements){
         console.log('found session in memory');
-        return new Promise((() => getState().section.history.data), (() => getState().query.errors));
+        return new Promise((resolve, reject) => resolve());
       }
-      return dispatch(QueryActions.fetchDeviceSession(id, deviceKey, time))
+      return dispatch(QueryActions.fetchDeviceSession(id, deviceKey))
       .then(session => { 
           dispatch(setSession(Object.assign({}, session, {deviceKey})));
           return session;
         })
         .catch(error => {
-          console.log('error fetching active sesssion');
-          console.log(error);
+          console.error('error fetching sesssion', error);
         });
-    };
-  },
-  getActiveSession: function(deviceKey, time) {
-    return function(dispatch, getState) {
-      const devices = getState().section.history.data;
-      const activeSessionIndex = getState().section.history.activeSessionIndex;
-      //TODO: have to find session index in device
-      
-      if (activeSessionIndex===null) { return false; }
-
-      const foundDev = devices.find(s=>s.deviceKey===deviceKey);
-      const activeSession = foundDev?foundDev.sessions[activeSessionIndex]:null;
-      if (!activeSession) { return false; }
-           
-      const devType = getDeviceTypeByKey(getState().user.profile.devices, deviceKey);
-      
-      if (devType === 'AMPHIRO') {
-        if (!activeSession.id) { return false; }
-        return dispatch(HistoryActions.getDeviceSession(activeSession.id, deviceKey, time));
-      }
-      else {
-        return true;
-      }
-    };
-  },
-  getDeviceSessions: function(deviceKeys, time) {
-    return function(dispatch, getState) {
-      //if query not changed dont update (for now)
-      //TODO: have to ask every now and then for new data
-      if (getState().section.history.synced) {
-        console.log('device data already in memory', getState().section.history.data);
-        return new Promise((() => getState().section.history.data), (() => getState().query.errors));
-      }
-      return dispatch(QueryActions.queryDeviceSessions(deviceKeys, time))
-      .then(sessions => {
-          dispatch(setDataSynced());
-          dispatch(setSessions(sessions));
-          return sessions;
-        });
-    }; 
-  },
-  getMeterSessions: function (deviceKeys, time) {
-    return function(dispatch, getState) {
-      //if query not changed dont update (for now)
-      //TODO: have to ask every now and then for new data
-      if (getState().section.history.synced) {
-        console.log('meter data already in memory');
-        return new Promise((() => getState().section.history.data), (() => getState().query.errors));
-      }
-      return dispatch(QueryActions.fetchMeterHistory(deviceKeys, time))
-        .then(sessions => {
-          dispatch(setSessions(sessions));
-          dispatch(setDataSynced());
-          return sessions;
-        })
-        .catch(error => {
-          console.log('oops error while getting all sessions');
-          console.error(error);
-        });
-    };
-  },
-  getDeviceOrMeterSessions: function (deviceKeys, time) {
-    return function(dispatch, getState) {
-      //if (!Array.isArray(deviceKey)) throw new Error(`deviceKey ${deviceKey} must be of type array`);
-
-      if (!deviceKeys || !deviceKeys.length) return new Promise((resolve, reject) => resolve()).then(() => dispatch(setSessions([])));
-      
-      console.log('getting device or met sessions', deviceKeys);
-      const devType = getReducedDeviceType(getState().user.profile.devices, deviceKeys);
-      
-      if (devType === 'AMPHIRO') {
-        return dispatch(HistoryActions.getDeviceSessions(deviceKeys, time)); 
-      }
-      else if (devType === 'METER') {
-        return dispatch(HistoryActions.getMeterSessions(deviceKeys, time))
-          .then(() => dispatch(HistoryActions.setQueryFilter('volume')));
-      }
-      else {
-        throw new Error(`device of type ${devType} not supported`);
-      }
     };
   },
   // time is of type Object with
   //  startDate of type string (unix timestamp),
   //  endDate of type string (unix timestamp)
   //  granularity of type int (0-4)
-  setTime: function(time) {
+  setTime: function(time, query=true) {
     return function(dispatch, getState) {
-      if (getState().section.history.synced) { 
-        dispatch(setDataUnsynced());
-      }
-      return dispatch({
+      dispatch({
         type: types.HISTORY_SET_TIME,
-        time: time 
+        time
       });
-    };
-  },
-  setTimeAndQuery: function (deviceKey, time) {
-    return function(dispatch, getState) {
-      dispatch(HistoryActions.setTime(time));
-      dispatch(HistoryActions.getDeviceOrMeterSessions(deviceKey, time));
-    };
-  },
-  setActiveDevice: function(deviceKeys) {
-    return function(dispatch, getState) {
-      if (getState().section.history.synced) { 
+      if (query) { 
         dispatch(setDataUnsynced());
+        dispatch(HistoryActions.query());
       }
-      return dispatch({
+    };
+  },
+  // update time used to calculate granularity and update time with
+  // startDate and/or endDate
+  updateTime: function(time, query=true) {
+    return function(dispatch, getState) {
+      let { startDate, endDate } = time;
+      startDate = startDate || getState().section.history.time.startDate;
+      endDate = endDate || getState().section.history.time.endDate;
+
+      const granularity = getGranularityByDiff(startDate, endDate);
+
+      dispatch(HistoryActions.setTime({startDate, endDate, granularity}, query));
+    };
+  },
+  query: function () {
+    return function(dispatch, getState) {
+      if (getState().section.history.activeDeviceType === 'AMPHIRO') {
+        
+        if (getState().section.history.activeDevice.length === 0) {
+          dispatch(setSessions([]));
+          dispatch(setDataSynced());
+          return;
+        }
+
+        dispatch(QueryActions.queryDeviceSessions(getState().section.history.activeDevice, {type: 'SLIDING', length: lastNFilterToLength(getState().section.history.timeFilter)}))
+          .then(sessions => dispatch(setSessions(sessions)))
+          .then(() => dispatch(setDataSynced()))
+          .catch(error => { 
+            console.error('Caught error in history device query:', error); 
+            dispatch(setSessions([]));
+            dispatch(setDataSynced());
+          });
+      }
+      else if (getState().section.history.activeDeviceType === 'METER') {
+        dispatch(QueryActions.fetchMeterHistory(getState().section.history.activeDevice, getState().section.history.time))
+          .then(sessions => dispatch(setSessions(sessions)))
+          .then(() => dispatch(setDataSynced()))
+          .catch(error => { 
+            console.error('Caught error in history meter query:', error); 
+            dispatch(setSessions([]));
+            dispatch(setDataSynced());
+          });
+      }
+
+
+        if (getState().section.history.comparison === 'last') {
+          dispatch(QueryActions.queryDeviceOrMeter(getState().section.history.activeDevice, getState().section.history.activeDeviceType, getPreviousPeriod(convertGranularityToPeriod(getState().section.history.time.granularity), getState().section.history.time.startDate)))
+          .then(sessions => dispatch(setComparisonSessions(sessions)))
+          .catch(error => { 
+            dispatch(setComparisonSessions([]));
+            console.error('Caught error in history comparison query:', error); 
+            });
+        }
+    };
+  },
+  setComparison: function(comparison) {
+    return function(dispatch, getState) {
+      dispatch({
+        type: types.HISTORY_SET_COMPARISON,
+        comparison
+      });
+      if (comparison == null) dispatch(setComparisonSessions([]));
+
+      dispatch(HistoryActions.query());
+    };
+  },
+  setActiveDevice: function(deviceKeys, query=true) {
+    
+    return function(dispatch, getState) {
+      dispatch({
         type: types.HISTORY_SET_ACTIVE_DEVICE,
         deviceKey: deviceKeys
       });
-    };
-  },
-  addToActiveDevices: function(deviceKey, time) {
-    return function(dispatch, getState) {
       
-      let active = getState().section.history.activeDevice.slice();
-      
-      if (!active.includes(deviceKey)) {
-        active.push(deviceKey);
-        if (getState().section.history.synced) { 
-          dispatch(setDataUnsynced());
-        } 
-        dispatch(HistoryActions.setActiveDeviceAndQuery(active, time));
-      }
-      
-    };
-  },
-  removeFromActiveDevices: function(deviceKey, time) {
-    return function(dispatch, getState) {
-      
-      let active = getState().section.history.activeDevice;
-      if (active.includes(deviceKey)) {
-        if (getState().section.history.synced) { 
-          dispatch(setDataUnsynced());
-        }
-        dispatch(HistoryActions.setActiveDeviceAndQuery(active.filter(x=>x!==deviceKey), time));
-      }
-      
-    };
-  },
-  setActiveDeviceAndQuery: function (deviceKeys, time) {
-    return function(dispatch, getState) {
-      dispatch(HistoryActions.setActiveDevice(deviceKeys));
-      dispatch(HistoryActions.getDeviceOrMeterSessions(deviceKeys, time));
-    };
-  },
-  resetActiveDevice: function() {
-    return function(dispatch, getState) {
-      if (getState().section.history.synced) { 
+      if (query) { 
         dispatch(setDataUnsynced());
+        dispatch(HistoryActions.query());
       }
-      return dispatch({
+    };
+  },
+  setActiveDeviceType: function(deviceType, query=true) {
+    return function(dispatch, getState) {
+      dispatch({
+        type: types.HISTORY_SET_ACTIVE_DEVICE_TYPE,
+        deviceType
+      });
+      dispatch(HistoryActions.setActiveDevice(getDeviceKeysByType(getState().user.profile.devices, deviceType), false));
+      
+      //set default options when switching
+      if (deviceType === 'AMPHIRO') {
+        dispatch(HistoryActions.setQueryFilter('volume'));
+        dispatch(HistoryActions.setTimeFilter('ten'));
+        dispatch(HistoryActions.setSortFilter('id'));
+      }
+      else if (deviceType === 'METER') {
+        dispatch(HistoryActions.setQueryFilter('difference'));
+        dispatch(HistoryActions.setTimeFilter('year'));
+        dispatch(HistoryActions.setSortFilter('timestamp'));
+      }
+      
+      if (query) { 
+        dispatch(setDataUnsynced());
+        dispatch(HistoryActions.query());
+      }
+    };
+  },
+   
+  resetActiveDevice: function(query=true) {
+    return function(dispatch, getState) {
+      dispatch({
         type: types.HISTORY_RESET_ACTIVE_DEVICE,
       });
+      
+      if (query) { 
+        dispatch(setDataUnsynced());
+        dispatch(HistoryActions.query());
+      }
     };
   },
   setActiveDeviceIfNone: function(deviceKey) {
@@ -246,43 +232,55 @@ const HistoryActions = {
       }
     };
   },
-  setActiveSessionIndex: function(sessionIndex) {
-    return {
-      type: types.HISTORY_SET_ACTIVE_SESSION_INDEX,
-      id: sessionIndex
+  
+  setActiveSession: function(device, id, timestamp) {
+    return function(dispatch, getState) {
+      dispatch({
+        type: types.HISTORY_SET_ACTIVE_SESSION,
+        device,
+        id: id || timestamp
+      });
+      if (id != null && device != null) {
+        dispatch(HistoryActions.getDeviceSession(id, device, getState().section.history.time));
+      }
     };
   },
-  resetActiveSessionIndex: function() {
+  
+  resetActiveSession: function() {
     return {
-      type: types.HISTORY_RESET_ACTIVE_SESSION_INDEX
+      type: types.HISTORY_RESET_ACTIVE_SESSION
     };
   },
-  increaseActiveSessionIndex: function() {
-    return {
-      type: types.HISTORY_INCREASE_ACTIVE_SESSION_INDEX
-    };
-  },
-  decreaseActiveSessionIndex: function() {
-    return {
-      type: types.HISTORY_DECREASE_ACTIVE_SESSION_INDEX
-    };
-  },
+
   setQueryFilter: function(filter) {
     return {
       type: types.HISTORY_SET_FILTER,
-      filter: filter
+      filter
     };
   },
   setTimeFilter: function(filter) {
     return {
       type: types.HISTORY_SET_TIME_FILTER,
-      filter: filter
+      filter
     };
   },
   setSessionFilter: function(filter) {
     return {
       type: types.HISTORY_SET_SESSION_FILTER,
-      filter: filter
+      filter
+    };
+  },  
+  setSortFilter: function(filter) {
+    return {
+      type: types.HISTORY_SET_SORT_FILTER,
+      filter
+    };
+  },
+  setSortOrder: function(order) {
+    if (order !== 'asc' && order !== 'desc') throw new Error('order must be asc or desc');
+    return {
+      type: types.HISTORY_SET_SORT_ORDER,
+      order
     };
   },
 };

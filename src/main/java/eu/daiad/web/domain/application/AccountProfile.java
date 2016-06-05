@@ -70,6 +70,12 @@ public class AccountProfile {
 	@Column(name = "utility_config")
 	private String utilityConfiguration;
 
+	@Column(name = "daily_amphiro_budget")
+	private Integer dailyAmphiroBudget;
+
+	@Column(name = "daily_meter_budget")
+	private Integer dailyMeterBudget;
+
 	public int getId() {
 		return id;
 	}
@@ -148,6 +154,22 @@ public class AccountProfile {
 
 	public long getRowVersion() {
 		return rowVersion;
+	}
+
+	public Integer getDailyAmphiroBudget() {
+		return dailyAmphiroBudget;
+	}
+
+	public void setDailyAmphiroBudget(Integer dailyAmphiroBudget) {
+		this.dailyAmphiroBudget = dailyAmphiroBudget;
+	}
+
+	public Integer getDailyMeterBudget() {
+		return dailyMeterBudget;
+	}
+
+	public void setDailyMeterBudget(Integer dailyMeterBudget) {
+		this.dailyMeterBudget = dailyMeterBudget;
 	}
 
 }

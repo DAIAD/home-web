@@ -45,9 +45,10 @@ import eu.daiad.web.model.query.GroupDataSeries;
 import eu.daiad.web.model.query.MeterUserDataPoint;
 import eu.daiad.web.model.query.RankingDataPoint;
 import eu.daiad.web.model.query.UserDataPoint;
+import eu.daiad.web.repository.BaseRepository;
 
 @Repository()
-public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurementRepository {
+public class HBaseWaterMeterMeasurementRepository extends BaseRepository implements IWaterMeterMeasurementRepository {
 
 	private static final Log logger = LogFactory.getLog(HBaseWaterMeterMeasurementRepository.class);
 
@@ -126,7 +127,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 			this.storeDataByMeter(serial, data);
 			this.storeDataByTime(serial, data);
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -180,7 +181,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 				table.put(p);
 			}
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (table != null) {
@@ -249,7 +250,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 				table.put(p);
 			}
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (table != null) {
@@ -399,7 +400,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 
 			return data;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (scanner != null) {
@@ -470,7 +471,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 				endDate = new DateTime(endDate.getYear(), 12, 31, 23, 59, 59, DateTimeZone.UTC);
 				break;
 			default:
-				throw new ApplicationException(DataErrorCode.TIME_GRANULARITY_NOT_SUPPORTED).set("level",
+				throw createApplicationException(DataErrorCode.TIME_GRANULARITY_NOT_SUPPORTED).set("level",
 								query.getGranularity());
 		}
 
@@ -547,7 +548,6 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 						volume = 0;
 						difference = 0;
 					}
-
 				}
 
 				series.sort();
@@ -555,7 +555,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 
 			return data;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (scanner != null) {
@@ -648,7 +648,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 					// Ignore
 					break;
 				default:
-					throw new ApplicationException(DataErrorCode.TIME_GRANULARITY_NOT_SUPPORTED).set("level",
+					throw createApplicationException(DataErrorCode.TIME_GRANULARITY_NOT_SUPPORTED).set("level",
 									query.getGranularity());
 			}
 
@@ -736,7 +736,7 @@ public class HBaseWaterMeterMeasurementRepository implements IWaterMeterMeasurem
 				}
 			}
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		} finally {
 			try {
 				if (scanner != null) {

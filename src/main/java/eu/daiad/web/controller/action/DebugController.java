@@ -25,6 +25,7 @@ import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,11 +44,16 @@ import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.loader.UploadRequest;
+import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.user.Account;
 import eu.daiad.web.repository.application.IDeviceRepository;
+import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IFileDataLoaderService;
 
+/**
+ * Provides helper methods for developers.
+ */
 @Controller
 public class DebugController extends BaseController {
 
@@ -64,6 +70,9 @@ public class DebugController extends BaseController {
 
 	@Autowired
 	private IUserRepository userRepository;
+
+	@Autowired
+	private IGroupRepository groupRepository;
 
 	@Autowired
 	private IDeviceRepository deviceRepository;
@@ -98,6 +107,12 @@ public class DebugController extends BaseController {
 		return Base64.encodeBase64URLSafeString(keyGen.generateKey().getEncoded());
 	}
 
+	/**
+	 * Registers all users found in the white list that have not yet been assigned to an account.
+	 * 
+	 * @param request a default password for all new accounts.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/action/debug/user/create", method = RequestMethod.POST, produces = "application/json")
 	@ResponseBody
 	@Secured({ "ROLE_ADMIN" })
@@ -137,10 +152,17 @@ public class DebugController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Registers a new Amphiro B1 device to all registered users that have no device registrations 
+	 * in their profile.
+	 * 
+	 * @param user the currently authenticated user.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/action/debug/amphiro/create", method = RequestMethod.GET, produces = "application/json")
 	@ResponseBody
 	@Secured({ "ROLE_ADMIN" })
-	public RestResponse registerAmphiro() {
+	public RestResponse registerAmphiro(@AuthenticationPrincipal AuthenticatedUser user) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -152,7 +174,7 @@ public class DebugController extends BaseController {
 				ArrayList<KeyValuePair> properties = new ArrayList<KeyValuePair>();
 				properties.add(new KeyValuePair("debug.autogenerate", (new DateTime(DateTimeZone.UTC)).toString()));
 
-				for (UUID userKey : userRepository.getUserKeysForUtility()) {
+				for (UUID userKey : groupRepository.getUtilityByIdMemberKeys(user.getId())) {
 					if (deviceRepository.getUserDevices(userKey, deviceQuery).size() == 0) {
 
 						deviceRepository.createAmphiroDevice(userKey, "Amphiro #1", generateRandomMacAddress(),
@@ -172,10 +194,18 @@ public class DebugController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Uploads a data file to the server and perform an action on it e.g. import test data
+	 * for Amphiro B1 devices.
+	 * 
+	 * @param user the currently authenticated user. 
+	 * @param request the upload file and action.
+	 * @return the controller's response.
+	 */
 	@RequestMapping(value = "/action/debug/amphiro/data/generate", method = RequestMethod.POST, produces = "application/json")
 	@ResponseBody
 	@Secured({ "ROLE_ADMIN" })
-	public RestResponse upload(UploadRequest request) {
+	public RestResponse upload(@AuthenticationPrincipal AuthenticatedUser user, UploadRequest request) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -210,8 +240,8 @@ public class DebugController extends BaseController {
 
 									this.saveFile(filename, file.getBytes());
 
-									this.fileDataLoaderService.importRandomAmphiroSessions(filename,
-													DateTimeZone.forID(request.getTimezone()));
+									this.fileDataLoaderService.importRandomAmphiroSessions(user.getUtilityId(),
+													filename, DateTimeZone.forID(request.getTimezone()));
 								}
 							}
 							break;

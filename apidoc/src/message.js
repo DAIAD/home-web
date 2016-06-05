@@ -17,14 +17,14 @@
  * @apiParam                            {String}   credentials.username   User name
  * @apiParam                            {String}   credentials.password   User password
  * @apiParam                            {Object[]} pagination             Array of <code>DataPagingOptions</code> objects. Each data paging options object contains information about fetching data for a specific type of messages. If more than one option objects are found for a single message type, the first overrides the others.
- * 
+ *
  * @apiParam (DataPagingOptions)   {Number}   type                   Message type. Valid values are <code>ALERT</code>, <code>RECOMMENDATION_STATIC</code>, <code>RECOMMENDATION_DYNAMIC</code> and <code>ANNOUNCEMENT</code>. This parameter is not case sensitive.
  * @apiParam (DataPagingOptions)   {Number}   [index]                Data paging starts from this index. If not set, data paging starts from the first record.
  * @apiParam (DataPagingOptions)   {Number}   [size]                 Number of records to return. If not set, all records are returned.
  * @apiParam (DataPagingOptions)   {Boolean}  [ascending]            <code>true</code> for ascending sorting; Otherwise <code>false</code>. Sorting is performed on the message id field. Sorting on message id field is similar to sorting over creation date. Default value is <code>true</code>.
  * @apiParam (DataPagingOptions)   {Number}   [minMessageId]         Filter data by minimum message id. This option is most useful to the <code>MOBILE</code> client if only the messages after a specific message are required.
- * 
- * 
+ *
+ *
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
@@ -39,17 +39,21 @@
  *     "minMessageId": 1453
  *   }]
  * }
- * 
+ *
  * @apiSuccess {Boolean}  success                  <code>true</code> or <code>false</code> indicating success of the operation.
  * @apiSuccess {Object[]} errors                   Empty array of error messages.
  * @apiSuccess {Object[]} alerts                   Array of <code>Alert</code> objects.
  * @apiSuccess {Object[]} recommendations          Array of <code>DynamicRecommendation</code> objects.
  * @apiSuccess {Object[]} tips                     Array of <code>StaticRecommendation</code> objects.
  * @apiSuccess {Object[]} announcements            Array of <code>Announcement</code> objects.
- * 
- * 
+ * @apiSuccess {Number}   totalAlerts              Total number of alerts.
+ * @apiSuccess {Number}   totalRecommendations     Total number of recommendations.
+ * @apiSuccess {Number}   totalTips                Total number of tips.
+ * @apiSuccess {Number}   totalAnnouncements       Total number of announcements.
+ *
+ *
  * @apiSuccess (Message) {String} type             Message type. Valid values are <code>ALERT</code>, <code>RECOMMENDATION_STATIC</code>, <code>RECOMMENDATION_DYNAMIC</code> and <code>ANNOUNCEMENT</code>.
- * 
+ *
  * @apiSuccess (Alert extends Message) {Number} id        Message unique id.
  * @apiSuccess (Alert extends Message) {String} alert     Alert type. Valid values are:
  * <br/><code>WATER_LEAK</code>
@@ -85,7 +89,7 @@
  * @apiSuccess (Alert extends Message) {String} imageLink      Image resource link.
  * @apiSuccess (Alert extends Message) {Number} createdOn      Date created time stamp.
  * @apiSuccess (Alert extends Message) {Number} acknowledgedOn Date acknoledged time stamp. This is the date the user has marked the message as read from the mobile/web application.
- * 
+ *
  * @apiSuccess (StaticRecommendation extends Message) {Number}  id                 Message unique id.
  * @apiSuccess (StaticRecommendation extends Message) {Number}  index              Message index.
  * @apiSuccess (StaticRecommendation extends Message) {String}  title              Short description.
@@ -99,7 +103,7 @@
  * @apiSuccess (StaticRecommendation extends Message) {Number}  modifiedOn         Date modified time stamp.
  * @apiSuccess (StaticRecommendation extends Message) {Boolean} active             <code>true</code> if message is acrive; Otherwise <code>false</code>.
  * @apiSuccess (StaticRecommendation extends Message) {Number}  acknowledgedOn     Date acknoledged time stamp. This is the date the user has marked the message as read from the mobile/web application.
- * 
+ *
  * @apiSuccess (DynamicRecommendation extends Message) {Number} id                Message unique id.
  * @apiSuccess (DynamicRecommendation extends Message) {String} recommendation    Recommendation type. Valid values are:
  * <br/><code>LESS_SHOWER_TIME</code>
@@ -114,7 +118,7 @@
  * @apiSuccess (DynamicRecommendation extends Message) {String} imageLink         Image resource link.
  * @apiSuccess (DynamicRecommendation extends Message) {Number} createdOn         Date created time stamp.
  * @apiSuccess (DynamicRecommendation extends Message) {Number} acknowledgedOn    Date acknoledged time stamp. This is the date the user has marked the message as read from the mobile/web application.
- * 
+ *
  * @apiSuccess (Announcement extends Message) {Number} id               Message unique id.
  * @apiSuccess (Announcement extends Message) {Number} priority         Message priority.
  * @apiSuccess (Announcement extends Message) {String} title            Short description.
@@ -122,8 +126,8 @@
  * @apiSuccess (Announcement extends Message) {String} link             Image resource link.
  * @apiSuccess (Announcement extends Message) {Number} createdOn        Date created time stamp.
  * @apiSuccess (Announcement extends Message) {Number} acknowledgedOn   Date acknoledged time stamp. This is the date the user has marked the message as read from the mobile/web application.
- * 
- * @apiSuccessExample {json} Message response
+ *
+ * @apiSuccessExample {json} Response Example
  * HTTP/1.1 200 OK
  * {
  *   "errors": [],
@@ -158,14 +162,14 @@
  *   "announcements": [],
  *   "success": true
  * }
- * 
+ *
  * @apiError {Boolean} success Always <code>false</code>.
  * @apiError {Object[]} errors Array of <code>Error</code> objects.
- * 
+ *
  * @apiError (Error) {String} code          Unique error code.
  * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
- * 
- * @apiErrorExample Response (example):
+ *
+ * @apiErrorExample Error Response Example
  * HTTP/1.1 200 OK
  * {
  *   errors: [{
@@ -190,16 +194,16 @@ function message() { return; }
  * @apiParam                            {String}   credentials.username   User name
  * @apiParam                            {String}   credentials.password   User password
  * @apiParam                            {Object[]} messages               Array of <code>MessageAcknowledgement</code>.
- * 
+ *
  * @apiParam (MessageAcknowledgement)   {Number}   type                   Message type. Valid values are <code>ALERT</code>, <code>RECOMMENDATION_STATIC</code>, <code>RECOMMENDATION_DYNAMIC</code> and <code>ANNOUNCEMENT</code>. This parameter is not case sensitive.
  * @apiParam (MessageAcknowledgement)   {Number}   id                     Unique message id. This id is unique per message type.
  * @apiParam (MessageAcknowledgement)   {Number}   timestamp              Time stamp the message was read by the user i.e. the time stamp at the mobile device.
- * 
+ *
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
- *     "username":"canogil.ana@gmail.com",
- *     "password":"123"
+ *     username: "user@daiad.eu",
+ *     password: "****"
  *   },
  *   "messages": [{
  *     "id": 1625,
@@ -211,17 +215,24 @@ function message() { return; }
  *     "type": "ALERT"
  *   }]
  * }
- * 
+ *
  * @apiSuccess {Boolean}  success                  <code>true</code> or <code>false</code> indicating success of the operation.
  * @apiSuccess {Object[]} errors                   Empty array of error messages.
- * 
+ *
+ * @apiSuccessExample {json} Response Example
+ * HTTP/1.1 200 OK
+ * {
+ *   "errors": [],
+ *   success: true
+ * }
+ *
  * @apiError {Boolean} success Always <code>false</code>.
  * @apiError {Object[]} errors Array of <code>Error</code> objects.
- * 
+ *
  * @apiError (Error) {String} code          Unique error code.
  * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
- * 
- * @apiErrorExample Response (example):
+ *
+ * @apiErrorExample Error Response Example
  * HTTP/1.1 200 OK
  * {
  *   errors: [{

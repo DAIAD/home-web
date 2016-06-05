@@ -34,30 +34,26 @@ import eu.daiad.web.domain.application.AccountProfile;
 import eu.daiad.web.domain.application.AccountProfileHistoryEntry;
 import eu.daiad.web.domain.application.AccountRole;
 import eu.daiad.web.domain.application.AccountWhiteListEntry;
-import eu.daiad.web.domain.application.Group;
-import eu.daiad.web.domain.application.GroupCluster;
 import eu.daiad.web.domain.application.Role;
 import eu.daiad.web.domain.application.Utility;
 import eu.daiad.web.model.EnumGender;
 import eu.daiad.web.model.EnumValueDescription;
 import eu.daiad.web.model.admin.AccountWhiteListInfo;
 import eu.daiad.web.model.error.ApplicationException;
-import eu.daiad.web.model.error.GroupErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
-import eu.daiad.web.model.group.GroupInfo;
 import eu.daiad.web.model.profile.EnumMobileMode;
 import eu.daiad.web.model.profile.EnumUtilityMode;
 import eu.daiad.web.model.profile.EnumWebMode;
-import eu.daiad.web.model.query.EnumClusterType;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.user.Account;
 import eu.daiad.web.model.user.UserInfo;
+import eu.daiad.web.repository.BaseRepository;
 
 @Repository
-@Transactional("transactionManager")
-public class JpaUserRepository implements IUserRepository {
+@Transactional("applicationTransactionManager")
+public class JpaUserRepository extends BaseRepository implements IUserRepository {
 
 	private static final Log logger = LogFactory.getLog(JpaUserRepository.class);
 
@@ -71,7 +67,7 @@ public class JpaUserRepository implements IUserRepository {
 		try {
 			for (EnumRole r : EnumRole.class.getEnumConstants()) {
 				TypedQuery<Role> roleQuery = entityManager.createQuery("select r from role r where r.name = :name",
-								Role.class);
+						Role.class);
 				roleQuery.setParameter("name", r.toString());
 
 				List<Role> roles = roleQuery.getResultList();
@@ -79,7 +75,7 @@ public class JpaUserRepository implements IUserRepository {
 					Role role = new Role();
 
 					String description = EnumRole.class.getField(r.name()).getAnnotation(EnumValueDescription.class)
-									.value();
+							.value();
 					role.setName(r.name());
 					role.setDescription(description);
 
@@ -87,7 +83,7 @@ public class JpaUserRepository implements IUserRepository {
 				}
 			}
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, UserErrorCode.ROLE_INITIALIZATION);
+			throw wrapApplicationException(ex, UserErrorCode.ROLE_INITIALIZATION);
 		}
 	}
 
@@ -95,13 +91,13 @@ public class JpaUserRepository implements IUserRepository {
 		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
 		try {
-			TypedQuery<eu.daiad.web.domain.application.Utility> utilityQuery = entityManager.createQuery(
-							"select u from utility u", eu.daiad.web.domain.application.Utility.class);
+			TypedQuery<eu.daiad.web.domain.application.Utility> utilityQuery = entityManager
+					.createQuery("select u from utility u", eu.daiad.web.domain.application.Utility.class);
 
 			for (eu.daiad.web.domain.application.Utility utility : utilityQuery.getResultList()) {
 				TypedQuery<eu.daiad.web.domain.application.Account> userQuery = entityManager.createQuery(
-								"select a from account a where a.username = :username",
-								eu.daiad.web.domain.application.Account.class);
+						"select a from account a where a.username = :username",
+						eu.daiad.web.domain.application.Account.class);
 				userQuery.setParameter("username", utility.getDefaultAdministratorUsername());
 
 				List<eu.daiad.web.domain.application.Account> users = userQuery.getResultList();
@@ -118,7 +114,7 @@ public class JpaUserRepository implements IUserRepository {
 					account.setLocale(Locale.ENGLISH.getLanguage());
 
 					TypedQuery<Role> roleQuery = entityManager.createQuery("select r from role r where r.name = :name",
-									Role.class);
+							Role.class);
 					roleQuery.setParameter("name", EnumRole.ROLE_ADMIN.name());
 
 					Role role = roleQuery.getSingleResult();
@@ -152,14 +148,13 @@ public class JpaUserRepository implements IUserRepository {
 					entry.setProfile(profile);
 					this.entityManager.persist(entry);
 
-					logger.info(String
-									.format("Default administrator has been crearted for utility [%s]. User name : %s. Password : %s",
-													utility.getName(), utility.getDefaultAdministratorUsername(),
-													password));
+					logger.info(String.format(
+							"Default administrator has been crearted for utility [%s]. User name : %s. Password : %s",
+							utility.getName(), utility.getDefaultAdministratorUsername(), password));
 				}
 			}
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, UserErrorCode.ADMIN_INITIALIZATION);
+			throw wrapApplicationException(ex, UserErrorCode.ADMIN_INITIALIZATION);
 		}
 	}
 
@@ -179,8 +174,8 @@ public class JpaUserRepository implements IUserRepository {
 
 	private boolean isUsernameReserved(String username) {
 		TypedQuery<eu.daiad.web.domain.application.Utility> userQuery = entityManager.createQuery(
-						"select u from utility u where u.defaultAdministratorUsername = :username",
-						eu.daiad.web.domain.application.Utility.class);
+				"select u from utility u where u.defaultAdministratorUsername = :username",
+				eu.daiad.web.domain.application.Utility.class);
 
 		userQuery.setParameter("username", username);
 
@@ -193,26 +188,26 @@ public class JpaUserRepository implements IUserRepository {
 
 		try {
 			if (this.isUsernameReserved(user.getUsername())) {
-				throw new ApplicationException(UserErrorCode.USERNANE_RESERVED).set("username", user.getUsername());
+				throw createApplicationException(UserErrorCode.USERNANE_RESERVED).set("username", user.getUsername());
 			}
 			if (this.getUserByName(user.getUsername()) != null) {
-				throw new ApplicationException(UserErrorCode.USERNANE_NOT_AVAILABLE)
-								.set("username", user.getUsername());
+				throw createApplicationException(UserErrorCode.USERNANE_NOT_AVAILABLE).set("username",
+						user.getUsername());
 			}
 
 			AccountWhiteListEntry whiteListEntry = null;
 
 			if (enforceWhiteListCheck) {
 				TypedQuery<eu.daiad.web.domain.application.AccountWhiteListEntry> query = entityManager
-								.createQuery("select a from account_white_list a where a.username = :username",
-												eu.daiad.web.domain.application.AccountWhiteListEntry.class)
-								.setFirstResult(0).setMaxResults(1);
+						.createQuery("select a from account_white_list a where a.username = :username",
+								eu.daiad.web.domain.application.AccountWhiteListEntry.class)
+						.setFirstResult(0).setMaxResults(1);
 				query.setParameter("username", user.getUsername());
 
 				List<eu.daiad.web.domain.application.AccountWhiteListEntry> result = query.getResultList();
 				if (result.size() == 0) {
-					throw new ApplicationException(UserErrorCode.WHITELIST_MISMATCH)
-									.set("username", user.getUsername());
+					throw createApplicationException(UserErrorCode.WHITELIST_MISMATCH).set("username",
+							user.getUsername());
 				} else {
 					whiteListEntry = result.get(0);
 				}
@@ -222,15 +217,13 @@ public class JpaUserRepository implements IUserRepository {
 
 			if (whiteListEntry != null) {
 				TypedQuery<eu.daiad.web.domain.application.Utility> query = entityManager.createQuery(
-								"select u from utility u where u.id = :id",
-								eu.daiad.web.domain.application.Utility.class);
+						"select u from utility u where u.id = :id", eu.daiad.web.domain.application.Utility.class);
 				query.setParameter("id", whiteListEntry.getUtility().getId());
 
 				utility = query.getSingleResult();
 			} else {
 				TypedQuery<eu.daiad.web.domain.application.Utility> query = entityManager.createQuery(
-								"select u from utility u where u.name = :name",
-								eu.daiad.web.domain.application.Utility.class);
+						"select u from utility u where u.name = :name", eu.daiad.web.domain.application.Utility.class);
 				query.setParameter("name", "DAIAD");
 
 				utility = query.getSingleResult();
@@ -258,7 +251,7 @@ public class JpaUserRepository implements IUserRepository {
 				if ((whiteListEntry.getLocation() != null) && (whiteListEntry.getLocation() instanceof Point)) {
 					account.setLocation(whiteListEntry.getLocation());
 				} else if ((whiteListEntry.getMeterLocation() != null)
-								&& (whiteListEntry.getMeterLocation() instanceof Point)) {
+						&& (whiteListEntry.getMeterLocation() instanceof Point)) {
 					account.setLocation(whiteListEntry.getMeterLocation());
 				}
 			} else {
@@ -286,7 +279,7 @@ public class JpaUserRepository implements IUserRepository {
 
 			Role role = null;
 			TypedQuery<Role> roleQuery = entityManager.createQuery("select r from role r where r.name = :name",
-							Role.class);
+					Role.class);
 			roleQuery.setParameter("name", EnumRole.ROLE_USER.toString());
 
 			role = roleQuery.getSingleResult();
@@ -333,7 +326,7 @@ public class JpaUserRepository implements IUserRepository {
 
 			return account.getKey();
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -355,9 +348,9 @@ public class JpaUserRepository implements IUserRepository {
 			AuthenticatedUser user = null;
 
 			TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager
-							.createQuery("select a from account a where a.username = :username",
-											eu.daiad.web.domain.application.Account.class).setFirstResult(0)
-							.setMaxResults(1);
+					.createQuery("select a from account a where a.username = :username",
+							eu.daiad.web.domain.application.Account.class)
+					.setFirstResult(0).setMaxResults(1);
 			query.setParameter("username", username);
 
 			List<eu.daiad.web.domain.application.Account> result = query.getResultList();
@@ -369,7 +362,7 @@ public class JpaUserRepository implements IUserRepository {
 					authorities.add(new SimpleGrantedAuthority(r.getRole().getName()));
 				}
 				user = new AuthenticatedUser(account.getId(), account.getKey(), account.getUsername(),
-								account.getPassword(), account.getUtility().getId(), account.isLocked(), authorities);
+						account.getPassword(), account.getUtility().getId(), account.isLocked(), authorities);
 
 				user.setCreatedOn(account.getCreatedOn());
 				user.setBirthdate(account.getBirthdate());
@@ -388,7 +381,7 @@ public class JpaUserRepository implements IUserRepository {
 
 			return user;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -398,9 +391,9 @@ public class JpaUserRepository implements IUserRepository {
 			AuthenticatedUser user = null;
 
 			TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager
-							.createQuery("select a from account a where a.key = :key",
-											eu.daiad.web.domain.application.Account.class).setFirstResult(0)
-							.setMaxResults(1);
+					.createQuery("select a from account a where a.key = :key",
+							eu.daiad.web.domain.application.Account.class)
+					.setFirstResult(0).setMaxResults(1);
 			query.setParameter("key", key);
 
 			List<eu.daiad.web.domain.application.Account> result = query.getResultList();
@@ -411,8 +404,9 @@ public class JpaUserRepository implements IUserRepository {
 				for (AccountRole r : account.getRoles()) {
 					authorities.add(new SimpleGrantedAuthority(r.getRole().getName()));
 				}
+				
 				user = new AuthenticatedUser(account.getId(), account.getKey(), account.getUsername(),
-								account.getPassword(), account.getUtility().getId(), account.isLocked(), authorities);
+						account.getPassword(), account.getUtility().getId(), account.isLocked(), authorities);
 
 				user.setCreatedOn(account.getCreatedOn());
 				user.setBirthdate(account.getBirthdate());
@@ -431,7 +425,7 @@ public class JpaUserRepository implements IUserRepository {
 
 			return user;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -441,9 +435,9 @@ public class JpaUserRepository implements IUserRepository {
 			AuthenticatedUser user = null;
 
 			TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager
-							.createQuery("select a from account a where a.key = :key and a.utility.id = :utility_id",
-											eu.daiad.web.domain.application.Account.class).setFirstResult(0)
-							.setMaxResults(1);
+					.createQuery("select a from account a where a.key = :key and a.utility.id = :utility_id",
+							eu.daiad.web.domain.application.Account.class)
+					.setFirstResult(0).setMaxResults(1);
 			query.setParameter("utility_id", utilityId);
 			query.setParameter("key", key);
 
@@ -456,7 +450,7 @@ public class JpaUserRepository implements IUserRepository {
 					authorities.add(new SimpleGrantedAuthority(r.getRole().getName()));
 				}
 				user = new AuthenticatedUser(account.getId(), account.getKey(), account.getUsername(),
-								account.getPassword(), account.getUtility().getId(), account.isLocked(), authorities);
+						account.getPassword(), account.getUtility().getId(), account.isLocked(), authorities);
 
 				user.setCreatedOn(account.getCreatedOn());
 				user.setBirthdate(account.getBirthdate());
@@ -475,15 +469,16 @@ public class JpaUserRepository implements IUserRepository {
 
 			return user;
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
 	@Override
 	public eu.daiad.web.model.admin.AccountWhiteListEntry getAccountWhiteListEntry(String username) {
 		TypedQuery<AccountWhiteListEntry> entityQuery = entityManager
-						.createQuery("select a from account_white_list a where a.username = :username",
-										AccountWhiteListEntry.class).setFirstResult(0).setMaxResults(1);
+				.createQuery("select a from account_white_list a where a.username = :username",
+						AccountWhiteListEntry.class)
+				.setFirstResult(0).setMaxResults(1);
 		entityQuery.setParameter("username", username);
 
 		List<AccountWhiteListEntry> entries = entityQuery.getResultList();
@@ -560,9 +555,9 @@ public class JpaUserRepository implements IUserRepository {
 	@Override
 	public List<eu.daiad.web.model.admin.AccountActivity> getAccountActivity(int utilityId) {
 		try {
-			TypedQuery<AccountActivity> query = entityManager
-							.createQuery("select a from trial_account_activity a where a.utilityId = :utility_id order by a.username",
-											AccountActivity.class);
+			TypedQuery<AccountActivity> query = entityManager.createQuery(
+					"select a from trial_account_activity a where a.utilityId = :utility_id order by a.username",
+					AccountActivity.class);
 
 			query.setParameter("utility_id", utilityId);
 
@@ -575,8 +570,8 @@ public class JpaUserRepository implements IUserRepository {
 				account.setKey(a.getKey());
 				account.setUtilityId(a.getUtilityId());
 				account.setAccountId(a.getAccountId());
-				account.setAccountRegisteredOn(a.getAccountRegisteredOn() != null ? a.getAccountRegisteredOn()
-								.getMillis() : null);
+				account.setAccountRegisteredOn(
+						a.getAccountRegisteredOn() != null ? a.getAccountRegisteredOn().getMillis() : null);
 				account.setUtilityName(a.getUtilityName());
 				account.setUsername(a.getUsername());
 				account.setFirstName(a.getFirstName());
@@ -585,19 +580,19 @@ public class JpaUserRepository implements IUserRepository {
 				account.setNumberOfAmphiroDevices(a.getNumberOfAmphiroDevices());
 				account.setNumberOfMeters(a.getNumberOfMeters());
 
-				account.setLastDataUploadFailure((a.getLastDataUploadFailure() != null) ? a.getLastDataUploadFailure()
-								.getMillis() : null);
-				account.setLastDataUploadSuccess(a.getLastDataUploadSuccess() != null ? a.getLastDataUploadSuccess()
-								.getMillis() : null);
-				account.setLastLoginFailure(a.getLastLoginFailure() != null ? a.getLastLoginFailure().getMillis()
-								: null);
-				account.setLastLoginSuccess(a.getLastLoginSuccess() != null ? a.getLastLoginSuccess().getMillis()
-								: null);
+				account.setLastDataUploadFailure(
+						(a.getLastDataUploadFailure() != null) ? a.getLastDataUploadFailure().getMillis() : null);
+				account.setLastDataUploadSuccess(
+						a.getLastDataUploadSuccess() != null ? a.getLastDataUploadSuccess().getMillis() : null);
+				account.setLastLoginFailure(
+						a.getLastLoginFailure() != null ? a.getLastLoginFailure().getMillis() : null);
+				account.setLastLoginSuccess(
+						a.getLastLoginSuccess() != null ? a.getLastLoginSuccess().getMillis() : null);
 
-				account.setLeastAmphiroRegistration(a.getLeastAmphiroRegistration() != null ? a
-								.getLeastAmphiroRegistration().getMillis() : null);
-				account.setLeastMeterRegistration(a.getLeastMeterRegistration() != null ? a.getLeastMeterRegistration()
-								.getMillis() : null);
+				account.setLeastAmphiroRegistration(
+						a.getLeastAmphiroRegistration() != null ? a.getLeastAmphiroRegistration().getMillis() : null);
+				account.setLeastMeterRegistration(
+						a.getLeastMeterRegistration() != null ? a.getLeastMeterRegistration().getMillis() : null);
 
 				account.setTransmissionCount(a.getTransmissionCount());
 				account.setTransmissionIntervalMax(a.getTransmissionIntervalMax());
@@ -619,15 +614,15 @@ public class JpaUserRepository implements IUserRepository {
 		try {
 
 			TypedQuery<eu.daiad.web.domain.application.AccountWhiteListEntry> whitelistQuery = entityManager
-							.createQuery("select a from account_white_list a where a.username = :username",
-											eu.daiad.web.domain.application.AccountWhiteListEntry.class)
-							.setFirstResult(0).setMaxResults(1);
+					.createQuery("select a from account_white_list a where a.username = :username",
+							eu.daiad.web.domain.application.AccountWhiteListEntry.class)
+					.setFirstResult(0).setMaxResults(1);
 			whitelistQuery.setParameter("username", userInfo.getEmail());
 			List<AccountWhiteListEntry> whitelistEntries = whitelistQuery.getResultList();
 
 			if (!whitelistEntries.isEmpty()) {
-				throw new ApplicationException(UserErrorCode.USERNAME_EXISTS_IN_WHITELIST).set("username",
-								userInfo.getEmail());
+				throw createApplicationException(UserErrorCode.USERNAME_EXISTS_IN_WHITELIST).set("username",
+						userInfo.getEmail());
 			}
 
 			AccountWhiteListEntry newEntry = new AccountWhiteListEntry(userInfo.getEmail());
@@ -637,14 +632,15 @@ public class JpaUserRepository implements IUserRepository {
 
 			// Get Utility
 			TypedQuery<eu.daiad.web.domain.application.Utility> utilityQuery = entityManager
-							.createQuery("select u from utility u where u.id = :id",
-											eu.daiad.web.domain.application.Utility.class).setFirstResult(0)
-							.setMaxResults(1);
+					.createQuery("select u from utility u where u.id = :id",
+							eu.daiad.web.domain.application.Utility.class)
+					.setFirstResult(0).setMaxResults(1);
 			utilityQuery.setParameter("id", userInfo.getUtilityId());
 			List<Utility> utilityEntry = utilityQuery.getResultList();
 
 			if (utilityEntry.isEmpty()) {
-				throw new ApplicationException(UserErrorCode.UTILITY_DOES_NOT_EXIST).set("id", userInfo.getUtilityId());
+				throw createApplicationException(UserErrorCode.UTILITY_DOES_NOT_EXIST).set("id",
+						userInfo.getUtilityId());
 			}
 			newEntry.setUtility(utilityEntry.get(0));
 			newEntry.setCountry(utilityEntry.get(0).getCountry());
@@ -660,7 +656,7 @@ public class JpaUserRepository implements IUserRepository {
 			this.entityManager.persist(newEntry);
 
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
 
@@ -669,8 +665,8 @@ public class JpaUserRepository implements IUserRepository {
 		ArrayList<UUID> result = new ArrayList<UUID>();
 		try {
 			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from \"group\" g "
-							+ "inner join group_member gm on g.id = gm.group_id "
-							+ "inner join account a on gm.account_id = a.id where g.key = CAST(? as uuid)");
+					+ "inner join group_member gm on g.id = gm.group_id "
+					+ "inner join account a on gm.account_id = a.id where g.key = CAST(? as uuid)");
 			query.setParameter(1, groupKey.toString());
 
 			List<?> keys = query.getResultList();
@@ -689,7 +685,7 @@ public class JpaUserRepository implements IUserRepository {
 		ArrayList<UUID> result = new ArrayList<UUID>();
 		try {
 			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from utility u "
-							+ "inner join account a on u.id = a.utility_id where u.key = CAST(? as uuid)");
+					+ "inner join account a on u.id = a.utility_id where u.key = CAST(? as uuid)");
 			query.setParameter(1, utilityKey.toString());
 
 			List<?> keys = query.getResultList();
@@ -708,7 +704,7 @@ public class JpaUserRepository implements IUserRepository {
 		ArrayList<UUID> result = new ArrayList<UUID>();
 		try {
 			Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from utility u "
-							+ "inner join account a on u.id = a.utility_id where u.id = :utilityId");
+					+ "inner join account a on u.id = a.utility_id where u.id = :utilityId");
 			query.setParameter("utilityId", utilityId);
 
 			List<?> keys = query.getResultList();
@@ -735,8 +731,8 @@ public class JpaUserRepository implements IUserRepository {
 			}
 
 			if (user != null) {
-				Query query = entityManager
-								.createNativeQuery("select CAST(a.key as char varying) from account a where a.utility_id = :utility_id");
+				Query query = entityManager.createNativeQuery(
+						"select CAST(a.key as char varying) from account a where a.utility_id = :utility_id");
 				query.setParameter("utility_id", user.getUtilityId());
 
 				List<?> keys = query.getResultList();
@@ -750,39 +746,6 @@ public class JpaUserRepository implements IUserRepository {
 		}
 
 		return result;
-	}
-
-	@Override
-	public List<GroupCluster> getClusterGroupByKey(UUID key) {
-		TypedQuery<GroupCluster> query = entityManager.createQuery("select g from group_cluster g  "
-						+ "where g.utility.id = :utility_id and g.cluster.key = :key", GroupCluster.class);
-
-		query.setParameter("utility_id", this.getCurrentUtilityId());
-		query.setParameter("key", key);
-
-		return query.getResultList();
-	}
-
-	@Override
-	public List<GroupCluster> getClusterGroupByName(String name) {
-		TypedQuery<GroupCluster> query = entityManager.createQuery("select g from group_cluster g "
-						+ "where g.utility.id = :utility_id and g.cluster.name = :name", GroupCluster.class);
-
-		query.setParameter("utility_id", this.getCurrentUtilityId());
-		query.setParameter("name", name);
-
-		return query.getResultList();
-	}
-
-	@Override
-	public List<GroupCluster> getClusterGroupByType(EnumClusterType type) {
-		TypedQuery<GroupCluster> query = entityManager.createQuery("select g from group_cluster g "
-						+ "where g.utility.id = :utility_id and g.cluster.name = :name", GroupCluster.class);
-
-		query.setParameter("utility_id", this.getCurrentUtilityId());
-		query.setParameter("name", type.getName());
-
-		return query.getResultList();
 	}
 
 	private Integer getCurrentUtilityId() {
@@ -807,21 +770,22 @@ public class JpaUserRepository implements IUserRepository {
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 			
 			if (!user.hasRole("ROLE_ADMIN") && !user.hasRole("ROLE_SUPERUSER")) {
-				throw new ApplicationException(SharedErrorCode.AUTHORIZATION);
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 			
 			TypedQuery<eu.daiad.web.domain.application.Account> userQuery = entityManager.createQuery(
 					"SELECT a FROM account a WHERE a.key = :user_id",
 					eu.daiad.web.domain.application.Account.class).setFirstResult(0).setMaxResults(1);
 			userQuery.setParameter("user_id", user_id);
-						
+
 			eu.daiad.web.domain.application.Account account = userQuery.getSingleResult();
 			
 			return new UserInfo(account);
 		}catch (NoResultException ex) {
-			throw ApplicationException.wrap(ex, UserErrorCode.USERID_NOT_FOUND).set("accountId", user_id);
+			throw wrapApplicationException(ex, UserErrorCode.USERID_NOT_FOUND).set("accountId", user_id);
 		} catch (Exception ex) {
-			throw ApplicationException.wrap(ex, SharedErrorCode.UNKNOWN);
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
+
 }

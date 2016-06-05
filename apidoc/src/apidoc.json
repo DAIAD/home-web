@@ -30,7 +30,8 @@
 	"AmphiroSessionByIndex",
 	"AmphiroSingleSessionByTime",
 	"AmphiroSingleSessionByIndex",
-    "Message"
+    "Message",
+	"Admin"
   ],
   "template": {
   	"withCompare": true,

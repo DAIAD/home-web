@@ -3,25 +3,35 @@ package eu.daiad.web.repository.application;
 import java.util.List;
 import java.util.UUID;
 
-import eu.daiad.web.model.group.CreateGroupSetRequest;
+import eu.daiad.web.model.group.Account;
+import eu.daiad.web.model.group.Group;
 import eu.daiad.web.model.group.GroupInfo;
-import eu.daiad.web.model.group.GroupMemberInfo;
-import eu.daiad.web.model.user.UserInfo;
+import eu.daiad.web.model.query.EnumClusterType;
 
-public interface IGroupRepository{
-	
-	public abstract List <GroupInfo> getGroups();
-	
-	public abstract List <GroupMemberInfo> getGroupCurrentMembers(UUID group_id);
+public interface IGroupRepository {
 
-	public abstract List<GroupMemberInfo> getGroupPossibleMembers(UUID group_id);
+	List<Group> getAll();
 
-	public abstract void createGroupSet(CreateGroupSetRequest groupSetInfo);
+	List<Group> getUtilities();
 
-	public abstract GroupInfo getSingleGroupByKey(UUID group_id);
+	List<Group> getClusters();
 
-	public abstract void deleteGroup(UUID group_id);
+	List<Group> getClusterByKeySegments(UUID clusterKey);
 
-	public abstract List <GroupInfo> getGroupsByMember(UUID user_id);
-		
+	List<Group> getClusterByNameSegments(String name);
+
+	List<Group> getClusterByTypeSegments(EnumClusterType type);
+
+	List<Group> getSets();
+
+	List<Group> getCommunities();
+
+	List<Account> getGroupMembers(UUID groupKey);
+
+	List<UUID> getGroupMemberKeys(UUID groupKey);
+
+	List<UUID> getUtilityByIdMemberKeys(int utilityId);
+
+	List<UUID> getUtilityByKeyMemberKeys(UUID utilityKey);
+
 }

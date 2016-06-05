@@ -13,14 +13,15 @@ import eu.daiad.web.model.profile.ProfileModes;
 import eu.daiad.web.model.profile.ProfileModesFilterOptions;
 import eu.daiad.web.model.profile.ProfileModesRequest;
 import eu.daiad.web.model.profile.ProfileModesSubmitChangesRequest;
+import eu.daiad.web.model.profile.UpdateProfileRequest;
 
 public interface IProfileRepository {
 
 	public abstract Profile getProfileByUsername(EnumApplication application) throws ApplicationException;
-	
-	public abstract List <ProfileModes> getProfileModes(ProfileModesRequest filters) throws ApplicationException;
 
-	public abstract void setProfileConfiguration(EnumApplication application, String value);
+	public abstract List<ProfileModes> getProfileModes(ProfileModesRequest filters) throws ApplicationException;
+
+	public abstract void saveProfile(UpdateProfileRequest updates);
 
 	public abstract void notifyProfile(EnumApplication application, UUID version, DateTime updatedOn);
 
