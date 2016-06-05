@@ -58,6 +58,15 @@ public class ProfileController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * It lists all modes (mobile, amphiro, social) for all users matching the specified 
+	 * filter options (if any).
+	 * 
+	 * @param user the authenticated user.
+	 * @param filters the filter options
+	 * @return the array of modes for the matching users
+	 * @throws JsonProcessingException
+	 */
 	@RequestMapping(value = "/action/profile/modes/list", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
 	public RestResponse getProfileModes(@AuthenticationPrincipal AuthenticatedUser user,
@@ -75,6 +84,14 @@ public class ProfileController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * It returns all available filter options for the user modes (including possible 
+	 * mode values and utility names)
+	 * 
+	 * @param user the authenticated user.
+	 * @return the available filter options.
+	 * @throws JsonProcessingException
+	 */
 	@RequestMapping(value = "/action/profile/modes/filter/options", method = RequestMethod.GET, produces = "application/json")
 	@Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
 	public RestResponse getFilterOptions(@AuthenticationPrincipal AuthenticatedUser user)
@@ -92,6 +109,14 @@ public class ProfileController extends BaseController {
 		return response;
 	}
 
+	/**
+	 * Given an array of altered modes, this changes are applied.
+	 * 
+	 * @param user the authenticated user.
+	 * @param modeChanges the array of mode changes.
+	 * @return the controller's response.
+	 * @throws JsonProcessingException
+	 */
 	@RequestMapping(value = "/action/profile/modes/save", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
 	public RestResponse saveModeChanges(@AuthenticationPrincipal AuthenticatedUser user,
@@ -112,10 +137,8 @@ public class ProfileController extends BaseController {
 	/**
 	 * Deactivates a user.
 	 * 
-	 * @param user
-	 *            the authenticated user.
-	 * @param userDeactId
-	 *            the user to deactivate
+	 * @param user the authenticated user.
+	 * @param userDeactId the user to deactivate
 	 * @return the controller's response.
 	 * @throws JsonProcessingException
 	 */

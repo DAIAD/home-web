@@ -5,9 +5,7 @@ var { Link } = require('react-router');
 var Table = require('./Table');
 var Chart = require('./Chart');
 
-
 var UpsertFavouriteForm = require('./section/demographics/UpsertFavouriteForm');
-
 
 var { connect } = require('react-redux');
 var { bindActionCreators } = require('redux');
@@ -213,7 +211,10 @@ var Group = React.createClass({
 			      <UpsertFavouriteForm
 			      type = 'GROUP'
             itemId = {this.props.params.id}
-            cancelAction = {this.props.hideFavouriteGroupForm}
+			      actions = {{
+              cancelAction : this.props.hideFavouriteGroupForm,
+              refreshParentForm : function (){}
+            }}
           />
 			  );
 			} else if (this.props.application === 'favouriteAccountForm'){
@@ -221,7 +222,10 @@ var Group = React.createClass({
             <UpsertFavouriteForm
             type = 'ACCOUNT'
             itemId = {this.props.accountId}
-            cancelAction = {this.props.hideFavouriteAccountForm}
+            actions = {{
+              cancelAction : this.props.hideFavouriteAccountForm,
+              refreshParentForm : function (){}
+            }}
           />
         );
       } else  if (this.props.groupInfo && this.props.currentMembers){

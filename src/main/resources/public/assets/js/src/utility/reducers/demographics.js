@@ -5,6 +5,7 @@ var DemographicsTablesSchema = require('../constants/DemographicsTablesSchema');
 
 var initialState = {
     isLoading : false,
+    showMessageAlert : false,
     asyncResponse : {
       action : null,
       success : null,
@@ -40,8 +41,8 @@ var initialState = {
       candidateMembersToAdd : [],
       candidateMembersToRemove : []
     },
-    deleteGroupForm : {
-      id : null,
+    ModalForm : {
+      itemId : null,
       modal : {
         show : false
       }
@@ -170,6 +171,7 @@ var demographics = function(state, action) {
   case types.DEMOGRAPHICS_SHOW_NEW_GROUP_FORM:
     return Object.assign({}, state, {
       isLoading : true,
+      showMessageAlert : false,
       application : 'addNewGroup'
     });
     
@@ -379,6 +381,7 @@ var demographics = function(state, action) {
    
   case types.DEMOGRAPHICS_SHOW_FAVOURITE_GROUP_FORM:
     return Object.assign({}, state, {
+      showMessageAlert : false,
       favouriteGroupId : action.groupId,
       application : 'favouriteGroupForm'
     });
@@ -396,8 +399,8 @@ var demographics = function(state, action) {
     
   case types.DEMOGRAPHICS_SHOW_MODAL:
     return Object.assign({}, state, {
-      deleteGroupForm : {
-        id : action.groupId,
+      ModalForm : {
+        itemId : action.groupId,
         modal : {
           show : true,
           title : action.title,
@@ -409,8 +412,8 @@ var demographics = function(state, action) {
     
   case types.DEMOGRAPHICS_HIDE_MODAL:
     return Object.assign({}, state, {
-      deleteGroupForm : {
-        id : null,
+      ModalForm : {
+        itemId : null,
         modal : {
           show : false
         }
@@ -427,6 +430,7 @@ var demographics = function(state, action) {
     
     return Object.assign({}, state, {
       isLoading : false,
+      showMessageAlert : true,
       asyncResponse : {
         action : 'DeleteGroup',
         success : action.success,
@@ -448,6 +452,12 @@ var demographics = function(state, action) {
         success : action.success,
         errors : action.errors,
       },
+    });
+    
+    
+  case types.DEMOGRAPHICS_HIDE_MESSAGE_ALERT:
+    return Object.assign({}, state, {
+      showMessageAlert : false
     });
     
     
