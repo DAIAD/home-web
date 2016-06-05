@@ -4,6 +4,8 @@ import java.util.Date;
 import java.util.List;
 
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.scheduling.ExecutionQuery;
+import eu.daiad.web.model.scheduling.ExecutionQueryResult;
 import eu.daiad.web.model.scheduling.JobExecutionInfo;
 import eu.daiad.web.model.scheduling.JobInfo;
 
@@ -26,16 +28,20 @@ public interface ISchedulerService {
 	abstract JobInfo getJob(long jobId);
 
 	/**
+     * Returns a list of {@link JobExecutionInfo}, optionally filtered by a query.
+     * 
+     * @param query the query to filter records.
+     * @return the executions
+     */
+    abstract ExecutionQueryResult getJobExecutions(ExecutionQuery query);
+    
+	/**
 	 * Returns a list of {@link JobExecutionInfo} for a job based on its id.
 	 * 
-	 * @param jobId
-	 *            the job id.
-	 * @param startPosition
-	 *            the start index.
-	 * @param maxResult
-	 *            the number of returned objects.
-	 * @return the first {@code maxResult} executions starting from
-	 *         {@code startPosition} index.
+	 * @param jobId the job id.
+	 * @param startPosition the start index.
+	 * @param maxResult the number of returned objects.
+	 * @return the first {@code maxResult} executions starting from {@code startPosition} index.
 	 */
 	abstract List<JobExecutionInfo> getJobExecutions(long jobId, int startPosition, int maxResult);
 
@@ -55,6 +61,14 @@ public interface ISchedulerService {
 	 */
 	abstract void disable(Long jobId);
 
+    /**
+     * Returns the message of an execution by its id.
+     * 
+     * @param executionId the execution id.
+     * @return the execution message.
+     */
+	abstract String getExecutionMessage(long executionId);
+	
 	/**
 	 * Schedules a job to run periodically.
 	 * 

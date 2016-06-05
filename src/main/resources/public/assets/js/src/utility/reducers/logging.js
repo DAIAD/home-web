@@ -16,8 +16,7 @@ var createInitialeState = function() {
       index : 0,
       size : 10,
       events : null
-    },
-    timeout : null
+    }
   };
 };
 
@@ -60,13 +59,8 @@ var logging = function(state, action) {
       });
 
     case types.LOG_EVENT_REQUEST_INIT:
-      if (state.timeout) {
-        clearTimeout(timeout);
-      }
-
       return Object.assign({}, state, {
-        isLoading : true,
-        timeout : null
+        isLoading : true
       });
 
     case types.LOG_EVENT_REQUEST_COMPLETE:

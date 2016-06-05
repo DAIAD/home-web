@@ -63,9 +63,10 @@ var SessionActions = {
 		return function(dispatch, getState) {
 			return sessionAPI.getProfile().then(
 					function(response) {
-						dispatch(receivedLogin(response.success,
+					  dispatch(receivedLogin(response.success,
 								response.errors, response.profile));
 					}, function(error) {
+					  console.log(error);
 						dispatch(receivedLogin(false, error, {}));
 					});
 		};

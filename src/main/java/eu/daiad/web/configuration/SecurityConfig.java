@@ -5,6 +5,7 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.autoconfigure.web.ErrorProperties;
 import org.springframework.context.annotation.Bean;
@@ -22,6 +23,7 @@ import eu.daiad.web.logging.MappedDiagnosticContextFilter;
 import eu.daiad.web.security.CsrfTokenResponseHeaderBindingFilter;
 import eu.daiad.web.security.CustomAccessDeniedHandler;
 import eu.daiad.web.security.CustomAuthenticationProvider;
+import eu.daiad.web.security.CustomLoginUrlAuthenticationEntryPoint;
 import eu.daiad.web.security.RESTAuthenticationFailureHandler;
 import eu.daiad.web.security.RESTAuthenticationSuccessHandler;
 import eu.daiad.web.security.RESTLogoutSuccessHandler;
@@ -33,90 +35,91 @@ import eu.daiad.web.security.RESTLogoutSuccessHandler;
 @Order(SecurityProperties.ACCESS_OVERRIDE_ORDER)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-	@Bean
-	protected ErrorProperties errorProperties() {
-		return new ErrorProperties();
-	}
+    @Bean
+    protected ErrorProperties errorProperties() {
+        return new ErrorProperties();
+    }
 
-	@Autowired
-	private RESTAuthenticationSuccessHandler authenticationSuccessHandler;
+    @Value("${server.login.force-https:true}")
+    private boolean forceHttps;
 
-	@Autowired
-	private RESTAuthenticationFailureHandler authenticationFailureHandler;
+    @Autowired
+    private RESTAuthenticationSuccessHandler authenticationSuccessHandler;
 
-	@Autowired
-	private RESTLogoutSuccessHandler logoutSuccessHandler;
+    @Autowired
+    private RESTAuthenticationFailureHandler authenticationFailureHandler;
 
-	@Autowired
-	private CustomAuthenticationProvider authenticationProvider;
+    @Autowired
+    private RESTLogoutSuccessHandler logoutSuccessHandler;
 
-	@Autowired
-	private CustomAccessDeniedHandler accessDeniedHandler;
+    @Autowired
+    private CustomAuthenticationProvider authenticationProvider;
 
-	/**
-	 * Adds authentication based upon the custom {@link AuthenticationProvider}
-	 * 
-	 * @param auth
-	 *            the authentication manager builder.
-	 */
-	@Override
-	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-		auth.authenticationProvider(authenticationProvider);
-	}
+    @Autowired
+    private CustomAccessDeniedHandler accessDeniedHandler;
 
-	/**
-	 * Configures the {@link HttpSecurity}.
-	 * 
-	 * @param http
-	 *            the configuration for modifying web based security.
-	 */
-	@Override
-	protected void configure(HttpSecurity http) throws Exception {
-		// Allow anonymous access to selected requests
-		http.authorizeRequests()
-						.antMatchers("/", "/login", "/logout", "/error/**", "/home/**", "/utility/**", "/assets/**",
-										"/api/**").permitAll().antMatchers("/docs/**").access("hasRole('ROLE_ADMIN')");
+    /**
+     * Adds authentication based upon the custom {@link AuthenticationProvider}
+     *
+     * @param auth the authentication manager builder.
+     */
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.authenticationProvider(authenticationProvider);
+    }
 
-		// Disable CSRF for API requests
-		http.csrf().requireCsrfProtectionMatcher(new RequestMatcher() {
+    /**
+     * Configures the {@link HttpSecurity}.
+     *
+     * @param http the configuration for modifying web based security.
+     */
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        // Allow anonymous access to selected requests
+        http.authorizeRequests().antMatchers("/", "/login", "/logout", "/error/**", "/home/**", "/utility/**",
+                        "/assets/**", "/api/**").permitAll().antMatchers("/docs/**").access("hasRole('ROLE_ADMIN')");
 
-			private Pattern allowedMethods = Pattern.compile("^(GET|HEAD|TRACE|OPTIONS)$");
+        // Disable CSRF for API requests
+        http.csrf().requireCsrfProtectionMatcher(new RequestMatcher() {
 
-			private RegexRequestMatcher apiMatcher = new RegexRequestMatcher("/api/v\\d+/.*", null);
+            private Pattern allowedMethods = Pattern.compile("^(GET|HEAD|TRACE|OPTIONS)$");
 
-			@Override
-			public boolean matches(HttpServletRequest request) {
-				// No CSRF due to allowedMethod
-				if (allowedMethods.matcher(request.getMethod()).matches())
-					return false;
+            private RegexRequestMatcher apiMatcher = new RegexRequestMatcher("/api/v\\d+/.*", null);
 
-				// No CSRF due to API call
-				if (apiMatcher.matches(request))
-					return false;
+            @Override
+            public boolean matches(HttpServletRequest request) {
+                // No CSRF due to allowedMethod
+                if (allowedMethods.matcher(request.getMethod()).matches())
+                    return false;
 
-				// Apply CSRF for everything else that is not an API call or
-				// the request method does not match allowedMethod pattern
-				return true;
-			}
-		}).ignoringAntMatchers("/login");
+                // No CSRF due to API call
+                if (apiMatcher.matches(request))
+                    return false;
 
-		// Require authorization for all requests except for the aforementioned
-		// exceptions
-		http.authorizeRequests().anyRequest().fullyAuthenticated();
+                // Apply CSRF for everything else that is not an API call or
+                // the request method does not match allowedMethod pattern
+                return true;
+            }
+        }).ignoringAntMatchers("/login");
 
-		// Configure form based authentication for the web application
-		http.formLogin().loginPage("/login").usernameParameter("username").passwordParameter("password")
-						.successHandler(authenticationSuccessHandler).failureHandler(authenticationFailureHandler);
+        // Require authorization for all requests except for the aforementioned
+        // exceptions
+        http.authorizeRequests().anyRequest().fullyAuthenticated();
 
-		// Configure logout page for the web application
-		http.logout().logoutUrl("/logout").logoutSuccessHandler(logoutSuccessHandler);
+        // Configure form based authentication for the web application
+        http.formLogin().loginPage("/login").usernameParameter("username").passwordParameter("password")
+                        .successHandler(authenticationSuccessHandler).failureHandler(authenticationFailureHandler);
 
-		http.exceptionHandling().accessDeniedHandler(accessDeniedHandler);
+        // Configure logout page for the web application
+        http.logout().logoutUrl("/logout").logoutSuccessHandler(logoutSuccessHandler);
 
-		// Refresh CSRF token
-		http.addFilterAfter(new CsrfTokenResponseHeaderBindingFilter(), CsrfFilter.class);
+        http.exceptionHandling().accessDeniedHandler(accessDeniedHandler).authenticationEntryPoint(
+                        new CustomLoginUrlAuthenticationEntryPoint("/login", forceHttps));
 
-		// Set MDC before CSRF filter
-		http.addFilterBefore(new MappedDiagnosticContextFilter(), CsrfFilter.class);
-	}
+        // Refresh CSRF token
+        http.addFilterAfter(new CsrfTokenResponseHeaderBindingFilter(), CsrfFilter.class);
+
+        // Set MDC before CSRF filter
+        http.addFilterBefore(new MappedDiagnosticContextFilter(), CsrfFilter.class);
+    }
 }

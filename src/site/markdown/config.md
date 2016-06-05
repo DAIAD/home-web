@@ -84,6 +84,7 @@ Additional information on how to configuring Log4j2 can be found at [Log4j2] (ht
 |spring.batch.schema|Schema creation script location|classpath:db/migration/daiad-manager/V1_0_1__Initialize_Spring_Batch_database.sql|
 |spring.batch.table-prefix|Prefix used by Spring Batch job repository for schema objects|batch.|
 |job.parameters.incrementer.name|Sequence name for DataSourceJobParametersIncrementer implementation|incrementer|
+|daiad.batch.server-time-zone|Application server time zone. Used as a workaround to Spring Batch saving local time to PostgreSQL field of type `timestamp without time zone`.|Europe/Athens|
 
 # Application General Settings
 
@@ -125,7 +126,8 @@ Additional information on how to configuring Log4j2 can be found at [Log4j2] (ht
 
 |Property|Description|Default|
 |---|---|---|
-|server.port|Server port|8888|
+|server.port|Server port. For production profile this property must be commented out|8888|
+|server.login.force-https|Enforce HTTPS for the login page. For production profile, it must be set to `true`|true|
 |datasource.default.driver-class-name|Data source driver for the `daiad` database|org.postgresql.Driver|
 |datasource.default.url|Data source url for the `daiad` database|`jdbc:postgresql://localhost:5432/daiad`|
 |datasource.default.username|Data source user for the `daiad` database||

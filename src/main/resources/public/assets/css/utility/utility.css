@@ -452,37 +452,48 @@ a .disabled{
 /* log levels */
 .log_error {
     padding: 4px 4px;
-    background: yellow;
     border-radius: 4px;
-    margin-left: -4px;
     color: #D8000C;
-background-color: #FFBABA;
+    background-color: #FFBABA;
+    text-align: center;
 }
 
 .log_warn {
     padding: 4px 4px;
-    background: yellow;
     border-radius: 4px;
-    margin-left: -4px;
     color: #9F6000;
     background-color: #FEEFB3;
+    text-align: center;
 }
 
 .log_info {
     padding: 4px 4px;
-    background: yellow;
     border-radius: 4px;
-    margin-left: -4px;
     color: #00529B;
     background-color: #BDE5F8;
+    text-align: center;
 }
 
-.log_gray {
+.log_success {
     padding: 4px 4px;
-    background: yellow;
     border-radius: 4px;
-    margin-left: -4px;
+    color: #f3f3f3;
+    background-color: #51A351;
+    text-align: center;
+}
+
+.log_debug {
+    padding: 4px 4px;
+    border-radius: 4px;
     background-color: #d0d0d0;
+    text-align: center;
+}
+
+.log_trace {
+    padding: 4px 4px;
+    border-radius: 4px;
+    background-color: #d0d0d0;
+    text-align: center;
 }
 
 /* Bootstrap forms */

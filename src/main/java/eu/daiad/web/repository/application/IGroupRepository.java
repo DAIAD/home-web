@@ -5,33 +5,33 @@ import java.util.UUID;
 
 import eu.daiad.web.model.group.Account;
 import eu.daiad.web.model.group.Group;
-import eu.daiad.web.model.group.GroupInfo;
+import eu.daiad.web.model.group.GroupQuery;
 import eu.daiad.web.model.query.EnumClusterType;
 
 public interface IGroupRepository {
 
-	List<Group> getAll();
+    List<Group> getAll(GroupQuery query);
 
-	List<Group> getUtilities();
+    List<Group> getUtilities(UUID utilityKey);
 
-	List<Group> getClusters();
+    List<Group> getClusters(UUID utilityKey);
 
-	List<Group> getClusterByKeySegments(UUID clusterKey);
+    List<Group> getClusterByKeySegments(UUID clusterKey);
 
-	List<Group> getClusterByNameSegments(String name);
+    List<Group> getClusterByNameSegments(String name);
 
-	List<Group> getClusterByTypeSegments(EnumClusterType type);
+    List<Group> getClusterByTypeSegments(EnumClusterType type);
 
-	List<Group> getSets();
+    List<Group> getSets();
 
-	List<Group> getCommunities();
+    List<Group> getCommunities();
 
-	List<Account> getGroupMembers(UUID groupKey);
+    List<Account> getGroupMembers(UUID groupKey);
 
-	List<UUID> getGroupMemberKeys(UUID groupKey);
+    List<UUID> getGroupMemberKeys(UUID groupKey);
 
-	List<UUID> getUtilityByIdMemberKeys(int utilityId);
+    List<UUID> getUtilityByIdMemberKeys(int utilityId);
 
-	List<UUID> getUtilityByKeyMemberKeys(UUID utilityKey);
+    List<UUID> getUtilityByKeyMemberKeys(UUID utilityKey);
 
 }

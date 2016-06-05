@@ -43,6 +43,11 @@ var sendFile = function(url, files, data) {
       var status;
 
       switch (jqXHR.status) {
+        case 401:
+          if (jqXHR.getResponseHeader("X-Require-Authentication")) {
+            document.cookie = 'daiad-utility-session=false; path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+          }
+          break;
         case 400:
         case 403:
         case 404:
@@ -66,9 +71,9 @@ var sendFile = function(url, files, data) {
   });
 };
 
-var sendRequest = function(url, data, contentType) {
+var sendRequest = function(url, data, contentType, method) {
   var request = {
-    type : data ? 'POST' : 'GET',
+    type : method || (data ? 'POST' : 'GET'),
     dataType : 'json',
     contentType : contentType,
     data : data,
@@ -89,6 +94,11 @@ var sendRequest = function(url, data, contentType) {
       var status;
 
       switch (jqXHR.status) {
+        case 401:
+          if (jqXHR.getResponseHeader("X-Require-Authentication")) {
+            document.cookie = 'daiad-utility-session=false; path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+          }
+          break;
         case 400:
         case 403:
         case 404:
@@ -99,10 +109,16 @@ var sendRequest = function(url, data, contentType) {
           break;
       }
 
+      var errorCodeSuffix = status;
+      
+      if((jqXHR.responseJSON) && (jqXHR.responseJSON.errors) && (jqXHR.responseJSON.errors.length > 0)) {
+        errorCodeSuffix = jqXHR.responseJSON.errors[0].code;
+      }
+
       var errors = [
         {
-          code : 'Error.' + status,
-          description : 'Error.' + status,
+          code : 'Error.' + errorCodeSuffix,
+          description : 'Error.' + errorCodeSuffix,
           details : errorThrown
         }
       ];
@@ -120,16 +136,16 @@ var api = {
 
     return sendRequest(url, data, 'application/x-www-form-urlencoded; charset=UTF-8');
   },
-  json : function(url, data) {
+  json : function(url, data, method) {
     var serializedData = data;
 
     if ((data) && (typeof data === 'object')) {
       serializedData = JSON.stringify(data);
     }
 
-    return sendRequest(url, serializedData, 'application/json; charset=UTF-8');
+    return sendRequest(url, serializedData, 'application/json; charset=UTF-8', method);
   },
-  sendFile: function(url, files, data) {
+  sendFile : function(url, files, data) {
     return sendFile(url, files, data);
   }
 };
