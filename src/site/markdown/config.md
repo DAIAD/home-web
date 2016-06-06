@@ -119,6 +119,7 @@ Additional information on how to configuring Log4j2 can be found at [Log4j2] (ht
 |daiad.manager.flyway.baseline-description|Baseline description for the `daiad` database|Database initialization|
 |daiad.manager.flyway.baseline-version|Version to start migration for the `daiad` database|1_0_2|
 |daiad.manager.flyway.locations|Baseline description for the `daiad` database|classpath:db/migration/daiad-manager/|
+|daiad.amphiro.validation-string|Enforce constraints for Amphiro measurements|true|
 
 # Application Profile Specific Settings
 

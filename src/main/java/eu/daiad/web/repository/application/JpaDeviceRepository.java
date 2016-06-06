@@ -521,21 +521,11 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
     @Override
     public Device getWaterMeterDeviceBySerial(String serial) {
         try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            AuthenticatedUser user = null;
-
-            if (auth.getPrincipal() instanceof AuthenticatedUser) {
-                user = (AuthenticatedUser) auth.getPrincipal();
-            } else {
-                throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
-            }
-
             TypedQuery<eu.daiad.web.domain.application.DeviceMeter> query = entityManager
-                            .createQuery("select d from device_meter d where d.serial = :serial and d.account.utility.id = :utility_id",
+                            .createQuery("select d from device_meter d where d.serial = :serial ",
                                             eu.daiad.web.domain.application.DeviceMeter.class).setFirstResult(0)
                             .setMaxResults(1);
             query.setParameter("serial", serial);
-            query.setParameter("utility_id", user.getUtilityId());
 
             List<eu.daiad.web.domain.application.DeviceMeter> result = query.getResultList();
 

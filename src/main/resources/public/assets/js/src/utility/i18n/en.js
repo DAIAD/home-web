@@ -190,7 +190,8 @@
     "AddFavourite" : "Add Favourite",
     "UpdateFavourite" : "Update Favourite",
     "Actions" : "Actions",
-    "DeleteGroup" : "Delete Group"
+    "DeleteGroup" : "Delete Group",
+    "DeleteFavourite" : "Remove Favourite"
   },
   "Form" : {
     "ErrorsDetected" : "Errors were detected:",
@@ -218,7 +219,14 @@
 		    "Part1" : "Are you sure you wish to delete group \"",
 		    "Part2" : "\" ?"
 		  }
-		}
+		},
+		"DeleteFavourite": {
+      "Title" : "Remove Favourite",
+      "Body" : {
+        "Part1" : "Are you sure you wish to remove favourite \"",
+        "Part2" : "\" ?"
+      }
+    }
 	},
   "FilterBar" : {
     "Filters": "Filters"
@@ -255,6 +263,7 @@
   "Success": {
     "UserSuccess.USER_ADDED_WHITELIST" : "User was succesfully registered in the user white list.",
     "GroupSuccess.GROUP_CREATED" : "Group was succesfully created.",
+    "GroupSuccess.GROUP_DELETED" : "Group was succesfully deleted.",
     "FavouriteSuccess.FAVOURITE_ADDED" : "Favourite was succesfully added.",
     "FavouriteSuccess.FAVOURITE_UPDATED" : "Favourite was succesfully updated."
   }

@@ -31,7 +31,11 @@ var UpsertFavouriteForm = React.createClass({
     return {
       type: null,
       itemId: null,
-      cancelAction : function(){}
+      actions : {
+        cancelAction : function(){},
+        refreshParentForm : function(){}
+      }
+      
      };
   },
   
@@ -68,8 +72,10 @@ var UpsertFavouriteForm = React.createClass({
 
   
   render: function(){
-
+    
+    var self = this;
     var _t = this.context.intl.formatMessage;
+    
     
     var itemInfoTitleText = this.props.type === 'GROUP' ? 
           _t({ id:'Demographics.NewFavourite.Group.FavouriteGroupInfo'}) : 
@@ -129,10 +135,14 @@ var UpsertFavouriteForm = React.createClass({
       } else {
         successCode = 'FavouriteSuccess.FAVOURITE_UPDATED';
       }
-      
+            
       const cancelButton = (
         <Bootstrap.Col xs={6}>
-          <Bootstrap.Button onClick={this.props.cancelAction}>
+          <Bootstrap.Button onClick={
+              function (){
+                self.props.actions.cancelAction();
+                self.props.actions.refreshParentForm();
+             }}>
             {_t({ id:'Buttons.Cancel'})}
           </Bootstrap.Button>
         </Bootstrap.Col>

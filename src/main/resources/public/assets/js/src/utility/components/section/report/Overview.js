@@ -15,57 +15,57 @@ var errorsCodes = require('../../../constants/Errors');
 var successCodes = require('../../../constants/Successes');
 
 
-var { getActivity, setFilter, getSessions, getMeters, resetUserData, exportUserData, showAddUserForm, 
-      hideAddUserForm, addUserSelectUtility, addUserSelectGenderMale, addUserSelectGenderFemale, addUserFillForm, 
+var { getActivity, setFilter, getSessions, getMeters, resetUserData, exportUserData, showAddUserForm,
+      hideAddUserForm, addUserSelectUtility, addUserSelectGenderMale, addUserSelectGenderFemale, addUserFillForm,
       addUserValidationsErrorsOccurred, addUserShowMessageAlert, addUserHideErrorAlert, addUser, addUserGetUtilities } = require('../../../actions/AdminActions');
 
 var Overview = React.createClass({
 	contextTypes: {
 	    intl: React.PropTypes.object
 	},
-	
+
   componentWillMount : function() {
     if(this.props.admin.activity === null) {
       this.props.actions.getActivity();
     }
    this.props.actions.addUserGetUtilities();
   },
-  
+
   setFilter: function(e) {
     this.props.actions.setFilter(this.refs.filter.getValue());
   },
-  
+
   clearFilter: function(e) {
     this.props.actions.setFilter('');
   },
-  
+
   resetUserData: function(e) {
     this.props.actions.resetUserData();
   },
-  
+
   refreshParticipants: function(e) {
     this.props.actions.getActivity();
   },
-  
+
   onPageIndexChange: function(index) {
-    
+
   },
-  
+
   validateNewUserForm: function(firstName, lastName, email, gender, address, postalCode){
     var errors = [];
-        
+
     if (!firstName){
       errors.push({code: errorsCodes['ValidationError.User.NO_FIRST_NAME']});
     } else if (firstName.length > 40){
       errors.push({code: errorsCodes['ValidationError.User.TOO_LONG_FIRST_NAME']});
     }
-    
+
     if (!lastName){
       errors.push({code: errorsCodes['ValidationError.User.NO_LAST_NAME']});
     } else if (lastName.length > 70){
       errors.push({code: errorsCodes['ValidationError.User.TOO_LONG_LAST_NAME']});
     }
-    
+
     if (!email){
       errors.push({code: errorsCodes['ValidationError.User.NO_EMAIL']});
     } else if (email.length > 100){
@@ -75,28 +75,28 @@ var Overview = React.createClass({
         if (!re.test(email)){
           errors.push({code: errorsCodes['ValidationError.User.INVALID_EMAIL']});
         }
-    } 
+    }
 
     if (!gender){
       errors.push({code: errorsCodes['ValidationError.User.NO_GENDER']});
     }
-    
+
     if (address && address.length > 90){
       errors.push({code: errorsCodes['ValidationError.User.TOO_LONG_ADDRESS']});
     }
-    
+
     if (this.props.admin.addUser.selectedUtility === null){
       errors.push({code: errorsCodes['ValidationError.User.NO_UTILITY']});
     }
-    
+
     if (postalCode && postalCode.length > 10){
       errors.push({code: errorsCodes['ValidationError.User.TOO_LONG_POSTAL_CODE']});
     }
-    
+
     return errors;
   },
-  
-  processAddNewUserForm: function(){    
+
+  processAddNewUserForm: function(){
     var gender = null;
     if (this.refs.genderMale.getChecked() === true){
       gender = 'MALE';
@@ -111,7 +111,7 @@ var Overview = React.createClass({
         address : this.refs.address.getValue(),
         postalCode : this.refs.postalCode.getValue()
     };
-    
+
     var errors = this.validateNewUserForm(
           this.refs.firstName.getValue(),
           this.refs.lastName.getValue(),
@@ -132,18 +132,18 @@ var Overview = React.createClass({
           utilityId : this.props.admin.addUser.selectedUtility.value,
           postalCode : this.refs.postalCode.getValue() === '' ? null : this.refs.postalCode.getValue()
       };
-     
+
       this.props.actions.addUser(userInfo);
     } else {
       this.props.actions.addUserValidationsErrorsOccurred(errors);
     }
   },
-  
+
   render: function() {
     var self = this;
     var _t = this.context.intl.formatMessage;
 
-    
+
     const groupTitle = (
       <span>
         <i className='fa fa-group fa-fw'></i>
@@ -155,7 +155,7 @@ var Overview = React.createClass({
         </span>
       </span>
     );
-    
+
     var closeSessionChartButton = null;
     if(this.props.admin.user.name) {
       closeSessionChartButton = (
@@ -166,13 +166,13 @@ var Overview = React.createClass({
         </span>
       );
     }
-    
+
     var titleText = 'Activity';
     if(this.props.admin.user.meters) {
       titleText = this.props.admin.user.name + ' - Last 30 days';
     } else if(this.props.admin.user.devices) {
       titleText = this.props.admin.user.name + ' - Last 100 sessions';
-    }  
+    }
     const chartTitle = (
       <span>
         <i className='fa fa-bar-chart fa-fw'></i>
@@ -180,7 +180,7 @@ var Overview = React.createClass({
         {closeSessionChartButton}
       </span>
     );
-    
+
     var rows = [];
     var total = 0, registered = 0, login = 0, paired = 0, uploaded = 0, assigned = 0;
 
@@ -190,10 +190,10 @@ var Overview = React.createClass({
         total++;
         if(records[i].accountRegisteredOn){
           registered++;
-        } 
+        }
         if(records[i].lastLoginSuccess){
           login++;
-        }  
+        }
         if(records[i].leastAmphiroRegistration) {
           paired++;
         }
@@ -226,7 +226,7 @@ var Overview = React.createClass({
           type: 'bar'
         }
     };
-    
+
     var series = [], data = [];
     if(!this.props.admin.isLoading) {
       if(this.props.admin.user.devices) {
@@ -240,12 +240,12 @@ var Overview = React.createClass({
           }
         };
 
-        
+
         var devices = this.props.admin.user.devices;
-        
+
         var maxSerieSize = 0, d;
         for(d=0; d<devices.length; d++) {
-          if(devices[d].sessions.length > maxSerieSize) { 
+          if(devices[d].sessions.length > maxSerieSize) {
             maxSerieSize = devices[d].sessions.length;
           }
         }
@@ -253,7 +253,7 @@ var Overview = React.createClass({
         for(d=0; d<devices.length; d++) {
           var device = devices[d];
           data = [];
-   
+
           var index = 1;
           for(var s=0; s < maxSerieSize; s++) {
             data.push({
@@ -262,7 +262,7 @@ var Overview = React.createClass({
             });
             index++;
           }
-          
+
           series.push({
             legend: device.name || device.deviceKey,
             xAxis: 'id',
@@ -271,10 +271,10 @@ var Overview = React.createClass({
             yAxisName: 'Volume (lt)'
           });
         }
-        
+
         model.chart.data = {
           series: series
-        };  
+        };
       } else if(this.props.admin.user.meters) {
         model.chart.type = 'bar';
         model.chart.options = {
@@ -286,20 +286,20 @@ var Overview = React.createClass({
               format: 'day'
             }
         };
-        
+
         var meters = this.props.admin.user.meters;
-          
+
         for(var m=0; m<meters.length; m++) {
           var meter = meters[m];
           data = [];
-          
+
           for(var v=0; v < meter.values.length; v++) {
             data.push({
               volume: meter.values[v].difference,
               date: new Date(meter.values[v].timestamp)
             });
           }
-  
+
           series.push({
             legend: meter.serial || meter.deviceKey,
             xAxis: 'date',
@@ -308,16 +308,16 @@ var Overview = React.createClass({
             yAxisName: 'Volume (lt)'
           });
         }
-        
+
         model.chart.data = {
           series: series
-        }; 
-        
+        };
+
       } else {
         model.chart.type = 'bar';
-  
+
         var dataPoints = [];
-        
+
         model.chart.options = {
           tooltip: {
               show: true
@@ -328,7 +328,7 @@ var Overview = React.createClass({
           itemStyle: {
             normal: {
               label : {
-                show: true, 
+                show: true,
                 position: 'top',
                 formatter: function (params) {
                   return params.value;
@@ -341,7 +341,7 @@ var Overview = React.createClass({
             }
           }
         };
-  
+
         dataPoints.push({
           value: total,
           label: 'Total Participants'
@@ -366,7 +366,7 @@ var Overview = React.createClass({
           value: uploaded,
           label: 'Uploaded'
         });
-        
+
         model.chart.data = {
             series: [{
                 legend: 'Trial Activity',
@@ -375,7 +375,7 @@ var Overview = React.createClass({
                 data: dataPoints,
                 yAxisName: 'Count'
             }]
-        };     
+        };
       }
     }
 
@@ -416,24 +416,24 @@ var Overview = React.createClass({
           name: 'meter',
           type:'action',
           image: '/assets/images/utility/meter.svg',
-          handler: function(e) {
-            if((this.props.row.key) && (this.props.row.numberOfMeters > 0)) {
+          handler: function(field, row) {
+            if((row.key) && (row.numberOfMeters > 0)) {
               self.props.actions.getMeters(this.props.row.key, this.props.row.username);
             }
           },
-          visible: function(row) { 
+          visible: function(field, row) {
             return ((row.key) && (row.numberOfMeters > 0));
           }
         }, {
           name: 'session',
           type:'action',
           image: '/assets/images/utility/amphiro.svg',
-          handler: function(e) {
-            if((this.props.row.key) && (this.props.row.numberOfAmphiroDevices > 0)) {
+          handler: function(field, row) {
+            if((row.key) && (row.numberOfAmphiroDevices > 0)) {
               self.props.actions.getSessions(this.props.row.key, this.props.row.username);
             }
           },
-          visible: function(row) { 
+          visible: function(field, row) {
             return ((row.key) && (row.numberOfAmphiroDevices > 0));
           }
         }, {
@@ -441,12 +441,12 @@ var Overview = React.createClass({
           type:'action',
           icon: 'cloud-download fa-2x',
           color: '#2D3580',
-          handler: function(e) {
-            if((this.props.row.key) && ((this.props.row.numberOfAmphiroDevices > 0) || (this.props.row.numberOfMeters > 0))) {
+          handler: function(field, row) {
+            if((row.key) && ((row.numberOfAmphiroDevices > 0) || (row.numberOfMeters > 0))) {
               self.props.actions.exportUserData(this.props.row.key, this.props.row.username);
             }
           },
-          visible: function(row) { 
+          visible: function(field, row) {
             return ((row.key) && ((row.numberOfAmphiroDevices > 0) || (row.numberOfMeters > 0)));
           }
         }],
@@ -457,7 +457,7 @@ var Overview = React.createClass({
           count:rows.length
         }
     };
-    
+
     var header = null, filter = null, addUserButton = null, table = null, chart = null;
     if(this.props.data !== null) {
       addUserButton = (
@@ -474,21 +474,21 @@ var Overview = React.createClass({
           </Bootstrap.ListGroup>
         </div>
       );
-      
+
       filter = (
         <div className='col-md-4'>
-          <Bootstrap.Input type='text' 
+          <Bootstrap.Input type='text'
                            id='filter' name='filter' ref='filter'
-                           placeholder='Search participants by email ...' 
+                           placeholder='Search participants by email ...'
                            onChange={this.setFilter}
                            value={this.props.admin.filter}
                            buttonAfter={
-                            <Bootstrap.Button onClick={this.clearFilter}><i className='fa fa-trash fa-fw'></i></Bootstrap.Button>
-                          } 
+                            <Bootstrap.Button onClick={this.clearFilter} style={{paddingTop: 7, paddingBottom: 7 }}><i className='fa fa-trash fa-fw'></i></Bootstrap.Button>
+                          }
           />
         </div>
       );
-          
+
       table = (
         <div className='row'>
           <div className="col-md-12">
@@ -501,14 +501,14 @@ var Overview = React.createClass({
             </Bootstrap.Panel>
           </div>
         </div>);
-      
+
       chart = (
         <div className='row'>
           <div className="col-md-12">
             <Bootstrap.Panel header={chartTitle}>
               <Bootstrap.ListGroup fill>
                 <Bootstrap.ListGroupItem>
-                  <Chart  style={{ width: '100%', height: 400 }} 
+                  <Chart  style={{ width: '100%', height: 400 }}
                           elementClassName='mixin'
                           prefix='chart'
                           type={model.chart.type}
@@ -522,8 +522,8 @@ var Overview = React.createClass({
       );
     }
     self = this;
-    
-    
+
+
     const newUserPanelTitle = (
         <span>
           <i className='fa fa-user-plus fa-fw'></i>
@@ -532,19 +532,19 @@ var Overview = React.createClass({
           </span>
         </span>
       );
-    
+
     var utilityOptions = [];
     if(this.props.admin.addUser.utilities){
       this.props.admin.addUser.utilities.forEach(function (utility, i){
         utilityOptions.push({label: utility.name, value: utility.id, key: utility.id});
       });
     }
-    
+
     var hideAddNewUserForm = function (){
       self.errors = [];
       self.props.actions.hideAddUserForm();
     };
-        
+
     var addNewUserForm = (
       <div>
         <Bootstrap.Panel header={newUserPanelTitle}>
@@ -554,50 +554,50 @@ var Overview = React.createClass({
                   <div className='clearfix'>
                     <Bootstrap.Row>
                       <Bootstrap.Col xs={6}>
-                        <Bootstrap.Input 
-                          type='text' 
+                        <Bootstrap.Input
+                          type='text'
                           value={this.props.admin.addUser.selectedFirstName}
-                          label={_t({ id:'AddUserForm.FirstName.label'}) + ' (*)'} 
-                          ref='firstName' 
+                          label={_t({ id:'AddUserForm.FirstName.label'}) + ' (*)'}
+                          ref='firstName'
                           placeholder={_t({ id:'AddUserForm.FirstName.placeholder'})} />
                       </Bootstrap.Col>
                       <Bootstrap.Col xs={6}>
-                        <Bootstrap.Input 
+                        <Bootstrap.Input
                           type='text'
                           value={this.props.admin.addUser.selectedLastName}
-                          label={_t({ id:'AddUserForm.LastName.label'}) + ' (*)'} 
-                          ref='lastName' 
+                          label={_t({ id:'AddUserForm.LastName.label'}) + ' (*)'}
+                          ref='lastName'
                           placeholder={_t({ id:'AddUserForm.LastName.placeholder'})} />
                       </Bootstrap.Col>
                     </Bootstrap.Row>
                     <Bootstrap.Row>
                       <Bootstrap.Col xs={6}>
-                        <Bootstrap.Input 
+                        <Bootstrap.Input
                           type='text'
                           value={this.props.admin.addUser.selectedEmail}
-                          label={_t({ id:'AddUserForm.E-mail.label'}) + ' (*)'} 
-                          ref='email' 
+                          label={_t({ id:'AddUserForm.E-mail.label'}) + ' (*)'}
+                          ref='email'
                           placeholder={_t({ id:'AddUserForm.E-mail.placeholder'})} />
                       </Bootstrap.Col>
                       <Bootstrap.Col xs={6}>
                         <Bootstrap.Input label={_t({ id:'AddUserForm.Gender.label'}) + ' (*)'} wrapperClassName='white-wrapper'>
                             <Bootstrap.Row>
                               <Bootstrap.Col xs={6}>
-                                <Bootstrap.Input 
-                                  type='radio' 
+                                <Bootstrap.Input
+                                  type='radio'
                                   checked={this.props.admin.addUser.selectedGender === 'MALE' ? true : false}
                                   onClick={this.props.actions.addUserSelectGenderMale}
-                                  ref='genderMale' 
-                                  label={_t({ id:'AddUserForm.Gender.values.Male'})} 
+                                  ref='genderMale'
+                                  label={_t({ id:'AddUserForm.Gender.values.Male'})}
                                   name='gender' />
                               </Bootstrap.Col>
                               <Bootstrap.Col xs={6}>
-                                <Bootstrap.Input 
+                                <Bootstrap.Input
                                   type='radio'
                                   onClick={this.props.actions.addUserSelectGenderFemale}
                                   checked={this.props.admin.addUser.selectedGender === 'FEMALE' ? true : false}
-                                  ref='genderFemale' 
-                                  label={_t({ id:'AddUserForm.Gender.values.Female'})} 
+                                  ref='genderFemale'
+                                  label={_t({ id:'AddUserForm.Gender.values.Female'})}
                                   name='gender' />
                               </Bootstrap.Col>
                             </Bootstrap.Row>
@@ -606,11 +606,11 @@ var Overview = React.createClass({
                     </Bootstrap.Row>
                     <Bootstrap.Row>
                       <Bootstrap.Col xs={6}>
-                        <Bootstrap.Input 
+                        <Bootstrap.Input
                           type='text'
                           value={this.props.admin.addUser.selectedAddress}
-                          label={_t({ id:'AddUserForm.Address.label'})} 
-                          ref='address' 
+                          label={_t({ id:'AddUserForm.Address.label'})}
+                          ref='address'
                           placeholder={_t({ id:'AddUserForm.Address.placeholder'})}/>
                       </Bootstrap.Col>
                       <Bootstrap.Col xs={6}>
@@ -626,13 +626,13 @@ var Overview = React.createClass({
                     </Bootstrap.Row>
                     <Bootstrap.Row>
                       <Bootstrap.Col xs={6}>
-                        <Bootstrap.Input 
+                        <Bootstrap.Input
                           type='text'
                           value={this.props.admin.addUser.selectedPostalCode}
-                          label={_t({ id:'AddUserForm.PostalCode.label'})} 
-                          ref='postalCode' 
+                          label={_t({ id:'AddUserForm.PostalCode.label'})}
+                          ref='postalCode'
                           placeholder={_t({ id:'AddUserForm.PostalCode.placeholder'})}/>
-                      </Bootstrap.Col>  
+                      </Bootstrap.Col>
                     </Bootstrap.Row>
                   </div>
                   <MessageAlert
@@ -664,14 +664,14 @@ var Overview = React.createClass({
             </div>
             </div>
           </div>
-          
+
           <em>(*) {_t({ id:'AddUserForm.MandatoryFields'})}</em>
 
         </Bootstrap.Panel>
       </div>
-        
+
     );
-    
+
     header = (
       <div className="row">
         {filter}
@@ -686,7 +686,7 @@ var Overview = React.createClass({
         {chart}
       </div>
     );
-    
+
     var visiblePart = this.props.admin.addUser.show ? addNewUserForm : reportBody;
 
 		return (
@@ -713,8 +713,8 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
   return {
-    actions : bindActionCreators(Object.assign({}, { getActivity, setFilter, getSessions, getMeters, resetUserData, 
-      exportUserData, showAddUserForm, hideAddUserForm, addUserSelectUtility, addUserSelectGenderMale, addUserSelectGenderFemale, 
+    actions : bindActionCreators(Object.assign({}, { getActivity, setFilter, getSessions, getMeters, resetUserData,
+      exportUserData, showAddUserForm, hideAddUserForm, addUserSelectUtility, addUserSelectGenderMale, addUserSelectGenderFemale,
       addUserFillForm, addUserValidationsErrorsOccurred, addUserShowMessageAlert, addUserHideErrorAlert, addUser, addUserGetUtilities }) , dispatch)
   };
 }

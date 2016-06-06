@@ -5,6 +5,7 @@ var i18n = require('./i18n');
 var session = require('./session');
 var demographics = require('./demographics');
 var group = require('./group');
+var user = require('./user');
 var upsertFavouriteForm = require('./upsertFavouriteForm');
 var mode_management = require('./mode_management');
 var admin = require('./admin');
@@ -22,6 +23,7 @@ var rootReducer = combineReducers({
   session,
   demographics,
   group,
+  user,
   upsertFavouriteForm,
   mode_management,
   admin,

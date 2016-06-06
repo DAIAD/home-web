@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.domain.application.GroupCommunity;
 import eu.daiad.web.domain.application.GroupSegment;
+import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.group.Account;
 import eu.daiad.web.model.group.Cluster;
 import eu.daiad.web.model.group.Community;
@@ -27,10 +29,11 @@ import eu.daiad.web.model.group.Segment;
 import eu.daiad.web.model.group.Utility;
 import eu.daiad.web.model.query.EnumClusterType;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.repository.BaseRepository;
 
 @Repository
 @Transactional("applicationTransactionManager")
-public class JpaGroupRepository implements IGroupRepository {
+public class JpaGroupRepository extends BaseRepository implements IGroupRepository {
 
     private static final Log logger = LogFactory.getLog(JpaGroupRepository.class);
 
@@ -54,10 +57,12 @@ public class JpaGroupRepository implements IGroupRepository {
         return groups;
     }
 
+
     @Override
     public List<Group> getUtilities(UUID utilityKey) {
         TypedQuery<eu.daiad.web.domain.application.Utility> query = entityManager.createQuery(
                         "select u from utility u where u.key = :utilityKey", eu.daiad.web.domain.application.Utility.class);
+
 
         query.setParameter("utilityKey", utilityKey);
         

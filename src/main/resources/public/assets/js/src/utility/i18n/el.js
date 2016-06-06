@@ -187,7 +187,8 @@
     "AddFavourite" : "Προσθήκη Αγαπημένου",
     "UpdateFavourite" : "Ενημέρωση Αγαπημένου",
     "Actions" : "Ενέργειες",
-    "DeleteGroup" : "Διαγραφή Ομάδας"
+    "DeleteGroup" : "Διαγραφή Ομάδας",
+    "DeleteFavourite" : "Διαγραφή Αγαπημένου"
   },
   "Form" : {
     "ErrorsDetected" : "Εντοπίστηκαν σφάλματα:",
@@ -213,6 +214,13 @@
       "Title" : "Διαγραφή Ομάδας",
       "Body" : {
         "Part1" : "Είστε σίγουρος ότι θέλετε να διαγράψετε την ομάδα \"",
+        "Part2" : "\" ;"
+      }
+    },
+    "DeleteFavourite": {
+      "Title" : "Διαγραφή Αγαπημένου",
+      "Body" : {
+        "Part1" : "Είστε σίγουρος ότι θέλετε να διαγράψετε τo αγαπημένο \"",
         "Part2" : "\" ;"
       }
     }
@@ -252,6 +260,7 @@
   "Success": {
     "UserSuccess.USER_ADDED_WHITELIST" : "Ο χρήστης εγγράφηκε επιτυχώς στη user white list.",
     "GroupSuccess.GROUP_CREATED" : "Η ομάδα δημιουργήθηκε επιτυχώς.",
+    "GroupSuccess.GROUP_DELETED" : "Η ομάδα διαγράφηκε επιτυχώς.",
     "FavouriteSuccess.FAVOURITE_ADDED" : "Το αγαπημένο προστέθηκε επιτυχώς.",
     "FavouriteSuccess.FAVOURITE_UPDATED" : "Το αγαπημένο ενημερώθηκε επιτυχώς."
   }

@@ -69,8 +69,7 @@ public class SchedulerController extends BaseController {
     /**
      * Returns all job executions, optionally filtered by a query.
      * 
-     * @param query
-     *            the query
+     * @param request the request
      * @return the executions.
      */
     @RequestMapping(value = "/action/scheduler/executions", method = RequestMethod.POST, produces = "application/json")
