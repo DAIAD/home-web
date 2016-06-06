@@ -691,3 +691,7 @@ div.measurement-value .delta > .sign {
   width: 455px;
   height: 230px;
 }
+
+.form-control {
+  height: 36px;
+}
