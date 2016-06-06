@@ -1,5 +1,5 @@
-var { combineReducers } = require('redux');
-var { routerReducer } = require('react-router-redux');
+var {combineReducers} = require('redux');
+var {routerReducer} = require('react-router-redux');
 
 var i18n = require('./i18n');
 var session = require('./session');
@@ -13,23 +13,25 @@ var alerts = require('./alerts');
 var query = require('./query');
 var scheduler = require('./scheduler');
 var debug = require('./debug');
-
+var reports = require('./reports');
+var config = require('./config');
 
 var rootReducer = combineReducers({
-	i18n,
-	session,
-	demographics,
-	group,
-	upsertFavouriteForm,
-	mode_management,
-	admin,
-	alerts,
-	query,
-	scheduler,
-	debug,
-	logging,
-	routing: routerReducer
-	
+  i18n,
+  config,
+  session,
+  demographics,
+  group,
+  upsertFavouriteForm,
+  mode_management,
+  admin,
+  alerts,
+  query,
+  scheduler,
+  debug,
+  logging,
+  routing: routerReducer,
+  reports,
 });
 
 module.exports = rootReducer;

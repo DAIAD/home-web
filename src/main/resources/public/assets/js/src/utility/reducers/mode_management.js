@@ -1,5 +1,5 @@
 var types = require('../constants/ActionTypes');
-var Helpers = require('../helpers/helpers');
+var Helpers = require('../helpers/array-funcs');
 var Schema = require('../constants/ModeManagementTableSchema');
 
 

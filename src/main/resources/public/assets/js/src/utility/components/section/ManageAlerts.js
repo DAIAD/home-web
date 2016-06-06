@@ -13,7 +13,7 @@ var {FormattedMessage, FormattedTime, FormattedDate} = require('react-intl');
 var Schema = require('../../constants/ManageAlertsTableSchema');
 var { getUtilities, addTip, cancelAddTip, showAddTipForm, beganEditingTip } = require('../../actions/ManageAlertsActions');
 
-var Helpers = require('../../helpers/helpers');
+var Helpers = require('../../helpers/array-funcs');
 
 var self;
 var saveDisabled = true;

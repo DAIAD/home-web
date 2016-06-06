@@ -34,7 +34,9 @@
       "Reports": {
         "Group": "Trial Management",
         "Overview": "Overview",
-        "Charts": "Charts"
+        "Charts": "Charts",
+        "Measurements": "Measurement Reports",
+        "System": "System Reports"
       },
 	    "Announcements" : "Announcements",
       "ManageAlerts" : "Manage Alerts",
