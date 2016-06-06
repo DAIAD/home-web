@@ -75,7 +75,7 @@ public class HBaseConnectionManager implements InitializingBean, DisposableBean 
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		//this.open();
+		this.open();
 	}
 
 	@Override
