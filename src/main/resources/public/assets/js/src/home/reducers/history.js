@@ -65,11 +65,6 @@ var history = function (state, action) {
       return Object.assign({}, state, {
         activeDeviceType: action.deviceType
       });
-   
-    case types.HISTORY_RESET_ACTIVE_DEVICE:
-      return Object.assign({}, state, {
-        activeDevice: null
-      });
     
     case types.HISTORY_SET_FILTER:
       return Object.assign({}, state, {

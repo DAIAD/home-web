@@ -99,7 +99,7 @@ var History = React.createClass({
       }
   },
   handleTypeSelect: function(key){
-    this.props.setQueryFilter(key); 
+    this.props.setMetricFilter(key); 
   },
   handleLastXSelect: function(key) {
 
@@ -146,7 +146,7 @@ var History = React.createClass({
     this.props.setTimeFilter(key);
 
     if (time) this.props.setTime(time, false);
-    this.props.query();
+    this.props.fetchData();
   },
   handlePrevious: function() { 
     //this.props.decreaseNavIndex();

@@ -1,3 +1,10 @@
+/**
+ * Locale Actions module.
+ * I18N related action creators
+ * 
+ * @module LocaleActions
+ */
+
 var localeAPI = require('../api/locales');
 var types = require('../constants/ActionTypes');
 
@@ -20,33 +27,47 @@ const requestedLocaleMessages = function(locale) {
   };
 };
 
-const LocaleActions = {
-
-  fetchLocaleMessages: function(locale) {
-    return function(dispatch, getState) {
-      return localeAPI.fetchLocaleMessages({locale, csrf: getState().user.csrf})
-      .then((messages) => {
-          dispatch(receivedMessages(true, null, locale, flattenMessages(messages)));
-          return messages;
-      })
-      .catch((errors) => {
-          dispatch(receivedMessages(false, errors, null, []));
-          return errors;
-      });
-    };
-  },
-  setLocale : function(locale) {
-    return function(dispatch, getState) {
-      if (getState().locale.locale === locale){
-        return true;
-      }
-      //dispatch request messages to update state
-      dispatch(requestedLocaleMessages(locale));
-      //dispatch fetch messages to call API
-      return dispatch(LocaleActions.fetchLocaleMessages(locale));
-    };
-  },
-
+/**
+ * Sets locale and fetches locale strings
+ *
+ * @param {String} locale - One of en, el, es, de, fr 
+ * @return {Promise} Resolved or rejected promise with locale strings if resolved, errors if rejected
+ */
+const setLocale = function(locale) {
+  return function(dispatch, getState) {
+    if (getState().locale.locale === locale){
+      return true;
+    }
+    //dispatch request messages to update state
+    dispatch(requestedLocaleMessages(locale));
+    //dispatch fetch messages to call API
+    return dispatch(fetchLocaleMessages(locale));
+  };
 };
 
-module.exports = LocaleActions;
+/**
+ * Fetches locale strings
+ *
+ * @param {String} locale - One of en, el, es, de, fr
+ * @return {Promise} Resolved or rejected promise with locale strings if resolved, errors if rejected
+ */
+const fetchLocaleMessages = function(locale) {
+  return function(dispatch, getState) {
+    return localeAPI.fetchLocaleMessages({locale, csrf: getState().user.csrf})
+    .then((messages) => {
+        dispatch(receivedMessages(true, null, locale, flattenMessages(messages)));
+        return messages;
+    })
+    .catch((errors) => {
+        dispatch(receivedMessages(false, errors, null, []));
+        return errors;
+    });
+  };
+};
+
+
+
+module.exports = {
+  fetchLocaleMessages,
+  setLocale
+};

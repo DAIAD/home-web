@@ -156,26 +156,13 @@ var dashboard = function (state, action) {
       //TODO: had to use let instead of const because of browserify block scope error
       let idx = newInfobox.findIndex(obj => obj.id === action.id);
 
-      newInfobox[idx] = Object.assign({}, newInfobox[idx], action.update);
-      //newInfobox[idx].data = action.data;
+      newInfobox[idx] = Object.assign({}, newInfobox[idx], action.data);
       
       return Object.assign({}, state, {
         infobox: newInfobox
       });
     }
   
-    case types.DASHBOARD_SET_INFOBOX_DATA: {
-      let newInfobox = state.infobox.slice();
-      //TODO: same as above 
-      let idx = newInfobox.findIndex(obj => obj.id === action.id);
-
-      newInfobox[idx] = Object.assign({}, newInfobox[idx], action.update);
-      //newInfobox[idx].data = action.data;
-      
-      return Object.assign({}, state, {
-        infobox: newInfobox
-      });
-    }
     case types.DASHBOARD_UPDATE_LAYOUT: {
       return Object.assign({}, state, {
         layout: action.layout
