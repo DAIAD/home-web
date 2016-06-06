@@ -7,9 +7,11 @@ import eu.daiad.web.model.admin.AccountActivity;
 import eu.daiad.web.model.admin.AccountWhiteListEntry;
 import eu.daiad.web.model.admin.AccountWhiteListInfo;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.query.EnumClusterType;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.user.Account;
+import eu.daiad.web.model.user.UserInfo;
 
 public interface IUserRepository {
 
@@ -36,5 +38,15 @@ public interface IUserRepository {
 	List<AccountActivity> getAccountActivity();
 
 	List<AccountActivity> getAccountActivity(int utilityId);
+
+	List<UUID> getUserKeysForGroup(UUID groupKey);
+
+	List<UUID> getUserKeysForUtility();
+
+	List<UUID> getUserKeysForUtility(UUID utilityKey);
+
+	List<UUID> getUserKeysForUtility(int utilityId);
+
+	UserInfo getUserInfoByKey(UUID user_id);
 
 }

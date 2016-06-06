@@ -250,6 +250,18 @@ var DemographicActions = {
       return demographicsAPI.deleteGroup(groupId).then(function(response) {
         
         dispatch(receivedGroupDeletionResponse(response.success, response.errors));
+        dispatch(requestedGroupsAndFavourites());
+        return demographicsAPI.fetchGroups().then(function(response) {
+          dispatch(receivedGroups(response.success, response.errors, response.groupListInfo));
+          
+          return demographicsAPI.fetchFavourites().then(function(response) {
+            dispatch(receivedFavourites(response.success, response.errors, response.favouritesInfo));
+          }, function(error) {
+            dispatch(receivedFavourites(false, error, null));
+          });
+        }, function(error) {
+          dispatch(receivedGroups(false, error, null));
+        });
       }, function(error){
         
         dispatch(receivedGroupDeletionResponse(false, error));
@@ -283,6 +295,13 @@ var DemographicActions = {
         
         dispatch(receivedFavouriteDeletionResponse(false, error));
       });
+    };
+  },
+  
+  
+  hideMessageAlert : function(){
+    return {
+      type : types.DEMOGRAPHICS_HIDE_MESSAGE_ALERT
     };
   },
   
