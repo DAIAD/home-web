@@ -7,6 +7,7 @@
 
 var userAPI = require('../api/user');
 var types = require('../constants/ActionTypes');
+var DashboardActions = require('./DashboardActions');
 
 const { fetchAll:fetchAllMessages } = require('./MessageActions');
 const { MESSAGE_TYPES } = require('../constants/HomeConstants');
@@ -67,7 +68,12 @@ const login = function(username, password) {
       dispatch(receivedLogin(success, errors.length?errors[0].code:null, profile));
 
       if (success) dispatch(fetchAllMessages());
-
+      
+      if (success && profile.configuration) {
+          const configuration = JSON.parse(profile.configuration);
+          if (configuration.infoboxes) dispatch(DashboardActions.setInfoboxes(configuration.infoboxes));
+          if (configuration.layout) dispatch(DashboardActions.updateLayout(configuration.layout));
+      }
       return response;
     })
     .catch((errors) => {
@@ -93,11 +99,41 @@ const refreshProfile = function() {
       dispatch(receivedLogin(success, errors.length?errors[0].code:null, profile));
 
       if (success) dispatch(fetchAllMessages());
-
+      
+      if (success && profile.configuration) {
+          const configuration = JSON.parse(profile.configuration);
+          if (configuration.infoboxes) dispatch(DashboardActions.setInfoboxes(configuration.infoboxes));
+          if (configuration.layout) dispatch(DashboardActions.updateLayout(configuration.layout));
+        }
       return response;
     })
     .catch((errors) => {
       console.error('User refresh failed with errors:', errors);
+      return errors;
+    });
+  };
+};
+
+/**
+ * Saves JSON data to profile  
+ *
+ * @param {Object} configuration - serializable object to be saved to user profile
+ * @return {Promise} Resolved or rejected promise, with errors if rejected
+ */
+const saveToProfile = function (configuration) {
+  return function(dispatch, getState) {
+
+    const data = Object.assign({}, {configuration}, {csrf: getState().user.csrf});
+    console.log('gonna save...', data);
+
+    return userAPI.saveToProfile(data)
+    .then((response) => {
+      console.log('saved to profile', response);
+      return response;
+
+    })
+    .catch((errors) => {
+      console.error('User save to profile failed with errors:', errors);
       return errors;
     });
   };

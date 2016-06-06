@@ -14,6 +14,9 @@ var UserAPI = {
   },
   getProfile: function() {
     return callAPI('/action/profile/load', {}, "GET");
+  },
+  saveToProfile: function(data) {
+    return callAPI('/action/profile/save', data);
   }
 };
 

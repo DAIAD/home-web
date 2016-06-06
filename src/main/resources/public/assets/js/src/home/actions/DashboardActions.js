@@ -28,13 +28,13 @@ const createInfobox = function(data) {
   };
 };
 
-const appendLayout = function(id, type) {
+const appendLayout = function(id, display) {
   let layout = {x:0, y:0, w:1, h:1, i:id};
-  if (type==='stat') {
-    Object.assign(layout, {w:2, h:1, minW:2, minH:1});
+  if (display==='stat') {
+    Object.assign(layout, {w:2, h:1});
   }
-  else if (type === 'chart') {
-    Object.assign(layout, {w:2, h:2, minW:2, minH:2});
+  else if (display === 'chart') {
+    Object.assign(layout, {w:2, h:2});
   }
   return {
     type: types.DASHBOARD_APPEND_LAYOUT,
@@ -61,21 +61,21 @@ const switchMode = function(mode) {
  * @return {String} id - The id of the added infobox 
  * 
  */
-const addInfobox = function(data) {
+const addInfobox = function(options) {
   return function(dispatch, getState) {
     const infobox = getState().section.dashboard.infobox;
 
     // find last id and increase by one
     const lastId = infobox.length?Math.max.apply(Math, infobox.map(info => parseInt(info.id))):0;
     const id = (lastId+1).toString();
-    const type = data.type;
+    const display = options.display;
 
-    dispatch(createInfobox(Object.assign(data, {id})));
-    dispatch(appendLayout(id, type));
+    dispatch(createInfobox(Object.assign(options, {id})));
+    dispatch(appendLayout(id, display));
     return id;
   };
 };
-
+    
 /**
  * Updates an existing infobox with provided options.
  * Important: This action triggers data fetch 
@@ -99,6 +99,18 @@ const updateInfobox = function(id, data) {
   };
 };
 
+/**
+ * Sets infoboxes 
+ * 
+ * @param {Object[]} infoboxes - array of objects containing infobox options as specified in {@link fetchInfoboxData}.  
+ */
+const setInfoboxes = function (infoboxes) {
+  return {
+    type: types.DASHBOARD_SET_INFOBOXES,
+    infoboxes
+  };
+};
+      
 /**
  * Updates an existing infobox with data.
  * Important: This action only sets the data returned by asynchronous fetch action and does not trigger data fetch

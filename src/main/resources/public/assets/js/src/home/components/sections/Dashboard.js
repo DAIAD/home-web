@@ -7,6 +7,8 @@ var { injectIntl, FormattedMessage, FormattedRelative } = require('react-intl');
 
 var { Responsive, WidthProvider } = require('react-grid-layout');
 var ResponsiveGridLayout = WidthProvider(Responsive);
+const { reduxForm } = require('redux-form');
+
 var PureRenderMixin = require('react-addons-pure-render-mixin');
 
 var MainSection = require('../layout/MainSection');
@@ -202,7 +204,7 @@ function ChartBox (props) {
                 /> :
               <Chart
                 height={200}
-                width='100%'  
+                width='100%'
                 title=''
                 subtitle=""
                 type='line'
@@ -275,20 +277,90 @@ function InfoPanel (props) {
 }
 
 function ButtonToolbar (props) {
-  const { switchMode, mode } = props;
+  const { switchMode, saveToProfile, mode } = props;
   return (
-    <div className="pull-right">
-      <bs.ButtonToolbar>
+      <bs.ButtonToolbar style={{float: 'right', marginRight: 20}}>
         <bs.Button onClick={()=> switchMode("add")} active={false}>Add</bs.Button>
         {
-          (()=> mode==="edit"?(
-            <bs.Button onClick={()=> switchMode("normal")} bsStyle="primary" active={false}>Done</bs.Button>
+          (()=> mode==="save"?(
+            <bs.Button onClick={()=> saveToProfile()} bsStyle="primary" active={false}>Save</bs.Button>
             ):(
-            <bs.Button onClick={()=> switchMode("edit")} active={false}>Edit</bs.Button>
+            <bs.Button onClick={()=> saveToProfile()} bsStyle="primary" active={false}>Save</bs.Button>
             ))()
         }
       </bs.ButtonToolbar>
-    </div>
+  );
+}
+
+function AddInfoboxForm (props) {
+  const {fields: {title, type, metric, deviceType}, metrics, types, deviceTypes} = props;
+  return (
+    <form>
+      
+      <bs.Tabs className="history-time-nav" position='top' tabWidth={3} activeKey={deviceType.value} onSelect={(key) => deviceType.onChange(key)}>
+               {
+                deviceTypes.map(devType =>
+                            <bs.Tab key={devType.id} eventKey={devType.id} title={devType.title} />)
+               } 
+       </bs.Tabs>
+
+      
+      <div className="add-infobox">
+        <div className="add-infobox-left">
+          
+          <div>
+            <label>Type</label>
+            <select
+              {...type}
+              value={type.value}>
+              {
+                types.map((type, idx) =>
+                  <option key={idx} value={type.id}>{type.title}</option>
+                )
+              }
+            </select>
+          </div>    
+        </div>
+
+        <div className="add-infobox-right">
+          <div>
+            <input type='text' placeholder='Enter title...' {...title}/>
+          </div>
+          
+        </div>
+      </div>
+       
+  </form>
+  );
+}
+
+const AddInfobox = reduxForm({
+    form: 'addInfobox',
+    fields: ['title', 'type', 'deviceType'],
+    initialValues: {deviceType: 'AMPHIRO', type: 'totalVolume'}
+})(AddInfoboxForm);
+
+
+function AddInfoboxModal (props) {
+  const { showModal, switchMode, addInfobox, metrics, types, deviceTypes, initialValues } = props;
+  return (
+    <bs.Modal animation={false} className='add-infobox-modal' show={showModal} onHide={() => switchMode('normal')} bsSize="large" backdrop='static'>
+        <bs.Modal.Header closeButton>
+          <bs.Modal.Title>
+            <FormattedMessage id="dashboard.add" />
+          </bs.Modal.Title>
+        </bs.Modal.Header>
+        <bs.Modal.Body>
+          
+          <AddInfobox {...{metrics, types, deviceTypes}}/> 
+
+        </bs.Modal.Body>
+        <bs.Modal.Footer>
+          <a onClick={() => switchMode('normal')}>Cancel</a>
+          <a style={{marginLeft: 20}} onClick={() => { addInfobox(); switchMode('normal');}}>Add</a>
+        </bs.Modal.Footer>
+      </bs.Modal> 
+
   );
 }
 
@@ -318,10 +390,14 @@ var Dashboard = React.createClass({
   },
   */
   render: function() {
-    const { firstname, mode, switchMode, amphiros, meters } = this.props;
+    const { firstname, mode, switchMode, addInfobox, saveToProfile,  amphiros, meters, metrics , types, deviceTypes, initialValues } = this.props;
     return (
       <MainSection id="section.dashboard">
         <SayHello firstname={firstname} />
+        <div className='pull-right'>
+          <ButtonToolbar {...{switchMode, saveToProfile, mode}}/>
+        </div>
+        <AddInfoboxModal {...{showModal:mode==='add', switchMode, addInfobox, metrics, types, deviceTypes, initialValues}}/>
         
         <InfoPanel {...this.props} />
         
