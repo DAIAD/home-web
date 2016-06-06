@@ -35,7 +35,7 @@ var messages = function (state, action) {
 
     case types.MESSAGE_SET_ACTIVE_TAB:
       return Object.assign({}, state, {
-        activeTab: action.tab,
+        activeTab: action.category,
         activeMessageId: null
       });
     
