@@ -189,8 +189,8 @@ const acknowledge = function (id, category, timestamp) {
  *                                respectively
  */
 const setActiveTab = function (category) {
-  if (!(tab === 'alerts' || tab === 'announcements' || tab === 'recommendations' || tab === 'tips')) {
-    throw new Error ('Tab needs to be one of alerts, announcements, recommendations, tips. Provided: ', tab);
+  if (!(category === 'alerts' || category === 'announcements' || category === 'recommendations' || category === 'tips')) {
+    throw new Error ('Tab needs to be one of alerts, announcements, recommendations, tips. Provided: ', category);
   }
 
   return {
