@@ -4,16 +4,16 @@ var types = require('../constants/ActionTypes');
 var submittedQuery = function(query) {
   return {
     type : types.QUERY_SUBMIT,
-    query: query
+    query : query
   };
 };
 
-var receivedResponse = function(success, errors, points) {
+var receivedResponse = function(success, errors, data) {
   return {
     type : types.QUERY_RESPONSE,
     success : success,
     errors : errors,
-    points : points
+    data : data
   };
 };
 
@@ -23,7 +23,17 @@ var QueryActions = {
       dispatch(submittedQuery(query));
 
       return queryAPI.submitQuery(query).then(function(response) {
-        dispatch(receivedResponse(response.success, response.errors, response.points));
+        var data = {
+          meters : null,
+          devices : null,
+          areas : null
+        };
+        if (response.success) {
+          data.areas = response.areas;
+          data.meters = response.meters;
+          data.devices = response.devices;
+        }
+        dispatch(receivedResponse(response.success, response.errors, data));
       }, function(error) {
         dispatch(receivedResponse(false, error, null));
       });

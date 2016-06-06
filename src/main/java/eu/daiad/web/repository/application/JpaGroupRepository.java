@@ -76,7 +76,7 @@ public class JpaGroupRepository implements IGroupRepository {
 
     @Override
     public List<Group> getClusterByKeySegments(UUID clusterKey) {
-        TypedQuery<GroupSegment> query = entityManager.createQuery("select g from group_cluster g  "
+        TypedQuery<GroupSegment> query = entityManager.createQuery("select g from group_segment g  "
                         + "where g.utility.id = :utility_id and g.cluster.key = :key", GroupSegment.class);
 
         query.setParameter("utility_id", this.getCurrentUtilityId());
@@ -87,7 +87,7 @@ public class JpaGroupRepository implements IGroupRepository {
 
     @Override
     public List<Group> getClusterByNameSegments(String name) {
-        TypedQuery<GroupSegment> query = entityManager.createQuery("select g from group_cluster g "
+        TypedQuery<GroupSegment> query = entityManager.createQuery("select g from group_segment g "
                         + "where g.utility.id = :utility_id and g.cluster.name = :name", GroupSegment.class);
 
         query.setParameter("utility_id", this.getCurrentUtilityId());
@@ -98,7 +98,7 @@ public class JpaGroupRepository implements IGroupRepository {
 
     @Override
     public List<Group> getClusterByTypeSegments(EnumClusterType type) {
-        TypedQuery<GroupSegment> query = entityManager.createQuery("select g from group_cluster g "
+        TypedQuery<GroupSegment> query = entityManager.createQuery("select g from group_segment g "
                         + "where g.utility.id = :utility_id and g.cluster.name = :name", GroupSegment.class);
 
         query.setParameter("utility_id", this.getCurrentUtilityId());

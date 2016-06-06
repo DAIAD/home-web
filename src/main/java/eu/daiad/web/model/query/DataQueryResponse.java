@@ -1,6 +1,8 @@
 package eu.daiad.web.model.query;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.joda.time.DateTimeZone;
 
@@ -8,42 +10,48 @@ import eu.daiad.web.model.RestResponse;
 
 public class DataQueryResponse extends RestResponse {
 
-	private String timezone;
+    private String timezone;
 
-	private ArrayList<GroupDataSeries> devices;
+    private Map<Long, LabeledGeometry> areas = new HashMap<Long, LabeledGeometry>();
 
-	private ArrayList<GroupDataSeries> meters;
+    private ArrayList<GroupDataSeries> devices;
 
-	public DataQueryResponse() {
-		this.timezone = DateTimeZone.UTC.toString();
-	}
+    private ArrayList<GroupDataSeries> meters;
 
-	public DataQueryResponse(String timezone) {
-		this.timezone = timezone;
-	}
+    public DataQueryResponse() {
+        this.timezone = DateTimeZone.UTC.toString();
+    }
 
-	public DataQueryResponse(DateTimeZone timezone) {
-		this.timezone = timezone.toString();
-	}
+    public DataQueryResponse(String timezone) {
+        this.timezone = timezone;
+    }
 
-	public ArrayList<GroupDataSeries> getDevices() {
-		return devices;
-	}
+    public DataQueryResponse(DateTimeZone timezone) {
+        this.timezone = timezone.toString();
+    }
 
-	public ArrayList<GroupDataSeries> getMeters() {
-		return meters;
-	}
+    public ArrayList<GroupDataSeries> getDevices() {
+        return devices;
+    }
 
-	public void setDevices(ArrayList<GroupDataSeries> devices) {
-		this.devices = devices;
-	}
+    public ArrayList<GroupDataSeries> getMeters() {
+        return meters;
+    }
 
-	public void setMeters(ArrayList<GroupDataSeries> meters) {
-		this.meters = meters;
-	}
+    public void setDevices(ArrayList<GroupDataSeries> devices) {
+        this.devices = devices;
+    }
 
-	public String getTimezone() {
-		return timezone;
-	}
+    public void setMeters(ArrayList<GroupDataSeries> meters) {
+        this.meters = meters;
+    }
+
+    public String getTimezone() {
+        return timezone;
+    }
+
+    public Map<Long, LabeledGeometry> getAreas() {
+        return areas;
+    }
 
 }

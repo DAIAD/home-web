@@ -4,6 +4,9 @@ var Select = require('react-select');
 var { bindActionCreators } = require('redux');
 var { connect } = require('react-redux');
 var $ = require('jquery');
+var moment = require('moment');
+var LeafletMap = require('../../LeafletMap');
+var Timeline = require('../../Timeline');
 
 var FormattedMessage = require('react-intl').FormattedMessage;
 
@@ -18,6 +21,27 @@ var { createUser, createAmphiro, generateAmphiroData, setTimezone, setErrors } =
 
 var onChangeTimezone = function(val) {
   this.props.actions.setTimezone(val.value);
+};
+
+var createPoints = function() {
+  var points = [];
+  
+  for(var i=0; i<50; i++) {
+    points.push([38.35 + 0.02 * Math.random(), -0.521 + 0.05 * Math.random(), Math.random()]);
+  }
+  
+  return points;
+};
+
+var createDateLabels = function(ref, days) {
+  var series = [];
+
+  for(var d=0; d < days; d++) {
+    series.push(ref.clone().toDate());
+    ref.add(1, 'days');
+  }
+
+  return series;
 };
 
 var Development = React.createClass({
@@ -49,8 +73,9 @@ var Development = React.createClass({
     var end = moment().valueOf();
     var start = moment().subtract(30, 'days').valueOf();
     
-    var spatialFilter = {
-      type: 'CONTAINS',
+    var constraintSpatialFilter = {
+      type: 'CONSTRAINT',
+      operation: 'CONTAINS',
       geometry: {
         'type': 'Polygon',
         'coordinates': [
@@ -88,6 +113,11 @@ var Development = React.createClass({
       }
     };
 
+    var groupSpatialFilter = {
+      type: 'GROUP',
+      group: 'd29f8cb8-7df6-4d57-8c99-0a155cc394c5'
+    };
+    
     var query = {
         time: {
           type : 'SLIDING',
@@ -97,36 +127,37 @@ var Development = React.createClass({
           granularity: 'DAY'
         },
         population: [
-          {
+          /*{
             type :'USER',
             label: 'User 1',
             users: ['63078a88-f75a-4c5e-8d75-b4472ba456bb']
           }, {
             type :'CLUSTER',
             label: 'Income',
-            //cluster: 'bd1a6ad7-6419-44a1-b951-bf6f1a4200d5',
-            //name: 'Income',
+            // cluster: 'bd1a6ad7-6419-44a1-b951-bf6f1a4200d5',
+            // name: 'Income',
             clusterType: 'INCOME'
-          }, {
+          },*/ {
             type :'UTILITY',
-            label: 'Alicante (all)',
+            label: 'Alicante',
             utility: '2b48083d-6f05-488f-9f9b-99607a93c6c3'
-          }, {
+          }/*, {
             type :'UTILITY',
             label: 'Alicante (top 2)',
             utility: '2b48083d-6f05-488f-9f9b-99607a93c6c3',
             ranking: {
               type: 'TOP',
-              metric: 'AVERAGE',
-              field: 'TEMPERATURE',
+              metric: 'SUM',
+              field: 'VOLUME',
               limit: 2
             }
-          }
+          }*/
         ],
-        spatial : null, //spatialFilter,
-        //source: 'BOTH',
+        // spatial :[constraintSpatialFilter],
+        spatial : [groupSpatialFilter],
+        // source: 'BOTH',
         source: 'METER',
-        metrics: ['COUNT', 'SUM', 'MIN', 'MAX', 'AVERAGE']
+        metrics: ['SUM']
     };
     
     this.props.actions.submitQuery({ query : query });
@@ -179,6 +210,42 @@ var Development = React.createClass({
       );
     }
     
+    // Add map
+    console.log(this.props.query);
+    var interval = [moment().startOf('month'), moment().endOf('month')];
+    var mapOptions = {
+      center: [38.35, -0.48], 
+      zoom: 13
+    };
+    
+    var onChangeTimeline = function(value, label, index) {
+      console.log(label + ' - ' + value + ' -  ' + index);
+    };
+    
+    var map = (
+      <Bootstrap.ListGroupItem>
+        <LeafletMap style={{ width: '100%', height: 400}} 
+                    elementClassName='mixin'
+                    prefix='map'
+                    options={mapOptions}
+                    points={this.state.points} />
+  		</Bootstrap.ListGroupItem>
+    );
+
+    var timeline = (
+      <Bootstrap.ListGroupItem>
+        <Timeline   onChange={onChangeTimeline} 
+                    labels={['A', 'B', 'C', 'D']}
+                    values={[1, 2, 3, 4]}
+                    defaultIndex={0}
+                    speed={1000}
+                    animate={false}
+                    data={createDateLabels(moment(new Date()).subtract(28, 'days'), 29)}>
+        </Timeline>
+      </Bootstrap.ListGroupItem>
+    );
+        
+    // End of map
     return (
       <div className='container-fluid' style={{ paddingTop: 10 }}>
         {modal}
@@ -228,7 +295,9 @@ var Development = React.createClass({
                   <br/><br/>
                   <span style={{ fontWeight: 'bold'}}>Create Amphiro</span>
                   <span color='#565656'>: Registers at least one Amphiro device for every registered user for the utility of the signed administrator.</span>
-                  </Bootstrap.ListGroupItem>
+                </Bootstrap.ListGroupItem>
+                {map}
+                {timeline}
               </Bootstrap.ListGroup>
             </Bootstrap.Panel>
           </div>

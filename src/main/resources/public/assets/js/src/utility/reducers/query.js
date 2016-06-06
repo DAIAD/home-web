@@ -3,7 +3,9 @@ var types = require('../constants/ActionTypes');
 var initialState = {
   isLoading : false,
   query : null,
-  points : null
+  areas : null,
+  meters : null,
+  devices : null
 };
 
 var query = function(state, action) {
@@ -16,17 +18,29 @@ var query = function(state, action) {
       });
 
     case types.QUERY_RESPONSE:
-      console.log(JSON.stringify(action.points, null, '\t'));
+      if (action.success) {
+        return Object.assign({}, state, {
+          isLoading : false,
+          areas : action.data.areas,
+          meters : action.data.meters,
+          devices : action.data.devices
+        });
+      }
+
       return Object.assign({}, state, {
         isLoading : false,
-        points : action.points
+        areas : null,
+        meters : null,
+        devices : null
       });
-
+      
     case types.USER_RECEIVED_LOGOUT:
       return Object.assign({}, state, {
         isLoading : false,
         query : null,
-        points : null
+        areas : null,
+        meters : null,
+        devices : null
       });
 
     default:
