@@ -52,7 +52,7 @@ var DataManagement = React.createClass({
         srid = 2100;
         break;
       case 'Spain':
-        srid = 25830;
+        srid = 3042;
         break;
        default:
          srid = 4326;
@@ -185,6 +185,7 @@ var DataManagement = React.createClass({
                               value={this.state.srid}
                               options={[
                                   { value: 4326, label: 'WGS 84 - EPSG:4326' },
+                                  { value: 3042, label: 'ETRS89 / UTM zone 30N (N-E) - EPSG:3042' },
                                   { value: 25830, label: 'ETRS89 / UTM zone 30N - EPSG:25830' },
                                   { value: 2100, label: 'GGRS87 - EPSG:2100)' },
                               ]}

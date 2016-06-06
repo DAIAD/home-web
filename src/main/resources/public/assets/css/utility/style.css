@@ -474,7 +474,22 @@ a .disabled{
     text-align: center;
 }
 
-.log_gray {
+.log_success {
+    padding: 4px 4px;
+    border-radius: 4px;
+    color: #f3f3f3;
+    background-color: #51A351;
+    text-align: center;
+}
+
+.log_debug {
+    padding: 4px 4px;
+    border-radius: 4px;
+    background-color: #d0d0d0;
+    text-align: center;
+}
+
+.log_trace {
     padding: 4px 4px;
     border-radius: 4px;
     background-color: #d0d0d0;

@@ -177,11 +177,7 @@ var types = mirrorToPath({
   DEBUG_SET_TIMEZONE: null,
   DEBUG_SET_ERRORS: null,
   DEBUG_AMPHIRO_DATA_GENERATE_REQUEST: null,
-  DEBUG_AMPHIRO_DATA_GENERATED: null,
-
-  SCHEDULER_STATUS_REQUEST : null,
-  SCHEDULER_STATUS_RESPONSE : null,
-
+  DEBUG_AMPHIRO_DATA_GENERATED: null
 });
 
 module.exports = types;

@@ -233,6 +233,7 @@
 		"403" : "Authentication has failed",
 		"404" : "Not found",
 		"500" : "Internal server error",
+		"SharedErrorCode.SESSION_EXPIRED": "Your session has expired.",
     "ValidationError.User.NO_FIRST_NAME": "First name is missing.",
     "ValidationError.User.NO_LAST_NAME": "Last name is missing.",
     "ValidationError.User.NO_EMAIL": "E-mail address is missing.",
