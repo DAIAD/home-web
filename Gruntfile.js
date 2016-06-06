@@ -1,7 +1,7 @@
 module.exports = function(grunt) {
-  
+
   //require('time-grunt')(grunt);
-  
+
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     clean: {
@@ -67,8 +67,8 @@ module.exports = function(grunt) {
     },
     browserify: {
       options: {
-        watch: false, 
-        keepAlive: !grunt.option('no-watchify'),
+        watch: true,
+        keepAlive: false,
         browserifyOptions: {
           debug: false,
         },
@@ -135,7 +135,7 @@ module.exports = function(grunt) {
             // globals
             'echarts',
           ],
-        }, 
+        },
         files: {
           'src/main/resources/public/assets/js/build/utility/bundle.js': [
             'src/main/resources/public/assets/js/src/utility/index.js'
@@ -385,6 +385,11 @@ module.exports = function(grunt) {
           src: ['**/*'],
           dest: 'src/main/resources/public/docs/api/',
           filter: 'isFile'
+        }, {
+          expand: true,
+          cwd: 'node_modules/font-awesome/',
+          src: ['css/*', 'fonts/*'],
+          dest: 'src/main/resources/public/assets/lib/font-awesome/'
         }]
       },
       home: {
@@ -412,8 +417,7 @@ module.exports = function(grunt) {
           'src/main/resources/public/assets/js/src/utility/**/*.js',
         ],
         tasks: [
-          'jshint:utility', 
-          'browserify:utility',
+          'jshint:utility',
           'sync:utility',
           'sync:debug',
         ],
@@ -434,7 +438,6 @@ module.exports = function(grunt) {
         ],
         tasks: [
           'jshint:home',
-          'browserify:home',
           'sync:home',
           'sync:debug',
         ],
