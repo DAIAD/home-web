@@ -2,6 +2,7 @@
 var _ = require('lodash');
 var moment = require('moment');
 var numeral = require('numeral');
+var sprintf = require('sprintf');
 
 var React = require('react');
 var ReactRedux = require('react-redux');
@@ -46,7 +47,7 @@ var Panel = React.createClass({
     defaults: {
       datetimeProps: {
         closeOnSelect: true,
-        dateFormat: 'DD/MM/YYYY',
+        dateFormat: 'ddd D MMM[,] YYYY',
         timeFormat: null, 
         inputProps: {size: 8}, 
       },  
@@ -266,14 +267,14 @@ var Panel = React.createClass({
     );
 
     var buttonSave = (
-      <Button onClick={() => (console.info('Todo Save'))} bsStyle="default" disabled={true} title="Save">
+      <Button onClick={this._saveAsImage} bsStyle="default" disabled={true} title="Save">
         <i className="fa fa-save" ></i>&nbsp; Save as image
       </Button>
     );
   
     var buttonExport = (
-      <Button onClick={() => (console.info('Todo Export'))} bsStyle="default" disabled={true} title="Export">
-        <i className="fa fa-table" ></i>&nbsp; Export as CSV
+      <Button onClick={this._exportToTable} bsStyle="default" disabled={true} title="Export">
+        <i className="fa fa-table" ></i>&nbsp; Export as table
       </Button>
     );
     
@@ -305,8 +306,9 @@ var Panel = React.createClass({
         <form className="form-horizontal report-panel" id={formId}>
           <fieldset>
           <legend>
-            <span style={{cursor: 'pointer'}} onClick={this._toggleCollapsed}>Parameters</span>
+            <span className="title" style={{cursor: 'pointer'}} onClick={this._toggleCollapsed}>Parameters</span>
             <i className={collapsed? "fa fa-fw fa-caret-down" : "fa fa-fw fa-caret-up"}></i>
+            {this._markupSummary(source, [t0, t1], [clusterKey, groupKey])}
           </legend>
           <Collapse in={!collapsed}><div>
             <div className="form-group">
@@ -418,6 +420,18 @@ var Panel = React.createClass({
     return false;
   },
   
+  _saveAsImage: function () {
+    // Todo
+    console.info('Todo: Saving to image...');
+    return false;
+  },
+
+  _exportToTable: function () {
+    // Todo
+    console.info('Todo: Exporting to CSV...');
+    return false;
+  },
+
   // Helpers
   
   _markupHelp: function () {
@@ -435,6 +449,34 @@ var Panel = React.createClass({
     return paragraph;
   },
 
+  _markupSummary: function (source, [t0, t1], [clusterKey, groupKey]) {
+    var _config = this.context.config.reports.byType.measurements;
+    
+    const openingBracket = (<span>&#91;</span>); 
+    const closingBracket = (<span>&#93;</span>);
+    const delimiter = (<span>::</span>);
+
+    // Todo a more friendly summary of supplied parameters
+    
+    t0 = moment(t0); t1 = moment(t1);
+    var dateFormat = (t0.year() == t1.year())? 'D/MMM' : 'D/MMM/YYYY';
+    var formattedTime = sprintf(
+      'From %s To %s', t0.format(dateFormat), t1.format(dateFormat)
+    ); 
+
+    return (
+      <span className="summary-wrapper">
+        {openingBracket}&nbsp;
+        <span className="summary">
+          <span>{_config.sources[source].title}</span>
+          &nbsp;{delimiter}&nbsp;
+          <span>{formattedTime}</span>
+        </span>
+        &nbsp;{closingBracket}
+      </span>  
+    );
+  },
+
 }); 
 
 var Chart = React.createClass({
@@ -447,6 +489,20 @@ var Chart = React.createClass({
     },
    
     defaults: {
+      width: '100%',
+      height: 320,
+      lineWidth: 1,
+      smooth: false,
+      tooltip: true,
+      fill: 0.35,
+      colors: [
+        '#2D6E8D', '#DB5563', '#9056B4', '#DD4BCF', '#30EC9F',
+        '#C23531', '#2F4554', '#61A0A8', '#ECA63F', '#41B024',
+      ],
+      symbolSize: 4,
+      grid: {
+        x: '80', x2: '35', y: '30', y2: '30',
+      },
       xAxis: {
         dateformat: {
           'minute': 'HH:mm',
@@ -477,8 +533,8 @@ var Chart = React.createClass({
 
   getDefaultProps: function () {
     return {
-      width: 850,
-      height: 350,
+      width: this.defaults.width,
+      height: this.defaults.height,
       series: [],
       finished: true,
       scaleTimeAxis: false,
@@ -488,47 +544,44 @@ var Chart = React.createClass({
   render: function () {
     var {defaults} = this.constructor;
     var {field, level, reportName} = this.props;
-    
     var {config} = this.context;
-    var _config = config.reports.byType.measurements;
-    
-    var {title, unit} = _config.fields[field];
+    var {title, unit} = config.reports.byType.measurements.fields[field];
     
     var {xaxisData, series} = this._consolidateData();
-    
     xaxisData || (xaxisData = []);
     
     series = (series || []).map(s => ({
       name: this._getNameForSeries(s),
-      symbolSize: 2,
-      smooth: true,
+      symbolSize: defaults.symbolSize,
+      fill: defaults.fill,
+      smooth: defaults.smooth,
       data: s.data,
     }));
 
     var xf = defaults.xAxis.dateformat[level];
 
     return (
-      <div className="report-chart"
-        id={['chart', field, level, reportName].join('--')}
-       >
-         <echarts.LineChart
+      <div className="report-chart" id={['chart', field, level, reportName].join('--')}>
+        <echarts.LineChart
             width={this.props.width}
             height={this.props.height}
             loading={this.props.finished? null : {text: 'Loading data...'}}
-            tooltip={false}
-            lineWidth={1}
+            tooltip={defaults.tooltip}
+            lineWidth={defaults.lineWidth}
+            color={defaults.colors}
+            grid={defaults.grid}
             xAxis={{
               data: xaxisData,
-              boundaryGap: true, 
+              boundaryGap: false, 
               formatter: (t) => (moment(t).format(xf)),
             }}
             yAxis={{
               name: title + (unit? (' (' + unit + ')') : ''),
               numTicks: 4,
-              formatter: unit? ((y) => (numeral(y).format('0.0a') + ' ' + unit)) : null,
+              formatter: (y) => (numeral(y).format('0.0a')),
             }}
             series={series}
-        />
+         />
       </div>
     );
   },

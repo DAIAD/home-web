@@ -83,7 +83,7 @@ var MeasurementReport = React.createClass({
         <h3>{reportsConfig.fields[field].title}</h3>
         
         <div className="legend">
-          <span>Choose Report:</span>&nbsp;
+          <span>Choose report:</span>&nbsp;
           {selectReport}
         </div>
         
