@@ -73,12 +73,10 @@ public interface ISchedulerRepository {
     abstract String getExecutionMessage(long executionId);
 
     /**
-     * Returns a list of {@link ScheduledJobExecution}, optionally filtered by a
-     * query.
+     * Returns a list of {@link ScheduledJobExecution} filtered by their exit code.
      * 
-     * @param query
-     *            the query to filter results
-     * @return the job executions
+     * @param exitStatus exit code for filtering the job executions.
+     * @return the job executions.
      */
     abstract List<ScheduledJobExecution> getExecutionByExitStatus(ExitStatus exitStatus);
 
