@@ -66,7 +66,7 @@ module.exports = function(grunt) {
       ]
     },
     browserify: {
-      options: {
+      options: { 
         watch: true,
         keepAlive: false,
         browserifyOptions: {
@@ -76,15 +76,9 @@ module.exports = function(grunt) {
           'echarts'
         ],
         transform: [
-          [
-            "babelify"
-          ],
-          [
-            "envify"
-          ],
-          [
-            "browserify-shim"
-          ]
+          ["babelify"],
+          ["envify"],
+          ["browserify-shim"]
         ]
       },
       utility: {
@@ -243,7 +237,6 @@ module.exports = function(grunt) {
             'src/main/resources/public/assets/js/build/home.js'
           ]
         }
-
       }
     },
     uglify: {
@@ -265,7 +258,34 @@ module.exports = function(grunt) {
           ]
         }
       },
-      // Todo Uglify vendor-*.js builds
+      'vendor-util': {
+         files: {
+          'src/main/resources/public/assets/js/build/vendor/util.min.js': [
+            'src/main/resources/public/assets/js/build/vendor/util.js'
+          ]
+        }
+      },
+      'vendor-react': {
+         files: {
+          'src/main/resources/public/assets/js/build/vendor/react.min.js': [
+            'src/main/resources/public/assets/js/build/vendor/react.js'
+          ]
+        }
+      },
+      'vendor-leaflet': {
+         files: {
+          'src/main/resources/public/assets/js/build/vendor/leaflet.min.js': [
+            'src/main/resources/public/assets/js/build/vendor/leaflet.js'
+          ]
+        }
+      },
+      'vendor-jquery': {
+         files: {
+          'src/main/resources/public/assets/js/build/vendor/jquery.min.js': [
+            'src/main/resources/public/assets/js/build/vendor/jquery.js'
+          ]
+        }
+      },
     },
     concat: {
       utility: {
@@ -462,9 +482,21 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-jsxhint');
 
   // Default task(s).
-  grunt.registerTask('build', ['clean', 'jshint', 'browserify', 'uglify', 'concat', 'docs', 'sync:home', 'sync:utility', 'sync:home']);
+  grunt.registerTask('build', [
+    'clean', 
+    'jshint', 
+    'browserify', 'uglify', 'concat', 
+    'docs', 
+    'sync:home', 'sync:utility', 'sync:home'
+  ]);
 
-  grunt.registerTask('develop', ['clean', 'jshint', 'browserify', 'sync:home', 'sync:utility', 'sync:debug', 'watch']);
+  grunt.registerTask('develop', [
+    'clean', 
+    'jshint', 
+    'browserify', 'uglify:vendor-leaflet', 'uglify:vendor-jquery', 
+    'sync:home', 'sync:utility', 'sync:debug', 
+    'watch'
+  ]);
 
   grunt.registerTask('docs', ['apidoc:utility']);
 
