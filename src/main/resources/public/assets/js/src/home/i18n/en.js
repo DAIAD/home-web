@@ -99,7 +99,11 @@
     "fifty": "Last 50"
   },
   "notifications": {
-    "showAll": "Show all"
+    "showAll": "Show all",
+    "alerts": "Alerts",
+    "announcements": "Announcements",
+    "recommendations": "Recommendations",
+    "tips": "Tips"
   },
   "profile": {
     "username": "Username",

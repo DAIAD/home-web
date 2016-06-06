@@ -8,6 +8,9 @@
 var userAPI = require('../api/user');
 var types = require('../constants/ActionTypes');
 
+const { fetchAll:fetchAllMessages } = require('./MessageActions');
+const { MESSAGE_TYPES } = require('../constants/HomeConstants');
+
 const requestedLogin = function() {
   return {
     type:types.USER_REQUESTED_LOGIN,
@@ -62,6 +65,9 @@ const login = function(username, password) {
       if (csrf) { dispatch(setCsrf(csrf)); }
       
       dispatch(receivedLogin(success, errors.length?errors[0].code:null, profile));
+
+      if (success) dispatch(fetchAllMessages());
+
       return response;
     })
     .catch((errors) => {
@@ -85,6 +91,9 @@ const refreshProfile = function() {
       if (csrf) { dispatch(setCsrf(csrf)); }
 
       dispatch(receivedLogin(success, errors.length?errors[0].code:null, profile));
+
+      if (success) dispatch(fetchAllMessages());
+
       return response;
     })
     .catch((errors) => {
@@ -106,16 +115,19 @@ const logout = function() {
     const csrf = getState().user.csrf;
 
     return userAPI.logout({csrf})
-      .then((response) => {
-        const { success, errors } = response;
+    .then((response) => {
+      
+      const { success, errors } = response;
+    
+      dispatch(receivedLogout(success, errors.length?errors[0].code:null));
 
-        dispatch(receivedLogout(success, errors.length?errors[0].code:null));
-        return response;
-      })
-      .catch((errors) => {
-        console.error('User logout failed with errors:', errors);
-        return errors;
-      });
+      return response;
+    })
+    .catch((errors) => {
+      console.error('User login failed with errors:', errors);
+      dispatch(receivedLogout(success, errors.length?errors[0].code:null));
+      return errors;
+    });
   };
 };
   

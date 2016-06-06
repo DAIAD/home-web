@@ -263,7 +263,23 @@ ul {
 @-webkit-keyframes counter-spin { 100% { -webkit-transform: rotate(-360deg); } }
 @keyframes counter-spin { 100% { -webkit-transform: rotate(-360deg); transform:rotate(-360deg); } }
 
-
+.error-display {
+  position: absolute;
+  margin-left: 30%;
+  margin-top: 40vh;
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  padding:50px;
+  z-index: 2000;
+}
+.error-display-x {
+  position: absolute;
+  right: 20px;
+  top: 5px;
+  color: #fff;
+  font-size: 1.5em;
+  font-weight: normal;
+}
 /* Main site parts */
 
 /* site-* top to bottom */
@@ -307,8 +323,8 @@ ul {
 .main-section{
   flex-grow: 1;
   display: flex;
-	//background: #fff;
 }
+
 div[class^="section."]{
   display: flex;
   flex-grow: 1;
@@ -439,6 +455,7 @@ div[class^="section."]{
 
 #notifications-popover { 
   margin-top: 7px;
+  border-radius: 0;
 }
 
 #notifications-popover .popover-title{
@@ -471,6 +488,10 @@ div[class^="section."]{
 .notification-list{
 }
 
+.notification-list li.active > a{ 
+  background: #E8F5FD;
+}
+
 .site-header .notification-list{
 	background: #fff;
 	position: absolute;
@@ -501,7 +522,7 @@ div[class^="section."]{
 
 .notification-list ul li a:hover{
 	cursor: pointer;
-	background: #eee;
+	background: #E8F5FD;
 }
 
 .hasUnread{
@@ -805,6 +826,27 @@ div[class^="section.login"]{
 .infobox-error {
   font-size: 1.1em;
 }
+
+.add-infobox-modal .modal-body {
+  padding: 0;
+}
+.add-infobox-modal .modal-content {
+  background:#E8F5FD;
+}
+.add-infobox {
+  display: flex;
+  flex-direction: row;
+}
+.add-infobox-left {
+  flex-grow: 1;
+  padding: 20px 0;
+  background: #fff;
+}
+.add-infobox-right {
+  flex-grow: 0;
+  flex-basis: 200px;
+  padding: 20px 0;
+}
 /* History */
 
 .history-chart-area {
@@ -929,12 +971,32 @@ input[name="amphiro-devices"] {
 }
 /* Notifications */
 
+.notifications { 
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+}
+.notifications-left {
+  flex-grow: 1;
+  background: #fff;
+}
+.notifications-right {
+  flex-grow: 0;
+  flex-shrink: 1;
+  flex-basis: 700px;
+  display: flex;
+  padding: 20px;
+}
 .notification {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
 }
 
 .notification-header {
 	text-align: center;
 	line-height: 1.4em;
+  flex-grow: 0;
 }
 
 .notification-img {
@@ -946,8 +1008,11 @@ input[name="amphiro-devices"] {
 .notification-details {
 	margin-top: 50px;
 	font-size: 1.1em;
+  flex-grow: 1;
 }
-
+.notification-pagination {
+  flex-grow: 0;
+}
 /* Profile */
 
 div[class^="section.profile"]{

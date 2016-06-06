@@ -41,6 +41,7 @@ function MainSidebar (props) {
   );
 } 
 
+
 function HomeRoot (props) {
   return (
     <IntlProvider 
@@ -63,12 +64,16 @@ function HomeRoot (props) {
           firstname={props.user.profile.firstname}
           deviceCount={props.deviceCount}
           isAuthenticated={props.user.isAuthenticated}
+          notifications={props.messages}
+          unreadNotifications={props.unreadNotifications}
+          linkToNotification={props.linkToNotification}
           locale={props.locale.locale}
           logout={props.logout} 
           setLocale={props.setLocale}
         />
 
       <div className = "main-container">
+        
         {(() => props.user.isAuthenticated ? 
           <MainSidebar menuItems={MAIN_MENU} />
           :
