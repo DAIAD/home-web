@@ -25,6 +25,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
+import com.google.common.collect.ImmutableMap;
+
 import eu.daiad.web.hbase.HBaseConnectionManager;
 import eu.daiad.web.model.amphiro.AmphiroAbstractDataPoint;
 import eu.daiad.web.model.amphiro.AmphiroAbstractSession;
@@ -74,6 +76,9 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 
     @Value("${scanner.cache.size}")
     private int scanCacheSize = 1;
+
+    @Value("${daiad.amphiro.validation-string:true}")
+    private boolean strictAmphiroValidation;
 
     private final String amphiroTableSessionIndex = "daiad:amphiro-sessions-index-v2";
 
@@ -482,20 +487,57 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                 }
 
                 // Set session for every measurement
-                for (AmphiroMeasurement m : measurements) {
+                for (int m = measurements.size() - 1; m >= 0; m--) {
+                    boolean rejected = false;
+
+                    // Find session
                     for (AmphiroSession s : sessions) {
-                        if (m.getSessionId() == s.getId()) {
+                        if (measurements.get(m).getSessionId() == s.getId()) {
                             if (s.isHistory()) {
-                                throw createApplicationException(DataErrorCode.HISTORY_SESSION_MEASUREMENT_FOUND).set(
-                                                "session", m.getSessionId()).set("index", m.getIndex());
+                                if (strictAmphiroValidation) {
+                                    throw createApplicationException(DataErrorCode.HISTORY_SESSION_MEASUREMENT_FOUND)
+                                                    .set("session", measurements.get(m).getSessionId()).set("index",
+                                                                    measurements.get(m).getIndex());
+                                } else {
+                                    ImmutableMap<String, Object> properties = ImmutableMap.<String, Object> builder()
+                                                    .put("index", measurements.get(m).getIndex()).put("session",
+                                                                    measurements.get(m).getSessionId()).build();
+
+                                    logger.warn(getMessage(DataErrorCode.HISTORY_SESSION_MEASUREMENT_FOUND, properties));
+
+                                    measurements.remove(m);
+
+                                    rejected = true;
+
+                                    break;
+                                }
                             }
-                            m.setSession(s);
+
+                            measurements.get(m).setSession(s);
                             break;
                         }
                     }
-                    if (m.getSession() == null) {
-                        throw createApplicationException(DataErrorCode.NO_SESSION_FOUND_FOR_MEASUREMENT).set("session",
-                                        m.getSessionId()).set("index", m.getIndex());
+
+                    // Ignore rejected measurements
+                    if (rejected) {
+                        continue;
+                    }
+
+                    // Check if measurement has no session
+                    if (measurements.get(m).getSession() == null) {
+                        if (strictAmphiroValidation) {
+                            throw createApplicationException(DataErrorCode.NO_SESSION_FOUND_FOR_MEASUREMENT).set(
+                                            "session", measurements.get(m).getSessionId()).set("index",
+                                            measurements.get(m).getIndex());
+                        } else {
+                            ImmutableMap<String, Object> properties = ImmutableMap.<String, Object> builder()
+                                            .put("index", measurements.get(m).getIndex()).put("session",
+                                                            measurements.get(m).getSessionId()).build();
+
+                            logger.warn(getMessage(DataErrorCode.NO_SESSION_FOUND_FOR_MEASUREMENT, properties));
+                            
+                            measurements.remove(m);
+                        }
                     }
                 }
             }
