@@ -83,7 +83,7 @@ const appendMessages = function (type, messages) {
  * @param {String} options.id - Message id to set active 
  * @param {Array} options.category - Message category to set active 
  */
-function linkToMessage (options) {
+const linkToMessage = function (options) {
   return function(dispatch, getState) {
     const { id, category } = options;
 
@@ -92,7 +92,7 @@ function linkToMessage (options) {
 
     dispatch(push('/notifications'));
   };
-}
+};
 
 /**
  * Fetch messages with the given options 
@@ -101,7 +101,7 @@ function linkToMessage (options) {
  * @param {String} options.type - The message type to fetch. 
  *                                One of ALERT, RECOMMENDATION_STATIC, RECOMMENDATION_DYNAMIC, ANNOUNCEMENT
  */
-function fetch (options) {
+const fetch = function (options) {
   return function(dispatch, getState) {
 
     if (!Array.isArray(options)) throw new Error('Fetch requires array of options:', options);
@@ -125,17 +125,17 @@ function fetch (options) {
         dispatch(receivedMessages(false, error));
       });
   };
-}
+};
 
 /**
  * Fetch all messages in descending order (most recent first)
  */
-function fetchAll () {
+const fetchAll = function () {
   return function(dispatch, getState) {
     dispatch(fetch(MESSAGE_TYPES.map(x => Object.assign({}, x, {ascending: false}))))
     .then(response => dispatch(setMessages(response)));
   };
-}
+};
 
 /**
  * Acknowledge message
@@ -147,7 +147,7 @@ function fetchAll () {
  *                                respectively
  * @param {Number} timestamp - The timestamp of the time of acknowledgement
  */
-function acknowledge (id, category, timestamp) {
+const acknowledge = function (id, category, timestamp) {
   return function(dispatch, getState) {
     if (!id || !category || !timestamp) throw new Error(`Not sufficient data provided for message acknowledgement. (id, type, timestamp): ${id}, ${category}, ${timestamp}`);
 
@@ -178,7 +178,7 @@ function acknowledge (id, category, timestamp) {
         throw error;
       });
   };
-}
+};
 
 /**
  * Set active message category 
@@ -188,7 +188,7 @@ function acknowledge (id, category, timestamp) {
  *                                        ALERT, RECOMMENDATION_STATIC, RECOMMENDATION_DYNAMIC, ANNOUNCEMENT
  *                                respectively
  */
-function setActiveTab (category) {
+const setActiveTab = function (category) {
   if (!(tab === 'alerts' || tab === 'announcements' || tab === 'recommendations' || tab === 'tips')) {
     throw new Error ('Tab needs to be one of alerts, announcements, recommendations, tips. Provided: ', tab);
   }
@@ -197,7 +197,7 @@ function setActiveTab (category) {
     type: types.MESSAGE_SET_ACTIVE_TAB,
     category
   };
-}
+};
 
 /**
  * Set active message id and acknowledge
@@ -205,7 +205,7 @@ function setActiveTab (category) {
  *
  * @param {Number} id - The message id
  */
-function setActiveMessageId (id) {
+const setActiveMessageId = function (id) {
   return function(dispatch, getState) {
     if (!id) throw new Error('Not sufficient data provided for selecting message, missing id');
 
@@ -220,7 +220,7 @@ function setActiveMessageId (id) {
 
 
   };
-}
+};
 
 module.exports = {
   linkToMessage,
