@@ -2,10 +2,6 @@
  * Apply site-local overrides for Bootstap
  */
 
-body {
-  font-family: sans-serif;
-}
-
 .form-group input {
   border-radius: 1px;
   height: 32px;
@@ -22,6 +18,20 @@ body {
   border-radius: 1px;
 }
 
+.form-group select {
+  line-height: 1.25em;
+  padding: 4px 7px;
+}
+
+.form-group {
+  margin-bottom: 6px;
+  margin-top: 2px;
+}
+
+.form-control {
+  height: 32px;
+}
+
 .btn {
   border-radius: 1px;
   padding-left: 8px;
@@ -32,18 +42,19 @@ body {
   top: 2px;
 }
 
-.panel-group .panel {
-  border-radius: 1px;
-}
-
-.form-group select {
-  line-height: 1.25em;
-  padding: 4px 7px;
-}
-
-.horizontal-form legend {
-  font-size: 1.35em;
+legend {
+  font-size: 1.1em;
+  margin-bottom: 8px;
 } 
+
+legend > .fa,
+legend > .glyphicon {
+  vertical-align: middle;
+}
+
+legend > .glyphicon {
+  font-size: 0.8em;
+}
 
 .progress {
   border-radius: 1px;
@@ -63,6 +74,7 @@ body {
   padding: 10px 0px;
 }
 
+.panel-group .panel,
 .dropdown-menu {
   border-radius: 1px;
 }

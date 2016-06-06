@@ -5,8 +5,8 @@ var numeral = require('numeral');
 
 var React = require('react');
 var ReactRedux = require('react-redux');
-var ReactBootstrap = require('react-bootstrap');
-var {Button, Glyphicon} = ReactBootstrap;
+var Bootstrap = require('react-bootstrap');
+var {Button, Glyphicon, Collapse} = Bootstrap;
 var DatetimeInput = require('react-datetime');
 
 var echarts = require('react-echarts');
@@ -25,9 +25,7 @@ var commonPropTypes = {
   reportName: PropTypes.string.isRequired,
 };
 
-var toOptionElement = ({value, text}) => (
-  <option value={value} key={value}>{text}</option>
-);
+var toOptionElement = ({value, text}) => (<option value={value} key={value}>{text}</option>);
 
 const REPORT_KEY = 'pane';
 
@@ -128,11 +126,13 @@ var Panel = React.createClass({
       error: null,
       errorMessage: null,
       timespan: this.props.timespan,
+      collapsed: false,
     };
   },
 
   getDefaultProps: function () {
     return {
+      inlineForm: true,
       source: 'meter',
       timespan: 'month',
       population: null,
@@ -176,8 +176,8 @@ var Panel = React.createClass({
   render: function () {
     var cls = this.constructor;
     var {config} = this.context;
-    var {field, level, reportName, source, population: target} = this.props;
-    var {timespan, error} = this.state;
+    var {field, level, reportName, source, population: target, inlineForm} = this.props;
+    var {timespan, error, collapsed} = this.state;
     
     var _config = config.reports.byType.measurements;
     var [t0, t1] = cls.computeTimespan(timespan);
@@ -203,82 +203,148 @@ var Panel = React.createClass({
       config.utility.clusters
         .find(c => (c.key == clusterKey))
           .groups.map(g => ({value: g.key, text: g.name}));
-
-    return (
-      <form className="form-inline report-panel" 
-        id={['panel', field, level, reportName].join('--')} 
+    
+    var selectSource = (
+      <Select className="select-source" value={source} onChange={this._setSource}>
+        {sourceOptions.map(toOptionElement)}
+      </Select>
+    );
+    
+    var selectTimespan = (
+      <Select className="select-timespan" 
+        value={_.isString(timespan)? timespan : ''} 
+        onChange={(val) => (this._setTimespan(val? (val) : ([t0, t1])))}
        >
-        <div className="form-group">
-          <label>Source:</label>
-          &nbsp;
-          <Select
-            className="select-source"
-            value={source}
-            onChange={this._setSource}
-           >
-            {sourceOptions.map(toOptionElement)}
-          </Select>
-        </div>
-        <div className="form-group">
-          <label>Time:</label>
-          &nbsp;
-          <Select
-            className="select-timespan"
-            value={_.isString(timespan)? timespan : ''}
-            onChange={(val) => (this._setTimespan(val? (val) : ([t0, t1])))} 
-           >
-            {timespanOptions.map(toOptionElement)}
-          </Select>
-          &nbsp;
-          <DatetimeInput {...datetimeProps} 
-            value={t0.toDate()} 
-            onChange={(val) => (this._setTimespan([val, t1]))} 
-           />
-          &nbsp;
-          <DatetimeInput {...datetimeProps} 
-            value={t1.toDate()}
-            onChange={(val) => (this._setTimespan([t0, val]))} 
-           />
-        </div>
-        <div className="form-group">
-          <label>Group:</label> 
-          &nbsp;
-          <Select
-            className='select-cluster'
-            value={clusterKey || ''}
-            onChange={(val) => this._setPopulation(val, null)}
-           >
-            <option value="" key="" >None</option>
-            <optgroup label="Cluster by:">
-              {clusterOptions.map(toOptionElement)}
-            </optgroup>
-          </Select>
-          &nbsp;
-          <Select
-            className='select-cluster-group'
-            value={groupKey || ''}
-            onChange={(val) => this._setPopulation(clusterKey, val)}
-           >
-            <optgroup label={clusterKey? 'All groups' : 'No groups'}>
-              <option value="" key="">{clusterKey? 'All' : 'Everyone'}</option>
-            </optgroup>
-            <optgroup label="Pick a specific group:">
-              {groupOptions.map(toOptionElement)}
-            </optgroup>
-          </Select>
-        </div>
-        <br />
-        <div className="form-group">
-          <Button onClick={this._refresh} bsStyle="primary" disabled={!!error} title="Refresh">
-            <Glyphicon glyph="repeat" />&nbsp; Refresh
-          </Button>
-        </div>
-        {this._markupHelp()}
-      </form>
-    )
+        {timespanOptions.map(toOptionElement)}
+      </Select>
+    ); 
+    
+    var inputStarts = (
+      <DatetimeInput {...datetimeProps} 
+        value={t0.toDate()} 
+        onChange={(val) => (this._setTimespan([val, t1]))} 
+       />
+    );
+    
+    var inputEnds = (
+      <DatetimeInput {...datetimeProps} 
+        value={t1.toDate()}
+        onChange={(val) => (this._setTimespan([t0, val]))} 
+       />
+    );
+    
+    var selectCluster = (
+      <Select className='select-cluster'
+        value={clusterKey || ''}
+        onChange={(val) => this._setPopulation(val, null)}
+       >
+        <option value="" key="" >None</option>
+        <optgroup label="Cluster by:">
+          {clusterOptions.map(toOptionElement)}
+        </optgroup>
+      </Select>
+    );
+
+    var selectClusterGroup = (
+      <Select className='select-cluster-group'
+        value={groupKey || ''}
+        onChange={(val) => this._setPopulation(clusterKey, val)}
+       >
+        <optgroup label={clusterKey? 'All groups' : 'No groups'}>
+          <option value="" key="">{clusterKey? 'All' : 'Everyone'}</option>
+        </optgroup>
+        <optgroup label="Pick a specific group:">
+          {groupOptions.map(toOptionElement)}
+        </optgroup>
+      </Select>
+    );
+
+    var buttonRefresh = (
+      <Button onClick={this._refresh} bsStyle="primary" disabled={!!error} title="Refresh">
+        <i className="fa fa-refresh"></i>&nbsp; Refresh
+      </Button>
+    );
+
+    var buttonSave = (
+      <Button onClick={() => (console.info('Todo Save'))} bsStyle="default" disabled={true} title="Save">
+        <i className="fa fa-save" ></i>&nbsp; Save as image
+      </Button>
+    );
+  
+    var buttonExport = (
+      <Button onClick={() => (console.info('Todo Export'))} bsStyle="default" disabled={true} title="Export">
+        <i className="fa fa-table" ></i>&nbsp; Export as CSV
+      </Button>
+    );
+    
+    var form, formId = ['panel', field, level, reportName].join('--');
+    
+    if (inlineForm) {
+      form = (
+        <form className="form-inline report-panel" id={formId}>
+          <div className="form-group">
+            <label>Source:</label>&nbsp;{selectSource}
+          </div>
+          <div className="form-group">
+            <label>Time:</label>&nbsp;
+            {selectTimespan}&nbsp;{inputStarts}&nbsp;{inputEnds}
+          </div>
+          <div className="form-group">
+            <label>Group:</label>&nbsp;
+            {selectCluster}&nbsp;{selectClusterGroup}
+          </div>
+          <br />
+          <div className="form-group">
+            {buttonRefresh}&nbsp;&nbsp;{buttonSave}&nbsp;&nbsp;{buttonExport}
+          </div>
+          {this._markupHelp()}
+        </form> 
+      );
+    } else {
+      form = (
+        <form className="form-horizontal report-panel" id={formId}>
+          <fieldset>
+          <legend>
+            <span style={{cursor: 'pointer'}} onClick={this._toggleCollapsed}>Parameters</span>
+            <i className={collapsed? "fa fa-fw fa-caret-down" : "fa fa-fw fa-caret-up"}></i>
+          </legend>
+          <Collapse in={!collapsed}><div>
+            <div className="form-group">
+              <label className="col-sm-2 control-label">Source:</label>
+              <div className="col-sm-9">{selectSource}</div>
+            </div>
+            <div className="form-group">
+              <label className="col-sm-2 control-label">Time:</label>
+              <div className="col-sm-9">
+                {selectTimespan}&nbsp;&nbsp;{inputStarts}&nbsp;-&nbsp;{inputEnds}
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="col-sm-2 control-label">Group:</label> 
+              <div className="col-sm-9">
+                {selectCluster}&nbsp;&nbsp;{selectClusterGroup}
+               </div>
+            </div>
+          </div></Collapse> 
+          </fieldset> 
+          <div className="form-group">
+            <div className="col-sm-12">
+              {buttonRefresh}&nbsp;&nbsp;{buttonSave}&nbsp;&nbsp;{buttonExport}
+            </div>
+          </div>
+          {this._markupHelp()}
+        </form>
+      );
+    }
+    
+    return form;
   },
 
   // Event handlers
+
+  _toggleCollapsed: function () {
+    this.setState({collapsed: !this.state.collapsed});
+  },
 
   _setTimespan: function (val) {
     var cls = this.constructor;
@@ -360,11 +426,11 @@ var Panel = React.createClass({
     var paragraph;
     
     if (errorMessage) {
-      paragraph = (<p className="inline help text-danger">{errorMessage}</p>);
+      paragraph = (<p className="help text-danger">{errorMessage}</p>);
     } else if (dirty) {
-      paragraph = (<p className="inline help text-info">Parameters have changed. Refresh to redraw data!</p>); 
+      paragraph = (<p className="help text-info">Parameters have changed. Refresh to redraw data!</p>); 
     } else {
-      paragraph = (<p className="inline help text-muted">Refresh to redraw data.</p>);
+      paragraph = (<p className="help text-muted">Refresh to redraw data.</p>);
     }
     return paragraph;
   },
@@ -434,8 +500,8 @@ var Chart = React.createClass({
     
     series = (series || []).map(s => ({
       name: this._getNameForSeries(s),
-      symbolSize: 0,
-      smooth: false,
+      symbolSize: 2,
+      smooth: true,
       data: s.data,
     }));
 

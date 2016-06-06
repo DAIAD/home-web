@@ -29,14 +29,9 @@ var MeasurementReport = React.createClass({
   },
 
   render: function() {  
-    
-    var commonReportProps = {
-      config: this.props.config,
-      field: 'volume',
-    };
 
     return (
-      <div className="container-fluid reports reports-measurements" style={{paddingTop: 10}}>
+      <div className="container-fluid reports reports-measurements">
         <div className="row">
           <div className="col-md-12">
             <Breadcrumb routes={this.props.routes}/>
@@ -44,7 +39,7 @@ var MeasurementReport = React.createClass({
         </div>
         <div className="row">
           <div className="col-md-12">
-            <reports.MeasurementReport {...commonReportProps} level="week" reportName="avg-daily-avg" />
+            <reports.MeasurementReport config={this.props.config} field={'volume'} />
           </div>
         </div>
       </div>

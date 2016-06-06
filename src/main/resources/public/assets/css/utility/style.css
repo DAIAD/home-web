@@ -481,21 +481,11 @@ a .disabled{
     text-align: center;
 }
 
-/* Bootstrap forms */
-
-.form-control {
-    height: 36px;
-}
-
 /* Reports (charts/panels) */
 
-div.stats-page {
-  width: 100%;
-}
-
 form.report-panel {
-  margin: 4px 0px;
-  padding: 4px 0px;
+  margin: 0px 0px;
+  padding: 5px 0px;
   width: 100%;
 }
 
@@ -524,8 +514,8 @@ form.report-panel.form-inline .form-group {
 }
 
 .reports > h3 {
-  margin: 5px 0px;
-  font-size: 22px;
+  margin: 5px 0px 15px 0px;
+  font-size: 25px;
 }
 
 .reports > h3 span.delimiter {
@@ -533,28 +523,60 @@ form.report-panel.form-inline .form-group {
   font-size: 1.3em;
 }
 
+.reports > div.legend {
+  /* mimic normal legend */
+  font-size: 1.1em;
+  margin-bottom: 8px;
+}
+
+.reports > div.legend .select-dropdown .dropdown-menu li a,
+.reports > div.legend .select-dropdown .dropdown-menu .dropdown-header,
+.reports > div.legend .select-dropdown .btn .text {
+  font-size: 1.1em;
+}
+
 .report-panel .form-group > label {
   vertical-align: text-top;
 }
 
-.report-panel .dropdown.select-source button > span.text {
+.dropdown.select-report button > span.text {
+  width: 18em;
+}
+
+.report-panel.form-inline .dropdown.select-source button > span.text {
   width: 3.1em;
 }
+.report-panel.form-horizontal .dropdown.select-source button > span.text {
+  width: 4.5em;
+}
 
-.report-panel .dropdown.select-timespan button > span.text {
+.report-panel.form-inline .dropdown.select-timespan button > span.text {
   width: 5.5em;
 }
-
-.report-panel .dropdown.select-granularity button > span.text {
-  width: 5em;
+.report-panel.form-horizontal .dropdown.select-timespan button > span.text {
+  width: 10em;
 }
 
-.report-panel .dropdown.select-cluster button > span.text {
-  width: 7.5em;
+.report-panel.form-inline .dropdown.select-cluster button > span.text {
+  width: 7em;
+}
+.report-panel.form-horizontal .dropdown.select-cluster button > span.text {
+  width: 10em;
 }
 
-.report-panel .dropdown.select-cluster-group button > span.text {
-  width: 7.5em;
+.report-panel.form-inline .dropdown.select-cluster-group button > span.text {
+  width: 7em;
+}
+.report-panel.form-horizontal .dropdown.select-cluster-group button > span.text {
+  width: 10em;
+}
+
+.report-panel .form-group .rdt {
+  display: inline-block;
+  vertical-align: middle;
+}
+.report-panel .form-group .rdt > input[type="text"] {
+  width: 6.5em;
 }
 
 .chart.portal {
