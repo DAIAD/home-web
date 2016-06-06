@@ -288,12 +288,12 @@ var Scheduler = React.createClass({
       </span>
     );
 
-    var resetButton = null;
+    var resetButton = ( <div />);
 
-    if((this.props.scheduler.query.execution.jobName != 'UNDEFINED') ||
-       (this.props.scheduler.query.execution.exitCode != 'UNDEFINED')) {
+    if((this.props.scheduler.query.execution.jobName) ||
+       (this.props.scheduler.query.execution.exitCode)) {
       resetButton = (
-        <div style={{float: 'right'}}>
+        <div style={{float: 'right', marginLeft: 20}}>
           <Bootstrap.Button bsStyle='default' onClick={this.clearExecutionFilter}>Reset</Bootstrap.Button>
         </div>
       );
@@ -353,7 +353,7 @@ var Scheduler = React.createClass({
                     </div>
                     <div className='col-md-4' style={{float: 'right'}}>
                       {resetButton}
-                      <div style={{float: 'right', marginRight: 20}}>
+                      <div style={{float: 'right'}}>
                         <Bootstrap.Button bsStyle='primary' onClick={this.refreshExecutions}>Refresh</Bootstrap.Button>
                       </div>
                     </div>

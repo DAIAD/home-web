@@ -54,7 +54,7 @@ var executionRequestComplete = function(success, errors, total, items, index, si
 var executionFilterByJobName = function(jobName) {
   return {
     type : types.EXECUTION_FILTER_JOB_NAME,
-    jobName : jobName
+    jobName : (jobName === 'UNDEFINED' ? null : jobName)
   };
 };
 

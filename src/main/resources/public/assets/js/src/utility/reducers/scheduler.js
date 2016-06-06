@@ -9,8 +9,8 @@ var createInitialeState = function() {
         size : 10,
         startDate : null,
         endDate : null,
-        exitCode : 'UNDEFINED',
-        jobName : 'UNDEFINED'
+        exitCode : null,
+        jobName : null
       }
     },
     data : {
@@ -45,7 +45,7 @@ var queryReducer = function(state, action) {
 
       return Object.assign({}, state, {
         execution : Object.assign({}, state.execution, {
-          jobName : action.jobName || '',
+          jobName : action.jobName || null,
           index : 0
         })
       });
