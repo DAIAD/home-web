@@ -2,22 +2,19 @@ var api = require('./base');
 
 var ManageAlertsAPI = {
     getAllUtilities: function(){
-        return api.json('/action/utility/fetch/all');
-    },
-    getTips: function(locale){
+        return api.json('/action/utility/fetch/corresponding');
+    },    
+    getTips: function(locale){      
         return api.json('/action/recommendation/static/' + locale);
     },
-    saveActiveTips: function(changedTips, locale){
-      console.log("API " + "/action/recommendation/static/save/" + locale, changedTips);
-      return api.json('/action/recommendation/static/save/'+ locale, changedTips);
+    saveActiveTips: function(changedRows){
+      return api.json('/action/recommendation/static/status/save/', changedRows);
     },
-    editTip: function(tip){
-      console.log("api editing tip " + tip);
-      //return api.json('/action/recommendation/static/edit', tip);
+    insertTip: function(tip){
+      return api.json('/action/recommendation/static/insert', tip);
     },
-    addTip: function(tip){
-      console.log("api adding tip " + tip.title);
-      //return api.json('/action/recommendation/static/add', tip);
+    deleteTip: function(tip){
+      return api.json('/action/recommendation/static/delete', tip);
     }
 };
 
