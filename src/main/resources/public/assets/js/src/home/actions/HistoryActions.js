@@ -7,8 +7,10 @@
 
 var types = require('../constants/ActionTypes');
 var { push } = require('react-router-redux');
-var { getSessionById, getDeviceKeysByType, getDeviceTypeByKey, lastNFilterToLength, getIdRangeByIndex } = require('../utils/device');
-var { getTimeByPeriod, getPreviousPeriod, convertGranularityToPeriod, getGranularityByDiff } = require('../utils/time');
+var { getDeviceKeysByType, getDeviceTypeByKey } = require('../utils/device');
+var { getTimeByPeriod, getPreviousPeriod, convertGranularityToPeriod, getGranularityByDiff  } = require('../utils/time');
+var { getSessionById } = require('../utils/transformations');
+var { lastNFilterToLength } = require('../utils/general');
 
 var QueryActions = require('./QueryActions');
 

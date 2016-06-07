@@ -40,7 +40,7 @@ function SayHello (props) {
 }
 
 function InfoBox (props) {
-  const { mode, infobox, updateInfobox, removeInfobox, chartFormatter, intl } = props;
+  const { mode, infobox, updateInfobox, removeInfobox, intl } = props;
   const { id, error, period, type, display, linkToHistory, periods, displays, time } = infobox;
   
   const _t = intl.formatMessage;
@@ -199,7 +199,6 @@ function ChartBox (props) {
                   xAxis={chartXAxis}
                   xAxisData={chartCategories}
                   colors={chartColors}
-                  formatter={chartFormatter(intl)}
                   data={chartData}
                 /> :
               <Chart
@@ -216,7 +215,6 @@ function ChartBox (props) {
                 xAxis={chartXAxis}
                 xAxisData={chartCategories}
                 colors={chartColors}
-                formatter={chartFormatter(intl)}
                 data={chartData}
               />))
 
@@ -239,8 +237,9 @@ function ChartBox (props) {
 }
 
 function InfoPanel (props) {
-  const { mode, layout, infoboxData, updateLayout, switchMode,  updateInfobox, removeInfobox, chartFormatter, intl, periods, displays } = props;
+  const { mode, layout, infoboxes, updateLayout, switchMode,  updateInfobox, removeInfobox, chartFormatter, intl, periods, displays } = props;
 
+  console.log('info panel with', infoboxes);
   return (
     <div>
       <ResponsiveGridLayout 
@@ -263,7 +262,7 @@ function InfoPanel (props) {
         }}
        >
        {
-         infoboxData.map(function(infobox) {
+         infoboxes.map(function(infobox) {
            return (
              <div key={infobox.id}>
                <InfoBox {...{mode, periods, displays, chartFormatter, infobox, updateInfobox, removeInfobox, intl}} /> 

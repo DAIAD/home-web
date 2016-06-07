@@ -4,7 +4,7 @@ var { connect } = require('react-redux');
 var injectIntl = require('react-intl').injectIntl;
 
 var { getChartDataByFilter } = require('../utils/chart');
-var { getDataSessions } = require('../utils/device');
+var { getDataSessions } = require('../utils/transformations');
 
 var SessionModal = require('../components/Session');
 

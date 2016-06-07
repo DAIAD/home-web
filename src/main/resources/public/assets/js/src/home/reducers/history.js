@@ -1,6 +1,6 @@
 var types = require('../constants/ActionTypes');
 
-var { updateOrAppendToSession } = require('../utils/device');
+var { updateOrAppendToSession } = require('../utils/transformations');
 var { thisYear } = require('../utils/time');
 
 var history = function (state, action) {

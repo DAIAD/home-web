@@ -7,9 +7,11 @@ var History = require('../components/sections/History');
 
 var HistoryActions = require('../actions/HistoryActions');
 
-var { getDeviceByKey, getDeviceNameByKey, getAvailableDevices, getDeviceTypeByKey, getDefaultDevice, reduceSessions, reduceMetric, getMetricMu, sortSessions } = require('../utils/device');
+var { getDeviceByKey, getDeviceNameByKey, getAvailableDevices, getDeviceTypeByKey, getDefaultDevice } = require('../utils/device');
+var { reduceSessions, reduceMetric, sortSessions } = require('../utils/transformations');
+
 var timeUtil = require('../utils/time');
-var { getFriendlyDuration, getEnergyClass } = require('../utils/general');
+var { getFriendlyDuration, getEnergyClass, getMetricMu } = require('../utils/general');
 
 var { DEV_METRICS, METER_METRICS, DEV_PERIODS, METER_PERIODS, DEV_SORT, METER_SORT } = require('../constants/HomeConstants');
 

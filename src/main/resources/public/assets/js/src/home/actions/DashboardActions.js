@@ -10,7 +10,8 @@ var types = require('../constants/ActionTypes');
 var QueryActions = require('./QueryActions');
 var HistoryActions = require('./HistoryActions');
 
-var { getDeviceKeysByType, lastNFilterToLength } = require('../utils/device');
+var { getDeviceKeysByType } = require('../utils/device');
+var { lastNFilterToLength } =  require('../utils/general');
 var { getTimeByPeriod, getLastShowerTime, getPreviousPeriodSoFar } = require('../utils/time');
 
 
@@ -72,6 +73,8 @@ const addInfobox = function(options) {
 
     dispatch(createInfobox(Object.assign(options, {id})));
     dispatch(appendLayout(id, display));
+
+    dispatch(updateInfobox(id, {}));
     return id;
   };
 };

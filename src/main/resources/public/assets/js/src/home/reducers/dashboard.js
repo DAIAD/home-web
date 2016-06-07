@@ -61,16 +61,7 @@ var dashboard = function (state, action) {
             metric: "difference",
             data: [],
           },
-          /*
-        {
-          id: "7", 
-          title: "Tip of the day",
-          type: "tip",
-          display: "tip",
-          data: [],
-        
-          },
-          */
+          
         {
           id: "8", 
           title: "Efficiency",
@@ -121,6 +112,16 @@ var dashboard = function (state, action) {
           metric: "difference",
           data: [],
         },
+        /*
+        {
+          id: "7", 
+          title: "Tip of the day",
+          type: "tip",
+          display: "tip",
+          data: [],
+        
+          },
+          */
       ]
     };
   }
@@ -149,12 +150,13 @@ var dashboard = function (state, action) {
     }
  
     case types.DASHBOARD_REMOVE_INFOBOX: {
-      let newInfobox = state.infobox.slice();
-      let idx = newInfobox.findIndex(obj => obj.id === action.id);
-      newInfobox.splice(idx, 1);
-      
+      let newInfobox = state.infobox.slice().filter(x => x.id !== action.id);
+
+      let newLayout = state.layout.slice().filter(x => x.i !== action.id);
+
       return Object.assign({}, state, {
-        infobox: newInfobox
+        infobox: newInfobox,
+        layout: newLayout
       });
     }
 

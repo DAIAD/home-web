@@ -12,7 +12,7 @@ var types = require('../constants/ActionTypes');
 var deviceAPI = require('../api/device');
 var meterAPI = require('../api/meter');
 
-var { reduceSessions, getLastSession, getSessionIndexById, getDeviceTypeByKey, updateOrAppendToSession } = require('../utils/device');
+var { reduceSessions, getLastSession, getDeviceTypeByKey, updateOrAppendToSession } = require('../utils/transformations');
 
 const requestedQuery = function() {
   return {
