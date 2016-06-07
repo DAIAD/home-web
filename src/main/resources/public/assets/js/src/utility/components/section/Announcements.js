@@ -144,8 +144,7 @@ var Announcements = React.createClass({
          <Bootstrap.ListGroup fill>
           <Bootstrap.ListGroupItem>	
             <div className="row">
-              <div className="col-md-12">
-                {filter}  
+              <div className="col-md-12"> 
 
                 {filter}
               </div>
