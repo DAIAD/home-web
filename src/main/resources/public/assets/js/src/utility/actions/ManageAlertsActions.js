@@ -149,7 +149,22 @@ var ManageAlertsActions = {
     return function (dispatch, getState) {
       dispatch(requestDeleteTip);
       return alertsAPI.deleteTip(getState(event).alerts.currentTip).then(function (response) {
-        dispatch(deleteTipResponse(response.success, response.errors));        
+        dispatch(deleteTipResponse(response.success, response.errors));   
+        var utility = getState(event).alerts.utility;
+        var locale;        
+        if (utility.label == "DAIAD") {
+          locale = "en";
+        } else if (utility.label == "Alicante") {
+          locale = "es";
+        } else {
+          locale = "en";
+        } 
+        dispatch(requestedTips(locale));
+        return alertsAPI.getTips(locale).then(function (response) {
+          dispatch(receivedTips(response.success, response.errors, response.messages));
+        }, function (error) {
+          dispatch(receivedTips(false, error, null));
+        });                
       }, function (error) {
         dispatch(deleteTipResponse(false, error, null));
       });

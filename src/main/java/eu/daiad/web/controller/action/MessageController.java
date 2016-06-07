@@ -203,7 +203,6 @@ public class MessageController extends BaseController {
 		    response.add(this.getError(ex));
 		    return response;
 		}
-        System.out.println("success " + response.getSuccess());
         return response;
 	}    
     
