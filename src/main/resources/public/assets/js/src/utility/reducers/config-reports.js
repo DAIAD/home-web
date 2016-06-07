@@ -35,7 +35,7 @@ var initialState = {
         'volume': {
           name: 'volume',
           title: 'Water Consumption',
-          unit: 'L', //'m\u00B3', // m^3
+          unit: 'lit', //'m\u00B3', // m^3
           sources: ['meter', 'device'],
         },
         'energy': {
@@ -103,7 +103,7 @@ var initialState = {
               title: 'Average of weekly consumption',
               description: 'The average weekly consumption',
               granularity: 'WEEK',
-              timespan: 'quarter',
+              timespan: 'quarter-1',
               metrics: ['AVERAGE'],
               consolidate: 'AVERAGE',
             },
@@ -111,7 +111,7 @@ var initialState = {
               title: 'Total weekly consumption',
               description: 'The total weekly consumption',
               granularity: 'WEEK',
-              timespan: 'quarter',
+              timespan: 'quarter-1',
               metrics: ['SUM'],
               consolidate: 'AVERAGE',
             },
@@ -120,7 +120,7 @@ var initialState = {
               title: 'Average of daily consumption',
               description: 'The weekly average of the average daily consumption',
               granularity: 'DAY',
-              timespan: 'quarter',
+              timespan: 'quarter-1',
               metrics: ['AVERAGE'],
               consolidate: 'AVERAGE',
             },
@@ -128,7 +128,7 @@ var initialState = {
               title: 'Peak of daily consumption',
               description: 'The weekly average of the daily min/max consumption',
               granularity: 'DAY',
-              timespan: 'quarter',
+              timespan: 'quarter-1',
               metrics: ['MIN', 'MAX'],
               consolidate: 'AVERAGE',
             },
@@ -140,7 +140,7 @@ var initialState = {
                 {type: 'TOP', metric: 'SUM', limit: 2},
                 {type: 'BOTTOM', metric: 'SUM', limit: 2},
               ],
-              timespan: 'quarter',
+              timespan: 'quarter-1',
               metrics: null, // n/a
               consolidate: 'AVERAGE', // n/a
             }

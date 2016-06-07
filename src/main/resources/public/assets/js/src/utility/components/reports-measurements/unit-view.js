@@ -49,7 +49,7 @@ class _View extends React.Component {
         legend: true,
         lineWidth: 1,
         color: ['#2D6E8D', '#DB5563', '#9056B4',],
-        grid: {x: '55', x2: '30', y: '30', y2: '30'},
+        grid: {x: '50', x2: '22', y: '30', y2: '30'},
         yAxis: {
           formatter: (y) => (numeral(y).format('0.0a')),
         },
@@ -216,10 +216,11 @@ class _View extends React.Component {
       return (moment.duration(p2[0] - p1[0]).as(level) == 1);
     };
     
-    if (!(keys.map(pairWithNext).every(_.spread(checkStepToNextUnit))))
-      throw new Error(sprintf(
-        'Expected that the step to the next unit is 1 %s', level
-      ));
+    // Fixme!!
+    //if (!(keys.map(pairWithNext).every(_.spread(checkStepToNextUnit))))
+    //  throw new Error(sprintf(
+    //    'Expected that the step to the next unit is 1 %s', level
+    //  ));
    
     if (keys.indexOf(k0) <= 0) 
       console.error(sprintf(

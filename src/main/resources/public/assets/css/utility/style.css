@@ -31,7 +31,7 @@
 	background-color: #fff;
 	position: inherit;
 	margin: 0 0 0 250px;
-	padding: 70px 30px 0px 30px;
+	padding: 60px 25px 0px 30px;
 	border-left: 1px solid #e7e7e7;
 	min-height: 1300px;
 }
@@ -84,7 +84,7 @@
 
 ul.breadcrumbs-list {
 	padding: 8px 15px;
-	margin-bottom: 20px;
+	margin-bottom: 12px;
 	list-style: none;
 	background-color: #f5f5f5;
 	border-radius: 4px;
@@ -528,6 +528,10 @@ form.report-panel.form-inline .form-group {
   margin: 8px 12px 8px 0px;
 }
 
+form.report-panel fieldset {
+  margin: 0px 0px 5px 0px;
+}
+
 .reports > h3 {
   margin: 5px 0px 15px 0px;
   font-size: 25px;
@@ -535,8 +539,12 @@ form.report-panel.form-inline .form-group {
 
 .reports > h3 span.delimiter {
   font-weight: bolder;
-  font-size: 1.3em;
 }
+
+.reports legend {
+  font-size: 1.1em;
+  margin-bottom: 8px;
+} 
 
 .reports > div.legend {
   /* mimic normal legend */
@@ -550,12 +558,26 @@ form.report-panel.form-inline .form-group {
   font-size: 1.1em;
 }
 
+.reports legend .summary-wrapper {
+  margin: 0px 5px;
+  vertical-align: baseline;
+}
+.reports legend .summary {
+  color: #777;
+  font-size: 0.8em;
+  margin: 0px 3px;
+}
+
 .report-panel .form-group > label {
   vertical-align: text-top;
+  font-weight: normal;
 }
 
 .dropdown.select-report button > span.text {
   width: 18em;
+}
+.dropdown.select-report .dropdown-menu {
+  width: 22em;  
 }
 
 .report-panel.form-inline .dropdown.select-source button > span.text {
@@ -571,12 +593,18 @@ form.report-panel.form-inline .form-group {
 .report-panel.form-horizontal .dropdown.select-timespan button > span.text {
   width: 10em;
 }
+.report-panel.form-horizontal .dropdown.select-timespan .dropdown-menu {
+  min-width: 12.1em;
+}
 
 .report-panel.form-inline .dropdown.select-cluster button > span.text {
   width: 7em;
 }
 .report-panel.form-horizontal .dropdown.select-cluster button > span.text {
   width: 10em;
+}
+.report-panel.form-horizontal .dropdown.select-cluster .dropdown-menu {
+  min-width: 12.1em;
 }
 
 .report-panel.form-inline .dropdown.select-cluster-group button > span.text {
@@ -585,13 +613,16 @@ form.report-panel.form-inline .form-group {
 .report-panel.form-horizontal .dropdown.select-cluster-group button > span.text {
   width: 10em;
 }
+.report-panel.form-horizontal .dropdown.select-cluster-group .dropdown-menu {
+  min-width: 12.1em;  
+}
 
 .report-panel .form-group .rdt {
   display: inline-block;
   vertical-align: middle;
 }
 .report-panel .form-group .rdt > input[type="text"] {
-  width: 6.5em;
+  width: 9.6em;
 }
 
 .chart.portal {
@@ -619,7 +650,8 @@ div.measurement-value {
 div.measurement-value > .wrapper {
   padding: 0px 0px;
   min-height: 150px;
-  min-width: 11em;
+  min-width: 10.5em;
+  background: inherit;
 }
 
 div.measurement-value .title {
@@ -684,11 +716,11 @@ div.measurement-value .delta > .sign {
   border-style: solid;
   border-color: rgb(191, 212, 222);
   border-width: 1px 1px 1px 5px;
-  margin: 0px 8px 0px 0px;
+  margin: 0px 5px 0px 0px;
 }
 
 .overview-utility .level > .chart {
-  width: 455px;
+  width: 330px;
   height: 230px;
 }
 

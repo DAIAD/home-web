@@ -24,7 +24,11 @@
 	},
 	"Section": {
       "Dashboard": "Dashboard",
-	    "Analytics":"Analytics",
+	    "Analytics-Group": "Analytics",
+	    "Analytics": {
+        "Fav": "Favorites",
+        "Overview": "Overview"
+      },
 	    "Forecasting": "Forecasting - Learning Mode",
 	    "Demographics": "Users & Groups",
 	    "ModeManagement": "Mode Management",

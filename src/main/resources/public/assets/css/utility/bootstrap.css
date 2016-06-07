@@ -4,7 +4,7 @@
 
 .form-group input {
   border-radius: 1px;
-  height: 32px;
+  height: 36px;
   line-height: 1.25em;
   padding: 2px 7px;
   border: solid 1px #ccc;
@@ -29,7 +29,7 @@
 }
 
 .form-control {
-  height: 32px;
+  height: 36px;
 }
 
 .btn {
@@ -51,7 +51,6 @@ legend > .fa,
 legend > .glyphicon {
   vertical-align: middle;
 }
-
 legend > .glyphicon {
   font-size: 0.8em;
 }
