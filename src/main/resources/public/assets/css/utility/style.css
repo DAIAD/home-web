@@ -31,7 +31,7 @@
 	background-color: #fff;
 	position: inherit;
 	margin: 0 0 0 250px;
-	padding: 70px 30px 0px 30px;
+	padding: 60px 25px 0px 30px;
 	border-left: 1px solid #e7e7e7;
 	min-height: 1300px;
 }
@@ -539,7 +539,6 @@ form.report-panel fieldset {
 
 .reports > h3 span.delimiter {
   font-weight: bolder;
-  font-size: 1.3em;
 }
 
 .reports legend {
@@ -651,7 +650,8 @@ div.measurement-value {
 div.measurement-value > .wrapper {
   padding: 0px 0px;
   min-height: 150px;
-  min-width: 11em;
+  min-width: 10.5em;
+  background: inherit;
 }
 
 div.measurement-value .title {
@@ -716,11 +716,11 @@ div.measurement-value .delta > .sign {
   border-style: solid;
   border-color: rgb(191, 212, 222);
   border-width: 1px 1px 1px 5px;
-  margin: 0px 8px 0px 0px;
+  margin: 0px 5px 0px 0px;
 }
 
 .overview-utility .level > .chart {
-  width: 455px;
+  width: 330px;
   height: 230px;
 }
 

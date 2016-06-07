@@ -1,4 +1,3 @@
-
 var _ = require('lodash');
 var moment = require('moment');
 
@@ -17,8 +16,10 @@ var _configPropType = PropTypes.shape({
   overview: PropTypes.object,
 });
 
-var MeasurementReport = React.createClass({
-  
+var Report = React.createClass({
+  displayName: 'Analytics.Overview',
+
+
   propTypes: {
     routes: PropTypes.array, // supplied by react-router
     config: _configPropType,
@@ -30,6 +31,9 @@ var MeasurementReport = React.createClass({
 
   render: function() {  
 
+    // Fixme
+    var now = moment('2016-03-09').valueOf(); 
+
     return (
       <div className="container-fluid">
         <div className="row">
@@ -39,7 +43,7 @@ var MeasurementReport = React.createClass({
         </div>
         <div className="row">
           <div className="col-md-12">
-            <reports.MeasurementReport config={this.props.config} field={'volume'} />
+            <reports.Overview config={this.props.config} grouping="utility" now={now} />
           </div>
         </div>
       </div>
@@ -48,8 +52,8 @@ var MeasurementReport = React.createClass({
 
 });
 
-MeasurementReport.icon = 'pie-chart';
-MeasurementReport.title = 'Section.Reports.Measurements';
+Report.icon = 'bullseye';
+Report.title = 'Section.Analytics.Overview';
 
 function mapStateToProps(state, ownProps) {
   return {
@@ -61,4 +65,4 @@ function mapDispatchToProps(dispatch, ownProps) {
   return {};
 }
 
-module.exports = Redux.connect(mapStateToProps, mapDispatchToProps)(MeasurementReport);
+module.exports = Redux.connect(mapStateToProps, mapDispatchToProps)(Report);

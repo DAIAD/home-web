@@ -32,6 +32,7 @@ var ContentRoot = React.createClass({
         consumers: false,
         reports: false,
         support: false,
+        analytics: false,
       },
     };
   },
@@ -92,21 +93,52 @@ var ContentRoot = React.createClass({
             <div className='navbar-default navbar-static-side' role='navigation'>
               <div className='sidebar-collapse'>
                 <ul className='nav' id='side-menu'>
+                  
                   <li>
                     <Link to='/'>
                       <i className='fa fa-dashboard fa-fw'></i>{' ' + _t({ id: 'Section.Dashboard'})}
                     </Link>
                   </li>
+                  
+                  {/*
                   <li>
                     <Link to='/analytics'>
                       <i className='fa fa-bar-chart fa-fw'></i>{' ' + _t({ id: 'Section.Analytics'})}
                     </Link>
                   </li>
+                  */}
+                  <li>
+                    <a href='#' onClick={() => this._toggleExpand('analytics')}>
+                      <i className='fa fa-bar-chart fa-fw'></i>
+                      {' ' + _t({ id: 'Section.Analytics-Group'}) + ' '}
+                      { this.state.expand.analytics ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)}
+                    </a>
+                    <Collapsible open={this.state.expand.analytics}>
+                      <ul className='nav'>
+                        <li>
+                          <Link to='/analytics/fav'>
+                            <span  style={{paddingLeft: 18}}>
+                              <i className='fa fa-diamond fa-fw'></i>{' ' + _t({ id: 'Section.Analytics.Fav'})}
+                            </span>
+                          </Link>
+                        </li>
+                        <li>
+                          <Link to='/analytics/overview'>
+                            <span  style={{paddingLeft: 18}}>
+                              <i className='fa fa-bullseye fa-fw'></i>{' ' + _t({ id: 'Section.Analytics.Overview'})}
+                            </span>
+                          </Link>
+                        </li>
+                      </ul>
+                    </Collapsible>
+                  </li>
+
                   <li>
                     <Link to='/forecasting' onClick={disableLink.bind(this)} className='disabled-link'>
                       <i className='fa fa-line-chart fa-fw'></i>{' ' + _t({ id: 'Section.Forecasting'})}
                     </Link>
                   </li>
+                  
                   <li>
                     <a href='#' onClick={() => this._toggleExpand('consumers')}>
                       <i className='fa fa-group fa-fw'></i>
@@ -115,12 +147,12 @@ var ContentRoot = React.createClass({
                     </a>
                     <Collapsible open={this.state.expand.consumers}>
                       <ul className='nav'>
-                            <li>
-                              <Link to='/demographics'>
-                            <span  style={{paddingLeft: 18}}>
-                              <i className='fa fa-bookmark fa-fw'></i>{' ' + _t({ id: 'Section.Demographics'})}
-                            </span>
-                          </Link>
+                        <li>
+                           <Link to='/demographics'>
+                             <span  style={{paddingLeft: 18}}>
+                                <i className='fa fa-bookmark fa-fw'></i>{' ' + _t({ id: 'Section.Demographics'})}
+                             </span>
+                           </Link>
                         </li>
                         <li>
                           <Link to='/search'>
@@ -132,21 +164,25 @@ var ContentRoot = React.createClass({
                       </ul>
                     </Collapsible>
                   </li>
+                  
                   <li>
                     <Link to='/scheduler'>
                       <i className='fa fa-clock-o fa-fw'></i>{' ' + _t({ id: 'Section.Scheduler'})}
                     </Link>
                   </li>
+                  
                   <li>
                     <Link to='/manage-alerts'>
                       <i className='fa fa-commenting-o fa-fw'></i>{' ' + _t({ id: 'Section.ManageAlerts'})}
                     </Link>
                   </li>
+                  
                   <li>
                     <Link to='/settings/user'>
                       <i className='fa fa-user fa-fw'></i>{' ' + _t({ id: 'Settings.User'})}
                     </Link>
                   </li>
+                  
                   <li>
                     <a href='#' onClick={() => this._toggleExpand('reports')}>
                       <i className='fa fa-flask fa-fw'></i>
@@ -172,6 +208,7 @@ var ContentRoot = React.createClass({
                       </ul>
                     </Collapsible>
                   </li>
+                  
                   <li>
                     <a href='#' onClick={() => this._toggleExpand('support')}>
                       <i className='fa fa-support fa-fw'></i>

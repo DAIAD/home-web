@@ -179,7 +179,7 @@ var Overview = React.createClass({
   
   propTypes: {
     config: _configPropType,
-    section: PropTypes.string,
+    grouping: PropTypes.string,
     now: PropTypes.number,
   },
  
@@ -193,12 +193,16 @@ var Overview = React.createClass({
  
   render: function () { 
     var overview = require('./reports-measurements/overview');
-    var {config, section, now} = this.props; 
+    var {config, grouping, now} = this.props; 
     
+    if (_.isEmpty(config) || _.isEmpty(config.reports) || _.isEmpty(config.utility)) {
+      return (<div>Loading configuration...</div>);
+    }
+   
     now = (now == null)? moment().valueOf() : now;
 
     var body;
-    switch (section) {
+    switch (grouping) {
       case 'utility':
         body = (<overview.UtilityView now={now} />);
         break;
@@ -225,12 +229,12 @@ var Overview = React.createClass({
         <span className="delimiter">&nbsp;/&nbsp;</span>
         {'Water Consumption'}
         <span className="delimiter">&nbsp;/&nbsp;</span>
-        {config.overview.sections[section].title}
+        {config.overview.sections[grouping].title}
       </h3>
     );
 
     return (
-      <div className="overview">
+      <div className="overview reports">
         {heading}
         {body}
       </div>
