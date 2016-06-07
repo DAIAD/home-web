@@ -42,22 +42,22 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 	@Autowired
 	IUserRepository userRepository;
         
-        @Autowired
-        IMessageManagementRepository messageManagementRepository;
+    @Autowired
+    IMessageManagementRepository messageManagementRepository;
         
-        @Autowired 
-        IDeviceRepository deviceRepository;
+    @Autowired 
+    IDeviceRepository deviceRepository;
         
-        @Override
+    @Override
 	public PendingMessageStatus resolve(MessageCalculationConfiguration config,
 					ConsumptionAggregateContainer aggregates, UUID accountKey) {      
 		AuthenticatedUser account = this.userRepository.getUserByKey(accountKey);
 
 		PendingMessageStatus status = new PendingMessageStatus();
 
-                status.setMeterInstalled(this.isMeterInstalledForUser(accountKey));
+        status.setMeterInstalled(this.isMeterInstalledForUser(accountKey));
                 
-                status.setAmphiroInstalled(this.isAmphiroInstalledForUser(accountKey));                
+        status.setAmphiroInstalled(this.isAmphiroInstalledForUser(accountKey));                
                 
 		status.setAlertWaterLeakSWM(this.alertWaterLeakSWM(accountKey, config.getTimezone()));
 
@@ -126,35 +126,34 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		status.setRecommendReduceFlowWhenNotNeededAmphiro(this.recommendReduceFlowWhenNotNeededAmphiro(aggregates,
 						accountKey, config.getTimezone()));
                 
-                status.setInitialStaticTips(this.initialStaticTipsForAccount(account));
+        status.setInitialStaticTips(this.initialStaticTipsForAccount(account));
                 
-                status.setStaticTip(this.produceStaticTipForAccount(account, config.getStaticTipInterval()));
+        status.setStaticTip(this.produceStaticTipForAccount(account, config.getStaticTipInterval()));
                 
 		return status;
 	}
         
-        //random three initial static tips
-        private boolean initialStaticTipsForAccount(AuthenticatedUser user) {                        
-                boolean initialStaticTips = false;            
-                DateTime lastCreatedOn = messageManagementRepository.getLastDateOfAccountStaticRecommendation(user);
+    //random three initial static tips
+    private boolean initialStaticTipsForAccount(AuthenticatedUser user) {                        
+        boolean initialStaticTips = false;            
+        DateTime lastCreatedOn = messageManagementRepository.getLastDateOfAccountStaticRecommendation(user);
 
-                if(lastCreatedOn == null ){
-                        initialStaticTips = true;
-                }
-                return initialStaticTips;
+        if(lastCreatedOn == null ){
+            initialStaticTips = true;
         }
+            return initialStaticTips;
+    }
         
-        
-        //random static tip
-        private boolean produceStaticTipForAccount(AuthenticatedUser user, int staticTipInterval) {                        
-                boolean produceStaticTip = false;            
-                DateTime lastCreatedOn = messageManagementRepository.getLastDateOfAccountStaticRecommendation(user);
+    //random static tip
+    private boolean produceStaticTipForAccount(AuthenticatedUser user, int staticTipInterval) {                        
+        boolean produceStaticTip = false;            
+        DateTime lastCreatedOn = messageManagementRepository.getLastDateOfAccountStaticRecommendation(user);
 
-                if(lastCreatedOn == null || lastCreatedOn.isBefore(DateTime.now().minusDays(staticTipInterval))){
-                    produceStaticTip = true;
-                }
-                return produceStaticTip;
+        if(lastCreatedOn == null || lastCreatedOn.isBefore(DateTime.now().minusDays(staticTipInterval))){
+            produceStaticTip = true;
         }
+        return produceStaticTip;
+    }
         
 	// 1 alert - Check for water leaks!
 	private boolean alertWaterLeakSWM(UUID accountKey, DateTimeZone timezone) {
@@ -277,9 +276,9 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQuery query = dataQueryBuilder.build();
 		DataQueryResponse queryResponse = dataService.execute(query);
 
-                if(queryResponse.getMeters().isEmpty()){
-                        return null;
-                }
+        if(queryResponse.getMeters().isEmpty()){
+            return null;
+        }
                 
 		GroupDataSeries dataSeriesMeter = queryResponse.getMeters().get(0);
 		ArrayList<DataPoint> dataPoints = dataSeriesMeter.getPoints();
@@ -309,9 +308,9 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQuery query = dataQueryBuilder.build();
 		DataQueryResponse queryResponse = dataService.execute(query);
 
-                if(queryResponse.getMeters().isEmpty()){
-                        return null;
-                }
+        if(queryResponse.getMeters().isEmpty()){
+            return null;
+        }
                                 
 		GroupDataSeries dataSeriesMeter = queryResponse.getMeters().get(0);
 		ArrayList<DataPoint> dataPoints = dataSeriesMeter.getPoints();
@@ -341,9 +340,9 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQuery query = dataQueryBuilder.build();
 		DataQueryResponse queryResponse = dataService.execute(query);
 
-                if(queryResponse.getDevices().isEmpty()){
-                        return null;
-                }
+        if(queryResponse.getDevices().isEmpty()){
+            return null;
+        }
                 
 		GroupDataSeries dataSeriesAmphiro = queryResponse.getDevices().get(0);
 		ArrayList<DataPoint> dataPoints = dataSeriesAmphiro.getPoints();
@@ -373,9 +372,9 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQuery query = dataQueryBuilder.build();
 		DataQueryResponse queryResponse = dataService.execute(query);
 
-                if(queryResponse.getDevices().isEmpty()){
-                        return null;
-                }
+        if(queryResponse.getDevices().isEmpty()){
+            return null;
+        }
                 
 		GroupDataSeries dataSeriesAmphiro = queryResponse.getDevices().get(0);
 		ArrayList<DataPoint> dataPoints = dataSeriesAmphiro.getPoints();
@@ -405,9 +404,9 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQuery query = dataQueryBuilder.build();
 		DataQueryResponse queryResponse = dataService.execute(query);
 
-                if(queryResponse.getMeters().isEmpty()){
-                        return null;
-                }
+        if(queryResponse.getMeters().isEmpty()){
+            return null;
+        }
                 
 		GroupDataSeries dataSeriesMeter = queryResponse.getMeters().get(0);
 		ArrayList<DataPoint> dataPoints = dataSeriesMeter.getPoints();
@@ -422,7 +421,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		if (lastDaySum > config.getDailyBudget() * 1.2) {
 			entry = new SimpleEntry<>(true, config.getDailyBudget());
 		} else {
-			entry = new SimpleEntry<>(false, null);
+			entry = null;
 		}
 		return entry;
 	}
@@ -437,9 +436,9 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQuery query = dataQueryBuilder.build();
 		DataQueryResponse queryResponse = dataService.execute(query);
 
-                if(queryResponse.getDevices().isEmpty()){
-                        return null;
-                }
+        if(queryResponse.getDevices().isEmpty()){
+            return null;
+        }
                 
 		GroupDataSeries dataSeriesAmphiro = queryResponse.getDevices().get(0);
 		ArrayList<DataPoint> dataPoints = dataSeriesAmphiro.getPoints();
@@ -546,9 +545,9 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQuery query = dataQueryBuilder.build();
 		DataQueryResponse queryResponse = dataService.execute(query);
 
-                if(queryResponse.getMeters().isEmpty()){
-                        return new SimpleEntry<>(false, null);
-                }                
+        if(queryResponse.getMeters().isEmpty()){
+            return new SimpleEntry<>(false, null);
+        }                
                 
 		GroupDataSeries dataSeriesMeter = queryResponse.getMeters().get(0);
 		ArrayList<DataPoint> dataPoints = dataSeriesMeter.getPoints();
@@ -581,9 +580,9 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQuery query = dataQueryBuilder.build();
 		DataQueryResponse queryResponse = dataService.execute(query);
 
-                if(queryResponse.getDevices().isEmpty()){
-                        return new SimpleEntry<>(false, null);
-                }                
+        if(queryResponse.getDevices().isEmpty()){
+            return new SimpleEntry<>(false, null);
+        }                
                                 
 		GroupDataSeries dataSeriesAmphiro = queryResponse.getDevices().get(0);
 		ArrayList<DataPoint> dataPoints = dataSeriesAmphiro.getPoints();
@@ -659,9 +658,9 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 						.user("user", accountKey).sum();
 		DataQuery firstWeekQuery = firstWeekDataQueryBuilder.build();
 		DataQueryResponse firstWeekQueryResponse = dataService.execute(firstWeekQuery);
-                if(firstWeekQueryResponse.getMeters().isEmpty()){
-                        return new SimpleEntry<>(false, null);
-                }
+        if(firstWeekQueryResponse.getMeters().isEmpty()){
+            return new SimpleEntry<>(false, null);
+        }
 		GroupDataSeries firstWeekDataSeriesMeter = firstWeekQueryResponse.getMeters().get(0);
 		ArrayList<DataPoint> firstWeekDataPoints = firstWeekDataSeriesMeter.getPoints();
 		if (firstWeekDataPoints == null || firstWeekDataPoints.isEmpty()) {
@@ -676,9 +675,9 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 						.user("user", accountKey).sum();
 		DataQuery lastWeekQuery = lastWeekDataQueryBuilder.build();
 		DataQueryResponse lastWeekQueryResponse = dataService.execute(lastWeekQuery);
-                if(lastWeekQueryResponse.getMeters().isEmpty()){
-                        return new SimpleEntry<>(false, null);
-                }
+        if(lastWeekQueryResponse.getMeters().isEmpty()){
+            return new SimpleEntry<>(false, null);
+        }
 		GroupDataSeries lastWeekDataSeriesMeter = lastWeekQueryResponse.getMeters().get(0);
 		ArrayList<DataPoint> lastWeekDataPoints = lastWeekDataSeriesMeter.getPoints();
 
@@ -713,9 +712,9 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQuery firstWeekQuery = firstWeekDataQueryBuilder.build();
 		DataQueryResponse firstWeekQueryResponse = dataService.execute(firstWeekQuery);
                 
-                if(firstWeekQueryResponse.getDevices().isEmpty()){
-                        return new SimpleEntry<>(false, null);
-                }
+        if(firstWeekQueryResponse.getDevices().isEmpty()){
+            return new SimpleEntry<>(false, null);
+        }
                 
 		GroupDataSeries firstWeekDataSeriesMeter = firstWeekQueryResponse.getDevices().get(0);
 		ArrayList<DataPoint> firstWeekDataPoints = firstWeekDataSeriesMeter.getPoints();
@@ -734,9 +733,9 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQuery lastWeekQuery = lastWeekDataQueryBuilder.build();
 		DataQueryResponse lastWeekQueryResponse = dataService.execute(lastWeekQuery);
                 
-                if(lastWeekQueryResponse.getDevices().isEmpty()){
-                        return new SimpleEntry<>(false, null);
-                }
+        if(lastWeekQueryResponse.getDevices().isEmpty()){
+            return new SimpleEntry<>(false, null);
+        }
                 
 		GroupDataSeries lastWeekDataSeriesMeter = lastWeekQueryResponse.getDevices().get(0);
 		ArrayList<DataPoint> lastWeekDataPoints = lastWeekDataSeriesMeter.getPoints();
@@ -1290,15 +1289,15 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		}
 	}
 
-        private boolean isMeterInstalledForUser(UUID userKey){
-                DeviceRegistrationQuery query = new DeviceRegistrationQuery(EnumDeviceType.METER);
-                return deviceRepository.getUserDevices(userKey, query).isEmpty(); 
-        }
+    private boolean isMeterInstalledForUser(UUID userKey){
+        DeviceRegistrationQuery query = new DeviceRegistrationQuery(EnumDeviceType.METER);
+        return deviceRepository.getUserDevices(userKey, query).isEmpty(); 
+    }
         
-        private boolean isAmphiroInstalledForUser(UUID userKey){
-                DeviceRegistrationQuery query = new DeviceRegistrationQuery(EnumDeviceType.AMPHIRO);
-                return deviceRepository.getUserDevices(userKey, query).isEmpty(); 
-        }        
+    private boolean isAmphiroInstalledForUser(UUID userKey){
+        DeviceRegistrationQuery query = new DeviceRegistrationQuery(EnumDeviceType.AMPHIRO);
+        return deviceRepository.getUserDevices(userKey, query).isEmpty(); 
+    }        
                 
 	private int computeConsecutiveZeroConsumptions(List<Double> values) {
 		int maxLength = 0;

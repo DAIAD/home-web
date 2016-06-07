@@ -79,9 +79,9 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 	private void computeAmphiroMessagesForUser(MessageCalculationConfiguration config,
 					ConsumptionAggregateContainer aggregates, PendingMessageStatus status, Account account) {
                
-                if(!status.isAmphiroInstalled()){
-                        return;
-                }            
+        if(!status.isAmphiroInstalled()){
+            return;
+        }            
             
 		// alertHotTemperatureAmphiro(account); //inactive
 		// alertShowerStillOnAmphiro(account); //inactive
@@ -105,9 +105,9 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
 	private void computeSmartWaterMeterMessagesForUser(MessageCalculationConfiguration config,
 					ConsumptionAggregateContainer aggregates, PendingMessageStatus status, Account account) {
-                if(!status.isMeterInstalled()){
-                        return;
-                }
+        if(!status.isMeterInstalled()){
+            return;
+        }
             
 		alertWaterLeakSWM(config, status, account);
 		alertWaterQualitySWM(config, status, account);
@@ -307,7 +307,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 	// 9 alert - Reached 80% of your daily shower budget {integer1} {integer2}
 	private void alertNearDailyBudgetAmphiro(MessageCalculationConfiguration config, PendingMessageStatus status,
 					Account account) {
-		if (status.getAlertNearDailyBudgetAmphiro() != null) {
+		if (status.getAlertNearDailyBudgetAmphiro() != null) {        
 			AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.NEAR_DAILY_SHOWER_BUDGET),
 							DateTime.now());
 
@@ -337,7 +337,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 	// 11 alert - Reached daily Water Budget {integer1}
 	private void alertReachedDailyBudgetSWM(MessageCalculationConfiguration config, PendingMessageStatus status,
 					Account account) {
-		if (status.getAlertReachedDailyBudgetSWM().getKey()) {
+		if (status.getAlertReachedDailyBudgetSWM() != null) {
 			AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.REACHED_DAILY_WATER_BUDGET),
 							DateTime.now());
 
@@ -349,13 +349,16 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 	// 12 alert - Reached daily Shower Budget {integer1}
 	private void alertReachedDailyBudgetAmphiro(MessageCalculationConfiguration config, PendingMessageStatus status,
 					Account account) {
-		if (status.getAlertReachedDailyBudgetSWM().getKey()) {
-			AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.REACHED_DAILY_SHOWER_BUDGET),
+        if(status.getAlertReachedDailyBudgetSWM() != null){
+		    if (status.getAlertReachedDailyBudgetSWM().getKey()) {
+			    AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.REACHED_DAILY_SHOWER_BUDGET),
 							DateTime.now());
 
-			setAccountAlertProperty(alert, config.getIntKey1(), status.getAlertReachedDailyBudgetSWM().getValue()
+			    setAccountAlertProperty(alert, config.getIntKey1(), status.getAlertReachedDailyBudgetSWM().getValue()
 							.toString());
-		}
+		    }    
+        }
+
 	}
 
 	// 13 alert - You are a real water champion!
