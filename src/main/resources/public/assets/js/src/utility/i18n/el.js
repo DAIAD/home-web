@@ -36,8 +36,11 @@
 	      "Overview": "Επισκόπηση",
 	      "Charts": "Γραφήματα"
 	    },
-	    "Announcements" : "Ανακοινώσεις",
-      "ManageAlerts" : "Διαχείρηση Ειδοποιήσεων",
+      "ManageAlerts": {
+        "Engagement": "Engagement",
+        "Messages": "Μηνύματα",
+        "Announcements": "Ανακοινώσεις"
+      },
 	    "Scheduler": "Διαχείριση Εργασιών",
 	    "Consumers": "Καταναλωτές",
 	    "Support" : {

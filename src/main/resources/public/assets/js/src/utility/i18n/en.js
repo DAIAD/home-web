@@ -42,8 +42,11 @@
         "Measurements": "Measurement Reports",
         "System": "System Reports"
       },
-	    "Announcements" : "Announcements",
-      "ManageAlerts" : "Manage Alerts",
+      "ManageAlerts": {
+        "Engagement": "Engagement",
+        "Messages": "Messages",
+        "Announcements": "Announcements"
+      },
 	    "Scheduler": "Job Management",
 	    "Consumers": "Consumers",
       "Support" : {
