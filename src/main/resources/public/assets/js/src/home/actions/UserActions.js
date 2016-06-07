@@ -171,5 +171,6 @@ const logout = function() {
 module.exports = {
   login,
   logout,
-  refreshProfile
+  refreshProfile,
+  saveToProfile
 };
