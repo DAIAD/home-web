@@ -23,6 +23,7 @@
     "leaflet": "^0.7.7",
     "leaflet-draw": "~0.2.3",
     "leaflet.heat": "~0.2.0",
+    "leaflet-choropleth": "^1.1.2",
     "lodash": "~4.0.1",
     "moment": "~2.11.2",
     "numeral": "^1.5.3",
@@ -69,6 +70,7 @@
     "browserify-shim": "~3.8.12",
     "envify": "~3.4.0",
     "exorcist": "~0.4.0",
+    "font-awesome": "~4.6.3",
     "grunt": "~0.4.5",
     "grunt-apidoc": "~0.11.0",
     "grunt-browserify": "~4.0.1",
@@ -88,8 +90,7 @@
     "reactify": "~1.1.1",
     "redux-devtools": "~3.1.1",
     "redux-logger": "^2.5.2",
-    "watchify": "~3.7.0",
-    "font-awesome": "~4.6.3"
+    "watchify": "~3.7.0"
   },
   "babelify": {
     "presets": [

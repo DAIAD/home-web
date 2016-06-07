@@ -14,7 +14,7 @@ var middleware = [
 
 if (develop) {
   // The logger middleware should always be last
-  middleware.push(ReduxLogger());
+  // middleware.push(ReduxLogger());
 }
 
 function configureStore(history, initialState) {

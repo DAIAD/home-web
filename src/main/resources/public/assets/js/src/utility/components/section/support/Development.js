@@ -127,31 +127,21 @@ var Development = React.createClass({
           granularity: 'DAY'
         },
         population: [
-          /*{
-            type :'USER',
-            label: 'User 1',
-            users: ['63078a88-f75a-4c5e-8d75-b4472ba456bb']
-          }, {
-            type :'CLUSTER',
-            label: 'Income',
-            // cluster: 'bd1a6ad7-6419-44a1-b951-bf6f1a4200d5',
-            // name: 'Income',
-            clusterType: 'INCOME'
-          },*/ {
+          /*
+           * { type :'USER', label: 'User 1', users:
+           * ['63078a88-f75a-4c5e-8d75-b4472ba456bb'] }, { type :'CLUSTER',
+           * label: 'Income', // cluster:
+           * 'bd1a6ad7-6419-44a1-b951-bf6f1a4200d5', // name: 'Income',
+           * clusterType: 'INCOME' },
+           */ {
             type :'UTILITY',
             label: 'Alicante',
             utility: '2b48083d-6f05-488f-9f9b-99607a93c6c3'
-          }/*, {
-            type :'UTILITY',
-            label: 'Alicante (top 2)',
-            utility: '2b48083d-6f05-488f-9f9b-99607a93c6c3',
-            ranking: {
-              type: 'TOP',
-              metric: 'SUM',
-              field: 'VOLUME',
-              limit: 2
-            }
-          }*/
+          }/*
+             * , { type :'UTILITY', label: 'Alicante (top 2)', utility:
+             * '2b48083d-6f05-488f-9f9b-99607a93c6c3', ranking: { type: 'TOP',
+             * metric: 'SUM', field: 'VOLUME', limit: 2 } }
+             */
         ],
         // spatial :[constraintSpatialFilter],
         spatial : [groupSpatialFilter],
@@ -211,7 +201,6 @@ var Development = React.createClass({
     }
     
     // Add map
-    console.log(this.props.query);
     var interval = [moment().startOf('month'), moment().endOf('month')];
     var mapOptions = {
       center: [38.35, -0.48], 
@@ -227,8 +216,10 @@ var Development = React.createClass({
         <LeafletMap style={{ width: '100%', height: 400}} 
                     elementClassName='mixin'
                     prefix='map'
-                    options={mapOptions}
-                    points={this.state.points} />
+                    center={[38.35, -0.48]} 
+                    zoom={13}
+                    mode={LeafletMap.MODE_CHOROPLETH}
+                    data={this.props.query.regions} />
   		</Bootstrap.ListGroupItem>
     );
 

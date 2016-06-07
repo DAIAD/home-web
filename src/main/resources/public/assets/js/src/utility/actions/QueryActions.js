@@ -22,7 +22,7 @@ var QueryActions = {
     return function(dispatch, getState) {
       dispatch(submittedQuery(query));
 
-      return queryAPI.submitQuery(query).then(function(response) {
+      return queryAPI.queryMeasurements(query).then(function(response) {
         var data = {
           meters : null,
           devices : null,

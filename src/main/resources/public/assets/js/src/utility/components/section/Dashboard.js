@@ -105,11 +105,6 @@ var Dashboard = React.createClass({
             }
         };
         
-		var mapOptions = {
-			center:	[38.35, -0.48], 
-			zoom: 13
-		};
-        
 		var chartTitle;
 		if(this.state.filter) {
 			chartTitle = (
@@ -313,8 +308,11 @@ var Dashboard = React.createClass({
 						<LeafletMap style={{ width: '100%', height: 400}} 
 									elementClassName='mixin'
 									prefix='map'
-									options={mapOptions}
-									points={this.state.points} />
+			            center={[38.35, -0.48]} 
+			            zoom={13}
+									data={this.state.points}
+						      mode={LeafletMap.MODE_HEATMAP}
+						/>
 						<Timeline 	onChange={onChangeTimeline.bind(this)} 
 									style={{paddingTop: 10}}
 									min={1}
