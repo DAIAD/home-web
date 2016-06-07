@@ -56,16 +56,19 @@ var alerts = function (state, action) {
       });
     case types.ADMIN_REQUESTED_ADD_TIP:
       return Object.assign({}, state, {
-        isLoading: true
+        isLoading: true,
+        currentTip: null
       });
     case types.ADMIN_ADD_TIP_RESPONSE:
       return Object.assign({}, state, {
         isLoading: false,
-        show: false
+        show: false,
+        currentTip: null
       });
     case types.ADMIN_ADD_TIP_SHOW:
       return Object.assign({}, state, {
-        show: true
+        show: true,
+        currentTip: null
       });
     case types.ADMIN_CANCEL_ADD_TIP_SHOW:
       return Object.assign({}, state, {
@@ -84,7 +87,8 @@ var alerts = function (state, action) {
       });
     case types.ADMIN_EDITED_TIP:
       return Object.assign({}, state, {
-        saveTipDisabled: false
+        saveTipDisabled: false,
+        currentTip:null
       });
     case types.MESSAGES_DELETE_MODAL_SHOW:
       return Object.assign({}, state, {
