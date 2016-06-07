@@ -10,10 +10,6 @@ var types = require('../constants/ActionTypes');
 var QueryActions = require('./QueryActions');
 var HistoryActions = require('./HistoryActions');
 
-var { getDeviceKeysByType } = require('../utils/device');
-var { lastNFilterToLength } =  require('../utils/general');
-var { getTimeByPeriod, getLastShowerTime, getPreviousPeriodSoFar } = require('../utils/time');
-
 
 const setLastSession = function(session) {
   return {
@@ -98,7 +94,7 @@ const updateInfobox = function(id, data) {
 
     dispatch(updateLayoutItem(id, data.display));
     
-    dispatch(fetchInfoboxData(Object.assign({}, getState().section.dashboard.infobox.find(i=>i.id===id))));
+    dispatch(QueryActions.fetchInfoboxData(Object.assign({}, getState().section.dashboard.infobox.find(i=>i.id===id))));
   };
 };
 
@@ -170,97 +166,21 @@ const updateLayoutItem = function(id, display) {
 };
 
 /**
- * Fetch data based on provided options and save to infobox
- * 
- * @param {Object} options - Options to fetch data 
- * @param {String} options.id - The id of the infobox to update
- * @param {String} options.deviceType - The type of device to query. One of METER, AMPHIRO
- * @param {String} options.period - The period to query.
- *                                  For METER one of day, week, month, year, custom (time-based)
- *                                  for AMPHIRO one of ten, twenty, fifty (index-based)
- * @param {String} options.type - The infobox type. One of: 
- *                                total (total metric consumption for period and deviceType),
- *                                last (last shower - only for deviceType AMPHIRO),
- *                                efficiency (energy efficiency for period - only for deviceType AMPHIRO, metric energy),
- *                                breakdown (Water breakdown analysis for period - only for deviceType METER, metric difference (volume difference). Static for the moment),
- *                                forecast (Computed forecasting for period - only for deviceType METER, metric difference (volume difference). Static for the moment),
- *                                comparison (Comparison for period and comparison metric - only for deviceType METER. Static for the moment),
- *                                budget (User budget information. Static for the moment)
- *
- */
-const fetchInfoboxData = function(options) {
-  return function(dispatch, getState) {
-    const { id, type, deviceType, period } = options;
-
-    if (!id || !type || !deviceType || !period) throw new Error('fetchInfoboxData: Insufficient data provided');
-
-    const device = getDeviceKeysByType(getState().user.profile.devices, deviceType);
-    let time = getTimeByPeriod(period);
-    
-    if (!device || !device.length) return new Promise((resolve, reject) => resolve()); 
-
-    const found = getState().section.dashboard.infobox.find(x => x.id === id);
-
-    if (found && found.synced===true) {
-    //if (found && found.data && found.data.length>0){
-      console.log('found infobox data in memory');
-      return new Promise((resolve, reject) => resolve());
-      //}
-    }
-
-    if (type === "last") {
-
-      return dispatch(QueryActions.fetchLastDeviceSession(device))
-      .then(response => 
-            dispatch(setInfoboxData(id, {data: response.data, index: response.index, device: response.device, showerId: response.id, time: response.timestamp})))
-      .catch(error => { 
-        //log error in console for debugging and display friendly message
-        console.error('Caught error in infobox data fetch:', error); 
-        dispatch(setInfoboxData(id, {data: [], error:'Oops, sth went wrong..replace with something friendly'})); });
-    }
-    //total or efficiency
-    else {
-
-      //fetch previous period data for comparison 
-      if (deviceType === 'METER') {
-        let prevTime = getPreviousPeriodSoFar(period);
-        dispatch(QueryActions.queryMeterHistory(device, prevTime))
-        .then(data => {
-            return dispatch(setInfoboxData(id, {previous:data, time:prevTime}));})
-          .catch(error => { 
-            console.error('Caught error in infobox previous period data fetch:', error); 
-            dispatch(setInfoboxData(id, {previous: [], error: 'Oops sth went wrong, replace with sth friendly'})); });
-             
-
-      return dispatch(QueryActions.queryMeterHistory(device, time))
-      .then(data =>  
-        dispatch(setInfoboxData(id, {data, time})))
-      .catch(error => { 
-        console.error('Caught error in infobox data fetch:', error); 
-        dispatch(setInfoboxData(id, {data: [], error: 'Oops sth went wrong, replace with sth friendly'})); });
-      }
-      else {
-        return dispatch(QueryActions.queryDeviceSessions(device, {type: 'SLIDING', length:lastNFilterToLength(period)}))
-        .then(data =>  
-          dispatch(setInfoboxData(id, {data})))
-        .catch(error => { 
-          console.error('Caught error in infobox data fetch:', error); 
-          dispatch(setInfoboxData(id, {data: [], error: 'Oops sth went wrong, replace with sth friendly'})); });
-      }
-    }
-  };
-};
-
-/**
  * Fetch data for all infoboxes in state 
  * 
  */
 const fetchAllInfoboxesData = function() {
   return function(dispatch, getState) {
     getState().section.dashboard.infobox.map(function (infobox) {
-      const { type } = infobox;
+      const { id, type } = infobox;
       if (type === 'total' || type === 'last' || type === 'efficiency' || type === 'comparison' || type === 'breakdown')
-      return dispatch(fetchInfoboxData(infobox));
+      return dispatch(QueryActions.fetchInfoboxData(infobox))
+      .then(res =>  
+          dispatch(setInfoboxData(id, res)))
+        .catch(error => { 
+          console.error('Caught error in infobox data fetch:', error); 
+          dispatch(setInfoboxData(id, {data: [], error: 'Oops sth went wrong, replace with sth friendly'})); });
+
     });
   };
 };
@@ -286,7 +206,6 @@ module.exports = {
   updateLayoutItem,
   updateLayout,
   removeInfobox,
-  fetchInfoboxData,
   fetchAllInfoboxesData,
 };
 
