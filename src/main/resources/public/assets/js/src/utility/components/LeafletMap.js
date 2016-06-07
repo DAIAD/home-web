@@ -1,6 +1,9 @@
 var React = require('react');
 var PortalMixin = require('./PortalMixin');
 
+// TODO : Remove jquery dependency
+var $ = require('jquery');
+
 var L = require('leaflet');
 require('leaflet.heat');
 require('leaflet-draw');
@@ -12,7 +15,7 @@ const MODE_CHOROPLETH = 'choropleth';
 const MODE_DRAW = 'draw';
 
 
-var _initializeDraw = function(data) {
+var _initializeDraw = function() {
   var drawnItems = new L.FeatureGroup();
   
   this.map.addLayer(drawnItems);
@@ -60,14 +63,14 @@ var _initializeHeatMap = function(data) {
 	this.heat = L.heatLayer(data, {radius: 30, maxZoom: 11}).addTo(this.map);
 };
 
-var _initializeChoroPleth = function(geojson) {
+var _initializeChoroPleth = function(geojson, colors) {
   if(this.choropleth) {
     this.map.removeLayer(this.choropleth);
   }
   if(geojson) {
-    var choropleth = L.choropleth(geojson, {
+    this.choropleth = L.choropleth(geojson, {
       valueProperty: 'value',
-      colors: ['#1a9850', '#91cf60', '#d9ef8b', '#ffffbf', '#fee08b', '#fc8d59', '#d73027'],
+      colors: colors,
       steps: 7,
       mode: 'q',
       style: {
@@ -80,21 +83,26 @@ var _initializeChoroPleth = function(geojson) {
                                         feature.properties.value + '</span>');
       }
     }).addTo(this.map);
+    
+    for(var index in this.overlays){ 
+      console.log(this.overlays[index]);
+      this.overlays[index].bringToFront();
+    }
   }
 };
 
-var _initialize = function(data) {
+var _initialize = function(props) {
   switch(this.props.mode) {
     case MODE_VECTOR:
       break;
     case MODE_DRAW:
-      _initializeDraw.bind(this)(data);
+      _initializeDraw.bind(this)();
       break;
     case MODE_HEATMAP:
-      _initializeHeatMap.bind(this)(data);
+      _initializeHeatMap.bind(this)(props.data);
       break;
     case MODE_CHOROPLETH:
-      _initializeChoroPleth.bind(this)(data);
+      _initializeChoroPleth.bind(this)(props.data, props.colors);
       break;
   }
   if(this.map) {
@@ -111,12 +119,14 @@ var LeafletMap = React.createClass({
 			center: [0 ,0],
 			zoom: 13,
 			data: [],
-			mode: MODE_VECTOR
+			mode: MODE_VECTOR,
+			colors: ['#2166ac', '#67a9cf', '#d1e5f0', '#f7f7f7', '#fddbc7', '#ef8a62', '#b2182b'],
+			urls: []
     };
 	},
 
 	render: function() {
-		var { prefix, center, zoom, mode, data, onDraw, ...other } = this.props;
+		var { prefix, center, zoom, mode, data, onDraw, colors, urls, ...other } = this.props;
 
 		return (
 			<div {...other}/>
@@ -125,7 +135,7 @@ var LeafletMap = React.createClass({
 
 	componentWillReceiveProps : function(nextProps, nextContext) {
 		if(this.map) {
-		  _initialize.bind(this)(nextProps.data);
+		  _initialize.bind(this)(nextProps);
 		}
 	},	
 
@@ -137,8 +147,35 @@ var LeafletMap = React.createClass({
 		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 		  attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 		}).addTo(this.map);
+		
+		if(this.props.urls) {
+		  var self = this;
+		  
+		  self.overlays = [];
+		  
+		  var callback = function( data ) {
+		    self.overlays.push(L.geoJson(data, { 
+          pointToLayer: function (feature, latlng) {
+            return L.circleMarker(latlng, {
+              radius: 8,
+              fillColor: "#ff7800",
+              color: "#000",
+              weight: 1,
+              opacity: 1,
+              fillOpacity: 0.8
+            });
+          }
+        }));
+		    
+		    self.overlays[self.overlays.length-1].addTo(self.map);
+      };
 
-		_initialize.bind(this)(this.props.data);
+		  for(var index in this.props.urls) {
+		    $.getJSON(this.props.urls[index], callback);
+		  }
+		}
+
+		_initialize.bind(this)(this.props);
 	},
 
 	componentWillUnmount : function() {

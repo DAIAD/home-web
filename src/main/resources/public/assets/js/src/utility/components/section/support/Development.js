@@ -8,7 +8,7 @@ var moment = require('moment');
 var LeafletMap = require('../../LeafletMap');
 var Timeline = require('../../Timeline');
 
-var FormattedMessage = require('react-intl').FormattedMessage;
+var {FormattedMessage, FormattedTime, FormattedDate} = require('react-intl');
 
 var Bootstrap = require('react-bootstrap');
 var Dropzone = require('react-dropzone');
@@ -17,31 +17,38 @@ var moment = require('moment');
 var Breadcrumb = require('../../Breadcrumb');
 
 var { submitQuery } = require('../../../actions/QueryActions');
-var { createUser, createAmphiro, generateAmphiroData, setTimezone, setErrors } = require('../../../actions/DebugActions');
+var { createUser, createAmphiro, generateAmphiroData, setTimezone, setErrors, getFeatures } = require('../../../actions/DebugActions');
 
 var onChangeTimezone = function(val) {
   this.props.actions.setTimezone(val.value);
 };
 
-var createPoints = function() {
-  var points = [];
-  
-  for(var i=0; i<50; i++) {
-    points.push([38.35 + 0.02 * Math.random(), -0.521 + 0.05 * Math.random(), Math.random()]);
-  }
-  
-  return points;
+var _getTimelineValues = function(timeline) {
+  if(timeline) {
+    return timeline.getTimestamps();
+  } 
+  return [];
 };
 
-var createDateLabels = function(ref, days) {
-  var series = [];
+var _getTimelineLabels = function(timeline) {
+  if(timeline) {
+    return timeline.getTimestamps().map(function(timestamp) {
+      return (
+        <FormattedTime  value={new Date(timestamp)} 
+                        day='numeric' 
+                        month='numeric' 
+                        year='numeric'/>
+      );      
+    });
+  } 
+  return [];
+};
 
-  for(var d=0; d < days; d++) {
-    series.push(ref.clone().toDate());
-    ref.add(1, 'days');
+var _getFeatures = function(timeline, timestamp, label) {
+  if(timeline) {
+    return timeline.getFeatures(timestamp, label);
   }
-
-  return series;
+  return null;
 };
 
 var Development = React.createClass({
@@ -173,9 +180,9 @@ var Development = React.createClass({
   render: function() {
     var _t = this.context.intl.formatMessage;
    
-    var spinner = (<i className="fa fa-cloud-upload fa-4x"></i>);
+    var spinner = (<i className='fa fa-cloud-upload fa-4x'></i>);
     if(this.props.debug.isLoading   === true) {
-      spinner = (<i className="fa fa-cog fa-spin fa-4x"></i>);
+      spinner = (<i className='fa fa-cog fa-spin fa-4x'></i>);
     }
 
     var modal = null;
@@ -209,8 +216,9 @@ var Development = React.createClass({
     
     var onChangeTimeline = function(value, label, index) {
       console.log(label + ' - ' + value + ' -  ' + index);
+      this.props.actions.getFeatures(this.props.query.timeline, value, 'Alicante');
     };
-    
+
     var map = (
       <Bootstrap.ListGroupItem>
         <LeafletMap style={{ width: '100%', height: 400}} 
@@ -219,19 +227,23 @@ var Development = React.createClass({
                     center={[38.35, -0.48]} 
                     zoom={13}
                     mode={LeafletMap.MODE_CHOROPLETH}
-                    data={this.props.query.regions} />
+                    data={ this.props.debug.features }
+                    colors={['#2166ac', '#67a9cf', '#d1e5f0', '#f7f7f7', '#fddbc7', '#ef8a62', '#b2182b']}
+                    urls={['/assets/data/meters.geojson']} />
   		</Bootstrap.ListGroupItem>
     );
 
+    var timelineLabels = _getTimelineLabels(this.props.query.timeline);
+    var timelineValues = _getTimelineValues(this.props.query.timeline);
+    
     var timeline = (
       <Bootstrap.ListGroupItem>
-        <Timeline   onChange={onChangeTimeline} 
-                    labels={['A', 'B', 'C', 'D']}
-                    values={[1, 2, 3, 4]}
+        <Timeline   onChange={onChangeTimeline.bind(this)} 
+                    labels={ _getTimelineLabels(this.props.query.timeline) }
+                    values={ _getTimelineValues(this.props.query.timeline) }
                     defaultIndex={0}
                     speed={1000}
-                    animate={false}
-                    data={createDateLabels(moment(new Date()).subtract(28, 'days'), 29)}>
+                    animate={false}>
         </Timeline>
       </Bootstrap.ListGroupItem>
     );
@@ -351,7 +363,8 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
   return {
-    actions : bindActionCreators(Object.assign({}, { submitQuery, createUser, createAmphiro, setTimezone, setErrors, generateAmphiroData }) , dispatch)
+    actions : bindActionCreators(Object.assign({}, { submitQuery, createUser, createAmphiro, 
+                                                     setTimezone, setErrors, generateAmphiroData, getFeatures }) , dispatch)
   };
 }
 

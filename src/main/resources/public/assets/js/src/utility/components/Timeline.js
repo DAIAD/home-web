@@ -1,6 +1,5 @@
 var React = require('react');
 var Bootstrap = require('react-bootstrap');
-var {FormattedMessage, FormattedTime, FormattedDate} = require('react-intl');
 
 var _refresh = function() {
 	var index;

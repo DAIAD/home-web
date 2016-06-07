@@ -88,6 +88,14 @@ var DebugActions = {
       type : types.DEBUG_SET_ERRORS,
       errors : errors
     };
+  },
+  getFeatures : function(timeline, timestamp, label) {
+    return {
+      type : types.DEBUG_GET_FEATURES,
+      timeline: timeline,
+      timestamp : timestamp,
+      label: label
+    };
   }
 };
 
