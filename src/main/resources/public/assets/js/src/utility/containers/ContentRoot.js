@@ -1,3 +1,4 @@
+
 var React = require('react');
 var ReactDOM = require('react-dom');
 var {bindActionCreators} = require('redux');
@@ -16,18 +17,6 @@ var {configure} = require('../actions/config');
 
 var Collapsible = require('../components/Collapsible');
 
-var expandConsumers= function(e) {
-  this.setState({ expandConsumers : !this.state.expandConsumers});
-};
- 
-var expandReports = function(e) {
-  this.setState({ expandReports : !this.state.expandReports});
-};
-
-var expandSupport = function (e) {
-  this.setState({ expandSupport : !this.state.expandSupport});
-};
-
 var disableLink = function(e) {
   e.preventDefault();
 };
@@ -39,10 +28,21 @@ var ContentRoot = React.createClass({
 
   getInitialState() {
     return {
-      expandConsumers: false,
-      expandReports: false,
-      expandSupport: false
+      expand: {
+        consumers: false,
+        reports: false,
+        support: false,
+      },
     };
+  },
+
+  _toggleExpand: function (itemKey) {
+    this.setState((prevState) => {
+      var expanded = prevState.expand;
+      return {
+        expand: Object.assign({}, expanded, {[itemKey]: !expanded[itemKey]})
+      };
+    });
   },
 
   render: function() {
@@ -108,12 +108,12 @@ var ContentRoot = React.createClass({
                     </Link>
                   </li>
                   <li>
-                    <a href='#' onClick={expandConsumers.bind(this)}>
+                    <a href='#' onClick={() => this._toggleExpand('consumers')}>
                       <i className='fa fa-group fa-fw'></i>
                       {' ' + _t({ id: 'Section.Consumers'}) + ' '}
-                      { this.state.expandConsumers ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)}
+                      { this.state.expand.consumers ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)}
                     </a>
-                    <Collapsible open={this.state.expandConsumers}>
+                    <Collapsible open={this.state.expand.consumers}>
                       <ul className='nav'>
                             <li>
                               <Link to='/demographics'>
@@ -148,12 +148,12 @@ var ContentRoot = React.createClass({
                     </Link>
                   </li>
                   <li>
-                    <a href='#' onClick={expandReports.bind(this)}>
+                    <a href='#' onClick={() => this._toggleExpand('reports')}>
                       <i className='fa fa-flask fa-fw'></i>
                       {' ' + _t({ id: 'Section.Reports.Group'}) + ' '}
-                      { this.state.expandReports ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)}
+                      { this.state.expand.reports ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)}
                     </a>
-                    <Collapsible open={this.state.expandReports}>
+                    <Collapsible open={this.state.expand.reports}>
                       <ul className='nav'>
                         <li>
                           <Link to='/report/overview'>
@@ -173,12 +173,12 @@ var ContentRoot = React.createClass({
                     </Collapsible>
                   </li>
                   <li>
-                    <a href='#' onClick={expandSupport.bind(this)}>
+                    <a href='#' onClick={() => this._toggleExpand('support')}>
                       <i className='fa fa-support fa-fw'></i>
                       {' ' + _t({ id: 'Section.Support.Group'}) + ' '}
-                      { this.state.expandSupport ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)}
+                      { this.state.expand.support ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)}
                     </a>
-                    <Collapsible open={this.state.expandSupport}>
+                    <Collapsible open={this.state.expand.support}>
                       <ul className='nav'>
                         <li>
                           <Link to='/support/logging'>
