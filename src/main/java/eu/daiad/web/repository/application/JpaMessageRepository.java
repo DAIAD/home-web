@@ -497,7 +497,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 		if (staticRecommendations.size() == 1) {
             
             StaticRecommendation toBeDeleted = staticRecommendations.get(0);
-            //this.entityManager.remove(toBeDeleted);    
+            this.entityManager.remove(toBeDeleted);    
 
 		}                          
     }    
