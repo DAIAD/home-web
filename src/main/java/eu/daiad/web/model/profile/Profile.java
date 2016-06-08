@@ -5,174 +5,185 @@ import java.util.UUID;
 
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.device.DeviceRegistration;
+import eu.daiad.web.model.utility.UtilityInfo;
 
 public class Profile {
 
-	private UUID key;
+    private UUID key;
 
-	private UUID version;
+    private UUID version;
 
-	private EnumApplication application;
+    private EnumApplication application;
 
-	private String username;
+    private String username;
 
-	private String firstname;
+    private String firstname;
 
-	private String lastname;
+    private String lastname;
 
-	private String email;
+    private String email;
 
-	private byte[] photo;
+    private byte[] photo;
 
-	private String locale;
+    private String locale;
 
-	private String timezone;
+    private String timezone;
 
-	private String country;
+    private String country;
 
-	private int mode = 0;
+    private int mode = 0;
 
-	private String configuration;
+    private String configuration;
 
-	private Integer dailyMeterBudget;
+    private Integer dailyMeterBudget;
 
-	private Integer dailyAmphiroBudget;
+    private Integer dailyAmphiroBudget;
 
-	private ArrayList<DeviceRegistration> devices;
+    private ArrayList<DeviceRegistration> devices;
 
-	public Profile() {
-		this.devices = new ArrayList<DeviceRegistration>();
-	}
+    private UtilityInfo utility;
 
-	public UUID getKey() {
-		return key;
-	}
+    public Profile() {
+        this.devices = new ArrayList<DeviceRegistration>();
+    }
 
-	public void setKey(UUID key) {
-		this.key = key;
-	}
+    public UUID getKey() {
+        return key;
+    }
 
-	public String getFirstname() {
-		return firstname;
-	}
+    public void setKey(UUID key) {
+        this.key = key;
+    }
 
-	public void setFirstname(String firstname) {
-		this.firstname = firstname;
-	}
+    public String getFirstname() {
+        return firstname;
+    }
 
-	public String getLastname() {
-		return lastname;
-	}
+    public void setFirstname(String firstname) {
+        this.firstname = firstname;
+    }
 
-	public void setLastname(String lastname) {
-		this.lastname = lastname;
-	}
+    public String getLastname() {
+        return lastname;
+    }
 
-	public String getTimezone() {
-		return timezone;
-	}
+    public void setLastname(String lastname) {
+        this.lastname = lastname;
+    }
 
-	public void setTimezone(String timezone) {
-		this.timezone = timezone;
-	}
+    public String getTimezone() {
+        return timezone;
+    }
 
-	public String getCountry() {
-		return country;
-	}
+    public void setTimezone(String timezone) {
+        this.timezone = timezone;
+    }
 
-	public void setCountry(String country) {
-		this.country = country;
-	}
+    public String getCountry() {
+        return country;
+    }
 
-	public ArrayList<DeviceRegistration> getDevices() {
-		return devices;
-	}
+    public void setCountry(String country) {
+        this.country = country;
+    }
 
-	public void setDevices(ArrayList<DeviceRegistration> devices) {
-		this.devices = devices;
-		if (this.devices == null) {
-			this.devices = new ArrayList<DeviceRegistration>();
-		}
-	}
+    public ArrayList<DeviceRegistration> getDevices() {
+        return devices;
+    }
 
-	public String getEmail() {
-		return email;
-	}
+    public void setDevices(ArrayList<DeviceRegistration> devices) {
+        this.devices = devices;
+        if (this.devices == null) {
+            this.devices = new ArrayList<DeviceRegistration>();
+        }
+    }
 
-	public void setEmail(String email) {
-		this.email = email;
-	}
+    public String getEmail() {
+        return email;
+    }
 
-	public byte[] getPhoto() {
-		return photo;
-	}
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-	public void setPhoto(byte[] photo) {
-		this.photo = photo;
-	}
+    public byte[] getPhoto() {
+        return photo;
+    }
 
-	public String getUsername() {
-		return username;
-	}
+    public void setPhoto(byte[] photo) {
+        this.photo = photo;
+    }
 
-	public void setUsername(String username) {
-		this.username = username;
-	}
+    public String getUsername() {
+        return username;
+    }
 
-	public EnumApplication getApplication() {
-		return application;
-	}
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-	public void setApplication(EnumApplication application) {
-		this.application = application;
-	}
+    public EnumApplication getApplication() {
+        return application;
+    }
 
-	public String getConfiguration() {
-		return configuration;
-	}
+    public void setApplication(EnumApplication application) {
+        this.application = application;
+    }
 
-	public void setConfiguration(String configuration) {
-		this.configuration = configuration;
-	}
+    public String getConfiguration() {
+        return configuration;
+    }
 
-	public int getMode() {
-		return mode;
-	}
+    public void setConfiguration(String configuration) {
+        this.configuration = configuration;
+    }
 
-	public void setMode(int mode) {
-		this.mode = mode;
-	}
+    public int getMode() {
+        return mode;
+    }
 
-	public UUID getVersion() {
-		return version;
-	}
+    public void setMode(int mode) {
+        this.mode = mode;
+    }
 
-	public void setVersion(UUID version) {
-		this.version = version;
-	}
+    public UUID getVersion() {
+        return version;
+    }
 
-	public String getLocale() {
-		return locale;
-	}
+    public void setVersion(UUID version) {
+        this.version = version;
+    }
 
-	public void setLocale(String locale) {
-		this.locale = locale;
-	}
+    public String getLocale() {
+        return locale;
+    }
 
-	public Integer getDailyMeterBudget() {
-		return dailyMeterBudget;
-	}
+    public void setLocale(String locale) {
+        this.locale = locale;
+    }
 
-	public void setDailyMeterBudget(Integer dailyMeterBudget) {
-		this.dailyMeterBudget = dailyMeterBudget;
-	}
+    public Integer getDailyMeterBudget() {
+        return dailyMeterBudget;
+    }
 
-	public Integer getDailyAmphiroBudget() {
-		return dailyAmphiroBudget;
-	}
+    public void setDailyMeterBudget(Integer dailyMeterBudget) {
+        this.dailyMeterBudget = dailyMeterBudget;
+    }
 
-	public void setDailyAmphiroBudget(Integer dailyAmphiroBudget) {
-		this.dailyAmphiroBudget = dailyAmphiroBudget;
-	}
+    public Integer getDailyAmphiroBudget() {
+        return dailyAmphiroBudget;
+    }
+
+    public void setDailyAmphiroBudget(Integer dailyAmphiroBudget) {
+        this.dailyAmphiroBudget = dailyAmphiroBudget;
+    }
+
+    public UtilityInfo getUtility() {
+        return utility;
+    }
+
+    public void setUtility(UtilityInfo utility) {
+        this.utility = utility;
+    }
 
 }

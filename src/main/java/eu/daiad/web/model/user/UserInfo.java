@@ -31,7 +31,7 @@ public class UserInfo {
 		this.id = account.getKey();
 		this.firstName = account.getFirstname();
 		this.lastName = account.getLastname();
-		this.email = account.getEmail();
+		this.email = account.getUsername();
 		this.gender = account.getGender();
 		this.registrationDateMils = account.getCreatedOn().getMillis();
 		this.country = account.getCountry();

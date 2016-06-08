@@ -29,7 +29,7 @@
         "Fav": "Favorites",
         "Overview": "Overview"
       },
-	    "Forecasting": "Forecasting - Learning Mode",
+      "Forecasting": "Forecasting",
 	    "Demographics": "Users & Groups",
 	    "ModeManagement": "Mode Management",
 	    "Search": "Search",

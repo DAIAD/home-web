@@ -23,9 +23,9 @@
 		}
 	},
 	"Section": {
-            "Dashboard": "Περίληψη",
+      "Dashboard": "Περίληψη",
 	    "Analytics":"Ανάλυση",
-	    "Forecasting": "Πρόβλεψη - Learning Mode",
+	    "Forecasting": "Πρόβλεψη",
 	    "Demographics": "Ομάδες & Χρήστες",
 	    "ModeManagement": "Διαχείριση Κατάστασης",
 	    "Search": "Αναζήτηση",

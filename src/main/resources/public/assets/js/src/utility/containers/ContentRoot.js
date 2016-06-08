@@ -134,7 +134,7 @@ var ContentRoot = React.createClass({
                   </li>
 
                   <li>
-                    <Link to='/forecasting' onClick={disableLink.bind(this)} className='disabled-link'>
+                    <Link to='/forecasting'>
                       <i className='fa fa-line-chart fa-fw'></i>{' ' + _t({ id: 'Section.Forecasting'})}
                     </Link>
                   </li>

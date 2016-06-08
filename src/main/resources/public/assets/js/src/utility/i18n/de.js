@@ -25,7 +25,7 @@
   "Section": {
       "Dashboard": "Dashboard",
       "Analytics":"Analytics",
-      "Forecasting": "Forecasting - Learning Mode",
+      "Forecasting": "Forecasting",
       "Demographics": "Users & Groups",
       "ModeManagement": "Mode Management",
       "Search": "Search",
