@@ -94,7 +94,13 @@ const updateInfobox = function(id, data) {
 
     dispatch(updateLayoutItem(id, data.display));
     
-    dispatch(QueryActions.fetchInfoboxData(Object.assign({}, getState().section.dashboard.infobox.find(i=>i.id===id))));
+    dispatch(QueryActions.fetchInfoboxData(Object.assign({}, getState().section.dashboard.infobox.find(i=>i.id===id))))
+    .then(res => dispatch(setInfoboxData(id, res)))
+    .catch(error => { 
+          console.error('Caught error in infobox data fetch:', error); 
+          dispatch(setInfoboxData(id, {data: [], error: 'Oops sth went wrong, replace with sth friendly'})); 
+    });
+
   };
 };
 
@@ -172,9 +178,13 @@ const updateLayoutItem = function(id, display) {
 const fetchAllInfoboxesData = function() {
   return function(dispatch, getState) {
     getState().section.dashboard.infobox.map(function (infobox) {
-      const { id, type } = infobox;
-      if (type === 'total' || type === 'last' || type === 'efficiency' || type === 'comparison' || type === 'breakdown')
-      return dispatch(QueryActions.fetchInfoboxData(infobox))
+      const { id, type, synced } = infobox;
+      //if (type === 'total' || type === 'last' || type === 'efficiency' || type === 'comparison' || type === 'breakdown')
+        if (synced === true) { 
+          console.log('found infobox data in memory');
+          return Promise.resolve(); 
+        }
+        return dispatch(QueryActions.fetchInfoboxData(infobox))
       .then(res =>  
           dispatch(setInfoboxData(id, res)))
         .catch(error => { 
