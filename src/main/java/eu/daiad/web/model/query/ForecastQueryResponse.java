@@ -4,34 +4,24 @@ import java.util.ArrayList;
 
 import org.joda.time.DateTimeZone;
 
-public class DataQueryResponse extends QueryResponse {
-
-    private ArrayList<GroupDataSeries> devices;
+public class ForecastQueryResponse extends QueryResponse {
 
     private ArrayList<GroupDataSeries> meters;
 
-    public DataQueryResponse() {
+    public ForecastQueryResponse() {
         super();
     }
 
-    public DataQueryResponse(String timezone) {
+    public ForecastQueryResponse(String timezone) {
         super(timezone);
     }
 
-    public DataQueryResponse(DateTimeZone timezone) {
+    public ForecastQueryResponse(DateTimeZone timezone) {
         super(timezone.toString());
-    }
-
-    public ArrayList<GroupDataSeries> getDevices() {
-        return devices;
     }
 
     public ArrayList<GroupDataSeries> getMeters() {
         return meters;
-    }
-
-    public void setDevices(ArrayList<GroupDataSeries> devices) {
-        this.devices = devices;
     }
 
     public void setMeters(ArrayList<GroupDataSeries> meters) {

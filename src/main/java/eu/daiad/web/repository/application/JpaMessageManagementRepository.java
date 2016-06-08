@@ -1,9 +1,9 @@
 package eu.daiad.web.repository.application;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.Random;
 import java.util.UUID;
 
 import javax.persistence.EntityManager;
@@ -34,7 +34,6 @@ import eu.daiad.web.model.message.PendingMessageStatus;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.BaseRepository;
-import java.util.Collections;
 
 @Repository()
 @Transactional("applicationTransactionManager")

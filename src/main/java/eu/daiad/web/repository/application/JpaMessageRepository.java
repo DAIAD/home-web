@@ -39,7 +39,6 @@ import eu.daiad.web.model.message.MessageRequest;
 import eu.daiad.web.model.message.MessageResult;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.BaseRepository;
-import org.joda.time.DateTimeZone;
 
 @Repository
 @Transactional("applicationTransactionManager")

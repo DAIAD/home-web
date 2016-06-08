@@ -64,10 +64,12 @@ var Table = React.createClass({
 
   		return (
 			<div className='clearfix'>
-				<Bootstrap.Table hover style={{margin: 0, padding: 0}}>
-					<Table.Header data = {this.props.data}></Table.Header>
-					<Table.Body data={this.props.data} activePageIndex={currentPageIndex - 1}></Table.Body>			
-				</Bootstrap.Table>
+			  <div style={{overflow: 'auto'}}>
+  				<Bootstrap.Table hover style={{margin: 0, padding: 0}}>
+  					<Table.Header data = {this.props.data}></Table.Header>
+  					<Table.Body data={this.props.data} activePageIndex={currentPageIndex - 1}></Table.Body>			
+  				</Bootstrap.Table>
+				</div>
 				<div style={{float:'right'}}>
 					<Bootstrap.Pagination 	prev
 											next

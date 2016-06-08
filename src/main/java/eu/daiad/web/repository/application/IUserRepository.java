@@ -7,7 +7,6 @@ import eu.daiad.web.model.admin.AccountActivity;
 import eu.daiad.web.model.admin.AccountWhiteListEntry;
 import eu.daiad.web.model.admin.AccountWhiteListInfo;
 import eu.daiad.web.model.error.ApplicationException;
-import eu.daiad.web.model.query.EnumClusterType;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.user.Account;

@@ -226,8 +226,8 @@ public class GroupDataSeries {
                     point.getVolume().put(m, point.getVolume().get(m) + difference);
                     break;
                 case MIN:
-                    if (point.getVolume().get(m) > volume) {
-                        point.getVolume().put(m, volume);
+                    if (point.getVolume().get(m) > (volume - difference)) {
+                        point.getVolume().put(m, (volume - difference));
                     }
                     break;
                 case MAX:

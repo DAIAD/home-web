@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
 public enum EnumUploadFileType {
-	UNDEFINED(0), METER(1), METER_DATA(2), AMPHIRO_DATA(3);
+	UNDEFINED(0), METER(1), METER_DATA(2), AMPHIRO_DATA(3), METER_DATA_FORECAST(4);
 
 	private final int value;
 

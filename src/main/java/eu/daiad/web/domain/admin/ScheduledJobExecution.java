@@ -8,7 +8,6 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Type;
-import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
 
 import eu.daiad.web.model.scheduling.EnumExecutionExitCode;
