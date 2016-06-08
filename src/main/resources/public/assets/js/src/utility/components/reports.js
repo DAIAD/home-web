@@ -181,10 +181,17 @@ var Overview = React.createClass({
     config: _configPropType,
     grouping: PropTypes.string,
     now: PropTypes.number,
+    field: PropTypes.string,
   },
  
   childContextTypes: {
     config: _configPropType, 
+  },
+
+  getDefaultProps: function () {
+    return {
+      field: 'volume',  
+    };
   },
 
   getChildContext: function() {
@@ -193,33 +200,40 @@ var Overview = React.createClass({
  
   render: function () { 
     var overview = require('./reports-measurements/overview');
-    var {config, grouping, now} = this.props; 
+    var {config, grouping, now, field} = this.props; 
     
-    if (_.isEmpty(config) || _.isEmpty(config.reports) || _.isEmpty(config.utility)) {
+    if (_.isEmpty(config) || _.isEmpty(config.reports) || 
+        _.isEmpty(config.utility) || _.isEmpty(config.overview)
+      ) {
       return (<div>Loading configuration...</div>);
     }
     
-    now = (now == null)? moment().valueOf() : now;
+    var reportProps = {
+      field,
+      now: (now == null)? moment().valueOf() : now,
+      uom: config.reports.byType.measurements.fields[field].unit,
+      reports: config.overview.reports,
+    };
 
     var body;
     switch (grouping) {
       case 'utility':
-        body = (<overview.UtilityView now={now} />);
+        body = (<overview.UtilityReport {...reportProps} />);
         break;
       case 'per-efficiency':
-        body = (<overview.GroupPerEfficiencyView now={now} />);
+        body = (<overview.GroupPerEfficiencyReport {...reportProps} />);
         break;
       case 'per-household-size':
-        body = (<overview.GroupPerSizeView now={now} />);
+        body = (<overview.GroupPerSizeReport {...reportProps} />);
         break;
       case 'per-household-members':
-        body = (<overview.GroupPerMembersView now={now} />);
+        body = (<overview.GroupPerMembersReport {...reportProps} />);
         break;
       case 'per-income':
-        body = (<overview.GroupPerIncomeView now={now} />);
+        body = (<overview.GroupPerIncomeReport {...reportProps} />);
         break;
       default:
-        body = (<overview.OverviewAsAccordion now={now} />);
+        body = (<overview.OverviewAsAccordion {...reportProps} />);
         break;
     }
  

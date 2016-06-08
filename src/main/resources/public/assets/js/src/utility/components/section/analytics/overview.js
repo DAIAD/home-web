@@ -19,7 +19,6 @@ var _configPropType = PropTypes.shape({
 var Report = React.createClass({
   displayName: 'Analytics.Overview',
 
-
   propTypes: {
     routes: PropTypes.array, // supplied by react-router
     config: _configPropType,

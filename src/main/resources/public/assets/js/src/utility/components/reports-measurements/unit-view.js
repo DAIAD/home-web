@@ -13,13 +13,11 @@ var {generateTimestamps} = require('../../helpers/timestamps');
 var PropTypes = React.PropTypes;
 var {seriesPropType} = require('../../prop-types');
 
-const FIELD = 'volume';
-
 //
 // Presentational components for reports based on a time unit (e.g by day, week ...)
 //
 
-class _View extends React.Component {
+class _UnitView extends React.Component {
   
   static get unit() {
     return 'ms'; // Override in subclasses!
@@ -92,7 +90,7 @@ class _View extends React.Component {
     console.assert(n == timestamps.length, 
       sprintf('Expected exactly %d timestamps (got %.1f)', timestamps.length, n));
     
-    console.info(sprintf(
+    console.debug(sprintf(
       'About to densify points for report (%s, level: %s): +%d points', 
        unit, level, n - points.length
     ));
@@ -272,7 +270,7 @@ class _View extends React.Component {
  
   render() {
     const {defaults, unit, momentToKey} = this.constructor;
-    var {duration: [K, unit1], level, series, title, formatDate, uom} = this.props;
+    var {duration: [K, unit1], level, series, title, formatDate, field, uom} = this.props;
     var {moment0, data, keys, totals, forecast} = this.state;
     
     var k0 = momentToKey(moment0), i0, k1, data0, data0p1;
@@ -298,7 +296,7 @@ class _View extends React.Component {
       loading: (data != null)? false : {text: 'Loading...'},
       yAxis: {
         ...defaults.charts.yAxis,
-        name: sprintf('%s (%s)', FIELD, uom)
+        name: sprintf('%s (%s)', field, uom)
       },
     };
 
@@ -392,12 +390,12 @@ class _View extends React.Component {
   }
   
   _markupSummary(title, subtitle, total, prevTotal) {
-    var {uom} = this.props;
+    var {field, uom} = this.props;
     return (
       <MeasurementValue 
         title={title}
         subtitle={subtitle} 
-        field={FIELD} 
+        field={field} 
         unit={uom}
         value={total}
         prevValue={prevTotal}
@@ -407,9 +405,10 @@ class _View extends React.Component {
 
 };
 
-_View.propTypes = {
-  now: PropTypes.number, // reference point for time 
-  uom: PropTypes.string, // unit of measurement
+_UnitView.propTypes = {
+  field: PropTypes.string.isRequired,
+  now: PropTypes.number.isRequired, // reference point for time 
+  uom: PropTypes.string.isRequired, // unit of measurement
   level: PropTypes.string, // detail level (granularity) of data points 
   startsAt: PropTypes.string, // boundary of unit-based intervals
   duration: PropTypes.array,
@@ -418,13 +417,13 @@ _View.propTypes = {
   title: PropTypes.string,
 };
 
-_View.defaultProps = {
+_UnitView.defaultProps = {
   formatDate: (m, brief=false) => (moment(m).format('LTS')),
 };
 
 // Day View
 
-class DayView extends _View {
+class DayView extends _UnitView {
   
   static get unit() {return 'day';}
   
@@ -433,7 +432,7 @@ class DayView extends _View {
   }
   
   static get defaults() {
-    return _.merge({}, _View.defaults, {
+    return _.merge({}, _UnitView.defaults, {
       charts: {
         xaxis: {
           normal: {
@@ -465,7 +464,7 @@ DayView.defaultProps = {
 
 // Week View
 
-class WeekView extends _View {
+class WeekView extends _UnitView {
   
   static get unit() {return 'week';}
   
@@ -474,7 +473,7 @@ class WeekView extends _View {
   }
   
   static get defaults() {
-    return _.merge({}, _View.defaults, {
+    return _.merge({}, _UnitView.defaults, {
       charts: {
         xaxis: {
           normal: {
@@ -508,7 +507,7 @@ WeekView.defaultProps = {
 
 // Month View
 
-class MonthView extends _View {
+class MonthView extends _UnitView {
   
   static get unit() {return 'month';}
   
@@ -517,7 +516,7 @@ class MonthView extends _View {
   }
   
   static get defaults() {
-    return _.merge({}, _View.defaults, {
+    return _.merge({}, _UnitView.defaults, {
       charts: {
         xaxis: {
           normal: {
