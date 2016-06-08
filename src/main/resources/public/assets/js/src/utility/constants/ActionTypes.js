@@ -180,8 +180,14 @@ var types = mirrorToPath({
   ADMIN_DELETE_TIP_RESPONSE: null,
   MESSAGES_DELETE_MODAL_SHOW: null,
   MESSAGES_DELETE_MODAL_HIDE: null,
+  
+  //Announcements
+  ANNC_ADD_USER: null,
+  ANNC_REMOVE_USER: null,
+  ANNC_REQUESTED_USERS: null,
+  ANNC_RECEIVED_USERS: null,
   //
-
+  
   QUERY_SUBMIT: null,
   QUERY_RESPONSE: null,
 

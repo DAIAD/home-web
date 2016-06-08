@@ -15,7 +15,11 @@ var ManageAlertsAPI = {
     },
     deleteTip: function(tip){
       return api.json('/action/recommendation/static/delete', tip);
-    }
+    },
+    getCurrentUtilityUsers: function() {
+      console.log('api getCurrentUtilityUsers');
+      return api.json('/action/admin/trial/activity');
+    },
 };
 
 module.exports = ManageAlertsAPI;
