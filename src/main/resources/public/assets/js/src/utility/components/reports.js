@@ -198,7 +198,7 @@ var Overview = React.createClass({
     if (_.isEmpty(config) || _.isEmpty(config.reports) || _.isEmpty(config.utility)) {
       return (<div>Loading configuration...</div>);
     }
-   
+    
     now = (now == null)? moment().valueOf() : now;
 
     var body;
@@ -219,19 +219,26 @@ var Overview = React.createClass({
         body = (<overview.GroupPerIncomeView now={now} />);
         break;
       default:
-        body = (<overview.UtilityView now={now} />);
+        body = (<overview.OverviewAsAccordion now={now} />);
         break;
     }
-  
-    var heading = (
+ 
+    var heading;
+    if (grouping) {
+      heading = (
        <h3>
-        {'Overview'}
-        <span className="delimiter">&nbsp;/&nbsp;</span>
-        {'Water Consumption'}
-        <span className="delimiter">&nbsp;/&nbsp;</span>
-        {config.overview.sections[grouping].title}
-      </h3>
-    );
+          {'Overview'}
+          <span className="delimiter">&nbsp;/&nbsp;</span>
+          {'Water Consumption'}
+          <span className="delimiter">&nbsp;/&nbsp;</span>
+          {config.overview.sections[grouping].title}
+        </h3>
+      );
+    } else {
+      heading = (
+        <h3>{'Overview'}</h3>
+      );
+    }
 
     return (
       <div className="overview reports">

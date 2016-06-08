@@ -22,7 +22,7 @@ const FIELD = 'volume';
 class _View extends React.Component {
   
   static get unit() {
-    return 'ms'; // override!
+    return 'ms'; // Override in subclasses!
   }
   
   static momentToKey(t) {
@@ -35,15 +35,15 @@ class _View extends React.Component {
         xaxis: {
           // The x-axis covers exactly the examined period
           normal: {
-            formatter: (t) => (moment(t).format('LTS')),
+            formatter: (t) => (moment(t).utc().format()),
           },
           // The x-axis spans over the examined period (e.g at forecast charts)
           wide: {
-            formatter: (t) => (moment(t).format('LTS')),
+            formatter: (t) => (moment(t).utc().format()),
           },
           // The x-axis for the comparison chart
           comparison: {
-            formatter: (t) => (moment(t).format('LTS')),
+            formatter: (t) => (moment(t).utc().format()),
           },
         },
         legend: true,
@@ -77,34 +77,53 @@ class _View extends React.Component {
     var {unit} = this;
     var p0 = points.map(p => p[0]);
     var t0 = _.first(p0);
-    var ts = moment(t0).startOf(startsAt);
-    var te = moment(t0).endOf(startsAt);
-    var n = _.ceil(moment.duration(te - ts).as(level), 3);
+    var ts = moment(t0).utc().startOf(startsAt);
+    var te = moment(t0).utc().endOf(startsAt);
+    var n = _.ceil(moment(te).diff(ts, level, true), 3);
     
     console.assert(n >= points.length, 'Received too many points!');
-
+    
     if (n == points.length) {
-      // This array doesnt seem to have gaps: return it
+      // This array doesnt seem to have gaps: return as is
       return points;
     }
     
     var timestamps = Array.from(generateTimestamps(ts, te, level));
     console.assert(n == timestamps.length, 
-      'Expected exactly ' + n + ' timestamps');
+      sprintf('Expected exactly %d timestamps (got %.1f)', timestamps.length, n));
     
     console.info(sprintf(
       'About to densify points for report (%s, level: %s): +%d points', 
-       moment.duration(te - ts).humanize(),
-       level,
-       n - points.length
+       unit, level, n - points.length
     ));
 
-    return timestamps.reduce((res, t) => {
-      // If found, include values from the source array
-      var i0 = p0.indexOf(t);
-      res.push([t, (i0 < 0)? defaultValue : points[i0][1]]);
-      return res;
-    }, []);
+    var densePoints = timestamps.map(pairWithNext)
+      .reduce((res, [tx, tx1]) => {
+        var i0;
+        // If a data point concurs with tx, pick it
+        i0 = p0.indexOf(tx);
+        if (i0 >= 0) {
+          res.push([tx, points[i0][1]]);
+          return res;
+        }
+        
+        // If a data point falls inside the bucket of (tx, tx1), pick it
+        i0 = p0.findIndex(t => (t > tx && (tx1 == null || t < tx1)));
+        if (i0 >= 0) {
+          console.info(sprintf(
+            'A data point at `%s` is picked for the bucket of 1 %s starting at `%s`',
+            moment(points[i0][0]).format(), level, moment(tx).format()
+          ));
+          res.push([tx, points[i0][1]]);
+          return res;
+        } 
+
+        // Nothing found, push default value
+        res.push([tx, defaultValue]);
+        return res;
+      }, []);
+
+    return densePoints;
   }
 
   static _propsToState(props) {
@@ -122,12 +141,15 @@ class _View extends React.Component {
     var data, keys, totals, forecast;
     
     // A moment that represents the period under examination
-    var moment0 = moment(now).add(-1, unit).startOf(startsAt);
+    var moment0 = moment(now);
+    moment0 = moment0.add(moment0.utcOffset(), 'minute').utc(); // move to same wall-clock in UTC
+    moment0 = moment0.add(-1, unit).startOf(startsAt);
+    
     // The key of this period (e.g. day-of-year)
     var k0 = this.momentToKey(moment0);
     
     if (!series)
-      return {moment0};
+      return {moment0, data: null};
     
     if (level != series.granularity.toLowerCase())
       throw new Error(sprintf(
@@ -149,8 +171,16 @@ class _View extends React.Component {
       .sort(([k1, p1], [k2, p2]) => (p1.points[0][0] - p2.points[0][0])) 
     );
     keys = Array.from(data.keys());
-    this._checkData(data, keys, k0, level);
+    
     //this._debugData(data, keys);
+    
+    // Validate received data
+    try {
+      this._checkData(data, keys, k0, level);
+    } catch (er) {
+      console.error('Check has failed: ' + er.message);
+      return {moment0, data: false};
+    }
 
     // Do we have forecast data? Todo maybe as separate series?
     var i0 = keys.indexOf(k0), k1r = keys[i0 + 1];
@@ -159,7 +189,7 @@ class _View extends React.Component {
     // Compute total consumption for each slot in our window
     totals = new Map(
       Array.from(data.entries())
-      .map(([k, p]) => ([k, _.sumBy(p.points, 1)]))
+        .map(([k, p]) => ([k, _.sumBy(p.points, 1)]))
     );
     
     // For each slot, add a closure point (preferrably the 1st point of next slot).
@@ -178,12 +208,12 @@ class _View extends React.Component {
 
   static _checkData(data, keys, k0, level) {
     
-    var {diffNumber} = require('../../helpers/array-funcs');
-    var {unit} = this;
-    
+    if (!keys.length)
+      throw new Error('No data received');
     if (!keys.every(k => _.isNumber(k)))
       throw new Error('Expected number keys!');
     
+    const {unit} = this;
     const U = moment.duration(1, unit).valueOf();
     const step = moment.duration(1, level).valueOf(); 
 
@@ -191,42 +221,43 @@ class _View extends React.Component {
       throw new Error(sprintf(
         'Expected that unit (%s) is a multiple of step (%s)', unit, level
       ));
-
-    const checkStepInUnit = (d) => (
-      data.get(d).points
+ 
+    const checkStepInsideUnit = (k) => (
+      data.get(k).points
         .map(v => v[0])
-        .map(diffNumber)
-        .slice(1)
-        .every(s => (s == step))
+        .map(pairWithNext)
+        .slice(0, -1)
+        .every(([ta, tb]) => (
+          // Note Must compute the diff at the given level (not as milliseconds!): 
+          // not all days have 24 hours (DST), not all months 30 days etc.
+          moment(tb).diff(ta, level, true) === 1
+        ))
     );
-
-    if (!keys.every(checkStepInUnit))
+    
+    if (!(keys.every(checkStepInsideUnit)))
       throw new Error(sprintf(
-        'Expected that data points have regular steps (%d ms)', step
+        'Expected that data points have regular steps (1 %s)', level
       ));
  
-    const checkStepToNextUnit = (k1, k2) => {
-      var a1, a2, p1, p2;
-      if (k2 == null)
-        return true;
-      a1 = data.get(k1).points; 
-      a2 = data.get(k2).points;
-      p1 = _.last(a1); 
-      p2 = _.first(a2);
-      return (moment.duration(p2[0] - p1[0]).as(level) == 1);
+    const checkStepToNextUnit = ([ka, kb]) => {
+      var pa = _.last(data.get(ka).points); 
+      var pb = _.first(data.get(kb).points);
+      return (moment(pb[0]).diff(pa[0], level, true) === 1);
     };
-    
-    // Fixme!!
-    //if (!(keys.map(pairWithNext).every(_.spread(checkStepToNextUnit))))
-    //  throw new Error(sprintf(
-    //    'Expected that the step to the next unit is 1 %s', level
-    //  ));
    
-    if (keys.indexOf(k0) <= 0) 
-      console.error(sprintf(
-        'No consumption data for previous time unit (%s)', unit
+    if (!(keys.map(pairWithNext).slice(0, -1).every(checkStepToNextUnit)))
+      throw new Error(sprintf(
+        'Expected that the step to the next unit is 1 %s', level
       ));
     
+    var i0 = keys.indexOf(k0);
+    if (i0 < 0) 
+      throw new Error(sprintf(
+        'No consumption data for current time unit (%s)', unit));
+    else if (i0 == 0)
+      console.error(sprintf(
+        'No consumption data for previous time unit (%s)', unit));
+
     return;
   }
 
@@ -264,7 +295,7 @@ class _View extends React.Component {
       lineWidth: defaults.charts.lineWidth,
       grid: defaults.charts.grid,
       color: defaults.charts.color,
-      loading: data? false : {text: 'Loading...'},
+      loading: (data != null)? false : {text: 'Loading...'},
       yAxis: {
         ...defaults.charts.yAxis,
         name: sprintf('%s (%s)', FIELD, uom)
@@ -283,7 +314,7 @@ class _View extends React.Component {
           {...chartProps}
           xAxis={{
             ...defaults.charts.xaxis.normal,
-            data: data? data0p1.map(v => v[0]) : null, 
+            data: data? data0p1.map(v => v[0]) : [], 
           }}
           series={[
             {
@@ -303,7 +334,7 @@ class _View extends React.Component {
           {...chartProps}
           xAxis={{
             ...defaults.charts.xaxis.wide,
-            data: !data? null : []
+            data: !data? [] : []
               .concat(data.get(k0).points, data.get(k1r).points)
               .map(v => v[0]),
           }}
@@ -334,8 +365,7 @@ class _View extends React.Component {
         {...chartProps}
         xAxis={{
           ...defaults.charts.xaxis.comparison,
-          data: data? dataX.points.map(v => v[0]).concat(dataX.closurePoint[0]) : null
-          //data: data? data0p1.map(v => v[0]) : null,
+          data: data? dataX.points.map(v => v[0]).concat(dataX.closurePoint[0]) : []
         }}
         series={!data? [] : comparisonKeys.reverse()
           .map(k => {
@@ -353,7 +383,7 @@ class _View extends React.Component {
     );
 
     return (
-      <div className="clearfix level"> 
+      <div className="clearfix unit-view"> 
         {summary}
         {chart}
         {comparisonChart}
@@ -399,7 +429,7 @@ class DayView extends _View {
   static get unit() {return 'day';}
   
   static momentToKey(t) {
-    return moment(t).dayOfYear();
+    return moment(t).utc().dayOfYear();
   }
   
   static get defaults() {
@@ -407,16 +437,16 @@ class DayView extends _View {
       charts: {
         xaxis: {
           normal: {
-            formatter: (t) => (moment(t).format('hA')),
+            formatter: (t) => (moment(t).utc().format('hA')),
           },
           wide: {
             formatter: (t) => {
-              var m = moment(t);
+              var m = moment(t).utc();
               return (m.hour() != 0)? m.format('hA') : m.format('ddd hA');
             },
           },
           comparison: {
-            formatter: (t) => (moment(t).format('hA')),
+            formatter: (t) => (moment(t).utc().format('hA')),
           },
         },
       },
@@ -428,7 +458,7 @@ DayView.displayName = 'UnitView.Day';
 
 DayView.defaultProps = {
   formatDate: (m, brief=false) => (
-    moment(m).format(brief? 'D/MMM' : 'ddd D MMM')
+    moment(m).utc().format(brief? 'D/MMM' : 'ddd D MMM')
   ),
   title: 'Daily Consumption',
 };
@@ -440,7 +470,7 @@ class WeekView extends _View {
   static get unit() {return 'week';}
   
   static momentToKey(t) {
-    return moment(t).isoWeek();
+    return moment(t).utc().isoWeek();
   }
   
   static get defaults() {
@@ -448,13 +478,13 @@ class WeekView extends _View {
       charts: {
         xaxis: {
           normal: {
-            formatter: (t) => (moment(t).format('dd')),
+            formatter: (t) => (moment(t).utc().format('dd')),
           },
           wide: {
-            formatter: (t) => (moment(t).format('D/M')),
+            formatter: (t) => (moment(t).utc().format('D/M')),
           },
           comparison: {
-            formatter: (t) => (moment(t).format('dd')),
+            formatter: (t) => (moment(t).utc().format('dd')),
           },
         },
       },
@@ -466,7 +496,7 @@ WeekView.displayName = 'UnitView.Week';
 
 WeekView.defaultProps = {
   formatDate: (m, brief=false) => {
-    m = moment(m);
+    m = moment(m).utc();
     if (brief) 
       return m.format('[Week #]W');
     var m0 = m.clone().startOf('isoweek');
@@ -483,7 +513,7 @@ class MonthView extends _View {
   static get unit() {return 'month';}
   
   static momentToKey(t) {
-    return moment(t).month();
+    return moment(t).utc().month();
   }
   
   static get defaults() {
@@ -491,14 +521,14 @@ class MonthView extends _View {
       charts: {
         xaxis: {
           normal: {
-            formatter: (t) => (moment(t).format('dd D')),
+            formatter: (t) => (moment(t).utc().format('dd D')),
           },
           wide: {
-            formatter: (t) => (moment(t).format('D MMM')),
+            formatter: (t) => (moment(t).utc().format('D MMM')),
           },
           comparison: {
-            labelFilter: (i, t) => (i % 5 == 0), // place every 5 items
-            formatter: (t, i) => (moment(t).format('D')),
+            labelFilter: (i, t) => (i % 5 == 0), // place 1 every 5 items
+            formatter: (t, i) => (moment(t).utc().format('D')),
           },
         },
       },
@@ -510,9 +540,11 @@ MonthView.displayName = 'UnitView.Month';
 
 MonthView.defaultProps = {
   formatDate: (m, brief=false) => (
-    moment(m).format(brief? 'MMM' : 'MMMM YYYY')
+    moment(m).utc().format(brief? 'MMM' : 'MMMM YYYY')
   ),
   title: 'Monthly Consumption',
 };
+
+// Todo YearView
 
 module.exports = {DayView, WeekView, MonthView};

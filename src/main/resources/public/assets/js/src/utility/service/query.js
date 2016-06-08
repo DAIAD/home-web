@@ -5,7 +5,9 @@ var sprintf = require('sprintf');
 var population = require('../model/population');
 var Granularity = require('../model/granularity'); 
 var api = require('../api/query');
-  
+
+const {TIMEZONE} = require('../constants/Constants');
+
 var queryStats = function (source, q, config) { 
   
   // Todo Build query to target action api
@@ -31,6 +33,8 @@ var queryMeasurements = function (source, field, q, config={}) {
   
   source = source.toUpperCase();
   
+  var timezone = TIMEZONE || 'Etc/GMT';
+
   var q1 = {
     ...defaults.api.queryParams,
     source,
@@ -57,7 +61,7 @@ var queryMeasurements = function (source, field, q, config={}) {
 
   // Send query, shape result
 
-  return api.queryMeasurements({query: q1}).then(
+  return api.queryMeasurements({query: q1, timezone}).then(
     res => {
       if (res.errors.length) 
         throw 'The request is rejected: ' + res.errors[0].description; 

@@ -29,12 +29,26 @@ var GroupPerEfficiencyView = React.createClass({
   
   propTypes: {
     now: PropTypes.number,
+    visible: PropTypes.bool,
   },
   
   contextTypes: {config: PropTypes.object},
 
+  getInitialState: function () {
+    return {foo: null};
+  },
+
   componentDidMount: function () {
-    console.info('GroupPerEfficiencyView mounted');
+    console.info(' ** GroupPerEfficiencyView mounted (visible='+this.props.visible+')');
+    if (this.props.visible) {this._computeFoo();}
+  },
+  
+  componentWillReceiveProps: function (nextProps) {
+    console.info(' ** GroupPerEfficiencyView received props (visible='+nextProps.visible+')');
+    if (nextProps.visible) {
+      if (this.state.foo == null || (nextProps.now != this.props.now)) 
+        this._computeFoo();
+    }
   },
 
   render: function () {
@@ -45,8 +59,13 @@ var GroupPerEfficiencyView = React.createClass({
     // Todo
 
     return (
-      <div>Hello per-efficiency view!</div>
+      <div>Hello per-efficiency view! <strong>{this.state.foo || 'n/a'}</strong></div>
     );
+  },
+
+  _computeFoo: function () {
+    console.info(' ** Computing foo ...');
+    setTimeout(() => {this.setState({foo: 42});}, 6000);
   },
 
 });

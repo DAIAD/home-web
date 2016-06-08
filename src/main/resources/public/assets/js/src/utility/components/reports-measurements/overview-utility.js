@@ -3,6 +3,7 @@ var _ = require('lodash');
 var moment = require('moment');
 var React = require('react');
 var ReactRedux = require('react-redux');
+var Bootstrap = require('react-bootstrap');
 
 var {computeKey} = require('../../reports').measurements;
 
@@ -20,6 +21,19 @@ const FIELD = 'volume';
 
 const REPORT_KEY = 'overview-utility';
 
+var getTimespanForReport = function (reportConfig, now) {
+  // Get a timespan (range) suitable for this report configuration 
+  var {startsAt, duration} = reportConfig;
+  
+  now = moment(now);
+  var t0 = moment(now).startOf(startsAt);
+  var t1 = moment(t0).add(...duration);
+  
+  t0 = t0.valueOf(); 
+  t1 = t1.valueOf();
+  return (t0 < t1)? [t0, t1] : [t1, t0];
+};
+
 //
 // Presentational components
 //
@@ -29,6 +43,7 @@ var UtilityView = React.createClass({
 
   propTypes: {
     now: PropTypes.number,
+    visible: PropTypes.bool,
     reports: PropTypes.shape({
       day: reportPropType,
       week: reportPropType,
@@ -51,20 +66,35 @@ var UtilityView = React.createClass({
   
   getDefaultProps: function () {
     return {
+      visible: true,
       reports: null,
       series: null,
     };
   },
   
   getInitialState: function () {
-    return {}; 
+    return {
+      refreshAt: null,
+    }; 
   },
 
   componentDidMount: function () {
     this.props.initialize();
-    this.props.refreshData();
+    if (this.props.visible) {
+      this.setState({refreshAt: this.props.now});
+      this.props.refreshData(this.props.now);
+    }
   },
 
+  componentWillReceiveProps: function (nextProps) {
+    if (nextProps.visible) {
+      if (this.state.refreshAt == null || (nextProps.now != this.state.refreshAt)) {
+        this.setState({refreshAt: nextProps.now});
+        nextProps.refreshData(nextProps.now);
+      }
+    }
+  },
+  
   render: function () {
     var {DayView, WeekView, MonthView} = require('./unit-view');
     var {now, reports, series} = this.props;
@@ -72,19 +102,17 @@ var UtilityView = React.createClass({
     var {unit: uom} = config.reports.byType.measurements.fields[FIELD];
     
     var viewProps = {now, uom};
-
     return (
-      <div className="overview-utility">
-        
-        <h3>Last Day</h3>
+      <div>
+        <h4>Last Day</h4>
         <DayView {...viewProps} 
           level={reports.day.level}
           startsAt={reports.day.startsAt}
           duration={reports.day.duration}
           series={series.day} 
          />
-
-        <h3>Last Week</h3>
+        
+        <h4>Last Week</h4>
         <WeekView {...viewProps} 
           level={reports.week.level}
           startsAt={reports.week.startsAt}
@@ -92,14 +120,13 @@ var UtilityView = React.createClass({
           series={series.week} 
          />
 
-        <h3>Last Month</h3>
+        <h4>Last Month</h4>
         <MonthView {...viewProps}
           level={reports.month.level}
           startsAt={reports.month.startsAt}
           duration={reports.month.duration}
           series={series.month} 
          />
-
       </div>
     );
   },
@@ -109,54 +136,54 @@ var UtilityView = React.createClass({
 // Container components
 //
 
+var {connect} = ReactRedux;
 var actions = require('../../actions/reports-measurements');
 
-UtilityView = ReactRedux.connect(
-  (state, ownProps) => {
-    var _state = state.reports.measurements;
-    var {reports} = state.config.overview.sections.utility;
-    var series = _.mapValues(reports, 
-      (u, k) => (
-        k = computeKey(FIELD, u.level, u.reportName, [REPORT_KEY, k]),
-        (k in _state)? _.first(_state[k].series) : null
-      )
-    );
-    return {reports, series};
-  }, 
-  (dispatch, ownProps) => ({
-    initializeReport: (level, reportName, key, defaults) => (
-      dispatch(actions.initialize(FIELD, level, reportName, [REPORT_KEY, key], defaults))
-    ),
-    refreshReportData: (level, reportName, key) => (
-      dispatch(actions.refreshData(FIELD, level, reportName, [REPORT_KEY, key]))
-    ),
-  }),
-  (stateProps, dispatchProps, ownProps) => {
-    // Provide convenience functions to initialize/refresh all reports
+var mapStateToProps = function (state, ownProps) {
+  var _state = state.reports.measurements;
+  var {reports} = state.config.overview;
+  var series = _.mapValues(reports, (r, k) => {
+    k = computeKey(FIELD, r.level, r.reportName, [REPORT_KEY, k]);
+    return (k in _state)? _.first(_state[k].series) : null;
+  });
+  return {reports, series};
+};
 
-    var initialize = () => {
-      var now = moment(ownProps.now);
-      return _.mapValues(stateProps.reports, (u, k) => { 
-        var t0 = now.clone().startOf(u.startsAt);
-        var t1 = t0.clone().add(...u.duration);
-        t0 = t0.valueOf(); 
-        t1 = t1.valueOf();
-        return dispatchProps.initializeReport(u.level, u.reportName, k, {
-          timespan: (t0 < t1)? [t0, t1] : [t1, t0]
-        });
-      });
-    };
-    
-    var refreshData = () => {
-      var p = _.mapValues(stateProps.reports, (u, k) => (
-        dispatchProps.refreshReportData(u.level, u.reportName, k)
-      ));
-      return Promise.all(_.values(p));
-    };
-    
-    return _.extend({}, ownProps, stateProps, dispatchProps, {initialize, refreshData});
-  }
-)(UtilityView);
+var mapDispatchToProps = function (dispatch, ownProps) {
+  return {
+    initializeReport: (level, reportName, key) => {
+      var kp = [REPORT_KEY, key];
+      return dispatch(actions.initialize(FIELD, level, reportName, kp));
+    },
+    refreshReportData: (level, reportName, key, timespan) => {
+      var kp = [REPORT_KEY, key];
+      dispatch(actions.setTimespan(FIELD, level, reportName, kp, timespan));
+      return dispatch(actions.refreshData(FIELD, level, reportName, kp));
+    },
+  };
+};
+
+var mergeProps = function (stateProps, dispatchProps, ownProps) {
+  // Provide convenience functions to initialize/refresh all reports
+
+  var initialize = () => {
+    return _.mapValues(stateProps.reports, (r, k) => (
+      dispatchProps.initializeReport(r.level, r.reportName, k)
+    ));
+  };
+  
+  var refreshData = (now) => {
+    var p = _.mapValues(stateProps.reports, (r, k) => {
+      var ts = getTimespanForReport(r, now);
+      return dispatchProps.refreshReportData(r.level, r.reportName, k, ts);
+    });
+    return Promise.all(_.values(p));
+  };
+  
+  return _.extend({}, ownProps, stateProps, dispatchProps, {initialize, refreshData});
+};
+
+UtilityView = connect(mapStateToProps, mapDispatchToProps, mergeProps)(UtilityView);
 
 // Export
 
