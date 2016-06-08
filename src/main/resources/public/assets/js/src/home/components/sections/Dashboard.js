@@ -13,7 +13,7 @@ var PureRenderMixin = require('react-addons-pure-render-mixin');
 
 var MainSection = require('../layout/MainSection');
 
-var Chart = require('../helpers/Chart');
+var ChartBox = require('../helpers/ChartBox');
 
 const { IMAGES } = require('../../constants/HomeConstants');
 
@@ -153,93 +153,9 @@ function TipBox (props) {
   );
 }
 
-function ChartBox (props) {
-  const { intl, history, infobox } = props;
-  const { title, type, subtype, improved, data, metric, measurements, period, device, deviceDetails, chartData, chartFormatter, chartType, chartCategories, chartColors, chartXAxis, highlight, time, index, mu, invertAxis } = infobox;
-  return (
-    <div>
-      <div >
-        {
-          (() => chartData.length>0 ? 
-           (type === 'budget' ? 
-            <div>
-              <div 
-                style={{float: 'left', width: '50%'}}>
-              <Chart
-                height={70}
-                width='100%'
-                type='pie'
-                title={chartData[0].title}
-                subtitle=""
-                fontSize={17}
-                mu=''
-                colors={chartColors}
-                data={chartData}
-              /> 
-            </div>
-            <div style={{width: '50%', float: 'right', textAlign: 'center'}}>
-              <b>{chartData[0].data[0].value} lt</b> consumed<br/>
-              <b>{chartData[0].data[1].value} lt</b> remaining
-            </div>
-          </div>:
-              ((type === 'breakdown' || type === 'forecast' || type === 'comparison') ?
-                <Chart
-                  height={200}
-                  width='100%'  
-                  title=''
-                  type='bar'
-                  subtitle=""
-                  xMargin={0}
-                  y2Margin={0}  
-                  yMargin={0}
-                  x2Margin={0}
-                  fontSize={12}
-                  mu={mu}
-                  invertAxis={invertAxis}
-                  xAxis={chartXAxis}
-                  xAxisData={chartCategories}
-                  colors={chartColors}
-                  data={chartData}
-                /> :
-              <Chart
-                height={200}
-                width='100%'
-                title=''
-                subtitle=""
-                type='line'
-                yMargin={10}
-                y2Margin={40}
-                fontSize={12}
-                mu={mu}
-                invertAxis={invertAxis}
-                xAxis={chartXAxis}
-                xAxisData={chartCategories}
-                colors={chartColors}
-                data={chartData}
-              />))
-
-            :
-            <span>Oops, no data available...</span>
-            )()
-        }
-        {
-          /*
-          (() => type === 'efficiency' ? 
-            <span>Your shower efficiency class this {period} was <b>{highlight}</b>!</span>
-           :
-             <span>You consumed a total of <b>{highlight}</b>!</span>
-             )()
-             */
-        }
-      </div>
-    </div>
-  );
-}
-
 function InfoPanel (props) {
   const { mode, layout, infoboxes, updateLayout, switchMode,  updateInfobox, removeInfobox, chartFormatter, intl, periods, displays } = props;
 
-  console.log('info panel with', infoboxes);
   return (
     <div>
       <ResponsiveGridLayout 
@@ -284,7 +200,7 @@ function ButtonToolbar (props) {
           (()=> mode==="save"?(
             <bs.Button onClick={()=> saveToProfile()} bsStyle="primary" active={false}>Save</bs.Button>
             ):(
-            <bs.Button onClick={()=> saveToProfile()} bsStyle="primary" active={false}>Save</bs.Button>
+            null
             ))()
         }
       </bs.ButtonToolbar>

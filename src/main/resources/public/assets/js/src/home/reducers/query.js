@@ -12,15 +12,15 @@ var query = function (state, action) {
    
   switch (action.type) {
     case types.QUERY_REQUEST_START:
-    case types.MESSAGE_REQUEST_START:
-    case types.MESSAGE_ACK_REQUEST_START:
+    case types.MESSAGES_REQUEST_START:
+    case types.MESSAGES_ACK_REQUEST_START:
       return Object.assign({}, state, {
         isLoading: true,
       });
 
     case types.QUERY_REQUEST_END:
-    case types.MESSAGE_REQUEST_END:
-    case types.MESSAGE_ACK_REQUEST_END:
+    case types.MESSAGES_REQUEST_END:
+    case types.MESSAGES_ACK_REQUEST_END:
       switch (action.success) {
         case true:
           return Object.assign({}, state, {

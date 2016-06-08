@@ -76,8 +76,10 @@ const transformInfoboxData = function (infobox, devices) {
     const meterPeriods = METER_PERIODS.filter(x => x.id !== 'custom');
     const devPeriods = DEV_PERIODS;
 
-    let device, chartData, reduced, time, highlight, previousReduced, better, comparePercentage, mu;
+    let device, chartData, reduced, highlight, previousReduced, better, comparePercentage, mu;
     let periods = [], displays = []; 
+
+    let time = infobox.time ? infobox.time : getTimeByPeriod(period);
 
     const showers = getShowersCount(devices, data);
     
@@ -118,7 +120,7 @@ const transformInfoboxData = function (infobox, devices) {
     
     else if (type === 'total') {
       device = getDeviceKeysByType(devices, deviceType);
-      time = getTimeByPeriod(period);
+      //time = getTimeByPeriod(period);
       
       periods = deviceType === 'AMPHIRO' ? devPeriods : meterPeriods;
       displays = STATBOX_DISPLAYS;

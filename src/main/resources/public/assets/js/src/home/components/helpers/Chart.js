@@ -347,7 +347,7 @@ var Chart = React.createClass({
       toolbox: {
         show : false,
       },
-      backgroundColor: '#fff',
+      //backgroundColor: '#fff',
       //backgroundColor: 'rgba(55,230,123,0.0)',
       color: ['#2D3580', '#A45476'],
       calculable : false,

@@ -13,12 +13,9 @@ var dashboard = function (state, action) {
         {i: "4", x:4, y:0, w:2, h:2},
         {i: "5", x:4, y:1, w:2, h:1},
         {i: "6", x:0, y:2, w:2, h:2},
-        {i: "7", x:0, y:2, w:2, h:1},
-        {i: "8", x:4, y:2, w:2, h:1},
-        {i: "9", x:0, y:3, w:2, h:2},
-        {i: "10", x:4, y:3, w:2, h:2},
-        {i: "11", x:2, y:3, w:2, h:2},
-        {i: "12", x:0, y:3, w:2, h:1},
+        {i: "7", x:0, y:2, w:2, h:2},
+        {i: "8", x:4, y:2, w:2, h:2},
+        {i: "9", x:0, y:3, w:2, h:1},
       ],
       infobox: [
           {
@@ -63,7 +60,7 @@ var dashboard = function (state, action) {
           },
           
         {
-          id: "8", 
+          id: "5", 
           title: "Efficiency",
           type: "efficiency",
           display: "stat",
@@ -73,7 +70,7 @@ var dashboard = function (state, action) {
           data: [],
         },
         {
-          id: "9", 
+          id: "6", 
           title: "Breakdown",
           type: "breakdown",
           display: "chart",
@@ -83,7 +80,7 @@ var dashboard = function (state, action) {
           data: [],
         },
         {
-          id: "10", 
+          id: "7", 
           title: "Forecast",
           type: "forecast",
           display: "chart",
@@ -93,7 +90,7 @@ var dashboard = function (state, action) {
           data: [],
         },
         {
-          id: "11", 
+          id: "8", 
           title: "Comparison",
           type: "comparison",
           display: "chart",
@@ -103,7 +100,7 @@ var dashboard = function (state, action) {
           data: [],
         },
         {
-          id: "12", 
+          id: "9", 
           title: "Budget",
           type: "budget",
           display: "chart",

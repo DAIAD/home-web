@@ -190,10 +190,9 @@ const queryMeterStatus = function(deviceKeys) {
 };
 
 /**
- * Fetch data based on provided options and save to infobox
+ * Fetch data based on provided options and handle query response before returning
  * 
  * @param {Object} options - Options to fetch data 
- * @param {String} options.id - The id of the infobox to update
  * @param {String} options.deviceType - The type of device to query. One of METER, AMPHIRO
  * @param {String} options.period - The period to query.
  *                                  For METER one of day, week, month, year, custom (time-based)
@@ -210,26 +209,16 @@ const queryMeterStatus = function(deviceKeys) {
  */
 const fetchInfoboxData = function(options) {
   return function(dispatch, getState) {
-    const { id, type, deviceType, period } = options;
+    const { type, deviceType, period } = options;
 
-    if (!id || !type || !deviceType || !period) throw new Error('fetchInfoboxData: Insufficient data provided');
+    let time = options.time ? options.time : getTimeByPeriod(period);
+
+    if (!type || !deviceType || !period) throw new Error('fetchInfoboxData: Insufficient data provided');
 
     const device = getDeviceKeysByType(getState().user.profile.devices, deviceType);
-    let time = getTimeByPeriod(period);
     
     if (!device || !device.length) return new Promise((resolve, reject) => resolve()); 
 
-    /*
-      const found = getState().section.dashboard.infobox.find(x => x.id === id);
-
-    if (found && found.synced===true) {
-    //if (found && found.data && found.data.length>0){
-      console.log('found infobox data in memory');
-      return new Promise((resolve, reject) => resolve());
-      //}
-    }
-    */
-    
     if (type === "last") {
 
       return dispatch(fetchLastDeviceSession(device))
@@ -239,12 +228,12 @@ const fetchInfoboxData = function(options) {
     //total or efficiency
     else {
 
-      //fetch previous period data for comparison 
       if (deviceType === 'METER') {
-             
+        
         return dispatch(queryMeterHistory(device, time))
         .then(data => ({data}))
         .then(res => {
+          //fetch previous period data for comparison 
           let prevTime = getPreviousPeriodSoFar(period);
           return dispatch(queryMeterHistory(device, prevTime))
           .then(prevData => Object.assign({}, res, {previous:prevData, prevTime}))
@@ -253,7 +242,7 @@ const fetchInfoboxData = function(options) {
             });
         });
       }
-      else {
+      else if (deviceType === 'AMPHIRO') {
         return dispatch(queryDeviceSessions(device, {type: 'SLIDING', length:lastNFilterToLength(period)}))
         .then(data => ({data}));
       }

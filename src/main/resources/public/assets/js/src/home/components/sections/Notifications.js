@@ -10,18 +10,25 @@ const { IMAGES, NOTIFICATION_TITLE_LENGTH } = require('../../constants/HomeConst
 var Topbar = require('../layout/Topbar');
 var { SidebarLeft } = require('../layout/Sidebars');
 var MainSection = require('../layout/MainSection');
-
-
+var ChartBox = require('../helpers/ChartBox');
 
 function NotificationMessage (props) {
-  const { notification, nextMessageId, previousMessageId, setActiveMessageId } = props;
+  const { notification, nextMessageId, previousMessageId, setActiveMessageId, infobox } = props;
 
   return !notification?<div />:(
     <div className="notification">
       <h3 className="notification-header">{notification.title}</h3>
       {
-        notification.imageEncoded?(<img className="notification-img" src={"data:image/png;base64, " + notification.imageEncoded} />):null
+        notification.imageEncoded?
+        <img className="notification-img" src={"data:image/png;base64, " + notification.imageEncoded} />
+        :
+          null
       }
+      {
+        infobox && infobox.chartData ? 
+          <ChartBox infobox={infobox} />
+          : null
+      } 
 
       <div className="notification-details">
         <p>{notification.description}</p>
@@ -90,8 +97,9 @@ function NotificationList(props){
   );
 }
 
+/*
 function NotificationModal (props) {
-  const { notification, shown, closeNotification, showNext, showePrevious, disabledNext, disabledPrevious } = props;
+  const { notification, shown, closeNotification, showNext, showePrevious, disabledNext, disabledPrevious, infobox } = props;
   return notification ? (
     <bs.Modal animation={false} show={shown} onHide={closeNotification} bsSize="large">
         <bs.Modal.Header closeButton>
@@ -101,7 +109,10 @@ function NotificationModal (props) {
         </bs.Modal.Header>
         <bs.Modal.Body>
 
-          <NotificationMessage notification={notification} />
+          <NotificationMessage 
+            infobox={infobox}
+            notification={notification} 
+          />
 
         </bs.Modal.Body>
         <bs.Modal.Footer>
@@ -113,11 +124,11 @@ function NotificationModal (props) {
     :
       (<div/>);
 }
-
+*/
 
 var Notifications = React.createClass({
   render: function() {
-    const { intl, categories, messages:notifications, activeMessageId, previousMessageId, nextMessageId, activeMessage:notification, activeTab, setActiveMessageId, setActiveTab } = this.props;
+    const { intl, categories, messages:notifications, activeMessageId, previousMessageId, nextMessageId, activeMessage:notification, activeTab, setActiveMessageId, setActiveTab, infobox } = this.props;
     
     const _t = intl.formatMessage;
     return (
@@ -128,8 +139,10 @@ var Notifications = React.createClass({
             <Topbar> 
               <bs.Tabs position='top' tabWidth={5} activeKey={activeTab} onSelect={(key) => setActiveTab(key)}>
                {
-                categories.map(category =>
-                            <bs.Tab key={category.id} eventKey={category.id} title={_t({id: category.title}) + ' (' + category.unread + ') '} />)
+                 categories.map(category => {
+                   const unreadReminder = category.unread && category.unread > 0 ? ' (' + category.unread + ')' : '';
+                   return <bs.Tab key={category.id} eventKey={category.id} title={_t({id: category.title}) + unreadReminder} />;
+                 })
                } 
               {
                 //  <bs.Tab eventKey="always" title={_t({id: "history.always"})} />
@@ -140,7 +153,8 @@ var Notifications = React.createClass({
           <NotificationList {...{notifications, activeMessageId, previousMessageId, nextMessageId, setActiveMessageId}}/>   
           </div>
           <div className='notifications-right'>
-            <NotificationMessage {...{notification, setActiveMessageId, previousMessageId, nextMessageId}} />
+            <NotificationMessage 
+              {...{notification, setActiveMessageId, previousMessageId, nextMessageId, infobox}} />
           </div>
         </div>
           { /* hack for notification window to close after it has been clicked */ }

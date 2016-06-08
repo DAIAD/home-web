@@ -11,17 +11,19 @@ const { MESSAGE_TYPES } = require('../constants/HomeConstants');
 var types = require('../constants/ActionTypes');
 var messageAPI = require('../api/message');
 
-const { getTypeByCategory } = require('../utils/messages');
+var QueryActions = require('./QueryActions');
+
+const { getTypeByCategory, getInfoboxByAlertType } = require('../utils/messages');
 
 const requestedMessages = function() {
   return {
-    type: types.MESSAGE_REQUEST_START,
+    type: types.MESSAGES_REQUEST_START,
   };
 };
 
 const receivedMessages = function(success, errors) {
   return {
-    type: types.MESSAGE_REQUEST_END,
+    type: types.MESSAGES_REQUEST_END,
     success,
     errors
   };
@@ -29,15 +31,24 @@ const receivedMessages = function(success, errors) {
 
 const requestedMessageAck = function() {
   return {
-    type: types.MESSAGE_ACK_REQUEST_START,
+    type: types.MESSAGES_ACK_REQUEST_START,
   };
 };
 
 const receivedMessageAck = function(success, errors) {
   return {
-    type: types.MESSAGE_ACK_REQUEST_END,
+    type: types.MESSAGES_ACK_REQUEST_END,
     success,
     errors,
+  };
+};
+
+const setMessageExtra = function (id, category, extra) {
+  return {
+    type: types.MESSAGE_SET_EXTRA,
+    id,
+    category,
+    extra
   };
 };
 
@@ -59,7 +70,7 @@ const setMessages = function (response) {
   if (tips.length > 0) messages.tips = tips;
 
   return {
-    type: types.MESSAGE_SET,
+    type: types.MESSAGES_SET,
     messages
   };
 };
@@ -69,7 +80,7 @@ const appendMessages = function (type, messages) {
   if (!Array.isArray(messages)) throw new Error('Messages in append messages action must be of type array: ', messages);
   if (!(type === 'alerts' || type === 'announcements' || type === 'recommendations' || type === 'tips')) throw new Error('Append messages failed because type is not supported: ', type);
   return {
-    type: types.MESSAGE_APPEND,
+    type: types.MESSAGES_APPEND,
     category: type,
     messages
   };
@@ -194,7 +205,7 @@ const setActiveTab = function (category) {
   }
 
   return {
-    type: types.MESSAGE_SET_ACTIVE_TAB,
+    type: types.MESSAGES_SET_ACTIVE_TAB,
     category
   };
 };
@@ -210,14 +221,28 @@ const setActiveMessageId = function (id) {
     if (!id) throw new Error('Not sufficient data provided for selecting message, missing id');
 
     dispatch({
-      type: types.MESSAGE_SET_ACTIVE,
+      type: types.MESSAGES_SET_ACTIVE,
       id
     });
 
     const category = getState().messages.activeTab;
-    
-    dispatch(acknowledge(id, category, new Date().getTime()));
+    const activeMessageIndex = getState().messages[category].findIndex(x => x.id === id);
+    const activeMessage = activeMessageIndex != null ? getState().messages[category][activeMessageIndex] : null;
 
+    dispatch(acknowledge(id, category, new Date().getTime()));
+  
+
+    if (category === 'alerts') {
+
+      const infobox = getInfoboxByAlertType(activeMessage ? activeMessage.alert : null, activeMessage ? activeMessage.createdOn : null);
+      if (!infobox) return;
+
+      dispatch(QueryActions.fetchInfoboxData(infobox)) 
+      .then(data => dispatch(setMessageExtra(id, category, {extra: Object.assign({}, infobox, data)})))
+      .catch(error => {
+        console.error('Oops, sth went wrong in setting message extra data', error);
+      });
+    }
 
   };
 };
