@@ -6,21 +6,10 @@ var initialState = {
   areas : null,
   meters : null,
   devices : null,
-  regions : null
+  timeline : null
 };
 
-var _transformSeriesToRegions = function(meters, areas) {
-  var geojson = {
-    type : 'FeatureCollection',
-    features : [],
-    crs : {
-      type : 'name',
-      properties : {
-        name : 'urn:ogc:def:crs:OGC:1.3:CRS84'
-      }
-    }
-  };
-
+var _extractTimeline = function(meters, areas) {
   var timeline = {}, timestamp, label;
 
   for (var m = 0; m < meters.length; m++) {
@@ -40,24 +29,68 @@ var _transformSeriesToRegions = function(meters, areas) {
     }
   }
 
-  console.log(timeline);
+  timeline.getAreas = function() {
+    return areas;
+  };
 
-  timestamp = 1464040800000;
-  label = 'Alicante';
-
-  var instance = timeline[timestamp][label];
-  for ( var index in instance) {
-    geojson.features.push({
-      'type' : 'Feature',
-      'geometry' : areas[index].geometry,
-      'properties' : {
-        'label' : areas[index].label,
-        'value' : instance[index]
+  timeline.getTimestamps = function() {
+    var values = [];
+    for ( var timestamp in this) {
+      var value = Number(timestamp);
+      if (!isNaN(value)) {
+        values.push(value);
       }
-    });
-  }
+    }
 
-  return geojson;
+    return values.sort(function(t1, t2) {
+      if (t1 < t2) {
+        return -1;
+      }
+      if (t1 > t2) {
+        return 1;
+      }
+      return 0;
+    });
+  };
+
+  timeline.getFeatures = function(timestamp, label) {
+    var geojson = {
+      type : 'FeatureCollection',
+      features : [],
+      crs : {
+        type : 'name',
+        properties : {
+          name : 'urn:ogc:def:crs:OGC:1.3:CRS84'
+        }
+      }
+    };
+
+    if (!this[timestamp]) {
+      return geojson;
+    }
+    var instance = timeline[timestamp][label];
+
+    if (!instance) {
+      return geojson;
+    }
+
+    var areas = this.getAreas();
+
+    for ( var index in instance) {
+      geojson.features.push({
+        'type' : 'Feature',
+        'geometry' : areas[index].geometry,
+        'properties' : {
+          'label' : areas[index].label,
+          'value' : instance[index]
+        }
+      });
+    }
+
+    return geojson;
+  };
+
+  return timeline;
 };
 
 var query = function(state, action) {
@@ -76,7 +109,7 @@ var query = function(state, action) {
           areas : action.data.areas,
           meters : action.data.meters,
           devices : action.data.devices,
-          regions : _transformSeriesToRegions(action.data.meters, action.data.areas)
+          timeline : _extractTimeline(action.data.meters, action.data.areas)
         });
       }
 

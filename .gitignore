@@ -22,6 +22,7 @@ src/main/resources/config/*
 src/main/resources/public/assets/js/build
 src/main/resources/public/assets/images
 src/main/resources/public/assets/lib
+src/main/resources/public/assets/data
 
 src/main/resources/public/docs
 
