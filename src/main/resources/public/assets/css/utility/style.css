@@ -732,10 +732,10 @@ div.measurement-value .delta > .sign {
   border-style: solid;
   border-color: rgb(191, 212, 222);
   border-width: 1px 1px 1px 5px;
-  margin: 0px 5px 0px 0px;
+  margin: 0px 5px 5px 0px;
 }
-
 .reports.overview .unit-view > .chart {
   width: 370px;
   height: 230px;
 }
+
