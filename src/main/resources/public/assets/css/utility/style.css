@@ -548,6 +548,19 @@ form.report-panel fieldset {
   font-size: 25px;
 }
 
+.overview.reports > h3 {
+  margin: 5px 0px 5px 0px; 
+}
+
+.overview.reports > .form-inline {
+  margin-bottom: 5px;
+  line-height: 40px;
+}
+.overview.reports > .form-inline .form-group {
+  margin: 0px;
+  vertical-align: top;
+}
+
 .reports .panel-body h4 {
   margin: 5px 0px 15px 0px;
   font-size: 17px;

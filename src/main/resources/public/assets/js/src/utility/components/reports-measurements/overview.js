@@ -13,7 +13,14 @@ var OverviewAsAccordion = React.createClass({
       activeKey: 'utility',
     };
   },
-        
+  
+  shouldComponentUpdate: function (nextProps) {
+    return (
+      (nextProps.now != this.props.now) ||
+      (nextProps.field != this.props.field)
+    );
+  },
+
   render: function () {
     var {now, field, uom, reports} = this.props;
     var visible = (k) => (this.state.activeKey == k);

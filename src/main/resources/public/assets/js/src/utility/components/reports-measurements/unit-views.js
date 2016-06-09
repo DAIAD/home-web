@@ -252,7 +252,7 @@ class _ViewWrapper extends React.Component {
     if (i0 < 0) 
       throw new Error(sprintf(
         'No consumption data for current time unit (%s)', unit));
-    else if (i0 == 0)
+    else if (i0 === 0)
       console.error(sprintf(
         'No consumption data for previous time unit (%s)', unit));
 

@@ -159,8 +159,9 @@ var mapDispatchToProps = function(dispatch, ownProps) {
   
   var ts = computeTimeRange(duration, startsAt, now);
   var [n, unit] = duration;
+
   var reportArgs = [field, level, reportName, [reportKey, unit]];
-  
+
   var initialize = () => (dispatch(actions.initialize(...reportArgs)));
 
   var refreshData = () => {

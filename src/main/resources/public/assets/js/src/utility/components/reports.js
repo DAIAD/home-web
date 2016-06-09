@@ -6,7 +6,7 @@ var React = require('react');
 var Bootstrap = require('react-bootstrap');
 var ReactRedux = require('react-redux');
 var Select = require('react-controls/select-dropdown');
-
+var DatetimeInput = require('react-datetime');
 var {Button, Collapse} = Bootstrap;
 
 var PropTypes = React.PropTypes;
@@ -15,8 +15,6 @@ var _configPropType = PropTypes.shape({
   reports: PropTypes.object,
   overview: PropTypes.object,
 });
-
-var toOptionElement = ({value, text}) => (<option value={value} key={value}>{text}</option>);
 
 var MeasurementReport = React.createClass({
   
@@ -198,30 +196,69 @@ var Overview = React.createClass({
     return {config: this.props.config};
   },
  
+  getInitialState: function () {
+    var now = moment().valueOf();
+    return {
+      showInput: false,
+      now: now,
+      inputNow: now,
+    }; 
+  },
+
   render: function () { 
     var {OverviewAsAccordion} = require('./reports-measurements/overview');
-    var {config, grouping, now, field} = this.props; 
-    
-    if (_.isEmpty(config) || _.isEmpty(config.reports) || 
-        _.isEmpty(config.utility) || _.isEmpty(config.overview)
-      ) {
+    var {config, field} = this.props; 
+    var {now, inputNow, showInput} = this.state; 
+
+    if (!config || _.isEmpty(config.reports) || _.isEmpty(config.utility) || _.isEmpty(config.overview)) {
       return (<div>Loading configuration...</div>);
     }
     
     var reportProps = {
       field,
-      now: (now == null)? moment().valueOf() : now,
+      now,
       uom: config.reports.byType.measurements.fields[field].unit,
       reports: config.overview.reports,
+    };
+    
+    var datetimeProps = {
+      dateFormat: 'D MMM[,] YYYY', 
+      timeFormat: null,
+      inputProps: {size: 10}
     };
 
     return (
       <div className="overview reports">
         <h3>{'Overview'}</h3>
+        <form className="form-inline">
+          <span className="help">
+            The consumption reports are generated around a reference time of <strong>{moment(now).format('DD MMM YYYY')}</strong>.&nbsp;
+          </span>
+          <a style={{cursor: 'pointer'}} 
+            onClick={() => (this.setState({showInput: !this.state.showInput}))}
+           >Choose a reference time</a>{showInput? ':' : ' '}&nbsp;
+          <div className="form-group" style={{display: showInput? 'inline-block' : 'none'}}>
+            <DatetimeInput {...datetimeProps} value={inputNow}
+              onChange={(t) => (this.setState({inputNow: t.valueOf()}))}
+             />
+            &nbsp;
+            <Button onClick={this._refresh}><i className='fa fa-refresh'/></Button>
+          </div>
+        </form>
         <OverviewAsAccordion {...reportProps} />
       </div>
     );
   },
+
+  _refresh: function () {
+    // Get the timestamp of the chosen YYYY-MM-DD date at UTC
+    var t = this.state.inputNow;
+    if (!t)
+      return;
+    t = moment(moment(t).format('YYYY-MM-DD') + 'T00:00:00Z')
+    this.setState({now: t});
+    setTimeout(() => {this.setState({showInput: false});}, 400);
+  },  
 });
 
 module.exports = {MeasurementReport, SystemReport, Overview};

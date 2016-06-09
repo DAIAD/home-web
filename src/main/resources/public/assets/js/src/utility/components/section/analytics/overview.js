@@ -28,13 +28,7 @@ var Report = React.createClass({
     intl: React.PropTypes.object
   },
 
-  render: function() {  
-
-    // Fixme should be an input
-    // Get the timestamp of a wall-clock at UTC with a specific date
-    var now = moment('2016-03-05T00:00:00Z').valueOf(); 
-    //var now = moment(); now = now.add(now.utcOffset(), 'minute').valueOf(); 
-
+  render: function() {
     return (
       <div className="container-fluid">
         <div className="row">
@@ -44,7 +38,7 @@ var Report = React.createClass({
         </div>
         <div className="row">
           <div className="col-md-12">
-            <reports.Overview config={this.props.config} grouping={null} now={now} />
+            <reports.Overview config={this.props.config} />
           </div>
         </div>
       </div>
