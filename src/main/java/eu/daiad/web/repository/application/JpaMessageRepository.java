@@ -603,7 +603,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 				float money = convertCurrencyIfNeed(euros, currencySymbol);
 
 				String currencyFormatted = numberFormat.format(money);
-				formatProperties.put(value, currencyFormatted);
+				formatProperties.put(key, currencyFormatted);
 				break;
 			}
 			case currencyKey2: {
