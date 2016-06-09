@@ -14,10 +14,11 @@ var OverviewAsAccordion = React.createClass({
     };
   },
   
-  shouldComponentUpdate: function (nextProps) {
+  shouldComponentUpdate: function (nextProps, nextState) {
     return (
       (nextProps.now != this.props.now) ||
-      (nextProps.field != this.props.field)
+      (nextProps.field != this.props.field) ||
+      (nextState.activeKey != this.state.activeKey)
     );
   },
 
