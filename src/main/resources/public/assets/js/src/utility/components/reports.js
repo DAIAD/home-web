@@ -255,7 +255,7 @@ var Overview = React.createClass({
     var t = this.state.inputNow;
     if (!t)
       return;
-    t = moment(moment(t).format('YYYY-MM-DD') + 'T00:00:00Z')
+    t = moment(moment(t).format('YYYY-MM-DD') + 'T00:00:00Z');
     this.setState({now: t});
     setTimeout(() => {this.setState({showInput: false});}, 400);
   },  
