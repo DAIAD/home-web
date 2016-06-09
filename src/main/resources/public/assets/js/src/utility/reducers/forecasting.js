@@ -43,7 +43,7 @@ var _extractChartSeries = function(interval, data, label) {
   } else {
     var index = 0;
     var points = data[0].points;
-    
+
     for (d = days; d > 0; d--) {
       if (ref.isSame(points[index].timestamp, 'day')) {
         series.push({
@@ -172,11 +172,11 @@ var admin = function(state, action) {
       return Object.assign({}, state, {
         isLoading : true,
         query : {
-          utility :state.query.utility,
-          user :  action.query
+          utility : state.query.utility,
+          user : action.query
         },
         forecast : {
-          utility :state.forecast.utility,
+          utility : state.forecast.utility,
           user : null
         }
       });
@@ -201,10 +201,19 @@ var admin = function(state, action) {
       });
 
     case types.SET_USER:
+      var clearData = ((action.user == null) || (state.user == null));
       return Object.assign({}, state, {
-        user : action.user
+        user : action.user,
+        data : {
+          utility : state.data.utility,
+          user : (clearData ? null : state.data.user)
+        },
+        forecast : {
+          utility : state.forecast.utility,
+          user : (clearData ? null : state.forecast.user)
+        }
       });
-      
+
     case types.USER_RECEIVED_LOGOUT:
       return _createInitialState();
 

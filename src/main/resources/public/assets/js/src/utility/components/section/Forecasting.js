@@ -49,6 +49,9 @@ var Forecasting = React.createClass({
   componentWillMount : function() {
     var profile = this.props.profile;
     
+    
+    this.props.actions.setUser(null);
+
 		this.props.actions.getUtilityData(profile.utility.key, profile.utility.name, profile.timezone);
 		this.props.actions.getUtilityForecast(profile.utility.key, profile.utility.name, profile.timezone);
 	},
@@ -63,7 +66,7 @@ var Forecasting = React.createClass({
 
 		if(this.props.forecasting.data.utility) {
 		  utilityChart.series.push({
-		    legend: this.props.forecasting.data.utility.label + ' - Real',
+		    legend: 'Actual',
 		    xAxis: 'date',
 		    yAxis: 'volume',
 		    data: this.props.forecasting.data.utility.data
@@ -71,7 +74,7 @@ var Forecasting = React.createClass({
 		}
     if(this.props.forecasting.forecast.utility) {
       utilityChart.series.push({
-        legend: this.props.forecasting.forecast.utility.label + ' - Forecast',
+        legend: 'Forecast',
         xAxis: 'date',
         yAxis: 'volume',
         data: this.props.forecasting.forecast.utility.data
@@ -81,7 +84,7 @@ var Forecasting = React.createClass({
     if(this.props.forecasting.user) {
       if(this.props.forecasting.data.user) {
         userChart.series.push({
-          legend: this.props.forecasting.data.user.label + ' - Real',
+          legend: this.props.forecasting.data.user.label + ' - Actual',
           xAxis: 'date',
           yAxis: 'volume',
           data: this.props.forecasting.data.user.data

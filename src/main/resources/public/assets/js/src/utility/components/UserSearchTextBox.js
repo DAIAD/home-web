@@ -31,7 +31,7 @@ var _getOptions = (input) => {
         result.options = response.users.map( user => { 
           return {
             value : user.id , 
-            label : user.email
+            label : (user.firstName + ' ' + user.lastName || user.email)
           };
         });
       }
