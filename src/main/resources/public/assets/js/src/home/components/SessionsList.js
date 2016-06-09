@@ -129,9 +129,14 @@ var SessionsList = React.createClass({
       <div className="history-list-area">
         <div className="history-list-header">
           <h3 style={{float: 'left'}}>In detail</h3>
-         
-          <a style={{float: 'left', marginLeft: 10}} className='btn' href={"data:application/csv;charset=utf-8,"+csvData}
-                download="Data.csv">CSV</a>
+
+          { 
+            csvData ?  
+           (<a style={{float: 'left', marginLeft: 10}} className='btn' href={"data:application/csv;charset=utf-8,"+csvData}
+                download="Data.csv">CSV</a>)
+             :
+             <span/>
+             }
           <div style={{float: 'right'}}> 
             <h5 style={{float: 'left', marginTop: 5}}>Sort by:</h5>
             <div className="sort-options" style={{float: 'right', marginLeft:10, textAlign: 'right'}}>
