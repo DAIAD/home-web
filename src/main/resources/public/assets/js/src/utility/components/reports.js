@@ -175,9 +175,18 @@ var SystemReport = React.createClass({
 
 var Overview = React.createClass({
   
+  statics: {
+    defaults: {
+      datetimeProps: {
+        dateFormat: 'D MMM[,] YYYY', 
+        timeFormat: null,
+        inputProps: {size: 10},
+      },
+    },
+  },
+
   propTypes: {
     config: _configPropType,
-    grouping: PropTypes.string,
     now: PropTypes.number,
     field: PropTypes.string,
   },
@@ -197,18 +206,16 @@ var Overview = React.createClass({
   },
  
   getInitialState: function () {
-    var now = moment().valueOf();
     return {
       showInput: false,
-      now: now,
-      inputNow: now,
+      inputNow: null,
     }; 
   },
 
   render: function () { 
     var {OverviewAsAccordion} = require('./reports-measurements/overview');
-    var {config, field} = this.props; 
-    var {now, inputNow, showInput} = this.state; 
+    var {config, field, now} = this.props; 
+    var {inputNow, showInput} = this.state; 
 
     if (!config || _.isEmpty(config.reports) || _.isEmpty(config.utility) || _.isEmpty(config.overview)) {
       return (<div>Loading configuration...</div>);
@@ -221,28 +228,28 @@ var Overview = React.createClass({
       reports: config.overview.reports,
     };
     
-    var datetimeProps = {
-      dateFormat: 'D MMM[,] YYYY', 
-      timeFormat: null,
-      inputProps: {size: 10}
-    };
+    var {datetimeProps} = this.constructor.defaults;
 
     return (
       <div className="overview reports">
         <h3>{'Overview'}</h3>
         <form className="form-inline">
           <span className="help">
-            The consumption reports are generated around a reference time of <strong>{moment(now).format('DD MMM YYYY')}</strong>.&nbsp;
+            The reports are generated around a reference time of <strong>{moment(now).format('D MMM, YYYY')}</strong>.&nbsp;
           </span>
           <a style={{cursor: 'pointer'}} 
             onClick={() => (this.setState({showInput: !this.state.showInput}))}
-           >Choose a reference time</a>{showInput? ':' : ' '}&nbsp;
+           >Choose a different time
+          </a>
+          {showInput? ':' : ' '}&nbsp;
           <div className="form-group" style={{display: showInput? 'inline-block' : 'none'}}>
-            <DatetimeInput {...datetimeProps} value={inputNow}
+            <DatetimeInput {...datetimeProps} value={inputNow || now}
               onChange={(t) => (this.setState({inputNow: t.valueOf()}))}
              />
             &nbsp;
-            <Button onClick={this._refresh}><i className='fa fa-refresh'/></Button>
+            <Button onClick={this._refresh} title="Re-generate the reports">
+              <i className='fa fa-refresh'/>
+            </Button>
           </div>
         </form>
         <OverviewAsAccordion {...reportProps} />
@@ -252,14 +259,27 @@ var Overview = React.createClass({
 
   _refresh: function () {
     // Get the timestamp of the chosen YYYY-MM-DD date at UTC
-    var t = this.state.inputNow;
-    if (!t)
+    var {inputNow} = this.state;
+    
+    if (!inputNow)
       return;
-    t = moment(moment(t).format('YYYY-MM-DD') + 'T00:00:00Z');
-    this.setState({now: t});
-    setTimeout(() => {this.setState({showInput: false});}, 400);
+    
+    var t = moment(moment(inputNow).format('YYYY-MM-DD') + 'T00:00:00Z');
+    this.props.setReferenceTime(t.valueOf());
+    
+    setTimeout(() => {this.setState({showInput: false});}, 500);
   },  
 });
+
+Overview = ReactRedux.connect(
+  (state, ownProps) => ({now: state.overview.referenceTime}),
+  (dispatch, ownProps) => {
+    var actions = require('../actions/overview.js');
+    return {
+      setReferenceTime: (t) => (dispatch(actions.setReferenceTime(t))),
+    };
+  }
+)(Overview);
 
 module.exports = {MeasurementReport, SystemReport, Overview};
 
