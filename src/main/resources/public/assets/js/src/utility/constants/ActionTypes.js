@@ -186,6 +186,8 @@ var types = mirrorToPath({
   ANNC_REMOVE_USER: null,
   ANNC_REQUESTED_USERS: null,
   ANNC_RECEIVED_USERS: null,
+  ANNC_SET_INITIAL_USERS: null,
+  ANNC_USER_SET_SELECTED: null,
   //
   
   QUERY_SUBMIT: null,

@@ -7,37 +7,26 @@ var DropDown = require('../DropDown');
 var Select = require('react-controls/select-dropdown');
 var Redux = require('react-redux');
 
-var { getCurrentUtilityUsers } = require('../../actions/AnnouncementsActions');
-//var AnnouncementsTableSchema = require('../../constants/AnnouncementsTableSchema');
+
+var { connect } = require('react-redux');
+var { bindActionCreators } = require('redux');
+var AnnouncementsActions = require('../../actions/AnnouncementsActions');
+
+var populatedUsers = [];
+var addedRows = [];
 
 var Announcements = React.createClass({
   contextTypes: {
       intl: React.PropTypes.object
   },
   
-//  getDefaultProps: function() {
-//    return {
-//      currentMembers: null,
-//      selectedMembers: null,
-//      actions: {
-//        addSelectedMembers: function(){},
-//        removeSelectedMembers: function(){}       
-//      } 
-//    };
-//  },
-  
   componentWillMount : function() {
-    
-    console.log(this);
-    //console.log('will mount ' + this.props.actions.getCurrentUtilityUsers);
-    //if(this.props.currentUsers) {
-      console.log('getting.. ');
-      this.props.getCurrentUtilityUsers();   
-    //}
+      this.props.getCurrentUtilityUsers();  
   },
-  
-  handleCurrentMembersCheckboxChange: function (rowId, propertyName, currentValue){
-    console.log('current change');
+   
+  handleCurrentMembersCheckboxChange: function (rowId, propertyName){
+    console.log('current change ' + rowId);
+    this.props.setUserSelected(this.props.accounts, rowId);
     //this.props.actions.toggleCandidateGroupMemberToRemove(rowId, currentValue);
   },
   
@@ -89,69 +78,50 @@ var Announcements = React.createClass({
   					count:20
   				}
   			};
-        
-    var currentRows = [];
-    var user1 = {id:1, username:'user1@gmail.com', accountRegisteredOn:new Date((new Date()).getTime() + (2+Math.random()) * 3600000)};
-    var user2 = {id:2, username:'user2@gmail.com', accountRegisteredOn:new Date((new Date()).getTime() + (2+Math.random()) * 3600000)};
-    var user3 = {id:3, username:'user3@gmail.com', accountRegisteredOn:new Date((new Date()).getTime() + (2+Math.random()) * 3600000)};
-    var user4 = {id:4, username:'user4@gmail.com', accountRegisteredOn:new Date((new Date()).getTime() + (2+Math.random()) * 3600000)};
-    currentRows.push(user1);
-    currentRows.push(user2);
-    currentRows.push(user3);
-    currentRows.push(user4);
-//    var currentRows2 = this.props.actions.getCurrentUtilityUsers;
-//    if(currentRows2){
-//      console.log('got users?? ' + currentRows2.length);
-//    }
-    
-    var addedRows = [];
-    var userAdded = {id:32, username:'user2@hotmail.com', accountRegisteredOn:new Date((new Date()).getTime() + (2+Math.random()) * 3600000)};
-    addedRows.push(userAdded);
-
-    var currentUsersFields = {
+         
+    var currentUsersFields1 = {
         fields: [{
-          name: 'id',
+          name: 'accountId',
           title: 'id',
           hidden: true
         }, {
-          name: 'key',
-          title: 'key',
-          hidden: true
+          name: 'lastName',
+          title: 'Last Name'
         }, {
           name: 'username',
           title: 'Username'
         }, {
-          name: 'accountRegisteredOn',
-          title: 'Registered On',
-          type: 'datetime'
-        }, {
-          name: 'lastLoginSuccess',
-          title: 'Last login on',
-          type: 'datetime'
-        }, {
-          name: 'currentSelected',
+          name: 'selected',
           type:'alterable-boolean',
-          handler: function(field, row) {
-            console.log(this);
-          }        
+          handler: null       
         }],
-        rows: currentRows,
+        rows: pluckAccounts(this.props.accounts),
         pager: {
           index: 0,
           size: 10,
-          count:currentRows.length
+          count:this.props.accounts ? this.props.accounts.length : 0
         }
     }; 
     
+//    var currentUsersFields = JSON.parse(JSON.stringify(currentUsersFields1));
+//    
+//    currentUsersFields.forEach(function (field){
+//      if (field.hasOwnProperty('accountId') && field.name === 'selected'){
+//        field.handler = self.handleCurrentMembersCheckboxChange;
+//      }
+//    });
+
+    var userAdded = {id:32, username:'user2@hotmail.com', accountRegisteredOn:new Date((new Date()).getTime() + (2+Math.random()) * 3600000)};
+    addedRows.push(userAdded);
+    
     var addedUsersFields = {
       fields: [{
-        name: 'id',
+        name: 'accountId',
         title: 'id',
         hidden: true
       }, {
-        name: 'key',
-        title: 'key',
-        hidden: true
+          name: 'lastName',
+          title: 'Last Name'
       }, {
         name: 'username',
         title: 'Username'
@@ -160,6 +130,7 @@ var Announcements = React.createClass({
         type:'alterable-boolean',
         handler: function(field, row) {
           console.log(this);
+          //self.handleCurrentMembersCheckboxChange(field, row);
         }        
       }],
       rows: addedRows,
@@ -170,7 +141,6 @@ var Announcements = React.createClass({
       }
     };   
     
- 
     const usersTitle = (
       <span>
         <i className='fa fa-calendar fa-fw'></i>
@@ -239,101 +209,139 @@ var Announcements = React.createClass({
       </div>
     );
 
-    return (
-      <div className="container-fluid" style={{ paddingTop: 10 }}>
-        <div className="row">
-         <div className="col-md-12">
-          <Breadcrumb routes={this.props.routes}/>
-         </div>
-        </div>
-        <div className="row">
-          <div className='col-md-5 equal-height-col'>
-            <Bootstrap.Panel header={usersTitle}>
-              <Bootstrap.ListGroup fill>
-                <Bootstrap.ListGroupItem>	
-                  {groupDropDown}
-                  {filter}    
-                  {usersTable}    
-                </Bootstrap.ListGroupItem>
-              </Bootstrap.ListGroup>
-            </Bootstrap.Panel> 
+    if(this.props.accounts){
+      return (
+        <div className="container-fluid" style={{ paddingTop: 10 }}>
+          <div className="row">
+           <div className="col-md-12">
+            <Breadcrumb routes={this.props.routes}/>
+           </div>
           </div>
-         
-          <div className='col-md-2 equal-height-col' >
-            <div className='div-centered'  style={{marginTop : 120}}>
-              <div>
-                <Bootstrap.Button onClick={this.props.actions.addSelectedGroupMembers}>
-                  {'>>>'}
-                </Bootstrap.Button>
-              </div>
-              <br></br>
-              <div>
+          <div className="row">
+            <div className='col-md-5 equal-height-col'>
+              <Bootstrap.Panel header={usersTitle}>
+                <Bootstrap.ListGroup fill>
+                  <Bootstrap.ListGroupItem>	
+                    {groupDropDown}
+                    {filter}    
+                    {usersTable}    
+                  </Bootstrap.ListGroupItem>
+                </Bootstrap.ListGroup>
+              </Bootstrap.Panel> 
+            </div>
+
+            <div className='col-md-2 equal-height-col' >
+              <div className='div-centered'  style={{marginTop : 120}}>
                 <div>
-                <Bootstrap.Button onClick={this.props.actions.getCurrentUtilityUsers} >
-                  {'<<<'}
-                </Bootstrap.Button>
+                  <Bootstrap.Button >
+                    {'>>>'}
+                  </Bootstrap.Button>
+                </div>
+                <br></br>
+                <div>
+                  <div>
+                  <Bootstrap.Button  >
+                    {'<<<'}
+                  </Bootstrap.Button>
+                  </div>
                 </div>
               </div>
+            </div>         
+
+            <div className='col-md-5 equal-height-col'>
+              <Bootstrap.Panel header={selectedUsersTitle}>
+                <Bootstrap.ListGroup fill>
+                  <Bootstrap.ListGroupItem>	       
+                    {selectedUsersTable}  
+                    <div>
+                      <Bootstrap.Button >
+                        {'Broadcast Announcement'}
+                      </Bootstrap.Button>
+                    </div>
+                  </Bootstrap.ListGroupItem>
+                </Bootstrap.ListGroup>
+              </Bootstrap.Panel> 
             </div>
-          </div>         
-         
-          <div className='col-md-5 equal-height-col'>
-            <Bootstrap.Panel header={selectedUsersTitle}>
-              <Bootstrap.ListGroup fill>
-                <Bootstrap.ListGroupItem>	       
-                  {selectedUsersTable}  
-                  <div>
-                    <Bootstrap.Button >
-                      {'Broadcast Announcement'}
-                    </Bootstrap.Button>
-                  </div>
-                </Bootstrap.ListGroupItem>
-              </Bootstrap.ListGroup>
-            </Bootstrap.Panel> 
+          </div>
+          <div>
+
+
+            <div className="row">
+              <div className="col-md-12">
+                <Bootstrap.Panel header={historyTitle}>
+                 <Bootstrap.ListGroup fill>
+                  <Bootstrap.ListGroupItem>	
+                   <Table data={historyTable}></Table>
+                  </Bootstrap.ListGroupItem>
+                 </Bootstrap.ListGroup>
+                </Bootstrap.Panel>
+              </div> 
+            </div> 
           </div>
         </div>
+      );  
+    }
+    else{
+      return (
         <div>
-        
-        
-          <div className="row">
-            <div className="col-md-12">
-              <Bootstrap.Panel header={historyTitle}>
-               <Bootstrap.ListGroup fill>
-                <Bootstrap.ListGroupItem>	
-                 <Table data={historyTable}></Table>
-                </Bootstrap.ListGroupItem>
-               </Bootstrap.ListGroup>
-              </Bootstrap.Panel>
-            </div> 
-          </div> 
+          <img className='preloader' src='/assets/images/utility/preloader-counterclock.png' />
+          <img className='preloader-inner' src='/assets/images/utility/preloader-clockwise.png' />
         </div>
-     </div>
-     );
+      );      
+    }
+
   }
 });
 
+function pluckAccounts(accounts){
+  for(var obj in accounts){
+    var currentId, currentUsername, currentLastName, element, selected;
+      
+    for(var prop in accounts[obj]){
+      if(prop == "id"){
+        currentId = accounts[obj][prop];
+      } 
+      else if(prop == "lastName"){
+        currentLastName = accounts[obj][prop];
+      }
+      else if(prop == "username"){
+        currentUsername = accounts[obj][prop];
+      } 
+      else if(prop == "selected"){
+        selected = accounts[obj][prop];
+      }
+    }
+
+    element = {id: currentId, lastName: currentLastName, username : currentUsername, selected: selected};
+    populatedUsers.push(element);
+  } 
+  return populatedUsers;
+}
+
 function mapStateToProps(state) {
-  console.log('mapStateToProps currentUsers' + state.announcements.currentUsers);
-  return {
-      currentUsers: state.announcements.currentUsers,
-      addedUsers: state.announcements.addedUsers
+  return {    
+      accounts: state.announcements.accounts,
+      initialUsers: state.announcements.initialUsers,
+      addedUsers: state.announcements.addedUsers,
+      rowIdToggled: state.announcements.rowIdToggled
   };
 }
 
 function mapDispatchToProps(dispatch) {
-  console.log('mapDispatchToProps');
   return {
-    //actions : bindActionCreators(Object.assign({}, {getCurrentUtilityUsers}) , dispatch),
-    //getCurrentUtilityUsers: bindActionCreators(AnnouncementsActions.getCurrentUtilityUsers, dispatch)
-//    getCurrentUtilityUsers: function (){
-//      dispatch(AnnouncementsActions.getCurrentUtilityUsers());
-//    },
-    getCurrentUtilityUsers : bindActionCreators(AnnouncementsActions.getCurrentUtilityUsers, dispatch)
+    getCurrentUtilityUsers: bindActionCreators(AnnouncementsActions.getCurrentUtilityUsers, dispatch),
+    //setUserSelected: bindActionCreators(AnnouncementsActions.setSelectedUser, dispatch),
+    setUserSelected: function (accounts, accountId){
+      console.log('map id ' + accountId);
+      dispatch(AnnouncementsActions.setSelectedUser(accounts, accountId));
+    },
+    
+    setInitialUsers: function (initialUsers){
+      dispatch(AnnouncementsActions.setInitialUsers(initialUsers));
+    }
   };
 }
 
-
 Announcements.icon = 'wechat';
 Announcements.title = 'Section.ManageAlerts.Announcements';
-
-module.exports = Announcements;
+module.exports = connect(mapStateToProps, mapDispatchToProps)(Announcements);
