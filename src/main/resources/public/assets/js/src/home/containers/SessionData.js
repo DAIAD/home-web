@@ -3,7 +3,7 @@ var { bindActionCreators } = require('redux');
 var { connect } = require('react-redux');
 var injectIntl = require('react-intl').injectIntl;
 
-var { getChartDataByFilter } = require('../utils/chart');
+var { getChartTimeData } = require('../utils/chart');
 var { getDataSessions } = require('../utils/transformations');
 
 var SessionModal = require('../components/Session');
@@ -27,6 +27,11 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
     ownProps.sessions.find(s=> s.device===stateProps.activeSession[0] && s.id===stateProps.activeSession[1] || s.timestamp===stateProps.activeSession[1]):{})
   :{};
 
+  if (!data || !data.measurements) return stateProps;
+
+  
+  const xMin = data.measurements[0].timestamp;
+  const xMax = data.measurements[data.measurements.length-1].timestamp;
   return Object.assign(
     {}, 
     ownProps, 
@@ -35,7 +40,9 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                   stateProps, 
                   {
                     data,
-                    chartData: data ? getChartDataByFilter(data.measurements?data.measurements:[], stateProps.activeSessionFilter, null) : [],
+                    xMin,
+                    xMax,
+                    chartData: getChartTimeData(data.measurements?data.measurements:[], stateProps.activeSessionFilter, null),
                     showModal: stateProps.activeSession===null?false:true,
                   })
   );

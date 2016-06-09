@@ -1,7 +1,7 @@
 var { STATIC_RECOMMENDATIONS, STATBOX_DISPLAYS, DEV_METRICS, METER_METRICS, DEV_PERIODS, METER_PERIODS, DEV_SORT, METER_SORT } = require('../constants/HomeConstants');
 
 var { getFriendlyDuration, getEnergyClass, getMetricMu } = require('./general');
-var { getChartDataByFilter, getChartMeterCategories, getChartAmphiroCategories } = require('./chart');
+var { getChartMeterData, getChartAmphiroData, getChartMeterCategories, getChartAmphiroCategories } = require('./chart');
 var { getTimeByPeriod } = require('./time');
 var { getDeviceTypeByKey, getDeviceNameByKey, getDeviceKeysByType } = require('./device');
 
@@ -86,7 +86,7 @@ const transformInfoboxData = function (infobox, devices) {
     let chartType = 'line';
     let chartXAxis = 'category';
     let chartCategories = deviceType === 'METER' ? 
-      getChartMeterCategories(period) : 
+      getChartMeterCategories(time) : 
         getChartAmphiroCategories(period);
         
         
@@ -100,7 +100,8 @@ const transformInfoboxData = function (infobox, devices) {
       device = infobox.device;
       time = infobox.time;
       
-      chartCategories = null;
+      //chartCategories = null;
+      chartCategories = getChartMeterCategories(time);
 
       const last = data.find(d=>d.deviceKey===device);
       const lastShowerMeasurements = getDataMeasurements(devices, last, index);
@@ -112,9 +113,9 @@ const transformInfoboxData = function (infobox, devices) {
 
       chartData = [{
         title: getDeviceNameByKey(devices, device), 
-        data: getChartDataByFilter(lastShowerMeasurements, infobox.metric, chartCategories)
+        data: getChartMeterData(lastShowerMeasurements, chartCategories, infobox.metric, 'hour')
       }];
-      chartXAxis = 'time';
+      //chartXAxis = 'time';
     
     }
     
@@ -136,7 +137,8 @@ const transformInfoboxData = function (infobox, devices) {
 
       chartData = data.map(devData => ({ 
         title: getDeviceNameByKey(devices, devData.deviceKey), 
-        data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, chartCategories)
+        //data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, chartCategories)
+        data: deviceType === 'METER' ? getChartMeterData(getDataSessions(devices, devData), chartCategories, infobox.metric, getLowerGranularityPeriod(period)) : getChartAmphiroData(getDataSessions(devices, devData), chartCategories, infobox.metric)
       }));
      
     }
@@ -162,9 +164,15 @@ const transformInfoboxData = function (infobox, devices) {
       
       chartData = data.map(devData => ({ 
         title: getDeviceNameByKey(devices, devData.deviceKey), 
+        //data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, chartCategories)
+        data: deviceType === 'METER' ? getChartMeterData(getDataSessions(devices, devData), chartCategories, infobox.metric, getLowerGranularityPeriod(period)) : getChartAmphiroData(getDataSessions(devices, devData), chartCategories, infobox.metric)
+      }));
+      /*
+      chartData = data.map(devData => ({ 
+        title: getDeviceNameByKey(devices, devData.deviceKey), 
         data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, chartCategories)
       }));
-      
+      */
     }
     else if (type === 'forecast') {
       chartType = 'bar';
