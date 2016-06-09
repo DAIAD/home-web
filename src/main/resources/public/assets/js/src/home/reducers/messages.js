@@ -1,16 +1,18 @@
 var types = require('../constants/ActionTypes');
 
+const initialState = {
+  activeTab: 'alerts',
+  activeMessageId: null,
+  alerts: [],
+  recommendations: [],
+  tips: [],
+  announcements: []
+};
+
 var messages = function (state, action) {
   //initial state
   if (state === undefined) {
-    state = {
-      activeTab: 'alerts',
-      activeMessageId: null,
-      alerts: [],
-      recommendations: [],
-      tips: [],
-      announcements: []
-    };
+    state = initialState;
   }
    
   switch (action.type) {
@@ -51,6 +53,10 @@ var messages = function (state, action) {
       
       return newState;
     }
+
+    case types.USER_RECEIVED_LOGOUT:
+      return Object.assign({}, initialState);
+
     default:
       return state;
   }

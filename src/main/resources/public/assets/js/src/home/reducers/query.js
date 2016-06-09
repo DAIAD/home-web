@@ -1,13 +1,15 @@
 var types = require('../constants/ActionTypes');
 
+const initialState = {
+  isLoading: false,
+  success: null,
+  errors: null
+};
+
 var query = function (state, action) {
   //initial state
   if (state === undefined) {
-    state = {
-      isLoading: false,
-      success: null,
-      errors: null
-    };
+    state = initialState;
   }
    
   switch (action.type) {
@@ -43,6 +45,9 @@ var query = function (state, action) {
         errors: null
       });
                   
+    case types.USER_RECEIVED_LOGOUT:
+      return Object.assign({}, initialState);
+
     default:
       return state;
   }

@@ -1,126 +1,128 @@
 var types = require('../constants/ActionTypes');
 var timeUtil = require ('../utils/time');
 
+const initialState = {
+  mode: "normal",
+  layout: [
+    {i: "1", x:0, y:0, w:2, h:2},
+    {i: "2", x:2, y:0, w:2, h:2},
+    {i: "3", x:2, y:0, w:2, h:1},
+    {i: "4", x:4, y:0, w:2, h:2},
+    {i: "5", x:4, y:1, w:2, h:1},
+    {i: "6", x:0, y:2, w:2, h:2},
+    {i: "7", x:0, y:2, w:2, h:2},
+    {i: "8", x:4, y:2, w:2, h:2},
+    {i: "9", x:0, y:3, w:2, h:1},
+  ],
+  infobox: [
+      {
+        id: "1", 
+        title: "Water",
+        type: "total",
+        display: "chart",
+        period: "ten",
+        deviceType: "AMPHIRO",
+        metric: "volume",
+        data: [],
+      },
+      {
+        id: "2", 
+        title: "Last Shower", 
+        period: "ten",
+        type: "last",
+        display: "chart",
+        deviceType: "AMPHIRO",
+        metric: "volume",
+        data: [],
+      },
+      {
+        id: "3", 
+        title: "Energy",
+        type: "total",
+        display: "stat",
+        period: "twenty",
+        deviceType: "AMPHIRO",
+        metric: "energy",
+        data: [],
+      },
+      {
+        id: "4", 
+        title: "SWM", 
+        type: "total",
+        display: "chart",
+        deviceType: "METER",
+        period: "year",
+        metric: "difference",
+        data: [],
+      },
+      
+    {
+      id: "5", 
+      title: "Efficiency",
+      type: "efficiency",
+      display: "stat",
+      deviceType: "AMPHIRO",
+      period: "twenty",
+      metric: "energy",
+      data: [],
+    },
+    {
+      id: "6", 
+      title: "Breakdown",
+      type: "breakdown",
+      display: "chart",
+      deviceType: "METER",
+      period: "year",
+      metric: "difference",
+      data: [],
+    },
+    {
+      id: "7", 
+      title: "Forecast",
+      type: "forecast",
+      display: "chart",
+      deviceType: "METER",
+      period: "year",
+      metric: "difference",
+      data: [],
+    },
+    {
+      id: "8", 
+      title: "Comparison",
+      type: "comparison",
+      display: "chart",
+      deviceType: "METER",
+      period: "year",
+      metric: "difference",
+      data: [],
+    },
+    {
+      id: "9", 
+      title: "Budget",
+      type: "budget",
+      display: "chart",
+      deviceType: "METER",
+      period: "month",
+      metric: "difference",
+      data: [],
+    },
+    /*
+    {
+      id: "7", 
+      title: "Tip of the day",
+      type: "tip",
+      display: "tip",
+      data: [],
+    
+      },
+      */
+  ]
+};
+
 var dashboard = function (state, action) {
   //initial state
   if (state === undefined) {
-    state = {
-      mode: "normal",
-      layout: [
-        {i: "1", x:0, y:0, w:2, h:2},
-        {i: "2", x:2, y:0, w:2, h:2},
-        {i: "3", x:2, y:0, w:2, h:1},
-        {i: "4", x:4, y:0, w:2, h:2},
-        {i: "5", x:4, y:1, w:2, h:1},
-        {i: "6", x:0, y:2, w:2, h:2},
-        {i: "7", x:0, y:2, w:2, h:2},
-        {i: "8", x:4, y:2, w:2, h:2},
-        {i: "9", x:0, y:3, w:2, h:1},
-      ],
-      infobox: [
-          {
-            id: "1", 
-            title: "Water",
-            type: "total",
-            display: "chart",
-            period: "ten",
-            deviceType: "AMPHIRO",
-            metric: "volume",
-            data: [],
-          },
-          {
-            id: "2", 
-            title: "Last Shower", 
-            period: "ten",
-            type: "last",
-            display: "chart",
-            deviceType: "AMPHIRO",
-            metric: "volume",
-            data: [],
-          },
-          {
-            id: "3", 
-            title: "Energy",
-            type: "total",
-            display: "stat",
-            period: "twenty",
-            deviceType: "AMPHIRO",
-            metric: "energy",
-            data: [],
-          },
-          {
-            id: "4", 
-            title: "SWM", 
-            type: "total",
-            display: "chart",
-            deviceType: "METER",
-            period: "year",
-            metric: "difference",
-            data: [],
-          },
-          
-        {
-          id: "5", 
-          title: "Efficiency",
-          type: "efficiency",
-          display: "stat",
-          deviceType: "AMPHIRO",
-          period: "twenty",
-          metric: "energy",
-          data: [],
-        },
-        {
-          id: "6", 
-          title: "Breakdown",
-          type: "breakdown",
-          display: "chart",
-          deviceType: "METER",
-          period: "year",
-          metric: "difference",
-          data: [],
-        },
-        {
-          id: "7", 
-          title: "Forecast",
-          type: "forecast",
-          display: "chart",
-          deviceType: "METER",
-          period: "year",
-          metric: "difference",
-          data: [],
-        },
-        {
-          id: "8", 
-          title: "Comparison",
-          type: "comparison",
-          display: "chart",
-          deviceType: "METER",
-          period: "year",
-          metric: "difference",
-          data: [],
-        },
-        {
-          id: "9", 
-          title: "Budget",
-          type: "budget",
-          display: "chart",
-          deviceType: "METER",
-          period: "month",
-          metric: "difference",
-          data: [],
-        },
-        /*
-        {
-          id: "7", 
-          title: "Tip of the day",
-          type: "tip",
-          display: "tip",
-          data: [],
-        
-          },
-          */
-      ]
-    };
+    state = initialState;
   }
    
   switch (action.type) {
@@ -190,6 +192,9 @@ var dashboard = function (state, action) {
         layout: newLayout 
       });
     }
+
+  case types.USER_RECEIVED_LOGOUT:
+    return Object.assign({}, initialState);
 
     default:
       return state;
