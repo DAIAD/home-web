@@ -104,7 +104,7 @@ class BaseReport extends React.Component {
   
   render() {
     var {field, uom, now, reports, series} = this.props;
-    series || (series = {});
+    if (!series) series = {};
 
     var viewProps = {now, uom, field};
     return (
@@ -156,7 +156,7 @@ class BaseReport extends React.Component {
   }
 }
 
-BaseReport.displayName = 'Overview.BaseReport'
+BaseReport.displayName = 'Overview.BaseReport';
 
 BaseReport.defaultProps = {
   field: 'volume',
