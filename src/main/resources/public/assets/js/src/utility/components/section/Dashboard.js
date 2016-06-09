@@ -1,5 +1,6 @@
 var React = require('react');
-var ReactDOM = require('react-dom');
+var { bindActionCreators } = require('redux');
+var { connect } = require('react-redux');
 var moment = require('moment');
 var Bootstrap = require('react-bootstrap');
 var { Link } = require('react-router');
@@ -8,27 +9,18 @@ var Counter = require('../Counter');
 var Message = require('../Message');
 var Chart = require('../Chart');
 var LeafletMap = require('../LeafletMap');
-var Table = require('../Table');
 var Select = require('react-select');
 var DateRangePicker = require('react-bootstrap-daterangepicker');
-var TimeDimensionSelect = require('../chart/dimension/TimeDimensionSelect');
 var FilterTag = require('../chart/dimension/FilterTag');
 var Timeline = require('../Timeline');
+var {FormattedMessage, FormattedTime, FormattedDate} = require('react-intl');
 
 var WidthProvider = require('react-grid-layout').WidthProvider;
 var ResponsiveReactGridLayout = require('react-grid-layout').Responsive;
 
-ResponsiveReactGridLayout = WidthProvider(ResponsiveReactGridLayout);
+var { getTimeline, getFeatures } = require('../../actions/DashboardActions');
 
-var createPoints = function() {
-	var points = [];
-	
-	for(var i=0; i<50; i++) {
-		points.push([38.35 + 0.02 * Math.random(), -0.521 + 0.05 * Math.random(), Math.random()]);
-	}
-	
-	return points;
-};
+ResponsiveReactGridLayout = WidthProvider(ResponsiveReactGridLayout);
 
 var createSeries = function(ref, days, baseConsumption, offset) {
 	var series = [];
@@ -67,37 +59,64 @@ var chartData = {
         data: createSeries(moment(new Date()).subtract(28, 'days'), 29, 2000, 300)
     }]
 };
-	
+
+var _getTimelineValues = function(timeline) {
+  if(timeline) {
+    return timeline.getTimestamps();
+  } 
+  return [];
+};
+
+var _getTimelineLabels = function(timeline) {
+  if(timeline) {
+    return timeline.getTimestamps().map(function(timestamp) {
+      return (
+        <FormattedTime  value={new Date(timestamp)} 
+                        day='numeric' 
+                        month='numeric' 
+                        year='numeric'/>
+      );      
+    });
+  } 
+  return [];
+};
+
+var _onChangeTimeline = function(value, label, index) {
+  this.props.actions.getFeatures(value);
+};
+
 var Dashboard = React.createClass({
 	contextTypes: {
 	    intl: React.PropTypes.object
 	},
-	
-    getInitialState: function() {
-        return {
-        	filter: null,
-            population: [{ value: 'All', label: 'All', type: 1 }],
-            ranges: {
-				'Today': [moment(), moment()],
-				'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-				'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-				'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-				'This Month': [moment().startOf('month'), moment().endOf('month')],
-				'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
-			},
-			interval:[moment(new Date(2016, 1, 1)), moment(new Date(2016, 1, 29))],
-			points: []
-        };
+
+	componentDidMount : function() {
+	  var utility = this.props.profile.utility;
+  
+	  this.props.actions.getTimeline(utility.key, utility.name, utility.timezone);
+  },
+
+  getInitialState: function() {
+    return {
+      	filter: null,
+          population: [{ value: 'All', label: 'All', type: 1 }],
+          ranges: {
+			'Today': [moment(), moment()],
+			'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+			'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+			'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+			'This Month': [moment().startOf('month'), moment().endOf('month')],
+			'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+		},
+		interval:[moment(new Date(2016, 1, 1)), moment(new Date(2016, 1, 29))],
+		points: []
+      };
     },
 	
     setFilter: function(value) {
     	this.setState({ filter : value});
     },
     
-    componentWillMount : function() {
-		this.setState({points : createPoints()});
-	},
-
   	render: function() { 		
         var chartOptions = {
             tooltip: {
@@ -127,7 +146,7 @@ var Dashboard = React.createClass({
 			chartTitle = (
 				<span>
 					<i className='fa fa-bar-chart fa-fw'></i>
-					<span style={{ paddingLeft: 4 }}>Daily Consumption</span>
+					<span style={{ paddingLeft: 4 }}>Last Week Daily Consumption</span>
 					<span style={{float: 'right',  marginTop: -3, marginLeft: 5  }}>
 						<Bootstrap.Button bsStyle='default' className='btn-circle'>
 							<i className='fa fa-expand fa-fw'></i>
@@ -160,7 +179,7 @@ var Dashboard = React.createClass({
 		var mapTitle = (
 			<span>
 				<i className='fa fa-map fa-fw'></i>
-				<span style={{ paddingLeft: 4 }}>Daily Consumption Heatmap</span>
+				<span style={{ paddingLeft: 4 }}>Last Week Daily Consumption Choropleth</span>
 				<span style={{float: 'right',  marginTop: -3, marginLeft: 5  }}>
 					<Bootstrap.Button bsStyle='default' className='btn-circle'>
 						<i className='fa fa-expand fa-fw'></i>
@@ -252,43 +271,29 @@ var Dashboard = React.createClass({
 
 		var chart, chartFilterTags = [], map, mapFilterTags = [];
 
-		switch(this.state.filter) {
-			case 'time':
-				chart = (
-					<Bootstrap.ListGroupItem>
-						<TimeDimensionSelect />
-					</Bootstrap.ListGroupItem>
-				);
-				break;
-			default:        
-	        	chartFilterTags.push( 
-        			<FilterTag key='time' text={intervalLabel} icon='calendar' onClick={this.setFilter.bind(this, 'time')} />
-	        	);
-	        	chartFilterTags.push( 
-        			<FilterTag key='population' text='All' icon='group' onClick={this.setFilter.bind(this, 'population')} />
-	        	);
-	        	chartFilterTags.push( 
-        			<FilterTag key='spatial' text='Alicante' icon='map' onClick={this.setFilter.bind(this, 'spatial')} />
-	        	);
-	        	chartFilterTags.push( 
-        			<FilterTag key='source' text='Meter, Amphiro' icon='database' onClick={this.setFilter.bind(this, 'source')} />
-	        	);
-				chart = (
-					<Bootstrap.ListGroupItem>
-						<Chart 	style={{ width: '100%', height: 400 }} 
-								elementClassName='mixin'
-								prefix='chart'
-								options={chartOptions}
-								data={chartData}/>
-					</Bootstrap.ListGroupItem>
-				);
-				break;
-		}
-
-		var onChangeTimeline = function(value) {
-			this.setState({points: createPoints()});
-		};
-		
+  	chartFilterTags.push( 
+			<FilterTag key='time' text={intervalLabel} icon='calendar' onClick={this.setFilter.bind(this, 'time')} />
+  	);
+  	chartFilterTags.push( 
+			<FilterTag key='population' text='All' icon='group' onClick={this.setFilter.bind(this, 'population')} />
+  	);
+  	chartFilterTags.push( 
+			<FilterTag key='spatial' text='Alicante' icon='map' onClick={this.setFilter.bind(this, 'spatial')} />
+  	);
+  	chartFilterTags.push( 
+			<FilterTag key='source' text='Meter, Amphiro' icon='database' onClick={this.setFilter.bind(this, 'source')} />
+  	);
+		chart = (
+			<Bootstrap.ListGroupItem>
+				<Chart 	style={{ width: '100%', height: 400 }} 
+						elementClassName='mixin'
+						prefix='chart'
+						options={chartOptions}
+						data={chartData}/>
+			</Bootstrap.ListGroupItem>
+		);
+	
+	
 		switch(this.state.filter) {
 			default:	        
 				mapFilterTags.push( 
@@ -304,57 +309,40 @@ var Dashboard = React.createClass({
 	    			<FilterTag key='source' text='Meter' icon='database' onClick={this.setFilter.bind(this, 'source')} />
 	        	);
 				map = (
-					<Bootstrap.ListGroupItem>
-						<LeafletMap style={{ width: '100%', height: 400}} 
-									elementClassName='mixin'
-									prefix='map'
-			            center={[38.35, -0.48]} 
-			            zoom={13}
-									data={this.state.points}
-						      mode={LeafletMap.MODE_HEATMAP}
-						/>
-						<Timeline 	onChange={onChangeTimeline.bind(this)} 
-									style={{paddingTop: 10}}
-									min={1}
-			            			max={29}
-									type='date'
-								    data={createDateLabels(moment(new Date()).subtract(28, 'days'), 29)}>
-						</Timeline>
-					</Bootstrap.ListGroupItem>
+			    <Bootstrap.ListGroup fill>
+  					<Bootstrap.ListGroupItem>
+    	        <LeafletMap style={{ width: '100%', height: 600}} 
+                          elementClassName='mixin'
+                          prefix='map'
+                          center={[38.36, -0.479]} 
+                          zoom={13}
+                          mode={LeafletMap.MODE_CHOROPLETH}
+                          data={ this.props.map.features }
+                          colors={['#2166ac', '#67a9cf', '#d1e5f0', '#f7f7f7', '#fddbc7', '#ef8a62', '#b2182b']}
+                          urls={['/assets/data/meters.geojson']} 
+    	        />
+  					</Bootstrap.ListGroupItem>
+  		      <Bootstrap.ListGroupItem>
+    	        <Timeline   onChange={_onChangeTimeline.bind(this)} 
+    	                    labels={ _getTimelineLabels(this.props.map.timeline) }
+    	                    values={ _getTimelineValues(this.props.map.timeline) }
+    	                    defaultIndex={0}
+    	                    speed={1000}
+    	                    animate={false}>
+    	        </Timeline>
+    	      </Bootstrap.ListGroupItem>
+            <Bootstrap.ListGroupItem className='clearfix'>
+              <div className='pull-left'>
+                {mapFilterTags}
+              </div>
+              <span style={{ paddingLeft : 7}}> </span>
+              <Link className='pull-right' to='/analytics' style={{ paddingLeft : 7, paddingTop: 12 }}>View analytics</Link>
+            </Bootstrap.ListGroupItem>
+  	      </Bootstrap.ListGroup>
 				);
 				break;
 		}
 		
-		var alerts = (
-			<Bootstrap.Panel header={ (<span><i className='fa fa-bell fa-fw'></i><span style={{ paddingLeft: 4 }}>Alerts / Announcements</span></span>) }>
-				<Bootstrap.ListGroup fill>
-					<Bootstrap.ListGroupItem>
-						<i className='fa fa-volume-up fa-fw'></i>
-						<span style={{ paddingLeft : 7}}>New water tariff policy</span>
-						<span className='pull-right text-muted small'><em>4 minutes ago</em></span>
-					</Bootstrap.ListGroupItem>
-					<Bootstrap.ListGroupItem>
-						<i className='fa fa-cogs fa-fw'></i>
-						<span style={{ paddingLeft : 7}}>Job 'Daily pre aggregation MR job' has started</span>
-						<span className='pull-right text-muted small'><em>12 minutes ago</em></span>
-					</Bootstrap.ListGroupItem>
-					<Bootstrap.ListGroupItem>
-						<i className='fa fa-warning fa-fw' style={{ color: '#f39c12'}}></i>
-						<span style={{ paddingLeft : 7}}>Excessive water consumption detected</span>
-                        <span className='pull-right text-muted small'><em>27 minutes ago</em></span>
-					</Bootstrap.ListGroupItem>
-					<Bootstrap.ListGroupItem>
-						<i className='fa fa-exclamation fa-fw' style={{ color: '#c0392b'}}></i>
-						<span style={{ paddingLeft : 7}}>Server master-c1-n01 has gone offline</span>
-						<span className='pull-right text-muted small'><em>1 hour ago</em></span>
-					</Bootstrap.ListGroupItem>
-					<Bootstrap.ListGroupItem>
-						<span style={{ paddingLeft : 7}}> </span>
-						<Link to='/alerts' style={{ paddingLeft : 7, float: 'right'}}>View all alerts</Link>
-					</Bootstrap.ListGroupItem>
-				</Bootstrap.ListGroup>
-			</Bootstrap.Panel>
-		);
         
 		var counters = (
 			<div className='row'>
@@ -371,21 +359,6 @@ var Dashboard = React.createClass({
 				<div className='col-md-2'>
 					<div style={{ marginBottom: 20 }}>
 						<Counter text={'Counter.Devices'} value={230} variance={10} color='#27ae60' link='/analytics' />
-					</div>
-				</div>
-				<div className='col-md-2'>
-					<div style={{ marginBottom: 20 }}>
-						<Counter text='Alerts' value={4} color='#c0392b' />
-					</div>
-				</div>
-				<div className='col-md-2'>
-					<div style={{ marginBottom: 20 }}>
-						<Counter text='Warning' value={1} color='#f39c12' />
-					</div>
-				</div>
-				<div className='col-md-2'>
-					<div style={{ marginBottom: 20 }}>
-						<Counter text='Information' value={2} color='#2e8ece' />
 					</div>
 				</div>
 			</div>
@@ -408,24 +381,14 @@ var Dashboard = React.createClass({
 
 		var mapPanel = (
 			<Bootstrap.Panel header={mapTitle}>
-				<Bootstrap.ListGroup fill>
-					{map}
-					<Bootstrap.ListGroupItem className='clearfix'>
-						<div className='pull-left'>
-							{mapFilterTags}
-						</div>
-						<span style={{ paddingLeft : 7}}> </span>
-						<Link className='pull-right' to='/analytics' style={{ paddingLeft : 7, paddingTop: 12 }}>View analytics</Link>
-					</Bootstrap.ListGroupItem>
-				</Bootstrap.ListGroup>
+				{map}
 			</Bootstrap.Panel>
 		);
 
 		var layouts = {
 			lg : [
-			      { i: '0', x: 0, y: 0, w: 6, h: 14},
-			      { i: '1', x: 6, y: 0, w: 6, h: 15},
-			      { i: '2', x: 0, y: 16, w: 6, h: 7}
+			      { i: '0', x: 0, y: 0, w: 12, h: 14, minH: 14, maxH: 14},
+			      { i: '1', x: 0, y: 12, w: 12, h: 20, minH: 20, maxH: 20}
 	      	]
 		};
 
@@ -441,7 +404,7 @@ var Dashboard = React.createClass({
 
 		};
 		
-  		return (
+		return (
 			<div className='container-fluid' style={{ paddingTop: 10 }}>
 				<div className='row'>
 					<div className='col-md-12'>
@@ -450,7 +413,7 @@ var Dashboard = React.createClass({
 				</div>
 				{counters}
 				<div className='row' style={{ overflow : 'hidden' }}>
-						<ResponsiveReactGridLayout	className='clearfix' 
+					<ResponsiveReactGridLayout	className='clearfix' 
 													layouts={layouts}
 													rowHeight={30}
 													onLayoutChange={onLayoutChange.bind(this)}
@@ -459,17 +422,16 @@ var Dashboard = React.createClass({
 													breakpoints={{lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0}}
 													cols={{lg: 12, md: 10, sm: 6, xs: 4, xxs: 2}}
 													autoSize={true}
+					                verticalCompact={true}
+					                isResizable={false}
 													draggableHandle='.panel-heading'>
-							<div key='0' className='draggable'>
-								{chartPanel}
-					        </div>
-					        <div key='1' className='draggable'>
-								{mapPanel}
-							</div>
-							<div key='2' className='draggable'>
-								{alerts}
-							</div>
-				        </ResponsiveReactGridLayout>
+						<div key='0' className='draggable'>
+							{chartPanel}
+		        </div>
+		        <div key='1' className='draggable'>
+							{mapPanel}
+						</div>
+	        </ResponsiveReactGridLayout>
 				</div>
             </div>
  		);
@@ -479,4 +441,18 @@ var Dashboard = React.createClass({
 Dashboard.icon = 'dashboard';
 Dashboard.title = 'Section.Dashboard';
 
-module.exports = Dashboard;
+function mapStateToProps(state) {
+  return {
+      map: state.dashboard.map,
+      profile: state.session.profile,
+      routing: state.routing
+  };
+}
+
+function mapDispatchToProps(dispatch) {
+  return {
+    actions : bindActionCreators(Object.assign({}, { getTimeline, getFeatures }) , dispatch)
+  };
+}
+
+module.exports = connect(mapStateToProps, mapDispatchToProps)(Dashboard);

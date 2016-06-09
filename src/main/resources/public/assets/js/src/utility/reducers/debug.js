@@ -61,9 +61,9 @@ var admin = function(state, action) {
         errors : action.errors
       });
 
-    case types.DEBUG_GET_FEATURES:     
+    case types.DEBUG_GET_FEATURES:
       var features = (action.timeline ? action.timeline.getFeatures(action.timestamp, action.label) : null);
-      
+
       return Object.assign({}, state, {
         features : features
       });

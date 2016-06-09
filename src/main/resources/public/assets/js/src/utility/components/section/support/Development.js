@@ -232,10 +232,7 @@ var Development = React.createClass({
                     urls={['/assets/data/meters.geojson']} />
   		</Bootstrap.ListGroupItem>
     );
-
-    var timelineLabels = _getTimelineLabels(this.props.query.timeline);
-    var timelineValues = _getTimelineValues(this.props.query.timeline);
-    
+   
     var timeline = (
       <Bootstrap.ListGroupItem>
         <Timeline   onChange={onChangeTimeline.bind(this)} 
