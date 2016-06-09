@@ -155,12 +155,13 @@ a:hover, a:focus {
 }
 
 button, .btn { 
-  background: #2D3580;
-  color: #FFF;
+  background: none;
+  color: #666;
+  //background: #2D3580;
+  //color: #FFF;
   border: 1px #2D3580 solid;
   border-radius: 0;
   font-size: 0.9em;
-
 }
 
 button:hover, button:focus, .btn:hover, .btn:focus, .btn[disabled]:focus, .btn[disabled]:hover {

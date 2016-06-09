@@ -344,6 +344,32 @@ const getPreviousSession = function(sessions, id) {
   }
 };
 
+const meterSessionsToCSV = function (sessions) {
+  return sessions.map(session => [
+    session.devName, 
+    session.volume, 
+    session.difference, 
+    session.timestamp 
+  ].join('%2C'))
+  .reduce((prev, curr) => [prev, curr].join('%0A'), 
+          'Device, Volume%A0total, Volume%A0 difference, Timestamp');
+};
+
+const deviceSessionsToCSV = function (sessions) {
+  return sessions.map(session => [
+    session.devName,
+    session.id,
+    session.history,
+    session.volume, 
+    session.energy,
+    session.energyClass,
+    session.temperature,
+    session.duration, 
+    session.timestamp 
+  ].join('%2C'))
+  .reduce((prev, curr) => [prev, curr].join('%0A'), 
+          'Device, Id, Historic, Volume, Energy, Energy%A0Class, Temperature, Duration, Timestamp');
+};
 
 module.exports = {
   getNextSession,
@@ -357,5 +383,7 @@ module.exports = {
   reduceSessions,
   sortSessions,
   reduceMetric,
-  transformInfoboxData
+  transformInfoboxData,
+  meterSessionsToCSV,
+  deviceSessionsToCSV
 };

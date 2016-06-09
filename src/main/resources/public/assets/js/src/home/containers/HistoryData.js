@@ -8,7 +8,7 @@ var History = require('../components/sections/History');
 var HistoryActions = require('../actions/HistoryActions');
 
 var { getDeviceByKey, getDeviceNameByKey, getAvailableDevices, getDeviceTypeByKey, getDefaultDevice } = require('../utils/device');
-var { reduceSessions, reduceMetric, sortSessions } = require('../utils/transformations');
+var { reduceSessions, reduceMetric, sortSessions, meterSessionsToCSV, deviceSessionsToCSV } = require('../utils/transformations');
 
 var timeUtil = require('../utils/time');
 var { getFriendlyDuration, getEnergyClass, getMetricMu } = require('../utils/general');
@@ -41,6 +41,8 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
   const devType = stateProps.activeDeviceType;  
   const sessions = sortSessions(reduceSessions(stateProps.devices, stateProps.data), stateProps.sortFilter, stateProps.sortOrder);
 
+  const csvData = stateProps.activeDeviceType === 'METER' ? meterSessionsToCSV(sessions) : deviceSessionsToCSV(sessions);
+
   const metrics = devType === 'AMPHIRO' ? DEV_METRICS : METER_METRICS;
 
   const periods = devType === 'AMPHIRO' ? DEV_PERIODS : METER_PERIODS;
@@ -68,6 +70,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                     comparisons,
                     sortOptions,
                     sessions,
+                    csvData,
                     reducedMetric: `${reduceMetric(stateProps.devices, stateProps.data, stateProps.metricFilter)} ${getMetricMu(stateProps.metricFilter)}`,
                   }));
 }
