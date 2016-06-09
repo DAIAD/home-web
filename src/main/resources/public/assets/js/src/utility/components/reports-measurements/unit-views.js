@@ -17,7 +17,7 @@ var {seriesPropType} = require('../../prop-types');
 // Presentational components for reports based on a time unit (e.g by day, week ...)
 //
 
-class _UnitView extends React.Component {
+class _ViewWrapper extends React.Component {
   
   static get unit() {
     return 'ms'; // Override in subclasses!
@@ -26,7 +26,7 @@ class _UnitView extends React.Component {
   static momentToKey(t) {
     return moment(t).valueOf();
   }
-
+  
   static get defaults() {
     return {
       charts: {
@@ -267,11 +267,60 @@ class _UnitView extends React.Component {
   componentWillReceiveProps(nextProps) {
     this.setState(this.constructor._propsToState(nextProps));
   }
- 
+   
   render() {
+    return (
+      <div className="clearfix unit-view">
+        {this.props.views.map(t => this._renderForView(t))}
+      </div>
+    );
+  } 
+
+  // Methods for specific views
+
+  _renderForView(viewType) {
+    var markup = null;
+    switch (viewType) {
+      case 'summary':
+        markup = this._renderSummary();
+        break;
+      case 'simple-chart':
+        markup = this._renderSimpleChart();
+        break;
+      case 'comparison-chart':
+        markup = this._renderComparisonChart();
+        break;
+    }
+    return markup;
+  }
+
+  _renderSummary() {
+    var {title, formatDate, field, uom} = this.props;
+    var {moment0, data, keys, totals} = this.state;
+    
+    var k0 = this.constructor.momentToKey(moment0), i0, k1;
+    if (data) {
+      i0 = keys.indexOf(k0);
+      k1 = keys[i0 - 1];
+    }
+    return (
+      <div className={'summary'} key={'summary'}>
+        <MeasurementValue 
+          title={formatDate(moment0)}
+          subtitle={title} 
+          field={field} 
+          unit={uom}
+          value={totals? totals.get(k0) : null}
+          prevValue={(totals && k1)? totals.get(k1) : null}
+        />
+      </div>
+    );
+  }
+
+  _renderSimpleChart() {
     const {defaults, unit, momentToKey} = this.constructor;
-    var {duration: [K, unit1], level, series, title, formatDate, field, uom} = this.props;
-    var {moment0, data, keys, totals, forecast} = this.state;
+    var {level, series, title, formatDate, field, uom} = this.props;
+    var {moment0, data, keys, forecast} = this.state;
     
     var k0 = momentToKey(moment0), i0, k1, data0, data0p1;
     if (data) {
@@ -280,13 +329,6 @@ class _UnitView extends React.Component {
       data0 =  data.get(k0);
       data0p1 = data0.points.concat([data0.closurePoint]);
     }
-  
-    var summary = this._markupSummary(
-      formatDate(moment0), 
-      title,
-      totals? totals.get(k0) : null,
-      (totals && k1)? totals.get(k1) : null
-    );
     
     var chartProps = {
       legend: defaults.charts.legend,
@@ -299,12 +341,8 @@ class _UnitView extends React.Component {
         name: sprintf('%s (%s)', field, uom)
       },
     };
-
-    // Chart for the examined period
-    // Todo move to a separate method
-    
+ 
     var chart;
-    
     if (!forecast) {
       // A simple chart for the exact period
       chart = (
@@ -317,7 +355,7 @@ class _UnitView extends React.Component {
           series={[
             {
               data: data? data0p1.map(v => v[1]) : [],
-              name: 'Consumption',
+              name: formatDate(moment0),
             }
           ]}
          />
@@ -351,14 +389,43 @@ class _UnitView extends React.Component {
          /> 
       );  
     }
+    
+    return (
+      <div className={"simple-chart"} key={"simple-chart"}>
+        {chart}
+      </div>
+    );
+  }
 
+  _renderComparisonChart() {
+    const {defaults, unit, momentToKey} = this.constructor;
+    var {duration: [K, unit1], level, series, title, formatDate, field, uom} = this.props;
+    var {moment0, data, keys} = this.state;
+    
+    var k0 = momentToKey(moment0), i0, k1;
+    if (data) {
+      i0 = keys.indexOf(k0);
+      k1 = keys[i0 - 1];
+    }
+    
+    var chartProps = {
+      legend: defaults.charts.legend,
+      lineWidth: defaults.charts.lineWidth,
+      grid: defaults.charts.grid,
+      color: defaults.charts.color,
+      loading: (data != null)? false : {text: 'Loading...'},
+      yAxis: {
+        ...defaults.charts.yAxis,
+        name: sprintf('%s (%s)', field, uom)
+      },
+    };
+    
     // Comparison chart (compare last K periods)
-    // Todo move to a separate method
 
     var comparisonKeys = (keys || []).filter((k, i) => (i <= i0)).slice(K);
     var kX = _.maxBy(comparisonKeys, k => data.get(k).points.length);
     var dataX = data? data.get(kX) : null;
-    var comparisonChart = (
+    var chart = (
       <echarts.LineChart 
         {...chartProps}
         xAxis={{
@@ -378,34 +445,20 @@ class _UnitView extends React.Component {
           })
        }
        />
-    );
-
+    ); 
+    
     return (
-      <div className="clearfix unit-view"> 
-        {summary}
+      <div className={"comparison-chart"} key={"comparison-chart"}>
         {chart}
-        {comparisonChart}
       </div>
     );
   }
-  
-  _markupSummary(title, subtitle, total, prevTotal) {
-    var {field, uom} = this.props;
-    return (
-      <MeasurementValue 
-        title={title}
-        subtitle={subtitle} 
-        field={field} 
-        unit={uom}
-        value={total}
-        prevValue={prevTotal}
-       />  
-    );
-  }
-
 };
 
-_UnitView.propTypes = {
+_ViewWrapper.propTypes = {
+  views: PropTypes.arrayOf(
+    PropTypes.oneOf(['summary', 'simple-chart', 'comparison-chart'])
+  ),
   field: PropTypes.string.isRequired,
   now: PropTypes.number.isRequired, // reference point for time 
   uom: PropTypes.string.isRequired, // unit of measurement
@@ -417,13 +470,14 @@ _UnitView.propTypes = {
   title: PropTypes.string,
 };
 
-_UnitView.defaultProps = {
+_ViewWrapper.defaultProps = {
+  views: ['summary', 'simple-chart', 'comparison-chart'],
   formatDate: (m, brief=false) => (moment(m).format('LTS')),
 };
 
-// Day View
+// Daily
 
-class DayView extends _UnitView {
+class ViewByDay extends _ViewWrapper {
   
   static get unit() {return 'day';}
   
@@ -432,7 +486,7 @@ class DayView extends _UnitView {
   }
   
   static get defaults() {
-    return _.merge({}, _UnitView.defaults, {
+    return _.merge({}, _ViewWrapper.defaults, {
       charts: {
         xaxis: {
           normal: {
@@ -453,18 +507,18 @@ class DayView extends _UnitView {
   }
 };
 
-DayView.displayName = 'UnitView.Day';
+ViewByDay.displayName = 'UnitView.Day';
 
-DayView.defaultProps = {
+ViewByDay.defaultProps = {
   formatDate: (m, brief=false) => (
     moment(m).utc().format(brief? 'D/MMM' : 'ddd D MMM')
   ),
   title: 'Daily Consumption',
 };
 
-// Week View
+// Weekly
 
-class WeekView extends _UnitView {
+class ViewByWeek extends _ViewWrapper {
   
   static get unit() {return 'week';}
   
@@ -473,7 +527,7 @@ class WeekView extends _UnitView {
   }
   
   static get defaults() {
-    return _.merge({}, _UnitView.defaults, {
+    return _.merge({}, _ViewWrapper.defaults, {
       charts: {
         xaxis: {
           normal: {
@@ -491,9 +545,9 @@ class WeekView extends _UnitView {
   }
 };
 
-WeekView.displayName = 'UnitView.Week';
+ViewByWeek.displayName = 'UnitView.Week';
 
-WeekView.defaultProps = {
+ViewByWeek.defaultProps = {
   formatDate: (m, brief=false) => {
     m = moment(m).utc();
     if (brief) 
@@ -505,9 +559,9 @@ WeekView.defaultProps = {
   title: 'Weekly Consumption',
 };
 
-// Month View
+// Monthly 
 
-class MonthView extends _UnitView {
+class ViewByMonth extends _ViewWrapper {
   
   static get unit() {return 'month';}
   
@@ -516,7 +570,7 @@ class MonthView extends _UnitView {
   }
   
   static get defaults() {
-    return _.merge({}, _UnitView.defaults, {
+    return _.merge({}, _ViewWrapper.defaults, {
       charts: {
         xaxis: {
           normal: {
@@ -535,15 +589,15 @@ class MonthView extends _UnitView {
   }
 };
 
-MonthView.displayName = 'UnitView.Month';
+ViewByMonth.displayName = 'UnitView.Month';
 
-MonthView.defaultProps = {
+ViewByMonth.defaultProps = {
   formatDate: (m, brief=false) => (
     moment(m).utc().format(brief? 'MMM' : 'MMMM YYYY')
   ),
   title: 'Monthly Consumption',
 };
 
-// Todo YearView
+// Todo ViewByYear
 
-module.exports = {DayView, WeekView, MonthView};
+module.exports = {ViewByDay, ViewByWeek, ViewByMonth};

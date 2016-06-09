@@ -645,7 +645,7 @@ form.report-panel fieldset {
   margin: 0px 0px;
   padding: 0px 0px;
   background-color: #fff;
-  border: solid 1px silver;
+  border: solid 0px silver;
 }
 
 .overview .panel .panel-heading .panel-title {
@@ -662,15 +662,8 @@ div.measurement-value {
   border-style: solid;
   border-color: rgb(191, 212, 222);
   border-width: 1px 1px 1px 5px;
+  background-color: inherit;
 }
-
-div.measurement-value > .wrapper {
-  padding: 0px 0px;
-  min-height: 145px;
-  min-width: 10.4em;
-  background: inherit;
-}
-
 div.measurement-value .title {
   font-size: 1.25rem;
   font-weight: bold;
@@ -679,32 +672,25 @@ div.measurement-value .title {
   border-width: 0px 0px 1px 0px;
   border-style: solid;
 }
-
 div.measurement-value .subtitle {
   padding: 9px 5px 0px 5px;
 }
-
 div.measurement-value .current-value > .value,
 div.measurement-value .current-value > .unit,
 div.measurement-value .delta > .value, 
 div.measurement-value .delta > .unit {
   font-family: 'Inconsolata', monospace;
-  /*font-family: monospace;*/
 }
-
 div.measurement-value .current-value {
   padding: 0px 5px 0px 5px; 
 }
-
 div.measurement-value .current-value .value { 
   font-size: 3.3rem;
   font-weight: normal;
 }
-
 div.measurement-value .current-value .unit {
   font-size: 2rem;
 }
-
 div.measurement-value .delta { 
   position: relative;
   top: -5px;
@@ -712,7 +698,6 @@ div.measurement-value .delta {
   font-size: 1.4rem;
   color: #545E63;
 }
-
 div.measurement-value .delta > .value,
 div.measurement-value .delta > .unit {
   vertical-align: baseline; 
@@ -720,13 +705,14 @@ div.measurement-value .delta > .unit {
 div.measurement-value .delta > .unit {
   font-size: 1rem;
 }
-
 div.measurement-value .delta > .sign {
   vertical-align: text-top; 
 }
 
-.reports.overview .unit-view > .measurement-value,
-.reports.overview .unit-view > .chart {
+.reports.overview .unit-view > .summary,
+.reports.overview .unit-view > .simple-chart,
+.reports.overview .unit-view > .comparison-chart
+{
   display: block;
   float: left;
   border-style: solid;
@@ -734,8 +720,15 @@ div.measurement-value .delta > .sign {
   border-width: 1px 1px 1px 5px;
   margin: 0px 5px 5px 0px;
 }
-.reports.overview .unit-view > .chart {
-  width: 370px;
+.reports.overview .unit-view .measurement-value {
+  border-width: 0px;
+  min-height: 150px;
+  min-width: 11em;
+}
+.reports.overview .unit-view .chart.portal {
+  width: 360px;
   height: 230px;
 }
+
+
 

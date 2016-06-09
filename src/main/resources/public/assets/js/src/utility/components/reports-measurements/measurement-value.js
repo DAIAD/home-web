@@ -36,23 +36,21 @@ var MeasurementValue = React.createClass({
     
     return (
       <div className="measurement-value">
-        <div className="wrapper">
-          <div className="title">{title}</div>
-          <div className="subtitle">{subtitle}</div>
-          <div className="current-value">
-            <span className="value">{value? f(value) : '--.-'}</span>
-            &nbsp;
-            <span className="unit">{unit}</span>
-          </div>
-          <div className="delta" style={{display: (dy != null)? 'block' : 'none' }}>
-            <span className={'sign' + ' ' + (decr? 'negative' : 'non-negative')}>
-              <Glyphicon glyph={decr? 'arrow-down' : 'arrow-up'} />
-            </span>
-            &nbsp;
-            <span className="value">{(dy != null)? f(Math.abs(dy)) : ''}</span>
-            &nbsp;
-            <span className="unit">{unit}</span>
-          </div>
+        <div className="title">{title}</div>
+        <div className="subtitle">{subtitle}</div>
+        <div className="current-value">
+          <span className="value">{value? f(value) : '--.-'}</span>
+          &nbsp;
+          <span className="unit">{unit}</span>
+        </div>
+        <div className="delta" style={{display: (dy != null)? 'block' : 'none' }}>
+          <span className={'sign' + ' ' + (decr? 'negative' : 'non-negative')}>
+            <Glyphicon glyph={decr? 'arrow-down' : 'arrow-up'} />
+          </span>
+          &nbsp;
+          <span className="value">{(dy != null)? f(Math.abs(dy)) : ''}</span>
+          &nbsp;
+          <span className="unit">{unit}</span>
         </div>
       </div>
     ); 

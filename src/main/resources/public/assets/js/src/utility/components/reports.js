@@ -199,7 +199,7 @@ var Overview = React.createClass({
   },
  
   render: function () { 
-    var overview = require('./reports-measurements/overview');
+    var {OverviewAsAccordion} = require('./reports-measurements/overview');
     var {config, grouping, now, field} = this.props; 
     
     if (_.isEmpty(config) || _.isEmpty(config.reports) || 
@@ -215,49 +215,10 @@ var Overview = React.createClass({
       reports: config.overview.reports,
     };
 
-    var body;
-    switch (grouping) {
-      case 'utility':
-        body = (<overview.UtilityReport {...reportProps} />);
-        break;
-      case 'per-efficiency':
-        body = (<overview.GroupPerEfficiencyReport {...reportProps} />);
-        break;
-      case 'per-household-size':
-        body = (<overview.GroupPerSizeReport {...reportProps} />);
-        break;
-      case 'per-household-members':
-        body = (<overview.GroupPerMembersReport {...reportProps} />);
-        break;
-      case 'per-income':
-        body = (<overview.GroupPerIncomeReport {...reportProps} />);
-        break;
-      default:
-        body = (<overview.OverviewAsAccordion {...reportProps} />);
-        break;
-    }
- 
-    var heading;
-    if (grouping) {
-      heading = (
-       <h3>
-          {'Overview'}
-          <span className="delimiter">&nbsp;/&nbsp;</span>
-          {'Water Consumption'}
-          <span className="delimiter">&nbsp;/&nbsp;</span>
-          {config.overview.sections[grouping].title}
-        </h3>
-      );
-    } else {
-      heading = (
-        <h3>{'Overview'}</h3>
-      );
-    }
-
     return (
       <div className="overview reports">
-        {heading}
-        {body}
+        <h3>{'Overview'}</h3>
+        <OverviewAsAccordion {...reportProps} />
       </div>
     );
   },
