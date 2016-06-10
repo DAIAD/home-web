@@ -25,21 +25,42 @@ function MainSidebar (props) {
   const { menuItems } = props;
   return (
     <aside className="main-sidebar">
+      <ul className='main-menu-side'>
       {
         menuItems.map(item =>  
-                      <div key={item.name} className="menu-group">
-                        <Link className="menu-item" to={item.route}><img src={`${IMAGES}/${item.image}`}/><FormattedMessage id={item.title}/></Link>
+                      <li key={item.name} className='menu-item'>
+                        <Link to={item.route}>{(() => item.image ? (<div style={{float: 'left', minWidth:25}}><img src={`${IMAGES}/${item.image}`}/></div>) : null)()}
+                          <FormattedMessage id={item.title}/></Link>
                         {
-                          item.children.map(child =>
-                                            <Link key={child.name} className="menu-item menu-subitem" to={child.route}><img src={`${IMAGES}/${child.image}`}/><FormattedMessage id={child.title}/></Link>
-                                            )
+                          item.children && item.children.length ? (<ul className='menu-group'>
+                            {
+                              item.children.map((child,idx) =>
+                                               <li key={idx} className="menu-subitem">
+                                                 <Link key={child.name} to={child.route}>
+                                                   {(() => child.image ? (<img src={`${IMAGES}/${child.image}`}/>) : null)()}
+                                                   <FormattedMessage id={child.title}/></Link>
+                                               </li>)
+                                               }
+                                               </ul>)
+                                            : null
                         }
-                      </div>
+                    </li>
         )
       }
+    </ul>
     </aside>
   );
 } 
+
+function ErrorDisplay (props) {
+  return props.errors ? 
+    <div className='error-display'>
+      <a onClick={() => props.dismissError()} className='error-display-x'>x</a>
+      <img src={`${IMAGES}/alert.svg`} /><span className="infobox-error">{`${props.errors}`}</span>
+    </div>
+    :
+     (<div/>);
+}
 
 function HomeRoot (props) {
   return (
@@ -63,12 +84,19 @@ function HomeRoot (props) {
           firstname={props.user.profile.firstname}
           deviceCount={props.deviceCount}
           isAuthenticated={props.user.isAuthenticated}
+          notifications={props.messages}
+          unreadNotifications={props.unreadNotifications}
+          linkToNotification={props.linkToNotification}
           locale={props.locale.locale}
           logout={props.logout} 
           setLocale={props.setLocale}
         />
 
       <div className = "main-container">
+        <ErrorDisplay 
+          dismissError={props.dismissError}
+          errors={props.errors} 
+        />
         {(() => props.user.isAuthenticated ? 
           <MainSidebar menuItems={MAIN_MENU} />
           :

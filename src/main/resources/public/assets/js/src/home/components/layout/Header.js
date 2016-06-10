@@ -8,7 +8,7 @@ var LocaleSwitcher = require('../LocaleSwitcher');
 
 var { Logout } = require('../LoginForm');
 
-const { STATIC_RECOMMENDATIONS, IMAGES, NOTIFICATION_TITLE_LENGTH } = require('../../constants/HomeConstants'); 
+const { IMAGES, NOTIFICATION_TITLE_LENGTH } = require('../../constants/HomeConstants'); 
 
 /* DAIAD Logo */
 function MainLogo() {
@@ -119,7 +119,10 @@ var NotificationMenuItem = React.createClass({
             id="notifications-popover"
             title={_t({id: this.props.item.title})} >
           <div className="scrollable">
-            <NotificationList notifications={this.props.notifications} />
+            <NotificationList
+              notifications={this.props.notifications} 
+              linkToNotification={this.props.linkToNotification}
+            />
           </div>
           <div className="footer">
             <Link className="notifications-show-all" to="/notifications">{_t({id:"notifications.showAll"})}</Link>
@@ -147,12 +150,14 @@ function NotificationList(props){
     <ul className="list-unstyled">
       {
         props.notifications.map(function(notification) {
-          const notificationClass = notification.unread?"unread":"read";
+          const notificationClass = notification.acknowledgedOn ? 'read' : 'unread';
           return (
-            <li key={notification.id} className={notificationClass} >
-              <Link to={`/notifications/${notification.id}`} >
-                {(notification.title.length>maxLength)?(`${notification.title.substring(0, maxLength).trim()}...`):notification.title}
-              </Link>
+            <li key={notification.category+notification.id} className={notificationClass} >
+              <a onClick={() => props.linkToNotification({id: notification.id, category:notification.category})}>
+                {
+                  notification.title
+                }
+              </a>
             </li>
           );
           })
@@ -161,14 +166,8 @@ function NotificationList(props){
   </div>
   );
 }
-
 function NotificationArea (props) {
-  let unreadNotifications = 0;
-  props.notifications.forEach(function(notification) {
-    if (notification.unread){
-      unreadNotifications += 1;
-    } 
-  });
+
   return (
     <div className="notification-area">
       <div className="notifications notification-item">
@@ -180,8 +179,9 @@ function NotificationArea (props) {
                     image: "images/svg/info.svg",
                     link: "#"
                     }}
-            unreadNotifications={unreadNotifications}
+            unreadNotifications={props.unreadNotifications}
             notifications={props.notifications}
+            linkToNotification={props.linkToNotification}
         />
       </div>
         {
@@ -199,9 +199,10 @@ function NotificationArea (props) {
 }
 
 var Header = React.createClass({
-  
+
+   
   render: function() {
-    const { intl, firstname, isAuthenticated, logout, deviceCount, setLocale, locale } = this.props;
+    const { intl, firstname, isAuthenticated, notifications, linkToNotification, unreadNotifications, logout, deviceCount, setLocale, locale } = this.props;
     //<MainMenu items={Constants.MAIN_MENU}/>
     return (
       <header className="site-header">
@@ -212,7 +213,10 @@ var Header = React.createClass({
               <NotificationArea
                 intl={intl}
                 deviceCount={deviceCount}
-                notifications={STATIC_RECOMMENDATIONS} />
+                notifications={notifications} 
+                unreadNotifications={unreadNotifications}
+                linkToNotification={linkToNotification}
+              />
               <UserInfo
                 intl={intl}
                 firstname={firstname}

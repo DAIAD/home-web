@@ -4,7 +4,7 @@ var { connect } = require('react-redux');
 var injectIntl = require('react-intl').injectIntl;
 
 var { getChartDataByFilter } = require('../utils/chart');
-var { getDataSessions } = require('../utils/device');
+var { getDataSessions } = require('../utils/transformations');
 
 var SessionModal = require('../components/Session');
 
@@ -12,6 +12,7 @@ var HistoryActions = require('../actions/HistoryActions');
 
 function mapStateToProps(state, ownProps) {
   return {
+    activeDeviceType: state.section.history.activeDeviceType,
     data: state.section.history.data,
     activeSessionFilter: state.section.history.activeSessionFilter,
     activeSession: state.section.history.activeSession,

@@ -43,6 +43,19 @@ module.exports = function(grunt) {
         }
       }
     },
+    jsdoc: {
+          home: {
+            src: [
+              'src/main/resources/public/assets/js/src/home/**/*.js', 
+              'src/main/resources/public/assets/js/src/home/README.md', 
+              '!src/main/resources/public/assets/js/src/home/i18n/**'
+            ],
+            options: {
+              exclude: ['i18n'], 
+              destination: 'jsdoc'
+            }
+          }
+        },
     jshint: {
       options: {
         ignores: [
@@ -484,6 +497,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-sync');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-apidoc');
+  grunt.loadNpmTasks('grunt-jsdoc');
   grunt.loadNpmTasks('grunt-jsxhint');
 
   // Default task(s).
@@ -503,6 +517,6 @@ module.exports = function(grunt) {
     'watch'
   ]);
 
-  grunt.registerTask('docs', ['apidoc:utility']);
+  grunt.registerTask('docs', ['apidoc:utility', 'jsdoc:home']);
 
 };

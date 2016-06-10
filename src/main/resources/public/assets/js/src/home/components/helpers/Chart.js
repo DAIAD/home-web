@@ -10,6 +10,7 @@ var Chart = React.createClass({
   render: function() {
     return (
       <div 
+        className='chart'
         style={{
           width: this.props.width,
           height: this.props.height
@@ -26,9 +27,13 @@ var Chart = React.createClass({
       subtitle: "",
       mu: "",
       xAxis: "category",
-      colors: ['#2D3580', '#CD4D3E', '#564535'],
+      colors: ['#2d3480', '#abaecc', '#7AD3AB', '#CD4D3E'],
       data: [],
       clickable: false,
+      dataZoom: false,
+      onPointClick: () => null,
+      onDataZoom: () => null,
+      dataZoomY: 'bottom',
       //xTicks: 12,
       xAxisData: null,
       invertAxis: false,
@@ -46,9 +51,14 @@ var Chart = React.createClass({
     const { setActiveSession, devices } = this.props;
     if (this.props.clickable) {
       this._chart.on('CLICK', (p => { 
-        //console.log('EVENT!', p); 
-        this.props.onClick(p.seriesName, p.name);
+        this.props.onPointClick(p.seriesIndex, p.dataIndex);
       }));
+      
+      this._chart.on('DATA_ZOOM', (p => { 
+        console.log('DATA ZOOM!', p);
+        //this.props.onPointClick(p.seriesIndex, p.dataIndex);
+      }));
+
     }
     this._updateOptions(this.props);
       //}
@@ -56,12 +66,14 @@ var Chart = React.createClass({
   
   componentWillReceiveProps : function(nextProps) {
     if(this._chart && nextProps) {
+     
       this._updateOptions(nextProps);
     }
   },
 
   componentWillUnmount : function() {
     this._chart.dispose();
+    this._chart = null;
   },
 
   _updateOptions: function(options) {
@@ -91,17 +103,18 @@ var Chart = React.createClass({
     if (xaxisData) {
       // Expect array of numbers paired to x-axis data (aAxis.type=category)
       data = data.map(v => ((v == '-' || v == null)? null : Number(v)));
-      if (data.length != xaxisData.length || data.some(v => isNaN(v)) || data.every(v => v===null))
+      if (data && xaxisData && data.length != xaxisData.length || data.some(v => isNaN(v)) || data.every(v => v===null))
         data = null; // invalidate the entire array
     } else {
       // Expect array of [x, y] pairs (xAxis.type=value)
-      data = data.filter(p => (Array.isArray(p) && p.length == 2))
+      data = data.filter(p => (Array.isArray(p) && p && p.length == 2))
         .map(p => ([Number(p[0]), Number(p[1])]));
     }
     return data;
   },
   _getSeriesArray: function(options, series, index) {
       const data = this._checkData(options.xAxisData, series.data);
+      //if (!data) return {};
       //const data = series.data;
       if (options.type === 'pie') 
         return {
@@ -128,19 +141,25 @@ var Chart = React.createClass({
               labelLine: {
                 show: false
               },
-            }
+            },
+            
+
         },
-        data: series.data.map(x => Object.assign({}, series, {itemStyle: { normal: {color: x.color, lineStyle: {width:1}}}}))
+        data: series.data.map((x, i) => Object.assign({}, x, {itemStyle: { normal: {color: this.props.colors[i]?this.props.colors[i]:this.props.colors[0]}}}))
         };
       else if (options.type === 'bar') 
         return {
           name: series.title,
           type: options.type,
+          barGap: 0,
+          barCategoryGap: 0,
+          //barWidth: 50,
+          //barMaxWidth: '10%',
           itemStyle: {
             normal: {
               color: this.props.colors[0],
               barBorderColor: this.props.colors[0],
-              barBorderWidth: 15,
+              barBorderWidth: 0,
               //barBorderRadius:10,
               lineStyle: {
                 width: 1
@@ -148,7 +167,8 @@ var Chart = React.createClass({
               label : {
                 show: true, 
                 position: options.invertAxis? 'insideLeft' : 'insideBottom',
-                formatter: '{b}: {c}',
+                //formatter: '{b}: {c}',
+                formatter: '{b}',
                 textStyle: {
                   color: '#fff',
                 },
@@ -166,8 +186,7 @@ var Chart = React.createClass({
             },
             
           },
-
-          data,
+          data: series.data.map((x, i) => Object.assign({}, {value:x}, {itemStyle: {normal: {color: this.props.colors[i]?this.props.colors[i]:this.props.colors[0]}}}) )
         };
       else
         return {
@@ -262,6 +281,7 @@ var Chart = React.createClass({
         show: false
       },
       splitLine: {
+        show: options.type === 'bar' ? false : true,
         lineStyle: {
           color: ['#ccc'],
           width: 1,
@@ -276,7 +296,7 @@ var Chart = React.createClass({
     return {
       title : {
         text: this.props.title,
-        padding: this.props.title.length?[-2, 0, 50, 30]:5,
+        padding: this.props.title && this.props.title.length?[-2, 0, 50, 30]:5,
         x: 'center',
         y: 'center',
         textStyle: {
@@ -298,13 +318,14 @@ var Chart = React.createClass({
   },
   _getBarOptions: function(options) {
     return {
+
     };
   },
   _getBaseOptions: function(options) {
     return {
       title : {
         text: options.title,
-        padding: options.title.length?[-2, 0, 50, 30]:5,
+        padding: options.title && options.title.length?[-2, 0, 50, 30]:5,
         textStyle: {
           //fontFamily: "OpenSansCondensed",
           color: '#808285'
@@ -329,18 +350,19 @@ var Chart = React.createClass({
       toolbox: {
         show : false,
       },
-      backgroundColor: 'rgba(55,230,123,0.0)',
+      //backgroundColor: '#fff',
+      //backgroundColor: 'rgba(55,230,123,0.0)',
       color: ['#2D3580', '#A45476'],
       calculable : false,
       dataZoom: {
-        show: false,
-        y: 'bottom',  
+        show: this.props.dataZoom,
+        y: this.props.dataZoomY,  
         realtime: true,
         start: 0,
         end: 100,
-        //backgroundColor: 'rgba(0,0,0,0)',
-        //dataBackgroundColor: '#E8F5FD',
-        //fillerColor: 'rgba(0,0,0,0.4)',
+        //backgroundColor: '#fff',
+        dataBackgroundColor: '#2D3580',
+        fillerColor: 'rgba(0,0,0,0.1)',
         handleColor: '#2D3580'
       },
       grid: {

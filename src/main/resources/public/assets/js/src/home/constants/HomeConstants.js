@@ -4,18 +4,26 @@ module.exports = {
   PNG_IMAGES : "/assets/images/home/png",
   NOTIFICATION_TITLE_LENGTH: 50,
   LOCALES: ["en", "el", "de", "es"],
+  
+  MESSAGE_TYPES:[
+    {type: "ALERT"}, 
+    {type: "RECOMMENDATION_STATIC"}, 
+    {type: "RECOMMENDATION_DYNAMIC"}, 
+    {type: "ANNOUNCEMENT"}
+  ],
   MAIN_MENU: [{
     name: "dashboard",
     title: "section.dashboard",
-    image: "dashboard-side-on.svg",
+    image: "dashboard-menu.svg",
     route:"/dashboard",
     children: []
   },
   {
     name: "history",
     title: "section.history",
-    image: "stats-new-side-on.svg",
+    image: "stats-menu.svg",
     route:"/history",
+    /*
     children: [
       {
         name: "explore",
@@ -29,44 +37,66 @@ module.exports = {
         image: "goals.svg",
         route: "/history/forecast",
       },
-    ]
+      ]
+      */
   },
+  /*
   {
     name: "commons",
     title: "section.commons",
     image: "dashboard.svg",
-    route:"/commons",
+    route: "/commons",
     children: []
-  },
+    },
+    */
+
   {
-    name: "settings",
-    title: "section.settings",
-    image: "settings.svg",
-    route:"/settings",
+    name: "messages",
+    title: "section.notifications",
+    image: "notifications-menu.svg",
+    route: "/notifications",
+    /*
     children: [
       {
-        name: "profile",
-        title: "section.profile",
+        name: "alerts",
+        title: "section.alerts",
         image: "dashboard.svg",
-        route:"/settings/profile",
+        route: "/notifications",
       },
       {
-        name: "devices",
-        title: "section.devices",
+        name: "recommendations",
+        title: "section.recommendations",
         image: "dashboard.svg",
-        route:"/settings/devices",
+        route: "/notifications",
       },
-    ]
-  }
+      {
+        name: "tips",
+        title: "section.tips",
+        image: "dashboard.svg",
+        route: "/notifications",
+      },
+      ],
+      */
+  },
+    
+      {
+        name: "settings",
+        title: "section.settings",
+        image: "settings-menu.svg",
+        route:"/settings",
+      },
+  ],
+  METER_AGG_METRICS: [
+      {id:'devName',  mu:'', title:'history.device', icon: 'amphiro_small.svg', details: 'history.durationDetails', clickable: false}, 
+      {id:'count',mu:'', title:'history.count', details:'history.countDetails', icon: 'default-ranking.svg', clickable: true},  
+      {id:'difference', mu:'lt',title:'history.volume', details:'history.volumeDetails', icon: 'volume.svg',clickable: true},
   ],
   SHOWER_METRICS: [
-      {id:'devName',  mu:'', title:'history.device', details: 'history.durationDetails', clickable: false}, 
-      {id:'count',mu:'', title:'history.count', details:'history.countDetails', clickable: true},  
-      {id:'volume', mu:'lt',title:'history.volume', details:'history.volumeDetails', clickable: true}, 
-      {id:'difference', mu:'lt',title:'history.volume', details:'history.volumeDetails', clickable: true},
-      {id:'temperature', mu:'ºC', title:'history.temperature', details: 'history.temperatureDetails', clickable: true}, 
-      {id:'energy',mu:'W', title:'history.energy', details: 'history.energyDetails', clickable: true}, 
-      {id:'duration', icon:'timer-on', mu:'sec', title:'history.duration', details: 'history.durationDetails', clickable: true}, 
+      {id:'devName',  mu:'', title:'history.device', icon: 'amphiro_small.svg', details: 'history.durationDetails', clickable: false}, 
+      {id:'volume', mu:'lt',title:'history.volume', details:'history.volumeDetails', icon:'volume.svg', clickable: true}, 
+      {id:'temperature', mu:'ºC', title:'history.temperature', details: 'history.temperatureDetails',icon: 'temperature.svg', clickable: true}, 
+      {id:'energy',mu:'W', title:'history.energy', details: 'history.energyDetails', icon:'energy.svg', clickable: true}, 
+      {id:'duration', mu:'sec', title:'history.duration', details: 'history.durationDetails', icon:'duration.svg', clickable: false}, 
   ],
   METER_PERIODS: [
     {id: 'day', title: 'periods.day'},

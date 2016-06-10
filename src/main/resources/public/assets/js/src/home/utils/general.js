@@ -112,9 +112,26 @@ const getEnergyClass = function(energy) {
   return scale;
 };
 
+const getMetricMu = function(metric) {
+  if (metric === 'showers') return '';
+  else if (metric === 'volume' || metric === 'difference') return 'lt';
+  else if (metric === 'energy') return 'W';
+  else if (metric === 'duration') return 'sec';
+  else if (metric === 'temperature') return '°C';
+};
+
+const lastNFilterToLength = function (filter) {
+  if (filter === 'ten') return 10;
+  else if (filter === 'twenty') return 20;
+  else if (filter === 'fifty') return 50;
+  else throw new Error('unrecognized filter', filter);
+};
+
 module.exports = {
   validateEmail,
   flattenMessages,
   getFriendlyDuration,
-  getEnergyClass
+  getEnergyClass,
+  getMetricMu,
+  lastNFilterToLength
 };
