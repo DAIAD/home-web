@@ -19,7 +19,6 @@ var _configPropType = PropTypes.shape({
 var Report = React.createClass({
   displayName: 'Analytics.Overview',
 
-
   propTypes: {
     routes: PropTypes.array, // supplied by react-router
     config: _configPropType,
@@ -29,11 +28,7 @@ var Report = React.createClass({
     intl: React.PropTypes.object
   },
 
-  render: function() {  
-
-    // Fixme
-    var now = moment('2016-03-09').valueOf(); 
-
+  render: function() {
     return (
       <div className="container-fluid">
         <div className="row">
@@ -43,7 +38,7 @@ var Report = React.createClass({
         </div>
         <div className="row">
           <div className="col-md-12">
-            <reports.Overview config={this.props.config} grouping="utility" now={now} />
+            <reports.Overview config={this.props.config} />
           </div>
         </div>
       </div>

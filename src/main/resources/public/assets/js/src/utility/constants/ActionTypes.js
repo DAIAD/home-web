@@ -143,7 +143,11 @@ var types = mirrorToPath({
       SET_DATA: null,
     },
   },
-    
+  
+  overview: {
+    SET_REFERENCE_TIME: null,
+  },
+
   // Alerts
 
  
