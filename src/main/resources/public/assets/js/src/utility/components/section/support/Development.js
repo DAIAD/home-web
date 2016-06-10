@@ -215,7 +215,6 @@ var Development = React.createClass({
     };
     
     var onChangeTimeline = function(value, label, index) {
-      console.log(label + ' - ' + value + ' -  ' + index);
       this.props.actions.getFeatures(this.props.query.timeline, value, 'Alicante');
     };
 

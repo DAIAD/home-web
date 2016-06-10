@@ -82,7 +82,6 @@ var _extractTimeline = function(meters, areas) {
       var timestamps = this.getTimestamps();
       if (timestamps.length > 0) {
         timestamp = timestamps[0];
-        console.log(timestamp);
       } else {
         return geojson;
       }
@@ -90,7 +89,6 @@ var _extractTimeline = function(meters, areas) {
     if (!label) {
       if (Object.keys(this[timestamp])) {
         label = Object.keys(this[timestamp])[0];
-        console.log(label);
       } else {
         return geojson;
       }
@@ -118,7 +116,6 @@ var _extractTimeline = function(meters, areas) {
       });
     }
 
-    console.log(geojson);
     return geojson;
   };
 
@@ -157,7 +154,6 @@ var mapReducer = function(state, action) {
       });
 
     case types.GET_FEATURES:
-      console.log('GET_FEATURES');
       var features = (state.timeline ? state.timeline.getFeatures(action.timestamp, action.label) : null);
 
       return Object.assign({}, state, {
@@ -170,7 +166,6 @@ var mapReducer = function(state, action) {
 };
 
 var dashboard = function(state, action) {
-  console.log(action.type);
   switch (action.type) {
     case types.TIMELINE_REQUEST:
       return Object.assign({}, state, {

@@ -13,7 +13,8 @@ module.exports = function(grunt) {
           'src/main/resources/public/assets/js/build/utility/*.js',
           'src/main/resources/public/assets/js/build/utility/*.js.map',
           'src/main/resources/public/assets/js/build/utility/*.min.js',
-          'src/main/resources/public/assets/js/build/utility/*.min.js.map'
+          'src/main/resources/public/assets/js/build/utility/*.min.js.map',
+          'src/main/resources/public/assets/js/build/utility/i18n/*.js'
         ]
       },
       home: {
@@ -21,7 +22,8 @@ module.exports = function(grunt) {
           'src/main/resources/public/assets/js/build/home/*.js',
           'src/main/resources/public/assets/js/build/home/*.js.map',
           'src/main/resources/public/assets/js/build/home/*.min.js',
-          'src/main/resources/public/assets/js/build/home/*.min.js.map'
+          'src/main/resources/public/assets/js/build/home/*.min.js.map',
+          'src/main/resources/public/assets/js/build/home/i18n/*.js'
         ],
       },
       'vendor': {

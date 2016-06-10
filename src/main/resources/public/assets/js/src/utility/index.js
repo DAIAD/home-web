@@ -32,7 +32,7 @@ var getCookie = function(name) {
   }
 };
 
-var locale = getCookie('daiad-utility-locale') || 'en';
+var locale = getCookie('daiad-utility-locale') || 'en-GB';
 var mustRefresh = (getCookie('daiad-utility-session') === 'true');
 
 // Chain preliminary actions needed before any rendering takes place

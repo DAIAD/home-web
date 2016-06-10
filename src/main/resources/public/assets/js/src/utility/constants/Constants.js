@@ -1,5 +1,5 @@
 const constants = {
-	LOCALES: ["en", "el", "de", "es"],
+	LOCALES: ["en-GB", "el", "de", "es"]
 };
 
 module.exports = constants;
