@@ -1,3 +1,4 @@
+    /*
 /**
  * Dashboard Actions module.
  * Action creators for Dashboard section
@@ -93,7 +94,8 @@ const updateInfobox = function(id, data) {
     });
 
     dispatch(updateLayoutItem(id, data.display));
-    
+
+    dispatch(setDirty()); 
     dispatch(QueryActions.fetchInfoboxData(Object.assign({}, getState().section.dashboard.infobox.find(i=>i.id===id))))
     .then(res => dispatch(setInfoboxData(id, res)))
     .catch(error => { 
@@ -139,9 +141,12 @@ const setInfoboxData = function(id, data) {
  * 
  */
 const removeInfobox = function(id) {
-  return {
-    type: types.DASHBOARD_REMOVE_INFOBOX,
-    id: id
+  return function(dispatch, getState) {
+    dispatch(setDirty());
+    dispatch({
+      type: types.DASHBOARD_REMOVE_INFOBOX,
+      id: id
+    });
   };
 };
 
@@ -185,8 +190,10 @@ const fetchAllInfoboxesData = function() {
           return Promise.resolve(); 
         }
         return dispatch(QueryActions.fetchInfoboxData(infobox))
-      .then(res =>  
-          dispatch(setInfoboxData(id, res)))
+      .then(res =>  {
+          dispatch(setInfoboxData(id, res));
+          //dispatch(resetDirty());
+      })
         .catch(error => { 
           console.error('Caught error in infobox data fetch:', error); 
           dispatch(setInfoboxData(id, {data: [], error: 'Oops sth went wrong, replace with sth friendly'})); });
@@ -195,27 +202,70 @@ const fetchAllInfoboxesData = function() {
   };
 };
 
+const setInfoboxToAdd = function(data) {
+  return {
+    type: types.DASHBOARD_SET_INFOBOX_TEMP,
+    data
+  };
+};
+
+const resetInfoboxToAdd = function() {
+  return {
+    type: types.DASHBOARD_RESET_INFOBOX_TEMP,
+  };
+};
 
 /**
  * Updates layout for react-grid-layout
  * @param {Object} layout - layout object produced by react-grid-layout
  * 
  */
-const updateLayout = function(layout) {
+const updateLayout = function(layout, dirty=true) {
+  return function(dispatch, getState) {
+    if (dirty) {
+      dispatch(setDirty());
+    }
+    dispatch({
+      type: types.DASHBOARD_UPDATE_LAYOUT,
+      layout
+    });
+  };
+};
+
+/**
+ * Sets dirty mode for dashboard in order to prompt for save 
+ * 
+ */
+const setDirty = function() {
   return {
-    type: types.DASHBOARD_UPDATE_LAYOUT,
-    layout
+    type: types.DASHBOARD_SET_DIRTY
+  };
+};
+
+/**
+ * Resets mode to clean after save or user dismiss 
+ * 
+ */
+
+const resetDirty = function() {
+  return {
+    type: types.DASHBOARD_RESET_DIRTY
   };
 };
 
 module.exports = {
+  resetDirty,
+  setDirty,
   switchMode,
   addInfobox,
   updateInfobox,
   setInfoboxData,
+  setInfoboxes,
   updateLayoutItem,
   updateLayout,
   removeInfobox,
   fetchAllInfoboxesData,
+  setInfoboxToAdd,
+  resetInfoboxToAdd
 };
 

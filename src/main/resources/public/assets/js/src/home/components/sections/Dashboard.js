@@ -7,7 +7,8 @@ var { injectIntl, FormattedMessage, FormattedRelative } = require('react-intl');
 
 var { Responsive, WidthProvider } = require('react-grid-layout');
 var ResponsiveGridLayout = WidthProvider(Responsive);
-const { reduxForm } = require('redux-form');
+//const { reduxForm } = require('redux-form');
+var { Link } = require('react-router');
 
 var PureRenderMixin = require('react-addons-pure-render-mixin');
 
@@ -50,13 +51,20 @@ function InfoBox (props) {
         <div className='header-left'>
           <h4>{infobox.title}</h4>
         </div>
+        <div className='header-left'>
+          {
+            (() => type === 'forecast' || type === 'budget' || type === 'comparison' || type === 'breakdown' ? <h5>STATIC</h5> : <span/> 
+            )()
+          }
+        </div>
 
         <div className='header-right'>
           <div style={{marginRight:10}}>
             {
-              displays.map(t => t.id!==display?(
+              /*displays.map(t => t.id!==display?(
                 <a key={t.id} onClick={() => updateInfobox(id, {display:t.id})} style={{marginLeft:5}}>{t.title}</a>
                 ):<span key={t}/>)
+                */
             }
           </div>
           
@@ -155,20 +163,19 @@ function TipBox (props) {
 
 function InfoPanel (props) {
   const { mode, layout, infoboxes, updateLayout, switchMode,  updateInfobox, removeInfobox, chartFormatter, intl, periods, displays } = props;
-
   return (
-    <div>
       <ResponsiveGridLayout 
         className='layout'
-        layouts={{lg:layout}}
-        breakpoints={{lg:1370, md: 900, sm: 600, xs: 480, xxs: 200}}
+        layouts={{sm: layout}}
+        breakpoints={{sm: 850}}
+        cols={{sm: 4}}
         rowHeight={160}
-        cols={{lg:8, md: 6, sm: 4, xs: 2, xxs: 1}}
         draggableHandle='.infobox-header'
         isDraggable={true}
         isResizable={false}
-        onLayoutChange={(layout, layouts) => { 
-          //updateLayout(layout);  
+        onBreakpointChange={(newBreakpoint, newCols) => {
+          console.log('new break!', newBreakpoint, newCols);
+          //return newCols;
         }}
         onResizeStop={(layout, oldItem, newItem, placeholder) => { 
           updateLayout(layout);  
@@ -179,6 +186,7 @@ function InfoPanel (props) {
        >
        {
          infoboxes.map(function(infobox) {
+           console.log('mapping infoboxes', infobox, infobox.id);
            return (
              <div key={infobox.id}>
                <InfoBox {...{mode, periods, displays, chartFormatter, infobox, updateInfobox, removeInfobox, intl}} /> 
@@ -187,32 +195,43 @@ function InfoPanel (props) {
          })
        }
       </ResponsiveGridLayout>
-     </div>
   );
 }
 
 function ButtonToolbar (props) {
-  const { switchMode, saveToProfile, mode } = props;
+  const { switchMode, setDirty, resetDirty, saveToProfile, mode, dirty } = props;
   return (
-      <bs.ButtonToolbar style={{float: 'right', marginRight: 20}}>
-        <bs.Button onClick={()=> switchMode("add")} active={false}>Add</bs.Button>
+      <div className='dashboard-button-toolbar'>
+        <a className='btn dashboard-add-btn' onClick={()=> switchMode("add")} active={false}>Add Widget</a>
         {
-          (()=> mode==="save"?(
-            <bs.Button onClick={()=> saveToProfile()} bsStyle="primary" active={false}>Save</bs.Button>
+          (()=> dirty === true ?(
+            <div className='dashboard-save'>
+            <h6>Save changes?</h6>
+              <div className='dashboard-save-prompt'>
+                <a className='btn dashboard-save-btn' onClick={()=> saveToProfile().then(() => resetDirty())} active={false}>Yes</a>
+                <a className='btn dashboard-discard-btn' onClick={()=> resetDirty()} active={false}>No</a>
+              </div>
+            </div>
             ):(
-            null
+            <div/>
             ))()
         }
-      </bs.ButtonToolbar>
+      </div>
   );
 }
 
 function AddInfoboxForm (props) {
-  const {fields: {title, type, metric, deviceType}, metrics, types, deviceTypes} = props;
+  const {infoboxToAdd, metrics, types, deviceTypes, setInfoboxToAdd, resetInfoboxToAdd } = props;
+  const { deviceType, title, type } = infoboxToAdd;
   return (
-    <form>
+    <div>
       
-      <bs.Tabs className="history-time-nav" position='top' tabWidth={3} activeKey={deviceType.value} onSelect={(key) => deviceType.onChange(key)}>
+      <bs.Tabs 
+        className="history-time-nav" 
+        position='top' tabWidth={3} 
+        activeKey={deviceType} 
+        onSelect={(key) => setInfoboxToAdd({deviceType: key, title: null, type: key === 'METER' ? 'totalDifferenceStat' : 'totalVolumeStat'})}
+        >
                {
                 deviceTypes.map(devType =>
                             <bs.Tab key={devType.id} eventKey={devType.id} title={devType.title} />)
@@ -224,40 +243,39 @@ function AddInfoboxForm (props) {
         <div className="add-infobox-left">
           
           <div>
-            <label>Type</label>
-            <select
-              {...type}
-              value={type.value}>
-              {
-                types.map((type, idx) =>
-                  <option key={idx} value={type.id}>{type.title}</option>
-                )
-              }
-            </select>
+            <ul className='add-infobox-types'>
+            {
+              types.map((t, idx) =>
+                        <li key={idx}>
+                          <a className={(type ===t.id)?'selected':''}  onClick={() => setInfoboxToAdd({type: t.id, title: null})} value={t.id}>
+                            {t.title}</a>
+                        </li>
+              )
+            }
+          </ul>
           </div>    
         </div>
 
         <div className="add-infobox-right">
           <div>
-            <input type='text' placeholder='Enter title...' {...title}/>
+            <input 
+              type='text' 
+              placeholder='Enter title...'
+              value={title || (types.find(t => t.id === type) ? types.find(t => t.id === type).title : null)}
+              onChange={(e) => setInfoboxToAdd({title: e.target.value})}
+            />
+            <p>{types.find(t => t.id === infoboxToAdd.type) ? types.find(t => t.id === infoboxToAdd.type).description :null }</p>
           </div>
           
         </div>
       </div>
        
-  </form>
+    </div>
   );
 }
 
-const AddInfobox = reduxForm({
-    form: 'addInfobox',
-    fields: ['title', 'type', 'deviceType'],
-    initialValues: {deviceType: 'AMPHIRO', type: 'totalVolume'}
-})(AddInfoboxForm);
-
-
 function AddInfoboxModal (props) {
-  const { showModal, switchMode, addInfobox, metrics, types, deviceTypes, initialValues } = props;
+  const { showModal, switchMode, addInfobox, metrics, types, deviceTypes, infoboxToAdd, setInfoboxToAdd, resetInfoboxToAdd } = props;
   return (
     <bs.Modal animation={false} className='add-infobox-modal' show={showModal} onHide={() => switchMode('normal')} bsSize="large" backdrop='static'>
         <bs.Modal.Header closeButton>
@@ -267,7 +285,7 @@ function AddInfoboxModal (props) {
         </bs.Modal.Header>
         <bs.Modal.Body>
           
-          <AddInfobox {...{metrics, types, deviceTypes}}/> 
+          <AddInfoboxForm {...{infoboxToAdd, metrics, types, deviceTypes, setInfoboxToAdd, resetInfoboxToAdd}}/> 
 
         </bs.Modal.Body>
         <bs.Modal.Footer>
@@ -285,7 +303,7 @@ var Dashboard = React.createClass({
   componentWillMount: function() {
     const { fetchAllInfoboxesData, switchMode } = this.props;
     //switchMode("normal");
-    fetchAllInfoboxesData();
+    //fetchAllInfoboxesData();
 
   },
   /*
@@ -305,16 +323,25 @@ var Dashboard = React.createClass({
   },
   */
   render: function() {
-    const { firstname, mode, switchMode, addInfobox, saveToProfile,  amphiros, meters, metrics , types, deviceTypes, initialValues } = this.props;
+    const { firstname, mode, dirty, switchMode, addInfobox, saveToProfile, setDirty, resetDirty, deviceCount, meterCount, metrics , types, deviceTypes, infoboxToAdd, setInfoboxToAdd, resetInfoboxToAdd } = this.props;
     return (
       <MainSection id="section.dashboard">
-        <SayHello firstname={firstname} />
-        <div className='pull-right'>
-          <ButtonToolbar {...{switchMode, saveToProfile, mode}}/>
+        <div className='dashboard'>
+          <div className='dashboard-infopanel'>
+
+            <SayHello firstname={firstname} />
+            <AddInfoboxModal {...{showModal:mode==='add', switchMode, addInfobox, infoboxToAdd,  metrics, types, deviceTypes, setInfoboxToAdd, resetInfoboxToAdd }}/>
+            
+            <InfoPanel {...this.props} />
+          </div>
+          <div className='dashboard-right'>
+            <div className='dashboard-device-info'>
+              <Link to='/settings/devices'><h6><img src={`${IMAGES}/amphiro_small.svg`} /><span>{deviceCount > 1 ? `${deviceCount} devices` : (deviceCount == 1 ? `1 device` :`No devices`)}</span></h6></Link>
+              <Link to='/settings/devices'><h6><img src={`${IMAGES}/water-meter.svg`} /><span>{meterCount > 1 ? `${meterCount} SWMs` : (meterCount == 1 ? `1 SWM` :`No SWM`)}</span></h6></Link>
+            </div>
+            <ButtonToolbar {...{switchMode, setDirty, resetDirty, saveToProfile, mode, dirty}}/>
+          </div>
         </div>
-        <AddInfoboxModal {...{showModal:mode==='add', switchMode, addInfobox, metrics, types, deviceTypes, initialValues}}/>
-        
-        <InfoPanel {...this.props} />
         
       </MainSection>
     );

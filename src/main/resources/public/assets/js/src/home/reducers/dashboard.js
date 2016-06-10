@@ -3,19 +3,25 @@ var timeUtil = require ('../utils/time');
 
 const initialState = {
   mode: "normal",
+  dirty: false,
   layout: [
     {i: "1", x:0, y:0, w:2, h:2},
     {i: "2", x:2, y:0, w:2, h:2},
     {i: "3", x:2, y:0, w:2, h:1},
-    {i: "4", x:4, y:0, w:2, h:2},
-    {i: "5", x:4, y:1, w:2, h:1},
-    {i: "6", x:0, y:2, w:2, h:2},
+    {i: "4", x:0, y:0, w:2, h:2},
+    {i: "5", x:0, y:1, w:2, h:1},
+    {i: "6", x:2, y:2, w:2, h:2},
     {i: "7", x:0, y:2, w:2, h:2},
-    {i: "8", x:4, y:2, w:2, h:2},
+    {i: "8", x:2, y:2, w:2, h:2},
     {i: "9", x:0, y:3, w:2, h:1},
   ],
+  infoboxToAdd: {
+    deviceType: 'METER',
+    type: 'totalDifferenceStat',
+    title : 'Total volume Stat',
+  },
   infobox: [
-      {
+       {
         id: "1", 
         title: "Water",
         type: "total",
@@ -55,7 +61,6 @@ const initialState = {
         metric: "difference",
         data: [],
       },
-      
     {
       id: "5", 
       title: "Efficiency",
@@ -193,6 +198,29 @@ var dashboard = function (state, action) {
       });
     }
 
+  case types.DASHBOARD_SET_INFOBOX_TEMP: {
+      return Object.assign({}, state, {
+        infoboxToAdd: Object.assign({}, state.infoboxToAdd, action.data) 
+      });
+  }
+
+  case types.DASHBOARD_RESET_INFOBOX_TEMP: {
+      return Object.assign({}, state, {
+        infoboxToAdd: initialState.infoboxToAdd 
+      });
+  }
+
+  case types.DASHBOARD_SET_DIRTY: {
+    return Object.assign({}, state, {
+      dirty: true
+      });
+  }
+
+  case types.DASHBOARD_RESET_DIRTY: {
+    return Object.assign({}, state, {
+      dirty: false
+      });
+  }
   case types.USER_RECEIVED_LOGOUT:
     return Object.assign({}, initialState);
 
