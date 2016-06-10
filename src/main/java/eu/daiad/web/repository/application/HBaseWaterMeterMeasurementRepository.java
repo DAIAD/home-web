@@ -10,7 +10,6 @@ import java.util.NavigableMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -45,10 +44,10 @@ import eu.daiad.web.model.query.GroupDataSeries;
 import eu.daiad.web.model.query.MeterUserDataPoint;
 import eu.daiad.web.model.query.RankingDataPoint;
 import eu.daiad.web.model.query.UserDataPoint;
-import eu.daiad.web.repository.BaseRepository;
+import eu.daiad.web.repository.AbstractHBaseRepository;
 
 @Repository()
-public class HBaseWaterMeterMeasurementRepository extends BaseRepository implements IWaterMeterMeasurementRepository {
+public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepository implements IWaterMeterMeasurementRepository {
 
     private static final Log logger = LogFactory.getLog(HBaseWaterMeterMeasurementRepository.class);
 
@@ -84,7 +83,7 @@ public class HBaseWaterMeterMeasurementRepository extends BaseRepository impleme
     private HBaseConnectionManager connection;
 
     @Override
-    public void storeData(String serial, WaterMeterMeasurementCollection data) {
+    public void store(String serial, WaterMeterMeasurementCollection data) {
         try {
             if ((data == null) || (data.getMeasurements() == null) || (data.getMeasurements().size() == 0)) {
                 return;
@@ -284,21 +283,6 @@ public class HBaseWaterMeterMeasurementRepository extends BaseRepository impleme
         System.arraycopy(timeBucketBytes, 0, rowKey, meterSerialHash.length, timeBucketBytes.length);
 
         return rowKey;
-    }
-
-    private byte[] appendLength(byte[] array) throws Exception {
-        byte[] length = { (byte) array.length };
-
-        return concatenate(length, array);
-    }
-
-    private byte[] concatenate(byte[] a, byte[] b) {
-        int lengthA = a.length;
-        int lengthB = b.length;
-        byte[] concat = new byte[lengthA + lengthB];
-        System.arraycopy(a, 0, concat, 0, lengthA);
-        System.arraycopy(b, 0, concat, lengthA, lengthB);
-        return concat;
     }
 
     @Override
@@ -571,32 +555,7 @@ public class HBaseWaterMeterMeasurementRepository extends BaseRepository impleme
         }
     }
 
-    private byte[] calculateTheClosestNextRowKeyForPrefix(byte[] rowKeyPrefix) {
-        // Essentially we are treating it like an 'unsigned very very long' and
-        // doing +1 manually.
-        // Search for the place where the trailing 0xFFs start
-        int offset = rowKeyPrefix.length;
-        while (offset > 0) {
-            if (rowKeyPrefix[offset - 1] != (byte) 0xFF) {
-                break;
-            }
-            offset--;
-        }
-
-        if (offset == 0) {
-            // We got an 0xFFFF... (only FFs) stopRow value which is
-            // the last possible prefix before the end of the table.
-            // So set it to stop at the 'end of the table'
-            return HConstants.EMPTY_END_ROW;
-        }
-
-        // Copy the right length of the original
-        byte[] newStopRow = Arrays.copyOfRange(rowKeyPrefix, 0, offset);
-        // And increment the last one
-        newStopRow[newStopRow.length - 1]++;
-        return newStopRow;
-    }
-
+    @Override
     public ArrayList<GroupDataSeries> query(ExpandedDataQuery query) throws ApplicationException {
         Table table = null;
         ResultScanner scanner = null;
@@ -836,14 +795,4 @@ public class HBaseWaterMeterMeasurementRepository extends BaseRepository impleme
         }
     }
 
-    private int inArray(ArrayList<byte[]> array, byte[] hash) {
-        int index = 0;
-        for (byte[] entry : array) {
-            if (Arrays.equals(entry, hash)) {
-                return index;
-            }
-            index++;
-        }
-        return -1;
-    }
 }

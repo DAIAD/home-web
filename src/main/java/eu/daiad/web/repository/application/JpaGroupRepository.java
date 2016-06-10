@@ -18,8 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.domain.application.GroupCommunity;
 import eu.daiad.web.domain.application.GroupSegment;
-import eu.daiad.web.model.error.ApplicationException;
-import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.group.Account;
 import eu.daiad.web.model.group.Cluster;
 import eu.daiad.web.model.group.Community;

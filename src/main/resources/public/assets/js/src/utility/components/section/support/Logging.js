@@ -49,7 +49,7 @@ var Logging = React.createClass({
   render: function() {
     var _t = this.context.intl.formatMessage;
       
-    var data = {
+    var tableConfiguration = {
       fields: [{
         name: 'id',
         title: 'Id',
@@ -99,19 +99,60 @@ var Logging = React.createClass({
         mode: Table.PAGING_SERVER_SIDE
       }
     };
+    
+    var resetButton = ( <div />);
+
+    if((this.props.logging.query.level) ||
+       (this.props.logging.query.account)) {
+      resetButton = (
+        <div style={{float: 'right', marginLeft: 20}}>
+          <Bootstrap.Button bsStyle='default' onClick={this.clearFilter}>Reset</Bootstrap.Button>
+        </div>
+      );
+    }
+
+    const filterOptions = (
+      <Bootstrap.ListGroupItem>
+        <div className="row">
+          <div className="col-md-2">
+            <Bootstrap.Input 
+              type='text' 
+               id='accountFilter' name='accountFilter' ref='accountFilter'
+               placeholder='Search by account ...' 
+               onChange={this.filterAccount}
+               onKeyPress={handleKeyPress.bind(this)} 
+               value={this.props.logging.query.account || ''} />
+              <span className='help-block'>Filter by account</span>
+          </div>
+          <div className="col-md-2">
+            <Select name='level'
+                    value={this.props.logging.query.level || 'UNDEFINED'}
+                    options={[
+                      { value: 'UNDEFINED', label: '-' },
+                      { value: 'DEBUG', label: 'DEBUG' },
+                      { value: 'INFO', label: 'INFO' },
+                      { value: 'WARN', label: 'WARN' },
+                      { value: 'ERROR', label: 'ERROR' }
+                    ]}
+                    onChange={this.filterLevel}
+                    clearable={false} 
+                    searchable={false} className="form-group"/>
+            <span className='help-block'>Filter by level</span>  
+          </div>
+          <div className="col-md-4" style={{float: 'right'}}>
+            {resetButton}
+            <div style={{float: 'right'}}>
+              <Bootstrap.Button bsStyle='primary' onClick={this.refresh}>Refresh</Bootstrap.Button>
+            </div>
+          </div>
+        </div>
+      </Bootstrap.ListGroupItem>
+    );
 
     const dataNotFound = (
         <span>No events found.</span>
     );
     
-    const searchHeader = (
-      <span>
-        <i className='fa fa-search fa-fw'></i>
-        <span style={{ paddingLeft: 4 }}>Search</span>
-        <span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}></span>
-      </span>
-    );
-
     const eventHeader = (
       <span>
         <i className='fa fa-table fa-fw'></i>
@@ -129,55 +170,11 @@ var Logging = React.createClass({
         </div>
         <div className="row">
           <div className="col-md-12">
-            <Bootstrap.Panel header={searchHeader}>
-              <Bootstrap.ListGroup fill>
-                <Bootstrap.ListGroupItem>
-                  <div className="row">
-                    <div className="col-md-2">
-                      <Bootstrap.Input 
-                        type='text' 
-                         id='accountFilter' name='accountFilter' ref='accountFilter'
-                         placeholder='Search by account ...' 
-                         onChange={this.filterAccount}
-                         onKeyPress={handleKeyPress.bind(this)} 
-                         value={this.props.logging.query.account || ''} />
-                        <span className='help-block'>Filter by account</span>
-                    </div>
-                    <div className="col-md-2">
-                      <Select name='level'
-                              value={this.props.logging.query.level || 'UNDEFINED'}
-                              options={[
-                                { value: 'UNDEFINED', label: '-' },
-                                { value: 'DEBUG', label: 'DEBUG' },
-                                { value: 'INFO', label: 'INFO' },
-                                { value: 'WARN', label: 'WARN' },
-                                { value: 'ERROR', label: 'ERROR' }
-                              ]}
-                              onChange={this.filterLevel}
-                              clearable={false} 
-                              searchable={false} className="form-group"/>
-                      <span className='help-block'>Filter by level</span>  
-                    </div>
-                    <div className="col-md-4" style={{float: 'right'}}>
-                      <div style={{float: 'right'}}>
-                        <Bootstrap.Button bsStyle='default' onClick={this.clearFilter}>Reset</Bootstrap.Button>
-                      </div>
-                      <div style={{float: 'right', marginRight: 20}}>
-                        <Bootstrap.Button bsStyle='primary' onClick={this.refresh}>Refresh</Bootstrap.Button>
-                      </div>
-                    </div>
-                  </div>
-                </Bootstrap.ListGroupItem>
-              </Bootstrap.ListGroup>
-            </Bootstrap.Panel>
-          </div>
-        </div>
-        <div className="row">
-          <div className="col-md-12">
             <Bootstrap.Panel header={eventHeader}>
               <Bootstrap.ListGroup fill>
+                {filterOptions}
                 <Bootstrap.ListGroupItem> 
-                  <Table  data={data} 
+                  <Table  data={tableConfiguration} 
                           onPageIndexChange={this.onPageIndexChange}
                           template={{empty : dataNotFound}}
                   ></Table>

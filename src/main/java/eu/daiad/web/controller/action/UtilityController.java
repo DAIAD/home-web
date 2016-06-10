@@ -10,8 +10,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.model.utility.UtilityInfoResponse;
 import eu.daiad.web.repository.application.IUtilityRepository;
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 /**
  * Provides actions for querying utility data
@@ -44,4 +49,37 @@ public class UtilityController extends BaseController {
 		}
 		return response;
 	}
+
+	@RequestMapping(value = "/action/utility/fetch/corresponding", method = RequestMethod.GET, produces = "application/json")
+	@Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
+	public RestResponse getCorrespondingUtilities(@AuthenticationPrincipal AuthenticatedUser user) {
+		RestResponse response = new RestResponse();                
+		try {
+                    
+            UtilityInfoResponse utilities = new UtilityInfoResponse(repository.getUtilities());
+                        
+            List<UtilityInfo> utilityResponse = new ArrayList<>();                    
+            String utilityName;
+            if(user.getUsername().contains("alicante")){
+                utilityName = "Alicante";
+            }
+            else if (user.getUsername().contains("albans")){
+                utilityName = "St Albans";
+            }
+            else{
+                return utilities;
+            }
+            for(UtilityInfo utility : utilities.getUtilitiesInfo()){     
+                if(utility.getName().equalsIgnoreCase(utilityName)){
+                    utilityResponse.add(utility);
+                    return new UtilityInfoResponse(utilityResponse);
+                }
+            }       
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
+			response.add(this.getError(ex));
+		}
+		return response;
+	}        
+        
 }

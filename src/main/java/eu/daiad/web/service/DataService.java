@@ -41,6 +41,8 @@ import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.EnumRankingType;
 import eu.daiad.web.model.query.ExpandedDataQuery;
 import eu.daiad.web.model.query.ExpandedPopulationFilter;
+import eu.daiad.web.model.query.ForecastQuery;
+import eu.daiad.web.model.query.ForecastQueryResponse;
 import eu.daiad.web.model.query.GroupPopulationFilter;
 import eu.daiad.web.model.query.GroupSpatialFilter;
 import eu.daiad.web.model.query.LabeledGeometry;
@@ -54,6 +56,7 @@ import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.ISpatialRepository;
 import eu.daiad.web.repository.application.IUserRepository;
+import eu.daiad.web.repository.application.IWaterMeterForecastRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 
 @Service
@@ -78,7 +81,10 @@ public class DataService extends BaseService implements IDataService {
     IAmphiroTimeOrderedRepository amphiroRepository;
 
     @Autowired
-    IWaterMeterMeasurementRepository meterRepository;
+    IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
+    
+    @Autowired
+    IWaterMeterForecastRepository waterMeterForecastRepository;
 
     protected String getMessage(ErrorCode error) {
         return messageSource.getMessage(error.getMessageKey(), null, error.getMessageKey(), null);
@@ -101,6 +107,142 @@ public class DataService extends BaseService implements IDataService {
     }
 
     private void validate(DataQuery query, DataQueryResponse response) {
+        // Time
+        if (query.getTime() == null) {
+            response.add(this.getError(QueryErrorCode.TIME_FILTER_NOT_SET));
+        } else {
+            switch (query.getTime().getType()) {
+                case ABSOLUTE:
+                    if (query.getTime().getEnd() == null) {
+                        response.add(this.getError(QueryErrorCode.TIME_FILTER_ABSOLUTE_END_NOT_SET));
+                    }
+                    break;
+                case SLIDING:
+                    if (query.getTime().getDuration() == null) {
+                        response.add(this.getError(QueryErrorCode.TIME_FILTER_SLIDING_DURATION_NOT_SET));
+                    }
+                    break;
+                default:
+                    response.add(this.getError(QueryErrorCode.TIME_FILTER_INVALID));
+                    break;
+            }
+        }
+
+        // Spatial
+        if ((query.getSpatial() != null) && (!query.getSpatial().isEmpty())) {
+            for (SpatialFilter spatialFilter : query.getSpatial()) {
+                switch (spatialFilter.getType()) {
+                    case CONSTRAINT:
+                        ConstraintSpatialFilter constraint = (ConstraintSpatialFilter) spatialFilter;
+
+                        if (constraint.getGeometry() == null) {
+                            response.add(this.getError(QueryErrorCode.SPATIAL_FILTER_GEOMETRY_NOT_SET));
+                        }
+                        switch (constraint.getOperation()) {
+                            case CONTAINS:
+                                break;
+                            case INTERSECT:
+                                break;
+                            case DISTANCE:
+                                if (constraint.getDistance() == null) {
+                                    response.add(this.getError(QueryErrorCode.SPATIAL_FILTER_DISTANCE_NOT_SET));
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+
+                        break;
+                    default:
+                        // Ignore
+                        break;
+                }
+            }
+        }
+
+        // Population
+        if ((query.getPopulation() == null) || (query.getPopulation().size() == 0)) {
+            response.add(this.getError(QueryErrorCode.POPULATION_FILTER_NOT_SET));
+        } else {
+            for (PopulationFilter filter : query.getPopulation()) {
+                switch (filter.getType()) {
+                    case USER:
+                        UserPopulationFilter userFilter = (UserPopulationFilter) filter;
+                        if ((userFilter.getUsers() == null) || (userFilter.getUsers().size() == 0)) {
+                            response.add(this.getError(QueryErrorCode.POPULATION_FILTER_IS_EMPTY));
+                        }
+                        break;
+                    case GROUP:
+                        GroupPopulationFilter groupFilter = (GroupPopulationFilter) filter;
+                        if (groupFilter.getGroup() == null) {
+                            response.add(this.getError(QueryErrorCode.POPULATION_FILTER_IS_EMPTY));
+                        }
+                        break;
+                    case CLUSTER:
+                        ClusterPopulationFilter clusterFilter = (ClusterPopulationFilter) filter;
+                        int propertyCount = 0;
+                        if (clusterFilter.getCluster() != null) {
+                            propertyCount++;
+                        }
+                        if (!StringUtils.isBlank(clusterFilter.getName())) {
+                            propertyCount++;
+                        }
+                        if ((clusterFilter.getClusterType() != null)
+                                        && (!clusterFilter.getClusterType().equals(EnumClusterType.UNDEFINED))) {
+                            propertyCount++;
+                        }
+                        if (propertyCount != 1) {
+                            response.add(this.getError(QueryErrorCode.POPULATION_FILTER_INVALID_CLUSTER));
+                        }
+                        break;
+                    case UTILITY:
+                        UtilityPopulationFilter utilityFilter = (UtilityPopulationFilter) filter;
+                        if (utilityFilter.getUtility() == null) {
+                            response.add(this.getError(QueryErrorCode.POPULATION_FILTER_IS_EMPTY));
+                        }
+                        break;
+                    default:
+                        response.add(this.getError(QueryErrorCode.POPULATION_FILTER_INVALID));
+                        break;
+
+                }
+
+                // Ranking
+                if (filter.getRanking() != null) {
+                    if (filter.getRanking().getType().equals(EnumRankingType.UNDEFINED)) {
+                        response.add(this.getError(QueryErrorCode.RANKING_TYPE_NOT_SET));
+                    }
+                    if ((filter.getRanking().getLimit() == null) || (filter.getRanking().getLimit() < 1)) {
+                        response.add(this.getError(QueryErrorCode.RANKING_INVALID_LIMIT));
+                    }
+                    if (filter.getRanking().getField().equals(EnumDataField.UNDEFINED)) {
+                        response.add(this.getError(QueryErrorCode.RANKING_INVALID_FIELD));
+                    }
+                    if (filter.getRanking().getMetric().equals(EnumMetric.UNDEFINED)) {
+                        response.add(this.getError(QueryErrorCode.RANKING_INVALID_METRIC));
+                    }
+                    if ((query.getSource().equals(EnumMeasurementDataSource.METER))
+                                    || (query.getSource().equals(EnumMeasurementDataSource.BOTH))) {
+                        if (!filter.getRanking().getMetric().equals(EnumMetric.SUM)) {
+                            response.add(this.getError(QueryErrorCode.RANKING_INVALID_METRIC));
+                        }
+                        if (!filter.getRanking().getField().equals(EnumDataField.VOLUME)) {
+                            response.add(this.getError(QueryErrorCode.RANKING_INVALID_FIELD));
+                        }
+                    }
+                }
+            }
+        }
+
+        // Metrics
+        for (EnumMetric m : query.getMetrics()) {
+            if (m.equals(EnumMetric.UNDEFINED)) {
+                response.add(this.getError(QueryErrorCode.METRIC_INVALID));
+            }
+        }
+    }
+
+    private void validate(ForecastQuery query, ForecastQueryResponse response) {
         // Time
         if (query.getTime() == null) {
             response.add(this.getError(QueryErrorCode.TIME_FILTER_NOT_SET));
@@ -576,15 +718,341 @@ public class DataService extends BaseService implements IDataService {
             switch (query.getSource()) {
                 case BOTH:
                     response.setDevices(amphiroRepository.query(expandedQuery));
-                    response.setMeters(meterRepository.query(expandedQuery));
+                    response.setMeters(waterMeterMeasurementRepository.query(expandedQuery));
                     break;
                 case AMPHIRO:
                     response.setDevices(amphiroRepository.query(expandedQuery));
                     break;
                 case METER:
-                    response.setMeters(meterRepository.query(expandedQuery));
+                    response.setMeters(waterMeterMeasurementRepository.query(expandedQuery));
                     break;
             }
+
+            return response;
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex);
+        }
+    }
+
+    @Override
+    public ForecastQueryResponse execute(ForecastQuery query) {
+        try {
+            // Get authenticated user if any exists
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            AuthenticatedUser authenticatedUser = null;
+
+            if ((authentication != null) && (authentication.getPrincipal() instanceof AuthenticatedUser)) {
+                authenticatedUser = (AuthenticatedUser) authentication.getPrincipal();
+            }
+
+            // If time zone is not set, use the current user's time zone
+            DateTimeZone timezone = null;
+
+            if (StringUtils.isBlank(query.getTimezone())) {
+                if (authenticatedUser != null) {
+                    timezone = DateTimeZone.forID(authenticatedUser.getTimezone());
+                } else {
+                    // If there is no authenticated user, user default UTC time
+                    // zone
+                    timezone = DateTimeZone.UTC;
+                }
+            } else {
+                timezone = DateTimeZone.forID(query.getTimezone());
+            }
+
+            ForecastQueryResponse response = new ForecastQueryResponse(timezone);
+
+            // Validate query
+            this.validate(query, response);
+            if (!response.getSuccess()) {
+                return response;
+            }
+
+            // Create new query
+            ExpandedDataQuery expandedQuery = new ExpandedDataQuery(timezone);
+
+            // Separate spatial filters from simple constraints
+            List<ConstraintSpatialFilter> spatialConstraints = new ArrayList<ConstraintSpatialFilter>();
+            List<SpatialFilter> spatialFilters = new ArrayList<SpatialFilter>();
+
+            if (query.getSpatial() != null) {
+                for (SpatialFilter spatialFilter : query.getSpatial()) {
+                    switch (spatialFilter.getType()) {
+                        case CONSTRAINT:
+                            spatialConstraints.add((ConstraintSpatialFilter) spatialFilter);
+                            break;
+                        default:
+                            spatialFilters.add(spatialFilter);
+                            break;
+                    }
+                }
+            }
+
+            // Spatial groups
+            List<LabeledGeometry> areas = new ArrayList<LabeledGeometry>();
+
+            // Expand spatial filters
+            for (SpatialFilter spatialFilter : spatialFilters) {
+                switch (spatialFilter.getType()) {
+                    case CUSTOM:
+                        CustomSpatialFilter customSpatialFilter = (CustomSpatialFilter) spatialFilter;
+                        for (LabeledGeometry area : customSpatialFilter.getGeometries()) {
+                            areas.add(area);
+                        }
+                        break;
+                    case AREA:
+                        AreaSpatialFilter areaSpatialQuery = (AreaSpatialFilter) spatialFilter;
+
+                        for (UUID key : areaSpatialQuery.getAreas()) {
+                            AreaGroupMemberEntity areaEntity = spatialRepository.getAreaByKey(key);
+
+                            areas.add(new LabeledGeometry(areaEntity.getTitle(), areaEntity.getGeometry()));
+                        }
+
+                        break;
+                    case GROUP:
+                        GroupSpatialFilter groupSpatialFilter = (GroupSpatialFilter) spatialFilter;
+
+                        for (AreaGroupMemberEntity areaEntity : spatialRepository
+                                        .getAreasByAreaGroupKey(groupSpatialFilter.getGroup())) {
+                            areas.add(new LabeledGeometry(areaEntity.getTitle(), areaEntity.getGeometry()));
+                        }
+                        break;
+                    default:
+                        // Ignore
+                        break;
+                }
+            }
+
+            // Helper store for caching user location
+            Map<UUID, Geometry> userLocations = new HashMap<UUID, Geometry>();
+
+            // Step 1: Generate groups based on the population
+            ArrayList<ExpandedPopulationFilter> populationGroups = new ArrayList<ExpandedPopulationFilter>();
+
+            if ((query.getPopulation() != null) && (!query.getPopulation().isEmpty())) {
+                MessageDigest md = MessageDigest.getInstance("MD5");
+
+                for (int p = 0; p < query.getPopulation().size(); p++) {
+                    PopulationFilter filter = query.getPopulation().get(p);
+
+                    List<UUID> filterUsers = null;
+                    switch (filter.getType()) {
+                        case USER:
+                            filterUsers = ((UserPopulationFilter) filter).getUsers();
+                            break;
+                        case GROUP:
+                            filterUsers = groupRepository.getGroupMemberKeys(((GroupPopulationFilter) filter)
+                                            .getGroup());
+                            break;
+                        case CLUSTER:
+                            ClusterPopulationFilter clusterFilter = (ClusterPopulationFilter) filter;
+
+                            List<eu.daiad.web.model.group.Group> groups = null;
+
+                            if (clusterFilter.getCluster() != null) {
+                                groups = groupRepository.getClusterByKeySegments(clusterFilter.getCluster());
+                            } else if ((clusterFilter.getClusterType() != null)
+                                            && (!clusterFilter.getClusterType().equals(EnumClusterType.UNDEFINED))) {
+                                groups = groupRepository.getClusterByTypeSegments(clusterFilter.getClusterType());
+                            } else if (!StringUtils.isBlank(clusterFilter.getName())) {
+                                groups = groupRepository.getClusterByNameSegments(clusterFilter.getName());
+                            }
+
+                            for (eu.daiad.web.model.group.Group group : groups) {
+                                if (clusterFilter.getRanking() == null) {
+                                    query.getPopulation().add(
+                                                    new GroupPopulationFilter(group.getName(), group.getKey()));
+                                } else {
+                                    query.getPopulation().add(
+                                                    new GroupPopulationFilter(group.getName(), group.getKey(),
+                                                                    clusterFilter.getRanking()));
+                                }
+                            }
+                            continue;
+                        case UTILITY:
+                            filterUsers = groupRepository.getUtilityByKeyMemberKeys(((UtilityPopulationFilter) filter)
+                                            .getUtility());
+                            break;
+                        default:
+                            // Ignore
+                    }
+
+                    // Construct expanded spatial and population filter
+                    ExpandedPopulationFilter expandedPopulationFilter;
+
+                    if (filter.getRanking() == null) {
+                        expandedPopulationFilter = new ExpandedPopulationFilter(filter.getLabel());
+                    } else {
+                        expandedPopulationFilter = new ExpandedPopulationFilter(filter.getLabel(), filter.getRanking());
+                    }
+
+                    if (filterUsers.size() > 0) {
+                        for (UUID userKey : filterUsers) {
+                            // Filter users based on the utility only when
+                            // an authenticated user exists
+                            AuthenticatedUser user = (authenticatedUser == null ? userRepository.getUserByKey(userKey)
+                                            : userRepository.getUserByUtilityAndKey(authenticatedUser.getUtilityId(),
+                                                            userKey));
+
+                            if (user == null) {
+                                throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username",
+                                                userKey);
+                            }
+
+                            // Decide if the user must be included in the group
+                            boolean includeUser = true;
+                            Geometry userLocation = null;
+                            WaterMeterDevice userMeter = null;
+
+                            // Fetch meter only if it is needed
+                            if ((query.getSource() == EnumMeasurementDataSource.BOTH)
+                                            || (query.getSource() == EnumMeasurementDataSource.METER)) {
+                                userMeter = getUserWaterMeter(userKey);
+                                if (userMeter == null) {
+                                    includeUser = false;
+                                }
+                            }
+
+                            // Filter only if not already rejected
+                            if (includeUser) {
+                                // Fetch location only if it is needed
+                                if ((!spatialConstraints.isEmpty()) || (!areas.isEmpty())) {
+                                    userLocation = getUserLocation(userLocations, userKey);
+                                }
+
+                                for (ConstraintSpatialFilter spatialConstraint : spatialConstraints) {
+                                    if (!this.filterUserWithConstraintSpatialFilter(userLocation, spatialConstraint)) {
+                                        includeUser = false;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            // Decide if user should be added to the final
+                            // result
+                            if (includeUser) {
+                                expandedPopulationFilter.getUsers().add(userKey);
+                                expandedPopulationFilter.getLabels().add(user.getUsername());
+                                expandedPopulationFilter.getHashes().add(
+                                                md.digest(userKey.toString().getBytes("UTF-8")));
+                                if (userMeter != null) {
+                                    expandedPopulationFilter.getSerials().add(
+                                                    md.digest(userMeter.getSerial().getBytes("UTF-8")));
+                                } else {
+                                    expandedPopulationFilter.getSerials().add(null);
+                                }
+                            }
+
+                        }
+                    }
+
+                    // Add group only if it has at least one user
+                    if (!expandedPopulationFilter.getUsers().isEmpty()) {
+                        populationGroups.add(expandedPopulationFilter);
+                    }
+                }
+            }
+
+            // Step 2: Split population groups depending on the areas
+            if (areas.isEmpty()) {
+                expandedQuery.getGroups().addAll(populationGroups);
+            } else {
+                long areaCounter = 0;
+
+                for (LabeledGeometry area : areas) {
+                    response.getAreas().put(++areaCounter, area);
+
+                    for (ExpandedPopulationFilter population : populationGroups) {
+                        ExpandedPopulationFilter expandedPopulationFilter;
+
+                        if (population.getRanking() == null) {
+                            expandedPopulationFilter = new ExpandedPopulationFilter(population.getLabel());
+                        } else {
+                            expandedPopulationFilter = new ExpandedPopulationFilter(population.getLabel(), population
+                                            .getRanking());
+                        }
+
+                        expandedPopulationFilter.setAreaId(areaCounter);
+
+                        for (int i = 0, count = population.getUsers().size(); i < count; i++) {
+                            if (area.contains(getUserLocation(userLocations, population.getUsers().get(i)))) {
+                                // Copy fields
+                                expandedPopulationFilter.getUsers().add(population.getUsers().get(i));
+                                expandedPopulationFilter.getLabels().add(population.getLabels().get(i));
+                                expandedPopulationFilter.getHashes().add(population.getHashes().get(i));
+                                expandedPopulationFilter.getSerials().add(population.getSerials().get(i));
+                            }
+                        }
+
+                        if (!expandedPopulationFilter.getUsers().isEmpty()) {
+                            expandedQuery.getGroups().add(expandedPopulationFilter);
+                        }
+                    }
+                }
+            }
+
+            // Compute time constraints
+            long startDateTime, endDateTime;
+
+            startDateTime = query.getTime().getStart();
+
+            switch (query.getTime().getType()) {
+                case ABSOLUTE:
+                    endDateTime = query.getTime().getEnd();
+                    break;
+                case SLIDING:
+                    switch (query.getTime().getDurationTimeUnit()) {
+                        case HOUR:
+                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusHours(query.getTime()
+                                            .getDuration()).getMillis());
+                            break;
+                        case DAY:
+                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusDays(query.getTime()
+                                            .getDuration()).getMillis());
+                            break;
+                        case WEEK:
+                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusWeeks(query.getTime()
+                                            .getDuration()).getMillis());
+                            break;
+                        case MONTH:
+                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusMonths(query.getTime()
+                                            .getDuration()).getMillis());
+                            break;
+                        case YEAR:
+                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusYears(query.getTime()
+                                            .getDuration()).getMillis());
+                            break;
+                        default:
+                            return response;
+                    }
+
+                    // Invert start/end dates if needed e.g. a negative interval
+                    // is selected for a sliding time window
+                    if (endDateTime < startDateTime) {
+                        long temp = startDateTime;
+                        startDateTime = endDateTime;
+                        endDateTime = temp;
+                    }
+                    break;
+                default:
+                    return response;
+            }
+
+            // Set metrics and add any required dependencies
+            List<EnumMetric> metrics = new ArrayList<EnumMetric>();
+
+            for (EnumMetric m : query.getMetrics()) {
+                metrics.add(m);
+            }
+
+            // Construct expanded query
+            expandedQuery.setStartDateTime(startDateTime);
+            expandedQuery.setEndDateTime(endDateTime);
+            expandedQuery.setGranularity(query.getTime().getGranularity());
+            expandedQuery.setMetrics(metrics);
+
+            response.setMeters(waterMeterForecastRepository.forecast(expandedQuery));
 
             return response;
         } catch (Exception ex) {

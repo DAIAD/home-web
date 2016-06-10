@@ -29,7 +29,7 @@
         "Fav": "Favorites",
         "Overview": "Overview"
       },
-	    "Forecasting": "Forecasting - Learning Mode",
+      "Forecasting": "Forecasting",
 	    "Demographics": "Users & Groups",
 	    "ModeManagement": "Mode Management",
 	    "Search": "Search",
@@ -245,6 +245,7 @@
 		"403" : "Authentication has failed",
 		"404" : "Not found",
 		"500" : "Internal server error",
+		"SharedErrorCode.AUTHENTICATION": "Authentication has failed. Please try again.",
 		"SharedErrorCode.SESSION_EXPIRED": "Your session has expired.",
     "ValidationError.User.NO_FIRST_NAME": "First name is missing.",
     "ValidationError.User.NO_LAST_NAME": "Last name is missing.",

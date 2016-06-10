@@ -1,15 +1,14 @@
 var React = require('react');
-var ReactDOM = require('react-dom');
 
-var {FormattedMessage, FormattedTime, FormattedDate} = require('react-intl');
+var { FormattedTime, FormattedDate} = require('react-intl');
 var { Link } = require('react-router');
 
 var Bootstrap = require('react-bootstrap');
 var Checkbox = require('./Checkbox');
 var CellCheckbox = require('./CellCheckbox');
 
-let PAGING_CLIENT_SIDE = 'client';
-let PAGING_SERVER_SIDE = 'server';
+var PAGING_CLIENT_SIDE = 'client';
+var PAGING_SERVER_SIDE = 'server';
 
 var Table = React.createClass({
 	getInitialState: function() {
@@ -65,10 +64,12 @@ var Table = React.createClass({
 
   		return (
 			<div className='clearfix'>
-				<Bootstrap.Table hover style={{margin: 0, padding: 0}}>
-					<Table.Header data = {this.props.data}></Table.Header>
-					<Table.Body data={this.props.data} activePageIndex={currentPageIndex - 1}></Table.Body>			
-				</Bootstrap.Table>
+			  <div style={{overflow: 'auto'}}>
+  				<Bootstrap.Table hover style={{margin: 0, padding: 0}}>
+  					<Table.Header data = {this.props.data}></Table.Header>
+  					<Table.Body data={this.props.data} activePageIndex={currentPageIndex - 1}></Table.Body>			
+  				</Bootstrap.Table>
+				</div>
 				<div style={{float:'right'}}>
 					<Bootstrap.Pagination 	prev
 											next
@@ -82,7 +83,7 @@ var Table = React.createClass({
 				</div>
 			</div>
  		);
-  	}
+	}
 });
 
 var Header = React.createClass({

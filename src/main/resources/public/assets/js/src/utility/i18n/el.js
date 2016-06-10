@@ -23,9 +23,9 @@
 		}
 	},
 	"Section": {
-            "Dashboard": "Περίληψη",
+      "Dashboard": "Περίληψη",
 	    "Analytics":"Ανάλυση",
-	    "Forecasting": "Πρόβλεψη - Learning Mode",
+	    "Forecasting": "Πρόβλεψη",
 	    "Demographics": "Ομάδες & Χρήστες",
 	    "ModeManagement": "Διαχείριση Κατάστασης",
 	    "Search": "Αναζήτηση",
@@ -238,6 +238,7 @@
 		"403" : "Η πιστοποίηση απέτυχε",
 		"404" : "Not found",
 		"500" : "Internal server error",
+		"SharedErrorCode.AUTHENTICATION": "Authentication has failed. Please try again.",
 		"SharedErrorCode.SESSION_EXPIRED": "Η συνεδρία έχει λήξει.",
     "ValidationError.User.NO_FIRST_NAME": "Λείπει το Όνομα.",
     "ValidationError.User.NO_LAST_NAME": "Λείπει το Επώνυμο.",

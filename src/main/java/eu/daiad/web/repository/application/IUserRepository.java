@@ -7,7 +7,6 @@ import eu.daiad.web.model.admin.AccountActivity;
 import eu.daiad.web.model.admin.AccountWhiteListEntry;
 import eu.daiad.web.model.admin.AccountWhiteListInfo;
 import eu.daiad.web.model.error.ApplicationException;
-import eu.daiad.web.model.query.EnumClusterType;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.user.Account;
@@ -15,38 +14,40 @@ import eu.daiad.web.model.user.UserInfo;
 
 public interface IUserRepository {
 
-	void initializeSecurityConfiguration();
+    void initializeSecurityConfiguration();
 
-	UUID createUser(Account user) throws ApplicationException;
+    UUID createUser(Account user) throws ApplicationException;
 
-	void setPassword(String username, String password) throws ApplicationException;
+    List<UserInfo> filterUserByPrefix(String prefix);
 
-	void setRole(String username, EnumRole role, boolean set) throws ApplicationException;
+    void setPassword(String username, String password) throws ApplicationException;
 
-	AuthenticatedUser getUserByName(String username) throws ApplicationException;
+    void setRole(String username, EnumRole role, boolean set) throws ApplicationException;
 
-	AuthenticatedUser getUserByKey(UUID key) throws ApplicationException;
+    AuthenticatedUser getUserByName(String username) throws ApplicationException;
 
-	AuthenticatedUser getUserByUtilityAndKey(int utilityId, UUID key) throws ApplicationException;
+    AuthenticatedUser getUserByKey(UUID key) throws ApplicationException;
 
-	AccountWhiteListEntry getAccountWhiteListEntry(String username);
+    AuthenticatedUser getUserByUtilityAndKey(int utilityId, UUID key) throws ApplicationException;
 
-	void insertAccountWhiteListEntry(AccountWhiteListInfo userInfo);
+    AccountWhiteListEntry getAccountWhiteListEntry(String username);
 
-	void updateLoginStats(int id, boolean success);
+    void insertAccountWhiteListEntry(AccountWhiteListInfo userInfo);
 
-	List<AccountActivity> getAccountActivity();
+    void updateLoginStats(int id, boolean success);
 
-	List<AccountActivity> getAccountActivity(int utilityId);
+    List<AccountActivity> getAccountActivity();
 
-	List<UUID> getUserKeysForGroup(UUID groupKey);
+    List<AccountActivity> getAccountActivity(int utilityId);
 
-	List<UUID> getUserKeysForUtility();
+    List<UUID> getUserKeysForGroup(UUID groupKey);
 
-	List<UUID> getUserKeysForUtility(UUID utilityKey);
+    List<UUID> getUserKeysForUtility();
 
-	List<UUID> getUserKeysForUtility(int utilityId);
+    List<UUID> getUserKeysForUtility(UUID utilityKey);
 
-	UserInfo getUserInfoByKey(UUID user_id);
+    List<UUID> getUserKeysForUtility(int utilityId);
+
+    UserInfo getUserInfoByKey(UUID user_id);
 
 }

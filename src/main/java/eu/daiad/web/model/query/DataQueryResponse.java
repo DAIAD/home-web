@@ -1,33 +1,25 @@
 package eu.daiad.web.model.query;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.joda.time.DateTimeZone;
 
-import eu.daiad.web.model.RestResponse;
-
-public class DataQueryResponse extends RestResponse {
-
-    private String timezone;
-
-    private Map<Long, LabeledGeometry> areas = new HashMap<Long, LabeledGeometry>();
+public class DataQueryResponse extends QueryResponse {
 
     private ArrayList<GroupDataSeries> devices;
 
     private ArrayList<GroupDataSeries> meters;
 
     public DataQueryResponse() {
-        this.timezone = DateTimeZone.UTC.toString();
+        super();
     }
 
     public DataQueryResponse(String timezone) {
-        this.timezone = timezone;
+        super(timezone);
     }
 
     public DataQueryResponse(DateTimeZone timezone) {
-        this.timezone = timezone.toString();
+        super(timezone.toString());
     }
 
     public ArrayList<GroupDataSeries> getDevices() {
@@ -44,14 +36,6 @@ public class DataQueryResponse extends RestResponse {
 
     public void setMeters(ArrayList<GroupDataSeries> meters) {
         this.meters = meters;
-    }
-
-    public String getTimezone() {
-        return timezone;
-    }
-
-    public Map<Long, LabeledGeometry> getAreas() {
-        return areas;
     }
 
 }

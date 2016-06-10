@@ -31,7 +31,7 @@ var Chart = React.createClass({
 	},
 
 	componentDidMount: function() {
-		this._chart = echarts.init(document.getElementById(this.getId()), theme); 
+		this._chart = echarts.init(document.getElementById(this.getId()), this.props.theme || theme); 
  
 		var chartOptions = this.shapeData(this.props.type, this.props.options, this.props.data, this.context.intl);
 		if(chartOptions) {

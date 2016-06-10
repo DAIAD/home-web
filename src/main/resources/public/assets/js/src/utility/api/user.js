@@ -2,6 +2,10 @@ var api = require('./base');
 
 var UserAPI = {
     
+  filterUserByPrefix: function(prefix) {
+    return api.json('/action/user/' + user_id);
+  },
+  
   fetchUserInfo: function(user_id) {      
     return api.json('/action/user/' + user_id);
   },

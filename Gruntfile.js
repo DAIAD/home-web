@@ -127,6 +127,7 @@ module.exports = function(grunt) {
             'leaflet',
             'leaflet.heat',
             'leaflet-draw',
+            'leaflet-choropleth',
             // globals
             'echarts',
           ],
@@ -201,6 +202,7 @@ module.exports = function(grunt) {
             'leaflet',
             'leaflet.heat',
             'leaflet-draw',
+            'leaflet-choropleth',
           ],
         },
         files: {
