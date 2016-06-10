@@ -50,6 +50,7 @@ module.exports = function(grunt) {
           'src/main/resources/public/assets/js/src/utility/service/query.js', // ES6 spread operator
           'src/main/resources/public/assets/js/src/utility/components/reports-measurements/pane.js', // ES6 spread operator
           'src/main/resources/public/assets/js/src/utility/components/reports-measurements/unit-reports.js', // https://github.com/jshint/jshint/issues/1925
+          'src/main/resources/public/assets/js/src/utility/components/reports-measurements/overview.js', // ES6 spread operator
         ],
         //unused: true,
         eqnull: true,

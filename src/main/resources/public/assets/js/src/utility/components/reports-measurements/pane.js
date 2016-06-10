@@ -281,7 +281,7 @@ var Form = React.createClass({
     
     if (inlineForm) {
       form = (
-        <form className="form-inline report-panel" id={formId}>
+        <form className="form-inline report-form" id={formId}>
           <div className="form-group">
             <label>Source:</label>&nbsp;{selectSource}
           </div>
@@ -302,7 +302,7 @@ var Form = React.createClass({
       );
     } else {
       form = (
-        <form className="form-horizontal report-panel" id={formId}>
+        <form className="form-horizontal report-form" id={formId}>
           <fieldset>
           <legend>
             <span className="title" style={{cursor: 'pointer'}} onClick={this._toggleCollapsed}>Parameters</span>

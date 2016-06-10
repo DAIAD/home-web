@@ -14,14 +14,8 @@ var {generateTimestamps} = require('../../helpers/timestamps');
 var {computeKey} = require('../../reports').measurements;
 
 var PropTypes = React.PropTypes;
-var {seriesPropType, populationPropType} = require('../../prop-types');
-var reportPropType = PropTypes.shape({
-  level: PropTypes.string.isRequired,
-  reportName: PropTypes.string.isRequired,
-  startsAt: PropTypes.string.isRequired,
-  duration: PropTypes.array.isRequired,
-});    
-
+var {seriesPropType, populationPropType, reportPropType} = require('../../prop-types');
+   
 var views = require('./views');
 
 var computeTimeRange = function(duration, startsAt, now) {

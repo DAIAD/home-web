@@ -32,10 +32,40 @@ var timespanPropType = PropTypes.oneOfType([
   ),
 ]);
 
+var reportPropType = PropTypes.shape({
+  level: PropTypes.string.isRequired,
+  reportName: PropTypes.string.isRequired,
+  startsAt: PropTypes.string.isRequired,
+  duration: PropTypes.array.isRequired,
+}); 
+
+// The shape of the global configuration object (passed via props or context)
+var configPropType = PropTypes.shape({
+  utility: PropTypes.shape({
+    clusters: PropTypes.arrayOf(PropTypes.shape({
+      groups: PropTypes.array,
+      key: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+    })),
+    key: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+  }),
+  reports: PropTypes.shape({
+    levels: PropTypes.object,
+    byType: PropTypes.object
+  }),
+  overview: PropTypes.shape({
+    reports: PropTypes.object,
+    sections: PropTypes.object,
+  }),
+});
+
 module.exports = {
   timespanPropType,
   populationPropType,
   seriesPropType,
+  reportPropType,
+  configPropType,
 };
 
 

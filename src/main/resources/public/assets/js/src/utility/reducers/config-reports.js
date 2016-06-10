@@ -34,13 +34,13 @@ var initialState = {
       fields: {
         'volume': {
           name: 'volume',
-          title: 'Water Consumption',
+          title: 'Volume',
           unit: 'lt',
           sources: ['meter', 'device'],
         },
         'energy': {
           name: 'energy',
-          title: 'Energy Consumption',
+          title: 'Energy',
           unit: 'kWh',
           sources: ['device'],
         },
