@@ -13,12 +13,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.message.AnnouncementRequest;
 import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageAcknowledgementRequest;
 import eu.daiad.web.model.message.MessageRequest;
 import eu.daiad.web.model.message.MessageResult;
 import eu.daiad.web.model.message.MultiTypeMessageResponse;
+import eu.daiad.web.model.message.ReceiverAccount;
 import eu.daiad.web.model.message.SingleTypeMessageResponse;
 import eu.daiad.web.model.message.StaticRecommendation;
 import eu.daiad.web.model.security.AuthenticatedUser;
@@ -204,6 +206,41 @@ public class MessageController extends BaseController {
 		    return response;
 		}
         return response;
+	}  
+    
+    /**
+     * Send announcement to the provided accounts.
+     * 
+     * @param user the user.
+     * @param request the request containing the announcement and the receivers.
+     * @return the controller response.
+     */
+    @RequestMapping(value = "/action/announcement/broadcast", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	@Secured("ROLE_ADMIN")
+	public RestResponse broadCastAnnouncement(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody AnnouncementRequest request) {
+        RestResponse response = new RestResponse();
+        
+        try {
+            System.out.println("GREAT SUCCESS ");
+            System.out.println("title " + request.getAnnouncement().getTitle());
+            //System.out.println("accounts size " + request.getReceiverAccountList().size());
+            for(ReceiverAccount us : request.getReceiverAccountList()){
+                System.out.println("send announcement to " + us.getAccountId() + " " + us.getUsername());
+            }
+            
+            this.messageRepository.persistAnnouncement(request.getAnnouncement(), user.getLocale());
+            
+            //repository. broadcast to accounts
+            
+
+		} catch (Exception ex) {
+			    logger.error(ex.getMessage(), ex);
+			    response.add(this.getError(ex));
+			    return response;
+		}
+        return response;
 	}    
+    
+    //add announcements history controller
     
 }

@@ -7,6 +7,7 @@ var initialState = {
     candidateUsersToRemove : [],
     initialUsers: null,
     addedUsers : [],
+    showForm : false,
     showModal : false,
     accountId : null,
     selected : false,
@@ -14,7 +15,6 @@ var initialState = {
 };
 
 var announcements = function (state, action) {
-  var updatedAccounts = null;
   switch (action.type) {
     case types.ANNC_REQUESTED_USERS:
       return Object.assign({}, state, {          
@@ -26,45 +26,40 @@ var announcements = function (state, action) {
         accounts : action.accounts,
         isLoading: false
       }); 
-    case types.ANNC_USER_SET_SELECTED:
-      updatedAccounts = [];
-      
-      for(var obj in state.accounts){
-        var updatedObj={};
-        for(var prop in state.accounts[obj]){
-          
-          if(prop == "id"){
-            if(state.accounts[obj][prop] == action.rowIdToggled){
-              updatedObj.id = action.rowIdToggled;
-              updatedObj.selected = true; //!state.accounts[obj].selected;
-            }
-            else{
-              updatedObj = state.accounts[obj];
-            }
-          }
-        }
-        updatedAccounts.push(updatedObj);
-      }
-
+    case types.ANNC_INITIAL_USERS_SET_SELECTED:
       return Object.assign({}, state, {
-        accounts : updatedAccounts
-      });        
+        accounts : action.accounts
+      });  
+    case types.ANNC_ADDED_USERS_SET_SELECTED:
+      return Object.assign({}, state, {
+        addedUsers : action.addedUsers
+      });     
     case types.ANNC_SET_INITIAL_USERS:
       return Object.assign({}, state, {
         initialUsers : action.initialUsers
       });    
-    case types.ANNC_ADD_USER_ACTION:
+    case types.ANNC_ADD_USERS_BUTTON_CLICKED:
       return Object.assign({}, state, {          
-        addedUsers : action.addedUsers,
-        initialUsers : action.initialUsers,
-        candidateUsersToAdd : [],
+        addedUsers : action.addedUsers
       });
-    case types.ANNC_REMOVE_USER_ACTION:
+    case types.ANNC_REMOVE_USERS_BUTTON_CLICKED:
+      return Object.assign({}, state, {          
+        addedUsers : action.addedUsers
+      }); 
+    case types.ANNC_SHOW_FORM:
+      return Object.assign({}, state, {          
+        showForm : true
+      });    
+    case types.ANNC_CANCEL_SHOW_FORM:
+      return Object.assign({}, state, {          
+        showForm : false
+      });  
+    case types.ANNC_BROADCAST_ANNOUNCEMENT_RESPONSE:
       return Object.assign({}, state, {
-        addedUsers : action.addedUsers,
-        initialUsers : action.initialUsers,
-        candidateUsersToRemove : []
-      });
+        isLoading: false,
+        showForm:false,
+        addedUsers:[]
+      });         
     default:
       return state || initialState;
   }

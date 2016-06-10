@@ -20,6 +20,16 @@ var ManageAlertsAPI = {
       console.log('api getUsers');
       return api.json('/action/admin/trial/activity');
     },
+    getAnnouncementsHistory: function() {
+      return api.json('/action/admin/trial/activity');
+    },
+    broadcastAnnouncement: function(users, announcement) {
+      var receiverAccountList = [];
+      for(var obj in users){
+        receiverAccountList.push({accountId : users[obj].id, username : users[obj].username, lastName : users[obj].lastName});
+      }      
+      return api.json('/action/announcement/broadcast', {announcement : announcement, receiverAccountList : receiverAccountList});
+    }
 };
 
 module.exports = ManageAlertsAPI;

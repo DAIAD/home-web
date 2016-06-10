@@ -25,6 +25,10 @@ import eu.daiad.web.domain.application.AccountDynamicRecommendation;
 import eu.daiad.web.domain.application.AccountDynamicRecommendationProperty;
 import eu.daiad.web.domain.application.AccountStaticRecommendation;
 import eu.daiad.web.domain.application.AlertTranslation;
+import eu.daiad.web.domain.application.Announcement;
+import eu.daiad.web.domain.application.AnnouncementChannel;
+import eu.daiad.web.domain.application.AnnouncementTranslation;
+import eu.daiad.web.domain.application.Channel;
 import eu.daiad.web.domain.application.DynamicRecommendationTranslation;
 import eu.daiad.web.domain.application.StaticRecommendation;
 import eu.daiad.web.domain.application.StaticRecommendationCategory;
@@ -501,6 +505,42 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 
 		}                          
     }    
+    
+    @Override
+    public void persistAnnouncement(eu.daiad.web.model.message.Announcement announcement, String locale){
+        AuthenticatedUser user = this.getCurrentAuthenticatedUser();
+         
+		TypedQuery<eu.daiad.web.domain.application.Channel> channelQuery = entityManager
+						.createQuery("select c from channel c where c.name = :name",
+										eu.daiad.web.domain.application.Channel.class).setFirstResult(0).setMaxResults(1);;
+
+		channelQuery.setParameter("name", "web");
+        List<Channel> channels = channelQuery.getResultList();
+        
+        int channelId = 1;
+        if(channels.size() == 1){
+            Channel c = channels.get(0);
+            channelId = c.getId();
+        }
+        
+        //check this flow
+        Announcement domainAnnouncement = new Announcement();
+        domainAnnouncement.setPriority(1);
+        
+        AnnouncementChannel announcementChannel = new AnnouncementChannel();
+        announcementChannel.setAnnouncementId(domainAnnouncement.getId());
+        announcementChannel.setChannelId(channelId);
+        
+
+        
+        AnnouncementTranslation announcementTranslation = new AnnouncementTranslation();
+        announcementTranslation.setTitle(announcement.getTitle());
+        announcementTranslation.setContent(announcement.getContent());
+        announcementTranslation.setLocale(locale);
+        announcementTranslation.setAnnouncement(domainAnnouncement);
+
+		//this.entityManager.persist(announcementTranslation);
+    }
     
 	// TODO : When sending an acknowledgement for an alert of a specific type,
 	// an older (not acknowledged) alert of the same type may appear in the next
