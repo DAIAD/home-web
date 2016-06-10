@@ -35,7 +35,7 @@ var initialState = {
         'volume': {
           name: 'volume',
           title: 'Water Consumption',
-          unit: 'lit', //'m\u00B3', // m^3
+          unit: 'lt',
           sources: ['meter', 'device'],
         },
         'energy': {

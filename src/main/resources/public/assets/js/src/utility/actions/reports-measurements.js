@@ -14,7 +14,7 @@ var actions = {
 
   // Plain actions
   
-  initialize: (field, level, reportName, key, defaults) => ({
+  initialize: (field, level, reportName, key, defaults={}) => ({
     type: ActionTypes.reports.measurements.INITIALIZE,
     field,
     level,

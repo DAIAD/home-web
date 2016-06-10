@@ -31,7 +31,7 @@
 	background-color: #fff;
 	position: inherit;
 	margin: 0 0 0 250px;
-	padding: 60px 25px 0px 30px;
+	padding: 55px 22px 0px 22px;
 	border-left: 1px solid #e7e7e7;
 	min-height: 1300px;
 }
@@ -496,6 +496,17 @@ a .disabled{
     text-align: center;
 }
 
+/* Bootstrap */
+
+.form-control {
+  height: 36px;
+}
+
+.panel-heading,
+.panel-body {
+  padding: 12px;
+}
+
 /* Reports (charts/panels) */
 
 form.report-panel {
@@ -537,25 +548,43 @@ form.report-panel fieldset {
   font-size: 25px;
 }
 
+.overview.reports > h3 {
+  margin: 5px 0px 5px 0px; 
+}
+
+.overview.reports > .form-inline {
+  margin-bottom: 5px;
+  line-height: 40px;
+}
+.overview.reports > .form-inline .form-group {
+  margin: 0px;
+  vertical-align: top;
+}
+
+.reports .panel-body h4 {
+  margin: 5px 0px 15px 0px;
+  font-size: 17px;
+} 
+
 .reports > h3 span.delimiter {
   font-weight: bolder;
 }
 
 .reports legend {
-  font-size: 1.1em;
+  font-size: 16px;
   margin-bottom: 8px;
 } 
 
 .reports > div.legend {
-  /* mimic normal legend */
-  font-size: 1.1em;
+  /* mimic a normal legend */
+  font-size: 16px;
   margin-bottom: 8px;
 }
 
 .reports > div.legend .select-dropdown .dropdown-menu li a,
 .reports > div.legend .select-dropdown .dropdown-menu .dropdown-header,
 .reports > div.legend .select-dropdown .btn .text {
-  font-size: 1.1em;
+  font-size: 16px;
 }
 
 .reports legend .summary-wrapper {
@@ -577,7 +606,7 @@ form.report-panel fieldset {
   width: 18em;
 }
 .dropdown.select-report .dropdown-menu {
-  width: 22em;  
+  width: 23.2em;  
 }
 
 .report-panel.form-inline .dropdown.select-source button > span.text {
@@ -629,11 +658,12 @@ form.report-panel fieldset {
   margin: 0px 0px;
   padding: 0px 0px;
   background-color: #fff;
-  border: solid 1px silver;
+  border: solid 0px silver;
 }
 
-.overview .panel .panel-title {
-  font-weight: bold;
+.overview .panel .panel-heading .panel-title {
+  font-weight: normal;
+  font-size: 18px;
 }
 
 .overview .panel-body h4 {
@@ -645,15 +675,8 @@ div.measurement-value {
   border-style: solid;
   border-color: rgb(191, 212, 222);
   border-width: 1px 1px 1px 5px;
+  background-color: inherit;
 }
-
-div.measurement-value > .wrapper {
-  padding: 0px 0px;
-  min-height: 150px;
-  min-width: 10.5em;
-  background: inherit;
-}
-
 div.measurement-value .title {
   font-size: 1.25rem;
   font-weight: bold;
@@ -662,33 +685,25 @@ div.measurement-value .title {
   border-width: 0px 0px 1px 0px;
   border-style: solid;
 }
-
 div.measurement-value .subtitle {
-  font-size: 1.2rem;
   padding: 9px 5px 0px 5px;
 }
-
 div.measurement-value .current-value > .value,
 div.measurement-value .current-value > .unit,
 div.measurement-value .delta > .value, 
 div.measurement-value .delta > .unit {
   font-family: 'Inconsolata', monospace;
-  /*font-family: monospace;*/
 }
-
 div.measurement-value .current-value {
   padding: 0px 5px 0px 5px; 
 }
-
 div.measurement-value .current-value .value { 
   font-size: 3.3rem;
   font-weight: normal;
 }
-
 div.measurement-value .current-value .unit {
   font-size: 2rem;
 }
-
 div.measurement-value .delta { 
   position: relative;
   top: -5px;
@@ -696,7 +711,6 @@ div.measurement-value .delta {
   font-size: 1.4rem;
   color: #545E63;
 }
-
 div.measurement-value .delta > .value,
 div.measurement-value .delta > .unit {
   vertical-align: baseline; 
@@ -704,26 +718,30 @@ div.measurement-value .delta > .unit {
 div.measurement-value .delta > .unit {
   font-size: 1rem;
 }
-
 div.measurement-value .delta > .sign {
   vertical-align: text-top; 
 }
 
-.overview-utility .level > .measurement-value,
-.overview-utility .level > .chart {
+.reports.overview .unit-view > .summary,
+.reports.overview .unit-view > .simple-chart,
+.reports.overview .unit-view > .comparison-chart
+{
   display: block;
   float: left;
   border-style: solid;
   border-color: rgb(191, 212, 222);
   border-width: 1px 1px 1px 5px;
-  margin: 0px 5px 0px 0px;
+  margin: 0px 5px 5px 0px;
 }
-
-.overview-utility .level > .chart {
-  width: 330px;
+.reports.overview .unit-view .measurement-value {
+  border-width: 0px;
+  min-height: 150px;
+  min-width: 11em;
+}
+.reports.overview .unit-view .chart.portal {
+  width: 360px;
   height: 230px;
 }
 
-.form-control {
-  height: 36px;
-}
+
+

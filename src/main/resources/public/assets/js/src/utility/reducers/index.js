@@ -18,6 +18,7 @@ var scheduler = require('./scheduler');
 var debug = require('./debug');
 var reports = require('./reports');
 var config = require('./config');
+var overview = require('./overview');
 
 var rootReducer = combineReducers({
   i18n,
@@ -38,6 +39,7 @@ var rootReducer = combineReducers({
   logging,
   routing: routerReducer,
   reports,
+  overview,
 });
 
 module.exports = rootReducer;
