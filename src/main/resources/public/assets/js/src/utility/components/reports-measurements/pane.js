@@ -9,7 +9,6 @@ var ReactRedux = require('react-redux');
 var Bootstrap = require('react-bootstrap');
 var {Button, Glyphicon, Collapse} = Bootstrap;
 var DatetimeInput = require('react-datetime');
-
 var echarts = require('react-echarts');
 var Select = require('react-controls/select-dropdown');
 
@@ -34,7 +33,7 @@ const REPORT_KEY = 'pane';
 // Presentational components
 //
 
-var Panel = React.createClass({
+var Form = React.createClass({
   
   statics: {
     
@@ -749,7 +748,7 @@ var Info = React.createClass({
 
 var actions = require('../../actions/reports-measurements');
 
-Panel = ReactRedux.connect(
+Form = ReactRedux.connect(
   (state, ownProps) => {
     var {field, level, reportName} = ownProps;
     var _state = state.reports.measurements;
@@ -772,7 +771,7 @@ Panel = ReactRedux.connect(
         dispatch(actions.refreshData(field, level, reportName, REPORT_KEY))),
     };
   }
-)(Panel);
+)(Form);
 
 Chart = ReactRedux.connect(
   (state, ownProps) => {
@@ -799,4 +798,4 @@ Info = ReactRedux.connect(
 
 // Export
 
-module.exports = {Panel, Chart, Info};
+module.exports = {Form, Chart, Info};

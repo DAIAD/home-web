@@ -10,7 +10,7 @@ var DatetimeInput = require('react-datetime');
 var {Button, Collapse} = Bootstrap;
 
 var PropTypes = React.PropTypes;
-var _configPropType = PropTypes.shape({
+var configPropType = PropTypes.shape({
   utility: PropTypes.object,
   reports: PropTypes.object,
   overview: PropTypes.object,
@@ -19,13 +19,13 @@ var _configPropType = PropTypes.shape({
 var MeasurementReport = React.createClass({
   
   propTypes: {
-    config: _configPropType,
+    config: configPropType,
     field: PropTypes.string,
     levels: PropTypes.arrayOf(PropTypes.string),
   },
   
   childContextTypes: {
-    config: _configPropType, 
+    config: configPropType, 
   },
 
   getChildContext: function() {
@@ -47,18 +47,16 @@ var MeasurementReport = React.createClass({
   },
 
   render: function () {
+    var pane = require('./reports-measurements/pane');
     var {config, field, levels} = this.props;
     var {level, reportName} = this.state;
 
     if (_.isEmpty(config) || _.isEmpty(config.reports) || _.isEmpty(config.utility)) {
       return (<div>Loading configuration...</div>);
     }
-
-    var ReportPane = require('./reports-measurements/pane');
    
-    var reportsConfig = config.reports.byType.measurements; 
-    
-    var reportOptions = _.values(reportsConfig.levels)
+    var reportConfig = config.reports.byType.measurements; 
+    var reportOptions = _.values(reportConfig.levels)
       .filter(l => (levels.indexOf(l.name) >= 0))
       .map(l => ({   
         group: l.description,
@@ -76,34 +74,18 @@ var MeasurementReport = React.createClass({
       </Select>
     );
 
+    var reportProps = {field, level, reportName};
+
     return (
       <div className="reports reports-measurements">
-        <h3>{reportsConfig.fields[field].title}</h3>
-        
+        <h3>{reportConfig.fields[field].title}</h3>
         <div className="legend">
           <span>Choose report:</span>&nbsp;
           {selectReport}
         </div>
-        
-        <ReportPane.Panel
-          field={field} 
-          level={level} 
-          reportName={reportName} 
-          inlineForm={false} 
-         />
-        
-        <ReportPane.Chart 
-          field={field} 
-          level={level} 
-          reportName={reportName} 
-         />
-        
-        <ReportPane.Info 
-          field={field} 
-          level={level} 
-          reportName={reportName} 
-         />
-      
+        <pane.Form {...reportProps} inlineForm={false} />
+        <pane.Chart {...reportProps} />
+        <pane.Info {...reportProps} /> 
       </div>
     );
   },
@@ -122,13 +104,13 @@ var MeasurementReport = React.createClass({
 var SystemReport = React.createClass({
   
   propTypes: {
-    config: _configPropType,
+    config: configPropType,
     level: PropTypes.string,
     reportName: PropTypes.string,
   },
   
   childContextTypes: {
-    config: _configPropType, 
+    config: configPropType, 
   },
 
   getChildContext: function() {
@@ -186,18 +168,19 @@ var Overview = React.createClass({
   },
 
   propTypes: {
-    config: _configPropType,
+    config: configPropType,
     now: PropTypes.number,
     field: PropTypes.string,
   },
  
   childContextTypes: {
-    config: _configPropType, 
+    config: configPropType, 
   },
 
   getDefaultProps: function () {
     return {
-      field: 'volume',  
+      field: 'volume',
+      source: 'meter',
     };
   },
 
@@ -213,8 +196,8 @@ var Overview = React.createClass({
   },
 
   render: function () { 
-    var {OverviewAsAccordion} = require('./reports-measurements/overview');
-    var {config, field, now} = this.props; 
+    var overview = require('./reports-measurements/overview');
+    var {config, field, source, now} = this.props; 
     var {inputNow, showInput} = this.state; 
 
     if (!config || _.isEmpty(config.reports) || _.isEmpty(config.utility) || _.isEmpty(config.overview)) {
@@ -223,6 +206,7 @@ var Overview = React.createClass({
     
     var reportProps = {
       field,
+      source,
       now,
       uom: config.reports.byType.measurements.fields[field].unit,
       reports: config.overview.reports,
@@ -252,7 +236,7 @@ var Overview = React.createClass({
             </Button>
           </div>
         </form>
-        <OverviewAsAccordion {...reportProps} />
+        <overview.OverviewAccordion {...reportProps} />
       </div>
     );
   },
