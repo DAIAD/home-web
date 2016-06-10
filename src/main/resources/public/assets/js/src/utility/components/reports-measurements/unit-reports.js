@@ -189,8 +189,9 @@ class _Report extends React.Component {
   
   static _propsToState(props) {
     // Compute state from received props.
-    var cls = this;
-
+    
+    var cls = this; 
+    
     var {unit} = cls;
     var {now, report: {level, startsAt, duration: [K, unit1]}, series} = props;
     var data, keys, totals, forecast;
@@ -201,6 +202,10 @@ class _Report extends React.Component {
         unit1, unit
       ));
     
+    var emptyState = {
+      moment0: null, data: null, keys: null, totals: null, forecast: null,
+    };
+
     // A moment that represents the period under examination
     var moment0 = moment(now);
     moment0 = moment0.add(moment0.utcOffset(), 'minute').utc(); // move to same wall-clock in UTC
@@ -210,7 +215,7 @@ class _Report extends React.Component {
     var k0 = cls.momentToKey(moment0);
     
     if (!series)
-      return {moment0, data: null};
+      return {...emptyState, moment0};
     
     if (level != series.granularity.toLowerCase())
       throw new Error(sprintf(
@@ -238,7 +243,7 @@ class _Report extends React.Component {
       checkData(data, keys, k0, unit, level);
     } catch (er) {
       console.error('Check has failed: ' + er.message);
-      return {moment0, data: false};
+      return {...emptyState, moment0, data: false};
     }
 
     // Do we have forecast data? Todo maybe as separate series?
