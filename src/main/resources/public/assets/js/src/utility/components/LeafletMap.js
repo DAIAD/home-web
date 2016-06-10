@@ -87,7 +87,6 @@ var _initializeChoroPleth = function(geojson, colors) {
     }).addTo(this.map);
     
     for(var index in this.overlays){ 
-      console.log(this.overlays[index]);
       this.overlays[index].bringToFront();
     }
   }

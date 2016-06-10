@@ -1,6 +1,6 @@
 {
 	"locale": {
-		"en":"English",
+		"en-GB":"English",
 		"el":"Greek",
 		"es":"Spanish",
 		"de":"German"
