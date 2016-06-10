@@ -35,7 +35,7 @@ function mapDispatchToProps(dispatch) {
 function mergeProps(stateProps, dispatchProps, ownProps) {
   
   const xAxisData = stateProps.activeDeviceType === 'METER' ? 
-    (stateProps.timeFilter === 'custom' ? null : getChartMeterCategories(stateProps.timeFilter)) : 
+    (stateProps.timeFilter === 'custom' ? null : getChartMeterCategories(stateProps.timeFilter, ownProps.intl)) : 
       getChartAmphiroCategories(stateProps.timeFilter);
 
 

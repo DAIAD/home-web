@@ -174,7 +174,7 @@ function InfoPanel (props) {
         isDraggable={true}
         isResizable={false}
         onBreakpointChange={(newBreakpoint, newCols) => {
-          console.log('new break!', newBreakpoint, newCols);
+          //console.log('new break!', newBreakpoint, newCols);
           //return newCols;
         }}
         onResizeStop={(layout, oldItem, newItem, placeholder) => { 
@@ -186,7 +186,6 @@ function InfoPanel (props) {
        >
        {
          infoboxes.map(function(infobox) {
-           console.log('mapping infoboxes', infobox, infobox.id);
            return (
              <div key={infobox.id}>
                <InfoBox {...{mode, periods, displays, chartFormatter, infobox, updateInfobox, removeInfobox, intl}} /> 

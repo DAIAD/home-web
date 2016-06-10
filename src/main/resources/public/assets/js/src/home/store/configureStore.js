@@ -10,7 +10,8 @@ var rootReducer = require('../reducers/root');
 var configureStore = function(history, initialState) {
   return createStore(rootReducer,
                      initialState,
-                     applyMiddleware(thunkMiddleware, logger(), routerMiddleware(history))
+                     //applyMiddleware(thunkMiddleware, logger(), routerMiddleware(history))
+                     applyMiddleware(thunkMiddleware, routerMiddleware(history))
                     );
 };
 

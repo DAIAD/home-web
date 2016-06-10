@@ -12,6 +12,7 @@ var HistoryActions = require('../actions/HistoryActions');
 
 function mapStateToProps(state, ownProps) {
   return {
+    activeDeviceType: state.section.history.activeDeviceType,
     data: state.section.history.data,
     activeSessionFilter: state.section.history.activeSessionFilter,
     activeSession: state.section.history.activeSession,

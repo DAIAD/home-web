@@ -163,8 +163,20 @@ button, .btn {
   border-radius: 0;
   font-size: 0.9em;
 }
+.btn-primary {
+  background: #2D3580;
+  color: #FFF;
+  border: 1px #2D3580 solid;
+  border-radius: 0;
+  font-size: 0.9em;
+}
 
-button:hover, button:focus, .btn:hover, .btn:focus, .btn[disabled]:focus, .btn[disabled]:hover {
+.btn-primary.focus, .btn-primary:focus {
+  background: #2D3580;
+  color: #FFF;
+}
+
+button:hover, .btn:hover, .btn[disabled]:focus, .btn[disabled]:hover {
   border: 1px #2D3580 solid;
   background: #2D3580; 
   color: #fff;
@@ -178,7 +190,7 @@ input[type="text"], input[type="password"], input[type="email"] {
   //padding: 10px 20px;
 }
 
-h1, h2, h3, h4, h5 {
+h1, h2, h3, h4, h5, h6 {
   font-family: "Simplifica", Helvetica, Arial, sans-serif;
   color: #424242;
 	//color: #2D3580;
@@ -206,8 +218,13 @@ h3 {
 h4 {
   font-size: 1.5em;
 }
+
 h5 {
   font-size: 1.3em;
+}
+
+h6 {
+  font-size: 1.15em;
 }
 
 p {
@@ -281,6 +298,9 @@ ul {
   font-size: 1.5em;
   font-weight: normal;
 }
+.btn-toolbar {
+  margin-left: 0;
+}
 /* Main site parts */
 
 /* site-* top to bottom */
@@ -334,13 +354,33 @@ div[class^="section."]{
 
 /* Main Menu */
 
-.menu-item {
-  margin: 5px 0;
-  float: left;
+.main-menu-side {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.main-menu-side img {
+  vertical-align: none;
+}
+
+.main-menu-side > li {
+}
+.menu-group {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+.menu-item > a, .menu-subitem > a{
   color: #fff;
 }
+.menu-item {
+  margin: 10px 0 10px 5px;
+}
 .menu-subitem {
-  margin: 5px 0px 5px 30px;
+  margin: 5px 0 5px 10px;
+ //margin: 5px 0px 5px 30px;
 }
 .menu-item:hover, .menu-item:focus {
   color: #fff;
@@ -426,6 +466,7 @@ div[class^="section."]{
 }
 .header-left{
 	float: left;
+  margin-right: 10px;
 }
 
 .settings img{
@@ -628,6 +669,9 @@ div[class^="section."]{
 
 /* Override Bootstrap styles */
 
+.col-sm-1 {
+  width: 10%;
+}
 .nav-tabs { 
   border-bottom: none;
 }
@@ -679,6 +723,7 @@ div[class^="section."]{
 
 .modal-body {
   text-align: center;
+  padding-bottom: 0;
 }
 
 .modal-footer {
@@ -771,6 +816,23 @@ div[class^="section.login"]{
 }
 /* Dashboard */
 
+.dashboard { 
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+}
+.dashboard-infopanel {
+  flex-grow: 1;
+  background: #fff;
+}
+.dashboard-right {
+  flex-grow: 0;
+  flex-shrink: 1;
+  flex-basis: 150px;
+  background: #D0EAFA; 
+  padding: 20px;
+}
+
 .say-hello {
   
 }
@@ -796,7 +858,6 @@ div[class^="section.login"]{
 .infobox-header span, .infobox-header div, .infobox-header a {
   display: inline-block;
   font-size: 0.95em;
-  margin: 0;
 }
 
 .infobox-body {
@@ -848,6 +909,58 @@ div[class^="section.login"]{
   flex-basis: 200px;
   padding: 20px 0;
 }
+.add-infobox-modal p {
+  padding: 15px;
+}
+
+.add-infobox-types {
+  list-style: none;
+}
+.add-infobox-types > li > a {
+  width: 190px;
+  float: left;
+  padding: 50px 30px;
+  margin: 5px;
+  border: 1px #2D3580 solid;
+  overflow: hidden;
+}
+.add-infobox-types > li > a:hover {
+  background: #D0EAFA;
+  //background: #2D3580;
+  //color: #fff;
+}
+.add-infobox-types > li > a.selected {
+  background: #D0EAFA;
+}
+.dashboard-device-info {
+  margin: 10px 0;
+}
+.dashboard-device-info > a > h6 {
+  margin-top: 10px;
+}
+.dashboard-device-info > a > h6 > img {
+  margin-right: 10px;
+}
+.dashboard-button-toolbar {
+  margin: 20px 0;
+}
+.dashboard-add-btn {
+  width: 100%;
+}
+
+.dashboard-save { 
+  margin-top: 20px;
+}
+.dashboard-save-btn {
+  margin-top: 5px;
+  float: left;
+  width: 45%;
+}
+.dashboard-discard-btn {
+  margin-top: 5px;
+  float: right;
+  width: 45%;
+}
 /* History */
 
 .history-chart-area {
@@ -881,8 +994,7 @@ div[class^="section.login"]{
 .history-list-header {
   display: inline-block;
   width: 100%;
-  margin-bottom: 10px;
-  border-bottom: 1px #424242 solid;
+  //border-bottom: 1px #424242 solid;
 }
 .sort-options .dropdown-toggle { 
   background: none;
@@ -896,9 +1008,17 @@ div[class^="section.login"]{
 .sessions-list {
 	display: block;
 	padding: 0;
+  margin: 0;
 	width: 100%;
 	list-style: none;
 	color: #424242;
+}
+.session-item-header{
+  height: 34px;
+  overflow: hidden;
+}
+.session-item-header i, .session-item-header h6 {
+  float: left;
 }
 
 .session-item{
@@ -916,33 +1036,41 @@ div[class^="section.login"]{
 	background: #fff;
 }
 
-.session-item-highlight {
-  color: #424242;
-  overflow: hidden;  
-  font-weight: normal;
+.session-list-table {
+  width: 100%;
 }
-.session-item-highlight>li {
-	font-size: 1.1em;
+.session-list-table > thead {
+  border-bottom: 1px #666 solid;
 }
-.session-item-details {
-  line-height: 3.5em;
-  color: #424242;
-  overflow: hidden;  
-  list-style: none;
-  font-weight: normal;
-}
-.session-item-details>li {
-  margin-left: 20px;
-  display: inline-block;
-	font-size: 1.1em;
+.session-list-table > thead > tr {
 }
 
-.session-item-details:first-child{
-  margin-left:0;
+.session-list-table > thead > tr > th {
+  padding: 10px;
 }
-.session-item-details>li i{
-  margin-right: 10px;
+
+.session-list-table thead tr th:first-child{
+  padding-left: 20px;
 }
+
+.session-list-table > thead > tr > th > i {
+  margin-right: 5px;
+}
+
+.session-list-item > td {
+  font-size: 1.1em;
+  padding-left: 20px;
+  border-bottom: 1px #666 solid;
+}
+.session-list-item td:last-child {
+  text-align: right;
+}
+
+.session-list-item:hover {
+  cursor: pointer;
+  background: #fff;
+}
+
 
 input[name="amphiro-devices"] {
   margin-left: 35px;
@@ -958,14 +1086,15 @@ input[name="amphiro-devices"] {
 }
 
 .shower-info .headline {
-  margin-bottom: 5px;
+  margin-bottom: 20px;
   font-size: 1.3em;
+  border-bottom: 1px #666 solid;
+  text-align: left;
 }
 .shower-info .headline i {
   margin-right: 10px;
 }
 .shower-info .headline-date {
-  float: left;
 }
 .shower-info .headline-user {
   float: right;
@@ -1067,3 +1196,5 @@ div[class^="section.profile"]{
   box-sizing: border-box;
   cursor: se-resize;
 }
+
+

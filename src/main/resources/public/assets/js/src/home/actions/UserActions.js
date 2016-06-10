@@ -151,11 +151,9 @@ const saveToProfile = function (configuration) {
   return function(dispatch, getState) {
 
     const data = Object.assign({}, {configuration: JSON.stringify(configuration)}, {csrf: getState().user.csrf});
-    console.log('gonna save...', data);
 
     return userAPI.saveToProfile(data)
     .then((response) => {
-      console.log('saved to profile', response);
       return response;
 
     })

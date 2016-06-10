@@ -81,7 +81,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                dispatchProps,
                stateProps,
                {
-                 infoboxes: stateProps.infoboxes.map(infobox => Object.assign({}, transformInfoboxData(infobox, stateProps.devices), {linkToHistory: () => dispatchProps.linkToHistory(infobox)})),
+                 infoboxes: stateProps.infoboxes.map(infobox => Object.assign({}, transformInfoboxData(infobox, stateProps.devices, ownProps.intl), {linkToHistory: () => dispatchProps.linkToHistory(infobox)})),
                    addInfobox: () => {
                      
                      const type = types.find(x => x.id === stateProps.infoboxToAdd.type);

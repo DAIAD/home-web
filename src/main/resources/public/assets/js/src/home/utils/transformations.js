@@ -71,7 +71,7 @@ const updateOrAppendToSession = function (devices, data) {
   return updated;
 };
 
-const transformInfoboxData = function (infobox, devices) {
+const transformInfoboxData = function (infobox, devices, intl) {
     const { id, title, type, period, index, deviceType, subtype, data, previous, metric, showerId } = infobox;
 
     const meterPeriods = METER_PERIODS.filter(x => x.id !== 'custom');
@@ -87,7 +87,7 @@ const transformInfoboxData = function (infobox, devices) {
     let chartType = 'line';
     let chartXAxis = 'category';
     let chartCategories = deviceType === 'METER' ? 
-      getChartMeterCategories(period) : 
+      getChartMeterCategories(period, intl) : 
         getChartAmphiroCategories(period);
         
         

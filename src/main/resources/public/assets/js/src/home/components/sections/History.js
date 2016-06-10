@@ -82,13 +82,18 @@ function TimeNavigator(props) {
 var History = React.createClass({
 
   componentWillMount: function() {
-    const { synced, setActiveDeviceType, activeDeviceType, timeFilter } = this.props;
+    const { synced, setActiveDeviceType, activeDeviceType, timeFilter, deviceTypes } = this.props;
     if (!synced) {
         //set active device and dont query cause we havent set time yet!
         setActiveDeviceType(activeDeviceType, false);
         this.handlePeriodSelect(timeFilter);
       
-      }
+    }
+    /*
+      if (!deviceTypes.find(x => x.id === 'METER')) {
+        setActiveDeviceType('AMPHIRO');
+        }
+        */
   },
   handleTypeSelect: function(key){
     this.props.setMetricFilter(key); 
@@ -182,7 +187,7 @@ var History = React.createClass({
   },
   */
   render: function() {
-    const { intl, devices, amphiros, activeDevice, activeDeviceType, device, devType, timeFilter, time, metrics, periods, comparisons } = this.props;
+    const { intl, devices, amphiros, activeDevice, activeDeviceType, device, devType, timeFilter, time, metrics, periods, comparisons, deviceTypes } = this.props;
     const _t = intl.formatMessage;
     return (
         <MainSection id="section.history">
@@ -214,9 +219,11 @@ var History = React.createClass({
             {
             <bs.Tabs position='left' tabWidth={20} activeKey={this.props.activeDeviceType} onSelect={this.handleDeviceTypeSelect}>
               {
-                [{id:'METER', title: 'Water meter', image: 'swm.svg'}, {id:'AMPHIRO', title:'Shower devices', image: 'amphiro_small.svg'}].map((devType, i) => ( 
-                  <bs.Tab key={devType.id} eventKey={devType.id} title={devType.title} /> 
-                           ))
+               deviceTypes 
+                .map((devType, i) => ( 
+                    <bs.Tab key={devType.id} eventKey={devType.id} title={devType.title} />
+                 
+                    ))
               }
             </bs.Tabs>
             }
@@ -289,6 +296,7 @@ var History = React.createClass({
 
         <HistoryList 
           handleSortSelect={this.handleSortSelect}
+          activeDeviceType={activeDeviceType}
           {...this.props} />
 
         </div>

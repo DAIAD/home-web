@@ -2,13 +2,11 @@ var React = require('react');
 
 var bs = require('react-bootstrap');
 //var link = require('react-router').link;
-var FormattedMessage = require('react-intl').FormattedMessage;
-var FormattedTime = require('react-intl').FormattedTime;
-var FormattedRelative = require('react-intl').FormattedRelative;
+var { FormattedMessage, FormattedTime, FormattedDate, FormattedRelative } = require('react-intl');
 
 var Chart = require('./helpers/Chart');
 
-var { SHOWER_METRICS, IMAGES } = require('../constants/HomeConstants'); 
+var { SHOWER_METRICS, METER_AGG_METRICS, IMAGES } = require('../constants/HomeConstants'); 
 var { SidebarLeft } = require('./layout/Sidebars');
 var timeUtil = require('../utils/time');
 
@@ -19,12 +17,12 @@ function SessionInfoItem (props) {
     <li className="session-item" >
       {(()=> props.sessionClick?(
         <a onClick={() => props.sessionClick(props.id)} title={_t({id: props.details})}>
-        <h4 style={{float: 'left'}}><img style={{width:24, marginRight:20}} src={`${IMAGES}/${props.icon}.svg`} /><FormattedMessage id={props.title} /></h4>
+        <h4 style={{float: 'left'}}><img style={{height:props.id==='temperature'?30:24, marginLeft:props.id==='temperature'?7:0, marginRight:20}} src={`${IMAGES}/${props.icon}`} /><FormattedMessage id={props.title} /></h4>
       <h4 style={{float:'right'}}>{props.data} <span>{props.mu}</span></h4>
     </a>
     ):(
     <span>
-        <h4 style={{float: 'left'}}><img style={{width:props.id==='temperature'?12:24, marginRight:20}} src={`${IMAGES}/${props.icon}.svg`} /><FormattedMessage id={props.title} /></h4>
+        <h4 style={{float: 'left'}}><img style={{height:props.id==='temperature'?30:24, marginLeft:props.id==='temperature'?7:0, marginRight:20}} src={`${IMAGES}/${props.icon}`} /><FormattedMessage id={props.title} /></h4>
       <h4 style={{float:'right'}}>{props.data} <span>{props.mu}</span></h4>
     </span>
     ))()
@@ -34,19 +32,21 @@ function SessionInfoItem (props) {
 }
 
 function SessionInfo (props) {
-  const { setSessionFilter, intl, data, firstname } = props;
+  const { setSessionFilter, intl, data, firstname, activeDeviceType } = props;
+  const metrics = activeDeviceType === 'METER' ? METER_AGG_METRICS : SHOWER_METRICS;
   return !data?<div />:(
     <div className="shower-info">
       <div className="headline">
         <span className="headline-user"><i className="fa fa-user"/>{firstname}</span>
-        <span className="headline-date"><i className="fa fa-calendar"/>{new Date(data.timestamp).toString()}</span>
+        {
+          //<span className="headline-date"><i className="fa fa-calendar"/>{new Date(data.timestamp).toString()}</span>
+        }
+        <span className="headline-date"><i className="fa fa-calendar"/><FormattedDate value={new Date(data.timestamp)} year='numeric' month='long' day='numeric' weekday='long' /> <FormattedTime value={new Date(data.timestamp)}/></span>
       </div>
-      <br/>
-      <br/>
       <ul className="sessions-list" >
         {
-          SHOWER_METRICS.map(function(metric) {
-            return (<SessionInfoItem key={metric.id} intl={intl} icon={metric.icon || metric.id} sessionClick={metric.clickable?setSessionFilter:null} title={metric.title} id={metric.id} data={data[metric.id]} mu={metric.mu} details={metric.details} />);
+          metrics.map(function(metric) {
+            return (<SessionInfoItem key={metric.id} intl={intl} icon={metric.icon} sessionClick={metric.clickable?setSessionFilter:null} title={metric.title} id={metric.id} data={data[metric.id]} mu={metric.mu} details={metric.details} />);
           })
         }
       </ul>
@@ -55,7 +55,7 @@ function SessionInfo (props) {
 }
 
 function Session (props) {
-  const { intl, filter, data, chartData, setSessionFilter, firstname } = props;
+  const { intl, filter, data, chartData, setSessionFilter, firstname, activeDeviceType } = props;
   if (!data) return <div/>;
   const { hasChartData, history, id } = data;
   const _t = intl.formatMessage;
@@ -81,6 +81,7 @@ function Session (props) {
           firstname={firstname}
           intl={intl}
           setSessionFilter={setSessionFilter}
+          activeDeviceType={activeDeviceType}
           data={data} /> 
     </div>
   ) : (
@@ -91,6 +92,7 @@ function Session (props) {
     
     <SessionInfo
       firstname={firstname}
+      activeDeviceType={activeDeviceType}
       intl={intl}
       data={data} />
     </div> 

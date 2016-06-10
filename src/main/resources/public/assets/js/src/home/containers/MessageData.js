@@ -49,7 +49,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
   const activeMessageIndex = stateProps.activeMessageId ? messages.findIndex(x => x.id === stateProps.activeMessageId) : null;
   const activeMessage = activeMessageIndex != null ? messages[activeMessageIndex] : null;
 
-  const infobox = activeMessage && activeMessage.extra ? transformInfoboxData(activeMessage.extra, stateProps.devices) : {}; 
+  const infobox = activeMessage && activeMessage.extra ? transformInfoboxData(activeMessage.extra, stateProps.devices, ownProps.intl) : {}; 
   return Object.assign({}, ownProps,
                dispatchProps,
                stateProps,
