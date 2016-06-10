@@ -3,10 +3,10 @@ var { getFriendlyDuration, getEnergyClass } = require('./general');
 const getDefaultDevice = function(devices) {
   const amphiroDevices = getAvailableDevices(devices);
   const meters = getAvailableMeters(devices);
-  if (amphiroDevices.length) {
+  if (amphiroDevices && amphiroDevices.length) {
     return amphiroDevices[0];
   }
-  else if (meters.length) {
+  else if (meters && meters.length) {
     return meters[0];
   }
   else {
@@ -27,8 +27,13 @@ const getDeviceKeyByName = function(devices, name) {
 };
 
 const getDeviceCount = function(devices) {
-  if (!devices.length) return 0;
+  if (!devices || !devices.length) return 0;
   return getAvailableDevices(devices).length;
+};
+
+const getMeterCount = function(devices) {
+  if (!devices || !devices.length) return 0;
+  return getAvailableMeters(devices).length;
 };
 
 const getAvailableDevices = function(devices) {
@@ -74,6 +79,7 @@ module.exports = {
   getDefaultDevice,
   getDeviceTypeByKey,
   getDeviceCount,
+  getMeterCount,
   getAvailableDevices,
   getAvailableDeviceKeys,
   getAvailableMeters,

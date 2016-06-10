@@ -10,6 +10,7 @@ var Chart = React.createClass({
   render: function() {
     return (
       <div 
+        className='chart'
         style={{
           width: this.props.width,
           height: this.props.height
@@ -65,12 +66,14 @@ var Chart = React.createClass({
   
   componentWillReceiveProps : function(nextProps) {
     if(this._chart && nextProps) {
+     
       this._updateOptions(nextProps);
     }
   },
 
   componentWillUnmount : function() {
     this._chart.dispose();
+    this._chart = null;
   },
 
   _updateOptions: function(options) {
@@ -100,11 +103,11 @@ var Chart = React.createClass({
     if (xaxisData) {
       // Expect array of numbers paired to x-axis data (aAxis.type=category)
       data = data.map(v => ((v == '-' || v == null)? null : Number(v)));
-      if (data.length != xaxisData.length || data.some(v => isNaN(v)) || data.every(v => v===null))
+      if (data && xaxisData && data.length != xaxisData.length || data.some(v => isNaN(v)) || data.every(v => v===null))
         data = null; // invalidate the entire array
     } else {
       // Expect array of [x, y] pairs (xAxis.type=value)
-      data = data.filter(p => (Array.isArray(p) && p.length == 2))
+      data = data.filter(p => (Array.isArray(p) && p && p.length == 2))
         .map(p => ([Number(p[0]), Number(p[1])]));
     }
     return data;
@@ -293,7 +296,7 @@ var Chart = React.createClass({
     return {
       title : {
         text: this.props.title,
-        padding: this.props.title.length?[-2, 0, 50, 30]:5,
+        padding: this.props.title && this.props.title.length?[-2, 0, 50, 30]:5,
         x: 'center',
         y: 'center',
         textStyle: {
@@ -322,7 +325,7 @@ var Chart = React.createClass({
     return {
       title : {
         text: options.title,
-        padding: options.title.length?[-2, 0, 50, 30]:5,
+        padding: options.title && options.title.length?[-2, 0, 50, 30]:5,
         textStyle: {
           //fontFamily: "OpenSansCondensed",
           color: '#808285'

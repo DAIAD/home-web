@@ -84,7 +84,6 @@ function NotificationList(props){
             <li key={notification.id} className={notificationClass + activeClass} >
               <a onClick={() => props.setActiveMessageId(notification.id)}>
                 {
-                  //(notification.title.length>maxLength)?(`${notification.title.substring(0, maxLength).trim()}...`):notification.title
                   notification.title
                 }
               </a>

@@ -18,6 +18,7 @@ const getShowersCount = function (devices, data) {
 
 
 const reduceMetric = function (devices, data, metric) {
+  if (!devices || !data || !metric) return null;
   const showers = getShowersCount(devices, data);                     
   const sessions = getSessionsCount(devices, data);
   let reducedMetric;
@@ -42,7 +43,7 @@ const reduceMetric = function (devices, data, metric) {
 };
 
 const getSessionIndexById = function (sessions, id) {
-    if (!id || !sessions.length || !sessions[0].hasOwnProperty('id')) return null;
+    if (!id || !sessions || !sessions.length || !sessions[0].hasOwnProperty('id')) return null;
       
       return sessions.findIndex(x => (x.id).toString() === id.toString());
 };
@@ -57,7 +58,7 @@ const updateOrAppendToSession = function (devices, data) {
   if (devIdx === -1) return updated;
 
   const sessions = updated[devIdx].sessions.slice();
-  if (!sessions.length) return null;
+  if (!sessions || !sessions.length) return null;
   
   const index = getSessionIndexById(sessions, id);
   if (index > -1) {
@@ -102,7 +103,7 @@ const transformInfoboxData = function (infobox, devices) {
       
       chartCategories = null;
 
-      const last = data.find(d=>d.deviceKey===device);
+      const last = data ? data.find(d=>d.deviceKey===device) : null;
       const lastShowerMeasurements = getDataMeasurements(devices, last, index);
       
       reduced = lastShowerMeasurements.map(s=>s[metric]).reduce((p, c)=>p+c, 0);
@@ -134,10 +135,10 @@ const transformInfoboxData = function (infobox, devices) {
       better = reduced < previousReduced;
       comparePercentage = previousReduced === 0 ? null : Math.round((Math.abs(reduced - previousReduced) / previousReduced)*100);
 
-      chartData = data.map(devData => ({ 
+      chartData = data ? data.map(devData => ({ 
         title: getDeviceNameByKey(devices, devData.deviceKey), 
         data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, chartCategories)
-      }));
+      })) : [];
      
     }
     else if (type === 'efficiency') {
@@ -160,10 +161,10 @@ const transformInfoboxData = function (infobox, devices) {
         throw new Error('only energy efficiency supported');
       }
       
-      chartData = data.map(devData => ({ 
+      chartData = data ? data.map(devData => ({ 
         title: getDeviceNameByKey(devices, devData.deviceKey), 
         data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, chartCategories)
-      }));
+      })) : [];
       
     }
     else if (type === 'forecast') {
@@ -255,6 +256,7 @@ const sortSessions = function (sessions, by='timestamp', order='desc') {
 // reduces array of devices with multiple sessions arrays
 // to single array of sessions (including device key)
 const reduceSessions = function (devices, data) {
+  if (!devices || !data) return [];
   return data.map(device =>  
                   getDataSessions(devices, device)
                   .map((session, idx, array) => {
@@ -299,29 +301,29 @@ const getDataSessions = function (devices, data) {
 const getDataMeasurements = function (devices, data, index) {
   const sessions = getDataSessions(devices, data);
 
-  if (!Array.isArray(sessions) || sessions.length < index) return [];
+  if (!sessions || !Array.isArray(sessions) || sessions.length < index) return [];
 
   return sessions[index]?sessions[index].measurements:[];
 };
 
 const getLastSession = function (sessions) { 
-  if (!sessions.length || !sessions[0].hasOwnProperty('timestamp')) return null;
+  if (!sessions || !sessions.length || !sessions[0].hasOwnProperty('timestamp')) return null;
 
   return sessions.reduce((prev, curr) => (curr.timestamp>prev.timestamp)?curr:prev);
 };
 
 const getSessionById = function (sessions, id) {
-  if (!id || !sessions.length || !sessions[0].hasOwnProperty('id')) return null;
+  if (!id || !sessions || !sessions.length || !sessions[0].hasOwnProperty('id')) return null;
   return sessions.find(x => (x.id).toString() === id.toString());
 };
 
 const getSessionByIndex = function(sessions, index) {
-  if (typeof(index) !== "number" || !sessions.length) return null;
+  if (typeof(index) !== "number" || !sessions || !sessions.length) return null;
   return sessions[index];
 };
 
 const getNextSession = function(sessions, id) {
-  if (!id || !sessions.length || !sessions[0].hasOwnProperty('id')) return null;
+  if (!id || !sessions || !sessions.length || !sessions[0].hasOwnProperty('id')) return null;
   
   const sessionIndex = getSessionIndexById(sessions, id);
   if (sessions[sessionIndex+1]){
@@ -333,7 +335,7 @@ const getNextSession = function(sessions, id) {
 };
 
 const getPreviousSession = function(sessions, id) {
-  if (!id || !sessions.length || !sessions[0].hasOwnProperty('id')) return null;
+  if (!id || !sessions || !sessions.length || !sessions[0].hasOwnProperty('id')) return null;
   
   const sessionIndex = getSessionIndexById(sessions, id);
   if (sessions[sessionIndex-1]){
