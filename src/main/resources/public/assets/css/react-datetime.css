@@ -1,0 +1,23 @@
+/* 
+ * Apply site-local overrides for react-datetime controls
+ */
+
+.form-group > .rdt {
+  display: inline-block;
+}
+
+.form-group .rdtPicker {
+  padding: 1px;
+  border: solid #ccc 1px;
+}
+
+.form-group .rdtPicker .rdtDays tbody td {
+  cursor: pointer;
+  height: 1.9em;
+}
+
+.form-group .rdtPicker .rdtDays tbody td:hover {
+  background-color: #F7E1B7;
+  color: #555;
+}
+

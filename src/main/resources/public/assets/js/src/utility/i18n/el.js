@@ -1,6 +1,6 @@
 {
 	"locale": {
-		"en":"Αγγλικά",
+		"en-GB":"Αγγλικά",
 		"el":"Ελληνικά",
 		"es":"Ισπανικά",
 		"de":"Γερμανικά"
@@ -23,12 +23,12 @@
 		}
 	},
 	"Section": {
-            "Dashboard": "Περίληψη",
+      "Dashboard": "Περίληψη",
 	    "Analytics":"Ανάλυση",
-	    "Forecasting": "Πρόβλεψη - Learning Mode",
-	    "Demographics": "Ομάδες & Χρήστες",
+	    "Forecasting": "Πρόβλεψη",
+	    "Demographics": "Ομάδες",
 	    "ModeManagement": "Διαχείριση Κατάστασης",
-	    "Search": "Αναζήτηση",
+	    "Users": "Χρήστες",
 	    "Messages": "Μηνύματα",
 	    "Settings": "Ρυθμίσεις",
 	    "Reports": {
@@ -36,13 +36,22 @@
 	      "Overview": "Επισκόπηση",
 	      "Charts": "Γραφήματα"
 	    },
-	    "Alerts": "Ειδοποιήσεις",
+      "Reports": {
+        "Group": "Δοκιμές",
+        "Overview": "Επισκόπηση",
+        "Charts": "Γραφήματα",
+        "Measurements": "Αναφορές",
+        "System": "Αναφορές Συστήματος"
+      },
 	    "Announcements" : "Ανακοινώσεις",
-      "ManageAlerts" : "Διαχείρηση Ειδοποιήσεων",
+	    "Messages" : {
+        "Tips" : "Διαχείρηση Ειδοποιήσεων"
+      },
 	    "Scheduler": "Διαχείριση Εργασιών",
 	    "Consumers": "Καταναλωτές",
 	    "Support" : {
         "Group": "Υποστήριξη",
+        "Logging": "Καταγραφή Συμβάντων",
         "Data": "Διαχείριση Δεδομένων",
         "Development": "Ανάπτυξη"
 	    }
@@ -187,7 +196,8 @@
     "AddFavourite" : "Προσθήκη Αγαπημένου",
     "UpdateFavourite" : "Ενημέρωση Αγαπημένου",
     "Actions" : "Ενέργειες",
-    "DeleteGroup" : "Διαγραφή Ομάδας"
+    "DeleteGroup" : "Διαγραφή Ομάδας",
+    "DeleteFavourite" : "Διαγραφή Αγαπημένου"
   },
   "Form" : {
     "ErrorsDetected" : "Εντοπίστηκαν σφάλματα:",
@@ -215,6 +225,13 @@
         "Part1" : "Είστε σίγουρος ότι θέλετε να διαγράψετε την ομάδα \"",
         "Part2" : "\" ;"
       }
+    },
+    "DeleteFavourite": {
+      "Title" : "Διαγραφή Αγαπημένου",
+      "Body" : {
+        "Part1" : "Είστε σίγουρος ότι θέλετε να διαγράψετε τo αγαπημένο \"",
+        "Part2" : "\" ;"
+      }
     }
 	},
   "FilterBar" : {
@@ -230,6 +247,8 @@
 		"403" : "Η πιστοποίηση απέτυχε",
 		"404" : "Not found",
 		"500" : "Internal server error",
+		"SharedErrorCode.AUTHENTICATION": "Authentication has failed. Please try again.",
+		"SharedErrorCode.SESSION_EXPIRED": "Η συνεδρία έχει λήξει.",
     "ValidationError.User.NO_FIRST_NAME": "Λείπει το Όνομα.",
     "ValidationError.User.NO_LAST_NAME": "Λείπει το Επώνυμο.",
     "ValidationError.User.NO_EMAIL": "Λείπει το E-mail.",
@@ -251,6 +270,7 @@
   "Success": {
     "UserSuccess.USER_ADDED_WHITELIST" : "Ο χρήστης εγγράφηκε επιτυχώς στη user white list.",
     "GroupSuccess.GROUP_CREATED" : "Η ομάδα δημιουργήθηκε επιτυχώς.",
+    "GroupSuccess.GROUP_DELETED" : "Η ομάδα διαγράφηκε επιτυχώς.",
     "FavouriteSuccess.FAVOURITE_ADDED" : "Το αγαπημένο προστέθηκε επιτυχώς.",
     "FavouriteSuccess.FAVOURITE_UPDATED" : "Το αγαπημένο ενημερώθηκε επιτυχώς."
   }

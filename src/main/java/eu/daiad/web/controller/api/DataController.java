@@ -22,6 +22,8 @@ import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.meter.WaterMeterMeasurementCollection;
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryRequest;
+import eu.daiad.web.model.query.ForecastQuery;
+import eu.daiad.web.model.query.ForecastQueryRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
@@ -31,9 +33,7 @@ import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 import eu.daiad.web.service.IDataService;
 
 /**
- * 
  * Provides actions for storing Amphiro B1 data to the server and querying stored data.
- *
  */
 @RestController("RestDataController")
 public class DataController extends BaseRestController {
@@ -91,6 +91,38 @@ public class DataController extends BaseRestController {
 		return response;
 	}
 
+    /**
+     * Returns forecasting results for a smart water meter
+     * 
+     * @param data the query.
+     * @return the data series.
+     */
+    @RequestMapping(value = "/api/v1/data/meter/forecast", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    public RestResponse forecast(@RequestBody ForecastQueryRequest data) {
+        RestResponse response = new RestResponse();
+
+        try {
+            AuthenticatedUser user = this.authenticate(data.getCredentials(), EnumRole.ROLE_ADMIN);
+
+            // Set defaults if needed
+            ForecastQuery query = data.getQuery();
+            if (query != null) {
+                // Initialize time zone
+                if (StringUtils.isBlank(query.getTimezone())) {
+                    query.setTimezone(user.getTimezone());
+                }
+            }
+
+            return dataService.execute(query);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
+    
 	/**
 	 * Stores Amphiro B1 session and measurement data. Sessions are index by time.
 	 * 
@@ -145,7 +177,7 @@ public class DataController extends BaseRestController {
 											data.getType().toString());
 						}
 
-						waterMeterMeasurementRepository.storeData(((WaterMeterDevice) device).getSerial(),
+						waterMeterMeasurementRepository.store(((WaterMeterDevice) device).getSerial(),
 										(WaterMeterMeasurementCollection) data);
 					}
 					break;
@@ -219,7 +251,7 @@ public class DataController extends BaseRestController {
 											data.getType().toString());
 						}
 
-						waterMeterMeasurementRepository.storeData(((WaterMeterDevice) device).getSerial(),
+						waterMeterMeasurementRepository.store(((WaterMeterDevice) device).getSerial(),
 										(WaterMeterMeasurementCollection) data);
 					}
 					break;

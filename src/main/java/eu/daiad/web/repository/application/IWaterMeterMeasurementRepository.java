@@ -14,15 +14,15 @@ import eu.daiad.web.model.query.GroupDataSeries;
 
 public interface IWaterMeterMeasurementRepository {
 
-	public abstract void storeData(String serial, WaterMeterMeasurementCollection data);
+    abstract void store(String serial, WaterMeterMeasurementCollection data);
 
-	public abstract WaterMeterStatusQueryResult getStatus(String serials[]);
+    abstract WaterMeterStatusQueryResult getStatus(String serials[]);
 
-	public abstract WaterMeterStatusQueryResult getStatus(String serials[], long maxDateTime);
+    abstract WaterMeterStatusQueryResult getStatus(String serials[], long maxDateTime);
 
-	public abstract WaterMeterMeasurementQueryResult searchMeasurements(String serials[], DateTimeZone timezone,
-					WaterMeterMeasurementQuery query);
+    abstract WaterMeterMeasurementQueryResult searchMeasurements(String serials[], DateTimeZone timezone,
+                    WaterMeterMeasurementQuery query);
 
-	public abstract ArrayList<GroupDataSeries> query(ExpandedDataQuery query) throws ApplicationException;
+    abstract ArrayList<GroupDataSeries> query(ExpandedDataQuery query) throws ApplicationException;
 
 }

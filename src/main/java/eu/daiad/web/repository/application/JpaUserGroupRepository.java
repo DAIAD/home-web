@@ -291,4 +291,35 @@ public class JpaUserGroupRepository extends BaseRepository implements IUserGroup
 		}
 
 	}
+	
+	@Override
+	public List<GroupInfo> getGroupsByMember(UUID user_id) {
+		try {
+			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+			AuthenticatedUser requestingUser = (AuthenticatedUser) auth.getPrincipal();
+
+			if (!requestingUser.hasRole("ROLE_ADMIN") && !requestingUser.hasRole("ROLE_SUPERUSER")) {
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+			}
+
+			TypedQuery<eu.daiad.web.domain.application.Group> userGroupQuery = entityManager
+					.createQuery("SELECT g FROM group_member m JOIN m.group g JOIN m.account a WHERE a.key = :user_key",
+							eu.daiad.web.domain.application.Group.class)
+					.setFirstResult(0);
+			userGroupQuery.setParameter("user_key", user_id);
+
+			List<eu.daiad.web.domain.application.Group> groups = userGroupQuery.getResultList();
+			List<GroupInfo> groupsInfo = new ArrayList<GroupInfo>();
+
+			for (eu.daiad.web.domain.application.Group group : groups) {
+				GroupInfo groupInfo = new GroupInfo(group);
+				groupsInfo.add(groupInfo);
+			}
+
+			return groupsInfo;
+
+		} catch (Exception ex) {
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+		}
+	}
 }

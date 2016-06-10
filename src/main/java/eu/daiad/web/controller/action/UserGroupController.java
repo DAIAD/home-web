@@ -188,4 +188,27 @@ public class UserGroupController extends BaseController {
 		}
 		return response;
 	}
+	
+	/**
+	 * It returns the list of groups in which the user is member.
+	 * 
+	 * @param user_id
+	 * @return the user groups
+	 */
+	
+	@RequestMapping(value = "/action/group/list/member/{user_id}", method = RequestMethod.GET, produces = "application/json")
+	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN"})
+	public @ResponseBody RestResponse getGroupsByMember(@PathVariable UUID user_id){
+		RestResponse response = new RestResponse();
+		
+		try{
+			return new GroupListInfoResponse(repository.getGroupsByMember(user_id));
+			
+		} catch (ApplicationException ex) {
+			logger.error(ex.getMessage(), ex);
+
+			response.add(this.getError(ex));
+		}
+		return response;
+	}
 }

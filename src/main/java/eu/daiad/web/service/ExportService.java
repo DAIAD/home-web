@@ -44,212 +44,214 @@ import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 @Service
 public class ExportService extends BaseService implements IExportService {
 
-	private static final Log logger = LogFactory.getLog(ExportService.class);
+    private static final Log logger = LogFactory.getLog(ExportService.class);
 
-	@Value("${tmp.folder}")
-	private String temporaryPath;
+    @Value("${tmp.folder}")
+    private String temporaryPath;
 
-	@Autowired
-	private IAmphiroIndexOrderedRepository amphiroIndexOrderedRepository;
+    @Autowired
+    private IAmphiroIndexOrderedRepository amphiroIndexOrderedRepository;
 
-	@Autowired
-	private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
+    @Autowired
+    private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
 
-	@Override
-	public String export(ExportUserDataQuery query) throws ApplicationException {
-		XSSFWorkbook workbook = null;
+    @Override
+    public String export(ExportUserDataQuery query) throws ApplicationException {
+        XSSFWorkbook workbook = null;
 
-		try {
-			// Create output folder
-			String outputFolderName = this.temporaryPath;
+        try {
+            // Create output folder
+            String outputFolderName = this.temporaryPath;
 
-			File outputFolder = new File(this.temporaryPath);
+            File outputFolder = new File(this.temporaryPath);
 
-			outputFolder.mkdirs();
+            outputFolder.mkdirs();
 
-			if (!outputFolder.exists()) {
-				throw createApplicationException(SharedErrorCode.DIR_CREATION_FAILED).set("path", outputFolderName);
-			}
+            if (!outputFolder.exists()) {
+                throw createApplicationException(SharedErrorCode.DIR_CREATION_FAILED).set("path", outputFolderName);
+            }
 
-			// Create new file name
-			String token = UUID.randomUUID().toString();
+            // Create new file name
+            String token = UUID.randomUUID().toString();
 
-			File excelFile = new File(FilenameUtils.concat(outputFolderName, token + ".xlsx"));
-			File zipFile = new File(FilenameUtils.concat(outputFolderName, token + ".zip"));
+            File excelFile = new File(FilenameUtils.concat(outputFolderName, token + ".xlsx"));
+            File zipFile = new File(FilenameUtils.concat(outputFolderName, token + ".zip"));
 
-			// Set time zone
-			Set<String> zones = DateTimeZone.getAvailableIDs();
-			if (query.getTimezone() == null) {
-				query.setTimezone("Europe/Athens");
-			}
-			if (!zones.contains(query.getTimezone())) {
-				throw createApplicationException(SharedErrorCode.TIMEZONE_NOT_FOUND).set("timezone",
-								query.getTimezone());
-			}
+            // Set time zone
+            Set<String> zones = DateTimeZone.getAvailableIDs();
+            if (query.getTimezone() == null) {
+                query.setTimezone("Europe/Athens");
+            }
+            if (!zones.contains(query.getTimezone())) {
+                throw createApplicationException(SharedErrorCode.TIMEZONE_NOT_FOUND).set("timezone",
+                                query.getTimezone());
+            }
 
-			DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZone(
-							DateTimeZone.forID(query.getTimezone()));
+            DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZone(
+                            DateTimeZone.forID(query.getTimezone()));
 
-			// Initialize excel work book
-			workbook = new XSSFWorkbook();
+            // Initialize excel work book
+            workbook = new XSSFWorkbook();
 
-			// Load sessions
-			String[] nameArray = new String[query.getAmphiroNames().size()];
-			query.getAmphiroNames().toArray(nameArray);
+            // Load sessions
+            String[] nameArray = new String[query.getAmphiroNames().size()];
+            query.getAmphiroNames().toArray(nameArray);
 
-			UUID[] amphiroArray = new UUID[query.getAmphiroKeys().size()];
-			query.getAmphiroKeys().toArray(amphiroArray);
+            UUID[] amphiroArray = new UUID[query.getAmphiroKeys().size()];
+            query.getAmphiroKeys().toArray(amphiroArray);
 
-			AmphiroSessionCollectionIndexIntervalQuery sessionQuery = new AmphiroSessionCollectionIndexIntervalQuery();
-			sessionQuery.setUserKey(query.getUserKey());
-			sessionQuery.setDeviceKey(amphiroArray);
-			sessionQuery.setType(EnumIndexIntervalQuery.SLIDING);
-			sessionQuery.setLength(Integer.MAX_VALUE);
+            AmphiroSessionCollectionIndexIntervalQuery sessionQuery = new AmphiroSessionCollectionIndexIntervalQuery();
+            sessionQuery.setUserKey(query.getUserKey());
+            sessionQuery.setDeviceKey(amphiroArray);
+            sessionQuery.setType(EnumIndexIntervalQuery.SLIDING);
+            sessionQuery.setLength(Integer.MAX_VALUE);
 
-			AmphiroSessionCollectionIndexIntervalQueryResult amphiroCollection = this.amphiroIndexOrderedRepository
-							.searchSessions(nameArray, DateTimeZone.forID(query.getTimezone()), sessionQuery);
+            AmphiroSessionCollectionIndexIntervalQueryResult amphiroCollection = this.amphiroIndexOrderedRepository
+                            .searchSessions(nameArray, DateTimeZone.forID(query.getTimezone()), sessionQuery);
 
-			// Create one sheet per device
-			for (AmphiroSessionCollection device : amphiroCollection.getDevices()) {
-				int rowIndex = 0;
+            // Create one sheet per device
+            for (AmphiroSessionCollection device : amphiroCollection.getDevices()) {
+                int rowIndex = 0;
 
-				String sheetName = device.getName();
-				if (StringUtils.isBlank(sheetName)) {
-					sheetName = device.getDeviceKey().toString();
-				}
+                String sheetName = device.getName();
+                if (StringUtils.isBlank(sheetName)) {
+                    sheetName = device.getDeviceKey().toString();
+                }
 
-				XSSFSheet sheet = workbook.createSheet(sheetName);
+                sheetName = Integer.toString(workbook.getNumberOfSheets() + 1) + " - " + sheetName;
 
-				// Write header
-				Row row = sheet.createRow(rowIndex++);
+                XSSFSheet sheet = workbook.createSheet(sheetName);
 
-				row.createCell(0).setCellValue("Session Id");
-				row.createCell(1).setCellValue("Date Time");
-				row.createCell(2).setCellValue("Volume");
-				row.createCell(3).setCellValue("Temperature");
-				row.createCell(4).setCellValue("Energy");
-				row.createCell(5).setCellValue("Flow");
-				row.createCell(6).setCellValue("Duration");
-				row.createCell(7).setCellValue("History");
+                // Write header
+                Row row = sheet.createRow(rowIndex++);
 
-				DataFormat format = workbook.createDataFormat();
-				CellStyle style = workbook.createCellStyle();
+                row.createCell(0).setCellValue("Session Id");
+                row.createCell(1).setCellValue("Date Time");
+                row.createCell(2).setCellValue("Volume");
+                row.createCell(3).setCellValue("Temperature");
+                row.createCell(4).setCellValue("Energy");
+                row.createCell(5).setCellValue("Flow");
+                row.createCell(6).setCellValue("Duration");
+                row.createCell(7).setCellValue("History");
 
-				style.setDataFormat(format.getFormat("0.00"));
+                DataFormat format = workbook.createDataFormat();
+                CellStyle style = workbook.createCellStyle();
 
-				for (AmphiroAbstractSession session : device.getSessions()) {
-					row = sheet.createRow(rowIndex++);
+                style.setDataFormat(format.getFormat("0.00"));
 
-					row.createCell(0).setCellValue(((AmphiroSession) session).getId());
-					row.createCell(1).setCellValue(session.getUtcDate().toString(formatter));
+                for (AmphiroAbstractSession session : device.getSessions()) {
+                    row = sheet.createRow(rowIndex++);
 
-					row.createCell(2).setCellValue(session.getVolume());
-					row.getCell(2).setCellStyle(style);
-					row.createCell(3).setCellValue(session.getTemperature());
-					row.getCell(3).setCellStyle(style);
-					row.createCell(4).setCellValue(session.getEnergy());
-					row.getCell(4).setCellStyle(style);
-					row.createCell(5).setCellValue(session.getFlow());
-					row.getCell(5).setCellStyle(style);
+                    row.createCell(0).setCellValue(((AmphiroSession) session).getId());
+                    row.createCell(1).setCellValue(session.getUtcDate().toString(formatter));
 
-					row.createCell(6).setCellValue(session.getDuration());
+                    row.createCell(2).setCellValue(session.getVolume());
+                    row.getCell(2).setCellStyle(style);
+                    row.createCell(3).setCellValue(session.getTemperature());
+                    row.getCell(3).setCellStyle(style);
+                    row.createCell(4).setCellValue(session.getEnergy());
+                    row.getCell(4).setCellStyle(style);
+                    row.createCell(5).setCellValue(session.getFlow());
+                    row.getCell(5).setCellStyle(style);
 
-					row.createCell(7).setCellValue(((AmphiroSession) session).isHistory() ? "YES" : "NO");
-				}
+                    row.createCell(6).setCellValue(session.getDuration());
 
-			}
+                    row.createCell(7).setCellValue(((AmphiroSession) session).isHistory() ? "YES" : "NO");
+                }
 
-			// Load meter measurements
-			String[] serialArray = new String[query.getMeterNames().size()];
-			query.getMeterNames().toArray(serialArray);
+            }
 
-			UUID[] meterArray = new UUID[query.getMeterKeys().size()];
-			query.getMeterKeys().toArray(meterArray);
+            // Load meter measurements
+            String[] serialArray = new String[query.getMeterNames().size()];
+            query.getMeterNames().toArray(serialArray);
 
-			WaterMeterMeasurementQuery meterQuery = new WaterMeterMeasurementQuery();
-			meterQuery.setUserKey(query.getUserKey());
-			meterQuery.setDeviceKey(meterArray);
-			meterQuery.setGranularity(TemporalConstants.NONE);
-			meterQuery.setStartDate(null);
-			meterQuery.setEndDate(null);
+            UUID[] meterArray = new UUID[query.getMeterKeys().size()];
+            query.getMeterKeys().toArray(meterArray);
 
-			WaterMeterMeasurementQueryResult meterCollection = this.waterMeterMeasurementRepository.searchMeasurements(
-							serialArray, DateTimeZone.forID(query.getTimezone()), meterQuery);
+            WaterMeterMeasurementQuery meterQuery = new WaterMeterMeasurementQuery();
+            meterQuery.setUserKey(query.getUserKey());
+            meterQuery.setDeviceKey(meterArray);
+            meterQuery.setGranularity(TemporalConstants.NONE);
+            meterQuery.setStartDate(null);
+            meterQuery.setEndDate(null);
 
-			// Create one sheet per device
-			for (WaterMeterDataSeries series : meterCollection.getSeries()) {
-				int rowIndex = 0;
+            WaterMeterMeasurementQueryResult meterCollection = this.waterMeterMeasurementRepository.searchMeasurements(
+                            serialArray, DateTimeZone.forID(query.getTimezone()), meterQuery);
 
-				String sheetName = series.getSerial();
-				if (StringUtils.isBlank(sheetName)) {
-					sheetName = series.getDeviceKey().toString();
-				}
+            // Create one sheet per device
+            for (WaterMeterDataSeries series : meterCollection.getSeries()) {
+                int rowIndex = 0;
 
-				XSSFSheet sheet = workbook.createSheet(sheetName);
+                String sheetName = series.getSerial();
+                if (StringUtils.isBlank(sheetName)) {
+                    sheetName = series.getDeviceKey().toString();
+                }
 
-				// Write header
-				Row row = sheet.createRow(rowIndex++);
+                XSSFSheet sheet = workbook.createSheet(sheetName);
 
-				row.createCell(0).setCellValue("Date Time");
-				row.createCell(1).setCellValue("Volume");
-				row.createCell(2).setCellValue("Difference");
+                // Write header
+                Row row = sheet.createRow(rowIndex++);
 
-				DataFormat format = workbook.createDataFormat();
-				CellStyle style = workbook.createCellStyle();
+                row.createCell(0).setCellValue("Date Time");
+                row.createCell(1).setCellValue("Volume");
+                row.createCell(2).setCellValue("Difference");
 
-				style.setDataFormat(format.getFormat("0.00"));
+                DataFormat format = workbook.createDataFormat();
+                CellStyle style = workbook.createCellStyle();
 
-				for (WaterMeterDataPoint point : series.getValues()) {
-					row = sheet.createRow(rowIndex++);
+                style.setDataFormat(format.getFormat("0.00"));
 
-					row.createCell(0).setCellValue(point.getUtcDate().toString(formatter));
-					row.createCell(1).setCellValue(point.getVolume());
-					row.getCell(1).setCellStyle(style);
-					row.createCell(2).setCellValue(point.getDifference());
-					row.getCell(2).setCellStyle(style);
-				}
-			}
+                for (WaterMeterDataPoint point : series.getValues()) {
+                    row = sheet.createRow(rowIndex++);
 
-			// Write workbook
-			FileOutputStream excelFileStream = new FileOutputStream(excelFile);
-			workbook.write(excelFileStream);
-			excelFileStream.close();
-			excelFileStream = null;
+                    row.createCell(0).setCellValue(point.getUtcDate().toString(formatter));
+                    row.createCell(1).setCellValue(point.getVolume());
+                    row.getCell(1).setCellStyle(style);
+                    row.createCell(2).setCellValue(point.getDifference());
+                    row.getCell(2).setCellStyle(style);
+                }
+            }
 
-			// Compress file
-			byte[] buffer = new byte[4096];
+            // Write workbook
+            FileOutputStream excelFileStream = new FileOutputStream(excelFile);
+            workbook.write(excelFileStream);
+            excelFileStream.close();
+            excelFileStream = null;
 
-			FileOutputStream fos = new FileOutputStream(zipFile);
-			ZipOutputStream zos = new ZipOutputStream(fos);
+            // Compress file
+            byte[] buffer = new byte[4096];
 
-			int len;
+            FileOutputStream fos = new FileOutputStream(zipFile);
+            ZipOutputStream zos = new ZipOutputStream(fos);
 
-			ZipEntry ze = new ZipEntry(query.getUsername() + ".xlsx");
-			zos.putNextEntry(ze);
-			FileInputStream in = new FileInputStream(excelFile);
-			while ((len = in.read(buffer)) > 0) {
-				zos.write(buffer, 0, len);
-			}
-			in.close();
-			zos.flush();
-			zos.closeEntry();
+            int len;
 
-			zos.close();
+            ZipEntry ze = new ZipEntry(query.getUsername() + ".xlsx");
+            zos.putNextEntry(ze);
+            FileInputStream in = new FileInputStream(excelFile);
+            while ((len = in.read(buffer)) > 0) {
+                zos.write(buffer, 0, len);
+            }
+            in.close();
+            zos.flush();
+            zos.closeEntry();
 
-			excelFile.delete();
+            zos.close();
 
-			return token;
-		} catch (Exception ex) {
-			throw wrapApplicationException(ex);
-		} finally {
-			try {
-				if (workbook != null) {
-					workbook.close();
-					workbook = null;
-				}
-			} catch (Exception ex) {
-				logger.error(ex);
-			}
-		}
-	}
+            excelFile.delete();
+
+            return token;
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex);
+        } finally {
+            try {
+                if (workbook != null) {
+                    workbook.close();
+                    workbook = null;
+                }
+            } catch (Exception ex) {
+                logger.error(ex);
+            }
+        }
+    }
 }

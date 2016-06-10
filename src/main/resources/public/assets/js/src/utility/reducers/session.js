@@ -45,7 +45,7 @@ var session = function(state, action) {
 
     case types.USER_RECEIVED_LOGOUT:
       if(document) {
-        document.cookie = 'daiad-utility-session=false; path=/';
+        document.cookie = 'daiad-utility-session=false; path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT;';
       }
 
       switch (action.status) {

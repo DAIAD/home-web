@@ -5,124 +5,144 @@ import eu.daiad.web.domain.admin.EnumJobCategory;
 
 public class JobInfo {
 
-	private long id;
+    private long id;
 
-	private EnumJobCategory category;
+    private EnumJobCategory category;
 
-	private EnumExecutionContainer container;
+    private EnumExecutionContainer container;
 
-	private String name;
+    private String name;
 
-	private String description;
+    private String description;
 
-	private Long lastExecution;
+    private Long lastExecution;
 
-	private Long lastExecutionDuration;
+    private Long lastExecutionDuration;
 
-	private String lastExecutionExitCode;
+    private EnumExecutionExitCode lastExecutionExitCode;
 
-	private String lastExecutionExitMessage;
+    private String lastExecutionExitMessage;
 
-	private Long nextExecution;
+    private Long nextExecution;
 
-	private boolean enabled;
+    private boolean enabled;
 
-	private Float progress;
+    private JobInfoSchedule schedule;
 
-	public long getId() {
-		return id;
-	}
+    private Float progress;
 
-	public void setId(long id) {
-		this.id = id;
-	}
+    private boolean running;
 
-	public EnumJobCategory getCategory() {
-		return category;
-	}
+    public long getId() {
+        return id;
+    }
 
-	public void setCategory(EnumJobCategory category) {
-		this.category = category;
-	}
+    public void setId(long id) {
+        this.id = id;
+    }
 
-	public EnumExecutionContainer getContainer() {
-		return container;
-	}
+    public EnumJobCategory getCategory() {
+        return category;
+    }
 
-	public void setContainer(EnumExecutionContainer container) {
-		this.container = container;
-	}
+    public void setCategory(EnumJobCategory category) {
+        this.category = category;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public EnumExecutionContainer getContainer() {
+        return container;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public void setContainer(EnumExecutionContainer container) {
+        this.container = container;
+    }
 
-	public String getDescription() {
-		return description;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public Long getLastExecution() {
-		return lastExecution;
-	}
+    public String getDescription() {
+        return description;
+    }
 
-	public void setLastExecution(Long lastExecution) {
-		this.lastExecution = lastExecution;
-	}
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-	public Long getLastExecutionDuration() {
-		return lastExecutionDuration;
-	}
+    public Long getLastExecution() {
+        return lastExecution;
+    }
 
-	public void setLastExecutionDuration(Long lastExecutionDuration) {
-		this.lastExecutionDuration = lastExecutionDuration;
-	}
+    public void setLastExecution(Long lastExecution) {
+        this.lastExecution = lastExecution;
+    }
 
-	public String getLastExecutionExitCode() {
-		return lastExecutionExitCode;
-	}
+    public Long getLastExecutionDuration() {
+        return lastExecutionDuration;
+    }
 
-	public void setLastExecutionExitCode(String lastExecutionExitCode) {
-		this.lastExecutionExitCode = lastExecutionExitCode;
-	}
+    public void setLastExecutionDuration(Long lastExecutionDuration) {
+        this.lastExecutionDuration = lastExecutionDuration;
+    }
 
-	public String getLastExecutionExitMessage() {
-		return lastExecutionExitMessage;
-	}
+    public EnumExecutionExitCode getLastExecutionExitCode() {
+        return lastExecutionExitCode;
+    }
 
-	public void setLastExecutionExitMessage(String lastExecutionExitMessage) {
-		this.lastExecutionExitMessage = lastExecutionExitMessage;
-	}
+    public void setLastExecutionExitCode(EnumExecutionExitCode lastExecutionExitCode) {
+        this.lastExecutionExitCode = lastExecutionExitCode;
+    }
 
-	public Long getNextExecution() {
-		return nextExecution;
-	}
+    public String getLastExecutionExitMessage() {
+        return lastExecutionExitMessage;
+    }
 
-	public void setNextExecution(Long nextExecution) {
-		this.nextExecution = nextExecution;
-	}
+    public void setLastExecutionExitMessage(String lastExecutionExitMessage) {
+        this.lastExecutionExitMessage = lastExecutionExitMessage;
+    }
 
-	public boolean isEnabled() {
-		return enabled;
-	}
+    public Long getNextExecution() {
+        return nextExecution;
+    }
 
-	public void setEnabled(boolean enabled) {
-		this.enabled = enabled;
-	}
+    public void setNextExecution(Long nextExecution) {
+        this.nextExecution = nextExecution;
+    }
 
-	public Float getProgress() {
-		return progress;
-	}
+    public boolean isEnabled() {
+        return enabled;
+    }
 
-	public void setProgress(Float progress) {
-		this.progress = progress;
-	}
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public Float getProgress() {
+        return progress;
+    }
+
+    public void setProgress(Float progress) {
+        this.progress = progress;
+    }
+
+    public JobInfoSchedule getSchedule() {
+        return schedule;
+    }
+
+    public void setSchedule(JobInfoSchedule schedule) {
+        this.schedule = schedule;
+    }
+
+    public boolean isRunning() {
+        return running;
+    }
+
+    public void setRunning(boolean running) {
+        this.running = running;
+    }
 
 }

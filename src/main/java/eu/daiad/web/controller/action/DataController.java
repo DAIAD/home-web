@@ -25,12 +25,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.google.common.collect.ImmutableMap;
@@ -48,10 +48,13 @@ import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.export.DownloadFileResponse;
 import eu.daiad.web.model.export.ExportUserDataQuery;
 import eu.daiad.web.model.export.ExportUserDataRequest;
+import eu.daiad.web.model.loader.EnumUploadFileType;
 import eu.daiad.web.model.loader.ImportWaterMeterFileConfiguration;
 import eu.daiad.web.model.loader.UploadRequest;
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryRequest;
+import eu.daiad.web.model.query.ForecastQuery;
+import eu.daiad.web.model.query.ForecastQueryRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.spatial.ReferenceSystem;
 import eu.daiad.web.repository.application.IDeviceRepository;
@@ -64,7 +67,7 @@ import eu.daiad.web.service.IWaterMeterDataLoaderService;
 /**
  * Provides methods for managing, querying and exporting data.
  */
-@Controller
+@RestController
 public class DataController extends BaseController {
 
 	private static final Log logger = LogFactory.getLog(DataController.class);
@@ -118,6 +121,9 @@ public class DataController extends BaseController {
 			if (request.getFiles() != null) {
 				FileUtils.forceMkdir(new File(temporaryPath));
 
+				String timezone;
+				Set<String> zones ;
+
 				switch (request.getType()) {
 					case METER:
 						// Check SRID
@@ -146,9 +152,9 @@ public class DataController extends BaseController {
 						break;
 					case METER_DATA:
 						// Check time zone
-						String timezone = request.getTimezone();
+						timezone = request.getTimezone();
 
-						Set<String> zones = DateTimeZone.getAvailableIDs();
+						zones = DateTimeZone.getAvailableIDs();
 
 						if (StringUtils.isBlank(timezone)) {
 							response.add(SharedErrorCode.INVALID_TIME_ZONE,
@@ -169,10 +175,39 @@ public class DataController extends BaseController {
 
 								this.saveFile(filename, file.getBytes());
 
-								this.waterMeterDataLoaderService.parse(filename, request.getTimezone());
+								this.waterMeterDataLoaderService.parse(filename, request.getTimezone(), EnumUploadFileType.METER_DATA);
 							}
 						}
 						break;
+					case METER_DATA_FORECAST:
+                        // Check time zone
+                        timezone = request.getTimezone();
+
+                        zones = DateTimeZone.getAvailableIDs();
+
+                        if (StringUtils.isBlank(timezone)) {
+                            response.add(SharedErrorCode.INVALID_TIME_ZONE,
+                                            this.getMessage(SharedErrorCode.INVALID_TIME_ZONE));
+                        } else if (!zones.contains(timezone)) {
+                            Map<String, Object> properties = ImmutableMap.<String, Object> builder()
+                                            .put("timezone", timezone).build();
+
+                            response.add(SharedErrorCode.TIMEZONE_NOT_FOUND,
+                                            this.getMessage(SharedErrorCode.TIMEZONE_NOT_FOUND, properties));
+                        }
+
+                        if (response.getSuccess()) {
+                            for (MultipartFile file : request.getFiles()) {
+                                String filename = Paths.get(temporaryPath,
+                                                UUID.randomUUID().toString() + "-" + file.getOriginalFilename())
+                                                .toString();
+
+                                this.saveFile(filename, file.getBytes());
+
+                                this.waterMeterDataLoaderService.parse(filename, request.getTimezone(), EnumUploadFileType.METER_DATA_FORECAST);
+                            }
+                        }
+					    break;
 					default:
 						break;
 				}
@@ -220,6 +255,38 @@ public class DataController extends BaseController {
 
 		return response;
 	}
+
+    /**
+     * Returns forecasting results for a smart water meter
+     *
+     * @param data the query.
+     * @return the data series.
+     */
+    @RequestMapping(value = "/action/data/meter/forecast", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @ResponseBody
+    @Secured({ "ROLE_ADMIN" })
+    public RestResponse forecast(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody ForecastQueryRequest data) {
+        RestResponse response = new RestResponse();
+
+        try {
+            // Set defaults if needed
+            ForecastQuery query = data.getQuery();
+            if (query != null) {
+                // Initialize time zone
+                if (StringUtils.isBlank(query.getTimezone())) {
+                    query.setTimezone(user.getTimezone());
+                }
+            }
+
+            return dataService.execute(query);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
 
 	/**
 	 * Exports Amphiro B1 sessions and smart water meter data for a single user based on a query.

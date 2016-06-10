@@ -30,234 +30,360 @@ import org.springframework.transaction.annotation.Transactional;
 import eu.daiad.web.connector.RemoteFileAttributes;
 import eu.daiad.web.connector.SecureFileTransferConnector;
 import eu.daiad.web.domain.admin.Upload;
+import eu.daiad.web.model.error.ActionErrorCode;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.loader.DataTransferConfiguration;
+import eu.daiad.web.model.loader.EnumUploadFileType;
 import eu.daiad.web.model.loader.FileProcessingStatus;
+import eu.daiad.web.model.meter.WaterMeterForecast;
+import eu.daiad.web.model.meter.WaterMeterForecastCollection;
 import eu.daiad.web.model.meter.WaterMeterMeasurement;
 import eu.daiad.web.model.meter.WaterMeterMeasurementCollection;
 import eu.daiad.web.repository.application.IDeviceRepository;
+import eu.daiad.web.repository.application.IWaterMeterForecastRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 
 @Service
 @Transactional("managementTransactionManager")
 public class WaterMeterDataLoaderService extends BaseService implements IWaterMeterDataLoaderService {
 
-	private static final Log logger = LogFactory.getLog(WaterMeterDataLoaderService.class);
+    private static final Log logger = LogFactory.getLog(WaterMeterDataLoaderService.class);
 
-	@Autowired
-	SecureFileTransferConnector sftConnector;
+    @Autowired
+    SecureFileTransferConnector sftConnector;
 
-	@PersistenceContext(unitName = "management")
-	EntityManager entityManager;
+    @PersistenceContext(unitName = "management")
+    EntityManager entityManager;
 
-	@Autowired
-	IDeviceRepository deviceRepository;
+    @Autowired
+    IDeviceRepository deviceRepository;
 
-	@Autowired
-	IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
+    @Autowired
+    IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
 
-	@Override
-	public void load(DataTransferConfiguration config) {
-		try {
-			// Create local folder
-			FileUtils.forceMkdir(new File(config.getLocalFolder()));
+    @Autowired
+    IWaterMeterForecastRepository waterMeterForecastRepository;
 
-			// Set time zone
-			Set<String> zones = DateTimeZone.getAvailableIDs();
-			if (config.getTimezone() == null) {
-				config.setTimezone("UTC");
-			}
-			if (!zones.contains(config.getTimezone())) {
-				throw new ExportException(String.format("Time zone [%s] is not supported.", config.getTimezone()));
-			}
+    @Override
+    public void load(DataTransferConfiguration config) {
+        try {
+            // Create local folder
+            FileUtils.forceMkdir(new File(config.getLocalFolder()));
 
-			// Construct regular expression for filtering file names
-			Pattern allowedFilenames = null;
-			if (!StringUtils.isBlank(config.getFilterRegEx())) {
-				allowedFilenames = Pattern.compile(config.getFilterRegEx());
-			}
+            // Set time zone
+            Set<String> zones = DateTimeZone.getAvailableIDs();
+            if (config.getTimezone() == null) {
+                config.setTimezone("UTC");
+            }
+            if (!zones.contains(config.getTimezone())) {
+                throw new ExportException(String.format("Time zone [%s] is not supported.", config.getTimezone()));
+            }
 
-			// Enumerate files from the remote folder
-			ArrayList<RemoteFileAttributes> files = this.sftConnector.ls(config.getSftpProperties(),
-							config.getRemoteFolder());
+            // Construct regular expression for filtering file names
+            Pattern allowedFilenames = null;
+            if (!StringUtils.isBlank(config.getFilterRegEx())) {
+                allowedFilenames = Pattern.compile(config.getFilterRegEx());
+            }
 
-			String qlString = "select u from upload u where u.remoteFolder = :remoteFolder "
-							+ "and u.remoteFilename = :remoteFilename and u.size = :fileSize order by u.id desc";
+            // Enumerate files from the remote folder
+            ArrayList<RemoteFileAttributes> files = this.sftConnector.ls(config.getSftpProperties(), config
+                            .getRemoteFolder());
 
-			for (RemoteFileAttributes f : files) {
-				// Check if a file with the same path, name and size has already
-				// been imported
-				TypedQuery<Upload> uploadQuery = entityManager.createQuery(qlString, Upload.class).setFirstResult(0)
-								.setMaxResults(1);
+            String qlString = "select u from upload u where u.remoteFolder = :remoteFolder "
+                            + "and u.remoteFilename = :remoteFilename and u.size = :fileSize order by u.id desc";
 
-				uploadQuery.setParameter("remoteFolder", f.getRemoteFolder());
-				uploadQuery.setParameter("remoteFilename", f.getFilename());
-				uploadQuery.setParameter("fileSize", f.getSize());
+            for (RemoteFileAttributes f : files) {
+                // Check if a file with the same path, name and size has already
+                // been imported
+                TypedQuery<Upload> uploadQuery = entityManager.createQuery(qlString, Upload.class).setFirstResult(0)
+                                .setMaxResults(1);
 
-				List<Upload> uploads = uploadQuery.getResultList();
+                uploadQuery.setParameter("remoteFolder", f.getRemoteFolder());
+                uploadQuery.setParameter("remoteFilename", f.getFilename());
+                uploadQuery.setParameter("fileSize", f.getSize());
 
-				Upload existingUpload = null;
-				if (uploads.size() != 0) {
-					existingUpload = uploads.get(0);
-				}
+                List<Upload> uploads = uploadQuery.getResultList();
 
-				if ((existingUpload == null)
-								|| ((existingUpload.getSkippedRows() + existingUpload.getProccessedRows()) != existingUpload
-												.getTotalRows())) {
-					// Filter file names based on a regular expression
-					if ((allowedFilenames != null) && (!allowedFilenames.matcher(f.getFilename()).matches())) {
-						continue;
-					}
+                Upload existingUpload = null;
+                if (uploads.size() != 0) {
+                    existingUpload = uploads.get(0);
+                }
 
-					// Create upload record
-					Upload upload = new Upload();
+                if ((existingUpload == null)
+                                || ((existingUpload.getSkippedRows() + existingUpload.getProccessedRows()) != existingUpload
+                                                .getTotalRows())) {
+                    // Filter file names based on a regular expression
+                    if ((allowedFilenames != null) && (!allowedFilenames.matcher(f.getFilename()).matches())) {
+                        continue;
+                    }
 
-					upload.setSource(f.getSource());
-					upload.setRemoteFolder(f.getRemoteFolder());
-					upload.setRemoteFilename(f.getFilename());
+                    // Create upload record
+                    Upload upload = new Upload();
 
-					upload.setSize(f.getSize());
-					upload.setModifiedOn(f.getModifiedOn());
+                    upload.setSource(f.getSource());
+                    upload.setRemoteFolder(f.getRemoteFolder());
+                    upload.setRemoteFilename(f.getFilename());
 
-					upload.setLocalFolder(config.getLocalFolder());
-					upload.setLocalFilename(UUID.randomUUID().toString() + "."
-									+ FilenameUtils.getExtension(f.getFilename()));
+                    upload.setSize(f.getSize());
+                    upload.setModifiedOn(f.getModifiedOn());
 
-					String target = FilenameUtils.concat(config.getLocalFolder(), upload.getLocalFilename());
+                    upload.setLocalFolder(config.getLocalFolder());
+                    upload.setLocalFilename(UUID.randomUUID().toString() + "."
+                                    + FilenameUtils.getExtension(f.getFilename()));
 
-					// Download file to the local folder
-					upload.setUploadStartedOn(new DateTime());
-					this.sftConnector
-									.get(config.getSftpProperties(), config.getRemoteFolder(), f.getFilename(), target);
-					upload.setUploadCompletedOn(new DateTime());
+                    String target = FilenameUtils.concat(config.getLocalFolder(), upload.getLocalFilename());
 
-					// Process data and import records to HBASE
-					upload.setProcessingStartedOn(new DateTime());
+                    // Download file to the local folder
+                    upload.setUploadStartedOn(new DateTime());
+                    this.sftConnector
+                                    .get(config.getSftpProperties(), config.getRemoteFolder(), f.getFilename(), target);
+                    upload.setUploadCompletedOn(new DateTime());
 
-					FileProcessingStatus status = this.parse(target, config.getTimezone());
+                    // Process data and import records to HBASE
+                    upload.setProcessingStartedOn(new DateTime());
 
-					upload.setTotalRows(status.getTotalRows());
-					upload.setProccessedRows(status.getProcessedRows());
-					upload.setSkippedRows(status.getSkippedRows());
+                    FileProcessingStatus status = this.parse(target, config.getTimezone(),
+                                    EnumUploadFileType.METER_DATA);
 
-					upload.setProcessingCompletedOn(new DateTime());
+                    upload.setTotalRows(status.getTotalRows());
+                    upload.setProccessedRows(status.getProcessedRows());
+                    upload.setSkippedRows(status.getSkippedRows());
 
-					this.entityManager.persist(upload);
-					this.entityManager.flush();
-				}
-			}
-		} catch (Exception ex) {
-			throw wrapApplicationException(ex);
-		}
-	}
+                    upload.setProcessingCompletedOn(new DateTime());
 
-	@Override
-	public FileProcessingStatus parse(String filename, String timezone) throws ApplicationException {
-		File file = new File(filename);
-		if (!file.exists()) {
-			throw createApplicationException(SharedErrorCode.RESOURCE_DOES_NOT_EXIST).set("resource", filename);
-		}
+                    this.entityManager.persist(upload);
+                    this.entityManager.flush();
+                }
+            }
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex);
+        }
+    }
 
-		Scanner scan = null;
+    @Override
+    public FileProcessingStatus parse(String filename, String timezone, EnumUploadFileType type) {
+        switch (type) {
+            case METER_DATA:
+                return parseMeterData(filename, timezone, type);
+            case METER_DATA_FORECAST:
+                return parseMeterForecastData(filename, timezone, type);
+            default:
+                throw createApplicationException(ActionErrorCode.FILE_TYPE_NOT_SUPPORTED).set("type", type);
+        }
+    }
 
-		FileProcessingStatus status = new FileProcessingStatus();
+    private FileProcessingStatus parseMeterData(String filename, String timezone, EnumUploadFileType type)
+                    throws ApplicationException {
+        File file = new File(filename);
+        if (!file.exists()) {
+            throw createApplicationException(SharedErrorCode.RESOURCE_DOES_NOT_EXIST).set("resource", filename);
+        }
 
-		// ABCD;ABCD;METER;17/02/2014 11:13:45;867;2;
-		String line = "";
+        Scanner scan = null;
 
-		// Set time zone
-		Set<String> zones = DateTimeZone.getAvailableIDs();
-		if ((StringUtils.isBlank(timezone)) || (!zones.contains(timezone))) {
-			throw createApplicationException(SharedErrorCode.TIMEZONE_NOT_FOUND).set("timezone", timezone);
-		}
+        FileProcessingStatus status = new FileProcessingStatus();
 
-		DateTimeFormatter formatter = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss").withZone(
-						DateTimeZone.forID(timezone));
+        // ABCD;ABCD;METER;17/02/2014 11:13:45;867;2;
+        String line = "";
 
-		try {
-			// Count rows
-			scan = new Scanner(new File(filename));
+        // Set time zone
+        Set<String> zones = DateTimeZone.getAvailableIDs();
+        if ((StringUtils.isBlank(timezone)) || (!zones.contains(timezone))) {
+            throw createApplicationException(SharedErrorCode.TIMEZONE_NOT_FOUND).set("timezone", timezone);
+        }
 
-			int index = 0;
-			while (scan.hasNextLine()) {
-				index++;
-				scan.nextLine();
-			}
-			scan.close();
-			scan = null;
+        DateTimeFormatter formatter = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss").withZone(
+                        DateTimeZone.forID(timezone));
 
-			status.setTotalRows(index);
+        try {
+            // Count rows
+            scan = new Scanner(new File(filename));
 
-			// Process rows
-			scan = new Scanner(new File(filename));
+            int index = 0;
+            while (scan.hasNextLine()) {
+                index++;
+                scan.nextLine();
+            }
+            scan.close();
+            scan = null;
 
-			index = 0;
-			while (scan.hasNextLine()) {
-				index++;
-				line = scan.nextLine();
+            status.setTotalRows(index);
 
-				float volume, difference;
+            // Process rows
+            scan = new Scanner(new File(filename));
 
-				String[] tokens = StringUtils.split(line, ";");
-				if (tokens.length != 6) {
-					status.skipRow();
-				} else {
-					String serial = tokens[2];
+            index = 0;
+            while (scan.hasNextLine()) {
+                index++;
+                line = scan.nextLine();
 
-					DateTime timestamp;
-					try {
-						timestamp = formatter.parseDateTime(tokens[3]);
-					} catch (Exception ex) {
-						logger.error(String.format("Failed to parse timestamp [%s] in line [%d] from file [%s].",
-										tokens[3], index, filename), ex);
-						status.skipRow();
-						continue;
-					}
+                float volume, difference;
 
-					try {
-						volume = Float.parseFloat(tokens[4]);
-					} catch (Exception ex) {
-						logger.error(String.format("Failed to parse volume [%s] in line [%d] from file [%s].",
-										tokens[4], index, filename), ex);
-						status.skipRow();
-						continue;
-					}
-					try {
-						difference = Float.parseFloat(tokens[5]);
-					} catch (Exception ex) {
-						logger.error(String.format("Failed to parse difference [%s] in line [%d] from file [%s].",
-										tokens[5], index, filename), ex);
-						status.skipRow();
-						continue;
-					}
+                String[] tokens = StringUtils.split(line, ";");
+                if (tokens.length != 6) {
+                    status.skipRow();
+                } else {
+                    String serial = tokens[2];
 
-					WaterMeterMeasurementCollection data = new WaterMeterMeasurementCollection();
-					ArrayList<WaterMeterMeasurement> measurements = new ArrayList<WaterMeterMeasurement>();
-					WaterMeterMeasurement measurement = new WaterMeterMeasurement();
+                    DateTime timestamp;
+                    try {
+                        timestamp = formatter.parseDateTime(tokens[3]);
+                    } catch (Exception ex) {
+                        logger.error(String.format("Failed to parse timestamp [%s] in line [%d] from file [%s].",
+                                        tokens[3], index, filename), ex);
+                        status.skipRow();
+                        continue;
+                    }
 
-					measurement.setTimestamp(timestamp.getMillis());
-					measurement.setVolume(volume);
-					measurement.setDifference(difference);
+                    try {
+                        volume = Float.parseFloat(tokens[4]);
+                    } catch (Exception ex) {
+                        logger.error(String.format("Failed to parse volume [%s] in line [%d] from file [%s].",
+                                        tokens[4], index, filename), ex);
+                        status.skipRow();
+                        continue;
+                    }
+                    try {
+                        difference = Float.parseFloat(tokens[5]);
+                    } catch (Exception ex) {
+                        logger.error(String.format("Failed to parse difference [%s] in line [%d] from file [%s].",
+                                        tokens[5], index, filename), ex);
+                        status.skipRow();
+                        continue;
+                    }
 
-					measurements.add(measurement);
+                    WaterMeterMeasurementCollection data = new WaterMeterMeasurementCollection();
+                    ArrayList<WaterMeterMeasurement> measurements = new ArrayList<WaterMeterMeasurement>();
+                    WaterMeterMeasurement measurement = new WaterMeterMeasurement();
 
-					data.setMeasurements(measurements);
+                    measurement.setTimestamp(timestamp.getMillis());
+                    measurement.setVolume(volume);
+                    measurement.setDifference(difference);
 
-					this.waterMeterMeasurementRepository.storeData(serial, data);
+                    measurements.add(measurement);
 
-					status.processRow();
-				}
-			}
-		} catch (FileNotFoundException fileEx) {
-			logger.error(String.format("File [%s] was not found.", filename), fileEx);
-		} finally {
-			if (scan != null) {
-				scan.close();
-			}
-		}
+                    data.setMeasurements(measurements);
 
-		return status;
-	}
+                    this.waterMeterMeasurementRepository.store(serial, data);
+
+                    status.processRow();
+                }
+            }
+        } catch (FileNotFoundException fileEx) {
+            logger.error(String.format("File [%s] was not found.", filename), fileEx);
+        } finally {
+            if (scan != null) {
+                scan.close();
+            }
+        }
+
+        return status;
+    }
+
+    private FileProcessingStatus parseMeterForecastData(String filename, String timezone, EnumUploadFileType type)
+                    throws ApplicationException {
+        File file = new File(filename);
+        if (!file.exists()) {
+            throw createApplicationException(SharedErrorCode.RESOURCE_DOES_NOT_EXIST).set("resource", filename);
+        }
+
+        Scanner scan = null;
+
+        FileProcessingStatus status = new FileProcessingStatus();
+
+        // C11DE516148_2014-06-30-01 1.9244444
+        String line = "";
+
+        // Set time zone
+        Set<String> zones = DateTimeZone.getAvailableIDs();
+        if ((StringUtils.isBlank(timezone)) || (!zones.contains(timezone))) {
+            throw createApplicationException(SharedErrorCode.TIMEZONE_NOT_FOUND).set("timezone", timezone);
+        }
+
+        DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd-HH").withZone(
+                        DateTimeZone.forID(timezone));
+
+        try {
+            // Count rows
+            scan = new Scanner(new File(filename));
+
+            int index = 0;
+            while (scan.hasNextLine()) {
+                index++;
+                scan.nextLine();
+            }
+            scan.close();
+            scan = null;
+
+            status.setTotalRows(index);
+
+            // Process rows
+            scan = new Scanner(new File(filename));
+
+            index = 0;
+            while (scan.hasNextLine()) {
+                index++;
+                line = scan.nextLine();
+
+                float difference;
+
+                String[] parts = StringUtils.split(line, "_");
+                if (parts.length != 2) {
+                    status.skipRow();
+                    continue;
+                }
+                String[] values = StringUtils.split(parts[1], " ");
+                if (values.length != 2) {
+                    status.skipRow();
+                    continue;
+                }
+
+                String serial = parts[0];
+
+                DateTime timestamp;
+                try {
+                    timestamp = formatter.parseDateTime(values[0]);
+                } catch (Exception ex) {
+                    logger.error(String.format("Failed to parse timestamp [%s] in line [%d] from file [%s].",
+                                    values[0], index, filename), ex);
+                    status.skipRow();
+                    continue;
+                }
+
+                try {
+                    difference = Float.parseFloat(values[1]);
+                } catch (Exception ex) {
+                    logger.error(String.format("Failed to parse difference [%s] in line [%d] from file [%s].",
+                                    values[1], index, filename), ex);
+                    status.skipRow();
+                    continue;
+                }
+
+                WaterMeterForecastCollection data = new WaterMeterForecastCollection();
+                ArrayList<WaterMeterForecast> measurements = new ArrayList<WaterMeterForecast>();
+                WaterMeterForecast measurement = new WaterMeterForecast();
+
+                measurement.setTimestamp(timestamp.getMillis());
+                measurement.setDifference(difference);
+
+                measurements.add(measurement);
+
+                data.setMeasurements(measurements);
+
+                this.waterMeterForecastRepository.store(serial, data);
+
+                status.processRow();
+            }
+        } catch (FileNotFoundException fileEx) {
+            logger.error(String.format("File [%s] was not found.", filename), fileEx);
+        } finally {
+            if (scan != null) {
+                scan.close();
+            }
+        }
+
+        return status;
+    }
 
 }

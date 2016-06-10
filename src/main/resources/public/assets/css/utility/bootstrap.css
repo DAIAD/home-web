@@ -1,0 +1,79 @@
+/*
+ * Apply site-local overrides for Bootstap
+ */
+
+.form-group input {
+  border-radius: 1px;
+  height: 36px;
+  line-height: 1.25em;
+  padding: 2px 7px;
+  border: solid 1px #ccc;
+}
+
+.form-group input[type="file"] {
+  padding: 4px 0px;
+}
+
+.form-group .input-group-addon {
+  border-radius: 1px;
+}
+
+.form-group select {
+  line-height: 1.25em;
+  padding: 4px 7px;
+}
+
+.form-group {
+  margin-bottom: 6px;
+  margin-top: 2px;
+}
+
+.form-control {
+  height: 36px;
+}
+
+.btn {
+  border-radius: 1px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.glyphicon {
+  top: 2px;
+}
+
+legend {
+  font-size: 1.1em;
+  margin-bottom: 8px;
+} 
+
+legend > .fa,
+legend > .glyphicon {
+  vertical-align: middle;
+}
+legend > .glyphicon {
+  font-size: 0.8em;
+}
+
+.progress {
+  border-radius: 1px;
+  border: solid 1px #ccc;
+}
+
+.form-inline .form-group > input,
+.form-inline .form-group > select {
+  margin: 0px 5px;
+}
+
+.nav-pills > li > a {
+  border-radius: 1px;
+}
+
+.tab-content {
+  padding: 10px 0px;
+}
+
+.panel-group .panel,
+.dropdown-menu {
+  border-radius: 1px;
+}

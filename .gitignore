@@ -18,8 +18,12 @@ node
 node_modules
 npm-debug.log
 src/main/resources/config/*
+
 src/main/resources/public/assets/js/build
 src/main/resources/public/assets/images
+src/main/resources/public/assets/lib
+src/main/resources/public/assets/data
+
 src/main/resources/public/docs
 
 bower_components
@@ -34,3 +38,5 @@ src/main/resources/log4j2.xml
 src/main/resources/config/*.properties
 
 apidoc/docs
+
+Gruntfile-local.js

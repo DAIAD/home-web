@@ -23,9 +23,11 @@ import eu.daiad.web.domain.application.AccountAlert;
 import eu.daiad.web.domain.application.AccountAlertProperty;
 import eu.daiad.web.domain.application.AccountDynamicRecommendation;
 import eu.daiad.web.domain.application.AccountDynamicRecommendationProperty;
+import eu.daiad.web.domain.application.AccountStaticRecommendation;
 import eu.daiad.web.domain.application.AlertTranslation;
 import eu.daiad.web.domain.application.DynamicRecommendationTranslation;
 import eu.daiad.web.domain.application.StaticRecommendation;
+import eu.daiad.web.domain.application.StaticRecommendationCategory;
 import eu.daiad.web.model.error.MessageErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.message.EnumAlertType;
@@ -59,7 +61,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 	}
 
 	@Override
-	public void setMessageAcknowledgement(List<MessageAcknowledgement> messages) {
+	public void setMessageAcknowledgement(List<MessageAcknowledgement> messages) {            
 		if (messages != null) {
 			for (MessageAcknowledgement message : messages) {
 				switch (message.getType()) {
@@ -71,6 +73,8 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 										new DateTime(message.getTimestamp()));
 						break;
 					case RECOMMENDATION_STATIC:
+                                                persistStaticRecommendationAcknowledgement(message.getId(),
+										new DateTime(message.getTimestamp()));
 						break;
 					case ANNOUNCEMENT:
 						throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
@@ -414,21 +418,89 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 		return messages;
 	}
 
-        @Override
-        public void persistActiveAdvisoryMessage(String locale, int index, boolean active){
-            TypedQuery<eu.daiad.web.domain.application.StaticRecommendation> advisoryMessage = entityManager
-                    .createQuery("select s from static_recommendation s where s.index = :index and s.locale = :locale",
-                                    eu.daiad.web.domain.application.StaticRecommendation.class);    
-            advisoryMessage.setParameter("index", index);
-            advisoryMessage.setParameter("locale", locale);
+    @Override
+    public void persistAdvisoryMessageActiveStatus(int id, boolean active){
+        TypedQuery<eu.daiad.web.domain.application.StaticRecommendation> advisoryMessage = entityManager
+                .createQuery("select s from static_recommendation s where s.id = :id",
+                    eu.daiad.web.domain.application.StaticRecommendation.class);    
+        advisoryMessage.setParameter("id", id);
 
-            List<StaticRecommendation> advisoryMessages = advisoryMessage.getResultList();
+        List<StaticRecommendation> advisoryMessages = advisoryMessage.getResultList();
             
-            if(!advisoryMessages.isEmpty()){
-                advisoryMessages.get(0).setActive(active);
-            }
+        if(!advisoryMessages.isEmpty()){
+            advisoryMessages.get(0).setActive(active);
         }
+    }
         
+    @Override
+    public void persistNewAdvisoryMessage(eu.daiad.web.model.message.StaticRecommendation staticRecommendation){
+        AuthenticatedUser user = this.getCurrentAuthenticatedUser();
+        
+  		TypedQuery<StaticRecommendationCategory> staticRecommendationCategoryQuery = entityManager
+						.createQuery("select c from static_recommendation_category c where c.id = :id",
+										StaticRecommendationCategory.class);
+
+		staticRecommendationCategoryQuery.setParameter("id", 7); //General Tips
+
+        List<StaticRecommendationCategory> staticRecommendationsCategoryList = staticRecommendationCategoryQuery.getResultList();    
+        
+        StaticRecommendationCategory category = null;
+        if(staticRecommendationsCategoryList.size() == 1){
+            category = staticRecommendationsCategoryList.get(0);
+        }
+                
+        Integer maxIndex = entityManager.createQuery("select max(s.index) from static_recommendation s", Integer.class).getSingleResult();
+        int nextIndex = maxIndex+1;
+               
+        StaticRecommendation newStaticRecommendation = new StaticRecommendation();
+        newStaticRecommendation.setIndex(nextIndex);
+        newStaticRecommendation.setActive(false);
+        newStaticRecommendation.setLocale(user.getLocale());     
+        newStaticRecommendation.setCategory(category);
+		newStaticRecommendation.setTitle(staticRecommendation.getTitle());
+		newStaticRecommendation.setDescription(staticRecommendation.getDescription());
+        newStaticRecommendation.setCreatedOn(DateTime.now());      
+        
+		this.entityManager.persist(newStaticRecommendation);
+    }
+        
+    @Override
+    public void updateAdvisoryMessage(eu.daiad.web.model.message.StaticRecommendation staticRecommendation){
+
+		TypedQuery<eu.daiad.web.domain.application.StaticRecommendation> staticRecommendationQuery = entityManager
+						.createQuery("select s from static_recommendation s where s.id = :id",
+										eu.daiad.web.domain.application.StaticRecommendation.class);
+
+		staticRecommendationQuery.setParameter("id", staticRecommendation.getId());
+
+		List<StaticRecommendation> staticRecommendations = staticRecommendationQuery.getResultList();
+
+		if (staticRecommendations.size() == 1) {
+            staticRecommendations.get(0).setTitle(staticRecommendation.getTitle());
+            staticRecommendations.get(0).setDescription(staticRecommendation.getDescription());
+			staticRecommendations.get(0).setModifiedOn(DateTime.now());
+		}                          
+    }
+
+    @Override
+    public void deleteAdvisoryMessage(eu.daiad.web.model.message.StaticRecommendation staticRecommendation){
+
+		TypedQuery<eu.daiad.web.domain.application.StaticRecommendation> staticRecommendationQuery = entityManager
+						.createQuery("select s from static_recommendation s where s.id = :id",
+										eu.daiad.web.domain.application.StaticRecommendation.class).setFirstResult(0).setMaxResults(1);;
+
+		staticRecommendationQuery.setParameter("id", staticRecommendation.getId());
+
+		List<StaticRecommendation> staticRecommendations = staticRecommendationQuery.getResultList();
+
+		if (staticRecommendations.size() == 1) {
+            
+            StaticRecommendation toBeDeleted = staticRecommendations.get(0);
+            this.entityManager.remove(toBeDeleted);    
+
+		}                          
+    }    
+    
 	// TODO : When sending an acknowledgement for an alert of a specific type,
 	// an older (not acknowledged) alert of the same type may appear in the next
 	// get messages call
@@ -446,6 +518,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 
 		List<AccountAlert> alerts = accountAlertsQuery.getResultList();
 
+                System.out.println("persisting.. size" + alerts.size());
 		if (alerts.size() == 1) {
 			alerts.get(0).setAcknowledgedOn(acknowledgedOn);
 			alerts.get(0).setReceiveAcknowledgedOn(DateTime.now());
@@ -470,6 +543,25 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 			recommendations.get(0).setReceiveAcknowledgedOn(DateTime.now());
 		}
 	}
+        
+	private void persistStaticRecommendationAcknowledgement(int id, DateTime acknowledgedOn) {
+		AuthenticatedUser user = this.getCurrentAuthenticatedUser();
+
+		TypedQuery<eu.daiad.web.domain.application.AccountStaticRecommendation> accountStaticRecommendationQuery = entityManager
+						.createQuery("select a from account_static_recommendation a "
+                                                                                + "where a.account.id = :accountId and a.id = :staticRecommendationId and a.acknowledgedOn is null",
+										eu.daiad.web.domain.application.AccountStaticRecommendation.class);
+
+		accountStaticRecommendationQuery.setParameter("accountId", user.getId());
+		accountStaticRecommendationQuery.setParameter("staticRecommendationId", id);
+
+		List<AccountStaticRecommendation> staticRecommendations = accountStaticRecommendationQuery.getResultList();
+
+		if (staticRecommendations.size() == 1) {
+			staticRecommendations.get(0).setAcknowledgedOn(acknowledgedOn);
+			staticRecommendations.get(0).setReceiveAcknowledgedOn(DateTime.now());
+		}
+	}        
 
 	private Locale resolveCurrency(String country) {
 		Locale currency;
@@ -511,7 +603,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 				float money = convertCurrencyIfNeed(euros, currencySymbol);
 
 				String currencyFormatted = numberFormat.format(money);
-				formatProperties.put(value, currencyFormatted);
+				formatProperties.put(key, currencyFormatted);
 				break;
 			}
 			case currencyKey2: {

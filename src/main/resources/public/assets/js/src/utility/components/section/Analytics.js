@@ -103,11 +103,6 @@ var Analytics = React.createClass({
             }
         };
         
-		var mapOptions = {
-			center:	[38.35, -0.48], 
-			zoom: 13
-		};
-
 		var modeTitle = 'Queries', icon = 'list';
 		switch(this.state.mode) {
 			case 'job':
@@ -209,7 +204,10 @@ var Analytics = React.createClass({
 				<LeafletMap style={{ width: '100%', height: 600}} 
 							elementClassName='mixin'
 							prefix='map'
-							options={mapOptions} />
+						  center={[38.35, -0.48]} 
+					    zoom={13}
+				      mode={LeafletMap.MODE_VECTOR} 
+				/>
 			);
 		} else {
 			dataContent1 = (
@@ -243,8 +241,10 @@ var Analytics = React.createClass({
 				<LeafletMap style={{ width: '100%', height: 600}} 
 							elementClassName='mixin'
 							prefix='map'
-							options={mapOptions}
-							points={this.state.points} />
+						  center={[38.35, -0.48]} 
+              zoom={13}
+				      mode={LeafletMap.MODE_HEATMAP}
+							data={this.state.points} />
 				<Timeline 	onChange={onChangeTimeline.bind(this)} 
 							style={{paddingTop: 10}}
 							min={1}
