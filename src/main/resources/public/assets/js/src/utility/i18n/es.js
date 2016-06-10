@@ -26,18 +26,22 @@
       "Dashboard": "Dashboard",
       "Analytics":"Analytics",
       "Forecasting": "Forecasting",
-      "Demographics": "Users & Groups",
+      "Demographics": "Groups",
       "ModeManagement": "Mode Management",
-      "Search": "Search",
+      "Users": "Users",
       "Messages": "Messages",
       "Settings": "Settings",
       "Reports": {
         "Group": "Trial Management",
         "Overview": "Overview",
-        "Charts": "Charts"
+        "Charts": "Charts",
+        "Measurements": "Pilot Reports",
+        "System": "System Reports"
       },
       "Announcements" : "Announcements",
-      "ManageAlerts" : "Manage Alerts",
+      "Messages" : {
+        "Tips" : "Manage Alerts"
+      },
       "Scheduler": "Job Management",
       "Consumers": "Consumers",
       "Support" : {

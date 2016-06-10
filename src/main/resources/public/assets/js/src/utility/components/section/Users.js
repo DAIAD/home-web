@@ -316,6 +316,6 @@ var Search = React.createClass({
 });
 
 Search.icon = 'search';
-Search.title = 'Section.Search';
+Search.title = 'Section.Users';
 
 module.exports = Search;

@@ -1,3 +1,4 @@
+const develop = (process.env.NODE_ENV !== 'production');
 
 var React = require('react');
 var ReactDOM = require('react-dom');
@@ -76,6 +77,20 @@ var ContentRoot = React.createClass({
         </div>
       );
     } else {
+
+      var development = null;
+      if(develop) {
+        development = (
+          <li>
+            <Link to='/support/development'>
+              <span  style={{paddingLeft: 18}}>
+                <i className='fa fa-bug fa-fw'></i>{' ' + _t({ id: 'Section.Support.Development'})}
+              </span>
+            </Link>
+          </li>
+        );
+      }
+
       content = (
         <div className='wrapper'>
           <nav className='navbar navbar-default navbar-fixed-top'>
@@ -138,7 +153,6 @@ var ContentRoot = React.createClass({
                       <i className='fa fa-line-chart fa-fw'></i>{' ' + _t({ id: 'Section.Forecasting'})}
                     </Link>
                   </li>
-                  
                   <li>
                     <a href='#' onClick={() => this._toggleExpand('consumers')}>
                       <i className='fa fa-group fa-fw'></i>
@@ -148,23 +162,22 @@ var ContentRoot = React.createClass({
                     <Collapsible open={this.state.expand.consumers}>
                       <ul className='nav'>
                         <li>
-                           <Link to='/demographics'>
-                             <span  style={{paddingLeft: 18}}>
-                                <i className='fa fa-bookmark fa-fw'></i>{' ' + _t({ id: 'Section.Demographics'})}
-                             </span>
-                           </Link>
+                          <Link to='/users'>
+                            <span  style={{paddingLeft: 18}}>
+                              <i className='fa fa-search fa-fw'></i>{' ' + _t({ id: 'Section.Users'})}
+                            </span>
+                          </Link>
                         </li>
                         <li>
-                          <Link to='/search'>
+                          <Link to='/demographics'>
                             <span  style={{paddingLeft: 18}}>
-                              <i className='fa fa-search fa-fw'></i>{' ' + _t({ id: 'Section.Search'})}
+                              <i className='fa fa-bookmark fa-fw'></i>{' ' + _t({ id: 'Section.Demographics'})}
                             </span>
                           </Link>
                         </li>
                       </ul>
                     </Collapsible>
                   </li>
-                  
                   <li>
                     <Link to='/scheduler'>
                       <i className='fa fa-clock-o fa-fw'></i>{' ' + _t({ id: 'Section.Scheduler'})}
@@ -173,16 +186,9 @@ var ContentRoot = React.createClass({
                   
                   <li>
                     <Link to='/manage-alerts'>
-                      <i className='fa fa-commenting-o fa-fw'></i>{' ' + _t({ id: 'Section.ManageAlerts'})}
+                      <i className='fa fa-commenting-o fa-fw'></i>{' ' + _t({ id: 'Section.Messages.Tips'})}
                     </Link>
                   </li>
-                  
-                  <li>
-                    <Link to='/settings/user'>
-                      <i className='fa fa-user fa-fw'></i>{' ' + _t({ id: 'Settings.User'})}
-                    </Link>
-                  </li>
-                  
                   <li>
                     <a href='#' onClick={() => this._toggleExpand('reports')}>
                       <i className='fa fa-flask fa-fw'></i>
@@ -238,16 +244,15 @@ var ContentRoot = React.createClass({
                             </span>
                           </Link>
                         </li>
-                        <li>
-                          <Link to='/support/development'>
-                            <span  style={{paddingLeft: 18}}>
-                              <i className='fa fa-bug fa-fw'></i>{' ' + _t({ id: 'Section.Support.Development'})}
-                            </span>
-                          </Link>
-                        </li>
+                        {development}
                       </ul>
                     </Collapsible>
-                  </li>                   
+                  </li>
+                  <li>
+                    <Link to='/settings/user'>
+                      <i className='fa fa-user fa-fw'></i>{' ' + _t({ id: 'Settings.User'})}
+                    </Link>
+                  </li>
                 </ul>
               </div>
             </div>

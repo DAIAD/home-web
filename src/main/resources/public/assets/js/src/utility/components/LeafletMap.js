@@ -16,32 +16,34 @@ const MODE_DRAW = 'draw';
 
 
 var _initializeDraw = function() {
+  var self = this;
+
   var drawnItems = new L.FeatureGroup();
   
-  this.map.addLayer(drawnItems);
+  self.map.addLayer(drawnItems);
 
   var drawControl = new L.Control.Draw({
-      edit: {
-          featureGroup: drawnItems,
-          edit: false,
-          remove: true
-      },
-      draw: {
-        polyline: false,
-        rectangle: false,
-        circle: false,
-        marker: false,
-        polygon: {
-          shapeOptions: {
-            color: '#2c3e50',
-                  fillColor: '#2980b9'
-              }
+    edit: {
+      featureGroup: drawnItems,
+      edit: false,
+      remove: true
+    },
+    draw: {
+      polyline: false,
+      rectangle: false,
+      circle: false,
+      marker: false,
+      polygon: {
+        shapeOptions: {
+          color: '#2c3e50',
+          fillColor: '#2980b9'
         }
       }
+    }
   });
-  this.map.addControl(drawControl);
+  self.map.addControl(drawControl);
   
-  this.map.on('draw:created', function (e) {
+  self.map.on('draw:created', function (e) {
     var type = e.layerType, layer = e.layer;
 
     drawnItems.eachLayer(function (l) {
@@ -50,8 +52,8 @@ var _initializeDraw = function() {
     
     drawnItems.addLayer(layer);
     
-    if(typeof this.props.onDraw === 'function') {
-      this.props.onDraw.bind(this)(layer);
+    if(typeof self.props.onDraw === 'function') {
+      self.props.onDraw.bind(self)(layer);
     }
   });  
 };

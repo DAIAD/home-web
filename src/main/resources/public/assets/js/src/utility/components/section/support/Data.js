@@ -81,7 +81,6 @@ var DataManagement = React.createClass({
   },
 
   onFirstRowIsHeaderClick: function(checked) {
-    console.log(checked);
     this.setState({ isFirstRowProfile : checked });
   },
 

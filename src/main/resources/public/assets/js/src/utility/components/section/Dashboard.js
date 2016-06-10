@@ -346,17 +346,17 @@ var Dashboard = React.createClass({
         
 		var counters = (
 			<div className='row'>
-				<div className='col-md-2'>
+				<div className='col-md-4'>
 					<div style={{ marginBottom: 20 }}>
 						<Counter text={'Counter.Users'} value={198} variance={-2} link='/analytics' />
 					</div>
 				</div>
-				<div className='col-md-2'>
+				<div className='col-md-4'>
 					<div style={{ marginBottom: 20 }}>
 						<Counter text={'Counter.Meters'} value={75} variance={5} color='#1abc9c' link='/analytics'/>
 					</div>
 				</div>
-				<div className='col-md-2'>
+				<div className='col-md-4'>
 					<div style={{ marginBottom: 20 }}>
 						<Counter text={'Counter.Devices'} value={230} variance={10} color='#27ae60' link='/analytics' />
 					</div>

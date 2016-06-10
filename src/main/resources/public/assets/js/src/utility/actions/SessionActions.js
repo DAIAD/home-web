@@ -66,7 +66,6 @@ var SessionActions = {
 					  dispatch(receivedLogin(response.success,
 								response.errors, response.profile));
 					}, function(error) {
-					  console.log(error);
 						dispatch(receivedLogin(false, error, {}));
 					});
 		};

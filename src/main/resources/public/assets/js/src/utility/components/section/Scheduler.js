@@ -326,7 +326,7 @@ var Scheduler = React.createClass({
               <Bootstrap.ListGroup fill>
                 <Bootstrap.ListGroupItem>
                   <div className='row'>
-                    <div className='col-md-2'>
+                    <div className='col-md-3'>
                       <Select name='jobName'
                               value={this.props.scheduler.query.execution.jobName || 'UNDEFINED'}
                               options={jobNames}

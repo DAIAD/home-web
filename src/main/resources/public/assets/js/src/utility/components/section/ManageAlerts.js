@@ -172,7 +172,7 @@ var ManageAlerts = React.createClass({
     
       var staticTipsTitle = (
         < span >
-          < i className = 'fa fa-list-ol fa-fw' > < /i>
+          < i className = 'fa fa-commenting-o fa-fw' > < /i>
           < span style = {{ paddingLeft: 4 }} > Static Tips < /span>
             < span style = {{float: 'right', marginTop: - 3, marginLeft: 5 }} >          
               < Bootstrap.Button  bsStyle = "default" className = "btn-circle" onClick={this.props.actions.showAddTipForm} >    
@@ -421,6 +421,6 @@ function mapDispatchToProps(dispatch) {
   };
 }
 
-ManageAlerts.icon = 'list-ol';
-ManageAlerts.title = 'Section.ManageAlerts.Messages';
+ManageAlerts.icon = 'commenting-o';
+ManageAlerts.title = 'Section.Messages.Tips';
 module.exports = connect(mapStateToProps, mapDispatchToProps)(ManageAlerts);

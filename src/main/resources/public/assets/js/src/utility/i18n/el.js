@@ -26,9 +26,9 @@
       "Dashboard": "Περίληψη",
 	    "Analytics":"Ανάλυση",
 	    "Forecasting": "Πρόβλεψη",
-	    "Demographics": "Ομάδες & Χρήστες",
+	    "Demographics": "Ομάδες",
 	    "ModeManagement": "Διαχείριση Κατάστασης",
-	    "Search": "Αναζήτηση",
+	    "Users": "Χρήστες",
 	    "Messages": "Μηνύματα",
 	    "Settings": "Ρυθμίσεις",
 	    "Reports": {
@@ -36,8 +36,17 @@
 	      "Overview": "Επισκόπηση",
 	      "Charts": "Γραφήματα"
 	    },
+      "Reports": {
+        "Group": "Δοκιμές",
+        "Overview": "Επισκόπηση",
+        "Charts": "Γραφήματα",
+        "Measurements": "Αναφορές",
+        "System": "Αναφορές Συστήματος"
+      },
 	    "Announcements" : "Ανακοινώσεις",
-      "ManageAlerts" : "Διαχείρηση Ειδοποιήσεων",
+	    "Messages" : {
+        "Tips" : "Διαχείρηση Ειδοποιήσεων"
+      },
 	    "Scheduler": "Διαχείριση Εργασιών",
 	    "Consumers": "Καταναλωτές",
 	    "Support" : {
