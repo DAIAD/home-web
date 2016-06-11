@@ -11,6 +11,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import org.hibernate.annotations.Type;
+import org.joda.time.DateTime;
 
 @Entity(name = "announcement_translation")
 @Table(schema = "public", name = "announcement_translation")
@@ -36,8 +38,20 @@ public class AnnouncementTranslation {
 	private String content;
 
 	@Column(name = "link")
-	private String imageLink;
+	private String link;
 
+    @Column(name = "dispatched_on")
+    @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+    private DateTime dispatchedOn;
+
+    public String getLink() {
+        return link;
+    }
+
+    public void setLink(String link) {
+        this.link = link;
+    }
+    
 	public Announcement getAnnouncement() {
 		return announcement;
 	}
@@ -70,16 +84,16 @@ public class AnnouncementTranslation {
 		this.content = content;
 	}
 
-	public String getImageLink() {
-		return imageLink;
-	}
-
-	public void setImageLink(String imageLink) {
-		this.imageLink = imageLink;
-	}
-
 	public int getId() {
 		return id;
 	}
+
+    public DateTime getDispatchedOn() {
+        return dispatchedOn;
+    }
+
+    public void setDispatchedOn(DateTime dispatchedOn) {
+        this.dispatchedOn = dispatchedOn;
+    }
 
 }

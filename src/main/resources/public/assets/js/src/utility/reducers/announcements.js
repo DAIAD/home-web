@@ -11,7 +11,9 @@ var initialState = {
     showModal : false,
     accountId : null,
     selected : false,
-    rowIdToggled: null
+    rowIdToggled: null,
+    announcements: [],
+    filter : null
 };
 
 var announcements = function (state, action) {
@@ -26,6 +28,11 @@ var announcements = function (state, action) {
         accounts : action.accounts,
         isLoading: false
       }); 
+    case types.ANNC_RECEIVED_ANNOUNCEMENT_HISTORY:
+      return Object.assign({}, state, {
+        announcements : action.announcements,
+        isLoading: false
+      });       
     case types.ANNC_INITIAL_USERS_SET_SELECTED:
       return Object.assign({}, state, {
         accounts : action.accounts
@@ -59,7 +66,11 @@ var announcements = function (state, action) {
         isLoading: false,
         showForm:false,
         addedUsers:[]
-      });         
+      });   
+    case types.ANNC_FILTER_USERS:
+      return Object.assign({}, state, {
+        filter : action.filter || null
+      });    
     default:
       return state || initialState;
   }

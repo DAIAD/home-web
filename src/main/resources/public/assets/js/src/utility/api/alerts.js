@@ -2,10 +2,10 @@ var api = require('./base');
 
 var ManageAlertsAPI = {
     getAllUtilities: function(){
-        return api.json('/action/utility/fetch/corresponding');
+      return api.json('/action/utility/fetch/corresponding');
     },    
     getTips: function(locale){      
-        return api.json('/action/recommendation/static/' + locale);
+      return api.json('/action/recommendation/static/' + locale);
     },
     saveActiveTips: function(changedRows){
       return api.json('/action/recommendation/static/status/save/', changedRows);
@@ -17,11 +17,13 @@ var ManageAlertsAPI = {
       return api.json('/action/recommendation/static/delete', tip);
     },
     getUsers: function() {
-      console.log('api getUsers');
       return api.json('/action/admin/trial/activity');
     },
     getAnnouncementsHistory: function() {
       return api.json('/action/admin/trial/activity');
+    },
+    getAnnouncements: function(){      
+      return api.json('/action/announcements/history');
     },
     broadcastAnnouncement: function(users, announcement) {
       var receiverAccountList = [];

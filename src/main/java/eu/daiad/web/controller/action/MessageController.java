@@ -20,7 +20,6 @@ import eu.daiad.web.model.message.MessageAcknowledgementRequest;
 import eu.daiad.web.model.message.MessageRequest;
 import eu.daiad.web.model.message.MessageResult;
 import eu.daiad.web.model.message.MultiTypeMessageResponse;
-import eu.daiad.web.model.message.ReceiverAccount;
 import eu.daiad.web.model.message.SingleTypeMessageResponse;
 import eu.daiad.web.model.message.StaticRecommendation;
 import eu.daiad.web.model.security.AuthenticatedUser;
@@ -109,7 +108,7 @@ public class MessageController extends BaseController {
 	}
 
 	/**
-	 * Gets static localized recommendations (tips) for a single user.
+	 * Gets static localized recommendations (tips) based on locale.
 	 * 
 	 * @param user the user
 	 * @param locale the locale
@@ -221,17 +220,9 @@ public class MessageController extends BaseController {
         RestResponse response = new RestResponse();
         
         try {
-            System.out.println("GREAT SUCCESS ");
-            System.out.println("title " + request.getAnnouncement().getTitle());
-            //System.out.println("accounts size " + request.getReceiverAccountList().size());
-            for(ReceiverAccount us : request.getReceiverAccountList()){
-                System.out.println("send announcement to " + us.getAccountId() + " " + us.getUsername());
-            }
-            
-            this.messageRepository.persistAnnouncement(request.getAnnouncement(), user.getLocale());
-            
-            //repository. broadcast to accounts
-            
+
+            String channel = "web";
+            this.messageRepository.broadcastAnnouncement(request, user.getLocale(), channel); //default channel web
 
 		} catch (Exception ex) {
 			    logger.error(ex.getMessage(), ex);
@@ -241,6 +232,29 @@ public class MessageController extends BaseController {
         return response;
 	}    
     
-    //add announcements history controller
+	/**
+	 * Get localized announcements history.
+	 * 
+	 * @param user the user
+	 * @return the announcements.
+	 */
+	@RequestMapping(value = "/action/announcements/history", method = RequestMethod.GET, produces = "application/json")
+	@Secured("ROLE_ADMIN")
+	public RestResponse getAnnouncements(@AuthenticationPrincipal AuthenticatedUser user) {
+		try {
+			SingleTypeMessageResponse messages = new SingleTypeMessageResponse();
+
+			messages.setType(EnumMessageType.ANNOUNCEMENT);
+			messages.setMessages(this.messageRepository.getAnnouncements(user.getLocale()));
+
+			return messages;
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
+
+			RestResponse response = new RestResponse();
+			response.add(this.getError(ex));
+			return response;
+		}
+	}    
     
 }

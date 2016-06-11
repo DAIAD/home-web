@@ -7,7 +7,7 @@ import eu.daiad.web.model.message.MessageAcknowledgement;
 import eu.daiad.web.model.message.MessageRequest;
 import eu.daiad.web.model.message.MessageResult;
 import eu.daiad.web.model.message.StaticRecommendation;
-import eu.daiad.web.model.message.Announcement;
+import eu.daiad.web.model.message.AnnouncementRequest;
 
 public interface IMessageRepository {
 
@@ -25,6 +25,8 @@ public interface IMessageRepository {
     
     public void deleteAdvisoryMessage(StaticRecommendation staticRecommendation);
     
-    public void persistAnnouncement(Announcement announcement, String locale);
+    public List<Message> getAnnouncements(String locale);
+            
+    public void broadcastAnnouncement(AnnouncementRequest announcementRequest, String locale, String channel);
 
 }

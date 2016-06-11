@@ -21,9 +21,18 @@ var Announcements = React.createClass({
   },
   
   componentWillMount : function() {
-      this.props.getCurrentUtilityUsers();
+    this.props.getAnnouncementHistory();
+    this.props.getCurrentUtilityUsers();
   },
-   
+  
+  setFilter: function(e) {
+    this.props.setFilter(this.refs.filter.getValue());
+  },  
+  
+  clearFilter: function(e) {
+    this.props.setFilter('');
+  }, 
+  
   handleCurrentMembersCheckboxChange: function (rowId, row, checked){
     this.props.toggleInitialUserSelected(this.props.accounts, rowId, checked);
   },
@@ -74,42 +83,36 @@ var Announcements = React.createClass({
   					name: 'title',
   					title: 'Title'
   				}, {
-  					name: 'text',
-  					title: 'Message'
+  					name: 'content',
+  					title: 'Content'
   				}, {
   					name: 'dispatchedOn',
   					title: 'Dispatched On',
   					type: 'datetime'
-  				}, {
-  					name: 'status',
-  					title: 'Status',
-  					className: function(value) {
-  						return 'danger';
-  					},
-  					hidden: true
   				}],
-  				rows: [{
-  					id: 1,
-       title: 'Save Money',
-  					text: 'Save 10% on your monthly bill by installing Amphiro B1',
-  					dispatchedOn: new Date((new Date()).getTime() + (3+Math.random()) * 3600000),
-  					status: 'Pending',
-  					acknowledged: true
-  				}, {
-  					id: 2,
-       title: 'Welcome!',
-  					text: 'Welcome to DAIAD!',
-  					dispatchedOn: new Date((new Date()).getTime() - (950) * 3600000),
-  					status: 'Received',
-  					acknowledged: false
-  				}],
+  				rows: this.props.announcements,
   				pager: {
   					index: 0,
-  					size: 10,
-  					count:20
+  					size: 3,
+  					count:this.props.announcements ? this.props.announcements.length : 0
   				}
   			};
          
+    var filteredAccounts = [];
+    if(this.props.accounts) {
+      var records = this.props.accounts;
+      for(var i=0, count=records.length; i<count; i++) {
+        if((!this.props.filter) || (records[i].username.indexOf(this.props.filter) !== -1)) {
+          filteredAccounts.push({
+            id: records[i].id,
+            username: records[i].username || '',
+            lastName: records[i].lastName || '',
+            selected: records[i].selected || false
+          });
+        }        
+      }         
+    }  
+
     var currentUsersFields = {
         fields: [{
           name: 'accountId',
@@ -128,7 +131,7 @@ var Announcements = React.createClass({
             self.handleCurrentMembersCheckboxChange(field, row, this.checked);
           }       
         }],
-        rows: this.props.accounts,
+        rows: filteredAccounts,
         pager: {
           index: 0,
           size: 10,
@@ -208,36 +211,19 @@ var Announcements = React.createClass({
      );
 
     var filter = (
-      <div className='col-md-4'>
+      <div className='col-md-12'>
         <Bootstrap.Input type='text'
           id='filter' name='filter' ref='filter'
-          placeholder='Search participants by email ...'
-          //onChange={this.setFilter}
-          //value={this.props.admin.filter}
+          placeholder='Search users by username ...'
+          onChange={this.setFilter}
+          value={this.props.filter}
+          buttonAfter={
+           <Bootstrap.Button onClick={this.clearFilter} style={{paddingTop: 7, paddingBottom: 7 }}><i className='fa fa-trash fa-fw'></i></Bootstrap.Button>
+         }          
         />
       </div>
     );  
    
-//    var groupDropDown = (
-//      <div className='col-md-4'>
-//        <DropDown
-//          title={'Select Group'}
-//          //options={utilityOptions}
-//          //onSelect={this.props.actions.addUserSelectUtility}
-//          disabled={false}
-//        />
-//      </div>
-//    );     
-    var groupDropDown = (
-      <Select className='select-cluster-group'
-        value={''}
-        //onChange={(val) => this._setPopulation(clusterKey, val)}
-       >
-        <optgroup label={ 'All groups'}>
-          <option value="" key="">{'Everyone'}</option>
-        </optgroup>
-      </Select>
-    );
     var usersTable = (
       <div>
         <Table data={currentUsersFields}></Table>
@@ -322,7 +308,7 @@ var Announcements = React.createClass({
       );       
     }
 
-    if(this.props.accounts){
+    if(this.props.accounts && this.props.announcements && !this.props.isLoading){
       return (
         <div className="container-fluid" style={{ paddingTop: 10 }}>
           <div className="row">
@@ -335,7 +321,6 @@ var Announcements = React.createClass({
               <Bootstrap.Panel header={usersTitle}>
                 <Bootstrap.ListGroup fill>
                   <Bootstrap.ListGroupItem>	
-                    {groupDropDown}
                     {filter}    
                     {usersTable}    
                   </Bootstrap.ListGroupItem>
@@ -367,7 +352,7 @@ var Announcements = React.createClass({
                   <Bootstrap.ListGroupItem>	       
                     {addedUsersTable}  
                     <div>
-                      <Bootstrap.Button onClick = {this.props.setShowForm}> 
+                      <Bootstrap.Button disabled = {this.props.addedUsers.length===0} onClick = {this.props.setShowForm}> 
                         {'Form Announcement'}
                       </Bootstrap.Button>
                     </div>
@@ -409,17 +394,20 @@ var Announcements = React.createClass({
 function mapStateToProps(state) {
   return {    
       accounts: state.announcements.accounts,
+      announcements: state.announcements.announcements,
       initialUsers: state.announcements.initialUsers,
       addedUsers: state.announcements.addedUsers,
       rowIdToggled: state.announcements.rowIdToggled,
       showForm: state.announcements.showForm,
-      showModal: state.announcements.showModal
+      showModal: state.announcements.showModal,
+      filter: state.announcements.filter
   };
 }
 
 function mapDispatchToProps(dispatch) {
   return {
     getCurrentUtilityUsers: bindActionCreators(AnnouncementsActions.getCurrentUtilityUsers, dispatch),
+    getAnnouncementHistory: bindActionCreators(AnnouncementsActions.getAnnouncementHistory, dispatch),
     toggleInitialUserSelected: function (accounts, accountId, selected){
       dispatch(AnnouncementsActions.setSelectedUser(accounts, accountId, selected));
     },
@@ -428,14 +416,13 @@ function mapDispatchToProps(dispatch) {
     },       
     addUsers: bindActionCreators(AnnouncementsActions.addUsers, dispatch),
     removeUsers: bindActionCreators(AnnouncementsActions.removeUsers, dispatch),
-    //showForm: bindActionCreators(AnnouncementsActions.showForm, dispatch),
     setShowForm: bindActionCreators(AnnouncementsActions.showForm, dispatch),
     cancelShowForm: bindActionCreators(AnnouncementsActions.cancelShowForm, dispatch),
     broadcastAnnouncement: function (){
       var announcement = {title : self.refs.title.value, content : self.refs.content.value};
-      //console.log('before length ' + accountIds.length);
       dispatch(AnnouncementsActions.broadCastAnnouncement(event, self.props.addedUsers, announcement));
-    }
+    },
+    setFilter: bindActionCreators(AnnouncementsActions.setFilter, dispatch)
   };
 }
 

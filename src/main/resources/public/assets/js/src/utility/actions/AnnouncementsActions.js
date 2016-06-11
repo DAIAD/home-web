@@ -35,6 +35,23 @@ var receivedCurrentUtilityUsers = function(success, errors, accounts) {
   };
 };
 
+var requestedAnnouncementsHistory = function() {
+  return {
+    type : types.ANNC_REQUESTED_ANNOUNCEMENT_HISTORY,
+    isLoading: true
+  };
+};
+
+var receivedAnnouncementsHistory = function(success, errors, announcements) {
+  return {
+    type : types.ANNC_RECEIVED_ANNOUNCEMENT_HISTORY,
+    isLoading: false,
+    success: success,
+    errors: errors,
+    announcements: announcements
+  };
+};
+
 var requestedBroadcast = function() {
   return {
     type : types.ANNC_BROADCAST_ANNOUNCEMENT_REQUEST,
@@ -56,13 +73,24 @@ var AnnouncementsActions = {
     return function(dispatch, getState) {
       dispatch(requestedCurrentUtilityUsers());
 
-      return alertsAPI.getUsers().then(function(response) {
-        dispatch(receivedCurrentUtilityUsers(response.success, response.errors, response.accounts));
+      return alertsAPI.getUsers().then(function(response) {        
+        dispatch(receivedCurrentUtilityUsers(response.success, response.errors, response.accounts));     
       }, function(error) {
         dispatch(receivedCurrentUtilityUsers(false, error, null));
       });
     };
   },
+  getAnnouncementHistory : function(event) {
+    return function(dispatch, getState) {
+      dispatch(requestedAnnouncementsHistory());
+
+      return alertsAPI.getAnnouncements().then(function(response) {
+        dispatch(receivedAnnouncementsHistory(response.success, response.errors, response.messages));
+      }, function(error) {
+        dispatch(receivedAnnouncementsHistory(false, error, []));
+      });
+    };
+  },  
   setSelectedUser : function(accounts, accountId, selected) {
     var changedAccounts = [];
     for(var obj in accounts){
@@ -152,11 +180,24 @@ var AnnouncementsActions = {
       dispatch(requestedBroadcast());
       return alertsAPI.broadcastAnnouncement(users, announcement).then(function(response) {
         dispatch(broadcastAnnouncementResponse(response.success, response.errors));
+    
+        dispatch(requestedAnnouncementsHistory());
+        return alertsAPI.getAnnouncements().then(function(response) {
+          dispatch(receivedAnnouncementsHistory(response.success, response.errors, response.messages));
+        }, function(error) {
+          dispatch(receivedAnnouncementsHistory(false, error, []));
+        });        
       }, function(error) {
         dispatch(broadcastAnnouncementResponse(false, error, null));
       });
     };
-  } 
+  }, 
+  setFilter : function(filter) {
+    return {
+      type : types.ANNC_FILTER_USERS,
+      filter : filter
+    };
+  }
 };
 
 module.exports = AnnouncementsActions;
