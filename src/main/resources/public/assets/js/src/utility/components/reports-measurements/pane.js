@@ -19,8 +19,7 @@ var population = require('../../model/population');
 var {computeKey, consolidateFuncs} = require('../../reports').measurements;
 var {timespanPropType, populationPropType, seriesPropType, configPropType} = require('../../prop-types');
 
-var {Button, ButtonGroup, ButtonToolbar, Tooltip, OverlayTrigger} = Bootstrap;
-var {Collapse, Panel, ListGroup, ListGroupItem} = Bootstrap;
+var {Button, ButtonGroup, Collapse, Panel, ListGroup, ListGroupItem} = Bootstrap;
 var PropTypes = React.PropTypes;
 
 const REPORT_KEY = 'pane';
@@ -89,6 +88,62 @@ var toOptionElement = function ({value, text}) {
 var ReportPanel = React.createClass({
   
   statics: {
+    toolbarSpec: [ 
+      {
+        key: 'parameters',
+        //component: 'div', // Note default is Bootstrap.ButtonGroup
+        buttons: [
+          {
+            key: 'source', 
+            tooltip: {message: 'Select source of measurements', placement: 'bottom'}, 
+            iconName: 'cube',
+            //text: 'Source',
+            buttonProps: {bsStyle: 'default', /*className: 'btn-circle'*/ },
+          },
+          {
+            key: 'report', 
+            tooltip: {message: 'Choose type of report', placement: 'bottom'}, 
+            iconName: 'area-chart',
+            //text: 'Metric',
+            buttonProps: {bsStyle: 'default', /*className: 'btn-circle'*/ },
+          },
+          {
+            key: 'timespan', 
+            tooltip: {message: 'Define a time range', placement: 'bottom'}, 
+            iconName: 'calendar',
+            //text: 'Time',
+            buttonProps: {bsStyle: 'default', /*className: 'btn-circle'*/},
+          },
+          {
+            key: 'population-group', 
+            tooltip: {message: 'Define a population target', placement: 'bottom'},
+            iconName: 'users',
+            //text: 'Groups',
+            buttonProps: {bsStyle: 'default', /*className: 'btn-circle'*/},
+          },
+        ],
+      },
+      {
+        key: 'actions',
+        //component: 'div', // Note default is Bootstrap.ButtonGroup
+        buttons: [
+          {
+            key: 'export',
+            tooltip: {message: 'Export to a CSV table', placement: 'bottom'},
+            text: 'Export',
+            iconName: 'table',
+            buttonProps: {bsStyle: 'default', /*className: 'btn-circle'*/ },
+          },
+          {
+            key: 'refresh',
+            tooltip: {message: 'Re-generate report and redraw the chart', placement: 'bottom'},
+            text: 'Refresh',
+            iconName: 'refresh',
+            buttonProps: {bsStyle: 'primary', /*className: 'btn-circle'*/ },
+          },
+        ],  
+      }, 
+    ]
   },
 
   propTypes: {
@@ -108,42 +163,18 @@ var ReportPanel = React.createClass({
   },
 
   render: function () {
+    var toolbars = require('../toolbars');
+    var cls = this.constructor;
     var {field, title} = this.props;
-    
+   
     var header = (
       <div className="header-wrapper">
         {/*<i className="fa fa-area-chart fa-fw"></i>&nbsp;*/}
         <h3>{title}</h3>
-        <ButtonGroup>
-          <OverlayTrigger placement="bottom" 
-            overlay={(<Tooltip id="tooltip--select-source">Select source of measurements</Tooltip>)}
-           > 
-            <Button onClick={this._prepareFormForSource}>
-              <i className="fa fa-cube fa-fw" ></i>
-            </Button>
-          </OverlayTrigger>
-          <OverlayTrigger placement="bottom" 
-            overlay={(<Tooltip id="tooltip--select-report">Choose a type of report</Tooltip>)}
-           > 
-            <Button onClick={this._prepareFormForReport}>
-              <i className="fa fa-area-chart fa-fw" ></i>
-            </Button>
-          </OverlayTrigger> 
-          <OverlayTrigger placement="bottom" 
-            overlay={(<Tooltip id="tooltip--select-timespan">Define a time range</Tooltip>)}
-           > 
-            <Button onClick={this._prepareFormForTime}>
-              <i className="fa fa-calendar fa-fw" ></i>
-            </Button>
-          </OverlayTrigger>
-          <OverlayTrigger placement="left" 
-            overlay={(<Tooltip id="tooltip--select-population-group">Define a population target</Tooltip>)}
-           > 
-            <Button onClick={this._prepareFormForPopulation}>
-              <i className="fa fa-users fa-fw" ></i>
-            </Button>
-          </OverlayTrigger> 
-        </ButtonGroup> 
+        <toolbars.ButtonToolbar className="header-toolbar" 
+          groups={cls.toolbarSpec} 
+          onSelect={this._handleToolbar}
+         />
       </div>
     );
     
@@ -170,20 +201,19 @@ var ReportPanel = React.createClass({
 
   // Event handlers
 
-  _prepareFormForReport: function () {
-    console.info('Prepare form ...');
+  _handleToolbar: function (groupKey, key) {
+    switch (groupKey) {
+      case 'parameters':
+        return this._switchFormView(key)
+        break;
+      case 'actions':
+        // Todo
+        break;
+    }
   },
-  
-  _prepareFormForSource: function () {
-    console.info('Prepare form ...');
-  },
-  
-  _prepareFormForTime: function () {
-    console.info('Prepare form ...');
-  },
-  
-  _prepareFormForPopulation: function () {
-    console.info('Prepare form ...');
+
+  _switchFormView: function (key) {
+    console.info('Prepare form ' + key);
   },
 
 });

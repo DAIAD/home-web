@@ -593,14 +593,20 @@ form.report-form fieldset {
   font-size: 17px;
 } 
 
-.reports .panel .panel-heading .panel-title.header-wrapper {
-  position: relative;
-}
 .reports .panel .panel-heading .panel-title.header-wrapper > .btn-group,
-.reports .panel .panel-heading .panel-title.header-wrapper > .btn {
-  position: absolute;
-  right: 0px;
-  top: -3px;
+.reports .panel .panel-heading .panel-title.header-wrapper > .btn,
+.reports .panel .panel-heading .panel-title.header-wrapper > .header-buttons,
+.reports .panel .panel-heading .panel-title.header-wrapper > .header-toolbar {
+  float: right;
+  margin-top: -3px;
+}
+.reports .panel .panel-heading .panel-title.header-wrapper > .header-toolbar > .btn-group {
+  margin-left: 10px;
+}
+
+.reports .panel .panel-heading .panel-title.header-wrapper > .header-buttons .btn-circle ,
+.reports .panel .panel-heading .panel-title.header-wrapper > .header-toolbar .btn-circle {
+  margin-left: 5px;
 }
 
 .reports legend {

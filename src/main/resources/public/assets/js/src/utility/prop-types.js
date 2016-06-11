@@ -44,11 +44,11 @@ var configPropType = PropTypes.shape({
   utility: PropTypes.shape({
     clusters: PropTypes.arrayOf(PropTypes.shape({
       groups: PropTypes.array,
-      key: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired,
+      key: PropTypes.string,
+      name: PropTypes.string,
     })),
-    key: PropTypes.string.isRequired,
-    name: PropTypes.string.isRequired,
+    key: PropTypes.string,
+    name: PropTypes.string,
   }),
   reports: PropTypes.shape({
     levels: PropTypes.object,
