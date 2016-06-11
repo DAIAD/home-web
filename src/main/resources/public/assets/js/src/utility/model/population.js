@@ -153,7 +153,7 @@ Group.fromString = function (label) {
   return r;
 };
 
-// A factory for cluster instances
+// A factory for Cluster instances
 
 Cluster.fromString = function (label) {  
   var m = (new RegExp('^CLUSTER[:]([-\\w]+)$')).exec(label);

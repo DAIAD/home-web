@@ -507,6 +507,13 @@ a .disabled{
   padding: 12px;
 }
 
+/* react-controls/select-dropdown */
+
+.select-dropdown .dropdown-toggle > span.empty-value,
+.select-dropdown .dropdown-menu li.empty-value > a {
+  font-style: oblique;
+}
+
 /* Reports (charts/panels) */
 
 .chart.portal {
@@ -525,21 +532,20 @@ form.report-form {
 .report-info {
   margin: 8px 0px;
 }
+.reports .panel-footer > .report-info,
+.reports .panel .list-item-group > .report-info {
+  margin: 0px 0px;
+}
 
-.report-info p.help,
-.report-form p.help {
+.reports .report-info p.help,
+.reports .report-form p.help {
   margin: 0px 0px;
   font-size: 0.9em;
 }
 
-.report-info p.help.inline,
-.report-form p.help.inline {
+.reports .report-info p.help.inline,
+.reports .report-form p.help.inline {
   display: inline-block;
-}
-
-.select-dropdown .dropdown-toggle > span.empty-value,
-.select-dropdown .dropdown-menu li.empty-value > a {
-  font-style: oblique;
 }
 
 form.report-form.form-inline .form-group {
@@ -560,10 +566,42 @@ form.report-form fieldset {
   font-size: 24px;
 }
 
+.reports .panel .panel-heading .panel-title > h3,
+.reports .panel .panel-heading h3.panel-title {
+  display: inline-block;
+  font-weight: normal;
+  font-size: 18px;
+  margin-top: 3px;
+  margin-bottom: 3px;
+}
+.reports .panel .panel-heading .panel-title.header-wrapper {
+  position: relative;
+}
+.reports .panel .panel-heading .panel-title.header-wrapper > .toolbar {
+  position: absolute;
+}
+
+.reports .panel .list-group-item.report-form-wrapper {
+  min-height: 100px;
+}
+.reports .panel .list-group-item.report-chart-wrapper {
+  min-height: 250px;
+}
+
 .reports .panel-body h4 {
-  margin: 5px 0px 15px 0px;
+  margin: 6px 0px 15px 0px;
   font-size: 17px;
 } 
+
+.reports .panel .panel-heading .panel-title.header-wrapper {
+  position: relative;
+}
+.reports .panel .panel-heading .panel-title.header-wrapper > .btn-group,
+.reports .panel .panel-heading .panel-title.header-wrapper > .btn {
+  position: absolute;
+  right: 0px;
+  top: -3px;
+}
 
 .reports legend {
   font-size: 16px;
@@ -613,34 +651,34 @@ form.report-form fieldset {
   width: 4.5em;
 }
 .report-form.form-horizontal .dropdown.select-source button > span.text {
-  width: 5.5em;
+  width: 6.5em;
 }
 .report-form.form-inline .dropdown.select-timespan button > span.text {
   width: 5.5em;
 }
 .report-form.form-horizontal .dropdown.select-timespan button > span.text {
-  width: 11em;
+  width: 9.5em;
 }
 .report-form.form-horizontal .dropdown.select-timespan .dropdown-menu {
-  min-width: 12.1em;
+  min-width: 11em;
 }
 .report-form.form-inline .dropdown.select-cluster button > span.text {
   width: 7em;
 }
 .report-form.form-horizontal .dropdown.select-cluster button > span.text {
-  width: 11em;
+  width: 9.5em;
 }
 .report-form.form-horizontal .dropdown.select-cluster .dropdown-menu {
-  min-width: 12.1em;
+  min-width: 11em;
 }
 .report-form.form-inline .dropdown.select-cluster-group button > span.text {
   width: 7em;
 }
 .report-form.form-horizontal .dropdown.select-cluster-group button > span.text {
-  width: 11em;
+  width: 9.5em;
 }
 .report-form.form-horizontal .dropdown.select-cluster-group .dropdown-menu {
-  min-width: 12.1em;  
+  min-width: 11em;  
 }
 
 .report-form .form-group .rdt {
@@ -648,16 +686,7 @@ form.report-form fieldset {
   vertical-align: middle;
 }
 .report-form.form-horizontal .form-group .rdt > input[type="text"] {
-  width: 9.6em;
-}
-
-.overview .panel .panel-heading .panel-title {
-  font-weight: normal;
-  font-size: 18px;
-}
-
-.overview .panel-body h4 {
-  margin: 12px 0px;
+  width: 10em;
 }
 
 div.measurement-value {

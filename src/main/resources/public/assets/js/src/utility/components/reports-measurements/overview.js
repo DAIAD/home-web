@@ -83,9 +83,11 @@ var OverviewPanel = React.createClass({
         </ListGroupItem>
       ))
     );
-    
+   
+    var header = (<h3>{this.props.title}</h3>);
+
     return (
-      <Panel header={this.props.title}>
+      <Panel header={header}>
         <ListGroup fill>
           {items} 
         </ListGroup>
@@ -95,7 +97,18 @@ var OverviewPanel = React.createClass({
 });
 
 var OverviewPanelGroup = React.createClass({
-  
+   
+   propTypes: {
+    ...commonPropTypes,
+    reports: PropTypes.shape({
+      day: reportPropType,
+      week: reportPropType,
+      month: reportPropType,
+      year: reportPropType,
+    }),
+    title: PropTypes.string.isRequired,
+  },
+ 
   getInitialState: function () {
     return {
       activeKey: 'utility',
@@ -112,7 +125,7 @@ var OverviewPanelGroup = React.createClass({
   },
 
   render: function () {
-    var {now, field, source, uom, reports} = this.props;
+    var {now, field, source, uom, reports, title} = this.props;
     var visible = (k) => (this.state.activeKey == k);
     
     var commonProps = {source, field, uom, now};
@@ -132,10 +145,23 @@ var OverviewPanelGroup = React.createClass({
       },
     };
     
+    var panelProps = {
+      utility: {
+        id: 'overview-utility',
+        header: (<h3>{title + ' - ' + 'Utility'}</h3>),
+        eventKey: 'utility',
+      },
+      perEfficiency: {
+        id: 'overview-per-efficiency',
+        header: (<h3>{title + ' - ' + 'Per Customer Efficiency'}</h3>),
+        eventKey: 'per-efficiency',
+      },
+    };
+
     return (
       <PanelGroup accordion onSelect={this._selectPanel} activeKey={this.state.activeKey}>
         
-        <Panel id="overview-utility" header="Water Consumption - Utility" eventKey="utility">
+        <Panel {...panelProps.utility}>
           <ListGroup fill>
             <ListGroupItem>
               <h4>Last Day</h4>
@@ -156,7 +182,7 @@ var OverviewPanelGroup = React.createClass({
           </ListGroup>
         </Panel>
         
-        <Panel id="overview-per-efficiency" header="Water Consumption - Customer Efficiency" eventKey="per-efficiency">
+        <Panel {...panelProps.perEfficiency}>
           <div>Todo</div> 
         </Panel>
         
@@ -169,7 +195,6 @@ var OverviewPanelGroup = React.createClass({
       this.setState({activeKey: key});
     return true;
   },
-
 });
 
 var Form = React.createClass({
@@ -307,12 +332,14 @@ var actions = require('../../actions/overview.js');
 var {connect} = ReactRedux;
 
 var mapStateToProps = function (state, ownProps) {
+  var {fields} = state.config.reports.byType.measurements;
   var {field, referenceTime, source, requested} = state.overview;
   return {
-    now: referenceTime,
-    field,
     source,
-    uom: state.config.reports.byType.measurements.fields[field].unit,
+    field,
+    now: referenceTime,
+    uom: fields[field].unit,
+    title: fields[field].title,
     generated: requested, // well, roughly
   };
 };

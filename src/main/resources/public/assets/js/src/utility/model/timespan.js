@@ -28,12 +28,12 @@ TimeSpan.prototype.toDuration = function () {
   return moment.duration(this.quantity, this.unit);
 };
 
-TimeSpan.prototype.toRange = function (milliseconds=false) {
+TimeSpan.prototype.toRange = function (asMillis=false) {
   var t0, t1, r;
   t0 = this.t;
   t1 = t0.clone().add(this.quantity, this.unit);
   r = (this.quantity < 0)? [t1, t0] : [t0, t1];
-  return !milliseconds? r : [r[0].valueOf(), r[1].valueOf()];
+  return !asMillis? r : [r[0].valueOf(), r[1].valueOf()];
 };
  
 TimeSpan.common = new Map([

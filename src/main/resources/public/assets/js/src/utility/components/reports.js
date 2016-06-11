@@ -12,7 +12,50 @@ var {Button, Collapse} = Bootstrap;
 var PropTypes = React.PropTypes;
 var {configPropType} = require('../prop-types');
 
-var MeasurementReport = React.createClass({
+var MeasurementsReportPanel = React.createClass({
+  
+  propTypes: {
+    config: configPropType,
+    field: PropTypes.string,
+  },
+  
+  childContextTypes: {config: configPropType},
+
+  getChildContext: function() {
+    return {config: this.props.config};
+  },
+  
+  getDefaultProps: function () {
+    return {
+      field: 'volume',
+    };
+  },
+
+  getInitialState: function () {
+    return {};
+  },
+
+  render: function () {
+    var pane = require('./reports-measurements/pane');
+    var {config, field} = this.props;
+    
+    var ready = (
+      !_.isEmpty(config) && !_.isEmpty(config.reports) && !_.isEmpty(config.utility)
+    );
+    if (!ready) {
+      return (<div>Loading configuration...</div>);
+    }
+    
+    return ( 
+      <div className="reports reports-measurements">
+        <h2>Generate Report</h2>
+        <pane.ReportPanel field={field} />
+      </div>
+    );
+  },
+});
+
+var MeasurementsReportSection = React.createClass({
   
   propTypes: {
     config: configPropType,
@@ -20,9 +63,7 @@ var MeasurementReport = React.createClass({
     levels: PropTypes.arrayOf(PropTypes.string),
   },
   
-  childContextTypes: {
-    config: configPropType, 
-  },
+  childContextTypes: {config: configPropType},
 
   getChildContext: function() {
     return {config: this.props.config};
@@ -48,11 +89,8 @@ var MeasurementReport = React.createClass({
     var {level, reportName} = this.state;
     
     var ready = (
-      !_.isEmpty(config) &&
-      !_.isEmpty(config.reports) &&
-      !_.isEmpty(config.utility)
+      !_.isEmpty(config) && !_.isEmpty(config.reports) && !_.isEmpty(config.utility)
     );
-
     if (!ready) {
       return (<div>Loading configuration...</div>);
     }
@@ -77,9 +115,8 @@ var MeasurementReport = React.createClass({
     );
 
     var reportProps = {field, level, reportName};
-
     return (
-      <div className="reports reports-measurements">
+      <section className="reports reports-measurements">
         <h2>{reportConfig.fields[field].title}</h2>
         <div className="legend">
           <span>Choose report:</span>&nbsp;
@@ -88,22 +125,17 @@ var MeasurementReport = React.createClass({
         <pane.Form {...reportProps} inlineForm={false} />
         <pane.Chart {...reportProps} />
         <pane.Info {...reportProps} /> 
-      </div>
+      </section>
     );
-  },
-
-  _setLevel: function (level) {
-    this.setState({level});
   },
   
   _setReport: function (name) {
     var [level, reportName] = name.split('/');
     this.setState({level, reportName});
   },
-
 });
 
-var SystemReport = React.createClass({
+var SystemReportSection = React.createClass({
   
   propTypes: {
     config: configPropType,
@@ -111,9 +143,7 @@ var SystemReport = React.createClass({
     reportName: PropTypes.string,
   },
   
-  childContextTypes: {
-    config: configPropType, 
-  },
+  childContextTypes: {config: configPropType},
 
   getChildContext: function() {
     return {config: this.props.config};
@@ -148,27 +178,22 @@ var SystemReport = React.createClass({
     }
 
     return (
-      <div className="reports reports-system">
+      <section className="reports reports-system">
         {heading}
         <Report level={level} reportName={reportName} />
-      </div>
+      </section>
     );
   },
 });
 
 var Overview = React.createClass({
-  
-  statics: {
-  },
 
   propTypes: {
     config: configPropType,
     now: PropTypes.number,
   },
  
-  childContextTypes: {
-    config: configPropType, 
-  },
+  childContextTypes: {config: configPropType},
 
   getChildContext: function() {
     return {config: this.props.config};
@@ -180,11 +205,8 @@ var Overview = React.createClass({
 
     var ready = (
       !_.isEmpty(config) &&
-      !_.isEmpty(config.reports) &&
-      !_.isEmpty(config.utility) &&
-      !_.isEmpty(config.overview)
+      !_.isEmpty(config.reports) && !_.isEmpty(config.utility) && !_.isEmpty(config.overview)
     );
-
     if (!ready) {
       return (<div>Loading configuration...</div>);
     }
@@ -208,5 +230,10 @@ Overview = ReactRedux.connect(
   (state) => ({now: state.overview.referenceTime})
 )(Overview);
 
-module.exports = {MeasurementReport, SystemReport, Overview};
+module.exports = {
+  MeasurementsReportSection,
+  MeasurementsReportPanel,
+  SystemReportSection,
+  Overview,
+};
 

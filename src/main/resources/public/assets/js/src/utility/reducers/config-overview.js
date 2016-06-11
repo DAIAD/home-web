@@ -5,29 +5,30 @@ var ActionTypes = require('../action-types');
 
 var initialState = {
   
-  // Configure reports, names refer to config.reports.measurements
+  // Configure available per-unit reports 
+  // Note report names refer to config.reports.measurements
   reports: {
     day: {
       level: 'hour',
-      reportName: 'hourly-sum',
+      reportName: 'sum',
       startsAt: 'day',
       duration: [-2, 'day'],
     },
     week: {
       level: 'day',
-      reportName: 'daily-sum',
+      reportName: 'sum',
       startsAt: 'isoweek',
       duration: [-2, 'week'],
     },
     month: {
       level: 'day',
-      reportName: 'daily-sum',
+      reportName: 'sum',
       startsAt: 'month',
       duration: [-2, 'month'],
     },
     year: {
       level: 'month',
-      reportName: 'monthly-sum',
+      reportName: 'sum',
       startsAt: 'year',
       duration: [-2, 'year'],
     },

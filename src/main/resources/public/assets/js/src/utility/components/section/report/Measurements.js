@@ -25,17 +25,17 @@ var MeasurementReport = React.createClass({
   },
 
   render: function() {  
-
+    var {routes, config} = this.props;
     return (
       <div className="container-fluid">
         <div className="row">
           <div className="col-md-12">
-            <Breadcrumb routes={this.props.routes}/>
+            <Breadcrumb routes={routes}/>
           </div>
         </div>
         <div className="row">
           <div className="col-md-12">
-            <reports.MeasurementReport config={this.props.config} field={'volume'} />
+            <reports.MeasurementsReportPanel config={config} field={'volume'} />
           </div>
         </div>
       </div>

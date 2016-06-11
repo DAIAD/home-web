@@ -7,42 +7,190 @@ var sprintf = require('sprintf');
 var React = require('react');
 var ReactRedux = require('react-redux');
 var Bootstrap = require('react-bootstrap');
-var {Button, Glyphicon, Collapse} = Bootstrap;
+var {FormattedMessage} = require('react-intl');
 var DatetimeInput = require('react-datetime');
 var echarts = require('react-echarts');
 var Select = require('react-controls/select-dropdown');
 
+var Errors = require('../../constants/Errors');
 var Granularity = require('../../model/granularity');
 var TimeSpan = require('../../model/timespan');
 var population = require('../../model/population');
 var {computeKey, consolidateFuncs} = require('../../reports').measurements;
-var {timespanPropType, populationPropType, seriesPropType} = require('../../prop-types');
+var {timespanPropType, populationPropType, seriesPropType, configPropType} = require('../../prop-types');
 
+var {Button, ButtonGroup, ButtonToolbar, Tooltip, OverlayTrigger} = Bootstrap;
+var {Collapse, Panel, ListGroup, ListGroupItem} = Bootstrap;
 var PropTypes = React.PropTypes;
-var commonPropTypes = { 
-  field: PropTypes.string.isRequired,
-  level: PropTypes.string.isRequired,
-  reportName: PropTypes.string.isRequired,
-};
-
-var toOptionElement = ({value, text}) => (<option value={value} key={value}>{text}</option>);
 
 const REPORT_KEY = 'pane';
+
+//
+// Helpers
+//
+
+var checkTimespan = function (val, level, N=4) {
+  // Check if a timespan (given either as name or as pair of timestamps)
+  // is valid. A non-empty string represents an error, zero represents success.
+  
+  var [t0, t1] = computeTimespan(val);
+  
+  var dt = t1.valueOf() - t0.valueOf();
+  if (dt <= 0)
+    return Errors.reports.measurements.TIMESPAN_INVALID;
+  
+  var dl = Granularity.fromName(level).valueOf();
+  if (dl >= dt)
+    return Errors.reports.measurements.TIMESPAN_TOO_NARROW;
+  
+  if (dl * Math.pow(10, N) < dt)
+    return Errors.reports.measurements.TIMESPAN_TOO_WIDE; // N orders of magnitude bigger than dl
+  
+  return 0;
+};
+    
+var computeTimespan = function (val) {
+  // Convert to a pair of moment instances
+  if (_.isString(val)) {
+    return TimeSpan.fromName(val).toRange();
+  } else if (_.isArray(val)) {
+    var [t0, t1] = val;
+    return [moment(t0), moment(t1)];
+  }
+};
+
+var extractPopulationGroupParams = function (target) {
+  var clusterKey, groupKey;
+  
+  if (target instanceof population.Cluster) {
+    clusterKey = target.key; 
+    groupKey = null;
+  } else if (target instanceof population.ClusterGroup) {
+    clusterKey = target.clusterKey; 
+    groupKey = target.key;
+  } else if (target instanceof population.Utility) { 
+    clusterKey = groupKey = null;
+  } else if (target instanceof population.Group) {
+    clusterKey = null; 
+    groupKey = target.key;
+  }
+  
+  return [clusterKey, groupKey];
+};
+
+var toOptionElement = function ({value, text}) {
+  return (<option value={value} key={value}>{text}</option>);
+};
 
 //
 // Presentational components
 //
 
+var ReportPanel = React.createClass({
+  
+  statics: {
+  },
+
+  propTypes: {
+    field: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired,
+  },
+
+  contextTypes: {config: configPropType},
+  
+  // Lifecycle
+  
+  getInitialState: function () {
+    return {
+      level: 'week',
+      reportName: 'avg-daily-avg',
+    };  
+  },
+
+  render: function () {
+    var {field, title} = this.props;
+    
+    var header = (
+      <div className="header-wrapper">
+        {/*<i className="fa fa-area-chart fa-fw"></i>&nbsp;*/}
+        <h3>{title}</h3>
+        <ButtonGroup>
+          <OverlayTrigger placement="bottom" 
+            overlay={(<Tooltip id="tooltip--select-source">Select source of measurements</Tooltip>)}
+           > 
+            <Button onClick={this._prepareFormForSource}>
+              <i className="fa fa-cube fa-fw" ></i>
+            </Button>
+          </OverlayTrigger>
+          <OverlayTrigger placement="bottom" 
+            overlay={(<Tooltip id="tooltip--select-report">Choose a type of report</Tooltip>)}
+           > 
+            <Button onClick={this._prepareFormForReport}>
+              <i className="fa fa-area-chart fa-fw" ></i>
+            </Button>
+          </OverlayTrigger> 
+          <OverlayTrigger placement="bottom" 
+            overlay={(<Tooltip id="tooltip--select-timespan">Define a time range</Tooltip>)}
+           > 
+            <Button onClick={this._prepareFormForTime}>
+              <i className="fa fa-calendar fa-fw" ></i>
+            </Button>
+          </OverlayTrigger>
+          <OverlayTrigger placement="left" 
+            overlay={(<Tooltip id="tooltip--select-population-group">Define a population target</Tooltip>)}
+           > 
+            <Button onClick={this._prepareFormForPopulation}>
+              <i className="fa fa-users fa-fw" ></i>
+            </Button>
+          </OverlayTrigger> 
+        </ButtonGroup> 
+      </div>
+    );
+    
+    // Todo Provide an <Info> element
+    var footer = (
+      <div className="report-info">
+        Info goes here!!
+      </div>
+    );
+
+    return (
+      <Panel header={header} footer={footer}>
+        <ListGroup fill>
+          <ListGroupItem className="report-form-wrapper">
+            Parameters!
+          </ListGroupItem>
+          <ListGroupItem className="report-chart-wrapper">
+            The chart goes here!
+          </ListGroupItem>
+        </ListGroup>
+      </Panel>
+    );
+  },
+
+  // Event handlers
+
+  _prepareFormForReport: function () {
+    console.info('Prepare form ...');
+  },
+  
+  _prepareFormForSource: function () {
+    console.info('Prepare form ...');
+  },
+  
+  _prepareFormForTime: function () {
+    console.info('Prepare form ...');
+  },
+  
+  _prepareFormForPopulation: function () {
+    console.info('Prepare form ...');
+  },
+
+});
+
 var Form = React.createClass({
   
   statics: {
-    
-    errors: {
-      TIMESPAN_INVALID: -1,
-      TIMESPAN_TOO_NARROW: -2,
-      TIMESPAN_TOO_WIDE: -3,
-    },
-  
     defaults: {
       datetimeProps: {
         closeOnSelect: true,
@@ -53,70 +201,21 @@ var Form = React.createClass({
     },
     
     timespanOptions: [].concat(
-      Array.from(TimeSpan.common.entries()).map(_.spread(
-        (name, u) => ({value: name, text: u.title})
-      )),
+      Array.from(TimeSpan.common.entries()).map(([name, u]) => ({value: name, text: u.title})),
       [{value: '', text: 'Custom...'}]
     ),
-
-    checkTimespan: function (val, level, N=4) {
-      var errors = this.errors;
-      var [t0, t1] = this.computeTimespan(val);
-      
-      var dt = t1.valueOf() - t0.valueOf();
-      if (dt <= 0)
-        return errors.TIMESPAN_INVALID;
-      
-      var dl = Granularity.fromName(level).valueOf();
-      if (dl >= dt)
-        return errors.TIMESPAN_TOO_NARROW;
-      
-      if (dl * Math.pow(10, N) < dt)
-        return errors.TIMESPAN_TOO_WIDE; // N orders of magnitude bigger than dl
-      
-      return 0;
-    },
- 
-    computeTimespan: function (val) {
-      // Convert to a pair of moment instances
-      if (_.isString(val)) {
-        return TimeSpan.fromName(val).toRange();
-      } else if (_.isArray(val)) {
-        var t0 = _.isNumber(val[0])? moment(val[0]) : val[0]; 
-        var t1 = _.isNumber(val[1])? moment(val[1]) : val[1]; 
-        return [t0, t1];
-      }
-    },
-    
-    extractPopulationGroupParams: function (target) {
-      var clusterKey, groupKey;
-      if (target instanceof population.Cluster) {
-        clusterKey = target.key; 
-        groupKey = null;
-      } else if (target instanceof population.ClusterGroup) {
-        clusterKey = target.clusterKey; 
-        groupKey = target.key;
-      } else if (target instanceof population.Utility) { 
-        clusterKey = groupKey = null;
-      } else if (target instanceof population.Group) {
-        clusterKey = null; 
-        groupKey = target.key;
-      }
-      return [clusterKey, groupKey];
-    },
-
   },
   
   propTypes: {
-    ...commonPropTypes,
+    field: PropTypes.string.isRequired,
+    level: PropTypes.string.isRequired,
+    reportName: PropTypes.string.isRequired,
     source: PropTypes.oneOf(['meter', 'device']),
     timespan: timespanPropType,
     population: populationPropType,
   },
 
-  contextTypes: {
-    config: PropTypes.object,
-  },
+  contextTypes: {config: configPropType},
 
   // Lifecycle
 
@@ -150,7 +249,6 @@ var Form = React.createClass({
   },
  
   componentWillReceiveProps: function (nextProps, nextContext) {
-
     // Check if moving to another report
     if (
       (nextProps.field != this.props.field) || 
@@ -180,7 +278,7 @@ var Form = React.createClass({
     var {timespan, error, collapsed} = this.state;
     
     var _config = config.reports.byType.measurements;
-    var [t0, t1] = cls.computeTimespan(timespan);
+    var [t0, t1] = computeTimespan(timespan);
 
     var datetimeProps = _.merge({}, cls.defaults.datetimeProps, {
       inputProps: {disabled: _.isString(timespan)? 'disabled' : null}
@@ -191,14 +289,14 @@ var Form = React.createClass({
     }));
 
     var timespanOptions = cls.timespanOptions.filter(
-      o => (!o.value || cls.checkTimespan(o.value, level) >= 0)
+      o => (!o.value || checkTimespan(o.value, level) === 0)
     );
 
     var clusterOptions = config.utility.clusters.map(
       c => ({value: c.key, text: c.name })
     );
     
-    var [clusterKey, groupKey] = cls.extractPopulationGroupParams(target);
+    var [clusterKey, groupKey] = extractPopulationGroupParams(target);
     var groupOptions = !clusterKey? [] :
       config.utility.clusters
         .find(c => (c.key == clusterKey))
@@ -348,8 +446,7 @@ var Form = React.createClass({
   },
 
   _setTimespan: function (val) {
-    var cls = this.constructor;
-    var errors = cls.errors;
+    var errors = Errors.reports.measurements;
     var error = null, errorMessage = null, ts = null;
     
     // Validate
@@ -360,7 +457,8 @@ var Form = React.createClass({
       // Check if given timespan is a valid range 
       console.assert(val.length == 2 && val.every(t => moment.isMoment(t)), 
         'Expected a pair of moment instances');
-      error = cls.checkTimespan(val, this.props.level);
+      error = checkTimespan(val, this.props.level);
+      // Todo Provide an i18n message keyed on error
       switch (error) {
         case errors.TIMESPAN_INVALID:
           errorMessage = 'The given timespan is invalid.'
@@ -420,13 +518,11 @@ var Form = React.createClass({
   },
   
   _saveAsImage: function () {
-    // Todo
     console.info('Todo: Saving to image...');
     return false;
   },
 
   _exportToTable: function () {
-    // Todo
     console.info('Todo: Exporting to CSV...');
     return false;
   },
@@ -514,21 +610,21 @@ var Chart = React.createClass({
         },
       }
     },
-
   }, 
 
   propTypes: {
-    ...commonPropTypes,
-    width: PropTypes.number,
-    height: PropTypes.number,
+    field: PropTypes.string.isRequired,
+    level: PropTypes.string.isRequired,
+    reportName: PropTypes.string.isRequired,
     series: PropTypes.arrayOf(seriesPropType),
     finished: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
+    // Appearence
+    width: PropTypes.number,
+    height: PropTypes.number,
     scaleTimeAxis: PropTypes.bool,
   }, 
   
-  contextTypes: {
-    config: PropTypes.object,
-  },
+  contextTypes: {config: configPropType},
 
   getDefaultProps: function () {
     return {
@@ -685,7 +781,9 @@ var Info = React.createClass({
   statics: {},
 
   propTypes: {
-    ...commonPropTypes,
+    field: PropTypes.string.isRequired,
+    level: PropTypes.string.isRequired,
+    reportName: PropTypes.string.isRequired,
     requested: PropTypes.number,
     finished: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
     errors: PropTypes.arrayOf(PropTypes.string),
@@ -733,9 +831,7 @@ var Info = React.createClass({
     }
 
     return (
-      <div className="report-info"
-        id={['info', field, level, reportName].join('--')}
-       >
+      <div className="report-info" id={['info', field, level, reportName].join('--')}>
         {paragraph}
       </div>
     );
@@ -747,6 +843,24 @@ var Info = React.createClass({
 //
 
 var actions = require('../../actions/reports-measurements');
+
+ReportPanel = ReactRedux.connect(
+  (state, ownProps) => {
+    var stateProps = {};
+    
+    var {field, title} = ownProps;
+    var {fields} = state.config.reports.byType.measurements;
+    
+    if (!title)
+      stateProps.title = fields[field].title;
+    
+    return stateProps;
+  }, 
+  (dispatch, ownProps) => {
+    return {
+    };
+  }, 
+)(ReportPanel);
 
 Form = ReactRedux.connect(
   (state, ownProps) => {
@@ -798,4 +912,4 @@ Info = ReactRedux.connect(
 
 // Export
 
-module.exports = {Form, Chart, Info};
+module.exports = {Form, Chart, Info, ReportPanel};

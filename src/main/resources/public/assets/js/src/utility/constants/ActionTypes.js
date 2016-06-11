@@ -143,7 +143,9 @@ var types = mirrorToPath({
       SET_DATA: null,
     },
   },
-  
+ 
+  // Overview reports (atop of measurement reports)
+
   overview: {
     SETUP: null,
   },
