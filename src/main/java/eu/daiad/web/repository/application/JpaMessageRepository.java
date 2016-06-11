@@ -81,11 +81,13 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 										new DateTime(message.getTimestamp()));
 						break;
 					case RECOMMENDATION_STATIC:
-                                                persistStaticRecommendationAcknowledgement(message.getId(),
+                        persistStaticRecommendationAcknowledgement(message.getId(),
 										new DateTime(message.getTimestamp()));
 						break;
 					case ANNOUNCEMENT:
-						throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
+                        persistAnnouncementAcknowledgement(message.getId(),
+										new DateTime(message.getTimestamp()));
+                        break;
 					default:
 						throw createApplicationException(MessageErrorCode.MESSAGE_TYPE_NOT_SUPPORTED).set("type.",
 										message.getType());
@@ -308,6 +310,85 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 			}
 		}
 
+        //Get Announcements
+		options = this.getMessageDataPagingOptions(request, EnumMessageType.ANNOUNCEMENT);
+
+		if (options != null) {
+			// Get total count
+			Integer totalAnnouncements;
+
+			TypedQuery<Number> countAccountAnnouncementsQuery = entityManager
+							.createQuery("select count(a.id) from account_announcement a "
+											+ "where a.account.id = :accountId and a.id > :minMessageId ", Number.class);
+
+			countAccountAnnouncementsQuery.setParameter("accountId", user.getId());
+			countAccountAnnouncementsQuery.setParameter("minMessageId", options.getMinMessageId());
+
+			totalAnnouncements = ((Number) countAccountAnnouncementsQuery.getSingleResult()).intValue();
+
+			result.setTotalAnnouncements(totalAnnouncements);
+
+			// Build query
+			TypedQuery<eu.daiad.web.domain.application.AccountAnnouncement> accountAnnouncementsQuery;
+
+			if ((options.getAscending() != null) && (options.getAscending() == true)) {
+				// Ascending order
+				accountAnnouncementsQuery = entityManager.createQuery("select a from account_announcement a "
+								+ "where a.account.id = :accountId and a.id > :minMessageId order by a.id",
+								eu.daiad.web.domain.application.AccountAnnouncement.class);
+			} else {
+				// Descending order
+				accountAnnouncementsQuery = entityManager.createQuery("select a from account_announcement a "
+								+ "where a.account.id = :accountId and a.id > :minMessageId order by a.id desc",
+								eu.daiad.web.domain.application.AccountAnnouncement.class);
+			}
+
+			if (options.getIndex() != null) {
+				accountAnnouncementsQuery.setFirstResult(options.getIndex());
+			}
+			if (options.getSize() != null) {
+				accountAnnouncementsQuery.setMaxResults(options.getSize());
+			}
+
+			accountAnnouncementsQuery.setParameter("accountId", user.getId());
+			accountAnnouncementsQuery.setParameter("minMessageId", options.getMinMessageId());
+
+			for (eu.daiad.web.domain.application.AccountAnnouncement accountAnnouncement : accountAnnouncementsQuery.getResultList()) {
+				// Find translation by locale
+				AnnouncementTranslation announcementTranslation = null;
+
+				for (AnnouncementTranslation translation : accountAnnouncement.getAnnouncement().getTranslations()) {
+					if (translation.getLocale().equals(locale)) {
+						announcementTranslation = translation;
+						break;
+					}
+
+				}
+
+				if (announcementTranslation == null) {
+					continue;
+				}
+
+				eu.daiad.web.model.message.AccountAnnouncement message = new eu.daiad.web.model.message.AccountAnnouncement();
+
+				message.setId(accountAnnouncement.getId());
+				message.setPriority(accountAnnouncement.getAnnouncement().getPriority());
+
+                message.setTitle(announcementTranslation.getTitle());                              
+                if(announcementTranslation.getContent() != null){
+                    message.setContent(announcementTranslation.getContent());
+                }
+				
+				message.setCreatedOn(accountAnnouncement.getCreatedOn().getMillis());
+				if (accountAnnouncement.getAcknowledgedOn() != null) {
+					message.setAcknowledgedOn(accountAnnouncement.getAcknowledgedOn().getMillis());
+				}
+
+				messages.add(message);
+			}
+		} 
+        
+        
 		// Add a random static tip every week.
 		options = this.getMessageDataPagingOptions(request, EnumMessageType.RECOMMENDATION_STATIC);
 
@@ -673,7 +754,25 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 			staticRecommendations.get(0).setAcknowledgedOn(acknowledgedOn);
 			staticRecommendations.get(0).setReceiveAcknowledgedOn(DateTime.now());
 		}
-	}        
+	}     
+    
+	private void persistAnnouncementAcknowledgement(int id, DateTime acknowledgedOn) {
+		AuthenticatedUser user = this.getCurrentAuthenticatedUser();
+
+		TypedQuery<eu.daiad.web.domain.application.AccountAnnouncement> accountAnnouncementQuery = entityManager
+						.createQuery("select a from account_announcement a "
+                                        + "where a.account.id = :accountId and a.id = :announcementId and a.acknowledgedOn is null",
+										eu.daiad.web.domain.application.AccountAnnouncement.class);
+
+		accountAnnouncementQuery.setParameter("accountId", user.getId());
+		accountAnnouncementQuery.setParameter("announcementId", id);
+
+		List<AccountAnnouncement> announcements = accountAnnouncementQuery.getResultList();
+
+		if (announcements.size() == 1) {
+			announcements.get(0).setAcknowledgedOn(acknowledgedOn);
+		}
+	}     
 
 	private Locale resolveCurrency(String country) {
 		Locale currency;
