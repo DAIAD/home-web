@@ -13,6 +13,7 @@ var mode_management = require('./mode_management');
 var admin = require('./admin');
 var logging = require('./logging');
 var alerts = require('./alerts');
+var announcements = require('./announcements');
 var query = require('./query');
 var scheduler = require('./scheduler');
 var debug = require('./debug');
@@ -33,6 +34,7 @@ var rootReducer = combineReducers({
   mode_management,
   admin,
   alerts,
+  announcements,
   query,
   scheduler,
   debug,

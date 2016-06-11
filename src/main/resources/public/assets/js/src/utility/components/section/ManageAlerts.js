@@ -78,7 +78,7 @@ var ManageAlerts = React.createClass({
 				      action: self.props.hideModal,
 				        name: "Cancel"
 			     },  {
-				      action: self.props.confirmDeleteTip,//this.props.editTip(tip);
+				      action: self.props.confirmDeleteTip,
 				        name: "Delete",
 				        style: 'danger'
 			         }

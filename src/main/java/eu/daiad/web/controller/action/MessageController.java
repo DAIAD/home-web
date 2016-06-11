@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.message.AnnouncementRequest;
 import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageAcknowledgementRequest;
@@ -107,7 +108,7 @@ public class MessageController extends BaseController {
 	}
 
 	/**
-	 * Gets static localized recommendations (tips) for a single user.
+	 * Gets static localized recommendations (tips) based on locale.
 	 * 
 	 * @param user the user
 	 * @param locale the locale
@@ -204,6 +205,56 @@ public class MessageController extends BaseController {
 		    return response;
 		}
         return response;
+	}  
+    
+    /**
+     * Send announcement to the provided accounts.
+     * 
+     * @param user the user.
+     * @param request the request containing the announcement and the receivers.
+     * @return the controller response.
+     */
+    @RequestMapping(value = "/action/announcement/broadcast", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	@Secured("ROLE_ADMIN")
+	public RestResponse broadCastAnnouncement(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody AnnouncementRequest request) {
+        RestResponse response = new RestResponse();
+        
+        try {
+
+            String channel = "web";
+            this.messageRepository.broadcastAnnouncement(request, user.getLocale(), channel); //default channel web
+
+		} catch (Exception ex) {
+			    logger.error(ex.getMessage(), ex);
+			    response.add(this.getError(ex));
+			    return response;
+		}
+        return response;
+	}    
+    
+	/**
+	 * Get localized announcements history.
+	 * 
+	 * @param user the user
+	 * @return the announcements.
+	 */
+	@RequestMapping(value = "/action/announcements/history", method = RequestMethod.GET, produces = "application/json")
+	@Secured("ROLE_ADMIN")
+	public RestResponse getAnnouncements(@AuthenticationPrincipal AuthenticatedUser user) {
+		try {
+			SingleTypeMessageResponse messages = new SingleTypeMessageResponse();
+
+			messages.setType(EnumMessageType.ANNOUNCEMENT);
+			messages.setMessages(this.messageRepository.getAnnouncements(user.getLocale()));
+
+			return messages;
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
+
+			RestResponse response = new RestResponse();
+			response.add(this.getError(ex));
+			return response;
+		}
 	}    
     
 }
