@@ -1,4 +1,6 @@
+var adminAPI = require('../api/admin');
 var queryAPI = require('../api/query');
+
 var types = require('../constants/DashboardActionTypes');
 
 var _buildTimelineQuery = function(key, name, timezone, interval) {
@@ -56,6 +58,21 @@ var _getFeatures = function(timestamp, label) {
   };
 };
 
+var _getCountersInit = function() {
+  return {
+    type : types.COUNTER_REQUEST
+  };
+};
+
+var _getCountersComplete = function(success, errors, counters) {
+  return {
+    type : types.COUNTER_RESPONSE,
+    success : success,
+    errors : errors,
+    counters : counters
+  };
+};
+
 var DashboardActions = {
   getTimeline : function(key, name, timezone) {
     return function(dispatch, getState) {
@@ -82,6 +99,24 @@ var DashboardActions = {
         dispatch(_getTimelineComplete(false, error, null));
 
         dispatch(_getFeatures(null, null));
+      });
+    };
+  },
+
+  getCounters : function(key, name, timezone) {
+    return function(dispatch, getState) {
+      dispatch(_getCountersInit());
+
+      return adminAPI.getCounters().then(function(response) {
+        var counters = null;
+
+        if (response.success) {
+          counters = response.counters;
+        }
+        dispatch(_getCountersComplete(response.success, response.errors, counters));
+
+      }, function(error) {
+        dispatch(_getCountersComplete(false, error, null));
       });
     };
   },

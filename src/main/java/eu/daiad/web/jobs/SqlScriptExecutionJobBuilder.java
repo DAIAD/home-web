@@ -18,37 +18,37 @@ import eu.daiad.web.service.scheduling.tasklet.SqlScriptExecutionTasklet;
 @Component
 public class SqlScriptExecutionJobBuilder implements IJobBuilder {
 
-	private static final String PARAMETER_LOCATIONS = "locations";
+    private static final String PARAMETER_LOCATIONS = "locations";
 
-	@Autowired
-	private ApplicationContext applicationContext;
+    @Autowired
+    private ApplicationContext applicationContext;
 
-	@Autowired
-	private MessageSource messageSource;
+    @Autowired
+    private MessageSource messageSource;
 
-	@Autowired
-	private JobBuilderFactory jobBuilderFactory;
+    @Autowired
+    private JobBuilderFactory jobBuilderFactory;
 
-	@Autowired
-	private StepBuilderFactory stepBuilderFactory;
+    @Autowired
+    private StepBuilderFactory stepBuilderFactory;
 
-	@Autowired
-	@Qualifier("applicationDataSource")
-	private DataSource dataSource;
+    @Autowired
+    @Qualifier("applicationDataSource")
+    private DataSource dataSource;
 
-	private Step executeScripts() {
-		SqlScriptExecutionTasklet sqlScriptExecutionTasklet = new SqlScriptExecutionTasklet();
+    private Step executeScripts() {
+        SqlScriptExecutionTasklet sqlScriptExecutionTasklet = new SqlScriptExecutionTasklet();
 
-		sqlScriptExecutionTasklet.setApplicationContext(this.applicationContext);
-		sqlScriptExecutionTasklet.setMessageSource(this.messageSource);
-		sqlScriptExecutionTasklet.setDataSource(this.dataSource);
-		sqlScriptExecutionTasklet.setLocationParameter(PARAMETER_LOCATIONS);
+        sqlScriptExecutionTasklet.setApplicationContext(this.applicationContext);
+        sqlScriptExecutionTasklet.setMessageSource(this.messageSource);
+        sqlScriptExecutionTasklet.setDataSource(this.dataSource);
+        sqlScriptExecutionTasklet.setLocationParameter(PARAMETER_LOCATIONS);
 
-		return stepBuilderFactory.get("executeScripts").tasklet(sqlScriptExecutionTasklet).build();
-	}
+        return stepBuilderFactory.get("executeScripts").tasklet(sqlScriptExecutionTasklet).build();
+    }
 
-	@Override
-	public Job build(String name, JobParametersIncrementer incrementer) throws Exception {
-		return jobBuilderFactory.get(name).incrementer(incrementer).start(executeScripts()).build();
-	}
+    @Override
+    public Job build(String name, JobParametersIncrementer incrementer) throws Exception {
+        return jobBuilderFactory.get(name).incrementer(incrementer).start(executeScripts()).build();
+    }
 }

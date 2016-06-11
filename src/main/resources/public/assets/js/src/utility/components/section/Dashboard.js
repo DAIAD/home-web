@@ -18,7 +18,7 @@ var {FormattedMessage, FormattedTime, FormattedDate} = require('react-intl');
 var WidthProvider = require('react-grid-layout').WidthProvider;
 var ResponsiveReactGridLayout = require('react-grid-layout').Responsive;
 
-var { getTimeline, getFeatures } = require('../../actions/DashboardActions');
+var { getTimeline, getFeatures, getCounters } = require('../../actions/DashboardActions');
 
 ResponsiveReactGridLayout = WidthProvider(ResponsiveReactGridLayout);
 
@@ -94,6 +94,7 @@ var Dashboard = React.createClass({
 	  var utility = this.props.profile.utility;
   
 	  this.props.actions.getTimeline(utility.key, utility.name, utility.timezone);
+	  this.props.actions.getCounters();
   },
 
   getInitialState: function() {
@@ -208,21 +209,21 @@ var Dashboard = React.createClass({
 			</span>
 		);
 		
-    	var onChangeInterval = function (event, picker) {
-    		this.setState({
-    			interval: [picker.startDate, picker.endDate]
-    		});
-    	};
+  	var onChangeInterval = function (event, picker) {
+  		this.setState({
+  			interval: [picker.startDate, picker.endDate]
+  		});
+  	};
 
-        var intervalLabel ='';
-        if(this.state.interval) {
-        	var start = this.state.interval[0].format('DD/MM/YYYY');
-        	var end = this.state.interval[1].format('DD/MM/YYYY');
-        	intervalLabel = start + ' - ' + end;
-        	if (start === end) {
-        		intervalLabel = start;
-        	}
-        }    	
+    var intervalLabel ='';
+    if(this.state.interval) {
+    	var start = this.state.interval[0].format('DD/MM/YYYY');
+    	var end = this.state.interval[1].format('DD/MM/YYYY');
+    	intervalLabel = start + ' - ' + end;
+    	if (start === end) {
+    		intervalLabel = start;
+    	}
+    }    	
 		var intervalConfig = (
 				<div className='col-md-6'>
 					<DateRangePicker	startDate={this.state.interval ? this.state.interval[0] : moment() } 
@@ -343,22 +344,29 @@ var Dashboard = React.createClass({
 				break;
 		}
 		
-        
-		var counters = (
+    var counters = this.props.counters;
+    
+		var counterComponents = (
 			<div className='row'>
 				<div className='col-md-4'>
 					<div style={{ marginBottom: 20 }}>
-						<Counter text={'Counter.Users'} value={198} variance={-2} link='/analytics' />
+						<Counter text={'Counter.Users'} 
+						         value={counters ? counters.user.value : null} 
+						         variance={counters ? counters.user.difference : null} link='/users' />
 					</div>
 				</div>
 				<div className='col-md-4'>
 					<div style={{ marginBottom: 20 }}>
-						<Counter text={'Counter.Meters'} value={75} variance={5} color='#1abc9c' link='/analytics'/>
+						<Counter text={'Counter.Meters'}
+						         value={counters ? counters.meter.difference : null}
+						         variance={counters ? counters.meter.difference : null} color='#1abc9c' link='/users'/>
 					</div>
 				</div>
 				<div className='col-md-4'>
 					<div style={{ marginBottom: 20 }}>
-						<Counter text={'Counter.Devices'} value={230} variance={10} color='#27ae60' link='/analytics' />
+						<Counter text={'Counter.Devices'}
+						         value={counters ? counters.amphiro.difference : null}
+						         variance={counters ? counters.amphiro.difference : null} color='#27ae60' link='/users' />
 					</div>
 				</div>
 			</div>
@@ -411,7 +419,7 @@ var Dashboard = React.createClass({
 						<Breadcrumb routes={this.props.routes}/>
 					</div>
 				</div>
-				{counters}
+				{counterComponents}
 				<div className='row' style={{ overflow : 'hidden' }}>
 					<ResponsiveReactGridLayout	className='clearfix' 
 													layouts={layouts}
@@ -444,6 +452,7 @@ Dashboard.title = 'Section.Dashboard';
 function mapStateToProps(state) {
   return {
       map: state.dashboard.map,
+      counters: state.dashboard.statistics.counters,
       profile: state.session.profile,
       routing: state.routing
   };
@@ -451,7 +460,7 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
   return {
-    actions : bindActionCreators(Object.assign({}, { getTimeline, getFeatures }) , dispatch)
+    actions : bindActionCreators(Object.assign({}, { getTimeline, getFeatures, getCounters }) , dispatch)
   };
 }
 

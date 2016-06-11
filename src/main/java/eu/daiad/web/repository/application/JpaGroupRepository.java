@@ -11,6 +11,7 @@ import javax.persistence.TypedQuery;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.joda.time.DateTime;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
@@ -55,25 +56,25 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
         return groups;
     }
 
-
     @Override
     public List<Group> getUtilities(UUID utilityKey) {
         TypedQuery<eu.daiad.web.domain.application.Utility> query = entityManager.createQuery(
-                        "select u from utility u where u.key = :utilityKey", eu.daiad.web.domain.application.Utility.class);
-
+                        "select u from utility u where u.key = :utilityKey",
+                        eu.daiad.web.domain.application.Utility.class);
 
         query.setParameter("utilityKey", utilityKey);
-        
+
         return utilityEntityToUtilityObject(query.getResultList());
     }
 
     @Override
     public List<Group> getClusters(UUID utilityKey) {
         TypedQuery<eu.daiad.web.domain.application.Cluster> query = entityManager.createQuery(
-                        "select c from cluster c where c.utility.key = :utilityKey", eu.daiad.web.domain.application.Cluster.class);
+                        "select c from cluster c where c.utility.key = :utilityKey",
+                        eu.daiad.web.domain.application.Cluster.class);
 
         query.setParameter("utilityKey", utilityKey);
-        
+
         return clusterEntityToClusterObject(query.getResultList());
     }
 
@@ -86,6 +87,74 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
         query.setParameter("key", clusterKey);
 
         return groupToSegmentList(query.getResultList());
+    }
+
+    @Override
+    public void createCluster(Cluster cluster) {
+        DateTime now = new DateTime();
+        
+        TypedQuery<eu.daiad.web.domain.application.Utility> utilityQuery = entityManager.createQuery(
+                        "select u from utility u where u.key = :key", eu.daiad.web.domain.application.Utility.class);
+
+        utilityQuery.setParameter("key", cluster.getUtilityKey());
+
+        eu.daiad.web.domain.application.Utility utility = utilityQuery.getSingleResult();
+
+        eu.daiad.web.domain.application.Cluster clusterEntity = new eu.daiad.web.domain.application.Cluster();
+
+        clusterEntity.setName(cluster.getName());
+        clusterEntity.setCreatedOn(now);
+        clusterEntity.setUtility(utility);
+
+        entityManager.persist(clusterEntity);
+        entityManager.flush();
+        
+        for (Segment segment : cluster.getSegments()) {
+            eu.daiad.web.domain.application.GroupSegment segmentEntity = new eu.daiad.web.domain.application.GroupSegment();
+
+            segmentEntity.setCluster(clusterEntity);
+            segmentEntity.setCreatedOn(now);
+            segmentEntity.setName(segment.getName());
+            segmentEntity.setSize(segment.getMembers().size());
+            segmentEntity.setUtility(utility);
+
+            entityManager.persist(segmentEntity);
+            entityManager.flush();
+            
+            TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager
+                            .createQuery("select a from account a where a.key = :key",
+                                            eu.daiad.web.domain.application.Account.class);
+
+            for (UUID userKey : segment.getMembers()) {
+                accountQuery.setParameter("key", userKey);
+                
+                eu.daiad.web.domain.application.GroupMember member = new eu.daiad.web.domain.application.GroupMember();
+                
+                member.setAccount(accountQuery.getSingleResult());
+                member.setGroup(segmentEntity);
+                member.setCreatetOn(now);
+                
+                entityManager.persist(member);
+            }
+
+        }
+
+        entityManager.flush();
+    }
+
+    @Override
+    public void deleteAllClusterByName(String name) {
+        TypedQuery<eu.daiad.web.domain.application.Cluster> query = entityManager.createQuery(
+                        "select c from cluster c where c.name = :name", eu.daiad.web.domain.application.Cluster.class);
+
+        query.setParameter("name", name);
+
+        for (eu.daiad.web.domain.application.Cluster cluster : query.getResultList()) {
+            for (eu.daiad.web.domain.application.GroupSegment segment : cluster.getGroups()) {
+                entityManager.remove(segment);
+            }
+            entityManager.remove(cluster);
+        }
     }
 
     @Override
@@ -281,8 +350,6 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
             cluster.setName(entity.getName());
             cluster.setUtilityKey(entity.getUtility().getKey());
 
-            List<Segment> segments = new ArrayList<Segment>();
-
             for (GroupSegment groupSegment : ((eu.daiad.web.domain.application.Cluster) entity).getGroups()) {
                 Segment segment = new Segment();
 
@@ -293,10 +360,8 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
                 segment.setSize(groupSegment.getSize());
                 segment.setUtilityKey(groupSegment.getUtility().getKey());
 
-                segments.add(segment);
+                cluster.getSegments().add(segment);
             }
-
-            cluster.setSegments(segments);
 
             clusters.add(cluster);
         }

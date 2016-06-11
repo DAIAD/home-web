@@ -15,8 +15,13 @@ var _onUserSelect= function(e) {
   var profile = this.props.profile;
   
   if(e) {
-    this.props.actions.getUserData(e.value, e.label, profile.timezone);
-    this.props.actions.getUserForecast(e.value, e.label, profile.timezone);
+    console.log('***');
+    console.log(e);
+    console.log('***');
+    if(e.value) {
+      this.props.actions.getUserData(e.value, e.label, profile.timezone);
+      this.props.actions.getUserForecast(e.value, e.label, profile.timezone);
+    }
   }
   this.props.actions.setUser(e);
 };

@@ -1,118 +1,132 @@
 var React = require('react');
-var ReactDOM = require('react-dom');
+var { bindActionCreators } = require('redux');
+var { connect } = require('react-redux');
 var Bootstrap = require('react-bootstrap');
 var { Link } = require('react-router');
 var Breadcrumb = require('../Breadcrumb');
 var Table = require('../Table');
 var Chart = require('../Chart');
 var LeafletMap = require('../LeafletMap');
+var UserSearchTextBox = require('../UserSearchTextBox');
+var { getUtilityData, getUtilityForecast, getUserData, getUserForecast, setUser } = require('../../actions/ForecastingActions');
+var theme = require('../chart/themes/forecast');
 
-var Search = React.createClass({
+var _onUserSelect= function(e) {
+  var profile = this.props.profile;
+  
+  if(e) {
+    //this.props.actions.getUserData(e.value, e.label, profile.timezone);
+    //this.props.actions.getUserForecast(e.value, e.label, profile.timezone);
+  }
+  this.props.actions.setUser(e);
+};
+
+var Users = React.createClass({
 	contextTypes: {
 	    intl: React.PropTypes.object
 	},
 
-  	render: function() {
-  		var _t = this.context.intl.formatMessage;
+  render: function() {
+		var _t = this.context.intl.formatMessage;
 
-  		var data = {
-  				fields: [{
-  					name: 'deviceId',
-  					title: 'Id',
-  					hidden: true
-  				}, {
-  					name: 'userId',
-  					hidden: true
-  				}, {
-  					name: 'type',
-  					title: 'Type'
-  				}, {
-  					name: 'chart',
-  					type:'action',
-  					icon: 'bar-chart',
-  					handler: function() {
-  						console.log(this);
-  					}
-  				}, {
-  					name: 'name',
-  					title: 'Description',
-  					link: '/device/{deviceId}'
-  				}, {
-  					name: 'registeredOn',
-  					title: 'Registered On',
-  					type: 'datetime'
-  				}, {
-  					name: 'lastUpdatedOn',
-  					title: 'Last Update On',
-  					type: 'datetime'
-  				}, {
-  					name: 'user',
-  					title: 'Username',
-  					link: '/user/{userId}'
-  				}, {
-  					name: 'email',
-  					title: 'Email'
-  				}, {
-  					name: 'map',
-  					type:'action',
-  					icon: 'map-o',
-  					handler: function() {
-  						console.log(this);
-  					}
-  				}, {
-  					name: 'message',
-  					type:'action',
-  					icon: 'envelope-o',
-  					handler: function() {
-  						console.log(this);
-  					}
-  				}, {
-  					name: 'bookmark',
-  					type:'action',
-  					icon: 'bookmark-o',
-  					handler: function() {
-  						console.log(this);
-  					}
-  				}, {
-  					name: 'add-to-group',
-  					type:'action',
-  					icon: 'user-plus',
-  					handler: function() {
-  						console.log(this);
-  					}
+		var data = {
+				fields: [{
+					name: 'deviceId',
+					title: 'Id',
+					hidden: true
 				}, {
-  					name: 'export',
-  					type:'action',
-  					icon: 'cloud-download',
-  					handler: function() {
-  						console.log(this);
-  					}
-  				}],
-  				rows: [{
-  					deviceId: 1,
-  					userId: 1,
-  					type: 'Amphiro',
-  					name: 'Amphiro #2',
-  					registeredOn: new Date((new Date()).getTime() + Math.random() * 3600000),
-  					lastUpdatedOn: new Date((new Date()).getTime() + Math.random() * 3600000),
-  					user: 'User 1',
-  					email: 'user1@daiad.eu'
-  				}, {
-  					deviceId: 2,
-  					userId: 1,
-  					type: 'Meter',
-  					name: 'I94854C384',
-  					registeredOn: new Date((new Date()).getTime() + Math.random() * 3600000),
-  					lastUpdatedOn: new Date((new Date()).getTime() + Math.random() * 3600000),
-  					user: 'User 1',
-  					email: 'user1@daiad.eu'
-  				}],
-  				pager: {
-  					index: 0,
-  					size: 1,
-  					count:2
-  				}
-  			};
+					name: 'userId',
+					hidden: true
+				}, {
+					name: 'type',
+					title: 'Type'
+				}, {
+					name: 'chart',
+					type:'action',
+					icon: 'bar-chart',
+					handler: function() {
+						console.log(this);
+					}
+				}, {
+					name: 'name',
+					title: 'Description',
+					link: '/device/{deviceId}'
+				}, {
+					name: 'registeredOn',
+					title: 'Registered On',
+					type: 'datetime'
+				}, {
+					name: 'lastUpdatedOn',
+					title: 'Last Update On',
+					type: 'datetime'
+				}, {
+					name: 'user',
+					title: 'Username',
+					link: '/user/{userId}'
+				}, {
+					name: 'email',
+					title: 'Email'
+				}, {
+					name: 'map',
+					type:'action',
+					icon: 'map-o',
+					handler: function() {
+						console.log(this);
+					}
+				}, {
+					name: 'message',
+					type:'action',
+					icon: 'envelope-o',
+					handler: function() {
+						console.log(this);
+					}
+				}, {
+					name: 'bookmark',
+					type:'action',
+					icon: 'bookmark-o',
+					handler: function() {
+						console.log(this);
+					}
+				}, {
+					name: 'add-to-group',
+					type:'action',
+					icon: 'user-plus',
+					handler: function() {
+						console.log(this);
+					}
+			}, {
+					name: 'export',
+					type:'action',
+					icon: 'cloud-download',
+					handler: function() {
+						console.log(this);
+					}
+				}],
+				rows: [{
+					deviceId: 1,
+					userId: 1,
+					type: 'Amphiro',
+					name: 'Amphiro #2',
+					registeredOn: new Date((new Date()).getTime() + Math.random() * 3600000),
+					lastUpdatedOn: new Date((new Date()).getTime() + Math.random() * 3600000),
+					user: 'User 1',
+					email: 'user1@daiad.eu'
+				}, {
+					deviceId: 2,
+					userId: 1,
+					type: 'Meter',
+					name: 'I94854C384',
+					registeredOn: new Date((new Date()).getTime() + Math.random() * 3600000),
+					lastUpdatedOn: new Date((new Date()).getTime() + Math.random() * 3600000),
+					user: 'User 1',
+					email: 'user1@daiad.eu'
+				}],
+				pager: {
+					index: 0,
+					size: 1,
+					count:2
+				}
+			};
 
   		var chartData = {
   			    series: [{
@@ -249,19 +263,13 @@ var Search = React.createClass({
 						<Bootstrap.Panel header={filterTitle}>
 							<Bootstrap.ListGroup fill>
 								<Bootstrap.ListGroupItem>
-										<Bootstrap.Input type='text' ref='username' 
-												placeholder='Search by user name, email address ...'
-												addonBefore={<i className='fa fa-user fa-fw'></i>}
-												defaultValue='User 1'/>
-										<Bootstrap.Input type='text' ref='device'
-												placeholder='Searh by meter serial number, Amphiro name ...'
-												addonBefore={<i className='fa fa-barcode fa-fw'></i>} />
-										<button id='search'
-							   				className='btn btn-primary'>
-											<i className='fa fa-search fa-fw'></i>
-							   				Search
-							   			</button>										
-								</Bootstrap.ListGroupItem>
+								  <div className='row'>
+								    <div className='col-md-3'>
+								      <UserSearchTextBox name='username' onChange={_onUserSelect.bind(this)}/>
+								      <span className='help-block'>Select a single user</span>
+							      </div>										
+                  </div>
+                </Bootstrap.ListGroupItem>
 							</Bootstrap.ListGroup>
 						</Bootstrap.Panel>
 					</div>
@@ -312,10 +320,26 @@ var Search = React.createClass({
 				</div>
 			</div>
  		);
-  	}
+  }
 });
 
-Search.icon = 'search';
-Search.title = 'Section.Users';
+Users.icon = 'user';
+Users.title = 'Section.Users';
 
-module.exports = Search;
+function mapStateToProps(state) {
+  return {
+      forecasting: state.forecasting,
+      profile: state.session.profile,
+      routing: state.routing
+  };
+}
+
+function mapDispatchToProps(dispatch) {
+  return {
+    actions : bindActionCreators(Object.assign({}, { getUtilityData, getUtilityForecast,
+                                                     getUserData, getUserForecast,
+                                                     setUser }) , dispatch)
+  };
+}
+
+module.exports = connect(mapStateToProps, mapDispatchToProps)(Users);

@@ -17,6 +17,7 @@ import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.admin.AccountActivity;
 import eu.daiad.web.model.admin.AccountActivityResponse;
+import eu.daiad.web.model.admin.CounterCollectionResponse;
 import eu.daiad.web.model.group.GroupQuery;
 import eu.daiad.web.model.group.GroupQueryRequest;
 import eu.daiad.web.model.group.GroupQueryResponse;
@@ -45,8 +46,7 @@ public class AdminController extends BaseController {
     /**
      * Returns information about all trial user activity.
      * 
-     * @param user
-     *            the currently authenticated user.
+     * @param user the currently authenticated user.
      * @return the user activity.
      */
     @RequestMapping(value = "/action/admin/trial/activity", method = RequestMethod.GET, produces = "application/json")
@@ -78,8 +78,7 @@ public class AdminController extends BaseController {
      * Returns all available groups including clusters, segments and user
      * defined user groups. Optionally filters data.
      * 
-     * @param request
-     *            the query to filter data.
+     * @param request the query to filter data.
      * @return the selected groups.
      */
     @RequestMapping(value = "/action/admin/group/query", method = RequestMethod.POST, produces = "application/json")
@@ -110,5 +109,29 @@ public class AdminController extends BaseController {
         }
 
         return response;
+    }
+
+    /**
+     * Returns all available counter values
+     * 
+     * @return the selected groups.
+     */
+    @RequestMapping(value = "/action/admin/counter", method = RequestMethod.GET, produces = "application/json")
+    @Secured("ROLE_ADMIN")
+    public RestResponse getCounters(@AuthenticationPrincipal AuthenticatedUser user) {
+        try {
+            CounterCollectionResponse response = new CounterCollectionResponse();
+
+            response.setCounters(this.utilityRepository.getCounters(user.getUtilityId()));
+
+            return response;
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            RestResponse response = new RestResponse();
+            response.add(this.getError(ex));
+
+            return response;
+        }
     }
 }
