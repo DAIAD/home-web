@@ -11,6 +11,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -143,7 +144,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             }
 
             profile.setUtility(new UtilityInfo(account.getUtility()));
-            
+
             return profile;
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
@@ -649,6 +650,9 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                 case MOBILE:
                     account.getProfile().setMobileConfiguration(updates.getConfiguration());
                     break;
+                case UTILITY:
+                    account.getProfile().setUtilityConfiguration(updates.getConfiguration());
+                    break;
                 default:
                     throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
                                     updates.getApplication());
@@ -656,6 +660,23 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
             account.getProfile().setDailyMeterBudget(updates.getDailyMeterBudget());
             account.getProfile().setDailyAmphiroBudget(updates.getDailyAmphiroBudget());
+
+            if (!StringUtils.isBlank(updates.getLastname())) {
+                account.setLastname(updates.getLastname());
+            }
+            if (!StringUtils.isBlank(updates.getFirstname())) {
+                account.setFirstname(updates.getFirstname());
+            }
+            if (!StringUtils.isBlank(updates.getLocale())) {
+                String locale = updates.getLocale();
+                if (locale.length() > 2) {
+                    locale = locale.substring(0, 2);
+                }
+                account.setLocale(updates.getLocale());
+            }
+            if (!StringUtils.isBlank(updates.getTimezone())) {
+                account.setTimezone(updates.getTimezone());
+            }
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }

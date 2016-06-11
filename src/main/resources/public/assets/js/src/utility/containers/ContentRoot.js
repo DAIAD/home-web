@@ -34,6 +34,7 @@ var ContentRoot = React.createClass({
         reports: false,
         support: false,
         analytics: false,
+        alerts: false
       },
     };
   },
@@ -155,7 +156,7 @@ var ContentRoot = React.createClass({
                   </li>
                   <li>
                     <a href='#' onClick={() => this._toggleExpand('consumers')}>
-                      <i className='fa fa-group fa-fw'></i>
+                      <i className='fa fa-home fa-fw'></i>
                       {' ' + _t({ id: 'Section.Consumers'}) + ' '}
                       { this.state.expand.consumers ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)}
                     </a>
@@ -164,14 +165,14 @@ var ContentRoot = React.createClass({
                         <li>
                           <Link to='/users'>
                             <span  style={{paddingLeft: 18}}>
-                              <i className='fa fa-search fa-fw'></i>{' ' + _t({ id: 'Section.Users'})}
+                              <i className='fa fa-user fa-fw'></i>{' ' + _t({ id: 'Section.Users'})}
                             </span>
                           </Link>
                         </li>
                         <li>
                           <Link to='/demographics'>
                             <span  style={{paddingLeft: 18}}>
-                              <i className='fa fa-bookmark fa-fw'></i>{' ' + _t({ id: 'Section.Demographics'})}
+                              <i className='fa fa-group fa-fw'></i>{' ' + _t({ id: 'Section.Demographics'})}
                             </span>
                           </Link>
                         </li>
@@ -185,10 +186,30 @@ var ContentRoot = React.createClass({
                   </li>
                   
                   <li>
-                    <Link to='/manage-alerts'>
-                      <i className='fa fa-commenting-o fa-fw'></i>{' ' + _t({ id: 'Section.Messages.Tips'})}
-                    </Link>
-                  </li>
+                    <a href='#' onClick={() => this._toggleExpand('alerts')}>
+                      <i className='fa fa-commenting-o fa-fw'></i>
+                      {' ' + _t({ id: 'Section.ManageAlerts.Engagement'}) + ' '}
+                      { this.state.alerts ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)}
+                    </a>
+                    <Collapsible open={this.state.expand.alerts}>
+                      <ul className='nav'>
+                        <li>
+                          <Link to='/manage-alerts'>
+                            <span  style={{paddingLeft: 18}}>
+                              <i className='fa fa-list-ol fa-fw'></i>{' ' + _t({ id: 'Section.ManageAlerts.Messages'})}
+                            </span>
+                          </Link>
+                        </li>
+                        <li>
+                          <Link to='/announcements'>
+                            <span  style={{paddingLeft: 18}}>
+                              <i className='fa fa-wechat fa-fw'></i>{' ' + _t({ id: 'Section.ManageAlerts.Announcements'})}
+                            </span>
+                          </Link>
+                        </li>
+                      </ul>
+                    </Collapsible>
+                  </li>  
                   <li>
                     <a href='#' onClick={() => this._toggleExpand('reports')}>
                       <i className='fa fa-flask fa-fw'></i>
@@ -261,7 +282,7 @@ var ContentRoot = React.createClass({
             {this.props.children}
           </div>
           <ScrollToTop showUnder={160}>
-            <div style={{marginRight: -25}}>
+            <div style={{marginRight: -30}}>
               <i className='fa fa-arrow-up fa-2x fa-fw' style={{ color : '#337ab7'}}></i>
             </div>
           </ScrollToTop>
@@ -314,3 +335,4 @@ function mapDispatchToProps(dispatch) {
 }
 
 module.exports = connect(mapStateToProps, mapDispatchToProps)(ContentRoot);
+

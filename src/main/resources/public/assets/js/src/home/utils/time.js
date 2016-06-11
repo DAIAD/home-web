@@ -1,5 +1,13 @@
 var moment = require('moment');
 
+const last24Hours = function(timestamp) {
+  return {
+    startDate: moment(timestamp).subtract(24, 'hours').valueOf(),
+    endDate: moment(timestamp).valueOf(),
+    granularity:0
+  };
+};
+
 const today = function() {
   return {
     startDate: moment().startOf('day').valueOf(),
@@ -150,6 +158,7 @@ const getLowerGranularityPeriod = function(period) {
 module.exports = {
   defaultFormatter,
   selectTimeFormatter,
+  last24Hours,
   today,
   thisWeek,
   thisMonth,

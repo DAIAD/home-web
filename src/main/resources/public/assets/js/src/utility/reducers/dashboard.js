@@ -2,6 +2,12 @@ var moment = require('moment');
 
 var types = require('../constants/DashboardActionTypes');
 
+var _createStatisticsInitialState = function() {
+  return {
+    counters : null
+  };
+};
+
 var _createMapInitialState = function() {
   return {
     query : null,
@@ -18,6 +24,7 @@ var _createMapInitialState = function() {
 var _createInitialState = function() {
   return {
     isLoading : false,
+    statistics : _createStatisticsInitialState(),
     map : _createMapInitialState()
   };
 };
@@ -122,6 +129,29 @@ var _extractTimeline = function(meters, areas) {
   return timeline;
 };
 
+var statisticsReduce = function(state, action) {
+  switch (action.type) {
+    case types.COUNTER_REQUEST:
+      return Object.assign({}, state, {
+        counters : null
+      });
+
+    case types.COUNTER_RESPONSE:
+      if (action.success) {
+        return Object.assign({}, state, {
+          counters : action.counters
+        });
+      }
+
+      return Object.assign({}, state, {
+        counters : null
+      });
+
+    default:
+      return state || _createStatisticsInitialState();
+  }
+};
+
 var mapReducer = function(state, action) {
   switch (action.type) {
     case types.TIMELINE_REQUEST:
@@ -168,27 +198,25 @@ var mapReducer = function(state, action) {
 var dashboard = function(state, action) {
   switch (action.type) {
     case types.TIMELINE_REQUEST:
+    case types.COUNTER_REQUEST:
       return Object.assign({}, state, {
         isLoading : true,
+        statistics : statisticsReduce(state.statistics, action),
         map : mapReducer(state.map, action)
       });
 
     case types.TIMELINE_RESPONSE:
-      if (action.success) {
-        return Object.assign({}, state, {
-          isLoading : false,
-          map : mapReducer(state.map, action)
-        });
-      }
-
+    case types.COUNTER_RESPONSE:
       return Object.assign({}, state, {
         isLoading : false,
+        statistics : statisticsReduce(state.statistics, action),
         map : mapReducer(state.map, action)
       });
 
     case types.GET_FEATURES:
       return Object.assign({}, state, {
         isLoading : false,
+        statistics : statisticsReduce(state.statistics, action),
         map : mapReducer(state.map, action)
       });
 

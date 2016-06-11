@@ -614,7 +614,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         List<UserInfo> accounts = new ArrayList<UserInfo>();
 
         TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager.createQuery(
-                        "select a from account a where (a.firstname like :prefix or a.lastname like :prefix) "
+                        "select a from account a where (lower(a.firstname) like lower(:prefix) or lower(a.lastname) like lower(:prefix)) "
                                         + "and (a.utility.id = :utility_id)",
                         eu.daiad.web.domain.application.Account.class).setMaxResults(100);
 

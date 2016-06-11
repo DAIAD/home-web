@@ -44,39 +44,44 @@ var Counter = React.createClass({
 	    };
 	},
 
-  	render: function() {
- 		var content, variance, footer;
-
-  		if(this.props.variance !== 0) {
-  			if(this.props.variance > 0) {
-  				variance = ( 
-					<span style={{ fontSize: 14 }}>
-						<i className='fa fa-arrow-up fa-fw' style={{ color: this.props.plusColor }}></i>
-						<span style={{ color: this.props.plusColor }}>
-							<FormattedNumber value={Math.abs(this.props.variance)} />
-						</span>
-						<span> since last week</span>
-					</span>);
-  			} else {
-  				variance = (
-					<span style={{ fontSize: 14 }}>
-						<i className='fa fa-arrow-down fa-fw' style={{ color: this.props.minusColor }}></i>
-						<span style={{ color: this.props.minusColor }}>
-							<FormattedNumber value={Math.abs(this.props.variance)} />
-						</span>
-						<span> since last week</span>
-					</span>);
-  			}
-  		}
+	render: function() {
+	  var content, variance, footer, valueText = '-', varianceText = '-';
+ 		
+	  if(this.props.variance) {
+	    varianceText = (
+        <FormattedNumber value={Math.abs(this.props.variance)} />
+	    );
+	  }
+		if((this.props.variance !==null) && (this.props.variance !== 0)) {
+			if(this.props.variance > 0) {
+				variance = ( 
+				<span style={{ fontSize: 14 }}>
+					<i className='fa fa-arrow-up fa-fw' style={{ color: this.props.plusColor }}></i>
+					<span style={{ color: this.props.plusColor }}>
+						{varianceText}
+					</span>
+					<span> since last week</span>
+				</span>);
+			} else {
+				variance = (
+				<span style={{ fontSize: 14 }}>
+					<i className='fa fa-arrow-down fa-fw' style={{ color: this.props.minusColor }}></i>
+					<span style={{ color: this.props.minusColor }}>
+					  {varianceText}
+					</span>
+					<span> since last week</span>
+				</span>);
+			}
+		}
   		switch(this.props.format) {
   			case Format.Number:
-  				content = ( <FormattedNumber value={this.props.value} /> );
+  				content = ( this.props.value !== null ? <FormattedNumber value={this.props.value} /> : '-');
   				break;
 			case Format.Percent:
-  				content = ( <FormattedNumber value={this.props.value} style='percent' /> );
+  				content = ( this.props.value !== null ? <FormattedNumber value={this.props.value} style='percent' /> : '-');
   				break;
   			case Format.Currency:
-  				content = ( <FormattedNumber value={this.props.value} style='currency' currency='EUR' /> );
+  				content = ( this.props.value !== null ? <FormattedNumber value={this.props.value} style='currency' currency='EUR' /> : '-');
   				break;
   			default: 
   				content = ( <span /> );
@@ -110,7 +115,7 @@ var Counter = React.createClass({
 				</div>
 			</div>
  		);
-  	}
+	}
 });
 
 Counter.Format = Format;

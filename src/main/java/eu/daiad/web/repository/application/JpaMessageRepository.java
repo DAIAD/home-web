@@ -18,18 +18,25 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ibm.icu.text.MessageFormat;
+import eu.daiad.web.domain.application.Account;
 
 import eu.daiad.web.domain.application.AccountAlert;
 import eu.daiad.web.domain.application.AccountAlertProperty;
+import eu.daiad.web.domain.application.AccountAnnouncement;
 import eu.daiad.web.domain.application.AccountDynamicRecommendation;
 import eu.daiad.web.domain.application.AccountDynamicRecommendationProperty;
 import eu.daiad.web.domain.application.AccountStaticRecommendation;
 import eu.daiad.web.domain.application.AlertTranslation;
+import eu.daiad.web.domain.application.Announcement;
+import eu.daiad.web.domain.application.AnnouncementChannel;
+import eu.daiad.web.domain.application.AnnouncementTranslation;
+import eu.daiad.web.domain.application.Channel;
 import eu.daiad.web.domain.application.DynamicRecommendationTranslation;
 import eu.daiad.web.domain.application.StaticRecommendation;
 import eu.daiad.web.domain.application.StaticRecommendationCategory;
 import eu.daiad.web.model.error.MessageErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.model.message.AnnouncementRequest;
 import eu.daiad.web.model.message.EnumAlertType;
 import eu.daiad.web.model.message.EnumDynamicRecommendationType;
 import eu.daiad.web.model.message.EnumMessageType;
@@ -37,6 +44,7 @@ import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageAcknowledgement;
 import eu.daiad.web.model.message.MessageRequest;
 import eu.daiad.web.model.message.MessageResult;
+import eu.daiad.web.model.message.ReceiverAccount;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.BaseRepository;
 
@@ -73,11 +81,13 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 										new DateTime(message.getTimestamp()));
 						break;
 					case RECOMMENDATION_STATIC:
-                                                persistStaticRecommendationAcknowledgement(message.getId(),
+                        persistStaticRecommendationAcknowledgement(message.getId(),
 										new DateTime(message.getTimestamp()));
 						break;
 					case ANNOUNCEMENT:
-						throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
+                        persistAnnouncementAcknowledgement(message.getId(),
+										new DateTime(message.getTimestamp()));
+                        break;
 					default:
 						throw createApplicationException(MessageErrorCode.MESSAGE_TYPE_NOT_SUPPORTED).set("type.",
 										message.getType());
@@ -300,6 +310,85 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 			}
 		}
 
+        //Get Announcements
+		options = this.getMessageDataPagingOptions(request, EnumMessageType.ANNOUNCEMENT);
+
+		if (options != null) {
+			// Get total count
+			Integer totalAnnouncements;
+
+			TypedQuery<Number> countAccountAnnouncementsQuery = entityManager
+							.createQuery("select count(a.id) from account_announcement a "
+											+ "where a.account.id = :accountId and a.id > :minMessageId ", Number.class);
+
+			countAccountAnnouncementsQuery.setParameter("accountId", user.getId());
+			countAccountAnnouncementsQuery.setParameter("minMessageId", options.getMinMessageId());
+
+			totalAnnouncements = ((Number) countAccountAnnouncementsQuery.getSingleResult()).intValue();
+
+			result.setTotalAnnouncements(totalAnnouncements);
+
+			// Build query
+			TypedQuery<eu.daiad.web.domain.application.AccountAnnouncement> accountAnnouncementsQuery;
+
+			if ((options.getAscending() != null) && (options.getAscending() == true)) {
+				// Ascending order
+				accountAnnouncementsQuery = entityManager.createQuery("select a from account_announcement a "
+								+ "where a.account.id = :accountId and a.id > :minMessageId order by a.id",
+								eu.daiad.web.domain.application.AccountAnnouncement.class);
+			} else {
+				// Descending order
+				accountAnnouncementsQuery = entityManager.createQuery("select a from account_announcement a "
+								+ "where a.account.id = :accountId and a.id > :minMessageId order by a.id desc",
+								eu.daiad.web.domain.application.AccountAnnouncement.class);
+			}
+
+			if (options.getIndex() != null) {
+				accountAnnouncementsQuery.setFirstResult(options.getIndex());
+			}
+			if (options.getSize() != null) {
+				accountAnnouncementsQuery.setMaxResults(options.getSize());
+			}
+
+			accountAnnouncementsQuery.setParameter("accountId", user.getId());
+			accountAnnouncementsQuery.setParameter("minMessageId", options.getMinMessageId());
+
+			for (eu.daiad.web.domain.application.AccountAnnouncement accountAnnouncement : accountAnnouncementsQuery.getResultList()) {
+				// Find translation by locale
+				AnnouncementTranslation announcementTranslation = null;
+
+				for (AnnouncementTranslation translation : accountAnnouncement.getAnnouncement().getTranslations()) {
+					if (translation.getLocale().equals(locale)) {
+						announcementTranslation = translation;
+						break;
+					}
+
+				}
+
+				if (announcementTranslation == null) {
+					continue;
+				}
+
+				eu.daiad.web.model.message.AccountAnnouncement message = new eu.daiad.web.model.message.AccountAnnouncement();
+
+				message.setId(accountAnnouncement.getId());
+				message.setPriority(accountAnnouncement.getAnnouncement().getPriority());
+
+                message.setTitle(announcementTranslation.getTitle());                              
+                if(announcementTranslation.getContent() != null){
+                    message.setContent(announcementTranslation.getContent());
+                }
+				
+				message.setCreatedOn(accountAnnouncement.getCreatedOn().getMillis());
+				if (accountAnnouncement.getAcknowledgedOn() != null) {
+					message.setAcknowledgedOn(accountAnnouncement.getAcknowledgedOn().getMillis());
+				}
+
+				messages.add(message);
+			}
+		} 
+        
+        
 		// Add a random static tip every week.
 		options = this.getMessageDataPagingOptions(request, EnumMessageType.RECOMMENDATION_STATIC);
 
@@ -487,7 +576,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 
 		TypedQuery<eu.daiad.web.domain.application.StaticRecommendation> staticRecommendationQuery = entityManager
 						.createQuery("select s from static_recommendation s where s.id = :id",
-										eu.daiad.web.domain.application.StaticRecommendation.class).setFirstResult(0).setMaxResults(1);;
+										eu.daiad.web.domain.application.StaticRecommendation.class).setFirstResult(0).setMaxResults(1);
 
 		staticRecommendationQuery.setParameter("id", staticRecommendation.getId());
 
@@ -500,6 +589,111 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 
 		}                          
     }    
+
+	@Override
+	public List<Message> getAnnouncements(String locale) {
+		List<Message> messages = new ArrayList<>();
+
+		switch (locale) {
+			case "en":
+			case "es":
+				// Ignore
+				break;
+			default:
+				// Set default
+				locale = "en";
+		}
+
+		TypedQuery<eu.daiad.web.domain.application.AnnouncementTranslation> accountAlertsQuery = entityManager
+						.createQuery("select a from announcement_translation a where a.locale = :locale order by a.id desc",
+										eu.daiad.web.domain.application.AnnouncementTranslation.class);
+		accountAlertsQuery.setParameter("locale", locale);
+
+		for (AnnouncementTranslation announcementTranslation : accountAlertsQuery.getResultList()) {
+			eu.daiad.web.model.message.AnnouncementTranslation message = new eu.daiad.web.model.message.AnnouncementTranslation();
+
+			message.setId(announcementTranslation.getId());
+			message.setTitle(announcementTranslation.getTitle());
+			message.setContent(announcementTranslation.getContent());
+            if(announcementTranslation.getDispatchedOn() != null ){
+               message.setDispatchedOn(announcementTranslation.getDispatchedOn().getMillis()); 
+            }
+			messages.add(message);
+		}
+
+		return messages;
+	}
+    
+    @Override
+    public void broadcastAnnouncement(AnnouncementRequest announcementRequest, String locale, String channel){
+        AuthenticatedUser user = this.getCurrentAuthenticatedUser();
+         
+		TypedQuery<eu.daiad.web.domain.application.Channel> channelQuery = entityManager
+						.createQuery("select c from channel c where c.name = :name",
+										eu.daiad.web.domain.application.Channel.class).setFirstResult(0).setMaxResults(1);
+
+		channelQuery.setParameter("name", channel);
+        List<Channel> channels = channelQuery.getResultList();
+        
+        int channelId = 1;
+        if(channels.size() == 1){
+            Channel c = channels.get(0);
+            channelId = c.getId();
+        }
+
+        AnnouncementTranslation announcementTranslation = new AnnouncementTranslation();
+        announcementTranslation.setTitle(announcementRequest.getAnnouncement().getTitle());
+        announcementTranslation.setContent(announcementRequest.getAnnouncement().getContent());
+        announcementTranslation.setLocale(locale);
+        announcementTranslation.setDispatchedOn(DateTime.now());
+        
+		this.entityManager.persist(announcementTranslation);
+        this.entityManager.flush();
+        
+        Announcement domainAnnouncement = new Announcement();
+        domainAnnouncement.setId(announcementTranslation.getId());
+        domainAnnouncement.setPriority(1);
+        
+        announcementTranslation.setAnnouncement(domainAnnouncement);
+
+        AnnouncementChannel announcementChannel = new AnnouncementChannel();
+        announcementChannel.setAnnouncementId(domainAnnouncement.getId());
+        announcementChannel.setChannelId(channelId);
+        
+        this.entityManager.persist(domainAnnouncement);
+        this.entityManager.persist(announcementChannel);
+        
+        persistAccountAnnouncement(announcementRequest.getReceiverAccountList(), domainAnnouncement);
+
+    }
+    
+    private void persistAccountAnnouncement(List<ReceiverAccount> receiverAccountList, Announcement domainAnnouncement) {
+        DateTime createdOn = DateTime.now();
+
+        for(ReceiverAccount receiver : receiverAccountList){
+            
+            TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager
+                            .createQuery("select a from account a where a.id = :id",
+                                            eu.daiad.web.domain.application.Account.class).setFirstResult(0).setMaxResults(1);           
+            accountQuery.setParameter("id", receiver.getAccountId());    
+            List<Account> accounts = accountQuery.getResultList();    
+            Account receiverAccount= null;
+            
+            if(accounts.size() == 1){
+                receiverAccount = accounts.get(0);
+            }
+        
+            if(receiverAccount != null){
+                AccountAnnouncement accountAnnouncement = new AccountAnnouncement();
+                accountAnnouncement.setAccount(receiverAccount); 
+                accountAnnouncement.setAnnouncement(domainAnnouncement);
+                accountAnnouncement.setCreatedOn(createdOn);
+                
+                this.entityManager.persist(accountAnnouncement);
+            }               
+        }
+    }    
+    
     
 	// TODO : When sending an acknowledgement for an alert of a specific type,
 	// an older (not acknowledged) alert of the same type may appear in the next
@@ -518,7 +712,6 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 
 		List<AccountAlert> alerts = accountAlertsQuery.getResultList();
 
-                System.out.println("persisting.. size" + alerts.size());
 		if (alerts.size() == 1) {
 			alerts.get(0).setAcknowledgedOn(acknowledgedOn);
 			alerts.get(0).setReceiveAcknowledgedOn(DateTime.now());
@@ -561,7 +754,25 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 			staticRecommendations.get(0).setAcknowledgedOn(acknowledgedOn);
 			staticRecommendations.get(0).setReceiveAcknowledgedOn(DateTime.now());
 		}
-	}        
+	}     
+    
+	private void persistAnnouncementAcknowledgement(int id, DateTime acknowledgedOn) {
+		AuthenticatedUser user = this.getCurrentAuthenticatedUser();
+
+		TypedQuery<eu.daiad.web.domain.application.AccountAnnouncement> accountAnnouncementQuery = entityManager
+						.createQuery("select a from account_announcement a "
+                                        + "where a.account.id = :accountId and a.id = :announcementId and a.acknowledgedOn is null",
+										eu.daiad.web.domain.application.AccountAnnouncement.class);
+
+		accountAnnouncementQuery.setParameter("accountId", user.getId());
+		accountAnnouncementQuery.setParameter("announcementId", id);
+
+		List<AccountAnnouncement> announcements = accountAnnouncementQuery.getResultList();
+
+		if (announcements.size() == 1) {
+			announcements.get(0).setAcknowledgedOn(acknowledgedOn);
+		}
+	}     
 
 	private Locale resolveCurrency(String country) {
 		Locale currency;

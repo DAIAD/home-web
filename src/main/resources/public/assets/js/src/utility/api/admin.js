@@ -3,20 +3,20 @@ var moment = require('moment');
 var api = require('./base');
 
 var AdminAPI = {
-  getActivity: function() {
+  getActivity : function() {
     return api.json('/action/admin/trial/activity');
   },
 
-  getSessions: function(userKey) {
+  getSessions : function(userKey) {
     return api.json('/action/device/index/session/query', {
       userKey : userKey,
       deviceKey : null,
-      type: 'SLIDING',
+      type : 'SLIDING',
       length : 100
     });
   },
 
-  getMeters: function(userKey) {
+  getMeters : function(userKey) {
     var endDate = moment().valueOf();
     var startDate = moment().subtract(30, 'days').valueOf();
 
@@ -29,7 +29,7 @@ var AdminAPI = {
     });
   },
 
-  exportUserData: function(userKey) {
+  exportUserData : function(userKey) {
     return api.json('/action/data/export', {
       type : 'USER_DATA',
       userKey : userKey,
@@ -39,18 +39,22 @@ var AdminAPI = {
       timezone : null
     });
   },
-  
-  getAllUtilities: function(){
+
+  getAllUtilities : function() {
     return api.json('/action/utility/fetch/all');
   },
-  
-  createNewUser: function (userInfo){
+
+  createNewUser : function(userInfo) {
     return api.json('/action/user/create', userInfo);
   },
 
-  getGroups: function () {
-    return api.json('/action/admin/group/query', {}); 
+  getGroups : function() {
+    return api.json('/action/admin/group/query', {});
   },
+
+  getCounters : function() {
+    return api.json('/action/admin/counter');
+  }
 };
 
 module.exports = AdminAPI;

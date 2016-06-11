@@ -44,7 +44,7 @@ public class UserController extends BaseController {
 
     @RequestMapping(value = "/action/user/search/prefix/{prefix}", method = RequestMethod.GET, produces = "application/json")
     @Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
-    public @ResponseBody RestResponse fetchUser(@PathVariable String prefix) {
+    public @ResponseBody RestResponse filterUserByPrefix(@PathVariable String prefix) {
         try {
             UserInfoCollectionResponse response = new UserInfoCollectionResponse();
             

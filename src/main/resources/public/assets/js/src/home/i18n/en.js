@@ -57,9 +57,10 @@
     "shower": "Shower",
     "shower-aggregated": "Total data",
     "commons": "Commons",
-    "notifications": "Notifications",
+    "notifications": "Messages",
     "search": "Search",
     "alerts": "Alerts",
+    "recommendations": "Insights",
     "tips": "Tips",
     "insights": "Insights",
     "settings": "Settings",
@@ -68,7 +69,8 @@
     "login": "Login"
   },
   "dashboard": {
-    "hello": "Welcome {name}!"
+    "hello": "Welcome {name}!",
+    "add": "Add widget"
   },
   "shower": {
     "details": "Shower details"
@@ -80,6 +82,7 @@
     "temperature": "Temperature",
     "energy": "Energy",
     "count": "Total Showers",
+    "device": "Device",
     "volumeDetails": "Total water used for this shower",
     "temperatureDetails": "Average water temperature",
     "energyDetails": "Estimated energy used for hot water",
@@ -99,7 +102,11 @@
     "fifty": "Last 50"
   },
   "notifications": {
-    "showAll": "Show all"
+    "showAll": "Show all",
+    "alerts": "Alerts",
+    "announcements": "Announcements",
+    "recommendations": "Recommendations",
+    "tips": "Tips"
   },
   "profile": {
     "username": "Username",

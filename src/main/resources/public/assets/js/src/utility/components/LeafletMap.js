@@ -17,14 +17,21 @@ const MODE_DRAW = 'draw';
 
 var _initializeDraw = function() {
   var self = this;
-
-  var drawnItems = new L.FeatureGroup();
   
-  self.map.addLayer(drawnItems);
+  if(this.draw) {
+    this.map.removeControl(this.draw);
+    this.map.off('draw:created', this.drawHandler);
+  }
 
-  var drawControl = new L.Control.Draw({
+  if(!this.drawnItems) {
+    this.drawnItems = new L.FeatureGroup();
+    
+    this.map.addLayer(this.drawnItems);
+  }
+  
+  this.draw = new L.Control.Draw({
     edit: {
-      featureGroup: drawnItems,
+      featureGroup: this.drawnItems,
       edit: false,
       remove: true
     },
@@ -41,21 +48,24 @@ var _initializeDraw = function() {
       }
     }
   });
-  self.map.addControl(drawControl);
   
-  self.map.on('draw:created', function (e) {
+  this.map.addControl(this.draw);
+  
+  this.drawHandler = function (e) {
     var type = e.layerType, layer = e.layer;
 
-    drawnItems.eachLayer(function (l) {
-      drawnItems.removeLayer(l);
+    self.drawnItems.eachLayer(function (l) {
+      self.drawnItems.removeLayer(l);
     });
     
-    drawnItems.addLayer(layer);
+    self.drawnItems.addLayer(layer);
     
     if(typeof self.props.onDraw === 'function') {
       self.props.onDraw.bind(self)(layer);
     }
-  });  
+  };
+  
+  this.map.on('draw:created', this.drawHandler);  
 };
 
 var _initializeHeatMap = function(data) {

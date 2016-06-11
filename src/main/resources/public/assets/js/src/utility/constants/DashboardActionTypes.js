@@ -7,6 +7,9 @@ var types = mirrorToPath({
 
   GET_FEATURES : null,
 
+  COUNTER_REQUEST : null,
+  COUNTER_RESPONSE : null,
+
   USER_RECEIVED_LOGOUT : null
 
 });

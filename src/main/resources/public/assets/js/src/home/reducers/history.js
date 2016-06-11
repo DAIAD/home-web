@@ -1,26 +1,28 @@
 var types = require('../constants/ActionTypes');
 
-var { updateOrAppendToSession } = require('../utils/device');
+var { updateOrAppendToSession } = require('../utils/transformations');
+var { thisYear } = require('../utils/time');
 
-
+const initialState = {
+  filter: "difference",
+  timeFilter: "year",
+  sortFilter: "timestamp",
+  sortOrder: "desc",
+  activeDevice: [],
+  activeDeviceType: "METER",
+  activeSessionFilter: "volume",
+  activeSession: null,
+  synced: false,
+  comparison: null,
+  data: [],
+  comparisonData: [],
+  time: thisYear()
+};
+ 
 var history = function (state, action) {
   //initial state
   if (state === undefined) {
-    state = {
-      filter: "difference",
-      timeFilter: "year",
-      sortFilter: "timestamp",
-      sortOrder: "desc",
-      activeDevice: [],
-      activeDeviceType: "METER",
-      activeSessionFilter: "volume",
-      activeSession: null,
-      synced: false,
-      comparison: null,
-      data: [],
-      comparisonData: [],
-      time: {}
-    };
+    state = initialState;
   }
    
   switch (action.type) {
@@ -65,11 +67,6 @@ var history = function (state, action) {
       return Object.assign({}, state, {
         activeDeviceType: action.deviceType
       });
-   
-    case types.HISTORY_RESET_ACTIVE_DEVICE:
-      return Object.assign({}, state, {
-        activeDevice: null
-      });
     
     case types.HISTORY_SET_FILTER:
       return Object.assign({}, state, {
@@ -111,6 +108,10 @@ var history = function (state, action) {
       return Object.assign({}, state, {
         sortOrder: action.order
       });
+
+    case types.USER_RECEIVED_LOGOUT:
+      return Object.assign({}, initialState);
+
     default:
       return state;
   }

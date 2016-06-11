@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.rmi.server.ExportException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
@@ -175,6 +177,8 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
 
     private FileProcessingStatus parseMeterData(String filename, String timezone, EnumUploadFileType type)
                     throws ApplicationException {
+        boolean diffExists = true;
+
         File file = new File(filename);
         if (!file.exists()) {
             throw createApplicationException(SharedErrorCode.RESOURCE_DOES_NOT_EXIST).set("resource", filename);
@@ -185,6 +189,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
         FileProcessingStatus status = new FileProcessingStatus();
 
         // ABCD;ABCD;METER;17/02/2014 11:13:45;867;2;
+        // METER;17/02/2014 11:13:45;867;
         String line = "";
 
         // Set time zone
@@ -197,78 +202,76 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
                         DateTimeZone.forID(timezone));
 
         try {
+            List<MeterDataRow> rows = new ArrayList<MeterDataRow>();
+
             // Count rows
             scan = new Scanner(new File(filename));
 
             int index = 0;
             while (scan.hasNextLine()) {
                 index++;
-                scan.nextLine();
+                line = scan.nextLine();
+
+                MeterDataRow row = new MeterDataRow();
+
+                String[] tokens = StringUtils.split(line, ";");
+
+                if ((tokens.length != 6) && (tokens.length != 3)) {
+                    status.skipRow();
+                } else {
+                    int offset = 0;
+                    if (tokens.length == 3) {
+                        offset = -2;
+                        diffExists = false;
+                    }
+                    row.serial = tokens[2 + offset];
+
+                    try {
+                        row.timestamp = formatter.parseDateTime(tokens[3 + offset]).getMillis();
+                    } catch (Exception ex) {
+                        logger.error(String.format("Failed to parse timestamp [%s] in line [%d] from file [%s].",
+                                        tokens[3 + offset], index, filename), ex);
+                        status.skipRow();
+                        continue;
+                    }
+
+                    try {
+                        row.volume = Float.parseFloat(tokens[4 + offset]);
+                    } catch (Exception ex) {
+                        logger.error(String.format("Failed to parse volume [%s] in line [%d] from file [%s].",
+                                        tokens[4 + offset], index, filename), ex);
+                        status.skipRow();
+                        continue;
+                    }
+                    if (tokens.length == 6) {
+                        try {
+                            row.difference = Float.parseFloat(tokens[5]);
+                        } catch (Exception ex) {
+                            logger.error(String.format("Failed to parse difference [%s] in line [%d] from file [%s].",
+                                            tokens[5], index, filename), ex);
+                            status.skipRow();
+                            continue;
+                        }
+                    }
+
+                    if (!diffExists) {
+                        rows.add(row);
+                    }
+                }
             }
+
             scan.close();
             scan = null;
 
             status.setTotalRows(index);
 
             // Process rows
-            scan = new Scanner(new File(filename));
+            if (diffExists) {
+                scan = new Scanner(new File(filename));
 
-            index = 0;
-            while (scan.hasNextLine()) {
-                index++;
-                line = scan.nextLine();
-
-                float volume, difference;
-
-                String[] tokens = StringUtils.split(line, ";");
-                if (tokens.length != 6) {
-                    status.skipRow();
-                } else {
-                    String serial = tokens[2];
-
-                    DateTime timestamp;
-                    try {
-                        timestamp = formatter.parseDateTime(tokens[3]);
-                    } catch (Exception ex) {
-                        logger.error(String.format("Failed to parse timestamp [%s] in line [%d] from file [%s].",
-                                        tokens[3], index, filename), ex);
-                        status.skipRow();
-                        continue;
-                    }
-
-                    try {
-                        volume = Float.parseFloat(tokens[4]);
-                    } catch (Exception ex) {
-                        logger.error(String.format("Failed to parse volume [%s] in line [%d] from file [%s].",
-                                        tokens[4], index, filename), ex);
-                        status.skipRow();
-                        continue;
-                    }
-                    try {
-                        difference = Float.parseFloat(tokens[5]);
-                    } catch (Exception ex) {
-                        logger.error(String.format("Failed to parse difference [%s] in line [%d] from file [%s].",
-                                        tokens[5], index, filename), ex);
-                        status.skipRow();
-                        continue;
-                    }
-
-                    WaterMeterMeasurementCollection data = new WaterMeterMeasurementCollection();
-                    ArrayList<WaterMeterMeasurement> measurements = new ArrayList<WaterMeterMeasurement>();
-                    WaterMeterMeasurement measurement = new WaterMeterMeasurement();
-
-                    measurement.setTimestamp(timestamp.getMillis());
-                    measurement.setVolume(volume);
-                    measurement.setDifference(difference);
-
-                    measurements.add(measurement);
-
-                    data.setMeasurements(measurements);
-
-                    this.waterMeterMeasurementRepository.store(serial, data);
-
-                    status.processRow();
-                }
+                insert(scan, status, filename, timezone);
+            } else {
+                sortComputeDiffAndInsert(rows, status);
             }
         } catch (FileNotFoundException fileEx) {
             logger.error(String.format("File [%s] was not found.", filename), fileEx);
@@ -279,6 +282,120 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
         }
 
         return status;
+    }
+
+    private void sortComputeDiffAndInsert(List<MeterDataRow> rows, FileProcessingStatus status) {
+        Collections.sort(rows, new Comparator<MeterDataRow>() {
+
+            @Override
+            public int compare(MeterDataRow r1, MeterDataRow r2) {
+                int result = r1.serial.compareTo(r2.serial);
+
+                if (result == 0) {
+                    if (r1.timestamp < r2.timestamp) {
+                        return -1;
+                    } else if (r1.timestamp > r2.timestamp) {
+                        return 1;
+                    }
+                    return 0;
+                } else {
+                    return result;
+                }
+            }
+        });
+
+        for (int i = 0, count = rows.size() - 1; i < count; i++) {
+            if (rows.get(i).serial.equals(rows.get(i + 1).serial)) {
+                rows.get(i + 1).difference = rows.get(i + 1).volume - rows.get(i).volume;
+                if (rows.get(i + 1).difference < 0) {
+                    rows.get(i + 1).difference = 0f;
+                }
+            }
+        }
+
+        for (MeterDataRow row : rows) {
+
+            WaterMeterMeasurementCollection data = new WaterMeterMeasurementCollection();
+            ArrayList<WaterMeterMeasurement> measurements = new ArrayList<WaterMeterMeasurement>();
+            WaterMeterMeasurement measurement = new WaterMeterMeasurement();
+
+            measurement.setTimestamp(row.timestamp);
+            measurement.setVolume(row.volume);
+            measurement.setDifference(row.difference);
+
+            measurements.add(measurement);
+
+            data.setMeasurements(measurements);
+
+            this.waterMeterMeasurementRepository.store(row.serial, data);
+
+            status.processRow();
+        }
+    }
+
+    private void insert(Scanner scan, FileProcessingStatus status, String filename, String timezone) {
+        int index = 0;
+        String line = "";
+
+        DateTimeFormatter formatter = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss").withZone(
+                        DateTimeZone.forID(timezone));
+
+        while (scan.hasNextLine()) {
+            index++;
+            line = scan.nextLine();
+
+            float volume, difference;
+
+            String[] tokens = StringUtils.split(line, ";");
+            if (tokens.length != 6) {
+                status.skipRow();
+            } else {
+                String serial = tokens[2];
+
+                DateTime timestamp;
+                try {
+                    timestamp = formatter.parseDateTime(tokens[3]);
+                } catch (Exception ex) {
+                    logger.error(String.format("Failed to parse timestamp [%s] in line [%d] from file [%s].",
+                                    tokens[3], index, filename), ex);
+                    status.skipRow();
+                    continue;
+                }
+
+                try {
+                    volume = Float.parseFloat(tokens[4]);
+                } catch (Exception ex) {
+                    logger.error(String.format("Failed to parse volume [%s] in line [%d] from file [%s].", tokens[4],
+                                    index, filename), ex);
+                    status.skipRow();
+                    continue;
+                }
+                try {
+                    difference = Float.parseFloat(tokens[5]);
+                } catch (Exception ex) {
+                    logger.error(String.format("Failed to parse difference [%s] in line [%d] from file [%s].",
+                                    tokens[5], index, filename), ex);
+                    status.skipRow();
+                    continue;
+                }
+
+                WaterMeterMeasurementCollection data = new WaterMeterMeasurementCollection();
+                ArrayList<WaterMeterMeasurement> measurements = new ArrayList<WaterMeterMeasurement>();
+                WaterMeterMeasurement measurement = new WaterMeterMeasurement();
+
+                measurement.setTimestamp(timestamp.getMillis());
+                measurement.setVolume(volume);
+                measurement.setDifference(difference);
+
+                measurements.add(measurement);
+
+                data.setMeasurements(measurements);
+
+                this.waterMeterMeasurementRepository.store(serial, data);
+
+                status.processRow();
+            }
+        }
     }
 
     private FileProcessingStatus parseMeterForecastData(String filename, String timezone, EnumUploadFileType type)
@@ -301,8 +418,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
             throw createApplicationException(SharedErrorCode.TIMEZONE_NOT_FOUND).set("timezone", timezone);
         }
 
-        DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd-HH").withZone(
-                        DateTimeZone.forID(timezone));
+        DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd-HH").withZone(DateTimeZone.forID(timezone));
 
         try {
             // Count rows
@@ -386,4 +502,14 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
         return status;
     }
 
+    private static class MeterDataRow {
+
+        public String serial;
+
+        public long timestamp;
+
+        public float volume;
+
+        public Float difference;
+    }
 }

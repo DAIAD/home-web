@@ -1,21 +1,23 @@
-var combineReducers = require('redux').combineReducers;
+var { combineReducers } = require('redux');
+var { routerReducer } = require('react-router-redux');
+
 var locale = require('./locale');
 var user = require('./user');
 var query = require('./query');
 var history = require('./history');
 var dashboard = require('./dashboard');
-
-var { routerReducer } = require('react-router-redux');
+var messages = require('./messages');
 
 var rootReducer = combineReducers({
+  routing: routerReducer,
   locale,
   user,
-  routing: routerReducer,
   query,
   section: combineReducers({
     history,
     dashboard
-  })
+  }),
+  messages
 });
 
 module.exports = rootReducer;

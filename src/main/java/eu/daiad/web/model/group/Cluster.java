@@ -1,21 +1,18 @@
 package eu.daiad.web.model.group;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Cluster extends Group {
 
-	private List<Segment> segments;
+    private List<Segment> segments = new ArrayList<Segment>();
 
-	public List<Segment> getSegments() {
-		return segments;
-	}
+    public List<Segment> getSegments() {
+        return segments;
+    }
 
-	public void setSegments(List<Segment> segments) {
-		this.segments = segments;
-	}
-
-	@Override
-	public EnumGroupType getType() {
-		return EnumGroupType.CLUSTER;
-	}
+    @Override
+    public EnumGroupType getType() {
+        return EnumGroupType.CLUSTER;
+    }
 }
