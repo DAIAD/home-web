@@ -23,8 +23,8 @@ var initialState = {
       
       // The data sources for our measurements
       sources: {
-        'meter': {name: 'meter', title: 'Meter'},
-        'device': {name: 'device', title: 'Device'},
+        'meter': {name: 'Meter', title: 'Meter (SWM)'},
+        'device': {name: 'Device', title: 'Device (B1)'},
       },
 
       // Metrics provided
@@ -33,14 +33,14 @@ var initialState = {
       // What physical quantities are being measured
       fields: {
         'volume': {
-          name: 'volume',
-          title: 'Volume',
+          name: 'Volume',
+          title: 'Water Consumption',
           unit: 'lt',
           sources: ['meter', 'device'],
         },
         'energy': {
-          name: 'energy',
-          title: 'Energy',
+          name: 'Energy',
+          title: 'Energy Consumption',
           unit: 'kWh',
           sources: ['device'],
         },

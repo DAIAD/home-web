@@ -216,13 +216,13 @@ var Form = React.createClass({
     
     var sourceOptions = new Map(
       _.values(
-        _.mapValues(sources, (s, k) => ([k, s.title])))
+        _.mapValues(sources, (s, k) => ([k, s.name])))
     );
 
     var fieldOptions = new Map(
       _.values(
         _.mapValues(
-          fields, (y, k) => ((y.sources.indexOf(source) < 0)? null : [k, y.title])
+          fields, (y, k) => ((y.sources.indexOf(source) < 0)? null : [k, y.name])
         ))
       .filter(y => y)
     );

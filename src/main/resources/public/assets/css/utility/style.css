@@ -551,7 +551,7 @@ form.report-form fieldset {
 }
 
 .reports > h2 {
-  margin: 10px 0px 10px 0px;
+  margin: 10px 0px 15px 0px;
   font-size: 28px;
 }
 
@@ -604,22 +604,22 @@ form.report-form fieldset {
 }
 
 .report-form.form-inline .dropdown.select-field button > span.text {
-  width: 5em;
+  width: 6em;
 }
 .report-form.form-horizontal .dropdown.select-field button > span.text {
-  width: 7em;
+  width: 8em;
 }
 .report-form.form-inline .dropdown.select-source button > span.text {
-  width: 3.1em;
+  width: 4.5em;
 }
 .report-form.form-horizontal .dropdown.select-source button > span.text {
-  width: 4.5em;
+  width: 5.5em;
 }
 .report-form.form-inline .dropdown.select-timespan button > span.text {
   width: 5.5em;
 }
 .report-form.form-horizontal .dropdown.select-timespan button > span.text {
-  width: 10em;
+  width: 11em;
 }
 .report-form.form-horizontal .dropdown.select-timespan .dropdown-menu {
   min-width: 12.1em;
@@ -628,7 +628,7 @@ form.report-form fieldset {
   width: 7em;
 }
 .report-form.form-horizontal .dropdown.select-cluster button > span.text {
-  width: 10em;
+  width: 11em;
 }
 .report-form.form-horizontal .dropdown.select-cluster .dropdown-menu {
   min-width: 12.1em;
@@ -637,7 +637,7 @@ form.report-form fieldset {
   width: 7em;
 }
 .report-form.form-horizontal .dropdown.select-cluster-group button > span.text {
-  width: 10em;
+  width: 11em;
 }
 .report-form.form-horizontal .dropdown.select-cluster-group .dropdown-menu {
   min-width: 12.1em;  

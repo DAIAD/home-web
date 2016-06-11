@@ -467,7 +467,7 @@ var Form = React.createClass({
       <span className="summary-wrapper">
         {openingBracket}&nbsp;
         <span className="summary">
-          <span>{_config.sources[source].title}</span>
+          <span>{_config.sources[source].name}</span>
           &nbsp;{delimiter}&nbsp;
           <span>{formattedTime}</span>
         </span>
@@ -544,7 +544,7 @@ var Chart = React.createClass({
     var {defaults} = this.constructor;
     var {field, level, reportName} = this.props;
     var {config} = this.context;
-    var {title, unit} = config.reports.byType.measurements.fields[field];
+    var {title, unit, name: fieldName} = config.reports.byType.measurements.fields[field];
     
     var {xaxisData, series} = this._consolidateData();
     xaxisData || (xaxisData = []);
@@ -575,7 +575,7 @@ var Chart = React.createClass({
               formatter: (t) => (moment(t).format(xf)),
             }}
             yAxis={{
-              name: title + (unit? (' (' + unit + ')') : ''),
+              name: fieldName + (unit? (' (' + unit + ')') : ''),
               numTicks: 4,
               formatter: (y) => (numeral(y).format('0.0a')),
             }}
