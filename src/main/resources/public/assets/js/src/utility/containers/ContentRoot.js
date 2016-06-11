@@ -34,6 +34,7 @@ var ContentRoot = React.createClass({
         reports: false,
         support: false,
         analytics: false,
+        alerts: false
       },
     };
   },
