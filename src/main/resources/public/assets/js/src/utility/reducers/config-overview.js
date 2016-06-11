@@ -25,12 +25,12 @@ var initialState = {
       startsAt: 'month',
       duration: [-2, 'month'],
     },
-    //year: {
-    //  level: 'month',
-    //  reportName: 'monthly-sum',
-    //  startsAt: 'year',
-    //  duration: [-2, 'year'],
-    //},
+    year: {
+      level: 'month',
+      reportName: 'monthly-sum',
+      startsAt: 'year',
+      duration: [-2, 'year'],
+    },
   },
  
   sections: {
