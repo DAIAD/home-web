@@ -57,11 +57,13 @@ var checkData = function (data, keys, k0, unit, level) {
       .map(v => v[0])
       .map(pairWithNext)
       .slice(0, -1)
-      .every(([ta, tb]) => (
+      .every(([ta, tb]) => {
         // Note Must compute the diff at the given level (not as milliseconds!): 
         // not all days have 24 hours (DST), not all months 30 days etc.
-        moment(tb).diff(ta, level, true) === 1
-      ))
+        var ma = moment(ta).utc();
+        var mb = moment(tb).utc();
+        return (mb.diff(ma, level, true) === 1);
+      })
   );
   
   if (!(keys.every(checkStepInsideUnit)))
@@ -72,7 +74,10 @@ var checkData = function (data, keys, k0, unit, level) {
   const checkStepToNextUnit = ([ka, kb]) => {
     var pa = _.last(data.get(ka).points); 
     var pb = _.first(data.get(kb).points);
-    return (moment(pb[0]).diff(pa[0], level, true) === 1);
+    // Compare at UTC offset 0, to avoid false alarms with DST
+    var ma = moment(pa[0]).utc();
+    var mb = moment(pb[0]).utc();
+    return (mb.diff(ma, level, true) === 1);
   };
  
   if (!(keys.map(pairWithNext).slice(0, -1).every(checkStepToNextUnit)))
