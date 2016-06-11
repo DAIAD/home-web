@@ -43,8 +43,11 @@
         "Measurements": "Αναφορές",
         "System": "Αναφορές Συστήματος"
       },
-	    "Announcements" : "Ανακοινώσεις",
-	    "Messages" : {
+      "ManageAlerts": {
+        "Engagement": "Engagement",
+        "Messages": "Μηνύματα",
+        "Announcements": "Ανακοινώσεις"
+      },
         "Tips" : "Διαχείρηση Ειδοποιήσεων"
       },
 	    "Scheduler": "Διαχείριση Εργασιών",
@@ -275,3 +278,4 @@
     "FavouriteSuccess.FAVOURITE_UPDATED" : "Το αγαπημένο ενημερώθηκε επιτυχώς."
   }
 }
+

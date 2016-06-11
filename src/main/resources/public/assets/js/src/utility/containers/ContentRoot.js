@@ -185,10 +185,30 @@ var ContentRoot = React.createClass({
                   </li>
                   
                   <li>
-                    <Link to='/manage-alerts'>
-                      <i className='fa fa-commenting-o fa-fw'></i>{' ' + _t({ id: 'Section.Messages.Tips'})}
-                    </Link>
-                  </li>
+                    <a href='#' onClick={() => this._toggleExpand('alerts')}>
+                      <i className='fa fa-commenting-o fa-fw'></i>
+                      {' ' + _t({ id: 'Section.ManageAlerts.Engagement'}) + ' '}
+                      { this.state.alerts ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)}
+                    </a>
+                    <Collapsible open={this.state.expand.alerts}>
+                      <ul className='nav'>
+                        <li>
+                          <Link to='/manage-alerts'>
+                            <span  style={{paddingLeft: 18}}>
+                              <i className='fa fa-list-ol fa-fw'></i>{' ' + _t({ id: 'Section.ManageAlerts.Messages'})}
+                            </span>
+                          </Link>
+                        </li>
+                        <li>
+                          <Link to='/announcements'>
+                            <span  style={{paddingLeft: 18}}>
+                              <i className='fa fa-wechat fa-fw'></i>{' ' + _t({ id: 'Section.ManageAlerts.Announcements'})}
+                            </span>
+                          </Link>
+                        </li>
+                      </ul>
+                    </Collapsible>
+                  </li>  
                   <li>
                     <a href='#' onClick={() => this._toggleExpand('reports')}>
                       <i className='fa fa-flask fa-fw'></i>
@@ -314,3 +334,4 @@ function mapDispatchToProps(dispatch) {
 }
 
 module.exports = connect(mapStateToProps, mapDispatchToProps)(ContentRoot);
+
