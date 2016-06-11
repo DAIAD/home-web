@@ -26,7 +26,7 @@ public class Announcement {
 
 	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
 	@JoinColumn(name = "announcement_id")
-	private Set<AnnouncementTranslation> translations = new HashSet<AnnouncementTranslation>();
+	private Set<AnnouncementTranslation> translations = new HashSet<>();
 
 	public int getPriority() {
 		return priority;
