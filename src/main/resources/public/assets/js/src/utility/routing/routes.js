@@ -4,9 +4,10 @@ var IndexRoute = require('react-router').IndexRoute;
 
 var App = require('../containers/App');
 
+var analytics = require('../components/section/analytics/index');
+var trials = require('../components/section/trials/index');
+
 var Dashboard = require('../components/section/Dashboard');
-var Analytics = require('../components/section/Analytics');
-var AnalyticsOverview = require('../components/section/analytics/overview');
 var Demographics = require('../components/section/Demographics');
 var ModeManagement = require('../components/section/mode_management/ModeManagement');
 var User = require('../components/User');
@@ -20,8 +21,6 @@ var Announcements = require('../components/section/Announcements');
 var ManageAlerts = require('../components/section/ManageAlerts');
 var UserSettings = require('../components/section/settings/UserSettings');
 var SystemSettings = require('../components/section/settings/SystemSettings');
-var OverviewReport = require('../components/section/report/Overview');
-var MeasurementsReport = require('../components/section/report/Measurements');
 var DataManagement = require('../components/section/support/Data');
 var Development = require('../components/section/support/Development');
 
@@ -30,23 +29,24 @@ module.exports = (
     <IndexRoute component={Dashboard} />
     <Route path="/utility" component={Dashboard} />
     <Route path="/dashboard" component={Dashboard} />
-    <Route path="/analytics" component={Analytics} />
-    <Route path="/analytics/fav" component={Analytics} />
-    <Route path="/analytics/overview" component={AnalyticsOverview} />
+    <Route path="/analytics" component={analytics.Fav} />
+    <Route path="/analytics/fav" component={analytics.Fav} />
+    <Route path="/analytics/basic-reports" component={analytics.BasicReports} />
+    <Route path="/analytics/panel" component={analytics.ReportPanel} />
+    <Route path="/trials/overview" component={trials.Overview}/>
+    <Route path="/trials/pilot-reports" component={trials.PilotReports}/>
     <Route path="/forecasting" component={Forecasting} />
     <Route path="/demographics" component={Demographics} />
     <Route path="/mode/management" component={ModeManagement}/>
+    <Route path="/users" component={Users} />
     <Route path="/user/:id" component={User} />
     <Route path="/group/:id" component={Group} />
     <Route path="/device/:id" component={Device} />
-    <Route path="/users" component={Users} />
     <Route path="/scheduler" component={Scheduler} />
     <Route path="/announcements" component={Announcements} />
     <Route path="/manage-alerts" component={ManageAlerts} />
     <Route path="/settings/user" component={UserSettings}/>
     <Route path="/settings/system" component={SystemSettings}/>
-    <Route path="/report/overview" component={OverviewReport}/>
-    <Route path="/report/measurements" component={MeasurementsReport}/>
     <Route path="/support/logging" component={Logging} />
     <Route path="/support/data" component={DataManagement}/>
     <Route path="/support/development" component={Development}/>

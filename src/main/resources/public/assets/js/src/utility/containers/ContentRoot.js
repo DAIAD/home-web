@@ -31,7 +31,7 @@ var ContentRoot = React.createClass({
     return {
       expand: {
         consumers: false,
-        reports: false,
+        trials: false,
         support: false,
         analytics: false,
         alerts: false
@@ -109,20 +109,12 @@ var ContentRoot = React.createClass({
             <div className='navbar-default navbar-static-side' role='navigation'>
               <div className='sidebar-collapse'>
                 <ul className='nav' id='side-menu'>
-                  
                   <li>
                     <Link to='/'>
                       <i className='fa fa-dashboard fa-fw'></i>{' ' + _t({ id: 'Section.Dashboard'})}
                     </Link>
                   </li>
                   
-                  {/*
-                  <li>
-                    <Link to='/analytics'>
-                      <i className='fa fa-bar-chart fa-fw'></i>{' ' + _t({ id: 'Section.Analytics'})}
-                    </Link>
-                  </li>
-                  */}
                   <li>
                     <a href='#' onClick={() => this._toggleExpand('analytics')}>
                       <i className='fa fa-bar-chart fa-fw'></i>
@@ -139,9 +131,16 @@ var ContentRoot = React.createClass({
                           </Link>
                         </li>
                         <li>
-                          <Link to='/analytics/overview'>
+                          <Link to='/analytics/basic-reports'>
                             <span  style={{paddingLeft: 18}}>
-                              <i className='fa fa-bullseye fa-fw'></i>{' ' + _t({ id: 'Section.Analytics.Overview'})}
+                              <i className='fa fa-bullseye fa-fw'></i>{' ' + _t({ id: 'Section.Analytics.BasicReports'})}
+                            </span>
+                          </Link>
+                        </li>
+                        <li>
+                          <Link to='/analytics/panel'>
+                            <span  style={{paddingLeft: 18}}>
+                              <i className='fa fa-area-chart fa-fw'></i>{' ' + _t({ id: 'Section.Analytics.ReportPanel'})}
                             </span>
                           </Link>
                         </li>
@@ -211,24 +210,24 @@ var ContentRoot = React.createClass({
                     </Collapsible>
                   </li>  
                   <li>
-                    <a href='#' onClick={() => this._toggleExpand('reports')}>
+                    <a href='#' onClick={() => this._toggleExpand('trials')}>
                       <i className='fa fa-flask fa-fw'></i>
-                      {' ' + _t({ id: 'Section.Reports.Group'}) + ' '}
-                      { this.state.expand.reports ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)}
+                      {' ' + _t({ id: 'Section.Trials.Group'}) + ' '}
+                      { this.state.expand.trials ? (<i className='fa fa-caret-up fa-fw'></i>) : (<i className='fa fa-caret-down fa-fw'></i>)}
                     </a>
-                    <Collapsible open={this.state.expand.reports}>
+                    <Collapsible open={this.state.expand.trials}>
                       <ul className='nav'>
                         <li>
-                          <Link to='/report/overview'>
+                          <Link to='/trials/overview'>
                             <span  style={{paddingLeft: 18}}>
-                              <i className='fa fa-table fa-fw'></i>{' ' + _t({id: 'Section.Reports.Overview'})}
+                              <i className='fa fa-table fa-fw'></i>{' ' + _t({id: 'Section.Trials.Overview'})}
                             </span>
                           </Link>
                         </li>
                         <li>
-                          <Link to='/report/measurements'>
+                          <Link to='/trials/pilot-reports'>
                             <span  style={{paddingLeft: 18}}>
-                              <i className='fa fa-pie-chart fa-fw'></i>{' ' + _t({id: 'Section.Reports.Measurements'})}
+                              <i className='fa fa-pie-chart fa-fw'></i>{' ' + _t({id: 'Section.Trials.PilotReports'})}
                             </span>
                           </Link>
                         </li>

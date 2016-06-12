@@ -663,10 +663,10 @@ form.report-form fieldset {
 .report-form.form-horizontal .dropdown.select-level button > span.text {width: 8em;}
 .report-form.form-horizontal .dropdown.select-level .dropdown-menu {width: 9em;}
 
-.report-form.form-inline .dropdown.select-field button > span.text {width: 6em;}
-.report-form.form-horizontal .dropdown.select-field button > span.text {width: 8em;}
+.report-form.form-inline .dropdown.select-field button > span.text {width: 7em;}
+.report-form.form-horizontal .dropdown.select-field button > span.text {width: 9em;}
 
-.report-form.form-inline .dropdown.select-source button > span.text {width: 4.5em;}
+.report-form.form-inline .dropdown.select-source button > span.text {width: 7em;}
 .report-form.form-horizontal .dropdown.select-source button > span.text {width: 10em;}
 .report-form.form-horizontal .dropdown.select-source .dropdown-menu {width: 12.8em;}
 

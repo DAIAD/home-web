@@ -33,6 +33,7 @@ var timespanPropType = PropTypes.oneOfType([
 ]);
 
 var reportPropType = PropTypes.shape({
+  title: PropTypes.string.isRequired,
   level: PropTypes.string.isRequired,
   reportName: PropTypes.string.isRequired,
   startsAt: PropTypes.string.isRequired,

@@ -27,7 +27,8 @@
 	    "Analytics-Group": "Analytics",
 	    "Analytics": {
         "Fav": "Favorites",
-        "Overview": "Overview"
+        "BasicReports": "Reports",
+        "ReportPanel": "Charts"
       },
       "Forecasting": "Forecasting",
 	    "Demographics": "Groups",
@@ -35,11 +36,10 @@
 	    "Users": "Users",
 	    "Messages": "Messages",
 	    "Settings": "Settings",
-      "Reports": {
+      "Trials": {
         "Group": "Trial Management",
         "Overview": "Overview",
-        "Charts": "Charts",
-        "Measurements": "Pilot Reports",
+        "PilotReports": "Pilot Reports",
         "System": "System Reports"
       },
       "ManageAlerts": {

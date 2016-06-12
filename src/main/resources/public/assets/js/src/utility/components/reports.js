@@ -37,7 +37,7 @@ var MeasurementsReportPanel = React.createClass({
     
     return ( 
       <div className="reports reports-measurements">
-        <h2>Chart!</h2>
+        {/*<h2>Chart</h2>*/}
         <pane.Panel />
       </div>
     );
@@ -203,9 +203,9 @@ var Overview = React.createClass({
     return (
       <div className="overview reports">
         <h2>
-          Overview
+          Reports
           <small className="info">
-            The reports are generated around a reference time of <strong>{moment(now).format('D MMM, YYYY')}</strong> 
+            Generated around a reference time of <strong>{moment(now).format('D MMM, YYYY')}</strong> 
           </small>
         </h2>
         <overview.Form /> 
