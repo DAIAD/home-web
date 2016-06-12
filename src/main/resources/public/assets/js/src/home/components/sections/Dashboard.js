@@ -121,7 +121,7 @@ function InfoBox (props) {
 }
 
 function StatBox (props) {
-  const { id, title, type, improved, data, highlight, metric, measurements, period, device, deviceDetails, index, time, better, comparePercentage, mu } = props.infobox;
+  const { id, title, type, deviceType, improved, data, highlight, metric, measurements, period, device, deviceDetails, index, time, better, comparePercentage, mu } = props.infobox;
   let improvedDiv = <div/>;
   if (improved === true) {
     improvedDiv = (<img src={`${IMAGES}/success.svg`}/>);
@@ -141,7 +141,7 @@ function StatBox (props) {
         <div>
           {
             (() => bow ? 
-             <span><i className={`fa ${arrowClass}`}/>{better ? `${comparePercentage}% better than last ${period} so far!` : `${comparePercentage}% worse than last ${period} so far`}</span>
+             <span><i className={`fa ${arrowClass}`}/>{deviceType === 'AMPHIRO' ? (better ? `${comparePercentage}% better than last ${period}!` : `${comparePercentage}% worse than last ${period}`): (better ? `${comparePercentage}% better than last ${period} so far!` : `${comparePercentage}% worse than last ${period} so far`)}</span>
              :
                <span>No data</span>
                )()
