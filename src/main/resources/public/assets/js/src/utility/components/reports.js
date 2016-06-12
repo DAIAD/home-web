@@ -16,7 +16,6 @@ var MeasurementsReportPanel = React.createClass({
   
   propTypes: {
     config: configPropType,
-    field: PropTypes.string,
   },
   
   childContextTypes: {config: configPropType},
@@ -24,20 +23,10 @@ var MeasurementsReportPanel = React.createClass({
   getChildContext: function() {
     return {config: this.props.config};
   },
-  
-  getDefaultProps: function () {
-    return {
-      field: 'volume',
-    };
-  },
-
-  getInitialState: function () {
-    return {};
-  },
 
   render: function () {
     var pane = require('./reports-measurements/pane');
-    var {config, field} = this.props;
+    var {config} = this.props;
     
     var ready = (
       !_.isEmpty(config) && !_.isEmpty(config.reports) && !_.isEmpty(config.utility)
@@ -48,8 +37,8 @@ var MeasurementsReportPanel = React.createClass({
     
     return ( 
       <div className="reports reports-measurements">
-        <h2>Generate Report</h2>
-        <pane.ReportPanel field={field} />
+        <h2>Chart!</h2>
+        <pane.ReportPanel />
       </div>
     );
   },

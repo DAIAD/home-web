@@ -18,6 +18,7 @@ var TimeSpan = require('../../model/timespan');
 var population = require('../../model/population');
 var {computeKey, consolidateFuncs} = require('../../reports').measurements;
 var {timespanPropType, populationPropType, seriesPropType, configPropType} = require('../../prop-types');
+var toolbars = require('../toolbars');
 
 var {Button, ButtonGroup, Collapse, Panel, ListGroup, ListGroupItem} = Bootstrap;
 var PropTypes = React.PropTypes;
@@ -85,9 +86,31 @@ var toOptionElement = function ({value, text}) {
 // Presentational components
 //
 
+var HelpParagraph = ({errorMessage, dirty}) => {
+  if (errorMessage) {
+    return (<p className="help text-danger">{errorMessage}</p>);
+  } else if (dirty) {
+    return (<p className="help text-info">Parameters have changed. Refresh to redraw data!</p>); 
+  } else {
+    return (<p className="help text-muted">Refresh to redraw data.</p>);
+  }
+};
+
 var ReportPanel = React.createClass({
   
   statics: {
+    defaults: {
+      templates: {
+      },    
+    },
+    
+    configurationForReport: function (props, context) {
+      var {config} = context;
+      return config.reports.byType.measurements
+        .levels[props.level]
+        .reports[props.reportName];
+    },
+    
     toolbarSpec: [ 
       {
         key: 'parameters',
@@ -96,7 +119,7 @@ var ReportPanel = React.createClass({
           {
             key: 'source', 
             tooltip: {message: 'Select source of measurements', placement: 'bottom'}, 
-            iconName: 'cube',
+            iconName: 'tachometer', //'cube',
             //text: 'Source',
             buttonProps: {bsStyle: 'default', /*className: 'btn-circle'*/ },
           },
@@ -132,7 +155,7 @@ var ReportPanel = React.createClass({
             tooltip: {message: 'Export to a CSV table', placement: 'bottom'},
             text: 'Export',
             iconName: 'table',
-            buttonProps: {bsStyle: 'default', /*className: 'btn-circle'*/ },
+            buttonProps: {disabled: true, bsStyle: 'default', /*className: 'btn-circle'*/ },
           },
           {
             key: 'refresh',
@@ -143,12 +166,24 @@ var ReportPanel = React.createClass({
           },
         ],  
       }, 
-    ]
+    ],
   },
 
   propTypes: {
     field: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
+    level: PropTypes.string.isRequired,
+    reportName: PropTypes.string.isRequired,
+    source: PropTypes.string,
+    timespan: timespanPropType,
+    population: populationPropType,
+    initializeReport: PropTypes.func.isRequired,
+    refreshData: PropTypes.func.isRequired,
+    setReport: PropTypes.func.isRequired,
+    setField: PropTypes.func.isRequired,
+    setTimespan: PropTypes.func.isRequired,
+    setPopulation: PropTypes.func.isRequired,
+    setSource: PropTypes.func.isRequired,
   },
 
   contextTypes: {config: configPropType},
@@ -157,42 +192,125 @@ var ReportPanel = React.createClass({
   
   getInitialState: function () {
     return {
-      level: 'week',
-      reportName: 'avg-daily-avg',
+      dirty: false,
+      timespan: this.props.timespan,
+      error: null,
+      errorMessage: null,
+      formFragment: 'report',
+      disabledButtons: '', // a '|' delimited string, e.g 'export|refresh'
+      fadeIn: false, // animation (seconds)  
     };  
+  },
+  
+  getDefaultProps: function () {
+    return {
+      field: 'volume',
+      level: 'week',
+      source: 'meter',
+      timespan: 'quarter',
+    };
+  },
+
+  componentDidMount: function () {
+    var cls = this.constructor;
+    var {field, level, reportName} = this.props;
+
+    if (_.isEmpty(field) || _.isEmpty(level) || _.isEmpty(reportName)) {
+      return; // cannot yet initialize the target report
+    }
+    
+    var {timespan} = cls.configurationForReport(this.props, this.context);
+    this.props.initializeReport(field, level, reportName, {timespan});
+    this.props.refreshData(field, level, reportName);
+  },
+  
+  componentWillReceiveProps: function (nextProps, nextContext) {
+    var cls = this.constructor;
+    
+    // In any case, reset temporary copy of timespan, clear error/dirty flags
+    this.setState({
+      dirty: false,
+      error: null,
+      errorMessage: null,
+      disabledButtons: '',
+      timespan: nextProps.timespan,
+    });
+
+    // If moving to another report, take care to initialize it first
+    if (
+      (nextProps.field != this.props.field) || 
+      (nextProps.level != this.props.level) ||
+      (nextProps.reportName != this.props.reportName)
+    ) {
+      console.info(sprintf(
+        'The panel will switch to report (%s, %s, %s)',
+        nextProps.field, nextProps.level, nextProps.reportName
+      ));
+      console.assert(nextContext.config == this.context.config, 
+        'Unexpected change for configuration in context!');
+      var {timespan} = cls.configurationForReport(nextProps, nextContext);
+      nextProps.initializeReport(
+        nextProps.field, nextProps.level, nextProps.reportName, {timespan}
+      );
+      setTimeout(
+        () => (nextProps.refreshData(
+          nextProps.field, nextProps.level, nextProps.reportName)
+        ), 
+        100
+      );
+    } 
+  },
+
+  componentDidUpdate: function () {
+    // Schedule updates after a successfull component update
+
+    // If under a CSS transition, be sure to clear the flag afterwards
+    // This is needed, because only a change "" -> ".fade-in" can trigger a new animation.
+    var d = Number(this.state.fadeIn);
+    if (d > 0) {
+      setTimeout(
+        () => (this.state.fadeIn && this.setState({fadeIn: false})), 
+        (d + 1) * 1e+3
+      );
+    }
   },
 
   render: function () {
-    var toolbars = require('../toolbars');
-    var cls = this.constructor;
-    var {field, title} = this.props;
-   
+    var {field, title, level, reportName} = this.props;
+    var {dirty, error, errorMessage} = this.state;
+
+    var toolbarSpec = this._specForToolbar();
     var header = (
       <div className="header-wrapper">
-        {/*<i className="fa fa-area-chart fa-fw"></i>&nbsp;*/}
         <h3>{title}</h3>
         <toolbars.ButtonToolbar className="header-toolbar" 
-          groups={cls.toolbarSpec} 
-          onSelect={this._handleToolbar}
+          groups={toolbarSpec} 
+          onSelect={this._handleToolbarEvent} 
          />
       </div>
     );
     
-    // Todo Provide an <Info> element
     var footer = (
-      <div className="report-info">
-        Info goes here!!
-      </div>
+      <Info field={field} level={level} reportName={reportName} />
     );
-
+    
+    var formFragment = this._renderFormFragment();
+    var {fadeIn} = this.state;
     return (
       <Panel header={header} footer={footer}>
         <ListGroup fill>
           <ListGroupItem className="report-form-wrapper">
-            Parameters!
+            <form className="report-form form-horizontal">
+              <fieldset className={!fadeIn? '' : sprintf('fade-in x%d', fadeIn)}>
+                {formFragment}
+              </fieldset>
+            </form>
+          </ListGroupItem>
+          <ListGroupItem className="report-form-help">
+            <HelpParagraph dirty={dirty} errorMessage={errorMessage}/>
           </ListGroupItem>
           <ListGroupItem className="report-chart-wrapper">
-            The chart goes here!
+            <Chart field={field} level={level} reportName={reportName} />
           </ListGroupItem>
         </ListGroup>
       </Panel>
@@ -201,20 +319,211 @@ var ReportPanel = React.createClass({
 
   // Event handlers
 
-  _handleToolbar: function (groupKey, key) {
+  _handleToolbarEvent: function (groupKey, key) {
     switch (groupKey) {
       case 'parameters':
-        return this._switchFormView(key)
+        return this._switchToFormFragment(key);
         break;
       case 'actions':
-        // Todo
+        return this._performAction(key);
         break;
     }
   },
 
-  _switchFormView: function (key) {
-    console.info('Prepare form ' + key);
+  _switchToFormFragment: function (key) {
+    if (this.state.formFragment != key)
+      this.setState({formFragment: key, fadeIn: 1.0});
+    return false;
   },
+
+  _performAction: function (key) {
+    var {field, level, reportName} = this.props;
+    switch (key) {
+      case 'refresh':
+        {
+          console.info(sprintf(
+            'About to refresh data for report (%s, %s, %s)...',
+            field, level, reportName
+          ));
+          this.props.refreshData(field, level, reportName);
+          // Note is this needed? as it will always be cleared at next props
+          //this.setState({dirty: false});
+        }
+        break;
+      case 'export':
+        // Todo
+        console.info('Todo: Export to CSV table');
+        break;
+    }
+  },
+
+  _setSource: function (source) {
+    var {field, level, reportName} = this.props;
+    this.props.setSource(field, level, reportName, source);
+    this.setState({dirty: true});
+    return false;
+  },
+  
+  _setReport: function (level, reportName) {
+    this.props.setReport(level, reportName);
+    return false;
+  },
+  
+  _setField: function (field) {
+    this.props.setField(field);
+    return false;
+  },
+
+  _setTimespan: function (ts) {
+    // Todo
+    return false;
+  },
+  
+  _setPopulation: function (target) {
+    // Todo
+    return false;
+  },
+
+  // Helpers
+  
+  _renderFormFragment: function () {
+    var {config} = this.context;
+    var {fields, sources, levels} = config.reports.byType.measurements;
+
+    var fragment1; // single element or array of keyed elements
+    switch (this.state.formFragment) {
+      case 'source':
+        {
+          var {source} = this.props;
+          var sourceOptions = new Map(
+            _.intersection(_.keys(sources), fields[this.props.field].sources)
+              .map(k => ([k, sources[k].title]))
+          );
+          fragment1 = ( 
+            <div className="form-group">
+              <label className="col-sm-2 control-label">Source:</label>
+              <div className="col-sm-9">
+                <Select className="select-source" 
+                  value={source} options={sourceOptions} onChange={this._setSource} 
+                 />
+                <p className="help text-muted">
+                  {'Specify the source device for measurements.'}
+                </p>
+              </div>
+            </div>
+          );
+        } 
+        break;
+      case 'report':
+        {
+          var {level, reportName} = this.props;
+          var levelOptions = new Map(
+            _.values(
+              _.mapValues(levels, (u, k) => ([k, u.name]))
+            )
+          );
+          var reportOptions = new Map(
+            _.values(
+              _.mapValues(levels[level].reports, (r, k) => ([k, r.title]))
+            )  
+          );
+          fragment1 = [
+            (
+              <div key="level" className="form-group" >
+                <label className="col-sm-2 control-label">Level:</label>
+                <div className="col-sm-9">
+                  <Select className="select-level" 
+                    value={level} 
+                    options={levelOptions} 
+                    onChange={(val) => this._setReport(val, reportName)} 
+                   />
+                  <p className="help text-muted">
+                    {'Specify the level of detail (unit of time for charts).'}
+                  </p>
+                </div>
+              </div>
+            ),
+            (
+              <div key="report-name" className="form-group" >
+                <label className="col-sm-2 control-label">Metric:</label>
+                <div className="col-sm-9">
+                  <Select className="select-report"
+                    value={reportName} 
+                    options={reportOptions} 
+                    onChange={(val) => this._setReport(level, val)} 
+                   />
+                  <p className="help text-muted">
+                    {'Select the metric to be applied to measurements.'}
+                  </p>
+                </div>
+              </div>
+            ),
+          ];
+        }
+        break;
+      case 'timespan':
+        {
+          // Todo
+        }
+        break;
+      case 'population-group':
+        {
+          // Todo
+        }
+        break;
+      default:
+        console.error(sprintf(
+          'Got unexpected key (%s) representing a form fragment',
+          this.state.formFragment
+        ));
+        break;
+    }
+
+    return fragment1;
+  },
+
+  _enableButton: function(key, flag=true) {
+    var {disabledButtons: value} = this.state, nextValue = null;
+    var disabledKeys = value? value.split('|') : [];
+    var i = disabledKeys.indexOf(key);
+
+    if (flag && (i >= 0)) {
+      // The button is currently disabled and must be enabled
+      disabledKeys.splice(i, 1);
+      nextValue = disabledKeys.join('|'); 
+    } else if (!flag && (i < 0)) {
+      // The button is currently enabled and must be disabled
+      disabledKeys.push(key);
+      nextValue = disabledKeys.sort().join('|');
+    }
+    
+    if (nextValue != null)
+      this.setState({disabledButtons: nextValue});
+  },
+  
+  _specForToolbar: function () {
+    // Make a spec object suitable to feed toolbars.ButtonToolbar "groups" prop.
+    // Note we must take into account our current state (disabled flags for buttons)
+    
+    var cls = this.constructor;
+    var {disabledButtons} = this.state;
+    
+    if (_.isEmpty(disabledButtons))
+      return cls.toolbarSpec; // return the original spec
+
+    var disabledKeys = disabledButtons.split('|');
+    return cls.toolbarSpec.map(spec => ({
+      ...spec, 
+      buttons: spec.buttons.map(b => _.merge({}, b, {
+        buttonProps: {
+          // A key disabled in the original spec cannot ever be enabled!
+          disabled: (b.buttonProps.disabled || disabledKeys.indexOf(b.key) >= 0)
+        },
+      }))
+    }));
+  },
+
+  // Wrap dispatch actions
 
 });
 
@@ -406,7 +715,9 @@ var Form = React.createClass({
     );
     
     var form, formId = ['panel', field, level, reportName].join('--');
-    
+    var helpParagraph = (
+      <HelpParagraph dirty={this.state.dirty} errorMessage={this.state.errorMessage}/>
+    );
     if (inlineForm) {
       form = (
         <form className="form-inline report-form" id={formId}>
@@ -425,7 +736,7 @@ var Form = React.createClass({
           <div className="form-group">
             {buttonRefresh}&nbsp;&nbsp;{buttonSave}&nbsp;&nbsp;{buttonExport}
           </div>
-          {this._markupHelp()}
+          {helpParagraph}
         </form> 
       );
     } else {
@@ -461,7 +772,7 @@ var Form = React.createClass({
               {buttonRefresh}&nbsp;&nbsp;{buttonSave}&nbsp;&nbsp;{buttonExport}
             </div>
           </div>
-          {this._markupHelp()}
+          {helpParagraph}
         </form>
       );
     }
@@ -558,37 +869,16 @@ var Form = React.createClass({
   },
 
   // Helpers
-  
-  _markupHelp: function () {
-    
-    var {errorMessage, dirty} = this.state;
-    var paragraph;
-    
-    if (errorMessage) {
-      paragraph = (<p className="help text-danger">{errorMessage}</p>);
-    } else if (dirty) {
-      paragraph = (<p className="help text-info">Parameters have changed. Refresh to redraw data!</p>); 
-    } else {
-      paragraph = (<p className="help text-muted">Refresh to redraw data.</p>);
-    }
-    return paragraph;
-  },
 
   _markupSummary: function (source, [t0, t1], [clusterKey, groupKey]) {
     var _config = this.context.config.reports.byType.measurements;
-    
     const openingBracket = (<span>&#91;</span>); 
     const closingBracket = (<span>&#93;</span>);
     const delimiter = (<span>::</span>);
-
-    // Todo a more friendly summary of supplied parameters
     
     t0 = moment(t0); t1 = moment(t1);
-    var dateFormat = (t0.year() == t1.year())? 'D/MMM' : 'D/MMM/YYYY';
-    var formattedTime = sprintf(
-      'From %s To %s', t0.format(dateFormat), t1.format(dateFormat)
-    ); 
-
+    var datefmt = (t0.year() == t1.year())? 'D/MMM' : 'D/MMM/YYYY';
+    var formattedTime = sprintf('From %s To %s', t0.format(datefmt), t1.format(datefmt)); 
     return (
       <span className="summary-wrapper">
         {openingBracket}&nbsp;
@@ -601,7 +891,6 @@ var Form = React.createClass({
       </span>  
     );
   },
-
 }); 
 
 var Chart = React.createClass({
@@ -614,8 +903,6 @@ var Chart = React.createClass({
     },
    
     defaults: {
-      width: '100%',
-      height: 320,
       lineWidth: 1,
       smooth: false,
       tooltip: true,
@@ -872,22 +1159,51 @@ var Info = React.createClass({
 // Container components
 //
 
-var actions = require('../../actions/reports-measurements');
+var reportingActions = require('../../actions/reports-measurements');
+var chartingActions = require('../../actions/charting');
 
 ReportPanel = ReactRedux.connect(
   (state, ownProps) => {
-    var stateProps = {};
-    
-    var {field, title} = ownProps;
+    var stateProps;
     var {fields} = state.config.reports.byType.measurements;
+    var {field, level, reportName} = state.charting;
     
-    if (!title)
+    stateProps = {field, level, reportName};
+    
+    if (!ownProps.title)
       stateProps.title = fields[field].title;
-    
+     
+    var key = computeKey(field, level, reportName, REPORT_KEY);
+    var r1 = state.reports.measurements[key];
+    if (r1) {
+      // There is an initialized intance of the report for (field, level, reportName)
+      var {source, timespan, population} = r1;
+      _.extend(stateProps, {source, timespan, population});
+    }
+
     return stateProps;
   }, 
   (dispatch, ownProps) => {
+    var {setField, setLevel, setReport} = chartingActions;
+    var {initialize, setSource, setTimespan, setPopulation, refreshData} = reportingActions;
     return {
+      setField: (field) => (dispatch(setField(field))),
+      setReport: (level, reportName) => (dispatch(setReport(level, reportName))), 
+      initializeReport: (field, level, reportName, defaults) => (
+        dispatch(initialize(field, level, reportName, REPORT_KEY, defaults))  
+      ),
+      refreshData: (field, level, reportName) => (
+        dispatch(refreshData(field, level, reportName, REPORT_KEY))
+      ),
+      setSource: (field, level, reportName, source) => (
+        dispatch(setSource(field, level, reportName, REPORT_KEY, source))
+      ),
+      setTimespan: (field, level, reportName, ts) => (
+        dispatch(setTimespan(field, level, reportName, REPORT_KEY, ts))
+      ),
+      setPopulation: (field, level, reportName, p) => (
+        dispatch(setPopulation(field, level, reportName, REPORT_KEY, p))
+      ),
     };
   }, 
 )(ReportPanel);
@@ -902,17 +1218,23 @@ Form = ReactRedux.connect(
   }, 
   (dispatch, ownProps) => {
     var {field, level, reportName} = ownProps;
+    var {initialize, setSource, setTimespan, setPopulation, refreshData} = reportingActions;
     return {
       initializeReport: (defaults) => (
-        dispatch(actions.initialize(field, level, reportName, REPORT_KEY, defaults))),
+        dispatch(initialize(field, level, reportName, REPORT_KEY, defaults))
+      ),
       setSource: (source) => (
-        dispatch(actions.setSource(field, level, reportName, REPORT_KEY, source))),
+        dispatch(setSource(field, level, reportName, REPORT_KEY, source))
+      ),
       setTimespan: (ts) => (
-        dispatch(actions.setTimespan(field, level, reportName, REPORT_KEY, ts))),
+        dispatch(setTimespan(field, level, reportName, REPORT_KEY, ts))
+      ),
       setPopulation: (p) => (
-        dispatch(actions.setPopulation(field, level, reportName, REPORT_KEY, p))),
+        dispatch(setPopulation(field, level, reportName, REPORT_KEY, p))
+      ),
       refreshData: () => (
-        dispatch(actions.refreshData(field, level, reportName, REPORT_KEY))),
+        dispatch(refreshData(field, level, reportName, REPORT_KEY))
+      ),
     };
   }
 )(Form);

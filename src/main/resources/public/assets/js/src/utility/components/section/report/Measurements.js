@@ -35,7 +35,7 @@ var MeasurementReport = React.createClass({
         </div>
         <div className="row">
           <div className="col-md-12">
-            <reports.MeasurementsReportPanel config={config} field={'volume'} />
+            <reports.MeasurementsReportPanel config={config} />
           </div>
         </div>
       </div>
