@@ -130,7 +130,7 @@ const initHome = function (profile) {
     dispatch(DashboardActions.fetchAllInfoboxesData());
     
     if (getMeterCount(getState().user.profile.devices) === 0) {
-      dispatch(HistoryActions.setActiveDeviceType('AMPHIRO', false));
+      dispatch(HistoryActions.setActiveDeviceType('AMPHIRO', true));
       
       dispatch(DashboardActions.setInfoboxToAdd({
         deviceType: 'AMPHIRO',
@@ -139,7 +139,7 @@ const initHome = function (profile) {
       }));
     }
     else {
-      dispatch(HistoryActions.setActiveDeviceType('METER', false));
+      dispatch(HistoryActions.setActiveDeviceType('METER', true));
     }
   };
 };
