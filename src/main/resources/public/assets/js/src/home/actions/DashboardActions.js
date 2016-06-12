@@ -102,7 +102,7 @@ const updateInfobox = function(id, data) {
     .then(res => dispatch(setInfoboxData(id, res)))
     .catch(error => { 
           console.error('Caught error in infobox data fetch:', error); 
-          dispatch(setInfoboxData(id, {data: [], error: 'Oops sth went wrong, replace with sth friendly'})); 
+          dispatch(setInfoboxData(id, {data: [], error: 'Oops sth went wrong, please refresh the page.'})); 
     });
 
   };
@@ -198,7 +198,7 @@ const fetchAllInfoboxesData = function() {
       })
         .catch(error => { 
           console.error('Caught error in infobox data fetch:', error); 
-          dispatch(setInfoboxData(id, {data: [], error: 'Oops sth went wrong, replace with sth friendly'})); });
+          dispatch(setInfoboxData(id, {data: [], error: 'Oops sth went wrong, please refresh the page'})); });
 
     });
   };
