@@ -38,7 +38,7 @@ var MeasurementsReportPanel = React.createClass({
     return ( 
       <div className="reports reports-measurements">
         <h2>Chart!</h2>
-        <pane.ReportPanel />
+        <pane.Panel />
       </div>
     );
   },
@@ -73,7 +73,7 @@ var MeasurementsReportSection = React.createClass({
   },
 
   render: function () {
-    var pane = require('./reports-measurements/pane');
+    var reportPane = require('./reports-measurements/pane');
     var {config, field, levels} = this.props;
     var {level, reportName} = this.state;
     
@@ -111,9 +111,9 @@ var MeasurementsReportSection = React.createClass({
           <span>Choose report:</span>&nbsp;
           {selectReport}
         </div>
-        <pane.Form {...reportProps} inlineForm={false} />
-        <pane.Chart {...reportProps} />
-        <pane.Info {...reportProps} /> 
+        <reportPane.Form {...reportProps} inlineForm={false} />
+        <reportPane.Chart {...reportProps} />
+        <reportPane.Info {...reportProps} /> 
       </section>
     );
   },

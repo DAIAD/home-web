@@ -610,7 +610,8 @@ form.report-form fieldset {
 .reports .panel .panel-heading .panel-title.header-wrapper > .header-toolbar .btn-circle {
   margin-left: 5px;
 }
-
+ 
+.reports.reports-measurements .report-chart .chart.portal, 
 .reports .panel .report-chart .chart.portal {
   width: 100%;
   height: 350px;
@@ -670,22 +671,23 @@ form.report-form fieldset {
 .report-form.form-horizontal .dropdown.select-source .dropdown-menu {width: 12.8em;}
 
 .report-form.form-inline .dropdown.select-timespan button > span.text {width: 5.5em;}
-.report-form.form-horizontal .dropdown.select-timespan button > span.text {width: 10em;}
-.report-form.form-horizontal .dropdown.select-timespan .dropdown-menu {min-width: 11em;}
+.report-form.form-horizontal .dropdown.select-timespan button > span.text {width: 11em;}
+.report-form.form-horizontal .dropdown.select-timespan .dropdown-menu {min-width: 13.7em;}
+.report-form.form-horizontal .dropdown.select-timespan {margin-right: 6px;}
 
 .report-form.form-inline .dropdown.select-cluster button > span.text {width: 7em;}
-.report-form.form-horizontal .dropdown.select-cluster button > span.text {width: 9.5em;}
-.report-form.form-horizontal .dropdown.select-cluster .dropdown-menu {min-width: 11em;}
+.report-form.form-horizontal .dropdown.select-cluster button > span.text {width: 12em;}
+.report-form.form-horizontal .dropdown.select-cluster .dropdown-menu {min-width: 14.6em;}
 
 .report-form.form-inline .dropdown.select-cluster-group button > span.text {width: 7em;}
-.report-form.form-horizontal .dropdown.select-cluster-group button > span.text {width: 9.5em;}
-.report-form.form-horizontal .dropdown.select-cluster-group .dropdown-menu {min-width: 11em;}
+.report-form.form-horizontal .dropdown.select-cluster-group button > span.text {width: 14em;}
+.report-form.form-horizontal .dropdown.select-cluster-group .dropdown-menu {min-width: 16.7em;}
 
 .report-form .form-group .rdt {
   display: inline-block;
   vertical-align: middle;
 }
-.report-form.form-horizontal .form-group .rdt > input[type="text"] {width: 10em;}
+.report-form.form-horizontal .form-group .rdt > input[type="text"] {min-width: 10.5em;}
 
 div.measurement-value {
   display: inline-block;
