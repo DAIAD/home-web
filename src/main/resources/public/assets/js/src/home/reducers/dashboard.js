@@ -23,7 +23,7 @@ const initialState = {
   infobox: [
        {
         id: "1", 
-        title: "Water",
+        title: "Shower Volume",
         type: "total",
         display: "chart",
         period: "ten",
@@ -43,7 +43,7 @@ const initialState = {
       },
       {
         id: "3", 
-        title: "Energy",
+        title: "Shower Energy",
         type: "total",
         display: "stat",
         period: "twenty",
@@ -53,7 +53,7 @@ const initialState = {
       },
       {
         id: "4", 
-        title: "SWM", 
+        title: "Total Water", 
         type: "total",
         display: "chart",
         deviceType: "METER",
@@ -63,7 +63,7 @@ const initialState = {
       },
     {
       id: "5", 
-      title: "Efficiency",
+      title: "Shower efficiency",
       type: "efficiency",
       display: "stat",
       deviceType: "AMPHIRO",
@@ -107,7 +107,7 @@ const initialState = {
       type: "budget",
       display: "chart",
       deviceType: "METER",
-      period: "month",
+      period: "day",
       metric: "difference",
       data: [],
     },

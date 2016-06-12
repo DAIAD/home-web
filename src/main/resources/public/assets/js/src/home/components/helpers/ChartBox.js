@@ -19,7 +19,7 @@ function ChartBox (props) {
                 type='pie'
                 title={chartData[0].title}
                 subtitle=""
-                fontSize={17}
+                fontSize={16}
                 mu=''
                 colors={chartColors}
                 data={chartData}

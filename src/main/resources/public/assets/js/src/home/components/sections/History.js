@@ -82,18 +82,11 @@ function TimeNavigator(props) {
 var History = React.createClass({
 
   componentWillMount: function() {
-    const { synced, setActiveDeviceType, activeDeviceType, timeFilter, deviceTypes } = this.props;
+    const { synced, setActiveDeviceType, activeDeviceType } = this.props;
+
     if (!synced) {
-        //set active device and dont query cause we havent set time yet!
-        setActiveDeviceType(activeDeviceType, false);
-        this.handlePeriodSelect(timeFilter);
-      
+      //setActiveDeviceType(activeDeviceType, true);
     }
-    /*
-      if (!deviceTypes.find(x => x.id === 'METER')) {
-        setActiveDeviceType('AMPHIRO');
-        }
-        */
   },
   handleTypeSelect: function(key){
     this.props.setMetricFilter(key); 
@@ -140,6 +133,7 @@ var History = React.createClass({
     else{
       throw new Error('oops, shouldn\'t be here');
     }
+
     this.props.setTimeFilter(key);
 
     if (time) this.props.setTime(time, false);
