@@ -9,7 +9,11 @@ var SessionAPI = {
 	},
 	getProfile: function(cb) {
 		return api.json('/action/profile/load', null);
-	}
+  },
+  saveToProfile: function(data) {
+    return api.json('/action/profile/save', data);
+  }
+  
 };
 
 module.exports = SessionAPI;
