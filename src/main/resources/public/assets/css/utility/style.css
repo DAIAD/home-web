@@ -233,12 +233,12 @@ a .disabled{
 .fade-in {
   opacity: 1;
   animation-name: fade-in; 
-  animation-duration: 1s;
+  animation-duration: 0.5s;
   animation-iteration-count: 1;
 }
-.fade-in.x2 {animation-duration: 2s;}
-.fade-in.x3 {animation-duration: 3s;}
-.fade-in.x4 {animation-duration: 4s;}
+.fade-in-2x {animation-duration: 1s;}
+.fade-in-3x {animation-duration: 1.5s;}
+.fade-in-4x {animation-duration: 2s;}
 
 @keyframes fade-in {from {opacity: 0.1;} to {opacity: 1;}}
 @keyframes fade-out {from {opacity: 1.0;} to {opacity: 0;}}
