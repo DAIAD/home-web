@@ -36,11 +36,11 @@ const getChartAmphiroCategories = function (period) {
   }
   else if (period === 'twenty') {
     //return Array.from({length: 20}, (v, i) => 20-i); 
-    return Array.from({length: 10}, (v, i) => `#${50-i}`);
+    return Array.from({length: 20}, (v, i) => `#${50-i}`);
   }
   else if (period === 'fifty') {
     //return Array.from({length: 50}, (v, i) => 50-i);
-    return Array.from({length: 10}, (v, i) => `#${50-i}`);
+    return Array.from({length: 50}, (v, i) => `#${50-i}`);
   }
   else return [];
 };
