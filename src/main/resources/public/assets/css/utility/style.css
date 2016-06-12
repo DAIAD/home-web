@@ -785,6 +785,7 @@ div.measurement-value .delta > .sign {
 
 #form-profile {
   margin-top: 20px;
+  min-width: 200px;
   width: 40%;
 }
 
