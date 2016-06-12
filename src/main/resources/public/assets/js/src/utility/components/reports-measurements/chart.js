@@ -52,11 +52,10 @@ var Chart = React.createClass({
     field: PropTypes.string.isRequired,
     level: PropTypes.string.isRequired,
     reportName: PropTypes.string.isRequired,
-    reportKey: PropTypes.string.isRequired,
     series: PropTypes.arrayOf(seriesPropType),
     finished: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
     // Appearence
-    draw: PropTypes.bool,
+    draw: PropTypes.bool, // parental control on our updates 
     width: PropTypes.number,
     height: PropTypes.number,
     scaleTimeAxis: PropTypes.bool,

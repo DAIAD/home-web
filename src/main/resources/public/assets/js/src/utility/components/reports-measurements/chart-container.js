@@ -1,11 +1,12 @@
 
 var React = require('react');
-var ReactRedux = require('react-redux');
+var {connect} = require('react-redux');
+var {PropTypes} = React;
 
 var {computeKey} = require('../../reports').measurements;
 var Chart = require('./chart');
 
-module.exports = ReactRedux.connect(
+var _Chart = connect(
   (state, ownProps) => {
     var {field, level, reportName, reportKey} = ownProps;
     var _state = state.reports.measurements;
@@ -15,4 +16,8 @@ module.exports = ReactRedux.connect(
   },
   null
 )(Chart);
+
+_Chart.propTypes.reportKey = PropTypes.string.isRequired;
+
+module.exports = _Chart;
 

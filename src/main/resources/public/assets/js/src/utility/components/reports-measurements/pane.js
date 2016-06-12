@@ -20,7 +20,7 @@ var {computeKey} = require('../../reports').measurements;
 var {timespanPropType, populationPropType, seriesPropType, configPropType} = require('../../prop-types');
 var {equalsPair} = require('../../helpers/comparators');
 
-var Chart = require('./chart-container');
+var Chart = require('./chart');
 
 var {Button, ButtonGroup, Collapse, Panel, ListGroup, ListGroupItem} = Bootstrap;
 var {PropTypes} = React;
@@ -183,6 +183,7 @@ var ReportPanel = React.createClass({
     timespan: timespanPropType,
     population: populationPropType,
     finished: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
+    series: PropTypes.arrayOf(seriesPropType),
     
     // Funcs (dispatchers)
     initializeReport: PropTypes.func.isRequired,
@@ -330,7 +331,7 @@ var ReportPanel = React.createClass({
   },
 
   render: function () {
-    var {field, title, level, reportName} = this.props;
+    var {field, title, level, reportName, finished, series} = this.props;
     var {dirty, draw, error, errorMessage} = this.state;
 
     var toolbarSpec = this._specForToolbar();
@@ -345,7 +346,7 @@ var ReportPanel = React.createClass({
     );
     
     var footer = (
-      <Info field={field} level={level} reportName={reportName} />
+      <ReportInfo field={field} level={level} reportName={reportName} />
     );
     
     var formFragment = this._renderFormFragment();
@@ -368,7 +369,8 @@ var ReportPanel = React.createClass({
               field={field} 
               level={level} 
               reportName={reportName} 
-              reportKey={REPORT_KEY} 
+              finished={finished}
+              series={series}
              />
           </ListGroupItem>
         </ListGroup>
@@ -688,6 +690,9 @@ var ReportPanel = React.createClass({
     // Make a spec object suitable to feed toolbars.ButtonToolbar "groups" prop.
     // Note we must take into account our current state (disabled flags for buttons)
     
+    // Todo This fuctionality fits better to the Toolbar component, 
+    // e.g.: <Toolbar spec={spec} enabledButtons={flags1} activeButtons={flags2} ... />
+
     var cls = this.constructor;
     var {disabledButtons} = this.state;
     
@@ -1061,7 +1066,7 @@ var ReportForm = React.createClass({
   },
 }); 
 
-var Info = React.createClass({
+var ReportInfo = React.createClass({
   statics: {},
 
   propTypes: {
@@ -1071,9 +1076,7 @@ var Info = React.createClass({
     requested: PropTypes.number,
     finished: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
     errors: PropTypes.arrayOf(PropTypes.string),
-    series: PropTypes.arrayOf(PropTypes.shape({
-      data: PropTypes.array,
-    })),
+    series: PropTypes.arrayOf(seriesPropType),
     requests: PropTypes.number,
   },
   
@@ -1144,8 +1147,8 @@ ReportPanel = ReactRedux.connect(
     var r1 = state.reports.measurements[key];
     if (r1) {
       // Found an initialized intance of the report for (field, level, reportName)
-      var {source, timespan, population, finished} = r1;
-      _.extend(stateProps, {source, timespan, population, finished});
+      var {source, timespan, population, series, finished} = r1;
+      _.extend(stateProps, {source, timespan, population, series, finished});
     }
 
     return stateProps;
@@ -1206,7 +1209,7 @@ ReportForm = ReactRedux.connect(
   }
 )(ReportForm);
 
-Info = ReactRedux.connect(
+ReportInfo = ReactRedux.connect(
   (state, ownProps) => {
     var {field, level, reportName} = ownProps;
     var _state = state.reports.measurements;
@@ -1216,13 +1219,17 @@ Info = ReactRedux.connect(
     );
   },
   null
-)(Info);
+)(ReportInfo);
 
+//
 // Export
+//
+
+var ChartContainer = require('./chart-container');
 
 module.exports = {
   Panel: ReportPanel,
   Form: ReportForm, 
-  Info, 
-  Chart: (props) => (<Chart {...props} reportKey={REPORT_KEY} />), 
+  Info: ReportInfo, 
+  Chart: (props) => (<ChartContainer {...props} reportKey={REPORT_KEY} />),
 };

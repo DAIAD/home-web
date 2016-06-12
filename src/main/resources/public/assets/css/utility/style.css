@@ -671,8 +671,8 @@ form.report-form fieldset {
 .report-form.form-horizontal .dropdown.select-source .dropdown-menu {width: 12.8em;}
 
 .report-form.form-inline .dropdown.select-timespan button > span.text {width: 5.5em;}
-.report-form.form-horizontal .dropdown.select-timespan button > span.text {width: 11em;}
-.report-form.form-horizontal .dropdown.select-timespan .dropdown-menu {min-width: 13.7em;}
+.report-form.form-horizontal .dropdown.select-timespan button > span.text {width: 12em;}
+.report-form.form-horizontal .dropdown.select-timespan .dropdown-menu {min-width: 14.6em;}
 .report-form.form-horizontal .dropdown.select-timespan {margin-right: 6px;}
 
 .report-form.form-inline .dropdown.select-cluster button > span.text {width: 7em;}
@@ -786,6 +786,8 @@ div.measurement-value .delta > .sign {
 .reports.overview .report-form.form-inline .form-group.submit-buttons {
   float: right;
 }      
+
+/* Map/Choropleth */
 
 /* view-source:http://leafletjs.com/examples/choropleth-example.html */
 .map-choropleth-info {
