@@ -72,24 +72,7 @@ const login = function(username, password) {
 
       // Actions that need to be dispatched on login
       if (success) {
-        dispatch(fetchAllMessages());
-      
-        if (profile.configuration) {
-            const configuration = JSON.parse(profile.configuration);
-            if (configuration.infoboxes) dispatch(DashboardActions.setInfoboxes(configuration.infoboxes));
-            if (configuration.layout) dispatch(DashboardActions.updateLayout(configuration.layout, false));
-
-        }
-        dispatch(DashboardActions.fetchAllInfoboxesData());
-        
-        if (getMeterCount(getState().user.profile.devices) === 0) {
-          dispatch(HistoryActions.setActiveDeviceType('AMPHIRO', true));
-          dispatch(DashboardActions.setInfoboxToAdd({
-            deviceType: 'AMPHIRO',
-            type: 'totalVolumeStat',
-            title : 'Shower volume',
-          }));
-        }
+        dispatch(initHome(profile));
       }
       return response;
     })
@@ -116,21 +99,8 @@ const refreshProfile = function() {
       dispatch(receivedLogin(success, errors.length?errors[0].code:null, profile));
 
       if (success) {
-        dispatch(fetchAllMessages());
-      
-        if (profile.configuration) {
-            const configuration = JSON.parse(profile.configuration);
-            if (configuration.infoboxes) dispatch(DashboardActions.setInfoboxes(configuration.infoboxes));
-            if (configuration.layout) dispatch(DashboardActions.updateLayout(configuration.layout, false));
-            
-          }
-          dispatch(DashboardActions.fetchAllInfoboxesData());
-    
-        if (getMeterCount(getState().user.profile.devices) === 0) {
-          dispatch(HistoryActions.setActiveDeviceType('AMPHIRO', false));
-        }
-      }
-      
+        dispatch(initHome(profile));
+      } 
 
       return response;
     })
@@ -138,6 +108,39 @@ const refreshProfile = function() {
       console.error('Error caught on profile refresh:', errors);
       return errors;
     });
+  };
+};
+
+/**
+ * Call all necessary actions to initialize app with profile data 
+ *
+ * @param {Object} profile - profile object as returned from server
+ */
+const initHome = function (profile) {
+  return function(dispatch, getState) {
+
+    dispatch(fetchAllMessages());
+      
+    if (profile.configuration) {
+        const configuration = JSON.parse(profile.configuration);
+        if (configuration.infoboxes) dispatch(DashboardActions.setInfoboxes(configuration.infoboxes));
+        if (configuration.layout) dispatch(DashboardActions.updateLayout(configuration.layout, false));
+
+    }
+    dispatch(DashboardActions.fetchAllInfoboxesData());
+    
+    if (getMeterCount(getState().user.profile.devices) === 0) {
+      dispatch(HistoryActions.setActiveDeviceType('AMPHIRO', false));
+      
+      dispatch(DashboardActions.setInfoboxToAdd({
+        deviceType: 'AMPHIRO',
+        type: 'totalVolumeStat',
+        title : 'Shower volume',
+      }));
+    }
+    else {
+      dispatch(HistoryActions.setActiveDeviceType('METER', false));
+    }
   };
 };
 
@@ -185,6 +188,8 @@ const logout = function() {
       return response;
     })
     .catch((errors) => {
+
+      dispatch(receivedLogout(true, errors.length?errors[0].code:null));
       console.error('Error caught on logout:', errors);
       return errors;
     });

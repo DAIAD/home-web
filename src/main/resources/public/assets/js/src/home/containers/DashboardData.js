@@ -81,13 +81,14 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                dispatchProps,
                stateProps,
                {
-                 infoboxes: stateProps.infoboxes.map(infobox => Object.assign({}, transformInfoboxData(infobox, stateProps.devices, ownProps.intl), {linkToHistory: () => dispatchProps.linkToHistory(infobox)})),
-                   addInfobox: () => {
-                     
-                     const type = types.find(x => x.id === stateProps.infoboxToAdd.type);
-                     // ?  types.find(x => x.id === stateProps.infoboxToAdd.type).data : {}
-                     return dispatchProps.addInfobox(Object.assign({}, {data: [], period: (deviceType === 'AMPHIRO' ? 'ten' : 'month')}, stateProps.infoboxToAdd, {title: stateProps.infoboxToAdd.title ? stateProps.infoboxToAdd.title : (type ? type.title : null)}, type ? type.data : {} ));
-                   },
+                 infoboxes: stateProps.infoboxes.map(infobox => 
+                   transformInfoboxData(infobox, stateProps.devices, ownProps.intl)),
+                 addInfobox: () => {
+                   
+                   const type = types.find(x => x.id === stateProps.infoboxToAdd.type);
+                   // ?  types.find(x => x.id === stateProps.infoboxToAdd.type).data : {}
+                   return dispatchProps.addInfobox(Object.assign({}, {data: [], period: (deviceType === 'AMPHIRO' ? 'ten' : 'month')}, stateProps.infoboxToAdd, {title: stateProps.infoboxToAdd.title ? stateProps.infoboxToAdd.title : (type ? type.title : null)}, type ? type.data : {} ));
+                 },
                  deviceCount: getDeviceCount(stateProps.devices),
                  meterCount: getMeterCount(stateProps.devices),
                  saveToProfile: () => dispatchProps.saveToProfile(saveData),

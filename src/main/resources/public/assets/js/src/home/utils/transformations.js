@@ -99,7 +99,7 @@ const transformInfoboxData = function (infobox, devices, intl) {
     }
     else if (type === 'last') {
       device = infobox.device;
-      time = infobox.time;
+      //time = infobox.time;
       
       chartCategories = null;
 
@@ -225,6 +225,7 @@ const transformInfoboxData = function (infobox, devices, intl) {
                        {
                          periods,
                          displays,
+                         time,
                          device,
                          highlight,
                          chartData,
