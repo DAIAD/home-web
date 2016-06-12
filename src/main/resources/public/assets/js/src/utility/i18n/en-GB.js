@@ -123,6 +123,9 @@
     "Address": "Address",
     "Zip": "Postal code",
     "Country": "Country",
+    "CountryPlaceholder": "Select country",
+    "TimezonePlaceholder": "Select timezone",
+    "Timezone": "Timezone",
     "Locale": "Language",
     "Submit" : "Update"
   },
@@ -286,10 +289,14 @@
     "FavouriteSuccess.FAVOURITE_UPDATED" : "Favourite was succesfully updated."
   },
   "Countries": {
-    "gr": "Greece",
-    "es": "Spain",
-    "gb": "United Kingdom",
-    "de": "Germany"
+    "Greece": "Greece",
+    "Spain": "Spain",
+    "United Kingdom": "United Kingdom"
+  },
+  "Timezones": {
+    "Europe/London": "UTC",
+    "Europe/Madrid": "Madrid",
+    "Europe/Athens": "Athens"
   }
 }
 

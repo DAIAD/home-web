@@ -8,6 +8,7 @@ var LocaleSwitcher = require('../../../components/LocaleSwitcher');
 var { setLocale } = require('../../../actions/LocaleActions');
 var { saveToProfile } = require('../../../actions/SessionActions');
 
+const { COUNTRIES, TIMEZONES } = require('../../../constants/Constants');
 
 var Breadcrumb = require('../../Breadcrumb');
 
@@ -15,21 +16,27 @@ var UserSettings = React.createClass({
 	contextTypes: {
 	    intl: React.PropTypes.object
 	},
-    	getInitialState: function() {
-        const { profile } = this.props;
-    	  return {
-    	    firstname: profile.firstname, 
-          lastname: profile.lastname,
-          address: profile.address,
-          zip: profile.zip,
-          country: profile.country
-    	  };
-    	},
+    getInitialState: function() {
+      const { profile:{firstname, lastname, address, zip, country, timezone, locale} } = this.props;
+      return {
+        firstname, 
+        lastname,
+        address,
+        zip,
+        country,
+        timezone,
+        locale
+      };
+    },
   	render: function() {
       const { profile, actions:{saveToProfile} } = this.props;
-      console.log('profile=', profile, this.state);
-  		var _t = this.context.intl.formatMessage;
 
+      var _t = this.context.intl.formatMessage;
+
+      if (this.state.locale === 'en') this.setState({locale: 'en-GB'});
+
+      const countryKey = this.state.country ? "Countries."+this.state.country : "UserSettings.CountryPlaceholder";
+      const timezoneKey = this.state.timezone ? "Timezones."+this.state.timezone : "UserSettings.TimezonePlaceholder";
   		return (
 			<div className="container-fluid" style={{ paddingTop: 10 }}>
 				<div className="row">
@@ -45,8 +52,11 @@ var UserSettings = React.createClass({
               <span><FormattedMessage id="UserSettings.Locale"/></span>
             </label>
             <LocaleSwitcher
-              locale={this.props.locale} 
-              onLocaleSwitch={this.props.actions.setLocale} 
+              locale={this.state.locale} 
+              onLocaleSwitch={value => { 
+                this.props.actions.setLocale(value); 
+                this.setState({locale: value});
+              }} 
             />
 					</div>
           <div className="form-group">
@@ -70,17 +80,36 @@ var UserSettings = React.createClass({
               <span><FormattedMessage id="UserSettings.Country"/></span>
             </label>
             <bs.DropdownButton
+					    title={_t({ id: countryKey})}
               id="country-switcher"
-              defaultValue={this.state.country}
-              onSelect={(e, val) => this.setState({country: val}) }>
+              onSelect={(e, val) => { this.setState({country: val}); } }>
               {
-                ['gr', 'gb', 'es', 'de'].map(country => 
-                    <bs.MenuItem key={country} eventKey={country} value={country} >{_t({id:"Countries."+country})}</bs.MenuItem>)
+                COUNTRIES.map(country => 
+                    <bs.MenuItem key={country} eventKey={country} value={country} >{_t({id: "Countries."+country})}</bs.MenuItem>)
               }	
             </bs.DropdownButton>
           </div>
 
-          <bs.ButtonInput type="submit" value={_t({id:"UserSettings.Submit"})} onClick={(e) => {e.preventDefault();  saveToProfile(this.state); } } />
+          <div className="form-group">
+            <label className="control-label">
+              <span><FormattedMessage id="UserSettings.Timezone"/></span>
+            </label>
+            <bs.DropdownButton
+					    title={_t({ id: timezoneKey})}
+              id="timezone-switcher"
+              onSelect={(e, val) => { this.setState({timezone: val}); } }>
+              {
+                TIMEZONES.map(timezone => 
+                    <bs.MenuItem key={timezone} eventKey={timezone} value={timezone} >{_t({id: "Timezones."+timezone})}</bs.MenuItem>)
+              }	
+            </bs.DropdownButton>
+          </div>
+
+          <hr/>
+          <bs.ButtonInput type="submit" value={_t({id:"UserSettings.Submit"})} onClick={(e) => {
+            e.preventDefault();  
+            saveToProfile(JSON.parse(JSON.stringify(this.state))); 
+          }} />
 				</form>
 			</div>
  		);
