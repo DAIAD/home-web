@@ -48,7 +48,7 @@ var UserSettings = React.createClass({
         
         <form id="form-profile">
           <div className="form-group">
-            <label className="control-label">
+            <label className="control-label col-md-2" style={{ paddingLeft: 0 }}>
               <span><FormattedMessage id="UserSettings.Locale"/></span>
             </label>
             <LocaleSwitcher
@@ -76,7 +76,7 @@ var UserSettings = React.createClass({
 					</div>
 
           <div className="form-group">
-            <label className="control-label">
+            <label className="control-label col-md-2" style={{ paddingLeft: 0 }}>
               <span><FormattedMessage id="UserSettings.Country"/></span>
             </label>
             <bs.DropdownButton
@@ -91,7 +91,7 @@ var UserSettings = React.createClass({
           </div>
 
           <div className="form-group">
-            <label className="control-label">
+            <label className="control-label col-md-2" style={{ paddingLeft: 0 }}>
               <span><FormattedMessage id="UserSettings.Timezone"/></span>
             </label>
             <bs.DropdownButton
