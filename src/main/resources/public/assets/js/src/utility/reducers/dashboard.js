@@ -10,27 +10,42 @@ var _createStatisticsInitialState = function() {
 
 var _createMapInitialState = function() {
   return {
+    interval : [
+        moment().subtract(14, 'day'), moment()
+    ],
     query : null,
     areas : null,
     meters : null,
     devices : null,
-    features : null,
+    timeline : null,
+    features : null
+  };
+};
+
+var _createChartInitialState = function() {
+  return {
     interval : [
-        moment().subtract(7, 'day'), moment()
+        moment().subtract(14, 'day'), moment()
     ],
+    query : null,
+    series : null
   };
 };
 
 var _createInitialState = function() {
   return {
     isLoading : false,
+    interval : [
+        moment().subtract(14, 'day'), moment()
+    ],
     statistics : _createStatisticsInitialState(),
-    map : _createMapInitialState()
+    map : _createMapInitialState(),
+    chart : _createChartInitialState(),
   };
 };
 
 var _extractTimeline = function(meters, areas) {
-  var timeline = {}, timestamp, label;
+  var timeline = {}, timestamp, label, area, min = NaN, max = NaN;
 
   for (var m = 0; m < meters.length; m++) {
     var meter = meters[m];
@@ -48,6 +63,23 @@ var _extractTimeline = function(meters, areas) {
       label[meter.areaId] += point.volume.SUM;
     }
   }
+
+  for (timestamp in timeline) {
+    for (label in timeline[timestamp]) {
+      for (area in timeline[timestamp][label]) {
+        var value = timeline[timestamp][label][area];
+        if ((isNaN(min)) || (min > value)) {
+          min = value;
+        }
+        if ((isNaN(max)) || (max < value)) {
+          max = value;
+        }
+      }
+    }
+  }
+
+  timeline.min = min;
+  timeline.max = max;
 
   timeline.getAreas = function() {
     return areas;
@@ -129,7 +161,63 @@ var _extractTimeline = function(meters, areas) {
   return timeline;
 };
 
-var statisticsReduce = function(state, action) {
+var _extractSeries = function(interval, data, label) {
+  var d;
+  var series = [];
+
+  var ref = interval[1].clone();
+  var days = interval[1].diff(interval[0], 'days') + 1;
+
+  if ((data.length === 0) || (!data[0].points) || (data[0].points.length === 0)) {
+    for (d = days; d > 0; d--) {
+      series.push({
+        volume : 0,
+        date : ref.clone().toDate()
+      });
+
+      ref.subtract(1, 'days');
+    }
+  } else {
+    var index = 0;
+    var points = data[0].points;
+
+    points.sort(function(p1, p2) {
+      return (p2.timestamp - p1.timestamp);
+    });
+
+    for (d = days; d > 0; d--) {
+      if (ref.isSame(points[index].timestamp, 'day')) {
+        series.push({
+          volume : points[index].volume.SUM,
+          date : ref.clone().toDate()
+        });
+        index++;
+      } else {
+        series.push({
+          volume : 0,
+          date : ref.clone().toDate()
+        });
+      }
+      ref.subtract(1, 'days');
+    }
+  }
+
+  return {
+    label : label,
+    data : series.reverse()
+  };
+};
+
+var _extractChartSeries = function(interval, data) {
+  var series = {};
+
+  series.meters = _extractSeries(interval, data.meters, 'Meter');
+  series.devices = _extractSeries(interval, data.devices, 'Amphiro B1');
+
+  return series;
+};
+
+var statisticsReducer = function(state, action) {
   switch (action.type) {
     case types.COUNTER_REQUEST:
       return Object.assign({}, state, {
@@ -161,7 +249,8 @@ var mapReducer = function(state, action) {
         meters : null,
         devices : null,
         timeline : null,
-        features : null
+        features : null,
+        index : 0
       });
 
     case types.TIMELINE_RESPONSE:
@@ -187,7 +276,8 @@ var mapReducer = function(state, action) {
       var features = (state.timeline ? state.timeline.getFeatures(action.timestamp, action.label) : null);
 
       return Object.assign({}, state, {
-        features : features
+        features : features,
+        index: action.index
       });
 
     default:
@@ -195,29 +285,58 @@ var mapReducer = function(state, action) {
   }
 };
 
+var chartReducer = function(state, action) {
+  switch (action.type) {
+    case types.CHART_REQUEST:
+      return Object.assign({}, state, {
+        query : action.query,
+        series : null
+      });
+
+    case types.CHART_RESPONSE:
+      if (action.success) {
+        return Object.assign({}, state, {
+          series : _extractChartSeries(state.interval, action.data)
+        });
+      }
+
+      return Object.assign({}, state, {
+        series : null
+      });
+
+    default:
+      return state || _createChartInitialState();
+  }
+};
+
 var dashboard = function(state, action) {
   switch (action.type) {
     case types.TIMELINE_REQUEST:
+    case types.CHART_REQUEST:
     case types.COUNTER_REQUEST:
       return Object.assign({}, state, {
         isLoading : true,
-        statistics : statisticsReduce(state.statistics, action),
-        map : mapReducer(state.map, action)
+        statistics : statisticsReducer(state.statistics, action),
+        map : mapReducer(state.map, action),
+        chart : chartReducer(state.chart, action)
       });
 
     case types.TIMELINE_RESPONSE:
+    case types.CHART_RESPONSE:
     case types.COUNTER_RESPONSE:
       return Object.assign({}, state, {
         isLoading : false,
-        statistics : statisticsReduce(state.statistics, action),
-        map : mapReducer(state.map, action)
+        statistics : statisticsReducer(state.statistics, action),
+        map : mapReducer(state.map, action),
+        chart : chartReducer(state.chart, action)
       });
 
     case types.GET_FEATURES:
       return Object.assign({}, state, {
         isLoading : false,
-        statistics : statisticsReduce(state.statistics, action),
-        map : mapReducer(state.map, action)
+        statistics : statisticsReducer(state.statistics, action),
+        map : mapReducer(state.map, action),
+        chart : chartReducer(state.chart, action)
       });
 
     case types.USER_RECEIVED_LOGOUT:
