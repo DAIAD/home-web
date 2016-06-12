@@ -113,9 +113,22 @@
     }
 	},
 	"Settings" : {
-		"User" : "User Preferences",
+    "User" : "User Preferences", 
 		"System" : "System Configuration"
 	},
+  "UserSettings": {
+    "Username": "Username",
+    "Firstname": "First name",
+    "Lastname": "Last name",
+    "Address": "Address",
+    "Zip": "Postal code",
+    "Country": "Country",
+    "CountryPlaceholder": "Select country",
+    "TimezonePlaceholder": "Select timezone",
+    "Timezone": "Timezone",
+    "Locale": "Language",
+    "Submit" : "Update"
+  },
 	"Group" : {
     "FavouriteGroupInfo" : "Favourite Group Info",
     "Name" : "Name",
@@ -242,7 +255,7 @@
 		"Users" : "Users",
 		"Meters" : "Smart Meters",
 		"Devices" : "Amphiro Devices"
-	},
+  },
 	"Error": {
 		"400" : "Bad request",
 		"403" : "Authentication has failed",
@@ -274,6 +287,16 @@
     "GroupSuccess.GROUP_DELETED" : "Group was succesfully deleted.",
     "FavouriteSuccess.FAVOURITE_ADDED" : "Favourite was succesfully added.",
     "FavouriteSuccess.FAVOURITE_UPDATED" : "Favourite was succesfully updated."
+  },
+  "Countries": {
+    "Greece": "Greece",
+    "Spain": "Spain",
+    "United Kingdom": "United Kingdom"
+  },
+  "Timezones": {
+    "Europe/London": "UTC",
+    "Europe/Madrid": "Madrid",
+    "Europe/Athens": "Athens"
   }
 }
 

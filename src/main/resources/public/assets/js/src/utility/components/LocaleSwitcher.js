@@ -26,7 +26,6 @@ var LocaleSwitcher = React.createClass({
 		var translationKey = 'locale.' + locale;
 
 		return (
-			<div className="language-switcher">
 				<bs.DropdownButton
 					title={_t({ id: translationKey})}
 					id="language-switcher"
@@ -41,7 +40,6 @@ var LocaleSwitcher = React.createClass({
 					})
 					}	
         </bs.DropdownButton>
-      </div>	
 		);
 	}
 });

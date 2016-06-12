@@ -31,11 +31,6 @@
 	    "Users": "Χρήστες",
 	    "Messages": "Μηνύματα",
 	    "Settings": "Ρυθμίσεις",
-	    "Reports": {
-	      "Group": "Δοκιμές",
-	      "Overview": "Επισκόπηση",
-	      "Charts": "Γραφήματα"
-	    },
       "Reports": {
         "Group": "Δοκιμές",
         "Overview": "Επισκόπηση",

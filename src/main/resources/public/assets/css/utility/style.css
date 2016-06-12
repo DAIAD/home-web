@@ -780,3 +780,19 @@ div.measurement-value .delta > .sign {
     margin-right: 8px;
     opacity: 0.7;
 }
+
+/* UserSettings */
+
+#form-profile {
+  margin-top: 20px;
+  min-width: 200px;
+  width: 40%;
+}
+
+#form-profile .form-group > label {
+  margin-right: 15px;  
+}
+
+#form-profile .form-group > label:after {
+  content: ":";
+}
