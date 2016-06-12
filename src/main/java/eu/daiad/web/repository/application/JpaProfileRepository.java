@@ -627,59 +627,59 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
     @Override
     public void saveProfile(UpdateProfileRequest updates) throws ApplicationException {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            AuthenticatedUser user = null;
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        AuthenticatedUser user = null;
 
-            if (auth.getPrincipal() instanceof AuthenticatedUser) {
-                user = (AuthenticatedUser) auth.getPrincipal();
-            } else {
-                throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
-            }
-
-            TypedQuery<Account> query = entityManager.createQuery("select a from account a where a.key = :key",
-                            Account.class).setFirstResult(0).setMaxResults(1);
-            query.setParameter("key", user.getKey());
-
-            Account account = query.getSingleResult();
-
-            switch (updates.getApplication()) {
-                case HOME:
-                    account.getProfile().setWebConfiguration(updates.getConfiguration());
-                    break;
-                case MOBILE:
-                    account.getProfile().setMobileConfiguration(updates.getConfiguration());
-                    break;
-                case UTILITY:
-                    account.getProfile().setUtilityConfiguration(updates.getConfiguration());
-                    break;
-                default:
-                    throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
-                                    updates.getApplication());
-            }
-
-            account.getProfile().setDailyMeterBudget(updates.getDailyMeterBudget());
-            account.getProfile().setDailyAmphiroBudget(updates.getDailyAmphiroBudget());
-
-            if (!StringUtils.isBlank(updates.getLastname())) {
-                account.setLastname(updates.getLastname());
-            }
-            if (!StringUtils.isBlank(updates.getFirstname())) {
-                account.setFirstname(updates.getFirstname());
-            }
-            if (!StringUtils.isBlank(updates.getLocale())) {
-                String locale = updates.getLocale();
-                if (locale.length() > 2) {
-                    locale = locale.substring(0, 2);
-                }
-                account.setLocale(updates.getLocale());
-            }
-            if (!StringUtils.isBlank(updates.getTimezone())) {
-                account.setTimezone(updates.getTimezone());
-            }
-        } catch (Exception ex) {
-            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        if (auth.getPrincipal() instanceof AuthenticatedUser) {
+            user = (AuthenticatedUser) auth.getPrincipal();
+        } else {
+            throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
         }
+
+        TypedQuery<Account> query = entityManager.createQuery("select a from account a where a.key = :key",
+                        Account.class).setFirstResult(0).setMaxResults(1);
+        query.setParameter("key", user.getKey());
+
+        Account account = query.getSingleResult();
+
+        switch (updates.getApplication()) {
+            case HOME:
+                account.getProfile().setWebConfiguration(updates.getConfiguration());
+                break;
+            case MOBILE:
+                account.getProfile().setMobileConfiguration(updates.getConfiguration());
+                break;
+            case UTILITY:
+                account.getProfile().setUtilityConfiguration(updates.getConfiguration());
+                break;
+            default:
+                throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
+                                updates.getApplication());
+        }
+
+        account.getProfile().setDailyMeterBudget(updates.getDailyMeterBudget());
+        account.getProfile().setDailyAmphiroBudget(updates.getDailyAmphiroBudget());
+
+        if (!StringUtils.isBlank(updates.getLastname())) {
+            account.setLastname(updates.getLastname());
+        }
+        if (!StringUtils.isBlank(updates.getFirstname())) {
+            account.setFirstname(updates.getFirstname());
+        }
+        if (!StringUtils.isBlank(updates.getLocale())) {
+            String locale = updates.getLocale();
+            if (locale.length() > 2) {
+                locale = locale.substring(0, 2);
+            }
+            account.setLocale(locale);
+        }
+        if (!StringUtils.isBlank(updates.getTimezone())) {
+            account.setTimezone(updates.getTimezone());
+        }
+
+        account.setAddress(updates.getAddress());
+        account.setCountry(updates.getCountry());
+        account.setPostalCode(updates.getPostalCode());
     }
 
     @Override
