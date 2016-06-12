@@ -73,10 +73,8 @@ var SessionActions = {
   saveToProfile : function (data) {
     return function(dispatch, getState) {
 
-      console.log('gonna save to profile:', data);
       return sessionAPI.saveToProfile(data)
       .then(function(response) {
-        console.log('got', response);
         return response;
 
       },function(errors) {
