@@ -5,57 +5,67 @@ import java.util.UUID;
 
 public class ExpandedPopulationFilter {
 
-	private String label;
+    private String label;
 
-	private ArrayList<UUID> users = new ArrayList<UUID>();
+    private Long areaId;
 
-	private ArrayList<String> labels = new ArrayList<String>();
+    private ArrayList<UUID> users = new ArrayList<UUID>();
 
-	private ArrayList<byte[]> hashes = new ArrayList<byte[]>();
+    private ArrayList<String> labels = new ArrayList<String>();
 
-	private ArrayList<byte[]> serials = new ArrayList<byte[]>();
+    private ArrayList<byte[]> hashes = new ArrayList<byte[]>();
 
-	private Ranking ranking;
+    private ArrayList<byte[]> serials = new ArrayList<byte[]>();
 
-	public ExpandedPopulationFilter() {
+    private Ranking ranking;
 
-	}
+    public ExpandedPopulationFilter() {
 
-	public ExpandedPopulationFilter(String label) {
-		this.label = label;
-	}
+    }
 
-	public ExpandedPopulationFilter(String label, Ranking ranking) {
-		this.label = label;
-		this.ranking = ranking;
-	}
+    public ExpandedPopulationFilter(String label) {
+        this.label = label;
+    }
 
-	public String getLabel() {
-		return label;
-	}
+    public ExpandedPopulationFilter(String label, Ranking ranking) {
+        this.label = label;
+        this.ranking = ranking;
+    }
 
-	public void setLabel(String label) {
-		this.label = label;
-	}
+    public String getLabel() {
+        return label;
+    }
 
-	public ArrayList<UUID> getUsers() {
-		return users;
-	}
+    public void setLabel(String label) {
+        this.label = label;
+    }
 
-	public ArrayList<byte[]> getHashes() {
-		return hashes;
-	}
+    public ArrayList<UUID> getUsers() {
+        return users;
+    }
 
-	public ArrayList<byte[]> getSerials() {
-		return serials;
-	}
+    public ArrayList<byte[]> getHashes() {
+        return hashes;
+    }
 
-	public ArrayList<String> getLabels() {
-		return labels;
-	}
+    public ArrayList<byte[]> getSerials() {
+        return serials;
+    }
 
-	public Ranking getRanking() {
-		return ranking;
-	}
+    public ArrayList<String> getLabels() {
+        return labels;
+    }
+
+    public Ranking getRanking() {
+        return ranking;
+    }
+
+    public Long getAreaId() {
+        return areaId;
+    }
+
+    public void setAreaId(Long areaId) {
+        this.areaId = areaId;
+    }
 
 }

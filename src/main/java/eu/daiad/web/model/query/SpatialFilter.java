@@ -1,47 +1,16 @@
 package eu.daiad.web.model.query;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.vividsolutions.jts.geom.Geometry;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-public class SpatialFilter {
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type")
+@JsonSubTypes({ @Type(value = CustomSpatialFilter.class, name = "CUSTOM"),
+                @Type(value = AreaSpatialFilter.class, name = "AREA"),
+                @Type(value = GroupSpatialFilter.class, name = "GROUP"),
+                @Type(value = ConstraintSpatialFilter.class, name = "CONSTRAINT") })
+public abstract class SpatialFilter {
 
-	@JsonDeserialize(using = EnumSpatialFilterType.Deserializer.class)
-	private EnumSpatialFilterType type;
-
-	private Geometry geometry;
-
-	private Double distance;
-
-	public EnumSpatialFilterType getType() {
-		return type;
-	}
-
-	public void setType(EnumSpatialFilterType type) {
-		this.type = type;
-	}
-
-	public Geometry getGeometry() {
-		return geometry;
-	}
-
-	public void setGeometry(Geometry geometry) {
-		this.geometry = geometry;
-	}
-
-	public Double getDistance() {
-		if (this.type == EnumSpatialFilterType.DISTANCE) {
-			return null;
-		}
-		return distance;
-	}
-
-	public void setDistance(Double distance) {
-		this.distance = distance;
-	}
-
-	@Override
-	public String toString() {
-		return "SpatialFilter [type=" + type + ", geometry=" + geometry + ", distance=" + distance + "]";
-	}
+    public abstract EnumSpatialFilterType getType();
 
 }

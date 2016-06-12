@@ -11,7 +11,7 @@ var AdminAPI = {
     return api.json('/action/device/index/session/query', {
       userKey : userKey,
       deviceKey : null,
-      type: 'SLIDING',
+      type : 'SLIDING',
       length : 100
     });
   },
@@ -39,14 +39,22 @@ var AdminAPI = {
       timezone : null
     });
   },
-  
-  getAllUtilities : function(){
+
+  getAllUtilities : function() {
     return api.json('/action/utility/fetch/all');
   },
-  
-  createNewUser : function (userInfo){
+
+  createNewUser : function(userInfo) {
     return api.json('/action/user/create', userInfo);
   },
+
+  getGroups : function() {
+    return api.json('/action/admin/group/query', {});
+  },
+
+  getCounters : function() {
+    return api.json('/action/admin/counter');
+  }
 };
 
 module.exports = AdminAPI;

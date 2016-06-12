@@ -1,5 +1,15 @@
 const constants = {
-	LOCALES: ["en", "el", "de", "es"]
+  LOCALES: ["en-GB", "el", "de", "es"],
+  COUNTRIES: [
+    "United Kingdom",
+    "Spain",
+    "Greece"
+],
+  TIMEZONES: [
+    "Europe/London",
+    "Europe/Madrid",
+    "Europe/Athens"
+]
 };
 
 module.exports = constants;

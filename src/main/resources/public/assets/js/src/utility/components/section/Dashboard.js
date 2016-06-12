@@ -1,5 +1,6 @@
 var React = require('react');
-var ReactDOM = require('react-dom');
+var { bindActionCreators } = require('redux');
+var { connect } = require('react-redux');
 var moment = require('moment');
 var Bootstrap = require('react-bootstrap');
 var { Link } = require('react-router');
@@ -8,386 +9,258 @@ var Counter = require('../Counter');
 var Message = require('../Message');
 var Chart = require('../Chart');
 var LeafletMap = require('../LeafletMap');
-var Table = require('../Table');
 var Select = require('react-select');
 var DateRangePicker = require('react-bootstrap-daterangepicker');
-var TimeDimensionSelect = require('../chart/dimension/TimeDimensionSelect');
 var FilterTag = require('../chart/dimension/FilterTag');
 var Timeline = require('../Timeline');
+var {FormattedMessage, FormattedTime, FormattedDate} = require('react-intl');
 
 var WidthProvider = require('react-grid-layout').WidthProvider;
 var ResponsiveReactGridLayout = require('react-grid-layout').Responsive;
 
+var { getTimeline, getFeatures, getCounters, getChart } = require('../../actions/DashboardActions');
+
 ResponsiveReactGridLayout = WidthProvider(ResponsiveReactGridLayout);
 
-var createPoints = function() {
-	var points = [];
-	
-	for(var i=0; i<50; i++) {
-		points.push([38.35 + 0.02 * Math.random(), -0.521 + 0.05 * Math.random(), Math.random()]);
-	}
-	
-	return points;
+var _getTimelineValues = function(timeline) {
+  if(timeline) {
+    return timeline.getTimestamps();
+  } 
+  return [];
 };
 
-var createSeries = function(ref, days, baseConsumption, offset) {
-	var series = [];
-	for(var d=0; d < days; d++) {
-		series.push({
-			volume: (baseConsumption + Math.random() * offset).toFixed(0),
-			date: ref.clone().toDate()
-		});
-		ref.add(1, 'days');
-	}
-
-	return series;
+var _getTimelineLabels = function(timeline) {
+  if(timeline) {
+    return timeline.getTimestamps().map(function(timestamp) {
+      return (
+        <FormattedTime  value={new Date(timestamp)} 
+                        day='numeric' 
+                        month='numeric' 
+                        year='numeric'/>
+      );      
+    });
+  } 
+  return [];
 };
 
-var createDateLabels = function(ref, days) {
-	var series = [];
-
-	for(var d=0; d < days; d++) {
-		series.push(ref.clone().toDate());
-		ref.add(1, 'days');
-	}
-
-	return series;
+var _onChangeTimeline = function(value, label, index) {
+  this.props.actions.getFeatures(index, value);
 };
 
-var chartData = {
-    series: [{
-        legend: 'Smart Meter',
-        xAxis: 'date',
-        yAxis: 'volume',
-        data: createSeries(moment(new Date()).subtract(28, 'days'), 29, 5000, 700)
-    }, {
-        legend: 'Amphiro',
-        xAxis: 'date',
-        yAxis: 'volume',
-        data: createSeries(moment(new Date()).subtract(28, 'days'), 29, 2000, 300)
-    }]
-};
-	
 var Dashboard = React.createClass({
+  _disabledActionHandler: function(e) {
+    e.stopPropagation();
+    e.preventDefault();
+  },
+  
 	contextTypes: {
 	    intl: React.PropTypes.object
 	},
-	
-    getInitialState: function() {
-        return {
-        	filter: null,
-            population: [{ value: 'All', label: 'All', type: 1 }],
-            ranges: {
-				'Today': [moment(), moment()],
-				'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-				'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-				'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-				'This Month': [moment().startOf('month'), moment().endOf('month')],
-				'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
-			},
-			interval:[moment(new Date(2016, 1, 1)), moment(new Date(2016, 1, 29))],
-			points: []
-        };
-    },
-	
-    setFilter: function(value) {
-    	this.setState({ filter : value});
-    },
-    
-    componentWillMount : function() {
-		this.setState({points : createPoints()});
-	},
 
-  	render: function() { 		
-        var chartOptions = {
-            tooltip: {
-                show: true
-            }
-        };
+	componentDidMount : function() {
+	  var utility = this.props.profile.utility;
+  
+	  if(!this.props.map.timeline) {
+	    this.props.actions.getTimeline(utility.key, utility.name, utility.timezone);
+	  }
+	  if(!this.props.chart.series) {
+	    this.props.actions.getChart(utility.key, utility.name, utility.timezone);
+	  }
+	  this.props.actions.getCounters();
+  },
+
+  render: function() { 		
+    var chartData = {
+      series: []
+    };
+
+    if(this.props.chart.series) {
+      if(this.props.chart.series.meters) {
+        chartData.series.push({
+          legend: 'Meter',
+          xAxis: 'date',
+          yAxis: 'volume',
+          data: this.props.chart.series.meters.data
+        });
+      }
+  
+      if(this.props.chart.series.devices) {
+        chartData.series.push({
+          legend: 'Amphiro B1',
+          xAxis: 'date',
+          yAxis: 'volume',
+          data: this.props.chart.series.devices.data
+        });
+      }
+    }
+
+    var chartOptions = {
+      tooltip: {
+        show: true
+      },
+      dataZoom : {
+        format: 'day'
+      }
+    };
         
-		var mapOptions = {
-			center:	[38.35, -0.48], 
-			zoom: 13
-		};
-        
-		var chartTitle;
-		if(this.state.filter) {
-			chartTitle = (
-				<span>
-					<i className='fa fa-bar-chart fa-fw'></i>
-					<span style={{ paddingLeft: 4 }}>Daily Consumption</span>
-					<span style={{float: 'right',  marginTop: -3, marginLeft: 5  }}>
-						<Bootstrap.Button bsStyle='default' className='btn-circle'>
-							<i className='fa fa-expand fa-fw'></i>
-						</Bootstrap.Button>
-					</span>
-					<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-						<Bootstrap.Button	bsStyle='default' className='btn-circle' onClick={this.setFilter.bind(this, null)}>
-							<i className='fa fa-bar-chart fa-fw'></i>
-						</Bootstrap.Button>
-					</span>
-				</span>
-			);
-		} else {		
-			chartTitle = (
-				<span>
-					<i className='fa fa-bar-chart fa-fw'></i>
-					<span style={{ paddingLeft: 4 }}>Daily Consumption</span>
-					<span style={{float: 'right',  marginTop: -3, marginLeft: 5  }}>
-						<Bootstrap.Button bsStyle='default' className='btn-circle'>
-							<i className='fa fa-expand fa-fw'></i>
-						</Bootstrap.Button>
-					</span>
-					<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-						<Bootstrap.Button	bsStyle='default' className='btn-circle' onClick={this.setFilter.bind(this, 'source')}>
-							<i className='fa fa-database fa-fw'></i>
-						</Bootstrap.Button>
-					</span>
-					<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-						<Bootstrap.Button	bsStyle='default' className='btn-circle' onClick={this.setFilter.bind(this, 'spatial')}>
-							<i className='fa fa-map fa-fw'></i>
-						</Bootstrap.Button>
-					</span>
-					<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-						<Bootstrap.Button	bsStyle='default' className='btn-circle' onClick={this.setFilter.bind(this, 'population')}>
-							<i className='fa fa-group fa-fw'></i>
-						</Bootstrap.Button>
-					</span>
-					<span style={{float: 'right',  marginTop: -3 }}>
-						<Bootstrap.Button	bsStyle='default' className='btn-circle' onClick={this.setFilter.bind(this, 'time')}>
-							<i className='fa fa-calendar fa-fw'></i>
-						</Bootstrap.Button>
-					</span>
-				</span>
-			);
-		}
-		
-		var mapTitle = (
+		var chartTitle = (
 			<span>
-				<i className='fa fa-map fa-fw'></i>
-				<span style={{ paddingLeft: 4 }}>Daily Consumption Heatmap</span>
-				<span style={{float: 'right',  marginTop: -3, marginLeft: 5  }}>
-					<Bootstrap.Button bsStyle='default' className='btn-circle'>
-						<i className='fa fa-expand fa-fw'></i>
-					</Bootstrap.Button>
-				</span>
+				<i className='fa fa-bar-chart fa-fw'></i>
+				<span style={{ paddingLeft: 4 }}>Last 2 Week Consumption</span>
 				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-					<Bootstrap.Button	bsStyle='default' className='btn-circle' >
+					<Bootstrap.Button	bsStyle='default' className='btn-circle' disabled >
 						<i className='fa fa-database fa-fw'></i>
 					</Bootstrap.Button>
 				</span>
 				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-					<Bootstrap.Button	bsStyle='default' className='btn-circle' >
-						<i className='fa fa-bar-chart fa-fw'></i>
+					<Bootstrap.Button	bsStyle='default' className='btn-circle' disabled >
+						<i className='fa fa-map fa-fw'></i>
 					</Bootstrap.Button>
 				</span>
 				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-					<Bootstrap.Button	bsStyle='default' className='btn-circle' >
+					<Bootstrap.Button	bsStyle='default' className='btn-circle' disabled >
 						<i className='fa fa-group fa-fw'></i>
 					</Bootstrap.Button>
 				</span>
 				<span style={{float: 'right',  marginTop: -3 }}>
-					<Bootstrap.Button	bsStyle='default' className='btn-circle' >
+					<Bootstrap.Button	bsStyle='default' className='btn-circle' disabled >
+						<i className='fa fa-calendar fa-fw'></i>
+					</Bootstrap.Button>
+				</span>
+			</span>
+		);		
+
+		var mapTitle = (
+			<span>
+				<i className='fa fa-map fa-fw'></i>
+				<span style={{ paddingLeft: 4 }}>Last 2 Week Consumption</span>
+				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
+					<Bootstrap.Button	bsStyle='default' className='btn-circle' disabled >
+						<i className='fa fa-database fa-fw'></i>
+					</Bootstrap.Button>
+				</span>
+        <span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
+          <Bootstrap.Button bsStyle='default' className='btn-circle' disabled >
+            <i className='fa fa-map fa-fw'></i>
+          </Bootstrap.Button>
+        </span>
+				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
+					<Bootstrap.Button	bsStyle='default' className='btn-circle' disabled >
+						<i className='fa fa-group fa-fw'></i>
+					</Bootstrap.Button>
+				</span>
+				<span style={{float: 'right',  marginTop: -3 }}>
+					<Bootstrap.Button	bsStyle='default' className='btn-circle' disabled >
 						<i className='fa fa-calendar fa-fw'></i>
 					</Bootstrap.Button>
 				</span>
 			</span>
 		);
 		
-    	var onChangeInterval = function (event, picker) {
-    		this.setState({
-    			interval: [picker.startDate, picker.endDate]
-    		});
-    	};
+    var intervalLabel ='';
+    if(this.props.interval) {
+    	var start = this.props.interval[0].format('DD/MM/YYYY');
+    	var end = this.props.interval[1].format('DD/MM/YYYY');
+    	intervalLabel = start + ' - ' + end;
+    	if (start === end) {
+    		intervalLabel = start;
+    	}
+    }    	
 
-        var intervalLabel ='';
-        if(this.state.interval) {
-        	var start = this.state.interval[0].format('DD/MM/YYYY');
-        	var end = this.state.interval[1].format('DD/MM/YYYY');
-        	intervalLabel = start + ' - ' + end;
-        	if (start === end) {
-        		intervalLabel = start;
-        	}
-        }    	
-		var intervalConfig = (
-				<div className='col-md-6'>
-					<DateRangePicker	startDate={this.state.interval ? this.state.interval[0] : moment() } 
-										endDate={this.state.interval ? this.state.interval[1] : moment()} 
-										ranges={this.state.ranges} 
-										onEvent={onChangeInterval.bind(this)}>
-						<div className='clearfix Select-control' style={{ cursor: 'pointer', padding: '5px 10px', width: '100%'}}>
-							<span>{intervalLabel}</span>
-						</div>
-	    			</DateRangePicker>
-	    			<span className='help-block'>Select data time interval</span>
-				</div>
-			);
+		var chart = null, chartFilterTags = [], map, mapFilterTags = [];
 
-  		var onChangePopulation = function(val) {
-  			this.setState({
-  				population: (val ? val.map( (item) => { return item.value; } ) : [])
-  			});
-        };
-        var renderOption = function(option) {
-        	switch(option.type){
-        		case 1:
-            		return <span><i className='fa fa-group fa-fw'></i>{option.label}</span>;
-        		case 2:
-        			return <span><i className='fa fa-user fa-fw'></i>{option.label}</span>;
-        	}
-    	};
-		var populationConfig = (
-			<div className='col-md-6'>
-				<Select name='population'
-					multi={true}
-					value={this.state.population}
-	            	options={[
-        	          	  { value: 'All', label: 'All', type: 1 },
-            	          { value: 'Alicante', label: 'Alicante', type: 1 },
-            	          { value: 'St. Albans', label: 'St. Albans', type: 1 },
-            	          { value: 'User 1', label: 'User 1', type: 2 },
-                    ]}
-					optionRenderer={renderOption.bind(this)}
-	            	onChange={onChangePopulation.bind(this)}
-					clearable={true} 
-				/>
-				<span className='help-block'>Select users or groups</span>  
-			</div>
+  	chartFilterTags.push( 
+			<FilterTag key='time' text={intervalLabel} icon='calendar' />
+  	);
+  	chartFilterTags.push( 
+			<FilterTag key='source' text='Meter, Amphiro B1' icon='database' />
+  	);
+
+  	if(chartData.series.length > 0) {
+  		chart = (
+  			<Bootstrap.ListGroupItem>
+  				<Chart 	style={{ width: '100%', height: 400 }} 
+  						elementClassName='mixin'
+  						prefix='chart'
+  						options={chartOptions}
+  						data={chartData}/>
+  			</Bootstrap.ListGroupItem>
+  		);
+  	}
+
+		mapFilterTags.push( 
+			<FilterTag key='time' text={intervalLabel} icon='calendar' />
+  	);
+		mapFilterTags.push( 
+			<FilterTag key='spatial' text='Alicante' icon='map' />
+  	);
+		mapFilterTags.push( 
+			<FilterTag key='source' text='Meter' icon='database' />
+  	);
+
+		map = (
+	    <Bootstrap.ListGroup fill>
+				<Bootstrap.ListGroupItem>
+	        <LeafletMap style={{ width: '100%', height: 600}} 
+                      elementClassName='mixin'
+                      prefix='map'
+                      center={[38.36, -0.479]} 
+                      zoom={13}
+                      mode={LeafletMap.MODE_CHOROPLETH}
+                      data={ this.props.map.features }
+                      colors={['#2166ac', '#67a9cf', '#d1e5f0', '#fddbc7', '#ef8a62', '#b2182b']}
+                      overlays={[
+                        { url : '/assets/data/meters.geojson',
+                          popupContent : 'serial'
+                        }
+                      ]}
+	                    min={this.props.map.timeline ? this.props.map.timeline.min : 0 }
+	                    max={this.props.map.timeline ? this.props.map.timeline.max : 0 }
+	        
+	        />
+				</Bootstrap.ListGroupItem>
+	      <Bootstrap.ListGroupItem>
+	        <Timeline   onChange={_onChangeTimeline.bind(this)} 
+	                    labels={ _getTimelineLabels(this.props.map.timeline) }
+	                    values={ _getTimelineValues(this.props.map.timeline) }
+	                    defaultIndex={this.props.map.index}
+	                    speed={1000}
+	                    animate={false}>
+	        </Timeline>
+	      </Bootstrap.ListGroupItem>
+        <Bootstrap.ListGroupItem className='clearfix'>
+          <div className='pull-left'>
+            {mapFilterTags}
+          </div>
+          <span style={{ paddingLeft : 7}}> </span>
+          <Link className='pull-right' to='/analytics' style={{ paddingLeft : 7, paddingTop: 12 }}>View analytics</Link>
+        </Bootstrap.ListGroupItem>
+      </Bootstrap.ListGroup>
 		);
-
-		var chart, chartFilterTags = [], map, mapFilterTags = [];
-
-		switch(this.state.filter) {
-			case 'time':
-				chart = (
-					<Bootstrap.ListGroupItem>
-						<TimeDimensionSelect />
-					</Bootstrap.ListGroupItem>
-				);
-				break;
-			default:        
-	        	chartFilterTags.push( 
-        			<FilterTag key='time' text={intervalLabel} icon='calendar' onClick={this.setFilter.bind(this, 'time')} />
-	        	);
-	        	chartFilterTags.push( 
-        			<FilterTag key='population' text='All' icon='group' onClick={this.setFilter.bind(this, 'population')} />
-	        	);
-	        	chartFilterTags.push( 
-        			<FilterTag key='spatial' text='Alicante' icon='map' onClick={this.setFilter.bind(this, 'spatial')} />
-	        	);
-	        	chartFilterTags.push( 
-        			<FilterTag key='source' text='Meter, Amphiro' icon='database' onClick={this.setFilter.bind(this, 'source')} />
-	        	);
-				chart = (
-					<Bootstrap.ListGroupItem>
-						<Chart 	style={{ width: '100%', height: 400 }} 
-								elementClassName='mixin'
-								prefix='chart'
-								options={chartOptions}
-								data={chartData}/>
-					</Bootstrap.ListGroupItem>
-				);
-				break;
-		}
-
-		var onChangeTimeline = function(value) {
-			this.setState({points: createPoints()});
-		};
 		
-		switch(this.state.filter) {
-			default:	        
-				mapFilterTags.push( 
-	    			<FilterTag key='time' text={intervalLabel} icon='calendar' onClick={this.setFilter.bind(this, 'time')} />
-	        	);
-				mapFilterTags.push( 
-	    			<FilterTag key='population' text='Alicante' icon='group' onClick={this.setFilter.bind(this, 'population')} />
-	        	);
-				mapFilterTags.push( 
-	    			<FilterTag key='spatial' text='Alicante' icon='map' onClick={this.setFilter.bind(this, 'spatial')} />
-	        	);
-				mapFilterTags.push( 
-	    			<FilterTag key='source' text='Meter' icon='database' onClick={this.setFilter.bind(this, 'source')} />
-	        	);
-				map = (
-					<Bootstrap.ListGroupItem>
-						<LeafletMap style={{ width: '100%', height: 400}} 
-									elementClassName='mixin'
-									prefix='map'
-									options={mapOptions}
-									points={this.state.points} />
-						<Timeline 	onChange={onChangeTimeline.bind(this)} 
-									style={{paddingTop: 10}}
-									min={1}
-			            			max={29}
-									type='date'
-								    data={createDateLabels(moment(new Date()).subtract(28, 'days'), 29)}>
-						</Timeline>
-					</Bootstrap.ListGroupItem>
-				);
-				break;
-		}
-		
-		var alerts = (
-			<Bootstrap.Panel header={ (<span><i className='fa fa-bell fa-fw'></i><span style={{ paddingLeft: 4 }}>Alerts / Announcements</span></span>) }>
-				<Bootstrap.ListGroup fill>
-					<Bootstrap.ListGroupItem>
-						<i className='fa fa-volume-up fa-fw'></i>
-						<span style={{ paddingLeft : 7}}>New water tariff policy</span>
-						<span className='pull-right text-muted small'><em>4 minutes ago</em></span>
-					</Bootstrap.ListGroupItem>
-					<Bootstrap.ListGroupItem>
-						<i className='fa fa-cogs fa-fw'></i>
-						<span style={{ paddingLeft : 7}}>Job 'Daily pre aggregation MR job' has started</span>
-						<span className='pull-right text-muted small'><em>12 minutes ago</em></span>
-					</Bootstrap.ListGroupItem>
-					<Bootstrap.ListGroupItem>
-						<i className='fa fa-warning fa-fw' style={{ color: '#f39c12'}}></i>
-						<span style={{ paddingLeft : 7}}>Excessive water consumption detected</span>
-                        <span className='pull-right text-muted small'><em>27 minutes ago</em></span>
-					</Bootstrap.ListGroupItem>
-					<Bootstrap.ListGroupItem>
-						<i className='fa fa-exclamation fa-fw' style={{ color: '#c0392b'}}></i>
-						<span style={{ paddingLeft : 7}}>Server master-c1-n01 has gone offline</span>
-						<span className='pull-right text-muted small'><em>1 hour ago</em></span>
-					</Bootstrap.ListGroupItem>
-					<Bootstrap.ListGroupItem>
-						<span style={{ paddingLeft : 7}}> </span>
-						<Link to='/alerts' style={{ paddingLeft : 7, float: 'right'}}>View all alerts</Link>
-					</Bootstrap.ListGroupItem>
-				</Bootstrap.ListGroup>
-			</Bootstrap.Panel>
-		);
-        
-		var counters = (
+    var counters = this.props.counters;
+    
+		var counterComponents = (
 			<div className='row'>
-				<div className='col-md-2'>
+				<div className='col-md-4'>
 					<div style={{ marginBottom: 20 }}>
-						<Counter text={'Counter.Users'} value={198} variance={-2} link='/analytics' />
+						<Counter text={'Counter.Users'} 
+						         value={counters ? counters.user.value : null} 
+						         variance={counters ? counters.user.difference : null} link='/users' />
 					</div>
 				</div>
-				<div className='col-md-2'>
+				<div className='col-md-4'>
 					<div style={{ marginBottom: 20 }}>
-						<Counter text={'Counter.Meters'} value={75} variance={5} color='#1abc9c' link='/analytics'/>
+						<Counter text={'Counter.Meters'}
+						         value={counters ? counters.meter.value : null}
+						         variance={counters ? counters.meter.difference : null} color='#1abc9c' link='/users'/>
 					</div>
 				</div>
-				<div className='col-md-2'>
+				<div className='col-md-4'>
 					<div style={{ marginBottom: 20 }}>
-						<Counter text={'Counter.Devices'} value={230} variance={10} color='#27ae60' link='/analytics' />
-					</div>
-				</div>
-				<div className='col-md-2'>
-					<div style={{ marginBottom: 20 }}>
-						<Counter text='Alerts' value={4} color='#c0392b' />
-					</div>
-				</div>
-				<div className='col-md-2'>
-					<div style={{ marginBottom: 20 }}>
-						<Counter text='Warning' value={1} color='#f39c12' />
-					</div>
-				</div>
-				<div className='col-md-2'>
-					<div style={{ marginBottom: 20 }}>
-						<Counter text='Information' value={2} color='#2e8ece' />
+						<Counter text={'Counter.Devices'}
+						         value={counters ? counters.amphiro.value : null}
+						         variance={counters ? counters.amphiro.difference : null} color='#27ae60' link='/users' />
 					</div>
 				</div>
 			</div>
@@ -410,24 +283,14 @@ var Dashboard = React.createClass({
 
 		var mapPanel = (
 			<Bootstrap.Panel header={mapTitle}>
-				<Bootstrap.ListGroup fill>
-					{map}
-					<Bootstrap.ListGroupItem className='clearfix'>
-						<div className='pull-left'>
-							{mapFilterTags}
-						</div>
-						<span style={{ paddingLeft : 7}}> </span>
-						<Link className='pull-right' to='/analytics' style={{ paddingLeft : 7, paddingTop: 12 }}>View analytics</Link>
-					</Bootstrap.ListGroupItem>
-				</Bootstrap.ListGroup>
+				{map}
 			</Bootstrap.Panel>
 		);
 
 		var layouts = {
 			lg : [
-			      { i: '0', x: 0, y: 0, w: 6, h: 14},
-			      { i: '1', x: 6, y: 0, w: 6, h: 15},
-			      { i: '2', x: 0, y: 16, w: 6, h: 7}
+			      { i: '0', x: 0, y: 0, w: 12, h: 14, minH: 14, maxH: 14},
+			      { i: '1', x: 0, y: 12, w: 12, h: 20, minH: 20, maxH: 20}
 	      	]
 		};
 
@@ -443,16 +306,16 @@ var Dashboard = React.createClass({
 
 		};
 		
-  		return (
+		return (
 			<div className='container-fluid' style={{ paddingTop: 10 }}>
 				<div className='row'>
 					<div className='col-md-12'>
 						<Breadcrumb routes={this.props.routes}/>
 					</div>
 				</div>
-				{counters}
+				{counterComponents}
 				<div className='row' style={{ overflow : 'hidden' }}>
-						<ResponsiveReactGridLayout	className='clearfix' 
+					<ResponsiveReactGridLayout	className='clearfix' 
 													layouts={layouts}
 													rowHeight={30}
 													onLayoutChange={onLayoutChange.bind(this)}
@@ -461,17 +324,16 @@ var Dashboard = React.createClass({
 													breakpoints={{lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0}}
 													cols={{lg: 12, md: 10, sm: 6, xs: 4, xxs: 2}}
 													autoSize={true}
+					                verticalCompact={true}
+					                isResizable={false}
 													draggableHandle='.panel-heading'>
-							<div key='0' className='draggable'>
-								{chartPanel}
-					        </div>
-					        <div key='1' className='draggable'>
-								{mapPanel}
-							</div>
-							<div key='2' className='draggable'>
-								{alerts}
-							</div>
-				        </ResponsiveReactGridLayout>
+						<div key='0' className='draggable'>
+							{chartPanel}
+		        </div>
+		        <div key='1' className='draggable'>
+							{mapPanel}
+						</div>
+	        </ResponsiveReactGridLayout>
 				</div>
             </div>
  		);
@@ -481,4 +343,21 @@ var Dashboard = React.createClass({
 Dashboard.icon = 'dashboard';
 Dashboard.title = 'Section.Dashboard';
 
-module.exports = Dashboard;
+function mapStateToProps(state) {
+  return {
+      interval: state.dashboard.interval,
+      map: state.dashboard.map,
+      chart: state.dashboard.chart,
+      counters: state.dashboard.statistics.counters,
+      profile: state.session.profile,
+      routing: state.routing
+  };
+}
+
+function mapDispatchToProps(dispatch) {
+  return {
+    actions : bindActionCreators(Object.assign({}, { getTimeline, getFeatures, getCounters, getChart }) , dispatch)
+  };
+}
+
+module.exports = connect(mapStateToProps, mapDispatchToProps)(Dashboard);

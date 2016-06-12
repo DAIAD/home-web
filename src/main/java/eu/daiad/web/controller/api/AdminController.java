@@ -1,5 +1,7 @@
 package eu.daiad.web.controller.api;
 
+import java.util.UUID;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,11 +13,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.group.GroupQuery;
 import eu.daiad.web.model.group.GroupQueryRequest;
 import eu.daiad.web.model.group.GroupQueryResponse;
+import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.Credentials;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.application.IGroupRepository;
+import eu.daiad.web.repository.application.IUtilityRepository;
 import eu.daiad.web.service.scheduling.ISchedulerService;
 
 /**
@@ -34,6 +39,9 @@ public class AdminController extends BaseRestController {
 	@Autowired
 	private ISchedulerService schedulerService;
 
+	@Autowired
+	private IUtilityRepository utilityRepository;
+	
 	/**
 	 * Launches a job by its name.
 	 * 
@@ -70,9 +78,18 @@ public class AdminController extends BaseRestController {
 		RestResponse response = null;
 
 		try {
-			this.authenticate(request.getCredentials(), EnumRole.ROLE_ADMIN);
+		    AuthenticatedUser user = this.authenticate(request.getCredentials(), EnumRole.ROLE_ADMIN);
 
-			return new GroupQueryResponse(this.groupRepository.getAll());
+            if (request.getQuery() == null) {
+                request.setQuery(new GroupQuery());
+            }
+            if (request.getQuery().getUtility() == null) {
+                UUID utilityKey = utilityRepository.getUtilityById(user.getUtilityId()).getKey();
+
+                request.getQuery().setUtility(utilityKey);
+            }
+
+			return new GroupQueryResponse(this.groupRepository.getAll(request.getQuery()));
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
 

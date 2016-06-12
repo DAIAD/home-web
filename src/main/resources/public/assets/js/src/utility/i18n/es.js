@@ -1,6 +1,6 @@
 {
   "locale": {
-    "en":"English",
+    "en-GB":"English",
     "el":"Greek",
     "es":"Spanish",
     "de":"German"
@@ -25,24 +25,28 @@
   "Section": {
       "Dashboard": "Dashboard",
       "Analytics":"Analytics",
-      "Forecasting": "Forecasting - Learning Mode",
-      "Demographics": "Users & Groups",
+      "Forecasting": "Forecasting",
+      "Demographics": "Groups",
       "ModeManagement": "Mode Management",
-      "Search": "Search",
+      "Users": "Users",
       "Messages": "Messages",
       "Settings": "Settings",
       "Reports": {
         "Group": "Trial Management",
         "Overview": "Overview",
-        "Charts": "Charts"
+        "Charts": "Charts",
+        "Measurements": "Pilot Reports",
+        "System": "System Reports"
       },
-      "Alerts": "Alerts",
       "Announcements" : "Announcements",
-      "ManageAlerts" : "Manage Alerts",
+      "Messages" : {
+        "Tips" : "Manage Alerts"
+      },
       "Scheduler": "Job Management",
       "Consumers": "Consumers",
       "Support" : {
         "Group": "Support",
+        "Logging": "Logs",
         "Data": "Data Management",
         "Development": "Development"
       }
@@ -106,6 +110,20 @@
   "Settings" : {
     "User" : "User Preferences",
     "System" : "System Configuration"
+  },
+  "UserSettings": {
+    "Title": "User Profile",
+    "Username": "Username",
+    "Firstname": "First name",
+    "Lastname": "Last name",
+    "Address": "Address",
+    "Zip": "Postal code",
+    "Country": "Country",
+    "CountryPlaceholder": "Select country",
+    "TimezonePlaceholder": "Select timezone",
+    "Timezone": "Timezone",
+    "Locale": "Language",
+    "Submit" : "Update"
   },
   "Group" : {
     "FavouriteGroupInfo" : "Favourite Group Info",
@@ -231,6 +249,8 @@
     "403" : "Authentication has failed",
     "404" : "Not found",
     "500" : "Internal server error",
+    "SharedErrorCode.AUTHENTICATION": "Authentication has failed. Please try again.",
+    "SharedErrorCode.SESSION_EXPIRED": "Your session has expired.",
     "ValidationError.User.NO_FIRST_NAME": "First name is missing.",
     "ValidationError.User.NO_LAST_NAME": "Last name is missing.",
     "ValidationError.User.NO_EMAIL": "E-mail address is missing.",
@@ -254,5 +274,15 @@
     "GroupSuccess.GROUP_CREATED" : "Group was succesfully created.",
     "FavouriteSuccess.FAVOURITE_ADDED" : "Favourite was succesfully added.",
     "FavouriteSuccess.FAVOURITE_UPDATED" : "Favourite was succesfully updated."
+  },
+  "Countries": {
+    "Greece": "Greece",
+    "Spain": "Spain",
+    "United Kingdom": "United Kingdom"
+  },
+  "Timezones": {
+    "Europe/London": "UTC",
+    "Europe/Madrid": "Madrid",
+    "Europe/Athens": "Athens"
   }
 }

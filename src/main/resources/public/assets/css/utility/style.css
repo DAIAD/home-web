@@ -1,0 +1,798 @@
+@CHARSET "UTF-8";
+
+.clearfix:after
+{
+    visibility: hidden;
+    display: block; /*font-size: 0;*/
+    content: " ";
+    clear: both;
+    height: 0;
+}
+* html .clearfix
+{
+    zoom: 1;
+}
+/* IE6 */
+*:first-child + html .clearfix
+{
+    zoom: 1;
+}
+
+.wrapper {
+	width: 100%;
+	background: #34495e;
+}
+
+.white-wrapper {
+	width: 100%;
+}
+
+.page-wrapper {
+	background-color: #fff;
+	position: inherit;
+	margin: 0 0 0 250px;
+	padding: 55px 22px 0px 22px;
+	border-left: 1px solid #e7e7e7;
+	min-height: 1300px;
+}
+
+.login-wrapper {
+	background-color: #fff;
+	position: inherit;
+	margin-left: auto;
+	margin-right: auto;
+	width: 30%;
+	min-width: 250px;
+	max-width: 350px;
+	padding: 70px 30px 0px 30px;
+	height: 100%;
+	padding: 70px 30px 0px 30px;
+}
+
+.navbar-default {
+}
+
+.navbar-static-side {
+	z-index: 1;
+	position: absolute;
+	width: 250px;
+	margin-top: 51px;
+    background-color: #34495e;
+}
+
+.navbar-static-side li  a {
+    color: #fff;	
+}
+
+.navbar-static-side li  a:focus, .navbar-static-side li  a:hover {
+    background-color: #fff;
+    color: #2c3e50;
+}
+
+/* Select 2 wrapper */
+.Select--multi .Select-value {
+    background-color: rgba(189, 195, 199, 0.08);
+    border: 1px solid rgba(127, 140, 141, 0.24);
+    color: #333;
+}
+
+.Select--multi .Select-value-icon {
+    border-right: 1px solid rgba(127, 140, 141, 0.24);
+}
+
+/* Bread crumb */
+
+ul.breadcrumbs-list {
+	padding: 6px 15px;
+	margin-bottom: 6px;
+	list-style: none;
+	background-color: #f5f5f5;
+	border-radius: 4px;
+}
+
+ul.breadcrumbs-list li {
+	display: inline-block;
+	margin-right: 20px;
+}
+
+ul.breadcrumbs-list li a:not (.breadcrumb-active) {
+	font-weight: bold;
+	margin-right: 20px;
+}
+
+ul.breadcrumbs-list li a.breadcrumb-active {
+	text-decoration: none;
+	cursor: default;
+}
+
+/* Images */
+img.sm {
+	max-width: 16px;
+}
+
+/* Table */
+.table-action {
+	cursor: pointer;
+}
+
+/* Table profile */
+.table-profile > tbody > tr:first-child  > td {
+    border-top: 0;
+}
+
+/* Check box */
+.c-checkbox {
+	float: left;
+}
+.checkbox {
+	margin: 0;
+}
+
+.c-checkbox input {
+	opacity: 0;
+}
+
+.c-checkbox span:before, .c-radio span:before {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	opacity: 0;
+	text-align: center !important;
+	font-size: 12px;
+	line-height: 18px;
+	margin-top: -1px;
+}
+
+.c-checkbox span, .c-radio span {
+	position: relative;
+	display: inline-block;
+	vertical-align: top;
+	margin-left: -25px;
+	width: 18px;
+	height: 18px;
+	border-radius: 2px;
+	text-align: center;
+}
+
+.c-checkbox input[type="checkbox"]+span, .c-checkbox input[type="radio"]+span,
+	.c-radio input[type="checkbox"]+span, .c-radio input[type="radio"]+span
+	{
+	border: 1px solid #337ab7;
+}
+
+.c-checkbox input[type="checkbox"]:checked+span, .c-checkbox input[type="radio"]:checked+span,
+	.c-radio input[type="checkbox"]:checked+span, .c-radio input[type="radio"]:checked+span
+	{
+	background-color: #337ab7;
+}
+
+.c-checkbox-warning	input[type="checkbox"]+span{
+	border: 2px solid #f0ad4e;
+}
+
+.c-checkbox-warning	input[type="checkbox"]:checked+span{
+	background-color: #f0ad4e;
+}
+
+.c-checkbox-disabled input[type="checkbox"]+span{
+	border: 1px solid #999999;
+}
+
+.c-checkbox-disabled input[type="checkbox"]:checked+span{
+	background-color: #999999;
+}
+
+.c-checkbox input[type=checkbox]:checked+span:before, .c-checkbox input[type=radio]:checked+span:before,
+	.c-radio input[type=checkbox]:checked+span:before, .c-radio input[type=radio]:checked+span:before
+	{
+	color: #fff;
+	opacity: 1;
+}
+
+/* Links */
+a .disabled{
+	color: #999999;
+    text-decoration: line-through;
+}
+
+/* Icon */
+.disabled-icon{
+	color: #999999;
+}
+
+/* Custom Spinner*/
+
+.preloader {
+	display: block;
+	position: absolute;
+	top: 35vh;
+	left: 50vw;
+	width: 80px;
+	height: 80px;
+  z-index: 100;
+	animation: counter-spin 0.8s linear infinite;
+}
+
+.preloader-inner {
+	display: block;
+	position: absolute;
+	top: 35vh;
+	left: 50vw;
+	width: 80px;
+	height: 80px;
+  z-index: 100;
+	animation: spin 0.8s linear infinite;
+}
+@-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
+@-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
+@keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }
+
+@-moz-keyframes counter-spin { 100% { -moz-transform: rotate(-360deg); } }
+@-webkit-keyframes counter-spin { 100% { -webkit-transform: rotate(-360deg); } }
+@keyframes counter-spin { 100% { -webkit-transform: rotate(-360deg); transform:rotate(-360deg); } }
+
+/* Bootstrap Grid */
+
+/* Bootstrap circle button */
+
+/* http://bootsnipp.com/snippets/featured/circle-button */
+.btn-circle {
+	width: 30px;
+	height: 30px;
+	text-align: center;
+	padding: 6px 0;
+	font-size: 12px;
+	line-height: 1.428571429;
+	border-radius: 15px;
+	outline: none;
+}
+
+.btn-circle.btn-lg {
+	width: 50px;
+	height: 50px;
+	padding: 10px 16px;
+	font-size: 18px;
+	line-height: 1.33;
+	border-radius: 25px;
+}
+
+.btn-circle.btn-xl {
+	width: 70px;
+	height: 70px;
+	padding: 10px 16px;
+	font-size: 24px;
+	line-height: 1.33;
+	border-radius: 35px;
+}
+
+/* React Bootstrap Badge */
+.badge.danger {
+	background: red;
+}
+
+/* React Bootstrap Tabs */
+.nav.nav-pills.nav-stacked {
+	padding-top: 10px;
+}
+
+.nav-tabs>li>a {
+	border-radius: 0px;
+}
+
+.nav-tabs>li>a:hover {
+	border-color: transparent;
+	border-top-color: #337ab7;
+	border-bottom-color: #ddd;
+	background: #fff;
+}
+
+.disabled-link {
+    border-color: transparent;
+    border-top-color: #337ab7;
+    border-bottom-color: #ddd;
+    color: #cecece!important;
+    background-color: #34495e !important;
+    cursor: not-allowed;
+}
+
+.nav-tabs>li>a:focus {
+	outline: none;
+	border-top-color: #337ab7;
+}
+
+.nav-pills>li.active>a, .nav-pills>li.active>a:focus, .nav-pills>li.active>a:hover
+	{
+	color: #fff;
+	background-color: #337ab7;
+	outline: none;
+}
+
+.nav-pills>li.active>a, .nav-pills>li.active>a:focus, .nav-pills>li.active>a:hover
+	{
+	color: #fff;
+	background-color: #337ab7;
+	outline: none;
+}
+
+.div-centered {
+    float: none;
+    width: 51px;
+    margin: 0 auto;
+}
+
+.equal-height-row {
+	overflow: hidden;
+}
+
+.equal-height-col {
+    margin-bottom: -99999px;
+    padding-bottom: 99999px;
+}
+
+.added-row {
+	background-color: #cef8ce;
+}
+
+.deleted-row {
+	background-color: #f8d6ce;
+}
+
+.rc-input-number {
+  margin: 0;
+  padding: 0;
+  line-height: 26px;
+  font-size: 12px;
+  height: 26px;
+  display: inline-block;
+  vertical-align: middle;
+  border: 1px solid #D9D9D9;
+  border-radius: 5px;
+}
+.rc-input-number-handler {
+  text-align: center;
+  line-height: 12px;
+  height: 12px;
+  overflow: hidden;
+  display: block;
+}
+.rc-input-number-handler-up-inner,
+.rc-input-number-handler-down-inner {
+  color: #666666;
+  -moz-user-select: none;
+   -ms-user-select: none;
+       user-select: none;
+  -webkit-user-select: none;
+}
+.rc-input-number:hover {
+  border-color: #23c0fa;
+}
+.rc-input-number:hover .rc-input-number-handler-up,
+.rc-input-number:hover .rc-input-number-handler-wrap {
+  border-color: #23c0fa;
+}
+.rc-input-number-disabled:hover {
+  border-color: #d9d9d9;
+}
+.rc-input-number-disabled:hover .rc-input-number-handler-up,
+.rc-input-number-disabled:hover .rc-input-number-handler-wrap {
+  border-color: #d9d9d9;
+}
+.rc-input-number-input-wrap {
+  overflow: hidden;
+  height: 26px;
+}
+.rc-input-number-input {
+  width: 100%;
+  text-align: center;
+  outline: 0;
+  -moz-appearance: textfield;
+  line-height: 26px;
+  height: 26px;
+  transition: all 0.3s ease;
+  color: #666666;
+  border: 0;
+  border-radius: 5px;
+  padding: 0;
+}
+.rc-input-number-handler-wrap {
+  float: right;
+  border-left: 1px solid #D9D9D9;
+  width: 20px;
+  height: 26px;
+}
+.rc-input-number-handler-up {
+  border-bottom: 1px solid #D9D9D9;
+  padding-top: 1px;
+}
+.rc-input-number-handler-up-inner:after {
+  content: '+';
+}
+.rc-input-number-handler-down-inner:after {
+  content: '-';
+}
+.rc-input-number-handler-down-disabled,
+.rc-input-number-handler-up-disabled {
+  opacity: 0.72;
+}
+.rc-input-number-handler-down-disabled:hover,
+.rc-input-number-handler-up-disabled:hover {
+  color: #999;
+  border-color: #d9d9d9;
+}
+.rc-input-number-disabled .rc-input-number-input {
+  opacity: 0.72;
+  cursor: not-allowed;
+  background-color: #f3f3f3;
+}
+.rc-input-number-disabled .rc-input-number-handler {
+  opacity: 0.72;
+}
+.rc-input-number-disabled .rc-input-number-handler:hover {
+  color: #999;
+  border-color: #d9d9d9;
+}
+
+/* react-grid-layout */
+.react-grid-item.react-grid-placeholder {
+    background: #F5F5F5;
+    opacity: 0.5;
+    cursor: move;
+}
+
+.react-grid-item > .react-resizable-handle {
+	right: -2px;
+}
+
+.draggable {
+	cursor: move;
+}
+
+/* log levels */
+.log_error {
+    padding: 4px 4px;
+    border-radius: 4px;
+    color: #D8000C;
+    background-color: #FFBABA;
+    text-align: center;
+}
+
+.log_warn {
+    padding: 4px 4px;
+    border-radius: 4px;
+    color: #9F6000;
+    background-color: #FEEFB3;
+    text-align: center;
+}
+
+.log_info {
+    padding: 4px 4px;
+    border-radius: 4px;
+    color: #00529B;
+    background-color: #BDE5F8;
+    text-align: center;
+}
+
+.log_success {
+    padding: 4px 4px;
+    border-radius: 4px;
+    color: #f3f3f3;
+    background-color: #51A351;
+    text-align: center;
+}
+
+.log_debug {
+    padding: 4px 4px;
+    border-radius: 4px;
+    background-color: #d0d0d0;
+    text-align: center;
+}
+
+.log_trace {
+    padding: 4px 4px;
+    border-radius: 4px;
+    background-color: #d0d0d0;
+    text-align: center;
+}
+
+/* Bootstrap */
+
+.form-control {
+  height: 36px;
+}
+
+.panel-heading,
+.panel-body {
+  padding: 12px;
+}
+
+/* Reports (charts/panels) */
+
+.chart.portal {
+  margin: 0px 0px;
+  padding: 0px 0px;
+  background-color: #fff;
+  border: solid 0px silver;
+}
+
+form.report-form {
+  margin: 0px 0px;
+  padding: 5px 0px;
+  width: 100%;
+}
+
+.report-info {
+  margin: 8px 0px;
+}
+
+.report-info p.help,
+.report-form p.help {
+  margin: 0px 0px;
+  font-size: 0.9em;
+}
+
+.report-info p.help.inline,
+.report-form p.help.inline {
+  display: inline-block;
+}
+
+.select-dropdown .dropdown-toggle > span.empty-value,
+.select-dropdown .dropdown-menu li.empty-value > a {
+  font-style: oblique;
+}
+
+form.report-form.form-inline .form-group {
+  margin: 8px 12px 8px 0px;
+}
+
+form.report-form fieldset {
+  margin: 0px 0px 5px 0px;
+}
+
+.reports > h2 {
+  margin: 10px 0px 10px 0px;
+  font-size: 28px;
+}
+
+.reports > h3 {
+  margin: 6px 0px 6px 0px;
+  font-size: 24px;
+}
+
+.reports .panel-body h4 {
+  margin: 5px 0px 15px 0px;
+  font-size: 17px;
+} 
+
+.reports legend {
+  font-size: 16px;
+  margin-bottom: 8px;
+} 
+
+.reports > div.legend {
+  font-size: 16px; /*  mimic a normal legend  */
+  margin-bottom: 8px;
+}
+
+.reports > div.legend .select-dropdown .dropdown-menu li a,
+.reports > div.legend .select-dropdown .dropdown-menu .dropdown-header,
+.reports > div.legend .select-dropdown .btn .text {
+  font-size: 16px;
+}
+
+.reports legend .summary-wrapper {
+  margin: 0px 5px;
+  vertical-align: baseline;
+}
+.reports legend .summary {
+  color: #777;
+  font-size: 0.8em;
+  margin: 0px 3px;
+}
+
+.report-form .form-group > label {
+  vertical-align: text-top;
+  font-weight: normal;
+}
+
+.dropdown.select-report button > span.text {
+  width: 18em;
+}
+.dropdown.select-report .dropdown-menu {
+  width: 23.2em;  
+}
+
+.report-form.form-inline .dropdown.select-field button > span.text {
+  width: 5em;
+}
+.report-form.form-horizontal .dropdown.select-field button > span.text {
+  width: 7em;
+}
+.report-form.form-inline .dropdown.select-source button > span.text {
+  width: 3.1em;
+}
+.report-form.form-horizontal .dropdown.select-source button > span.text {
+  width: 4.5em;
+}
+.report-form.form-inline .dropdown.select-timespan button > span.text {
+  width: 5.5em;
+}
+.report-form.form-horizontal .dropdown.select-timespan button > span.text {
+  width: 10em;
+}
+.report-form.form-horizontal .dropdown.select-timespan .dropdown-menu {
+  min-width: 12.1em;
+}
+.report-form.form-inline .dropdown.select-cluster button > span.text {
+  width: 7em;
+}
+.report-form.form-horizontal .dropdown.select-cluster button > span.text {
+  width: 10em;
+}
+.report-form.form-horizontal .dropdown.select-cluster .dropdown-menu {
+  min-width: 12.1em;
+}
+.report-form.form-inline .dropdown.select-cluster-group button > span.text {
+  width: 7em;
+}
+.report-form.form-horizontal .dropdown.select-cluster-group button > span.text {
+  width: 10em;
+}
+.report-form.form-horizontal .dropdown.select-cluster-group .dropdown-menu {
+  min-width: 12.1em;  
+}
+
+.report-form .form-group .rdt {
+  display: inline-block;
+  vertical-align: middle;
+}
+.report-form.form-horizontal .form-group .rdt > input[type="text"] {
+  width: 9.6em;
+}
+
+.overview .panel .panel-heading .panel-title {
+  font-weight: normal;
+  font-size: 18px;
+}
+
+.overview .panel-body h4 {
+  margin: 12px 0px;
+}
+
+div.measurement-value {
+  display: inline-block;
+  border-style: solid;
+  border-color: rgb(191, 212, 222);
+  border-width: 1px 1px 1px 5px;
+  background-color: inherit;
+}
+div.measurement-value .title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  padding: 8px 5px 8px 5px;
+  border-color: rgb(191, 212, 222);
+  border-width: 0px 0px 1px 0px;
+  border-style: solid;
+}
+div.measurement-value .subtitle {
+  padding: 9px 5px 0px 5px;
+}
+div.measurement-value .current-value > .value,
+div.measurement-value .current-value > .unit,
+div.measurement-value .delta > .value, 
+div.measurement-value .delta > .unit {
+  font-family: 'Inconsolata', monospace;
+}
+div.measurement-value .current-value {
+  padding: 0px 5px 0px 5px; 
+}
+div.measurement-value .current-value .value { 
+  font-size: 3.3rem;
+  font-weight: normal;
+}
+div.measurement-value .current-value .unit {
+  font-size: 2rem;
+}
+div.measurement-value .delta { 
+  position: relative;
+  top: -5px;
+  padding: 0px 5px 0px 5px; 
+  font-size: 1.4rem;
+  color: #545E63;
+}
+div.measurement-value .delta > .value,
+div.measurement-value .delta > .unit {
+  vertical-align: baseline; 
+}
+div.measurement-value .delta > .unit {
+  font-size: 1rem;
+}
+div.measurement-value .delta > .sign {
+  vertical-align: text-top; 
+}
+
+.reports.overview .unit-view > .summary,
+.reports.overview .unit-view > .simple-chart,
+.reports.overview .unit-view > .comparison-chart
+{
+  display: block;
+  float: left;
+  border-style: solid;
+  border-color: rgb(191, 212, 222);
+  border-width: 1px 1px 1px 5px;
+  margin: 0px 5px 5px 0px;
+}
+.reports.overview .unit-view .measurement-value {
+  border-width: 0px;
+  min-height: 150px;
+  min-width: 11em;
+}
+.reports.overview .unit-view .chart.portal {
+  width: 360px;
+  height: 230px;
+}
+
+.reports.overview h2 > small,
+.reports.overview h3 > small {
+  font-size: 57%;
+  margin: 0px 0px 0px 10px;
+}
+.reports.overview .report-form.form-inline {
+  margin: 5px 0px 0px 0px;
+}
+.reports.overview .report-form.form-inline .form-group {
+  margin-right: 6px;
+}
+.reports.overview .report-form.form-inline .form-group label {
+  font-weight: normal;
+  padding: 0px 4px 0px;
+}
+.reports.overview .report-form.form-inline .form-group label {
+  vertical-align: baseline;
+}
+.reports.overview .report-form.form-inline .btn.submit-btn {
+  margin-left: 5px;
+}
+.reports.overview .report-form.form-inline .form-group.submit-buttons {
+  float: right;
+}      
+
+/* view-source:http://leafletjs.com/examples/choropleth-example.html */
+.map-choropleth-info {
+    padding: 6px 8px;
+    font: 14px/16px Arial, Helvetica, sans-serif;
+    background: white;
+    background: rgba(255,255,255,0.8);
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    border-radius: 5px;
+}
+
+.map-choropleth-legend {
+    text-align: left;
+    line-height: 18px;
+    color: #555;
+}
+.map-choropleth-legend i {
+    width: 18px;
+    height: 18px;
+    float: left;
+    margin-right: 8px;
+    opacity: 0.7;
+}
+
+/* UserSettings */
+
+#form-profile {
+  margin-top: 20px;
+  min-width: 200px;
+  width: 40%;
+}
+
+#form-profile .form-group > label {
+  margin-right: 15px;  
+}
+
+#form-profile .form-group > label:after {
+  content: ":";
+}

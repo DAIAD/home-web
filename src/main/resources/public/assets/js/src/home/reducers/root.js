@@ -1,5 +1,4 @@
 var { combineReducers } = require('redux');
-const { reducer:formReducer } = require('redux-form');
 var { routerReducer } = require('react-router-redux');
 
 var locale = require('./locale');
@@ -11,7 +10,6 @@ var messages = require('./messages');
 
 var rootReducer = combineReducers({
   routing: routerReducer,
-  form: formReducer,
   locale,
   user,
   query,

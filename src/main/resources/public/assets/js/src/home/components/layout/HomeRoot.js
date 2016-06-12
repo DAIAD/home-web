@@ -25,18 +25,29 @@ function MainSidebar (props) {
   const { menuItems } = props;
   return (
     <aside className="main-sidebar">
+      <ul className='main-menu-side'>
       {
         menuItems.map(item =>  
-                      <div key={item.name} className="menu-group">
-                        <Link className="menu-item" to={item.route}><img src={`${IMAGES}/${item.image}`}/><FormattedMessage id={item.title}/></Link>
+                      <li key={item.name} className='menu-item'>
+                        <Link to={item.route}>{(() => item.image ? (<div style={{float: 'left', minWidth:25}}><img src={`${IMAGES}/${item.image}`}/></div>) : null)()}
+                          <FormattedMessage id={item.title}/></Link>
                         {
-                          item.children.map(child =>
-                                            <Link key={child.name} className="menu-item menu-subitem" to={child.route}><img src={`${IMAGES}/${child.image}`}/><FormattedMessage id={child.title}/></Link>
-                                            )
+                          item.children && item.children.length ? (<ul className='menu-group'>
+                            {
+                              item.children.map((child,idx) =>
+                                               <li key={idx} className="menu-subitem">
+                                                 <Link key={child.name} to={child.route}>
+                                                   {(() => child.image ? (<img src={`${IMAGES}/${child.image}`}/>) : null)()}
+                                                   <FormattedMessage id={child.title}/></Link>
+                                               </li>)
+                                               }
+                                               </ul>)
+                                            : null
                         }
-                      </div>
+                    </li>
         )
       }
+    </ul>
     </aside>
   );
 } 

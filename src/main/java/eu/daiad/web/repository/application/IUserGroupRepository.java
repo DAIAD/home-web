@@ -21,4 +21,5 @@ public interface IUserGroupRepository{
 
 	public abstract void deleteGroup(UUID group_id);
 		
+	public abstract List<GroupInfo> getGroupsByMember(UUID user_id);
 }

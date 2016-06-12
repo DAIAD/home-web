@@ -155,7 +155,6 @@ function NotificationList(props){
             <li key={notification.category+notification.id} className={notificationClass} >
               <a onClick={() => props.linkToNotification({id: notification.id, category:notification.category})}>
                 {
-                  //(notification.title.length>maxLength)?(`${notification.title.substring(0, maxLength).trim()}...`):notification.title
                   notification.title
                 }
               </a>

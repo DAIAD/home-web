@@ -2,6 +2,7 @@ package eu.daiad.web.service;
 
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.loader.DataTransferConfiguration;
+import eu.daiad.web.model.loader.EnumUploadFileType;
 import eu.daiad.web.model.loader.FileProcessingStatus;
 
 public interface IWaterMeterDataLoaderService {
@@ -19,10 +20,11 @@ public interface IWaterMeterDataLoaderService {
 	 * 
 	 * @param filename the file name.
 	 * @param timezone the time stamp time zone.
+	 * @param type of data being uploaded
 	 * @return statistics about the process execution.
 	 * 
 	 * @throws ApplicationException if the file or the time zone is not found.
 	 */
-	public abstract FileProcessingStatus parse(String filename, String timezone) throws ApplicationException;
+	public abstract FileProcessingStatus parse(String filename, String timezone, EnumUploadFileType type) throws ApplicationException;
 
 }

@@ -4,46 +4,38 @@ import java.util.ArrayList;
 
 import org.joda.time.DateTimeZone;
 
-import eu.daiad.web.model.RestResponse;
+public class DataQueryResponse extends QueryResponse {
 
-public class DataQueryResponse extends RestResponse {
+    private ArrayList<GroupDataSeries> devices;
 
-	private String timezone;
+    private ArrayList<GroupDataSeries> meters;
 
-	private ArrayList<GroupDataSeries> devices;
+    public DataQueryResponse() {
+        super();
+    }
 
-	private ArrayList<GroupDataSeries> meters;
+    public DataQueryResponse(String timezone) {
+        super(timezone);
+    }
 
-	public DataQueryResponse() {
-		this.timezone = DateTimeZone.UTC.toString();
-	}
+    public DataQueryResponse(DateTimeZone timezone) {
+        super(timezone.toString());
+    }
 
-	public DataQueryResponse(String timezone) {
-		this.timezone = timezone;
-	}
+    public ArrayList<GroupDataSeries> getDevices() {
+        return devices;
+    }
 
-	public DataQueryResponse(DateTimeZone timezone) {
-		this.timezone = timezone.toString();
-	}
+    public ArrayList<GroupDataSeries> getMeters() {
+        return meters;
+    }
 
-	public ArrayList<GroupDataSeries> getDevices() {
-		return devices;
-	}
+    public void setDevices(ArrayList<GroupDataSeries> devices) {
+        this.devices = devices;
+    }
 
-	public ArrayList<GroupDataSeries> getMeters() {
-		return meters;
-	}
-
-	public void setDevices(ArrayList<GroupDataSeries> devices) {
-		this.devices = devices;
-	}
-
-	public void setMeters(ArrayList<GroupDataSeries> meters) {
-		this.meters = meters;
-	}
-
-	public String getTimezone() {
-		return timezone;
-	}
+    public void setMeters(ArrayList<GroupDataSeries> meters) {
+        this.meters = meters;
+    }
 
 }

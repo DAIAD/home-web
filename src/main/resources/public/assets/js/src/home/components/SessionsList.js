@@ -5,8 +5,35 @@ var { injectIntl } = require('react-intl');
 var { FormattedMessage, FormattedRelative } = require('react-intl');
 var { IMAGES } = require('../constants/HomeConstants');
 
-//var SessionsChart = require('./SessionsChart');
 
+function SessionListHeader (props) {
+  const { activeDeviceType:devType } = props;
+
+  return devType === 'AMPHIRO' ? (
+    <thead>
+      <tr >
+        <th>Volume</th>
+        <th><i className="fa fa-user"/>User</th>
+        <th><i className="fa fa-calendar"/>Date</th>
+        <th>Device</th>
+        <th><i className="fa fa-clock-o"/>Dur</th>
+        <th><i className="fa fa-flash"/>En</th>
+        <th><i className="fa fa-temperature"/>Temp</th>
+        <th>Id</th>
+        <th></th>
+      </tr>
+    </thead>
+  ):(
+    <thead>
+      <tr>
+        <th>Volume</th>
+        <th><i className="fa fa-user"/>User</th>
+        <th><i className="fa fa-calendar"/>Date</th>
+        <th></th>
+      </tr>
+    </thead>
+  );
+}
 
 function SessionListItem (props) {
   const { firstname } = props;
@@ -14,66 +41,26 @@ function SessionListItem (props) {
   const arrowClass = better===null?"":better?"fa-arrow-down green":"fa-arrow-up red";
   const highlight = devType === 'METER' ? difference : volume;
   const mu = ' lt';
-  return (
-    <li className="session-item"> 
-      <a onClick={() => props.onOpen(device, id, timestamp)} >
-        
-        <ul className="session-item-details"> 
-          <li className='col-md-2'> 
-            <span style={{fontSize: '2.5em'}}>{highlight}<span style={{fontSize: '0.6em'}}>{mu}</span></span>
-        </li>
-            {(() => devType === 'AMPHIRO' ?
-            <li>
-              <span>{devName}</span>
-            </li>
-              :
-              <span/>
-            )()}
-            <li>
-              <span>{firstname}</span>
-            </li>
-            <li>
-              <span><i className="fa fa-calendar"/><FormattedRelative value={timestamp}/></span> 
-            </li>
-            {(() => duration ? 
-             <li>
-              <span><i className="fa fa-clock-o"/>{duration}</span>
-            </li>
-             :
-             <span/>
-            )()}
-            {(() => energyClass ? 
-             <li>
-              <span><i className="fa fa-flash"/>{energyClass}</span>
-            </li>
-            :
-            <span/>
-            )()}
-            {(() => temperature ? 
-             <li>
-              <span><i className="fa fa-temperature"/>{temperature} ºC</span>
-            </li>
-            :
-            <span/>
-            )()}
-            {(() => id!=null ? 
-               <li>
-                <span style={{fontSize: '0.8m!important'}} >{`#${id}`}</span>
-              </li>
-              :
-              <span/>
-            )()}
-        {
-          /*
-             <SparklineChart history={history} data={measurements} intl={props.intl}/>
-          */
-          }
-          <li className="pull-right">
-            <img src={`${IMAGES}/arrow-big-right.svg`} />
-          </li>
-      </ul>
-    </a>
-  </li>
+  //  return (
+  return devType === 'AMPHIRO' ? (
+      <tr onClick={() => props.onOpen(device, id, timestamp)} className='session-list-item'>
+        <td><span style={{fontSize: '2.5em'}}>{highlight}<span style={{fontSize: '0.6em'}}>{mu}</span></span></td>
+        <td>{firstname}</td>
+        <td><FormattedRelative value={timestamp}/></td>
+        <td>{devName}</td>
+        <td>{duration}</td>
+        <td>{energyClass}</td>
+        <td>{temperature} ºC</td>
+        <td><span style={{fontSize: '0.8m!important'}} >{`#${id}`}</span></td>
+        <td><img src={`${IMAGES}/arrow-big-right.svg`} /></td>
+      </tr>
+  ):(
+      <tr onClick={() => props.onOpen(device, id, timestamp)} className='session-list-item'>
+        <td><span style={{fontSize: '2.5em'}}>{highlight}<span style={{fontSize: '0.6em'}}>{mu}</span></span></td>
+        <td>{firstname}</td>
+        <td><FormattedRelative value={timestamp}/></td>
+        <td><img src={`${IMAGES}/arrow-big-right.svg`} /></td>
+      </tr>
   );
 }
 
@@ -124,7 +111,7 @@ var SessionsList = React.createClass({
     },
     */
   render: function() {
-    const { sortOptions, sortFilter, sortOrder, handleSortSelect, csvData } = this.props;
+    const { sortOptions, sortFilter, sortOrder, handleSortSelect, activeDeviceType, csvData } = this.props;
     return (
       <div className="history-list-area">
         <div className="history-list-header">
@@ -164,21 +151,23 @@ var SessionsList = React.createClass({
         
         </div>
       </div>
-
-        <ul className="sessions-list">
-          {
-            this.props.sessions.map((session, idx) => (
-              <SessionListItem
-                firstname={this.props.firstname}
-                intl={this.props.intl}
-                key={idx}
-                index={idx}
-                data={session}
-                onOpen={this.onOpen}
-              />  
-              ))
-          }
-        </ul>
+          <table className='session-list-table'>
+            <SessionListHeader activeDeviceType={activeDeviceType} />
+              <tbody>
+              {
+                this.props.sessions.map((session, idx) => (
+                  <SessionListItem
+                    firstname={this.props.firstname}
+                    intl={this.props.intl}
+                    key={idx}
+                    index={idx}
+                    data={session}
+                    onOpen={this.onOpen}
+                  />  
+                  ))
+              }
+            </tbody>
+            </table>
         </div>
     );
   }

@@ -46,30 +46,30 @@ const getPeriod = function(period, timestamp=moment().valueOf()) {
     granularity: convertPeriodToGranularity(period)
   };
 };
-
+//get Start or End of iso week instead of week to start from monday
 const getNextPeriod = function(period, timestamp=moment().valueOf()) {
-  let sPeriod = period === 'isoweek' ? 'week' : period;
+  let sPeriod = period === 'week' ? 'isoweek' : period;
   return {
-    startDate: moment(timestamp).startOf(period).add(1, sPeriod).valueOf(),
-    endDate: moment(timestamp).endOf(period).add(1, sPeriod).valueOf(),
+    startDate: moment(timestamp).startOf(sPeriod).add(1, period).valueOf(),
+    endDate: moment(timestamp).endOf(sPeriod).add(1, period).valueOf(),
     granularity: convertPeriodToGranularity(period)
   };
 };
 
 const getPreviousPeriod = function(period, timestamp=moment().valueOf()) {
-  let sPeriod = period === 'isoweek' ? 'week' : period;
+  let sPeriod = period === 'week' ? 'isoweek' : period;
   return {
-    startDate: moment(timestamp).startOf(period).subtract(1, sPeriod).valueOf(),
-    endDate: moment(timestamp).endOf(period).subtract(1, sPeriod).valueOf(),
+    startDate: moment(timestamp).startOf(sPeriod).subtract(1, period).valueOf(),
+    endDate: moment(timestamp).endOf(sPeriod).subtract(1, period).valueOf(),
     granularity: convertPeriodToGranularity(period)
   };
 };
 
 const getPreviousPeriodSoFar = function(period, timestamp=moment().valueOf()) {
-  let sPeriod = period === 'isoweek' ? 'week' : period;
+  let sPeriod = period === 'week' ? 'isoweek' : period;
   return {
-    startDate: moment(timestamp).startOf(period).subtract(1, sPeriod).valueOf(),
-    endDate: moment(timestamp).subtract(1, sPeriod).valueOf(),
+    startDate: moment(timestamp).startOf(sPeriod).subtract(1, period).valueOf(),
+    endDate: moment(timestamp).subtract(1, period).valueOf(),
     granularity: convertPeriodToGranularity(period)
   };
 };
@@ -157,6 +157,7 @@ const getGranularityByDiff = function(start, end) {
 
 
 const timeToBuckets = function(time, oops) {
+  if (time == null) return [];
   const { startDate, endDate, granularity } = time;
   if (startDate == null || endDate == null || granularity == null) return [];
   // throw new Error('Need time object with startDate, endDate & granularity to make buckets');
@@ -181,7 +182,6 @@ const timeToBuckets = function(time, oops) {
     buckets.push(t.valueOf());
     x = t.endOf(aggrPeriod).add(1, 'second').clone();
   }
-  console.log('buckets', buckets);
   return buckets;
 };
 

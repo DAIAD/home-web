@@ -1,6 +1,7 @@
 package eu.daiad.web.controller.action;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -16,11 +17,14 @@ import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.admin.AccountActivity;
 import eu.daiad.web.model.admin.AccountActivityResponse;
+import eu.daiad.web.model.admin.CounterCollectionResponse;
+import eu.daiad.web.model.group.GroupQuery;
 import eu.daiad.web.model.group.GroupQueryRequest;
 import eu.daiad.web.model.group.GroupQueryResponse;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IUserRepository;
+import eu.daiad.web.repository.application.IUtilityRepository;
 
 /**
  * Provides actions for performing administration tasks.
@@ -28,67 +32,106 @@ import eu.daiad.web.repository.application.IUserRepository;
 @RestController
 public class AdminController extends BaseController {
 
-	private static final Log logger = LogFactory.getLog(AdminController.class);
+    private static final Log logger = LogFactory.getLog(AdminController.class);
 
-	@Autowired
-	private IGroupRepository groupRepository;
+    @Autowired
+    private IGroupRepository groupRepository;
 
-	@Autowired
-	private IUserRepository userRepository;
+    @Autowired
+    private IUserRepository userRepository;
 
-	/**
-	 * Returns information about all trial user activity.
-	 * 
-	 * @param user the currently authenticated user.
-	 * @return the user activity.
-	 */
-	@RequestMapping(value = "/action/admin/trial/activity", method = RequestMethod.GET, produces = "application/json")
-	@Secured("ROLE_ADMIN")
-	public RestResponse getTrialUserActivity(@AuthenticationPrincipal AuthenticatedUser user) {
-		RestResponse response = null;
+    @Autowired
+    private IUtilityRepository utilityRepository;
 
-		try {
-			AccountActivityResponse controllerResponse = new AccountActivityResponse();
+    /**
+     * Returns information about all trial user activity.
+     * 
+     * @param user the currently authenticated user.
+     * @return the user activity.
+     */
+    @RequestMapping(value = "/action/admin/trial/activity", method = RequestMethod.GET, produces = "application/json")
+    @Secured("ROLE_ADMIN")
+    public RestResponse getTrialUserActivity(@AuthenticationPrincipal AuthenticatedUser user) {
+        RestResponse response = null;
 
-			List<AccountActivity> records = userRepository.getAccountActivity(user.getUtilityId());
+        try {
+            AccountActivityResponse controllerResponse = new AccountActivityResponse();
 
-			for (AccountActivity a : records) {
-				controllerResponse.getAccounts().add(a);
-			}
+            List<AccountActivity> records = userRepository.getAccountActivity(user.getUtilityId());
 
-			response = controllerResponse;
-		} catch (Exception ex) {
-			logger.error(ex.getMessage(), ex);
+            for (AccountActivity a : records) {
+                controllerResponse.getAccounts().add(a);
+            }
 
-			response = new RestResponse();
-			response.add(this.getError(ex));
-		}
+            response = controllerResponse;
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
 
-		return response;
-	}
+            response = new RestResponse();
+            response.add(this.getError(ex));
+        }
 
-	/**
-	 * Returns all available groups including clusters, segments and user defined user groups. Optionally
-	 * filters data.
-	 * 
-	 * @param request the query to filter data. 
-	 * @return the selected groups.
-	 */
-	@RequestMapping(value = "/action/admin/group/query", method = RequestMethod.POST, produces = "application/json")
-	@Secured("ROLE_ADMIN")
-	public RestResponse getGroups(@RequestBody GroupQueryRequest request) {
-		RestResponse response = null;
+        return response;
+    }
 
-		try {
-			return new GroupQueryResponse(this.groupRepository.getAll());
-		} catch (Exception ex) {
-			logger.error(ex.getMessage(), ex);
+    /**
+     * Returns all available groups including clusters, segments and user
+     * defined user groups. Optionally filters data.
+     * 
+     * @param request the query to filter data.
+     * @return the selected groups.
+     */
+    @RequestMapping(value = "/action/admin/group/query", method = RequestMethod.POST, produces = "application/json")
+    @Secured("ROLE_ADMIN")
+    public RestResponse getGroups(@AuthenticationPrincipal AuthenticatedUser user,
+                    @RequestBody GroupQueryRequest request) {
+        RestResponse response = null;
 
-			response = new RestResponse();
-			response.add(this.getError(ex));
-		}
+        try {
+            if (request == null) {
+                request = new GroupQueryRequest();
+            }
+            if (request.getQuery() == null) {
+                request.setQuery(new GroupQuery());
+            }
+            if (request.getQuery().getUtility() == null) {
+                UUID utilityKey = utilityRepository.getUtilityById(user.getUtilityId()).getKey();
 
-		return response;
-	}
+                request.getQuery().setUtility(utilityKey);
+            }
 
+            return new GroupQueryResponse(this.groupRepository.getAll(request.getQuery()));
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response = new RestResponse();
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
+
+    /**
+     * Returns all available counter values
+     * 
+     * @return the selected groups.
+     */
+    @RequestMapping(value = "/action/admin/counter", method = RequestMethod.GET, produces = "application/json")
+    @Secured("ROLE_ADMIN")
+    public RestResponse getCounters(@AuthenticationPrincipal AuthenticatedUser user) {
+        try {
+            CounterCollectionResponse response = new CounterCollectionResponse();
+
+            response.setCounters(this.utilityRepository.getCounters(user.getUtilityId()));
+
+            return response;
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            RestResponse response = new RestResponse();
+            response.add(this.getError(ex));
+
+            return response;
+        }
+    }
 }

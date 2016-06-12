@@ -8,9 +8,12 @@
 var userAPI = require('../api/user');
 var types = require('../constants/ActionTypes');
 var DashboardActions = require('./DashboardActions');
+var HistoryActions = require('./HistoryActions');
 
 const { fetchAll:fetchAllMessages } = require('./MessageActions');
 const { MESSAGE_TYPES } = require('../constants/HomeConstants');
+
+const { getMeterCount } = require('../utils/device');
 
 const requestedLogin = function() {
   return {
@@ -67,17 +70,14 @@ const login = function(username, password) {
       
       dispatch(receivedLogin(success, errors.length?errors[0].code:null, profile));
 
-      if (success) dispatch(fetchAllMessages());
-      
-      if (success && profile.configuration) {
-          const configuration = JSON.parse(profile.configuration);
-          if (configuration.infoboxes) dispatch(DashboardActions.setInfoboxes(configuration.infoboxes));
-          if (configuration.layout) dispatch(DashboardActions.updateLayout(configuration.layout));
+      // Actions that need to be dispatched on login
+      if (success) {
+        dispatch(initHome(profile));
       }
       return response;
     })
     .catch((errors) => {
-      console.error('User login failed with errors:', errors);
+      console.error('Error caught on user login:', errors);
       return errors;
     });
   };
@@ -98,19 +98,49 @@ const refreshProfile = function() {
 
       dispatch(receivedLogin(success, errors.length?errors[0].code:null, profile));
 
-      if (success) dispatch(fetchAllMessages());
-      
-      if (success && profile.configuration) {
-          const configuration = JSON.parse(profile.configuration);
-          if (configuration.infoboxes) dispatch(DashboardActions.setInfoboxes(configuration.infoboxes));
-          if (configuration.layout) dispatch(DashboardActions.updateLayout(configuration.layout));
-        }
+      if (success) {
+        dispatch(initHome(profile));
+      } 
+
       return response;
     })
     .catch((errors) => {
-      console.error('User refresh failed with errors:', errors);
+      console.error('Error caught on profile refresh:', errors);
       return errors;
     });
+  };
+};
+
+/**
+ * Call all necessary actions to initialize app with profile data 
+ *
+ * @param {Object} profile - profile object as returned from server
+ */
+const initHome = function (profile) {
+  return function(dispatch, getState) {
+
+    dispatch(fetchAllMessages());
+      
+    if (profile.configuration) {
+        const configuration = JSON.parse(profile.configuration);
+        if (configuration.infoboxes) dispatch(DashboardActions.setInfoboxes(configuration.infoboxes));
+        if (configuration.layout) dispatch(DashboardActions.updateLayout(configuration.layout, false));
+
+    }
+    dispatch(DashboardActions.fetchAllInfoboxesData());
+    
+    if (getMeterCount(getState().user.profile.devices) === 0) {
+      dispatch(HistoryActions.setActiveDeviceType('AMPHIRO', true));
+      
+      dispatch(DashboardActions.setInfoboxToAdd({
+        deviceType: 'AMPHIRO',
+        type: 'totalVolumeStat',
+        title : 'Shower volume',
+      }));
+    }
+    else {
+      dispatch(HistoryActions.setActiveDeviceType('METER', true));
+    }
   };
 };
 
@@ -123,17 +153,15 @@ const refreshProfile = function() {
 const saveToProfile = function (configuration) {
   return function(dispatch, getState) {
 
-    const data = Object.assign({}, {configuration}, {csrf: getState().user.csrf});
-    console.log('gonna save...', data);
+    const data = Object.assign({}, {configuration: JSON.stringify(configuration)}, {csrf: getState().user.csrf});
 
     return userAPI.saveToProfile(data)
     .then((response) => {
-      console.log('saved to profile', response);
       return response;
 
     })
     .catch((errors) => {
-      console.error('User save to profile failed with errors:', errors);
+      console.error('Error caught on saveToProfile:', errors);
       return errors;
     });
   };
@@ -160,8 +188,9 @@ const logout = function() {
       return response;
     })
     .catch((errors) => {
-      console.error('User login failed with errors:', errors);
-      dispatch(receivedLogout(success, errors.length?errors[0].code:null));
+
+      dispatch(receivedLogout(true, errors.length?errors[0].code:null));
+      console.error('Error caught on logout:', errors);
       return errors;
     });
   };

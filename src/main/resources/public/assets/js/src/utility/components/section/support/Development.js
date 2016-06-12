@@ -4,8 +4,11 @@ var Select = require('react-select');
 var { bindActionCreators } = require('redux');
 var { connect } = require('react-redux');
 var $ = require('jquery');
+var moment = require('moment');
+var LeafletMap = require('../../LeafletMap');
+var Timeline = require('../../Timeline');
 
-var FormattedMessage = require('react-intl').FormattedMessage;
+var {FormattedMessage, FormattedTime, FormattedDate} = require('react-intl');
 
 var Bootstrap = require('react-bootstrap');
 var Dropzone = require('react-dropzone');
@@ -14,10 +17,38 @@ var moment = require('moment');
 var Breadcrumb = require('../../Breadcrumb');
 
 var { submitQuery } = require('../../../actions/QueryActions');
-var { createUser, createAmphiro, generateAmphiroData, setTimezone, setErrors } = require('../../../actions/DebugActions');
+var { createUser, createAmphiro, generateAmphiroData, setTimezone, setErrors, getFeatures } = require('../../../actions/DebugActions');
 
 var onChangeTimezone = function(val) {
   this.props.actions.setTimezone(val.value);
+};
+
+var _getTimelineValues = function(timeline) {
+  if(timeline) {
+    return timeline.getTimestamps();
+  } 
+  return [];
+};
+
+var _getTimelineLabels = function(timeline) {
+  if(timeline) {
+    return timeline.getTimestamps().map(function(timestamp) {
+      return (
+        <FormattedTime  value={new Date(timestamp)} 
+                        day='numeric' 
+                        month='numeric' 
+                        year='numeric'/>
+      );      
+    });
+  } 
+  return [];
+};
+
+var _getFeatures = function(timeline, timestamp, label) {
+  if(timeline) {
+    return timeline.getFeatures(timestamp, label);
+  }
+  return null;
 };
 
 var Development = React.createClass({
@@ -49,8 +80,9 @@ var Development = React.createClass({
     var end = moment().valueOf();
     var start = moment().subtract(30, 'days').valueOf();
     
-    var spatialFilter = {
-      type: 'CONTAINS',
+    var constraintSpatialFilter = {
+      type: 'CONSTRAINT',
+      operation: 'CONTAINS',
       geometry: {
         'type': 'Polygon',
         'coordinates': [
@@ -88,6 +120,11 @@ var Development = React.createClass({
       }
     };
 
+    var groupSpatialFilter = {
+      type: 'GROUP',
+      group: 'd29f8cb8-7df6-4d57-8c99-0a155cc394c5'
+    };
+    
     var query = {
         time: {
           type : 'SLIDING',
@@ -97,36 +134,27 @@ var Development = React.createClass({
           granularity: 'DAY'
         },
         population: [
-          {
-            type :'USER',
-            label: 'User 1',
-            users: ['63078a88-f75a-4c5e-8d75-b4472ba456bb']
-          }, {
-            type :'CLUSTER',
-            label: 'Income',
-            //cluster: 'bd1a6ad7-6419-44a1-b951-bf6f1a4200d5',
-            //name: 'Income',
-            clusterType: 'INCOME'
-          }, {
+          /*
+           * { type :'USER', label: 'User 1', users:
+           * ['63078a88-f75a-4c5e-8d75-b4472ba456bb'] }, { type :'CLUSTER',
+           * label: 'Income', // cluster:
+           * 'bd1a6ad7-6419-44a1-b951-bf6f1a4200d5', // name: 'Income',
+           * clusterType: 'INCOME' },
+           */ {
             type :'UTILITY',
-            label: 'Alicante (all)',
+            label: 'Alicante',
             utility: '2b48083d-6f05-488f-9f9b-99607a93c6c3'
-          }, {
-            type :'UTILITY',
-            label: 'Alicante (top 2)',
-            utility: '2b48083d-6f05-488f-9f9b-99607a93c6c3',
-            ranking: {
-              type: 'TOP',
-              metric: 'AVERAGE',
-              field: 'TEMPERATURE',
-              limit: 2
-            }
-          }
+          }/*
+             * , { type :'UTILITY', label: 'Alicante (top 2)', utility:
+             * '2b48083d-6f05-488f-9f9b-99607a93c6c3', ranking: { type: 'TOP',
+             * metric: 'SUM', field: 'VOLUME', limit: 2 } }
+             */
         ],
-        spatial : null, //spatialFilter,
-        //source: 'BOTH',
+        // spatial :[constraintSpatialFilter],
+        spatial : [groupSpatialFilter],
+        // source: 'BOTH',
         source: 'METER',
-        metrics: ['COUNT', 'SUM', 'MIN', 'MAX', 'AVERAGE']
+        metrics: ['SUM']
     };
     
     this.props.actions.submitQuery({ query : query });
@@ -152,9 +180,9 @@ var Development = React.createClass({
   render: function() {
     var _t = this.context.intl.formatMessage;
    
-    var spinner = (<i className="fa fa-cloud-upload fa-4x"></i>);
+    var spinner = (<i className='fa fa-cloud-upload fa-4x'></i>);
     if(this.props.debug.isLoading   === true) {
-      spinner = (<i className="fa fa-cog fa-spin fa-4x"></i>);
+      spinner = (<i className='fa fa-cog fa-spin fa-4x'></i>);
     }
 
     var modal = null;
@@ -179,6 +207,44 @@ var Development = React.createClass({
       );
     }
     
+    // Add map
+    var interval = [moment().startOf('month'), moment().endOf('month')];
+    var mapOptions = {
+      center: [38.35, -0.48], 
+      zoom: 13
+    };
+    
+    var onChangeTimeline = function(value, label, index) {
+      this.props.actions.getFeatures(this.props.query.timeline, value, 'Alicante');
+    };
+
+    var map = (
+      <Bootstrap.ListGroupItem>
+        <LeafletMap style={{ width: '100%', height: 400}} 
+                    elementClassName='mixin'
+                    prefix='map'
+                    center={[38.35, -0.48]} 
+                    zoom={13}
+                    mode={LeafletMap.MODE_CHOROPLETH}
+                    data={ this.props.debug.features }
+                    colors={['#2166ac', '#67a9cf', '#d1e5f0', '#f7f7f7', '#fddbc7', '#ef8a62', '#b2182b']}
+                    urls={['/assets/data/meters.geojson']} />
+  		</Bootstrap.ListGroupItem>
+    );
+   
+    var timeline = (
+      <Bootstrap.ListGroupItem>
+        <Timeline   onChange={onChangeTimeline.bind(this)} 
+                    labels={ _getTimelineLabels(this.props.query.timeline) }
+                    values={ _getTimelineValues(this.props.query.timeline) }
+                    defaultIndex={0}
+                    speed={1000}
+                    animate={false}>
+        </Timeline>
+      </Bootstrap.ListGroupItem>
+    );
+        
+    // End of map
     return (
       <div className='container-fluid' style={{ paddingTop: 10 }}>
         {modal}
@@ -228,7 +294,9 @@ var Development = React.createClass({
                   <br/><br/>
                   <span style={{ fontWeight: 'bold'}}>Create Amphiro</span>
                   <span color='#565656'>: Registers at least one Amphiro device for every registered user for the utility of the signed administrator.</span>
-                  </Bootstrap.ListGroupItem>
+                </Bootstrap.ListGroupItem>
+                {map}
+                {timeline}
               </Bootstrap.ListGroup>
             </Bootstrap.Panel>
           </div>
@@ -291,7 +359,8 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
   return {
-    actions : bindActionCreators(Object.assign({}, { submitQuery, createUser, createAmphiro, setTimezone, setErrors, generateAmphiroData }) , dispatch)
+    actions : bindActionCreators(Object.assign({}, { submitQuery, createUser, createAmphiro, 
+                                                     setTimezone, setErrors, generateAmphiroData, getFeatures }) , dispatch)
   };
 }
 

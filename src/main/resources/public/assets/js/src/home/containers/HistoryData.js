@@ -7,7 +7,7 @@ var History = require('../components/sections/History');
 
 var HistoryActions = require('../actions/HistoryActions');
 
-var { getDeviceByKey, getDeviceNameByKey, getAvailableDevices, getDeviceTypeByKey, getDefaultDevice } = require('../utils/device');
+var { getDeviceByKey, getDeviceNameByKey, getAvailableDevices, getDeviceTypeByKey, getDefaultDevice, getDeviceCount, getMeterCount } = require('../utils/device');
 var { reduceSessions, reduceMetric, sortSessions, meterSessionsToCSV, deviceSessionsToCSV } = require('../utils/transformations');
 
 var timeUtil = require('../utils/time');
@@ -41,7 +41,23 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
   const devType = stateProps.activeDeviceType;  
   const sessions = sortSessions(reduceSessions(stateProps.devices, stateProps.data), stateProps.sortFilter, stateProps.sortOrder);
 
+
   const csvData = stateProps.activeDeviceType === 'METER' ? meterSessionsToCSV(sessions) : deviceSessionsToCSV(sessions);
+
+  let deviceTypes = [{id:'METER', title: 'Water meter', image: 'water-meter.svg'}, {id:'AMPHIRO', title:'Shower devices', image: 'amphiro_small.svg'}];
+
+
+  const amphiros = getAvailableDevices(stateProps.devices); 
+  const meterCount = getMeterCount(stateProps.devices);
+  const deviceCount = getDeviceCount(stateProps.devices);
+
+  if (meterCount === 0) {
+    deviceTypes = deviceTypes.filter(x => x.id !== 'METER');
+  }
+  
+  if (deviceCount === 0) {
+    deviceTypes = deviceTypes.filter(x => x.id !== 'AMPHIRO');
+  }
 
   const metrics = devType === 'AMPHIRO' ? DEV_METRICS : METER_METRICS;
 
@@ -55,6 +71,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
     ) 
       : [];
 
+
   return Object.assign(
     {}, 
     ownProps, 
@@ -64,12 +81,13 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                   { 
                     nextPeriod: stateProps.time?timeUtil.getNextPeriod(stateProps.timeFilter, stateProps.time.startDate):{}, 
                     previousPeriod: stateProps.time?timeUtil.getPreviousPeriod(stateProps.timeFilter, stateProps.time.endDate):{},
-                    amphiros: getAvailableDevices(stateProps.devices),
+                    amphiros,
                     periods,
                     metrics,
                     comparisons,
                     sortOptions,
                     sessions,
+                    deviceTypes,
                     csvData,
                     reducedMetric: `${reduceMetric(stateProps.devices, stateProps.data, stateProps.metricFilter)} ${getMetricMu(stateProps.metricFilter)}`,
                   }));

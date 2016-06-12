@@ -70,10 +70,18 @@ const linkToHistory = function(options) {
   return function(dispatch, getState) {
     const { showerId, device, deviceType, metric, period, time, data } = options;
     
-    if (deviceType) dispatch(setActiveDeviceType(deviceType, false));
-    if (metric) dispatch(setMetricFilter(metric));
-    if (period) dispatch(setTimeFilter(period));
-    if (time) dispatch(setTime(time, false));
+    if (deviceType) {
+      dispatch(setActiveDeviceType(deviceType, false));
+    }
+    if (metric) {
+      dispatch(setMetricFilter(metric));
+    }
+    if (period) {
+      dispatch(setTimeFilter(period));
+    }
+    if (time) {
+      dispatch(setTime(time, false));
+    }
 
     if (device != null && showerId != null) { 
       dispatch(setSessionFilter(metric)); 
@@ -83,7 +91,7 @@ const linkToHistory = function(options) {
       dispatch(resetActiveSession()); 
     }
     
-    if (data && data.length>0) { 
+    if (data && Array.isArray(data)) { 
       dispatch(setSessions(data));
       dispatch(setDataSynced());
       }
@@ -248,7 +256,7 @@ const setActiveDeviceType = function(deviceType, query=true) {
     else if (deviceType === 'METER') {
       dispatch(setMetricFilter('difference'));
       dispatch(setTimeFilter('year'));
-      dispatch(setTime(getTimeByPeriod('year')));
+      dispatch(setTime(getTimeByPeriod('year'), query));
       dispatch(setSortFilter('timestamp'));
     }
     

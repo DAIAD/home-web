@@ -8,7 +8,7 @@ var MessageAlert = require('../../AlertDismissable');
 var errorsCodes = require('../../../constants/Errors');
 var successCodes = require('../../../constants/Successes');
 
-var Helpers = require('../../../helpers/helpers');
+var Helpers = require('../../../helpers/array-funcs');
 var DemographicsTablesSchema = require('../../../constants/DemographicsTablesSchema');
 
 

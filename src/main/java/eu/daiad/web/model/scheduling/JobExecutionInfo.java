@@ -4,8 +4,10 @@ import java.util.List;
 
 public class JobExecutionInfo {
 
-	private long jobId;
+	private Long jobId;
 
+	private String jobName;
+	
 	private long instanceId;
 
 	private long executionId;
@@ -16,15 +18,15 @@ public class JobExecutionInfo {
 
 	private String statusCode;
 
-	private String exitCode;
+	private EnumExecutionExitCode exitCode;
 
 	private List<JobExecutionParameter> parameters;
 
-	public long getJobId() {
+	public Long getJobId() {
 		return jobId;
 	}
 
-	public void setJobId(long jobId) {
+	public void setJobId(Long jobId) {
 		this.jobId = jobId;
 	}
 
@@ -68,11 +70,11 @@ public class JobExecutionInfo {
 		this.statusCode = statusCode;
 	}
 
-	public String getExitCode() {
+	public EnumExecutionExitCode getExitCode() {
 		return exitCode;
 	}
 
-	public void setExitCode(String exitCode) {
+	public void setExitCode(EnumExecutionExitCode exitCode) {
 		this.exitCode = exitCode;
 	}
 
@@ -83,5 +85,13 @@ public class JobExecutionInfo {
 	public void setParameters(List<JobExecutionParameter> parameters) {
 		this.parameters = parameters;
 	}
+
+    public String getJobName() {
+        return jobName;
+    }
+
+    public void setJobName(String jobName) {
+        this.jobName = jobName;
+    }
 
 }
