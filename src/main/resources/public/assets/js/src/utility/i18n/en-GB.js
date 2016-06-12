@@ -42,9 +42,10 @@
         "Measurements": "Pilot Reports",
         "System": "System Reports"
       },
-	    "Announcements" : "Announcements",
-	    "Messages" : {
-        "Tips" : "Manage Alerts"
+      "ManageAlerts": {
+        "Engagement": "Engagement",
+        "Messages": "Messages",
+        "Announcements": "Announcements"
       },
 	    "Scheduler": "Job Management",
 	    "Consumers": "Consumers",
@@ -291,3 +292,4 @@
     "de": "Germany"
   }
 }
+

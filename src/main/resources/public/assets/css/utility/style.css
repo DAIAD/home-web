@@ -83,8 +83,8 @@
 /* Bread crumb */
 
 ul.breadcrumbs-list {
-	padding: 8px 15px;
-	margin-bottom: 12px;
+	padding: 6px 15px;
+	margin-bottom: 6px;
 	list-style: none;
 	background-color: #f5f5f5;
 	border-radius: 4px;
@@ -95,7 +95,7 @@ ul.breadcrumbs-list li {
 	margin-right: 20px;
 }
 
-ul.breadcrumbs-list li a:not (.breadcrumb-active ) {
+ul.breadcrumbs-list li a:not (.breadcrumb-active) {
 	font-weight: bold;
 	margin-right: 20px;
 }
@@ -509,7 +509,14 @@ a .disabled{
 
 /* Reports (charts/panels) */
 
-form.report-panel {
+.chart.portal {
+  margin: 0px 0px;
+  padding: 0px 0px;
+  background-color: #fff;
+  border: solid 0px silver;
+}
+
+form.report-form {
   margin: 0px 0px;
   padding: 5px 0px;
   width: 100%;
@@ -520,13 +527,13 @@ form.report-panel {
 }
 
 .report-info p.help,
-.report-panel p.help {
+.report-form p.help {
   margin: 0px 0px;
   font-size: 0.9em;
 }
 
 .report-info p.help.inline,
-.report-panel p.help.inline {
+.report-form p.help.inline {
   display: inline-block;
 }
 
@@ -535,30 +542,22 @@ form.report-panel {
   font-style: oblique;
 }
 
-form.report-panel.form-inline .form-group {
+form.report-form.form-inline .form-group {
   margin: 8px 12px 8px 0px;
 }
 
-form.report-panel fieldset {
+form.report-form fieldset {
   margin: 0px 0px 5px 0px;
 }
 
+.reports > h2 {
+  margin: 10px 0px 10px 0px;
+  font-size: 28px;
+}
+
 .reports > h3 {
-  margin: 5px 0px 15px 0px;
-  font-size: 25px;
-}
-
-.overview.reports > h3 {
-  margin: 5px 0px 5px 0px; 
-}
-
-.overview.reports > .form-inline {
-  margin-bottom: 5px;
-  line-height: 40px;
-}
-.overview.reports > .form-inline .form-group {
-  margin: 0px;
-  vertical-align: top;
+  margin: 6px 0px 6px 0px;
+  font-size: 24px;
 }
 
 .reports .panel-body h4 {
@@ -566,18 +565,13 @@ form.report-panel fieldset {
   font-size: 17px;
 } 
 
-.reports > h3 span.delimiter {
-  font-weight: bolder;
-}
-
 .reports legend {
   font-size: 16px;
   margin-bottom: 8px;
 } 
 
 .reports > div.legend {
-  /* mimic a normal legend */
-  font-size: 16px;
+  font-size: 16px; /*  mimic a normal legend  */
   margin-bottom: 8px;
 }
 
@@ -597,7 +591,7 @@ form.report-panel fieldset {
   margin: 0px 3px;
 }
 
-.report-panel .form-group > label {
+.report-form .form-group > label {
   vertical-align: text-top;
   font-weight: normal;
 }
@@ -609,56 +603,52 @@ form.report-panel fieldset {
   width: 23.2em;  
 }
 
-.report-panel.form-inline .dropdown.select-source button > span.text {
+.report-form.form-inline .dropdown.select-field button > span.text {
+  width: 5em;
+}
+.report-form.form-horizontal .dropdown.select-field button > span.text {
+  width: 7em;
+}
+.report-form.form-inline .dropdown.select-source button > span.text {
   width: 3.1em;
 }
-.report-panel.form-horizontal .dropdown.select-source button > span.text {
+.report-form.form-horizontal .dropdown.select-source button > span.text {
   width: 4.5em;
 }
-
-.report-panel.form-inline .dropdown.select-timespan button > span.text {
+.report-form.form-inline .dropdown.select-timespan button > span.text {
   width: 5.5em;
 }
-.report-panel.form-horizontal .dropdown.select-timespan button > span.text {
+.report-form.form-horizontal .dropdown.select-timespan button > span.text {
   width: 10em;
 }
-.report-panel.form-horizontal .dropdown.select-timespan .dropdown-menu {
+.report-form.form-horizontal .dropdown.select-timespan .dropdown-menu {
   min-width: 12.1em;
 }
-
-.report-panel.form-inline .dropdown.select-cluster button > span.text {
+.report-form.form-inline .dropdown.select-cluster button > span.text {
   width: 7em;
 }
-.report-panel.form-horizontal .dropdown.select-cluster button > span.text {
+.report-form.form-horizontal .dropdown.select-cluster button > span.text {
   width: 10em;
 }
-.report-panel.form-horizontal .dropdown.select-cluster .dropdown-menu {
+.report-form.form-horizontal .dropdown.select-cluster .dropdown-menu {
   min-width: 12.1em;
 }
-
-.report-panel.form-inline .dropdown.select-cluster-group button > span.text {
+.report-form.form-inline .dropdown.select-cluster-group button > span.text {
   width: 7em;
 }
-.report-panel.form-horizontal .dropdown.select-cluster-group button > span.text {
+.report-form.form-horizontal .dropdown.select-cluster-group button > span.text {
   width: 10em;
 }
-.report-panel.form-horizontal .dropdown.select-cluster-group .dropdown-menu {
+.report-form.form-horizontal .dropdown.select-cluster-group .dropdown-menu {
   min-width: 12.1em;  
 }
 
-.report-panel .form-group .rdt {
+.report-form .form-group .rdt {
   display: inline-block;
   vertical-align: middle;
 }
-.report-panel .form-group .rdt > input[type="text"] {
+.report-form.form-horizontal .form-group .rdt > input[type="text"] {
   width: 9.6em;
-}
-
-.chart.portal {
-  margin: 0px 0px;
-  padding: 0px 0px;
-  background-color: #fff;
-  border: solid 0px silver;
 }
 
 .overview .panel .panel-heading .panel-title {
@@ -743,5 +733,50 @@ div.measurement-value .delta > .sign {
   height: 230px;
 }
 
+.reports.overview h2 > small,
+.reports.overview h3 > small {
+  font-size: 57%;
+  margin: 0px 0px 0px 10px;
+}
+.reports.overview .report-form.form-inline {
+  margin: 5px 0px 0px 0px;
+}
+.reports.overview .report-form.form-inline .form-group {
+  margin-right: 6px;
+}
+.reports.overview .report-form.form-inline .form-group label {
+  font-weight: normal;
+  padding: 0px 4px 0px;
+}
+.reports.overview .report-form.form-inline .form-group label {
+  vertical-align: baseline;
+}
+.reports.overview .report-form.form-inline .btn.submit-btn {
+  margin-left: 5px;
+}
+.reports.overview .report-form.form-inline .form-group.submit-buttons {
+  float: right;
+}      
 
+/* view-source:http://leafletjs.com/examples/choropleth-example.html */
+.map-choropleth-info {
+    padding: 6px 8px;
+    font: 14px/16px Arial, Helvetica, sans-serif;
+    background: white;
+    background: rgba(255,255,255,0.8);
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    border-radius: 5px;
+}
 
+.map-choropleth-legend {
+    text-align: left;
+    line-height: 18px;
+    color: #555;
+}
+.map-choropleth-legend i {
+    width: 18px;
+    height: 18px;
+    float: left;
+    margin-right: 8px;
+    opacity: 0.7;
+}

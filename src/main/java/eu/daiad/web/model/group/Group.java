@@ -1,73 +1,81 @@
 package eu.daiad.web.model.group;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import com.vividsolutions.jts.geom.Geometry;
 
 public abstract class Group {
 
-	private UUID key;
+    private UUID key;
 
-	private UUID utilityKey;
+    private UUID utilityKey;
 
-	private String name;
+    private String name;
 
-	private long createdOn;
+    private long createdOn;
 
-	private Geometry geometry;
+    private Geometry geometry;
 
-	private Integer size;
+    private Integer size;
 
-	public UUID getKey() {
-		return key;
-	}
+    private List<UUID> members = new ArrayList<UUID>();
 
-	public void setKey(UUID key) {
-		this.key = key;
-	}
+    public UUID getKey() {
+        return key;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public void setKey(UUID key) {
+        this.key = key;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public long getCreatedOn() {
-		return createdOn;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public void setCreatedOn(long createdOn) {
-		this.createdOn = createdOn;
-	}
+    public long getCreatedOn() {
+        return createdOn;
+    }
 
-	public Geometry getGeometry() {
-		return geometry;
-	}
+    public void setCreatedOn(long createdOn) {
+        this.createdOn = createdOn;
+    }
 
-	public void setGeometry(Geometry geometry) {
-		this.geometry = geometry;
-	}
+    public Geometry getGeometry() {
+        return geometry;
+    }
 
-	public Integer getSize() {
-		return size;
-	}
+    public void setGeometry(Geometry geometry) {
+        this.geometry = geometry;
+    }
 
-	public void setSize(Integer size) {
-		this.size = size;
-	}
+    public Integer getSize() {
+        return size;
+    }
 
-	public UUID getUtilityKey() {
-		return utilityKey;
-	}
+    public void setSize(Integer size) {
+        this.size = size;
+    }
 
-	public void setUtilityKey(UUID utilityKey) {
-		this.utilityKey = utilityKey;
-	}
+    public UUID getUtilityKey() {
+        return utilityKey;
+    }
 
-	public EnumGroupType getType() {
-		return EnumGroupType.UNDEFINED;
-	}
+    public void setUtilityKey(UUID utilityKey) {
+        this.utilityKey = utilityKey;
+    }
+
+    public EnumGroupType getType() {
+        return EnumGroupType.UNDEFINED;
+    }
+
+    public List<UUID> getMembers() {
+        return members;
+    }
 
 }

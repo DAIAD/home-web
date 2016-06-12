@@ -47,7 +47,8 @@ import eu.daiad.web.model.query.UserDataPoint;
 import eu.daiad.web.repository.AbstractHBaseRepository;
 
 @Repository()
-public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepository implements IWaterMeterMeasurementRepository {
+public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepository implements
+                IWaterMeterMeasurementRepository {
 
     private static final Log logger = LogFactory.getLog(HBaseWaterMeterMeasurementRepository.class);
 
@@ -117,9 +118,11 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                 }
             }
             for (int i = 1, count = data.getMeasurements().size(); i < count; i++) {
-                data.getMeasurements().get(i).setDifference(
-                                data.getMeasurements().get(i).getVolume()
-                                                - data.getMeasurements().get(i - 1).getVolume());
+                if (data.getMeasurements().get(i).getDifference() == null) {
+                    data.getMeasurements().get(i).setDifference(
+                                    data.getMeasurements().get(i).getVolume()
+                                                    - data.getMeasurements().get(i - 1).getVolume());
+                }
             }
 
             this.storeDataByMeter(serial, data);
@@ -145,7 +148,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
             for (int i = 0; i < data.getMeasurements().size(); i++) {
                 WaterMeterMeasurement m = data.getMeasurements().get(i);
 
-                if (m.getVolume() <= 0) {
+                if ((m.getVolume() <= 0) || (m.getDifference() <= 0)) {
                     continue;
                 }
 
@@ -209,9 +212,10 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
             for (int i = 0; i < data.getMeasurements().size(); i++) {
                 WaterMeterMeasurement m = data.getMeasurements().get(i);
 
-                if (m.getVolume() <= 0) {
+                if ((m.getVolume() <= 0) || (m.getDifference() <= 0)) {
                     continue;
                 }
+
                 short partition = (short) (m.getTimestamp() % this.timePartitions);
                 byte[] partitionBytes = Bytes.toBytes(partition);
 

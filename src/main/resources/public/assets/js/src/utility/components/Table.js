@@ -295,7 +295,10 @@ var Cell = React.createClass({
 			
 		}
 
-		var style = {};
+		var style = {
+		    maxHeight: 100,
+		    overflowY: 'auto'
+		};
     if((this.props.field.width) && (this.props.field.width > 0)) {
       style.width = this.props.field.width;
     }

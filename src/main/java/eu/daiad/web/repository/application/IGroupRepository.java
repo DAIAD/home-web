@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import eu.daiad.web.model.group.Account;
+import eu.daiad.web.model.group.Cluster;
 import eu.daiad.web.model.group.Group;
 import eu.daiad.web.model.group.GroupQuery;
 import eu.daiad.web.model.query.EnumClusterType;
@@ -33,5 +34,9 @@ public interface IGroupRepository {
     List<UUID> getUtilityByIdMemberKeys(int utilityId);
 
     List<UUID> getUtilityByKeyMemberKeys(UUID utilityKey);
+
+    void deleteAllClusterByName(String name);
+
+    void createCluster(Cluster cluster);
 
 }

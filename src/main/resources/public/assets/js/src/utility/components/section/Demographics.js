@@ -264,71 +264,6 @@ var Demographics = React.createClass({
 		      }]
 		  };
 
-  		var jobs = {
-  			fields: [{
-  				name: 'id',
-  				hidden: true
-  			}, {
-  				name: 'description',
-  				title: 'Demographics.JobManagement.Description'
-  			}, {
-  				name: 'owner',
-  				title: 'Demographics.JobManagement.Owner'			
-  			}, {
-  				name: 'createdOn',
-  				title: 'Demographics.JobManagement.CreatedOn',
-  				type: 'datetime'
-  			}, {
-  				name: 'scheduledOn',
-  				title: 'Demographics.JobManagement.NextExecution',
-  				type: 'datetime'
-  			}, {
-  				name: 'status',
-  				title: 'Demographics.JobManagement.Status'
-  			}, {
-  				name: 'progress',
-  				title: 'Demographics.JobManagement.Progress',
-  				type: 'progress'
-  			}, {
-  				name: 'edit',
-  				type:'action',
-  				icon: 'pencil',
-  				handler: function() {
-  					console.log(this);
-  				}
-  			}, {
-  				name: 'cancel',
-  				type:'action',
-  				icon: 'remove',
-  				handler: function() {
-  					console.log(this);
-  				}
-  			}],
-  			rows: [{
-  				id: 1,
-  				description: 'Find top 20 consumers for January 2016',
-  				owner: 'Yannis',
-  				createdOn: new Date((new Date()).getTime() + Math.random() * 3600000),
-  				scheduledOn: new Date((new Date()).getTime() + Math.random() * 3600000),
-  				status: 'Running',
-  				progress: 45
-  			}, {
-  				id: 2,
-  				description: 'Create clusters of users based on consumption behavior patterns',
-  				owner: 'Yannis',
-  				createdOn: new Date((new Date()).getTime() + Math.random() * 3600000),
-  				scheduledOn: new Date((new Date()).getTime() + Math.random() * 3600000),
-  				status: 'Pending',
-  				progress: null
-  			}],
-  			pager: {
-  				index: 0,
-  				size: 1,
-  				count:2
-  			}
-  		};
-  		
-  		
       var chartOptions = {
           tooltip: {
               show: true
@@ -390,18 +325,6 @@ var Demographics = React.createClass({
   			</span>
   		);	
 
-  		const scheduleTitle = (
-  			<span>
-  				<i className='fa fa-clock-o fa-fw'></i>
-  				<span style={{ paddingLeft: 4 }}>Job Management</span>
-  				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-  					<Bootstrap.Button	bsStyle="default" className="btn-circle">
-  						<Bootstrap.Glyphicon glyph="plus" />
-  					</Bootstrap.Button>
-  				</span>
-  			</span>
-  		);	
-  		
   		const groupMessageAlert = (
           <MessageAlert
             show = {this.props.showMessageAlert}
@@ -552,21 +475,6 @@ var Demographics = React.createClass({
       						</Bootstrap.Panel>
       					</div>
       				</div>
-      				<div className="row">
-      					<div className='col-md-12'>
-      						<Bootstrap.Panel header={scheduleTitle}>
-      							<Bootstrap.ListGroup fill>
-      								<Bootstrap.ListGroupItem>	
-      									<Table data={jobs}></Table>
-      								</Bootstrap.ListGroupItem>
-      								<Bootstrap.ListGroupItem>
-      									<span style={{ paddingLeft : 7}}> </span>
-      									<Link to='/scheduler' style={{ paddingLeft : 7, float: 'right'}}>View job management</Link>
-      								</Bootstrap.ListGroupItem>
-      							</Bootstrap.ListGroup>
-      						</Bootstrap.Panel>
-      					</div>
-      				</div>
       			</div>
       		);
 		    } else {
@@ -581,7 +489,7 @@ var Demographics = React.createClass({
   	}
 });
 
-Demographics.icon = 'bookmark';
+Demographics.icon = 'group';
 Demographics.title = 'Section.Demographics';
 
 
