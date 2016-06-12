@@ -112,6 +112,7 @@
     "System" : "System Configuration"
   },
   "UserSettings": {
+    "Title": "User Profile",
     "Username": "Username",
     "Firstname": "First name",
     "Lastname": "Last name",
