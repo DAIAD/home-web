@@ -113,7 +113,7 @@ var Chart = React.createClass({
           xAxis={{
             data: xaxisData,
             boundaryGap: false, 
-            formatter: (t) => (moment(t).format(xf)),
+            formatter: (t) => (moment(t).utc().format(xf)),
           }}
           yAxis={{
             name: fieldName + (unit? (' (' + unit + ')') : ''),
@@ -161,18 +161,16 @@ var Chart = React.createClass({
       end = _.max(series.map(s => s.timespan[1]));
     }
     
-    var startx = moment(start).startOf(bucket);
-    var endx = moment(end).endOf(bucket);
+    var startx = moment(start).utc().startOf(bucket);
+    var endx = moment(end).utc().endOf(bucket);
     
     // Generate x-axis data,
-    
     result.xaxisData = [];
     for (let m = startx; m < endx; m.add(d)) {
       result.xaxisData.push(m.valueOf());
     }
 
-    // Collect points in level-wide buckets, then consolidate
-    
+    // Collect points in level-wide buckets
     var groupInBuckets = (data, boundaries) => {
       // Group y values into buckets defined yb x-axis boundaries:
       var N = boundaries.length;
@@ -186,11 +184,10 @@ var Chart = React.createClass({
           j++;
         }
       }
-      // The last (N-th) bucket will always be empty
-      yb.push([]);
       return yb;
     };
-
+    
+    // Consolidate
     var cf = consolidateFuncs[report.consolidate]; 
     result.series = series.map(s => (
       _.extend({}, s, {
@@ -198,6 +195,9 @@ var Chart = React.createClass({
       })
     ));
     
+    // The number of Y buckets is always N - 1, where N is the number of X points!
+    result.xaxisData.pop(); 
+
     return result;
   },
 
