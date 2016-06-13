@@ -23,60 +23,12 @@ module.exports = {
     title: "section.history",
     image: "stats-menu.svg",
     route:"/history",
-    /*
-    children: [
-      {
-        name: "explore",
-        title: "section.explore",
-        image: "dashboard.svg",
-        route: "/history/explore",
-      },
-      {
-        name: "forecast",
-        title: "section.forecast",
-        image: "goals.svg",
-        route: "/history/forecast",
-      },
-      ]
-      */
   },
-  /*
-  {
-    name: "commons",
-    title: "section.commons",
-    image: "dashboard.svg",
-    route: "/commons",
-    children: []
-    },
-    */
-
   {
     name: "messages",
     title: "section.notifications",
     image: "notifications-menu.svg",
     route: "/notifications",
-    /*
-    children: [
-      {
-        name: "alerts",
-        title: "section.alerts",
-        image: "dashboard.svg",
-        route: "/notifications",
-      },
-      {
-        name: "recommendations",
-        title: "section.recommendations",
-        image: "dashboard.svg",
-        route: "/notifications",
-      },
-      {
-        name: "tips",
-        title: "section.tips",
-        image: "dashboard.svg",
-        route: "/notifications",
-      },
-      ],
-      */
   },
     
       {
@@ -96,7 +48,7 @@ module.exports = {
       {id:'volume', mu:'lt',title:'history.volume', details:'history.volumeDetails', icon:'volume.svg', clickable: true}, 
       {id:'temperature', mu:'ºC', title:'history.temperature', details: 'history.temperatureDetails',icon: 'temperature.svg', clickable: true}, 
       {id:'energy',mu:'W', title:'history.energy', details: 'history.energyDetails', icon:'energy.svg', clickable: true}, 
-      {id:'duration', mu:'sec', title:'history.duration', details: 'history.durationDetails', icon:'duration.svg', clickable: false}, 
+      {id:'friendlyDuration', mu:'', title:'history.duration', details: 'history.durationDetails', icon:'duration.svg', clickable: false}, 
   ],
   METER_PERIODS: [
     {id: 'day', title: 'periods.day'},

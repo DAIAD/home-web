@@ -10,6 +10,7 @@ var { getDataSessions } = require('../utils/transformations');
 var SessionModal = require('../components/Session');
 
 var HistoryActions = require('../actions/HistoryActions');
+var moment = require('moment');
 
 function mapStateToProps(state, ownProps) {
   return {
@@ -31,9 +32,10 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
    :{})
       :{};
 
-  
-  const xMin = data && data.measurements && data.measurements[0] ? data.measurements[0].timestamp : 0;
-  const xMax = data && data.measurements && data.measurements[data.measurements.length-1] ? data.measurements[data.measurements.length-1].timestamp : 0;
+      
+   const chartFormatter = (t) => moment(t).format('hh:mm');
+      //const xMin = data && data.measurements && data.measurements[0] ? data.measurements[0].timestamp : 0;
+      //const xMax = data && data.measurements && data.measurements[data.measurements.length-1] ? data.measurements[data.measurements.length-1].timestamp : 0;
   
   return Object.assign(
     {}, 
@@ -43,9 +45,10 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                   stateProps, 
                   {
                     data,
-                    xMin,
-                    xMax,
-                    chartData: getChartTimeData(data.measurements?data.measurements:[], stateProps.activeSessionFilter, null),
+                    //xMin,
+                    //xMax,
+                    chartFormatter,
+                    chartData: getChartTimeData(data && data.measurements?data.measurements:[], stateProps.activeSessionFilter, null),
                     showModal: stateProps.activeSession===null?false:true,
                   })
   );

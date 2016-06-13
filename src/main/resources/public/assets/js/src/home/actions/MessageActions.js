@@ -144,7 +144,7 @@ const fetch = function (options) {
 const fetchAll = function () {
   return function(dispatch, getState) {
     dispatch(fetch(MESSAGE_TYPES.map(x => Object.assign({}, x, {ascending: false}))))
-    .then(response => dispatch(setMessages(response)));
+    .then(response => response ? dispatch(setMessages(response)) : response);
   };
 };
 

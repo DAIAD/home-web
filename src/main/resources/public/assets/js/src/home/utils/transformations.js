@@ -1,10 +1,11 @@
+var moment = require('moment');
+
 var { STATIC_RECOMMENDATIONS, STATBOX_DISPLAYS, DEV_METRICS, METER_METRICS, DEV_PERIODS, METER_PERIODS, DEV_SORT, METER_SORT } = require('../constants/HomeConstants');
 
 var { getFriendlyDuration, getEnergyClass, getMetricMu } = require('./general');
-var { getChartMeterData, getChartAmphiroData, getChartMeterCategories, getChartMeterCategoryLabels, getChartAmphiroCategories } = require('./chart');
+var { getChartMeterData, getChartAmphiroData, getChartMeterCategories, getChartMeterCategoryLabels, getChartAmphiroCategories, getChartTimeData } = require('./chart');
 var { getTimeByPeriod, getLowerGranularityPeriod } = require('./time');
 var { getDeviceTypeByKey, getDeviceNameByKey, getDeviceKeysByType } = require('./device');
-
 
 const getSessionsCount = function (devices, data) {
   return reduceSessions(devices, data).map(s => 1).reduce((p, c) => p + c, 0);
@@ -33,6 +34,12 @@ const reduceMetric = function (devices, data, metric) {
     if (metric === 'temperature') {
       reducedMetric = reducedMetric / sessions;
       //reducedMetric = showers>0 ? reducedMetric / showers: 0;
+    }
+    else if (metric === 'duration') {
+      reducedMetric = (reducedMetric / sessions) / 60;
+    }
+    else if (metric === 'energy') {
+      reducedMetric = reducedMetric / 1000;
     }
       //(metric === 'temperature' && (data[0]?(data[0].sessions[0]?(data[0].sessions[0].count==null):false):false))?(reducedMetric / showers):reducedMetric;
     
@@ -86,6 +93,7 @@ const transformInfoboxData = function (infobox, devices, intl) {
     
     let chartType = 'line';
     let chartXAxis = 'category';
+    let chartFormatter = null;
     let chartCategories = deviceType === 'METER' ? 
       getChartMeterCategories(time) : 
         //getChartMeterCategories(period, intl) : 
@@ -105,12 +113,20 @@ const transformInfoboxData = function (infobox, devices, intl) {
       device = infobox.device;
       //time = infobox.time;
       
-      //chartCategories = null;
-      chartCategories = getChartMeterCategories(time);
-
       const last = data ? data.find(d=>d.deviceKey===device) : null;
       const lastShowerMeasurements = getDataMeasurements(devices, last, index);
+
+      chartCategories = null;
+      //chartCategories = getChartMeterCategories(time);
+    
+      //xMin = data && data.measurements && data.measurements[0] ? data.measurements[0].timestamp : 0;
       
+      //xMax = data && data.measurements && data.measurements[data.measurements.length-1] ? data.measurements[data.measurements.length-1].timestamp : 0;
+
+
+      chartXAxis = 'time'; 
+      chartFormatter = (t) => moment(t).format('hh:mm');
+
       reduced = lastShowerMeasurements.map(s=>s[metric]).reduce((p, c)=>p+c, 0);
       highlight = reduced;
       mu = getMetricMu(metric);
@@ -118,7 +134,9 @@ const transformInfoboxData = function (infobox, devices, intl) {
 
       chartData = [{
         title: getDeviceNameByKey(devices, device), 
-        data: getChartMeterData(lastShowerMeasurements, chartCategories, infobox.metric, 'hour')
+        //data: getChartMeterData(lastShowerMeasurements, chartCategories, infobox.metric, 'hour')
+
+        data: getChartTimeData(lastShowerMeasurements, infobox.metric),
       }];
       //chartXAxis = 'time';
     
@@ -251,7 +269,7 @@ const transformInfoboxData = function (infobox, devices, intl) {
       //TODO: static
       const consumed = reduced;
 
-      const remaining = reduced*0.35;
+      const remaining = Math.round(reduced*0.35);
       let percent = Math.round((consumed / (consumed+remaining))* 100);
       percent = isNaN(percent) ? '' : `${percent}%`;
 
@@ -272,7 +290,7 @@ const transformInfoboxData = function (infobox, devices, intl) {
                          device,
                          highlight,
                          chartData,
-                         //chartFormatter,
+                         chartFormatter,
                          chartType,
                          chartCategories: chartLabels,
                          chartColors,
@@ -311,8 +329,8 @@ const reduceSessions = function (devices, data) {
                                devType,
                                device: device.deviceKey,
                                devName:getDeviceNameByKey(devices, device.deviceKey),
-                               //volume: devType==='METER'?session.difference:session.volume,
-                               duration: getFriendlyDuration(session.duration), 
+                               duration: session.duration ? Math.floor(session.duration / 60) : null,
+                               friendlyDuration: getFriendlyDuration(session.duration), 
                                temperature: session.temperature ? Math.round(session.temperature * 10)/10 : null,
                                energyClass: getEnergyClass(session.energy), 
                                

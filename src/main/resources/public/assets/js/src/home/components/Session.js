@@ -55,7 +55,7 @@ function SessionInfo (props) {
 }
 
 function Session (props) {
-  const { intl, filter, data, chartData, setSessionFilter, firstname, activeDeviceType } = props;
+  const { intl, filter, data, chartData, chartFormatter, setSessionFilter, firstname, activeDeviceType } = props;
   if (!data) return <div/>;
   const { hasChartData, history, id } = data;
   const _t = intl.formatMessage;
@@ -71,7 +71,7 @@ function Session (props) {
             mu="lt"
             xMargin={60}
             x2Margin={60}
-            formatter={(x) => intl.formatTime(x, { hour: 'numeric', minute: 'numeric'})}
+            formatter={chartFormatter}
             xAxis="time"
             data={[{title:`#${id}`, data:chartData}]}
           />

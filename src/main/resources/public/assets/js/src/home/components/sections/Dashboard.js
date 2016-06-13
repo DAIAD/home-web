@@ -101,7 +101,7 @@ function InfoBox (props) {
                } 
                else if (display==='chart') {
                  return (
-                   <ChartBox {...props} /> 
+                   <ChartBox {...infobox} /> 
                    );
                }
                else if (display==='tip') {
@@ -143,7 +143,7 @@ function StatBox (props) {
             (() => bow ? 
              <span><i className={`fa ${arrowClass}`}/>{deviceType === 'AMPHIRO' ? (better ? `${comparePercentage}% better than last ${period}!` : `${comparePercentage}% worse than last ${period}`): (better ? `${comparePercentage}% better than last ${period} so far!` : `${comparePercentage}% worse than last ${period} so far`)}</span>
              :
-               <span>No data</span>
+               <span>No comparison data</span>
                )()
           }
         </div>
