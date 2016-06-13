@@ -143,7 +143,16 @@ var types = mirrorToPath({
       SET_DATA: null,
     },
   },
+ 
+  // Chart panels
   
+  charting: {
+    SET_FIELD: null,
+    SET_REPORT: null,
+  },
+
+  // Overview reports (atop of measurement reports)
+
   overview: {
     SETUP: null,
   },

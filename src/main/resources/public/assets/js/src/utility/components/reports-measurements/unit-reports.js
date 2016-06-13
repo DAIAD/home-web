@@ -57,11 +57,13 @@ var checkData = function (data, keys, k0, unit, level) {
       .map(v => v[0])
       .map(pairWithNext)
       .slice(0, -1)
-      .every(([ta, tb]) => (
+      .every(([ta, tb]) => {
         // Note Must compute the diff at the given level (not as milliseconds!): 
         // not all days have 24 hours (DST), not all months 30 days etc.
-        moment(tb).diff(ta, level, true) === 1
-      ))
+        var ma = moment(ta).utc();
+        var mb = moment(tb).utc();
+        return (mb.diff(ma, level, true) === 1);
+      })
   );
   
   if (!(keys.every(checkStepInsideUnit)))
@@ -72,7 +74,10 @@ var checkData = function (data, keys, k0, unit, level) {
   const checkStepToNextUnit = ([ka, kb]) => {
     var pa = _.last(data.get(ka).points); 
     var pb = _.first(data.get(kb).points);
-    return (moment(pb[0]).diff(pa[0], level, true) === 1);
+    // Compare at UTC offset 0, to avoid false alarms with DST
+    var ma = moment(pa[0]).utc();
+    var mb = moment(pb[0]).utc();
+    return (mb.diff(ma, level, true) === 1);
   };
  
   if (!(keys.map(pairWithNext).slice(0, -1).every(checkStepToNextUnit)))
@@ -189,8 +194,9 @@ class _Report extends React.Component {
   
   static _propsToState(props) {
     // Compute state from received props.
-    var cls = this;
-
+    
+    var cls = this; 
+    
     var {unit} = cls;
     var {now, report: {level, startsAt, duration: [K, unit1]}, series} = props;
     var data, keys, totals, forecast;
@@ -201,6 +207,10 @@ class _Report extends React.Component {
         unit1, unit
       ));
     
+    var emptyState = {
+      moment0: null, data: null, keys: null, totals: null, forecast: null,
+    };
+
     // A moment that represents the period under examination
     var moment0 = moment(now);
     moment0 = moment0.add(moment0.utcOffset(), 'minute').utc(); // move to same wall-clock in UTC
@@ -210,7 +220,7 @@ class _Report extends React.Component {
     var k0 = cls.momentToKey(moment0);
     
     if (!series)
-      return {moment0, data: null};
+      return {...emptyState, moment0};
     
     if (level != series.granularity.toLowerCase())
       throw new Error(sprintf(
@@ -238,7 +248,7 @@ class _Report extends React.Component {
       checkData(data, keys, k0, unit, level);
     } catch (er) {
       console.error('Check has failed: ' + er.message);
-      return {moment0, data: false};
+      return {...emptyState, moment0, data: false};
     }
 
     // Do we have forecast data? Todo maybe as separate series?

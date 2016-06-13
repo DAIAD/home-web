@@ -23,8 +23,8 @@ var initialState = {
       
       // The data sources for our measurements
       sources: {
-        'meter': {name: 'meter', title: 'Meter'},
-        'device': {name: 'device', title: 'Device'},
+        'meter': {name: 'Meter', title: 'Meter (SWM)'},
+        'device': {name: 'Device', title: 'Device (B1)'},
       },
 
       // Metrics provided
@@ -33,14 +33,14 @@ var initialState = {
       // What physical quantities are being measured
       fields: {
         'volume': {
-          name: 'volume',
-          title: 'Volume',
+          name: 'Volume',
+          title: 'Water Consumption',
           unit: 'lt',
           sources: ['meter', 'device'],
         },
         'energy': {
-          name: 'energy',
-          title: 'Energy',
+          name: 'Energy',
+          title: 'Energy Consumption',
           unit: 'kWh',
           sources: ['device'],
         },
@@ -53,7 +53,7 @@ var initialState = {
           title: 'Hour',
           description: 'Report over hour', // time unit of 1 hour
           reports: {
-            'hourly-avg': {
+            'avg': {
               title: 'Average of hourly consumption',
               description: 'The average hourly consumption',
               granularity: 'HOUR',
@@ -61,7 +61,7 @@ var initialState = {
               metrics: ['AVERAGE'],
               consolidate: 'AVERAGE',
             },
-            'hourly-sum': {
+            'sum': {
               title: 'Total hourly consumption',
               description: 'The total hourly consumption',
               granularity: 'HOUR',
@@ -76,7 +76,7 @@ var initialState = {
           title: 'Day',
           description: 'Report over day', // time unit of 1 day
           reports: {
-            'daily-avg': {
+            'avg': {
               title: 'Average of daily consumption',
               description: 'The average daily consumption',
               granularity: 'DAY',
@@ -84,7 +84,7 @@ var initialState = {
               metrics: ['AVERAGE'],
               consolidate: 'AVERAGE',
             },
-            'daily-sum': {
+            'sum': {
               title: 'Total daily consumption',
               description: 'The total daily consumption',
               granularity: 'DAY',
@@ -99,7 +99,7 @@ var initialState = {
           title: 'Week',
           description: 'Report over week', // time unit of 1 week
           reports: {
-            'weekly-avg': {
+            'avg': {
               title: 'Average of weekly consumption',
               description: 'The average weekly consumption',
               granularity: 'WEEK',
@@ -107,7 +107,7 @@ var initialState = {
               metrics: ['AVERAGE'],
               consolidate: 'AVERAGE',
             },
-            'weekly-sum': {
+            'sum': {
               title: 'Total weekly consumption',
               description: 'The total weekly consumption',
               granularity: 'WEEK',
@@ -116,7 +116,7 @@ var initialState = {
               consolidate: 'AVERAGE',
             },
             'avg-daily-avg': {
-              // Note This will always be ("weekly-avg"/7), over the same population
+              // Note This will always be ("avg"/7), over the same population
               title: 'Average of daily consumption',
               description: 'The weekly average of the average daily consumption',
               granularity: 'DAY',
@@ -151,7 +151,7 @@ var initialState = {
           title: 'Month',
           description: 'Report over month', // time unit of 1 month
           reports: {
-            'monthly-avg': {
+            'avg': {
               title: 'Average of monthly consumption',
               description: 'The average monthly consumption',
               granularity: 'MONTH',
@@ -159,7 +159,7 @@ var initialState = {
               metrics: ['AVERAGE'],
               consolidate: 'AVERAGE',
             },
-            'monthly-sum': {
+            'sum': {
               title: 'Total monthly consumption',
               description: 'The total monthly consumption',
               granularity: 'MONTH',

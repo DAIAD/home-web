@@ -1,6 +1,6 @@
-var keyMirror = require('keymirror');
+var mirrorToPath = require('../helpers/path-mirror.js');
 
-const constants = keyMirror({
+const constants = mirrorToPath({
 	'SharedErrorCode.AUTHENTICATION' : null,
 	
 	'ValidationError.User.NO_FIRST_NAME' : null,
@@ -16,7 +16,18 @@ const constants = keyMirror({
 	'ValidationError.User.TOO_LONG_POSTAL_CODE' : null,
 	'ValidationError.Group.NO_GROUP_NAME' : null,
 	'ValidationError.Group.NO_GROUP_MEMBERS' : null,
-	'ValidationError.Favourite.NO_LABEL' : null
+	'ValidationError.Favourite.NO_LABEL' : null,
+
+  // Reports
+
+  reports: {
+    measurements: {
+      TIMESPAN_INVALID: null,
+      TIMESPAN_TOO_NARROW: null,
+      TIMESPAN_TOO_WIDE: null,
+    },
+  },
+
 });
 
 module.exports = constants;

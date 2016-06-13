@@ -153,7 +153,7 @@ Group.fromString = function (label) {
   return r;
 };
 
-// A factory for cluster instances
+// A factory for Cluster instances
 
 Cluster.fromString = function (label) {  
   var m = (new RegExp('^CLUSTER[:]([-\\w]+)$')).exec(label);
@@ -177,4 +177,31 @@ var fromString = function (label) {
   return g? [g, r] : null;
 };
 
-module.exports = {Group, Cluster, Utility, ClusterGroup, Ranking, fromString};
+var extractGroupParams = function (target) {
+  var clusterKey, groupKey;
+  
+  if (target instanceof Cluster) {
+    clusterKey = target.key; 
+    groupKey = null;
+  } else if (target instanceof ClusterGroup) {
+    clusterKey = target.clusterKey; 
+    groupKey = target.key;
+  } else if (target instanceof Utility) { 
+    clusterKey = groupKey = null;
+  } else if (target instanceof Group) {
+    clusterKey = null; 
+    groupKey = target.key;
+  }
+  
+  return [clusterKey, groupKey];
+};
+
+module.exports = {
+  Group, 
+  Cluster,
+  Utility,
+  ClusterGroup, 
+  Ranking, 
+  fromString,
+  extractGroupParams,
+};

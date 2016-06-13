@@ -1,20 +1,17 @@
 @CHARSET "UTF-8";
 
-.clearfix:after
-{
+.clearfix:after {
     visibility: hidden;
     display: block; /*font-size: 0;*/
     content: " ";
     clear: both;
     height: 0;
 }
-* html .clearfix
-{
+* html .clearfix {
     zoom: 1;
 }
 /* IE6 */
-*:first-child + html .clearfix
-{
+*:first-child + html .clearfix {
     zoom: 1;
 }
 
@@ -49,8 +46,7 @@
 	padding: 70px 30px 0px 30px;
 }
 
-.navbar-default {
-}
+.navbar-default {}
 
 .navbar-static-side {
 	z-index: 1;
@@ -191,13 +187,11 @@ img.sm {
 	opacity: 1;
 }
 
-/* Links */
 a .disabled{
 	color: #999999;
     text-decoration: line-through;
 }
 
-/* Icon */
 .disabled-icon{
 	color: #999999;
 }
@@ -225,6 +219,7 @@ a .disabled{
   z-index: 100;
 	animation: spin 0.8s linear infinite;
 }
+
 @-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
 @-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
 @keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }
@@ -232,6 +227,21 @@ a .disabled{
 @-moz-keyframes counter-spin { 100% { -moz-transform: rotate(-360deg); } }
 @-webkit-keyframes counter-spin { 100% { -webkit-transform: rotate(-360deg); } }
 @keyframes counter-spin { 100% { -webkit-transform: rotate(-360deg); transform:rotate(-360deg); } }
+
+/* Fade in/out using animation */
+
+.fade-in {
+  opacity: 1;
+  animation-name: fade-in; 
+  animation-duration: 1s;
+  animation-iteration-count: 1;
+}
+.fade-in.x2 {animation-duration: 2s;}
+.fade-in.x3 {animation-duration: 3s;}
+.fade-in.x4 {animation-duration: 4s;}
+
+@keyframes fade-in {from {opacity: 0.1;} to {opacity: 1;}}
+@keyframes fade-out {from {opacity: 1.0;} to {opacity: 0;}}
 
 /* Bootstrap Grid */
 
@@ -507,6 +517,13 @@ a .disabled{
   padding: 12px;
 }
 
+/* react-controls/select-dropdown */
+
+.select-dropdown .dropdown-toggle > span.empty-value,
+.select-dropdown .dropdown-menu li.empty-value > a {
+  font-style: oblique;
+}
+
 /* Reports (charts/panels) */
 
 .chart.portal {
@@ -525,22 +542,21 @@ form.report-form {
 .report-info {
   margin: 8px 0px;
 }
-
-.report-info p.help,
-.report-form p.help {
+.reports .panel-footer > .report-info,
+.reports .panel .list-item-group > .report-info {
   margin: 0px 0px;
-  font-size: 0.9em;
 }
 
-.report-info p.help.inline,
-.report-form p.help.inline {
-  display: inline-block;
+.reports .report-info p.help,
+.reports .report-form p.help {
+  margin: 0px 0px;
+  font-size: 0.85em;
 }
 
-.select-dropdown .dropdown-toggle > span.empty-value,
-.select-dropdown .dropdown-menu li.empty-value > a {
-  font-style: oblique;
-}
+.reports .report-form .form-group p.help {margin-top: 6px;}
+
+.reports .report-info p.help.inline,
+.reports .report-form p.help.inline {display: inline-block;}
 
 form.report-form.form-inline .form-group {
   margin: 8px 12px 8px 0px;
@@ -551,7 +567,7 @@ form.report-form fieldset {
 }
 
 .reports > h2 {
-  margin: 10px 0px 10px 0px;
+  margin: 10px 0px 15px 0px;
   font-size: 28px;
 }
 
@@ -560,15 +576,60 @@ form.report-form fieldset {
   font-size: 24px;
 }
 
+.reports .panel .panel-heading .panel-title > h3,
+.reports .panel .panel-heading h3.panel-title {
+  display: inline-block;
+  font-weight: normal;
+  font-size: 18px;
+  margin-top: 3px;
+  margin-bottom: 3px;
+}
+
 .reports .panel-body h4 {
-  margin: 5px 0px 15px 0px;
+  margin: 6px 0px 15px 0px;
   font-size: 17px;
 } 
+
+
+.reports .panel .list-group-item.report-form-wrapper {min-height: 150px;}
+.reports .panel .list-group-item.report-form-help {min-height: 35px;}
+.reports .panel .list-group-item.report-chart-wrapper {min-height: 300px;}
+
+.reports .panel .panel-heading .panel-title.header-wrapper > .btn-group,
+.reports .panel .panel-heading .panel-title.header-wrapper > .btn,
+.reports .panel .panel-heading .panel-title.header-wrapper > .header-buttons,
+.reports .panel .panel-heading .panel-title.header-wrapper > .header-toolbar {
+  float: right;
+  margin-top: -3px;
+}
+.reports .panel .panel-heading .panel-title.header-wrapper > .header-toolbar > .btn-group {
+  margin-left: 10px;
+}
+
+.reports .panel .panel-heading .panel-title.header-wrapper > .header-buttons .btn-circle ,
+.reports .panel .panel-heading .panel-title.header-wrapper > .header-toolbar .btn-circle {
+  margin-left: 5px;
+}
+ 
+.reports.reports-measurements .report-chart .chart.portal, 
+.reports .panel .report-chart .chart.portal {
+  width: 100%;
+  height: 350px;
+}
 
 .reports legend {
   font-size: 16px;
   margin-bottom: 8px;
 } 
+
+.reports .panel .list-group-item .report-form {
+  padding: 0px 0px; /* the .list-group-item has enough padding */
+  margin: 0px 0px; 
+}
+.reports .panel .list-group-item .report-form .form-group {margin-bottom: 10px;}
+.reports .panel .list-group-item .report-form .form-group:last-child {margin-bottom: 0px;}
+
+.reports .panel .list-group-item.report-form-help p.help {margin: 0px 0px;}
 
 .reports > div.legend {
   font-size: 16px; /*  mimic a normal legend  */
@@ -596,69 +657,37 @@ form.report-form fieldset {
   font-weight: normal;
 }
 
-.dropdown.select-report button > span.text {
-  width: 18em;
-}
-.dropdown.select-report .dropdown-menu {
-  width: 23.2em;  
-}
+.report-form.form-horizontal .dropdown.select-report button > span.text {width: 20em;}
+.report-form.form-horizontal .dropdown.select-report .dropdown-menu {width: 22.8em;}
 
-.report-form.form-inline .dropdown.select-field button > span.text {
-  width: 5em;
-}
-.report-form.form-horizontal .dropdown.select-field button > span.text {
-  width: 7em;
-}
-.report-form.form-inline .dropdown.select-source button > span.text {
-  width: 3.1em;
-}
-.report-form.form-horizontal .dropdown.select-source button > span.text {
-  width: 4.5em;
-}
-.report-form.form-inline .dropdown.select-timespan button > span.text {
-  width: 5.5em;
-}
-.report-form.form-horizontal .dropdown.select-timespan button > span.text {
-  width: 10em;
-}
-.report-form.form-horizontal .dropdown.select-timespan .dropdown-menu {
-  min-width: 12.1em;
-}
-.report-form.form-inline .dropdown.select-cluster button > span.text {
-  width: 7em;
-}
-.report-form.form-horizontal .dropdown.select-cluster button > span.text {
-  width: 10em;
-}
-.report-form.form-horizontal .dropdown.select-cluster .dropdown-menu {
-  min-width: 12.1em;
-}
-.report-form.form-inline .dropdown.select-cluster-group button > span.text {
-  width: 7em;
-}
-.report-form.form-horizontal .dropdown.select-cluster-group button > span.text {
-  width: 10em;
-}
-.report-form.form-horizontal .dropdown.select-cluster-group .dropdown-menu {
-  min-width: 12.1em;  
-}
+.report-form.form-horizontal .dropdown.select-level button > span.text {width: 8em;}
+.report-form.form-horizontal .dropdown.select-level .dropdown-menu {width: 9em;}
+
+.report-form.form-inline .dropdown.select-field button > span.text {width: 6em;}
+.report-form.form-horizontal .dropdown.select-field button > span.text {width: 8em;}
+
+.report-form.form-inline .dropdown.select-source button > span.text {width: 4.5em;}
+.report-form.form-horizontal .dropdown.select-source button > span.text {width: 10em;}
+.report-form.form-horizontal .dropdown.select-source .dropdown-menu {width: 12.8em;}
+
+.report-form.form-inline .dropdown.select-timespan button > span.text {width: 5.5em;}
+.report-form.form-horizontal .dropdown.select-timespan button > span.text {width: 11em;}
+.report-form.form-horizontal .dropdown.select-timespan .dropdown-menu {min-width: 13.7em;}
+.report-form.form-horizontal .dropdown.select-timespan {margin-right: 6px;}
+
+.report-form.form-inline .dropdown.select-cluster button > span.text {width: 7em;}
+.report-form.form-horizontal .dropdown.select-cluster button > span.text {width: 12em;}
+.report-form.form-horizontal .dropdown.select-cluster .dropdown-menu {min-width: 14.6em;}
+
+.report-form.form-inline .dropdown.select-cluster-group button > span.text {width: 7em;}
+.report-form.form-horizontal .dropdown.select-cluster-group button > span.text {width: 14em;}
+.report-form.form-horizontal .dropdown.select-cluster-group .dropdown-menu {min-width: 16.7em;}
 
 .report-form .form-group .rdt {
   display: inline-block;
   vertical-align: middle;
 }
-.report-form.form-horizontal .form-group .rdt > input[type="text"] {
-  width: 9.6em;
-}
-
-.overview .panel .panel-heading .panel-title {
-  font-weight: normal;
-  font-size: 18px;
-}
-
-.overview .panel-body h4 {
-  margin: 12px 0px;
-}
+.report-form.form-horizontal .form-group .rdt > input[type="text"] {min-width: 10.5em;}
 
 div.measurement-value {
   display: inline-block;

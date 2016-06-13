@@ -280,7 +280,14 @@
     "GroupErrorCode.GROUP_DOES_NOT_EXIST" : "No Group exists with this id.",
     "ValidationError.Group.NO_GROUP_NAME": "Group name is missing",
     "ValidationError.Group.NO_GROUP_MEMBERS": "No Members were assigned to this Group.",
-    "ValidationError.Favourite.NO_LABEL": "No Label was entered for this Favourite."
+    "ValidationError.Favourite.NO_LABEL": "No Label was entered for this Favourite.",
+    "reports": {
+      "measurements": {
+        "TIMESPAN_INVALID": "The given timespan is invalid.",
+        "TIMESPAN_TOO_NARROW": "The given timespan is too narrow.",
+        "TIMESPAN_TOO_WIDE": "The given timespan is too wide."
+      }  
+    }
 	}, 
   "Success": {
     "UserSuccess.USER_ADDED_WHITELIST" : "User was succesfully registered in the user white list.",
