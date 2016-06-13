@@ -7,7 +7,7 @@ var moment = require('moment');
 // Note
 // This class is mostly used to provide named instances (e.g 'today') for reports.
 
-var TimeSpan = function (t, quantity, unit)
+var TimeSpan = function (t, duration, unit)
 {
   if (_.isString(t)) {
     if (!t || t == 'now')
@@ -21,79 +21,130 @@ var TimeSpan = function (t, quantity, unit)
   }
   
   this.unit = unit; // same as in Moment.js
-  this.quantity = quantity;
+  this.duration = duration;
 };
 
 TimeSpan.prototype.toDuration = function () {
-  return moment.duration(this.quantity, this.unit);
+  return moment.duration(this.duration, this.unit);
 };
 
 TimeSpan.prototype.toRange = function (asMillis=false) {
   var t0, t1, r;
   t0 = this.t;
-  t1 = t0.clone().add(this.quantity, this.unit);
-  r = (this.quantity < 0)? [t1, t0] : [t0, t1];
+  t1 = t0.clone().add(this.duration, this.unit);
+  r = (this.duration < 0)? [t1, t0] : [t0, t1];
   return !asMillis? r : [r[0].valueOf(), r[1].valueOf()];
 };
  
 TimeSpan.common = new Map([
   ['hour', {
     title: 'This hour',
-    getArgs: () => ([moment().startOf('hour'), +1, 'hour']),
+    startsAt: 'hour',
+    duration: +1,
+    unit: 'hour',
   }],
-  ['hour-1', {
+  ['1-hour', {
     title: 'Last 1 hour',
-    getArgs: () => ([moment(), -1, 'hour']),
+    startsAt: null,
+    duration: -1,
+    unit: 'hour',
   }],
   ['today', {
     title: 'Today',
-    getArgs: () => ([moment().startOf('day'), +1, 'day']),
+    startsAt: 'day',
+    duration: +1,
+    unit: 'day',
   }],
   ['yesterday', {
     title: 'Yesterday',
-    getArgs: () => ([moment().startOf('day'), -1, 'day']),
+    startsAt: 'day',
+    duration: -1,
+    unit: 'day',
   }],
-  ['day-1', {
+  ['24-hours', {
     title: 'Last 24 hours',
-    getArgs: () => ([moment(), -1, 'day']),
+    startsAt: null,
+    duration: -24,
+    unit: 'hour',
   }],
-  ['day-2', {
+  ['48-hours', {
     title: 'Last 48 hours',
-    getArgs: () => ([moment(), -2, 'day']),
+    startsAt: null,
+    duration: -48,
+    unit: 'hour',
+  }],
+  ['7-day', {
+    title: 'Last 7 days',
+    startsAt: 'day',
+    duration: -7,
+    unit: 'day',
   }],
   ['week', {
     title: 'This week',
-    getArgs: () => ([moment().startOf('isoweek'), +1, 'week']),
+    startsAt: 'isoweek',
+    duration: +1,
+    unit: 'week',
   }],
-  ['week-1', {
+  ['last-week', {
     title: 'Last week',
-    getArgs: () => ([moment(), -1, 'week']),
+    startsAt: 'isoweek',
+    duration: -1,
+    unit: 'week',
   }],
   ['month', {
     title: 'This month',
-    getArgs: () => ([moment().startOf('month'), +1, 'month']),
+    startsAt: 'month',
+    duration: +1,
+    unit: 'month',
   }],
-  ['month-1', {
+  ['last-month', {
     title: 'Last month',
-    getArgs: () => ([moment(), -1, 'month']),
+    startsAt: 'month',
+    duration: -1,
+    unit: 'month',
   }],
   ['quarter', {
     title: 'This quarter',
-    getArgs: () => ([moment().startOf('quarter'), +1, 'quarter']),
+    startsAt: 'quarter',
+    duration: +1,
+    unit: 'quarter',
   }],
-  ['quarter-1', {
+  ['last-quarter', {
     title: 'Last quarter',
-    getArgs: () => ([moment(), -1, 'quarter']),
+    startsAt: 'quarter',
+    duration: -1,
+    unit: 'quarter',
   }],
   ['year', {
     title: 'This year',
-    getArgs: () => ([moment().startOf('year'), +1, 'year']),
+    startsAt: 'year',
+    duration: +1,
+    unit: 'year',
+  }],
+  ['last-year', {
+    title: 'Last year',
+    startsAt: 'year',
+    duration: -1,
+    unit: 'year',
   }],
 ]);
 
-TimeSpan.fromName = function (name) {
+TimeSpan.fromName = function (name, offset, now) {
   var u = TimeSpan.common.get(name);
-  return !u? null : (new TimeSpan(...u.getArgs()));
+  if (!u)
+    return null;
+  
+  var t = moment(now);
+  
+  // A UTC offset (if given) affects all startOf() calculations!
+  if (_.isNumber(offset))
+    t.utcOffset(offset);
+  
+  // Align to a start of a bucket
+  if (u.startsAt)
+    t.startOf(u.startsAt);
+  
+  return new TimeSpan(t, u.duration, u.unit);
 };
 
 TimeSpan.commonNames = () => (Array.from(TimeSpan.common.keys()));

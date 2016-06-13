@@ -25,7 +25,7 @@ var Chart = React.createClass({
       lineWidth: 1,
       smooth: false,
       tooltip: true,
-      fill: 0.35,
+      fill: 0.333,
       colors: [
         '#2D6E8D', '#DB5563', '#9056B4', '#DD4BCF', '#30EC9F',
         '#C23531', '#2F4554', '#61A0A8', '#ECA63F', '#41B024',
@@ -38,8 +38,8 @@ var Chart = React.createClass({
         dateformat: {
           'minute': 'HH:mm',
           'hour': 'HH:00',
-          'day': 'DD/MMM',
-          'week': 'DD/MMM',
+          'day': 'D/MMM',
+          'week': 'D/MMM',
           'month': 'MMM/YYYY',
           'quarter': 'Qo YYYY',
           'year': 'YYYY',

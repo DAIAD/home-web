@@ -7,6 +7,7 @@ var ActionTypes = require('../action-types');
 var {computeKey} = require('../reports').measurements;
 var TimeSpan = require('../model/timespan');
 var population = require('../model/population');
+var {toUtcTime} = require('../helpers/timestamps');
 var {queryMeasurements} = require('../service/query');
 
 // Define actions
@@ -90,10 +91,10 @@ var actions = {
     var _state = state.reports.measurements;
     
     var {config} = state;
-    var _config = config.reports.byType.measurements;
+    var {metrics, levels} = config.reports.byType.measurements;
     
     var k = computeKey(field, level, reportName, key);
-    var report = _config.levels[level].reports[reportName];
+    var report = levels[level].reports[reportName];
     
     var {timespan: ts, source, requested, population: target} = _state[k];
     
@@ -118,13 +119,24 @@ var actions = {
         'Expected an instance of population.Group');
     }
     
-    // Prepare time range
-    var [t0, t1] = _.isString(ts)? TimeSpan.fromName(ts).toRange() : ts;
-    if (t0 > t1) {
-      let t = t0; t0 = t1; t1 = t; // ensure proper order
+    // Prepare literal time range, re-order if needed
+    var timezone = 'Etc/GMT';
+    if (_.isString(ts)) {
+      // Interpret this named range, as if you were at UTC+0 
+      var [t0, t1] = TimeSpan.fromName(ts, 0).toRange();
+    } else {
+      // Set global timezone, move to UTC while keeping local time
+      var [t0, t1] = ts;
+      if (t0 > t1) {
+        let t = t0; t0 = t1; t1 = t;
+      }
+      t0 = toUtcTime(t0);
+      t1 = toUtcTime(t1);
     }
-    t0 = moment(t0).utc();
-    t1 = moment(t1).utc().add(1, level); // add a closure time slot
+    console.assert(
+      moment.isMoment(t0) && t0.isUTC() && moment.isMoment(t1) && t1.isUTC(),
+      'Expected 2 moment instances both flagged as UTC!'); 
+    t1.add(1, level); // a closure time slot
 
     // Prepare the entire query
     var q = {
@@ -135,18 +147,20 @@ var actions = {
       population: _.flatten([target]),
     };
    
-    // Dispatch!
+    // Dispatch, return promise
     dispatch(actions.requestData(field, level, reportName, key, now));
-   
-    return queryMeasurements(source, field, q, _config).then(
-      (data) => (
-        dispatch(actions.setData(field, level, reportName, key, data))
-      ),
-      (reason) => (
-        console.error(sprintf('Cannot refresh data for %s: %s', k, reason)),
-        dispatch(actions.setDataError(field, level, reportName, key, [reason]))
-      )
-    );
+    var pq = queryMeasurements(source, field, q, {metrics, timezone})
+      .then(
+        (data) => (
+          dispatch(actions.setData(field, level, reportName, key, data))
+        ),
+        (reason) => (
+          console.error(sprintf('Cannot refresh data for %s: %s', k, reason)),
+          dispatch(actions.setDataError(field, level, reportName, key, [reason]))
+        )
+      );
+
+    return pq;
   },
 };
 
