@@ -11,6 +11,8 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.user.Account;
 import eu.daiad.web.model.user.UserInfo;
+import eu.daiad.web.model.user.UserQuery;
+import eu.daiad.web.model.user.UserQueryResult;
 
 public interface IUserRepository {
 
@@ -49,5 +51,7 @@ public interface IUserRepository {
     List<UUID> getUserKeysForUtility(int utilityId);
 
     UserInfo getUserInfoByKey(UUID user_id);
+
+    UserQueryResult search(UserQuery query);
 
 }

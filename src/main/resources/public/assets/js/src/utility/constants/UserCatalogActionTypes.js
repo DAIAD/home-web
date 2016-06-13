@@ -1,0 +1,19 @@
+var keyMirror = require('keymirror');
+
+module.exports = keyMirror({
+  ACCOUNT_CHANGE_INDEX : null,
+  ACCOUNT_REQUEST_INIT : null,
+  ACCOUNT_REQUEST_COMPLETE : null,
+
+  ACCOUNT_FILTER_TEXT : null,
+  ACCOUNT_FILTER_SERIAL : null,
+
+  ACCOUNT_FILTER_CLEAR : null,
+
+  USER_CATALOG_METER_REQUEST : null,
+  USER_CATALOG_METER_RESPONSE : null,
+  USER_CATALOG_CLEAR_CHART : null,
+
+  USER_CATALOG_SET_SEARCH_MODE : null,
+  USER_CATELOG_SET_SEARCH_GEOMETRY : null
+});

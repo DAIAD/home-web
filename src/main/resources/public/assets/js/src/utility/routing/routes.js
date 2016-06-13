@@ -13,7 +13,7 @@ var User = require('../components/User');
 var Group = require('../components/Group');
 var Device = require('../components/Device');
 var Forecasting = require('../components/section/Forecasting');
-var Users = require('../components/section/Users');
+var UserCatalog = require('../components/section/UserCatalog');
 var Scheduler = require('../components/section/Scheduler');
 var Logging = require('../components/section/support/Logging');
 var Announcements = require('../components/section/Announcements');
@@ -39,7 +39,7 @@ module.exports = (
     <Route path="/user/:id" component={User} />
     <Route path="/group/:id" component={Group} />
     <Route path="/device/:id" component={Device} />
-    <Route path="/users" component={Users} />
+    <Route path="/users" component={UserCatalog} />
     <Route path="/scheduler" component={Scheduler} />
     <Route path="/announcements" component={Announcements} />
     <Route path="/manage-alerts" component={ManageAlerts} />

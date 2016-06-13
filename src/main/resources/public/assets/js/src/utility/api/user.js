@@ -6,6 +6,12 @@ var UserAPI = {
     return api.json('/action/user/' + user_id);
   },
 
+  getAccounts : function(query) {
+    return api.json('/action/user/search', {
+      query : query
+    });
+  },
+
   fetchUser : function(user_id) {
     return api.json('/action/user/' + user_id);
   },
@@ -15,11 +21,11 @@ var UserAPI = {
   },
 
   addFavorite : function(userKey) {
-    return api.json(`/action/favorite/${userKey}`, null, 'PUT');
+    return api.json(`/action/user/favorite/${userKey}`, null, 'PUT');
   },
 
   removeFavorite : function(userKey) {
-    return api.json(`/action/favorite/${userKey}`, null, 'DELETE');
+    return api.json(`/action/user/favorite/${userKey}`, null, 'DELETE');
   }
 };
 

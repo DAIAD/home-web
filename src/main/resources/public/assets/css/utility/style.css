@@ -825,3 +825,8 @@ div.measurement-value .delta > .sign {
 #form-profile .form-group > label:after {
   content: ":";
 }
+
+/* Leaflet */
+.leaflet-popup-content-wrapper {
+    border-radius: 0px;
+}

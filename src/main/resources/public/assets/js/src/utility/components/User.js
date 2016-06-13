@@ -473,6 +473,9 @@ var User = React.createClass({
                       </div>
                     </div>
                   </Bootstrap.ListGroupItem>
+                  <Bootstrap.ListGroupItem className='clearfix'>
+                    <Link className='pull-right' to='/users' style={{ paddingLeft : 7, paddingTop: 12 }}>Browse all users</Link>
+                  </Bootstrap.ListGroupItem>
                 </Bootstrap.ListGroup>
               </Bootstrap.Panel>
     		    </div>
