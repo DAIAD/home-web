@@ -43,11 +43,13 @@ var theme = {
     borderWidth : 0
   },
   categoryAxis : {
+    /*
     axisLine : {
       lineStyle : {
         color : '#1790cf'
       }
     },
+    */
     splitLine : {
       lineStyle : {
         color : [
@@ -57,11 +59,13 @@ var theme = {
     }
   },
   valueAxis : {
+    /*
     axisLine : {
       lineStyle : {
         color : '#1790cf'
       }
     },
+    */
     splitArea : {
       show : true,
       areaStyle : {
