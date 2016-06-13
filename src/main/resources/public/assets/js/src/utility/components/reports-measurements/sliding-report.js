@@ -108,7 +108,7 @@ Report = connect(
       dispatch(actions.refreshData(
         field, level, reportName, reportKey
       ));
-    }
+    };
 
     return {initialize, refreshData};
   }

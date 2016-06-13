@@ -136,7 +136,7 @@ var ReportsPanel = React.createClass({
             reportKey={sprintf('pilot-%d-%s', i + 1, target.key)}
           />
         </ListGroupItem>    
-      ))
+      ));
     
     var header = (
       <h3>
