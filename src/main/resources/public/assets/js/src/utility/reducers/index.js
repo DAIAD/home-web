@@ -22,6 +22,7 @@ var reports = require('./reports');
 var config = require('./config');
 var charting = require('./charting');
 var overview = require('./overview');
+var trials = require('./trials');
 
 var rootReducer = combineReducers({
   i18n,
@@ -46,6 +47,7 @@ var rootReducer = combineReducers({
   reports,
   charting,
   overview,
+  trials,
 });
 
 module.exports = rootReducer;

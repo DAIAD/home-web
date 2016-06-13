@@ -78,7 +78,6 @@ var Chart = React.createClass({
     var update = (nextProps.draw !== false);
     
     if (!update) console.info('Skipping update of Chart!...');
-    
     return update;
   },
 
@@ -104,24 +103,24 @@ var Chart = React.createClass({
     return (
       <div className="report-chart" id={['chart', field, level, reportName].join('--')}>
         <echarts.LineChart
-            width={this.props.width}
-            height={this.props.height}
-            loading={this.props.finished? null : {text: 'Loading data...'}}
-            tooltip={defaults.tooltip}
-            lineWidth={defaults.lineWidth}
-            color={defaults.colors}
-            grid={defaults.grid}
-            xAxis={{
-              data: xaxisData,
-              boundaryGap: false, 
-              formatter: (t) => (moment(t).format(xf)),
-            }}
-            yAxis={{
-              name: fieldName + (unit? (' (' + unit + ')') : ''),
-              numTicks: 4,
-              formatter: (y) => (numeral(y).format('0.0a')),
-            }}
-            series={series}
+          width={this.props.width}
+          height={this.props.height}
+          loading={this.props.finished? null : {text: 'Loading data...'}}
+          tooltip={defaults.tooltip}
+          lineWidth={defaults.lineWidth}
+          color={defaults.colors}
+          grid={defaults.grid}
+          xAxis={{
+            data: xaxisData,
+            boundaryGap: false, 
+            formatter: (t) => (moment(t).format(xf)),
+          }}
+          yAxis={{
+            name: fieldName + (unit? (' (' + unit + ')') : ''),
+            numTicks: 4,
+            formatter: (y) => (numeral(y).format('0.0a')),
+          }}
+          series={series}
          />
       </div>
     );
@@ -209,12 +208,13 @@ var Chart = React.createClass({
     var label;
     if (target instanceof population.Utility) {
       // Use utility's friendly name
-      label = config.utility.name;
+      label = 'Utility'; //config.utility.name;
     } else if (target instanceof population.ClusterGroup) {
       // Use group's friendly name
-      label = config.utility.clusters
-        .find(c => (c.key == target.clusterKey))
-          .groups.find(g => (g.key == target.key)).name;
+      var cluster = config.utility.clusters
+        .find(c => (c.key == target.clusterKey));
+      label = cluster.name + ': ' +
+          cluster.groups.find(g => (g.key == target.key)).name;
     }
 
     var tpl = (ranking)? nameTemplates.ranking : nameTemplates.basic;

@@ -6,6 +6,8 @@ var Breadcrumb = require('../../Breadcrumb');
 var PropTypes = React.PropTypes;
 var {configPropType} = require('../../../prop-types');
 
+var {PilotReports} = require('../../reports');
+
 var Page = React.createClass({
   displayName: 'Trials.PilotReports',
 
@@ -28,8 +30,7 @@ var Page = React.createClass({
         </div>
         <div className="row">
           <div className="col-md-12">
-            Todo!
-            {/*<PilotReports config={this.props.config} />*/}
+            <PilotReports config={this.props.config} />
           </div>
         </div>
       </div>
