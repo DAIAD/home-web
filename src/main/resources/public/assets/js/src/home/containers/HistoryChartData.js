@@ -7,11 +7,14 @@ var Chart = require('../components/helpers/Chart');
 
 var HistoryActions = require('../actions/HistoryActions');
 
-var { selectTimeFormatter } = require('../utils/time');
-var { getChartTimeDataByFilter, getChartDataByFilter, getChartMeterCategories, getChartAmphiroCategories, getChartMetadata } = require('../utils/chart');
+
+var { selectTimeFormatter, timeToBuckets, getLowerGranularityPeriod, convertGranularityToPeriod, getBucketLabels, addPeriodToSessions } = require('../utils/time');
+
+var { getChartMeterData, getChartAmphiroData, getChartMeterCategories, getChartMeterCategoryLabels, getChartAmphiroCategories, getChartMetadata } = require('../utils/chart');
+
 var { getDeviceTypeByKey, getDeviceKeyByName, getDeviceNameByKey } = require('../utils/device');
 var { getDataSessions } = require('../utils/transformations');
-var { getMetricMu } = require('../utils/general');
+var { getMetricMu, getFriendlyDuration } = require('../utils/general');
 
 
 function mapStateToProps(state, ownProps) {
@@ -34,49 +37,69 @@ function mapDispatchToProps(dispatch) {
 }
 function mergeProps(stateProps, dispatchProps, ownProps) {
   
-  const xAxisData = stateProps.activeDeviceType === 'METER' ? 
-    (stateProps.timeFilter === 'custom' ? null : getChartMeterCategories(stateProps.timeFilter, ownProps.intl)) : 
+  const xData = stateProps.activeDeviceType === 'METER' ? 
+    getChartMeterCategories(stateProps.time) : 
       getChartAmphiroCategories(stateProps.timeFilter);
 
 
-      const chartData = stateProps.data.map(devData => {
-         const sessions = getDataSessions(stateProps.devices, devData);
-         return ({
-           title: getDeviceNameByKey(stateProps.devices, devData.deviceKey), 
-           data: getChartDataByFilter(sessions, stateProps.filter, xAxisData),
-           metadata: {
-             device: devData.deviceKey,
-             ids: getChartMetadata(sessions , xAxisData)
-           }
-         });
+  const chartData = stateProps.data.map(devData => {
+    const sessions = getDataSessions(stateProps.devices, devData)
+    .map(session => Object.assign({}, session, { 
+      //duration: getFriendlyDuration(session.duration),
+      //energy: getFriendlyEnergy(session.energy),
+       duration: Math.floor(session.duration / 60),
+       energy: Math.floor(session.energy / 1000),
+     }));
+
+    return ({
+       title: getDeviceNameByKey(stateProps.devices, devData.deviceKey), 
+       data: stateProps.activeDeviceType === 'METER' ? getChartMeterData(sessions, xData, stateProps.filter, stateProps.time) : getChartAmphiroData(sessions, xData, stateProps.filter),
+       //data: getChartDataByFilter(sessions, stateProps.filter, xAxisData),
+       metadata: {
+         device: devData.deviceKey,
+         ids: getChartMetadata(sessions , xData, stateProps.activeDeviceType === 'METER' ? true : false)
+       }
+     });
    });
-   
+
+   const xDataLabels = stateProps.activeDeviceType === 'METER' ?
+     getChartMeterCategoryLabels(xData, stateProps.time, ownProps.intl)
+      : xData;
    const comparison = stateProps.comparisonData.map(devData => {
-     const sessions = getDataSessions(stateProps.devices, devData);
+     const sessions = getDataSessions(stateProps.devices, devData)
+     .map(session => Object.assign({}, session, { 
+       duration: Math.floor(session.duration / 60),
+       energy: Math.floor(session.energy / 1000),
+     }));
      return ({
        title: `${getDeviceNameByKey(stateProps.devices, devData.deviceKey)} (previous ${stateProps.timeFilter})`, 
-       data: getChartDataByFilter(sessions, stateProps.filter, xAxisData)
+       data: stateProps.activeDeviceType === 'METER' ? getChartMeterData(addPeriodToSessions(sessions, stateProps.timeFilter), xData, stateProps.filter, stateProps.time) : getChartAmphiroData(sessions, xData, stateProps.filter),
+       //data: sessionsToBuckets(addPeriodToSessions(cSessions, stateProps.timeFilter), buckets, stateProps.filter, period),
+
+       //data: getChartDataByFilter(sessions, stateProps.filter, xAxisData)
      });
-   }
-                                                 );
+   });
+
   return Object.assign({},
                        ownProps,
                        dispatchProps,
                        stateProps, 
                        {
                          data: chartData.concat(comparison),
-                             xMin: stateProps.timeFilter === 'custom' ? stateProps.time.startDate : 0,
-                             xMax: stateProps.timeFilter === 'custom' ? stateProps.time.endDate : xAxisData.length-1,
-                         xAxis: stateProps.timeFilter === 'custom' ? 'time' : 'category',
-                         xAxisData,
+                         //xMin: 0,
+                         //xMax: buckets.length-1,
+                         //xMin: stateProps.timeFilter === 'custom' ? stateProps.time.startDate : 0,
+                         // xMax: stateProps.timeFilter === 'custom' ? stateProps.time.endDate : xAxisData.length-1,
+                             //                         xAxis: stateProps.timeFilter === 'custom' ? 'time' : 'category',
+                         xAxis: 'category',
+                         xAxisData: xDataLabels,
                          type: 'line',
                          //xTicks: xAxisData.length,
                          mu: getMetricMu(stateProps.filter),
                          clickable: true,
                          onPointClick: (series, index) => {
                            const device = chartData[series] ? chartData[series].metadata.device : null;
-                           const [id, timestamp] = chartData[series] ? (chartData[series].metadata.ids[index] ? chartData[series].metadata.ids[index] : [null, null]) : [null, null];
-                           //console.log('clicked x', series, index, chartData[series].metadata.device, chartData[series].metadata.ids[index]);
+                           const [id, timestamp] = chartData[series] && chartData[series].metadata.ids ? chartData[series].metadata.ids[index] : [null, null];
                            dispatchProps.setActiveSession(device, id, timestamp);
                            },
                          dataZoom: true,

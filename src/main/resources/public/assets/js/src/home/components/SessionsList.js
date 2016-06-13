@@ -4,7 +4,7 @@ var bs = require('react-bootstrap');
 var { injectIntl } = require('react-intl');
 var { FormattedMessage, FormattedRelative } = require('react-intl');
 var { IMAGES } = require('../constants/HomeConstants');
-
+var { getTimeLabelByGranularity } = require('../utils/chart');
 
 function SessionListHeader (props) {
   const { activeDeviceType:devType } = props;
@@ -36,11 +36,12 @@ function SessionListHeader (props) {
 }
 
 function SessionListItem (props) {
-  const { firstname } = props;
-  const { id, index, device, devType, devName, volume, difference, energyClass, timestamp, duration, better, temperature, history, measurements } = props.data;
+  const { firstname, time: {granularity}, intl } = props;
+  const { id, index, device, devType, devName, volume, difference, energyClass, timestamp, duration, friendlyDuration, better, temperature, history, measurements } = props.data;
   const arrowClass = better===null?"":better?"fa-arrow-down green":"fa-arrow-up red";
   const highlight = devType === 'METER' ? difference : volume;
   const mu = ' lt';
+  const date = granularity === 0 ? getTimeLabelByGranularity(timestamp, granularity, intl, true) : getTimeLabelByGranularity(timestamp, granularity, intl);
   //  return (
   return devType === 'AMPHIRO' ? (
       <tr onClick={() => props.onOpen(device, id, timestamp)} className='session-list-item'>
@@ -48,7 +49,7 @@ function SessionListItem (props) {
         <td>{firstname}</td>
         <td><FormattedRelative value={timestamp}/></td>
         <td>{devName}</td>
-        <td>{duration}</td>
+        <td>{friendlyDuration}</td>
         <td>{energyClass}</td>
         <td>{temperature} ºC</td>
         <td><span style={{fontSize: '0.8m!important'}} >{`#${id}`}</span></td>
@@ -58,7 +59,7 @@ function SessionListItem (props) {
       <tr onClick={() => props.onOpen(device, id, timestamp)} className='session-list-item'>
         <td><span style={{fontSize: '2.5em'}}>{highlight}<span style={{fontSize: '0.6em'}}>{mu}</span></span></td>
         <td>{firstname}</td>
-        <td><FormattedRelative value={timestamp}/></td>
+        <td>{date}</td>
         <td><img src={`${IMAGES}/arrow-big-right.svg`} /></td>
       </tr>
   );
@@ -111,7 +112,7 @@ var SessionsList = React.createClass({
     },
     */
   render: function() {
-    const { sortOptions, sortFilter, sortOrder, handleSortSelect, activeDeviceType, csvData } = this.props;
+    const { sortOptions, sortFilter, sortOrder, handleSortSelect, activeDeviceType, csvData, time } = this.props;
     return (
       <div className="history-list-area">
         <div className="history-list-header">
@@ -162,6 +163,7 @@ var SessionsList = React.createClass({
                     key={idx}
                     index={idx}
                     data={session}
+                    time={time}
                     onOpen={this.onOpen}
                   />  
                   ))

@@ -1,10 +1,11 @@
+var moment = require('moment');
+
 var { STATIC_RECOMMENDATIONS, STATBOX_DISPLAYS, DEV_METRICS, METER_METRICS, DEV_PERIODS, METER_PERIODS, DEV_SORT, METER_SORT } = require('../constants/HomeConstants');
 
 var { getFriendlyDuration, getEnergyClass, getMetricMu } = require('./general');
-var { getChartDataByFilter, getChartMeterCategories, getChartAmphiroCategories } = require('./chart');
-var { getTimeByPeriod } = require('./time');
+var { getChartMeterData, getChartAmphiroData, getChartMeterCategories, getChartMeterCategoryLabels, getChartAmphiroCategories, getChartTimeData } = require('./chart');
+var { getTimeByPeriod, getLowerGranularityPeriod } = require('./time');
 var { getDeviceTypeByKey, getDeviceNameByKey, getDeviceKeysByType } = require('./device');
-
 
 const getSessionsCount = function (devices, data) {
   return reduceSessions(devices, data).map(s => 1).reduce((p, c) => p + c, 0);
@@ -33,6 +34,12 @@ const reduceMetric = function (devices, data, metric) {
     if (metric === 'temperature') {
       reducedMetric = reducedMetric / sessions;
       //reducedMetric = showers>0 ? reducedMetric / showers: 0;
+    }
+    else if (metric === 'duration') {
+      reducedMetric = (reducedMetric / sessions) / 60;
+    }
+    else if (metric === 'energy') {
+      reducedMetric = reducedMetric / 1000;
     }
       //(metric === 'temperature' && (data[0]?(data[0].sessions[0]?(data[0].sessions[0].count==null):false):false))?(reducedMetric / showers):reducedMetric;
     
@@ -86,11 +93,16 @@ const transformInfoboxData = function (infobox, devices, intl) {
     
     let chartType = 'line';
     let chartXAxis = 'category';
+    let chartFormatter = null;
     let chartCategories = deviceType === 'METER' ? 
-      getChartMeterCategories(period, intl) : 
+      getChartMeterCategories(time) : 
+        //getChartMeterCategories(period, intl) : 
         getChartAmphiroCategories(period);
         
-        
+    let chartLabels = deviceType === 'METER' ? 
+      getChartMeterCategoryLabels(chartCategories, time, intl) 
+     :chartCategories; 
+
     let chartColors = ['#2d3480', '#abaecc', '#7AD3AB', '#CD4D3E'];
     let invertAxis = false;
 
@@ -101,11 +113,20 @@ const transformInfoboxData = function (infobox, devices, intl) {
       device = infobox.device;
       //time = infobox.time;
       
-      chartCategories = null;
-
       const last = data ? data.find(d=>d.deviceKey===device) : null;
       const lastShowerMeasurements = getDataMeasurements(devices, last, index);
+
+      chartCategories = null;
+      //chartCategories = getChartMeterCategories(time);
+    
+      //xMin = data && data.measurements && data.measurements[0] ? data.measurements[0].timestamp : 0;
       
+      //xMax = data && data.measurements && data.measurements[data.measurements.length-1] ? data.measurements[data.measurements.length-1].timestamp : 0;
+
+
+      chartXAxis = 'time'; 
+      chartFormatter = (t) => moment(t).format('hh:mm');
+
       reduced = lastShowerMeasurements.map(s=>s[metric]).reduce((p, c)=>p+c, 0);
       highlight = reduced;
       mu = getMetricMu(metric);
@@ -113,9 +134,11 @@ const transformInfoboxData = function (infobox, devices, intl) {
 
       chartData = [{
         title: getDeviceNameByKey(devices, device), 
-        data: getChartDataByFilter(lastShowerMeasurements, infobox.metric, chartCategories)
+        //data: getChartMeterData(lastShowerMeasurements, chartCategories, infobox.metric, 'hour')
+
+        data: getChartTimeData(lastShowerMeasurements, infobox.metric),
       }];
-      chartXAxis = 'time';
+      //chartXAxis = 'time';
     
     }
     
@@ -144,7 +167,10 @@ const transformInfoboxData = function (infobox, devices, intl) {
 
       chartData = data ? data.map(devData => ({ 
         title: getDeviceNameByKey(devices, devData.deviceKey), 
-        data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, chartCategories)
+        //data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, chartCategories)
+        data: deviceType === 'METER' ? getChartMeterData(getDataSessions(devices, devData), chartCategories, infobox.metric, getLowerGranularityPeriod(period)) : getChartAmphiroData(getDataSessions(devices, devData), chartCategories, infobox.metric)
+        //}))
+      //data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, chartCategories)
       })) : [];
      
     }
@@ -176,7 +202,15 @@ const transformInfoboxData = function (infobox, devices, intl) {
       
       chartData = data ? data.map(devData => ({ 
         title: getDeviceNameByKey(devices, devData.deviceKey), 
+        //data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, chartCategories)
+        data: deviceType === 'METER' ? getChartMeterData(getDataSessions(devices, devData), chartCategories, infobox.metric, getLowerGranularityPeriod(period)) : getChartAmphiroData(getDataSessions(devices, devData), chartCategories, infobox.metric)
+        //}));
+      /*
+      chartData = data.map(devData => ({ 
+        title: getDeviceNameByKey(devices, devData.deviceKey), 
         data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, chartCategories)
+      }));
+      */
       })) : [];
       
     }
@@ -188,7 +222,7 @@ const transformInfoboxData = function (infobox, devices, intl) {
 
       //periods = deviceType === 'AMPHIRO' ? devPeriods : meterPeriods;
       //dummy data
-      chartCategories=[2014, 2015, 2016];
+      chartLabels=[2014, 2015, 2016];
       chartData=[{title:'Consumption', data:[reduced, reduced*1.5, reduced*0.8]}];
       mu = getMetricMu(metric);
     }
@@ -201,7 +235,7 @@ const transformInfoboxData = function (infobox, devices, intl) {
       reduced = data ? reduceMetric(devices, data, metric) : 0;
       //dummy data
       chartData=[{title:'Consumption', data:[Math.floor(reduced/4), Math.floor(reduced/4), Math.floor(reduced/3), Math.floor(reduced/2-reduced/3)]}];
-      chartCategories = ["toilet", "faucet", "shower", "kitchen"];
+      chartLabels = ["toilet", "faucet", "shower", "kitchen"];
       chartColors = ['#abaecc', '#8185b2', '#575d99', '#2d3480'];
       mu = getMetricMu(metric);
       invertAxis = true;
@@ -216,7 +250,7 @@ const transformInfoboxData = function (infobox, devices, intl) {
       mu = getMetricMu(metric);
       //dummy data based on real user data
       chartData=[{title:'Comparison', data:[reduced-0.2*reduced, reduced+0.5*reduced, reduced/2, reduced]}];
-      chartCategories = ["City", "Neighbors", "Similar", "You"];
+      chartLabels = ["City", "Neighbors", "Similar", "You"];
       chartColors = ['#f5dbd8', '#ebb7b1','#a3d4f4', '#2d3480'];
       mu = getMetricMu(metric);
       invertAxis = true;
@@ -235,7 +269,7 @@ const transformInfoboxData = function (infobox, devices, intl) {
       //TODO: static
       const consumed = reduced;
 
-      const remaining = reduced*0.35;
+      const remaining = Math.round(reduced*0.35);
       let percent = Math.round((consumed / (consumed+remaining))* 100);
       percent = isNaN(percent) ? '' : `${percent}%`;
 
@@ -256,9 +290,9 @@ const transformInfoboxData = function (infobox, devices, intl) {
                          device,
                          highlight,
                          chartData,
-                         //chartFormatter,
+                         chartFormatter,
                          chartType,
-                         chartCategories,
+                         chartCategories: chartLabels,
                          chartColors,
                          chartXAxis,
                          invertAxis,
@@ -295,8 +329,8 @@ const reduceSessions = function (devices, data) {
                                devType,
                                device: device.deviceKey,
                                devName:getDeviceNameByKey(devices, device.deviceKey),
-                               //volume: devType==='METER'?session.difference:session.volume,
-                               duration: getFriendlyDuration(session.duration), 
+                               duration: session.duration ? Math.floor(session.duration / 60) : null,
+                               friendlyDuration: getFriendlyDuration(session.duration), 
                                temperature: session.temperature ? Math.round(session.temperature * 10)/10 : null,
                                energyClass: getEnergyClass(session.energy), 
                                

@@ -28,18 +28,33 @@ const addZero = function(input) {
 
 const getFriendlyDuration = function(seconds) {
   if (!seconds) { return null; }
-  
+  const mu = getFriendlyDurationMu(seconds); 
   if (seconds>3600) {
     return  (addZero(Math.floor(seconds/3600))) + ":" +
             addZero(Math.floor((seconds % 3600)/60)) + ":" +
-            addZero(Math.floor((seconds % 3600)/60) % 60);
+              addZero(Math.floor((seconds % 3600)/60) % 60);
   }
   else if (seconds>60) {
     return addZero(Math.floor(seconds/60)) + ":" +
-           addZero(Math.floor(seconds/60)%60);
+      addZero(Math.floor(seconds/60)%60);
   }
   else {
     return "00:" + addZero(seconds);
+  }
+};
+
+
+const getFriendlyDurationMu = function(seconds) {
+  if (!seconds) { return null; }
+  
+  if (seconds>3600) {
+    return 'h';
+  }
+  else if (seconds>60) {
+    return 'min';
+  }
+  else {
+    return 'sec';
   }
 };
 
@@ -115,8 +130,8 @@ const getEnergyClass = function(energy) {
 const getMetricMu = function(metric) {
   if (metric === 'showers') return '';
   else if (metric === 'volume' || metric === 'difference') return 'lt';
-  else if (metric === 'energy') return 'W';
-  else if (metric === 'duration') return 'sec';
+  else if (metric === 'energy') return 'kW';
+  else if (metric === 'duration') return 'min';
   else if (metric === 'temperature') return '°C';
 };
 

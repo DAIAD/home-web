@@ -2,6 +2,7 @@ var React = require('react');
 var ReactDOM = require('react-dom');
 var PortalMixin = require('./PortalMixin');
 var echarts = require('echarts');
+var moment = require('moment');
 
 var Chart = React.createClass({
 
@@ -66,7 +67,6 @@ var Chart = React.createClass({
   
   componentWillReceiveProps : function(nextProps) {
     if(this._chart && nextProps) {
-     
       this._updateOptions(nextProps);
     }
   },
@@ -113,7 +113,13 @@ var Chart = React.createClass({
     return data;
   },
   _getSeriesArray: function(options, series, index) {
-      const data = this._checkData(options.xAxisData, series.data);
+    let data;
+    if (options.xAxis === 'category') {
+      data = this._checkData(options.xAxisData, series.data);
+    }
+    else if (options.xAxis === 'time') {
+      data = series.data;
+    }
       //if (!data) return {};
       //const data = series.data;
       if (options.type === 'pie') 
@@ -232,9 +238,13 @@ var Chart = React.createClass({
     return {
       show: true,
       type : options.xAxis,
-      data: options.xAxisData ? options.xAxisData : [],
+      data: options.xAxisData ? options.xAxisData : null,
       //splitNumber: 12,
       scale:false,
+      splitNumber: 6,
+      axisTick: {
+        show: true
+      },
       //scale: true,
       //min: options.xMin,
       //max: options.xMax,
@@ -334,7 +344,7 @@ var Chart = React.createClass({
         subtext: options.subtitle
       },
       tooltip : {
-        formatter: (params) => options.xAxis === 'time' ? `${new Date(params.value[0])}: ${params.value[1]}` : `${params.name}: ${params.value}`,
+        formatter: (params) => options.xAxis === 'time' ? `${moment(params.value[0]).format('MMMM Do YYYY, h:mm:ss a')}: ${params.value[1]} ${options.mu}` : `${params.name}: ${params.value} ${options.mu}`,
         trigger: 'item',
         backgroundColor: '#2D3580',
         borderColor: '#2D3580',

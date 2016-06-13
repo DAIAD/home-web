@@ -51,12 +51,6 @@ function InfoBox (props) {
         <div className='header-left'>
           <h4>{infobox.title}</h4>
         </div>
-        <div className='header-left'>
-          {
-            (() => type === 'forecast' || type === 'budget' || type === 'comparison' || type === 'breakdown' ? <h5>STATIC</h5> : <span/> 
-            )()
-          }
-        </div>
 
         <div className='header-right'>
           <div style={{marginRight:10}}>
@@ -101,7 +95,7 @@ function InfoBox (props) {
                } 
                else if (display==='chart') {
                  return (
-                   <ChartBox {...props} /> 
+                   <ChartBox {...infobox} /> 
                    );
                }
                else if (display==='tip') {
@@ -143,7 +137,7 @@ function StatBox (props) {
             (() => bow ? 
              <span><i className={`fa ${arrowClass}`}/>{deviceType === 'AMPHIRO' ? (better ? `${comparePercentage}% better than last ${period}!` : `${comparePercentage}% worse than last ${period}`): (better ? `${comparePercentage}% better than last ${period} so far!` : `${comparePercentage}% worse than last ${period} so far`)}</span>
              :
-               <span>No data</span>
+               <span>No comparison data</span>
                )()
           }
         </div>
