@@ -103,6 +103,7 @@ var Announcements = React.createClass({
     if(this.props.accounts) {
       var records = this.props.accounts;
       for(var i=0, count=records.length; i<count; i++) {
+        console.log(records[i].username);
         if((!this.props.filter) || (records[i].username.indexOf(this.props.filter) !== -1)) {
           filteredAccounts.push({
             id: records[i].id,
@@ -226,10 +227,10 @@ var Announcements = React.createClass({
     );  
    
     var groupOptions = [];
-    groupOptions.push({label: 'Everyone'});
+    groupOptions.push({id : null, label: 'Everyone'});
     if(this.props.groups){
       for(var obj in this.props.groups){
-        groupOptions.push({id: this.props.groups[obj].id, label: this.props.groups[obj].name});
+        groupOptions.push({value: this.props.groups[obj].id, label: this.props.groups[obj].name});
       }
     }
     
@@ -447,11 +448,11 @@ function mapDispatchToProps(dispatch) {
     fetchGroups : bindActionCreators(AnnouncementsActions.fetchGroups, dispatch),
     setGroup: function (event, group){
       dispatch(AnnouncementsActions.setGroup(event, group));
-      
-      if(group.name == 'Everyone'){
+      if(group.label == 'Everyone'){
+        console.log('TODO fetch everyone again');
       }
       else{
-        dispatch(AnnouncementsActions.getGroupUsers(event, group));
+        dispatch(AnnouncementsActions.getGroupUsers(group.value));
       }
     },
     getCurrentUtilityUsers: bindActionCreators(AnnouncementsActions.getCurrentUtilityUsers, dispatch),

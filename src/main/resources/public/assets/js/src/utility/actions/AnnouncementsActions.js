@@ -112,12 +112,11 @@ var AnnouncementsActions = {
       });
     };
   },  
-  getGroupUsers : function(event, group) {
+  getGroupUsers : function(groupUUID) {
     return function(dispatch, getState) {
       dispatch(requestedUsers());
-
-      return alertsAPI.getUsersOfGroup(group.id).then(function(response) {        
-        dispatch(receivedCurrentUtilityUsers(response.success, response.errors, response.groupMembersInfo));     
+      return alertsAPI.getUsersOfGroup(groupUUID).then(function(response) {        
+        dispatch(receivedCurrentUtilityUsers(response.success, response.errors, response.accounts));     
       }, function(error) {
         dispatch(receivedCurrentUtilityUsers(false, error, null));
       });

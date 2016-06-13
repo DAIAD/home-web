@@ -32,10 +32,8 @@ var ManageAlertsAPI = {
     getAllGroups: function(){
       return api.json('/action/group/list');
     },
-    getUsersOfGroup: function(groupId){
-      console.log('api getting members of group ' + groupId);
-      //return api.json(`/action/group/members/current/${groupId}`, groupId, 'GET');
-      //return api.json('/action/group/members/current/' + groupUUID);
+    getUsersOfGroup: function(groupUUID){
+      return api.json(`/action/group/accounts/current/${groupUUID}`, groupUUID, 'GET');
     }
 };
 
