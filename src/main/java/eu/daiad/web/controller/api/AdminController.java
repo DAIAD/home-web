@@ -1,7 +1,5 @@
 package eu.daiad.web.controller.api;
 
-import java.util.UUID;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.group.GroupQuery;
 import eu.daiad.web.model.group.GroupQueryRequest;
 import eu.daiad.web.model.group.GroupQueryResponse;
 import eu.daiad.web.model.security.AuthenticatedUser;
@@ -24,80 +21,75 @@ import eu.daiad.web.repository.application.IUtilityRepository;
 import eu.daiad.web.service.scheduling.ISchedulerService;
 
 /**
- * Provides actions for performing administration tasks e.g. starting a job or querying 
- * generic application data such as user groups, areas etc.
+ * Provides actions for performing administration tasks e.g. starting a job or
+ * querying generic application data such as user groups, areas etc.
  *
  */
 @RestController("ApiAdminController")
 public class AdminController extends BaseRestController {
 
-	private static final Log logger = LogFactory.getLog(AdminController.class);
+    private static final Log logger = LogFactory.getLog(AdminController.class);
 
-	@Autowired
-	private IGroupRepository groupRepository;
+    @Autowired
+    private IGroupRepository groupRepository;
 
-	@Autowired
-	private ISchedulerService schedulerService;
+    @Autowired
+    private ISchedulerService schedulerService;
 
-	@Autowired
-	private IUtilityRepository utilityRepository;
-	
-	/**
-	 * Launches a job by its name.
-	 * 
-	 * @param credentials the user credentials.
-	 * @param jobName the name of the job
-	 * @return the controller's response.
-	 */
-	@RequestMapping(value = "/api/v1/admin/scheduler/launch/{jobName}", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse launch(@RequestBody Credentials credentials, @PathVariable String jobName) {
-		RestResponse response = new RestResponse();
+    @Autowired
+    private IUtilityRepository utilityRepository;
 
-		try {
-			this.authenticate(credentials, EnumRole.ROLE_ADMIN);
+    /**
+     * Launches a job by its name.
+     * 
+     * @param credentials
+     *            the user credentials.
+     * @param jobName
+     *            the name of the job
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/api/v1/admin/scheduler/launch/{jobName}", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    public RestResponse launch(@RequestBody Credentials credentials, @PathVariable String jobName) {
+        RestResponse response = new RestResponse();
 
-			this.schedulerService.launch(jobName);
-		} catch (Exception ex) {
-			logger.error(ex.getMessage(), ex);
+        try {
+            this.authenticate(credentials, EnumRole.ROLE_ADMIN);
 
-			response.add(this.getError(ex));
-		}
+            this.schedulerService.launch(jobName);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
 
-		return response;
-	}
+            response.add(this.getError(ex));
+        }
 
-	/**
-	 * Returns all available groups including clusters, segments and user defined user groups. Optionally
-	 * filters data.
-	 * 
-	 * @param request the query to filter data. 
-	 * @return the selected groups.
-	 */
-	@RequestMapping(value = "/api/v1/admin/group/query", method = RequestMethod.POST, produces = "application/json")
-	public RestResponse getGroups(@RequestBody GroupQueryRequest request) {
-		RestResponse response = null;
+        return response;
+    }
 
-		try {
-		    AuthenticatedUser user = this.authenticate(request.getCredentials(), EnumRole.ROLE_ADMIN);
+    /**
+     * Returns all available groups including clusters, segments and user
+     * defined user groups. Optionally filters data.
+     * 
+     * @param request
+     *            the query to filter data.
+     * @return the selected groups.
+     */
+    @RequestMapping(value = "/api/v1/admin/group/query", method = RequestMethod.POST, produces = "application/json")
+    public RestResponse getGroups(@RequestBody GroupQueryRequest request) {
+        try {
+            AuthenticatedUser user = this.authenticate(request.getCredentials(), EnumRole.ROLE_ADMIN);
 
-            if (request.getQuery() == null) {
-                request.setQuery(new GroupQuery());
-            }
-            if (request.getQuery().getUtility() == null) {
-                UUID utilityKey = utilityRepository.getUtilityById(user.getUtilityId()).getKey();
+            GroupQueryResponse response = new GroupQueryResponse();
 
-                request.getQuery().setUtility(utilityKey);
-            }
+            response.setGroups(this.groupRepository.getAll(user.getUtilityKey()));
 
-			return new GroupQueryResponse(this.groupRepository.getAll(request.getQuery()));
-		} catch (Exception ex) {
-			logger.error(ex.getMessage(), ex);
+            return response;
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
 
-			response = new RestResponse();
-			response.add(this.getError(ex));
-		}
+            RestResponse response = new RestResponse();
+            response.add(this.getError(ex));
 
-		return response;
-	}
-
+            return response;
+        }
+    }
 }

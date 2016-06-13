@@ -11,7 +11,7 @@ public enum EnumClusterType {
 	UNDEFINED(0, null),
 	AGE(1, "Age"),
 	INCOME(2, "Income"),
-	HOUSEHOLD_SIZE(3, "Household Size"),
+	HOUSEHOLD_SIZE(3, "Household Members"),
 	APARTMENT_SIZE(4, "Apartment Size");
 
 	private final int value;

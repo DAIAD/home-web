@@ -34,6 +34,8 @@ public class UserInfo {
 
     private DeviceMeterInfo meter;
 
+    private boolean favorite;
+
     public UserInfo(eu.daiad.web.domain.application.Account account) {
         this.id = account.getKey();
         this.firstName = account.getFirstname();
@@ -106,6 +108,14 @@ public class UserInfo {
 
     public String getFullname() {
         return fullname;
+    }
+
+    public boolean isFavorite() {
+        return favorite;
+    }
+
+    public void setFavorite(boolean favorite) {
+        this.favorite = favorite;
     }
 
 }

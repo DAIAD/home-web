@@ -32,7 +32,7 @@ var initialState = {
   population: [
     'UTILITY',
     'CLUSTER:Income',
-    'CLUSTER:Household Size',
+    'CLUSTER:Household Members',
   ],
 
   period: {

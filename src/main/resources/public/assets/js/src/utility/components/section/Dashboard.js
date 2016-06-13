@@ -267,20 +267,25 @@ var Dashboard = React.createClass({
 			</div>
 		);
 		
-		var chartPanel = (
-			<Bootstrap.Panel header={chartTitle}>
-				<Bootstrap.ListGroup fill>
-					{chart}	
-					<Bootstrap.ListGroupItem className='clearfix'>				
-						<div className='pull-left'>
-							{chartFilterTags}
-						</div>
-						<span style={{ paddingLeft : 7}}> </span>
-						<Link className='pull-right' to='/analytics' style={{ paddingLeft : 7, paddingTop: 12 }}>View analytics</Link>
-					</Bootstrap.ListGroupItem>
-				</Bootstrap.ListGroup>
-			</Bootstrap.Panel>
-		);
+		var chartPanel = ( <div /> );
+		if(this.props.chart.series) {
+		  chartPanel = (
+        <div key='0' className='draggable'>
+      		<Bootstrap.Panel header={chartTitle}>
+      			<Bootstrap.ListGroup fill>
+      				{chart}	
+      				<Bootstrap.ListGroupItem className='clearfix'>				
+      					<div className='pull-left'>
+      						{chartFilterTags}
+      					</div>
+      					<span style={{ paddingLeft : 7}}> </span>
+      					<Link className='pull-right' to='/analytics' style={{ paddingLeft : 7, paddingTop: 12 }}>View analytics</Link>
+      				</Bootstrap.ListGroupItem>
+      			</Bootstrap.ListGroup>
+      		</Bootstrap.Panel>
+    		</div>
+  		);
+		}
 
 		var mapPanel = (
 			<Bootstrap.Panel header={mapTitle}>
@@ -328,15 +333,13 @@ var Dashboard = React.createClass({
 					                verticalCompact={true}
 					                isResizable={false}
 													draggableHandle='.panel-heading'>
-						<div key='0' className='draggable'>
-							{chartPanel}
-		        </div>
+						{chartPanel}
 		        <div key='1' className='draggable'>
 							{mapPanel}
 						</div>
 	        </ResponsiveReactGridLayout>
 				</div>
-            </div>
+      </div>
  		);
   	}
 });

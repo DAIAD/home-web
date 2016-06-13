@@ -17,7 +17,6 @@ function LocaleSwitcher (props) {
   const _t = intl.formatMessage;
   const translationKey = `locale.${locale}`;
   return (
-    <div className="language-switcher">
       <bs.DropdownButton
         title={_t({ id: translationKey})}
         id="language-switcher"
@@ -32,7 +31,6 @@ function LocaleSwitcher (props) {
         })
         } 
       </bs.DropdownButton>
-    </div>  
   );
 }
 

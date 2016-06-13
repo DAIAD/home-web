@@ -12,10 +12,43 @@ var Table = require('../Table');
 var LeafletMap = require('../LeafletMap');
 var Chart = require('../Chart');
 var theme = require('../chart/themes/shine');
+var InputTextModal = require('../InputTextModal');
 
 var { getAccounts, changeIndex, filterText, filterSerial, clearFilter, getMeter, clearChart,
-      setSearchModeText, setSearchModeMap, setGeometry} = require('../../actions/UserCatalogActions');
+      setSearchModeText, setSearchModeMap, setGeometry,
+      removeFavorite, addFavorite,
+      setSelectionMode, discardBagOfConsumers, toggleConsumer, saveBagOfConsumers } = require('../../actions/UserCatalogActions');
   
+var _setSelectionMode = function(e) {
+  this.props.actions.setSelectionMode(!this.props.userCatalog.selection.enabled);
+};
+
+var _show = function() {
+  if(Object.keys(this.props.userCatalog.selection.selected).length > 0) {
+    this.setState({ modal: true});
+  }
+};
+
+var _hide = function() {
+  this.setState({ modal: false});
+};
+
+var _setTitle =  function(key, text) {
+  _hide.bind(this)();
+  
+  if((text) && (key==='save')) {
+    _saveBagOfConsumers.bind(this)(text, Object.keys(this.props.userCatalog.selection.selected));
+  }
+};
+
+var _saveBagOfConsumers = function(title, members) {
+  this.props.actions.saveBagOfConsumers(title, members);
+};
+
+var _discardBagOfConsumers = function(e) {
+  this.props.actions.discardBagOfConsumers();
+};
+
 var _handleKeyPress = function(e) {
   if (e.key === 'Enter') {
     this.refresh();
@@ -41,13 +74,25 @@ var _featureRenderer = function(feature) {
 
     self.props.actions.getMeter(feature.properties.userKey, feature.properties.deviceKey, feature.properties.name);
   });
-  
+
+  container.on('click', '.add-consumer-to-collection', function(e) {
+    e.stopPropagation();
+    e.preventDefault();
+
+    self.props.actions.toggleConsumer(feature.properties.userKey);
+  });
+
   var content = [];
-  content.push('<span style="font-weight: bold;">Customer</span>');
-  content.push('<br/>');
-  content.push('<span style="font-size: 14px;">');
-  content.push(feature.properties.name);
+
+  content.push('<span style="font-size: 14px; font-weight: bold;">');
+  content.push(feature.properties.name + '&nbsp');
+  if(this.props.userCatalog.selection.enabled) {
+    content.push('<span class="add-consumer-to-collection" style="cursor: pointer; text-decoration: underline; font-size: 14px;">');
+    content.push('<i class="fa fa-shopping-basket fa-fw">&nbsp</i>');
+    content.push('</span>');  
+  }
   content.push('</span>');
+  
   content.push('<br/>');
   content.push('<br/>');
   content.push('<span style="font-weight: bold;">Address</span>');
@@ -61,8 +106,8 @@ var _featureRenderer = function(feature) {
   content.push('<br/>');
   content.push('<span class="add-meter-chart" style="cursor: pointer; text-decoration: underline; font-size: 14px;">');
   content.push(feature.properties.meter.serial);
-  content.push('</span>');
-  
+  content.push('</span>'); 
+    
   container.html(content.join(''));
 
   return container[0];
@@ -84,6 +129,12 @@ var _clearChart = function(e) {
 var UserCatalog = React.createClass({
   contextTypes: {
       intl: React.PropTypes.object
+  },
+  
+  getInitialState: function() {
+    return {
+      modal: false
+    };
   },
   
   componentWillMount : function() {
@@ -140,6 +191,22 @@ var UserCatalog = React.createClass({
         title: 'Registered On',
         type: 'datetime'
       }, {
+        name : 'favorite',
+        type : 'action',
+        icon : function(field, row) {
+          return (row.favorite ? 'star' : 'star-o');
+        },
+        handler : (function(field, row) {
+          if(row.favorite) {
+            this.props.actions.removeFavorite(row.id);
+          } else {
+            this.props.actions.addFavorite(row.id);
+          }
+        }).bind(this),
+        visible : (function(field, row) {
+          return (row.meter !== null);
+        }).bind(this)
+      }, {
         name : 'chart',
         type : 'action',
         icon : 'bar-chart-o',
@@ -161,6 +228,18 @@ var UserCatalog = React.createClass({
       }    
     };
     
+    if(this.props.userCatalog.selection.enabled) {
+      tableConfiguration.fields.splice(1, 0, {
+        name: 'selected',
+        title: '',
+        type: 'alterable-boolean',
+        width: 30,
+        handler: (function(id, name, value) {
+          this.props.actions.toggleConsumer(id);
+        }).bind(this)
+      });
+    }
+
     var tableStyle = {
       row : {
         rowHeight: 50
@@ -215,14 +294,41 @@ var UserCatalog = React.createClass({
         <span>{ this.props.userCatalog.isLoading ? 'Loading data ...' : 'No data found.' }</span>
     );
     
-    const filterTitle = (
-      <span>
-        <i className='fa fa-search fa-fw'></i>
-        <span style={{ paddingLeft: 4 }}>Search</span>
-        <span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}></span>
-      </span>
-    );
-    
+    var filterTitle;
+    if(this.props.userCatalog.selection.enabled) {
+      filterTitle = (
+        <span>
+          <i className='fa fa-search fa-fw'></i>
+          <span style={{ paddingLeft: 4 }}>Search</span>
+          <span style={{float: 'right',  marginTop: 2, marginLeft: 5 }}>
+            {Object.keys(this.props.userCatalog.selection.selected).length + ' selected'}
+          </span>
+          <span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
+            <Bootstrap.Button bsStyle='default' className='btn-circle' onClick={_discardBagOfConsumers.bind(this)} >
+              <i className='fa fa-remove fa-lg' ></i>
+            </Bootstrap.Button>
+          </span>
+          <span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
+            <Bootstrap.Button bsStyle='default' className='btn-circle' onClick={_show.bind(this)} >
+              <i className='fa fa-save fa-lg' ></i>
+            </Bootstrap.Button>
+          </span>
+        </span>
+      );
+    } else {
+      filterTitle = (
+        <span>
+          <i className='fa fa-search fa-fw'></i>
+          <span style={{ paddingLeft: 4 }}>Search</span>
+          <span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
+            <Bootstrap.Button bsStyle='default' className='btn-circle' onClick={_setSelectionMode.bind(this)} title='Create a new group' >
+              <i className='fa fa-shopping-basket fa-lg' ></i>
+            </Bootstrap.Button>
+          </span>
+        </span>
+      );
+    }
+
     const mapTitle = (
       <span>
         <span>
@@ -350,6 +456,18 @@ var UserCatalog = React.createClass({
 
     return (
       <div className="container-fluid" style={{ paddingTop: 10 }}>
+        <InputTextModal 
+          onHide={_hide.bind(this)}
+          title='Create Group'
+          visible={this.state.modal}
+          prompt='Title ...'
+          help='Set title for the new group'
+          actions={
+            [{ style : 'default', key : 'save', text : 'Save' },
+             { style : 'danger', key : 'cancel', text : 'Cancel' }]
+          }
+          handler={_setTitle.bind(this)}
+        />
         <div className="row">
           <div className="col-md-12">
             <Breadcrumb routes={this.props.routes}/>
@@ -411,7 +529,9 @@ function mapDispatchToProps(dispatch) {
   return {
     actions : bindActionCreators(
       Object.assign({}, {getAccounts, changeIndex, filterSerial, filterText, clearFilter, getMeter, clearChart,
-                         setSearchModeText, setSearchModeMap, setGeometry}) , dispatch
+                         setSearchModeText, setSearchModeMap, setGeometry,
+                         removeFavorite, addFavorite,
+                         setSelectionMode, discardBagOfConsumers, toggleConsumer, saveBagOfConsumers }) , dispatch
   )};
 }
 

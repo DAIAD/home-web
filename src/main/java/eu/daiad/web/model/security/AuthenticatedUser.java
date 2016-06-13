@@ -16,161 +16,168 @@ import eu.daiad.web.model.profile.EnumWebMode;
 
 public class AuthenticatedUser extends User {
 
-	private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
+    private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
 
-	private UUID key;
+    private UUID key;
 
-	private int id;
+    private int id;
 
-	private int utilityId;
+    private UUID utilityKey;
 
-	private DateTime createdOn;
+    private int utilityId;
 
-	private String firstname;
+    private DateTime createdOn;
 
-	private String lastname;
+    private String firstname;
 
-	private EnumGender gender;
+    private String lastname;
 
-	private DateTime birthdate;
+    private EnumGender gender;
 
-	private String locale;
+    private DateTime birthdate;
 
-	private String country;
+    private String locale;
 
-	private String postalCode;
+    private String country;
 
-	private String timezone;
+    private String postalCode;
 
-	private EnumWebMode webMode = EnumWebMode.INACTIVE;
+    private String timezone;
 
-	private EnumMobileMode mobileMode = EnumMobileMode.INACTIVE;
+    private EnumWebMode webMode = EnumWebMode.INACTIVE;
 
-	private EnumUtilityMode utilityMode = EnumUtilityMode.INACTIVE;
+    private EnumMobileMode mobileMode = EnumMobileMode.INACTIVE;
 
-	public AuthenticatedUser(int id, UUID key, String username, String password, int utilityId, boolean isLocked,
-					Collection<? extends GrantedAuthority> authorities) {
-		super(username, password, true, true, true, !isLocked, authorities);
+    private EnumUtilityMode utilityMode = EnumUtilityMode.INACTIVE;
 
-		this.id = id;
-		this.utilityId = utilityId;
+    public AuthenticatedUser(int id, UUID key, String username, String password, int utilityId, UUID utilityKey,
+                    boolean isLocked, Collection<? extends GrantedAuthority> authorities) {
+        super(username, password, true, true, true, !isLocked, authorities);
 
-		this.key = key;
-	}
+        this.id = id;
+        this.utilityId = utilityId;
+        this.utilityKey = utilityKey;
 
-	public String getFirstname() {
-		return firstname;
-	}
+        this.key = key;
+    }
 
-	public void setFirstname(String firstname) {
-		this.firstname = firstname;
-	}
+    public String getFirstname() {
+        return firstname;
+    }
 
-	public String getLastname() {
-		return lastname;
-	}
+    public void setFirstname(String firstname) {
+        this.firstname = firstname;
+    }
 
-	public void setLastname(String lastname) {
-		this.lastname = lastname;
-	}
+    public String getLastname() {
+        return lastname;
+    }
 
-	public UUID getKey() {
-		return this.key;
-	}
+    public void setLastname(String lastname) {
+        this.lastname = lastname;
+    }
 
-	public EnumGender getGender() {
-		return gender;
-	}
+    public UUID getKey() {
+        return this.key;
+    }
 
-	public void setGender(EnumGender gender) {
-		this.gender = gender;
-	}
+    public EnumGender getGender() {
+        return gender;
+    }
 
-	public DateTime getBirthdate() {
-		return birthdate;
-	}
+    public void setGender(EnumGender gender) {
+        this.gender = gender;
+    }
 
-	public void setBirthdate(DateTime birthdate) {
-		this.birthdate = birthdate;
-	}
+    public DateTime getBirthdate() {
+        return birthdate;
+    }
 
-	public String getCountry() {
-		return country;
-	}
+    public void setBirthdate(DateTime birthdate) {
+        this.birthdate = birthdate;
+    }
 
-	public void setCountry(String country) {
-		this.country = country;
-	}
+    public String getCountry() {
+        return country;
+    }
 
-	public String getTimezone() {
-		return timezone;
-	}
+    public void setCountry(String country) {
+        this.country = country;
+    }
 
-	public void setTimezone(String timezone) {
-		this.timezone = timezone;
-	}
+    public String getTimezone() {
+        return timezone;
+    }
 
-	public String getPostalCode() {
-		return postalCode;
-	}
+    public void setTimezone(String timezone) {
+        this.timezone = timezone;
+    }
 
-	public void setPostalCode(String postalCode) {
-		this.postalCode = postalCode;
-	}
+    public String getPostalCode() {
+        return postalCode;
+    }
 
-	public boolean hasRole(String role) {
-		return this.getAuthorities().contains(new SimpleGrantedAuthority(role));
-	}
+    public void setPostalCode(String postalCode) {
+        this.postalCode = postalCode;
+    }
 
-	public boolean hasRole(EnumRole role) {
-		return this.getAuthorities().contains(new SimpleGrantedAuthority(role.toString()));
-	}
+    public boolean hasRole(String role) {
+        return this.getAuthorities().contains(new SimpleGrantedAuthority(role));
+    }
 
-	public EnumWebMode getWebMode() {
-		return webMode;
-	}
+    public boolean hasRole(EnumRole role) {
+        return this.getAuthorities().contains(new SimpleGrantedAuthority(role.toString()));
+    }
 
-	public void setWebMode(EnumWebMode webMode) {
-		this.webMode = webMode;
-	}
+    public EnumWebMode getWebMode() {
+        return webMode;
+    }
 
-	public EnumMobileMode getMobileMode() {
-		return mobileMode;
-	}
+    public void setWebMode(EnumWebMode webMode) {
+        this.webMode = webMode;
+    }
 
-	public void setMobileMode(EnumMobileMode mobileMode) {
-		this.mobileMode = mobileMode;
-	}
+    public EnumMobileMode getMobileMode() {
+        return mobileMode;
+    }
 
-	public EnumUtilityMode getUtilityMode() {
-		return utilityMode;
-	}
+    public void setMobileMode(EnumMobileMode mobileMode) {
+        this.mobileMode = mobileMode;
+    }
 
-	public void setUtilityMode(EnumUtilityMode utilityMode) {
-		this.utilityMode = utilityMode;
-	}
+    public EnumUtilityMode getUtilityMode() {
+        return utilityMode;
+    }
 
-	public int getUtilityId() {
-		return utilityId;
-	}
+    public void setUtilityMode(EnumUtilityMode utilityMode) {
+        this.utilityMode = utilityMode;
+    }
 
-	public int getId() {
-		return id;
-	}
+    public int getUtilityId() {
+        return utilityId;
+    }
 
-	public String getLocale() {
-		return locale;
-	}
+    public int getId() {
+        return id;
+    }
 
-	public void setLocale(String locale) {
-		this.locale = locale;
-	}
+    public String getLocale() {
+        return locale;
+    }
 
-	public DateTime getCreatedOn() {
-		return createdOn;
-	}
+    public void setLocale(String locale) {
+        this.locale = locale;
+    }
 
-	public void setCreatedOn(DateTime createdOn) {
-		this.createdOn = createdOn;
-	}
+    public DateTime getCreatedOn() {
+        return createdOn;
+    }
+
+    public void setCreatedOn(DateTime createdOn) {
+        this.createdOn = createdOn;
+    }
+
+    public UUID getUtilityKey() {
+        return utilityKey;
+    }
 }

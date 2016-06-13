@@ -238,7 +238,7 @@ var _initializeChoroPleth = function(config) {
 var _intializeVector = function(config) {
   var map = this.map;
   
-  var { data, renderer } = config;
+  var { data, autofit, renderer } = config;
 
   if(data) {
     this.vector = {};
@@ -263,7 +263,7 @@ var _intializeVector = function(config) {
       }
     }).addTo(map);
     
-    if((data) && (data.features.length > 0)) {
+    if((autofit) && (data) && (data.features.length > 0)) {
       map.fitBounds(layer.getBounds());
     }
     

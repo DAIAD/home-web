@@ -79,13 +79,13 @@ var _fillMeterSeries = function(interval, data) {
         ref.subtract(1, 'days');
       }
     }
-
-    allPoints.sort(function(p1, p2) {
-      return (p1.timestamp - p2.timestamp);
-    });
-
-    data[0].values = allPoints;
   }
+
+  allPoints.sort(function(p1, p2) {
+    return (p1.timestamp - p2.timestamp);
+  });
+
+  data[0].values = allPoints;
 
   return data;
 };

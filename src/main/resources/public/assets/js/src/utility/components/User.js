@@ -105,9 +105,6 @@ var User = React.createClass({
           var utility = this.props.profile.utility;
           
           this.props.getGroupSeries(row.id, row.name, utility.timezone);
-        }).bind(this),
-        visible : (function(field, row) {
-          return (this.props.data.meters !== null);
         }).bind(this)
       }],
       rows : []
@@ -481,7 +478,7 @@ var User = React.createClass({
                     <Table data={groupTableConfig}></Table>
                   </Bootstrap.ListGroupItem>
                   <Bootstrap.ListGroupItem className='clearfix'>
-                    <Link className='pull-right' to='/demographics' style={{ paddingLeft : 7, paddingTop: 12 }}>Browse all groups</Link>
+                    <Link className='pull-right' to='/groups' style={{ paddingLeft : 7, paddingTop: 12 }}>Browse all groups</Link>
                   </Bootstrap.ListGroupItem>
                 </Bootstrap.ListGroup>
               </Bootstrap.Panel>

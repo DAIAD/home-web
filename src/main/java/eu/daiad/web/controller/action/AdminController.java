@@ -1,7 +1,6 @@
 package eu.daiad.web.controller.action;
 
 import java.util.List;
-import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -18,7 +17,6 @@ import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.admin.AccountActivity;
 import eu.daiad.web.model.admin.AccountActivityResponse;
 import eu.daiad.web.model.admin.CounterCollectionResponse;
-import eu.daiad.web.model.group.GroupQuery;
 import eu.daiad.web.model.group.GroupQueryRequest;
 import eu.daiad.web.model.group.GroupQueryResponse;
 import eu.daiad.web.model.security.AuthenticatedUser;
@@ -46,7 +44,8 @@ public class AdminController extends BaseController {
     /**
      * Returns information about all trial user activity.
      * 
-     * @param user the currently authenticated user.
+     * @param user
+     *            the currently authenticated user.
      * @return the user activity.
      */
     @RequestMapping(value = "/action/admin/trial/activity", method = RequestMethod.GET, produces = "application/json")
@@ -78,37 +77,29 @@ public class AdminController extends BaseController {
      * Returns all available groups including clusters, segments and user
      * defined user groups. Optionally filters data.
      * 
-     * @param request the query to filter data.
+     * @param request
+     *            the query to filter data.
      * @return the selected groups.
      */
     @RequestMapping(value = "/action/admin/group/query", method = RequestMethod.POST, produces = "application/json")
     @Secured("ROLE_ADMIN")
     public RestResponse getGroups(@AuthenticationPrincipal AuthenticatedUser user,
                     @RequestBody GroupQueryRequest request) {
-        RestResponse response = null;
 
         try {
-            if (request == null) {
-                request = new GroupQueryRequest();
-            }
-            if (request.getQuery() == null) {
-                request.setQuery(new GroupQuery());
-            }
-            if (request.getQuery().getUtility() == null) {
-                UUID utilityKey = utilityRepository.getUtilityById(user.getUtilityId()).getKey();
+            GroupQueryResponse response = new GroupQueryResponse();
 
-                request.getQuery().setUtility(utilityKey);
-            }
+            response.setGroups(this.groupRepository.getAll(user.getUtilityKey()));
 
-            return new GroupQueryResponse(this.groupRepository.getAll(request.getQuery()));
+            return response;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            response = new RestResponse();
+            RestResponse response = new RestResponse();
             response.add(this.getError(ex));
-        }
 
-        return response;
+            return response;
+        }
     }
 
     /**

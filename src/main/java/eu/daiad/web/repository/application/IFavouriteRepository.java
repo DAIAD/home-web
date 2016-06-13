@@ -20,10 +20,16 @@ public interface IFavouriteRepository {
 
     abstract void deleteFavourite(UUID favourite_id);
 
-    abstract void addFavorite(UUID ownerKey, UUID userKey);
+    abstract void addUserFavorite(UUID ownerKey, UUID userKey);
 
-    abstract void deleteFavorite(UUID ownerKey, UUID userKey);
+    abstract void addGroupFavorite(UUID ownerKey, UUID groupKey);
 
-    abstract boolean isFavorite(UUID ownerKey, UUID userKey);
+    abstract void deleteUserFavorite(UUID ownerKey, UUID userKey);
+
+    abstract void deleteGroupFavorite(UUID ownerKey, UUID groupKey);
+
+    abstract boolean isUserFavorite(UUID ownerKey, UUID userKey);
+
+    abstract boolean isGroupFavorite(UUID ownerKey, UUID groupKey);
 
 }

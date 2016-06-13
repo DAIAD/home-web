@@ -7,12 +7,12 @@ var requestedGroupsAndFavourites = function() {
   };
 };
 
-var receivedGroups = function(success, errors, groupsInfo) {
+var receivedGroups = function(success, errors, groups) {
   return {
     type : types.DEMOGRAPHICS_RECEIVE_GROUPS,
     success : success,
     errors : errors,
-    groupsInfo : groupsInfo
+    groups : groups
   };
 };
 
@@ -122,7 +122,7 @@ var DemographicActions = {
       dispatch(requestedGroupsAndFavourites());
       
       return demographicsAPI.fetchGroups().then(function(response) {
-        dispatch(receivedGroups(response.success, response.errors, response.groupListInfo));
+        dispatch(receivedGroups(response.success, response.errors, response.groups));
         
         return demographicsAPI.fetchFavourites().then(function(response) {
           dispatch(receivedFavourites(response.success, response.errors, response.favouritesInfo));
@@ -252,7 +252,7 @@ var DemographicActions = {
         dispatch(receivedGroupDeletionResponse(response.success, response.errors));
         dispatch(requestedGroupsAndFavourites());
         return demographicsAPI.fetchGroups().then(function(response) {
-          dispatch(receivedGroups(response.success, response.errors, response.groupListInfo));
+          dispatch(receivedGroups(response.success, response.errors, response.groups));
           
           return demographicsAPI.fetchFavourites().then(function(response) {
             dispatch(receivedFavourites(response.success, response.errors, response.favouritesInfo));

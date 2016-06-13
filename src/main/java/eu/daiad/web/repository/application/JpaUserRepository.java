@@ -368,7 +368,8 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                     authorities.add(new SimpleGrantedAuthority(r.getRole().getName()));
                 }
                 user = new AuthenticatedUser(account.getId(), account.getKey(), account.getUsername(), account
-                                .getPassword(), account.getUtility().getId(), account.isLocked(), authorities);
+                                .getPassword(), account.getUtility().getId(), account.getUtility().getKey(), account
+                                .isLocked(), authorities);
 
                 user.setCreatedOn(account.getCreatedOn());
                 user.setBirthdate(account.getBirthdate());
@@ -412,7 +413,8 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                 }
 
                 user = new AuthenticatedUser(account.getId(), account.getKey(), account.getUsername(), account
-                                .getPassword(), account.getUtility().getId(), account.isLocked(), authorities);
+                                .getPassword(), account.getUtility().getId(), account.getUtility().getKey(), account
+                                .isLocked(), authorities);
 
                 user.setCreatedOn(account.getCreatedOn());
                 user.setBirthdate(account.getBirthdate());
@@ -455,7 +457,8 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                     authorities.add(new SimpleGrantedAuthority(r.getRole().getName()));
                 }
                 user = new AuthenticatedUser(account.getId(), account.getKey(), account.getUsername(), account
-                                .getPassword(), account.getUtility().getId(), account.isLocked(), authorities);
+                                .getPassword(), account.getUtility().getId(), account.getUtility().getKey(), account
+                                .isLocked(), authorities);
 
                 user.setCreatedOn(account.getCreatedOn());
                 user.setBirthdate(account.getBirthdate());
@@ -727,7 +730,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         for (eu.daiad.web.domain.application.Account a : result.getAccounts()) {
             a.getDevices().size();
         }
-        
+
         return result;
 
     }
@@ -859,6 +862,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
 
                 List<?> keys = query.getResultList();
 
+                // Force device loading
                 for (Object key : keys) {
                     result.add(UUID.fromString((String) key));
                 }

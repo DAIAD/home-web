@@ -12,6 +12,7 @@ var { reduceSessions, reduceMetric, sortSessions, meterSessionsToCSV, deviceSess
 
 var timeUtil = require('../utils/time');
 var { getFriendlyDuration, getEnergyClass, getMetricMu } = require('../utils/general');
+var { getTimeLabelByGranularity } = require('../utils/chart');
 
 var { DEV_METRICS, METER_METRICS, DEV_PERIODS, METER_PERIODS, DEV_SORT, METER_SORT } = require('../constants/HomeConstants');
 
@@ -39,8 +40,10 @@ function mapDispatchToProps(dispatch) {
 
 function mergeProps(stateProps, dispatchProps, ownProps) {
   const devType = stateProps.activeDeviceType;  
-  const sessions = sortSessions(reduceSessions(stateProps.devices, stateProps.data), stateProps.sortFilter, stateProps.sortOrder);
+  const sessions = sortSessions(reduceSessions(stateProps.devices, stateProps.data), stateProps.sortFilter, stateProps.sortOrder)
+  .map(s => Object.assign({}, s, {date: getTimeLabelByGranularity(s.timestamp, stateProps.time.granularity, ownProps.intl)}));
 
+  
 
   const csvData = stateProps.activeDeviceType === 'METER' ? meterSessionsToCSV(sessions) : deviceSessionsToCSV(sessions);
 
@@ -67,7 +70,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
 
   const comparisons = stateProps.timeFilter !== 'custom' ?
     (devType === 'AMPHIRO' ? [] : 
-     [{id: 'last', title: timeUtil.getLastPeriod(stateProps.timeFilter, stateProps.time.startDate)}]
+     [{id: 'last', title: timeUtil.getComparisonPeriod(stateProps.time.startDate, stateProps.time.granularity, ownProps.intl)}]
     ) 
       : [];
 

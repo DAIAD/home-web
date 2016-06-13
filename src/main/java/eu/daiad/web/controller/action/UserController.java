@@ -108,7 +108,7 @@ public class UserController extends BaseController {
      */
     @RequestMapping(value = "/action/user/search", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
-    public RestResponse search(@RequestBody UserQueryRequest request) {
+    public RestResponse search(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody UserQueryRequest request) {
         try {
             // Set default values
             if (request.getQuery() == null) {
@@ -134,6 +134,7 @@ public class UserController extends BaseController {
 
             for (Account entity : result.getAccounts()) {
                 UserInfo account = new UserInfo(entity);
+
                 account.setLocation(entity.getLocation());
 
                 for (eu.daiad.web.domain.application.Device d : entity.getDevices()) {
@@ -142,6 +143,8 @@ public class UserController extends BaseController {
                         break;
                     }
                 }
+
+                account.setFavorite(favouriteRepository.isUserFavorite(user.getKey(), entity.getKey()));
 
                 accounts.add(account);
             }
@@ -206,7 +209,7 @@ public class UserController extends BaseController {
             response.setDevices(getDevices(key, user.getTimezone()));
             response.setGroups(userGroupRepository.getGroupsByMember(key));
 
-            response.setFavorite(favouriteRepository.isFavorite(user.getKey(), response.getUser().getId()));
+            response.setFavorite(favouriteRepository.isUserFavorite(user.getKey(), response.getUser().getId()));
 
             return response;
         } catch (ApplicationException ex) {
@@ -280,7 +283,7 @@ public class UserController extends BaseController {
     public @ResponseBody RestResponse addFavorite(@AuthenticationPrincipal AuthenticatedUser user,
                     @PathVariable UUID userKey) {
         try {
-            favouriteRepository.addFavorite(user.getKey(), userKey);
+            favouriteRepository.addUserFavorite(user.getKey(), userKey);
 
             return new RestResponse();
         } catch (ApplicationException ex) {
@@ -305,7 +308,7 @@ public class UserController extends BaseController {
     public @ResponseBody RestResponse removeFavorite(@AuthenticationPrincipal AuthenticatedUser user,
                     @PathVariable UUID userKey) {
         try {
-            favouriteRepository.deleteFavorite(user.getKey(), userKey);
+            favouriteRepository.deleteUserFavorite(user.getKey(), userKey);
 
             return new RestResponse();
         } catch (ApplicationException ex) {

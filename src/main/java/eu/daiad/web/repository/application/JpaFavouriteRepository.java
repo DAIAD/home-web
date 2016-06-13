@@ -20,6 +20,7 @@ import eu.daiad.web.domain.application.Favourite;
 import eu.daiad.web.domain.application.FavouriteAccount;
 import eu.daiad.web.domain.application.FavouriteGroup;
 import eu.daiad.web.domain.application.Group;
+import eu.daiad.web.domain.application.GroupSegment;
 import eu.daiad.web.model.error.FavouriteErrorCode;
 import eu.daiad.web.model.error.GroupErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
@@ -31,6 +32,7 @@ import eu.daiad.web.model.favourite.FavouriteAccountInfo;
 import eu.daiad.web.model.favourite.FavouriteGroupInfo;
 import eu.daiad.web.model.favourite.FavouriteInfo;
 import eu.daiad.web.model.favourite.UpsertFavouriteRequest;
+import eu.daiad.web.model.group.EnumGroupType;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.BaseRepository;
 
@@ -360,8 +362,8 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
     }
 
     @Override
-    public void addFavorite(UUID ownerKey, UUID userKey) {
-        if (isFavorite(ownerKey, userKey)) {
+    public void addUserFavorite(UUID ownerKey, UUID userKey) {
+        if (isUserFavorite(ownerKey, userKey)) {
             return;
         }
 
@@ -386,7 +388,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
     }
 
     @Override
-    public void deleteFavorite(UUID ownerKey, UUID userKey) {
+    public void deleteUserFavorite(UUID ownerKey, UUID userKey) {
         TypedQuery<eu.daiad.web.domain.application.FavouriteAccount> query = entityManager.createQuery(
                         "SELECT f FROM favourite_account f "
                                         + "WHERE f.owner.key = :ownerKey and f.account.key = :userKey",
@@ -394,16 +396,16 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
         query.setParameter("ownerKey", ownerKey);
         query.setParameter("userKey", userKey);
-        
+
         List<FavouriteAccount> favorites = query.getResultList();
-        
-        if(!favorites.isEmpty()) {
+
+        if (!favorites.isEmpty()) {
             entityManager.remove(favorites.get(0));
         }
     }
 
     @Override
-    public boolean isFavorite(UUID ownerKey, UUID userKey) {
+    public boolean isUserFavorite(UUID ownerKey, UUID userKey) {
         TypedQuery<eu.daiad.web.domain.application.FavouriteAccount> query = entityManager.createQuery(
                         "SELECT f FROM favourite_account f "
                                         + "WHERE f.owner.key = :ownerKey and f.account.key = :userKey",
@@ -414,4 +416,68 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
         return (!query.getResultList().isEmpty());
     }
+
+    @Override
+    public void addGroupFavorite(UUID ownerKey, UUID groupKey) {
+        if (isGroupFavorite(ownerKey, groupKey)) {
+            return;
+        }
+
+        TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager.createQuery(
+                        "select a from account a where a.key = :key", eu.daiad.web.domain.application.Account.class);
+
+        accountQuery.setParameter("key", ownerKey);
+
+        eu.daiad.web.domain.application.Account owner = accountQuery.getSingleResult();
+
+        TypedQuery<eu.daiad.web.domain.application.Group> groupQuery = entityManager.createQuery(
+                        "select g from group g where g.key = :key", eu.daiad.web.domain.application.Group.class);
+
+        groupQuery.setParameter("key", groupKey);
+
+        eu.daiad.web.domain.application.Group group = groupQuery.getSingleResult();
+
+        eu.daiad.web.domain.application.FavouriteGroup favorite = new eu.daiad.web.domain.application.FavouriteGroup();
+        favorite.setGroup(group);
+        favorite.setCreatedOn(new DateTime());
+        favorite.setOwner(owner);
+        if (group.getType() == EnumGroupType.SEGMENT) {
+            favorite.setLabel(((GroupSegment) group).getCluster().getName() + " - " + group.getName());
+        } else {
+            favorite.setLabel(group.getName());
+        }
+
+        entityManager.persist(favorite);
+    }
+
+    @Override
+    public void deleteGroupFavorite(UUID ownerKey, UUID groupKey) {
+        TypedQuery<eu.daiad.web.domain.application.FavouriteGroup> query = entityManager.createQuery(
+                        "SELECT f FROM favourite_group f "
+                                        + "WHERE f.owner.key = :ownerKey and f.group.key = :groupKey",
+                        eu.daiad.web.domain.application.FavouriteGroup.class).setFirstResult(0).setMaxResults(1);
+
+        query.setParameter("ownerKey", ownerKey);
+        query.setParameter("groupKey", groupKey);
+
+        List<FavouriteGroup> favorites = query.getResultList();
+
+        if (!favorites.isEmpty()) {
+            entityManager.remove(favorites.get(0));
+        }
+    }
+
+    @Override
+    public boolean isGroupFavorite(UUID ownerKey, UUID groupKey) {
+        TypedQuery<eu.daiad.web.domain.application.FavouriteGroup> query = entityManager.createQuery(
+                        "SELECT f FROM favourite_group f "
+                                        + "WHERE f.owner.key = :ownerKey and f.group.key = :groupKey",
+                        eu.daiad.web.domain.application.FavouriteGroup.class).setFirstResult(0).setMaxResults(1);
+
+        query.setParameter("ownerKey", ownerKey);
+        query.setParameter("groupKey", groupKey);
+
+        return (!query.getResultList().isEmpty());
+    }
+
 }
