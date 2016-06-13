@@ -422,5 +422,5 @@ function mapDispatchToProps(dispatch) {
 }
 
 ManageAlerts.icon = 'commenting-o';
-ManageAlerts.title = 'Section.Messages.Tips';
+ManageAlerts.title = 'Section.ManageAlerts.Messages';
 module.exports = connect(mapStateToProps, mapDispatchToProps)(ManageAlerts);
