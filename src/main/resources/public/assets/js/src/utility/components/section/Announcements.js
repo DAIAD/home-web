@@ -8,7 +8,7 @@ var {FormattedMessage, FormattedTime, FormattedDate} = require('react-intl');
 var DropDown = require('../DropDown');
 var Select = require('react-controls/select-dropdown');
 var Redux = require('react-redux');
-
+var DropDown = require('../UtilityDropDown');
 
 var { connect } = require('react-redux');
 var { bindActionCreators } = require('redux');
@@ -23,6 +23,7 @@ var Announcements = React.createClass({
   componentWillMount : function() {
     this.props.getAnnouncementHistory();
     this.props.getCurrentUtilityUsers();
+    this.props.fetchGroups();
   },
   
   setFilter: function(e) {
@@ -224,27 +225,40 @@ var Announcements = React.createClass({
       </div>
     );  
    
-  //    var groupDropDown = (
-//      <div className='col-md-4'>
-//        <DropDown
-//          title={'Select Group'}
-//          //options={utilityOptions}
-//          //onSelect={this.props.actions.addUserSelectUtility}
-//          disabled={false}
-//        />
-//      </div>
-//    );     
+    var groupOptions = [];
+    groupOptions.push({label: 'Everyone'});
+    if(this.props.groups){
+      for(var obj in this.props.groups){
+        groupOptions.push({id: this.props.groups[obj].id, label: this.props.groups[obj].name});
+      }
+    }
+    
+    var groupDisabled;
+    var groupTitle;
+    if(groupOptions.length === 1){
+      groupTitle = 'No groups available';
+      groupDisabled = true;
+    }
+    else{
+      groupTitle = 'Everyone';
+      groupDisabled = false;
+    }
     var groupDropDown = (
-      <Select className='select-cluster-group'
-        value={''}
-        //onChange={(val) => this._setPopulation(clusterKey, val)}
-       >
-        <optgroup label={ 'All groups'}>
-          <option value="" key="">{'Everyone'}</option>
-        </optgroup>
-      </Select>
+      <div className='form-horizontal report-form' >
+        <div className='col-sm-1 control-label'>
+          <label>Group:</label>
+        </div> 
+        <div className='col-sm-9' style = {{marginLeft: 8, marginBottom:10}}> 
+          <DropDown  
+            title = {this.props.group ? this.props.group.label : groupTitle}                             
+            options={groupOptions}
+            disabled={groupDisabled}
+            onSelect={this.props.setGroup}  
+          />   
+        </div> 
+      </div>
     );  
-   
+    
     var usersTable = (
       <div>
         <Table data={currentUsersFields}></Table>
@@ -329,7 +343,7 @@ var Announcements = React.createClass({
       );       
     }
 
-    if(this.props.accounts && this.props.announcements && !this.props.isLoading){
+    if(this.props.groups && this.props.accounts && this.props.announcements && !this.props.isLoading){
       return (
         <div className="container-fluid" style={{ paddingTop: 10 }}>
           <div className="row">
@@ -342,8 +356,8 @@ var Announcements = React.createClass({
               <Bootstrap.Panel header={usersTitle}>
                 <Bootstrap.ListGroup fill>
                   <Bootstrap.ListGroupItem>	
-                    {filter} 
                     {groupDropDown}
+                    {filter} 
                     {usersTable}    
                   </Bootstrap.ListGroupItem>
                 </Bootstrap.ListGroup>
@@ -422,12 +436,24 @@ function mapStateToProps(state) {
       rowIdToggled: state.announcements.rowIdToggled,
       showForm: state.announcements.showForm,
       showModal: state.announcements.showModal,
-      filter: state.announcements.filter
+      filter: state.announcements.filter,
+      groups: state.announcements.groups,
+      group: state.announcements.group
   };
 }
 
 function mapDispatchToProps(dispatch) {
   return {
+    fetchGroups : bindActionCreators(AnnouncementsActions.fetchGroups, dispatch),
+    setGroup: function (event, group){
+      dispatch(AnnouncementsActions.setGroup(event, group));
+      
+      if(group.name == 'Everyone'){
+      }
+      else{
+        dispatch(AnnouncementsActions.getGroupUsers(event, group));
+      }
+    },
     getCurrentUtilityUsers: bindActionCreators(AnnouncementsActions.getCurrentUtilityUsers, dispatch),
     getAnnouncementHistory: bindActionCreators(AnnouncementsActions.getAnnouncementHistory, dispatch),
     toggleInitialUserSelected: function (accounts, accountId, selected){

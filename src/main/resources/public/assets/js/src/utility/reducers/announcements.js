@@ -13,7 +13,9 @@ var initialState = {
     selected : false,
     rowIdToggled: null,
     announcements: [],
-    filter : null
+    filter : null,
+    groups : null,
+    group : null
 };
 
 var announcements = function (state, action) {
@@ -71,6 +73,19 @@ var announcements = function (state, action) {
       return Object.assign({}, state, {
         filter : action.filter || null
       });    
+    case types.ANNC_REQUESTED_GROUPS:
+      return Object.assign({}, state, {
+        isLoading : true
+      }); 
+    case types.ANNC_RECEIVED_GROUPS:
+      return Object.assign({}, state, {
+        isLoading : false,
+        groups : action.groups
+      });    
+    case types.ANNC_SELECT_GROUP:
+      return Object.assign({}, state, {
+        group: action.group
+      });      
     default:
       return state || initialState;
   }
