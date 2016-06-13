@@ -222,8 +222,8 @@ public class JpaUserGroupRepository extends BaseRepository implements IUserGroup
 
 			Utility adminUtility = utilityQuery.getSingleResult();
 
-			TypedQuery<GroupSet> groupQuery = entityManager
-							.createQuery("SELECT g FROM group_set g WHERE g.key = :group_id", GroupSet.class)
+			TypedQuery<Group> groupQuery = entityManager
+							.createQuery("SELECT g FROM group g WHERE g.key = :group_id", Group.class)
 							.setFirstResult(0).setMaxResults(1);
 			groupQuery.setParameter("group_id", group_id);
 

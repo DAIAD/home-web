@@ -293,6 +293,10 @@
     "Europe/London": "UTC",
     "Europe/Madrid": "Μαδρίτη",
     "Europe/Athens": "Αθήνα"
+  },
+  "Gender" : {
+    "FEMALE": "Female",
+    "MALE": "Male"
   }
 }
 

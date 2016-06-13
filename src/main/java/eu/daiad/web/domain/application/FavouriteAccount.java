@@ -1,6 +1,5 @@
 package eu.daiad.web.domain.application;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -12,7 +11,7 @@ import eu.daiad.web.model.favourite.EnumFavouriteType;
 @Table(schema = "public", name = "favourite_account")
 public class FavouriteAccount extends Favourite {
 
-	@ManyToOne(cascade = { CascadeType.ALL })
+	@ManyToOne()
 	@JoinColumn(name = "account_id", nullable = false)
 	private Account account;
 

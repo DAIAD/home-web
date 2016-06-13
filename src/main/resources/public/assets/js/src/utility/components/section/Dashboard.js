@@ -84,7 +84,7 @@ var Dashboard = React.createClass({
         });
       }
   
-      if(this.props.chart.series.devices) {
+      if(this.props.chart.series.devices) {       
         chartData.series.push({
           legend: 'Amphiro B1',
           xAxis: 'date',
