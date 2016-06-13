@@ -26,9 +26,10 @@ const createInfobox = function(data) {
   };
 };
 
-const appendLayout = function(id, display) {
+const appendLayout = function(id, display, type) {
   let layout = {x:0, y:0, w:1, h:1, i:id};
-  if (display==='stat') {
+  //if (display==='stat') {
+  if (display === 'stat' || (display === 'chart' && type === 'budget')) {
     Object.assign(layout, {w:2, h:1});
   }
   else if (display === 'chart') {
@@ -67,9 +68,10 @@ const addInfobox = function(options) {
     const lastId = infobox.length?Math.max.apply(Math, infobox.map(info => parseInt(info.id))):0;
     const id = (lastId+1).toString();
     const display = options.display;
+    const type = options.type;
 
     dispatch(createInfobox(Object.assign(options, {id})));
-    dispatch(appendLayout(id, display));
+    dispatch(appendLayout(id, display, type));
 
     dispatch(updateInfobox(id, {}));
     return id;
@@ -93,14 +95,14 @@ const updateInfobox = function(id, data) {
       data: Object.assign({}, data, {synced:false}),
     });
 
-    dispatch(updateLayoutItem(id, data.display));
+    dispatch(updateLayoutItem(id, data.display, data.type));
 
     dispatch(setDirty()); 
     dispatch(QueryActions.fetchInfoboxData(Object.assign({}, getState().section.dashboard.infobox.find(i=>i.id===id))))
     .then(res => dispatch(setInfoboxData(id, res)))
     .catch(error => { 
           console.error('Caught error in infobox data fetch:', error); 
-          dispatch(setInfoboxData(id, {data: [], error: 'Oops sth went wrong, replace with sth friendly'})); 
+          dispatch(setInfoboxData(id, {data: [], error: 'Oops sth went wrong, please refresh the page.'})); 
     });
 
   };
@@ -157,7 +159,7 @@ const removeInfobox = function(id) {
  * @param {String} display - One of stat, display
  * 
  */
-const updateLayoutItem = function(id, display) {
+const updateLayoutItem = function(id, display, type) {
   return function(dispatch, getState) {
 
     if (display==null) return;
@@ -166,7 +168,7 @@ const updateLayoutItem = function(id, display) {
     const layoutItemIdx = layout.findIndex(i=>i.i===id);
     if (layoutItemIdx==-1) return;
 
-      if (display === 'stat') {
+      if (display === 'stat' || (display === 'chart' && type === 'budget')) {
          layout[layoutItemIdx] = Object.assign({}, layout[layoutItemIdx], {w:2, h:1});
       }
       else if (display === 'chart') {
@@ -196,7 +198,7 @@ const fetchAllInfoboxesData = function() {
       })
         .catch(error => { 
           console.error('Caught error in infobox data fetch:', error); 
-          dispatch(setInfoboxData(id, {data: [], error: 'Oops sth went wrong, replace with sth friendly'})); });
+          dispatch(setInfoboxData(id, {data: [], error: 'Oops sth went wrong, please refresh the page'})); });
 
     });
   };

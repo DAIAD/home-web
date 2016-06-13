@@ -41,9 +41,9 @@ function SayHello (props) {
 }
 
 function InfoBox (props) {
-  const { mode, infobox, updateInfobox, removeInfobox, intl } = props;
-  const { id, error, period, type, display, linkToHistory, periods, displays, time } = infobox;
-  
+  const { mode, infobox, updateInfobox, removeInfobox, intl, linkToHistory, } = props;
+  const { id, error, period, type, display, periods, displays, time } = infobox;
+
   const _t = intl.formatMessage;
   return (
     <div className='infobox'>
@@ -114,14 +114,14 @@ function InfoBox (props) {
          }
        </div>
        <div className='infobox-footer'>
-          <a onClick={linkToHistory}>See more</a>
+         <a onClick={() => linkToHistory(infobox)}>See more</a>
        </div>
     </div>
   );
 }
 
 function StatBox (props) {
-  const { id, title, type, improved, data, highlight, metric, measurements, period, device, deviceDetails, index, time, better, comparePercentage, mu } = props.infobox;
+  const { id, title, type, deviceType, improved, data, highlight, metric, measurements, period, device, deviceDetails, index, time, better, comparePercentage, mu } = props.infobox;
   let improvedDiv = <div/>;
   if (improved === true) {
     improvedDiv = (<img src={`${IMAGES}/success.svg`}/>);
@@ -141,7 +141,7 @@ function StatBox (props) {
         <div>
           {
             (() => bow ? 
-             <span><i className={`fa ${arrowClass}`}/>{better ? `${comparePercentage}% better than last ${period} so far!` : `${comparePercentage}% worse than last ${period} so far`}</span>
+             <span><i className={`fa ${arrowClass}`}/>{deviceType === 'AMPHIRO' ? (better ? `${comparePercentage}% better than last ${period}!` : `${comparePercentage}% worse than last ${period}`): (better ? `${comparePercentage}% better than last ${period} so far!` : `${comparePercentage}% worse than last ${period} so far`)}</span>
              :
                <span>No data</span>
                )()
@@ -162,7 +162,7 @@ function TipBox (props) {
 }
 
 function InfoPanel (props) {
-  const { mode, layout, infoboxes, updateLayout, switchMode,  updateInfobox, removeInfobox, chartFormatter, intl, periods, displays } = props;
+  const { mode, layout, infoboxes, updateLayout, switchMode,  updateInfobox, removeInfobox, chartFormatter, intl, periods, displays, linkToHistory } = props;
   return (
       <ResponsiveGridLayout 
         className='layout'
@@ -188,7 +188,7 @@ function InfoPanel (props) {
          infoboxes.map(function(infobox) {
            return (
              <div key={infobox.id}>
-               <InfoBox {...{mode, periods, displays, chartFormatter, infobox, updateInfobox, removeInfobox, intl}} /> 
+               <InfoBox {...{mode, periods, displays, chartFormatter, infobox, updateInfobox, removeInfobox, intl, linkToHistory}} /> 
            </div>
            );
          })

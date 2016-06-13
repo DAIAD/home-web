@@ -10,18 +10,14 @@ var Breadcrumb = require('../../Breadcrumb');
 var reports = require('../../reports');
 
 var PropTypes = React.PropTypes;
-var _configPropType = PropTypes.shape({
-  utility: PropTypes.object,
-  reports: PropTypes.object,
-  overview: PropTypes.object,
-});
+var {configPropType} = require('../../../prop-types');
 
 var Report = React.createClass({
   displayName: 'Analytics.Overview',
 
   propTypes: {
     routes: PropTypes.array, // supplied by react-router
-    config: _configPropType,
+    config: configPropType,
   },
 
   contextTypes: {

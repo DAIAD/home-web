@@ -111,6 +111,20 @@
     "User" : "User Preferences",
     "System" : "System Configuration"
   },
+  "UserSettings": {
+    "Title": "User Profile",
+    "Username": "Username",
+    "Firstname": "First name",
+    "Lastname": "Last name",
+    "Address": "Address",
+    "Zip": "Postal code",
+    "Country": "Country",
+    "CountryPlaceholder": "Select country",
+    "TimezonePlaceholder": "Select timezone",
+    "Timezone": "Timezone",
+    "Locale": "Language",
+    "Submit" : "Update"
+  },
   "Group" : {
     "FavouriteGroupInfo" : "Favourite Group Info",
     "Name" : "Name",
@@ -125,7 +139,7 @@
       "id": "Id",
       "name": "Name",
       "size": "# of Members",
-      "createdOn": "Creation Date"
+      "createdOn": "Updated On"
     },
     "User" : {
       "Users": "Users",
@@ -260,5 +274,19 @@
     "GroupSuccess.GROUP_CREATED" : "Group was succesfully created.",
     "FavouriteSuccess.FAVOURITE_ADDED" : "Favourite was succesfully added.",
     "FavouriteSuccess.FAVOURITE_UPDATED" : "Favourite was succesfully updated."
+  },
+  "Countries": {
+    "Greece": "Greece",
+    "Spain": "Spain",
+    "United Kingdom": "United Kingdom"
+  },
+  "Timezones": {
+    "Europe/London": "UTC",
+    "Europe/Madrid": "Madrid",
+    "Europe/Athens": "Athens"
+  },
+  "Gender" : {
+    "FEMALE": "Female",
+    "MALE": "Male"
   }
 }

@@ -9,15 +9,21 @@ import eu.daiad.web.model.favourite.FavouriteGroupInfo;
 import eu.daiad.web.model.favourite.FavouriteInfo;
 
 public interface IFavouriteRepository {
-	
-	public abstract List <FavouriteInfo> getFavourites();
-	
-	public abstract FavouriteAccountInfo checkFavouriteAccount(UUID account_id);
 
-	public abstract FavouriteGroupInfo checkFavouriteGroup(UUID group_id);
+    abstract List<FavouriteInfo> getFavourites();
 
-	public abstract void upsertFavourite(UpsertFavouriteRequest favouriteInfo);
+    abstract FavouriteAccountInfo checkFavouriteAccount(UUID account_id);
 
-	public abstract void deleteFavourite(UUID favourite_id);
-	
+    abstract FavouriteGroupInfo checkFavouriteGroup(UUID group_id);
+
+    abstract void upsertFavourite(UpsertFavouriteRequest favouriteInfo);
+
+    abstract void deleteFavourite(UUID favourite_id);
+
+    abstract void addFavorite(UUID ownerKey, UUID userKey);
+
+    abstract void deleteFavorite(UUID ownerKey, UUID userKey);
+
+    abstract boolean isFavorite(UUID ownerKey, UUID userKey);
+
 }

@@ -15,9 +15,6 @@ var _onUserSelect= function(e) {
   var profile = this.props.profile;
   
   if(e) {
-    console.log('***');
-    console.log(e);
-    console.log('***');
     if(e.value) {
       this.props.actions.getUserData(e.value, e.label, profile.timezone);
       this.props.actions.getUserForecast(e.value, e.label, profile.timezone);
@@ -42,7 +39,7 @@ var Forecasting = React.createClass({
 	getInitialState() {
 		return {
 		  chart: {
-		    type: 'bar'
+		    type: 'line'
 		  }
 		};
 	},
@@ -164,7 +161,7 @@ var Forecasting = React.createClass({
 		              </div>
 		              <div className='col-md-2'>
   		              <Select name='chart-type'
-                      value={ this.state.chart.type }
+                      value={ 'line' }
                       options={[
                           { value: 'bar', label: 'Bar' },
                           { value: 'line', label: 'Line' },

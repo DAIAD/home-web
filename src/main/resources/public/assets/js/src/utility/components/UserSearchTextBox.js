@@ -55,7 +55,7 @@ var UserSearchTextBox = React.createClass({
 
   getInitialState() {
     return {
-      value: [],
+      value: null,
     };
   },
   

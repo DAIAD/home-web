@@ -243,7 +243,7 @@ var AdminActions = {
         $('#export-download-frame').remove();
         $('body').append(content.join(''));
       }, function(error) {
-        dispatch(receivedMeters(false, error, null));
+        dispatch(receivedExport(false, error, null));
       });
     };
   },
