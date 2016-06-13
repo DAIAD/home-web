@@ -186,19 +186,31 @@ var _extractSeries = function(interval, data, label) {
     });
 
     for (d = days; d > 0; d--) {
-      if (ref.isSame(points[index].timestamp, 'day')) {
-        series.push({
-          volume : points[index].volume.SUM,
-          date : ref.clone().toDate()
-        });
-        index++;
-      } else {
+      if (index === points.length) {
         series.push({
           volume : 0,
           date : ref.clone().toDate()
         });
+
+        ref.subtract(1, 'days');
+      } else if (ref.isBefore(points[index].timestamp, 'day')) {
+        index++;
+      } else if (ref.isAfter(points[index].timestamp, 'day')) {
+        series.push({
+          volume : 0,
+          date : ref.clone().toDate()
+        });
+
+        ref.subtract(1, 'days');
+      } else if (ref.isSame(points[index].timestamp, 'day')) {
+        series.push({
+          volume : points[index].volume.SUM,
+          date : ref.clone().toDate()
+        });
+
+        index++;
+        ref.subtract(1, 'days');
       }
-      ref.subtract(1, 'days');
     }
   }
 
@@ -209,12 +221,10 @@ var _extractSeries = function(interval, data, label) {
 };
 
 var _extractChartSeries = function(interval, data) {
-  var series = {};
-
-  series.meters = _extractSeries(interval, data.meters, 'Meter');
-  series.devices = _extractSeries(interval, data.devices, 'Amphiro B1');
-
-  return series;
+  return {
+    meters : _extractSeries(interval, data.meters, 'Meter'),
+    devices : _extractSeries(interval, data.devices, 'Amphiro B1')
+  };
 };
 
 var statisticsReducer = function(state, action) {
@@ -277,7 +287,7 @@ var mapReducer = function(state, action) {
 
       return Object.assign({}, state, {
         features : features,
-        index: action.index
+        index : action.index
       });
 
     default:

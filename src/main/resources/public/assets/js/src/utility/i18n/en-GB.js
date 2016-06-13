@@ -144,7 +144,7 @@
 			"id": "Id",
 			"name": "Name",
 			"size": "# of Members",
-			"createdOn": "Creation Date"
+			"createdOn": "Updated On"
 		},
 		"User" : {
 			"Users": "Users",
@@ -298,6 +298,10 @@
     "Europe/London": "UTC",
     "Europe/Madrid": "Madrid",
     "Europe/Athens": "Athens"
+  },
+  "Gender" : {
+    "FEMALE": "Female",
+    "MALE": "Male"
   }
 }
 

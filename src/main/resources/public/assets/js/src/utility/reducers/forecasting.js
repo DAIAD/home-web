@@ -44,20 +44,36 @@ var _extractChartSeries = function(interval, data, label) {
     var index = 0;
     var points = data[0].points;
 
+    points.sort(function(p1, p2) {
+      return (p2.timestamp - p1.timestamp);
+    });
+
     for (d = days; d > 0; d--) {
-      if (ref.isSame(points[index].timestamp, 'day')) {
-        series.push({
-          volume : points[index].volume.SUM,
-          date : ref.clone().toDate()
-        });
-        index++;
-      } else {
+      if (index === points.length) {
         series.push({
           volume : 0,
           date : ref.clone().toDate()
         });
+
+        ref.subtract(1, 'days');
+      } else if (ref.isBefore(points[index].timestamp, 'day')) {
+        index++;
+      } else if (ref.isAfter(points[index].timestamp, 'day')) {
+        series.push({
+          volume : 0,
+          date : ref.clone().toDate()
+        });
+
+        ref.subtract(1, 'days');
+      } else if (ref.isSame(points[index].timestamp, 'day')) {
+        series.push({
+          volume : points[index].volume.SUM,
+          date : ref.clone().toDate()
+        });
+
+        index++;
+        ref.subtract(1, 'days');
       }
-      ref.subtract(1, 'days');
     }
   }
 

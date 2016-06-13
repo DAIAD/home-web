@@ -13,7 +13,7 @@ var PAGING_SERVER_SIDE = 'server';
 var Table = React.createClass({
 	getInitialState: function() {
 		return {
-			activePage: this.props.data.pager.index
+			activePage: (this.props.data.pager ? this.props.data.pager.index : 0)
   	};
 	},
 	
@@ -30,13 +30,7 @@ var Table = React.createClass({
 		return {
 			data: {
 				fields: [],
-				rows: [],
-				pager: {
-					index: 0,
-					size: 10,
-					count:0,
-					mode: PAGING_CLIENT_SIDE
-				}
+				rows: []
 			},
 			template: {
 			  empty: null
@@ -53,8 +47,24 @@ var Table = React.createClass({
   	},
 
   	render: function() {
-  	  var totalPages = Math.ceil(this.props.data.pager.count / this.props.data.pager.size);
-  	  var currentPageIndex = ((this.state.activePage + 1) > totalPages ? totalPages : (this.state.activePage + 1));
+  	  var totalPages = 1, currentPageIndex = 0, pagination = null;
+  	  
+  	  if(this.props.data.pager) {
+  	    totalPages = Math.ceil(this.props.data.pager.count / this.props.data.pager.size);
+  	    currentPageIndex = (this.state.activePage + 1) > totalPages ? totalPages : (this.state.activePage + 1);
+  	    
+  	    pagination = (
+	        <Bootstrap.Pagination prev
+                                next
+                                first
+                                last
+                                ellipsis
+                                items={totalPages}
+                                maxButtons={7}
+                                activePage={currentPageIndex}
+                                onSelect={this.onPageIndexChange} />
+        );
+  	  }
 
       if((this.props.data.rows.length === 0) && (this.props.template.empty)) {
         return(
@@ -71,15 +81,7 @@ var Table = React.createClass({
   				</Bootstrap.Table>
 				</div>
 				<div style={{float:'right'}}>
-					<Bootstrap.Pagination 	prev
-											next
-											first
-											last
-											ellipsis
-											items={totalPages}
-			        						maxButtons={7}
-			        						activePage={currentPageIndex}
-			        						onSelect={this.onPageIndexChange} />	
+					{pagination}	
 				</div>
 			</div>
  		);
@@ -136,10 +138,11 @@ var Body = React.createClass({
       var pager = self.props.data.pager;
   		var filtered = self.props.data.rows;
   		
-  		if((!pager.mode) || (pager.mode === PAGING_CLIENT_SIDE)) {
+  		if((!pager) || (!pager.mode) || (pager.mode === PAGING_CLIENT_SIDE)) {
   		  filtered = self.props.data.rows.reduce(function(newArray, currentValue, currentIndex) {
   		  
-  		    if(((self.props.activePageIndex*pager.size) <= currentIndex) && (currentIndex < ((self.props.activePageIndex+1)*pager.size))) {
+  		    if((!pager) || (((self.props.activePageIndex*pager.size) <= currentIndex) && 
+  		        (currentIndex < ((self.props.activePageIndex+1)*pager.size)))) {
   		      newArray.push(currentValue);
   		    }
 

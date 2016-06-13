@@ -84,7 +84,7 @@ var Dashboard = React.createClass({
         });
       }
   
-      if(this.props.chart.series.devices) {
+      if(this.props.chart.series.devices) {       
         chartData.series.push({
           legend: 'Amphiro B1',
           xAxis: 'date',
@@ -245,22 +245,22 @@ var Dashboard = React.createClass({
 				<div className='col-md-4'>
 					<div style={{ marginBottom: 20 }}>
 						<Counter text={'Counter.Users'} 
-						         value={counters ? counters.user.value : null} 
-						         variance={counters ? counters.user.difference : null} link='/users' />
+						         value={((counters) && (counters.user)) ? counters.user.value : null} 
+						         variance={((counters) && (counters.user)) ? counters.user.difference : null} link='/users' />
 					</div>
 				</div>
 				<div className='col-md-4'>
 					<div style={{ marginBottom: 20 }}>
 						<Counter text={'Counter.Meters'}
-						         value={counters ? counters.meter.value : null}
-						         variance={counters ? counters.meter.difference : null} color='#1abc9c' link='/users'/>
+						         value={((counters) && (counters.meter)) ? counters.meter.value : null}
+						         variance={((counters) && (counters.meter)) ? counters.meter.difference : null} color='#1abc9c' link='/users'/>
 					</div>
 				</div>
 				<div className='col-md-4'>
 					<div style={{ marginBottom: 20 }}>
 						<Counter text={'Counter.Devices'}
-						         value={counters ? counters.amphiro.value : null}
-						         variance={counters ? counters.amphiro.difference : null} color='#27ae60' link='/users' />
+						         value={((counters) && (counters.amphiro)) ? counters.amphiro.value : null}
+						         variance={((counters) && (counters.amphiro)) ? counters.amphiro.difference : null} color='#27ae60' link='/users' />
 					</div>
 				</div>
 			</div>

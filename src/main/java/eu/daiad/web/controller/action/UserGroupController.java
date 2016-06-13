@@ -196,13 +196,13 @@ public class UserGroupController extends BaseController {
 	 * @return the user groups
 	 */
 	
-	@RequestMapping(value = "/action/group/list/member/{user_id}", method = RequestMethod.GET, produces = "application/json")
+	@RequestMapping(value = "/action/group/list/member/{key}", method = RequestMethod.GET, produces = "application/json")
 	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN"})
-	public @ResponseBody RestResponse getGroupsByMember(@PathVariable UUID user_id){
+	public @ResponseBody RestResponse getGroupsByMember(@PathVariable UUID key){
 		RestResponse response = new RestResponse();
 		
 		try{
-			return new GroupListInfoResponse(repository.getGroupsByMember(user_id));
+			return new GroupListInfoResponse(repository.getGroupsByMember(key));
 			
 		} catch (ApplicationException ex) {
 			logger.error(ex.getMessage(), ex);
