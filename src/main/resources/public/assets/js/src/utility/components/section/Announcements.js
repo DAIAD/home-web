@@ -224,6 +224,27 @@ var Announcements = React.createClass({
       </div>
     );  
    
+  //    var groupDropDown = (
+//      <div className='col-md-4'>
+//        <DropDown
+//          title={'Select Group'}
+//          //options={utilityOptions}
+//          //onSelect={this.props.actions.addUserSelectUtility}
+//          disabled={false}
+//        />
+//      </div>
+//    );     
+    var groupDropDown = (
+      <Select className='select-cluster-group'
+        value={''}
+        //onChange={(val) => this._setPopulation(clusterKey, val)}
+       >
+        <optgroup label={ 'All groups'}>
+          <option value="" key="">{'Everyone'}</option>
+        </optgroup>
+      </Select>
+    );  
+   
     var usersTable = (
       <div>
         <Table data={currentUsersFields}></Table>
@@ -321,7 +342,8 @@ var Announcements = React.createClass({
               <Bootstrap.Panel header={usersTitle}>
                 <Bootstrap.ListGroup fill>
                   <Bootstrap.ListGroupItem>	
-                    {filter}    
+                    {filter} 
+                    {groupDropDown}
                     {usersTable}    
                   </Bootstrap.ListGroupItem>
                 </Bootstrap.ListGroup>
