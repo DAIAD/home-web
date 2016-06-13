@@ -31,11 +31,6 @@
 	    "Users": "Χρήστες",
 	    "Messages": "Μηνύματα",
 	    "Settings": "Ρυθμίσεις",
-	    "Reports": {
-	      "Group": "Δοκιμές",
-	      "Overview": "Επισκόπηση",
-	      "Charts": "Γραφήματα"
-	    },
       "Reports": {
         "Group": "Δοκιμές",
         "Overview": "Επισκόπηση",
@@ -47,8 +42,6 @@
         "Engagement": "Engagement",
         "Messages": "Μηνύματα",
         "Announcements": "Ανακοινώσεις"
-      },
-        "Tips" : "Διαχείρηση Ειδοποιήσεων"
       },
 	    "Scheduler": "Διαχείριση Εργασιών",
 	    "Consumers": "Καταναλωτές",
@@ -119,6 +112,20 @@
 		"User" : "Επιλογές Χρήστη",
 		"System" : "Ρυθμίσεις Συστήματος"
 	},
+  "UserSettings": {
+    "Title": "Προφίλ Χρήστη",
+    "Username": "Όνομα χρήστη",
+    "Firstname": "Όνομα",
+    "Lastname": "Επώνυμο",
+    "Address": "Διεύθυνση",
+    "Zip": "Τ/Κ",
+    "Country": "Χώρα",
+    "CountryPlaceholder": "Επιλέξτε χώρα",
+    "TimezonePlaceholder": "Επιλέξτε ζώνη ώρας",
+    "Timezone": "Ζώνη Ώρας",
+    "Locale": "Γλώσσα",
+    "Submit" : "Ενημέρωση"
+  },
 	"Group" : {
     "Name" : "Όνομα",
     "Description" : "Περιγραφή",
@@ -276,6 +283,20 @@
     "GroupSuccess.GROUP_DELETED" : "Η ομάδα διαγράφηκε επιτυχώς.",
     "FavouriteSuccess.FAVOURITE_ADDED" : "Το αγαπημένο προστέθηκε επιτυχώς.",
     "FavouriteSuccess.FAVOURITE_UPDATED" : "Το αγαπημένο ενημερώθηκε επιτυχώς."
+  },
+  "Countries": {
+    "Greece": "Ελλάδα",
+    "Spain": "Spain",
+    "United Kingdom": "United Kingdom"
+  },
+  "Timezones": {
+    "Europe/London": "UTC",
+    "Europe/Madrid": "Μαδρίτη",
+    "Europe/Athens": "Αθήνα"
+  },
+  "Gender" : {
+    "FEMALE": "Female",
+    "MALE": "Male"
   }
 }
 

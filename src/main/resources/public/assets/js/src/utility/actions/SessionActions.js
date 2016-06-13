@@ -69,7 +69,21 @@ var SessionActions = {
 						dispatch(receivedLogin(false, error, {}));
 					});
 		};
-	}
+  },
+  saveToProfile : function (data) {
+    return function(dispatch, getState) {
+
+      return sessionAPI.saveToProfile(data)
+      .then(function(response) {
+        return response;
+
+      },function(errors) {
+        console.error('Error caught on saveToProfile:', errors);
+        return errors;
+      });
+    };
+  }
+
 };
 
 // http://stackoverflow.com/questions/46155/validate-email-address-in-javascript

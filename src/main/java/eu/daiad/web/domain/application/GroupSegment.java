@@ -13,7 +13,7 @@ import eu.daiad.web.model.group.EnumGroupType;
 @Table(schema = "public", name = "group_segment")
 public class GroupSegment extends Group {
 
-	@ManyToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+	@ManyToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
 	@JoinColumn(name = "cluster_id", nullable = false)
 	private Cluster cluster;
 

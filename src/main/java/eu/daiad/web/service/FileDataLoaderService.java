@@ -295,7 +295,7 @@ public class FileDataLoaderService extends BaseService implements IFileDataLoade
 					data.setDeviceKey(device.getKey());
 					ArrayList<AmphiroSession> sessions = new ArrayList<AmphiroSession>();
 
-					for (int i = 0; i < 1500; i++) {
+					for (int i = 0; i < 600; i++) {
 						sampleIndex = (sampleIndex + rand.nextInt(samples.size())) % samples.size();
 						showerId++;
 
@@ -355,7 +355,7 @@ public class FileDataLoaderService extends BaseService implements IFileDataLoade
 					data.setDeviceKey(device.getKey());
 					ArrayList<AmphiroSession> sessions = new ArrayList<AmphiroSession>();
 
-					for (int i = 0; i < 1500; i++) {
+					for (int i = 0; i < 600; i++) {
 						sampleIndex = (sampleIndex + rand.nextInt(samples.size())) % samples.size();
 						showerId++;
 

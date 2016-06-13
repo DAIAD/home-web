@@ -97,9 +97,9 @@ var Chart = React.createClass({
 			});
   	};
 		
-		var getValues = function(series) {
+		var getValues = function(series, decimalPlaces) {
 			return series.data.map(function(record) {
-				return record[series.yAxis];
+				return record[series.yAxis].toFixed(decimalPlaces);
 			});
   	};
 		
@@ -110,20 +110,20 @@ var Chart = React.createClass({
     	
     	// Common configuration
     	if(i===0) {
-            chartOptions.xAxis.push({
-            	type : 'category',
-            	data : getLabels(series),
-            	name: series.xAxisName || '',
-        	});
+        chartOptions.xAxis.push({
+        	type : 'category',
+        	data : getLabels(series),
+        	name: series.xAxisName || '',
+        });
 
     		chartOptions.yAxis.push({
-              type : 'value',
-            	name: series.yAxisName || 'Volume',
-            	nameLocation: 'end',
-            	nameTextStyle: {
-            		color: '#000'
-            	}
-            });
+          type : 'value',
+        	name: series.yAxisName || 'Volume',
+        	nameLocation: 'end',
+        	nameTextStyle: {
+        		color: '#000'
+        	}
+        });
     	}
         	
     	// Data series configuration
@@ -139,11 +139,11 @@ var Chart = React.createClass({
     	}
 
     	chartOptions.series.push({
-            name: series.legend,
-            type: (type === 'area' ? 'line' : type),
-            itemStyle: itemStyle,
-            data: getValues(series)                
-        });
+        name: series.legend,
+        type: (type === 'area' ? 'line' : type),
+        itemStyle: itemStyle,
+        data: getValues(series, 0)                
+      });
     }
 
 		return chartOptions;

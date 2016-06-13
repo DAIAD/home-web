@@ -99,7 +99,7 @@ const transformInfoboxData = function (infobox, devices, intl) {
     }
     else if (type === 'last') {
       device = infobox.device;
-      time = infobox.time;
+      //time = infobox.time;
       
       chartCategories = null;
 
@@ -127,7 +127,14 @@ const transformInfoboxData = function (infobox, devices, intl) {
       displays = STATBOX_DISPLAYS;
 
       reduced = data ? reduceMetric(devices, data, metric) : 0;
-      previousReduced = previous ? reduceMetric(devices, previous, metric) : 0; 
+      //TODO: static
+      //previousReduced = previous ? reduceMetric(devices, previous, metric) : 0; 
+      let fac; 
+      if (period === 'ten') fac = 1.2;
+      else if (period === 'twenty') fac = 0.8;
+      else if (period === 'fifty') fac = 0.75;
+
+      previousReduced = deviceType === 'AMPHIRO' ? reduced * fac : (previous ? reduceMetric(devices, previous, metric) : 0); 
 
       highlight = reduced;
       mu = getMetricMu(metric);
@@ -148,7 +155,13 @@ const transformInfoboxData = function (infobox, devices, intl) {
       periods = deviceType === 'AMPHIRO' ? devPeriods : meterPeriods;
       displays = STATBOX_DISPLAYS;
 
-      previousReduced = previous ? reduceMetric(devices, previous, metric) : 0; 
+      //TODO: static
+      let fac; 
+      if (period === 'ten') fac = 0.4;
+      else if (period === 'twenty') fac = 1.1;
+      else if (period === 'fifty') fac = 1.15;
+      //previousReduced = previous ? reduceMetric(devices, previous, metric) : 0; 
+      previousReduced = previous ? reduceMetric(devices, previous, metric) : reduced*fac; 
 
       better = reduced < previousReduced;
 
@@ -169,17 +182,21 @@ const transformInfoboxData = function (infobox, devices, intl) {
     }
     else if (type === 'forecast') {
       chartType = 'bar';
+      
+      device = getDeviceKeysByType(devices, deviceType);
+      reduced = data ? reduceMetric(devices, data, metric) : 0;
 
       //periods = deviceType === 'AMPHIRO' ? devPeriods : meterPeriods;
       //dummy data
       chartCategories=[2014, 2015, 2016];
-      chartData=[{title:'Consumption', data:[100, 200, 150]}];
+      chartData=[{title:'Consumption', data:[reduced, reduced*1.5, reduced*0.8]}];
       mu = getMetricMu(metric);
     }
     else if (type === 'breakdown') {
       chartType = 'bar';
 
-      periods = deviceType === 'AMPHIRO' ? devPeriods : meterPeriods;
+      //periods = deviceType === 'AMPHIRO' ? devPeriods : meterPeriods;
+      periods = meterPeriods.filter(p => p.id === 'month' || p.id === 'year');
 
       reduced = data ? reduceMetric(devices, data, metric) : 0;
       //dummy data
@@ -208,15 +225,25 @@ const transformInfoboxData = function (infobox, devices, intl) {
     else if (type === 'budget') {
       chartType = 'pie';
 
-      periods = deviceType === 'AMPHIRO' ? devPeriods : meterPeriods;
-
+      //periods = meterPeriods.filter(p => p.id === 'day');
+      periods = [];
       reduced = data ? reduceMetric(devices, data, metric) : 0;
       mu = getMetricMu(metric);
       chartCategories = null; 
+      
+      //dummy data based on real user data
+      //TODO: static
+      const consumed = reduced;
+
+      const remaining = reduced*0.35;
+      let percent = Math.round((consumed / (consumed+remaining))* 100);
+      percent = isNaN(percent) ? '' : `${percent}%`;
+
+      chartData=[{title: percent, data:[{value: consumed, name: 'consumed', color: '#2D3580'}, {value: remaining, name: 'remaining', color: '#D0EAFA'}]}];
 
       chartColors = ['#2d3480', '#abaecc'];
       //dummy data
-      chartData=[{title:'66%', data:[{value: 345, name: 'consumed', color: '#2D3580'}, {value: 250, name: 'remaining', color: '#D0EAFA'}]}];
+      //chartData=[{title:'66%', data:[{value: 345, name: 'consumed', color: '#2D3580'}, {value: 250, name: 'remaining', color: '#D0EAFA'}]}];
       mu = getMetricMu(metric);
 
     }
@@ -225,6 +252,7 @@ const transformInfoboxData = function (infobox, devices, intl) {
                        {
                          periods,
                          displays,
+                         time,
                          device,
                          highlight,
                          chartData,
