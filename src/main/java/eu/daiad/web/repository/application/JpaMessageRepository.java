@@ -487,7 +487,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 			message.setIndex(staticRecommendation.getIndex());
 			message.setTitle(staticRecommendation.getTitle());
 			message.setDescription(staticRecommendation.getDescription());
-			message.setImageEncoded(staticRecommendation.getImage());
+			//message.setImageEncoded(staticRecommendation.getImage());
 			message.setImageMimeType(staticRecommendation.getImageMimeType());
 			message.setImageLink(staticRecommendation.getImageLink());
 			message.setPrompt(staticRecommendation.getPrompt());

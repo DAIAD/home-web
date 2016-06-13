@@ -4,9 +4,9 @@ var ManageAlertsAPI = {
     getAllUtilities: function(){
       return api.json('/action/utility/fetch/corresponding');
     },    
-    getTips: function(locale){      
+    getTips: function(locale){  
       return api.json('/action/recommendation/static/' + locale);
-    },
+    },   
     saveActiveTips: function(changedRows){
       return api.json('/action/recommendation/static/status/save/', changedRows);
     },
