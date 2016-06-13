@@ -51,12 +51,6 @@ function InfoBox (props) {
         <div className='header-left'>
           <h4>{infobox.title}</h4>
         </div>
-        <div className='header-left'>
-          {
-            (() => type === 'forecast' || type === 'budget' || type === 'comparison' || type === 'breakdown' ? <h5>STATIC</h5> : <span/> 
-            )()
-          }
-        </div>
 
         <div className='header-right'>
           <div style={{marginRight:10}}>
