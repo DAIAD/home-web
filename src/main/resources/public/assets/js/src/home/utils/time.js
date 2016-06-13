@@ -156,22 +156,14 @@ const getGranularityByDiff = function(start, end) {
 
 
 
-const timeToBuckets = function(time, oops) {
+const timeToBuckets = function(time) {
   if (time == null) return [];
   const { startDate, endDate, granularity } = time;
   if (startDate == null || endDate == null || granularity == null) return [];
-  // throw new Error('Need time object with startDate, endDate & granularity to make buckets');
 
-  let period, aggrPeriod = null;
-  if (oops === true) {
-    period = 'second';
-    aggrPeriod = 'second';
-  }
-  else {
-    period = getLowerGranularityPeriod(convertGranularityToPeriod(granularity));
-
-    aggrPeriod = period === 'hour' ? 'hour' : 'day';
-  }
+  let period = getLowerGranularityPeriod(convertGranularityToPeriod(granularity));
+  let aggrPeriod = period === 'hour' ? 'hour' : 'day';
+  
   const bucketCount = moment(endDate).add(1, 'second').diff(moment(startDate), period);
 
   let buckets = [];

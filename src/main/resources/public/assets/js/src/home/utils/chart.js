@@ -58,20 +58,27 @@ const getChartMeterCategories = function(time) {
 const getChartMeterCategoryLabels = function(xData, time, intl) {
   if (!time || time.granularity == null) return [];
 
-  if (time.granularity === 4) {
-    return xData.map(t => intl.formatMessage({id: `months.${moment(t).get('month')}`})); 
+  return xData.map(t => getTimeLabelByGranularity(t, time.granularity, intl));
+
+};
+
+const getTimeLabelByGranularity = function (timestamp, granularity, intl, extended=false) {
+
+  if (extended) {
+    return moment(timestamp).format('DD/MM/YY hh:mm a');
   }
-  else if (time.granularity === 3) {
-    return xData.map(t => `${intl.formatMessage({id: 'periods.week'})} ${moment(t).get('isoweek')}`);
+  else if (granularity === 4) {
+    return intl.formatMessage({id: `months.${moment(timestamp).get('month')}`}); 
   }
-  else if (time.granularity === 2) {
-    return xData.map(t => intl.formatMessage({id: `weekdays.${moment(t).get('day')}`}));
+  else if (granularity === 3) {
+    return `${intl.formatMessage({id: 'periods.week'})} ${moment(timestamp).get('isoweek')}`;
+  }
+  else if (granularity === 2) {
+    return intl.formatMessage({id: `weekdays.${moment(timestamp).get('day')}`});
   }
   else {
-    return xData.map(t => `${moment(t).format('hh:mm')}`);
-
+    return `${moment(timestamp).format('hh:mm')}`;
   }
-
 };
 
 const getChartAmphiroCategories = function (period) {
@@ -116,16 +123,8 @@ const getChartAmphiroData = function (sessions, xAxisData, metric) {
 };
 
 const getChartTimeData = function (sessions, metric) {
-  //if not x axis data then x axis time
-  //  if (xAxisData === null) {
-      return sessions.map(session => session[metric] == null ? [] :
-                        [new Date(session.timestamp), session[metric]]);
-                        //}
-    //else x axis is category
-    //else {
-    //return xAxisData.map((v, i) =>
-    //  sessions[i] ? sessions[i][metric] : null);
-    // }
+    return sessions.map(session => session[metric] == null ? [] :
+                      [new Date(session.timestamp), session[metric]]);
 };
 
 
@@ -148,18 +147,19 @@ const getChartMeterData = function(sessions, xAxisData, metric, time) {
   });
 };
 
-const getChartMetadata = function (data, xAxisData) {
-  //if (xAxisData === null) {
-  //  return data.map(session => [session.id, session.timestamp]);
-  //}
-  //else {
-  console.log('getting metadata from ', data, xAxisData);
-  return xAxisData.map((v, i) => {
-    const index = data.findIndex(x => x.timestamp === v);
-    return index > -1 ? [data[index].id, data[index].timestamp] : [];
-  });
-                         //      data[i] ? [data[i].id, data[i].timestamp] : []);
-      //}
+const getChartMetadata = function (data, xAxisData, timeBased=true) {
+  if (timeBased) {
+    return xAxisData.map((v, i) => {
+      const index = data.findIndex(x => moment(x.timestamp).startOf('hour').valueOf() === v);
+      return index > -1 ? [data[index].id, data[index].timestamp] : [];
+    });
+  }
+  else {
+    return xAxisData.map((v, i) => {
+      return data[i] ? [data[i].id, data[i].timestamp] : [null, null];
+    });
+  }
+
 };
 
 module.exports = {
@@ -171,5 +171,6 @@ module.exports = {
   getChartMeterCategoryLabels,
   getChartAmphiroCategories,
   getChartMetadata,
+  getTimeLabelByGranularity,
   //sessionsToBuckets
 };
