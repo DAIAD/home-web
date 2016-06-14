@@ -1,7 +1,22 @@
 var types = require('../constants/ActionTypes');
 var alertsAPI = require('../api/alerts');
 
-var requestedCurrentUtilityUsers = function() {
+var requestedGroups = function () {
+  return {
+    type: types.ANNC_REQUESTED_GROUPS,
+  };
+};
+
+var receivedGroups = function (success, errors, groups) {
+  return {
+    type: types.ANNC_RECEIVED_GROUPS,
+    success: success,
+    errors: errors,
+    groups: groups
+  };
+};
+
+var requestedUsers = function() {
   return {
     type : types.ANNC_REQUESTED_USERS,
     isLoading: true
@@ -69,17 +84,44 @@ var broadcastAnnouncementResponse = function(success, errors) {
 };
 
 var AnnouncementsActions = {
+  fetchGroups: function (event) {
+    
+    return function (dispatch, getState) {
+      dispatch(requestedGroups());
+      return alertsAPI.getAllGroups().then(function (response) {
+        dispatch(receivedGroups(response.success, response.errors, response.groups));      
+      }, function (error) {
+        dispatch(receivedGroups(false, error, null));
+      });
+    };
+  },
+  setGroup: function (event, group) {
+    return{
+      type: types.ANNC_SELECT_GROUP,
+      group: group
+    };
+  },    
   getCurrentUtilityUsers : function(event) {
     return function(dispatch, getState) {
-      dispatch(requestedCurrentUtilityUsers());
+      dispatch(requestedUsers());
 
-      return alertsAPI.getUsers().then(function(response) {        
+      return alertsAPI.getAllUtilityUsers().then(function(response) {        
         dispatch(receivedCurrentUtilityUsers(response.success, response.errors, response.accounts));     
       }, function(error) {
         dispatch(receivedCurrentUtilityUsers(false, error, null));
       });
     };
-  },
+  },  
+  getGroupUsers : function(groupUUID) {
+    return function(dispatch, getState) {
+      dispatch(requestedUsers());
+      return alertsAPI.getUsersOfGroup(groupUUID).then(function(response) {        
+        dispatch(receivedCurrentUtilityUsers(response.success, response.errors, response.accounts));     
+      }, function(error) {
+        dispatch(receivedCurrentUtilityUsers(false, error, null));
+      });
+    };
+  },   
   getAnnouncementHistory : function(event) {
     return function(dispatch, getState) {
       dispatch(requestedAnnouncementsHistory());
@@ -197,6 +239,18 @@ var AnnouncementsActions = {
       type : types.ANNC_FILTER_USERS,
       filter : filter
     };
+  },
+  setSelectedAll : function(event, selected){
+    var accounts = [];
+    for(var obj in event.props.data.rows){
+      event.props.data.rows[obj].selected = selected;
+      accounts.push(event.props.data.rows[obj]); 
+    }
+    return {
+      type : types.ANNC_SET_SELECTED_ALL,
+      accounts : accounts,
+      checked : selected
+    };  
   }
 };
 

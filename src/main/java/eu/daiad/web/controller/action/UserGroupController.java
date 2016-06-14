@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.admin.AccountActivityResponse;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.group.CreateGroupSetRequest;
 import eu.daiad.web.model.group.GroupInfoResponse;
@@ -100,6 +101,31 @@ public class UserGroupController extends BaseController {
 		}
 		return response;
 	}
+    
+	/**
+	 * Returns the accounts that are members of the group.
+	 * 
+	 * @param group_id the group id.
+	 * @return the controller's response.
+	 */
+	@RequestMapping(value = "/action/group/accounts/current/{groupId}", method = RequestMethod.GET, produces = "application/json")
+	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN" })
+	public RestResponse getGroupAccounts(@PathVariable UUID groupId) {
+		RestResponse response = new RestResponse();
+		
+		try{				
+            AccountActivityResponse activityResponse = new AccountActivityResponse();
+            activityResponse.getAccounts().addAll(repository.getGroupAccounts(groupId));
+            
+			return activityResponse;
+			
+		} catch (ApplicationException ex) {
+			logger.error(ex.getMessage(), ex);
+
+			response.add(this.getError(ex));
+		}
+		return response;
+	}    
 	
 	/**
 	 * Returns all the users that are eligible to join a new user defined group.
