@@ -103,7 +103,7 @@ const initialState = {
     },
     {
       id: "9", 
-      title: "Budget",
+      title: "Daily Budget",
       type: "budget",
       display: "chart",
       deviceType: "METER",

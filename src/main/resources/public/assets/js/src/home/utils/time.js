@@ -3,8 +3,8 @@ var moment = require('moment');
 const last24Hours = function(timestamp) {
   return {
     startDate: moment(timestamp).subtract(24, 'hours').valueOf(),
-    endDate: moment(timestamp).valueOf(),
-    granularity:0
+    endDate: timestamp,
+    granularity: 0
   };
 };
 
@@ -42,34 +42,38 @@ const thisYear = function() {
 const getPeriod = function(period, timestamp=moment().valueOf()) {
   return {
     startDate: moment().startOf(period).valueOf(),
-    endDate: Object.assign({}, moment(timestamp)).endOf(period).valueOf(),
+    endDate: moment(timestamp).endOf(period).valueOf(),
     granularity: convertPeriodToGranularity(period)
   };
 };
-
+//get Start or End of iso week instead of week to start from monday
 const getNextPeriod = function(period, timestamp=moment().valueOf()) {
+  let sPeriod = period === 'week' ? 'isoweek' : period;
   return {
-    startDate: moment(timestamp).startOf(period).add(1, period).valueOf(),
-    endDate: Object.assign(moment(), moment(timestamp)).endOf(period).add(1, period).valueOf(),
+    startDate: moment(timestamp).startOf(sPeriod).add(1, period).valueOf(),
+    endDate: moment(timestamp).endOf(sPeriod).add(1, period).valueOf(),
     granularity: convertPeriodToGranularity(period)
   };
 };
 
 const getPreviousPeriod = function(period, timestamp=moment().valueOf()) {
+  let sPeriod = period === 'week' ? 'isoweek' : period;
   return {
-    startDate: moment(timestamp).startOf(period).subtract(1, period).valueOf(),
-    endDate: moment(timestamp).endOf(period).subtract(1, period).valueOf(),
+    startDate: moment(timestamp).startOf(sPeriod).subtract(1, period).valueOf(),
+    endDate: moment(timestamp).endOf(sPeriod).subtract(1, period).valueOf(),
     granularity: convertPeriodToGranularity(period)
   };
 };
 
 const getPreviousPeriodSoFar = function(period, timestamp=moment().valueOf()) {
+  let sPeriod = period === 'week' ? 'isoweek' : period;
   return {
-    startDate: moment(timestamp).startOf(period).subtract(1, period).valueOf(),
+    startDate: moment(timestamp).startOf(sPeriod).subtract(1, period).valueOf(),
     endDate: moment(timestamp).subtract(1, period).valueOf(),
     granularity: convertPeriodToGranularity(period)
   };
 };
+
 
 const defaultFormatter = function(timestamp){
   const date = new Date(timestamp);
@@ -109,6 +113,14 @@ const convertGranularityToPeriod = function (granularity) {
   else return "day";
 };
 
+const getLowerGranularityPeriod = function(period) {
+  if (period === 'year') return 'month';
+  else if (period === 'month') return 'week';
+  else if (period === 'week') return 'day';
+  else if (period === 'day') return 'hour';
+  else throw new Error('error in get lower granularity period with', period);
+};
+
 const getTimeByPeriod = function (period) {
   if (period === "year") return thisYear();
   else if (period === "month") return thisMonth();
@@ -118,6 +130,7 @@ const getTimeByPeriod = function (period) {
 
 const getLastPeriod = function(period, timestamp) {
   return moment(timestamp).subtract(period, 1).get(period).toString();
+  //return moment(timestamp).subtract(period, 1).valueOf();
 };
 
 const getLastShowerTime = function () {
@@ -142,18 +155,63 @@ const getGranularityByDiff = function(start, end) {
   else return 0;
 };
 
-const getPeriodByTimestamp = function(period, timestamp) {
-  return moment(timestamp).get(getLowerGranularityPeriod(period));
+
+
+const timeToBuckets = function(time) {
+  if (time == null) return [];
+  const { startDate, endDate, granularity } = time;
+  if (startDate == null || endDate == null || granularity == null) return [];
+
+  let period = getLowerGranularityPeriod(convertGranularityToPeriod(granularity));
+  let aggrPeriod = period === 'hour' ? 'hour' : 'day';
+  
+  const bucketCount = moment(endDate).add(1, 'second').diff(moment(startDate), period);
+
+  let buckets = [];
+  //let buckets = Array(bucketCount).fill(null).map(i => 
+  let x = moment(startDate);
+  for (let i=0; i<bucketCount; i++) {
+    const t = x.endOf(period === 'week' ? 'isoweek' : period).startOf(aggrPeriod);
+    buckets.push(t.valueOf());
+    x = t.endOf(aggrPeriod).add(1, 'second').clone();
+  }
+  return buckets;
 };
 
-const getLowerGranularityPeriod = function(period) {
-  if (period === 'year') return 'month';
-  else if (period === 'month') return 'week';
-  else if (period === 'week') return 'day';
-  else if (period === 'day') return 'hour';
-  else throw new Error('error in get lower granularity period with', period);
-
+/*
+const normalizeSessionTimestamp = function(session, period) {
+  const normalized = Object.assign({}, session, {timestamp: moment(session.timestamp).startOf(period).valueOf()});
+  return normalized;
 };
+const getPeriodFromTimestamp = function(period, timestamp=moment()) {
+  return moment(timestamp).get(period);
+};
+*/
+/*
+const getBucketLabels = function(buckets, period) {
+  if (period === 'month') {
+    return buckets.map((b, i, a) => a.length > 12 ? moment(b).get('month') + '/' + moment(b).get('year') : moment(b).get('month'));
+  }
+  else if (period === 'week') {
+    return buckets.map((b, i, a) => moment(b).get('week'));
+  }
+  else if (period === 'day') {
+    return buckets.map((b, i, a) => a > 7 ? moment(b).get('day') + '/' + moment(b).get('month') : moment(b).get('day'));
+  }
+  else if (period === 'hour') {
+    return buckets.map((b, i, a) => a > 24 ? moment(b).get('day') + 'T' + moment(b).get('hours') + ':' + moment(b).get('minutes') : moment(b).get('hours') + ':' + moment(b).get('minutes'));
+
+  }
+  else {
+    throw new Error ('cannot get bucket labels from unrecognized period', period);
+  }
+};
+*/
+
+const addPeriodToSessions = function(sessions, period) {
+  return sessions.map(session => Object.assign({}, session, {timestamp: period === 'month' ? moment(session.timestamp).add(1, period).startOf(getLowerGranularityPeriod(period)).valueOf() : moment(session.timestamp).add(1, period).valueOf() }));
+};
+
 
 module.exports = {
   defaultFormatter,
@@ -172,6 +230,11 @@ module.exports = {
   getGranularityByDiff,
   getLastShowerTime,
   getLastPeriod,
-  getPeriodByTimestamp,
-  getLowerGranularityPeriod
+  timeToBuckets,
+  //normalizeSessionTimestamp,
+  getLowerGranularityPeriod,
+  //getPeriodFromTimestamp,
+  //getBucketLabels,
+  addPeriodToSessions,
+  //getPeriodByTimestamp,
 };

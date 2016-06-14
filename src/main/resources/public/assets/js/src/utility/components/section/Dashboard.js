@@ -207,16 +207,17 @@ var Dashboard = React.createClass({
                       center={[38.36, -0.479]} 
                       zoom={13}
                       mode={LeafletMap.MODE_CHOROPLETH}
-                      data={ this.props.map.features }
-                      colors={['#2166ac', '#67a9cf', '#d1e5f0', '#fddbc7', '#ef8a62', '#b2182b']}
+	                    choropleth= {{
+	                      colors : ['#2166ac', '#67a9cf', '#d1e5f0', '#fddbc7', '#ef8a62', '#b2182b'],
+	                      min : this.props.map.timeline ? this.props.map.timeline.min : 0,
+                        max : this.props.map.timeline ? this.props.map.timeline.max : 0,
+                        data : this.props.map.features
+	                    }}
                       overlays={[
                         { url : '/assets/data/meters.geojson',
                           popupContent : 'serial'
                         }
                       ]}
-	                    min={this.props.map.timeline ? this.props.map.timeline.min : 0 }
-	                    max={this.props.map.timeline ? this.props.map.timeline.max : 0 }
-	        
 	        />
 				</Bootstrap.ListGroupItem>
 	      <Bootstrap.ListGroupItem>

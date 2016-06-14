@@ -30,6 +30,7 @@
   },
   "errors": {
     "Error: Internal Server Error": "Oops, something went wrong. Please try again in a while, or send feedback if this error keeps recurring",
+    "Error: Forbidden": "You have been idle for a long time. Please refresh the page",
     "SharedErrorCode.AUTHENTICATION": "Authentication has failed. Please try again.",
     "SharedErrorCode.UNKNOWN": "We are facing an internal problem, please try again in a while."
   },

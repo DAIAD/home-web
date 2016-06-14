@@ -76,7 +76,7 @@ var EditTable = React.createClass({
         rows: [],
         pager: {
           index: 0,
-          size: 7
+          size: 8
         }
       }
     };

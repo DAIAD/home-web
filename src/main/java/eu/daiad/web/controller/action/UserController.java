@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
+import eu.daiad.web.domain.application.Account;
+import eu.daiad.web.domain.application.DeviceMeter;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.admin.AccountWhiteListInfo;
 import eu.daiad.web.model.amphiro.AmphiroSessionCollection;
@@ -33,8 +35,14 @@ import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.meter.WaterMeterStatus;
 import eu.daiad.web.model.meter.WaterMeterStatusQueryResult;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.user.DeviceMeterInfo;
+import eu.daiad.web.model.user.UserInfo;
 import eu.daiad.web.model.user.UserInfoCollectionResponse;
 import eu.daiad.web.model.user.UserInfoResponse;
+import eu.daiad.web.model.user.UserQuery;
+import eu.daiad.web.model.user.UserQueryRequest;
+import eu.daiad.web.model.user.UserQueryResponse;
+import eu.daiad.web.model.user.UserQueryResult;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IFavouriteRepository;
@@ -55,7 +63,7 @@ public class UserController extends BaseController {
     private boolean enforceWhiteListCheck;
 
     @Autowired
-    private IUserRepository repository;
+    private IUserRepository userRepository;
 
     @Autowired
     private IDeviceRepository deviceRepository;
@@ -78,7 +86,7 @@ public class UserController extends BaseController {
         try {
             UserInfoCollectionResponse response = new UserInfoCollectionResponse();
 
-            response.setUsers(repository.filterUserByPrefix(prefix));
+            response.setUsers(userRepository.filterUserByPrefix(prefix));
 
             return response;
         } catch (Exception ex) {
@@ -88,6 +96,65 @@ public class UserController extends BaseController {
             response.add(this.getError(ex));
 
             return response;
+        }
+    }
+
+    /**
+     * Returns application events.
+     * 
+     * @param request
+     *            the request
+     * @return the events
+     */
+    @RequestMapping(value = "/action/user/search", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
+    public RestResponse search(@RequestBody UserQueryRequest request) {
+        try {
+            // Set default values
+            if (request.getQuery() == null) {
+                request.setQuery(new UserQuery());
+            }
+            if ((request.getQuery().getIndex() == null) || (request.getQuery().getIndex() < 0)) {
+                request.getQuery().setIndex(0);
+            }
+            if (request.getQuery().getSize() == null) {
+                request.getQuery().setSize(10);
+            }
+
+            UserQueryResult result = userRepository.search(request.getQuery());
+
+            UserQueryResponse response = new UserQueryResponse();
+
+            response.setTotal(result.getTotal());
+
+            response.setIndex(request.getQuery().getIndex());
+            response.setSize(request.getQuery().getSize());
+
+            List<UserInfo> accounts = new ArrayList<UserInfo>();
+
+            for (Account entity : result.getAccounts()) {
+                UserInfo account = new UserInfo(entity);
+                account.setLocation(entity.getLocation());
+
+                for (eu.daiad.web.domain.application.Device d : entity.getDevices()) {
+                    if (d.getType() == EnumDeviceType.METER) {
+                        account.setMeter(new DeviceMeterInfo((DeviceMeter) d));
+                        break;
+                    }
+                }
+
+                accounts.add(account);
+            }
+            response.setAccounts(accounts);
+
+            return response;
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            RestResponse errorResponse = new RestResponse();
+            errorResponse.add(this.getError(ex));
+
+            return errorResponse;
         }
     }
 
@@ -107,7 +174,7 @@ public class UserController extends BaseController {
         RestResponse response = new RestResponse();
 
         try {
-            repository.insertAccountWhiteListEntry(userInfo);
+            userRepository.insertAccountWhiteListEntry(userInfo);
 
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -134,13 +201,13 @@ public class UserController extends BaseController {
         try {
             UserInfoResponse response = new UserInfoResponse();
 
-            response.setUser(repository.getUserInfoByKey(key));
+            response.setUser(userRepository.getUserInfoByKey(key));
             response.setMeters(getMeters(key));
             response.setDevices(getDevices(key, user.getTimezone()));
             response.setGroups(userGroupRepository.getGroupsByMember(key));
 
             response.setFavorite(favouriteRepository.isFavorite(user.getKey(), response.getUser().getId()));
-            
+
             return response;
         } catch (ApplicationException ex) {
             logger.error(ex.getMessage(), ex);
@@ -204,16 +271,17 @@ public class UserController extends BaseController {
     /**
      * Adds a user to the favorite list
      * 
-     * @param userKey the key of the user to add
+     * @param userKey
+     *            the key of the user to add
      * @return the result of the operation
      */
-    @RequestMapping(value = "/action/favorite/{userKey}", method = RequestMethod.PUT, produces = "application/json")
+    @RequestMapping(value = "/action/user/favorite/{userKey}", method = RequestMethod.PUT, produces = "application/json")
     @Secured({ "ROLE_ADMIN" })
-    public @ResponseBody RestResponse addUserFavorite(@AuthenticationPrincipal AuthenticatedUser user,
+    public @ResponseBody RestResponse addFavorite(@AuthenticationPrincipal AuthenticatedUser user,
                     @PathVariable UUID userKey) {
         try {
             favouriteRepository.addFavorite(user.getKey(), userKey);
-            
+
             return new RestResponse();
         } catch (ApplicationException ex) {
             logger.error(ex.getMessage(), ex);
@@ -228,16 +296,17 @@ public class UserController extends BaseController {
     /**
      * Removes a user from the favorite list
      * 
-     * @param userKey the key of the user to remove
+     * @param userKey
+     *            the key of the user to remove
      * @return the result of the operation
      */
-    @RequestMapping(value = "/action/favorite/{userKey}", method = RequestMethod.DELETE, produces = "application/json")
+    @RequestMapping(value = "/action/user/favorite/{userKey}", method = RequestMethod.DELETE, produces = "application/json")
     @Secured({ "ROLE_ADMIN" })
-    public @ResponseBody RestResponse removeUserFavorite(@AuthenticationPrincipal AuthenticatedUser user,
+    public @ResponseBody RestResponse removeFavorite(@AuthenticationPrincipal AuthenticatedUser user,
                     @PathVariable UUID userKey) {
         try {
             favouriteRepository.deleteFavorite(user.getKey(), userKey);
-            
+
             return new RestResponse();
         } catch (ApplicationException ex) {
             logger.error(ex.getMessage(), ex);

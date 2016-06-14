@@ -12,8 +12,6 @@ import javax.persistence.TypedQuery;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,7 +25,6 @@ import eu.daiad.web.model.group.GroupQuery;
 import eu.daiad.web.model.group.Segment;
 import eu.daiad.web.model.group.Utility;
 import eu.daiad.web.model.query.EnumClusterType;
-import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository
@@ -92,7 +89,7 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
     @Override
     public void createCluster(Cluster cluster) {
         DateTime now = new DateTime();
-        
+
         TypedQuery<eu.daiad.web.domain.application.Utility> utilityQuery = entityManager.createQuery(
                         "select u from utility u where u.key = :key", eu.daiad.web.domain.application.Utility.class);
 
@@ -108,7 +105,7 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
 
         entityManager.persist(clusterEntity);
         entityManager.flush();
-        
+
         for (Segment segment : cluster.getSegments()) {
             eu.daiad.web.domain.application.GroupSegment segmentEntity = new eu.daiad.web.domain.application.GroupSegment();
 
@@ -120,20 +117,20 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
 
             entityManager.persist(segmentEntity);
             entityManager.flush();
-            
+
             TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager
                             .createQuery("select a from account a where a.key = :key",
                                             eu.daiad.web.domain.application.Account.class);
 
             for (UUID userKey : segment.getMembers()) {
                 accountQuery.setParameter("key", userKey);
-                
+
                 eu.daiad.web.domain.application.GroupMember member = new eu.daiad.web.domain.application.GroupMember();
-                
+
                 member.setAccount(accountQuery.getSingleResult());
                 member.setGroup(segmentEntity);
                 member.setCreatetOn(now);
-                
+
                 entityManager.persist(member);
             }
 
@@ -286,21 +283,6 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
         }
 
         return result;
-    }
-
-    private Integer getCurrentUtilityId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        AuthenticatedUser user = null;
-
-        if (auth.getPrincipal() instanceof AuthenticatedUser) {
-            user = (AuthenticatedUser) auth.getPrincipal();
-        }
-
-        if (user != null) {
-            return user.getUtilityId();
-        }
-
-        return null;
     }
 
     private List<Group> groupToSegmentList(List<eu.daiad.web.domain.application.GroupSegment> groups) {

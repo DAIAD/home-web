@@ -108,7 +108,7 @@ const fetchDeviceSession = function(id, deviceKey) {
  */
 const fetchLastDeviceSession = function(deviceKeys) {
   return function(dispatch, getState) {
-    return dispatch(queryDeviceSessions(deviceKeys, {type: 'SLIDING', length: 1}))
+    return dispatch(queryDeviceSessions(deviceKeys, {type: 'SLIDING', length: 10}))
     .then(sessions => {
       
       const reduced = reduceSessions(getState().user.profile.devices, sessions);        

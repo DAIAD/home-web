@@ -717,6 +717,11 @@ div[class^="section."]{
 .modal-header .close {
   margin-top: 4px;
 }
+.modal-header .close:hover {
+  background: none;
+  border: none;
+}
+
 .modal-header .close span {
   font-size: 1.4em;
 }
@@ -848,7 +853,7 @@ div[class^="section.login"]{
 }
 .infobox-header {
   flex-grow: 0;
-  padding: 5px;
+  padding: 8px 5px 5px 8px;
   min-height: 37px;
   border-bottom: 1px #2D3580 solid;
 }

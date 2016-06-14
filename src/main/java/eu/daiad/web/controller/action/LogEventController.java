@@ -36,8 +36,7 @@ public class LogEventController extends BaseController {
 	/**
 	 * Returns application events.
 	 * 
-	 * @param request
-	 *            the request
+	 * @param request the request
 	 * @return the events
 	 */
 	@RequestMapping(value = "/action/admin/logging/events", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")

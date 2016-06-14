@@ -26,7 +26,7 @@ function NotificationMessage (props) {
       }
       {
         infobox && infobox.chartData ? 
-          <ChartBox infobox={infobox} />
+          <ChartBox {...infobox} />
           : null
       } 
 

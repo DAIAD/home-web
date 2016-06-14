@@ -198,17 +198,16 @@ const fetchData = function () {
           dispatch(setSessions([]));
           dispatch(setDataSynced());
         });
-    }
 
-
-      if (getState().section.history.comparison === 'last') {
-        dispatch(QueryActions.queryMeterHistory(getState().section.history.activeDevice, getPreviousPeriod(convertGranularityToPeriod(getState().section.history.time.granularity), getState().section.history.time.startDate)))
+        if (getState().section.history.comparison === 'last') {
+        dispatch(QueryActions.queryMeterHistory(getState().section.history.activeDevice, getPreviousPeriod(getState().section.history.timeFilter, getState().section.history.time.startDate)))
         .then(sessions => dispatch(setComparisonSessions(sessions)))
         .catch(error => { 
           dispatch(setComparisonSessions([]));
           console.error('Caught error in history comparison query:', error); 
           });
       }
+    }
   };
 };
 

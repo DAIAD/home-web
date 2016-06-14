@@ -34,7 +34,12 @@ var Table = React.createClass({
 			},
 			template: {
 			  empty: null
-			}
+			}, 
+      style: {
+        row : {
+          rowHeight: 100
+        }
+      } 
 		};
 	},
 
@@ -77,7 +82,7 @@ var Table = React.createClass({
 			  <div style={{overflow: 'auto'}}>
   				<Bootstrap.Table hover style={{margin: 0, padding: 0}}>
   					<Table.Header data = {this.props.data}></Table.Header>
-  					<Table.Body data={this.props.data} activePageIndex={currentPageIndex - 1}></Table.Body>			
+  					<Table.Body data={this.props.data} activePageIndex={currentPageIndex - 1} style={this.props.style}></Table.Body>			
   				</Bootstrap.Table>
 				</div>
 				<div style={{float:'right'}}>
@@ -154,7 +159,8 @@ var Body = React.createClass({
   			return (
   				<Table.Row 	key={rowIndex} 
   							fields={self.props.data.fields} 
-  							row={row}>
+  							row={row}
+  				      style={self.props.style.row}>
   				</Table.Row>
   			);
   		});
@@ -176,7 +182,7 @@ var Row = React.createClass({
 				{
 					this.props.fields.filter((f) => { return !!!f.hidden; }).map(function(field, columnIndex) {
 						return (
-							<Table.Cell key={columnIndex} row={self.props.row} field={field}>
+							<Table.Cell key={columnIndex} row={self.props.row} field={field} style={self.props.style}>
 							</Table.Cell>
 						);
 					})
@@ -299,7 +305,7 @@ var Cell = React.createClass({
 		}
 
 		var style = {
-		    maxHeight: 100,
+		    maxHeight: this.props.style.rowHeight || 100,
 		    overflowY: 'auto'
 		};
     if((this.props.field.width) && (this.props.field.width > 0)) {

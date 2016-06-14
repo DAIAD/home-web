@@ -13,14 +13,42 @@ const MODE_HEATMAP = 'heat';
 const MODE_CHOROPLETH = 'choropleth';
 const MODE_DRAW = 'draw';
 
-
-var _initializeDraw = function() {
-  var self = this;
-  
+var _reset = function() {
   if(this.draw) {
     this.map.removeControl(this.draw);
-    this.map.off('draw:created', this.drawHandler);
+    this.map.off('draw:created', this.drawCreateHandler);
+    this.map.off('draw:deleted', this.drawDeleteHandler);
+    
+    delete this.drawCreateHandler;
+    delete this.drawDeleteHandler;
+    delete this.draw;
   }
+  
+  if(this.heat) {
+    this.map.removeLayer(this.heat);
+    
+    delete this.heat;
+  }
+
+  if(this.choropleth) {
+    this.map.removeControl(this.choropleth.info);
+    this.map.removeControl(this.choropleth.legend);
+    this.map.removeLayer(this.choropleth.layer);
+    
+    delete this.choropleth;
+  }
+
+  if(this.vector) {
+    this.map.removeLayer(this.vector.layer);
+    
+    delete this.vector;
+  }
+};
+
+var _initializeDraw = function(config) {
+  var self = this;
+  
+  _reset.bind(this)();
 
   if(!this.drawnItems) {
     this.drawnItems = new L.FeatureGroup();
@@ -50,7 +78,7 @@ var _initializeDraw = function() {
   
   this.map.addControl(this.draw);
   
-  this.drawHandler = function (e) {
+  this.drawCreateHandler = function (e) {
     var type = e.layerType, layer = e.layer;
 
     self.drawnItems.eachLayer(function (l) {
@@ -62,30 +90,36 @@ var _initializeDraw = function() {
     if(typeof self.props.onDraw === 'function') {
       self.props.onDraw.bind(self)(layer);
     }
-  };
-  
-  this.map.on('draw:created', this.drawHandler);  
-};
-
-var _initializeHeatMap = function(data) {
-	if(this.heat) {
-		this.map.removeLayer(this.heat);
-	}
-	this.heat = L.heatLayer(data, {radius: 30, maxZoom: 11}).addTo(this.map);
-};
-
-var _initializeChoroPleth = function(geojson, colors, min, max) {
-  var map = this.map;
-
-  if(this.choropleth) {
-    this.map.removeControl(this.choropleth.info);
-    this.map.removeControl(this.choropleth.legend);
-    this.map.removeLayer(this.choropleth.layer);
     
-    delete this.choropleth;
-  }
+    if(typeof config.onFeatureChange === 'function') {
+      config.onFeatureChange(self.drawnItems.toGeoJSON().features);
+    }
+  };
 
-  if(geojson) {
+  this.drawDeleteHandler = function (e) {   
+    if(typeof config.onFeatureChange === 'function') {
+      config.onFeatureChange(self.drawnItems.toGeoJSON().features);
+    }
+  };
+
+  this.map.on('draw:created', this.drawCreateHandler);
+  this.map.on('draw:deleted', this.drawDeleteHandler);
+};
+
+var _initializeHeatMap = function(config) {
+  _reset.bind(this)();
+
+	this.heat = L.heatLayer(config.data, {radius: 30, maxZoom: 11}).addTo(this.map);
+};
+
+var _initializeChoroPleth = function(config) {
+  var map = this.map;
+  
+  var { colors, min, max, data } = config;
+
+  _reset.bind(this)();
+
+  if(data) {
     this.choropleth = {};
     
     var info = this.choropleth.info = L.control();
@@ -173,7 +207,7 @@ var _initializeChoroPleth = function(geojson, colors, min, max) {
         });
       };
   
-      layer = this.choropleth.layer = L.geoJson(geojson, {
+      layer = this.choropleth.layer = L.geoJson(data, {
         style: style,
         onEachFeature: onEachFeature
       }).addTo(map);
@@ -206,18 +240,60 @@ var _initializeChoroPleth = function(geojson, colors, min, max) {
   }
 };
 
+
+var _intializeVector = function(config) {
+  var map = this.map;
+  
+  var { data, renderer } = config;
+
+  _reset.bind(this)();
+
+  if(data) {
+    this.vector = {};
+
+    var style = function(feature) {
+      return {
+        weight: 2,
+        opacity: 1,
+        color: 'white',
+        dashArray: '3',
+        fillOpacity: 0.7,
+        fillColor: '#1790cf'
+      };
+    };
+
+    var layer = this.vector.layer = L.geoJson(data, {
+      style: style,
+      onEachFeature: function onEachFeature(feature, layer) {
+        if (renderer) {
+          layer.bindPopup(renderer(feature));
+        }
+      }
+    }).addTo(map);
+    
+    map.fitBounds(layer.getBounds());
+    
+    var overlays = this.overlays;
+
+    for(var index in overlays){ 
+      overlays[index].bringToFront();
+    }
+  }
+};
+
 var _initialize = function(props) {
-  switch(this.props.mode) {
+  switch(props.mode) {
     case MODE_VECTOR:
+      _intializeVector.bind(this)(props.vector);
       break;
     case MODE_DRAW:
-      _initializeDraw.bind(this)();
+      _initializeDraw.bind(this)(props.draw);
       break;
     case MODE_HEATMAP:
-      _initializeHeatMap.bind(this)(props.data);
+      _initializeHeatMap.bind(this)(props.heatmap);
       break;
     case MODE_CHOROPLETH:
-      _initializeChoroPleth.bind(this)(props.data, props.colors, props.min, props.max);
+      _initializeChoroPleth.bind(this)(props.choropleth);
       break;
   }
   if(this.map) {
@@ -233,15 +309,27 @@ var LeafletMap = React.createClass({
 		return {
 			center: [0 ,0],
 			zoom: 13,
-			data: [],
 			mode: MODE_VECTOR,
-			colors: ['#2166ac', '#67a9cf', '#d1e5f0', '#f7f7f7', '#fddbc7', '#ef8a62', '#b2182b'],
-			overlays: []
+			choropleth: {
+			  colors: ['#2166ac', '#67a9cf', '#d1e5f0', '#f7f7f7', '#fddbc7', '#ef8a62', '#b2182b'],
+			  min: 0,
+			  max: 0,
+			  data: null
+			},
+			heatmap:{ 
+	      data: [],			  
+			},
+			vector: {
+			  features: null,
+			  renderer: null
+			},
+			overlays: [],
+			onDraw: null
     };
 	},
 
 	render: function() {
-		var { prefix, center, zoom, mode, data, onDraw, colors, overlays, min, max, ...other } = this.props;
+		var { prefix, center, zoom, mode, choropleth, heatmap, vector,  overlays, onDraw, ...other } = this.props;
 
 		return (
 			<div {...other}/>
@@ -290,7 +378,8 @@ var LeafletMap = React.createClass({
 		    self.overlays[self.overlays.length-1].addTo(self.map);
       };
 
-      // Create closure to capture the index (declared here to make jshint happy...)
+      // Create closure to capture the index (declared here to make jshint
+      // happy...)
       var closureBuilder = function(index) {
         return function(data) {
           callback(data, index);

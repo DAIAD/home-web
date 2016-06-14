@@ -2,8 +2,7 @@ var React = require('react');
 var Chart = require('./Chart');
 
 function ChartBox (props) {
-  const { intl, history, infobox } = props;
-  const { title, type, subtype, improved, data, metric, measurements, period, device, deviceDetails, chartData, chartType, chartCategories, chartColors, chartXAxis, highlight, time, index, mu, invertAxis } = infobox;
+  const { title, type, subtype, improved, data, metric, measurements, period, device, deviceDetails, chartData, chartType, chartCategories, chartFormatter, chartColors, chartXAxis, highlight, time, index, mu, invertAxis } = props;
   return (
     <div>
       <div >
@@ -59,6 +58,7 @@ function ChartBox (props) {
                 y2Margin={40}
                 fontSize={12}
                 mu={mu}
+                formatter={chartFormatter}
                 invertAxis={invertAxis}
                 xAxis={chartXAxis}
                 xAxisData={chartCategories}

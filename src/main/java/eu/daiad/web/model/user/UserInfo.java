@@ -2,82 +2,110 @@ package eu.daiad.web.model.user;
 
 import java.util.UUID;
 
+import com.vividsolutions.jts.geom.Geometry;
+
 import eu.daiad.web.model.EnumGender;
 
-
 public class UserInfo {
-	
-	private UUID id;
 
-	private String firstName;
-	
-	private String lastName;
+    private UUID id;
 
-	private String email;
-	
-	private EnumGender gender;
-	
-	private long registrationDateMils;
-	
-	private String country;
-	
-	private String city;
-	
-	private String address;
+    private String firstName;
 
-	private String postalCode;	
-	
-	public UserInfo (eu.daiad.web.domain.application.Account account) {
-		this.id = account.getKey();
-		this.firstName = account.getFirstname();
-		this.lastName = account.getLastname();
-		this.email = account.getUsername();
-		this.gender = account.getGender();
-		this.registrationDateMils = account.getCreatedOn().getMillis();
-		this.country = account.getCountry();
-		this.city = account.getCity();
-		this.address = account.getAddress();
-		this.postalCode = account.getPostalCode();
-	}
+    private String lastName;
 
-	public UUID getId() {
-		return id;
-	}
+    private String fullname;
 
-	public String getFirstName() {
-		return firstName;
-	}
+    private String email;
 
-	public String getLastName() {
-		return lastName;
-	}
+    private EnumGender gender;
 
-	public String getEmail() {
-		return email;
-	}
+    private long registrationDateMils;
 
-	public EnumGender getGender() {
-		return gender;
-	}
+    private String country;
 
-	public long getRegistrationDateMils() {
-		return registrationDateMils;
-	}
+    private String city;
 
-	public String getCountry() {
-		return country;
-	}
+    private String address;
 
-	public String getCity() {
-		return city;
-	}
+    private String postalCode;
 
-	public String getAddress() {
-		return address;
-	}
+    private Geometry location;
 
-	public String getPostalCode() {
-		return postalCode;
-	}
-	
+    private DeviceMeterInfo meter;
+
+    public UserInfo(eu.daiad.web.domain.application.Account account) {
+        this.id = account.getKey();
+        this.firstName = account.getFirstname();
+        this.lastName = account.getLastname();
+        this.email = account.getUsername();
+        this.gender = account.getGender();
+        this.registrationDateMils = account.getCreatedOn().getMillis();
+        this.country = account.getCountry();
+        this.city = account.getCity();
+        this.address = account.getAddress();
+        this.postalCode = account.getPostalCode();
+        this.fullname = account.getFullname();
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public EnumGender getGender() {
+        return gender;
+    }
+
+    public long getRegistrationDateMils() {
+        return registrationDateMils;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public String getPostalCode() {
+        return postalCode;
+    }
+
+    public Geometry getLocation() {
+        return location;
+    }
+
+    public void setLocation(Geometry location) {
+        this.location = location;
+    }
+
+    public DeviceMeterInfo getMeter() {
+        return meter;
+    }
+
+    public void setMeter(DeviceMeterInfo meter) {
+        this.meter = meter;
+    }
+
+    public String getFullname() {
+        return fullname;
+    }
+
 }

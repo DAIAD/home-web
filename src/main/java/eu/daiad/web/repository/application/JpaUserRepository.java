@@ -14,6 +14,7 @@ import javax.persistence.Query;
 import javax.persistence.StoredProcedureQuery;
 import javax.persistence.TypedQuery;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
 import eu.daiad.web.domain.application.AccountActivity;
@@ -49,6 +51,8 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.user.Account;
 import eu.daiad.web.model.user.UserInfo;
+import eu.daiad.web.model.user.UserQuery;
+import eu.daiad.web.model.user.UserQueryResult;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository
@@ -629,6 +633,101 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
     }
 
     @Override
+    public UserQueryResult search(UserQuery query) {
+        // Prepare response
+        UserQueryResult result = new UserQueryResult();
+
+        Geometry geometry = query.getGeometry();
+        if ((geometry != null) && (geometry.getSRID() == 0)) {
+            geometry.setSRID(4326);
+        }
+
+        // Load data
+        String command = "";
+
+        // Resolve filters
+        List<String> filters = new ArrayList<String>();
+
+        filters.add("(a.utility.id = :utility_id)");
+
+        if (!StringUtils.isBlank(query.getSerial())) {
+            filters.add("(a.id in (select m.account.id from device_meter m where m.serial like :serial))");
+
+            if (!StringUtils.isBlank(query.getText())) {
+                filters.add("(a.lastname like :text or a.username like :text)");
+            }
+        } else if (!StringUtils.isBlank(query.getText())) {
+            filters.add("(a.lastname like :text or a.username like :text)");
+        }
+        if (geometry != null) {
+            filters.add("(contains(:geometry, a.location) = true)");
+        }
+
+        command = "select count(a.id) from account a ";
+
+        // Count total number of records
+        Integer totalUsers;
+
+        if (!filters.isEmpty()) {
+            command += "where " + StringUtils.join(filters, " and ");
+        }
+
+        TypedQuery<Number> countQuery = entityManager.createQuery(command, Number.class);
+
+        if (!StringUtils.isBlank(query.getText())) {
+            countQuery.setParameter("text", query.getText() + "%");
+        }
+        if (!StringUtils.isBlank(query.getSerial())) {
+            countQuery.setParameter("serial", query.getSerial() + "%");
+        }
+        if (geometry != null) {
+            countQuery.setParameter("geometry", geometry);
+        }
+
+        countQuery.setParameter("utility_id", getCurrentUtilityId());
+
+        totalUsers = ((Number) countQuery.getSingleResult()).intValue();
+
+        result.setTotal(totalUsers);
+
+        // Load data
+        command = "select a from account a left join fetch a.devices d";
+
+        if (!filters.isEmpty()) {
+            command += " where " + StringUtils.join(filters, " and ");
+        }
+
+        if (!StringUtils.isBlank(query.getSerial())) {
+            command += " order by a.lastname, a.firstname";
+        } else {
+            command += " order by a.lastname, a.firstname";
+        }
+
+        TypedQuery<eu.daiad.web.domain.application.Account> entityQuery = entityManager.createQuery(command,
+                        eu.daiad.web.domain.application.Account.class);
+
+        if (!StringUtils.isBlank(query.getText())) {
+            entityQuery.setParameter("text", query.getText() + "%");
+        }
+        if (!StringUtils.isBlank(query.getSerial())) {
+            entityQuery.setParameter("serial", query.getSerial() + "%");
+        }
+        if (geometry != null) {
+            entityQuery.setParameter("geometry", geometry);
+        }
+
+        entityQuery.setParameter("utility_id", getCurrentUtilityId());
+
+        entityQuery.setFirstResult(query.getIndex() * query.getSize());
+        entityQuery.setMaxResults(query.getSize());
+
+        result.setAccounts(entityQuery.getResultList());
+
+        return result;
+
+    }
+
+    @Override
     public void insertAccountWhiteListEntry(AccountWhiteListInfo userInfo) {
         try {
 
@@ -764,21 +863,6 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         }
 
         return result;
-    }
-
-    private Integer getCurrentUtilityId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        AuthenticatedUser user = null;
-
-        if (auth.getPrincipal() instanceof AuthenticatedUser) {
-            user = (AuthenticatedUser) auth.getPrincipal();
-        }
-
-        if (user != null) {
-            return user.getUtilityId();
-        }
-
-        return null;
     }
 
     @Override
