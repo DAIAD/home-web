@@ -10,6 +10,7 @@ var CellCheckbox = require('./CellCheckbox');
 var PAGING_CLIENT_SIDE = 'client';
 var PAGING_SERVER_SIDE = 'server';
 
+var allChecked = false;
 var Table = React.createClass({
 	getInitialState: function() {
 		return {
@@ -43,7 +44,13 @@ var Table = React.createClass({
 			}
 		};
 	},
-
+ 
+ toggleCheckBoxes: function (selected){	
+   allChecked = selected;  
+   var visibleRowIds = [];
+   this.props.setSelectedAll(this, selected);
+ },
+ 
 	suspendUI: function() {
 		this.setState({ loading : false});
   	},
@@ -53,6 +60,7 @@ var Table = React.createClass({
   	},
 
   	render: function() {
+     var self = this;
   	  var totalPages = Math.ceil(this.props.data.pager.count / this.props.data.pager.size);
   	  var currentPageIndex = ((this.state.activePage + 1) > totalPages ? totalPages : (this.state.activePage + 1));
 
@@ -65,7 +73,7 @@ var Table = React.createClass({
   		return (
 			<div className='clearfix'>
 				<Bootstrap.Table hover style={{margin: 0, padding: 0}}>
-					<Table.Header data = {this.props.data}></Table.Header>
+					<Table.Header data = {this.props.data} toggleCheckBoxes = {this.toggleCheckBoxes}></Table.Header>
 					<Table.Body data={this.props.data} activePageIndex={currentPageIndex - 1}></Table.Body>			
 				</Bootstrap.Table>
 				<div style={{float:'right'}}>
@@ -90,25 +98,36 @@ var Header = React.createClass({
 	},
 
 	render: function() {	
+  var self = this;
 		var _t = this.context.intl.formatMessage;
-
 		var header = this.props.data.fields.filter((f) => { return !!!f.hidden; }).map(function(field) {
 		  var style =  {};
       if(field.hasOwnProperty('align')) {
         style.textAlign = field.align;
       }
-      
+ 
 			switch(field.type ) {
-				case 'action':
-				  style.width = field.width || 24;
-				  break;
-				case 'boolean':
-				  style.width = field.width || 90;
-				  break;
+				 case 'action':
+				   style.width = field.width || 24;
+				   break;
+				 case 'boolean':
+				   style.width = field.width || 90;
+				   break; 
+     case 'alterable-boolean':   
+					  return (
+        <th style={{width: 24}}>
+			       <Checkbox 
+						       checked={allChecked}
+								     disabled={false}
+								     onChange={self.props.toggleCheckBoxes}
+			       />
+        </th>   
+					   );        
+    
 			  default:
-		      if((field.width) && (field.width >0)) {
-		        style.width = field.width;
-		      }
+		     if((field.width) && (field.width >0)) {
+		       style.width = field.width;
+		     }
 			    break;
 			}
 
@@ -269,6 +288,8 @@ var Cell = React.createClass({
 			case 'date':
 				text = (<FormattedDate value={value} day='numeric' month='long' year='numeric' />);
 				break;
+			case 'property':
+        break;    
 			default:
 				console.log('Cell type [' + this.props.field.type + '] is not supported.');
 				break;
@@ -312,7 +333,7 @@ var Cell = React.createClass({
 		}
 	}
 });
-
+ 
 Table.Header = Header;
 
 Table.Body = Body;

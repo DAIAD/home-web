@@ -8,7 +8,7 @@ var {FormattedMessage, FormattedTime, FormattedDate} = require('react-intl');
 var DropDown = require('../DropDown');
 var Select = require('react-controls/select-dropdown');
 var Redux = require('react-redux');
-
+var DropDown = require('../UtilityDropDown');
 
 var { connect } = require('react-redux');
 var { bindActionCreators } = require('redux');
@@ -23,6 +23,7 @@ var Announcements = React.createClass({
   componentWillMount : function() {
     this.props.getAnnouncementHistory();
     this.props.getCurrentUtilityUsers();
+    this.props.fetchGroups();
   },
   
   setFilter: function(e) {
@@ -40,7 +41,6 @@ var Announcements = React.createClass({
   handleAddedMembersCheckboxChange: function (rowId, row, checked){
     this.props.toggleAddedUserSelected(this.props.addedUsers, rowId, checked);
   },  
-  
   addUsersButtonClick: function (){
     var addedAccounts = [];
     for(var obj in this.props.accounts){
@@ -125,11 +125,14 @@ var Announcements = React.createClass({
           name: 'username',
           title: 'Username'
         }, {
+          name: 'all',
+          title: 'All'
+        }, {
           name: 'selected',
           type:'alterable-boolean',
           handler: function(field, row) {
             self.handleCurrentMembersCheckboxChange(field, row, this.checked);
-          }       
+          }
         }],
         rows: filteredAccounts,
         pager: {
@@ -152,7 +155,7 @@ var Announcements = React.createClass({
         title: 'Username'
       }, {
         name: 'selected',
-        type:'alterable-boolean',
+        type:'boolean',
         handler: function(field, row) {
           self.handleAddedMembersCheckboxChange(field, row, this.checked);          
         }        
@@ -224,15 +227,49 @@ var Announcements = React.createClass({
       </div>
     );  
    
+    var groupOptions = [];
+    groupOptions.push({id : null, label: 'Everyone'});
+    if(this.props.groups){
+      for(var obj in this.props.groups){
+        groupOptions.push({value: this.props.groups[obj].id, label: this.props.groups[obj].name});
+      }
+    }
+    
+    var groupDisabled;
+    var groupTitle;
+    if(groupOptions.length === 1){
+      groupTitle = 'No groups available';
+      groupDisabled = true;
+    }
+    else{
+      groupTitle = 'Everyone';
+      groupDisabled = false;
+    }
+    var groupDropDown = (
+      <div className='form-horizontal report-form' >
+        <div className='col-sm-1 control-label'>
+          <label>Group:</label>
+        </div> 
+        <div className='col-sm-9' style = {{marginLeft: 8, marginBottom:10}}> 
+          <DropDown  
+            title = {this.props.group ? this.props.group.label : groupTitle}                             
+            options={groupOptions}
+            disabled={groupDisabled}
+            onSelect={this.props.setGroup}  
+          />   
+        </div> 
+      </div>
+    );  
+    
     var usersTable = (
       <div>
-        <Table data={currentUsersFields}></Table>
+        <Table data={currentUsersFields} setSelectedAll={this.props.setSelectedAll}></Table>
       </div>
     );  
    
     var addedUsersTable = (
       <div>
-        <Table data={addedUsersFields}></Table>
+        <Table data={addedUsersFields} setSelectedAll={this.props.setSelectedAll}></Table>
       </div>
     );
    
@@ -308,7 +345,7 @@ var Announcements = React.createClass({
       );       
     }
 
-    if(this.props.accounts && this.props.announcements && !this.props.isLoading){
+    if(this.props.groups && this.props.accounts && this.props.announcements && !this.props.isLoading){
       return (
         <div className="container-fluid" style={{ paddingTop: 10 }}>
           <div className="row">
@@ -321,7 +358,8 @@ var Announcements = React.createClass({
               <Bootstrap.Panel header={usersTitle}>
                 <Bootstrap.ListGroup fill>
                   <Bootstrap.ListGroupItem>	
-                    {filter}    
+                    {groupDropDown}
+                    {filter} 
                     {usersTable}    
                   </Bootstrap.ListGroupItem>
                 </Bootstrap.ListGroup>
@@ -400,12 +438,24 @@ function mapStateToProps(state) {
       rowIdToggled: state.announcements.rowIdToggled,
       showForm: state.announcements.showForm,
       showModal: state.announcements.showModal,
-      filter: state.announcements.filter
+      filter: state.announcements.filter,
+      groups: state.announcements.groups,
+      group: state.announcements.group
   };
 }
 
 function mapDispatchToProps(dispatch) {
   return {
+    fetchGroups : bindActionCreators(AnnouncementsActions.fetchGroups, dispatch),
+    setGroup: function (event, group){
+      dispatch(AnnouncementsActions.setGroup(event, group));
+      if(group.label == 'Everyone'){      
+        self.props.getCurrentUtilityUsers();
+      }
+      else{
+        dispatch(AnnouncementsActions.getGroupUsers(group.value));
+      }
+    },
     getCurrentUtilityUsers: bindActionCreators(AnnouncementsActions.getCurrentUtilityUsers, dispatch),
     getAnnouncementHistory: bindActionCreators(AnnouncementsActions.getAnnouncementHistory, dispatch),
     toggleInitialUserSelected: function (accounts, accountId, selected){
@@ -422,7 +472,10 @@ function mapDispatchToProps(dispatch) {
       var announcement = {title : self.refs.title.value, content : self.refs.content.value};
       dispatch(AnnouncementsActions.broadCastAnnouncement(event, self.props.addedUsers, announcement));
     },
-    setFilter: bindActionCreators(AnnouncementsActions.setFilter, dispatch)
+    setFilter: bindActionCreators(AnnouncementsActions.setFilter, dispatch),
+    setSelectedAll: function (event, selected){
+			   dispatch(AnnouncementsActions.setSelectedAll(event, selected));
+		  },
   };
 }
 

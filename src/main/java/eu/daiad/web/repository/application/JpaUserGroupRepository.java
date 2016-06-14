@@ -23,6 +23,7 @@ import eu.daiad.web.domain.application.Group;
 import eu.daiad.web.domain.application.GroupMember;
 import eu.daiad.web.domain.application.GroupSet;
 import eu.daiad.web.domain.application.Utility;
+import eu.daiad.web.model.admin.AccountActivity;
 import eu.daiad.web.model.error.GroupErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.favourite.EnumFavouriteType;
@@ -96,6 +97,41 @@ public class JpaUserGroupRepository extends BaseRepository implements IUserGroup
 			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
+    
+	@Override
+	public List<AccountActivity> getGroupAccounts(UUID group_id) {
+		try {
+			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
+                        
+            
+			if (!user.hasRole(EnumRole.ROLE_ADMIN) && !user.hasRole(EnumRole.ROLE_SUPERUSER)) {
+				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+			}            
+            
+			TypedQuery<Account> groupMemberQuery = entityManager.createQuery(
+							"SELECT a.account FROM group_member a WHERE a.group.key = :group_key", Account.class)
+							.setFirstResult(0);
+			groupMemberQuery.setParameter("group_key", group_id);
+            
+			List<Account> accounts = groupMemberQuery.getResultList();
+            
+            List<AccountActivity> accountActivityList = new ArrayList<>();
+            
+            for (Account a : accounts) {
+                eu.daiad.web.model.admin.AccountActivity accountActivity = new eu.daiad.web.model.admin.AccountActivity();
+                accountActivity.setAccountId(a.getId());
+                accountActivity.setUsername(a.getUsername());
+                accountActivity.setLastName(a.getLastname());
+                accountActivityList.add(accountActivity);
+            }        
+
+            return accountActivityList;
+		} catch (Exception ex) {
+
+			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+		}
+	}    
 
 	@Override
 	public List<GroupMemberInfo> getGroupPossibleMembers(UUID group_id) {
