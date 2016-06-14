@@ -12,12 +12,14 @@ function SessionListHeader (props) {
     <thead>
       <tr >
         <th>Volume</th>
+        <th></th>
         <th><i className="fa fa-user"/>User</th>
         <th><i className="fa fa-calendar"/>Date</th>
         <th>Device</th>
         <th><i className="fa fa-clock-o"/>Dur</th>
         <th><i className="fa fa-flash"/>En</th>
         <th><i className="fa fa-temperature"/>Temp</th>
+        <th>Real</th>
         <th>Id</th>
         <th></th>
       </tr>
@@ -26,6 +28,7 @@ function SessionListHeader (props) {
     <thead>
       <tr>
         <th>Volume</th>
+        <th></th>
         <th><i className="fa fa-user"/>User</th>
         <th><i className="fa fa-calendar"/>Date</th>
         <th></th>
@@ -36,27 +39,32 @@ function SessionListHeader (props) {
 
 function SessionListItem (props) {
   const { firstname, time: {granularity}, intl } = props;
-  const { id, index, device, devType, devName, volume, difference, energyClass, timestamp, duration, friendlyDuration, better, temperature, history, measurements, date } = props.data;
-  const arrowClass = better===null?"":better?"fa-arrow-down green":"fa-arrow-up red";
+  const { id, index, device, devType, devName, volume, difference, energyClass, timestamp, duration, friendlyDuration, percentDiff, temperature, history, measurements, date } = props.data;
   const highlight = devType === 'METER' ? difference : volume;
+  const better = percentDiff != null ? percentDiff < 0 : null;
+  const arrowClass = better===null ? 'dash':(better?"fa fa-arrow-down green":"fa fa-arrow-up red");
+  //const percentDifference = percentDiff != null ? ` ${Math.abs(percentDiff)} %` : '';
   const mu = ' lt';
   //const date = getTimeLabelByGranularity(timestamp, granularity, intl);
   //  return (
   return devType === 'AMPHIRO' ? (
       <tr onClick={() => props.onOpen(device, id, timestamp)} className='session-list-item'>
         <td><span style={{fontSize: '2.5em'}}>{highlight}<span style={{fontSize: '0.6em'}}>{mu}</span></span></td>
+        <td><i className={`fa ${arrowClass}`}></i></td>
         <td>{firstname}</td>
         <td><FormattedRelative value={timestamp}/></td>
         <td>{devName}</td>
         <td>{friendlyDuration}</td>
         <td>{energyClass}</td>
         <td>{temperature} ºC</td>
+        <td>{history === false ? <i className="fa fa-check"></i> : <i className="fa fa-times"></i>}</td>
         <td><span style={{fontSize: '0.8m!important'}} >{`#${id}`}</span></td>
         <td><img src={`${IMAGES}/arrow-big-right.svg`} /></td>
       </tr>
   ):(
       <tr onClick={() => props.onOpen(device, id, timestamp)} className='session-list-item'>
         <td><span style={{fontSize: '2.5em'}}>{highlight}<span style={{fontSize: '0.6em'}}>{mu}</span></span></td>
+        <td><i className={arrowClass}></i></td>
         <td>{firstname}</td>
         <td>{date}</td>
         <td><img src={`${IMAGES}/arrow-big-right.svg`} /></td>
