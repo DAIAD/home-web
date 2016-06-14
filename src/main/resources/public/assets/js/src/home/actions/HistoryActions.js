@@ -115,7 +115,8 @@ const fetchDeviceSession = function (id, deviceKey) {
     
     if (found && found.measurements){
       console.log('found session in memory');
-      return new Promise((resolve, reject) => resolve());
+      //return new Promise((resolve, reject) => resolve());
+      return Promise.resolve();
     }
     return dispatch(QueryActions.fetchDeviceSession(id, deviceKey))
     .then(session => { 

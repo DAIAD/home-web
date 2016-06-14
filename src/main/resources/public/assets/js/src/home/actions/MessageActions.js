@@ -120,19 +120,22 @@ const fetch = function (options) {
     dispatch(requestedMessages());
 
     const data = Object.assign({}, {pagination: options}, {csrf: getState().user.csrf});
+    console.log('requestin messages with', data);
 
     return messageAPI.fetch(data)
     .then(response => {
+      console.log('got ', response);
+      
+      if (!response || !response.success) {
+        throw new Error (response && response.errors && response.errors.length > 0 ? response.errors[0].code : 'unknownError');
+        }
 
-      if (!response.success) {
-        throw new Error (response.errors);
-      }
-
-      dispatch(receivedMessages(response.success, response.errors));
+      dispatch(receivedMessages(response.success, null));
 
       return response;
       })
       .catch((error) => {
+        console.error('Caught error in messages fetch:', error); 
         dispatch(receivedMessages(false, error));
       });
   };
@@ -144,7 +147,7 @@ const fetch = function (options) {
 const fetchAll = function () {
   return function(dispatch, getState) {
     dispatch(fetch(MESSAGE_TYPES.map(x => Object.assign({}, x, {ascending: false}))))
-    .then(response => response ? dispatch(setMessages(response)) : response);
+    .then(response => response && response.success ? dispatch(setMessages(response)) : response);
   };
 };
 
