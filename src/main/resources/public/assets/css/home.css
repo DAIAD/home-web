@@ -190,11 +190,11 @@ button:hover, .btn:hover, .btn[disabled]:focus, .btn[disabled]:hover {
 }
 
 input[type="text"], input[type="password"], input[type="email"] {
-  text-align: center;
+  text-align: left;
+  padding: 5px 12px 6px 12px;
   border: 1px #2D3580 solid;
   border-radius: 0;
   font-size: 1em;
-  //padding: 10px 20px;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -484,17 +484,17 @@ div[class^="section."]{
 	float: left;
 }
 
-.site-header .language-switcher{
+.site-header #language-switcher{
   margin-top: -5px;
   margin-right: 20px;
 }
-.site-header .language-switcher #language-switcher {
+.site-header #language-switcher {
 	background: #D0EAFA;
   color: #2D3580;
 	border: none;
   box-shadow: none;
 }
-.site-header .language-switcher .open > #language-switcher {
+.site-header #language-switcher.open {
   background: #fff;
 }
 
@@ -676,6 +676,9 @@ div[class^="section."]{
 
 /* Override Bootstrap styles */
 
+label { 
+  margin-right: 10px;
+}
 .col-sm-1 {
   width: 10%;
 }
@@ -817,6 +820,9 @@ div[class^="section.login"]{
 .form-login button {
   margin-top: 10px;
   width: 100%;
+}
+.form-login input {
+  text-align: center;
 }
 
 .form-login-container .login-errors {
