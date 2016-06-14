@@ -128,9 +128,27 @@ const getTimeByPeriod = function (period) {
   else if (period === "day") return today();
 };
 
+
 const getLastPeriod = function(period, timestamp) {
-  return moment(timestamp).subtract(period, 1).get(period).toString();
+  return moment(timestamp).subtract(period, 1).valueOf();
+  //.get(period).valueOf();
   //return moment(timestamp).subtract(period, 1).valueOf();
+};
+
+const getComparisonPeriod = function(timestamp, granularity, intl) {
+  const last = getLastPeriod(convertGranularityToPeriod(granularity), timestamp);
+  if (granularity === 4) {
+    return moment(last).get('year').toString();
+  }
+  else if (granularity === 3) {
+    return intl.formatMessage({id: `months.${moment(last).get('month')}`}); 
+  }
+  else if (granularity === 2) {
+    return `${intl.formatMessage({id: 'periods.week'})} ${moment(last).get('isoweek')}`;
+  }
+  else {
+    return intl.formatMessage({id: `weekdays.${moment(last).get('day')}`});
+  }
 };
 
 const getLastShowerTime = function () {
@@ -236,5 +254,6 @@ module.exports = {
   //getPeriodFromTimestamp,
   //getBucketLabels,
   addPeriodToSessions,
+  getComparisonPeriod
   //getPeriodByTimestamp,
 };

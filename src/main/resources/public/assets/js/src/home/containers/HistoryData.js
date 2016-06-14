@@ -67,7 +67,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
 
   const comparisons = stateProps.timeFilter !== 'custom' ?
     (devType === 'AMPHIRO' ? [] : 
-     [{id: 'last', title: timeUtil.getLastPeriod(stateProps.timeFilter, stateProps.time.startDate)}]
+     [{id: 'last', title: timeUtil.getComparisonPeriod(stateProps.time.startDate, stateProps.time.granularity, ownProps.intl)}]
     ) 
       : [];
 
