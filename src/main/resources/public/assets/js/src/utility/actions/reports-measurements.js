@@ -120,13 +120,13 @@ var actions = {
     }
     
     // Prepare literal time range, re-order if needed
-    var timezone = 'Etc/GMT';
+    var t0, t1, timezone = 'Etc/GMT';
     if (_.isString(ts)) {
       // Interpret this named range, as if you were at UTC+0 
-      var [t0, t1] = TimeSpan.fromName(ts, 0).toRange();
+      [t0, t1] = TimeSpan.fromName(ts, 0).toRange();
     } else {
       // Set global timezone, move to UTC while keeping local time
-      var [t0, t1] = ts;
+      [t0, t1] = ts;
       if (t0 > t1) {
         let t = t0; t0 = t1; t1 = t;
       }
