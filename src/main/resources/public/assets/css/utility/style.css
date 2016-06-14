@@ -634,7 +634,7 @@ form.report-form fieldset {
 .reports .panel .list-group-item .report-form .form-group {margin-bottom: 10px;}
 .reports .panel .list-group-item .report-form .form-group:last-child {margin-bottom: 0px;}
 
-.reports .panel .list-group-item.report-form-help p.help {margin: 0px 0px;}
+.reports .panel .list-group-item.report-form-help p.help {margin: 0px 0px; font-size: 0.85em;}
 
 .reports > div.legend {
   font-size: 16px; /*  mimic a normal legend  */
