@@ -4,7 +4,6 @@ var bs = require('react-bootstrap');
 var { injectIntl } = require('react-intl');
 var { FormattedMessage, FormattedRelative } = require('react-intl');
 var { IMAGES } = require('../constants/HomeConstants');
-var { getTimeLabelByGranularity } = require('../utils/chart');
 
 function SessionListHeader (props) {
   const { activeDeviceType:devType } = props;
@@ -37,11 +36,11 @@ function SessionListHeader (props) {
 
 function SessionListItem (props) {
   const { firstname, time: {granularity}, intl } = props;
-  const { id, index, device, devType, devName, volume, difference, energyClass, timestamp, duration, friendlyDuration, better, temperature, history, measurements } = props.data;
+  const { id, index, device, devType, devName, volume, difference, energyClass, timestamp, duration, friendlyDuration, better, temperature, history, measurements, date } = props.data;
   const arrowClass = better===null?"":better?"fa-arrow-down green":"fa-arrow-up red";
   const highlight = devType === 'METER' ? difference : volume;
   const mu = ' lt';
-  const date = granularity === 0 ? getTimeLabelByGranularity(timestamp, granularity, intl, true) : getTimeLabelByGranularity(timestamp, granularity, intl);
+  //const date = getTimeLabelByGranularity(timestamp, granularity, intl);
   //  return (
   return devType === 'AMPHIRO' ? (
       <tr onClick={() => props.onOpen(device, id, timestamp)} className='session-list-item'>

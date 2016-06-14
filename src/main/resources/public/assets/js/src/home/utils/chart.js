@@ -58,26 +58,39 @@ const getChartMeterCategories = function(time) {
 const getChartMeterCategoryLabels = function(xData, time, intl) {
   if (!time || time.granularity == null) return [];
 
-  return xData.map(t => getTimeLabelByGranularity(t, time.granularity, intl));
+  return xData.map(t => getTimeLabelByGranularityShort(t, time.granularity, intl));
 
 };
 
-const getTimeLabelByGranularity = function (timestamp, granularity, intl, extended=false) {
+const getTimeLabelByGranularity = function (timestamp, granularity, intl) {
 
-  if (extended) {
-    return moment(timestamp).format('DD/MM/YY hh:mm a');
+  if (granularity === 4) {
+    return intl.formatMessage({id: `months.${moment(timestamp).get('month')}`}) + ' ' + moment(timestamp).format('YYYY'); 
   }
-  else if (granularity === 4) {
+  else if (granularity === 3) {
+    return intl.formatMessage({id: 'periods.week'}) + ' ' + moment(timestamp).get('isoweek') + ', ' + intl.formatMessage({id: 'months.'+moment(timestamp).get('month')}) + ', ' + moment(timestamp).format('YYYY');
+  }
+  else if (granularity === 2) {
+    return intl.formatMessage({id: `weekdays.${moment(timestamp).get('day')}`}) + ',  ' + moment(timestamp).format(' DD / MM / YYYY');
+  }
+  else {
+    return intl.formatMessage({id: `weekdays.${moment(timestamp).get('day')}`}) + ',  ' + moment(timestamp).format('DD/ MM/ YYYY hh:mm a');
+  }
+};
+
+const getTimeLabelByGranularityShort = function (timestamp, granularity, intl) {
+
+  if (granularity === 4) {
     return intl.formatMessage({id: `months.${moment(timestamp).get('month')}`}); 
   }
   else if (granularity === 3) {
-    return `${intl.formatMessage({id: 'periods.week'})} ${moment(timestamp).get('isoweek')}`;
+    return intl.formatMessage({id: 'periods.week'}) + ' ' + moment(timestamp).get('isoweek');
   }
   else if (granularity === 2) {
     return intl.formatMessage({id: `weekdays.${moment(timestamp).get('day')}`});
   }
   else {
-    return `${moment(timestamp).format('hh:mm')}`;
+    return moment(timestamp).format('hh:mm');
   }
 };
 
@@ -160,5 +173,6 @@ module.exports = {
   getChartAmphiroCategories,
   getChartMetadata,
   getTimeLabelByGranularity,
+  getTimeLabelByGranularityShort,
   //sessionsToBuckets
 };

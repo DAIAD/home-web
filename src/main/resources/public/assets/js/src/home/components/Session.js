@@ -40,8 +40,11 @@ function SessionInfo (props) {
         <span className="headline-user"><i className="fa fa-user"/>{firstname}</span>
         {
           //<span className="headline-date"><i className="fa fa-calendar"/>{new Date(data.timestamp).toString()}</span>
-        }
-        <span className="headline-date"><i className="fa fa-calendar"/><FormattedDate value={new Date(data.timestamp)} year='numeric' month='long' day='numeric' weekday='long' /> <FormattedTime value={new Date(data.timestamp)}/></span>
+          }
+          {
+            //<span className="headline-date"><i className="fa fa-calendar"/><FormattedDate value={new Date(data.timestamp)} year='numeric' month='long' day='numeric' weekday='long' /> <FormattedTime value={new Date(data.timestamp)}/></span>
+          }
+          <span className="headline-date"><i className="fa fa-calendar"/>{data.date}</span>
       </div>
       <ul className="sessions-list" >
         {
@@ -55,7 +58,7 @@ function SessionInfo (props) {
 }
 
 function Session (props) {
-  const { intl, filter, data, chartData, chartFormatter, setSessionFilter, firstname, activeDeviceType } = props;
+  const { intl, filter, data, chartData, date, chartFormatter, setSessionFilter, firstname, activeDeviceType } = props;
   if (!data) return <div/>;
   const { hasChartData, history, id } = data;
   const _t = intl.formatMessage;
