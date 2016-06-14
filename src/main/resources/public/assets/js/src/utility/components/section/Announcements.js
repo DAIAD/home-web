@@ -71,6 +71,7 @@ var Announcements = React.createClass({
   }, 
   
   render: function() {
+    var thisAnnouncements = this;
     self = this;
   		var _t = this.context.intl.formatMessage;
  
@@ -260,10 +261,9 @@ var Announcements = React.createClass({
         </div> 
       </div>
     );  
-    
     var usersTable = (
       <div>
-        <Table data={currentUsersFields} setSelectedAll={this.props.setSelectedAll}></Table>
+        <Table data={currentUsersFields} setSelectedAll={this.props.setSelectedAll} allChecked={thisAnnouncements.props.checked}></Table>
       </div>
     );  
    
@@ -440,7 +440,8 @@ function mapStateToProps(state) {
       showModal: state.announcements.showModal,
       filter: state.announcements.filter,
       groups: state.announcements.groups,
-      group: state.announcements.group
+      group: state.announcements.group,
+      checked : state.announcements.checked
   };
 }
 

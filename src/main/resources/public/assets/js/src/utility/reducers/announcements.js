@@ -15,7 +15,8 @@ var initialState = {
     announcements: [],
     filter : null,
     groups : null,
-    group : null
+    group : null,
+    checked : false
 };
 
 var announcements = function (state, action) {
@@ -28,7 +29,8 @@ var announcements = function (state, action) {
     case types.ANNC_RECEIVED_USERS:
       return Object.assign({}, state, {
         accounts : action.accounts,
-        isLoading: false
+        isLoading: false,
+        checked : false
       }); 
     case types.ANNC_RECEIVED_ANNOUNCEMENT_HISTORY:
       return Object.assign({}, state, {
@@ -84,11 +86,13 @@ var announcements = function (state, action) {
       });    
     case types.ANNC_SELECT_GROUP:
       return Object.assign({}, state, {
-        group: action.group
+        group: action.group,
+        checked : false
       });  
     case types.ANNC_SET_SELECTED_ALL:
       return Object.assign({}, state, {
-        accounts: action.accounts
+        accounts: action.accounts,
+        checked: action.checked
       });       
     default:
       return state || initialState;

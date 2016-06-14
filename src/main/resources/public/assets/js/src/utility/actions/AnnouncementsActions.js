@@ -248,7 +248,8 @@ var AnnouncementsActions = {
     }
     return {
       type : types.ANNC_SET_SELECTED_ALL,
-      accounts : accounts
+      accounts : accounts,
+      checked : selected
     };  
   }
 };

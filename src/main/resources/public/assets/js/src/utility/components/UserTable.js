@@ -10,7 +10,7 @@ var CellCheckbox = require('./CellCheckbox');
 var PAGING_CLIENT_SIDE = 'client';
 var PAGING_SERVER_SIDE = 'server';
 
-var allChecked = false;
+var current;
 var Table = React.createClass({
 	getInitialState: function() {
 		return {
@@ -32,6 +32,7 @@ var Table = React.createClass({
 			data: {
 				fields: [],
 				rows: [],
+    allChecked: false,
 				pager: {
 					index: 0,
 					size: 10,
@@ -46,7 +47,7 @@ var Table = React.createClass({
 	},
  
  toggleCheckBoxes: function (selected){	
-   allChecked = selected;  
+   //allChecked = selected;  
    var visibleRowIds = [];
    this.props.setSelectedAll(this, selected);
  },
@@ -60,6 +61,7 @@ var Table = React.createClass({
   	},
 
   	render: function() {
+     current = this;
      var self = this;
   	  var totalPages = Math.ceil(this.props.data.pager.count / this.props.data.pager.size);
   	  var currentPageIndex = ((this.state.activePage + 1) > totalPages ? totalPages : (this.state.activePage + 1));
@@ -117,7 +119,7 @@ var Header = React.createClass({
 					  return (
         <th style={{width: 24}}>
 			       <Checkbox 
-						       checked={allChecked}
+						       checked={current.props.allChecked}
 								     disabled={false}
 								     onChange={self.props.toggleCheckBoxes}
 			       />
@@ -147,19 +149,18 @@ var Header = React.createClass({
 });
 
 var Body = React.createClass({
-  	render: function() {
-  	  var self = this;
+  render: function() {
+  	 var self = this;
   	  
-      var pager = self.props.data.pager;
-  		var filtered = self.props.data.rows;
-  		
-  		if((!pager.mode) || (pager.mode === PAGING_CLIENT_SIDE)) {
+    var pager = self.props.data.pager;
+  	 var filtered = self.props.data.rows;
+ 		
+ 		 if((!pager.mode) || (pager.mode === PAGING_CLIENT_SIDE)) {
   		  filtered = self.props.data.rows.reduce(function(newArray, currentValue, currentIndex) {
   		  
   		    if(((self.props.activePageIndex*pager.size) <= currentIndex) && (currentIndex < ((self.props.activePageIndex+1)*pager.size))) {
   		      newArray.push(currentValue);
   		    }
-
   		    return newArray;
   		  }, []);
   		}
@@ -182,7 +183,7 @@ var Body = React.createClass({
 });
 
 var Row = React.createClass({
-  	render: function() {
+  render: function() {
   		var self = this;
 
   		return (
