@@ -53,15 +53,17 @@ var initialState = {
 
 var createGroupRows = function(groupsInfo){
   var groups = [];
-  groupsInfo.forEach(function(g){
-    var group = {
-        id: g.id,
-        name: g.name,
-        size: g.numberOfMembers,
-        createdOn: new Date (g.creationDateMils)
-    };
-    groups.push(group);
-  });
+  if(groupsInfo) {
+    groupsInfo.forEach(function(g){
+      var group = {
+          id: g.id,
+          name: g.name,
+          size: g.numberOfMembers,
+          createdOn: new Date (g.creationDateMils)
+      };
+      groups.push(group);
+    });
+  }
   return groups;
 };
 
@@ -121,7 +123,8 @@ var demographics = function(state, action) {
     });
   
   case types.DEMOGRAPHICS_RECEIVE_GROUPS:
-    
+    action.groupsInfo = action.groupsInfo || [];
+
     var fields = DemographicsTablesSchema.Groups.fields;
     return Object.assign({}, state, {
       asyncResponse : {
@@ -185,7 +188,7 @@ var demographics = function(state, action) {
       asyncResponse : {
         action : 'GetPossibleGroupMembers',
         success : action.success,
-        errors : action.errors,
+        errors : action.errors
       },
       newGroup : newGroup
     });
@@ -217,7 +220,7 @@ var demographics = function(state, action) {
       asyncResponse : {
         action : 'GetGroupMembers',
         success : action.success,
-        errors : action.errors,
+        errors : action.errors
       },
       possibleMembers : createPossibleMembersRows(action.possibleMembersInfo)
      
@@ -339,7 +342,7 @@ var demographics = function(state, action) {
       asyncResponse : {
         action : 'CreateGroupSet',
         success : action.success,
-        errors : action.errors,
+        errors : action.errors
       },
       newGroup : newGroup
     });

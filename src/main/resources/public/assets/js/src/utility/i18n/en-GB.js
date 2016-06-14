@@ -28,7 +28,8 @@
 	    "Analytics": {
         "Fav": "Favorites",
         "BasicReports": "Reports",
-        "ReportPanel": "Charts"
+        "ReportPanel": "Charts",
+        "Maps": "Maps"
       },
       "Forecasting": "Forecasting",
 	    "Demographics": "Groups",

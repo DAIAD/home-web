@@ -47,8 +47,6 @@ var _reset = function() {
 
 var _initializeDraw = function(config) {
   var self = this;
-  
-  _reset.bind(this)();
 
   if(!this.drawnItems) {
     this.drawnItems = new L.FeatureGroup();
@@ -107,8 +105,6 @@ var _initializeDraw = function(config) {
 };
 
 var _initializeHeatMap = function(config) {
-  _reset.bind(this)();
-
 	this.heat = L.heatLayer(config.data, {radius: 30, maxZoom: 11}).addTo(this.map);
 };
 
@@ -116,8 +112,6 @@ var _initializeChoroPleth = function(config) {
   var map = this.map;
   
   var { colors, min, max, data } = config;
-
-  _reset.bind(this)();
 
   if(data) {
     this.choropleth = {};
@@ -246,8 +240,6 @@ var _intializeVector = function(config) {
   
   var { data, renderer } = config;
 
-  _reset.bind(this)();
-
   if(data) {
     this.vector = {};
 
@@ -271,7 +263,9 @@ var _intializeVector = function(config) {
       }
     }).addTo(map);
     
-    map.fitBounds(layer.getBounds());
+    if((data) && (data.features.length > 0)) {
+      map.fitBounds(layer.getBounds());
+    }
     
     var overlays = this.overlays;
 
@@ -282,19 +276,25 @@ var _intializeVector = function(config) {
 };
 
 var _initialize = function(props) {
-  switch(props.mode) {
-    case MODE_VECTOR:
-      _intializeVector.bind(this)(props.vector);
-      break;
-    case MODE_DRAW:
-      _initializeDraw.bind(this)(props.draw);
-      break;
-    case MODE_HEATMAP:
-      _initializeHeatMap.bind(this)(props.heatmap);
-      break;
-    case MODE_CHOROPLETH:
-      _initializeChoroPleth.bind(this)(props.choropleth);
-      break;
+  _reset.bind(this)();
+
+  var mode = Array.isArray(props.mode) ? props.mode : [props.mode];
+  
+  for(var index in mode) {
+    switch(mode[index]) {
+      case MODE_VECTOR:
+        _intializeVector.bind(this)(props.vector);
+        break;
+      case MODE_DRAW:
+        _initializeDraw.bind(this)(props.draw);
+        break;
+      case MODE_HEATMAP:
+        _initializeHeatMap.bind(this)(props.heatmap);
+        break;
+      case MODE_CHOROPLETH:
+        _initializeChoroPleth.bind(this)(props.choropleth);
+        break;
+    }
   }
   if(this.map) {
     this.map.invalidateSize();

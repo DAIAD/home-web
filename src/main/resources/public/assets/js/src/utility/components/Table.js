@@ -306,8 +306,10 @@ var Cell = React.createClass({
 
 		var style = {
 		    maxHeight: this.props.style.rowHeight || 100,
-		    overflowY: 'auto'
 		};
+		if(this.props.field.type !== 'alterable-boolean') {
+	    style.overflowY = 'auto';		  
+		}
     if((this.props.field.width) && (this.props.field.width > 0)) {
       style.width = this.props.field.width;
     }

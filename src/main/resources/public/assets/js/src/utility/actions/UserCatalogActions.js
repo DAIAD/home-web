@@ -133,7 +133,7 @@ var UserCatalogActionCreators = {
     };
   },
 
-  getMeter : function(userKey, deviceKey) {
+  getMeter : function(userKey, deviceKey, label) {
     return function(dispatch, getState) {
       dispatch(meterRequestInit(userKey, deviceKey));
 
@@ -143,6 +143,7 @@ var UserCatalogActionCreators = {
         if (response.series) {
           for ( var index in response.series) {
             if (response.series[index].deviceKey === deviceKey) {
+              response.series[index].label = label + ' - ' + response.series[index].serial;
               dispatch(meterRequestComplete(response.success, response.errors, userKey, response.series[index]));
               break;
             }
