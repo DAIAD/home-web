@@ -41,7 +41,6 @@ var Announcements = React.createClass({
   handleAddedMembersCheckboxChange: function (rowId, row, checked){
     this.props.toggleAddedUserSelected(this.props.addedUsers, rowId, checked);
   },  
-  
   addUsersButtonClick: function (){
     var addedAccounts = [];
     for(var obj in this.props.accounts){
@@ -103,7 +102,6 @@ var Announcements = React.createClass({
     if(this.props.accounts) {
       var records = this.props.accounts;
       for(var i=0, count=records.length; i<count; i++) {
-        console.log(records[i].username);
         if((!this.props.filter) || (records[i].username.indexOf(this.props.filter) !== -1)) {
           filteredAccounts.push({
             id: records[i].id,
@@ -127,11 +125,14 @@ var Announcements = React.createClass({
           name: 'username',
           title: 'Username'
         }, {
+          name: 'all',
+          title: 'All'
+        }, {
           name: 'selected',
           type:'alterable-boolean',
           handler: function(field, row) {
             self.handleCurrentMembersCheckboxChange(field, row, this.checked);
-          }       
+          }
         }],
         rows: filteredAccounts,
         pager: {
@@ -154,7 +155,7 @@ var Announcements = React.createClass({
         title: 'Username'
       }, {
         name: 'selected',
-        type:'alterable-boolean',
+        type:'boolean',
         handler: function(field, row) {
           self.handleAddedMembersCheckboxChange(field, row, this.checked);          
         }        
@@ -262,13 +263,13 @@ var Announcements = React.createClass({
     
     var usersTable = (
       <div>
-        <Table data={currentUsersFields}></Table>
+        <Table data={currentUsersFields} setSelectedAll={this.props.setSelectedAll}></Table>
       </div>
     );  
    
     var addedUsersTable = (
       <div>
-        <Table data={addedUsersFields}></Table>
+        <Table data={addedUsersFields} setSelectedAll={this.props.setSelectedAll}></Table>
       </div>
     );
    
@@ -448,8 +449,8 @@ function mapDispatchToProps(dispatch) {
     fetchGroups : bindActionCreators(AnnouncementsActions.fetchGroups, dispatch),
     setGroup: function (event, group){
       dispatch(AnnouncementsActions.setGroup(event, group));
-      if(group.label == 'Everyone'){
-        console.log('TODO fetch everyone again');
+      if(group.label == 'Everyone'){      
+        self.props.getCurrentUtilityUsers();
       }
       else{
         dispatch(AnnouncementsActions.getGroupUsers(group.value));
@@ -471,7 +472,10 @@ function mapDispatchToProps(dispatch) {
       var announcement = {title : self.refs.title.value, content : self.refs.content.value};
       dispatch(AnnouncementsActions.broadCastAnnouncement(event, self.props.addedUsers, announcement));
     },
-    setFilter: bindActionCreators(AnnouncementsActions.setFilter, dispatch)
+    setFilter: bindActionCreators(AnnouncementsActions.setFilter, dispatch),
+    setSelectedAll: function (event, selected){
+			   dispatch(AnnouncementsActions.setSelectedAll(event, selected));
+		  },
   };
 }
 

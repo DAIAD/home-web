@@ -85,7 +85,11 @@ var announcements = function (state, action) {
     case types.ANNC_SELECT_GROUP:
       return Object.assign({}, state, {
         group: action.group
-      });      
+      });  
+    case types.ANNC_SET_SELECTED_ALL:
+      return Object.assign({}, state, {
+        accounts: action.accounts
+      });       
     default:
       return state || initialState;
   }

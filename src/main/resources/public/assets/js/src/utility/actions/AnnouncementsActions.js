@@ -239,6 +239,17 @@ var AnnouncementsActions = {
       type : types.ANNC_FILTER_USERS,
       filter : filter
     };
+  },
+  setSelectedAll : function(event, selected){
+    var accounts = [];
+    for(var obj in event.props.data.rows){
+      event.props.data.rows[obj].selected = selected;
+      accounts.push(event.props.data.rows[obj]); 
+    }
+    return {
+      type : types.ANNC_SET_SELECTED_ALL,
+      accounts : accounts
+    };  
   }
 };
 
