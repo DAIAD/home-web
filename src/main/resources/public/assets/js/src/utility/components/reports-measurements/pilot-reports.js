@@ -155,6 +155,12 @@ var ReportsPanel = React.createClass({
       </Panel>
     );
   },
+
+  shouldComponentUpdate: function (nextProps) {
+    return (
+      nextProps.now != this.props.now
+    ); 
+  },
 });
 
 ReportsPanel.displayName = 'PilotReports.ReportsPanel';
