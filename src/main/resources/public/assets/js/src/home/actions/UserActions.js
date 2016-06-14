@@ -44,6 +44,20 @@ const receivedLogout = function(status, errors) {
   };
 };
 
+const requestedQuery = function() {
+  return {
+    type: types.QUERY_REQUEST_START,
+  };
+};
+
+const receivedQuery = function(success, errors) {
+  return {
+    type: types.QUERY_REQUEST_END,
+    success,
+    errors,
+  };
+};
+
 const setCsrf = function(csrf) {
   return {
     type: types.USER_SESSION_SET_CSRF,
@@ -120,7 +134,7 @@ const initHome = function (profile) {
   return function(dispatch, getState) {
 
     dispatch(fetchAllMessages());
-      
+
     if (profile.configuration) {
         const configuration = JSON.parse(profile.configuration);
         if (configuration.infoboxes) dispatch(DashboardActions.setInfoboxes(configuration.infoboxes));
@@ -140,7 +154,7 @@ const initHome = function (profile) {
     }
     else {
       dispatch(HistoryActions.setActiveDeviceType('METER', true));
-    }
+      }
   };
 };
 
@@ -150,18 +164,28 @@ const initHome = function (profile) {
  * @param {Object} configuration - serializable object to be saved to user profile
  * @return {Promise} Resolved or rejected promise, with errors if rejected
  */
-const saveToProfile = function (configuration) {
+const saveToProfile = function (data) {
   return function(dispatch, getState) {
 
-    const data = Object.assign({}, {configuration: JSON.stringify(configuration)}, {csrf: getState().user.csrf});
+    const data = Object.assign({}, data, {csrf: getState().user.csrf});
+
+    dispatch(requestedQuery());
 
     return userAPI.saveToProfile(data)
     .then((response) => {
+
+      dispatch(receivedQuery(response.success, response.errors));
+       
+      if (!response || !response.success) {
+        throw new Error (response && response.errors && response.errors.length > 0 ? response.errors[0].code : 'unknownError');
+      }
+
       return response;
 
     })
     .catch((errors) => {
       console.error('Error caught on saveToProfile:', errors);
+      dispatch(receivedQuery(false, errors));
       return errors;
     });
   };

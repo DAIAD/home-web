@@ -92,7 +92,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                  },
                  deviceCount: getDeviceCount(stateProps.devices),
                  meterCount: getMeterCount(stateProps.devices),
-                 saveToProfile: () => dispatchProps.saveToProfile(saveData),
+                 saveToProfile: () => dispatchProps.saveToProfile({configuration: JSON.stringify(saveData)}),
                  deviceTypes,
                  types,
                });
