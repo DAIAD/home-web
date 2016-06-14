@@ -28,7 +28,6 @@ var queryMeasurements = function (source, field, q, config={}) {
   var defaults = queryMeasurements.defaults;
   
   // Validate parameters
-
   q = queryMeasurements.validate(q, config);
   
   source = source.toUpperCase();
@@ -43,6 +42,7 @@ var queryMeasurements = function (source, field, q, config={}) {
       end: q.timespan[1], 
       granularity: q.granularity,
     },
+    timezone,
     population: q.population.map(p => p.toJSON()),
   };
  
@@ -61,7 +61,7 @@ var queryMeasurements = function (source, field, q, config={}) {
 
   // Send query, shape result
 
-  return api.queryMeasurements({query: q1, timezone}).then(
+  return api.queryMeasurements({query: q1}).then(
     res => {
       if (res.errors.length) 
         throw 'The request is rejected: ' + res.errors[0].description; 
