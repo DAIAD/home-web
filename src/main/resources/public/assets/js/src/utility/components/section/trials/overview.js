@@ -690,7 +690,7 @@ var Overview = React.createClass({
     var visiblePart = this.props.admin.addUser.show ? addNewUserForm : reportBody;
 
 		return (
-  		<div className="container-fluid" style={{ paddingTop: 10 }}>
+  		<div className="container-fluid">
   		  <div className="row">
   				<div className="col-md-12">
   					<Breadcrumb routes={this.props.routes}/>
@@ -702,7 +702,7 @@ var Overview = React.createClass({
 });
 
 Overview.icon = 'table';
-Overview.title = 'Section.Reports.Overview';
+Overview.title = 'Section.Trials.Overview';
 
 function mapStateToProps(state) {
   return {

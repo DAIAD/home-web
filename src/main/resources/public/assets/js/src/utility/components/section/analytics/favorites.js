@@ -3,18 +3,18 @@ var ReactDOM = require('react-dom');
 var moment = require('moment');
 var Bootstrap = require('react-bootstrap');
 var { Link } = require('react-router');
-var Breadcrumb = require('../Breadcrumb');
-var Chart = require('../Chart');
-var ClusterChart = require('../ClusterChart');
-var LeafletMap = require('../LeafletMap');
-var Table = require('../Table');
-var ChartWizard = require('../ChartWizard');
-var ChartConfig = require('../ChartConfig');
-var Tag = require('../Tag');
-var Message = require('../Message');
-var JobConfigAnalysis = require('../JobConfigAnalysis');
-var FilterTag = require('../chart/dimension/FilterTag');
-var Timeline = require('../Timeline');
+var Breadcrumb = require('../../Breadcrumb');
+var Chart = require('../../Chart');
+var ClusterChart = require('../../ClusterChart');
+var LeafletMap = require('../../LeafletMap');
+var Table = require('../../Table');
+var ChartWizard = require('../../ChartWizard');
+var ChartConfig = require('../../ChartConfig');
+var Tag = require('../../Tag');
+var Message = require('../../Message');
+var JobConfigAnalysis = require('../../JobConfigAnalysis');
+var FilterTag = require('../../chart/dimension/FilterTag');
+var Timeline = require('../../Timeline');
 
 var createPoints = function() {
 	var points = [];
@@ -530,6 +530,6 @@ var Analytics = React.createClass({
 });
 
 Analytics.icon = 'bar-chart';
-Analytics.title = 'Section.Analytics';
+Analytics.title = 'Section.Analytics.Fav';
 
 module.exports = Analytics;

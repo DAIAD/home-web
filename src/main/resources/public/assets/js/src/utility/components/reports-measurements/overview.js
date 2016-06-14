@@ -98,7 +98,7 @@ var OverviewPanel = React.createClass({
 
 var OverviewPanelGroup = React.createClass({
    
-   propTypes: {
+  propTypes: {
     ...commonPropTypes,
     reports: PropTypes.shape({
       day: reportPropType,
@@ -109,6 +109,10 @@ var OverviewPanelGroup = React.createClass({
     title: PropTypes.string.isRequired,
   },
  
+  contextTypes: {
+    config: configPropType,
+  },
+  
   getInitialState: function () {
     return {
       activeKey: 'utility',
@@ -127,7 +131,7 @@ var OverviewPanelGroup = React.createClass({
   render: function () {
     var {now, field, source, uom, reports, title} = this.props;
     var visible = (k) => (this.state.activeKey == k);
-    
+
     var commonProps = {source, field, uom, now};
 
     var reportProps = {
@@ -140,7 +144,7 @@ var OverviewPanelGroup = React.createClass({
       perEfficiency: {
         ...commonProps,
         reportKey: 'per-efficiency',
-        target: null, // Fixme population.Cluster
+        target: null, // Fixme provide population.Cluster instance
         visible: visible('per-efficiency')
       },
     };
@@ -164,27 +168,29 @@ var OverviewPanelGroup = React.createClass({
         <Panel {...panelProps.utility}>
           <ListGroup fill>
             <ListGroupItem>
-              <h4>Last Day</h4>
+              <h4>{reports.day.title} - Last Day</h4>
               <ReportByDay {...reportProps.utility} report={reports.day} />
             </ListGroupItem>
             <ListGroupItem>
-              <h4>Last Week</h4>
+              <h4>{reports.week.title} - Last Week</h4>
               <ReportByWeek {...reportProps.utility} report={reports.week} />
             </ListGroupItem>
             <ListGroupItem>
-              <h4>Last Month</h4>
+              <h4>{reports.month.title} - Last Month</h4>
               <ReportByMonth {...reportProps.utility} report={reports.month} />
             </ListGroupItem>
             <ListGroupItem>
-              <h4>Last Year</h4>
+              <h4>{reports.year.title} - Last Year</h4>
               <ReportByYear {...reportProps.utility} report={reports.year} />
             </ListGroupItem>
           </ListGroup>
         </Panel>
         
+        {/*
         <Panel {...panelProps.perEfficiency}>
           <div>Todo</div> 
         </Panel>
+        */}
         
       </PanelGroup>    
     );
@@ -241,7 +247,7 @@ var Form = React.createClass({
     
     var sourceOptions = new Map(
       _.values(
-        _.mapValues(sources, (s, k) => ([k, s.name])))
+        _.mapValues(sources, (s, k) => ([k, s.title])))
     );
 
     var fieldOptions = new Map(

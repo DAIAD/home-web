@@ -233,12 +233,12 @@ a .disabled{
 .fade-in {
   opacity: 1;
   animation-name: fade-in; 
-  animation-duration: 1s;
+  animation-duration: 0.5s;
   animation-iteration-count: 1;
 }
-.fade-in.x2 {animation-duration: 2s;}
-.fade-in.x3 {animation-duration: 3s;}
-.fade-in.x4 {animation-duration: 4s;}
+.fade-in-2x {animation-duration: 1s;}
+.fade-in-3x {animation-duration: 1.5s;}
+.fade-in-4x {animation-duration: 2s;}
 
 @keyframes fade-in {from {opacity: 0.1;} to {opacity: 1;}}
 @keyframes fade-out {from {opacity: 1.0;} to {opacity: 0;}}
@@ -663,16 +663,16 @@ form.report-form fieldset {
 .report-form.form-horizontal .dropdown.select-level button > span.text {width: 8em;}
 .report-form.form-horizontal .dropdown.select-level .dropdown-menu {width: 9em;}
 
-.report-form.form-inline .dropdown.select-field button > span.text {width: 6em;}
-.report-form.form-horizontal .dropdown.select-field button > span.text {width: 8em;}
+.report-form.form-inline .dropdown.select-field button > span.text {width: 7em;}
+.report-form.form-horizontal .dropdown.select-field button > span.text {width: 9em;}
 
-.report-form.form-inline .dropdown.select-source button > span.text {width: 4.5em;}
+.report-form.form-inline .dropdown.select-source button > span.text {width: 7em;}
 .report-form.form-horizontal .dropdown.select-source button > span.text {width: 10em;}
 .report-form.form-horizontal .dropdown.select-source .dropdown-menu {width: 12.8em;}
 
 .report-form.form-inline .dropdown.select-timespan button > span.text {width: 5.5em;}
-.report-form.form-horizontal .dropdown.select-timespan button > span.text {width: 11em;}
-.report-form.form-horizontal .dropdown.select-timespan .dropdown-menu {min-width: 13.7em;}
+.report-form.form-horizontal .dropdown.select-timespan button > span.text {width: 12em;}
+.report-form.form-horizontal .dropdown.select-timespan .dropdown-menu {min-width: 14.6em;}
 .report-form.form-horizontal .dropdown.select-timespan {margin-right: 6px;}
 
 .report-form.form-inline .dropdown.select-cluster button > span.text {width: 7em;}
@@ -786,6 +786,8 @@ div.measurement-value .delta > .sign {
 .reports.overview .report-form.form-inline .form-group.submit-buttons {
   float: right;
 }      
+
+/* Map/Choropleth */
 
 /* view-source:http://leafletjs.com/examples/choropleth-example.html */
 .map-choropleth-info {

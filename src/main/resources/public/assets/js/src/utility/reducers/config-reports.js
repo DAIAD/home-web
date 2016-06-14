@@ -169,6 +169,29 @@ var initialState = {
             },
           },
         },
+        'year': {
+          name: 'year',
+          title: 'Year',
+          description: 'Report over year', // time unit of 1 year
+          reports: {
+            'avg': {
+              title: 'Average of yearly consumption',
+              description: 'The average yearly consumption',
+              granularity: 'YEAR',
+              timespan: null,
+              metrics: ['AVERAGE'],
+              consolidate: 'AVERAGE',
+            },
+            'sum': {
+              title: 'Total yearly consumption',
+              description: 'The total yearly consumption',
+              granularity: 'YEAR',
+              timespan: null,
+              metrics: ['SUM'],
+              consolidate: 'AVERAGE',
+            },
+          }
+        }
       },
     },
 

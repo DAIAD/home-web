@@ -20,7 +20,7 @@ var {computeKey} = require('../../reports').measurements;
 var {timespanPropType, populationPropType, seriesPropType, configPropType} = require('../../prop-types');
 var {equalsPair} = require('../../helpers/comparators');
 
-var Chart = require('./chart-container');
+var Chart = require('./chart');
 
 var {Button, ButtonGroup, Collapse, Panel, ListGroup, ListGroupItem} = Bootstrap;
 var {PropTypes} = React;
@@ -77,7 +77,7 @@ var Option = ({value, text}) => (<option value={value} key={value}>{text}</optio
 // Presentational components
 //
 
-var HelpParagraph = ({errorMessage, dirty}) => {
+var FormStatusParagraph = ({errorMessage, dirty}) => {
   if (errorMessage) {
     return (<p className="help text-danger">{errorMessage}</p>);
   } else if (dirty) {
@@ -95,7 +95,15 @@ var ReportPanel = React.createClass({
         dateFormat: 'ddd D MMM[,] YYYY',
         timeFormat: null, 
         inputProps: {size: 10}, 
-      },  
+      },
+      
+      helpMessages: {
+        'source': 'Specify the source device for measurements.',
+        'population-group': 'Target a group (or cluster of groups) of consumers.',
+        'timespan': 'Specify the time range you are interested into.',
+        'report-name': 'Select the metric to be applied to measurements.',
+        'level': 'Specify the level of detail (unit of time for charts).'
+      },
     },
     
     templates: {},    
@@ -166,6 +174,7 @@ var ReportPanel = React.createClass({
   },
 
   propTypes: {
+    // Model
     field: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
     level: PropTypes.string.isRequired,
@@ -174,6 +183,9 @@ var ReportPanel = React.createClass({
     timespan: timespanPropType,
     population: populationPropType,
     finished: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
+    series: PropTypes.arrayOf(seriesPropType),
+    
+    // Funcs (dispatchers)
     initializeReport: PropTypes.func.isRequired,
     refreshData: PropTypes.func.isRequired,
     setReport: PropTypes.func.isRequired,
@@ -181,6 +193,15 @@ var ReportPanel = React.createClass({
     setTimespan: PropTypes.func.isRequired,
     setPopulation: PropTypes.func.isRequired,
     setSource: PropTypes.func.isRequired,
+
+    // Appearence
+    fadeIn: PropTypes.oneOfType([
+      PropTypes.bool,
+      PropTypes.shape({
+        className: PropTypes.string, // class to apply to fade-in elements
+        duration: PropTypes.number, // the duration of fade-in animation (seconds)
+     })
+    ]),
   },
 
   contextTypes: {config: configPropType},
@@ -190,7 +211,7 @@ var ReportPanel = React.createClass({
   getInitialState: function () {
     return {
       draw: true, // should draw chart?
-      fadeIn: false, // animation effect (seconds)  
+      fadeIn: false, // animation effect in progress
       dirty: false,
       timespan: this.props.timespan,
       error: null,
@@ -209,6 +230,7 @@ var ReportPanel = React.createClass({
       timespan: null,
       population: null,
       finished :null,
+      fadeIn: false, // {className: 'fade-in', duration: 0.5},
     };
   },
 
@@ -298,20 +320,19 @@ var ReportPanel = React.createClass({
       this.setState(nextState);
     }
 
-    // If under a CSS transition, be sure to clear the flag afterwards
+    // If under a CSS animation, remember to clear the flag after the animation has ended.
     // This is needed, because only a change "" -> ".fade-in" can trigger a new animation.
-    var d = Number(this.state.fadeIn);
-    if (d > 0) {
+    if (this.state.fadeIn) {
       setTimeout(
         () => (this.state.fadeIn && this.setState({fadeIn: false})), 
-        (d + 1) * 1e+3
+        (this.props.fadeIn.duration + 0.25) * 1e+3
       );
     }
   },
 
   render: function () {
-    var {field, title, level, reportName} = this.props;
-    var {dirty, draw, error, errorMessage, fadeIn} = this.state;
+    var {field, title, level, reportName, finished, series} = this.props;
+    var {dirty, draw, error, errorMessage} = this.state;
 
     var toolbarSpec = this._specForToolbar();
     var header = (
@@ -325,7 +346,7 @@ var ReportPanel = React.createClass({
     );
     
     var footer = (
-      <Info field={field} level={level} reportName={reportName} />
+      <ReportInfo field={field} level={level} reportName={reportName} />
     );
     
     var formFragment = this._renderFormFragment();
@@ -334,13 +355,13 @@ var ReportPanel = React.createClass({
         <ListGroup fill>
           <ListGroupItem className="report-form-wrapper">
             <form className="report-form form-horizontal">
-              <fieldset className={!fadeIn? '' : sprintf('fade-in x%d', fadeIn)}>
+              <fieldset className={!this.state.fadeIn? '' : this.props.fadeIn.className}>
                 {formFragment}
               </fieldset>
             </form>
           </ListGroupItem>
           <ListGroupItem className="report-form-help">
-            <HelpParagraph dirty={dirty} errorMessage={errorMessage}/>
+            <FormStatusParagraph dirty={dirty} errorMessage={errorMessage}/>
           </ListGroupItem>
           <ListGroupItem className="report-chart-wrapper">
             <Chart 
@@ -348,7 +369,8 @@ var ReportPanel = React.createClass({
               field={field} 
               level={level} 
               reportName={reportName} 
-              reportKey={REPORT_KEY} 
+              finished={finished}
+              series={series}
              />
           </ListGroupItem>
         </ListGroup>
@@ -370,8 +392,12 @@ var ReportPanel = React.createClass({
   },
 
   _switchToFormFragment: function (key) {
-    if (this.state.formFragment != key)
-      this.setState({formFragment: key, fadeIn: 1.0});
+    if (this.state.formFragment != key) {
+      var nextState = {formFragment: key};
+      if (this.props.fadeIn)
+        nextState.fadeIn = true;
+      this.setState(nextState);
+    }
     return false;
   },
 
@@ -467,6 +493,7 @@ var ReportPanel = React.createClass({
   
   _renderFormFragment: function () {
     var {defaults} = this.constructor;
+    var {helpMessages} = defaults;
     var {config} = this.context;
     var {fields, sources, levels} = config.reports.byType.measurements;
     var {level} = this.props;
@@ -487,9 +514,7 @@ var ReportPanel = React.createClass({
                 <Select className="select-source" 
                   value={source} options={sourceOptions} onChange={this._setSource} 
                  />
-                <p className="help text-muted">
-                  {'Specify the source device for measurements.'}
-                </p>
+                <p className="help text-muted">{helpMessages['source']}</p>
               </div>
             </div>
           );
@@ -518,13 +543,10 @@ var ReportPanel = React.createClass({
                     options={levelOptions} 
                     onChange={(val) => this._setReport(val, reportName)} 
                    />
-                  <p className="help text-muted">
-                    {'Specify the level of detail (unit of time for charts).'}
-                  </p>
+                  <p className="help text-muted">{helpMessages['level']}</p>
                 </div>
               </div>
-            ),
-            (
+            ), (
               <div key="report-name" className="form-group" >
                 <label className="col-sm-2 control-label">Metric:</label>
                 <div className="col-sm-9">
@@ -533,9 +555,7 @@ var ReportPanel = React.createClass({
                     options={reportOptions} 
                     onChange={(val) => this._setReport(level, val)} 
                    />
-                  <p className="help text-muted">
-                    {'Select the metric to be applied to measurements.'}
-                  </p>
+                  <p className="help text-muted">{helpMessages['report-name']}</p>
                 </div>
               </div>
             ),
@@ -579,9 +599,7 @@ var ReportPanel = React.createClass({
                   value={t1.toDate()}
                   onChange={(val) => (this._setTimespan([t0, val]))} 
                  />
-                <p className="help text-muted">
-                  {'Specify the time range you are interested into.'}
-                </p>
+                <p className="help text-muted">{helpMessages['timespan']}</p>
               </div>
             </div>
           );
@@ -596,8 +614,7 @@ var ReportPanel = React.createClass({
             {
               group: null, 
               options: new Map([['', 'None']])
-            },
-            {
+            }, {
               group: 'Cluster By:', 
               options: new Map(clusters.map(c => ([c.key, c.name ])))
             },
@@ -610,8 +627,7 @@ var ReportPanel = React.createClass({
             {
               group: clusterKey? 'All groups' : 'No groups',
               options: new Map([['', clusterKey? 'All' : 'Everyone']]),
-            },
-            {
+            }, {
               group: 'Pick a specific group:',
               options: !clusterKey? [] : new Map(
                 selectedCluster.groups.map(g => ([g.key, selectedCluster.name + ': ' + g.name]))
@@ -634,9 +650,7 @@ var ReportPanel = React.createClass({
                   onChange={(val) => this._setPopulation(clusterKey, val)}
                   options={groupOptions}
                  />
-                <p className="help text-muted">
-                  {'Target a group (or cluster of groups) of consumers.'}
-                </p>
+                <p className="help text-muted">{helpMessages['population-group']}</p>
               </div> 
             </div>
           );
@@ -676,6 +690,9 @@ var ReportPanel = React.createClass({
     // Make a spec object suitable to feed toolbars.ButtonToolbar "groups" prop.
     // Note we must take into account our current state (disabled flags for buttons)
     
+    // Todo This fuctionality fits better to the Toolbar component, 
+    // e.g.: <Toolbar spec={spec} enabledButtons={flags1} activeButtons={flags2} ... />
+
     var cls = this.constructor;
     var {disabledButtons} = this.state;
     
@@ -695,7 +712,6 @@ var ReportPanel = React.createClass({
   },
 
   // Wrap dispatch actions
-
 });
 
 var ReportForm = React.createClass({
@@ -885,8 +901,8 @@ var ReportForm = React.createClass({
     );
     
     var form, formId = ['panel', field, level, reportName].join('--');
-    var helpParagraph = (
-      <HelpParagraph dirty={this.state.dirty} errorMessage={this.state.errorMessage}/>
+    var statusParagraph = (
+      <FormStatusParagraph dirty={this.state.dirty} errorMessage={this.state.errorMessage}/>
     );
     if (inlineForm) {
       form = (
@@ -906,7 +922,7 @@ var ReportForm = React.createClass({
           <div className="form-group">
             {buttonRefresh}&nbsp;&nbsp;{buttonSave}&nbsp;&nbsp;{buttonExport}
           </div>
-          {helpParagraph}
+          {statusParagraph}
         </form> 
       );
     } else {
@@ -942,7 +958,7 @@ var ReportForm = React.createClass({
               {buttonRefresh}&nbsp;&nbsp;{buttonSave}&nbsp;&nbsp;{buttonExport}
             </div>
           </div>
-          {helpParagraph}
+          {statusParagraph}
         </form>
       );
     }
@@ -1050,7 +1066,7 @@ var ReportForm = React.createClass({
   },
 }); 
 
-var Info = React.createClass({
+var ReportInfo = React.createClass({
   statics: {},
 
   propTypes: {
@@ -1060,9 +1076,7 @@ var Info = React.createClass({
     requested: PropTypes.number,
     finished: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
     errors: PropTypes.arrayOf(PropTypes.string),
-    series: PropTypes.arrayOf(PropTypes.shape({
-      data: PropTypes.array,
-    })),
+    series: PropTypes.arrayOf(seriesPropType),
     requests: PropTypes.number,
   },
   
@@ -1133,8 +1147,8 @@ ReportPanel = ReactRedux.connect(
     var r1 = state.reports.measurements[key];
     if (r1) {
       // Found an initialized intance of the report for (field, level, reportName)
-      var {source, timespan, population, finished} = r1;
-      _.extend(stateProps, {source, timespan, population, finished});
+      var {source, timespan, population, series, finished} = r1;
+      _.extend(stateProps, {source, timespan, population, series, finished});
     }
 
     return stateProps;
@@ -1195,7 +1209,7 @@ ReportForm = ReactRedux.connect(
   }
 )(ReportForm);
 
-Info = ReactRedux.connect(
+ReportInfo = ReactRedux.connect(
   (state, ownProps) => {
     var {field, level, reportName} = ownProps;
     var _state = state.reports.measurements;
@@ -1205,13 +1219,17 @@ Info = ReactRedux.connect(
     );
   },
   null
-)(Info);
+)(ReportInfo);
 
+//
 // Export
+//
+
+var ChartContainer = require('./chart-container');
 
 module.exports = {
   Panel: ReportPanel,
   Form: ReportForm, 
-  Info, 
-  Chart: (props) => (<Chart {...props} reportKey={REPORT_KEY} />), 
+  Info: ReportInfo, 
+  Chart: (props) => (<ChartContainer {...props} reportKey={REPORT_KEY} />),
 };

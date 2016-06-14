@@ -7,13 +7,13 @@ var Redux = require('react-redux');
 var Bootstrap = require('react-bootstrap');
 var Breadcrumb = require('../../Breadcrumb');
 
-var reports = require('../../reports');
-
 var PropTypes = React.PropTypes;
+
+var {Overview: BasicReports} = require('../../reports');
 var {configPropType} = require('../../../prop-types');
 
-var Report = React.createClass({
-  displayName: 'Analytics.Overview',
+var Page = React.createClass({
+  displayName: 'Analytics.BasicReports',
 
   propTypes: {
     routes: PropTypes.array, // supplied by react-router
@@ -34,7 +34,7 @@ var Report = React.createClass({
         </div>
         <div className="row">
           <div className="col-md-12">
-            <reports.Overview config={this.props.config} />
+            <BasicReports config={this.props.config} />
           </div>
         </div>
       </div>
@@ -43,8 +43,8 @@ var Report = React.createClass({
 
 });
 
-Report.icon = 'bullseye';
-Report.title = 'Section.Analytics.Overview';
+Page.icon = 'bullseye';
+Page.title = 'Section.Analytics.BasicReports';
 
 function mapStateToProps(state, ownProps) {
   return {
@@ -56,4 +56,4 @@ function mapDispatchToProps(dispatch, ownProps) {
   return {};
 }
 
-module.exports = Redux.connect(mapStateToProps, mapDispatchToProps)(Report);
+module.exports = Redux.connect(mapStateToProps, mapDispatchToProps)(Page);

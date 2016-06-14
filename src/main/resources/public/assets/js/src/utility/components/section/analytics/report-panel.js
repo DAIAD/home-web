@@ -8,13 +8,14 @@ var Redux = require('react-redux');
 var Bootstrap = require('react-bootstrap');
 var Breadcrumb = require('../../Breadcrumb');
 
-var reports = require('../../reports');
+var {MeasurementsReportPanel} = require('../../reports');
 
 var PropTypes = React.PropTypes;
 var {configPropType} = require('../../../prop-types'); 
 
-var MeasurementReport = React.createClass({
-  
+var Page = React.createClass({
+  displayName: 'Analytics.ReportPanel',
+
   propTypes: {
     routes: PropTypes.array, // supplied by react-router
     config: configPropType,
@@ -35,7 +36,7 @@ var MeasurementReport = React.createClass({
         </div>
         <div className="row">
           <div className="col-md-12">
-            <reports.MeasurementsReportPanel config={config} />
+            <MeasurementsReportPanel config={config} />
           </div>
         </div>
       </div>
@@ -44,8 +45,8 @@ var MeasurementReport = React.createClass({
 
 });
 
-MeasurementReport.icon = 'pie-chart';
-MeasurementReport.title = 'Section.Reports.Measurements';
+Page.icon = 'pie-chart';
+Page.title = 'Section.Analytics.ReportPanel';
 
 function mapStateToProps(state, ownProps) {
   return {
@@ -57,4 +58,4 @@ function mapDispatchToProps(dispatch, ownProps) {
   return {};
 }
 
-module.exports = Redux.connect(mapStateToProps, mapDispatchToProps)(MeasurementReport);
+module.exports = Redux.connect(mapStateToProps, mapDispatchToProps)(Page);

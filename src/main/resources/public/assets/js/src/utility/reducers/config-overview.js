@@ -9,24 +9,28 @@ var initialState = {
   // Note report names refer to config.reports.measurements
   reports: {
     day: {
+      title: 'Total daily consumption',
       level: 'hour',
       reportName: 'sum',
       startsAt: 'day',
       duration: [-2, 'day'],
     },
     week: {
+      title: 'Total weekly consumption',
       level: 'day',
       reportName: 'sum',
       startsAt: 'isoweek',
       duration: [-2, 'week'],
     },
     month: {
+      title: 'Total monthly consumption',
       level: 'day',
       reportName: 'sum',
       startsAt: 'month',
       duration: [-2, 'month'],
     },
     year: {
+      title: 'Total yearly consumption',
       level: 'month',
       reportName: 'sum',
       startsAt: 'year',

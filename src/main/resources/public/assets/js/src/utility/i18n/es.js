@@ -24,7 +24,12 @@
   },
   "Section": {
       "Dashboard": "Dashboard",
-      "Analytics":"Analytics",
+      "Analytics-Group":"Analytics",
+      "Analytics": {
+        "Fav": "Favorites",
+        "BasicReports": "Reports",
+        "ReportPanel": "Charts"
+      },
       "Forecasting": "Forecasting",
       "Demographics": "Groups",
       "ModeManagement": "Mode Management",
@@ -34,8 +39,7 @@
       "Reports": {
         "Group": "Trial Management",
         "Overview": "Overview",
-        "Charts": "Charts",
-        "Measurements": "Pilot Reports",
+        "PilotReports": "Pilot Reports",
         "System": "System Reports"
       },
       "Announcements" : "Announcements",
