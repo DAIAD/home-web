@@ -300,13 +300,13 @@ var AnalyticsMap = React.createClass({
       <FilterTag key='time' text={intervalLabel} icon='calendar' />
     );
     mapFilterTags.push( 
-      <FilterTag key='population' text={ (this.props.population ? this.props.population.label : 'All') } icon='group' />
+      <FilterTag key='population' text={ this.props.population ? this.props.population.label : 'All' } icon='group' />
     );
     mapFilterTags.push( 
-      <FilterTag key='spatial' text={ (this.props.geometry ? 'Custom' : 'Alicante') } icon='map' />
+      <FilterTag key='spatial' text={ this.props.geometry ? 'Custom' : 'Alicante' } icon='map' />
     );
     mapFilterTags.push( 
-      <FilterTag key='source' text={ (this.props.source === 'METER' ? 'Meter' : 'Amphiro B1') } icon='database' />
+      <FilterTag key='source' text={ this.props.source === 'METER' ? 'Meter' : 'Amphiro B1' } icon='database' />
     );
 
     map = (
