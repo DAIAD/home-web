@@ -29,20 +29,16 @@ var _clearGroupSeries = function() {
   this.props.clearGroupSeries();
 };
 
-var _onAction = function(event, eventKey) {
-  console.log(eventKey);
-  switch(eventKey) {
-    case '2':
-      if(this.props.favorite) {
-        this.props.removeFavorite(this.props.user.id);
-      } else {
-        this.props.addFavorite(this.props.user.id);
-      }
-      break;
-    case '3':
-      this.props.exportData(this.props.user.id, this.props.user.email);
-      break;
+var _toggleFavorite = function() {
+  if(this.props.favorite) {
+    this.props.removeFavorite(this.props.user.id);
+  } else {
+    this.props.addFavorite(this.props.user.id);
   }
+};
+
+var _exportData = function() {
+  this.props.exportData(this.props.user.id, this.props.user.email);  
 };
 
 var User = React.createClass({
@@ -125,23 +121,22 @@ var User = React.createClass({
 			<span>
 				<i className='fa fa-user fa-fw'></i>
 				<span style={{ paddingLeft: 4 }}>Profile</span>
-				<span style={{float: 'right',  marginTop: -5 }}>
-					<Bootstrap.SplitButton title='Actions' id='profile-actions' onSelect={_onAction.bind(this)}>
-						<Bootstrap.MenuItem eventKey='1' disabled>
-							<i className='fa fa-envelope-o fa-fw'></i>
-						<span style={{ paddingLeft: 4 }}>Send Message</span>
-					</Bootstrap.MenuItem>
-					<Bootstrap.MenuItem eventKey='2'>
-						<i className={ this.props.favorite ? 'fa fa-bookmark-o fa-fw' : 'fa fa-bookmark fa-fw'}></i>
-						<span style={{ paddingLeft: 4 }}>{ this.props.favorite ? 'Remove from favourites' : 'Add to favourites' }</span>
-					</Bootstrap.MenuItem>
-						<Bootstrap.MenuItem divider />
-						<Bootstrap.MenuItem eventKey='3'>
-							<i className='fa fa-cloud-download fa-fw'></i>
-							<span style={{ paddingLeft: 4 }}>Export data</span>
-					</Bootstrap.MenuItem>
-					</Bootstrap.SplitButton>
-			    </span>
+				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
+          <Bootstrap.Button bsStyle='default' className='btn-circle' onClick={_toggleFavorite.bind(this)} >
+            <i className={ this.props.favorite ? 'fa fa-star fa-lg' : 'fa fa-star-o fa-lg' }
+                title={ this.props.favorite ? 'Remove from favorites' : 'Add to favorites' }></i>
+          </Bootstrap.Button>
+        </span>
+        <span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
+          <Bootstrap.Button bsStyle='default' className='btn-circle' onClick={_exportData.bind(this)} title='Export data'>
+            <i className='fa fa-cloud-download fa-lg'></i>
+          </Bootstrap.Button>
+        </span>
+        <span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
+          <Bootstrap.Button bsStyle='default' className='btn-circle' disabled >
+            <i className='fa fa-envelope-o fa-lg'></i>
+          </Bootstrap.Button>
+        </span>
 			</span>
 		);
 		
@@ -484,6 +479,9 @@ var User = React.createClass({
                 <Bootstrap.ListGroup fill>
                   <Bootstrap.ListGroupItem>
                     <Table data={groupTableConfig}></Table>
+                  </Bootstrap.ListGroupItem>
+                  <Bootstrap.ListGroupItem className='clearfix'>
+                    <Link className='pull-right' to='/demographics' style={{ paddingLeft : 7, paddingTop: 12 }}>Browse all groups</Link>
                   </Bootstrap.ListGroupItem>
                 </Bootstrap.ListGroup>
               </Bootstrap.Panel>

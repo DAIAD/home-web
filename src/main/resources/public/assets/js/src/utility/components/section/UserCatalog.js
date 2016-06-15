@@ -39,14 +39,27 @@ var _featureRenderer = function(feature) {
     e.stopPropagation();
     e.preventDefault();
 
-    self.props.actions.getMeter(feature.properties.userKey, feature.properties.deviceKey);
+    self.props.actions.getMeter(feature.properties.userKey, feature.properties.deviceKey, feature.properties.name);
   });
   
   var content = [];
+  content.push('<span style="font-weight: bold;">Customer</span>');
+  content.push('<br/>');
+  content.push('<span style="font-size: 14px;">');
+  content.push(feature.properties.name);
+  content.push('</span>');
+  content.push('<br/>');
+  content.push('<br/>');
+  content.push('<span style="font-weight: bold;">Address</span>');
+  content.push('<br/>');
+  content.push('<span style="font-size: 14px;">');
   content.push(feature.properties.address);
+  content.push('</span>');
   content.push('<br/>');
   content.push('<br/>');
-  content.push('<span class="add-meter-chart" style="cursor: pointer; text-decoration: underline;">');
+  content.push('<span style="font-weight: bold;">Meter Id</span>');
+  content.push('<br/>');
+  content.push('<span class="add-meter-chart" style="cursor: pointer; text-decoration: underline; font-size: 14px;">');
   content.push(feature.properties.meter.serial);
   content.push('</span>');
   
@@ -132,12 +145,11 @@ var UserCatalog = React.createClass({
         icon : 'bar-chart-o',
         handler : (function(field, row) {
           if(row.serial) {
-            this.props.actions.getMeter(row.id, row.meter.key);
+            this.props.actions.getMeter(row.id, row.meter.key, row.fullname);
           }
         }).bind(this),
         visible : (function(field, row) {
-          // return (this.props.data.meters !== null);
-          return true;
+          return (row.meter !== null);
         }).bind(this)
       }],
       rows: this.props.userCatalog.data.accounts || [],
@@ -169,7 +181,7 @@ var UserCatalog = React.createClass({
     const filterOptions = (
       <Bootstrap.ListGroupItem>
         <div className="row">
-          <div className="col-md-3">
+          <div className="col-md-4">
             <Bootstrap.Input 
               type='text' 
                id='accountFilter' name='accountFilter' ref='accountFilter'
@@ -179,7 +191,7 @@ var UserCatalog = React.createClass({
                value={this.props.userCatalog.query.text || ''} />
               <span className='help-block'>Filter by name or account</span>
           </div>
-          <div className="col-md-3">
+          <div className="col-md-4">
             <Bootstrap.Input 
               type='text' 
                id='serialFilter' name='serialFilter' ref='serialFilter'
@@ -222,7 +234,7 @@ var UserCatalog = React.createClass({
             <i className={ this.props.userCatalog.search === 'map' ? 'fa fa-undo fa-fw' : 'fa fa-pencil fa-fw' }></i>
           </Bootstrap.Button>
         </span>
-        </span>
+      </span>
     );
 
     const mapOptions = {
@@ -241,9 +253,13 @@ var UserCatalog = React.createClass({
                       prefix='map'
                       center={[38.35, -0.48]} 
                       zoom={13}
-                      mode={LeafletMap.MODE_DRAW}
+                      mode={[LeafletMap.MODE_DRAW, LeafletMap.MODE_VECTOR]}
                       draw={{
                         onFeatureChange: _onFeatureChange.bind(this)
+                      }}
+                      vector={{
+                        data : this.props.userCatalog.data.features,
+                        renderer : _featureRenderer.bind(this)
                       }}
           />
         );
@@ -312,7 +328,7 @@ var UserCatalog = React.createClass({
           }
   
           chartConfig.data.series.push({
-            legend: c.serial,
+            legend: c.label,
             xAxis: 'date',
             yAxis: 'volume',
             data: data,

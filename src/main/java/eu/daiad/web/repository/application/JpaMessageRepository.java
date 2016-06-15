@@ -777,6 +777,10 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 	private Locale resolveCurrency(String country) {
 		Locale currency;
 
+        if(country == null){
+            return Locale.GERMANY;
+        }
+        
 		// TODO: check fixed values of countries
 		switch (country) {
 			case "United Kingdom":

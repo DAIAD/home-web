@@ -691,7 +691,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         result.setTotal(totalUsers);
 
         // Load data
-        command = "select a from account a left join fetch a.devices d";
+        command = "select a from account a ";
 
         if (!filters.isEmpty()) {
             command += " where " + StringUtils.join(filters, " and ");
@@ -723,6 +723,11 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
 
         result.setAccounts(entityQuery.getResultList());
 
+        // Force device loading
+        for (eu.daiad.web.domain.application.Account a : result.getAccounts()) {
+            a.getDevices().size();
+        }
+        
         return result;
 
     }

@@ -124,23 +124,30 @@ var ContentRoot = React.createClass({
                     <Collapsible open={this.state.expand.analytics}>
                       <ul className='nav'>
                         <li>
-                          <Link to='/analytics/fav'>
+                          <Link to='/analytics/panel'>
                             <span  style={{paddingLeft: 18}}>
-                              <i className='fa fa-diamond fa-fw'></i>{' ' + _t({ id: 'Section.Analytics.Fav'})}
+                              <i className='fa fa-area-chart fa-fw'></i>{' ' + _t({ id: 'Section.Analytics.ReportPanel'})}
+                            </span>
+                          </Link>
+                        </li>
+                        <li>
+                          <Link to='/analytics/maps' onClick={disableLink} className='disabled-link'>
+                            <span  style={{paddingLeft: 18}}>
+                              <i className='fa fa-map-o fa-fw'></i>{' ' + _t({ id: 'Section.Analytics.Maps'})}
                             </span>
                           </Link>
                         </li>
                         <li>
                           <Link to='/analytics/basic-reports'>
                             <span  style={{paddingLeft: 18}}>
-                              <i className='fa fa-bullseye fa-fw'></i>{' ' + _t({ id: 'Section.Analytics.BasicReports'})}
+                              <i className='fa fa-file-text fa-fw'></i>{' ' + _t({ id: 'Section.Analytics.BasicReports'})}
                             </span>
                           </Link>
                         </li>
                         <li>
-                          <Link to='/analytics/panel'>
+                          <Link to='/analytics/fav' onClick={disableLink} className='disabled-link'>
                             <span  style={{paddingLeft: 18}}>
-                              <i className='fa fa-area-chart fa-fw'></i>{' ' + _t({ id: 'Section.Analytics.ReportPanel'})}
+                              <i className='fa fa-diamond fa-fw'></i>{' ' + _t({ id: 'Section.Analytics.Fav'})}
                             </span>
                           </Link>
                         </li>
