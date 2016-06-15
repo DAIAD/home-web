@@ -9,6 +9,7 @@ var Notifications = require('../components/sections/Notifications');
 var MessageActions = require('../actions/MessageActions');
 
 var { transformInfoboxData } = require('../utils/transformations');
+var { stripTags } = require('../utils/messages');
 
 function mapStateToProps(state, ownProps) {
   return {
@@ -36,6 +37,8 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
   //else if (stateProps.activeTab === 'announcements') messages = stateProps.announcements;
   else if (stateProps.activeTab === 'recommendations') messages = stateProps.recommendations;
   else if (stateProps.activeTab === 'tips') messages = stateProps.tips;
+
+  messages = messages.map(message => stripTags(message));
 
   const categories = [
     {id: 'alerts', title: 'notifications.alerts', unread: alertments.reduce(((prev, curr) => ! curr.acknowledgedOn ? prev+1 : prev), 0)}, 
