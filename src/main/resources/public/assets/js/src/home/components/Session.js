@@ -43,9 +43,12 @@ function SessionInfo (props) {
           //<span className="headline-date"><i className="fa fa-calendar"/>{new Date(data.timestamp).toString()}</span>
           }
           {
-            //<span className="headline-date"><i className="fa fa-calendar"/><FormattedDate value={new Date(data.timestamp)} year='numeric' month='long' day='numeric' weekday='long' /> <FormattedTime value={new Date(data.timestamp)}/></span>
+            (() => activeDeviceType === 'AMPHIRO' ? 
+              <span className="headline-date"><i className="fa fa-calendar"/><FormattedDate value={new Date(data.timestamp)} year='numeric' month='long' day='numeric' weekday='long' /> <FormattedTime value={new Date(data.timestamp)}/></span> :
+                <span className="headline-date"><i className="fa fa-calendar"/>{data.date}</span>
+                )()
           }
-          <span className="headline-date"><i className="fa fa-calendar"/>{data.date}</span>
+
       </div>
       <ul className="sessions-list" >
         {
