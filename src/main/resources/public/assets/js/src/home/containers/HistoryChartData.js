@@ -47,8 +47,8 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
     .map(session => Object.assign({}, session, { 
       //duration: getFriendlyDuration(session.duration),
       //energy: getFriendlyEnergy(session.energy),
-       duration: Math.floor(session.duration / 60),
-       energy: Math.floor(session.energy / 1000),
+      duration: Math.round(100* session.duration / 60) /100,
+      energy: Math.round(session.energy / 10)/100,
      }));
 
     return ({
@@ -68,9 +68,9 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
    const comparison = stateProps.comparisonData.map(devData => {
      const sessions = getDataSessions(stateProps.devices, devData)
      .map(session => Object.assign({}, session, { 
-       duration: Math.floor(session.duration / 60),
-       energy: Math.floor(session.energy / 1000),
-     }));
+        duration: Math.round(100* session.duration / 60) /100,
+        energy: Math.round(session.energy / 10)/100,
+       }));
      return ({
        title: `${getDeviceNameByKey(stateProps.devices, devData.deviceKey)} (previous ${stateProps.timeFilter})`, 
        data: stateProps.activeDeviceType === 'METER' ? getChartMeterData(addPeriodToSessions(sessions, stateProps.timeFilter), xData, stateProps.filter, stateProps.time) : getChartAmphiroData(sessions, xData, stateProps.filter),
