@@ -137,8 +137,8 @@ var initialState = {
               description: 'The weekly top/bottom consumers',
               granularity: 'WEEK',
               ranking: [
-                {type: 'TOP', metric: 'SUM', limit: 2},
-                {type: 'BOTTOM', metric: 'SUM', limit: 2},
+                {type: 'TOP', metric: 'SUM', limit: 3},
+                {type: 'BOTTOM', metric: 'SUM', limit: 3},
               ],
               timespan: 'quarter-1',
               metrics: null, // n/a

@@ -1,4 +1,4 @@
-// Define views that can be enabled on reports. 
+// Define views that can be enabled (as drop-in) on unit reports. 
 // A view instance is intended to be owned (as a child) by a report. It is up to the 
 // report component how to actually present these views.
 

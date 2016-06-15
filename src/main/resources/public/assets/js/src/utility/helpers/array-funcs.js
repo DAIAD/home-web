@@ -82,6 +82,20 @@ var funcs = {
     return [value, nextValue];
   },
 
+  // The cartesian product of 2 arrays
+  product2: function (a1, a2) {
+    return _.flatten(a1.map(e1 => a2.map(e2 => ([e1, e2]))));
+  },
+  
+  // The cartesian product of 3 arrays
+  product3: function (a1, a2, a3) {
+    return _.flatten(a1.map(e1 => funcs.product2(a2, a3).map(t => ([e1, t[0], t[1]]))));
+  }, 
+
+  product: function (a1, a2, a3) {
+    return (a3 == null)? funcs.product2(a1, a2) : funcs.product3(a1, a2, a3);
+  },
+
 };
 
 module.exports = funcs;

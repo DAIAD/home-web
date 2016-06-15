@@ -157,6 +157,12 @@ var types = mirrorToPath({
     SETUP: null,
   },
 
+  // Trials
+
+  trials: {
+    SET_REFERENCE_TIME: null,
+  },
+
   // Alerts
 
  

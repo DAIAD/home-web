@@ -6,14 +6,12 @@ var React = require('react');
 var Bootstrap = require('react-bootstrap');
 var ReactRedux = require('react-redux');
 var Select = require('react-controls/select-dropdown');
-var DatetimeInput = require('react-datetime');
-var {Button, Collapse} = Bootstrap;
+var {Button, Collapse, Panel, ListGroup, ListGroupItem} = Bootstrap;
 
 var PropTypes = React.PropTypes;
 var {configPropType} = require('../prop-types');
 
 var MeasurementsReportPanel = React.createClass({
-  
   propTypes: {
     config: configPropType,
   },
@@ -45,7 +43,6 @@ var MeasurementsReportPanel = React.createClass({
 });
 
 var MeasurementsReportSection = React.createClass({
-  
   propTypes: {
     config: configPropType,
     field: PropTypes.string,
@@ -124,8 +121,7 @@ var MeasurementsReportSection = React.createClass({
   },
 });
 
-var SystemReportSection = React.createClass({
-  
+var SystemReportsSection = React.createClass({
   propTypes: {
     config: configPropType,
     level: PropTypes.string,
@@ -176,7 +172,6 @@ var SystemReportSection = React.createClass({
 });
 
 var Overview = React.createClass({
-
   propTypes: {
     config: configPropType,
     now: PropTypes.number,
@@ -215,14 +210,57 @@ var Overview = React.createClass({
   }, 
 });
 
+var PilotReports = React.createClass({
+
+  propTypes: {
+    config: configPropType,
+  },
+ 
+  childContextTypes: {config: configPropType},
+
+  getChildContext: function() {
+    return {config: this.props.config};
+  },
+  
+  render: function () { 
+    var reports = require('./reports-measurements/pilot-reports');
+    
+    var {config} = this.props; 
+    var ready = (
+      !_.isEmpty(config) &&
+      !_.isEmpty(config.reports) && !_.isEmpty(config.utility) && !_.isEmpty(config.overview)
+    );
+    if (!ready) {
+      return (<div>Loading configuration...</div>);
+    }
+
+    return (
+      <div className="reports-measurements reports pilot-reports">
+        <reports.Form />
+        <reports.ReportsPanel />
+      </div>
+    );
+  },
+
+});
+
+//
+// Containers
+//
+
 Overview = ReactRedux.connect(
   (state) => ({now: state.overview.referenceTime})
 )(Overview);
 
+//
+// Export
+//
+
 module.exports = {
   MeasurementsReportSection,
   MeasurementsReportPanel,
-  SystemReportSection,
+  SystemReportsSection,
   Overview,
+  PilotReports,
 };
 

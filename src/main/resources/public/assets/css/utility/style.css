@@ -527,6 +527,7 @@ a .disabled{
 /* Reports (charts/panels) */
 
 .chart.portal {
+  width: 100%;
   margin: 0px 0px;
   padding: 0px 0px;
   background-color: #fff;
@@ -585,11 +586,15 @@ form.report-form fieldset {
   margin-bottom: 3px;
 }
 
-.reports .panel-body h4 {
+.reports .panel h4 {
   margin: 6px 0px 15px 0px;
   font-size: 17px;
 } 
 
+.reports h2 > small,
+.reports h3 > small {margin: 0px 0px 0px 10px;}
+.reports h2 > small {font-size: 55%}
+.reports h3 > small {font-size: 65%}
 
 .reports .panel .list-group-item.report-form-wrapper {min-height: 150px;}
 .reports .panel .list-group-item.report-form-help {min-height: 35px;}
@@ -683,6 +688,13 @@ form.report-form fieldset {
 .report-form.form-horizontal .dropdown.select-cluster-group button > span.text {width: 14em;}
 .report-form.form-horizontal .dropdown.select-cluster-group .dropdown-menu {min-width: 16.7em;}
 
+.pilot-reports .report-form.form-inline .dropdown.select-month button > span.text {width: 10em;}
+.pilot-reports .report-form.form-inline .dropdown.select-month .dropdown-menu {width: 12.8em;}
+.pilot-reports .report-form.form-inline .form-group.submit-buttons {float: right;}
+.pilot-reports .report-form.form-inline .form-group:last-child {margin-right: 0px;}
+
+.pilot-reports .panel .report-chart .chart.portal {height: 320px; width: 85%;}
+
 .report-form .form-group .rdt {
   display: inline-block;
   vertical-align: middle;
@@ -762,17 +774,12 @@ div.measurement-value .delta > .sign {
   height: 230px;
 }
 
-.reports.overview h2 > small,
-.reports.overview h3 > small {
-  font-size: 57%;
-  margin: 0px 0px 0px 10px;
-}
 .reports.overview .report-form.form-inline {
   margin: 5px 0px 0px 0px;
 }
-.reports.overview .report-form.form-inline .form-group {
-  margin-right: 6px;
-}
+.reports.overview .report-form.form-inline .form-group {margin-right: 6px;}
+.reports.overview .report-form.form-inline .form-group:last-child {margin-right: 0px;}
+
 .reports.overview .report-form.form-inline .form-group label {
   font-weight: normal;
   padding: 0px 4px 0px;
