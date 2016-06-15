@@ -2,6 +2,7 @@ package eu.daiad.web.controller.action;
 
 import java.util.UUID;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,10 +18,12 @@ import org.springframework.web.bind.annotation.RestController;
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.group.EnumGroupType;
 import eu.daiad.web.model.group.Group;
 import eu.daiad.web.model.group.GroupQueryRequest;
 import eu.daiad.web.model.group.GroupQueryResponse;
+import eu.daiad.web.model.group.GroupSetCreateRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IFavouriteRepository;
 import eu.daiad.web.repository.application.IGroupRepository;
@@ -41,9 +44,11 @@ public class GroupController extends BaseController {
     private IFavouriteRepository favouriteRepository;
 
     /**
-     * Enumerates user defined groups.
-     * 
-     * @return the available groups.
+     * Returns all groups filtered by a query
+     *  
+     * @param user the authenticated user
+     * @param request the query
+     * @return the result of the operation
      */
     @RequestMapping(value = "/action/group", method = RequestMethod.POST, produces = "application/json")
     @Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
@@ -72,6 +77,62 @@ public class GroupController extends BaseController {
     }
 
     /**
+     * Creates a new group
+     *  
+     * @param user the authenticated user
+     * @param request the group creation request
+     * @return the result of the operation
+     */
+    @RequestMapping(value = "/action/group", method = RequestMethod.PUT, produces = "application/json")
+    @Secured({ "ROLE_ADMIN" })
+    public @ResponseBody RestResponse create(@AuthenticationPrincipal AuthenticatedUser user,
+                    @RequestBody GroupSetCreateRequest request) {
+        try {
+            if (StringUtils.isBlank(request.getTitle())) {
+                return new RestResponse(SharedErrorCode.UNKNOWN.getMessageKey(), "No title selected");
+            }
+            if ((request.getMembers() == null) || (request.getMembers().length == 0)) {
+                return new RestResponse(SharedErrorCode.UNKNOWN.getMessageKey(), "No members selected");
+            }
+            groupRepository.createGroupSet(user.getKey(), request.getTitle(), request.getMembers());
+
+            return new RestResponse();
+        } catch (ApplicationException ex) {
+            logger.error(ex.getMessage(), ex);
+
+            RestResponse response = new RestResponse();
+            response.add(this.getError(ex));
+
+            return response;
+        }
+    }
+
+    /**
+     * Deletes a group
+     * 
+     * @param user the authenticated user
+     * @param groupKey the key of the group
+     * @return the result of the operation
+     */
+    @RequestMapping(value = "/action/group/{groupKey}", method = RequestMethod.DELETE, produces = "application/json")
+    @Secured({ "ROLE_ADMIN" })
+    public @ResponseBody RestResponse remove(@AuthenticationPrincipal AuthenticatedUser user,
+                    @PathVariable UUID groupKey) {
+        try {
+            groupRepository.deleteGroupSet(groupKey);
+
+            return new RestResponse();
+        } catch (ApplicationException ex) {
+            logger.error(ex.getMessage(), ex);
+
+            RestResponse response = new RestResponse();
+            response.add(this.getError(ex));
+
+            return response;
+        }
+    }
+    
+    /**
      * Adds a group to the favorite list
      * 
      * @param groupKey
@@ -97,10 +158,10 @@ public class GroupController extends BaseController {
     }
 
     /**
-     * Removes a user from the favorite list
+     * Removes a group from the favorite list
      * 
-     * @param userKey
-     *            the key of the user to remove
+     * @param groupKey
+     *            the key of the group to remove
      * @return the result of the operation
      */
     @RequestMapping(value = "/action/group/favorite/{groupKey}", method = RequestMethod.DELETE, produces = "application/json")

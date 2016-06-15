@@ -39,6 +39,16 @@ public class BaseRepository {
         return ApplicationException.wrap(ex, code, pattern);
     }
 
+    protected AuthenticatedUser getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth.getPrincipal() instanceof AuthenticatedUser) {
+            return (AuthenticatedUser) auth.getPrincipal();
+        }
+
+        return null;
+    }
+
     protected Integer getCurrentUtilityId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         AuthenticatedUser user = null;

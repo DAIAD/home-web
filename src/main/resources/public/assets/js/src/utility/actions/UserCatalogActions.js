@@ -2,6 +2,7 @@ var types = require('../constants/UserCatalogActionTypes');
 
 var userAPI = require('../api/user');
 var adminAPI = require('../api/admin');
+var groupAPI = require('../api/group');
 
 var getAccountsInit = function() {
   return {
@@ -240,6 +241,48 @@ var UserCatalogActionCreators = {
           errors : error
         });
       });
+    };
+  },
+
+  setSelectionMode : function(enabled) {
+    return {
+      type : types.USER_CATALOG_CREATE_BAG_OF_CONSUMER,
+      enabled : enabled
+    };
+  },
+
+  discardBagOfConsumers : function() {
+    return {
+      type : types.USER_CATALOG_DISCARD_BAG_OF_CONSUMER
+    };
+  },
+
+  saveBagOfConsumers : function(title, members) {
+    return function(dispatch, getState) {
+      dispatch({
+        type : types.USER_CATALOG_SAVE_BAG_OF_CONSUMER_REQUEST
+      });
+
+      return groupAPI.create(title, members).then(function(response) {
+        dispatch({
+          type : types.USER_CATALOG_SAVE_BAG_OF_CONSUMER_RESPONSE,
+          success : response.success,
+          errors : response.errors
+        });
+      }, function(error) {
+        dispatch({
+          type : types.USER_CATALOG_SAVE_BAG_OF_CONSUMER_RESPONSE,
+          success : false,
+          errors : error
+        });
+      });
+    };
+  },
+
+  toggleConsumer : function(id) {
+    return {
+      type : types.USER_CATALOG_TOGGLE_CONSUMER,
+      id : id
     };
   }
 

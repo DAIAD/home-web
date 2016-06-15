@@ -12,11 +12,41 @@ var Table = require('../Table');
 var LeafletMap = require('../LeafletMap');
 var Chart = require('../Chart');
 var theme = require('../chart/themes/shine');
+var InputTextModal = require('../InputTextModal');
 
 var { getAccounts, changeIndex, filterText, filterSerial, clearFilter, getMeter, clearChart,
       setSearchModeText, setSearchModeMap, setGeometry,
-      removeFavorite, addFavorite} = require('../../actions/UserCatalogActions');
+      removeFavorite, addFavorite,
+      setSelectionMode, discardBagOfConsumers, toggleConsumer, saveBagOfConsumers } = require('../../actions/UserCatalogActions');
   
+var _setSelectionMode = function(e) {
+  this.props.actions.setSelectionMode(!this.props.userCatalog.selection.enabled);
+};
+
+var _show = function() {
+  this.setState({ modal: true});
+};
+
+var _hide = function() {
+  this.setState({ modal: false});
+};
+
+var _setTitle =  function(key, text) {
+  _hide.bind(this)();
+  
+  if((text) && (key==='save')) {
+    _saveBagOfConsumers.bind(this)(text, Object.keys(this.props.userCatalog.selection.selected));
+  }
+};
+
+var _saveBagOfConsumers = function(title, members) {
+  this.props.actions.saveBagOfConsumers(title, members);
+};
+
+var _discardBagOfConsumers = function(e) {
+  this.props.actions.discardBagOfConsumers();
+};
+
 var _handleKeyPress = function(e) {
   if (e.key === 'Enter') {
     this.refresh();
@@ -85,6 +115,12 @@ var _clearChart = function(e) {
 var UserCatalog = React.createClass({
   contextTypes: {
       intl: React.PropTypes.object
+  },
+  
+  getInitialState: function() {
+    return {
+      modal: false
+    };
   },
   
   componentWillMount : function() {
@@ -178,6 +214,18 @@ var UserCatalog = React.createClass({
       }    
     };
     
+    if(this.props.userCatalog.selection.enabled) {
+      tableConfiguration.fields.splice(1, 0, {
+        name: 'selected',
+        title: '',
+        type: 'alterable-boolean',
+        width: 30,
+        handler: (function(id, name, value) {
+          this.props.actions.toggleConsumer(id);
+        }).bind(this)
+      });
+    }
+
     var tableStyle = {
       row : {
         rowHeight: 50
@@ -232,14 +280,41 @@ var UserCatalog = React.createClass({
         <span>{ this.props.userCatalog.isLoading ? 'Loading data ...' : 'No data found.' }</span>
     );
     
-    const filterTitle = (
-      <span>
-        <i className='fa fa-search fa-fw'></i>
-        <span style={{ paddingLeft: 4 }}>Search</span>
-        <span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}></span>
-      </span>
-    );
-    
+    var filterTitle;
+    if(this.props.userCatalog.selection.enabled) {
+      filterTitle = (
+        <span>
+          <i className='fa fa-search fa-fw'></i>
+          <span style={{ paddingLeft: 4 }}>Search</span>
+          <span style={{float: 'right',  marginTop: 2, marginLeft: 5 }}>
+            {Object.keys(this.props.userCatalog.selection.selected).length + ' selected'}
+          </span>
+          <span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
+            <Bootstrap.Button bsStyle='default' className='btn-circle' onClick={_discardBagOfConsumers.bind(this)} >
+              <i className='fa fa-remove fa-lg' ></i>
+            </Bootstrap.Button>
+          </span>
+          <span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
+            <Bootstrap.Button bsStyle='default' className='btn-circle' onClick={_show.bind(this)} >
+              <i className='fa fa-save fa-lg' ></i>
+            </Bootstrap.Button>
+          </span>
+        </span>
+      );
+    } else {
+      filterTitle = (
+        <span>
+          <i className='fa fa-search fa-fw'></i>
+          <span style={{ paddingLeft: 4 }}>Search</span>
+          <span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
+            <Bootstrap.Button bsStyle='default' className='btn-circle' onClick={_setSelectionMode.bind(this)} title='Create a new group' >
+              <i className='fa fa-shopping-basket fa-lg' ></i>
+            </Bootstrap.Button>
+          </span>
+        </span>
+      );
+    }
+
     const mapTitle = (
       <span>
         <span>
@@ -367,6 +442,18 @@ var UserCatalog = React.createClass({
 
     return (
       <div className="container-fluid" style={{ paddingTop: 10 }}>
+        <InputTextModal 
+          onHide={_hide.bind(this)}
+          title='Create Group'
+          visible={this.state.modal}
+          prompt='Title ...'
+          help='Set title for the new group'
+          actions={
+            [{ style : 'default', key : 'save', text : 'Save' },
+             { style : 'danger', key : 'cancel', text : 'Cancel' }]
+          }
+          handler={_setTitle.bind(this)}
+        />
         <div className="row">
           <div className="col-md-12">
             <Breadcrumb routes={this.props.routes}/>
@@ -429,7 +516,8 @@ function mapDispatchToProps(dispatch) {
     actions : bindActionCreators(
       Object.assign({}, {getAccounts, changeIndex, filterSerial, filterText, clearFilter, getMeter, clearChart,
                          setSearchModeText, setSearchModeMap, setGeometry,
-                         removeFavorite, addFavorite}) , dispatch
+                         removeFavorite, addFavorite,
+                         setSelectionMode, discardBagOfConsumers, toggleConsumer, saveBagOfConsumers }) , dispatch
   )};
 }
 

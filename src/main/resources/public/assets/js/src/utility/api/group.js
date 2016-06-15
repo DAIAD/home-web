@@ -9,6 +9,19 @@ var GroupAPI = {
       return api.json('/action/group/members/current/' + group_id);
     },
     
+    create: function(title, members) {
+      var data = {
+          title: title,
+          members:members
+      };
+      
+      return api.json('/action/group' , data, 'PUT');
+    },
+    
+    remove: function(groupKey){
+      return api.json(`/action/group/${groupKey}`, null, 'DELETE');
+    },
+    
     getGroups: function(query) {
       return api.json('/action/group' , query);
     },

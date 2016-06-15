@@ -110,6 +110,20 @@ var GroupCatalog  = React.createClass({
           
           this.props.actions.getChart(row.key, row.text, utility.timezone);
         }).bind(this)
+      }, {
+        name : 'delete',
+        type : 'action',
+        icon : function(field, row) {
+          return (row.type == 'SET' ? 'remove' : null);
+        },
+        handler : (function(field, row) {
+          if(row.type == 'SET') {
+            this.props.actions.deleteGroup(row.key);
+          }
+        }).bind(this),
+        visible : (function(field, row) {
+          return (row.type == 'SET');
+        }).bind(this)
       }],
       rows: this.props.groupCatalog.data.filtered || [],
       pager: {

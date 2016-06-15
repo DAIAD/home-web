@@ -40,4 +40,8 @@ public interface IGroupRepository {
 
     void createCluster(Cluster cluster);
 
+    void createGroupSet(UUID ownerKey, String name, UUID[] members);
+
+    void deleteGroupSet(UUID groupKey);
+
 }

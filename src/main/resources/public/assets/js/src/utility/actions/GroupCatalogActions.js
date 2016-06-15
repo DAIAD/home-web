@@ -115,15 +115,27 @@ var GroupCatalogActionCreators = {
     };
   },
 
-  deleteGroup : function() {
+  deleteGroup : function(groupKey) {
     return function(dispatch, getState) {
-      dispatch(deleteGroupInit());
+      dispatch(deleteGroupInit(groupKey));
 
-      return groupAPI.getGroups(getState().userCatalog.query).then(function(response) {
-        dispatch(deleteGroupComplete(response.success, response.errors));
-      }, function(error) {
-        dispatch(deleteGroupComplete(false, error));
-      });
+      return groupAPI.remove(groupKey).then(
+          function(response) {
+            dispatch(deleteGroupComplete(response.success, response.errors));
+
+            dispatch(getGroupsInit());
+
+            return groupAPI.getGroups(getState().userCatalog.query).then(
+                function(response) {
+                  dispatch(getGroupsComplete(response.success, response.errors, response.total, response.groups,
+                      response.index, response.size));
+                }, function(error) {
+                  dispatch(getGroupsComplete(false, error));
+                });
+
+          }, function(error) {
+            dispatch(deleteGroupComplete(false, error));
+          });
     };
   },
 

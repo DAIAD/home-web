@@ -99,14 +99,13 @@ var _fillGroupSeries = function(interval, label, data) {
         ref.subtract(1, 'days');
       }
     }
-
-    allPoints.sort(function(p1, p2) {
-      return (p1.timestamp - p2.timestamp);
-    });
-
-    data.points = allPoints;
   }
 
+  allPoints.sort(function(p1, p2) {
+    return (p1.timestamp - p2.timestamp);
+  });
+
+  data.points = allPoints;
   data.label = label;
 
   return data;
