@@ -18,6 +18,12 @@ history = syncHistoryWithStore(history, store);
 var LocaleActions = require('./actions/LocaleActions');
 var UserActions = require('./actions/UserActions');
 
+var ReactIntl = require('react-intl');
+
+ReactIntl.addLocaleData(require('react-intl/locale-data/en'));
+ReactIntl.addLocaleData(require('react-intl/locale-data/el'));
+ReactIntl.addLocaleData(require('react-intl/locale-data/es'));
+ReactIntl.addLocaleData(require('react-intl/locale-data/de'));
 
 store.dispatch(LocaleActions.setLocale(properties.locale))
   .then((response) => {

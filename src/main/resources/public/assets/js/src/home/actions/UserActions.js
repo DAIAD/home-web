@@ -170,7 +170,7 @@ const initHome = function (profile) {
     if (getMeterCount(getState().user.profile.devices) === 0) {
       dispatch(HistoryActions.setActiveDeviceType('AMPHIRO', true));
       
-      dispatch(DashboardActions.setInfoboxToAdd({
+      dispatch(FormActions.setForm('infoboxToAdd',{
         deviceType: 'AMPHIRO',
         type: 'totalVolumeStat',
         title : 'Shower volume',
