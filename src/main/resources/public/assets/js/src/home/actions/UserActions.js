@@ -196,17 +196,15 @@ const initHome = function (profile) {
  */
 const saveToProfile = function (profile) {
   return function(dispatch, getState) {
-    console.log('save t dp data', profile);
 
-    const data = Object.assign({}, profile, {csrf: getState().user.csrf});
-    console.log('gonna save to profile', data);
+    //TODO: country is there because of bug in backend that sets it to null otherwise causing problems
+    const data = Object.assign({}, {country: 'Greece'}, profile, {csrf: getState().user.csrf});
 
     dispatch(requestedQuery());
 
     return userAPI.saveToProfile(data)
     .then((response) => {
 
-      console.log('got = ', response);
       dispatch(receivedQuery(response.success, response.errors));
        
       if (!response || !response.success) {

@@ -191,10 +191,19 @@ const fetchAllInfoboxesData = function() {
       return QueryActions.fetchInfoboxData(infobox);
     })
     .reduce((prev, curr, i) => {
+      if (i===0) { 
+        console.time('total');
+        console.time(i); 
+      }
       return prev.then(() => {
         //console.log('tick');
         return dispatch(curr)
           .then(res =>  {
+            console.timeEnd(i-1);
+            console.time(i); 
+            if (i === 14) {
+              console.timeEnd('total');
+            }
             const id = getState().section.dashboard.infobox[i].id;
             dispatch(setInfoboxData(id, res));
           })
