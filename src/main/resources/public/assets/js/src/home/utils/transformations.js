@@ -323,6 +323,8 @@ const reduceSessions = function (devices, data) {
                   getDataSessions(devices, device)
                   .map((session, idx, array) => {
                     const devType = getDeviceTypeByKey(devices, device.deviceKey);
+                    const vol = devType === 'METER' ? 'difference' : 'volume'; 
+                    const diff = array[idx-1]?(array[idx][vol]-array[idx-1][vol]):null;
                     return Object.assign({}, session, 
                              {
                                index:idx, 
@@ -334,7 +336,7 @@ const reduceSessions = function (devices, data) {
                                temperature: session.temperature ? Math.round(session.temperature * 10)/10 : null,
                                energyClass: getEnergyClass(session.energy), 
                                
-                               better: array[idx-1]?(devType==='METER'?(array[idx].difference<=array[idx-1].difference?true:false):(array[idx].volume<=array[idx-1].volume?true:false)):null,
+                               percentDiff: diff != null && array[idx-1][vol] !== 0 ? Math.round(10000 *( diff / array[idx-1][vol]))/100 : null,
                                hasChartData: session.measurements?true:false 
 
                              });

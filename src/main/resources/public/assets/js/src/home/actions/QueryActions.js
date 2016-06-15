@@ -27,8 +27,8 @@ const requestedQuery = function() {
 const receivedQuery = function(success, errors) {
   return {
     type: types.QUERY_REQUEST_END,
-    success: success,
-    errors: errors,
+    success,
+    errors,
   };
 };
 
@@ -55,16 +55,17 @@ const queryDeviceSessions = function(deviceKeys, options) {
     return deviceAPI.querySessions(data)
     .then(response => {
       dispatch(receivedQuery(response.success, response.errors, response.devices) );
-      
-      if (!response.success) {
-        throw new Error (response.errors);
+       
+      if (!response || !response.success) {
+          throw new Error (response && response.errors && response.errors.length > 0 ? response.errors[0].code : 'unknownError');
       }
-        return response.devices;
-      })
-      .catch((error) => {
-        dispatch(receivedQuery(false, error));
-        throw error;
-      });
+      
+      return response.devices;
+    })
+    .catch((error) => {
+      dispatch(receivedQuery(false, error));
+      throw error;
+    });
   };
 };
   
@@ -87,9 +88,11 @@ const fetchDeviceSession = function(id, deviceKey) {
     return deviceAPI.getSession(data)
       .then((response) => {
         dispatch(receivedQuery(response.success, response.errors, response.session));
-        if (!response.success) {
-          throw new Error (response.errors);
+        
+        if (!response || !response.success) {
+          throw new Error (response && response.errors && response.errors.length > 0 ? response.errors[0].code : 'unknownError');
         }
+
         return response.session;
       })
       .catch((errors) => {
@@ -113,11 +116,10 @@ const fetchLastDeviceSession = function(deviceKeys) {
       
       const reduced = reduceSessions(getState().user.profile.devices, sessions);        
       //find last
-      const lastSession = reduced.reduce((curr, prev) => (curr.timestamp>prev.timestamp)?curr:prev, {});
-       
+      const lastSession = reduced.reduce((curr, prev) => (curr.timestamp>prev.timestamp)?curr:prev, {}); 
       const { device, id, index, timestamp } = lastSession;
 
-      if (!id) throw new Error(`last session id doesnt exist in response: ${response}`);
+      if (!id) throw new Error(`sessionIDNotFound`);
       const devSessions = sessions.find(x=>x.deviceKey === device);
       
       return dispatch(fetchDeviceSession(id, device))
@@ -147,9 +149,11 @@ const queryMeterHistory = function(deviceKeys, time) {
     return meterAPI.getHistory(data)
       .then((response) => {
         dispatch(receivedQuery(response.success, response.errors, response.session));
-        if (!response.success) {
-          throw new Error (response.errors);
+        
+        if (!response || !response.success) {
+          throw new Error (response && response.errors && response.errors.length > 0 ? response.errors[0].code : 'unknownError');
         }
+
         return response.series;
       })
       .catch((error) => {
@@ -177,9 +181,10 @@ const queryMeterStatus = function(deviceKeys) {
       .then((response) => {
         dispatch(receivedMeterStatus(response.success, response.errors, response.devices?response.devices:[]) );
         
-        if (!response.success) {
-          throw new Error (response.errors);
+        if (!response || !response.success) {
+          throw new Error (response && response.errors && response.errors.length > 0 ? response.errors[0].code : 'unknownError');
         }
+
         return response;
       })
       .catch((error) => {

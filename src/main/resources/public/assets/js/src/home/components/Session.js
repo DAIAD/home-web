@@ -34,14 +34,18 @@ function SessionInfoItem (props) {
 function SessionInfo (props) {
   const { setSessionFilter, intl, data, firstname, activeDeviceType } = props;
   const metrics = activeDeviceType === 'METER' ? METER_AGG_METRICS : SHOWER_METRICS;
+   
   return !data?<div />:(
     <div className="shower-info">
       <div className="headline">
         <span className="headline-user"><i className="fa fa-user"/>{firstname}</span>
         {
           //<span className="headline-date"><i className="fa fa-calendar"/>{new Date(data.timestamp).toString()}</span>
-        }
-        <span className="headline-date"><i className="fa fa-calendar"/><FormattedDate value={new Date(data.timestamp)} year='numeric' month='long' day='numeric' weekday='long' /> <FormattedTime value={new Date(data.timestamp)}/></span>
+          }
+          {
+            //<span className="headline-date"><i className="fa fa-calendar"/><FormattedDate value={new Date(data.timestamp)} year='numeric' month='long' day='numeric' weekday='long' /> <FormattedTime value={new Date(data.timestamp)}/></span>
+          }
+          <span className="headline-date"><i className="fa fa-calendar"/>{data.date}</span>
       </div>
       <ul className="sessions-list" >
         {
@@ -55,48 +59,80 @@ function SessionInfo (props) {
 }
 
 function Session (props) {
-  const { intl, filter, data, chartData, chartFormatter, setSessionFilter, firstname, activeDeviceType } = props;
+  const { intl, filter, data, chartData, date, chartFormatter, setSessionFilter, firstname, activeDeviceType } = props;
   if (!data) return <div/>;
   const { hasChartData, history, id } = data;
   const _t = intl.formatMessage;
+  
+  const better = data.percentDiff != null ? data.percentDiff < 0 : null;
+  const arrowClass = better===null ? '':(better?"fa fa-arrow-down green":"fa fa-arrow-up red");
+  const percentDifference = data.percentDiff != null ? ` ${Math.abs(data.percentDiff)}%` : '';
+
   //title = _t({id: `history.${filter}`})
-  return history===false?(
-    <div className="shower-container">
-      <div className="shower-chart-area">
-        <Chart 
-            height={300}
-            width='100%'
-            type='line'
-            title=""
-            mu="lt"
-            xMargin={60}
-            x2Margin={60}
-            formatter={chartFormatter}
-            xAxis="time"
-            data={[{title:`#${id}`, data:chartData}]}
-          />
+  if (history===false) {
+    return (
+      <div className="shower-container">
+        <div className="shower-chart-area">
+          <Chart 
+              height={300}
+              width='100%'
+              type='line'
+              title=""
+              mu="lt"
+              xMargin={60}
+              x2Margin={60}
+              formatter={chartFormatter}
+              xAxis="time"
+              data={[{title:`#${id}`, data:chartData}]}
+            />
+          </div>
+          
+          <SessionInfo
+            firstname={firstname}
+            intl={intl}
+            setSessionFilter={setSessionFilter}
+            activeDeviceType={activeDeviceType}
+            data={data} /> 
+      </div>
+    );
+  }
+  else if (history === true) {
+    return (
+      <div className="shower-container">
+        <div className="shower-chart-area">
+          <h3><FormattedMessage id="history.limitedData"/></h3>
+        </div>
+
+          <div style={{marginTop: 10}}>
+            <h5><i className={arrowClass}> </i><b>{percentDifference}</b><span>{better != null ? (better ? '  better than last shower!' : '  worse than last shower') : 'No comparison data'}</span></h5>
+          </div> 
+
+        <SessionInfo
+          firstname={firstname}
+          activeDeviceType={activeDeviceType}
+          intl={intl}
+          data={data} />
+        </div> 
+    );
+  }
+  else {
+    return (
+      <div className="shower-container">
+        <div className="shower-chart-area">
+          <h4>
+            <i className={arrowClass}> </i><b>{percentDifference}</b><span>{better != null ? (better ? '  better than last measurement!' : '  worse than last measurement') : 'No comparison data'}</span>
+          </h4>
         </div>
         
         <SessionInfo
           firstname={firstname}
-          intl={intl}
-          setSessionFilter={setSessionFilter}
           activeDeviceType={activeDeviceType}
-          data={data} /> 
-    </div>
-  ) : (
-  <div className="shower-container">
-    <div className="shower-chart-area">
-      <h3><FormattedMessage id="history.limitedData"/> </h3>
-    </div>
-    
-    <SessionInfo
-      firstname={firstname}
-      activeDeviceType={activeDeviceType}
-      intl={intl}
-      data={data} />
-    </div> 
-  );
+          intl={intl}
+          data={data} />
+        </div> 
+    );
+
+  }
 }
 
 var SessionModal = React.createClass({

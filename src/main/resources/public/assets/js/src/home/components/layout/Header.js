@@ -198,16 +198,31 @@ function NotificationArea (props) {
   );
 }
 
-var Header = React.createClass({
+function ErrorDisplay (props) {
+  const { intl, errors, dismissError } = props;
+  return errors ? 
+    <div className='error-display'>
+      <a onClick={() => dismissError()} className='error-display-x'>x</a>
+      <img src={`${IMAGES}/alert.svg`} /><span className="infobox-error"><FormattedMessage id={`errors.${errors}`} /></span>
+    </div>
+    :
+     (<div/>);
+}
 
-   
+var Header = React.createClass({   
   render: function() {
-    const { intl, firstname, isAuthenticated, notifications, linkToNotification, unreadNotifications, logout, deviceCount, setLocale, locale } = this.props;
+    const { intl, firstname, isAuthenticated, notifications, linkToNotification, unreadNotifications, logout, deviceCount, setLocale, locale, errors, dismissError } = this.props;
     //<MainMenu items={Constants.MAIN_MENU}/>
     return (
       <header className="site-header">
         {(() => isAuthenticated ? (
           <div>
+            
+            <ErrorDisplay
+              intl={intl}
+              dismissError={dismissError}
+              errors={errors} 
+            />
             <MainLogo />
             <div className="top-header-right">
               <NotificationArea

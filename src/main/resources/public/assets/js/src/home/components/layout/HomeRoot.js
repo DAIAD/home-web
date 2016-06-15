@@ -52,15 +52,7 @@ function MainSidebar (props) {
   );
 } 
 
-function ErrorDisplay (props) {
-  return props.errors ? 
-    <div className='error-display'>
-      <a onClick={() => props.dismissError()} className='error-display-x'>x</a>
-      <img src={`${IMAGES}/alert.svg`} /><span className="infobox-error">{`${props.errors}`}</span>
-    </div>
-    :
-     (<div/>);
-}
+
 
 function HomeRoot (props) {
   return (
@@ -90,13 +82,12 @@ function HomeRoot (props) {
           locale={props.locale.locale}
           logout={props.logout} 
           setLocale={props.setLocale}
+          errors={props.errors}
+          dismissError={props.dismissError}
         />
 
       <div className = "main-container">
-        <ErrorDisplay 
-          dismissError={props.dismissError}
-          errors={props.errors} 
-        />
+        
         {(() => props.user.isAuthenticated ? 
           <MainSidebar menuItems={MAIN_MENU} />
           :

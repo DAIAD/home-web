@@ -58,26 +58,39 @@ const getChartMeterCategories = function(time) {
 const getChartMeterCategoryLabels = function(xData, time, intl) {
   if (!time || time.granularity == null) return [];
 
-  return xData.map(t => getTimeLabelByGranularity(t, time.granularity, intl));
+  return xData.map(t => getTimeLabelByGranularityShort(t, time.granularity, intl));
 
 };
 
-const getTimeLabelByGranularity = function (timestamp, granularity, intl, extended=false) {
+const getTimeLabelByGranularity = function (timestamp, granularity, intl) {
 
-  if (extended) {
-    return moment(timestamp).format('DD/MM/YY hh:mm a');
+  if (granularity === 4) {
+    return intl.formatMessage({id: `months.${moment(timestamp).get('month')}`}) + ' ' + moment(timestamp).format('YYYY'); 
   }
-  else if (granularity === 4) {
+  else if (granularity === 3) {
+    return intl.formatMessage({id: 'periods.week'}) + ' ' + moment(timestamp).get('isoweek') + ', ' + intl.formatMessage({id: 'months.'+moment(timestamp).get('month')}) + ', ' + moment(timestamp).format('YYYY');
+  }
+  else if (granularity === 2) {
+    return intl.formatMessage({id: `weekdays.${moment(timestamp).get('day')}`}) + ',  ' + moment(timestamp).format(' DD / MM / YYYY');
+  }
+  else {
+    return intl.formatMessage({id: `weekdays.${moment(timestamp).get('day')}`}) + ',  ' + moment(timestamp).format('DD/ MM/ YYYY hh:mm a');
+  }
+};
+
+const getTimeLabelByGranularityShort = function (timestamp, granularity, intl) {
+
+  if (granularity === 4) {
     return intl.formatMessage({id: `months.${moment(timestamp).get('month')}`}); 
   }
   else if (granularity === 3) {
-    return `${intl.formatMessage({id: 'periods.week'})} ${moment(timestamp).get('isoweek')}`;
+    return intl.formatMessage({id: 'periods.week'}) + ' ' + moment(timestamp).get('isoweek');
   }
   else if (granularity === 2) {
     return intl.formatMessage({id: `weekdays.${moment(timestamp).get('day')}`});
   }
   else {
-    return `${moment(timestamp).format('hh:mm')}`;
+    return moment(timestamp).format('hh:mm');
   }
 };
 
@@ -105,58 +118,46 @@ const getChartTimeDataByFilter = function (data, filter, period, intl) {
             */
 
 
-//TODO: have to make sure data is ALWAYS fetched in order of ascending ids for amphiro, ascending timestamps for meters
-
-const getChartAmphiroData = function (sessions, xAxisData, metric) {
-  /*
-  //if not x axis data then x axis time
-    if (xAxisData === null) {
-      return data.map(session => session[filter] == null ? [] :
-                        [new Date(session.timestamp), session[filter]]);
-    }
-    //else x axis is category
-    else {
-    */
-    return xAxisData.map((v, i) =>
-      sessions[i] ? sessions[i][metric] : null);
-      // }
-};
-
 const getChartTimeData = function (sessions, metric) {
     return sessions.map(session => session[metric] == null ? [] :
                       [new Date(session.timestamp), session[metric]]);
 };
 
+//TODO: have to make sure data is ALWAYS fetched in order of ascending ids for amphiro, ascending timestamps for meters
 
+const getChartAmphiroData = function (sessions, xAxisData, metric) {
+   return xAxisData.map((v, i, arr) => {
+     return (i >= (arr.length - sessions.length)) && sessions[i-(arr.length-sessions.length)] ? sessions[i-(arr.length-sessions.length)][metric] : null;
+    });
+};
 
 const getChartMeterData = function(sessions, xAxisData, metric, time) {
 
   const period = getLowerGranularityPeriod(convertGranularityToPeriod(time.granularity));
   //const sessionsToBuckets = function(sessions, buckets, metric, period) {
-  return xAxisData
-  .map(t => {
-    const bucketSession = sessions.find(session => {
+  return xAxisData.map(t => {
+      const bucketSession = sessions.find(session => {
+        
+        const tt = (period === 'hour' ? moment(session.timestamp).startOf('hour').valueOf() : session.timestamp);
+        return tt === t;
+      });
       
-      const tt = (period === 'hour' ? moment(session.timestamp).startOf('hour').valueOf(): session.timestamp);
+      return bucketSession && bucketSession[metric] != null ? bucketSession[metric] : null;
       
-      return tt === t;
     });
-    
-    return bucketSession && bucketSession[metric] != null ? bucketSession[metric] : null;
-    
-  });
 };
 
-const getChartMetadata = function (data, xAxisData, timeBased=true) {
+const getChartMetadata = function (sessions, xAxisData, timeBased=true) {
   if (timeBased) {
     return xAxisData.map((v, i) => {
-      const index = data.findIndex(x => moment(x.timestamp).startOf('hour').valueOf() === v);
-      return index > -1 ? [data[index].id, data[index].timestamp] : [];
+      const index = sessions.findIndex(x => moment(x.timestamp).startOf('hour').valueOf() === v);
+      return index > -1 ? [sessions[index].id, sessions[index].timestamp] : [];
     });
   }
   else {
-    return xAxisData.map((v, i) => {
-      return data[i] ? [data[i].id, data[i].timestamp] : [null, null];
+    return xAxisData.map((v, i, arr) => {
+      return (i >= (arr.length - sessions.length)) && sessions[i-(arr.length-sessions.length)] ? [sessions[i-(arr.length-sessions.length)].id, sessions[i-(arr.length-sessions.length)].timestamp] : [null, null];
+      //return data[i] ? [data[i].id, data[i].timestamp] : [null, null];
     });
   }
 
@@ -172,5 +173,6 @@ module.exports = {
   getChartAmphiroCategories,
   getChartMetadata,
   getTimeLabelByGranularity,
+  getTimeLabelByGranularityShort,
   //sessionsToBuckets
 };

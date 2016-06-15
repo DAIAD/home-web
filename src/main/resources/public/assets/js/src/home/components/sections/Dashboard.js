@@ -214,7 +214,8 @@ function ButtonToolbar (props) {
 }
 
 function AddInfoboxForm (props) {
-  const {infoboxToAdd, metrics, types, deviceTypes, setInfoboxToAdd, resetInfoboxToAdd } = props;
+  const {infoboxToAdd, metrics, types, deviceTypes, setForm } = props;
+  const setInfoboxToAdd = (data) => setForm('infoboxToAdd', data);
   const { deviceType, title, type } = infoboxToAdd;
   return (
     <div>
@@ -268,7 +269,7 @@ function AddInfoboxForm (props) {
 }
 
 function AddInfoboxModal (props) {
-  const { showModal, switchMode, addInfobox, metrics, types, deviceTypes, infoboxToAdd, setInfoboxToAdd, resetInfoboxToAdd } = props;
+  const { showModal, switchMode, addInfobox, metrics, types, deviceTypes, infoboxToAdd, setForm } = props;
   return (
     <bs.Modal animation={false} className='add-infobox-modal' show={showModal} onHide={() => switchMode('normal')} bsSize="large" backdrop='static'>
         <bs.Modal.Header closeButton>
@@ -278,7 +279,7 @@ function AddInfoboxModal (props) {
         </bs.Modal.Header>
         <bs.Modal.Body>
           
-          <AddInfoboxForm {...{infoboxToAdd, metrics, types, deviceTypes, setInfoboxToAdd, resetInfoboxToAdd}}/> 
+          <AddInfoboxForm {...{infoboxToAdd, metrics, types, deviceTypes, setForm}}/> 
 
         </bs.Modal.Body>
         <bs.Modal.Footer>
@@ -316,14 +317,14 @@ var Dashboard = React.createClass({
   },
   */
   render: function() {
-    const { firstname, mode, dirty, switchMode, addInfobox, saveToProfile, setDirty, resetDirty, deviceCount, meterCount, metrics , types, deviceTypes, infoboxToAdd, setInfoboxToAdd, resetInfoboxToAdd } = this.props;
+    const { firstname, mode, dirty, switchMode, addInfobox, saveToProfile, setDirty, resetDirty, deviceCount, meterCount, metrics , types, deviceTypes, infoboxToAdd, setForm } = this.props;
     return (
       <MainSection id="section.dashboard">
         <div className='dashboard'>
           <div className='dashboard-infopanel'>
 
             <SayHello firstname={firstname} />
-            <AddInfoboxModal {...{showModal:mode==='add', switchMode, addInfobox, infoboxToAdd,  metrics, types, deviceTypes, setInfoboxToAdd, resetInfoboxToAdd }}/>
+            <AddInfoboxModal {...{showModal:mode==='add', switchMode, addInfobox, infoboxToAdd,  metrics, types, deviceTypes, setForm }}/>
             
             <InfoPanel {...this.props} />
           </div>
