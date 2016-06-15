@@ -4,6 +4,7 @@ var {routerReducer} = require('react-router-redux');
 var i18n = require('./i18n');
 var session = require('./session');
 var dashboard = require('./dashboard');
+var map = require('./map');
 var demographics = require('./demographics');
 var forecasting = require('./forecasting');
 var group = require('./group');
@@ -31,6 +32,7 @@ var rootReducer = combineReducers({
   session,
   dashboard,
   forecasting,
+  map,
   demographics,
   group,
   groupCatalog,

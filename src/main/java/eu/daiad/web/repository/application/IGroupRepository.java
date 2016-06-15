@@ -14,6 +14,8 @@ public interface IGroupRepository {
 
     List<Group> getGroups(UUID utilityKey);
 
+    List<Group> filterByName(UUID utilityKey, String text);
+
     List<Group> getUtilities(UUID utilityKey);
 
     List<Group> getClusters(UUID utilityKey);

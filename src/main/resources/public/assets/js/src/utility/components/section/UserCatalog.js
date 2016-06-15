@@ -119,7 +119,6 @@ var _onFeatureChange = function(features) {
   } else {
     this.props.actions.setGeometry(features[0].geometry);
   }
-  
 };
 
 var _clearChart = function(e) {

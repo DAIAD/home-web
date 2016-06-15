@@ -24,6 +24,7 @@
 	},
 	"Section": {
       "Dashboard": "Dashboard",
+      "Map": "Map",
 	    "Analytics-Group": "Analytics",
 	    "Analytics": {
         "Fav": "Favorites",

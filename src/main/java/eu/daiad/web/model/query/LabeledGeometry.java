@@ -34,7 +34,9 @@ public class LabeledGeometry {
     }
 
     public boolean contains(Geometry g) {
+        if ((this.geometry == null) || (g == null)) {
+            return false;
+        }
         return this.geometry.contains(g);
     }
-
 }

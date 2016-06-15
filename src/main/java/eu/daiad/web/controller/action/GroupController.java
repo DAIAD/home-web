@@ -45,9 +45,11 @@ public class GroupController extends BaseController {
 
     /**
      * Returns all groups filtered by a query
-     *  
-     * @param user the authenticated user
-     * @param request the query
+     * 
+     * @param user
+     *            the authenticated user
+     * @param request
+     *            the query
      * @return the result of the operation
      */
     @RequestMapping(value = "/action/group", method = RequestMethod.POST, produces = "application/json")
@@ -77,10 +79,46 @@ public class GroupController extends BaseController {
     }
 
     /**
+     * Returns all groups filtered by name
+     * 
+     * @param user
+     *            the authenticated user
+     * @param text
+     *            the text to search for
+     * @return the selected groups
+     */
+    @RequestMapping(value = "/action/group/query/{text}", method = RequestMethod.GET, produces = "application/json")
+    @Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
+    public RestResponse getGroups(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable String text) {
+
+        try {
+            GroupQueryResponse response = new GroupQueryResponse();
+
+            response.setGroups(this.groupRepository.filterByName(user.getUtilityKey(), text));
+
+            for (Group g : response.getGroups()) {
+                if (g.getType() == EnumGroupType.SET) {
+                    g.setFavorite(favouriteRepository.isGroupFavorite(user.getKey(), g.getKey()));
+                }
+            }
+            return response;
+        } catch (ApplicationException ex) {
+            logger.error(ex.getMessage(), ex);
+
+            RestResponse response = new RestResponse();
+            response.add(this.getError(ex));
+
+            return response;
+        }
+    }
+
+    /**
      * Creates a new group
-     *  
-     * @param user the authenticated user
-     * @param request the group creation request
+     * 
+     * @param user
+     *            the authenticated user
+     * @param request
+     *            the group creation request
      * @return the result of the operation
      */
     @RequestMapping(value = "/action/group", method = RequestMethod.PUT, produces = "application/json")
@@ -110,8 +148,10 @@ public class GroupController extends BaseController {
     /**
      * Deletes a group
      * 
-     * @param user the authenticated user
-     * @param groupKey the key of the group
+     * @param user
+     *            the authenticated user
+     * @param groupKey
+     *            the key of the group
      * @return the result of the operation
      */
     @RequestMapping(value = "/action/group/{groupKey}", method = RequestMethod.DELETE, produces = "application/json")
@@ -131,7 +171,7 @@ public class GroupController extends BaseController {
             return response;
         }
     }
-    
+
     /**
      * Adds a group to the favorite list
      * 

@@ -9,6 +9,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
@@ -50,6 +51,34 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
         groups.addAll(getClusters(utilityKey));
 
         groups.addAll(getUtilities(utilityKey));
+
+        return groups;
+    }
+
+    @Override
+    public List<Group> filterByName(UUID utilityKey, String text) {
+        List<Group> groups = this.getAll(utilityKey);
+
+        for (int i = groups.size() - 1; i >= 0; i--) {
+            boolean remove = false;
+
+            switch (groups.get(i).getType()) {
+                case UTILITY:
+                case SET:
+                    remove = (!StringUtils.contains(groups.get(i).getName(), text));
+                    break;
+                case SEGMENT:
+                    remove = ((!StringUtils.contains(groups.get(i).getName(), text)) && (!StringUtils.contains(
+                                    ((Segment) groups.get(i)).getCluster(), text)));
+                    break;
+                default:
+                    remove = true;
+                    break;
+            }
+            if (remove) {
+                groups.remove(i);
+            }
+        }
 
         return groups;
     }

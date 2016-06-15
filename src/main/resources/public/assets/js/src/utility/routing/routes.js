@@ -8,6 +8,7 @@ var analytics = require('../components/section/analytics/index');
 var trials = require('../components/section/trials/index');
 
 var Dashboard = require('../components/section/Dashboard');
+var AnalyticsMap = require('../components/section/Map');
 var ModeManagement = require('../components/section/mode_management/ModeManagement');
 var User = require('../components/User');
 var UserCatalog = require('../components/section/UserCatalog');
@@ -34,6 +35,7 @@ module.exports = (
     <Route path="/analytics/fav" component={analytics.Fav} />
     <Route path="/analytics/basic-reports" component={analytics.BasicReports} />
     <Route path="/analytics/panel" component={analytics.ReportPanel} />
+		<Route path="/analytics/map" component={AnalyticsMap} />
     <Route path="/trials/overview" component={trials.Overview}/>
     <Route path="/trials/pilot-reports" component={trials.PilotReports}/>
     <Route path="/forecasting" component={Forecasting} />

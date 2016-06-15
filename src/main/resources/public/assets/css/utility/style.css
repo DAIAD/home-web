@@ -839,3 +839,7 @@ div.measurement-value .delta > .sign {
 .leaflet-popup-content-wrapper {
     border-radius: 0px;
 }
+
+.leaflet-top {
+	z-index: 0;
+}
