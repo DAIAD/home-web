@@ -30,11 +30,11 @@ const REPORT_KEY = 'pane';
 // Todo Move under react-intl
 const ErrorMessages = {
   [Errors.reports.measurements.TIMESPAN_INVALID]: 
-    'The given timespan is invalid.',
+    'The given time range is invalid.',
   [Errors.reports.measurements.TIMESPAN_TOO_NARROW]:
-    'The given timespan is too narrow.',
+    'The given time range is too narrow.',
   [Errors.reports.measurements.TIMESPAN_TOO_WIDE]:
-    'The given timespan is too wide.',
+    'The given time range is too wide.',
 };
 
 //
@@ -215,7 +215,6 @@ var ReportPanel = React.createClass({
       dirty: false,
       timespan: this.props.timespan,
       error: null,
-      errorMessage: null,
       formFragment: 'report',
       disabledButtons: '', // a '|' delimited string, e.g 'export|refresh'
     };  
@@ -254,7 +253,6 @@ var ReportPanel = React.createClass({
     // In any case, reset temporary copy of timespan, clear error/dirty flags
     this.setState({
       error: null,
-      errorMessage: null,
       disabledButtons: '',
       timespan: nextProps.timespan,
     });
@@ -332,7 +330,7 @@ var ReportPanel = React.createClass({
 
   render: function () {
     var {field, title, level, reportName, finished, series} = this.props;
-    var {dirty, draw, error, errorMessage} = this.state;
+    var {dirty, draw, error} = this.state;
 
     var toolbarSpec = this._specForToolbar();
     var header = (
@@ -361,7 +359,9 @@ var ReportPanel = React.createClass({
             </form>
           </ListGroupItem>
           <ListGroupItem className="report-form-help">
-            <FormStatusParagraph dirty={dirty} errorMessage={errorMessage}/>
+            <FormStatusParagraph 
+              dirty={dirty} errorMessage={!error? null : ErrorMessages[error]}
+             />
           </ListGroupItem>
           <ListGroupItem className="report-chart-wrapper">
             <Chart 
@@ -406,7 +406,7 @@ var ReportPanel = React.createClass({
     switch (key) {
       case 'refresh':
         {
-          console.info(sprintf(
+          console.debug(sprintf(
             'About to refresh data for report (%s, %s, %s)...',
             field, level, reportName
           ));
@@ -416,7 +416,6 @@ var ReportPanel = React.createClass({
         break;
       case 'export':
         // Todo
-        console.info('Todo: Export to CSV table');
         break;
     }
   },
@@ -441,7 +440,7 @@ var ReportPanel = React.createClass({
   },
 
   _setTimespan: function (value) {
-    var error = null, errorMessage = null, timespan = null;
+    var error = null, timespan = null;
     
     // Validate
     if (_.isString(value)) {
@@ -449,23 +448,27 @@ var ReportPanel = React.createClass({
       timespan = value;
     } else if (_.isArray(value)) {
       // Check if given timespan is a valid range 
-      console.assert(value.length == 2 && value.every(t => moment.isMoment(t)), 
+      var [t0, t1] = value;
+      console.assert(moment.isMoment(t0) && moment.isMoment(t1), 
         'Expected a pair of moment instances');
       error = checkTimespan(value, this.props.level);
-      if (error)
-        errorMessage = ErrorMessages[error];
-      else
-        timespan = [value[0].valueOf(), value[1].valueOf()];
+      if (!error) {
+        // Truncate the time part, we only care about integral days!
+        t0.millisecond(0).second(0).minute(0).hour(0);
+        t1.millisecond(0).second(0).minute(0).hour(0);
+        // Make a pair of timestamps to dispatch upstairs
+        timespan = [t0.valueOf(), t1.valueOf()];
+      }
     }
     
     // If valid, invoke setTimespan()
-    if (timespan != null) {
+    if (!error) {
       var {field, level, reportName} = this.props;
       this.props.setTimespan(field, level, reportName, timespan);
     }
     
     // Update state with (probably invalid) timespan (to keep track of user input)
-    this.setState({dirty: true, timespan: value, error, errorMessage});
+    this.setState({dirty: true, timespan: value, error});
     return false;
   },
   
@@ -748,7 +751,6 @@ var ReportForm = React.createClass({
     return {
       dirty: false,
       error: null,
-      errorMessage: null,
       timespan: this.props.timespan,
       collapsed: false,
     };
@@ -785,7 +787,7 @@ var ReportForm = React.createClass({
       var _config = nextContext.config.reports.byType.measurements;
       var report = _config.levels[nextProps.level].reports[nextProps.reportName];
 
-      this.setState({dirty: false, error: null, errorMessage: null});
+      this.setState({dirty: false, error: null});
       nextProps.initializeReport({timespan: report.timespan});
       setTimeout(nextProps.refreshData, 100);
     }
@@ -902,7 +904,9 @@ var ReportForm = React.createClass({
     
     var form, formId = ['panel', field, level, reportName].join('--');
     var statusParagraph = (
-      <FormStatusParagraph dirty={this.state.dirty} errorMessage={this.state.errorMessage}/>
+      <FormStatusParagraph 
+        dirty={this.state.dirty} errorMessage={!error? null : ErrorMessages[error]} 
+       />
     );
     if (inlineForm) {
       form = (
@@ -973,7 +977,7 @@ var ReportForm = React.createClass({
   },
 
   _setTimespan: function (value) {
-    var error = null, errorMessage = null, timespan = null;
+    var error = null, timespan = null;
     
     // Validate
     if (_.isString(value)) {
@@ -984,9 +988,7 @@ var ReportForm = React.createClass({
       console.assert(value.length == 2 && value.every(t => moment.isMoment(t)), 
         'Expected a pair of moment instances');
       error = checkTimespan(value, this.props.level);
-      if (error)
-        errorMessage = ErrorMessages[error];
-      else
+      if (!error)
         timespan = [value[0].valueOf(), value[1].valueOf()];
     }
     
@@ -995,7 +997,7 @@ var ReportForm = React.createClass({
       this.props.setTimespan(timespan);
     
     // Update state with a (probably invalid) timespan (to keep track of user input)
-    this.setState({dirty: true, timespan: value, error, errorMessage});
+    this.setState({dirty: true, timespan: value, error});
     
     return false;
   },

@@ -314,9 +314,7 @@ var Form = React.createClass({
       return false;
     }
     
-    // Get the timestamp of the chosen YYYY-MM-DD date at GMT (UTC offset 0)
     var t = moment(this.state.now);
-    t = moment(t.format('YYYY-MM-DD') + 'T00:00:00Z');
     if (!t.isValid()) {
       console.warn('Failed to convert to a valid moment! Skipping refresh'); 
       return false;
@@ -324,10 +322,8 @@ var Form = React.createClass({
     
     this.props.submit(this.state.source, this.state.field, t.valueOf());
     this.setState({submitted: true});
-    
     return false;
   }, 
-
 });
 
 //

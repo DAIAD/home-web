@@ -33,7 +33,7 @@ var queryMeasurements = function (source, field, q, config={}) {
   
   source = source.toUpperCase();
   
-  var timezone = TIMEZONE || 'Etc/GMT';
+  var timezone = config.timezone || TIMEZONE || 'Etc/GMT';
 
   var q1 = {
     ...defaults.api.queryParams,
