@@ -1,17 +1,27 @@
 package eu.daiad.web.model.group;
 
-import java.util.UUID;
+import com.vividsolutions.jts.geom.Geometry;
 
 public class GroupQuery {
 
-    private UUID utility;
+    private String name;
 
-    public UUID getUtility() {
-        return utility;
+    private Geometry geometry;
+
+    public String getName() {
+        return name;
     }
 
-    public void setUtility(UUID utility) {
-        this.utility = utility;
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Geometry getGeometry() {
+        return geometry;
+    }
+
+    public void setGeometry(Geometry geometry) {
+        this.geometry = geometry;
     }
 
 }

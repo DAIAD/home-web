@@ -21,8 +21,8 @@ import eu.daiad.web.model.group.Account;
 import eu.daiad.web.model.group.Cluster;
 import eu.daiad.web.model.group.Community;
 import eu.daiad.web.model.group.Group;
-import eu.daiad.web.model.group.GroupQuery;
 import eu.daiad.web.model.group.Segment;
+import eu.daiad.web.model.group.Set;
 import eu.daiad.web.model.group.Utility;
 import eu.daiad.web.model.query.EnumClusterType;
 import eu.daiad.web.repository.BaseRepository;
@@ -37,18 +37,31 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
     EntityManager entityManager;
 
     @Override
-    public List<Group> getAll(GroupQuery query) {
+    public List<Group> getAll(UUID utilityKey) {
         TypedQuery<eu.daiad.web.domain.application.Group> entityQuery = entityManager.createQuery(
                         "select g from group g where g.utility.key = :utilityKey",
                         eu.daiad.web.domain.application.Group.class);
 
-        entityQuery.setParameter("utilityKey", query.getUtility());
+        entityQuery.setParameter("utilityKey", utilityKey);
 
         List<Group> groups = groupEntityToGroupObject(entityQuery.getResultList());
 
-        groups.addAll(getClusters(query.getUtility()));
+        groups.addAll(getClusters(utilityKey));
 
-        groups.addAll(getUtilities(query.getUtility()));
+        groups.addAll(getUtilities(utilityKey));
+
+        return groups;
+    }
+
+    @Override
+    public List<Group> getGroups(UUID utilityKey) {
+        TypedQuery<eu.daiad.web.domain.application.Group> entityQuery = entityManager.createQuery(
+                        "select g from group g where g.utility.key = :utilityKey",
+                        eu.daiad.web.domain.application.Group.class);
+
+        entityQuery.setParameter("utilityKey", utilityKey);
+
+        List<Group> groups = groupEntityToGroupObject(entityQuery.getResultList());
 
         return groups;
     }
@@ -364,7 +377,6 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
     private Group groupEntityToGroupObject(eu.daiad.web.domain.application.Group entity) {
         switch (entity.getType()) {
             case SEGMENT:
-            case SET:
                 Segment segment = new Segment();
 
                 segment.setCreatedOn(entity.getCreatedOn().getMillis());
@@ -374,7 +386,20 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
                 segment.setSize(entity.getSize());
                 segment.setUtilityKey(entity.getUtility().getKey());
 
+                segment.setCluster(((GroupSegment) entity).getCluster().getName());
+                
                 return segment;
+            case SET:
+                Set set = new Set();
+
+                set.setCreatedOn(entity.getCreatedOn().getMillis());
+                set.setGeometry(entity.getGeometry());
+                set.setKey(entity.getKey());
+                set.setName(entity.getName());
+                set.setSize(entity.getSize());
+                set.setUtilityKey(entity.getUtility().getKey());
+
+                return set;
             case COMMONS:
                 Community community = new Community();
 

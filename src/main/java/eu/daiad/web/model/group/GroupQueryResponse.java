@@ -6,22 +6,14 @@ import eu.daiad.web.model.RestResponse;
 
 public class GroupQueryResponse extends RestResponse {
 
-	private List<Group> groups;
+    private List<Group> groups;
 
-	public GroupQueryResponse() {
+    public List<Group> getGroups() {
+        return groups;
+    }
 
-	}
-
-	public GroupQueryResponse(List<Group> groups) {
-		this.groups = groups;
-	}
-
-	public List<Group> getGroups() {
-		return groups;
-	}
-
-	public void setGroups(List<Group> groups) {
-		this.groups = groups;
-	}
+    public void setGroups(List<Group> groups) {
+        this.groups = groups;
+    }
 
 }

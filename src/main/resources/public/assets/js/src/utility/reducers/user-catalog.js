@@ -2,6 +2,16 @@ var moment = require('moment');
 
 var types = require('../constants/UserCatalogActionTypes');
 
+var _createInitialeDataState = function() {
+  return {
+    total : 0,
+    index : 0,
+    size : 10,
+    accounts : null,
+    features : null
+  };
+};
+
 var _createInitialeState = function() {
   return {
     isLoading : false,
@@ -12,13 +22,7 @@ var _createInitialeState = function() {
       serial : null,
       geometry : null
     },
-    data : {
-      total : 0,
-      index : 0,
-      size : 10,
-      accounts : null,
-      features : null
-    },
+    data : _createInitialeDataState(),
     interval : [
         moment().subtract(30, 'days'), moment()
     ],
@@ -84,13 +88,13 @@ var _fillMeterSeries = function(interval, data) {
         ref.subtract(1, 'days');
       }
     }
-
-    allPoints.sort(function(p1, p2) {
-      return (p1.timestamp - p2.timestamp);
-    });
-
-    data.values = allPoints;
   }
+
+  allPoints.sort(function(p1, p2) {
+    return (p1.timestamp - p2.timestamp);
+  });
+
+  data.values = allPoints;
 
   return data;
 };
@@ -133,9 +137,64 @@ var _extractFeatures = function(accounts) {
   return geojson;
 };
 
+var dataReducer = function(state, action) {
+  switch (action.type) {
+    case types.USER_CATALOG_REQUEST_COMPLETE:
+
+      if (action.success === true) {
+        action.accounts.forEach(function(account) {
+          if (account.meter) {
+            account.serial = account.meter.serial;
+          }
+        });
+
+        return Object.assign({}, state, {
+          total : action.total || 0,
+          index : action.index || 0,
+          size : action.size || 10,
+          accounts : action.accounts || [],
+          features : _extractFeatures(action.accounts || [])
+        });
+      } else {
+        return Object.assign({}, state, {
+          total : 0,
+          index : 0,
+          size : 10,
+          accounts : [],
+          features : _extractFeatures([])
+        });
+      }
+
+    case types.USER_CATALOG_ADD_FAVORITE_RESPONSE:
+    case types.USER_CATALOG_REMOVE_FAVORITE_RESPONSE:
+      if (action.success === true) {
+        console.log(state);
+        state.accounts.forEach(function(account) {
+          if (account.id === action.userKey) {
+            account.favorite = action.favorite
+          }
+        });
+        return Object.assign({}, state, {
+          accounts : state.accounts || [],
+        });
+      } else {
+        return state.data;
+      }
+
+    default:
+      return state || _createInitialeDataState();
+  }
+};
+
 var userCatalog = function(state, action) {
   switch (action.type) {
-    case types.ACCOUNT_CHANGE_INDEX:
+    case types.USER_CATALOG_ADD_FAVORITE_REQUEST:
+    case types.USER_CATALOG_REMOVE_FAVORITE_REQUEST:
+      return Object.assign({}, state, {
+        isLoading : true,
+      });
+
+    case types.USER_CATALOG_CHANGE_INDEX:
 
       return Object.assign({}, state, {
         isLoading : true,
@@ -144,7 +203,7 @@ var userCatalog = function(state, action) {
         })
       });
 
-    case types.ACCOUNT_FILTER_TEXT:
+    case types.USER_CATALOG_FILTER_TEXT:
 
       return Object.assign({}, state, {
         query : Object.assign({}, state.query, {
@@ -153,7 +212,7 @@ var userCatalog = function(state, action) {
         })
       });
 
-    case types.ACCOUNT_FILTER_SERIAL:
+    case types.USER_CATALOG_FILTER_SERIAL:
 
       return Object.assign({}, state, {
         query : Object.assign({}, state.query, {
@@ -162,7 +221,7 @@ var userCatalog = function(state, action) {
         })
       });
 
-    case types.USER_CATELOG_SET_SEARCH_GEOMETRY:
+    case types.USER_CATALOG_SET_SEARCH_GEOMETRY:
 
       return Object.assign({}, state, {
         query : Object.assign({}, state.query, {
@@ -171,7 +230,7 @@ var userCatalog = function(state, action) {
         })
       });
 
-    case types.ACCOUNT_FILTER_CLEAR:
+    case types.USER_CATALOG_FILTER_CLEAR:
 
       return Object.assign({}, state, {
         query : Object.assign({}, state.query, {
@@ -180,41 +239,16 @@ var userCatalog = function(state, action) {
         })
       });
 
-    case types.ACCOUNT_REQUEST_INIT:
+    case types.USER_CATALOG_REQUEST_INIT:
       return Object.assign({}, state, {
         isLoading : true
       });
 
-    case types.ACCOUNT_REQUEST_COMPLETE:
-      if (action.success === true) {
-        action.accounts.forEach(function(account) {
-          if (account.meter) {
-            account.serial = account.meter.serial;
-          }
-        });
-        return Object.assign({}, state, {
-          isLoading : false,
-          data : {
-            total : action.total || 0,
-            index : action.index || 0,
-            size : action.size || 10,
-            accounts : action.accounts || [],
-            features : _extractFeatures(action.accounts || [])
-          }
-        });
-      } else {
-        return Object.assign({}, state, {
-          isLoading : false,
-          data : {
-            total : 0,
-            index : 0,
-            size : 10,
-            accounts : [],
-            features : _extractFeatures([])
-          }
-        });
-      }
-      break;
+    case types.USER_CATALOG_REQUEST_COMPLETE:
+      return Object.assign({}, state, {
+        isLoading : false,
+        data : dataReducer(state.data, action)
+      });
 
     case types.USER_CATALOG_METER_REQUEST:
       return Object.assign({}, state, {
@@ -246,6 +280,13 @@ var userCatalog = function(state, action) {
 
     case types.USER_RECEIVED_LOGOUT:
       return _createInitialeState();
+
+    case types.USER_CATALOG_ADD_FAVORITE_RESPONSE:
+    case types.USER_CATALOG_REMOVE_FAVORITE_RESPONSE:
+      return Object.assign({}, state, {
+        isLoading : false,
+        data : dataReducer(state.data, action)
+      });
 
     default:
       return state || _createInitialeState();

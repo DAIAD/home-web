@@ -14,7 +14,8 @@ var Chart = require('../Chart');
 var theme = require('../chart/themes/shine');
 
 var { getAccounts, changeIndex, filterText, filterSerial, clearFilter, getMeter, clearChart,
-      setSearchModeText, setSearchModeMap, setGeometry} = require('../../actions/UserCatalogActions');
+      setSearchModeText, setSearchModeMap, setGeometry,
+      removeFavorite, addFavorite} = require('../../actions/UserCatalogActions');
   
 var _handleKeyPress = function(e) {
   if (e.key === 'Enter') {
@@ -139,6 +140,22 @@ var UserCatalog = React.createClass({
         name: 'registrationDateMils',
         title: 'Registered On',
         type: 'datetime'
+      }, {
+        name : 'favorite',
+        type : 'action',
+        icon : function(field, row) {
+          return (row.favorite ? 'star' : 'star-o');
+        },
+        handler : (function(field, row) {
+          if(row.favorite) {
+            this.props.actions.removeFavorite(row.id);
+          } else {
+            this.props.actions.addFavorite(row.id);
+          }
+        }).bind(this),
+        visible : (function(field, row) {
+          return (row.meter !== null);
+        }).bind(this)
       }, {
         name : 'chart',
         type : 'action',
@@ -411,7 +428,8 @@ function mapDispatchToProps(dispatch) {
   return {
     actions : bindActionCreators(
       Object.assign({}, {getAccounts, changeIndex, filterSerial, filterText, clearFilter, getMeter, clearChart,
-                         setSearchModeText, setSearchModeMap, setGeometry}) , dispatch
+                         setSearchModeText, setSearchModeMap, setGeometry,
+                         removeFavorite, addFavorite}) , dispatch
   )};
 }
 

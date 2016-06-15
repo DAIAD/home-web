@@ -119,17 +119,31 @@ var CreateGroupForm = React.createClass({
         </span>
       );
     
-    const membersTitle = (
-        <span>
-          <i className='fa fa-user fa-fw'></i>
-          <span style={{ paddingLeft: 4 }}>{_t({ id:'Demographics.NewGroup.CurrentMembers'})}</span>
+    var membersTitle = (
+        <span className='clearfix'>
+          <span>
+            <i className='fa fa-user fa-fw'></i>
+            <span style={{ paddingLeft: 4 }}>{_t({ id:'Demographics.NewGroup.CurrentMembers'})}</span>
+          </span>
+          <span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
+            <Bootstrap.Button bsStyle='default' className='btn-circle' onClick={this.props.actions.removeSelectedGroupMembers} >
+              <i className='fa fa-arrow-right fa-fw'></i>
+            </Bootstrap.Button>
+          </span>
         </span>
       );
     
-    const nonMembersTitle = (
-        <span>
-          <i className='fa fa-user-plus fa-fw'></i>
-          <span style={{ paddingLeft: 4 }}>{_t({ id:'Demographics.NewGroup.PossibleMembers'})}</span>
+    var nonMembersTitle = (
+        <span className='clearfix'>
+          <span style={{ float: 'left', marginTop: -3, marginLeft: 5 }}>
+            <Bootstrap.Button bsStyle='default' className='btn-circle' onClick={this.props.actions.addSelectedGroupMembers} >
+              <i className='fa fa-arrow-left fa-fw'></i>
+            </Bootstrap.Button>
+          </span>
+          <span style={{float: 'right'}}>
+            <i className='fa fa-user-plus fa-fw'></i>
+            <span style={{ paddingLeft: 4 }}>{_t({ id:'Demographics.NewGroup.PossibleMembers'})}</span>
+          </span>
         </span>
       );
     
@@ -148,24 +162,26 @@ var CreateGroupForm = React.createClass({
         field.handler = self.handlePossibleMembersCheckboxChange;
       }
     });
+
+    var rows = this.membersObjectToArray(this.props.currentMembers).sort(this.compareGroupMembers);
     
     var currentMembers = {
         fields : currentMembersFields,
-        rows : this.membersObjectToArray(this.props.currentMembers).sort(this.compareGroupMembers),
+        rows : rows,
         pager : {
           index : DemographicsTablesSchema.GroupMembers.pager.index,
           size : DemographicsTablesSchema.GroupMembers.pager.size,
-          count : Math.ceil(this.props.currentMembers.length / DemographicsTablesSchema.GroupMembers.pager.size)
+          count : rows.length//Math.ceil(this.props.currentMembers.length / DemographicsTablesSchema.GroupMembers.pager.size)
         }
     };
-    
+    rows = this.membersObjectToArray(this.props.possibleMembers).sort(this.compareGroupMembers);
     var possibleMembers = {
         fields : possibleMembersFields,
-        rows : this.membersObjectToArray(this.props.possibleMembers).sort(this.compareGroupMembers),
+        rows : rows,
         pager : {
           index : DemographicsTablesSchema.GroupMembers.pager.index,
           size : DemographicsTablesSchema.GroupMembers.pager.size,
-          count : Math.ceil(this.props.possibleMembers.length / DemographicsTablesSchema.GroupMembers.pager.size)
+          count : rows.length //Math.ceil(this.props.possibleMembers.length / DemographicsTablesSchema.GroupMembers.pager.size)
         }
     };
     
@@ -192,7 +208,7 @@ var CreateGroupForm = React.createClass({
               </Bootstrap.ListGroupItem>
             </Bootstrap.ListGroup>
             <div className='row equal-height-row'>
-              <div className='col-md-5 equal-height-col'>
+              <div className='col-md-6 equal-height-col'>
                 <Bootstrap.Panel header={membersTitle}>
                   <Bootstrap.ListGroup fill>
                     <Bootstrap.ListGroupItem> 
@@ -201,25 +217,7 @@ var CreateGroupForm = React.createClass({
                   </Bootstrap.ListGroup>
                 </Bootstrap.Panel>
               </div>
-            
-              <div className='col-md-2 equal-height-col' >
-                <div className='div-centered'>
-                  <div>
-                    <Bootstrap.Button onClick={this.props.actions.addSelectedGroupMembers}>
-                      {'<<<'}
-                    </Bootstrap.Button>
-                  </div>
-                  <br></br>
-                  <div>
-                    <div>
-                    <Bootstrap.Button onClick={this.props.actions.removeSelectedGroupMembers}>
-                      {'>>>'}
-                    </Bootstrap.Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className='col-md-5 equal-height-col'>
+              <div className='col-md-6 equal-height-col'>
                 <Bootstrap.Panel header={nonMembersTitle}>
                   <Bootstrap.ListGroup fill>
                     <Bootstrap.ListGroupItem> 
@@ -229,6 +227,7 @@ var CreateGroupForm = React.createClass({
                 </Bootstrap.Panel>
               </div>
             </div>
+            
             <div className='row'>
               <div className='col-md-6'>
                   <MessageAlert

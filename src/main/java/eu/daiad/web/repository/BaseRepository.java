@@ -1,6 +1,7 @@
 package eu.daiad.web.repository;
 
 import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
@@ -48,6 +49,21 @@ public class BaseRepository {
 
         if (user != null) {
             return user.getUtilityId();
+        }
+
+        return null;
+    }
+
+    protected UUID getCurrentUtilityKey() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        AuthenticatedUser user = null;
+
+        if (auth.getPrincipal() instanceof AuthenticatedUser) {
+            user = (AuthenticatedUser) auth.getPrincipal();
+        }
+
+        if (user != null) {
+            return user.getUtilityKey();
         }
 
         return null;
