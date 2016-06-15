@@ -138,8 +138,8 @@ var AnalyticsMap = React.createClass({
         <Select name='source'
           value={ this.props.source || 'METER' }
           options={[
-            { value: 'METER', label: 'METER' },
-            { value: 'AMPHIRO', label: 'AMPHIRO' }
+            { value: 'METER', label: 'Meter' },
+            { value: 'AMPHIRO', label: 'Amphiro B1' }
           ]}
           onChange={_onSourceEditorChange.bind(this)}
           clearable={false} 
@@ -300,10 +300,13 @@ var AnalyticsMap = React.createClass({
       <FilterTag key='time' text={intervalLabel} icon='calendar' />
     );
     mapFilterTags.push( 
-      <FilterTag key='spatial' text='Alicante' icon='map' />
+      <FilterTag key='population' text={ (this.props.population ? this.props.population.label : 'All') } icon='group' />
     );
     mapFilterTags.push( 
-      <FilterTag key='source' text='Meter' icon='database' />
+      <FilterTag key='spatial' text={ (this.props.geometry ? 'Custom' : 'Alicante') } icon='map' />
+    );
+    mapFilterTags.push( 
+      <FilterTag key='source' text={ (this.props.source === 'METER' ? 'Meter' : 'Amphiro B1') } icon='database' />
     );
 
     map = (
@@ -400,6 +403,8 @@ AnalyticsMap.title = 'Section.Map';
 function mapStateToProps(state) {
   return {
       source: state.map.source,
+      geometry: state.map.geometry,
+      population: state.map.population,
       interval: state.map.interval,
       editor: state.map.editor,
       ranges: state.map.ranges,

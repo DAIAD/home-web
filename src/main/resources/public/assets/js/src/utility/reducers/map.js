@@ -32,7 +32,7 @@ var _createInitialState = function() {
     interval : interval,
     population : null,
     source : 'METER',
-    geometry: null,
+    geometry : null,
     timezone : null,
     ranges : {
       'Last 7 Days' : [
@@ -365,10 +365,14 @@ var map = function(state, action) {
               });
             case 'SEGMENT':
             case 'SET':
+              var label = group.name;
+              if (group.type === 'SEGMENT') {
+                label = group.cluster + ': ' + label;
+              }
               return Object.assign({}, state, {
                 population : {
                   group : group.key,
-                  label : group.name,
+                  label : label,
                   type : 'GROUP'
                 }
               });
