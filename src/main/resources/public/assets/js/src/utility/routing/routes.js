@@ -8,13 +8,14 @@ var analytics = require('../components/section/analytics/index');
 var trials = require('../components/section/trials/index');
 
 var Dashboard = require('../components/section/Dashboard');
-var Demographics = require('../components/section/Demographics');
 var ModeManagement = require('../components/section/mode_management/ModeManagement');
 var User = require('../components/User');
+var UserCatalog = require('../components/section/UserCatalog');
 var Group = require('../components/Group');
+var GroupCatalog = require('../components/section/GroupCatalog');
+var CreateGroupForm = require('../components/section/demographics/CreateGroupForm');
 var Device = require('../components/Device');
 var Forecasting = require('../components/section/Forecasting');
-var UserCatalog = require('../components/section/UserCatalog');
 var Scheduler = require('../components/section/Scheduler');
 var Logging = require('../components/section/support/Logging');
 var Announcements = require('../components/section/Announcements');
@@ -36,11 +37,12 @@ module.exports = (
     <Route path="/trials/overview" component={trials.Overview}/>
     <Route path="/trials/pilot-reports" component={trials.PilotReports}/>
     <Route path="/forecasting" component={Forecasting} />
-    <Route path="/demographics" component={Demographics} />
     <Route path="/mode/management" component={ModeManagement}/>
     <Route path="/users" component={UserCatalog} />
     <Route path="/user/:id" component={User} />
+    <Route path="/groups" component={GroupCatalog} />
     <Route path="/group/:id" component={Group} />
+		<Route path="/group/create" component={CreateGroupForm} />
     <Route path="/device/:id" component={Device} />
     <Route path="/scheduler" component={Scheduler} />
     <Route path="/announcements" component={Announcements} />

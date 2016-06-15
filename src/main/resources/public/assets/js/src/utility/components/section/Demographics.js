@@ -22,40 +22,40 @@ var { connect } = require('react-redux');
 var { bindActionCreators } = require('redux');
 
 var Demographics = React.createClass({
-	contextTypes: {
-	    intl: React.PropTypes.object
-	},
-	
-	getInitialState() {
-		return {
-			key: 1,
-			showAddNewUserForm: false
-    	};
-	},
-	
-	componentWillMount : function() {
-	  this.props.getGroupsAndFavourites();
-	  //this.props.getGroupMembers('c1403676-de58-4960-bd0a-5d406f533807');	  
+  contextTypes: {
+      intl: React.PropTypes.object
+  },
+  
+  getInitialState() {
+    return {
+      key: 1,
+      showAddNewUserForm: false
+      };
+  },
+  
+  componentWillMount : function() {
+    this.props.getGroupsAndFavourites();
+    //this.props.getGroupMembers('c1403676-de58-4960-bd0a-5d406f533807');   
   },
   
   componentWillUnmount : function() {
     this.props.resetDemograhpics();
   },
 
-	selectSection(key) {
-		this.setState({key : key});
-  	},
-  	
-  	showAddNewUserForm: function (){
-  		this.setState({showAddNewUserForm : true});
-  	},
-  	
-  	setGroupsFilter : function(){
-  	  this.props.setGroupsFilter(this.refs.searchGroups.getValue());
-  	},
-  	
-  	clearGroupsFilter : function(){
-  	  this.props.setGroupsFilter('');
+  selectSection(key) {
+    this.setState({key : key});
+    },
+    
+    showAddNewUserForm: function (){
+      this.setState({showAddNewUserForm : true});
+    },
+    
+    setGroupsFilter : function(){
+      this.props.setGroupsFilter(this.refs.searchGroups.getValue());
+    },
+    
+    clearGroupsFilter : function(){
+      this.props.setGroupsFilter('');
     },
     
     setFavouritesFilter : function(){
@@ -65,53 +65,54 @@ var Demographics = React.createClass({
     clearFavouritesFilter : function(){
       this.props.setFavouritesFilter('');
     },
-  	
-  	computeVisibleItems : function(items, filter){
-  	  var visibleItems = {
-  	      fields : items.fields,
-  	      rows : [],
-  	      pager : {
-  	        index : items.pager.index,
-  	        size : items.pager.size,
-  	        count : 1
-  	      }
-  	  };
-  	  
-  	  if (filter){
-  	    visibleItems.rows = Helpers.pickQualiffiedOnSusbstring(items.rows, 'name', filter, false);
-  	  } else {
-  	    visibleItems.rows = items.rows;
-  	  }
-  	  visibleItems.pager.count = Math.ceil(visibleItems.rows.length / visibleItems.pager.size);
-  	  return visibleItems;
-  	},
-  	
-  	deleteGroup: function (){
-  	  this.props.hideModal();
-  	  this.props.deleteGroup(this.props.ModalForm.itemId);
-  	},
-  	
-  	deleteFavourite: function (){
+    
+    computeVisibleItems : function(items, filter){
+      var visibleItems = {
+          fields : items.fields,
+          rows : [],
+          pager : {
+            index : items.pager.index,
+            size : items.pager.size,
+            count : 1
+          }
+      };
+      
+      if (filter){
+        visibleItems.rows = Helpers.pickQualiffiedOnSusbstring(items.rows, 'name', filter, false);
+      } else {
+        visibleItems.rows = items.rows;
+      }
+      visibleItems.pager.count = visibleItems.rows.length; //Math.ceil(visibleItems.rows.length / visibleItems.pager.size);
+
+      return visibleItems;
+    },
+    
+    deleteGroup: function (){
+      this.props.hideModal();
+      this.props.deleteGroup(this.props.ModalForm.itemId);
+    },
+    
+    deleteFavourite: function (){
       this.props.hideModal();
       this.props.deleteFavourite(this.props.ModalForm.itemId);
     },
-  	
-  	showDeleteGroupModal: function(group_id){
-  	  
-  	  var _t = this.context.intl.formatMessage;
-  	  var title = _t({id:'Modal.DeleteGroup.Title'});
-  	  
-  	  var group = Helpers.pickQualiffiedOnEquality(this.props.groups.rows, 'id', group_id);
-  	    	  
-  	  var body;
-  	  if (group){
-  	    body = _t({id:'Modal.DeleteGroup.Body.Part1'}) + group[0].name + _t({id:'Modal.DeleteGroup.Body.Part2'});
+    
+    showDeleteGroupModal: function(group_id){
+      
+      var _t = this.context.intl.formatMessage;
+      var title = _t({id:'Modal.DeleteGroup.Title'});
+      
+      var group = Helpers.pickQualiffiedOnEquality(this.props.groups.rows, 'id', group_id);
+            
+      var body;
+      if (group){
+        body = _t({id:'Modal.DeleteGroup.Body.Part1'}) + group[0].name + _t({id:'Modal.DeleteGroup.Body.Part2'});
       } else {
         body = _t({id:'Modal.DeleteGroup.Body.Part1'}) + group_id + _t({id:'Modal.DeleteGroup.Body.Part2'});
-      }  	  
-  	  
-  	  
-  	  var actions = [{
+      }     
+      
+      
+      var actions = [{
         action: this.props.hideModal,
         name: _t({id:'Buttons.Cancel'})
         }, {
@@ -120,10 +121,10 @@ var Demographics = React.createClass({
           style: 'danger'
         }
       ];
-  	  
-  	  this.props.showModal(group_id, title, body, actions);
-  	},
-  	
+      
+      this.props.showModal(group_id, title, body, actions);
+    },
+    
     showDeleteFavouriteModal: function(favourite_id){
       
       var _t = this.context.intl.formatMessage;
@@ -150,126 +151,35 @@ var Demographics = React.createClass({
       
       this.props.showModal(favourite_id, title, body, actions);
     },
-  	
-	
-  	render: function() {
-  	  var _t = this.context.intl.formatMessage;
-  		var self = this;
-  		
-  		var visibleGroups = this.computeVisibleItems(this.props.groups, this.props.groupsFilter);
-  		visibleGroups.fields.forEach(function(field){
-  		  if(field.hasOwnProperty('name') && field.name === 'add-favourite'){
-  		    field.handler = function (){
-  		      self.props.showFavouriteGroupForm(this.props.row.id);
-  		    };
-  		  } else if (field.hasOwnProperty('name') && field.name === 'remove'){
+    
+  
+    render: function() {
+      var _t = this.context.intl.formatMessage;
+      var self = this;
+      
+      var visibleGroups = this.computeVisibleItems(this.props.groups, this.props.groupsFilter);
+      visibleGroups.fields.forEach(function(field){
+        if(field.hasOwnProperty('name') && field.name === 'add-favourite'){
+          field.handler = function (){
+            self.props.showFavouriteGroupForm(this.props.row.id);
+          };
+        } else if (field.hasOwnProperty('name') && field.name === 'remove'){
           field.handler = function (){
             self.showDeleteGroupModal(this.props.row.id);
           };
         }
-  		});
-  		
-  		var visibleFavourites = this.computeVisibleItems(this.props.favourites, this.props.favouritesFilter);
-  		visibleFavourites.fields.forEach(function(field){
+      });
+      
+      var visibleFavourites = this.computeVisibleItems(this.props.favourites, this.props.favouritesFilter);
+      visibleFavourites.fields.forEach(function(field){
         if(field.hasOwnProperty('name') && field.name === 'remove'){
           field.handler = function (){
             self.showDeleteFavouriteModal(this.props.row.id);
           };
         }
       });
-  		
-  		var chartData = {
-		    series: [{
-		        legend: 'Alicante DAIAD Trial (average)',
-		        xAxis: 'date',
-		        yAxis: 'volume',
-		        data: [{
-		            id: 1,
-		            volume: 25,
-		            date: new Date(2016, 1, 1)
-		        }, {
-		            id: 1,
-		            volume: 70,
-		            date: new Date(2016, 1, 2) 
-		        }, {
-		            id: 1,
-		            volume: 75,
-		            date: new Date(2016, 1, 3)
-		        }, {
-		            id: 1,
-		            volume: 62,
-		            date: new Date(2016, 1, 4)
-		        }, {
-		            id: 1,
-		            volume: 53,
-		            date: new Date(2016, 1, 5)
-		        }, {
-		            id: 1,
-		            volume: 27,
-		            date: new Date(2016, 1, 6)
-		        }, {
-		            id: 1,
-		            volume: 41,
-		            date: new Date(2016, 1, 7)
-		        }, {
-		            id: 1,
-		            volume: 45,
-		            date: new Date(2016, 1, 8)
-		        }, {
-		            id: 1,
-		            volume: 13,
-		            date: new Date(2016, 1, 9)
-		        }]
-		    }, {
-		        legend: 'User 1',
-		        xAxis: 'date',
-		        yAxis: 'volume',
-		        data: [{
-		            id: 1,
-		            volume: 15,
-		            date: new Date(2016, 1, 1)
-		        }, {
-		            id: 1,
-		            volume: 30,
-		            date: new Date(2016, 1, 2) 
-		        }, {
-		            id: 1,
-		            volume: 44,
-		            date: new Date(2016, 1, 3)
-		        }, {
-		            id: 1,
-		            volume: 32,
-		            date: new Date(2016, 1, 4)
-		        }, {
-		            id: 1,
-		            volume: 23,
-		            date: new Date(2016, 1, 5)
-		        }, {
-		            id: 1,
-		            volume: 11,
-		            date: new Date(2016, 1, 6)
-		        }, {
-		            id: 1,
-		            volume: 18,
-		            date: new Date(2016, 1, 7)
-		        }, {
-		            id: 1,
-		            volume: 11,
-		            date: new Date(2016, 1, 8)
-		        }, {
-		            id: 1,
-		            volume: 5,
-		            date: new Date(2016, 1, 9)
-		        }]
-		      }]
-		  };
-
-      var chartOptions = {
-          tooltip: {
-              show: true
-          }
-      };
       
+     
       const breadCrumb = (
             <div className="row">
               <div className="col-md-12">
@@ -278,54 +188,47 @@ var Demographics = React.createClass({
             </div>
       );
       
-  		const groupTitle = (
-  			<span>
-  				<i className='fa fa-group fa-fw'></i>
-  				<span style={{ paddingLeft: 4 }}>Groups</span>
-  				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-  					<Bootstrap.Button	bsStyle="default" className="btn-circle" onClick={this.props.showNewGroupForm}>
-  						<Bootstrap.Glyphicon glyph="plus" />
-  					</Bootstrap.Button>
-  				</span>
-  			</span>
-  		);
-  		
-  		const favouriteTitle = (
-  			<span>
-  				<i className='fa fa-bookmark fa-fw'></i>
-  				<span style={{ paddingLeft: 4 }}>Favourites</span>
-  			</span>
-  		);
-  		
-  		const newGroupInfoFormTitle = (
+      const groupTitle = (
+        <span>
+          <i className='fa fa-group fa-fw'></i>
+          <span style={{ paddingLeft: 4 }}>Groups</span>
+          <span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
+            <Bootstrap.Button bsStyle="default" className="btn-circle" onClick={this.props.showNewGroupForm}>
+              <Bootstrap.Glyphicon glyph="plus" />
+            </Bootstrap.Button>
+          </span>
+        </span>
+      );
+      
+      const favouriteTitle = (
+        <span>
+          <i className='fa fa-bookmark fa-fw'></i>
+          <span style={{ paddingLeft: 4 }}>Favourites</span>
+        </span>
+      );
+      
+      const newGroupInfoFormTitle = (
           <span>
             <i className='fa fa-group fa-fw'></i>
             <span style={{ paddingLeft: 4 }}>{_t({ id:'Demographics.NewGroup.NewGroup'})}</span>
           </span>
         );
-  		
-  		const membersTitle = (
+      
+      const membersTitle = (
           <span>
             <i className='fa fa-user fa-fw'></i>
             <span style={{ paddingLeft: 4 }}>{_t({ id:'Demographics.NewGroup.CurrentMembers'})}</span>
           </span>
         );
-  		
-  		const nonMembersTitle = (
+      
+      const nonMembersTitle = (
           <span>
             <i className='fa fa-user-plus fa-fw'></i>
             <span style={{ paddingLeft: 4 }}>{_t({ id:'Demographics.NewGroup.PossibleMembers'})}</span>
           </span>
         );
   
-  		const chartTitle = (
-  			<span>
-  				<i className="fa fa-bar-chart fa-fw"></i>
-  				<span style={{ paddingLeft: 4 }}>Compare groups and users</span>
-  			</span>
-  		);	
-
-  		const groupMessageAlert = (
+      const groupMessageAlert = (
           <MessageAlert
             show = {this.props.showMessageAlert}
             title = {this.props.asyncResponse.success ?  _t({id: 'Form.Success'}) : _t({id: 'Form.ErrorsDetected'})}
@@ -336,23 +239,23 @@ var Demographics = React.createClass({
             dismissFunc={this.props.hideMessageAlert}
           />
         );
-  		
-  		var modal;
-  		if (this.props.hasOwnProperty('ModalForm') && 
-  		    this.props.ModalForm.hasOwnProperty('modal') &&
-  		    this.props.ModalForm.modal.hasOwnProperty('show') &&
-  		    this.props.ModalForm.modal.show){
+      
+      var modal;
+      if (this.props.hasOwnProperty('ModalForm') && 
+          this.props.ModalForm.hasOwnProperty('modal') &&
+          this.props.ModalForm.modal.hasOwnProperty('show') &&
+          this.props.ModalForm.modal.show){
 
-  		  modal = (
-  		      <Modal show = {true}
+        modal = (
+            <Modal show = {true}
               onClose = {self.props.hideModal}
               title = {this.props.ModalForm.modal.title}
               text = {this.props.ModalForm.modal.body}
-  		        actions = {this.props.ModalForm.modal.actions}
-  		      />
-  		      );
-  		} else {
-  		  modal = (
+              actions = {this.props.ModalForm.modal.actions}
+            />
+            );
+      } else {
+        modal = (
             <Modal show = {false}
               onClose = {function(){}}
               title = {''}
@@ -360,11 +263,11 @@ var Demographics = React.createClass({
               actions = {[]}
             />
             );
-  		}
-  		
-  		if (this.props.application === 'addNewGroup'){
-  		  return (
-		      <div className="container-fluid" style={{ paddingTop: 10 }}>
+      }
+      
+      if (this.props.application === 'addNewGroup'){
+        return (
+          <div className="container-fluid" style={{ paddingTop: 10 }}>
             {breadCrumb}
             <CreateGroupForm
               
@@ -391,8 +294,8 @@ var Demographics = React.createClass({
               }}
             />
           </div>
-  		  );
-  		} else if (this.props.application === 'favouriteGroupForm' && this.props.favouriteGroupId){
+        );
+      } else if (this.props.application === 'favouriteGroupForm' && this.props.favouriteGroupId){
         return (
             <div className="container-fluid" style={{ paddingTop: 10 }}>
               {breadCrumb}
@@ -408,85 +311,66 @@ var Demographics = React.createClass({
             </div>
         );
       } else {
-    		if (!this.props.isLoading){
-    		  return (
-      			<div className="container-fluid" style={{ paddingTop: 10 }}>
-      			  {breadCrumb}
-      			  {groupMessageAlert}
-      			  <div className='row'>
+        if (!this.props.isLoading){
+          return (
+            <div className="container-fluid" style={{ paddingTop: 10 }}>
+              {breadCrumb}
+              {groupMessageAlert}
+              <div className='row'>
                 <div className='col-md-12'>           
                   {modal}
                 </div>
               </div>
-      				<div className='row'>
-      					<div className='col-md-6'>
-      					 	<Bootstrap.Input 	type="text" 
-      					 	          ref="searchGroups"
-      					 						placeholder='Search groups ...'
-      					 						onChange={this.setGroupsFilter}
-      					 						buttonAfter={<Bootstrap.Button onClick={this.clearGroupsFilter}><i className='fa fa-trash fa-fw'></i></Bootstrap.Button>} 
-      					 	/>
-      			 		</div>
-      					<div className='col-md-6'>
-      					 	<Bootstrap.Input 	type="text" 
-      					 	          ref="searchFavourites"
-      					 						placeholder='Search favourites ...' 
-      					 						onChange={this.setFavouritesFilter}
-      					 						buttonAfter={<Bootstrap.Button onClick={this.clearFavouritesFilter}><i className='fa fa-trash fa-fw'></i></Bootstrap.Button>} 
-      					 	/>
-      			 		</div>
-      			 	</div>
-      				<div className='row'>
-      					<div className='col-md-6'>
-      						<Bootstrap.Panel header={groupTitle}>
-      							<Bootstrap.ListGroup fill>
-      								<Bootstrap.ListGroupItem>
-      									<Table data={visibleGroups}></Table>
-      								</Bootstrap.ListGroupItem>
-      							</Bootstrap.ListGroup>
-      						</Bootstrap.Panel>
-      					</div>
-      					<div className='col-md-6'>
-      						<Bootstrap.Panel header={favouriteTitle}>
-      							<Bootstrap.ListGroup fill>
-      								<Bootstrap.ListGroupItem>	
-      									<Table data={visibleFavourites}></Table>
-      								</Bootstrap.ListGroupItem>
-      							</Bootstrap.ListGroup>
-      						</Bootstrap.Panel>
-      					</div>
-      				</div>
-      				<div className="row">
-      					<div className="col-md-12">
-      						<Bootstrap.Panel header={chartTitle}>
-      							<Bootstrap.ListGroup fill>
-      								<Bootstrap.ListGroupItem>
-      									<Chart 	style={{ width: '100%', height: 400 }} 
-      											elementClassName='mixin'
-      											prefix='chart'
-      											options={chartOptions}
-      											data={chartData}/>
-      								</Bootstrap.ListGroupItem>
-      								<Bootstrap.ListGroupItem>
-      									<span style={{ paddingLeft : 7}}> </span>
-      									<Link to='/analytics' style={{ paddingLeft : 7, float: 'right'}}>View analytics</Link>
-      								</Bootstrap.ListGroupItem>
-      							</Bootstrap.ListGroup>
-      						</Bootstrap.Panel>
-      					</div>
-      				</div>
-      			</div>
-      		);
-		    } else {
-	        return (
-	          <div>
-	            <img className='preloader' src='/assets/images/utility/preloader-counterclock.png' />
-	            <img className='preloader-inner' src='/assets/images/utility/preloader-clockwise.png' />
-	          </div>
-	        );
-		    }
-  		}
-  	}
+              <div className='row'>
+                <div className='col-md-6'>
+                  <Bootstrap.Input  type="text" 
+                            ref="searchGroups"
+                            placeholder='Search groups ...'
+                            onChange={this.setGroupsFilter}
+                            buttonAfter={<Bootstrap.Button onClick={this.clearGroupsFilter}><i className='fa fa-trash fa-fw'></i></Bootstrap.Button>} 
+                  />
+                </div>
+                <div className='col-md-6'>
+                  <Bootstrap.Input  type="text" 
+                            ref="searchFavourites"
+                            placeholder='Search favourites ...' 
+                            onChange={this.setFavouritesFilter}
+                            buttonAfter={<Bootstrap.Button onClick={this.clearFavouritesFilter}><i className='fa fa-trash fa-fw'></i></Bootstrap.Button>} 
+                  />
+                </div>
+              </div>
+              <div className='row'>
+                <div className='col-md-6'>
+                  <Bootstrap.Panel header={groupTitle}>
+                    <Bootstrap.ListGroup fill>
+                      <Bootstrap.ListGroupItem>
+                        <Table data={visibleGroups}></Table>
+                      </Bootstrap.ListGroupItem>
+                    </Bootstrap.ListGroup>
+                  </Bootstrap.Panel>
+                </div>
+                <div className='col-md-6'>
+                  <Bootstrap.Panel header={favouriteTitle}>
+                    <Bootstrap.ListGroup fill>
+                      <Bootstrap.ListGroupItem> 
+                        <Table data={visibleFavourites}></Table>
+                      </Bootstrap.ListGroupItem>
+                    </Bootstrap.ListGroup>
+                  </Bootstrap.Panel>
+                </div>
+              </div>
+            </div>
+          );
+        } else {
+          return (
+            <div>
+              <img className='preloader' src='/assets/images/utility/preloader-counterclock.png' />
+              <img className='preloader-inner' src='/assets/images/utility/preloader-clockwise.png' />
+            </div>
+          );
+        }
+      }
+    }
 });
 
 Demographics.icon = 'group';

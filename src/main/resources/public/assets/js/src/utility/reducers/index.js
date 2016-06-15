@@ -7,6 +7,7 @@ var dashboard = require('./dashboard');
 var demographics = require('./demographics');
 var forecasting = require('./forecasting');
 var group = require('./group');
+var groupCatalog=  require('./group-catalog');
 var user = require('./user');
 var userCatalog=  require('./user-catalog');
 var upsertFavouriteForm = require('./upsertFavouriteForm');
@@ -32,6 +33,7 @@ var rootReducer = combineReducers({
   forecasting,
   demographics,
   group,
+  groupCatalog,
   user,
   userCatalog,
   upsertFavouriteForm,

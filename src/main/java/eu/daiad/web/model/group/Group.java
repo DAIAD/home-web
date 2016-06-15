@@ -22,12 +22,26 @@ public abstract class Group {
 
     private List<UUID> members = new ArrayList<UUID>();
 
+    private boolean favorite;
+
+    public EnumGroupType getType() {
+        return EnumGroupType.UNDEFINED;
+    }
+
     public UUID getKey() {
         return key;
     }
 
     public void setKey(UUID key) {
         this.key = key;
+    }
+
+    public UUID getUtilityKey() {
+        return utilityKey;
+    }
+
+    public void setUtilityKey(UUID utilityKey) {
+        this.utilityKey = utilityKey;
     }
 
     public String getName() {
@@ -62,20 +76,20 @@ public abstract class Group {
         this.size = size;
     }
 
-    public UUID getUtilityKey() {
-        return utilityKey;
-    }
-
-    public void setUtilityKey(UUID utilityKey) {
-        this.utilityKey = utilityKey;
-    }
-
-    public EnumGroupType getType() {
-        return EnumGroupType.UNDEFINED;
-    }
-
     public List<UUID> getMembers() {
         return members;
+    }
+
+    public void setMembers(List<UUID> members) {
+        this.members = members;
+    }
+
+    public boolean isFavorite() {
+        return favorite;
+    }
+
+    public void setFavorite(boolean favorite) {
+        this.favorite = favorite;
     }
 
 }

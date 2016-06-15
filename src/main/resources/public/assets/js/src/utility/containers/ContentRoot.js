@@ -176,7 +176,7 @@ var ContentRoot = React.createClass({
                           </Link>
                         </li>
                         <li>
-                          <Link to='/demographics'>
+                          <Link to='/groups'>
                             <span  style={{paddingLeft: 18}}>
                               <i className='fa fa-group fa-fw'></i>{' ' + _t({ id: 'Section.Demographics'})}
                             </span>

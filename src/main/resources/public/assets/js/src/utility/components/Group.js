@@ -52,14 +52,16 @@ var Group = React.createClass({
 	  var currentMembersFields = GroupTablesSchema.Members.fields;
 	  
 	  var currentMembers = null;
+	  var rows = this.membersObjectToArray(Object.assign({}, this.props.currentMembers)).sort(this.compareGroupMembers);
 	  if (this.props.currentMembers) {
   	  currentMembers = {
           fields : currentMembersFields,
-          rows : this.membersObjectToArray(Object.assign({}, this.props.currentMembers)).sort(this.compareGroupMembers),
-          pager : {
-            index : GroupTablesSchema.Members.pager.index,
-            size : GroupTablesSchema.Members.pager.size,
-            count : Math.ceil(this.membersObjectToArray(this.props.currentMembers).length / GroupTablesSchema.Members.pager.size)
+          rows : rows,
+          pager: {
+            index: 0,
+            size: 10,
+            count: rows.length || 0,
+            mode: Table.PAGING_CLIENT_SIDE
           }
       };
   	  
@@ -74,130 +76,16 @@ var Group = React.createClass({
 	  
 	  
 	  
-		var chartData = {
-			    series: [{
-			        legend: 'Average',
-			        xAxis: 'date',
-			        yAxis: 'volume',
-			        data: [{
-			            id: 1,
-			            volume: 25,
-			            date: new Date(2016, 1, 1)
-			        }, {
-			            id: 1,
-			            volume: 70,
-			            date: new Date(2016, 1, 2)
-			        }, {
-			            id: 1,
-			            volume: 75,
-			            date: new Date(2016, 1, 3)
-			        }, {
-			            id: 1,
-			            volume: 62,
-			            date: new Date(2016, 1, 4)
-			        }, {
-			            id: 1,
-			            volume: 53,
-			            date: new Date(2016, 1, 5)
-			        }, {
-			            id: 1,
-			            volume: 82,
-			            date: new Date(2016, 1, 6)
-			        }, {
-			            id: 1,
-			            volume: 41,
-			            date: new Date(2016, 1, 7)
-			        }, {
-			            id: 1,
-			            volume: 45,
-			            date: new Date(2016, 1, 8)
-			        }, {
-			            id: 1,
-			            volume: 52,
-			            date: new Date(2016, 1, 9)
-			        }]
-			    }, {
-			        legend: 'User 1',
-			        xAxis: 'date',
-			        yAxis: 'volume',
-			        data: [{
-			            id: 1,
-			            volume: 2,
-			            date: new Date(2016, 1, 1)
-			        }, {
-			            id: 1,
-			            volume: 4,
-			            date: new Date(2016, 1, 2) 
-			        }, {
-			            id: 1,
-			            volume: 7,
-			            date: new Date(2016, 1, 3)
-			        }, {
-			            id: 1,
-			            volume: 8,
-			            date: new Date(2016, 1, 4)
-			        }, {
-			            id: 1,
-			            volume: 0,
-			            date: new Date(2016, 1, 5)
-			        }, {
-			            id: 1,
-			            volume: 0,
-			            date: new Date(2016, 1, 6)
-			        }, {
-			            id: 1,
-			            volume: 1,
-			            date: new Date(2016, 1, 7)
-			        }, {
-			            id: 1,
-			            volume: 2,
-			            date: new Date(2016, 1, 8)
-			        }, {
-			            id: 1,
-			            volume: 4,
-			            date: new Date(2016, 1, 9)
-			        }]
-			    }]
-			};
-	  		
-	        var chartOptions = {
-	            tooltip: {
-	                show: true
-	            }
-	        };
 	    
 			var groupTitle = null;
 			if (this.props.groupInfo) {
   			groupTitle = (
-  					<span>
-  						<i className='fa fa-group fa-fw'></i>
-  						<span style={{ paddingLeft: 4 }}>{this.props.groupInfo.name ? this.props.groupInfo.name : ''}</span>
-  						<span style={{float: 'right',  marginTop: -5 }}>
-  							<Bootstrap.SplitButton title={_t({id : 'Buttons.Actions'})} id='profile-actions'>
-  								<Bootstrap.MenuItem eventKey='1'>
-  									<i className='fa fa-envelope-o fa-fw'></i>
-  								<span style={{ paddingLeft: 4 }}>Send Message</span>
-  							</Bootstrap.MenuItem>
-  							<Bootstrap.MenuItem eventKey='1' onSelect={this.props.showFavouriteGroupForm}>
-  								<i className='fa fa-bookmark-o fa-fw'></i>
-  								<span style={{ paddingLeft: 4 }}>Add to favourites</span>
-  							</Bootstrap.MenuItem>
-  								<Bootstrap.MenuItem divider />
-  								<Bootstrap.MenuItem eventKey='2'>
-  									<i className='fa fa-cloud-download fa-fw'></i>
-  									<span style={{ paddingLeft: 4 }}>Export data</span>
-  							</Bootstrap.MenuItem>
-  							</Bootstrap.SplitButton>
-  					    </span>
-  					</span>
-  				);
-			}
-			const consumptionTitle = (
 					<span>
-						<i className='fa fa-bar-chart fa-fw'></i>
-						<span style={{ paddingLeft: 4 }}>Consumption</span>
+						<i className='fa fa-group fa-fw'></i>
+						<span style={{ paddingLeft: 4 }}>{this.props.groupInfo.name ? this.props.groupInfo.name : ''}</span>
 					</span>
 				);
+			}
 
 			const memberTitle = (
 					<span>
@@ -246,10 +134,6 @@ var Group = React.createClass({
                               <td>{this.props.groupInfo.name ? this.props.groupInfo.name : ''}</td>
                             </tr>
                             <tr>
-                              <td>Description</td>
-                              <td>{this.props.groupInfo.name ? this.props.groupInfo.name : ''}</td>
-                            </tr>
-                            <tr>
                               <td>Created on</td>
                               <td><FormattedDate value={this.props.groupInfo.createdOn ? this.props.groupInfo.createdOn : new Date()} day='numeric' month='long' year='numeric' /></td>
                             </tr>
@@ -265,6 +149,9 @@ var Group = React.createClass({
                         </table>
                       </div>
                     </Bootstrap.ListGroupItem>
+                    <Bootstrap.ListGroupItem className='clearfix'>
+                      <Link className='pull-right' to='/groups' style={{ paddingLeft : 7, paddingTop: 12 }}>Browse all groups</Link>
+                    </Bootstrap.ListGroupItem>
                   </Bootstrap.ListGroup>
                 </Bootstrap.Panel>
               </div>
@@ -272,26 +159,10 @@ var Group = React.createClass({
                 <Bootstrap.Panel header={memberTitle}>
                   <Bootstrap.ListGroup fill>
                     <Bootstrap.ListGroupItem>
-                        <Bootstrap.Input  type="text" 
-                                  placeholder='Search for user ...' 
-                                  buttonAfter={<Bootstrap.Button><i className='fa fa-plus fa-fw'></i></Bootstrap.Button>} 
-                        />
                       <Table data={currentMembers}></Table>
                     </Bootstrap.ListGroupItem>
-                  </Bootstrap.ListGroup>
-                </Bootstrap.Panel>
-              </div>
-            </div>
-            <div className='row'>
-              <div className='col-md-12'>
-                <Bootstrap.Panel header={consumptionTitle}>
-                  <Bootstrap.ListGroup fill>
-                    <Bootstrap.ListGroupItem>
-                      <Chart  style={{ width: '100%', height: 400 }} 
-                          elementClassName='mixin'
-                          prefix='chart'
-                          options={chartOptions}
-                          data={chartData}/>
+                    <Bootstrap.ListGroupItem className='clearfix'>
+                      <Link className='pull-right' to='/users' style={{ paddingLeft : 7, paddingTop: 12 }}>Browse all users</Link>
                     </Bootstrap.ListGroupItem>
                   </Bootstrap.ListGroup>
                 </Bootstrap.Panel>

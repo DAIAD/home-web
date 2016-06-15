@@ -301,13 +301,12 @@ var Cell = React.createClass({
 			} else {
 				text = (<Link to={formatLink(this.props.field.link, this.props.row)}>{text}</Link>);
 			}
-			
 		}
 
 		var style = {
 		    maxHeight: this.props.style.rowHeight || 100,
 		};
-		if(this.props.field.type !== 'alterable-boolean') {
+		if((this.props.field.type !== 'boolean') && (this.props.field.type !== 'alterable-boolean')) {
 	    style.overflowY = 'auto';		  
 		}
     if((this.props.field.width) && (this.props.field.width > 0)) {

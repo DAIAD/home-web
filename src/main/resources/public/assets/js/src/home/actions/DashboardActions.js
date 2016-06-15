@@ -185,12 +185,8 @@ const updateLayoutItem = function(id, display, type) {
 const fetchAllInfoboxesData = function() {
   return function(dispatch, getState) {
     getState().section.dashboard.infobox.map(function (infobox) {
-      const { id, type, synced } = infobox;
-      //if (type === 'total' || type === 'last' || type === 'efficiency' || type === 'comparison' || type === 'breakdown')
-        if (synced === true) { 
-          console.log('found infobox data in memory');
-          return Promise.resolve(); 
-        }
+      const { id, type } = infobox;
+      
         return dispatch(QueryActions.fetchInfoboxData(infobox))
       .then(res =>  {
           dispatch(setInfoboxData(id, res));
@@ -198,7 +194,7 @@ const fetchAllInfoboxesData = function() {
       })
         .catch(error => { 
           console.error('Caught error in infobox data fetch:', error); 
-          dispatch(setInfoboxData(id, {data: [], error: 'Oops sth went wrong, please refresh the page'})); });
+          dispatch(setInfoboxData(id, {data: [], error: 'Oops sth went wrong'})); });
 
     });
   };

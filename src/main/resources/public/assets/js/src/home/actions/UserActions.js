@@ -7,8 +7,10 @@
 
 var userAPI = require('../api/user');
 var types = require('../constants/ActionTypes');
+var LocaleActions = require('./LocaleActions');
 var DashboardActions = require('./DashboardActions');
 var HistoryActions = require('./HistoryActions');
+var FormActions = require('./FormActions');
 
 const { fetchAll:fetchAllMessages } = require('./MessageActions');
 const { MESSAGE_TYPES } = require('../constants/HomeConstants');
@@ -41,6 +43,20 @@ const receivedLogout = function(status, errors) {
     type: types.USER_RECEIVED_LOGOUT,
     status: status,
     errors: errors
+  };
+};
+
+const requestedQuery = function() {
+  return {
+    type: types.QUERY_REQUEST_START,
+  };
+};
+
+const receivedQuery = function(success, errors) {
+  return {
+    type: types.QUERY_REQUEST_END,
+    success,
+    errors,
   };
 };
 
@@ -84,13 +100,13 @@ const login = function(username, password) {
 };
 
 /**
- * Fetches profile when user refreshes page 
+ * Fetches profile and performs necessary initialization when user eefreshes page 
  *
  * @return {Promise} Resolved or rejected promise with user profile if resolved, errors if rejected
  */
 const refreshProfile = function() {
   return function(dispatch, getState) {
-    return userAPI.getProfile()
+    return dispatch(fetchProfile())
     .then((response) => {
       const { csrf, success, errors, profile } = response;
       
@@ -112,6 +128,28 @@ const refreshProfile = function() {
 };
 
 /**
+ * Fetches profile
+ *
+ * @return {Promise} Resolved or rejected promise with user profile if resolved, errors if rejected
+ */
+const fetchProfile = function() {
+  return function(dispatch, getState) {
+    return userAPI.getProfile()
+    .then((response) => {
+      const { success, errors, profile } = response;
+      
+      dispatch(receivedLogin(success, errors.length?errors[0].code:null, profile));
+
+      return response;
+    })
+    .catch((errors) => {
+      console.error('Error caught on profile fetch:', errors);
+      return errors;
+      });
+  };
+};
+
+/**
  * Call all necessary actions to initialize app with profile data 
  *
  * @param {Object} profile - profile object as returned from server
@@ -120,7 +158,7 @@ const initHome = function (profile) {
   return function(dispatch, getState) {
 
     dispatch(fetchAllMessages());
-      
+
     if (profile.configuration) {
         const configuration = JSON.parse(profile.configuration);
         if (configuration.infoboxes) dispatch(DashboardActions.setInfoboxes(configuration.infoboxes));
@@ -140,7 +178,13 @@ const initHome = function (profile) {
     }
     else {
       dispatch(HistoryActions.setActiveDeviceType('METER', true));
-    }
+      }
+
+    dispatch(LocaleActions.setLocale(profile.locale));
+    const { firstname, lastname, email, username, locale, address, zip, country, timezone } = profile;
+    const profileData = { firstname, lastname, email, username, locale, address, zip, country, timezone };
+    dispatch(FormActions.setForm('profileForm', profileData));
+
   };
 };
 
@@ -150,18 +194,31 @@ const initHome = function (profile) {
  * @param {Object} configuration - serializable object to be saved to user profile
  * @return {Promise} Resolved or rejected promise, with errors if rejected
  */
-const saveToProfile = function (configuration) {
+const saveToProfile = function (profile) {
   return function(dispatch, getState) {
+    console.log('save t dp data', profile);
 
-    const data = Object.assign({}, {configuration: JSON.stringify(configuration)}, {csrf: getState().user.csrf});
+    const data = Object.assign({}, profile, {csrf: getState().user.csrf});
+    console.log('gonna save to profile', data);
+
+    dispatch(requestedQuery());
 
     return userAPI.saveToProfile(data)
     .then((response) => {
+
+      console.log('got = ', response);
+      dispatch(receivedQuery(response.success, response.errors));
+       
+      if (!response || !response.success) {
+        throw new Error (response && response.errors && response.errors.length > 0 ? response.errors[0].code : 'unknownError');
+      }
+
       return response;
 
     })
     .catch((errors) => {
       console.error('Error caught on saveToProfile:', errors);
+      dispatch(receivedQuery(false, errors));
       return errors;
     });
   };
@@ -201,5 +258,6 @@ module.exports = {
   login,
   logout,
   refreshProfile,
+  fetchProfile,
   saveToProfile
 };

@@ -5,6 +5,16 @@
     "es": "Español",
     "de": "Deutsche"
   },
+  "countries": {
+    "United Kingdom": "United Kingdom",
+    "Greece": "Greece",
+    "Spain": "Spain"
+  },
+  "timezones": {
+    "Europe/London": "UTC",
+    "Europe/Athens": "Athens",
+    "Europe/Madrid": "Madrid"
+  },
   "weekdays": {
     "0": "Sunday",
     "1": "Monday",
@@ -29,7 +39,10 @@
     "11": "December"
   },
   "errors": {
-    "Error: Internal Server Error": "Oops, something went wrong. Please try again in a while, or send feedback if this error keeps recurring",
+    "unknownError": "Oops, an unknown error occurred. Please refresh the page or contact us if this error keeps recurring.",
+    "Error: Not Found": "API call not found. Your developer should be fired.",
+    "Error: SharedErrorCode.UNKNOWN": "Oops, an unknown error occurred. Please refresh the page or contact us if this error keeps recurring.", 
+    "Error: Internal Server Error": "Oops, an unknown error occurred. Please refresh the page or contact us if this error keeps recurring.",
     "Error: Forbidden": "You have been idle for a long time. Please refresh the page",
     "SharedErrorCode.AUTHENTICATION": "Authentication has failed. Please try again.",
     "SharedErrorCode.UNKNOWN": "We are facing an internal problem, please try again in a while."
@@ -110,10 +123,15 @@
     "tips": "Tips"
   },
   "profile": {
+    "locale": "Language",
     "username": "Username",
     "email": "Email",
     "firstname": "First name",
     "lastname": "Last name",
+    "address": "Address",
+    "zip": "Postal code",
+    "country": "Country",
+    "timezone": "Timezone",
     "submit": "Update"
   },
   "devices": {

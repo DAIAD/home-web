@@ -2,8 +2,18 @@ package eu.daiad.web.model.group;
 
 public class Segment extends Group {
 
-	@Override
-	public EnumGroupType getType() {
-		return EnumGroupType.SEGMENT;
-	}
+    private String cluster;
+
+    @Override
+    public EnumGroupType getType() {
+        return EnumGroupType.SEGMENT;
+    }
+
+    public String getCluster() {
+        return cluster;
+    }
+
+    public void setCluster(String cluster) {
+        this.cluster = cluster;
+    }
 }

@@ -4,7 +4,12 @@ module.exports = {
   PNG_IMAGES : "/assets/images/home/png",
   NOTIFICATION_TITLE_LENGTH: 50,
   LOCALES: ["en", "el", "de", "es"],
-  
+  COUNTRIES: ["United Kingdom", "Spain", "Greece" ],
+  TIMEZONES: [
+    "Europe/London",
+    "Europe/Madrid",
+    "Europe/Athens"
+  ],
   MESSAGE_TYPES:[
     {type: "ALERT"}, 
     {type: "RECOMMENDATION_STATIC"}, 

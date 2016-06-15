@@ -68,5 +68,8 @@ module.exports = keyMirror({
   MESSAGE_SET_READ: null,
   MESSAGE_SET_EXTRA: null,
 
+  FORM_SET: null,
+  FORM_RESET: null
+
 });
 
