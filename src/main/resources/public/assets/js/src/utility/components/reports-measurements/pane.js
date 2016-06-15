@@ -106,10 +106,11 @@ var ReportPanel = React.createClass({
       },
     },
     
-    templates: {},    
+    templates: {
+      reportTitle: _.template('<%= report.title %> - <%= populationName %>'),
+    },    
     
-    configurationForReport: function (props, context) {
-      var {config} = context;
+    configForReport: function (props, {config}) {
       return config.reports.byType.measurements
         .levels[props.level]
         .reports[props.reportName];
@@ -241,7 +242,7 @@ var ReportPanel = React.createClass({
       return; // cannot yet initialize the target report
     }
      
-    var {timespan} = cls.configurationForReport(this.props, this.context);
+    var {timespan} = cls.configForReport(this.props, this.context);
     this.props.initializeReport(field, level, reportName, {timespan});
     this.props.refreshData(field, level, reportName)
       .then(() => (this.setState({draw: false})));
@@ -269,7 +270,7 @@ var ReportPanel = React.createClass({
       ));
       console.assert(nextContext.config == this.context.config, 
         'Unexpected change for configuration in context!');
-      var {timespan} = cls.configurationForReport(nextProps, nextContext);
+      var {timespan} = cls.configForReport(nextProps, nextContext);
       nextProps.initializeReport(
         nextProps.field, nextProps.level, nextProps.reportName, {timespan}
       );
@@ -348,6 +349,9 @@ var ReportPanel = React.createClass({
     );
     
     var formFragment = this._renderFormFragment();
+
+    var reportTitle = this._titleForReport();
+
     return (
       <Panel header={header} footer={footer}>
         <ListGroup fill>
@@ -358,7 +362,8 @@ var ReportPanel = React.createClass({
               </fieldset>
             </form>
           </ListGroupItem>
-          <ListGroupItem className="report-form-help">
+          <ListGroupItem className="report-form-help report-title-wrapper">
+            <h4>{reportTitle}</h4>
             <FormStatusParagraph 
               dirty={dirty} errorMessage={!error? null : ErrorMessages[error]}
              />
@@ -712,6 +717,29 @@ var ReportPanel = React.createClass({
         },
       }))
     }));
+  },
+
+  _titleForReport: function () {    
+    var {config} = this.context;
+    var {configForReport, templates} = this.constructor;
+    var {population: target} = this.props;
+
+    var report = configForReport(this.props, {config});
+    
+    // Find a friendly name for population target
+    var populationName = target? target.name : 'Utility';
+    if (target instanceof population.Utility || target == null) {
+      populationName = 'Utility'; //config.utility.name;  
+    } else if (target instanceof population.Cluster) {
+      var cluster = config.utility.clusters.find(c => c.key == target.key);
+      populationName = 'Cluster by: ' + cluster.name;
+    } else if (target instanceof population.ClusterGroup) {
+      var cluster = config.utility.clusters.find(c => c.key == target.clusterKey);
+      var group = cluster.groups.find(g => g.key == target.key);
+      populationName = cluster.name + ': ' + group.name;
+    }
+
+    return templates.reportTitle({report, populationName});
   },
 
   // Wrap dispatch actions
