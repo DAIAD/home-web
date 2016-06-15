@@ -28,7 +28,7 @@ var _buildGroupQuery = function(key, label, timezone) {
       ],
       'source' : 'METER',
       'metrics' : [
-        'AVERAGE'
+        'AVERAGE', 'MIN', 'MAX'
       ]
     }
   };

@@ -24,7 +24,9 @@ var _setSelectionMode = function(e) {
 };
 
 var _show = function() {
-  this.setState({ modal: true});
+  if(Object.keys(this.props.userCatalog.selection.selected).length > 0) {
+    this.setState({ modal: true});
+  }
 };
 
 var _hide = function() {
@@ -72,13 +74,25 @@ var _featureRenderer = function(feature) {
 
     self.props.actions.getMeter(feature.properties.userKey, feature.properties.deviceKey, feature.properties.name);
   });
-  
+
+  container.on('click', '.add-consumer-to-collection', function(e) {
+    e.stopPropagation();
+    e.preventDefault();
+
+    self.props.actions.toggleConsumer(feature.properties.userKey);
+  });
+
   var content = [];
-  content.push('<span style="font-weight: bold;">Customer</span>');
-  content.push('<br/>');
-  content.push('<span style="font-size: 14px;">');
-  content.push(feature.properties.name);
+
+  content.push('<span style="font-size: 14px; font-weight: bold;">');
+  content.push(feature.properties.name + '&nbsp');
+  if(this.props.userCatalog.selection.enabled) {
+    content.push('<span class="add-consumer-to-collection" style="cursor: pointer; text-decoration: underline; font-size: 14px;">');
+    content.push('<i class="fa fa-shopping-basket fa-fw">&nbsp</i>');
+    content.push('</span>');  
+  }
   content.push('</span>');
+  
   content.push('<br/>');
   content.push('<br/>');
   content.push('<span style="font-weight: bold;">Address</span>');
@@ -92,8 +106,8 @@ var _featureRenderer = function(feature) {
   content.push('<br/>');
   content.push('<span class="add-meter-chart" style="cursor: pointer; text-decoration: underline; font-size: 14px;">');
   content.push(feature.properties.meter.serial);
-  content.push('</span>');
-  
+  content.push('</span>'); 
+    
   container.html(content.join(''));
 
   return container[0];

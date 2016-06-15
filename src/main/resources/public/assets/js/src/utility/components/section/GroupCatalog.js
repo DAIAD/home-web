@@ -195,7 +195,9 @@ var GroupCatalog  = React.createClass({
                     value={this.props.groupCatalog.metric}
                     options={[
                       { value: 'SUM', label: 'Total' },
-                      { value: 'AVERAGE', label: 'Average' }
+                      { value: 'AVERAGE', label: 'Average' },
+                      { value: 'MIN', label: 'Min' },
+                      { value: 'MAX', label: 'Max' }
                     ]}
                     onChange={_setChartMetric.bind(this)}
                     clearable={false} 
@@ -266,7 +268,7 @@ var GroupCatalog  = React.createClass({
   
           for(v=0; v < c.points.length; v++) {
             data.push({
-              volume: ( this.props.groupCatalog.metric === 'SUM' ? c.points[v].sum : c.points[v].average),
+              volume: c.points[v][this.props.groupCatalog.metric],
               date: new Date(c.points[v].timestamp)
             });
           }

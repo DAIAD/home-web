@@ -54,8 +54,10 @@ var _fillGroupSeries = function(interval, label, data) {
   if ((!data) || (data.points.length === 0)) {
     for (d = days; d > 0; d--) {
       allPoints.push({
-        sum: 0,
-        average : 0,
+        MIN: 0,
+        MAX: 0,
+        SUM: 0,
+        AVERAGE : 0,
         timestamp : ref.clone().toDate().getTime()
       });
 
@@ -72,8 +74,10 @@ var _fillGroupSeries = function(interval, label, data) {
     for (d = days; d > 0; d--) {
       if (index === points.length) {
         allPoints.push({
-          sum: 0,
-          average : 0,
+          MIN: 0,
+          MAX: 0,
+          SUM: 0,
+          AVERAGE : 0,
           timestamp : ref.clone().toDate().getTime()
         });
 
@@ -82,16 +86,20 @@ var _fillGroupSeries = function(interval, label, data) {
         index++;
       } else if (ref.isAfter(points[index].timestamp, 'day')) {
         allPoints.push({
-          sum: 0,
-          average : 0,
+          MIN: 0,
+          MAX: 0,
+          SUM: 0,
+          AVERAGE : 0,
           timestamp : ref.clone().toDate().getTime()
         });
 
         ref.subtract(1, 'days');
       } else if (ref.isSame(points[index].timestamp, 'day')) {
         allPoints.push({
-          sum : points[index].volume.SUM,
-          average : points[index].volume.AVERAGE,
+          MIN: points[index].volume.MIN,
+          MAX: points[index].volume.MAX,
+          SUM : points[index].volume.SUM,
+          AVERAGE : points[index].volume.AVERAGE,
           timestamp : ref.clone().toDate().getTime()
         });
 
