@@ -142,11 +142,24 @@ const lastNFilterToLength = function (filter) {
   else throw new Error('unrecognized filter', filter);
 };
 
+const getCacheKey = function(deviceType, timeOrLength) {
+  if (deviceType === 'AMPHIRO') {
+    return 'AMPHIRO,'+timeOrLength;
+  }
+  else if (deviceType === 'METER') {
+    return 'METER,'+timeOrLength.startDate+'-'+timeOrLength.endDate;
+  }
+  else {
+    throw new Error(`deviceType ${deviceType} not supported`);
+  }
+};
+
 module.exports = {
   validateEmail,
   flattenMessages,
   getFriendlyDuration,
   getEnergyClass,
   getMetricMu,
-  lastNFilterToLength
+  lastNFilterToLength,
+  getCacheKey
 };

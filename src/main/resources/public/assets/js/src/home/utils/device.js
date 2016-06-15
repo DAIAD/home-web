@@ -73,6 +73,9 @@ const getDeviceNameByKey = function(devices, key) {
   return device.name || device.serial || device.macAddress || device.deviceKey;
 };
 
+const filterDataByDeviceKeys = function(data, deviceKeys) {
+    return data.filter(x => deviceKeys.findIndex(k => k === x.deviceKey)>-1);
+};
 
 
 module.exports = {
@@ -87,4 +90,5 @@ module.exports = {
   getDeviceByKey,
   getDeviceKeyByName,
   getDeviceKeysByType,
+  filterDataByDeviceKeys
 };

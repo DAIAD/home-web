@@ -184,19 +184,27 @@ const updateLayoutItem = function(id, display, type) {
  */
 const fetchAllInfoboxesData = function() {
   return function(dispatch, getState) {
-    getState().section.dashboard.infobox.map(function (infobox) {
-      const { id, type } = infobox;
-      
-        return dispatch(QueryActions.fetchInfoboxData(infobox))
-      .then(res =>  {
-          dispatch(setInfoboxData(id, res));
-          //dispatch(resetDirty());
-      })
-        .catch(error => { 
-          console.error('Caught error in infobox data fetch:', error); 
-          dispatch(setInfoboxData(id, {data: [], error: 'Oops sth went wrong'})); });
 
-    });
+    //sequential execution to take advantage of cache
+    //TODO: this implementation is slower FTM
+    getState().section.dashboard.infobox.map(infobox => {
+      return QueryActions.fetchInfoboxData(infobox);
+    })
+    .reduce((prev, curr, i) => {
+      return prev.then(() => {
+        //console.log('tick');
+        return dispatch(curr)
+          .then(res =>  {
+            const id = getState().section.dashboard.infobox[i].id;
+            dispatch(setInfoboxData(id, res));
+          })
+          .catch(error => { 
+            console.error('Caught error in infobox data fetch:', error); 
+            dispatch(setInfoboxData(id, {data: [], error: 'Oops sth went wrong'})); 
+          });
+      });
+    }, Promise.resolve());
+    
   };
 };
 
