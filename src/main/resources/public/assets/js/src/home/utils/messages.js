@@ -4,7 +4,7 @@ const { thisYear, last24Hours } = require('./time');
 //remove extra maps
 const combineMessages = function (categories) {
   return categories.map(cat => 
-                            cat.values.map(msg => Object.assign({}, msg, {category: cat.name})))
+                            cat.values.map(msg => Object.assign({}, stripTags(msg), {category: cat.name})))
                        .reduce(((prev, curr) => prev.concat(curr)), [])
                        .sort((a, b) => b.createdOn - a.createdOn);
 
@@ -46,8 +46,22 @@ const getInfoboxByAlertType = function (type, timestamp) {
   }
 };
 
+const stripTags = function (message) {
+  let title = message.title;
+  let description = message.description;
+  let strings = ["<h1>", "</h1>", "<h2>", "</h2>", "<h3>", "</h3>"];
+
+  for (let s of strings) {
+    title = title.replace(new RegExp(s, 'g'), '');
+    description = description.replace(new RegExp(s, 'g'), '');
+  }
+  
+  return Object.assign({}, message, {title, description});
+};
+
 module.exports = {
   combineMessages,
   getTypeByCategory,
-  getInfoboxByAlertType
+  getInfoboxByAlertType,
+  stripTags
 };
