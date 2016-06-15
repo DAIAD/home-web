@@ -1,5 +1,6 @@
 
 var _ = require('lodash');
+var moment = require('moment');
 var sprintf = require('sprintf');
 
 var ActionTypes = require('../action-types');
@@ -94,14 +95,16 @@ var actions = {
     var k = computeKey(field, level, reportName, key);
     var report = _config.levels[level].reports[reportName];
     
-    var {timespan, source, requested, population: target} = _state[k];
-
+    var {timespan: ts, source, requested, population: target} = _state[k];
+    
+    // Throttle requests
     var now = new Date();
     if (requested && (now.getTime() - requested < 1e+3)) {
       console.info('Skipping refresh requests arriving too fast...');
       return Promise.resolve();
     } 
     
+    // Prepare population target
     if (!target) {
       // Assume target is the entire utility
       target = new population.Utility(config.utility.key, config.utility.name);
@@ -114,18 +117,27 @@ var actions = {
       console.assert(target instanceof population.Group, 
         'Expected an instance of population.Group');
     }
-   
+    
+    // Prepare time range
+    var [t0, t1] = _.isString(ts)? TimeSpan.fromName(ts).toRange() : ts;
+    if (t0 > t1) {
+      let t = t0; t0 = t1; t1 = t; // ensure proper order
+    }
+    t0 = moment(t0).utc();
+    t1 = moment(t1).utc().add(1, level); // add a closure time slot
+
+    // Prepare the entire query
     var q = {
       granularity: report.granularity,
-      timespan: _.isString(timespan)? 
-        TimeSpan.fromName(timespan).toRange(true) : timespan,
+      timespan: [t0.valueOf(), t1.valueOf()], 
       metrics: report.metrics,
       ranking: report.ranking,
       population: _.flatten([target]),
     };
-    
+   
+    // Dispatch!
     dispatch(actions.requestData(field, level, reportName, key, now));
-    
+   
     return queryMeasurements(source, field, q, _config).then(
       (data) => (
         dispatch(actions.setData(field, level, reportName, key, data))
