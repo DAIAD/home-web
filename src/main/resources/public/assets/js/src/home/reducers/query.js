@@ -28,7 +28,7 @@ var query = function (state, action) {
           return Object.assign({}, state, {
             isLoading: false,
             success: true,
-            errors: null
+            //errors: null
           });
 
         case false:

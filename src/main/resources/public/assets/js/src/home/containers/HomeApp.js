@@ -1,7 +1,6 @@
 // Dependencies
 var React = require('react');
 var ReactDOM = require('react-dom');
-var ReactIntlProvider = require('react-intl').IntlProvider;
 var { bindActionCreators } = require('redux');
 var { connect } = require('react-redux');
 
@@ -23,7 +22,12 @@ function mapStateToProps(state) {
       locale: state.locale,
       errors: state.query.errors,
       loading: state.user.status.isLoading || state.locale.status.isLoading || state.query.isLoading,
-      messages: combineMessages([{name: 'alerts', values: state.messages.alerts}, {name: 'announcements', values: state.messages.announcements}, {name:'recommendations', values: state.messages.recommendations}, {name: 'tips', values: state.messages.tips}]),
+      messages: combineMessages([
+        {name: 'alerts', values: state.messages.alerts}, 
+        {name: 'announcements', values: state.messages.announcements}, 
+        {name:'recommendations', values: state.messages.recommendations}, 
+        {name: 'tips', values: state.messages.tips}
+      ]),
     };
 }
 

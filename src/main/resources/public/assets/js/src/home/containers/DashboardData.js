@@ -13,6 +13,7 @@ var Dashboard = require('../components/sections/Dashboard');
 var DashboardActions = require('../actions/DashboardActions');
 var { linkToHistory } = require('../actions/HistoryActions');
 var { saveToProfile } = require('../actions/UserActions');
+var { setForm } = require('../actions/FormActions');
 
 var timeUtil = require('../utils/time');
 
@@ -31,13 +32,14 @@ function mapStateToProps(state, ownProps) {
     mode: state.section.dashboard.mode,
     dirty: state.section.dashboard.dirty,
     infoboxes: state.section.dashboard.infobox,
-    infoboxToAdd: state.section.dashboard.infoboxToAdd,
+    infoboxToAdd: state.forms.infoboxToAdd,
+    //infoboxToAdd: state.section.dashboard.infoboxToAdd,
     //infoboxToAdd: getValues(state.form.addInfobox)
   };
 }
 
 function mapDispatchToProps(dispatch) {
-  return bindActionCreators(Object.assign({}, DashboardActions, {linkToHistory, saveToProfile}), dispatch);
+  return bindActionCreators(Object.assign({}, DashboardActions, {linkToHistory, saveToProfile, setForm}), dispatch);
 }
 
 function mergeProps(stateProps, dispatchProps, ownProps) {
@@ -92,7 +94,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                  },
                  deviceCount: getDeviceCount(stateProps.devices),
                  meterCount: getMeterCount(stateProps.devices),
-                 saveToProfile: () => dispatchProps.saveToProfile(saveData),
+                 saveToProfile: () => dispatchProps.saveToProfile({configuration: JSON.stringify(saveData)}),
                  deviceTypes,
                  types,
                });
