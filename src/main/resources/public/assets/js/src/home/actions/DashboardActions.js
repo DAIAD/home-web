@@ -184,25 +184,25 @@ const updateLayoutItem = function(id, display, type) {
  */
 const fetchAllInfoboxesData = function() {
   return function(dispatch, getState) {
-
-    //sequential execution to take advantage of cache
-    //TODO: this implementation is slower FTM
-    getState().section.dashboard.infobox.map(infobox => {
+  /*
+   * sequential execution to take advantage of cache
+   */
+    return getState().section.dashboard.infobox.map(infobox => {
       return QueryActions.fetchInfoboxData(infobox);
     })
-    .reduce((prev, curr, i) => {
+    .reduce((prev, curr, i, arr) => {
       if (i===0) { 
-        console.time('total');
-        console.time(i); 
+        //console.time('total');
+        //console.time(i); 
       }
       return prev.then(() => {
         //console.log('tick');
         return dispatch(curr)
           .then(res =>  {
-            console.timeEnd(i-1);
-            console.time(i); 
-            if (i === 14) {
-              console.timeEnd('total');
+            //console.timeEnd(i-1);
+            //console.time(i); 
+            if (i === arr.length-1) {
+              //console.timeEnd('total');
             }
             const id = getState().section.dashboard.infobox[i].id;
             dispatch(setInfoboxData(id, res));

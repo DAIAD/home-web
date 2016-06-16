@@ -88,9 +88,9 @@ const login = function(username, password) {
 
       // Actions that need to be dispatched on login
       if (success) {
-        dispatch(initHome(profile));
+        return dispatch(initHome(profile));
       }
-      return response;
+      return Promise.reject(response);
     })
     .catch((errors) => {
       console.error('Error caught on user login:', errors);
@@ -115,10 +115,10 @@ const refreshProfile = function() {
       dispatch(receivedLogin(success, errors.length?errors[0].code:null, profile));
 
       if (success) {
-        dispatch(initHome(profile));
+        return dispatch(initHome(profile));
       } 
 
-      return response;
+      return Promise.reject(response);
     })
     .catch((errors) => {
       console.error('Error caught on profile refresh:', errors);
@@ -165,7 +165,6 @@ const initHome = function (profile) {
         if (configuration.layout) dispatch(DashboardActions.updateLayout(configuration.layout, false));
 
     }
-    dispatch(DashboardActions.fetchAllInfoboxesData());
     
     if (getMeterCount(getState().user.profile.devices) === 0) {
       dispatch(HistoryActions.setActiveDeviceType('AMPHIRO', true));
@@ -184,6 +183,9 @@ const initHome = function (profile) {
     const { firstname, lastname, email, username, locale, address, zip, country, timezone } = profile;
     const profileData = { firstname, lastname, email, username, locale, address, zip, country, timezone };
     dispatch(FormActions.setForm('profileForm', profileData));
+    
+    return dispatch(DashboardActions.fetchAllInfoboxesData())
+            .then(() => ({success:true, profile}));
 
   };
 };
@@ -250,12 +252,24 @@ const logout = function() {
     });
   };
 };
-  
+
+/**
+ * Action that is dispatched after authentication success
+ * for optimization purposes 
+ *
+ * @return {Promise} Resolved or rejected promise with Object {success:true, profile{Object}} if resolved, {success: false} if rejected
+ */
+const letIn = function() {
+  return {
+    type: types.USER_LET_IN
+  };
+};
 
 module.exports = {
   login,
   logout,
   refreshProfile,
   fetchProfile,
-  saveToProfile
+  saveToProfile,
+  letIn
 };

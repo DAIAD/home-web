@@ -23,8 +23,9 @@ store.dispatch(LocaleActions.setLocale(properties.locale))
   .then((response) => {
     if (properties.reload){
       store.dispatch(UserActions.refreshProfile())
-        .then((response) =>{
-          init();
+      .then((res) => {
+        store.dispatch(UserActions.letIn());
+        init();
         });
     }
     else {
@@ -42,3 +43,4 @@ const init = function() {
     </ReduxProvider>,
     document.getElementById('app'));
 };
+

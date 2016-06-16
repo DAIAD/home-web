@@ -29,7 +29,6 @@ var user = function (state, action) {
               isLoading: false,
               errors: null
             },
-            isAuthenticated: true,
             profile: action.profile,
           });
         
@@ -39,11 +38,15 @@ var user = function (state, action) {
               success: false,
               isLoading: false,
               errors: action.errors
-            },
-            isAuthenticated: false,
+            }
           });
       }
       return state;
+
+    case types.USER_LET_IN:
+      return Object.assign({}, state, {
+        isAuthenticated: true
+      });
 
     case types.USER_REQUESTED_LOGOUT:
       return Object.assign({}, state, {

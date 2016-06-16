@@ -12,6 +12,7 @@ module.exports = keyMirror({
   USER_PROFILE_REFRESH : null,
   USER_PROFILE_UPDATE: null,
   USER_SESSION_SET_CSRF: null,
+  USER_LET_IN: null,
 
   DEVICE_RECEIVED_SESSION_SEARCH: null,
   DEVICE_REQUESTED_SESSION_SEARCH: null,

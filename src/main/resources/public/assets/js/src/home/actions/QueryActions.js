@@ -49,10 +49,8 @@ const queryDeviceSessions = function(deviceKeys, options) {
     
     if (!deviceKeys) throw new Error(`Not sufficient data provided for device sessions query: deviceKey:${deviceKeys}`);
 
-    console.time('cache');
     if (getState().query.cache[getCacheKey('AMPHIRO', options.length)]) {
-      console.log('found in cache');
-      console.timeEnd('cache');
+      //console.log('found in cache');
       dispatch(cacheItemRequested('AMPHIRO', options.length));
       return Promise.resolve(filterDataByDeviceKeys(getState().query.cache[getCacheKey('AMPHIRO', options.length)].data, deviceKeys));
     }
@@ -61,13 +59,11 @@ const queryDeviceSessions = function(deviceKeys, options) {
 
     //const data = Object.assign({}, options, {deviceKey:deviceKeys}, {csrf: getState().user.csrf});
 
-    console.time('device');
     //fetch all items to save in cache
     const data = Object.assign({}, options, {deviceKey:getDeviceKeysByType(getState().user.profile.devices, 'AMPHIRO')}, {csrf: getState().user.csrf});
 
     return deviceAPI.querySessions(data)
     .then(response => {
-      console.timeEnd('device');
       dispatch(receivedQuery(response.success, response.errors, response.devices) );
        
       if (!response || !response.success) {
@@ -160,10 +156,8 @@ const queryMeterHistory = function(deviceKeys, time) {
   return function(dispatch, getState) {
     if (!deviceKeys || !time || !time.startDate || !time.endDate) throw new Error(`Not sufficient data provided for meter history query: deviceKey:${deviceKeys}, time: ${time}`);
 
-    console.time('cache');
     if (getState().query.cache[getCacheKey('METER', time)]) {
-      console.log('found in cache!');
-      console.timeEnd('cache');
+      //console.log('found in cache!');
       dispatch(cacheItemRequested('METER', time));
       return Promise.resolve(filterDataByDeviceKeys(getState().query.cache[getCacheKey('METER', time)].data, deviceKeys));
     }
@@ -172,13 +166,11 @@ const queryMeterHistory = function(deviceKeys, time) {
     
     //const data = Object.assign({}, time, {deviceKey:deviceKeys}, {csrf: getState().user.csrf});
 
-    console.time('meter');
     //fetch all meters requested in order to save to cache 
     const data = Object.assign({}, time, {deviceKey:getDeviceKeysByType(getState().user.profile.devices, 'METER')}, {csrf: getState().user.csrf}); 
     
     return meterAPI.getHistory(data)
       .then((response) => {
-        console.timeEnd('meter');
         dispatch(receivedQuery(response.success, response.errors, response.session));
         
         if (!response || !response.success) {
