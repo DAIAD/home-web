@@ -7,15 +7,8 @@
 
 var userAPI = require('../api/user');
 var types = require('../constants/ActionTypes');
-var LocaleActions = require('./LocaleActions');
-var DashboardActions = require('./DashboardActions');
-var HistoryActions = require('./HistoryActions');
-var FormActions = require('./FormActions');
 
-const { fetchAll:fetchAllMessages } = require('./MessageActions');
-const { MESSAGE_TYPES } = require('../constants/HomeConstants');
-
-const { getMeterCount } = require('../utils/device');
+var InitActions = require('./InitActions');
 
 const requestedLogin = function() {
   return {
@@ -88,7 +81,7 @@ const login = function(username, password) {
 
       // Actions that need to be dispatched on login
       if (success) {
-        return dispatch(initHome(profile));
+        return dispatch(InitActions.initHome(profile));
       }
       return Promise.reject(response);
     })
@@ -116,7 +109,7 @@ const refreshProfile = function() {
       dispatch(receivedLogin(success, errors.length?errors[0].code:null, profile));
 
       if (success) {
-        return dispatch(initHome(profile));
+        return dispatch(InitActions.initHome(profile));
       } 
 
       return Promise.reject(response);
@@ -151,43 +144,31 @@ const fetchProfile = function() {
 };
 
 /**
- * Call all necessary actions to initialize app with profile data 
+ * Performs user logout 
  *
- * @param {Object} profile - profile object as returned from server
+ * @return {Promise} Resolved or rejected promise, errors if rejected
  */
-const initHome = function (profile) {
+const logout = function() {
   return function(dispatch, getState) {
+    dispatch(requestedLogout());
 
-    dispatch(fetchAllMessages());
+    const csrf = getState().user.csrf;
 
-    if (profile.configuration) {
-        const configuration = JSON.parse(profile.configuration);
-        if (configuration.infoboxes) dispatch(DashboardActions.setInfoboxes(configuration.infoboxes));
-        if (configuration.layout) dispatch(DashboardActions.updateLayout(configuration.layout, false));
-
-    }
-    
-    if (getMeterCount(getState().user.profile.devices) === 0) {
-      dispatch(HistoryActions.setActiveDeviceType('AMPHIRO', true));
+    return userAPI.logout({csrf})
+    .then((response) => {
       
-      dispatch(FormActions.setForm('infoboxToAdd',{
-        deviceType: 'AMPHIRO',
-        type: 'totalVolumeStat',
-        title : 'Shower volume',
-      }));
-    }
-    else {
-      dispatch(HistoryActions.setActiveDeviceType('METER', true));
-      }
-
-    dispatch(LocaleActions.setLocale(profile.locale));
-    const { firstname, lastname, email, username, locale, address, zip, country, timezone } = profile;
-    const profileData = { firstname, lastname, email, username, locale, address, zip, country, timezone };
-    dispatch(FormActions.setForm('profileForm', profileData));
+      const { success, errors } = response;
     
-    return dispatch(DashboardActions.fetchAllInfoboxesData())
-            .then(() => ({success:true, profile}));
+      dispatch(receivedLogout(success, errors.length?errors[0].code:null));
 
+      return response;
+    })
+    .catch((errors) => {
+
+      dispatch(receivedLogout(true, errors.length?errors[0].code:null));
+      console.error('Error caught on logout:', errors);
+      return errors;
+    });
   };
 };
 
@@ -225,57 +206,6 @@ const saveToProfile = function (profile) {
   };
 };
 
-/**
- * Performs user logout 
- *
- * @return {Promise} Resolved or rejected promise, errors if rejected
- */
-const logout = function() {
-  return function(dispatch, getState) {
-    dispatch(requestedLogout());
-
-    const csrf = getState().user.csrf;
-
-    return userAPI.logout({csrf})
-    .then((response) => {
-      
-      const { success, errors } = response;
-    
-      dispatch(receivedLogout(success, errors.length?errors[0].code:null));
-
-      return response;
-    })
-    .catch((errors) => {
-
-      dispatch(receivedLogout(true, errors.length?errors[0].code:null));
-      console.error('Error caught on logout:', errors);
-      return errors;
-    });
-  };
-};
-
-/**
- * Action that is dispatched after authentication success
- * for optimization purposes 
- *
- * @return {Promise} Resolved or rejected promise with Object {success:true, profile{Object}} if resolved, {success: false} if rejected
- */
-const letIn = function() {
-  return {
-    type: types.USER_LET_IN
-  };
-};
-
-/**
- * Action dispatched when application has been initialized 
- * (used for loading locale messages & reload if active session
- *
- */
-const setReady = function() {
-  return {
-    type: types.HOME_IS_READY
-  };
-};
 
 module.exports = {
   login,
@@ -283,6 +213,4 @@ module.exports = {
   refreshProfile,
   fetchProfile,
   saveToProfile,
-  letIn,
-  setReady
 };

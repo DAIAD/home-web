@@ -8,7 +8,8 @@ var { connect } = require('react-redux');
 var HomeRoot = require('../components/layout/HomeRoot');
 
 // Actions
-var { login, logout, refreshProfile, letIn, setReady } = require('../actions/UserActions');
+var { login, logout, refreshProfile } = require('../actions/UserActions');
+var { letTheRightOneIn, setReady } = require('../actions/InitActions');
 var { setLocale } = require('../actions/LocaleActions');
 var { linkToMessage:linkToNotification } = require('../actions/MessageActions');
 var { dismissError } = require('../actions/QueryActions');
@@ -33,7 +34,7 @@ function mapStateToProps(state) {
 }
 
 function mapDispatchToProps(dispatch) {
-  return bindActionCreators(Object.assign({}, {login, logout, refreshProfile, letIn, setLocale, linkToNotification, dismissError, setReady }), dispatch);
+  return bindActionCreators(Object.assign({}, {login, logout, refreshProfile, letTheRightOneIn, setLocale, linkToNotification, dismissError, setReady }), dispatch);
 }
 
 function mergeProps(stateProps, dispatchProps, ownProps) {
@@ -51,8 +52,8 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                                dispatchProps.refreshProfile()
                                  .then(res => { 
                                    if (res.success) { 
-                                     dispatchProps.setReady(); 
-                                     dispatchProps.letIn();
+                                     dispatchProps.eetReady(); 
+                                     dispatchProps.letTheRightOneIn();
                                    }
                                  }); 
                              }
@@ -62,7 +63,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                            });
                          },
                          login: (user, pass) => dispatchProps.login(user, pass)
-                                                .then(res => res.success ? dispatchProps.letIn() : null), 
+                                                .then(res => res.success ? dispatchProps.letTheRightOneIn() : null), 
                          unreadNotifications: stateProps.messages.reduce(((prev, curr) => !curr.acknowledgedOn ? prev+1 : prev), 0)
                        }
                       );
