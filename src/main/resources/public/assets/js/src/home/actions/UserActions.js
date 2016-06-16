@@ -23,12 +23,12 @@ const requestedLogin = function() {
     };
 };
 
-const receivedLogin = function(status, errors, profile) {
+const receivedLogin = function(success, errors, profile) {
   return {
     type: types.USER_RECEIVED_LOGIN,
-    status: status,
-    errors: errors,
-    profile: profile
+    success,
+    errors,
+    profile
   };
 };
 
@@ -38,11 +38,11 @@ const requestedLogout = function() {
     };
 };
 
-const receivedLogout = function(status, errors) {
+const receivedLogout = function(success, errors) {
   return {
     type: types.USER_RECEIVED_LOGOUT,
-    status: status,
-    errors: errors
+    success,
+    errors
   };
 };
 
@@ -106,6 +106,7 @@ const login = function(username, password) {
  */
 const refreshProfile = function() {
   return function(dispatch, getState) {
+    console.log('refreshing profile...');
     return dispatch(fetchProfile())
     .then((response) => {
       const { csrf, success, errors, profile } = response;
@@ -265,11 +266,23 @@ const letIn = function() {
   };
 };
 
+/**
+ * Action dispatched when application has been initialized 
+ * (used for loading locale messages & reload if active session
+ *
+ */
+const setReady = function() {
+  return {
+    type: types.HOME_IS_READY
+  };
+};
+
 module.exports = {
   login,
   logout,
   refreshProfile,
   fetchProfile,
   saveToProfile,
-  letIn
+  letIn,
+  setReady
 };

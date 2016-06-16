@@ -1,6 +1,8 @@
 var keyMirror = require('keymirror');
 
 module.exports = keyMirror({
+  HOME_IS_READY: null,
+
   LOCALE_CHANGE : null,
   LOCALE_REQUEST_MESSAGES: null,
   LOCALE_RECEIVED_MESSAGES: null,
