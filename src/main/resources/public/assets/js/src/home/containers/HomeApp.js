@@ -8,8 +8,8 @@ var { connect } = require('react-redux');
 var HomeRoot = require('../components/layout/HomeRoot');
 
 // Actions
-var { login, logout, refreshProfile } = require('../actions/UserActions');
-var { letTheRightOneIn, setReady } = require('../actions/InitActions');
+var { login, logout, refreshProfile, letTheRightOneIn } = require('../actions/UserActions');
+var { setReady } = require('../actions/InitActions');
 var { setLocale } = require('../actions/LocaleActions');
 var { linkToMessage:linkToNotification } = require('../actions/MessageActions');
 var { dismissError } = require('../actions/QueryActions');
@@ -52,7 +52,7 @@ function mergeProps(stateProps, dispatchProps, ownProps) {
                                dispatchProps.refreshProfile()
                                  .then(res => { 
                                    if (res.success) { 
-                                     dispatchProps.eetReady(); 
+                                     dispatchProps.setReady(); 
                                      dispatchProps.letTheRightOneIn();
                                    }
                                  }); 

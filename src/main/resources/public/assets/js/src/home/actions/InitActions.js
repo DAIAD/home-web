@@ -57,18 +57,6 @@ const initHome = function (profile) {
 };
 
 /**
- * Action that is dispatched after authentication success
- * for optimization purposes 
- *
- * @return {Promise} Resolved or rejected promise with Object {success:true, profile{Object}} if resolved, {success: false} if rejected
- */
-const letTheRightOneIn = function() {
-  return {
-    type: types.USER_LET_IN
-  };
-};
-
-/**
  * Action dispatched when application has been initialized 
  * (used for loading locale messages & reload if active session
  *
@@ -81,6 +69,5 @@ const setReady = function() {
 
 module.exports = {
   initHome,
-  letTheRightOneIn,
   setReady
 };

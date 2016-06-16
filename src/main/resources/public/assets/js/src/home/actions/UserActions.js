@@ -206,6 +206,17 @@ const saveToProfile = function (profile) {
   };
 };
 
+/**
+ * Action that is dispatched after authentication success
+ * for optimization purposes 
+ *
+ * @return {Promise} Resolved or rejected promise with Object {success:true, profile{Object}} if resolved, {success: false} if rejected
+ */
+const letTheRightOneIn = function() {
+  return {
+    type: types.USER_LET_IN
+  };
+};
 
 module.exports = {
   login,
@@ -213,4 +224,5 @@ module.exports = {
   refreshProfile,
   fetchProfile,
   saveToProfile,
+  letTheRightOneIn
 };
