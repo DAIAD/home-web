@@ -7,7 +7,7 @@ function ChartBox (props) {
     <div>
       <div >
         {
-          (() => chartData.length>0 ? 
+          (() => chartData && chartData.length>0 ? 
            (type === 'budget' ? 
             <div>
               <div 

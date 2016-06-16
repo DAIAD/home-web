@@ -36,7 +36,7 @@ const requestedLocaleMessages = function(locale) {
 const setLocale = function(locale) {
   return function(dispatch, getState) {
     if (getState().locale.locale === locale){
-      return true;
+      return Promise.resolve(true);
     }
     //dispatch request messages to update state
     dispatch(requestedLocaleMessages(locale));

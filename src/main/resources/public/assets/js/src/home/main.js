@@ -2,17 +2,16 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
 var ReduxProvider = require('react-redux').Provider;
-var configureStore = require('./store/configureStore');
 var Router = require('react-router').Router;
 require('babel-polyfill');
 
-var history = require('./routing/history');
+
 var routes = require('./routing/routes');
-var store = configureStore(history);
+var store = require('./store/configureStore');
 
 var { syncHistoryWithStore } = require('react-router-redux');
+var history = require('./routing/history');
 history = syncHistoryWithStore(history, store);
-
 
 //Actions
 var LocaleActions = require('./actions/LocaleActions');
@@ -25,26 +24,12 @@ ReactIntl.addLocaleData(require('react-intl/locale-data/el'));
 ReactIntl.addLocaleData(require('react-intl/locale-data/es'));
 ReactIntl.addLocaleData(require('react-intl/locale-data/de'));
 
-store.dispatch(LocaleActions.setLocale(properties.locale))
-  .then((response) => {
-    if (properties.reload){
-      store.dispatch(UserActions.refreshProfile())
-        .then((response) =>{
-          init();
-        });
-    }
-    else {
-      init();
-    }
-});
-    
-const init = function() {
-  ReactDOM.render(
-    <ReduxProvider store={store}>
-      <Router 
-        history={history}
-        routes={routes}
-      />
-    </ReduxProvider>,
-    document.getElementById('app'));
-};
+ReactDOM.render(
+  <ReduxProvider store={store}>
+    <Router 
+      history={history}
+      routes={routes}
+    />
+  </ReduxProvider>,
+  document.getElementById('app'));
+

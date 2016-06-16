@@ -56,7 +56,7 @@ const getChartMeterCategories = function(time) {
 };
 
 const getChartMeterCategoryLabels = function(xData, time, intl) {
-  if (!time || time.granularity == null) return [];
+  if (!time || time.granularity == null || !intl) return [];
 
   return xData.map(t => getTimeLabelByGranularityShort(t, time.granularity, intl));
 

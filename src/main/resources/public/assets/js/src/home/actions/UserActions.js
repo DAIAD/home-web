@@ -23,12 +23,12 @@ const requestedLogin = function() {
     };
 };
 
-const receivedLogin = function(status, errors, profile) {
+const receivedLogin = function(success, errors, profile) {
   return {
     type: types.USER_RECEIVED_LOGIN,
-    status: status,
-    errors: errors,
-    profile: profile
+    success,
+    errors,
+    profile
   };
 };
 
@@ -38,11 +38,11 @@ const requestedLogout = function() {
     };
 };
 
-const receivedLogout = function(status, errors) {
+const receivedLogout = function(success, errors) {
   return {
     type: types.USER_RECEIVED_LOGOUT,
-    status: status,
-    errors: errors
+    success,
+    errors
   };
 };
 
@@ -88,9 +88,9 @@ const login = function(username, password) {
 
       // Actions that need to be dispatched on login
       if (success) {
-        dispatch(initHome(profile));
+        return dispatch(initHome(profile));
       }
-      return response;
+      return Promise.reject(response);
     })
     .catch((errors) => {
       console.error('Error caught on user login:', errors);
@@ -106,6 +106,7 @@ const login = function(username, password) {
  */
 const refreshProfile = function() {
   return function(dispatch, getState) {
+    console.log('refreshing profile...');
     return dispatch(fetchProfile())
     .then((response) => {
       const { csrf, success, errors, profile } = response;
@@ -115,10 +116,10 @@ const refreshProfile = function() {
       dispatch(receivedLogin(success, errors.length?errors[0].code:null, profile));
 
       if (success) {
-        dispatch(initHome(profile));
+        return dispatch(initHome(profile));
       } 
 
-      return response;
+      return Promise.reject(response);
     })
     .catch((errors) => {
       console.error('Error caught on profile refresh:', errors);
@@ -165,7 +166,6 @@ const initHome = function (profile) {
         if (configuration.layout) dispatch(DashboardActions.updateLayout(configuration.layout, false));
 
     }
-    dispatch(DashboardActions.fetchAllInfoboxesData());
     
     if (getMeterCount(getState().user.profile.devices) === 0) {
       dispatch(HistoryActions.setActiveDeviceType('AMPHIRO', true));
@@ -184,6 +184,9 @@ const initHome = function (profile) {
     const { firstname, lastname, email, username, locale, address, zip, country, timezone } = profile;
     const profileData = { firstname, lastname, email, username, locale, address, zip, country, timezone };
     dispatch(FormActions.setForm('profileForm', profileData));
+    
+    return dispatch(DashboardActions.fetchAllInfoboxesData())
+            .then(() => ({success:true, profile}));
 
   };
 };
@@ -196,17 +199,15 @@ const initHome = function (profile) {
  */
 const saveToProfile = function (profile) {
   return function(dispatch, getState) {
-    console.log('save t dp data', profile);
 
-    const data = Object.assign({}, profile, {csrf: getState().user.csrf});
-    console.log('gonna save to profile', data);
+    //TODO: country is there because of bug in backend that sets it to null otherwise causing problems
+    const data = Object.assign({}, {country: 'Greece'}, profile, {csrf: getState().user.csrf});
 
     dispatch(requestedQuery());
 
     return userAPI.saveToProfile(data)
     .then((response) => {
 
-      console.log('got = ', response);
       dispatch(receivedQuery(response.success, response.errors));
        
       if (!response || !response.success) {
@@ -252,12 +253,36 @@ const logout = function() {
     });
   };
 };
-  
+
+/**
+ * Action that is dispatched after authentication success
+ * for optimization purposes 
+ *
+ * @return {Promise} Resolved or rejected promise with Object {success:true, profile{Object}} if resolved, {success: false} if rejected
+ */
+const letIn = function() {
+  return {
+    type: types.USER_LET_IN
+  };
+};
+
+/**
+ * Action dispatched when application has been initialized 
+ * (used for loading locale messages & reload if active session
+ *
+ */
+const setReady = function() {
+  return {
+    type: types.HOME_IS_READY
+  };
+};
 
 module.exports = {
   login,
   logout,
   refreshProfile,
   fetchProfile,
-  saveToProfile
+  saveToProfile,
+  letIn,
+  setReady
 };

@@ -6,6 +6,7 @@ var user = function (state, action) {
       status: {
         isLoading: false
       },
+      ready: false,
       isAuthenticated: false,
       csrf: null,
       profile: {}
@@ -13,6 +14,11 @@ var user = function (state, action) {
   }
  
   switch (action.type) {
+    case types.HOME_IS_READY:
+      return Object.assign({}, state, {
+        ready: true
+      });
+  
     case types.USER_REQUESTED_LOGIN:
       return Object.assign({}, state, {
         status: {
@@ -21,7 +27,7 @@ var user = function (state, action) {
       });
 
     case types.USER_RECEIVED_LOGIN:
-      switch (action.status) {
+      switch (action.success) {
         case true:
           return Object.assign({}, state, {
             status: {
@@ -29,7 +35,6 @@ var user = function (state, action) {
               isLoading: false,
               errors: null
             },
-            isAuthenticated: true,
             profile: action.profile,
           });
         
@@ -39,11 +44,15 @@ var user = function (state, action) {
               success: false,
               isLoading: false,
               errors: action.errors
-            },
-            isAuthenticated: false,
+            }
           });
       }
       return state;
+
+    case types.USER_LET_IN:
+      return Object.assign({}, state, {
+        isAuthenticated: true
+      });
 
     case types.USER_REQUESTED_LOGOUT:
       return Object.assign({}, state, {
@@ -53,7 +62,7 @@ var user = function (state, action) {
       });
 
     case types.USER_RECEIVED_LOGOUT:
-      switch (action.status) {
+      switch (action.success) {
         case true:
           return Object.assign({}, state, {
             status: {

@@ -3,7 +3,8 @@ var types = require('../constants/ActionTypes');
 const initialState = {
   isLoading: false,
   success: null,
-  errors: null
+  errors: null,
+  cache: {}
 };
 
 var query = function (state, action) {
@@ -47,6 +48,32 @@ var query = function (state, action) {
                   
     case types.USER_RECEIVED_LOGOUT:
       return Object.assign({}, initialState);
+
+
+    case types.QUERY_SET_CACHE: {
+      return Object.assign({}, state, {
+        cache: action.cache
+      });
+    }
+
+    case types.QUERY_SAVE_TO_CACHE: {
+      let newCache = Object.assign({}, state.cache);
+      newCache[action.key] = {
+        data: action.data,
+        counter: 1
+      };
+      return Object.assign({}, state, {
+        cache:  newCache
+      });
+    }
+
+    case types.QUERY_CACHE_ITEM_REQUESTED: {
+      let newCache = Object.assign({}, state.cache);
+      newCache[action.key] = Object.assign({}, newCache[action.key], {counter: newCache[action.key].counter+1});
+      return Object.assign({}, state, {
+        cache: newCache
+      });
+    }
 
     default:
       return state;

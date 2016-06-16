@@ -1,6 +1,16 @@
 var types = require('../constants/ActionTypes');
 var locales = function (state, action) {
-  if (state === undefined) state = {};
+  if (state === undefined) {
+    state = {
+      status: {
+        success: false,
+        errors: null,
+        isLoading: false
+      },
+      messages: null,
+      locale: null
+    };
+  }
  
   switch (action.type) {
     case types.LOCALE_REQUEST_MESSAGES:
