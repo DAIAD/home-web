@@ -157,7 +157,7 @@ const fetchProfile = function() {
 const initHome = function (profile) {
   return function(dispatch, getState) {
 
-    dispatch(fetchAllMessages());
+    //dispatch(fetchAllMessages());
 
     if (profile.configuration) {
         const configuration = JSON.parse(profile.configuration);

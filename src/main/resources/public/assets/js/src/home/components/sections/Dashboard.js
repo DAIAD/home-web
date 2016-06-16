@@ -160,26 +160,33 @@ function InfoPanel (props) {
   return (
       <ResponsiveGridLayout 
         className='layout'
-        layouts={{sm: layout}}
-        breakpoints={{sm: 850}}
-        cols={{sm: 4}}
+        layouts={{xs:layout, xxs:layout}}
+        breakpoints={{xs:650, xxs:200}}
+        cols={{xs:4, xxs:1}}
         rowHeight={160}
+        measureBeforeMount={true}
         draggableHandle='.infobox-header'
-        isDraggable={true}
-        isResizable={false}
-        onBreakpointChange={(newBreakpoint, newCols) => {
-          //console.log('new break!', newBreakpoint, newCols);
-          //return newCols;
+        resizable={true}
+        draggable={true}
+        onLayoutChange={(l, allLayouts) => {
+          console.log('layout changed', layout, l);
+          if (layout === l) {
+            updateLayout(l);
+          }
         }}
         onResizeStop={(layout, oldItem, newItem, placeholder) => { 
-          updateLayout(layout);  
+          console.log('resized', layout, oldItem, newItem);
+          //updateLayout(layout);  
+          //updateLayout(layout);  
         }}
-        onDragStop={(layout) => {
-          updateLayout(layout); 
+        onDragStop={(layout, oldItem, newItem, placeholder) => {
+          console.log('dragged', layout, oldItem, newItem, placeholder);
+          //updateLayout(layout); 
         }}
        >
        {
          infoboxes.map(function(infobox) {
+           console.log('mapping ', infobox.id);
            return (
              <div key={infobox.id}>
                <InfoBox {...{mode, periods, displays, chartFormatter, infobox, updateInfobox, removeInfobox, intl, linkToHistory}} /> 
@@ -292,7 +299,7 @@ function AddInfoboxModal (props) {
 }
 
 var Dashboard = React.createClass({
-  mixins: [ PureRenderMixin ],
+  //mixins: [ PureRenderMixin ],
 
   componentWillMount: function() {
     const { fetchAllInfoboxesData, switchMode } = this.props;
@@ -316,8 +323,12 @@ var Dashboard = React.createClass({
    
   },
   */
+  componentWillReceiveProps: function(nextProps) {
+    
+  },
   render: function() {
-    const { firstname, mode, dirty, switchMode, addInfobox, saveToProfile, setDirty, resetDirty, deviceCount, meterCount, metrics , types, deviceTypes, infoboxToAdd, setForm } = this.props;
+    const { firstname, mode, dirty, switchMode, addInfobox, saveToProfile, setDirty, resetDirty, deviceCount, meterCount, metrics , types, infoboxes, deviceTypes, infoboxToAdd, setForm, layout, updateInfobox, removeInfobox, linkToHistory, intl, updateLayout } = this.props;
+    console.log('layout=', layout);
     return (
       <MainSection id="section.dashboard">
         <div className='dashboard'>
@@ -325,8 +336,11 @@ var Dashboard = React.createClass({
 
             <SayHello firstname={firstname} />
             <AddInfoboxModal {...{showModal:mode==='add', switchMode, addInfobox, infoboxToAdd,  metrics, types, deviceTypes, setForm }}/>
+
+            {
+              <InfoPanel {...this.props} />
+            }
             
-            <InfoPanel {...this.props} />
           </div>
           <div className='dashboard-right'>
             <div className='dashboard-device-info'>

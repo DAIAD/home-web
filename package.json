@@ -38,7 +38,7 @@
     "react-datetime": "^2.2.1",
     "react-dom": "~0.14.6",
     "react-echarts": "git+https://github.com/DAIAD/react-echarts.git#master",
-    "react-grid-layout": "^0.10.8",
+    "react-grid-layout": "^0.12.6",
     "react-intl": "~2.0.0-rc-1",
     "react-redux": "~4.4.0",
     "react-router": "~2.0.0",
