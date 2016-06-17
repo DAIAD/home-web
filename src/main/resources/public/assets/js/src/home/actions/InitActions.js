@@ -45,13 +45,16 @@ const initHome = function (profile) {
       dispatch(HistoryActions.setActiveDeviceType('METER', true));
       }
 
-    dispatch(LocaleActions.setLocale(profile.locale));
     const { firstname, lastname, email, username, locale, address, zip, country, timezone } = profile;
     const profileData = { firstname, lastname, email, username, locale, address, zip, country, timezone };
     dispatch(FormActions.setForm('profileForm', profileData));
     
+
     return dispatch(DashboardActions.fetchAllInfoboxesData())
-            .then(() => ({success:true, profile}));
+    .then(() => {
+      dispatch(LocaleActions.setLocale(profile.locale));
+      return {success:true, profile};
+    });
 
   };
 };
