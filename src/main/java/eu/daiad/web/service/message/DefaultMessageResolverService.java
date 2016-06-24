@@ -535,7 +535,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 	public SimpleEntry<Boolean, Double> alertTooMuchWaterConsumptionSWM(ConsumptionAggregateContainer aggregates,
 					UUID accountKey, DateTimeZone timezone) {
 
-		if (aggregates.getAverageWeeklyConsumptionSWM() == null) {
+		if (aggregates.getAverageWeeklySWM().getValue() == null) {
 			return new SimpleEntry<>(false, null);
 		}
 
@@ -558,10 +558,10 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		MeterDataPoint meterPoint = (MeterDataPoint) dataPoint;
 		Double lastWeekSum = meterPoint.getVolume().get(EnumMetric.SUM);
 
-		if (lastWeekSum > 2 * aggregates.getAverageWeeklyConsumptionSWM()) {
+		if (lastWeekSum > 2 * aggregates.getAverageWeeklySWM().getValue()) {
 			// return annual savings if average behavior is adopted. Multiply
 			// with 52 weeks for annual value (liters).
-			return new SimpleEntry<>(true, (lastWeekSum - aggregates.getAverageWeeklyConsumptionSWM()) * 52);
+			return new SimpleEntry<>(true, (lastWeekSum - aggregates.getAverageWeeklySWM().getValue()) * 52);
 		} else {
 			return new SimpleEntry<>(false, null);
 		}
@@ -764,13 +764,13 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 	public SimpleEntry<Boolean, Integer> alertWaterEfficiencyLeaderSWM(ConsumptionAggregateContainer aggregates,
 					UUID accountKey, DateTimeZone timezone) {
 
-		if (aggregates.getTop10BaseMonthThresholdSWM() == null || aggregates.getAverageMonthlyConsumptionSWM() == null) {
+		if (aggregates.getTop10BaseMonthSWM().getValue() == null || aggregates.getAverageMonthlySWM().getValue() == null) {
 
 			return new SimpleEntry<>(false, null);
 		}
 
-		Double baseTop10Consumption = aggregates.getTop10BaseMonthThresholdSWM();
-		Double averageMonthlyAllUsers = aggregates.getAverageMonthlyConsumptionSWM();
+		Double baseTop10Consumption = aggregates.getTop10BaseMonthSWM().getValue();
+		Double averageMonthlyAllUsers = aggregates.getAverageMonthlySWM().getValue();
 
 		DataQueryBuilder dataQueryBuilder = new DataQueryBuilder();
 		dataQueryBuilder.timezone(timezone).sliding(-30, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
@@ -811,7 +811,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 	// 22 alert - You are doing a great job!
 	public boolean alertPromptGoodJobMonthlySWM(ConsumptionAggregateContainer aggregates, UUID accountKey,
 					DateTimeZone timezone) {
-		if (aggregates.getAverageMonthlyConsumptionSWM() == null) {
+		if (aggregates.getAverageMonthlySWM() == null) {
 			return false;
 		}
 
@@ -865,7 +865,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 			} else {
 
 				fireAlert = percentDifferenceFromPreviousMonth > 6
-								&& currentMonthConsumptionSWM < aggregates.getAverageMonthlyConsumptionSWM();
+								&& currentMonthConsumptionSWM < aggregates.getAverageMonthlySWM().getValue();
 			}
 		} else {
 			fireAlert = false;
@@ -932,7 +932,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 	public boolean alertTop25SaverWeeklySWM(ConsumptionAggregateContainer aggregates, UUID accountKey,
 					DateTimeZone timezone) {
 
-		if (aggregates.getTop25BaseWeekThresholdSWM() == null) {
+		if (aggregates.getTop25BaseWeekSWM() == null || aggregates.getTop25BaseWeekSWM().getValue() == null) {
 			return false;
 		}
 
@@ -944,7 +944,11 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQuery currentWeekQuery = currentWeekQueryBuilder.build();
 		DataQueryResponse currentWeekQueryResponse = dataService.execute(currentWeekQuery);
 		ArrayList<GroupDataSeries> currentWeekDataSeriesMeter = currentWeekQueryResponse.getMeters();
-
+        
+		if (currentWeekDataSeriesMeter == null || currentWeekDataSeriesMeter.isEmpty()) {
+			return false;
+		}
+        
 		for (GroupDataSeries serie : currentWeekDataSeriesMeter) {
 			if (!serie.getPoints().isEmpty()) {
 				ArrayList<DataPoint> points = serie.getPoints();
@@ -955,14 +959,14 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 			}
 		}
 
-		return currentWeekConsumptionSWM < aggregates.getTop25BaseWeekThresholdSWM();
+		return currentWeekConsumptionSWM < aggregates.getTop25BaseWeekSWM().getValue();
 	}
 
 	// 25 alert - Congratulations! You are among the top group of savers in your
 	// city.
 	public boolean alertTop10SaverSWM(ConsumptionAggregateContainer aggregates, UUID accountKey, DateTimeZone timezone) {
 
-		if (aggregates.getTop10BaseWeekThresholdSWM() == null) {
+		if (aggregates.getTop10BaseWeekSWM().getValue() == null) {
 			return false;
 		}
 
@@ -989,7 +993,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 			}
 		}
 		return ((currentWeekConsumptionSWM != null) && (currentWeekConsumptionSWM < aggregates
-						.getTop10BaseWeekThresholdSWM()));
+						.getTop10BaseWeekSWM().getValue()));
 	}
 
 	// 1 recommendation - Spend 1 less minute in the shower and save {integer1}

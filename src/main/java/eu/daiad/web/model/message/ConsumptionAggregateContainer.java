@@ -1,18 +1,25 @@
 package eu.daiad.web.model.message;
 
+import eu.daiad.web.service.message.aggregates.AverageMonthlySWM;
+import eu.daiad.web.service.message.aggregates.AverageWeeklySWM;
+import eu.daiad.web.service.message.aggregates.Top10BaseMonthSWM;
+import eu.daiad.web.service.message.aggregates.Top10BaseWeekSWM;
+import eu.daiad.web.service.message.aggregates.Top25BaseWeekSWM;
 import org.joda.time.DateTime;
 
 public class ConsumptionAggregateContainer {
-
-	private Double averageMonthlyConsumptionAmphiro = null;
-	private Double averageWeeklyConsumptionAmphiro = null;
-	private Double averageMonthlyConsumptionSWM = null;
-	private Double averageWeeklyConsumptionSWM = null;
-	private Double top10BaseMonthThresholdSWM = null;
-	private Double top10BaseWeekThresholdSWM = null;
-
+    
+    private int population;
+    private AverageMonthlySWM averageMonthlySWM = new AverageMonthlySWM();
+    private AverageWeeklySWM averageWeeklySWM = new AverageWeeklySWM();
+    private Top10BaseMonthSWM top10BaseMonthSWM = new Top10BaseMonthSWM();
+    private Top10BaseWeekSWM top10BaseWeekSWM = new Top10BaseWeekSWM();
+    private Top25BaseWeekSWM top25BaseWeekSWM = new Top25BaseWeekSWM();
+    
+    
+	private Double averageMonthlyConsumptionAmphiro = null;    
+	private Double averageWeeklyConsumptionAmphiro = null;	
 	private Double top10BaseThresholdAmphiro = null;
-	private Double top25BaseWeekThresholdSWM = null;
 	private Double averageTemperatureAmphiro = null;
 	private Double averageFlowAmphiro = null;
 	private Double averageDurationAmphiro = null;
@@ -21,10 +28,10 @@ public class ConsumptionAggregateContainer {
 	private Integer showerDurationThresholdMinutes = 30;
 	private Float temperatureThreshold = 45f;
 
-	private DateTime lastDateComputed;
+	//private DateTime lastDateComputed;
 
 	public ConsumptionAggregateContainer() {
-		lastDateComputed = DateTime.now();
+
 	}
 
 	public Double getAverageMonthlyConsumptionAmphiro() {
@@ -43,22 +50,22 @@ public class ConsumptionAggregateContainer {
 		this.averageWeeklyConsumptionAmphiro = averageWeeklyConsumptionAmphiro;
 	}
 
-	public Double getAverageMonthlyConsumptionSWM() {
-		return averageMonthlyConsumptionSWM;
+	public AverageMonthlySWM getAverageMonthlySWM() {
+        return averageMonthlySWM;
+	}    
+    
+	public void setAverageMonthlySWM(AverageMonthlySWM averageMonthlySWM) {
+        this.averageMonthlySWM = averageMonthlySWM;
+	}  
+    
+	public AverageWeeklySWM getAverageWeeklySWM() {
+		return averageWeeklySWM;
 	}
 
-	public void setAverageMonthlyConsumptionSWM(Double averageMonthlyConsumptionSWM) {
-		this.averageMonthlyConsumptionSWM = averageMonthlyConsumptionSWM;
+	public void setAverageWeeklySWM(AverageWeeklySWM averageWeeklySWM) {
+		this.averageWeeklySWM = averageWeeklySWM;
 	}
-
-	public Double getAverageWeeklyConsumptionSWM() {
-		return averageWeeklyConsumptionSWM;
-	}
-
-	public void setAverageWeeklyConsumptionSWM(Double averageWeeklyConsumptionSWM) {
-		this.averageWeeklyConsumptionSWM = averageWeeklyConsumptionSWM;
-	}
-
+    
 	public Float getTemperatureThreshold() {
 		return temperatureThreshold;
 	}
@@ -67,22 +74,22 @@ public class ConsumptionAggregateContainer {
 		this.temperatureThreshold = temperatureThreshold;
 	}
 
-	public Double getTop10BaseMonthThresholdSWM() {
-		return top10BaseMonthThresholdSWM;
+	public Top10BaseMonthSWM getTop10BaseMonthSWM() {
+		return top10BaseMonthSWM;
 	}
 
-	public void setTop10BaseMonthThresholdSWM(Double top10BaseMonthThresholdSWM) {
-		this.top10BaseMonthThresholdSWM = top10BaseMonthThresholdSWM;
+	public void setTop10BaseMonthSWM(Top10BaseMonthSWM top10BaseMonthSWM) {
+		this.top10BaseMonthSWM = top10BaseMonthSWM;
+	}    
+    
+	public Top10BaseWeekSWM getTop10BaseWeekSWM() {
+		return top10BaseWeekSWM;
 	}
 
-	public Double getTop10BaseWeekThresholdSWM() {
-		return top10BaseWeekThresholdSWM;
+	public void setTop10BaseWeekSWM(Top10BaseWeekSWM top10BaseWeekSWM) {
+		this.top10BaseWeekSWM = top10BaseWeekSWM;
 	}
-
-	public void setTop10BaseWeekThresholdSWM(Double top10BaseWeekThresholdSWM) {
-		this.top10BaseWeekThresholdSWM = top10BaseWeekThresholdSWM;
-	}
-
+    
 	public Double getTop10BaseThresholdAmphiro() {
 		return top10BaseThresholdAmphiro;
 	}
@@ -90,15 +97,15 @@ public class ConsumptionAggregateContainer {
 	public void setTop10BaseThresholdAmphiro(Double top10BaseThresholdAmphiro) {
 		this.top10BaseThresholdAmphiro = top10BaseThresholdAmphiro;
 	}
-
-	public Double getTop25BaseWeekThresholdSWM() {
-		return top25BaseWeekThresholdSWM;
+    
+	public Top25BaseWeekSWM getTop25BaseWeekSWM() {
+		return top25BaseWeekSWM;
 	}
 
-	public void setTop25BaseWeekThresholdSWM(Double top25BaseWeekThresholdSWM) {
-		this.top25BaseWeekThresholdSWM = top25BaseWeekThresholdSWM;
+	public void setTop25BaseWeekSWM(Top25BaseWeekSWM top25BaseWeekSWM) {
+		this.top25BaseWeekSWM = top25BaseWeekSWM;
 	}
-
+    
 	public Integer getShowerDurationThresholdMinutes() {
 		return showerDurationThresholdMinutes;
 	}
@@ -139,41 +146,73 @@ public class ConsumptionAggregateContainer {
 		this.averageSessionConsumptionAmphiro = averageSessionConsumptionAmphiro;
 	}
 
-	public DateTime getLastDateComputed() {
-		return lastDateComputed;
-	}
-
-	public void setLastDateComputed(DateTime lastDateComputed) {
-		this.lastDateComputed = lastDateComputed;
-	}
+//	public DateTime getLastDateComputed() {
+//		return lastDateComputed;
+//	}
+//
+//	public void setLastDateComputed(DateTime lastDateComputed) {
+//		this.lastDateComputed = lastDateComputed;
+//	}
 
 	public void resetValues() {
+
+        if(getAverageMonthlySWM() != null){
+            getAverageMonthlySWM().setValue(null);
+            getAverageMonthlySWM().setLastComputed(null);            
+        }
+
+        if(getAverageWeeklySWM() != null){
+            getAverageWeeklySWM().setValue(null);
+            getAverageWeeklySWM().setLastComputed(null);            
+        }        
+        
+        if(getTop10BaseMonthSWM() != null){
+            getTop10BaseMonthSWM().setValue(null);
+            getTop10BaseMonthSWM().setLastComputed(null);            
+        } 
+        
+        if(getTop10BaseWeekSWM() != null){
+            getTop10BaseWeekSWM().setValue(null);
+            getTop10BaseWeekSWM().setLastComputed(null);            
+        } 
+        
+        if(getTop25BaseWeekSWM() != null){
+            getTop25BaseWeekSWM().setValue(null);
+            getTop25BaseWeekSWM().setLastComputed(null);            
+        }         
+        
 		setAverageMonthlyConsumptionAmphiro(null);
 		setAverageWeeklyConsumptionAmphiro(null);
-		setAverageMonthlyConsumptionSWM(null);
-		setTop10BaseMonthThresholdSWM(null);
-		setTop10BaseWeekThresholdSWM(null);
+
 		setTop10BaseThresholdAmphiro(null);
-		setTop25BaseWeekThresholdSWM(null);
+
 		setAverageTemperatureAmphiro(null);
 		setAverageFlowAmphiro(null);
 		setAverageDurationAmphiro(null);
-		setLastDateComputed(null);
+		//setLastDateComputed(null);
 	}
 
+    public int getPopulation() {
+        return population;
+    }
+
+    public void setPopulation(int population) {
+        this.population = population;
+    }
+    
 	@Override
 	public String toString() {
 		return "MessageAggregatesContainer{" + "\naverageMonthlyConsumptionAmphiro=" + averageMonthlyConsumptionAmphiro
 						+ ",\naverageWeeklyConsumptionAmphiro=" + averageWeeklyConsumptionAmphiro
-						+ ",\naverageMonthlyConsumptionSWM=" + averageMonthlyConsumptionSWM
-						+ ",\naverageWeeklyConsumptionSWM=" + averageWeeklyConsumptionSWM
-						+ ",\ntop10BaseMonthThresholdSWM=" + top10BaseMonthThresholdSWM
-						+ ",\ntop10BaseWeekThresholdSWM=" + top10BaseWeekThresholdSWM + ",\ntop10BaseThresholdAmphiro="
-						+ top10BaseThresholdAmphiro + ",\ntop25BaseWeekThresholdSWM=" + top25BaseWeekThresholdSWM
+						+ ",\naverageMonthlyConsumptionSWM=" + averageMonthlySWM.getValue()
+						+ ",\naverageWeeklyConsumptionSWM=" + averageWeeklySWM.getValue()
+						+ ",\ntop10BaseMonthThresholdSWM=" + top10BaseMonthSWM.getValue()
+						+ ",\ntop10BaseWeekThresholdSWM=" + top10BaseWeekSWM.getValue() + ",\ntop10BaseThresholdAmphiro="
+						+ top10BaseThresholdAmphiro + ",\ntop25BaseWeekThresholdSWM=" + top25BaseWeekSWM.getValue()
 						+ ",\naverageTemperatureAmphiro=" + averageTemperatureAmphiro + ",\naverageFlowAmphiro="
 						+ averageFlowAmphiro + ",\naverageDurationAmphiro=" + averageDurationAmphiro
 						+ ",\nshowerDurationThresholdMinutes=" + showerDurationThresholdMinutes
-						+ ",\ntemperatureThreshold=" + temperatureThreshold + ",\nlastDateComputed=" + lastDateComputed
+						//+ ",\ntemperatureThreshold=" + temperatureThreshold + ",\nlastDateComputed=" + lastDateComputed
 						+ "\n}";
 	}
 }
