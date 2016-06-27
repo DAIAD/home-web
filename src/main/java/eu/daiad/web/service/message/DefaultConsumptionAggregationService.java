@@ -25,8 +25,15 @@ import eu.daiad.web.model.query.MeterDataPoint;
 import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IDataService;
+import eu.daiad.web.service.message.aggregates.AverageDurationAmphiro;
+import eu.daiad.web.service.message.aggregates.AverageFlowAmphiro;
+import eu.daiad.web.service.message.aggregates.AverageMonthlyAmphiro;
 import eu.daiad.web.service.message.aggregates.AverageMonthlySWM;
+import eu.daiad.web.service.message.aggregates.AverageSessionAmphiro;
+import eu.daiad.web.service.message.aggregates.AverageTemperatureAmphiro;
+import eu.daiad.web.service.message.aggregates.AverageWeeklyAmphiro;
 import eu.daiad.web.service.message.aggregates.AverageWeeklySWM;
+import eu.daiad.web.service.message.aggregates.Top10BaseMonthAmphiro;
 import eu.daiad.web.service.message.aggregates.Top10BaseMonthSWM;
 import eu.daiad.web.service.message.aggregates.Top10BaseWeekSWM;
 import eu.daiad.web.service.message.aggregates.Top25BaseWeekSWM;
@@ -51,8 +58,6 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 		ConsumptionAggregateContainer aggregates = new ConsumptionAggregateContainer();
         
         //aggregates.resetValues();
-        //aggregates.setLastDateComputed(DateTime.now().minusMonths(2));
-        
         computeAverageMonthlyConsumptionSWM(config, aggregates);
 		computeAverageWeeklyConsumptionSWM(config, aggregates);       
         computeTop10MonthlyConsumptionThresholdSWM(config, aggregates);
@@ -315,11 +320,14 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
     
 	private void computeAverageMonthlyConsumptionAmphiro(MessageCalculationConfiguration config,
 					ConsumptionAggregateContainer container) {
-		if (container.getAverageMonthlyConsumptionAmphiro() == null
-//						|| container.getLastDateComputed().isBefore(
-//										DateTime.now().minusDays(config.getAggregateComputationInterval()))
-                ) {
+		if (container.getAverageMonthlyAmphiro() == null
+                || container.getAverageMonthlyAmphiro().getValue() == null
+                || container.getAverageMonthlyAmphiro().getLastComputed() == null
+				|| container.getAverageMonthlyAmphiro().getLastComputed().isBefore(
+						DateTime.now().minusDays(config.getAggregateComputationInterval()))) {
 
+            AverageMonthlyAmphiro aggregate = new AverageMonthlyAmphiro();
+            
 			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
 			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
 
@@ -342,10 +350,15 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 					AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
 					Map<EnumMetric, Double> ma = amphiroDataPoint.getVolume();
 					Double sumMonthlyConsumptionAmphiro = ma.get(EnumMetric.SUM);
-					container.setAverageMonthlyConsumptionAmphiro(sumMonthlyConsumptionAmphiro / series.getPopulation());
-					//container.setLastDateComputed(DateTime.now());
+
+                    aggregate.setLastComputed(DateTime.now());
+                    aggregate.setValue(sumMonthlyConsumptionAmphiro / series.getPopulation());
+                    container.setAverageMonthlyAmphiro(aggregate);                     
+
 				} else {
-					container.setAverageMonthlyConsumptionAmphiro(null);
+                    aggregate.setLastComputed(null);
+                    aggregate.setValue(null);
+                    container.setAverageMonthlyAmphiro(aggregate); 
 				}
 			}
 		}
@@ -353,11 +366,14 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 
 	private void computeAverageWeeklyConsumptionAmphiro(MessageCalculationConfiguration config,
 					ConsumptionAggregateContainer container) {
-		if (container.getAverageWeeklyConsumptionAmphiro() == null
-//						|| container.getLastDateComputed().isBefore(
-//										DateTime.now().minusDays(config.getAggregateComputationInterval()))
-                ) {
+		if (container.getAverageWeeklyAmphiro() == null
+                || container.getAverageWeeklyAmphiro().getValue() == null
+                || container.getAverageWeeklyAmphiro().getLastComputed() == null
+				|| container.getAverageWeeklyAmphiro().getLastComputed().isBefore(
+						DateTime.now().minusDays(config.getAggregateComputationInterval()))) {
 
+            AverageWeeklyAmphiro aggregate = new AverageWeeklyAmphiro();
+            
 			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
 			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
 
@@ -381,10 +397,14 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 					Map<EnumMetric, Double> ma = amphiroDataPoint.getVolume();
 					Double averageWeeklyAmphiro = ma.get(EnumMetric.SUM);
 
-					container.setAverageWeeklyConsumptionAmphiro(averageWeeklyAmphiro / series.getPopulation());
-					//container.setLastDateComputed(DateTime.now());
+                    aggregate.setLastComputed(DateTime.now());
+                    aggregate.setValue(averageWeeklyAmphiro / series.getPopulation());
+                    container.setAverageWeeklyAmphiro(aggregate);                    
+                    
 				} else {
-					container.setAverageWeeklyConsumptionAmphiro(null);
+                    aggregate.setLastComputed(null);
+                    aggregate.setValue(null);
+                    container.setAverageWeeklyAmphiro(aggregate); 
 				}
 			}
 		}
@@ -392,11 +412,14 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
     
 	private void computeTop10MonthlyConsumptionThresholdAmphiro(MessageCalculationConfiguration config,
 					ConsumptionAggregateContainer container) {
-		if (container.getTop10BaseThresholdAmphiro() == null
-//						|| container.getLastDateComputed().isBefore(
-//										DateTime.now().minusDays(config.getAggregateComputationInterval()))
-                ) {
+		if (container.getTop10BaseMonthAmphiro() == null
+                || container.getTop10BaseMonthAmphiro().getValue() == null
+                || container.getTop10BaseMonthAmphiro().getLastComputed() == null
+				|| container.getTop10BaseMonthAmphiro().getLastComputed().isBefore(
+						DateTime.now().minusDays(config.getAggregateComputationInterval()))) {
 
+            Top10BaseMonthAmphiro aggregate = new Top10BaseMonthAmphiro();
+            
 			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
 			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
 			List<Double> averageConsumptions = new ArrayList<>();
@@ -426,10 +449,15 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 				Collections.sort(averageConsumptions);
 				int top10BaseIndex = (int) (averageConsumptions.size() * 10) / 100;
 				Double consumptionThresholdTop10 = averageConsumptions.get(top10BaseIndex);
-				container.setTop10BaseThresholdAmphiro(consumptionThresholdTop10);
-				//container.setLastDateComputed(DateTime.now());
+                
+                aggregate.setLastComputed(DateTime.now());
+                aggregate.setValue(consumptionThresholdTop10);
+                container.setTop10BaseMonthAmphiro(aggregate);                 
+
 			} else {
-				container.setTop10BaseThresholdAmphiro(null);
+                aggregate.setLastComputed(null);
+                aggregate.setValue(null);
+                container.setTop10BaseMonthAmphiro(aggregate); 
 			}
 		}
 	}
@@ -437,10 +465,13 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 	private void computeAverageTemperatureAmphiro(MessageCalculationConfiguration config,
 					ConsumptionAggregateContainer container) {
 		if (container.getAverageTemperatureAmphiro() == null
-//						|| container.getLastDateComputed().isBefore(
-//										DateTime.now().minusDays(config.getAggregateComputationInterval()))
-                ) {
+                || container.getAverageTemperatureAmphiro().getValue() == null
+                || container.getAverageTemperatureAmphiro().getLastComputed() == null
+				|| container.getAverageTemperatureAmphiro().getLastComputed().isBefore(
+						DateTime.now().minusDays(config.getAggregateComputationInterval()))) {
 
+            AverageTemperatureAmphiro aggregate = new AverageTemperatureAmphiro();
+            
 			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
 			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
 
@@ -462,87 +493,14 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 					AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) point.get(0);
 					Map<EnumMetric, Double> metricsMap = amphiroDataPoint.getTemperature();
 					Double averageTemperatureAmphiro = metricsMap.get(EnumMetric.AVERAGE);
-
-					container.setAverageTemperatureAmphiro(averageTemperatureAmphiro);
-					//container.setLastDateComputed(DateTime.now());
+                    
+                    aggregate.setLastComputed(DateTime.now());
+                    aggregate.setValue(averageTemperatureAmphiro);
+                    container.setAverageTemperatureAmphiro(aggregate);
 				} else {
-					container.setAverageTemperatureAmphiro(null);
-				}
-			}
-		}
-	}
-
-	private void computeAverageDurationAmphiro(MessageCalculationConfiguration config,
-					ConsumptionAggregateContainer container) {
-		if (container.getAverageDurationAmphiro() == null
-//						|| container.getLastDateComputed().isBefore(
-//										DateTime.now().minusDays(config.getAggregateComputationInterval()))
-                ) {
-
-			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
-			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
-
-			DataQueryBuilder queryBuilder = new DataQueryBuilder();
-			queryBuilder.timezone(config.getTimezone()).sliding(-30, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
-							.users("utility", userUUIDs).amphiro().average();
-
-			DataQuery query = queryBuilder.build();
-			DataQueryResponse queryResponse = dataService.execute(query);
-			ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
-
-			for (GroupDataSeries series : dataSeriesAmphiro) {
-				if (series.getPopulation() == 0) {
-					return;
-				}
-
-				if (!series.getPoints().isEmpty()) {
-					ArrayList<DataPoint> point = series.getPoints();
-					AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) point.get(0);
-					Map<EnumMetric, Double> metricsMap = amphiroDataPoint.getDuration();
-					Double averageDurationAmphiro = metricsMap.get(EnumMetric.AVERAGE);
-
-					container.setAverageDurationAmphiro(averageDurationAmphiro);
-					//container.setLastDateComputed(DateTime.now());
-				} else {
-					container.setAverageDurationAmphiro(null);
-				}
-			}
-		}
-	}
-
-	private void computeAverageFlowAmphiro(MessageCalculationConfiguration config,
-					ConsumptionAggregateContainer container) {
-		if (container.getAverageFlowAmphiro() == null
-//						|| container.getLastDateComputed().isBefore(
-//										DateTime.now().minusDays(config.getAggregateComputationInterval()))
-                ) {
-
-			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
-			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
-
-			DataQueryBuilder queryBuilder = new DataQueryBuilder();
-			queryBuilder.timezone(config.getTimezone()).sliding(-30, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
-							.users("utility", userUUIDs).amphiro().average();
-
-			DataQuery query = queryBuilder.build();
-			DataQueryResponse queryResponse = dataService.execute(query);
-			ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
-
-			for (GroupDataSeries series : dataSeriesAmphiro) {
-				if (series.getPopulation() == 0) {
-					return;
-				}
-
-				if (!series.getPoints().isEmpty()) {
-					ArrayList<DataPoint> point = series.getPoints();
-					AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) point.get(0);
-					Map<EnumMetric, Double> metricsMap = amphiroDataPoint.getFlow();
-					Double averageFlowAmphiro = metricsMap.get(EnumMetric.AVERAGE);
-
-					container.setAverageFlowAmphiro(averageFlowAmphiro);
-					//container.setLastDateComputed(DateTime.now());
-				} else {
-					container.setAverageFlowAmphiro(null);
+                    aggregate.setLastComputed(null);
+                    aggregate.setValue(null);
+                    container.setAverageTemperatureAmphiro(aggregate); 
 				}
 			}
 		}
@@ -550,11 +508,13 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 
 	private void computeAverageSessionConsumptionAmphiro(MessageCalculationConfiguration config,
 					ConsumptionAggregateContainer container) {
-		if (container.getAverageSessionConsumptionAmphiro() == null
-//						|| container.getLastDateComputed().isBefore(
-//										DateTime.now().minusDays(config.getAggregateComputationInterval()))
-                ) {
+		if (container.getAverageSessionAmphiro() == null
+                || container.getAverageSessionAmphiro().getValue() == null
+                || container.getAverageSessionAmphiro().getLastComputed() == null
+				|| container.getAverageSessionAmphiro().getLastComputed().isBefore(
+						DateTime.now().minusDays(config.getAggregateComputationInterval()))) {
 
+            AverageSessionAmphiro aggregate = new AverageSessionAmphiro();
 			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
 			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
 
@@ -577,10 +537,103 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 					Map<EnumMetric, Double> metricsMap = amphiroDataPoint.getVolume();
 					Double averageSessionConsumptionAmphiro = metricsMap.get(EnumMetric.AVERAGE);
 
-					container.setAverageTemperatureAmphiro(averageSessionConsumptionAmphiro);
-					//container.setLastDateComputed(DateTime.now());
+                    aggregate.setLastComputed(DateTime.now());
+                    aggregate.setValue(averageSessionConsumptionAmphiro);
+                    container.setAverageSessionAmphiro(aggregate);                    
+                    
 				} else {
-					container.setAverageTemperatureAmphiro(null);
+                    aggregate.setLastComputed(null);
+                    aggregate.setValue(null);
+                    container.setAverageSessionAmphiro(aggregate); 
+				}
+			}
+		}
+	}
+    
+	private void computeAverageFlowAmphiro(MessageCalculationConfiguration config,
+					ConsumptionAggregateContainer container) {
+		if (container.getAverageFlowAmphiro() == null
+                || container.getAverageFlowAmphiro().getValue() == null
+                || container.getAverageFlowAmphiro().getLastComputed() == null
+				|| container.getAverageFlowAmphiro().getLastComputed().isBefore(
+						DateTime.now().minusDays(config.getAggregateComputationInterval()))) {
+
+            AverageFlowAmphiro aggregate = new AverageFlowAmphiro();
+            
+			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
+			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
+
+			DataQueryBuilder queryBuilder = new DataQueryBuilder();
+			queryBuilder.timezone(config.getTimezone()).sliding(-30, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+							.users("utility", userUUIDs).amphiro().average();
+
+			DataQuery query = queryBuilder.build();
+			DataQueryResponse queryResponse = dataService.execute(query);
+			ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
+
+			for (GroupDataSeries series : dataSeriesAmphiro) {
+				if (series.getPopulation() == 0) {
+					return;
+				}
+
+				if (!series.getPoints().isEmpty()) {
+					ArrayList<DataPoint> point = series.getPoints();
+					AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) point.get(0);
+					Map<EnumMetric, Double> metricsMap = amphiroDataPoint.getFlow();
+					Double averageFlowAmphiro = metricsMap.get(EnumMetric.AVERAGE);
+
+                    aggregate.setLastComputed(DateTime.now());
+                    aggregate.setValue(averageFlowAmphiro);
+                    container.setAverageFlowAmphiro(aggregate);                     
+
+				} else {
+                    aggregate.setLastComputed(null);
+                    aggregate.setValue(null);
+                    container.setAverageFlowAmphiro(aggregate);
+				}
+			}
+		}
+	}
+    
+	private void computeAverageDurationAmphiro(MessageCalculationConfiguration config,
+					ConsumptionAggregateContainer container) {
+		if (container.getAverageDurationAmphiro() == null
+                || container.getAverageDurationAmphiro().getValue() == null
+                || container.getAverageDurationAmphiro().getLastComputed() == null
+				|| container.getAverageDurationAmphiro().getLastComputed().isBefore(
+						DateTime.now().minusDays(config.getAggregateComputationInterval()))) {
+
+            AverageDurationAmphiro aggregate = new AverageDurationAmphiro();
+            
+			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
+			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
+
+			DataQueryBuilder queryBuilder = new DataQueryBuilder();
+			queryBuilder.timezone(config.getTimezone()).sliding(-30, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+							.users("utility", userUUIDs).amphiro().average();
+
+			DataQuery query = queryBuilder.build();
+			DataQueryResponse queryResponse = dataService.execute(query);
+			ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
+
+			for (GroupDataSeries series : dataSeriesAmphiro) {
+				if (series.getPopulation() == 0) {
+					return;
+				}
+
+				if (!series.getPoints().isEmpty()) {
+					ArrayList<DataPoint> point = series.getPoints();
+					AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) point.get(0);
+					Map<EnumMetric, Double> metricsMap = amphiroDataPoint.getDuration();
+					Double averageDurationAmphiro = metricsMap.get(EnumMetric.AVERAGE);
+
+                    aggregate.setLastComputed(DateTime.now());
+                    aggregate.setValue(averageDurationAmphiro);
+                    container.setAverageDurationAmphiro(aggregate);                     
+				} else {
+                    aggregate.setLastComputed(null);
+                    aggregate.setValue(null);
+                    container.setAverageDurationAmphiro(aggregate);
 				}
 			}
 		}
