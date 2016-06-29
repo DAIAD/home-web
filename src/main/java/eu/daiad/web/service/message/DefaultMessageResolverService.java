@@ -208,9 +208,6 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		return fireAlert;
 	}
 
-	// TODO : Check if there is a bug where MIN is requested but COUNT is
-	// checked ...
-
 	// 5 alert - Water quality not assured!
 	public boolean alertWaterQualitySWM(UUID accountKey, DateTimeZone timezone) {
 		boolean fireAlert = false;
@@ -959,6 +956,10 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 			}
 		}
 
+        if(currentWeekConsumptionSWM == null){
+            return false;
+        }
+        
 		return currentWeekConsumptionSWM < aggregates.getTop25BaseWeekSWM().getValue();
 	}
 
