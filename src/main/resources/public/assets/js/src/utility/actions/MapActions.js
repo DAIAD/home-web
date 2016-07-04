@@ -10,7 +10,7 @@ var _buildTimelineQuery = function(population, source, geometry, timezone, inter
       group : 'd29f8cb8-7df6-4d57-8c99-0a155cc394c5'
     }
   ];
-  console.log(geometry);
+
   if (geometry) {
     spatial.push({
       type : 'CONSTRAINT',
