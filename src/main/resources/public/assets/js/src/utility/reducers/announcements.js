@@ -8,7 +8,6 @@ var initialState = {
     initialUsers: null,
     addedUsers : [],
     showForm : false,
-    showModal : false,
     accountId : null,
     selected : false,
     rowIdToggled: null,
@@ -16,7 +15,9 @@ var initialState = {
     filter : null,
     groups : null,
     group : null,
-    checked : false
+    checked : false,
+    showModal : false,
+    announcement : null
 };
 
 var announcements = function (state, action) {
@@ -93,7 +94,12 @@ var announcements = function (state, action) {
       return Object.assign({}, state, {
         accounts: action.accounts,
         checked: action.checked
-      });       
+      });   
+    case types.ANNC_SHOW_DELETE_MODAL:
+      return Object.assign({}, state, {
+        showModal: action.showModal,
+        announcement : action.announcement
+      });      
     default:
       return state || initialState;
   }

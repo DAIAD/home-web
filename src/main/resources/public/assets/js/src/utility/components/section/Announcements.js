@@ -69,7 +69,7 @@ var Announcements = React.createClass({
     }     
     this.props.removeUsers(remainingAccounts);
   }, 
-  
+   
   render: function() {
     var thisAnnouncements = this;
     self = this;
@@ -77,20 +77,27 @@ var Announcements = React.createClass({
  
   		var historyTable = {
   				fields: [{
-  					name: 'id',
-  					title: 'Id',
-  					hidden: true
+  					 name: 'id',
+  					 title: 'Id',
+  					 hidden: true
   				}, {
-  					name: 'title',
-  					title: 'Title'
+  					 name: 'title',
+  					 title: 'Title'
   				}, {
-  					name: 'content',
-  					title: 'Content'
+  					 name: 'content',
+  					 title: 'Content'
   				}, {
-  					name: 'dispatchedOn',
-  					title: 'Dispatched On',
-  					type: 'datetime'
-  				}],
+  					 name: 'dispatchedOn',
+  					 title: 'Dispatched On',
+  					 type: 'datetime'
+  				}, {
+        name: 'cancel',
+        type:'action',
+        icon: 'remove',
+        handler: function() {
+          self.props.setShowModal(this.props.row);            
+        }
+      }],
   				rows: this.props.announcements,
   				pager: {
   					index: 0,
@@ -345,6 +352,28 @@ var Announcements = React.createClass({
       );       
     }
 
+    if(this.props.showModal){
+      var modal;
+      var title = 'Delete Announcement?';
+			   var actions = [{
+				    action: self.props.hideModal,
+				    name: "Cancel"
+			     },  {
+				      action: this.props.confirmDeleteAnnouncement,
+				      name: "Delete",
+				      style: 'danger'
+			      }];    
+      return (     
+       <div>
+  		      <Modal show = {this.props.showModal}
+              onClose = {this.props.hideModal}
+              title = {title}
+              text = {'Are you sure?'}
+  		          actions = {actions}
+  		      />
+      </div>     
+      );   
+    }
     if(this.props.groups && this.props.accounts && this.props.announcements && !this.props.isLoading){
       return (
         <div className="container-fluid" style={{ paddingTop: 10 }}>
@@ -401,7 +430,6 @@ var Announcements = React.createClass({
           </div>
           <div>
 
-
             <div className="row">
               <div className="col-md-12">
                 <Bootstrap.Panel header={historyTitle}>
@@ -437,11 +465,12 @@ function mapStateToProps(state) {
       addedUsers: state.announcements.addedUsers,
       rowIdToggled: state.announcements.rowIdToggled,
       showForm: state.announcements.showForm,
-      showModal: state.announcements.showModal,
       filter: state.announcements.filter,
       groups: state.announcements.groups,
       group: state.announcements.group,
-      checked : state.announcements.checked
+      checked : state.announcements.checked,
+      showModal : state.announcements.showModal,
+      announcement : state.announcements.announcement
   };
 }
 
@@ -477,6 +506,9 @@ function mapDispatchToProps(dispatch) {
     setSelectedAll: function (event, selected){
 			   dispatch(AnnouncementsActions.setSelectedAll(event, selected));
 		  },
+    setShowModal : bindActionCreators(AnnouncementsActions.showModal, dispatch),
+    hideModal : bindActionCreators(AnnouncementsActions.hideModal, dispatch),  
+    confirmDeleteAnnouncement : bindActionCreators(AnnouncementsActions.deleteAnnouncement, dispatch)
   };
 }
 

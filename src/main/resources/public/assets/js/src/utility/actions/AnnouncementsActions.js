@@ -83,6 +83,24 @@ var broadcastAnnouncementResponse = function(success, errors) {
   };
 };
 
+var requestDeleteAnnouncement = function (announcement) {
+  return {
+    type: types.ANNC_DELETE_ANNOUNCEMENT_REQUEST,
+    announcement: announcement,
+    showModal: false,
+    isLoading: true
+  };
+};
+
+var deleteAnnouncementResponse = function (success, errors) {
+  return {
+    type: types.ANNC_DELETE_ANNOUNCEMENT_RESPONSE,
+    isLoading: false,
+    success: success,
+    errors: errors
+  };
+};
+
 var AnnouncementsActions = {
   fetchGroups: function (event) {
     
@@ -251,6 +269,29 @@ var AnnouncementsActions = {
       accounts : accounts,
       checked : selected
     };  
+  },
+  showModal : function(announcement){
+    return {
+      type : types.ANNC_SHOW_DELETE_MODAL,
+      announcement : announcement,
+      showModal: true
+    };
+  },
+  hideModal : function(){
+    return {
+      type : types.ANNC_SHOW_DELETE_MODAL,
+      showModal: false
+    };
+  },
+  deleteAnnouncement: function (event) {
+    return function (dispatch, getState) {
+      dispatch(requestDeleteAnnouncement);
+      return alertsAPI.deleteAnnouncement(getState(event).announcements.announcement).then(function (response) {
+        dispatch(deleteAnnouncementResponse(response.success, response.errors));                  
+      }, function (error) {
+        dispatch(deleteAnnouncementResponse(false, error, null));
+      });
+    };
   }
 };
 
