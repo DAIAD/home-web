@@ -113,11 +113,11 @@ var types = mirrorToPath({
   config: {
     utility: {
       REQUEST_CONFIGURATION: null,
-      SET_CONFIGURATION: null,
+      SET_CONFIGURATION: null
     },
     reports: {
-      SET_CONFIGURATION: null,
-    },
+      SET_CONFIGURATION: null
+    }
   },
 
   // Reports
@@ -132,7 +132,7 @@ var types = mirrorToPath({
       SET_TIMESPAN: null,
       SET_POPULATION: null,
       REQUEST_DATA: null,
-      SET_DATA: null,
+      SET_DATA: null
     },
 
     // Reports on system utilization
@@ -140,27 +140,27 @@ var types = mirrorToPath({
     system: {
       INITIALIZE: null, 
       REQUEST_DATA: null,
-      SET_DATA: null,
-    },
+      SET_DATA: null
+    }
   },
  
   // Chart panels
   
   charting: {
     SET_FIELD: null,
-    SET_REPORT: null,
+    SET_REPORT: null
   },
 
   // Overview reports (atop of measurement reports)
 
   overview: {
-    SETUP: null,
+    SETUP: null
   },
 
   // Trials
 
   trials: {
-    SET_REFERENCE_TIME: null,
+    SET_REFERENCE_TIME: null
   },
 
   // Alerts
@@ -223,6 +223,8 @@ var types = mirrorToPath({
   ANNC_HIDE_DELETE_MODAL: null,
   ANNC_DELETE_ANNOUNCEMENT_REQUEST: null,
   ANNC_DELETE_ANNOUNCEMENT_RESPONSE: null,
+  ANNC_SHOW_ANNOUNCEMENT_REQUEST: null,
+  ANNC_SHOW_ANNOUNCEMENT_RESPONSE: null,  
   //
   
   QUERY_SUBMIT: null,
