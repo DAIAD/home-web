@@ -36,8 +36,7 @@ var ManageAlertsAPI = {
       return api.json(`/action/group/accounts/current/${groupUUID}`, groupUUID, 'GET');
     },
     deleteAnnouncement: function(announcement){
-      console.log('api delete announcement ' + announcement.title);
-      //return api.json('/action/announcement/delete', announcement);
+      return api.json('/action/announcements/delete', announcement);
     },    
 };
 

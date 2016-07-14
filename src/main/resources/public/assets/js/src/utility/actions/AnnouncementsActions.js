@@ -96,6 +96,7 @@ var deleteAnnouncementResponse = function (success, errors) {
   return {
     type: types.ANNC_DELETE_ANNOUNCEMENT_RESPONSE,
     isLoading: false,
+    showModal: false,
     success: success,
     errors: errors
   };
@@ -287,7 +288,15 @@ var AnnouncementsActions = {
     return function (dispatch, getState) {
       dispatch(requestDeleteAnnouncement);
       return alertsAPI.deleteAnnouncement(getState(event).announcements.announcement).then(function (response) {
-        dispatch(deleteAnnouncementResponse(response.success, response.errors));                  
+        dispatch(deleteAnnouncementResponse(response.success, response.errors)); 
+        
+        dispatch(requestedAnnouncementsHistory());
+        return alertsAPI.getAnnouncements().then(function(response) {
+          dispatch(receivedAnnouncementsHistory(response.success, response.errors, response.messages));
+        }, function(error) {
+          dispatch(receivedAnnouncementsHistory(false, error, []));
+        });          
+        
       }, function (error) {
         dispatch(deleteAnnouncementResponse(false, error, null));
       });

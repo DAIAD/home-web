@@ -36,7 +36,8 @@ var announcements = function (state, action) {
     case types.ANNC_RECEIVED_ANNOUNCEMENT_HISTORY:
       return Object.assign({}, state, {
         announcements : action.announcements,
-        isLoading: false
+        isLoading: false,
+        showModal: action.showModal
       });       
     case types.ANNC_INITIAL_USERS_SET_SELECTED:
       return Object.assign({}, state, {

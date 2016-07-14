@@ -368,7 +368,7 @@ var Announcements = React.createClass({
   		      <Modal show = {this.props.showModal}
               onClose = {this.props.hideModal}
               title = {title}
-              text = {'Are you sure?'}
+              text = {'You are about to delete the announcement with title "' + this.props.announcement.title + '". This announcement will not be visible to users anymore. Are you sure?'}
   		          actions = {actions}
   		      />
       </div>     

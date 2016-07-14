@@ -590,6 +590,25 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 		}                          
     }    
 
+    @Override
+    public void deleteAnnouncement(eu.daiad.web.model.message.Announcement announcement){
+
+		TypedQuery<eu.daiad.web.domain.application.Announcement> announcementQuery = entityManager
+						.createQuery("select a from announcement a where a.id = :id",
+										eu.daiad.web.domain.application.Announcement.class).setFirstResult(0).setMaxResults(1);
+
+		announcementQuery.setParameter("id", announcement.getId());
+
+		List<Announcement> announcements = announcementQuery.getResultList();
+
+		if (announcements.size() == 1) {
+            
+            Announcement toBeDeleted = announcements.get(0);
+            this.entityManager.remove(toBeDeleted);    
+
+		}                          
+    } 
+    
 	@Override
 	public List<Message> getAnnouncements(String locale) {
 		List<Message> messages = new ArrayList<>();
