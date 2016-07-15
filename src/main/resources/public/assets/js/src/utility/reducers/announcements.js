@@ -17,7 +17,9 @@ var initialState = {
     group : null,
     checked : false,
     showModal : false,
-    announcement : null
+    showAnnouncementDetailsTable : false,
+    announcement : null,
+    receivers : null
 };
 
 var announcements = function (state, action) {
@@ -100,6 +102,19 @@ var announcements = function (state, action) {
       return Object.assign({}, state, {
         showModal: action.showModal,
         announcement : action.announcement
+      });
+    case types.ANNC_SHOW_ANNOUNCEMENT_RESPONSE:
+      return Object.assign({}, state, {
+        isLoading: false,
+        showAnnouncementDetailsTable: action.showAnnouncementDetailsTable,
+        announcement: action.announcement,
+        receivers: action.receivers
+      });  
+    case types.ANNC_GO_BACK:
+      return Object.assign({}, state, {
+        showAnnouncementDetailsTable: action.showAnnouncementDetailsTable,
+        announcement: null,
+        receivers: null
       });      
     default:
       return state || initialState;

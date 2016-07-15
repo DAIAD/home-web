@@ -3,7 +3,7 @@ var alertsAPI = require('../api/alerts');
 
 var requestedGroups = function () {
   return {
-    type: types.ANNC_REQUESTED_GROUPS,
+    type: types.ANNC_REQUESTED_GROUPS
   };
 };
 
@@ -99,6 +99,25 @@ var deleteAnnouncementResponse = function (success, errors) {
     showModal: false,
     success: success,
     errors: errors
+  };
+};
+
+var requestShowAnnouncement = function () {
+  return {
+    type: types.ANNC_SHOW_ANNOUNCEMENT_REQUEST,
+    isLoading: true
+  };
+};
+
+var showAnnouncementResponse = function (response) {
+  return {
+    type: types.ANNC_SHOW_ANNOUNCEMENT_RESPONSE,
+    isLoading: false,
+    showAnnouncementDetailsTable: true,
+    success: response.success,
+    errors: response.errors,
+    announcement: response.announcement,
+    receivers: response.receivers
   };
 };
 
@@ -300,6 +319,22 @@ var AnnouncementsActions = {
       }, function (error) {
         dispatch(deleteAnnouncementResponse(false, error, null));
       });
+    };
+  },
+  showAnnouncementDetails: function (event, announcement) { 
+    return function(dispatch, getState) {
+      dispatch(requestShowAnnouncement());
+      return alertsAPI.fetchAnnouncement(announcement).then(function(response) {
+        dispatch(showAnnouncementResponse(response));       
+      }, function(error) {
+        dispatch(showAnnouncementResponse(false, error, null));
+      });
+    };
+  },
+  goBack : function(){
+    return {
+      type : types.ANNC_GO_BACK,
+      showAnnouncementDetailsTable: false
     };
   }
 };

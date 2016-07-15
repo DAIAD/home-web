@@ -225,6 +225,7 @@ var types = mirrorToPath({
   ANNC_DELETE_ANNOUNCEMENT_RESPONSE: null,
   ANNC_SHOW_ANNOUNCEMENT_REQUEST: null,
   ANNC_SHOW_ANNOUNCEMENT_RESPONSE: null,  
+  ANNC_GO_BACK: null, 
   //
   
   QUERY_SUBMIT: null,
