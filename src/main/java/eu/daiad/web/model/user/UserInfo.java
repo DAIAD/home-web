@@ -37,9 +37,11 @@ public class UserInfo {
     private boolean favorite;
 
     private String smartPhoneOs;
-    
+
     private String tabletOs;
-    
+
+    private ModeInfo mode;
+
     public UserInfo(eu.daiad.web.domain.application.Account account) {
         this.id = account.getKey();
         this.firstName = account.getFirstname();
@@ -136,6 +138,78 @@ public class UserInfo {
 
     public void setTabletOs(String tabletOs) {
         this.tabletOs = tabletOs;
+    }
+
+    public ModeInfo getMode() {
+        return mode;
+    }
+
+    public void setMode(ModeInfo mode) {
+        this.mode = mode;
+    }
+
+    public static class ModeInfo {
+
+        private int utilityMode;
+
+        private int homeMode;
+
+        private int mobileMode;
+
+        private long updatedOn;
+
+        private Long enabledOn;
+
+        private Long acknowledgedOn;
+
+        public int getUtilityMode() {
+            return utilityMode;
+        }
+
+        public void setUtilityMode(int utilityMode) {
+            this.utilityMode = utilityMode;
+        }
+
+        public int getHomeMode() {
+            return homeMode;
+        }
+
+        public void setHomeMode(int homeMode) {
+            this.homeMode = homeMode;
+        }
+
+        public int getMobileMode() {
+            return mobileMode;
+        }
+
+        public void setMobileMode(int mobileMode) {
+            this.mobileMode = mobileMode;
+        }
+
+        public long getUpdatedOn() {
+            return updatedOn;
+        }
+
+        public void setUpdatedOn(long updatedOn) {
+            this.updatedOn = updatedOn;
+        }
+
+        public Long getEnabledOn() {
+            return enabledOn;
+        }
+
+        public void setEnabledOn(Long enabledOn) {
+            this.enabledOn = enabledOn;
+        }
+
+        public Long getAcknowledgedOn() {
+            return acknowledgedOn;
+        }
+
+        public void setAcknowledgedOn(Long acknowledgedOn) {
+            this.acknowledgedOn = acknowledgedOn;
+        }
+
     }
 
 }

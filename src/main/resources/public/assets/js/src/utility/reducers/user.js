@@ -138,8 +138,9 @@ var user = function(state, action) {
           city : action.user.city,
           address : action.user.address,
           postalCode : action.user.postalCode,
-          smartPhoneOs : (action.user.smartPhoneOs == 'None' ? '-' : action.user.smartPhoneOs),
-          tabletOs : (action.user.tabletOs == 'None' ? '-' : action.user.tabletOs)
+          smartPhoneOs : action.user.smartPhoneOs,
+          tabletOs : action.user.tabletOs,
+          mode: action.user.mode
         },
         meters : action.meters,
         devices : _fillDevices(action.devices, action.configurations),

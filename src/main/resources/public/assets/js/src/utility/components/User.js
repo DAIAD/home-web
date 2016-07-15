@@ -13,7 +13,55 @@ var { bindActionCreators } = require('redux');
 
 var UserActions = require('../actions/UserActions');
 var UserTablesSchema = require('../constants/UserTablesSchema');
- 
+
+var _getUtilityMode = function(mode) {
+  switch(mode){
+    case 1:
+      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_info'>Enabled</div>);
+    case 2:
+      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_debug'>Disabled</div>);
+    default:
+      return '-';
+  }
+};
+
+var _getHomeMode = function(mode) {
+  switch(mode){
+    case 1:
+      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_info'>Enabled</div>);
+    case 2:
+      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_debug'>Disabled</div>);
+    default:
+      return '-';
+  }
+};
+
+var _getMobileMode = function(mode) {
+  switch(mode){
+    case 1:
+      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_info'>Enabled</div>);
+    case 2:
+      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_debug'>Disabled</div>);
+    case 3:
+      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_warn'>Learning</div>);
+    case 4:
+      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_error'>Blocked</div>);
+    default:
+      return '-';
+  }
+};
+
+var _getOsView = function(os) {
+  switch(os) {
+    case 'iOS':
+      return (<span><i className='fa fa-apple fa-lg' />&nbsp;iOS</span>);
+    case 'Android':
+      return (<span><i className='fa fa-android fa-lg' />&nbsp;Android</span>);
+    default:
+      return '-';
+  }
+};
+
 var _showChart = function(type, key, e) {
   switch(type) {
     case 'METER':
@@ -144,6 +192,13 @@ var User = React.createClass({
       </span>
     );
 
+    const applicationTitle = (
+      <span>
+        <i className='fa fa-cubes fa-fw'></i>
+        <span style={{ paddingLeft: 4 }}>Application Modes</span>
+      </span>
+    );
+
 		const groupTitle = (
 			<span>
 				<i className='fa fa-group fa-fw'></i>
@@ -151,6 +206,68 @@ var User = React.createClass({
 			</span>
 		);
 
+		var applicationElements = [];
+
+		if(this.props.user) {
+		  var mode = this.props.user.mode;
+		  
+		  applicationElements.push(
+          <Bootstrap.ListGroupItem key={applicationElements.length + 1} className='clearfix'>
+            <table style={{ width : '100%' }}>
+              <tbody>
+                <tr>
+                  <td style={{ paddingRight: 5 }}><b>Utility</b></td>
+                  <td>{_getUtilityMode(mode.utilityMode)}</td>
+                </tr>
+                  <tr>
+                  <td style={{ paddingRight: 5 }}><b>Home</b></td>
+                  <td>{_getHomeMode(mode.homeMode)}</td>
+                </tr>
+                <tr>
+                  <td style={{ paddingRight: 5 }}><b>Mobile</b></td>
+                  <td>{_getMobileMode(mode.mobileMode)}</td>
+                </tr>
+                <tr>
+                  <td style={{ paddingRight: 5 }}><b>Last update</b></td>
+                  <td>
+                    <FormattedTime  value={ new Date(mode.updatedOn) } 
+                                    day='numeric' 
+                                    month='numeric' 
+                                    year='numeric'
+                                    hour='numeric' 
+                                    minute='numeric' />
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ paddingRight: 5 }}><b>Enabled On</b></td>
+                  <td>
+                    { mode.enabledOn ? 
+                      <FormattedTime  value={ new Date(mode.enabledOn) } 
+                                      day='numeric' 
+                                      month='numeric' 
+                                      year='numeric'
+                                      hour='numeric' 
+                                      minute='numeric' /> : '-' }
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ paddingRight: 5 }}><b>Acknowledged On</b></td>
+                  <td>
+                    { mode.acknowledgedOn ? 
+                      <FormattedTime  value={ new Date(mode.acknowledgedOn) } 
+                                      day='numeric' 
+                                      month='numeric' 
+                                      year='numeric'
+                                      hour='numeric' 
+                                      minute='numeric' /> : '-' }
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </Bootstrap.ListGroupItem>
+      );
+		}
+		
 		var deviceElements = [];
 
 		if(this.props.meters) {
@@ -169,7 +286,7 @@ var User = React.createClass({
         );
 		    deviceElements.push(
 	        <Bootstrap.ListGroupItem key={deviceElements.length + 1}>
-	          <table>
+	          <table style={{ width : '100%' }}>
 	            <tbody>
   	            <tr>
   	              <td style={{ paddingRight: 5 }}><b>Current value</b></td>
@@ -210,7 +327,7 @@ var User = React.createClass({
         );
         deviceElements.push(
           <Bootstrap.ListGroupItem key={deviceElements.length + 1}>
-            <table>
+            <table style={{ width : '100%' }}>
               <tbody>
                 <tr>
                   <td style={{ paddingRight: 5 }}><b>Configuration</b></td>
@@ -259,7 +376,7 @@ var User = React.createClass({
           var s = d.sessions[0];
           deviceElements.push(
             <Bootstrap.ListGroupItem key={deviceElements.length + 1}>
-              <table>
+              <table style={{ width : '100%' }}>
                 <tbody>
                   <tr>
                     <td style={{ paddingRight: 5 }}><b>Last Session</b></td>
@@ -455,6 +572,12 @@ var User = React.createClass({
       </Bootstrap.ListGroup>
     );
 		
+		var applicationModeGroup = (
+      <Bootstrap.ListGroup fill>
+        {applicationElements.length === 0 ? null : applicationElements}
+      </Bootstrap.ListGroup>
+    );
+		
 		if (this.props.user) {
   		return (
     		<div className='container-fluid' style={{ paddingTop: 10 }}>
@@ -510,11 +633,11 @@ var User = React.createClass({
                             </tr> 
                             <tr>
                               <td>Smart Phone OS</td>
-                              <td>{ this.props.user.smartPhoneOs ? this.props.user.smartPhoneOs : '-' }</td>
+                              <td>{ _getOsView(this.props.user.smartPhoneOs) }</td>
                             </tr>
                             <tr>
                               <td>Table OS</td>
-                              <td>{ this.props.user.tabletOs ? this.props.user.tabletOs : '-' }</td>
+                              <td>{ _getOsView(this.props.user.tabletOs) }</td>
                             </tr>
                           </tbody>
                         </table>
@@ -544,6 +667,9 @@ var User = React.createClass({
     		    <div className='col-md-3'>
               <Bootstrap.Panel header={deviceTitle}>
                 {deviceListGroup}
+              </Bootstrap.Panel>
+              <Bootstrap.Panel header={applicationTitle}>
+                {applicationModeGroup}
               </Bootstrap.Panel>
     		    </div>
             <div className='col-md-9'>
