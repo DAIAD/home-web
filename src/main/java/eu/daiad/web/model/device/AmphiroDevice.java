@@ -8,72 +8,83 @@ import eu.daiad.web.model.KeyValuePair;
 
 public class AmphiroDevice extends Device {
 
-	private String name;
+    private String name;
 
-	private String macAddress;
+    private String macAddress;
 
-	private String aesKey;
+    private String aesKey;
 
-	public AmphiroDevice(int ownerId, UUID key, String name, String macAddress, String aesKey, long registeredOn) {
-		super(ownerId, key, registeredOn);
+    private DeviceAmphiroConfiguration configuration;
 
-		this.name = name;
-		this.macAddress = macAddress;
-		this.aesKey = aesKey;
-	}
+    public AmphiroDevice(int ownerId, UUID key, String name, String macAddress, String aesKey, long registeredOn) {
+        super(ownerId, key, registeredOn);
 
-	public AmphiroDevice(int ownerId, UUID key, String name, String macAddress, ArrayList<KeyValuePair> properties,
-					long registeredOn) {
-		super(ownerId, key, properties, registeredOn);
+        this.name = name;
+        this.macAddress = macAddress;
+        this.aesKey = aesKey;
+    }
 
-		this.name = name;
-		this.macAddress = macAddress;
-	}
+    public AmphiroDevice(int ownerId, UUID key, String name, String macAddress, ArrayList<KeyValuePair> properties,
+                    long registeredOn) {
+        super(ownerId, key, properties, registeredOn);
 
-	public String getName() {
-		return name;
-	}
+        this.name = name;
+        this.macAddress = macAddress;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public String getMacAddress() {
-		return macAddress;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public void setMacAddress(String macAddress) {
-		this.macAddress = macAddress;
-	}
+    public String getMacAddress() {
+        return macAddress;
+    }
 
-	@Override
-	public EnumDeviceType getType() {
-		return EnumDeviceType.AMPHIRO;
-	}
+    public void setMacAddress(String macAddress) {
+        this.macAddress = macAddress;
+    }
 
-	@Override
-	public DeviceRegistration toDeviceRegistration() {
-		AmphiroDeviceRegistration r = new AmphiroDeviceRegistration();
+    @Override
+    public EnumDeviceType getType() {
+        return EnumDeviceType.AMPHIRO;
+    }
 
-		r.setDeviceKey(this.getKey());
-		r.setName(this.getName());
-		r.setMacAddress(this.getMacAddress());
-		r.setAesKey(this.getAesKey());
-		r.setRegisteredOn(this.getRegisteredOn());
+    @Override
+    public DeviceRegistration toDeviceRegistration() {
+        AmphiroDeviceRegistration r = new AmphiroDeviceRegistration();
 
-		for (Iterator<KeyValuePair> p = this.getProperties().iterator(); p.hasNext();) {
-			KeyValuePair property = p.next();
-			r.getProperties().add(new KeyValuePair(property.getKey(), property.getValue()));
-		}
+        r.setDeviceKey(this.getKey());
+        r.setName(this.getName());
+        r.setMacAddress(this.getMacAddress());
+        r.setAesKey(this.getAesKey());
+        r.setRegisteredOn(this.getRegisteredOn());
 
-		return r;
-	}
+        for (Iterator<KeyValuePair> p = this.getProperties().iterator(); p.hasNext();) {
+            KeyValuePair property = p.next();
+            r.getProperties().add(new KeyValuePair(property.getKey(), property.getValue()));
+        }
 
-	public String getAesKey() {
-		return aesKey;
-	}
+        return r;
+    }
 
-	public void setAesKey(String aesKey) {
-		this.aesKey = aesKey;
-	}
+    public String getAesKey() {
+        return aesKey;
+    }
+
+    public void setAesKey(String aesKey) {
+        this.aesKey = aesKey;
+    }
+
+    public DeviceAmphiroConfiguration getConfiguration() {
+        return configuration;
+    }
+
+    public void setConfiguration(DeviceAmphiroConfiguration configuration) {
+        this.configuration = configuration;
+    }
+
 }

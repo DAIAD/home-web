@@ -36,6 +36,10 @@ public class UserInfo {
 
     private boolean favorite;
 
+    private String smartPhoneOs;
+    
+    private String tabletOs;
+    
     public UserInfo(eu.daiad.web.domain.application.Account account) {
         this.id = account.getKey();
         this.firstName = account.getFirstname();
@@ -116,6 +120,22 @@ public class UserInfo {
 
     public void setFavorite(boolean favorite) {
         this.favorite = favorite;
+    }
+
+    public String getSmartPhoneOs() {
+        return smartPhoneOs;
+    }
+
+    public void setSmartPhoneOs(String smartPhoneOs) {
+        this.smartPhoneOs = smartPhoneOs;
+    }
+
+    public String getTabletOs() {
+        return tabletOs;
+    }
+
+    public void setTabletOs(String tabletOs) {
+        this.tabletOs = tabletOs;
     }
 
 }

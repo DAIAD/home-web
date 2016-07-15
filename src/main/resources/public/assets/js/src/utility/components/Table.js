@@ -315,7 +315,7 @@ var Cell = React.createClass({
     if(this.props.field.hasOwnProperty('align')) {
       style.textAlign = this.props.field.align;
     }
-    style.color = this.props.field.color || '#000000';
+    style.color = this.props.field.color;
     if(typeof style.color === 'function') {
       style.color = style.color(this.props.field, this.props.row) || '#000000';
     }

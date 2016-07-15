@@ -42,7 +42,7 @@ var requestedUser = function() {
   };
 };
 
-var receivedUser = function(success, errors, user, meters, devices, groups, favorite) {
+var receivedUser = function(success, errors, user, meters, devices, configurations, groups, favorite) {
   return {
     type : types.USER_RECEIVE_USER_INFO,
     success : success,
@@ -51,6 +51,7 @@ var receivedUser = function(success, errors, user, meters, devices, groups, favo
     user : user,
     meters : meters,
     devices : devices,
+    configurations: configurations,
     groups : groups
   };
 };
@@ -140,7 +141,7 @@ var UserActions = {
       return userAPI.fetchUser(userId).then(
           function(response) {
             dispatch(receivedUser(response.success, response.errors, response.user, response.meters, response.devices,
-                response.groups, response.favorite));
+                response.configurations, response.groups, response.favorite));
 
             if (response.meters.length > 0) {
               return adminAPI.getMeters(response.user.id, response.user.email).then(function(response) {

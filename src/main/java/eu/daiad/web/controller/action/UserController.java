@@ -28,6 +28,7 @@ import eu.daiad.web.model.amphiro.AmphiroSessionCollectionIndexIntervalQuery;
 import eu.daiad.web.model.amphiro.EnumIndexIntervalQuery;
 import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.device.Device;
+import eu.daiad.web.model.device.DeviceAmphiroConfiguration;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
@@ -102,8 +103,7 @@ public class UserController extends BaseController {
     /**
      * Returns application events.
      * 
-     * @param request
-     *            the request
+     * @param request the request
      * @return the events
      */
     @RequestMapping(value = "/action/user/search", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
@@ -164,10 +164,8 @@ public class UserController extends BaseController {
     /**
      * Adds a user to the white list.
      * 
-     * @param user
-     *            the currently authenticated user.
-     * @param userInfo
-     *            the user to add.
+     * @param user the currently authenticated user.
+     * @param userInfo the user to add.
      * @return the controller's response.
      */
     @RequestMapping(value = "/action/user/create", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
@@ -193,8 +191,7 @@ public class UserController extends BaseController {
      * provide info, regarding the groups it participates or the devices he
      * owns.
      * 
-     * @param user_id
-     *            the user id
+     * @param user_id the user id
      * @return the user
      */
     @RequestMapping(value = "/action/user/{key}", method = RequestMethod.GET, produces = "application/json")
@@ -205,11 +202,18 @@ public class UserController extends BaseController {
             UserInfoResponse response = new UserInfoResponse();
 
             response.setUser(userRepository.getUserInfoByKey(key));
-            response.setMeters(getMeters(key));
-            response.setDevices(getDevices(key, user.getTimezone()));
             response.setGroups(userGroupRepository.getGroupsByMember(key));
-
             response.setFavorite(favouriteRepository.isUserFavorite(user.getKey(), response.getUser().getId()));
+
+            ArrayList<Device> amphiroDevices = this.getAmphiroDevices(key);
+
+            response.setConfigurations(new ArrayList<DeviceAmphiroConfiguration>());
+            for (Device d : amphiroDevices) {
+                response.getConfigurations().add(((AmphiroDevice) d).getConfiguration());
+            }
+
+            response.setMeters(getMeters(key));
+            response.setDevices(getDevices(key, amphiroDevices, user.getTimezone()));
 
             return response;
         } catch (ApplicationException ex) {
@@ -249,14 +253,18 @@ public class UserController extends BaseController {
         return result.getDevices();
     }
 
-    private ArrayList<AmphiroSessionCollection> getDevices(UUID userkey, String timezone) {
+    private ArrayList<Device> getAmphiroDevices(UUID userkey) {
         DeviceRegistrationQuery deviceQuery = new DeviceRegistrationQuery();
         deviceQuery.setType(EnumDeviceType.AMPHIRO);
 
+        return this.deviceRepository.getUserDevices(userkey, deviceQuery);
+    }
+
+    private ArrayList<AmphiroSessionCollection> getDevices(UUID userkey, ArrayList<Device> devices, String timezone) {
         List<String> names = new ArrayList<String>();
         List<UUID> deviceKeys = new ArrayList<UUID>();
 
-        for (Device d : this.deviceRepository.getUserDevices(userkey, deviceQuery)) {
+        for (Device d : devices) {
             names.add(((AmphiroDevice) d).getName());
             deviceKeys.add(((AmphiroDevice) d).getKey());
         }
@@ -274,8 +282,7 @@ public class UserController extends BaseController {
     /**
      * Adds a user to the favorite list
      * 
-     * @param userKey
-     *            the key of the user to add
+     * @param userKey the key of the user to add
      * @return the result of the operation
      */
     @RequestMapping(value = "/action/user/favorite/{userKey}", method = RequestMethod.PUT, produces = "application/json")
@@ -299,8 +306,7 @@ public class UserController extends BaseController {
     /**
      * Removes a user from the favorite list
      * 
-     * @param userKey
-     *            the key of the user to remove
+     * @param userKey the key of the user to remove
      * @return the result of the operation
      */
     @RequestMapping(value = "/action/user/favorite/{userKey}", method = RequestMethod.DELETE, produces = "application/json")

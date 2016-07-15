@@ -195,6 +195,7 @@ var User = React.createClass({
 
     if(this.props.devices) {
       this.props.devices.forEach( d => {
+        
         deviceElements.push(
           <Bootstrap.ListGroupItem key={deviceElements.length + 1} className='clearfix'>
             <div style={{ width: 24, float : 'left', textAlign : 'center', marginLeft: -5 }}>
@@ -207,6 +208,53 @@ var User = React.createClass({
             </div>
           </Bootstrap.ListGroupItem>
         );
+        deviceElements.push(
+          <Bootstrap.ListGroupItem key={deviceElements.length + 1}>
+            <table>
+              <tbody>
+                <tr>
+                  <td style={{ paddingRight: 5 }}><b>Configuration</b></td>
+                  <td>{d.configuration.title}</td>
+                </tr>
+                <tr>
+                  <td style={{ paddingRight: 5 }}><b>Created On</b></td>
+                  <td>
+                    <FormattedTime  value={ new Date(d.configuration.createdOn) } 
+                                    day='numeric' 
+                                    month='numeric' 
+                                    year='numeric'
+                                    hour='numeric' 
+                                    minute='numeric' />
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ paddingRight: 5 }}><b>Enabled On</b></td>
+                  <td>
+                    { d.configuration.enabledOn ? 
+                    <FormattedTime  value={ new Date(d.configuration.enabledOn) } 
+                                    day='numeric' 
+                                    month='numeric' 
+                                    year='numeric'
+                                    hour='numeric' 
+                                    minute='numeric' /> : '-' }
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ paddingRight: 5 }}><b>Acknowledged On</b></td>
+                  <td>
+                    { d.configuration.acknowledgedOn ? 
+                      <FormattedTime  value={ new Date(d.configuration.acknowledgedOn) } 
+                                      day='numeric' 
+                                      month='numeric' 
+                                      year='numeric'
+                                      hour='numeric' 
+                                      minute='numeric' /> : '-' }
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </Bootstrap.ListGroupItem>
+        );
         if((d.sessions) && (d.sessions.length > 0)) {
           var s = d.sessions[0];
           deviceElements.push(
@@ -214,7 +262,7 @@ var User = React.createClass({
               <table>
                 <tbody>
                   <tr>
-                    <td style={{ paddingRight: 5 }}><b>Consumption</b></td>
+                    <td style={{ paddingRight: 5 }}><b>Last Session</b></td>
                     <td>{s.volume} lt</td>
                   </tr>
                   <tr>
@@ -460,6 +508,14 @@ var User = React.createClass({
                               <td>Postal code</td>
                               <td>{this.props.user.postalCode}</td>
                             </tr> 
+                            <tr>
+                              <td>Smart Phone OS</td>
+                              <td>{ this.props.user.smartPhoneOs ? this.props.user.smartPhoneOs : '-' }</td>
+                            </tr>
+                            <tr>
+                              <td>Table OS</td>
+                              <td>{ this.props.user.tabletOs ? this.props.user.tabletOs : '-' }</td>
+                            </tr>
                           </tbody>
                         </table>
                       </div>

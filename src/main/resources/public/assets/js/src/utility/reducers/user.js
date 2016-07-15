@@ -94,6 +94,18 @@ var _fillGroupSeries = function(interval, data) {
   return data;
 };
 
+var _fillDevices = function(devices, configurations) {
+  for ( var d in devices) {
+    for ( var c in configurations) {
+      if (devices[d].deviceKey == configurations[c].deviceKey) {
+        devices[d].configuration = configurations[c];
+        break;
+      }
+    }
+  }
+  return devices;
+};
+
 var user = function(state, action) {
 
   switch (action.type) {
@@ -125,10 +137,12 @@ var user = function(state, action) {
           country : action.user.country,
           city : action.user.city,
           address : action.user.address,
-          postalCode : action.user.postalCode
+          postalCode : action.user.postalCode,
+          smartPhoneOs : (action.user.smartPhoneOs == 'None' ? '-' : action.user.smartPhoneOs),
+          tabletOs : (action.user.tabletOs == 'None' ? '-' : action.user.tabletOs)
         },
         meters : action.meters,
-        devices : action.devices,
+        devices : _fillDevices(action.devices, action.configurations),
         groups : action.groups
       });
 

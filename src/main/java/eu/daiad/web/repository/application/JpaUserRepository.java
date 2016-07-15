@@ -37,6 +37,7 @@ import eu.daiad.web.domain.application.AccountProfileHistoryEntry;
 import eu.daiad.web.domain.application.AccountRole;
 import eu.daiad.web.domain.application.AccountWhiteListEntry;
 import eu.daiad.web.domain.application.Role;
+import eu.daiad.web.domain.application.Survey;
 import eu.daiad.web.domain.application.Utility;
 import eu.daiad.web.model.EnumGender;
 import eu.daiad.web.model.EnumValueDescription;
@@ -891,7 +892,23 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
 
             eu.daiad.web.domain.application.Account account = userQuery.getSingleResult();
 
-            return new UserInfo(account);
+            UserInfo userInfo = new UserInfo(account);
+
+            TypedQuery<eu.daiad.web.domain.application.Survey> surveyQuery = entityManager.createQuery(
+                            "SELECT s FROM survey s WHERE s.username = :username",
+                            eu.daiad.web.domain.application.Survey.class).setFirstResult(0).setMaxResults(1);
+            surveyQuery.setParameter("username", account.getUsername());
+
+            List<eu.daiad.web.domain.application.Survey> surveys = surveyQuery.getResultList();
+
+            if (!surveys.isEmpty()) {
+                Survey survey = surveys.get(0);
+
+                userInfo.setTabletOs(survey.getTabletOs());
+                userInfo.setSmartPhoneOs(survey.getSmartPhoneOs());
+            }
+
+            return userInfo;
         } catch (NoResultException ex) {
             throw wrapApplicationException(ex, UserErrorCode.USERID_NOT_FOUND).set("accountId", user_id);
         } catch (Exception ex) {
