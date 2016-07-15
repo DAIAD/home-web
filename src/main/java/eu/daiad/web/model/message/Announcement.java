@@ -13,6 +13,8 @@ public class Announcement extends Message {
 	private String link;
 
 	private Long createdOn;
+    
+    private Long dispatchedOn;
 
 	@Override
 	public EnumMessageType getType() {
@@ -66,4 +68,12 @@ public class Announcement extends Message {
 	public void setId(int id) {
 		this.id = id;
 	}
+
+    public Long getDispatchedOn() {
+        return dispatchedOn;
+    }
+
+    public void setDispatchedOn(Long dispatchedOn) {
+        this.dispatchedOn = dispatchedOn;
+    }
 }
