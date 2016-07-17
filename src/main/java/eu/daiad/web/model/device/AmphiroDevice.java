@@ -16,17 +16,17 @@ public class AmphiroDevice extends Device {
 
     private DeviceAmphiroConfiguration configuration;
 
-    public AmphiroDevice(int ownerId, UUID key, String name, String macAddress, String aesKey, long registeredOn) {
-        super(ownerId, key, registeredOn);
+    public AmphiroDevice(int id, UUID key, String name, String macAddress, String aesKey, long registeredOn) {
+        super(id, key, registeredOn);
 
         this.name = name;
         this.macAddress = macAddress;
         this.aesKey = aesKey;
     }
 
-    public AmphiroDevice(int ownerId, UUID key, String name, String macAddress, ArrayList<KeyValuePair> properties,
+    public AmphiroDevice(int id, UUID key, String name, String macAddress, ArrayList<KeyValuePair> properties,
                     long registeredOn) {
-        super(ownerId, key, properties, registeredOn);
+        super(id, key, properties, registeredOn);
 
         this.name = name;
         this.macAddress = macAddress;

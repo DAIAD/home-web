@@ -18,9 +18,36 @@
 			</Policies>
 			<DefaultRolloverStrategy max="10" />
 		</RollingFile>
+
+        <RollingFile name="AmphiroSessionFile" filename="${baseDir}/amphiro-session.log"
+            filepattern="${baseDir}/amphiro-session-%d{MM-dd-yyyy}-%i.log.gz">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss};%m%n" />
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="100" />
+        </RollingFile>
+
+        <RollingFile name="AmphiroMeasurementFile" filename="${baseDir}/amphiro-measurement.log"
+            filepattern="${baseDir}/amphiro-measurement-%d{MM-dd-yyyy}-%i.log.gz">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss};%m%n" />
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="100" />
+        </RollingFile>
 	</Appenders>
 	<Loggers>
+        <Logger name="AmphiroSessionLogger" level="INFO" additivity="false">
+            <AppenderRef ref="AmphiroSessionFile" />
+        </Logger>
+
+        <Logger name="AmphiroMeasurementLogger" level="INFO" additivity="false">
+            <AppenderRef ref="AmphiroMeasurementFile" />
+        </Logger>
+
 		<Logger name="org.hibernate.SQL" level="WARN"></Logger>
+
 		<Root level="INFO">
 			<AppenderRef ref="Console" />
 			<AppenderRef ref="File" />

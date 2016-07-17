@@ -27,6 +27,7 @@ import eu.daiad.web.model.device.WaterMeterDevice;
 import eu.daiad.web.model.error.Error;
 import eu.daiad.web.model.error.ErrorCode;
 import eu.daiad.web.model.error.QueryErrorCode;
+import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
 import eu.daiad.web.model.query.AreaSpatialFilter;
 import eu.daiad.web.model.query.ClusterPopulationFilter;
@@ -46,6 +47,7 @@ import eu.daiad.web.model.query.ForecastQueryResponse;
 import eu.daiad.web.model.query.GroupPopulationFilter;
 import eu.daiad.web.model.query.GroupSpatialFilter;
 import eu.daiad.web.model.query.LabeledGeometry;
+import eu.daiad.web.model.query.NamedDataQuery;
 import eu.daiad.web.model.query.PopulationFilter;
 import eu.daiad.web.model.query.SpatialFilter;
 import eu.daiad.web.model.query.UserPopulationFilter;
@@ -63,7 +65,7 @@ import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 public class DataService extends BaseService implements IDataService {
 
     @Autowired
-    protected MessageSource messageSource;
+    private MessageSource messageSource;
 
     @Autowired
     private IUserRepository userRepository;
@@ -82,7 +84,7 @@ public class DataService extends BaseService implements IDataService {
 
     @Autowired
     IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
-    
+
     @Autowired
     IWaterMeterForecastRepository waterMeterForecastRepository;
 
@@ -1099,6 +1101,14 @@ public class DataService extends BaseService implements IDataService {
             default:
                 return false;
         }
+    }
+
+    public void storeQuery(String name, DataQuery query) {
+        throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
+    }
+
+    public List<NamedDataQuery> getAllQueries() {
+        throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
     }
 
 }
