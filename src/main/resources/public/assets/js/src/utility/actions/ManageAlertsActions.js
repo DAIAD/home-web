@@ -252,7 +252,7 @@ var ManageAlertsActions = {
       type : types.MESSAGES_DELETE_MODAL_HIDE,
       showModal: false
     };
-  },  
+  }  
 };
 
 module.exports = ManageAlertsActions;

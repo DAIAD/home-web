@@ -590,6 +590,25 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 		}                          
     }    
 
+    @Override
+    public void deleteAnnouncement(eu.daiad.web.model.message.Announcement announcement){
+
+		TypedQuery<eu.daiad.web.domain.application.Announcement> announcementQuery = entityManager
+						.createQuery("select a from announcement a where a.id = :id",
+										eu.daiad.web.domain.application.Announcement.class).setFirstResult(0).setMaxResults(1);
+
+		announcementQuery.setParameter("id", announcement.getId());
+
+		List<Announcement> announcements = announcementQuery.getResultList();
+
+		if (announcements.size() == 1) {
+            
+            Announcement toBeDeleted = announcements.get(0);
+            this.entityManager.remove(toBeDeleted);    
+
+		}                          
+    } 
+    
 	@Override
 	public List<Message> getAnnouncements(String locale) {
 		List<Message> messages = new ArrayList<>();
@@ -604,12 +623,12 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 				locale = "en";
 		}
 
-		TypedQuery<eu.daiad.web.domain.application.AnnouncementTranslation> accountAlertsQuery = entityManager
+		TypedQuery<eu.daiad.web.domain.application.AnnouncementTranslation> accountAnnouncementsQuery = entityManager
 						.createQuery("select a from announcement_translation a where a.locale = :locale order by a.id desc",
 										eu.daiad.web.domain.application.AnnouncementTranslation.class);
-		accountAlertsQuery.setParameter("locale", locale);
+		accountAnnouncementsQuery.setParameter("locale", locale);
 
-		for (AnnouncementTranslation announcementTranslation : accountAlertsQuery.getResultList()) {
+		for (AnnouncementTranslation announcementTranslation : accountAnnouncementsQuery.getResultList()) {
 			eu.daiad.web.model.message.AnnouncementTranslation message = new eu.daiad.web.model.message.AnnouncementTranslation();
 
 			message.setId(announcementTranslation.getId());
@@ -622,6 +641,65 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 		}
 
 		return messages;
+	}
+
+	@Override
+	public eu.daiad.web.model.message.Announcement getAnnouncement(int id, String locale) {
+        
+        eu.daiad.web.model.message.Announcement message = new eu.daiad.web.model.message.Announcement();
+
+		switch (locale) {
+			case "en":
+			case "es":
+				// Ignore
+				break;
+			default:
+				// Set default
+				locale = "en";
+		}
+
+		TypedQuery<eu.daiad.web.domain.application.AnnouncementTranslation> accountAnnouncementQuery = entityManager
+						.createQuery("select a from announcement_translation a where a.locale = :locale and a.id = :id",
+										eu.daiad.web.domain.application.AnnouncementTranslation.class);
+		accountAnnouncementQuery.setParameter("locale", locale);
+        accountAnnouncementQuery.setParameter("id", id);
+
+        List<AnnouncementTranslation> announcements = accountAnnouncementQuery.getResultList();
+        if(accountAnnouncementQuery.getResultList().size() == 1){
+            AnnouncementTranslation announcementTranslation = announcements.get(0);
+			message.setId(announcementTranslation.getId());
+			message.setTitle(announcementTranslation.getTitle());
+			message.setContent(announcementTranslation.getContent());
+            if(announcementTranslation.getDispatchedOn() != null ){
+               message.setDispatchedOn(announcementTranslation.getDispatchedOn().getMillis()); 
+            }
+        }
+
+		return message;
+	}
+
+	@Override
+	public List<ReceiverAccount> getAnnouncementReceivers(int announcementId) {
+        
+        List<ReceiverAccount> receivers = new ArrayList<>();
+
+		TypedQuery<eu.daiad.web.domain.application.AccountAnnouncement> accountAnnouncementQuery = entityManager
+						.createQuery("select a from account_announcement a where a.announcement.id = :id",
+										eu.daiad.web.domain.application.AccountAnnouncement.class);
+
+        accountAnnouncementQuery.setParameter("id", announcementId);
+
+		for (AccountAnnouncement accountAnnouncement : accountAnnouncementQuery.getResultList()) {
+            
+            ReceiverAccount receiverAccount = new ReceiverAccount();
+            receiverAccount.setAccountId(accountAnnouncement.getAccount().getId());
+            receiverAccount.setUsername(accountAnnouncement.getAccount().getUsername());
+            receiverAccount.setLastName(accountAnnouncement.getAccount().getLastname());
+            receiverAccount.setAcknowledgedOn(accountAnnouncement.getAcknowledgedOn());
+            receivers.add(receiverAccount);
+            
+        }        
+		return receivers;
 	}
     
     @Override

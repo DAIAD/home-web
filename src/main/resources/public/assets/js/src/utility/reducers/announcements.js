@@ -8,7 +8,6 @@ var initialState = {
     initialUsers: null,
     addedUsers : [],
     showForm : false,
-    showModal : false,
     accountId : null,
     selected : false,
     rowIdToggled: null,
@@ -16,7 +15,11 @@ var initialState = {
     filter : null,
     groups : null,
     group : null,
-    checked : false
+    checked : false,
+    showModal : false,
+    showAnnouncementDetailsTable : false,
+    announcement : null,
+    receivers : null
 };
 
 var announcements = function (state, action) {
@@ -35,7 +38,8 @@ var announcements = function (state, action) {
     case types.ANNC_RECEIVED_ANNOUNCEMENT_HISTORY:
       return Object.assign({}, state, {
         announcements : action.announcements,
-        isLoading: false
+        isLoading: false,
+        showModal: action.showModal
       });       
     case types.ANNC_INITIAL_USERS_SET_SELECTED:
       return Object.assign({}, state, {
@@ -93,7 +97,25 @@ var announcements = function (state, action) {
       return Object.assign({}, state, {
         accounts: action.accounts,
         checked: action.checked
-      });       
+      });   
+    case types.ANNC_SHOW_DELETE_MODAL:
+      return Object.assign({}, state, {
+        showModal: action.showModal,
+        announcement : action.announcement
+      });
+    case types.ANNC_SHOW_ANNOUNCEMENT_RESPONSE:
+      return Object.assign({}, state, {
+        isLoading: false,
+        showAnnouncementDetailsTable: action.showAnnouncementDetailsTable,
+        announcement: action.announcement,
+        receivers: action.receivers
+      });  
+    case types.ANNC_GO_BACK:
+      return Object.assign({}, state, {
+        showAnnouncementDetailsTable: action.showAnnouncementDetailsTable,
+        announcement: null,
+        receivers: null
+      });      
     default:
       return state || initialState;
   }

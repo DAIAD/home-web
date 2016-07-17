@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.message.Announcement;
+import eu.daiad.web.model.message.AnnouncementDetailsResponse;
 import eu.daiad.web.model.message.AnnouncementRequest;
 import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.Message;
@@ -188,12 +190,12 @@ public class MessageController extends BaseController {
     /**
      * Delete an existing recommendation (tip).
      * 
-     * @param request the message to add or edit
+     * @param request the message to delete
      * @return the controller response.
      */
     @RequestMapping(value = "/action/recommendation/static/delete", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_ADMIN")
-	public RestResponse deleteStaticRemmendation(@RequestBody StaticRecommendation request) {
+	public RestResponse deleteStaticRecommendation(@RequestBody StaticRecommendation request) {
         RestResponse response = new RestResponse();
         
         try {
@@ -238,7 +240,7 @@ public class MessageController extends BaseController {
 	 * @param user the user
 	 * @return the announcements.
 	 */
-	@RequestMapping(value = "/action/announcements/history", method = RequestMethod.GET, produces = "application/json")
+	@RequestMapping(value = "/action/announcement/history", method = RequestMethod.GET, produces = "application/json")
 	@Secured("ROLE_ADMIN")
 	public RestResponse getAnnouncements(@AuthenticationPrincipal AuthenticatedUser user) {
 		try {
@@ -257,4 +259,59 @@ public class MessageController extends BaseController {
 		}
 	}    
     
+    /**
+     * Delete an existing announcement.
+     * 
+     * @param user the user
+     * @param request the announcement to delete
+     * @return the controller response.
+     */
+    @RequestMapping(value = "/action/announcement/delete", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	@Secured("ROLE_ADMIN")
+	public RestResponse deleteAnnouncement(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody Announcement request) {
+        
+        RestResponse response = new RestResponse();
+
+        try {
+            
+            this.messageRepository.deleteAnnouncement(request);
+            
+		} catch (Exception ex) {
+	        logger.error(ex.getMessage(), ex);
+		    response.add(this.getError(ex));
+		    return response;
+		}
+        return response;
+	}   
+    
+	/**
+	 * Get announcement details (including receiver accounts).
+	 * 
+	 * @param user the user
+     * @param id the announcement id
+	 * @return the announcement details.
+	 */
+	@RequestMapping(value = "/action/announcement/details/{id}", method = RequestMethod.GET, produces = "application/json")
+	@Secured("ROLE_ADMIN")
+	public RestResponse getAnnouncementDetails(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable String id) {
+        
+        RestResponse response = new RestResponse();
+        
+		try {
+            
+            AnnouncementDetailsResponse announcementDetailsResponse = new AnnouncementDetailsResponse();
+            
+            int intId = Integer.parseInt(id);
+            String locale = user.getLocale();
+            
+            announcementDetailsResponse.setAnnouncement(this.messageRepository.getAnnouncement(intId, locale));
+            announcementDetailsResponse.setReceivers(this.messageRepository.getAnnouncementReceivers(intId));
+
+			return announcementDetailsResponse;
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
+			response.add(this.getError(ex));
+			return response;
+		}
+	}     
 }
