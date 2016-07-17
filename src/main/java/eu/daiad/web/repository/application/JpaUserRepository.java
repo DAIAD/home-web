@@ -340,14 +340,30 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
 
     @Override
     public void setPassword(String username, String password) throws ApplicationException {
-        // TODO Auto-generated method stub
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
+        TypedQuery<eu.daiad.web.domain.application.Account> userQuery = entityManager.createQuery(
+                        "select a from account a where a.username = :username",
+                        eu.daiad.web.domain.application.Account.class);
+        userQuery.setParameter("username", username);
+
+        eu.daiad.web.domain.application.Account user = userQuery.getSingleResult();
+
+        user.setPassword(encoder.encode(password));
+
+        entityManager.flush();
+
+        logger.warn(String.format("Password for user [%s] has been updated", username));
     }
 
     @Override
-    public void setRole(String username, EnumRole role, boolean set) throws ApplicationException {
-        // TODO Auto-generated method stub
+    public void grantRole(String username, EnumRole role) throws ApplicationException {
+        throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
+    }
 
+    @Override
+    public void revokeRole(String username, EnumRole role) throws ApplicationException {
+        throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
     }
 
     @Override
@@ -894,27 +910,27 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
 
             UserInfo userInfo = new UserInfo(account);
 
-            for(AccountProfileHistoryEntry history : account.getProfile().getHistory()) {
-                if(history.getVersion().equals(account.getProfile().getVersion())) {
+            for (AccountProfileHistoryEntry history : account.getProfile().getHistory()) {
+                if (history.getVersion().equals(account.getProfile().getVersion())) {
                     UserInfo.ModeInfo modeInfo = new UserInfo.ModeInfo();
-                    
+
                     modeInfo.setUtilityMode(account.getProfile().getUtilityMode());
                     modeInfo.setHomeMode(account.getProfile().getWebMode());
                     modeInfo.setMobileMode(account.getProfile().getMobileMode());
-                    
+
                     modeInfo.setUpdatedOn(account.getProfile().getUpdatedOn().getMillis());
-                    if(history.getEnabledOn() != null) {
+                    if (history.getEnabledOn() != null) {
                         modeInfo.setEnabledOn(history.getEnabledOn().getMillis());
                     }
-                    if(history.getAcknowledgedOn() != null) {
+                    if (history.getAcknowledgedOn() != null) {
                         modeInfo.setAcknowledgedOn(history.getAcknowledgedOn().getMillis());
                     }
-                    
+
                     userInfo.setMode(modeInfo);
                     break;
                 }
             }
-            
+
             TypedQuery<eu.daiad.web.domain.application.Survey> surveyQuery = entityManager.createQuery(
                             "SELECT s FROM survey s WHERE s.username = :username",
                             eu.daiad.web.domain.application.Survey.class).setFirstResult(0).setMaxResults(1);

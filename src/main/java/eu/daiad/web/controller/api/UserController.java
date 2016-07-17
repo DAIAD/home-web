@@ -92,11 +92,9 @@ public class UserController extends BaseRestController {
 		RestResponse response = new RestResponse();
 
 		try {
-			this.authenticate(data.getCredentials(), EnumRole.ROLE_USER);
+			this.authenticate(data.getCredentials(), EnumRole.ROLE_ADMIN);
 
-			userService.setPassword(data.getCredentials().getUsername(), data.getPassword());
-
-			return new RestResponse();
+			userService.setPassword(data.getUsername(), data.getPassword());
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
 
@@ -112,14 +110,14 @@ public class UserController extends BaseRestController {
 	 * @param data the request.
 	 * @return the controller's response.
 	 */
-	@RequestMapping(value = "/api/v1/user/role/grant", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse addRole(@RequestBody RoleUpdateRequest data) {
+	@RequestMapping(value = "/api/v1/user/role", method = RequestMethod.PUT, consumes = "application/json", produces = "application/json")
+	public RestResponse addRole(@RequestBody RoleUpdateRequest request) {
 		RestResponse response = new RestResponse();
 
 		try {
-			this.authenticate(data.getCredentials(), EnumRole.ROLE_ADMIN);
+			this.authenticate(request.getCredentials(), EnumRole.ROLE_ADMIN);
 
-			userService.setRole(data.getUsername(), data.getRole(), true);
+			userService.grantRole(request.getUsername(), request.getRole());
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
 
@@ -135,14 +133,14 @@ public class UserController extends BaseRestController {
 	 * @param data the request.
 	 * @return the controller's response.
 	 */
-	@RequestMapping(value = "/api/v1/user/role/revoke", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse revokeRole(@RequestBody RoleUpdateRequest data) {
+	@RequestMapping(value = "/api/v1/user/role", method = RequestMethod.DELETE, consumes = "application/json", produces = "application/json")
+	public RestResponse revokeRole(@RequestBody RoleUpdateRequest request) {
 		RestResponse response = new RestResponse();
 
 		try {
-			this.authenticate(data.getCredentials(), EnumRole.ROLE_ADMIN);
+			this.authenticate(request.getCredentials(), EnumRole.ROLE_ADMIN);
 
-			userService.setRole(data.getUsername(), data.getRole(), false);
+			userService.revokeRole(request.getUsername(), request.getRole());
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
 

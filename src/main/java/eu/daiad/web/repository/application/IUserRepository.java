@@ -24,7 +24,9 @@ public interface IUserRepository {
 
     void setPassword(String username, String password) throws ApplicationException;
 
-    void setRole(String username, EnumRole role, boolean set) throws ApplicationException;
+    void grantRole(String username, EnumRole role) throws ApplicationException;
+    
+    void revokeRole(String username, EnumRole role) throws ApplicationException;
 
     AuthenticatedUser getUserByName(String username) throws ApplicationException;
 
