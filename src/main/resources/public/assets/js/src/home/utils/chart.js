@@ -138,11 +138,24 @@ const getChartMeterData = function(sessions, xAxisData, metric, time) {
   return xAxisData.map(t => {
       const bucketSession = sessions.find(session => {
         
-        const tt = (period === 'hour' ? moment(session.timestamp).startOf('hour').valueOf() : session.timestamp);
+       //const tt = (period === 'hour' ? moment(session.timestamp).startOf('hour').valueOf() : moment(session.timestamp).startOf('day').startOf('hour').valueOf());
+        let tt;
+        if (period === 'hour') {
+          tt = moment(session.timestamp).startOf('hour').valueOf();
+        }
+        else if (period === 'day') {
+          tt = moment(session.timestamp).startOf('day').valueOf();
+        }
+        else if (period === 'week') {
+          tt = moment(session.timestamp).endOf('isoweek').startOf('day').valueOf();
+        }
+        else if (period === 'month') {
+          tt = moment(session.timestamp).endOf('month').startOf('day').valueOf();
+        }
         return tt === t;
       });
-      
-      return bucketSession && bucketSession[metric] != null ? bucketSession[metric] : null;
+
+      return ( bucketSession && bucketSession[metric] != null ) ? bucketSession[metric] : null;
       
     });
 };
