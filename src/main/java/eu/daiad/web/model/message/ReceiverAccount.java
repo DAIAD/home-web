@@ -1,10 +1,13 @@
 package eu.daiad.web.model.message;
 
+import org.joda.time.DateTime;
+
 public class ReceiverAccount{
 
     private int accountId;
     private String username;
     private String lastName;
+    private DateTime acknowledgedOn;
 
     public int getAccountId() {
         return accountId;
@@ -29,4 +32,13 @@ public class ReceiverAccount{
     public void setLastName(String lastName) {
         this.lastName = lastName;
     }
+
+    public DateTime getAcknowledgedOn() {
+        return acknowledgedOn;
+    }
+
+    public void setAcknowledgedOn(DateTime acknowledgedOn) {
+        this.acknowledgedOn = acknowledgedOn;
+    }
+
 }

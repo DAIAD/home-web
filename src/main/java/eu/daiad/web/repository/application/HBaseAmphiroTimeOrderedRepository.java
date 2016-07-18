@@ -6,10 +6,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.UUID;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.Delete;
@@ -43,6 +45,7 @@ import eu.daiad.web.model.amphiro.AmphiroSessionCollectionTimeIntervalQueryResul
 import eu.daiad.web.model.amphiro.AmphiroSessionDetails;
 import eu.daiad.web.model.amphiro.AmphiroSessionTimeIntervalQuery;
 import eu.daiad.web.model.amphiro.AmphiroSessionTimeIntervalQueryResult;
+import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DataErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
@@ -56,11 +59,20 @@ import eu.daiad.web.model.query.ExpandedPopulationFilter;
 import eu.daiad.web.model.query.GroupDataSeries;
 import eu.daiad.web.model.query.RankingDataPoint;
 import eu.daiad.web.model.query.UserDataPoint;
+import eu.daiad.web.model.security.AuthenticatedUser;
 
 @Repository()
 public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository implements IAmphiroTimeOrderedRepository {
 
+    private static final String dataSessionLoggerName = "AmphiroSessionLogger";
+    
+    private static final String dataMeasurementLoggerName = "AmphiroMeasurementLogger";
+
     private static final Log logger = LogFactory.getLog(HBaseAmphiroTimeOrderedRepository.class);
+
+    private static final Log dataSessionLogger = LogFactory.getLog(dataSessionLoggerName);
+    
+    private static final Log dataMeasurementLogger = LogFactory.getLog(dataMeasurementLoggerName);
 
     private final String ERROR_RELEASE_RESOURCES = "Failed to release resources";
 
@@ -388,6 +400,56 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
         }
     }
 
+    private void logData(AuthenticatedUser user, AmphiroDevice device, AmphiroMeasurementCollection data) {
+        for (AmphiroSession session : data.getSessions()) {
+            List<String> tokens = new ArrayList<String>();
+            
+            tokens.add("v1");
+            
+            tokens.add(Integer.toString(user.getId()));
+            tokens.add(user.getKey().toString());
+            tokens.add(user.getUsername());
+            
+            tokens.add(Integer.toString(device.getId()));
+            tokens.add(device.getKey().toString());
+            
+            tokens.add(Long.toString(session.getId()));
+            tokens.add(Boolean.toString(session.isHistory()));
+            tokens.add(Long.toString(session.getTimestamp()));
+            tokens.add(Integer.toString(session.getDuration()));
+            
+            tokens.add(Float.toString(session.getVolume()));
+            tokens.add(Float.toString(session.getEnergy()));
+            tokens.add(Float.toString(session.getTemperature()));
+            tokens.add(Float.toString(session.getFlow()));
+            
+            dataSessionLogger.info(StringUtils.join(tokens, ";"));
+        }
+        for (AmphiroMeasurement measurement : data.getMeasurements()) {
+            List<String> tokens = new ArrayList<String>();
+            
+            tokens.add("v1");
+            
+            tokens.add(Integer.toString(user.getId()));
+            tokens.add(user.getKey().toString());
+            tokens.add(user.getUsername());
+            
+            tokens.add(Integer.toString(device.getId()));
+            tokens.add(device.getKey().toString());
+            
+            tokens.add(Long.toString(measurement.getSessionId()));
+            tokens.add(Integer.toString(measurement.getIndex()));
+            tokens.add(Boolean.toString(measurement.isHistory()));
+            tokens.add(Long.toString(measurement.getTimestamp()));
+            
+            tokens.add(Float.toString(measurement.getVolume()));
+            tokens.add(Float.toString(measurement.getEnergy()));
+            tokens.add(Float.toString(measurement.getTemperature()));
+            
+            dataMeasurementLogger.info(StringUtils.join(tokens, ";"));
+        }
+    }
+
     private void preProcessData(AmphiroMeasurementCollection data) {
         try {
             // Sort sessions
@@ -556,22 +618,25 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
     }
 
     @Override
-    public void storeData(UUID userKey, AmphiroMeasurementCollection data) throws ApplicationException {
+    public void storeData(AuthenticatedUser user, AmphiroDevice device, AmphiroMeasurementCollection data)
+                    throws ApplicationException {
         try {
             if ((data == null) || (data.getSessions() == null) || (data.getSessions().size() == 0)) {
                 return;
             }
 
+            this.logData(user, device, data);
+
             this.preProcessData(data);
 
-            this.updateSessionIndex(userKey, data);
+            this.updateSessionIndex(user.getKey(), data);
 
             if (data.getSessions().size() > 0) {
-                this.storeSessionByUser(userKey, data);
-                this.storeSessionByTime(userKey, data);
+                this.storeSessionByUser(user.getKey(), data);
+                this.storeSessionByTime(user.getKey(), data);
 
                 if ((data.getMeasurements() != null) && (data.getMeasurements().size() > 0)) {
-                    this.storeMeasurements(userKey, data);
+                    this.storeMeasurements(user.getKey(), data);
                 }
             }
         } catch (Exception ex) {

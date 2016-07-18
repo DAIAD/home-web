@@ -1,9 +1,12 @@
 package eu.daiad.web.service;
 
+import java.util.List;
+
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.ForecastQuery;
 import eu.daiad.web.model.query.ForecastQueryResponse;
+import eu.daiad.web.model.query.NamedDataQuery;
 
 public interface IDataService {
 
@@ -22,4 +25,20 @@ public interface IDataService {
      * @return A collection of data series.
      */
     abstract ForecastQueryResponse execute(ForecastQuery query);
+    
+    /**
+     * Stores a data query and assigns a unique name to it.
+     * 
+     * @param name the query name
+     * @param query the query
+     */
+    abstract void storeQuery(String name, DataQuery query);
+ 
+    /**
+     * Loads all saved queries.
+     * 
+     * @return the queries.
+     */
+    abstract List<NamedDataQuery> getAllQueries();
+    
 }

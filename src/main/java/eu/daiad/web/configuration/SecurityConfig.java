@@ -43,6 +43,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Value("${server.login.force-https:true}")
     private boolean forceHttps;
 
+    @Value("${daiad.docs.require-authentication}")
+    private boolean documentationRequiresAuthentication;
+
     @Autowired
     private RESTAuthenticationSuccessHandler authenticationSuccessHandler;
 
@@ -77,7 +80,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         // Allow anonymous access to selected requests
         http.authorizeRequests().antMatchers("/", "/login", "/logout", "/error/**", "/home/**", "/utility/**",
-                        "/assets/**", "/api/**").permitAll().antMatchers("/docs/**").access("hasRole('ROLE_ADMIN')");
+                        "/assets/**", "/api/**").permitAll();
+        if(documentationRequiresAuthentication) {
+            http.authorizeRequests().antMatchers("/docs/**").access("hasRole('ROLE_ADMIN')");
+        } else {
+            http.authorizeRequests().antMatchers("/docs/**").permitAll();
+        }
 
         // Disable CSRF for API requests
         http.csrf().requireCsrfProtectionMatcher(new RequestMatcher() {

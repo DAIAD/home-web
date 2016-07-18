@@ -77,20 +77,36 @@ var Announcements = React.createClass({
  
   		var historyTable = {
   				fields: [{
-  					name: 'id',
-  					title: 'Id',
-  					hidden: true
+  					 name: 'id',
+  					 title: 'Id',
+  					 hidden: true
   				}, {
-  					name: 'title',
-  					title: 'Title'
+  					 name: 'title',
+  					 title: 'Title'
   				}, {
-  					name: 'content',
-  					title: 'Content'
+  					 name: 'content',
+  					 title: 'Content'
   				}, {
-  					name: 'dispatchedOn',
-  					title: 'Dispatched On',
-  					type: 'datetime'
-  				}],
+  					 name: 'dispatchedOn',
+  					 title: 'Dispatched On',
+  					 type: 'datetime'
+  				}, {
+        name: 'view',
+        title: 'Details',
+        type:'action',
+        icon: 'group',
+        handler: function() {
+          self.props.showAnnouncementDetails(this.props.row);          
+        }, 
+      }, {
+        name: 'cancel',
+        title: 'Delete',
+        type:'action',
+        icon: 'remove',
+        handler: function() {
+          self.props.setShowModal(this.props.row);            
+        }
+      }],
   				rows: this.props.announcements,
   				pager: {
   					index: 0,
@@ -204,7 +220,7 @@ var Announcements = React.createClass({
           <span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}></span>
       </span>
     );   
-
+   
     const historyTitle = (
       <span>
        <i className='fa fa-calendar fa-fw'></i>
@@ -345,6 +361,142 @@ var Announcements = React.createClass({
       );       
     }
 
+    if(this.props.showModal){
+      var modal;
+      var title = 'Delete Announcement?';
+			   var actions = [{
+				    action: self.props.hideModal,
+				    name: "Cancel"
+			     },  {
+				      action: this.props.confirmDeleteAnnouncement,
+				      name: "Delete",
+				      style: 'danger'
+			      }];    
+      return (     
+       <div>
+  		      <Modal show = {this.props.showModal}
+              onClose = {this.props.hideModal}
+              title = {title}
+              text = {'You are about to delete the announcement with title "' + this.props.announcement.title + '". This announcement will not be visible to users anymore. Are you sure?'}
+  		          actions = {actions}
+  		      />
+      </div>     
+      );   
+    }
+    
+    if(this.props.showAnnouncementDetailsTable){
+
+      var receiversFields = {
+        fields: [{
+          name: 'accountId',
+          title: 'id',
+          hidden: true
+        }, {
+          name: 'lastName',
+          title: 'Last Name'
+        }, {
+          name: 'username',
+          title: 'Username'
+        }, {
+          name: 'acknowledgedOn',
+          title: 'Acknowledged On',
+          type: 'datetime'
+        }],
+        rows: this.props.receivers,
+        pager: {
+          index: 0,
+          size: 10,
+          count:this.props.receivers ? this.props.receivers.length : 0
+        }
+      };
+      
+      var receiversTitle = (
+        <span>
+          <i className='fa fa-calendar fa-fw'></i>
+            <span style={{ paddingLeft: 4 }}>Users that received this announcement</span>
+            <span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}></span>
+        </span>
+      ); 
+     
+      var announcementTitle = (
+        <span>
+          <i className='fa fa-calendar fa-fw'></i>
+            <span style={{ paddingLeft: 4 }}>Announcement Info</span>
+            <span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}></span>
+        </span>
+      );          
+      var receiversTable = (
+        <div>
+          <Table data={receiversFields}></Table>
+        </div>
+      );
+
+    var announcementInfo = (
+      <div>
+        <Bootstrap.Row>
+          <Bootstrap.Col xs={6}>
+            <label>Title:</label>  
+          </Bootstrap.Col>
+          <Bootstrap.Col xs={6}>
+            <div style={{fontSize:16}}>            
+              <label>{this.props.announcement.title}</label>   
+            </div>
+          </Bootstrap.Col>
+        </Bootstrap.Row>        
+         <Bootstrap.Row>
+          <Bootstrap.Col xs={6}>
+            <label>Content:</label>
+          </Bootstrap.Col>
+          <Bootstrap.Col xs={6}>
+            <div style={{fontSize:16}}>
+              <label>{this.props.announcement.content}</label>
+            </div> 
+          </Bootstrap.Col>         
+        </Bootstrap.Row>     
+         <Bootstrap.Row>
+          <Bootstrap.Col xs={6}>
+            <label>Dispatched On:</label>
+          </Bootstrap.Col>
+          <Bootstrap.Col xs={6}>
+            <div style={{fontSize:16}}>
+            <label>{new Date(this.props.announcement.dispatchedOn).toUTCString()}</label>
+            </div>
+          </Bootstrap.Col>         
+        </Bootstrap.Row>         
+      </div>  
+      );
+     
+      return (     
+        < div className = "container-fluid" style = {{ paddingTop: 10 }} >  
+          <div className="row">
+              <Bootstrap.Panel header={announcementTitle}>
+                <Bootstrap.ListGroup fill>
+                  <Bootstrap.ListGroupItem>	       
+                    {announcementInfo}  
+                  </Bootstrap.ListGroupItem>
+                </Bootstrap.ListGroup>
+              </Bootstrap.Panel> 
+          </div>        
+          <div className="row">
+              <Bootstrap.Panel header={receiversTitle}>
+                <Bootstrap.ListGroup fill>
+                  <Bootstrap.ListGroupItem>	       
+                    {receiversTable}  
+                  </Bootstrap.ListGroupItem>
+                </Bootstrap.ListGroup>
+              </Bootstrap.Panel> 
+          </div>   
+            <div className="row">
+              <Bootstrap.Button 
+                onClick = {this.props.goBack}>
+                {'Back'}
+              </Bootstrap.Button>
+            </div>
+        </div>  
+
+      );   
+    }
+    
     if(this.props.groups && this.props.accounts && this.props.announcements && !this.props.isLoading){
       return (
         <div className="container-fluid" style={{ paddingTop: 10 }}>
@@ -401,7 +553,6 @@ var Announcements = React.createClass({
           </div>
           <div>
 
-
             <div className="row">
               <div className="col-md-12">
                 <Bootstrap.Panel header={historyTitle}>
@@ -437,11 +588,14 @@ function mapStateToProps(state) {
       addedUsers: state.announcements.addedUsers,
       rowIdToggled: state.announcements.rowIdToggled,
       showForm: state.announcements.showForm,
-      showModal: state.announcements.showModal,
       filter: state.announcements.filter,
       groups: state.announcements.groups,
       group: state.announcements.group,
-      checked : state.announcements.checked
+      checked: state.announcements.checked,
+      showModal: state.announcements.showModal,
+      announcement: state.announcements.announcement,
+      showAnnouncementDetailsTable: state.announcements.showAnnouncementDetailsTable,
+      receivers: state.announcements.receivers
   };
 }
 
@@ -477,6 +631,13 @@ function mapDispatchToProps(dispatch) {
     setSelectedAll: function (event, selected){
 			   dispatch(AnnouncementsActions.setSelectedAll(event, selected));
 		  },
+    setShowModal : bindActionCreators(AnnouncementsActions.showModal, dispatch),
+    hideModal : bindActionCreators(AnnouncementsActions.hideModal, dispatch),  
+    confirmDeleteAnnouncement : bindActionCreators(AnnouncementsActions.deleteAnnouncement, dispatch),
+    showAnnouncementDetails: function (announcement){
+      dispatch(AnnouncementsActions.showAnnouncementDetails(event, announcement));
+    },
+    goBack: bindActionCreators(AnnouncementsActions.goBack, dispatch),
   };
 }
 

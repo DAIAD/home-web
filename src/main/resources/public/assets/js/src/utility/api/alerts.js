@@ -20,7 +20,7 @@ var ManageAlertsAPI = {
       return api.json('/action/admin/trial/activity');
     },
     getAnnouncements: function(){      
-      return api.json('/action/announcements/history');
+      return api.json('/action/announcement/history');
     },
     broadcastAnnouncement: function(users, announcement) {
       var receiverAccountList = [];
@@ -34,7 +34,13 @@ var ManageAlertsAPI = {
     },
     getUsersOfGroup: function(groupUUID){
       return api.json(`/action/group/accounts/current/${groupUUID}`, groupUUID, 'GET');
-    }
+    },
+    deleteAnnouncement: function(announcement){
+      return api.json('/action/announcement/delete', announcement);
+    },
+    fetchAnnouncement: function(announcement){
+      return api.json('/action/announcement/details/' + announcement.id);
+    }    
 };
 
 module.exports = ManageAlertsAPI;

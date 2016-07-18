@@ -6,10 +6,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.UUID;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.Delete;
@@ -46,14 +48,24 @@ import eu.daiad.web.model.amphiro.AmphiroSessionIndexIntervalQuery;
 import eu.daiad.web.model.amphiro.AmphiroSessionIndexIntervalQueryResult;
 import eu.daiad.web.model.amphiro.AmphiroSessionUpdate;
 import eu.daiad.web.model.amphiro.AmphiroSessionUpdateCollection;
+import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DataErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.model.security.AuthenticatedUser;
 
 @Repository()
 public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository implements IAmphiroIndexOrderedRepository {
 
+    private static final String dataSessionLoggerName = "AmphiroSessionLogger";
+    
+    private static final String dataMeasurementLoggerName = "AmphiroMeasurementLogger";
+
     private static final Log logger = LogFactory.getLog(HBaseAmphiroIndexOrderedRepository.class);
+
+    private static final Log dataSessionLogger = LogFactory.getLog(dataSessionLoggerName);
+    
+    private static final Log dataMeasurementLogger = LogFactory.getLog(dataMeasurementLoggerName);
 
     private final String ERROR_RELEASE_RESOURCES = "Failed to release resources";
 
@@ -428,6 +440,56 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
         }
     }
 
+    private void logData(AuthenticatedUser user, AmphiroDevice device, AmphiroMeasurementCollection data) {
+        for (AmphiroSession session : data.getSessions()) {
+            List<String> tokens = new ArrayList<String>();
+            
+            tokens.add("v2");
+            
+            tokens.add(Integer.toString(user.getId()));
+            tokens.add(user.getKey().toString());
+            tokens.add(user.getUsername());
+            
+            tokens.add(Integer.toString(device.getId()));
+            tokens.add(device.getKey().toString());
+            
+            tokens.add(Long.toString(session.getId()));
+            tokens.add(Boolean.toString(session.isHistory()));
+            tokens.add(Long.toString(session.getTimestamp()));
+            tokens.add(Integer.toString(session.getDuration()));
+            
+            tokens.add(Float.toString(session.getVolume()));
+            tokens.add(Float.toString(session.getEnergy()));
+            tokens.add(Float.toString(session.getTemperature()));
+            tokens.add(Float.toString(session.getFlow()));
+            
+            dataSessionLogger.info(StringUtils.join(tokens, ";"));
+        }
+        for (AmphiroMeasurement measurement : data.getMeasurements()) {
+            List<String> tokens = new ArrayList<String>();
+            
+            tokens.add("v2");
+            
+            tokens.add(Integer.toString(user.getId()));
+            tokens.add(user.getKey().toString());
+            tokens.add(user.getUsername());
+            
+            tokens.add(Integer.toString(device.getId()));
+            tokens.add(device.getKey().toString());
+            
+            tokens.add(Long.toString(measurement.getSessionId()));
+            tokens.add(Integer.toString(measurement.getIndex()));
+            tokens.add(Boolean.toString(measurement.isHistory()));
+            tokens.add(Long.toString(measurement.getTimestamp()));
+            
+            tokens.add(Float.toString(measurement.getVolume()));
+            tokens.add(Float.toString(measurement.getEnergy()));
+            tokens.add(Float.toString(measurement.getTemperature()));
+            
+            dataMeasurementLogger.info(StringUtils.join(tokens, ";"));
+        }
+    }
+
     private void preProcessData(AmphiroMeasurementCollection data) {
         try {
             // Sort sessions
@@ -530,12 +592,12 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                                             "session", measurements.get(m).getSessionId()).set("index",
                                             measurements.get(m).getIndex());
                         } else {
-                            ImmutableMap<String, Object> properties = ImmutableMap.<String, Object> builder()
-                                            .put("index", measurements.get(m).getIndex()).put("session",
-                                                            measurements.get(m).getSessionId()).build();
+                            ImmutableMap<String, Object> properties = ImmutableMap.<String, Object> builder().put(
+                                            "index", measurements.get(m).getIndex()).put("session",
+                                            measurements.get(m).getSessionId()).build();
 
                             logger.warn(getMessage(DataErrorCode.NO_SESSION_FOUND_FOR_MEASUREMENT, properties));
-                            
+
                             measurements.remove(m);
                         }
                     }
@@ -613,21 +675,23 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
     }
 
     @Override
-    public AmphiroSessionUpdateCollection storeData(UUID userKey, AmphiroMeasurementCollection data)
-                    throws ApplicationException {
+    public AmphiroSessionUpdateCollection storeData(AuthenticatedUser user, AmphiroDevice device,
+                    AmphiroMeasurementCollection data) throws ApplicationException {
         AmphiroSessionUpdateCollection updates = new AmphiroSessionUpdateCollection();
 
         try {
             if ((data != null) && (data.getSessions() != null) && (data.getSessions().size() != 0)) {
+                this.logData(user, device, data);
+
                 this.preProcessData(data);
 
-                this.refreshSessionTimestampIndex(userKey, data);
+                this.refreshSessionTimestampIndex(user.getKey(), data);
 
-                this.storeSessionByUser(userKey, data, updates);
-                this.storeSessionByTime(userKey, data);
+                this.storeSessionByUser(user.getKey(), data, updates);
+                this.storeSessionByTime(user.getKey(), data);
 
                 if ((data.getMeasurements() != null) && (data.getMeasurements().size() != 0)) {
-                    this.storeMeasurements(userKey, data);
+                    this.storeMeasurements(user.getKey(), data);
                 }
             }
         } catch (Exception ex) {

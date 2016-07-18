@@ -3,7 +3,7 @@ var alertsAPI = require('../api/alerts');
 
 var requestedGroups = function () {
   return {
-    type: types.ANNC_REQUESTED_GROUPS,
+    type: types.ANNC_REQUESTED_GROUPS
   };
 };
 
@@ -80,6 +80,44 @@ var broadcastAnnouncementResponse = function(success, errors) {
     success: success,
     errors: errors,
     isLoading: false
+  };
+};
+
+var requestDeleteAnnouncement = function (announcement) {
+  return {
+    type: types.ANNC_DELETE_ANNOUNCEMENT_REQUEST,
+    announcement: announcement,
+    showModal: false,
+    isLoading: true
+  };
+};
+
+var deleteAnnouncementResponse = function (success, errors) {
+  return {
+    type: types.ANNC_DELETE_ANNOUNCEMENT_RESPONSE,
+    isLoading: false,
+    showModal: false,
+    success: success,
+    errors: errors
+  };
+};
+
+var requestShowAnnouncement = function () {
+  return {
+    type: types.ANNC_SHOW_ANNOUNCEMENT_REQUEST,
+    isLoading: true
+  };
+};
+
+var showAnnouncementResponse = function (response) {
+  return {
+    type: types.ANNC_SHOW_ANNOUNCEMENT_RESPONSE,
+    isLoading: false,
+    showAnnouncementDetailsTable: true,
+    success: response.success,
+    errors: response.errors,
+    announcement: response.announcement,
+    receivers: response.receivers
   };
 };
 
@@ -251,6 +289,53 @@ var AnnouncementsActions = {
       accounts : accounts,
       checked : selected
     };  
+  },
+  showModal : function(announcement){
+    return {
+      type : types.ANNC_SHOW_DELETE_MODAL,
+      announcement : announcement,
+      showModal: true
+    };
+  },
+  hideModal : function(){
+    return {
+      type : types.ANNC_SHOW_DELETE_MODAL,
+      showModal: false
+    };
+  },
+  deleteAnnouncement: function (event) {
+    return function (dispatch, getState) {
+      dispatch(requestDeleteAnnouncement);
+      return alertsAPI.deleteAnnouncement(getState(event).announcements.announcement).then(function (response) {
+        dispatch(deleteAnnouncementResponse(response.success, response.errors)); 
+        
+        dispatch(requestedAnnouncementsHistory());
+        return alertsAPI.getAnnouncements().then(function(response) {
+          dispatch(receivedAnnouncementsHistory(response.success, response.errors, response.messages));
+        }, function(error) {
+          dispatch(receivedAnnouncementsHistory(false, error, []));
+        });          
+        
+      }, function (error) {
+        dispatch(deleteAnnouncementResponse(false, error, null));
+      });
+    };
+  },
+  showAnnouncementDetails: function (event, announcement) { 
+    return function(dispatch, getState) {
+      dispatch(requestShowAnnouncement());
+      return alertsAPI.fetchAnnouncement(announcement).then(function(response) {
+        dispatch(showAnnouncementResponse(response));       
+      }, function(error) {
+        dispatch(showAnnouncementResponse(false, error, null));
+      });
+    };
+  },
+  goBack : function(){
+    return {
+      type : types.ANNC_GO_BACK,
+      showAnnouncementDetailsTable: false
+    };
   }
 };
 

@@ -91,7 +91,93 @@ var _fillMeterSeries = function(interval, data) {
 };
 
 var _fillGroupSeries = function(interval, data) {
+  var d;
+  var allPoints = [];
+
+  var ref = interval[1].clone();
+  var days = interval[1].diff(interval[0], 'days') + 1;
+
+  if ((!data) || (data.points.length === 0)) {
+    for (d = days; d > 0; d--) {
+      allPoints.push({
+        volume : {
+          AVERAGE : 0,
+          COUNT : 0,
+          SUM : 0
+        },
+        timestamp : ref.clone().toDate().getTime()
+      });
+
+      ref.subtract(1, 'days');
+    }
+  } else {
+    var index = 0;
+    var points = data.points;
+
+    points.sort(function(p1, p2) {
+      return (p2.timestamp - p1.timestamp);
+    });
+
+    for (d = days; d > 0; d--) {
+      if (index === points.length) {
+        allPoints.push({
+          volume : {
+            AVERAGE : 0,
+            COUNT : 0,
+            SUM : 0
+          },
+          timestamp : ref.clone().toDate().getTime()
+        });
+
+        ref.subtract(1, 'days');
+      } else if (ref.isBefore(points[index].timestamp, 'day')) {
+        index++;
+      } else if (ref.isAfter(points[index].timestamp, 'day')) {
+        allPoints.push({
+          volume : {
+            AVERAGE : 0,
+            COUNT : 0,
+            SUM : 0
+          },
+          timestamp : ref.clone().toDate().getTime()
+        });
+
+        ref.subtract(1, 'days');
+      } else if (ref.isSame(points[index].timestamp, 'day')) {
+        allPoints.push({
+          volume : {
+            COUNT : points[index].volume.COUNT,
+            SUM : points[index].volume.SUM,
+            AVERAGE : points[index].volume.AVERAGE
+          },
+          timestamp : ref.clone().toDate().getTime()
+        });
+
+        index++;
+        ref.subtract(1, 'days');
+      }
+    }
+  }
+
+  allPoints.sort(function(p1, p2) {
+    return (p1.timestamp - p2.timestamp);
+  });
+
+  data.points = allPoints;
+
   return data;
+};
+
+var _fillDevices = function(devices, configurations) {
+  for ( var d in devices) {
+    for ( var c in configurations) {
+      if (devices[d].deviceKey == configurations[c].deviceKey) {
+        devices[d].configuration = configurations[c];
+        break;
+      }
+    }
+  }
+  return devices;
 };
 
 var user = function(state, action) {
@@ -125,10 +211,13 @@ var user = function(state, action) {
           country : action.user.country,
           city : action.user.city,
           address : action.user.address,
-          postalCode : action.user.postalCode
+          postalCode : action.user.postalCode,
+          smartPhoneOs : action.user.smartPhoneOs,
+          tabletOs : action.user.tabletOs,
+          mode : action.user.mode
         },
         meters : action.meters,
-        devices : action.devices,
+        devices : _fillDevices(action.devices, action.configurations),
         groups : action.groups
       });
 

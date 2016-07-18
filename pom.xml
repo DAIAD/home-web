@@ -373,11 +373,11 @@
 		</dependency>
 
         <!--
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-clients_2.10</artifactId>
-            <version>1.0.3</version>
-        </dependency>
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-clients_2.10</artifactId>
+			<version>1.0.3</version>
+		</dependency>
         -->
 
         <!--
@@ -386,7 +386,8 @@
 			<artifactId>spring-boot-starter-tomcat</artifactId>
 			<scope>provided</scope>
 		</dependency>
-        -->
+		-->
+
 	</dependencies>
 
 	<build>
@@ -404,7 +405,7 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
- 
+
 			<plugin>
 				<groupId>com.github.eirslett</groupId>
 				<artifactId>frontend-maven-plugin</artifactId>
@@ -445,7 +446,11 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-site-plugin</artifactId>
 				<version>3.5</version>
+				<configuration>
+                    <outputDirectory>${basedir}/src/main/resources/public/docs/site/</outputDirectory>
+                </configuration>
 			</plugin>
+
 		</plugins>
 
 	</build>

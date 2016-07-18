@@ -27,13 +27,21 @@ public interface IUserService {
 	abstract void setPassword(String username, String password) throws ApplicationException;
 
 	/**
-	 * Grants or revokes a role to a user.
+     * Grants a role to a user
+     * 
+     * @param username the user name.
+     * @param role the role to grant or revoke.
+     * @throws ApplicationException if the user or the role does not exist.
+     */
+    abstract void grantRole(String username, EnumRole role) throws ApplicationException;
+    
+	/**
+	 * Revokes a role from a user.
 	 * 
 	 * @param username the user name.
 	 * @param role the role to grant or revoke.
-	 * @param set true if the role is being granted; Otherwise false.
 	 * @throws ApplicationException if the user or the role does not exist.
 	 */
-	abstract void setRole(String username, EnumRole role, boolean set) throws ApplicationException;
+	abstract void revokeRole(String username, EnumRole role) throws ApplicationException;
 
 }

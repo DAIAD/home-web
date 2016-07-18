@@ -22,7 +22,7 @@ public class SimpleCORSFilter implements Filter {
 			.compile("^(GET|POST|OPTIONS)$");
 	
 	private RegexRequestMatcher apiMatcher = new RegexRequestMatcher(
-			"/api/v1/.*", null);
+			"/api/v\\d+/.*", null);
 
 	@Override
 	public void doFilter(ServletRequest req, ServletResponse res,

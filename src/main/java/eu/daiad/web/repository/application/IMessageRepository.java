@@ -8,6 +8,8 @@ import eu.daiad.web.model.message.MessageRequest;
 import eu.daiad.web.model.message.MessageResult;
 import eu.daiad.web.model.message.StaticRecommendation;
 import eu.daiad.web.model.message.AnnouncementRequest;
+import eu.daiad.web.model.message.Announcement;
+import eu.daiad.web.model.message.ReceiverAccount;
 
 public interface IMessageRepository {
 
@@ -28,5 +30,11 @@ public interface IMessageRepository {
     public List<Message> getAnnouncements(String locale);
             
     public void broadcastAnnouncement(AnnouncementRequest announcementRequest, String locale, String channel);
+    
+    public void deleteAnnouncement(Announcement announcement);
+    
+    public Announcement getAnnouncement(int id, String locale);
+    
+    public List<ReceiverAccount> getAnnouncementReceivers(int id);
 
 }

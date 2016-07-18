@@ -279,9 +279,9 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
                     case AMPHIRO:
                         eu.daiad.web.domain.application.DeviceAmphiro amphiroEntity = (eu.daiad.web.domain.application.DeviceAmphiro) entity;
 
-                        AmphiroDevice amphiro = new AmphiroDevice(amphiroEntity.getAccount().getId(), amphiroEntity
-                                        .getKey(), amphiroEntity.getName(), amphiroEntity.getMacAddress(),
-                                        amphiroEntity.getAesKey(), entity.getRegisteredOn().getMillis());
+                        AmphiroDevice amphiro = new AmphiroDevice(amphiroEntity.getId(), amphiroEntity.getKey(),
+                                        amphiroEntity.getName(), amphiroEntity.getMacAddress(), amphiroEntity
+                                                        .getAesKey(), entity.getRegisteredOn().getMillis());
 
                         for (eu.daiad.web.domain.application.DeviceProperty p : amphiroEntity.getProperties()) {
                             amphiro.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
@@ -340,9 +340,9 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
                     case AMPHIRO:
                         eu.daiad.web.domain.application.DeviceAmphiro amphiroEntity = (eu.daiad.web.domain.application.DeviceAmphiro) entity;
 
-                        AmphiroDevice amphiro = new AmphiroDevice(amphiroEntity.getAccount().getId(), amphiroEntity
-                                        .getKey(), amphiroEntity.getName(), amphiroEntity.getMacAddress(),
-                                        amphiroEntity.getAesKey(), entity.getRegisteredOn().getMillis());
+                        AmphiroDevice amphiro = new AmphiroDevice(amphiroEntity.getId(), amphiroEntity.getKey(),
+                                        amphiroEntity.getName(), amphiroEntity.getMacAddress(), amphiroEntity
+                                                        .getAesKey(), entity.getRegisteredOn().getMillis());
 
                         for (eu.daiad.web.domain.application.DeviceProperty p : amphiroEntity.getProperties()) {
                             amphiro.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
@@ -418,12 +418,20 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
                         if ((query.getType() == EnumDeviceType.UNDEFINED) || (query.getType() == entity.getType())) {
                             eu.daiad.web.domain.application.DeviceAmphiro amphiroEntity = (eu.daiad.web.domain.application.DeviceAmphiro) entity;
 
-                            AmphiroDevice amphiro = new AmphiroDevice(amphiroEntity.getAccount().getId(), amphiroEntity
-                                            .getKey(), amphiroEntity.getName(), amphiroEntity.getMacAddress(),
-                                            amphiroEntity.getAesKey(), entity.getRegisteredOn().getMillis());
+                            AmphiroDevice amphiro = new AmphiroDevice(amphiroEntity.getId(), amphiroEntity.getKey(),
+                                            amphiroEntity.getName(), amphiroEntity.getMacAddress(), amphiroEntity
+                                                            .getAesKey(), entity.getRegisteredOn().getMillis());
 
                             for (eu.daiad.web.domain.application.DeviceProperty p : amphiroEntity.getProperties()) {
                                 amphiro.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
+                            }
+
+                            for (eu.daiad.web.domain.application.DeviceAmphiroConfiguration c : amphiroEntity
+                                            .getConfigurations()) {
+                                if (c.isActive()) {
+                                    amphiro.setConfiguration(new eu.daiad.web.model.device.DeviceAmphiroConfiguration(c));
+                                    break;
+                                }
                             }
 
                             devices.add(amphiro);
@@ -470,9 +478,8 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
             if (result.size() == 1) {
                 eu.daiad.web.domain.application.DeviceAmphiro entity = result.get(0);
 
-                AmphiroDevice amphiro = new AmphiroDevice(entity.getAccount().getId(), entity.getKey(), entity
-                                .getName(), entity.getMacAddress(), entity.getAesKey(), entity.getRegisteredOn()
-                                .getMillis());
+                AmphiroDevice amphiro = new AmphiroDevice(entity.getId(), entity.getKey(), entity.getName(),
+                                entity.getMacAddress(), entity.getAesKey(), entity.getRegisteredOn().getMillis());
 
                 for (eu.daiad.web.domain.application.DeviceProperty p : entity.getProperties()) {
                     amphiro.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
@@ -521,10 +528,9 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
     @Override
     public Device getWaterMeterDeviceBySerial(String serial) {
         try {
-            TypedQuery<eu.daiad.web.domain.application.DeviceMeter> query = entityManager
-                            .createQuery("select d from device_meter d where d.serial = :serial ",
-                                            eu.daiad.web.domain.application.DeviceMeter.class).setFirstResult(0)
-                            .setMaxResults(1);
+            TypedQuery<eu.daiad.web.domain.application.DeviceMeter> query = entityManager.createQuery(
+                            "select d from device_meter d where d.serial = :serial ",
+                            eu.daiad.web.domain.application.DeviceMeter.class).setFirstResult(0).setMaxResults(1);
             query.setParameter("serial", serial);
 
             List<eu.daiad.web.domain.application.DeviceMeter> result = query.getResultList();
@@ -651,37 +657,10 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
                 deviceConfigurationCollection.setKey(device.getKey());
                 deviceConfigurationCollection.setMacAddress(device.getMacAddress());
 
-                for (DeviceAmphiroConfiguration p : device.getConfigurations()) {
-                    if (p.isActive()) {
-                        eu.daiad.web.model.device.DeviceAmphiroConfiguration configuration = new eu.daiad.web.model.device.DeviceAmphiroConfiguration();
-
-                        configuration.setTitle(p.getTitle());
-                        configuration.setCreatedOn(p.getCreatedOn().getMillis());
-
-                        configuration.getProperties().add(p.getValue1());
-                        configuration.getProperties().add(p.getValue2());
-                        configuration.getProperties().add(p.getValue3());
-                        configuration.getProperties().add(p.getValue4());
-                        configuration.getProperties().add(p.getValue5());
-                        configuration.getProperties().add(p.getValue6());
-                        configuration.getProperties().add(p.getValue7());
-                        configuration.getProperties().add(p.getValue8());
-                        configuration.getProperties().add(p.getValue9());
-                        configuration.getProperties().add(p.getValue10());
-                        configuration.getProperties().add(p.getValue11());
-                        configuration.getProperties().add(p.getValue12());
-
-                        configuration.setBlock(p.getBlock());
-                        configuration.setFrameDuration(p.getFrameDuration());
-                        configuration.setNumberOfFrames(p.getNumberOfFrames());
-
-                        configuration.setVersion(p.getVersion());
-                        if (p.getAcknowledgedOn() != null) {
-                            configuration.setAcknowledgedOn(p.getAcknowledgedOn().getMillis());
-                        }
-                        if (p.getEnabledOn() != null) {
-                            configuration.setEnabledOn(p.getEnabledOn().getMillis());
-                        }
+                for (DeviceAmphiroConfiguration c : device.getConfigurations()) {
+                    if (c.isActive()) {
+                        eu.daiad.web.model.device.DeviceAmphiroConfiguration configuration = new eu.daiad.web.model.device.DeviceAmphiroConfiguration(
+                                        c);
 
                         deviceConfigurationCollection.getConfigurations().add(configuration);
                     }

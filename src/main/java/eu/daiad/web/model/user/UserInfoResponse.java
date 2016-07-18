@@ -4,6 +4,7 @@ import java.util.List;
 
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.amphiro.AmphiroSessionCollection;
+import eu.daiad.web.model.device.DeviceAmphiroConfiguration;
 import eu.daiad.web.model.group.GroupInfo;
 import eu.daiad.web.model.meter.WaterMeterStatus;
 
@@ -12,6 +13,8 @@ public class UserInfoResponse extends RestResponse {
     private boolean favorite;
 
     private UserInfo user;
+
+    private List<DeviceAmphiroConfiguration> configurations;
 
     private List<WaterMeterStatus> meters;
 
@@ -65,6 +68,14 @@ public class UserInfoResponse extends RestResponse {
 
     public void setFavorite(boolean favorite) {
         this.favorite = favorite;
+    }
+
+    public List<DeviceAmphiroConfiguration> getConfigurations() {
+        return configurations;
+    }
+
+    public void setConfigurations(List<DeviceAmphiroConfiguration> configurations) {
+        this.configurations = configurations;
     }
 
 }

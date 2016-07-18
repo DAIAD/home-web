@@ -13,7 +13,68 @@ var { bindActionCreators } = require('redux');
 
 var UserActions = require('../actions/UserActions');
 var UserTablesSchema = require('../constants/UserTablesSchema');
- 
+
+var _getAmphiroConfig = function(title) {
+  switch(title) {
+    case 'Off Configuration':
+      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_debug'>Disabled</div>);
+    case 'Enabled Configuration (Metric Units)':
+      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_info'>Enabled (Metric Units)</div>);
+    case 'Enabled Configuration (Imperial Units)':
+      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_info'>Enabled (Imperial Units)</div>);
+    default:
+      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_error'>Unknown</div>);
+  }
+};
+
+var _getUtilityMode = function(mode) {
+  switch(mode){
+    case 1:
+      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_info'>Enabled</div>);
+    case 2:
+      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_debug'>Disabled</div>);
+    default:
+      return '-';
+  }
+};
+
+var _getHomeMode = function(mode) {
+  switch(mode){
+    case 1:
+      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_info'>Enabled</div>);
+    case 2:
+      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_debug'>Disabled</div>);
+    default:
+      return '-';
+  }
+};
+
+var _getMobileMode = function(mode) {
+  switch(mode){
+    case 1:
+      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_info'>Enabled</div>);
+    case 2:
+      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_debug'>Disabled</div>);
+    case 3:
+      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_warn'>Learning</div>);
+    case 4:
+      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_error'>Blocked</div>);
+    default:
+      return '-';
+  }
+};
+
+var _getOsView = function(os) {
+  switch(os) {
+    case 'iOS':
+      return (<span><i className='fa fa-apple fa-lg' />&nbsp;iOS</span>);
+    case 'Android':
+      return (<span><i className='fa fa-android fa-lg' />&nbsp;Android</span>);
+    default:
+      return '-';
+  }
+};
+
 var _showChart = function(type, key, e) {
   switch(type) {
     case 'METER':
@@ -144,6 +205,13 @@ var User = React.createClass({
       </span>
     );
 
+    const applicationTitle = (
+      <span>
+        <i className='fa fa-cubes fa-fw'></i>
+        <span style={{ paddingLeft: 4 }}>Application Modes</span>
+      </span>
+    );
+
 		const groupTitle = (
 			<span>
 				<i className='fa fa-group fa-fw'></i>
@@ -151,6 +219,64 @@ var User = React.createClass({
 			</span>
 		);
 
+		var applicationElements = [];
+
+		if(this.props.user) {
+		  var mode = this.props.user.mode;
+		  
+		  applicationElements.push(
+          <Bootstrap.ListGroupItem key={applicationElements.length + 1} className='clearfix'>
+            <div className='row'>
+              <div className='col-md-6'><b>Utility</b></div>
+              <div className='col-md-6'>{_getUtilityMode(mode.utilityMode)}</div>
+            </div>
+            <div className='row'>
+              <div className='col-md-6'><b>Home</b></div>
+              <div className='col-md-6'>{_getHomeMode(mode.homeMode)}</div>
+            </div>
+            <div className='row'>
+              <div className='col-md-6'><b>Mobile</b></div>
+              <div className='col-md-6'>{_getMobileMode(mode.mobileMode)}</div>
+            </div>
+            <div className='row'>
+              <div className='col-md-6'><b>Last update</b></div>
+              <div className='col-md-6'>
+                <FormattedTime  value={ new Date(mode.updatedOn) } 
+                                day='numeric' 
+                                month='numeric' 
+                                year='numeric'
+                                hour='numeric' 
+                                minute='numeric' />
+              </div>
+            </div>
+            <div className='row'>
+              <div className='col-md-6'><b>Enabled On</b></div>
+              <div className='col-md-6'>
+                { mode.enabledOn ? 
+                  <FormattedTime  value={ new Date(mode.enabledOn) } 
+                                  day='numeric' 
+                                  month='numeric' 
+                                  year='numeric'
+                                  hour='numeric' 
+                                  minute='numeric' /> : '-' }
+              </div>
+            </div>
+            <div className='row'>
+              <div className='col-md-6'><b>Acknowledged On</b></div>
+              <div className='col-md-6'>
+                { mode.acknowledgedOn ? 
+                  <FormattedTime  value={ new Date(mode.acknowledgedOn) } 
+                                  day='numeric' 
+                                  month='numeric' 
+                                  year='numeric'
+                                  hour='numeric' 
+                                  minute='numeric' /> : '-' }
+              </div>
+            </div>
+          </Bootstrap.ListGroupItem>
+      );
+		}
+		
 		var deviceElements = [];
 
 		if(this.props.meters) {
@@ -169,25 +295,21 @@ var User = React.createClass({
         );
 		    deviceElements.push(
 	        <Bootstrap.ListGroupItem key={deviceElements.length + 1}>
-	          <table>
-	            <tbody>
-  	            <tr>
-  	              <td style={{ paddingRight: 5 }}><b>Current value</b></td>
-  	              <td>{m.volume} lt</td>
-                </tr>
-                <tr>
-                  <td style={{ paddingRight: 5 }}><b>Last update</b></td>
-                  <td>
-                    <FormattedTime  value={ new Date(m.timestamp) } 
-                                    day='numeric' 
-                                    month='numeric' 
-                                    year='numeric'
-                                    hour='numeric' 
-                                    minute='numeric' />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+	          <div className='row'>
+              <div className='col-md-6'><b>Current value</b></div>
+              <div className='col-md-6'>{m.volume} lt</div>
+            </div>
+            <div className='row'>
+              <div className='col-md-6'><b>Last update</b></div>
+              <div className='col-md-6'>
+                <FormattedTime  value={ new Date(m.timestamp) } 
+                                day='numeric' 
+                                month='numeric' 
+                                year='numeric'
+                                hour='numeric' 
+                                minute='numeric' />
+              </div>
+            </div>
 	        </Bootstrap.ListGroupItem>
 	     );   
 		  });
@@ -195,6 +317,7 @@ var User = React.createClass({
 
     if(this.props.devices) {
       this.props.devices.forEach( d => {
+        
         deviceElements.push(
           <Bootstrap.ListGroupItem key={deviceElements.length + 1} className='clearfix'>
             <div style={{ width: 24, float : 'left', textAlign : 'center', marginLeft: -5 }}>
@@ -207,29 +330,68 @@ var User = React.createClass({
             </div>
           </Bootstrap.ListGroupItem>
         );
+        deviceElements.push(
+          <Bootstrap.ListGroupItem key={deviceElements.length + 1}>
+            <div className='row'>
+              <div className='col-md-6'><b>Configuration</b></div>
+              <div className='col-md-6'>{ _getAmphiroConfig(d.configuration.title) }</div>
+            </div>
+            <div className='row'>
+              <div className='col-md-6'><b>Created On</b></div>
+              <div className='col-md-6'>
+                    <FormattedTime  value={ new Date(d.configuration.createdOn) } 
+                                    day='numeric' 
+                                    month='numeric' 
+                                    year='numeric'
+                                    hour='numeric' 
+                                    minute='numeric' />
+              </div>
+            </div>
+            <div className='row'>
+              <div className='col-md-6'><b>Enabled On</b></div>
+              <div className='col-md-6'>
+                    { d.configuration.enabledOn ? 
+                    <FormattedTime  value={ new Date(d.configuration.enabledOn) } 
+                                    day='numeric' 
+                                    month='numeric' 
+                                    year='numeric'
+                                    hour='numeric' 
+                                    minute='numeric' /> : '-' }
+              </div>
+            </div>
+            <div className='row'>
+              <div className='col-md-6'><b>Acknowledged On</b></div>
+              <div className='col-md-6'>
+                    { d.configuration.acknowledgedOn ? 
+                      <FormattedTime  value={ new Date(d.configuration.acknowledgedOn) } 
+                                      day='numeric' 
+                                      month='numeric' 
+                                      year='numeric'
+                                      hour='numeric' 
+                                      minute='numeric' /> : '-' }
+              </div>
+            </div>
+          </Bootstrap.ListGroupItem>
+        );
         if((d.sessions) && (d.sessions.length > 0)) {
           var s = d.sessions[0];
           deviceElements.push(
             <Bootstrap.ListGroupItem key={deviceElements.length + 1}>
-              <table>
-                <tbody>
-                  <tr>
-                    <td style={{ paddingRight: 5 }}><b>Consumption</b></td>
-                    <td>{s.volume} lt</td>
-                  </tr>
-                  <tr>
-                    <td style={{ paddingRight: 5 }}><b>Last update</b></td>
-                    <td>
+              <div className='row'>
+                <div className='col-md-6'><b>Last Session</b></div>
+                <div className='col-md-6'>{s.volume} lt</div>
+              </div>
+              <div className='row'>
+                <div className='col-md-6'><b>Last update</b></div>
+                <div className='col-md-6'>
                       <FormattedTime  value={ new Date(s.timestamp) } 
                                       day='numeric' 
                                       month='numeric' 
                                       year='numeric'
                                       hour='numeric' 
                                       minute='numeric' />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                </div>
+              </div>
             </Bootstrap.ListGroupItem>
           );   
         }
@@ -407,6 +569,12 @@ var User = React.createClass({
       </Bootstrap.ListGroup>
     );
 		
+		var applicationModeGroup = (
+      <Bootstrap.ListGroup fill>
+        {applicationElements.length === 0 ? null : applicationElements}
+      </Bootstrap.ListGroup>
+    );
+		
 		if (this.props.user) {
   		return (
     		<div className='container-fluid' style={{ paddingTop: 10 }}>
@@ -460,6 +628,14 @@ var User = React.createClass({
                               <td>Postal code</td>
                               <td>{this.props.user.postalCode}</td>
                             </tr> 
+                            <tr>
+                              <td>Smart Phone OS</td>
+                              <td>{ _getOsView(this.props.user.smartPhoneOs) }</td>
+                            </tr>
+                            <tr>
+                              <td>Table OS</td>
+                              <td>{ _getOsView(this.props.user.tabletOs) }</td>
+                            </tr>
                           </tbody>
                         </table>
                       </div>
@@ -485,12 +661,15 @@ var User = React.createClass({
     		    </div>
     		  </div>
     		  <div className='row'>
-    		    <div className='col-md-3'>
+    		    <div className='col-md-4'>
               <Bootstrap.Panel header={deviceTitle}>
                 {deviceListGroup}
               </Bootstrap.Panel>
+              <Bootstrap.Panel header={applicationTitle}>
+                {applicationModeGroup}
+              </Bootstrap.Panel>
     		    </div>
-            <div className='col-md-9'>
+            <div className='col-md-8'>
               <Bootstrap.Panel header={chartTitleText}>
                 <Bootstrap.ListGroup fill>
                   <Bootstrap.ListGroupItem>

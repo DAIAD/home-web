@@ -15,7 +15,7 @@ public class AnnouncementTranslation extends Message {
 
 	@Override
 	public EnumMessageType getType() {
-		return EnumMessageType.RECOMMENDATION_STATIC;
+		return EnumMessageType.ANNOUNCEMENT;
 	}
 
 	public String getTitle() {

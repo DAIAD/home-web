@@ -29,6 +29,7 @@ import eu.daiad.web.model.amphiro.AmphiroSessionCollectionTimeIntervalQuery;
 import eu.daiad.web.model.amphiro.AmphiroSessionCollectionTimeIntervalQueryResult;
 import eu.daiad.web.model.amphiro.AmphiroSessionTimeIntervalQuery;
 import eu.daiad.web.model.amphiro.AmphiroSessionTimeIntervalQueryResult;
+import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -238,7 +239,8 @@ public class UpdateAmphiroDataSchemaJobBuilder implements IJobBuilder {
 												AmphiroMeasurementCollection request = createInsertRequest(
 																deviceKeys[0], data);
 
-												amphiroIndexOrderedRepository.storeData(userKey, request);
+                                                amphiroIndexOrderedRepository.storeData(user, (AmphiroDevice) device,
+                                                                request);
 
 												if ((totalSessions % 1000) == 0) {
 													logger.info(String

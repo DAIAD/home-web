@@ -52,7 +52,7 @@ module.exports = function(grunt) {
             ],
             options: {
               exclude: ['i18n'], 
-              destination: 'jsdoc'
+              destination: 'jsdoc/home'
             }
           }
         },
@@ -445,6 +445,12 @@ module.exports = function(grunt) {
           cwd: 'node_modules/react-datetime/css/',
           src: ['*.css'],
           dest: 'src/main/resources/public/assets/lib/react-datetime/',
+          filter: 'isFile'
+        }, {
+          expand: true,
+          cwd: 'jsdoc/home/',
+          src: ['**/*'],
+          dest: 'src/main/resources/public/docs/client/home/',
           filter: 'isFile'
         }]
       }
