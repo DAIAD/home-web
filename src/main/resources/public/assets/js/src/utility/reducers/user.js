@@ -16,6 +16,7 @@ var initialState = {
     groups : {},
     deviceKey : null
   },
+  activeDevice : null,
   interval : [
       moment().subtract(30, 'days'), moment()
   ],
@@ -351,6 +352,16 @@ var user = function(state, action) {
       return Object.assign({}, state, {
         isLoading : false,
         favorite : (action.success ? false : state.favorite)
+      });
+
+    case types.AMPHIRO_CONFIG_SHOW:
+      return Object.assign({}, state, {
+        activeDevice : action.activeDevice || null
+      });
+
+    case types.AMPHIRO_CONFIG_HIDE:
+      return Object.assign({}, state, {
+        activeDevice : null
       });
 
     default:
