@@ -2,6 +2,7 @@ package eu.daiad.web.controller.api;
 
 import java.util.UUID;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.security.RoleUpdateRequest;
 import eu.daiad.web.model.user.Account;
@@ -82,19 +85,25 @@ public class UserController extends BaseRestController {
 	}
 
 	/**
-	 * Changes a user's password.
+	 * Sets a user's password.
 	 * 
 	 * @param data the request.
 	 * @return the controller's response.
 	 */
 	@RequestMapping(value = "/api/v1/user/password", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse changePassword(@RequestBody PasswordChangeRequest data) {
+	public RestResponse setPassword(@RequestBody PasswordChangeRequest data) {
 		RestResponse response = new RestResponse();
 
 		try {
-			this.authenticate(data.getCredentials(), EnumRole.ROLE_ADMIN);
+			AuthenticatedUser user = this.authenticate(data.getCredentials());
 
-			userService.setPassword(data.getUsername(), data.getPassword());
+            if ((user.hasRole(EnumRole.ROLE_ADMIN)) && (!StringUtils.isBlank(data.getUsername()))) {
+                userService.setPassword(data.getUsername(), data.getPassword());    
+			} else if(user.hasRole(EnumRole.ROLE_USER)){
+			    userService.setPassword(user.getUsername(), data.getPassword());
+			} else {
+			    throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+			}
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
 
