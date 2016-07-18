@@ -99,7 +99,6 @@ const login = function(username, password) {
  */
 const refreshProfile = function() {
   return function(dispatch, getState) {
-    console.log('refreshing profile...');
     return dispatch(fetchProfile())
     .then((response) => {
       const { csrf, success, errors, profile } = response;
@@ -109,7 +108,8 @@ const refreshProfile = function() {
       dispatch(receivedLogin(success, errors.length?errors[0].code:null, profile));
 
       if (success) {
-        return dispatch(InitActions.initHome(profile));
+        dispatch(InitActions.initHome(profile));
+        return Promise.resolve({success:true, profile});
       } 
 
       return Promise.reject(response);

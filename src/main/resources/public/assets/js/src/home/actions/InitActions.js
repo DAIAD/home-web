@@ -53,7 +53,7 @@ const initHome = function (profile) {
     return dispatch(DashboardActions.fetchAllInfoboxesData())
     .then(() => {
       dispatch(LocaleActions.setLocale(profile.locale));
-      return {success:true, profile};
+      return Promise.resolve({success:true, profile});
     });
 
   };
