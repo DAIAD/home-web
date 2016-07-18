@@ -52,62 +52,75 @@ function MainSidebar (props) {
   );
 } 
 
-
-
-function HomeRoot (props) {
+function Loader (props) {
   return (
-    <IntlProvider 
-      locale={props.locale.locale}
-      messages={props.locale.messages} >
-      <div className='site-container'>
-        {
-          (() => {
-            if (props.loading){
-              return (
-                <div>
-                  <img className="preloader" src={`${PNG_IMAGES}/preloader-counterclock.png`} />
-                  <img className="preloader-inner" src={`${PNG_IMAGES}/preloader-clockwise.png`} />
-                </div>
-                );
-            }
-            })()
-        }
-        <Header
-          firstname={props.user.profile.firstname}
-          deviceCount={props.deviceCount}
-          isAuthenticated={props.user.isAuthenticated}
-          notifications={props.messages}
-          unreadNotifications={props.unreadNotifications}
-          linkToNotification={props.linkToNotification}
-          locale={props.locale.locale}
-          logout={props.logout} 
-          setLocale={props.setLocale}
-          errors={props.errors}
-          dismissError={props.dismissError}
-        />
-
-      <div className = "main-container">
-        
-        {(() => props.user.isAuthenticated ? 
-          <MainSidebar menuItems={MAIN_MENU} />
-          :
-          <MainSidebar menuItems={[]}/>
-        )()}
-
-        {(() => props.user.isAuthenticated ? 
-         props.children
-         :
-          <LoginPage 
-            isAuthenticated = {props.user.isAuthenticated}
-            errors = {props.user.status.errors}
-            login = {props.login}
-            logout = {props.logout} />
-        )()}
-      </div>
-
-          <Footer />
-        </div>
-      </IntlProvider>
+    <div>
+      <img className="preloader" src={`${PNG_IMAGES}/preloader-counterclock.png`} />
+      <img className="preloader-inner" src={`${PNG_IMAGES}/preloader-clockwise.png`} />
+    </div>
     );
 }
+
+//function HomeRoot (props) {
+var HomeRoot = React.createClass({
+  componentWillMount: function() {
+    const { init, ready } = this.props;
+
+    if (!ready) {
+      init();
+    }
+  },
+  render: function() {
+    const { ready, locale, loading, user, deviceCount, messages, unreadNotifications, linkToNotification, login, logout, setLocale, errors, dismissError, children } = this.props;
+    if (!ready) {
+      return <Loader/>;
+    }
+    return (
+      <IntlProvider 
+        locale={locale.locale}
+        messages={locale.messages} >
+        <div className='site-container'>
+          {
+            loading ? <Loader/> : <div/> 
+          }
+          <Header
+            firstname={user.profile.firstname}
+            deviceCount={deviceCount}
+            isAuthenticated={user.isAuthenticated}
+            notifications={messages}
+            unreadNotifications={unreadNotifications}
+            linkToNotification={linkToNotification}
+            locale={locale.locale}
+            logout={logout} 
+            setLocale={setLocale}
+            errors={errors}
+            dismissError={dismissError}
+          />
+
+        <div className = "main-container">
+          
+          {(() => user.isAuthenticated ? 
+            <MainSidebar menuItems={MAIN_MENU} />
+            :
+            <MainSidebar menuItems={[]}/>
+          )()}
+
+          {(() => user.isAuthenticated ? 
+           children
+           :
+            <LoginPage 
+              isAuthenticated = {user.isAuthenticated}
+              errors = {user.status.errors}
+              login = {login}
+              logout = {logout} />
+          )()}
+        </div>
+
+            <Footer />
+          </div>
+        </IntlProvider>
+    );
+  }
+});
+
 module.exports = HomeRoot;

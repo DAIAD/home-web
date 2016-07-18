@@ -8,7 +8,8 @@ var { connect } = require('react-redux');
 var HomeRoot = require('../components/layout/HomeRoot');
 
 // Actions
-var { login, logout } = require('../actions/UserActions');
+var { login, logout, refreshProfile, letTheRightOneIn } = require('../actions/UserActions');
+var { setReady } = require('../actions/InitActions');
 var { setLocale } = require('../actions/LocaleActions');
 var { linkToMessage:linkToNotification } = require('../actions/MessageActions');
 var { dismissError } = require('../actions/QueryActions');
@@ -19,6 +20,7 @@ var { combineMessages } = require('../utils/messages');
 function mapStateToProps(state) {
     return {
       user: state.user,
+      ready: state.user.ready,
       locale: state.locale,
       errors: state.query.errors,
       loading: state.user.status.isLoading || state.locale.status.isLoading || state.query.isLoading,
@@ -32,18 +34,36 @@ function mapStateToProps(state) {
 }
 
 function mapDispatchToProps(dispatch) {
-  return bindActionCreators(Object.assign({}, {login, logout, setLocale, linkToNotification, dismissError}), dispatch);
+  return bindActionCreators(Object.assign({}, {login, logout, refreshProfile, letTheRightOneIn, setLocale, linkToNotification, dismissError, setReady }), dispatch);
 }
 
 function mergeProps(stateProps, dispatchProps, ownProps) {
-  const isAuthed = stateProps.user.isAuthenticated;
-  const devices = stateProps.user.profile.devices;
   return Object.assign({}, 
                        ownProps, 
                        dispatchProps,
                        stateProps,
                        { 
-                         deviceCount: isAuthed?getDeviceCount(devices):0,
+                         init: () => {
+                           //init locale
+                           dispatchProps.setLocale(properties.locale)
+                           .then(() => {
+                             //refresh profile if session exists
+                             if (properties.reload) {
+                               dispatchProps.refreshProfile()
+                                 .then(res => { 
+                                   if (res.success) { 
+                                     dispatchProps.setReady(); 
+                                     dispatchProps.letTheRightOneIn();
+                                   }
+                                 }); 
+                             }
+                             else {
+                               dispatchProps.setReady();
+                             }
+                           });
+                         },
+                         login: (user, pass) => dispatchProps.login(user, pass)
+                                                .then(res => res.success ? dispatchProps.letTheRightOneIn() : null), 
                          unreadNotifications: stateProps.messages.reduce(((prev, curr) => !curr.acknowledgedOn ? prev+1 : prev), 0)
                        }
                       );

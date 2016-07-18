@@ -168,7 +168,7 @@ const transformInfoboxData = function (infobox, devices, intl) {
       chartData = data ? data.map(devData => ({ 
         title: getDeviceNameByKey(devices, devData.deviceKey), 
         //data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, chartCategories)
-        data: deviceType === 'METER' ? getChartMeterData(getDataSessions(devices, devData), chartCategories, infobox.metric, getLowerGranularityPeriod(period)) : getChartAmphiroData(getDataSessions(devices, devData), chartCategories, infobox.metric)
+        data: deviceType === 'METER' ? getChartMeterData(getDataSessions(devices, devData), chartCategories, infobox.metric, time) : getChartAmphiroData(getDataSessions(devices, devData), chartCategories, infobox.metric)
         //}))
       //data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, chartCategories)
       })) : [];

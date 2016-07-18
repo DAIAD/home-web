@@ -7,15 +7,8 @@
 
 var userAPI = require('../api/user');
 var types = require('../constants/ActionTypes');
-var LocaleActions = require('./LocaleActions');
-var DashboardActions = require('./DashboardActions');
-var HistoryActions = require('./HistoryActions');
-var FormActions = require('./FormActions');
 
-const { fetchAll:fetchAllMessages } = require('./MessageActions');
-const { MESSAGE_TYPES } = require('../constants/HomeConstants');
-
-const { getMeterCount } = require('../utils/device');
+var InitActions = require('./InitActions');
 
 const requestedLogin = function() {
   return {
@@ -23,12 +16,12 @@ const requestedLogin = function() {
     };
 };
 
-const receivedLogin = function(status, errors, profile) {
+const receivedLogin = function(success, errors, profile) {
   return {
     type: types.USER_RECEIVED_LOGIN,
-    status: status,
-    errors: errors,
-    profile: profile
+    success,
+    errors,
+    profile
   };
 };
 
@@ -38,11 +31,11 @@ const requestedLogout = function() {
     };
 };
 
-const receivedLogout = function(status, errors) {
+const receivedLogout = function(success, errors) {
   return {
     type: types.USER_RECEIVED_LOGOUT,
-    status: status,
-    errors: errors
+    success,
+    errors
   };
 };
 
@@ -88,9 +81,9 @@ const login = function(username, password) {
 
       // Actions that need to be dispatched on login
       if (success) {
-        dispatch(initHome(profile));
+        return dispatch(InitActions.initHome(profile));
       }
-      return response;
+      return Promise.reject(response);
     })
     .catch((errors) => {
       console.error('Error caught on user login:', errors);
@@ -115,10 +108,11 @@ const refreshProfile = function() {
       dispatch(receivedLogin(success, errors.length?errors[0].code:null, profile));
 
       if (success) {
-        dispatch(initHome(profile));
+        dispatch(InitActions.initHome(profile));
+        return Promise.resolve({success:true, profile});
       } 
 
-      return response;
+      return Promise.reject(response);
     })
     .catch((errors) => {
       console.error('Error caught on profile refresh:', errors);
@@ -150,81 +144,6 @@ const fetchProfile = function() {
 };
 
 /**
- * Call all necessary actions to initialize app with profile data 
- *
- * @param {Object} profile - profile object as returned from server
- */
-const initHome = function (profile) {
-  return function(dispatch, getState) {
-
-    dispatch(fetchAllMessages());
-
-    if (profile.configuration) {
-        const configuration = JSON.parse(profile.configuration);
-        if (configuration.infoboxes) dispatch(DashboardActions.setInfoboxes(configuration.infoboxes));
-        if (configuration.layout) dispatch(DashboardActions.updateLayout(configuration.layout, false));
-
-    }
-    dispatch(DashboardActions.fetchAllInfoboxesData());
-    
-    if (getMeterCount(getState().user.profile.devices) === 0) {
-      dispatch(HistoryActions.setActiveDeviceType('AMPHIRO', true));
-      
-      dispatch(FormActions.setForm('infoboxToAdd',{
-        deviceType: 'AMPHIRO',
-        type: 'totalVolumeStat',
-        title : 'Shower volume',
-      }));
-    }
-    else {
-      dispatch(HistoryActions.setActiveDeviceType('METER', true));
-      }
-
-    dispatch(LocaleActions.setLocale(profile.locale));
-    const { firstname, lastname, email, username, locale, address, zip, country, timezone } = profile;
-    const profileData = { firstname, lastname, email, username, locale, address, zip, country, timezone };
-    dispatch(FormActions.setForm('profileForm', profileData));
-
-  };
-};
-
-/**
- * Saves JSON data to profile  
- *
- * @param {Object} configuration - serializable object to be saved to user profile
- * @return {Promise} Resolved or rejected promise, with errors if rejected
- */
-const saveToProfile = function (profile) {
-  return function(dispatch, getState) {
-    console.log('save t dp data', profile);
-
-    const data = Object.assign({}, profile, {csrf: getState().user.csrf});
-    console.log('gonna save to profile', data);
-
-    dispatch(requestedQuery());
-
-    return userAPI.saveToProfile(data)
-    .then((response) => {
-
-      console.log('got = ', response);
-      dispatch(receivedQuery(response.success, response.errors));
-       
-      if (!response || !response.success) {
-        throw new Error (response && response.errors && response.errors.length > 0 ? response.errors[0].code : 'unknownError');
-      }
-
-      return response;
-
-    })
-    .catch((errors) => {
-      console.error('Error caught on saveToProfile:', errors);
-      dispatch(receivedQuery(false, errors));
-      return errors;
-    });
-  };
-};
-
-/**
  * Performs user logout 
  *
  * @return {Promise} Resolved or rejected promise, errors if rejected
@@ -252,12 +171,58 @@ const logout = function() {
     });
   };
 };
-  
+
+/**
+ * Saves JSON data to profile  
+ *
+ * @param {Object} configuration - serializable object to be saved to user profile
+ * @return {Promise} Resolved or rejected promise, with errors if rejected
+ */
+const saveToProfile = function (profile) {
+  return function(dispatch, getState) {
+
+    //TODO: country is there because of bug in backend that sets it to null otherwise causing problems
+    const data = Object.assign({}, {country: 'Greece'}, profile, {csrf: getState().user.csrf});
+
+    dispatch(requestedQuery());
+
+    return userAPI.saveToProfile(data)
+    .then((response) => {
+
+      dispatch(receivedQuery(response.success, response.errors));
+       
+      if (!response || !response.success) {
+        throw new Error (response && response.errors && response.errors.length > 0 ? response.errors[0].code : 'unknownError');
+      }
+
+      return response;
+
+    })
+    .catch((errors) => {
+      console.error('Error caught on saveToProfile:', errors);
+      dispatch(receivedQuery(false, errors));
+      return errors;
+    });
+  };
+};
+
+/**
+ * Action that is dispatched after authentication success
+ * for optimization purposes 
+ *
+ * @return {Promise} Resolved or rejected promise with Object {success:true, profile{Object}} if resolved, {success: false} if rejected
+ */
+const letTheRightOneIn = function() {
+  return {
+    type: types.USER_LET_IN
+  };
+};
 
 module.exports = {
   login,
   logout,
   refreshProfile,
   fetchProfile,
-  saveToProfile
+  saveToProfile,
+  letTheRightOneIn
 };

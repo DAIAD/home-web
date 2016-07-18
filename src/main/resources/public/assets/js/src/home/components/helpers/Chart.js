@@ -209,9 +209,9 @@ var Chart = React.createClass({
                 width: 1
               },
               label : {
-                  show: true, 
+                  show: false, 
                   //position: 'insideTop',
-                  formatter: (params) => `${options.title}`,
+                  //formatter: (params) => `${options.title}`,
                   position: 'center',
                   textStyle: {
                     fontColor: 'red',

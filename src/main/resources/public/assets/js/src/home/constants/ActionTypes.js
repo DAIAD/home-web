@@ -1,6 +1,8 @@
 var keyMirror = require('keymirror');
 
 module.exports = keyMirror({
+  HOME_IS_READY: null,
+
   LOCALE_CHANGE : null,
   LOCALE_REQUEST_MESSAGES: null,
   LOCALE_RECEIVED_MESSAGES: null,
@@ -12,6 +14,7 @@ module.exports = keyMirror({
   USER_PROFILE_REFRESH : null,
   USER_PROFILE_UPDATE: null,
   USER_SESSION_SET_CSRF: null,
+  USER_LET_IN: null,
 
   DEVICE_RECEIVED_SESSION_SEARCH: null,
   DEVICE_REQUESTED_SESSION_SEARCH: null,
@@ -21,7 +24,10 @@ module.exports = keyMirror({
   QUERY_REQUEST_START: null,
   QUERY_REQUEST_END: null,
   QUERY_DISMISS_ERROR: null,
-  
+  QUERY_SAVE_TO_CACHE: null,
+  QUERY_CACHE_ITEM_REQUESTED: null,
+  QUERY_SET_CACHE: null,
+
   HISTORY_SET_COMPARISON: null,
   HISTORY_SET_TIME: null,
   HISTORY_SET_ACTIVE_DEVICE: null,

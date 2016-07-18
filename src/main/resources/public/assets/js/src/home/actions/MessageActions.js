@@ -120,11 +120,9 @@ const fetch = function (options) {
     dispatch(requestedMessages());
 
     const data = Object.assign({}, {pagination: options}, {csrf: getState().user.csrf});
-    console.log('requestin messages with', data);
 
     return messageAPI.fetch(data)
     .then(response => {
-      console.log('got ', response);
       
       if (!response || !response.success) {
         throw new Error (response && response.errors && response.errors.length > 0 ? response.errors[0].code : 'unknownError');
