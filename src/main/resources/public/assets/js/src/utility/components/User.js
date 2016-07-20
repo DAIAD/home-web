@@ -14,14 +14,38 @@ var { bindActionCreators } = require('redux');
 var UserActions = require('../actions/UserActions');
 var UserTablesSchema = require('../constants/UserTablesSchema');
 
-var _getAmphiroConfig = function(title) {
-  switch(title) {
+var _viewAmphiroConfiguration = function(device) {
+  this.props.showAmphiroConfig(device);
+};
+
+var _getAmphiroConfig = function(self, device) {
+  let configuration = device.configuration;
+  
+  switch(configuration.title) {
     case 'Off Configuration':
-      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_debug'>Disabled</div>);
+      return (
+        <div style={{ marginTop: 5, marginBottom: 5 }} className='log_debug'>
+          Disabled
+          <i style={{ textAlign: 'right', cursor: 'pointer' }} 
+             className='fa fa-search fa-fw'
+             onClick={_viewAmphiroConfiguration.bind(self, device)} />
+        </div>);
     case 'Enabled Configuration (Metric Units)':
-      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_info'>Enabled (Metric Units)</div>);
+      return (
+        <div style={{ marginTop: 5, marginBottom: 5 }} className='log_info'>
+          Enabled (Metric Units)
+          <i style={{ textAlign: 'right', cursor: 'pointer' }} 
+             className='fa fa-search fa-fw' 
+             onClick={_viewAmphiroConfiguration.bind(self, device)} />
+        </div>);
     case 'Enabled Configuration (Imperial Units)':
-      return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_info'>Enabled (Imperial Units)</div>);
+      return (
+        <div style={{ marginTop: 5, marginBottom: 5 }} className='log_info'>
+          Enabled (Imperial Units)
+          <i style={{ textAlign: 'right', cursor: 'pointer' }} 
+             className='fa fa-search fa-fw'
+             onClick={_viewAmphiroConfiguration.bind(self, device)} />
+        </div>);
     default:
       return (<div style={{ marginTop: 5, marginBottom: 5 }} className='log_error'>Unknown</div>);
   }
@@ -334,10 +358,10 @@ var User = React.createClass({
           <Bootstrap.ListGroupItem key={deviceElements.length + 1}>
             <div className='row'>
               <div className='col-md-6'><b>Configuration</b></div>
-              <div className='col-md-6'>{ _getAmphiroConfig(d.configuration.title) }</div>
+              <div className='col-md-6'>{ _getAmphiroConfig(this, d) }</div>
             </div>
             <div className='row'>
-              <div className='col-md-6'><b>Created On</b></div>
+              <div className='col-md-6'><b>Mode Changed On</b></div>
               <div className='col-md-6'>
                     <FormattedTime  value={ new Date(d.configuration.createdOn) } 
                                     day='numeric' 
@@ -575,9 +599,58 @@ var User = React.createClass({
       </Bootstrap.ListGroup>
     );
 		
+		var amphiroConfigurationModal = (<div />);
+		if (this.props.activeDevice) {
+		  let activeDevice = this.props.activeDevice;
+		  let config = activeDevice.configuration;
+
+		  amphiroConfigurationModal = (
+        <Bootstrap.Modal show={true} onHide={this.props.hideAmphiroConfig}>
+          <Bootstrap.Modal.Header closeButton>
+            <Bootstrap.Modal.Title>{activeDevice.name + ' - ' + activeDevice.deviceKey}</Bootstrap.Modal.Title>
+          </Bootstrap.Modal.Header>
+          <Bootstrap.Modal.Body>
+            <div className='row'>
+              <div className='col-md-4'><b>Title</b></div>
+              <div className='col-md-8'>{config.title}</div>
+            </div>          
+            <div className='row'>
+              <div className='col-md-4'><b>Version</b></div>
+              <div className='col-md-8'>{config.version}</div>
+            </div>
+            <div className='row'>
+              <div className='col-md-4'><b>Block</b></div>
+              <div className='col-md-8'>{config.block}</div>
+            </div>
+            <div className='row'>
+              <div className='col-md-4'><b>Frame Duration</b></div>
+              <div className='col-md-8'>{config.frameDuration}</div>
+            </div>
+            <div className='row'>
+              <div className='col-md-4'><b>Number Of Frames</b></div>
+              <div className='col-md-8'>{config.numberOfFrames}</div>
+            </div>
+            <div className='row'>
+              <div className='col-md-4'><b>Properties</b></div>
+              <div className='col-md-8'>
+              {
+                config.properties.reduce( (o, n, i, a) => {
+                  return (o.toString() ? (o.toString() + ', ' + n.toString()) : n.toString());
+                }, '')
+              }
+              </div>
+            </div>
+          </Bootstrap.Modal.Body>
+          <Bootstrap.Modal.Footer>
+            <Bootstrap.Button onClick={this.props.hideAmphiroConfig}>Close</Bootstrap.Button>
+          </Bootstrap.Modal.Footer>
+        </Bootstrap.Modal>
+      );
+		}
 		if (this.props.user) {
   		return (
     		<div className='container-fluid' style={{ paddingTop: 10 }}>
+    		  {amphiroConfigurationModal}
     		  <div className='row'>
     		    <div className='col-md-7'>
       		    <Bootstrap.Panel header={profileTitle}>
@@ -697,6 +770,7 @@ function mapStateToProps(state) {
     data : state.user.data,
     groups : state.user.groups,
     application : state.user.application,
+    activeDevice : state.user.activeDevice,
     accountId : state.user.accountId,
     profile: state.session.profile
   };
@@ -713,7 +787,9 @@ function mapDispatchToProps(dispatch) {
     getGroupSeries : bindActionCreators(UserActions.getGroupSeries, dispatch),
     exportData : bindActionCreators(UserActions.exportData, dispatch),
     addFavorite : bindActionCreators(UserActions.addFavorite, dispatch),
-    removeFavorite : bindActionCreators(UserActions.removeFavorite, dispatch)
+    removeFavorite : bindActionCreators(UserActions.removeFavorite, dispatch),
+    showAmphiroConfig : bindActionCreators(UserActions.showAmphiroConfig, dispatch),
+    hideAmphiroConfig : bindActionCreators(UserActions.hideAmphiroConfig, dispatch)
   };
 }
 

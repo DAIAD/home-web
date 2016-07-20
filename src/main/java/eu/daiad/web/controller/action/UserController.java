@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTimeZone;
@@ -33,9 +34,11 @@ import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.meter.WaterMeterStatus;
 import eu.daiad.web.model.meter.WaterMeterStatusQueryResult;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.user.DeviceMeterInfo;
 import eu.daiad.web.model.user.UserInfo;
 import eu.daiad.web.model.user.UserInfoCollectionResponse;
@@ -50,6 +53,8 @@ import eu.daiad.web.repository.application.IFavouriteRepository;
 import eu.daiad.web.repository.application.IUserGroupRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
+import eu.daiad.web.security.PasswordChangeRequest;
+import eu.daiad.web.service.IUserService;
 
 /**
  * Provides actions for managing users.
@@ -63,6 +68,9 @@ public class UserController extends BaseController {
     @Value("${security.white-list}")
     private boolean enforceWhiteListCheck;
 
+    @Autowired
+    private IUserService userService;
+    
     @Autowired
     private IUserRepository userRepository;
 
@@ -327,4 +335,33 @@ public class UserController extends BaseController {
         }
     }
 
+    /**
+     * Sets a user's password.
+     * 
+     * @param data the request.
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/action/user/password", method = RequestMethod.POST, produces = "application/json")
+    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
+    public RestResponse setPassword(@AuthenticationPrincipal AuthenticatedUser user,
+                    @RequestBody PasswordChangeRequest data) {
+        RestResponse response = new RestResponse();
+
+        try {
+            if ((user.hasRole(EnumRole.ROLE_ADMIN)) && (!StringUtils.isBlank(data.getUsername()))) {
+                userService.setPassword(data.getUsername(), data.getPassword());
+            } else if (user.hasRole(EnumRole.ROLE_USER)) {
+                userService.setPassword(user.getUsername(), data.getPassword());
+            } else {
+                throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+            }
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
+    
 }

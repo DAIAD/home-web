@@ -1,5 +1,6 @@
 package eu.daiad.web.security;
 
+import org.apache.hadoop.util.StringUtils;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -21,6 +22,7 @@ import eu.daiad.web.model.profile.EnumMobileMode;
 import eu.daiad.web.model.profile.EnumUtilityMode;
 import eu.daiad.web.model.profile.EnumWebMode;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.application.IUserRepository;
 
 @Component
@@ -37,28 +39,52 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 		AuthenticatedUser user = null;
+		boolean impersonate = false;
 
 		try {
 			// Check credentials
-			String username = authentication.getName();
+			String[] username = StringUtils.split(authentication.getName(),':');
 			String password = authentication.getCredentials().toString();
 
+			if(username.length == 2) {
+			    impersonate = true;
+			}
+
 			// Set authentication name
-			MDC.put(MappedDiagnosticContextKeys.USERNAME, username);
+			MDC.put(MappedDiagnosticContextKeys.USERNAME, authentication.getName());
 
 			// Check credentials
 			BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-			user = (AuthenticatedUser) userService.loadUserByUsername(username);
+			user = (AuthenticatedUser) userService.loadUserByUsername(username[0]);
 
 			if ((user == null) || (!encoder.matches(password, user.getPassword()))) {
-				throw new BadCredentialsException(String.format("Authentication has failed for user [%s].", username));
+				throw new BadCredentialsException(String.format("Authentication has failed for user [%s].", authentication.getName()));
 			}
 
 			if (!user.isAccountNonLocked()) {
-				throw new BadCredentialsException(String.format("Account [%s] is locked.", username));
+				throw new BadCredentialsException(String.format("Account [%s] is locked.", authentication.getName()));
 			}
 
+			// Set impersonating user
+            if (impersonate) {
+                if (user.hasRole(EnumRole.ROLE_ADMIN)) {
+                    AuthenticatedUser impersonatedUser = (AuthenticatedUser) userService
+                                    .loadUserByUsername(username[1]);
+
+                    if (user.getUtilityId() == impersonatedUser.getUtilityId()) {
+                        user = impersonatedUser;
+                    } else {
+                        throw new BadCredentialsException(String.format(
+                                        "Cannot impersonate user [%s] with user [%s] from different utilities.",
+                                        username[1], username[0]));
+                    }
+                } else {
+                    throw new BadCredentialsException(String.format(
+                                    "User [%s] does not have the permission for impersonating other users.",
+                                    username[0]));
+                }
+            }
 			// Check application
 			ServletRequestAttributes sra = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 
@@ -71,7 +97,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 					application = EnumApplication.MOBILE;
 				} else {
 					throw new BadCredentialsException(String.format("Application is unavailable for user [%s].",
-									username));
+					                authentication.getName()));
 				}
 			}
 
@@ -81,38 +107,38 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 					if (!user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
 						throw new BadCredentialsException(
 										String.format("Application UTILITY authorization has failed for user [%s] and role ROLE_ADMIN.",
-														username));
+										                authentication.getName()));
 					}
 					if (!user.getUtilityMode().equals(EnumUtilityMode.ACTIVE)) {
 						throw new BadCredentialsException(
 										String.format("Application UTILITY is not enabled for user [%s]. Current application mode [%s].",
-														username, user.getUtilityMode().toString()));
+										                authentication.getName(), user.getUtilityMode().toString()));
 					}
 					break;
 				case HOME:
 					if (!user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER"))) {
 						throw new BadCredentialsException(String.format(
 										"Application HOME authorization has failed for user [%s] and role ROLE_USER.",
-										username));
+										authentication.getName()));
 					}
 					if (!user.getWebMode().equals(EnumWebMode.ACTIVE)) {
 						throw new BadCredentialsException(
 										String.format("Application HOME is not enabled for user [%s]. Current application mode [%s].",
-														username, user.getWebMode().toString()));
+										                authentication.getName(), user.getWebMode().toString()));
 					}
 					break;
 				case MOBILE:
 					if (!user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER"))) {
 						throw new BadCredentialsException(
 										String.format("Application MOBILE authorization has failed for user [%s] and role ROLE_USER.",
-														username));
+										                authentication.getName()));
 					}
 					if ((!user.getMobileMode().equals(EnumMobileMode.ACTIVE))
 									&& (!user.getMobileMode().equals(EnumMobileMode.INACTIVE))
 									&& (!user.getMobileMode().equals(EnumMobileMode.LEARNING))) {
 						throw new BadCredentialsException(
 										String.format("Application MOBILE is not enabled for user [%s]. Current application mode [%s].",
-														username, user.getMobileMode().toString()));
+										                authentication.getName(), user.getMobileMode().toString()));
 					}
 					break;
 				default:
@@ -121,8 +147,9 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 									application.toString()));
 			}
 
-			updateLoginStats(user.getId(), true);
-
+            if (!impersonate) {
+                updateLoginStats(user.getId(), true);
+            }
 			return new UsernamePasswordAuthenticationToken(user, authentication.getCredentials(), user.getAuthorities());
 		} catch (Exception ex) {
 			if (user != null) {

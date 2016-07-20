@@ -51,7 +51,7 @@ var receivedUser = function(success, errors, user, meters, devices, configuratio
     user : user,
     meters : meters,
     devices : devices,
-    configurations: configurations,
+    configurations : configurations,
     groups : groups
   };
 };
@@ -288,6 +288,19 @@ var UserActions = {
           errors : error
         });
       });
+    };
+  },
+
+  showAmphiroConfig : function(activeDevice) {
+    return {
+      type : types.AMPHIRO_CONFIG_SHOW,
+      activeDevice : activeDevice
+    };
+  },
+
+  hideAmphiroConfig : function() {
+    return {
+      type : types.AMPHIRO_CONFIG_HIDE
     };
   }
 
