@@ -160,21 +160,21 @@ function InfoPanel (props) {
   return (
       <ResponsiveGridLayout 
         className='layout'
-        layouts={{sm: layout}}
-        breakpoints={{sm: 850}}
-        cols={{sm: 4}}
+        layouts={{lg:layout, md:layout, sm:layout}}
+        breakpoints={{lg:1080, md:650, sm:200}}
+        cols={{lg:8, md:4, sm:2}}
         rowHeight={160}
+        measureBeforeMount={true}
         draggableHandle='.infobox-header'
-        isDraggable={true}
-        isResizable={false}
-        onBreakpointChange={(newBreakpoint, newCols) => {
-          //console.log('new break!', newBreakpoint, newCols);
-          //return newCols;
+        resizable={true}
+        draggable={true}
+        onLayoutChange={(l, allLayouts) => {
         }}
         onResizeStop={(layout, oldItem, newItem, placeholder) => { 
           updateLayout(layout);  
+          //updateLayout(layout);  
         }}
-        onDragStop={(layout) => {
+        onDragStop={(layout, oldItem, newItem, placeholder) => {
           updateLayout(layout); 
         }}
        >
@@ -292,7 +292,7 @@ function AddInfoboxModal (props) {
 }
 
 var Dashboard = React.createClass({
-  mixins: [ PureRenderMixin ],
+  //mixins: [ PureRenderMixin ],
 
   componentWillMount: function() {
     const { fetchAllInfoboxesData, switchMode } = this.props;
@@ -316,8 +316,11 @@ var Dashboard = React.createClass({
    
   },
   */
+  componentWillReceiveProps: function(nextProps) {
+    
+  },
   render: function() {
-    const { firstname, mode, dirty, switchMode, addInfobox, saveToProfile, setDirty, resetDirty, deviceCount, meterCount, metrics , types, deviceTypes, infoboxToAdd, setForm } = this.props;
+    const { firstname, mode, dirty, switchMode, addInfobox, saveToProfile, setDirty, resetDirty, deviceCount, meterCount, metrics , types, infoboxes, deviceTypes, infoboxToAdd, setForm, layout, updateInfobox, removeInfobox, linkToHistory, intl, updateLayout } = this.props;
     return (
       <MainSection id="section.dashboard">
         <div className='dashboard'>
@@ -325,8 +328,11 @@ var Dashboard = React.createClass({
 
             <SayHello firstname={firstname} />
             <AddInfoboxModal {...{showModal:mode==='add', switchMode, addInfobox, infoboxToAdd,  metrics, types, deviceTypes, setForm }}/>
+
+            {
+              <InfoPanel {...this.props} />
+            }
             
-            <InfoPanel {...this.props} />
           </div>
           <div className='dashboard-right'>
             <div className='dashboard-device-info'>
