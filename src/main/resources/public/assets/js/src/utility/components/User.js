@@ -518,15 +518,6 @@ var User = React.createClass({
                 theme={theme}/>
   		);
     } else if(this.props.data.devices) {
-      chartTitleText = (
-        <span>
-          <span>
-            <i className='fa fa-bar-chart fa-fw'></i>
-            <span style={{ paddingLeft: 4 }}>Consumption - Last 30 days</span>
-          </span>
-        </span>
-      );
-      
       chartConfig = {
         options: {
           tooltip: {
@@ -553,6 +544,15 @@ var User = React.createClass({
 
       var size = devices[deviceIndex].sessions.length, device = devices[deviceIndex], index = 1;
       data = [];
+
+      chartTitleText = (
+        <span>
+          <span>
+            <i className='fa fa-bar-chart fa-fw'></i>
+            <span style={{ paddingLeft: 4 }}>{device.name} - Last 100 sessions</span>
+          </span>
+        </span>
+      );
 
       for(var s=0; s < size; s++) {
         data.push({
@@ -706,7 +706,7 @@ var User = React.createClass({
                               <td>{ _getOsView(this.props.user.smartPhoneOs) }</td>
                             </tr>
                             <tr>
-                              <td>Table OS</td>
+                              <td>Tablet OS</td>
                               <td>{ _getOsView(this.props.user.tabletOs) }</td>
                             </tr>
                           </tbody>

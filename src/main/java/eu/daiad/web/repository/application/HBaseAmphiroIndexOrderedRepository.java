@@ -441,52 +441,56 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
     }
 
     private void logData(AuthenticatedUser user, AmphiroDevice device, AmphiroMeasurementCollection data) {
-        for (AmphiroSession session : data.getSessions()) {
-            List<String> tokens = new ArrayList<String>();
-            
-            tokens.add("v2");
-            
-            tokens.add(Integer.toString(user.getId()));
-            tokens.add(user.getKey().toString());
-            tokens.add(user.getUsername());
-            
-            tokens.add(Integer.toString(device.getId()));
-            tokens.add(device.getKey().toString());
-            
-            tokens.add(Long.toString(session.getId()));
-            tokens.add(Boolean.toString(session.isHistory()));
-            tokens.add(Long.toString(session.getTimestamp()));
-            tokens.add(Integer.toString(session.getDuration()));
-            
-            tokens.add(Float.toString(session.getVolume()));
-            tokens.add(Float.toString(session.getEnergy()));
-            tokens.add(Float.toString(session.getTemperature()));
-            tokens.add(Float.toString(session.getFlow()));
-            
-            dataSessionLogger.info(StringUtils.join(tokens, ";"));
+        if (data.getSessions() != null) {
+            for (AmphiroSession session : data.getSessions()) {
+                List<String> tokens = new ArrayList<String>();
+
+                tokens.add("v2");
+
+                tokens.add(Integer.toString(user.getId()));
+                tokens.add(user.getKey().toString());
+                tokens.add(user.getUsername());
+
+                tokens.add(Integer.toString(device.getId()));
+                tokens.add(device.getKey().toString());
+
+                tokens.add(Long.toString(session.getId()));
+                tokens.add(Boolean.toString(session.isHistory()));
+                tokens.add(Long.toString(session.getTimestamp()));
+                tokens.add(Integer.toString(session.getDuration()));
+
+                tokens.add(Float.toString(session.getVolume()));
+                tokens.add(Float.toString(session.getEnergy()));
+                tokens.add(Float.toString(session.getTemperature()));
+                tokens.add(Float.toString(session.getFlow()));
+
+                dataSessionLogger.info(StringUtils.join(tokens, ";"));
+            }
         }
-        for (AmphiroMeasurement measurement : data.getMeasurements()) {
-            List<String> tokens = new ArrayList<String>();
-            
-            tokens.add("v2");
-            
-            tokens.add(Integer.toString(user.getId()));
-            tokens.add(user.getKey().toString());
-            tokens.add(user.getUsername());
-            
-            tokens.add(Integer.toString(device.getId()));
-            tokens.add(device.getKey().toString());
-            
-            tokens.add(Long.toString(measurement.getSessionId()));
-            tokens.add(Integer.toString(measurement.getIndex()));
-            tokens.add(Boolean.toString(measurement.isHistory()));
-            tokens.add(Long.toString(measurement.getTimestamp()));
-            
-            tokens.add(Float.toString(measurement.getVolume()));
-            tokens.add(Float.toString(measurement.getEnergy()));
-            tokens.add(Float.toString(measurement.getTemperature()));
-            
-            dataMeasurementLogger.info(StringUtils.join(tokens, ";"));
+        if (data.getMeasurements() != null) {
+            for (AmphiroMeasurement measurement : data.getMeasurements()) {
+                List<String> tokens = new ArrayList<String>();
+
+                tokens.add("v2");
+
+                tokens.add(Integer.toString(user.getId()));
+                tokens.add(user.getKey().toString());
+                tokens.add(user.getUsername());
+
+                tokens.add(Integer.toString(device.getId()));
+                tokens.add(device.getKey().toString());
+
+                tokens.add(Long.toString(measurement.getSessionId()));
+                tokens.add(Integer.toString(measurement.getIndex()));
+                tokens.add(Boolean.toString(measurement.isHistory()));
+                tokens.add(Long.toString(measurement.getTimestamp()));
+
+                tokens.add(Float.toString(measurement.getVolume()));
+                tokens.add(Float.toString(measurement.getEnergy()));
+                tokens.add(Float.toString(measurement.getTemperature()));
+
+                dataMeasurementLogger.info(StringUtils.join(tokens, ";"));
+            }
         }
     }
 
