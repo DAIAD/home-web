@@ -68,6 +68,7 @@ var Chart = React.createClass({
   componentWillReceiveProps : function(nextProps) {
     if(this._chart && nextProps) {
       this._updateOptions(nextProps);
+      this.onResize();
     }
   },
 

@@ -160,33 +160,26 @@ function InfoPanel (props) {
   return (
       <ResponsiveGridLayout 
         className='layout'
-        layouts={{xs:layout, xxs:layout}}
-        breakpoints={{xs:650, xxs:200}}
-        cols={{xs:4, xxs:1}}
+        layouts={{lg:layout, md:layout, sm:layout}}
+        breakpoints={{lg:1080, md:650, sm:200}}
+        cols={{lg:8, md:4, sm:2}}
         rowHeight={160}
         measureBeforeMount={true}
         draggableHandle='.infobox-header'
         resizable={true}
         draggable={true}
         onLayoutChange={(l, allLayouts) => {
-          console.log('layout changed', layout, l);
-          if (layout === l) {
-            updateLayout(l);
-          }
         }}
         onResizeStop={(layout, oldItem, newItem, placeholder) => { 
-          console.log('resized', layout, oldItem, newItem);
-          //updateLayout(layout);  
+          updateLayout(layout);  
           //updateLayout(layout);  
         }}
         onDragStop={(layout, oldItem, newItem, placeholder) => {
-          console.log('dragged', layout, oldItem, newItem, placeholder);
-          //updateLayout(layout); 
+          updateLayout(layout); 
         }}
        >
        {
          infoboxes.map(function(infobox) {
-           console.log('mapping ', infobox.id);
            return (
              <div key={infobox.id}>
                <InfoBox {...{mode, periods, displays, chartFormatter, infobox, updateInfobox, removeInfobox, intl, linkToHistory}} /> 
@@ -328,7 +321,6 @@ var Dashboard = React.createClass({
   },
   render: function() {
     const { firstname, mode, dirty, switchMode, addInfobox, saveToProfile, setDirty, resetDirty, deviceCount, meterCount, metrics , types, infoboxes, deviceTypes, infoboxToAdd, setForm, layout, updateInfobox, removeInfobox, linkToHistory, intl, updateLayout } = this.props;
-    console.log('layout=', layout);
     return (
       <MainSection id="section.dashboard">
         <div className='dashboard'>
