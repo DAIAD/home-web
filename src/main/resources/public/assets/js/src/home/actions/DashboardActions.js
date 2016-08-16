@@ -27,13 +27,13 @@ const createInfobox = function(data) {
 };
 
 const appendLayout = function(id, display, type) {
-  let layout = {x:0, y:0, w:1, h:1, i:id};
+  let layout = {x:0, y:0, w:1, h:1, static:false, i:id};
   //if (display==='stat') {
   if (display === 'stat' || (display === 'chart' && type === 'budget')) {
-    Object.assign(layout, {w:2, h:1});
+    Object.assign(layout, {w:2, h:1, minW:2, minH:1, maxH:1});
   }
   else if (display === 'chart') {
-    Object.assign(layout, {w:2, h:2});
+    Object.assign(layout, {w:2, h:2, minW:2, minH:2, maxH:2});
   }
   return {
     type: types.DASHBOARD_APPEND_LAYOUT,
@@ -70,7 +70,7 @@ const addInfobox = function(options) {
     const display = options.display;
     const type = options.type;
 
-    dispatch(createInfobox(Object.assign(options, {id})));
+    dispatch(createInfobox(Object.assign({}, options, {id})));
     dispatch(appendLayout(id, display, type));
 
     dispatch(updateInfobox(id, {}));
