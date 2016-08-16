@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.4.0.M3</version>
+		<version>1.4.0.RELEASE</version>
 		<relativePath />
 		<!-- no parent resolution -->
 	</parent>
@@ -445,7 +445,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-site-plugin</artifactId>
-				<version>3.5</version>
 				<configuration>
                     <outputDirectory>${basedir}/src/main/resources/public/docs/site/</outputDirectory>
                 </configuration>
