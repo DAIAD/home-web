@@ -18,7 +18,7 @@ public class DataQuery {
     private ArrayList<SpatialFilter> spatial = new ArrayList<SpatialFilter>();
 
     @JsonDeserialize(using = EnumMeasurementDataSource.Deserializer.class)
-    private EnumMeasurementDataSource source = EnumMeasurementDataSource.BOTH;
+    private EnumMeasurementDataSource source = EnumMeasurementDataSource.NONE;
 
     private EnumMetric[] metrics = {};
 

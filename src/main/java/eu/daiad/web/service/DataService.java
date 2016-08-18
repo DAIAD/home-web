@@ -242,6 +242,11 @@ public class DataService extends BaseService implements IDataService {
                 response.add(this.getError(QueryErrorCode.METRIC_INVALID));
             }
         }
+
+        // Source
+        if(query.getSource().equals(EnumMeasurementDataSource.NONE)) {
+            response.add(this.getError(QueryErrorCode.SOURCE_INVALID));
+        }
     }
 
     private void validate(ForecastQuery query, ForecastQueryResponse response) {
@@ -727,6 +732,9 @@ public class DataService extends BaseService implements IDataService {
                     break;
                 case METER:
                     response.setMeters(waterMeterMeasurementRepository.query(expandedQuery));
+                    break;
+                case NONE:
+                    // Ignore
                     break;
             }
 

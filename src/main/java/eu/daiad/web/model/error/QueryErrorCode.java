@@ -15,7 +15,8 @@ public enum QueryErrorCode implements ErrorCode {
 	RANKING_INVALID_LIMIT,
 	RANKING_INVALID_FIELD,
 	RANKING_INVALID_METRIC,
-	METRIC_INVALID;
+	METRIC_INVALID,
+	SOURCE_INVALID;
 
 	@Override
 	public String getMessageKey() {
