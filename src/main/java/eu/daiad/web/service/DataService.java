@@ -53,7 +53,7 @@ import eu.daiad.web.model.query.SpatialFilter;
 import eu.daiad.web.model.query.UserPopulationFilter;
 import eu.daiad.web.model.query.UtilityPopulationFilter;
 import eu.daiad.web.model.security.AuthenticatedUser;
-import eu.daiad.web.repository.application.IAmphiroTimeOrderedRepository;
+import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.ISpatialRepository;
@@ -80,7 +80,7 @@ public class DataService extends BaseService implements IDataService {
     private ISpatialRepository spatialRepository;
 
     @Autowired
-    IAmphiroTimeOrderedRepository amphiroRepository;
+    IAmphiroIndexOrderedRepository amphiroIndexOrderedRepository;
 
     @Autowired
     IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
@@ -719,11 +719,11 @@ public class DataService extends BaseService implements IDataService {
 
             switch (query.getSource()) {
                 case BOTH:
-                    response.setDevices(amphiroRepository.query(expandedQuery));
+                    response.setDevices(amphiroIndexOrderedRepository.query(expandedQuery));
                     response.setMeters(waterMeterMeasurementRepository.query(expandedQuery));
                     break;
                 case AMPHIRO:
-                    response.setDevices(amphiroRepository.query(expandedQuery));
+                    response.setDevices(amphiroIndexOrderedRepository.query(expandedQuery));
                     break;
                 case METER:
                     response.setMeters(waterMeterMeasurementRepository.query(expandedQuery));

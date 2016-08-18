@@ -22,6 +22,8 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +34,6 @@ import com.google.common.collect.ImmutableMap;
 import eu.daiad.web.hbase.HBaseConnectionManager;
 import eu.daiad.web.model.amphiro.AmphiroAbstractDataPoint;
 import eu.daiad.web.model.amphiro.AmphiroAbstractSession;
-import eu.daiad.web.model.amphiro.AmphiroDataPoint;
 import eu.daiad.web.model.amphiro.AmphiroDataSeries;
 import eu.daiad.web.model.amphiro.AmphiroMeasurement;
 import eu.daiad.web.model.amphiro.AmphiroMeasurementCollection;
@@ -52,6 +53,16 @@ import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DataErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.model.query.AmphiroDataPoint;
+import eu.daiad.web.model.query.AmphiroUserDataPoint;
+import eu.daiad.web.model.query.DataPoint;
+import eu.daiad.web.model.query.EnumDataField;
+import eu.daiad.web.model.query.EnumMetric;
+import eu.daiad.web.model.query.ExpandedDataQuery;
+import eu.daiad.web.model.query.ExpandedPopulationFilter;
+import eu.daiad.web.model.query.GroupDataSeries;
+import eu.daiad.web.model.query.RankingDataPoint;
+import eu.daiad.web.model.query.UserDataPoint;
 import eu.daiad.web.model.security.AuthenticatedUser;
 
 @Repository()
@@ -861,8 +872,8 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 
                     @Override
                     public int compare(AmphiroAbstractDataPoint o1, AmphiroAbstractDataPoint o2) {
-                        AmphiroDataPoint m1 = (AmphiroDataPoint) o1;
-                        AmphiroDataPoint m2 = (AmphiroDataPoint) o2;
+                        eu.daiad.web.model.amphiro.AmphiroDataPoint m1 = (eu.daiad.web.model.amphiro.AmphiroDataPoint) o1;
+                        eu.daiad.web.model.amphiro.AmphiroDataPoint m2 = (eu.daiad.web.model.amphiro.AmphiroDataPoint) o2;
 
                         if (m1.getSessionId() < m2.getSessionId()) {
                             return -1;
@@ -1265,6 +1276,309 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
             } catch (Exception ex) {
                 logger.error(ERROR_RELEASE_RESOURCES, ex);
             }
+        }
+    }
+
+    @Override
+    public ArrayList<GroupDataSeries> query(ExpandedDataQuery query) throws ApplicationException {
+        Table table = null;
+        ResultScanner scanner = null;
+
+        ArrayList<GroupDataSeries> result = new ArrayList<GroupDataSeries>();
+        for (ExpandedPopulationFilter filter : query.getGroups()) {
+            result.add(new GroupDataSeries(filter.getLabel(), filter.getUsers().size(), filter.getAreaId()));
+        }
+        try {
+            table = connection.getTable(this.amphiroTableSessionByTime);
+            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+
+            DateTime startDate = new DateTime(query.getStartDateTime(), DateTimeZone.UTC);
+            DateTime endDate = new DateTime(query.getEndDateTime(), DateTimeZone.UTC);
+
+            switch (query.getGranularity()) {
+                case HOUR:
+                    startDate = new DateTime(startDate.getYear(), startDate.getMonthOfYear(),
+                                    startDate.getDayOfMonth(), startDate.getHourOfDay(), 0, 0, DateTimeZone.UTC);
+                    endDate = new DateTime(endDate.getYear(), endDate.getMonthOfYear(), endDate.getDayOfMonth(),
+                                    endDate.getHourOfDay(), 59, 59, DateTimeZone.UTC);
+                    break;
+                case DAY:
+                    startDate = new DateTime(startDate.getYear(), startDate.getMonthOfYear(),
+                                    startDate.getDayOfMonth(), 0, 0, 0, DateTimeZone.UTC);
+                    endDate = new DateTime(endDate.getYear(), endDate.getMonthOfYear(), endDate.getDayOfMonth(), 23,
+                                    59, 59, DateTimeZone.UTC);
+                    break;
+                case WEEK:
+                    DateTime monday = startDate.withDayOfWeek(DateTimeConstants.MONDAY);
+                    DateTime sunday = endDate.withDayOfWeek(DateTimeConstants.SUNDAY);
+                    startDate = new DateTime(monday.getYear(), monday.getMonthOfYear(), monday.getDayOfMonth(), 0, 0,
+                                    0, DateTimeZone.UTC);
+                    endDate = new DateTime(sunday.getYear(), sunday.getMonthOfYear(), sunday.getDayOfMonth(), 23, 59,
+                                    59, DateTimeZone.UTC);
+                    break;
+                case MONTH:
+                    startDate = new DateTime(startDate.getYear(), startDate.getMonthOfYear(), 1, 0, 0, 0,
+                                    DateTimeZone.UTC);
+                    endDate = new DateTime(endDate.getYear(), endDate.getMonthOfYear(), endDate.dayOfMonth()
+                                    .getMaximumValue(), 23, 59, 59, DateTimeZone.UTC);
+                    break;
+                case YEAR:
+                    startDate = new DateTime(startDate.getYear(), 1, 1, 0, 0, 0, DateTimeZone.UTC);
+                    endDate = new DateTime(endDate.getYear(), 12, 31, 23, 59, 59, DateTimeZone.UTC);
+                    break;
+                case ALL:
+                    // Ignore
+                    break;
+                default:
+                    throw createApplicationException(DataErrorCode.TIME_GRANULARITY_NOT_SUPPORTED).set("level",
+                                    query.getGranularity());
+            }
+
+            for (short p = 0; p < timePartitions; p++) {
+                Scan scan = new Scan();
+                scan.setCaching(this.scanCacheSize);
+                scan.addFamily(columnFamily);
+
+                byte[] partitionBytes = Bytes.toBytes(p);
+
+                long from = startDate.getMillis() / 1000;
+                from = from - (from % EnumTimeInterval.DAY.getValue());
+                byte[] fromBytes = Bytes.toBytes(from);
+
+                long to = endDate.getMillis() / 1000;
+                to = to - (to % EnumTimeInterval.DAY.getValue());
+                byte[] toBytes = Bytes.toBytes(to);
+
+                // Scanner row key prefix start
+                byte[] rowKey = new byte[partitionBytes.length + fromBytes.length];
+
+                System.arraycopy(partitionBytes, 0, rowKey, 0, partitionBytes.length);
+                System.arraycopy(fromBytes, 0, rowKey, partitionBytes.length, fromBytes.length);
+
+                scan.setStartRow(rowKey);
+
+                // Scanner row key prefix end
+                rowKey = new byte[partitionBytes.length + toBytes.length];
+
+                System.arraycopy(partitionBytes, 0, rowKey, 0, partitionBytes.length);
+                System.arraycopy(toBytes, 0, rowKey, partitionBytes.length, toBytes.length);
+
+                scan.setStopRow(calculateTheClosestNextRowKeyForPrefix(rowKey));
+
+                scanner = table.getScanner(scan);
+
+                for (Result r = scanner.next(); r != null; r = scanner.next()) {
+                    NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
+
+                    if (map != null) {
+                        rowKey = r.getRow();
+
+                        long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 2, 10));
+                        byte[] userHash = Arrays.copyOfRange(r.getRow(), 10, 26);
+
+                        long timestamp = 0;
+                        int duration = 0;
+                        float volume = 0, energy = 0, temperature = 0, flow = 0;
+
+                        for (Entry<byte[], byte[]> entry : map.entrySet()) {
+                            String qualifier = Bytes.toString(entry.getKey());
+
+                            switch (qualifier) {
+                                case "s:offset":
+                                    timestamp = (timeBucket + Bytes.toInt(entry.getValue())) * 1000L;
+                                    break;
+                                case "m:v":
+                                    volume = Bytes.toFloat(entry.getValue());
+                                    break;
+                                case "m:t":
+                                    temperature = Bytes.toFloat(entry.getValue());
+                                    break;
+                                case "m:e":
+                                    energy = Bytes.toFloat(entry.getValue());
+                                    break;
+                                case "m:f":
+                                    flow = Bytes.toFloat(entry.getValue());
+                                    break;
+                                case "m:d":
+                                    duration = Bytes.toInt(entry.getValue());
+                                    break;
+                                default:
+                                    // Ignore
+                                    break;
+                            }
+                        }
+
+                        int filterIndex = 0;
+                        for (ExpandedPopulationFilter filter : query.getGroups()) {
+                            GroupDataSeries series = result.get(filterIndex);
+
+                            int index = inArray(filter.getHashes(), userHash);
+                            if (index >= 0) {
+                                if (filter.getRanking() == null) {
+                                    series.addAmhiroDataPoint(query.getGranularity(), timestamp, volume, energy,
+                                                    duration, temperature, flow, query.getMetrics(), query
+                                                                    .getTimezone());
+                                } else {
+                                    series.addAmphiroRankingDataPoint(query.getGranularity(), filter.getUsers().get(
+                                                    index), filter.getLabels().get(index), timestamp, volume, energy,
+                                                    duration, temperature, flow, query.getMetrics(), query
+                                                                    .getTimezone());
+                                }
+                            }
+
+                            filterIndex++;
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        } finally {
+            try {
+                if (scanner != null) {
+                    scanner.close();
+                    scanner = null;
+                }
+                if (table != null) {
+                    table.close();
+                    table = null;
+                }
+            } catch (Exception ex) {
+                logger.error(ERROR_RELEASE_RESOURCES, ex);
+            }
+        }
+
+        // Post process results
+        int filterIndex = 0;
+        for (final ExpandedPopulationFilter filter : query.getGroups()) {
+            GroupDataSeries series = result.get(filterIndex);
+
+            if (filter.getRanking() != null) {
+                // Truncate (n-k) users and keep top/bottom-k only
+                for (DataPoint point : series.getPoints()) {
+                    RankingDataPoint ranking = (RankingDataPoint) point;
+
+                    final EnumDataField field = filter.getRanking().getField();
+
+                    Collections.sort(ranking.getUsers(), new Comparator<UserDataPoint>() {
+
+                        @Override
+                        public int compare(UserDataPoint u1, UserDataPoint u2) {
+                            AmphiroUserDataPoint m1 = (AmphiroUserDataPoint) u1;
+                            AmphiroUserDataPoint m2 = (AmphiroUserDataPoint) u2;
+
+                            switch (field) {
+                                case VOLUME:
+                                    if (m1.getVolume().get(filter.getRanking().getMetric()) < m2.getVolume().get(
+                                                    filter.getRanking().getMetric())) {
+                                        return -1;
+                                    }
+                                    if (m1.getVolume().get(filter.getRanking().getMetric()) > m2.getVolume().get(
+                                                    filter.getRanking().getMetric())) {
+                                        return 1;
+                                    }
+
+                                    break;
+                                case ENERGY:
+                                    if (m1.getEnergy().get(filter.getRanking().getMetric()) < m2.getEnergy().get(
+                                                    filter.getRanking().getMetric())) {
+                                        return -1;
+                                    }
+                                    if (m1.getEnergy().get(filter.getRanking().getMetric()) > m2.getEnergy().get(
+                                                    filter.getRanking().getMetric())) {
+                                        return 1;
+                                    }
+
+                                    break;
+                                case DURATION:
+                                    if (m1.getDuration().get(filter.getRanking().getMetric()) < m2.getDuration().get(
+                                                    filter.getRanking().getMetric())) {
+                                        return -1;
+                                    }
+                                    if (m1.getDuration().get(filter.getRanking().getMetric()) > m2.getDuration().get(
+                                                    filter.getRanking().getMetric())) {
+                                        return 1;
+                                    }
+
+                                    break;
+                                case TEMPERATURE:
+                                    if (m1.getTemperature().get(filter.getRanking().getMetric()) < m2.getTemperature()
+                                                    .get(filter.getRanking().getMetric())) {
+                                        return -1;
+                                    }
+                                    if (m1.getTemperature().get(filter.getRanking().getMetric()) > m2.getTemperature()
+                                                    .get(filter.getRanking().getMetric())) {
+                                        return 1;
+                                    }
+
+                                    break;
+                                case FLOW:
+                                    if (m1.getFlow().get(filter.getRanking().getMetric()) < m2.getFlow().get(
+                                                    filter.getRanking().getMetric())) {
+                                        return -1;
+                                    }
+                                    if (m1.getFlow().get(filter.getRanking().getMetric()) > m2.getFlow().get(
+                                                    filter.getRanking().getMetric())) {
+                                        return 1;
+                                    }
+
+                                    break;
+                                default:
+                                    break;
+                            }
+                            return 0;
+                        }
+                    });
+
+                    int limit = filter.getRanking().getLimit();
+                    switch (filter.getRanking().getType()) {
+                        case TOP:
+                            for (int i = 0, max = ranking.getUsers().size() - limit; i < max; i++) {
+                                ranking.getUsers().remove(0);
+                            }
+                            break;
+                        case BOTTOM:
+                            for (int i = ranking.getUsers().size() - 1, max = limit - 1; i > max; i--) {
+                                ranking.getUsers().remove(i);
+                            }
+                            break;
+                        default:
+                            series.getPoints().clear();
+                            break;
+                    }
+                }
+            }
+            filterIndex++;
+        }
+
+        cleanSeries(query, result);
+
+        return result;
+    }
+
+    private void cleanSeries(ExpandedDataQuery query, ArrayList<GroupDataSeries> result) {
+        int filterIndex = 0;
+        for (final ExpandedPopulationFilter filter : query.getGroups()) {
+            GroupDataSeries series = result.get(filterIndex);
+            if (filter.getRanking() == null) {
+                for (Object p : series.getPoints()) {
+                    AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) p;
+
+                    amphiroDataPoint.getTemperature().remove(EnumMetric.SUM);
+                    amphiroDataPoint.getFlow().remove(EnumMetric.SUM);
+                }
+            } else {
+                for (Object p : series.getPoints()) {
+                    RankingDataPoint rankingDataPoint = (RankingDataPoint) p;
+                    for (UserDataPoint userDataPoint : rankingDataPoint.getUsers()) {
+                        AmphiroUserDataPoint amphiroUserDataPoint = (AmphiroUserDataPoint) userDataPoint;
+
+                        amphiroUserDataPoint.getTemperature().remove(EnumMetric.SUM);
+                        amphiroUserDataPoint.getFlow().remove(EnumMetric.SUM);
+                    }
+                }
+            }
+            filterIndex++;
         }
     }
 
