@@ -21,12 +21,16 @@ import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageAcknowledgementRequest;
 import eu.daiad.web.model.message.MessageRequest;
 import eu.daiad.web.model.message.MessageResult;
+import eu.daiad.web.model.message.MessageStatisticsQuery;
+import eu.daiad.web.model.message.MessageStatisticsQueryRequest;
+import eu.daiad.web.model.message.MessageStatisticsResponse;
 import eu.daiad.web.model.message.MultiTypeMessageResponse;
 import eu.daiad.web.model.message.SingleTypeMessageResponse;
 import eu.daiad.web.model.message.StaticRecommendation;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IMessageRepository;
 import java.util.List;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * Provides actions for loading messages and saving acknowledgments.
@@ -167,7 +171,7 @@ public class MessageController extends BaseController {
      */
     @RequestMapping(value = "/action/recommendation/static/insert", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_ADMIN")
-	public RestResponse insertStaticRemmendation(@RequestBody StaticRecommendation request) {
+	public RestResponse insertStaticRecommendation(@RequestBody StaticRecommendation request) {
         RestResponse response = new RestResponse();
         
         try {
@@ -313,5 +317,43 @@ public class MessageController extends BaseController {
 			response.add(this.getError(ex));
 			return response;
 		}
-	}     
+	}    
+    
+	/**
+	 * Get message (alerts/recommendations) details (including receiver accounts).
+	 * 
+	 * @param user the user
+     * @param request the request
+	 * @return the message statistics.
+	 */
+	@RequestMapping(value = "/action/recommendation/dynamic/statistics", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	@Secured("ROLE_ADMIN")
+	public RestResponse getMessageStatistics(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody MessageStatisticsQueryRequest request) {
+        
+        RestResponse response = new RestResponse();
+        
+		try {
+            
+            MessageStatisticsQuery query = request.getQuery();
+            
+            // Set defaults if needed
+			if (query != null) {
+                System.out.println("success " + query.getTime());
+				// Initialize time zone
+				if (StringUtils.isBlank(query.getTimezone())) {
+					query.setTimezone(user.getTimezone());
+				}
+			}  
+            
+            MessageStatisticsResponse messageStatisticsResponse = new MessageStatisticsResponse();
+            messageStatisticsResponse.setAlertStatistics(this.messageRepository.getAlertStatistics(user.getLocale(), query));
+
+			return messageStatisticsResponse;
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
+			response.add(this.getError(ex));
+			return response;
+		}
+	} 
+    
 }

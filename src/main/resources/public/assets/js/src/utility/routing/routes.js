@@ -35,6 +35,7 @@ module.exports = (
     <Route path="/analytics/fav" component={analytics.Fav} />
     <Route path="/analytics/basic-reports" component={analytics.BasicReports} />
     <Route path="/analytics/panel" component={analytics.ReportPanel} />
+    <Route path="/analytics/messages" component={analytics.MessageAnalytics} />
 		<Route path="/analytics/map" component={AnalyticsMap} />
     <Route path="/trials/overview" component={trials.Overview}/>
     <Route path="/trials/pilot-reports" component={trials.PilotReports}/>

@@ -40,7 +40,10 @@ var ManageAlertsAPI = {
     },
     fetchAnnouncement: function(announcement){
       return api.json('/action/announcement/details/' + announcement.id);
-    }    
+    },
+    getMessageStatistics: function(query){
+      return api.json('/action/recommendation/dynamic/statistics', query);
+    }
 };
 
 module.exports = ManageAlertsAPI;
