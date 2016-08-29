@@ -31,6 +31,7 @@
 	"AmphiroSingleSessionByTime",
 	"AmphiroSingleSessionByIndex",
     "Message",
+    "Weather",
 	"Admin"
   ],
   "template": {

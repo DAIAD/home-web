@@ -14,7 +14,7 @@ import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.ErrorCode;
 import eu.daiad.web.model.security.AuthenticatedUser;
 
-public class BaseRepository {
+public abstract class BaseRepository {
 
     @Autowired
     protected MessageSource messageSource;

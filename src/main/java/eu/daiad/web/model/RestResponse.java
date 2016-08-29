@@ -47,4 +47,12 @@ public class RestResponse {
 	public void add(ArrayList<Error> errors) {
 		this.errors.addAll(errors);
 	}
+
+	public RestResponse toRestResponse() {
+	    if(this instanceof RestResponse) {
+	        return this;
+	    }
+
+	    return new RestResponse(this.getErrors());
+	}
 }
