@@ -15,7 +15,7 @@ var DateRangePicker = require('react-bootstrap-daterangepicker');
 
 var Table = require('../../UserTable');
 
-var { fetchMessages, getTimeline, setEditor, setEditorValue, setTimezone } 
+var { fetchMessages, changeIndex, setEditor, setEditorValue, setTimezone } 
  = require('../../../actions/MessageAnalyticsActions');
 
 
@@ -26,7 +26,6 @@ var _onIntervalEditorChange = function (event, picker) {
 var onPopulationEditorChange = function(e) {
   if(!e) {
     var utility = this.props.profile.utility;
-
     e = {
       key: utility.key,
       name: utility.name,
@@ -36,11 +35,10 @@ var onPopulationEditorChange = function(e) {
   this.props.actions.setEditorValue('population', e);
 };
 
-
 var _setEditor = function(key) {
   this.props.actions.setEditor(key);
 };
-
+  
 var AnalyticsMap = React.createClass({
 
   contextTypes: {
@@ -61,7 +59,11 @@ var AnalyticsMap = React.createClass({
       };
     }
   },
-
+  
+  onPageIndexChange: function(index) {
+    this.props.actions.changeIndex(index);
+  },
+  
   render: function() {
     // Filter configuration
     var intervalLabel ='';
@@ -141,13 +143,13 @@ var AnalyticsMap = React.createClass({
       </span>
     );
 
-    var map, mapFilterTags = [];
+    var statistics, filterTags = [];
 
-    mapFilterTags.push( 
+    filterTags.push( 
       <FilterTag key='time' text={intervalLabel} icon='calendar' />
     );
-    mapFilterTags.push( 
-      <FilterTag key='population' text={ this.props.population ? this.props.population.label : 'All' } icon='group' />
+    filterTags.push( 
+      <FilterTag key='population' text={ this.props.population ? this.props.population.label : this.props.profile.utility.name } icon='group' />
     );
 
     var messageFields = {
@@ -155,32 +157,43 @@ var AnalyticsMap = React.createClass({
         name: 'id',
         title: 'ID'
       }, {
-          name: 'message',
+          name: 'title',
           title: 'Message'
       }, {
         name: 'type',
         title: 'Type'
       }, {
-        name: 'receivers',
+        name: 'receiversCount',
         title: 'Total Receivers'
-      }],
-      rows: this.props.messages ? populateMessageStatistics(this.props.messages) : [],
+      }, {
+          name: 'details',
+          type:'action',
+          icon: 'group',
+          handler: function() {           
+            console.log(this.props.row);
+          }
+        }],
+      rows: this.props.messages ? this.props.messages : [],
       pager: {
         index: 0,
         size: 10,
-        count:0
+        count: this.props.messages ? this.props.messages.length : 0,
+        mode: Table.PAGING_CLIENT_SIDE        
       }
-    };
-    
-    map = (
+  	 };    
+       
+    statistics = (
       <Bootstrap.ListGroup fill>
         {filter}
         <Bootstrap.ListGroupItem>
-          <Table data = {messageFields} > </Table>
+          <Table 
+            data = {messageFields} 
+            onPageIndexChange={this.onPageIndexChange}> 
+          </Table>
         </Bootstrap.ListGroupItem>
         <Bootstrap.ListGroupItem className='clearfix'>
           <div className='pull-left'>
-            {mapFilterTags}
+            {filterTags}
           </div>       
           <span style={{ paddingLeft : 7}}> </span>
           <Link className='pull-right' to='/' style={{ paddingLeft : 7, paddingTop: 12 }}>View dashboard</Link>
@@ -188,9 +201,9 @@ var AnalyticsMap = React.createClass({
       </Bootstrap.ListGroup>
     );
 
-    var mapPanel = (
+    var statisticsPanel = (
       <Bootstrap.Panel header={mapTitle}>
-        {map}
+        {statistics}
       </Bootstrap.Panel>
     );
    
@@ -203,7 +216,7 @@ var AnalyticsMap = React.createClass({
         </div>
         <div className='row'>
           <div className='col-md-12'>
-            {mapPanel}
+            {statisticsPanel}
           </div>
         </div>
       </div>
@@ -211,19 +224,7 @@ var AnalyticsMap = React.createClass({
     }
 });
 
-function populateMessageStatistics(messageMap){ 
-  var populated = [];
-  var element = {};
-  for (var prop in messageMap){
-    var currentId, currentIndex, currentTitle, currentDescription;
-    console.log(prop);
-  }
-  return populated;
-}
-
 function mapStateToProps(state) {
-  console.log('map success?? ->>');
-  console.log(state.messages.messages);
   return {
       source: state.map.source,
       population: state.map.population,
@@ -239,7 +240,7 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
   return {
-    actions : bindActionCreators(Object.assign({}, { fetchMessages,
+    actions : bindActionCreators(Object.assign({}, { fetchMessages, changeIndex,
                                                      setEditor, setEditorValue,
                                                      setTimezone}) , dispatch)
   };

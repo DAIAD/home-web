@@ -706,7 +706,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 	}
     
 	@Override
-	public Map<Alert, Integer> getAlertStatistics(String locale, MessageStatisticsQuery query) {
+	public List<Alert> getAlertStatistics(String locale, MessageStatisticsQuery query) {
         
         DateTime startDate = new DateTime(query.getTime().getStart());
         DateTime endDate = new DateTime(query.getTime().getEnd());
@@ -718,14 +718,13 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 
         alertTranslationQuery.setParameter("locale", locale);
 
-        Map<Alert, Integer> map = new  HashMap<>();
+        List<Alert> alerts = new  ArrayList<>();
 		for (AlertTranslation alertTranslation : alertTranslationQuery.getResultList()) {
             
             Alert alert  = new Alert(EnumAlertType.UNDEFINED);
             
             alert.setId(alertTranslation.getId());
             alert.setTitle(alertTranslation.getTitle());
-            alert.setDescription(alertTranslation.getDescription());
             
             TypedQuery<Number> accountAlertQuery = entityManager
 						.createQuery("select count (a.alert.id) from account_alert a where a.alert.id = :alert_id and a.createdOn > :startDate and a.createdOn < :endDate",
@@ -737,41 +736,45 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             
             
             int totalCount = ((Number) accountAlertQuery.getSingleResult()).intValue();
-            map.put(alert, totalCount);
+            alert.setReceiversCount(totalCount);
+            alerts.add(alert);
         }    
         
-		return map;
+		return alerts;
 	}    
 
 	@Override
-	public Map<DynamicRecommendation, Integer> getRecommendationStatistics(String locale) {
- 
+	public List<DynamicRecommendation> getRecommendationStatistics(String locale, MessageStatisticsQuery query) {
+        
+        DateTime startDate = new DateTime(query.getTime().getStart());
+        DateTime endDate = new DateTime(query.getTime().getEnd());
+        
 		TypedQuery<eu.daiad.web.domain.application.DynamicRecommendationTranslation> dynamicRecommendationTranslationQuery = entityManager
-						.createQuery("select a from alert_translation a where a.locale = :locale",
+						.createQuery("select d from dynamic_recommendation_translation d where d.locale = :locale order by d.id",
 										eu.daiad.web.domain.application.DynamicRecommendationTranslation.class);
 
         dynamicRecommendationTranslationQuery.setParameter("locale", locale);
 
-        Map<DynamicRecommendation, Integer> map = new  HashMap<>();
+        List<DynamicRecommendation> recommendations = new  ArrayList<>();
 		for (DynamicRecommendationTranslation dynamicRecommendationTranslation : dynamicRecommendationTranslationQuery.getResultList()) {
             
             DynamicRecommendation recommendation  = new DynamicRecommendation(EnumDynamicRecommendationType.UNDEFINED);
             
             recommendation.setId(dynamicRecommendationTranslation.getId());
             recommendation.setTitle(dynamicRecommendationTranslation.getTitle());
-            recommendation.setDescription(dynamicRecommendationTranslation.getDescription());
             
-            TypedQuery<Number> accountAlertQuery = entityManager
-						.createQuery("select count (a.alert.id) from account_alert a where a.alert.id = :alert_id",
+            TypedQuery<Number> accountRecommendationQuery = entityManager
+						.createQuery("select count (a.recommendation.id) from account_dynamic_recommendation a where a.recommendation.id = :dynamic_recommendation_id and a.createdOn > :startDate and a.createdOn < :endDate",
 									Number.class);
-
-            accountAlertQuery.setParameter("alert_id", dynamicRecommendationTranslation.getId());            
+            accountRecommendationQuery.setParameter("startDate", startDate);
+            accountRecommendationQuery.setParameter("endDate", endDate);
+            accountRecommendationQuery.setParameter("dynamic_recommendation_id", dynamicRecommendationTranslation.getId());            
             
-            int totalCount = ((Number) accountAlertQuery.getSingleResult()).intValue();
-            map.put(recommendation, totalCount);
+            int totalCount = ((Number) accountRecommendationQuery.getSingleResult()).intValue();
+            recommendation.setReceiversCount(totalCount);
+            recommendations.add(recommendation);
         }  
-        
-		return map;
+		return recommendations;
 	}
     
 	@Override

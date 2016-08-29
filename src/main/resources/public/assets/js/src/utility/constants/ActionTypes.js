@@ -201,6 +201,7 @@ var types = mirrorToPath({
   MESSAGES_DELETE_MODAL_HIDE: null,
   MESSAGES_REQUESTED_STATISTICS: null,
   MESSAGES_RECEIVED_STATISTICS: null,
+  MESSAGES_INDEX_CHANGE: null,
   
   //Announcements
   ANNC_REQUESTED_USERS: null,

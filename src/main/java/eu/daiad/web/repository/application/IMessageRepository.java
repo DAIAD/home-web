@@ -41,9 +41,9 @@ public interface IMessageRepository {
     
     public List<ReceiverAccount> getAnnouncementReceivers(int id);
     
-    public Map<Alert, Integer> getAlertStatistics(String locale, MessageStatisticsQuery query);
+    public List<Alert> getAlertStatistics(String locale, MessageStatisticsQuery query);
     
-    public Map<DynamicRecommendation, Integer> getRecommendationStatistics(String locale);    
+    public List<DynamicRecommendation> getRecommendationStatistics(String locale, MessageStatisticsQuery query);    
     
     public List<ReceiverAccount> getMessageReceivers(int messageId);
 

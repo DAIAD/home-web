@@ -36,7 +36,7 @@ var receivedMessageStatistics = function (success, errors, messageStatistics) {
 };
 
 var buildQuery = function(population, timezone, interval) {
-
+  
   return {
     'query' : {
       'timezone' : timezone,
@@ -52,7 +52,19 @@ var buildQuery = function(population, timezone, interval) {
   };
 };
 
+var changeIndex = function(index) {
+  return {
+    type : types.MESSAGES_INDEX_CHANGE,
+    index : index
+  };
+};
+
 var MessageAnalyticsActions = {
+
+  changeIndex : function(index) {
+    return changeIndex(index);
+  },
+  
   setEditor : function(key) {
     return {
       type : mapTypes.MAP_SELECT_EDITOR,
@@ -62,11 +74,13 @@ var MessageAnalyticsActions = {
 
   setEditorValue : function(editor, value) {
     return function(dispatch, getState) {
+      dispatch(changeIndex(0));
       dispatch(_setEditorValue(editor, value));
       dispatch(requestedMessageStatistics());
       var query = buildQuery(getState(event).map.population, getState(event).map.timezone, getState(event).map.interval);
       return alertsAPI.getMessageStatistics(query).then(function (response) {
-        dispatch(receivedMessageStatistics(response.success, response.errors, response.alertStatistics));
+        var messages = response.alertStatistics.concat(response.recommendationStatistics);
+        dispatch(receivedMessageStatistics(response.success, response.errors, messages));
       }, function (error) {
         dispatch(receivedMessageStatistics(false, error, null));
       });
@@ -86,10 +100,12 @@ var MessageAnalyticsActions = {
   
   fetchMessages: function (event) {
     return function (dispatch, getState) {
+      dispatch(changeIndex(0));
       dispatch(requestedMessageStatistics());
       var query = buildQuery(getState(event).map.population, getState(event).map.timezone, getState(event).map.interval);
       return alertsAPI.getMessageStatistics(query).then(function (response) {
-        dispatch(receivedMessageStatistics(response.success, response.errors, response.alertStatistics));
+        var messages = response.alertStatistics.concat(response.recommendationStatistics);  
+        dispatch(receivedMessageStatistics(response.success, response.errors, messages));
       }, function (error) {
         dispatch(receivedMessageStatistics(false, error, null));
       });

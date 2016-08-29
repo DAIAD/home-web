@@ -338,7 +338,6 @@ public class MessageController extends BaseController {
             
             // Set defaults if needed
 			if (query != null) {
-                System.out.println("success " + query.getTime());
 				// Initialize time zone
 				if (StringUtils.isBlank(query.getTimezone())) {
 					query.setTimezone(user.getTimezone());
@@ -347,6 +346,8 @@ public class MessageController extends BaseController {
             
             MessageStatisticsResponse messageStatisticsResponse = new MessageStatisticsResponse();
             messageStatisticsResponse.setAlertStatistics(this.messageRepository.getAlertStatistics(user.getLocale(), query));
+            
+            messageStatisticsResponse.setRecommendationStatistics(this.messageRepository.getRecommendationStatistics(user.getLocale(), query));            
 
 			return messageStatisticsResponse;
 		} catch (Exception ex) {
