@@ -36,7 +36,9 @@ import eu.daiad.web.domain.application.StaticRecommendation;
 import eu.daiad.web.domain.application.StaticRecommendationCategory;
 import eu.daiad.web.model.error.MessageErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.AnnouncementRequest;
+import eu.daiad.web.model.message.DynamicRecommendation;
 import eu.daiad.web.model.message.EnumAlertType;
 import eu.daiad.web.model.message.EnumDynamicRecommendationType;
 import eu.daiad.web.model.message.EnumMessageType;
@@ -44,6 +46,7 @@ import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageAcknowledgement;
 import eu.daiad.web.model.message.MessageRequest;
 import eu.daiad.web.model.message.MessageResult;
+import eu.daiad.web.model.message.MessageStatisticsQuery;
 import eu.daiad.web.model.message.ReceiverAccount;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.BaseRepository;
@@ -700,6 +703,207 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             
         }        
 		return receivers;
+	}
+    
+	@Override
+	public List<Alert> getAlertStatistics(String locale, int utilityId, MessageStatisticsQuery query) {
+        
+        DateTime startDate = new DateTime(query.getTime().getStart());
+        DateTime endDate = new DateTime(query.getTime().getEnd());
+        
+        //alerts
+		TypedQuery<eu.daiad.web.domain.application.AlertTranslation> alertTranslationQuery = entityManager
+						.createQuery("select a from alert_translation a where a.locale = :locale order by a.id",
+										eu.daiad.web.domain.application.AlertTranslation.class);
+
+        alertTranslationQuery.setParameter("locale", locale);
+
+        List<Alert> alerts = new  ArrayList<>();
+		for (AlertTranslation alertTranslation : alertTranslationQuery.getResultList()) {
+            
+            Alert alert  = new Alert(EnumAlertType.UNDEFINED);
+            
+            alert.setId(alertTranslation.getAlert().getId());
+            alert.setTitle(alertTranslation.getTitle());
+            alert.setDescription(alertTranslation.getDescription());
+            
+            TypedQuery<Number> accountAlertQuery = entityManager
+						.createQuery("select count (a.alert.id) from account_alert a where a.account.utility.id = :utilityId and a.alert.id = :alert_id and a.createdOn > :startDate and a.createdOn < :endDate",
+									Number.class);
+
+            accountAlertQuery.setParameter("utilityId", utilityId);
+            accountAlertQuery.setParameter("startDate", startDate);
+            accountAlertQuery.setParameter("endDate", endDate);
+            accountAlertQuery.setParameter("alert_id", alertTranslation.getAlert().getId());            
+            
+            
+            int totalCount = ((Number) accountAlertQuery.getSingleResult()).intValue();
+            alert.setReceiversCount(totalCount);
+            alerts.add(alert);
+        }    
+        
+		return alerts;
+	}    
+
+	@Override
+	public List<DynamicRecommendation> getRecommendationStatistics(String locale, int utilityId, MessageStatisticsQuery query) {
+        
+        DateTime startDate = new DateTime(query.getTime().getStart());
+        DateTime endDate = new DateTime(query.getTime().getEnd());
+        
+		TypedQuery<eu.daiad.web.domain.application.DynamicRecommendationTranslation> dynamicRecommendationTranslationQuery = entityManager
+						.createQuery("select d from dynamic_recommendation_translation d where d.locale = :locale order by d.id",
+										eu.daiad.web.domain.application.DynamicRecommendationTranslation.class);
+
+        dynamicRecommendationTranslationQuery.setParameter("locale", locale);
+
+        List<DynamicRecommendation> recommendations = new  ArrayList<>();
+		for (DynamicRecommendationTranslation dynamicRecommendationTranslation : dynamicRecommendationTranslationQuery.getResultList()) {
+            
+            DynamicRecommendation recommendation  = new DynamicRecommendation(EnumDynamicRecommendationType.UNDEFINED);
+            
+            recommendation.setId(dynamicRecommendationTranslation.getRecommendation().getId());
+            recommendation.setTitle(dynamicRecommendationTranslation.getTitle());
+            recommendation.setDescription(dynamicRecommendationTranslation.getDescription());
+            
+            TypedQuery<Number> accountRecommendationQuery = entityManager
+						.createQuery("select count (a.recommendation.id) from account_dynamic_recommendation a where a.account.utility.id = :utilityId and a.recommendation.id = :dynamic_recommendation_id and a.createdOn > :startDate and a.createdOn < :endDate",
+									Number.class);
+            
+            accountRecommendationQuery.setParameter("utilityId", utilityId);
+            accountRecommendationQuery.setParameter("startDate", startDate);
+            accountRecommendationQuery.setParameter("endDate", endDate);
+            accountRecommendationQuery.setParameter("dynamic_recommendation_id", dynamicRecommendationTranslation.getId());            
+            
+            int totalCount = ((Number) accountRecommendationQuery.getSingleResult()).intValue();
+            recommendation.setReceiversCount(totalCount);
+            recommendations.add(recommendation);
+        }  
+		return recommendations;
+	}
+    
+	@Override
+	public List<ReceiverAccount> getAlertReceivers(int alertId, int utilityId, MessageStatisticsQuery query) {
+        
+        DateTime startDate = new DateTime(query.getTime().getStart());
+        DateTime endDate = new DateTime(query.getTime().getEnd());
+         
+        
+        List<ReceiverAccount> receivers = new ArrayList<>();
+
+		TypedQuery<eu.daiad.web.domain.application.AccountAlert> accountAlertQuery = entityManager
+						.createQuery("select a from account_alert a where a.account.utility.id = :utilityId and a.alert.id = :id and a.createdOn > :startDate and a.createdOn < :endDate",
+										eu.daiad.web.domain.application.AccountAlert.class);
+
+        accountAlertQuery.setParameter("utilityId", utilityId);
+        accountAlertQuery.setParameter("id", alertId);
+        accountAlertQuery.setParameter("startDate", startDate);
+        accountAlertQuery.setParameter("endDate", endDate);        
+
+		for (AccountAlert accountAlert : accountAlertQuery.getResultList()) {
+            
+            ReceiverAccount receiverAccount = new ReceiverAccount();
+            receiverAccount.setAccountId(accountAlert.getAccount().getId());
+            receiverAccount.setUsername(accountAlert.getAccount().getUsername());
+            receiverAccount.setLastName(accountAlert.getAccount().getLastname());
+            receiverAccount.setAcknowledgedOn(accountAlert.getAcknowledgedOn());
+            receivers.add(receiverAccount);
+            
+        }        
+		return receivers;
+	}
+
+	@Override
+	public List<ReceiverAccount> getRecommendationReceivers(int recommendationId, int utilityId, MessageStatisticsQuery query) {
+        
+        DateTime startDate = new DateTime(query.getTime().getStart());
+        DateTime endDate = new DateTime(query.getTime().getEnd());        
+        
+        List<ReceiverAccount> receivers = new ArrayList<>();
+
+		TypedQuery<eu.daiad.web.domain.application.AccountDynamicRecommendation> accountRecommendationQuery = entityManager
+						.createQuery("select a from account_dynamic_recommendation a where a.account.utility.id = :utilityId and a.recommendation = :id and a.createdOn > :startDate and a.createdOn < :endDate",
+										eu.daiad.web.domain.application.AccountDynamicRecommendation.class);
+        
+        accountRecommendationQuery.setParameter("utilityId", utilityId);
+        accountRecommendationQuery.setParameter("id", recommendationId);
+        accountRecommendationQuery.setParameter("startDate", startDate);
+        accountRecommendationQuery.setParameter("endDate", endDate);        
+
+		for (AccountDynamicRecommendation accountRecommendation : accountRecommendationQuery.getResultList()) {
+            
+            ReceiverAccount receiverAccount = new ReceiverAccount();
+            receiverAccount.setAccountId(accountRecommendation.getAccount().getId());
+            receiverAccount.setUsername(accountRecommendation.getAccount().getUsername());
+            receiverAccount.setLastName(accountRecommendation.getAccount().getLastname());
+            receiverAccount.setAcknowledgedOn(accountRecommendation.getAcknowledgedOn());
+            receivers.add(receiverAccount);
+            
+        }        
+		return receivers;
+	}
+
+	@Override
+	public Alert getAlert(int id, String locale) {
+        
+        Alert alert = new Alert(EnumAlertType.UNDEFINED);
+		switch (locale) {
+			case "en":
+			case "es":
+				// Ignore
+				break;
+			default:
+				// Set default
+				locale = "en";
+		}
+
+		TypedQuery<eu.daiad.web.domain.application.AlertTranslation> accountAlertQuery = entityManager
+						.createQuery("select a from alert_translation a where a.locale = :locale and a.id = :id",
+										eu.daiad.web.domain.application.AlertTranslation.class);
+		accountAlertQuery.setParameter("locale", locale);
+        accountAlertQuery.setParameter("id", id);
+
+        List<AlertTranslation> alerts = accountAlertQuery.getResultList();
+        if(accountAlertQuery.getResultList().size() == 1){
+            AlertTranslation alertTranslation = alerts.get(0);
+			alert.setId(alertTranslation.getId());
+			alert.setTitle(alertTranslation.getTitle());
+			alert.setDescription(alertTranslation.getDescription());
+
+        }
+
+		return alert;
+	}
+    
+	@Override
+	public DynamicRecommendation getRecommendation(int id, String locale) {
+        
+        DynamicRecommendation recommendation = new DynamicRecommendation(EnumDynamicRecommendationType.UNDEFINED);
+		switch (locale) {
+			case "en":
+			case "es":
+				// Ignore
+				break;
+			default:
+				// Set default
+				locale = "en";
+		}
+
+		TypedQuery<eu.daiad.web.domain.application.DynamicRecommendationTranslation> accountRecommendationQuery = entityManager
+						.createQuery("select a from dynamic_recommendation_translation a where a.locale = :locale and a.id = :id",
+										eu.daiad.web.domain.application.DynamicRecommendationTranslation.class);
+		accountRecommendationQuery.setParameter("locale", locale);
+        accountRecommendationQuery.setParameter("id", id);
+
+        List<DynamicRecommendationTranslation> recommendations = accountRecommendationQuery.getResultList();
+        if(accountRecommendationQuery.getResultList().size() == 1){
+            DynamicRecommendationTranslation recommendationTranslation = recommendations.get(0);
+			recommendation.setId(recommendationTranslation.getId());
+			recommendation.setTitle(recommendationTranslation.getTitle());
+			recommendation.setDescription(recommendationTranslation.getDescription());
+        }
+
+		return recommendation;
 	}
     
     @Override

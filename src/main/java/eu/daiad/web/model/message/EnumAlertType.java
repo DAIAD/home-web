@@ -42,7 +42,7 @@ public enum EnumAlertType {
 		this.value = value;
 	}
 
-	private static final Map<Integer, EnumAlertType> intToTypeMap = new HashMap<Integer, EnumAlertType>();
+	private static final Map<Integer, EnumAlertType> intToTypeMap = new HashMap<>();
 	static {
 		for (EnumAlertType type : EnumAlertType.values()) {
 			intToTypeMap.put(type.value, type);
@@ -50,7 +50,7 @@ public enum EnumAlertType {
 	}
 
 	public static EnumAlertType fromInteger(int value) {
-		EnumAlertType type = intToTypeMap.get(Integer.valueOf(value));
+		EnumAlertType type = intToTypeMap.get(value);
 		if (type == null)
 			return EnumAlertType.UNDEFINED;
 		return type;
