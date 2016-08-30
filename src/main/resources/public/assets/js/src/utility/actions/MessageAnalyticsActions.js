@@ -35,6 +35,22 @@ var receivedMessageStatistics = function (success, errors, messageStatistics) {
   };
 };
 
+var requestedReceivers = function () {
+  return {
+    type: types.MESSAGES_REQUESTED_RECEIVERS
+  };
+};
+
+var receivedReceivers = function (success, errors, receivers) {
+  return {
+    type: types.MESSAGES_RECEIVED_RECEIVERS,
+    success: success,
+    errors: errors,     
+    receivers: receivers
+  };
+};
+
+
 var buildQuery = function(population, timezone, interval) {
   
   return {
@@ -109,6 +125,45 @@ var MessageAnalyticsActions = {
       }, function (error) {
         dispatch(receivedMessageStatistics(false, error, null));
       });
+    };
+  },
+  showReceivers: function (event) {
+    return function (dispatch, getState) {
+      dispatch(requestedReceivers());
+      
+      var message = getState(event).messages.selectedMessage;
+      var query = buildQuery(getState(event).map.population, getState(event).map.timezone, getState(event).map.interval);
+      
+      if(message.type == "ALERT"){
+      
+        return alertsAPI.getAlertReceivers(message.id, query).then(function (response) {
+          dispatch(receivedReceivers(response.success, response.errors, response.receivers));
+        }, function (error) {
+          dispatch(receivedReceivers(false, error, null));
+        });      
+      }
+      else if(message.type == "RECOMMENDATION_DYNAMIC"){
+        return alertsAPI.getRecommendationReceivers(message.id, query).then(function (response) {
+          dispatch(receivedReceivers(response.success, response.errors, response.receivers));
+        }, function (error) {
+          dispatch(receivedReceivers(false, error, null));
+        });      
+      }
+      
+
+    };     
+  },
+  setSelectedMessage:function (message) {
+    return {
+      type : types.MESSAGES_SELECTED_MESSAGE,
+      selectedMessage : message
+    };  
+
+  },
+  goBack : function(){
+    return {
+      type : types.MESSAGES_RETURN_BACK,
+      showReceivers: false
     };
   }
 };

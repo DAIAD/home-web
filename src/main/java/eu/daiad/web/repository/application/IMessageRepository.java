@@ -1,7 +1,6 @@
 package eu.daiad.web.repository.application;
 
 import java.util.List;
-import java.util.Map;
 
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageAcknowledgement;
@@ -41,10 +40,16 @@ public interface IMessageRepository {
     
     public List<ReceiverAccount> getAnnouncementReceivers(int id);
     
-    public List<Alert> getAlertStatistics(String locale, MessageStatisticsQuery query);
+    public List<Alert> getAlertStatistics(String locale, int utilityId, MessageStatisticsQuery query);
     
-    public List<DynamicRecommendation> getRecommendationStatistics(String locale, MessageStatisticsQuery query);    
+    public List<DynamicRecommendation> getRecommendationStatistics(String locale, int utilityId, MessageStatisticsQuery query);    
     
-    public List<ReceiverAccount> getMessageReceivers(int messageId);
+    public List<ReceiverAccount> getAlertReceivers(int alertId, int utilityId, MessageStatisticsQuery query);
+    
+    public List<ReceiverAccount> getRecommendationReceivers(int recommendationId, int utilityId, MessageStatisticsQuery query);   
+    
+    public Alert getAlert(int id, String locale);
+    
+    public DynamicRecommendation getRecommendation(int id, String locale);
 
 }

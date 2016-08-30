@@ -43,7 +43,13 @@ var ManageAlertsAPI = {
     },
     getMessageStatistics: function(query){
       return api.json('/action/recommendation/dynamic/statistics', query);
-    }
+    },
+    getAlertReceivers: function(id, query){
+      return api.json('/action/recommendation/dynamic/alert/receivers/' + id, query);
+    },
+    getRecommendationReceivers: function(id, query){
+      return api.json('/action/recommendation/dynamic/recommendation/receivers/' + id, query);
+    }     
 };
 
 module.exports = ManageAlertsAPI;
