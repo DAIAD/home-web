@@ -13,6 +13,8 @@ import eu.daiad.web.model.message.ReceiverAccount;
 import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.DynamicRecommendation;
 import eu.daiad.web.model.message.MessageStatisticsQuery;
+import eu.daiad.web.domain.application.AlertAnalytics;
+import eu.daiad.web.domain.application.RecommendationAnalytics;
 
 public interface IMessageRepository {
 
@@ -40,9 +42,9 @@ public interface IMessageRepository {
     
     public List<ReceiverAccount> getAnnouncementReceivers(int id);
     
-    public List<Alert> getAlertStatistics(String locale, int utilityId, MessageStatisticsQuery query);
+    public List<AlertAnalytics> getAlertStatistics(String locale, int utilityId, MessageStatisticsQuery query);
     
-    public List<DynamicRecommendation> getRecommendationStatistics(String locale, int utilityId, MessageStatisticsQuery query);    
+    public List<RecommendationAnalytics> getRecommendationStatistics(String locale, int utilityId, MessageStatisticsQuery query);    
     
     public List<ReceiverAccount> getAlertReceivers(int alertId, int utilityId, MessageStatisticsQuery query);
     

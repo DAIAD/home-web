@@ -344,6 +344,7 @@ var AnalyticsMap = React.createClass({
 });
 
 function mapStateToProps(state) {
+  console.log(state);
   return {
       source: state.map.source,
       population: state.map.population,
