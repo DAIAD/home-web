@@ -50,7 +50,7 @@ public class BaseRestController extends BaseController {
             }
 
             // Check permissions
-            if (roles != null) {
+            if ((roles != null) && (roles.length > 0)) {
                 boolean hasRole = false;
 
                 for (EnumRole role : roles) {
