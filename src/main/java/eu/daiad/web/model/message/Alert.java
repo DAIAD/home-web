@@ -15,6 +15,8 @@ public class Alert extends Message {
 	private String imageLink;
 
 	private Long createdOn;
+    
+    private int receiversCount;
 
 	public Alert(EnumAlertType alert) {
 		this.alert = alert;
@@ -76,5 +78,13 @@ public class Alert extends Message {
 	public void setId(int id) {
 		this.id = id;
 	}
+
+    public int getReceiversCount() {
+        return receiversCount;
+    }
+
+    public void setReceiversCount(int receiversCount) {
+        this.receiversCount = receiversCount;
+    }
 
 }

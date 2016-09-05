@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.message.AlertReceiversResponse;
 import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.model.message.AnnouncementDetailsResponse;
 import eu.daiad.web.model.message.AnnouncementRequest;
@@ -21,12 +22,18 @@ import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageAcknowledgementRequest;
 import eu.daiad.web.model.message.MessageRequest;
 import eu.daiad.web.model.message.MessageResult;
+import eu.daiad.web.model.message.MessageStatisticsQuery;
+import eu.daiad.web.model.message.MessageStatisticsQueryRequest;
+import eu.daiad.web.model.message.MessageStatisticsResponse;
 import eu.daiad.web.model.message.MultiTypeMessageResponse;
+import eu.daiad.web.model.message.RecommendationReceiversResponse;
 import eu.daiad.web.model.message.SingleTypeMessageResponse;
 import eu.daiad.web.model.message.StaticRecommendation;
+import eu.daiad.web.model.query.PopulationFilter;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IMessageRepository;
 import java.util.List;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * Provides actions for loading messages and saving acknowledgments.
@@ -167,7 +174,7 @@ public class MessageController extends BaseController {
      */
     @RequestMapping(value = "/action/recommendation/static/insert", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured("ROLE_ADMIN")
-	public RestResponse insertStaticRemmendation(@RequestBody StaticRecommendation request) {
+	public RestResponse insertStaticRecommendation(@RequestBody StaticRecommendation request) {
         RestResponse response = new RestResponse();
         
         try {
@@ -313,5 +320,130 @@ public class MessageController extends BaseController {
 			response.add(this.getError(ex));
 			return response;
 		}
-	}     
+	}    
+    
+	/**
+	 * Get message (alerts/recommendations) statistics (including count of receiver accounts).
+	 * 
+	 * @param user the user
+     * @param request the request
+	 * @return the message statistics.
+	 */
+	@RequestMapping(value = "/action/recommendation/dynamic/statistics", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	@Secured("ROLE_ADMIN")
+	public RestResponse getMessageStatistics(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody MessageStatisticsQueryRequest request) {
+        
+        RestResponse response = new RestResponse();
+        
+		try {
+            
+            MessageStatisticsQuery query = request.getQuery();
+            
+            // Set defaults if needed
+			if (query != null) {
+				// Initialize time zone
+				if (StringUtils.isBlank(query.getTimezone())) {
+					query.setTimezone(user.getTimezone());
+				}
+			}  
+            
+            MessageStatisticsResponse messageStatisticsResponse = new MessageStatisticsResponse();
+            messageStatisticsResponse.setAlertStatistics(this.messageRepository
+                    .getAlertStatistics(user.getLocale(), user.getUtilityId(), query));
+            messageStatisticsResponse.setRecommendationStatistics(this.messageRepository
+                    .getRecommendationStatistics(user.getLocale(), user.getUtilityId(), query));            
+
+			return messageStatisticsResponse;
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
+			response.add(this.getError(ex));
+			return response;
+		}
+	} 
+
+	/**
+	 * Get alert details receivers.
+	 * 
+	 * @param user the user
+     * @param id the alert id
+     * @param request the request
+	 * @return the alert details, including receivers.
+	 */
+	@RequestMapping(value = "/action/recommendation/dynamic/alert/receivers/{id}", method = RequestMethod.POST, produces = "application/json")
+	@Secured("ROLE_ADMIN")
+	public RestResponse getAlertReceivers(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable String id,
+            @RequestBody MessageStatisticsQueryRequest request) {
+        
+        RestResponse response = new RestResponse();
+        
+		try {
+            
+            int intId = Integer.parseInt(id);
+            
+            MessageStatisticsQuery query = request.getQuery();
+            // Set defaults if needed
+			if (query != null) {
+				// Initialize time zone
+				if (StringUtils.isBlank(query.getTimezone())) {
+					query.setTimezone(user.getTimezone());
+				}
+			}   
+            
+            AlertReceiversResponse alertReceiversResponse = new AlertReceiversResponse();
+            alertReceiversResponse.setAlert(this.messageRepository.getAlert(intId, user.getLocale()));
+            alertReceiversResponse.setReceivers(this.messageRepository
+                    .getAlertReceivers(intId, user.getUtilityId(), query));
+
+			return alertReceiversResponse;
+            
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
+			response.add(this.getError(ex));
+			return response;
+		}
+	}  
+
+	/**
+	 * Get recommendation details and receivers.
+	 * 
+	 * @param user the user
+     * @param id the recommendation id 
+     * @param request the request
+	 * @return the announcement details.
+	 */
+	@RequestMapping(value = "/action/recommendation/dynamic/recommendation/receivers/{id}", method = RequestMethod.POST, produces = "application/json")
+	@Secured("ROLE_ADMIN")
+	public RestResponse getRecommendationReceivers(@AuthenticationPrincipal AuthenticatedUser user, 
+            @PathVariable String id, @RequestBody MessageStatisticsQueryRequest request) {
+        
+        RestResponse response = new RestResponse();
+        
+		try {
+            
+            int intId = Integer.parseInt(id);
+            
+            MessageStatisticsQuery query = request.getQuery();
+            
+            // Set defaults if needed
+			if (query != null) {
+				// Initialize time zone
+				if (StringUtils.isBlank(query.getTimezone())) {
+					query.setTimezone(user.getTimezone());
+				}
+			}        
+            
+            RecommendationReceiversResponse recommendationReceiversResponse = new RecommendationReceiversResponse();
+            recommendationReceiversResponse.setRecommendation(this.messageRepository
+                    .getRecommendation(intId, user.getLocale()));
+            recommendationReceiversResponse.setReceivers(this.messageRepository
+                    .getRecommendationReceivers(intId, user.getUtilityId(), query));
+            return recommendationReceiversResponse;
+
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
+			response.add(this.getError(ex));
+			return response;
+		}
+	} 
+    
 }

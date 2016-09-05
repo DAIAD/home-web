@@ -15,6 +15,8 @@ public class DynamicRecommendation extends Message {
 	private String imageLink;
 
 	private Long createdOn;
+    
+    private int receiversCount;
 
 	public DynamicRecommendation(EnumDynamicRecommendationType recommendation) {
 		this.recommendation = recommendation;
@@ -76,5 +78,13 @@ public class DynamicRecommendation extends Message {
 	public void setId(int id) {
 		this.id = id;
 	}
+
+    public int getReceiversCount() {
+        return receiversCount;
+    }
+
+    public void setReceiversCount(int receiversCount) {
+        this.receiversCount = receiversCount;
+    }
 
 }

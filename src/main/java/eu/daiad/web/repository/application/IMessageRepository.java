@@ -10,6 +10,11 @@ import eu.daiad.web.model.message.StaticRecommendation;
 import eu.daiad.web.model.message.AnnouncementRequest;
 import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.model.message.ReceiverAccount;
+import eu.daiad.web.model.message.Alert;
+import eu.daiad.web.model.message.DynamicRecommendation;
+import eu.daiad.web.model.message.MessageStatisticsQuery;
+import eu.daiad.web.domain.application.AlertAnalytics;
+import eu.daiad.web.domain.application.RecommendationAnalytics;
 
 public interface IMessageRepository {
 
@@ -36,5 +41,17 @@ public interface IMessageRepository {
     public Announcement getAnnouncement(int id, String locale);
     
     public List<ReceiverAccount> getAnnouncementReceivers(int id);
+    
+    public List<AlertAnalytics> getAlertStatistics(String locale, int utilityId, MessageStatisticsQuery query);
+    
+    public List<RecommendationAnalytics> getRecommendationStatistics(String locale, int utilityId, MessageStatisticsQuery query);    
+    
+    public List<ReceiverAccount> getAlertReceivers(int alertId, int utilityId, MessageStatisticsQuery query);
+    
+    public List<ReceiverAccount> getRecommendationReceivers(int recommendationId, int utilityId, MessageStatisticsQuery query);   
+    
+    public Alert getAlert(int id, String locale);
+    
+    public DynamicRecommendation getRecommendation(int id, String locale);
 
 }
