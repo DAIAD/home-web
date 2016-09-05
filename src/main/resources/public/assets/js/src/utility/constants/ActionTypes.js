@@ -208,6 +208,8 @@ var types = mirrorToPath({
   MESSAGES_SELECTED_MESSAGE: null,
   MESSAGES_RETURN_BACK: null,
   MESSAGES_SET_EDITOR_VALUE: null,
+  MESSAGES_SELECT_EDITOR: null,
+  MESSAGES_SET_TIMEZONE: null,
   
   //Announcements
   ANNC_REQUESTED_USERS: null,

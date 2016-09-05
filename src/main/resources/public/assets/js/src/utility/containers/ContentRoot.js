@@ -150,14 +150,7 @@ var ContentRoot = React.createClass({
                               <i className='fa fa-diamond fa-fw'></i>{' ' + _t({ id: 'Section.Analytics.Fav'})}
                             </span>
                           </Link>
-                        </li>
-                        <li>
-                          <Link to='/analytics/messages'>
-                            <span  style={{paddingLeft: 18}}>
-                              <i className='fa fa-commenting fa-fw'></i>{' ' + _t({ id: 'Section.ManageAlerts.Messages'})}
-                            </span>
-                          </Link>
-                        </li>                       
+                        </li>                     
                       </ul>
                     </Collapsible>
                   </li>
@@ -278,6 +271,13 @@ var ContentRoot = React.createClass({
                             </span>
                           </Link>
                         </li>
+                        <li>
+                          <Link to='/analytics/messages'>
+                            <span  style={{paddingLeft: 18}}>
+                              <i className='fa fa-commenting fa-fw'></i>{' ' + _t({ id: 'Section.ManageAlerts.Messages'})}
+                            </span>
+                          </Link>
+                        </li>                       
                         {development}
                       </ul>
                     </Collapsible>

@@ -21,6 +21,7 @@ var Scheduler = require('../components/section/Scheduler');
 var Logging = require('../components/section/support/Logging');
 var Announcements = require('../components/section/Announcements');
 var ManageAlerts = require('../components/section/ManageAlerts');
+var MessageAnalytics = require('../components/section/support/MessageAnalytics');
 var UserSettings = require('../components/section/settings/UserSettings');
 var SystemSettings = require('../components/section/settings/SystemSettings');
 var DataManagement = require('../components/section/support/Data');
@@ -35,7 +36,7 @@ module.exports = (
     <Route path="/analytics/fav" component={analytics.Fav} />
     <Route path="/analytics/basic-reports" component={analytics.BasicReports} />
     <Route path="/analytics/panel" component={analytics.ReportPanel} />
-    <Route path="/analytics/messages" component={analytics.MessageAnalytics} />
+    <Route path="/analytics/messages" component={MessageAnalytics} />
 		<Route path="/analytics/map" component={AnalyticsMap} />
     <Route path="/trials/overview" component={trials.Overview}/>
     <Route path="/trials/pilot-reports" component={trials.PilotReports}/>

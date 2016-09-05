@@ -7,8 +7,24 @@ var initialState = {
   showReceivers: false,
   receivers: null,
   selectedMessage: null,
-  editor: null,
-  interval: [moment().subtract(14, 'day'), moment()]
+  editor: 'interval',
+  interval: [moment().subtract(14, 'day'), moment()],
+  timezone: null,
+  population: null,
+  ranges : {
+    'Last 7 Days' : [
+        moment().subtract(6, 'days'), moment()
+    ],
+    'Last 30 Days' : [
+        moment().subtract(29, 'days'), moment()
+    ],
+    'This Month' : [
+        moment().startOf('month'), moment().endOf('month')
+    ],
+    'Last Month' : [
+        moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')
+    ]
+  }
 };
 
 var messages = function (state, action) {
@@ -43,10 +59,7 @@ var messages = function (state, action) {
       });  
     case types.MESSAGES_SET_EDITOR_VALUE:
       switch (action.editor) {
-        case 'interval':
-          console.log('returning interval..');
-          console.log(action.editor);
-          console.log(action.value);          
+        case 'interval':       
           return Object.assign({}, state, {
             interval : action.value
           });
@@ -84,13 +97,21 @@ var messages = function (state, action) {
           });
       }
 
-      return state;      
+      return state;   
     case types.MESSAGES_RETURN_BACK:
       return Object.assign({}, state, {
         showReceivers: false,
         isLoading: false,
         selectedMessage: null,
         receivers: null
+      });        
+    case types.MESSAGES_SELECT_EDITOR:
+      return Object.assign({}, state, {
+        editor : action.editor
+      });
+    case types.MESSAGES_SET_TIMEZONE:
+      return Object.assign({}, state, {
+        timezone : action.timezone
       });      
     default:
       return state || initialState;

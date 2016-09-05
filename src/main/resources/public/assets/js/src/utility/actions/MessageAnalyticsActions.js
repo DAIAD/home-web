@@ -1,20 +1,10 @@
 
-var mapTypes = require('../constants/MapActionTypes');
 var types = require('../constants/ActionTypes');
 var alertsAPI = require('../api/alerts');
 
-var _getFeatures = function(index, timestamp, label) {
-  return {
-    type : mapTypes.MAP_GET_FEATURES,
-    timestamp : timestamp,
-    label : label,
-    index : index
-  };
-};
-
 var _setEditorValue = function(editor, value) {
   return {
-    type : mapTypes.MAP_SET_EDITOR_VALUE,
+    type : types.MESSAGES_SET_EDITOR_VALUE,
     editor : editor,
     value : value
   };
@@ -50,7 +40,6 @@ var receivedReceivers = function (success, errors, receivers) {
   };
 };
 
-
 var buildQuery = function(population, timezone, interval) {
   
   return {
@@ -83,7 +72,7 @@ var MessageAnalyticsActions = {
   
   setEditor : function(key) {
     return {
-      type : mapTypes.MAP_SELECT_EDITOR,
+      type : types.MESSAGES_SELECT_EDITOR,
       editor : key
     };
   },
@@ -93,7 +82,7 @@ var MessageAnalyticsActions = {
       dispatch(changeIndex(0));
       dispatch(_setEditorValue(editor, value));
       dispatch(requestedMessageStatistics());
-      var query = buildQuery(getState(event).map.population, getState(event).map.timezone, getState(event).map.interval);
+      var query = buildQuery(getState(event).messages.population, getState(event).messages.timezone, getState(event).messages.interval);
       return alertsAPI.getMessageStatistics(query).then(function (response) {
         var messages = response.alertStatistics.concat(response.recommendationStatistics);
         dispatch(receivedMessageStatistics(response.success, response.errors, messages));
@@ -103,13 +92,9 @@ var MessageAnalyticsActions = {
     };
   },
 
-  getFeatures : function(index, timestamp, label) {
-    return _getFeatures(index, timestamp, label);
-  },
-
   setTimezone : function(timezone) {
     return {
-      type : mapTypes.MAP_SET_TIMEZONE,
+      type : types.MESSAGES_SET_TIMEZONE,
       timezone : timezone
     };
   },
@@ -118,7 +103,7 @@ var MessageAnalyticsActions = {
     return function (dispatch, getState) {
       dispatch(changeIndex(0));
       dispatch(requestedMessageStatistics());
-      var query = buildQuery(getState(event).map.population, getState(event).map.timezone, getState(event).map.interval);
+      var query = buildQuery(getState(event).messages.population, getState(event).messages.timezone, getState(event).messages.interval);
       return alertsAPI.getMessageStatistics(query).then(function (response) {
         var messages = response.alertStatistics.concat(response.recommendationStatistics);  
         dispatch(receivedMessageStatistics(response.success, response.errors, messages));
@@ -132,7 +117,7 @@ var MessageAnalyticsActions = {
       dispatch(requestedReceivers());
       
       var message = getState(event).messages.selectedMessage;
-      var query = buildQuery(getState(event).map.population, getState(event).map.timezone, getState(event).map.interval);
+      var query = buildQuery(getState(event).messages.population, getState(event).messages.timezone, getState(event).messages.interval);
       
       if(message.type == "ALERT"){
       
