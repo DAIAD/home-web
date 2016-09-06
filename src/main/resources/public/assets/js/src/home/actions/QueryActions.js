@@ -33,6 +33,12 @@ const receivedQuery = function(success, errors) {
   };
 };
 
+/**
+ * Wrapper to queryDeviceSessions with cache functionality
+ * @param {Object} options - The queryDeviceSessions options object
+ * @return {Promise} Resolve returns Object containing device sessions data in form {data: sessionsData}, reject returns possible errors
+ * 
+ */
 const queryDeviceSessionsCache = function(options) {
   return function(dispatch, getState) {
     
@@ -62,8 +68,8 @@ const queryDeviceSessionsCache = function(options) {
 
 /**
  * Query Device sessions
- * @param {Array} deviceKey - Array of device keys to query
  * @param {Object} options - Query options
+ * @param {Array} options.deviceKey - Array of device keys to query
  * @param {String} options.type - The query type. One of SLIDING, ABSOLUTE
  * @param {Number} options.startIndex - Start index for ABSOLUTE query
  * @param {Number} options.endIndex - End index for ABSOLUTE query
@@ -74,7 +80,7 @@ const queryDeviceSessionsCache = function(options) {
 const queryDeviceSessions = function(options) {
   return function(dispatch, getState) {
     
-    const { length, deviceKey } = options;
+    const { length, type, deviceKey } = options;
     
     if (!deviceKey) throw new Error(`Not sufficient data provided for device sessions query: deviceKey:${deviceKey}`);
     
@@ -88,13 +94,11 @@ const queryDeviceSessions = function(options) {
     .then(response => {
       dispatch(receivedQuery(response.success, response.errors, response.devices) );
 
-
       if (!response || !response.success) {
           throw new Error (response && response.errors && response.errors.length > 0 ? response.errors[0].code : 'unknownError');
       }
-      return response.devices;
+      return response.devices;      
       //dispatch(saveToCache('AMPHIRO', options.length, response.devices));
-      
       //return only the items requested
       //return filterDataByDeviceKeys(response.devices, deviceKey);
       //return response.devices;
@@ -117,7 +121,7 @@ const fetchDeviceSession = function(id, deviceKey) {
   return function(dispatch, getState) {
     
     if (!id || !deviceKey) throw new Error(`Not sufficient data provided for device session fetch: id: ${id}, deviceKey:${deviceKey}`);
-    
+
     dispatch(requestedQuery());
 
     const data = Object.assign({}, {sessionId:id, deviceKey: deviceKey}, {csrf: getState().user.csrf});
@@ -129,7 +133,6 @@ const fetchDeviceSession = function(id, deviceKey) {
         if (!response || !response.success) {
           throw new Error (response && response.errors && response.errors.length > 0 ? response.errors[0].code : 'unknownError');
         }
-
         return response.session;
       })
       .catch((errors) => {
@@ -138,7 +141,6 @@ const fetchDeviceSession = function(id, deviceKey) {
       });
   };
 };
-                      
 
 /**
  * Fetch last session for array of devices
@@ -166,6 +168,12 @@ const fetchLastDeviceSession = function(deviceKey) {
   };
 };
 
+/**
+ * Wrapper to queryMeterHistory with cache functionality
+ * @param {Object} options - The queryMeterHistory options object
+ * @return {Promise} Resolve returns Object containing meter sessions data in form {data: sessionsData}, reject returns possible errors
+ * 
+ */
 const queryMeterHistoryCache = function(options) {
   return function(dispatch, getState) {
     
@@ -194,11 +202,12 @@ const queryMeterHistoryCache = function(options) {
 };
 /**
  * Query Meter for historic session data
- * @param {Array} deviceKey - Array of device keys to query
- * @param {Object} time - Query time window
- * @param {Number} time.startDate - Start timestamp for query
- * @param {Number} time.endDate - End timestamp for query
- * @param {Number} time.granularity - Granularity for data aggregation. One of 0: minute, 1: hour, 2: day, 3: week, 4: month
+ * @param {Object} options - Query options
+ * @param {Array} options.deviceKey - Array of device keys to query
+ * @param {Object} options.time - Query time window
+ * @param {Number} options.time.startDate - Start timestamp for query
+ * @param {Number} options.time.endDate - End timestamp for query
+ * @param {Number} options.time.granularity - Granularity for data aggregation. One of 0: minute, 1: hour, 2: day, 3: week, 4: month
  * @return {Promise} Resolve returns Object containing meter sessions data in form {data: sessionsData}, reject returns possible errors
  * 
  */                 
@@ -210,7 +219,7 @@ const queryMeterHistory = function(options) {
 
     dispatch(requestedQuery());
     
-    const data = Object.assign({}, time, {deviceKey}, {csrf: getState().user.csrf});
+    const data = Object.assign({}, time, options);
     
     return meterAPI.getHistory(data)
       .then((response) => {
