@@ -181,7 +181,7 @@ const fetchData = function () {
         return;
       }
 
-      dispatch(QueryActions.queryDeviceSessions(getState().section.history.activeDevice, {type: 'SLIDING', length: lastNFilterToLength(getState().section.history.timeFilter)}))
+      dispatch(QueryActions.queryDeviceSessionsCache({ deviceKey: getState().section.history.activeDevice, type: 'SLIDING', length: lastNFilterToLength(getState().section.history.timeFilter)}))
         .then(sessions => dispatch(setSessions(sessions)))
         .then(() => dispatch(setDataSynced()))
         .catch(error => { 
@@ -191,7 +191,7 @@ const fetchData = function () {
         });
     }
     else if (getState().section.history.activeDeviceType === 'METER') {
-      dispatch(QueryActions.queryMeterHistory(getState().section.history.activeDevice, getState().section.history.time))
+      dispatch(QueryActions.queryMeterHistoryCache({deviceKey: getState().section.history.activeDevice, time:getState().section.history.time}))
         .then(sessions => dispatch(setSessions(sessions)))
         .then(() => dispatch(setDataSynced()))
         .catch(error => { 
@@ -201,7 +201,7 @@ const fetchData = function () {
         });
 
         if (getState().section.history.comparison === 'last') {
-        dispatch(QueryActions.queryMeterHistory(getState().section.history.activeDevice, getPreviousPeriod(getState().section.history.timeFilter, getState().section.history.time.startDate)))
+        dispatch(QueryActions.queryMeterHistoryCache({deviceKey:getState().section.history.activeDevice, time:getPreviousPeriod(getState().section.history.timeFilter, getState().section.history.time.startDate)}))
         .then(sessions => dispatch(setComparisonSessions(sessions)))
         .catch(error => { 
           dispatch(setComparisonSessions([]));
@@ -271,15 +271,15 @@ const setActiveDeviceType = function(deviceType, query=true) {
 /**
  * Sets active devices. 
  *
- * @param {Array} deviceKeys - Device keys to set active. Important: Device keys must only be of one deviceType (METER or AMPHIRO)  
+ * @param {Array} deviceKey - Device keys to set active. Important: Device keys must only be of one deviceType (METER or AMPHIRO)  
  * @param {Bool} query=true - If true performs query based on active filters to update data
  */
-const setActiveDevice = function(deviceKeys, query=true) {
+const setActiveDevice = function(deviceKey, query=true) {
   
   return function(dispatch, getState) {
     dispatch({
       type: types.HISTORY_SET_ACTIVE_DEVICE,
-      deviceKey: deviceKeys
+      deviceKey
     });
     
     if (query) { 

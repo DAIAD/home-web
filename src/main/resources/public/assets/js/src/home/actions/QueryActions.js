@@ -33,9 +33,36 @@ const receivedQuery = function(success, errors) {
   };
 };
 
+const queryDeviceSessionsCache = function(options) {
+  return function(dispatch, getState) {
+    
+    const { length, deviceKey } = options;
+    if (getState().query.cache[getCacheKey('AMPHIRO', length)]) {
+      
+      dispatch(cacheItemRequested('AMPHIRO', length));
+      return Promise.resolve(filterDataByDeviceKeys(getState().query.cache[getCacheKey('AMPHIRO', length)].data, deviceKey));
+    }
+    
+    //fetch all items to save in cache
+    const newOptions = Object.assign({}, options, {deviceKey:getDeviceKeysByType(getState().user.profile.devices, 'AMPHIRO')}, {csrf: getState().user.csrf});
+    
+    return dispatch(queryDeviceSessions(newOptions))
+    .then(devices => {
+
+      dispatch(saveToCache('AMPHIRO', length, devices));
+        
+      //return only the items requested
+      return filterDataByDeviceKeys(devices, deviceKey);
+      //return response.devices;
+
+    });
+
+  };
+};
+
 /**
  * Query Device sessions
- * @param {Array} deviceKeys - Array of device keys to query
+ * @param {Array} deviceKey - Array of device keys to query
  * @param {Object} options - Query options
  * @param {String} options.type - The query type. One of SLIDING, ABSOLUTE
  * @param {Number} options.startIndex - Start index for ABSOLUTE query
@@ -44,35 +71,32 @@ const receivedQuery = function(success, errors) {
  * @return {Promise} Resolve returns Object containing device sessions data in form {data: sessionsData}, reject returns possible errors
  * 
  */
-const queryDeviceSessions = function(deviceKeys, options) {
+const queryDeviceSessions = function(options) {
   return function(dispatch, getState) {
     
-    if (!deviceKeys) throw new Error(`Not sufficient data provided for device sessions query: deviceKey:${deviceKeys}`);
-
-    if (getState().query.cache[getCacheKey('AMPHIRO', options.length)]) {
-      //console.log('found in cache');
-      dispatch(cacheItemRequested('AMPHIRO', options.length));
-      return Promise.resolve(filterDataByDeviceKeys(getState().query.cache[getCacheKey('AMPHIRO', options.length)].data, deviceKeys));
-    }
-
+    const { length, deviceKey } = options;
+    
+    if (!deviceKey) throw new Error(`Not sufficient data provided for device sessions query: deviceKey:${deviceKey}`);
+    
     dispatch(requestedQuery());
 
-    //const data = Object.assign({}, options, {deviceKey:deviceKeys}, {csrf: getState().user.csrf});
-
-    //fetch all items to save in cache
-    const data = Object.assign({}, options, {deviceKey:getDeviceKeysByType(getState().user.profile.devices, 'AMPHIRO')}, {csrf: getState().user.csrf});
+    //const data = Object.assign({}, options, {deviceKey:deviceKey}, {csrf: getState().user.csrf});
+ 
+    const data = Object.assign({}, options, {csrf: getState().user.csrf});
 
     return deviceAPI.querySessions(data)
     .then(response => {
       dispatch(receivedQuery(response.success, response.errors, response.devices) );
-       
+
+
       if (!response || !response.success) {
           throw new Error (response && response.errors && response.errors.length > 0 ? response.errors[0].code : 'unknownError');
       }
-      dispatch(saveToCache('AMPHIRO', options.length, response.devices));
+      return response.devices;
+      //dispatch(saveToCache('AMPHIRO', options.length, response.devices));
       
       //return only the items requested
-      return filterDataByDeviceKeys(response.devices, deviceKeys);
+      //return filterDataByDeviceKeys(response.devices, deviceKey);
       //return response.devices;
     })
     .catch((error) => {
@@ -118,13 +142,13 @@ const fetchDeviceSession = function(id, deviceKey) {
 
 /**
  * Fetch last session for array of devices
- * @param {String} deviceKeys - Device keys to query
+ * @param {String} deviceKey - Device keys to query
  * @return {Promise} Resolve returns Object containing last session data for all devices provided (last session between devices is computed using timestamp), reject returns possible errors
  * 
  */
-const fetchLastDeviceSession = function(deviceKeys) {
+const fetchLastDeviceSession = function(deviceKey) {
   return function(dispatch, getState) {
-    return dispatch(queryDeviceSessions(deviceKeys, {type: 'SLIDING', length: 10}))
+    return dispatch(queryDeviceSessions(deviceKey, {type: 'SLIDING', length: 10}))
     .then(sessions => {
       
       const reduced = reduceSessions(getState().user.profile.devices, sessions);        
@@ -141,10 +165,36 @@ const fetchLastDeviceSession = function(deviceKeys) {
     });
   };
 };
-  
+
+const queryMeterHistoryCache = function(options) {
+  return function(dispatch, getState) {
+    
+    const { deviceKey, time } = options;
+
+    if (getState().query.cache[getCacheKey('METER', time)]) {
+      //console.log('found in cache!');
+      dispatch(cacheItemRequested('METER', time));
+      return Promise.resolve(filterDataByDeviceKeys(getState().query.cache[getCacheKey('METER', time)].data, deviceKey));
+    }
+
+    //fetch all meters requested in order to save to cache 
+    const newOptions = Object.assign({}, {time, deviceKey:getDeviceKeysByType(getState().user.profile.devices, 'METER')}, {csrf: getState().user.csrf}); 
+            
+    return dispatch(queryMeterHistory(newOptions))
+    .then(series => {
+
+      dispatch(saveToCache('METER', time, series));
+      
+      //return only the meters requested  
+      return filterDataByDeviceKeys(series, deviceKey);
+      //return response.series;
+    });
+
+  };
+};
 /**
  * Query Meter for historic session data
- * @param {Array} deviceKeys - Array of device keys to query
+ * @param {Array} deviceKey - Array of device keys to query
  * @param {Object} time - Query time window
  * @param {Number} time.startDate - Start timestamp for query
  * @param {Number} time.endDate - End timestamp for query
@@ -152,22 +202,15 @@ const fetchLastDeviceSession = function(deviceKeys) {
  * @return {Promise} Resolve returns Object containing meter sessions data in form {data: sessionsData}, reject returns possible errors
  * 
  */                 
-const queryMeterHistory = function(deviceKeys, time) {
+const queryMeterHistory = function(options) {
   return function(dispatch, getState) {
-    if (!deviceKeys || !time || !time.startDate || !time.endDate) throw new Error(`Not sufficient data provided for meter history query: deviceKey:${deviceKeys}, time: ${time}`);
+    const { deviceKey, time } = options;
 
-    if (getState().query.cache[getCacheKey('METER', time)]) {
-      //console.log('found in cache!');
-      dispatch(cacheItemRequested('METER', time));
-      return Promise.resolve(filterDataByDeviceKeys(getState().query.cache[getCacheKey('METER', time)].data, deviceKeys));
-    }
+    if (!deviceKey || !time || !time.startDate || !time.endDate) throw new Error(`Not sufficient data provided for meter history query: deviceKey:${deviceKey}, time: ${time}`);
 
     dispatch(requestedQuery());
     
-    //const data = Object.assign({}, time, {deviceKey:deviceKeys}, {csrf: getState().user.csrf});
-
-    //fetch all meters requested in order to save to cache 
-    const data = Object.assign({}, time, {deviceKey:getDeviceKeysByType(getState().user.profile.devices, 'METER')}, {csrf: getState().user.csrf}); 
+    const data = Object.assign({}, time, {deviceKey}, {csrf: getState().user.csrf});
     
     return meterAPI.getHistory(data)
       .then((response) => {
@@ -176,11 +219,7 @@ const queryMeterHistory = function(deviceKeys, time) {
         if (!response || !response.success) {
           throw new Error (response && response.errors && response.errors.length > 0 ? response.errors[0].code : 'unknownError');
         }
-        dispatch(saveToCache('METER', time, response.series));
-
-        //return only the meters requested  
-        return filterDataByDeviceKeys(response.series, deviceKeys);
-        //return response.series;
+        return response.series;
       })
       .catch((error) => {
         dispatch(receivedQuery(false, error));
@@ -191,18 +230,18 @@ const queryMeterHistory = function(deviceKeys, time) {
 
 /**
  * Query Meter for current meter status
- * @param {Array} deviceKeys - Array of device keys to query
+ * @param {Array} deviceKey - Array of device keys to query
  * @return {Promise} Resolve returns Object containing meter sessions data in form {data: sessionsData}, reject returns possible errors
  * 
  */    
-const queryMeterStatus = function(deviceKeys) {
+const queryMeterStatus = function(deviceKey) {
   return function(dispatch, getState) {
 
-    if (!deviceKeys) throw new Error(`Not sufficient data provided for meter status: deviceKeys:${deviceKeys}`);
+    if (!deviceKey) throw new Error(`Not sufficient data provided for meter status: deviceKeys:${deviceKey}`);
 
     dispatch(requestedMeterStatus());
     
-    const data = {deviceKey: deviceKeys, csrf: getState().user.csrf };
+    const data = {deviceKey, csrf: getState().user.csrf };
     return meterAPI.getStatus(data)
       .then((response) => {
         dispatch(receivedMeterStatus(response.success, response.errors, response.devices?response.devices:[]) );
@@ -260,13 +299,13 @@ const fetchInfoboxData = function(options) {
 
       if (deviceType === 'METER') {
         
-        return dispatch(queryMeterHistory(device, time))
+        return dispatch(queryMeterHistoryCache({deviceKey:device, time}))
         .then(data => ({data}))
         .then(res => {
           if (type === 'TOTAL') {
             //fetch previous period data for comparison 
             let prevTime = getPreviousPeriodSoFar(period);
-            return dispatch(queryMeterHistory(device, prevTime))
+            return dispatch(queryMeterHistoryCache({deviceKey:device, prevTime}))
             .then(prevData => Object.assign({}, res, {previous:prevData, prevTime}))
               .catch(error => { 
                 console.error('Caught error in infobox previous period data fetch:', error); 
@@ -278,7 +317,7 @@ const fetchInfoboxData = function(options) {
         });
       }
       else if (deviceType === 'AMPHIRO') {
-        return dispatch(queryDeviceSessions(device, {type: 'SLIDING', length:lastNFilterToLength(period)}))
+        return dispatch(queryDeviceSessionsCache({deviceKey:device, type: 'SLIDING', length:lastNFilterToLength(period)}))
         .then(data => ({data}));
       }
     }
@@ -312,7 +351,7 @@ const saveToCache = function(deviceType, timeOrLength, data) {
   return function(dispatch, getState) {
     const { cache } = getState().query;
     if (Object.keys(cache).length >= CACHE_SIZE) {
-      console.warn('Cache limit exceeded, making space...');
+      console.warn('Cache limit exceeded, making space by emptying LRU...');
       
       const newCacheKeys = Object.keys(cache)
       .sort((a, b) => cache[b].counter - cache[a].counter)
@@ -334,9 +373,11 @@ const saveToCache = function(deviceType, timeOrLength, data) {
 };
 
 module.exports = {
+  queryDeviceSessionsCache,
   queryDeviceSessions,
   fetchDeviceSession,
   fetchLastDeviceSession,
+  queryMeterHistoryCache,
   queryMeterHistory,
   queryMeterStatus,
   fetchInfoboxData,
