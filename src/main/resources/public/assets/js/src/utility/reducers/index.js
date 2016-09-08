@@ -12,6 +12,7 @@ var groupCatalog=  require('./group-catalog');
 var user = require('./user');
 var userCatalog=  require('./user-catalog');
 var upsertFavouriteForm = require('./upsertFavouriteForm');
+var favourites = require('./favourites');
 var mode_management = require('./mode_management');
 var admin = require('./admin');
 var logging = require('./logging');
@@ -39,6 +40,7 @@ var rootReducer = combineReducers({
   groupCatalog,
   user,
   userCatalog,
+  favourites,
   upsertFavouriteForm,
   mode_management,
   admin,

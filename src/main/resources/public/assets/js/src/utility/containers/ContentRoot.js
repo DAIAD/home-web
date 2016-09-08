@@ -145,7 +145,7 @@ var ContentRoot = React.createClass({
                           </Link>
                         </li>
                         <li>
-                          <Link to='/analytics/fav' onClick={disableLink} className='disabled-link'>
+                          <Link to='/analytics/fav'>
                             <span  style={{paddingLeft: 18}}>
                               <i className='fa fa-diamond fa-fw'></i>{' ' + _t({ id: 'Section.Analytics.Fav'})}
                             </span>
