@@ -32,6 +32,8 @@ import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
+//import eu.daiad.web.service.weather.DailyWeatherData;
+//import eu.daiad.web.service.weather.IWeatherRepository;
 
 @Service()
 public class DefaultMessageResolverService implements IMessageResolverService {
@@ -47,7 +49,10 @@ public class DefaultMessageResolverService implements IMessageResolverService {
         
     @Autowired 
     IDeviceRepository deviceRepository;
-        
+    
+//    @Autowired
+//    private IWeatherRepository weatherRepository;       
+    
     @Override
 	public PendingMessageStatus resolve(MessageCalculationConfiguration config,
 					ConsumptionAggregateContainer aggregates, UUID accountKey) {      
@@ -212,6 +217,17 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 	public boolean alertWaterQualitySWM(UUID accountKey, DateTimeZone timezone) {
 		boolean fireAlert = false;
 
+        //check for outside temperature.
+//        int utilityId = userRepository.getUserByKey(accountKey).getUtilityId();
+//        List<DailyWeatherData> dailyWeatherData = 
+//                weatherRepository.getDailyData(0, utilityId, DateTime.now(timezone).minusDays(1), DateTime.now(timezone));
+//        
+//        Double maxTemperature = dailyWeatherData.get(0).getMaxTemperature();
+//        
+//        if(maxTemperature < 27){
+//            return false;
+//        }
+        
 		DataQueryBuilder queryBuilder = new DataQueryBuilder();
 		queryBuilder.timezone(timezone).sliding(-24, EnumTimeUnit.HOUR, EnumTimeAggregation.HOUR)
 						.user("user", accountKey).meter().sum();
