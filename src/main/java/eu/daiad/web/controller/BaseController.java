@@ -150,6 +150,16 @@ public abstract class BaseController {
 						.getMessageKey()));
 	}
 
+    /**
+     * Returns an {@link Error} with {@link Error#getCode()} equal to {@link SharedErrorCode#UNKNOWN}.
+     * 
+     * @return the localized error.
+     */
+    protected Error getErrorUnknown() {
+        return new Error(SharedErrorCode.UNKNOWN.getMessageKey(), this.getMessage(SharedErrorCode.UNKNOWN
+                        .getMessageKey()));
+    }
+
 	/**
 	 * Creates a response based on a {@link ErrorCode}.
 	 * @param error the error code.

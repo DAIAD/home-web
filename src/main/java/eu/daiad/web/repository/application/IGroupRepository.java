@@ -12,7 +12,9 @@ public interface IGroupRepository {
 
     List<Group> getAll(UUID utilityKey);
 
-    List<Group> getGroups(UUID utilityKey);
+    List<Group> getGroupsByUtilityKey(UUID utilityKey);
+    
+    List<Group> getGroupsByUtilityId(int utilityId);
 
     List<Group> filterByName(UUID utilityKey, String text);
 

@@ -109,6 +109,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             profile.setVersion(account.getProfile().getVersion());
             profile.setKey(account.getKey());
             profile.setUsername(account.getUsername());
+            profile.setEmail(account.getEmail());
             profile.setFirstname(account.getFirstname());
             profile.setLastname(account.getLastname());
             profile.setTimezone(account.getTimezone());

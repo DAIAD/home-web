@@ -42,7 +42,6 @@ import eu.daiad.web.model.meter.WaterMeterForecast;
 import eu.daiad.web.model.meter.WaterMeterForecastCollection;
 import eu.daiad.web.model.meter.WaterMeterMeasurement;
 import eu.daiad.web.model.meter.WaterMeterMeasurementCollection;
-import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IWaterMeterForecastRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 
@@ -57,9 +56,6 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
 
     @PersistenceContext(unitName = "management")
     EntityManager entityManager;
-
-    @Autowired
-    IDeviceRepository deviceRepository;
 
     @Autowired
     IWaterMeterMeasurementRepository waterMeterMeasurementRepository;

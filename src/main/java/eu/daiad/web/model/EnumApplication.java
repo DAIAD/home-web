@@ -48,7 +48,7 @@ public enum EnumApplication {
 		return EnumApplication.UNDEFINED;
 	}
 
-	public class Deserializer extends JsonDeserializer<EnumApplication> {
+	public static class Deserializer extends JsonDeserializer<EnumApplication> {
 
 		@Override
 		public EnumApplication deserialize(JsonParser parser, DeserializationContext context) throws IOException,

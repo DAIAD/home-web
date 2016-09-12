@@ -9,6 +9,7 @@ import eu.daiad.web.model.admin.AccountWhiteListInfo;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
+import eu.daiad.web.model.security.PasswordResetToken;
 import eu.daiad.web.model.user.Account;
 import eu.daiad.web.model.user.UserInfo;
 import eu.daiad.web.model.user.UserQuery;
@@ -22,10 +23,14 @@ public interface IUserRepository {
 
     List<UserInfo> filterUserByPrefix(String prefix);
 
-    void setPassword(String username, String password) throws ApplicationException;
+    void changePassword(String username, String password) throws ApplicationException;
+
+    PasswordResetToken createPasswordResetToken(String username) throws ApplicationException;
+
+    void resetPassword(UUID token, String pin, String password) throws ApplicationException;
 
     void grantRole(String username, EnumRole role) throws ApplicationException;
-    
+
     void revokeRole(String username, EnumRole role) throws ApplicationException;
 
     AuthenticatedUser getUserByName(String username) throws ApplicationException;

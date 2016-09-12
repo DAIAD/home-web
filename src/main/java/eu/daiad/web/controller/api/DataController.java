@@ -132,7 +132,7 @@ public class DataController extends BaseRestController {
     /**
      * Loads all saved data queries.
      * 
-     * @param data authentication request.
+     * @param request authentication request.
      * @return the saved data queries
      */
     @RequestMapping(value = "/api/v1/data/query/load", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
