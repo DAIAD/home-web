@@ -293,7 +293,6 @@ public class DataController extends BaseController {
     /**
      * Loads all saved data queries.
      * 
-     * @param data authentication request.
      * @return the saved data queries
      */
     @RequestMapping(value = "/action/data/query/load", method = RequestMethod.GET, consumes = "application/json", produces = "application/json")

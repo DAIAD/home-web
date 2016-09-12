@@ -20,24 +20,39 @@ import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
+import eu.daiad.web.model.security.PasswordChangeRequest;
+import eu.daiad.web.model.security.PasswordResetTokenCreateRequest;
+import eu.daiad.web.model.security.PasswordResetTokenCreateResponse;
+import eu.daiad.web.model.security.PasswordResetTokenRedeemRequest;
 import eu.daiad.web.model.security.RoleUpdateRequest;
 import eu.daiad.web.model.user.Account;
 import eu.daiad.web.model.user.UserRegistrationRequest;
 import eu.daiad.web.model.user.UserRegistrationResponse;
-import eu.daiad.web.security.PasswordChangeRequest;
 import eu.daiad.web.service.IUserService;
 
+/**
+ * Provides methods for user management 
+ */
 @RestController("RestUserController")
 public class UserController extends BaseRestController {
 
 	private static final Log logger = LogFactory.getLog(UserController.class);
 
+	/**
+	 * Instance of @{link IUserService} that implements user management operations.
+	 */
 	@Autowired
 	private IUserService userService;
 
+	/**
+	 * Instance of @{link org.springframework.validation.Validator} for performing user input validation manually.
+	 */
 	@Autowired
 	private org.springframework.validation.Validator validator;
 
+	/**
+	 * True if white list checks must be applied; Otherwise False.
+	 */
 	@Value("${security.white-list}")
 	private boolean enforceWhiteListCheck;
 
@@ -85,22 +100,30 @@ public class UserController extends BaseRestController {
 	}
 
 	/**
-	 * Sets a user's password.
+	 * Changes a user's password.
 	 * 
 	 * @param data the request.
 	 * @return the controller's response.
 	 */
-	@RequestMapping(value = "/api/v1/user/password", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse setPassword(@RequestBody PasswordChangeRequest data) {
+	@RequestMapping(value = "/api/v1/user/password/change", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+	public RestResponse changePassword(@RequestBody PasswordChangeRequest data) {
 		RestResponse response = new RestResponse();
 
 		try {
 			AuthenticatedUser user = this.authenticate(data.getCredentials());
 
-            if ((user.hasRole(EnumRole.ROLE_ADMIN)) && (!StringUtils.isBlank(data.getUsername()))) {
-                userService.setPassword(data.getUsername(), data.getPassword());    
+            if (user.hasRole(EnumRole.ROLE_ADMIN)) {
+                if(StringUtils.isBlank(data.getUsername())) {
+                    userService.changePassword(user.getUsername(), data.getPassword());
+                } else {
+                    userService.changePassword(data.getUsername(), data.getPassword());    
+                }
 			} else if(user.hasRole(EnumRole.ROLE_USER)){
-			    userService.setPassword(user.getUsername(), data.getPassword());
+			    if(StringUtils.isBlank(data.getUsername())) {
+			        userService.changePassword(user.getUsername(), data.getPassword());
+			    } else {
+			        throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+			    }
 			} else {
 			    throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
@@ -113,10 +136,53 @@ public class UserController extends BaseRestController {
 		return response;
 	}
 
+    /**
+     * Requests a token for resetting a user's password.
+     * 
+     * @param request the name of the user.
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/api/v1/user/password/reset/token/create", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    public RestResponse resetPasswordCreateToken(@RequestBody PasswordResetTokenCreateRequest request) {
+        try {
+            return new PasswordResetTokenCreateResponse(userService.resetPasswordCreateToken(request.getUsername(),
+                            true, request.getApplication()));
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            // Do not send detailed error information
+            RestResponse response = new RestResponse();
+            response.add(this.getErrorUnknown());
+
+            return response;
+        }
+    }
+    
+    /**
+     * Resets a user's password given a valid token and password.
+     * 
+     * @param request the token and new password values.
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/api/v1/user/password/reset/token/redeem", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    public RestResponse resetPasswordRedeemToken(@RequestBody PasswordResetTokenRedeemRequest request) {
+        RestResponse response = new RestResponse();
+
+        try {
+            userService.resetPasswordRedeemToken(request.getToken(), request.getPin(), request.getPassword());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
+
 	/**
 	 * Grants a role to a user.
 	 * 
-	 * @param data the request.
+	 * @param request the request.
 	 * @return the controller's response.
 	 */
 	@RequestMapping(value = "/api/v1/user/role", method = RequestMethod.PUT, consumes = "application/json", produces = "application/json")
@@ -139,7 +205,7 @@ public class UserController extends BaseRestController {
 	/**
 	 * Revokes a role to a user.
 	 * 
-	 * @param data the request.
+	 * @param request the request.
 	 * @return the controller's response.
 	 */
 	@RequestMapping(value = "/api/v1/user/role", method = RequestMethod.DELETE, consumes = "application/json", produces = "application/json")

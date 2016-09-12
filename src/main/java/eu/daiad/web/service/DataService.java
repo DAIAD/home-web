@@ -727,7 +727,7 @@ public class DataService extends BaseService implements IDataService {
                     response.setDevices(amphiroIndexOrderedRepository.query(expandedQuery));
                     response.setMeters(waterMeterMeasurementRepository.query(expandedQuery));
                     break;
-                case AMPHIRO:
+                case AMPHIRO: case DEVICE:
                     response.setDevices(amphiroIndexOrderedRepository.query(expandedQuery));
                     break;
                 case METER:

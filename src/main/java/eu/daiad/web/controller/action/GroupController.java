@@ -60,7 +60,7 @@ public class GroupController extends BaseController {
         try {
             GroupQueryResponse response = new GroupQueryResponse();
 
-            response.setGroups(this.groupRepository.getGroups(user.getUtilityKey()));
+            response.setGroups(this.groupRepository.getGroupsByUtilityKey(user.getUtilityKey()));
 
             for (Group g : response.getGroups()) {
                 if (g.getType() == EnumGroupType.SET) {

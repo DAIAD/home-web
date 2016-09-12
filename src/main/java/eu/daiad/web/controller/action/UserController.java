@@ -39,6 +39,9 @@ import eu.daiad.web.model.meter.WaterMeterStatus;
 import eu.daiad.web.model.meter.WaterMeterStatusQueryResult;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
+import eu.daiad.web.model.security.PasswordChangeRequest;
+import eu.daiad.web.model.security.PasswordResetTokenCreateRequest;
+import eu.daiad.web.model.security.PasswordResetTokenRedeemRequest;
 import eu.daiad.web.model.user.DeviceMeterInfo;
 import eu.daiad.web.model.user.UserInfo;
 import eu.daiad.web.model.user.UserInfoCollectionResponse;
@@ -53,12 +56,10 @@ import eu.daiad.web.repository.application.IFavouriteRepository;
 import eu.daiad.web.repository.application.IUserGroupRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
-import eu.daiad.web.security.PasswordChangeRequest;
 import eu.daiad.web.service.IUserService;
 
 /**
- * Provides actions for managing users.
- *
+ * Provides methods for user management 
  */
 @RestController
 public class UserController extends BaseController {
@@ -199,8 +200,8 @@ public class UserController extends BaseController {
      * provide info, regarding the groups it participates or the devices he
      * owns.
      * 
-     * @param user_id the user id
-     * @return the user
+     * @param user the authenticated user
+     * @return the key of the user for which data is requested
      */
     @RequestMapping(value = "/action/user/{key}", method = RequestMethod.GET, produces = "application/json")
     @Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
@@ -336,22 +337,29 @@ public class UserController extends BaseController {
     }
 
     /**
-     * Sets a user's password.
+     * Changes a user's password.
      * 
      * @param data the request.
      * @return the controller's response.
      */
-    @RequestMapping(value = "/action/user/password", method = RequestMethod.POST, produces = "application/json")
+    @RequestMapping(value = "/action/user/password/change", method = RequestMethod.POST, produces = "application/json")
     @Secured({ "ROLE_USER", "ROLE_ADMIN" })
-    public RestResponse setPassword(@AuthenticationPrincipal AuthenticatedUser user,
-                    @RequestBody PasswordChangeRequest data) {
+    public RestResponse changePassword(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody PasswordChangeRequest data) {
         RestResponse response = new RestResponse();
 
         try {
-            if ((user.hasRole(EnumRole.ROLE_ADMIN)) && (!StringUtils.isBlank(data.getUsername()))) {
-                userService.setPassword(data.getUsername(), data.getPassword());
-            } else if (user.hasRole(EnumRole.ROLE_USER)) {
-                userService.setPassword(user.getUsername(), data.getPassword());
+            if (user.hasRole(EnumRole.ROLE_ADMIN)) {
+                if(StringUtils.isBlank(data.getUsername())) {
+                    userService.changePassword(user.getUsername(), data.getPassword());
+                } else {
+                    userService.changePassword(data.getUsername(), data.getPassword());    
+                }
+            } else if(user.hasRole(EnumRole.ROLE_USER)){
+                if(StringUtils.isBlank(data.getUsername())) {
+                    userService.changePassword(user.getUsername(), data.getPassword());
+                } else {
+                    throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+                }
             } else {
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION);
             }
@@ -363,5 +371,49 @@ public class UserController extends BaseController {
 
         return response;
     }
+
+    /**
+     * Requests a token for resetting a user's password.
+     * 
+     * @param request the name of the user.
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/action/user/password/reset/token/create", method = RequestMethod.POST, produces = "application/json")
+    public RestResponse resetPasswordCreateToken(@AuthenticationPrincipal AuthenticatedUser user,
+                    @RequestBody PasswordResetTokenCreateRequest request) {
+        RestResponse response = new RestResponse();
+
+        try {
+            userService.resetPasswordCreateToken(request.getUsername(), true, request.getApplication());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            // Do not send detailed error information
+            response.add(this.getErrorUnknown());
+        }
+
+        return response;
+    }
     
+    /**
+     * Resets a user's password given a valid token and password.
+     * 
+     * @param request the token and new password values.
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/action/user/password/reset/token/redeem", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    public RestResponse resetPasswordRedeemToken(@RequestBody PasswordResetTokenRedeemRequest request) {
+        RestResponse response = new RestResponse();
+
+        try {
+            userService.resetPasswordRedeemToken(request.getToken(), request.getPin(), request.getPassword());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
+
 }

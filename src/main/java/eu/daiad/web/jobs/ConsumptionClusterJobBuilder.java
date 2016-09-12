@@ -147,7 +147,7 @@ public class ConsumptionClusterJobBuilder extends BaseJobBuilder implements IJob
                                     start = formatter.parseDateTime(parameter);
                                 }
 
-                                DateTime end = start.minusDays(30);
+                                DateTime end = start.minusDays(60);
                                 parameter = (String) chunkContext.getStepContext().getJobParameters()
                                                 .get(PARAMETER_END);
 
@@ -157,7 +157,7 @@ public class ConsumptionClusterJobBuilder extends BaseJobBuilder implements IJob
 
                                 DataQuery query = DataQueryBuilder.create().absolute(start, end,
                                                 EnumTimeAggregation.ALL).utilityTop(utility.getName(),
-                                                utility.getKey(), EnumMetric.SUM, (int) totalMeters).build();
+                                                utility.getKey(), EnumMetric.SUM, (int) totalMeters).meter().build();
 
                                 DataQueryResponse result = dataService.execute(query);
 

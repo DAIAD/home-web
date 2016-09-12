@@ -95,6 +95,9 @@ public class Account {
     @Column(name = "change_password_on_login")
     private boolean changePasswordOnNextLogin;
 
+    @Column(name = "allow_password_reset")
+    private boolean allowPasswordReset;
+
     @Basic()
     private boolean locked;
 
@@ -228,6 +231,14 @@ public class Account {
 
     public void setChangePasswordOnNextLogin(boolean changePasswordOnNextLogin) {
         this.changePasswordOnNextLogin = changePasswordOnNextLogin;
+    }
+
+    public boolean isAllowPasswordReset() {
+        return allowPasswordReset;
+    }
+
+    public void setAllowPasswordReset(boolean allowPasswordReset) {
+        this.allowPasswordReset = allowPasswordReset;
     }
 
     public boolean isLocked() {

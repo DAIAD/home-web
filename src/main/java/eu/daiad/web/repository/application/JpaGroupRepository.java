@@ -84,7 +84,20 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
     }
 
     @Override
-    public List<Group> getGroups(UUID utilityKey) {
+    public List<Group> getGroupsByUtilityId(int utilityId) {
+        TypedQuery<eu.daiad.web.domain.application.Group> entityQuery = entityManager.createQuery(
+                        "select g from group g where g.utility.id = :utilityId",
+                        eu.daiad.web.domain.application.Group.class);
+
+        entityQuery.setParameter("utilityId", utilityId);
+
+        List<Group> groups = groupEntityToGroupObject(entityQuery.getResultList());
+
+        return groups;
+    }
+    
+    @Override
+    public List<Group> getGroupsByUtilityKey(UUID utilityKey) {
         TypedQuery<eu.daiad.web.domain.application.Group> entityQuery = entityManager.createQuery(
                         "select g from group g where g.utility.key = :utilityKey",
                         eu.daiad.web.domain.application.Group.class);

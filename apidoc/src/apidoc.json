@@ -7,6 +7,12 @@
   "order": [
 	"Authentication",
 	"User",
+	"UserRegister",
+	"PasswordChange",
+	"ResetPasswordTokenRequest",
+	"ResetPasswordTokenRedeem",
+	"GrantRole",
+	"RevokeRole",
 	"Profile",
 	"ProfileLoad",
 	"ProfileSave",

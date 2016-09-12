@@ -14,6 +14,7 @@ import javax.persistence.Query;
 import javax.persistence.StoredProcedureQuery;
 import javax.persistence.TypedQuery;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,6 +37,7 @@ import eu.daiad.web.domain.application.AccountProfile;
 import eu.daiad.web.domain.application.AccountProfileHistoryEntry;
 import eu.daiad.web.domain.application.AccountRole;
 import eu.daiad.web.domain.application.AccountWhiteListEntry;
+import eu.daiad.web.domain.application.PasswordResetTokenEntity;
 import eu.daiad.web.domain.application.Role;
 import eu.daiad.web.domain.application.Survey;
 import eu.daiad.web.domain.application.Utility;
@@ -50,6 +52,7 @@ import eu.daiad.web.model.profile.EnumUtilityMode;
 import eu.daiad.web.model.profile.EnumWebMode;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
+import eu.daiad.web.model.security.PasswordResetToken;
 import eu.daiad.web.model.user.Account;
 import eu.daiad.web.model.user.UserInfo;
 import eu.daiad.web.model.user.UserQuery;
@@ -65,6 +68,9 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
     @Value("${security.white-list}")
     private boolean enforceWhiteListCheck;
 
+    @Value("${daiad.password.reset.token.duration}")
+    private int passwordResetTokenDuration;
+    
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
 
@@ -255,6 +261,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                 account.setAddress(whiteListEntry.getAddress());
                 account.setTimezone(whiteListEntry.getTimezone());
                 account.setPostalCode(whiteListEntry.getPostalCode());
+                account.setAllowPasswordReset(false);
 
                 if ((whiteListEntry.getLocation() != null) && (whiteListEntry.getLocation() instanceof Point)) {
                     account.setLocation(whiteListEntry.getLocation());
@@ -274,6 +281,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                 account.setAddress(user.getAddress());
                 account.setTimezone(user.getTimezone());
                 account.setPostalCode(user.getPostalCode());
+                account.setAllowPasswordReset(false);
 
                 if ((user.getLocation() != null) && (user.getLocation() instanceof Point)) {
                     account.setLocation(user.getLocation());
@@ -339,7 +347,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
     }
 
     @Override
-    public void setPassword(String username, String password) throws ApplicationException {
+    public void changePassword(String username, String password) throws ApplicationException {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
         TypedQuery<eu.daiad.web.domain.application.Account> userQuery = entityManager.createQuery(
@@ -354,6 +362,88 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         entityManager.flush();
 
         logger.warn(String.format("Password for user [%s] has been updated", username));
+    }
+    
+    @Override
+    public PasswordResetToken createPasswordResetToken(String username) throws ApplicationException {
+        // Find user
+        TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager.createQuery(
+                        "select a from account a where a.username = :username",
+                        eu.daiad.web.domain.application.Account.class).setFirstResult(0).setMaxResults(1);
+        accountQuery.setParameter("username", username);
+
+        List<eu.daiad.web.domain.application.Account> accounts = accountQuery.getResultList();
+        if (accounts.isEmpty()) {
+            throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
+        }
+        
+        eu.daiad.web.domain.application.Account account = accounts.get(0);
+
+        // Reset any existing tokens that are still valid
+        TypedQuery<eu.daiad.web.domain.application.PasswordResetTokenEntity> tokenQuery = entityManager.createQuery(
+                        "select t from password_reset_token t where t.valid = true and t.account.id = :accountId",
+                        eu.daiad.web.domain.application.PasswordResetTokenEntity.class);
+        tokenQuery.setParameter("accountId", account.getId());
+        
+        for(PasswordResetTokenEntity oldToken : tokenQuery.getResultList()){
+            oldToken.setValid(false);
+        }
+        
+        // Create new token
+        PasswordResetTokenEntity token = new PasswordResetTokenEntity();
+        
+        token.setAccount(account);
+        token.setValid(true);
+        token.setPin(RandomStringUtils.randomNumeric(4));
+        
+        entityManager.persist(token);
+        
+        return new PasswordResetToken(token.getToken(), token.getPin());
+    }
+    
+    @Override
+    public void resetPassword(UUID token, String pin, String password) throws ApplicationException {
+        // Find token
+        TypedQuery<eu.daiad.web.domain.application.PasswordResetTokenEntity> tokenQuery = entityManager.createQuery(
+                        "select t from password_reset_token t where t.token = :token",
+                        eu.daiad.web.domain.application.PasswordResetTokenEntity.class);
+        tokenQuery.setParameter("token", token);
+
+        List<PasswordResetTokenEntity> tokens = tokenQuery.getResultList();
+
+        if (tokens.isEmpty()) {
+            throw createApplicationException(UserErrorCode.PASSWORD_RESET_TOKEN_NOT_FOUND);
+        }
+
+        PasswordResetTokenEntity passwordResetTokenEntity = tokens.get(0);
+
+        // Validate token
+        if (passwordResetTokenEntity.isReedemed()) {
+            throw createApplicationException(UserErrorCode.PASSWORD_RESET_TOKEN_ALREADY_REEDEMED);
+        }
+
+        if (passwordResetTokenEntity.isExpired(passwordResetTokenDuration)) {
+            throw createApplicationException(UserErrorCode.PASSWORD_RESET_TOKEN_EXPIRED);
+        }
+        
+        if(!passwordResetTokenEntity.getPin().equals(pin)) {
+            throw createApplicationException(UserErrorCode.PASSWORD_RESET_PIN_MISMATCH);
+        }
+
+        // Get account
+        eu.daiad.web.domain.application.Account account = passwordResetTokenEntity.getAccount();
+        if (account == null) {
+            throw createApplicationException(UserErrorCode.PASSWORD_RESET_TOKEN_USER_NOT_FOUND);
+        }
+
+        // Set password
+        this.changePassword(account.getUsername(), password);
+
+        // Update token
+        passwordResetTokenEntity.setRedeemedOn(DateTime.now());
+        passwordResetTokenEntity.setValid(false);
+
+        logger.warn(String.format("Password for user [%s] has been reset.", account.getUsername()));
     }
 
     @Override
@@ -397,6 +487,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                 user.setGender(account.getGender());
                 user.setPostalCode(account.getPostalCode());
                 user.setTimezone(account.getTimezone());
+                user.setAllowPasswordReset(account.isAllowPasswordReset());
 
                 user.setWebMode(EnumWebMode.fromInteger(account.getProfile().getWebMode()));
                 user.setMobileMode(EnumMobileMode.fromInteger(account.getProfile().getMobileMode()));
@@ -442,7 +533,8 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                 user.setGender(account.getGender());
                 user.setPostalCode(account.getPostalCode());
                 user.setTimezone(account.getTimezone());
-
+                user.setAllowPasswordReset(account.isAllowPasswordReset());
+                
                 user.setWebMode(EnumWebMode.fromInteger(account.getProfile().getWebMode()));
                 user.setMobileMode(EnumMobileMode.fromInteger(account.getProfile().getMobileMode()));
                 user.setUtilityMode(EnumUtilityMode.fromInteger(account.getProfile().getUtilityMode()));
@@ -486,7 +578,8 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                 user.setGender(account.getGender());
                 user.setPostalCode(account.getPostalCode());
                 user.setTimezone(account.getTimezone());
-
+                user.setAllowPasswordReset(account.isAllowPasswordReset());
+                
                 user.setWebMode(EnumWebMode.fromInteger(account.getProfile().getWebMode()));
                 user.setMobileMode(EnumMobileMode.fromInteger(account.getProfile().getMobileMode()));
                 user.setUtilityMode(EnumUtilityMode.fromInteger(account.getProfile().getUtilityMode()));
