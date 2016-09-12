@@ -37,6 +37,8 @@ import eu.daiad.web.service.message.aggregates.Top10BaseMonthAmphiro;
 import eu.daiad.web.service.message.aggregates.Top10BaseMonthSWM;
 import eu.daiad.web.service.message.aggregates.Top10BaseWeekSWM;
 import eu.daiad.web.service.message.aggregates.Top25BaseWeekSWM;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 //TODO - define some sanity values for checking the produced results
 
@@ -51,13 +53,16 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 
 	@Autowired
 	IDataService dataService;
+    
+    private static final Log logger = LogFactory.getLog(DefaultConsumptionAggregationService.class);
 
 	@Override
 	public ConsumptionAggregateContainer execute(MessageCalculationConfiguration config) {
         
 		ConsumptionAggregateContainer aggregates = new ConsumptionAggregateContainer();
-        
-        //aggregates.resetValues();
+        aggregates.resetValues();
+        aggregates.setUtilityId(config.getUtilityId());     
+
         computeAverageMonthlyConsumptionSWM(config, aggregates);
 		computeAverageWeeklyConsumptionSWM(config, aggregates);       
         computeTop10MonthlyConsumptionThresholdSWM(config, aggregates);
@@ -71,7 +76,9 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 		computeAverageDurationAmphiro(config, aggregates);
 		computeAverageFlowAmphiro(config, aggregates);
 		computeAverageSessionConsumptionAmphiro(config, aggregates);
-        System.out.println(aggregates.toString());
+        
+        logger.info(aggregates.toString());
+        
 		return aggregates;
 	}
 
@@ -98,6 +105,8 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 			ArrayList<GroupDataSeries> dataSeriesMeter = queryResponse.getMeters();
 
 			for (GroupDataSeries series : dataSeriesMeter) {
+                logger.info("Population(SWM): " + series.getPopulation() + " (utility id " + config.getUtilityId() + ")");
+                container.setPopulation(series.getPopulation());
 				if (series.getPopulation() == 0) {
 					return;
 				}
@@ -176,29 +185,27 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
             Top10BaseMonthSWM aggregate = new Top10BaseMonthSWM();
             
 			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
-			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
 			List<Double> averageConsumptions = new ArrayList<>();
 
 			DataQueryBuilder queryBuilder = new DataQueryBuilder();
-			queryBuilder.timezone(config.getTimezone()).sliding(-30, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
-							.users("utility", userUUIDs).meter().sum();
+            for(UUID uuid : uuidList){
+                queryBuilder.timezone(config.getTimezone()).sliding(-30, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+                                .user("user", uuid).meter().average();    
+                DataQuery query = queryBuilder.build();
+                DataQueryResponse queryResponse = dataService.execute(query);
+                ArrayList<GroupDataSeries> dataSeriesMeter = queryResponse.getMeters(); 
+                
+                for (GroupDataSeries series : dataSeriesMeter) {
+                    if (!series.getPoints().isEmpty()) {
+                        ArrayList<DataPoint> userPoints = series.getPoints();
+                        DataPoint dataPoint = userPoints.get(0);
 
-			DataQuery query = queryBuilder.build();
-			DataQueryResponse queryResponse = dataService.execute(query);
-			ArrayList<GroupDataSeries> dataSeriesMeter = queryResponse.getMeters();
-
-			for (GroupDataSeries series : dataSeriesMeter) {
-				if (series.getPopulation() == 0) {
-					return;
-				}
-				if (!series.getPoints().isEmpty()) {
-					ArrayList<DataPoint> userPoints = series.getPoints();
-					DataPoint dataPoint = userPoints.get(0);
-					MeterDataPoint meterDataPoint = (MeterDataPoint) dataPoint;
-					Map<EnumMetric, Double> metricsMap = meterDataPoint.getVolume();
-					averageConsumptions.add(metricsMap.get(EnumMetric.SUM) / series.getPopulation());
-				}
-			}
+                        MeterDataPoint meterDataPoint = (MeterDataPoint) dataPoint;
+                        Map<EnumMetric, Double> metricsMap = meterDataPoint.getVolume();
+                        averageConsumptions.add(metricsMap.get(EnumMetric.AVERAGE));
+                    }
+                }                
+            }            
 			if (!averageConsumptions.isEmpty()) {
 				Collections.sort(averageConsumptions);
 				int top10BaseIndex = (int) (averageConsumptions.size() * 10) / 100;
@@ -227,29 +234,28 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
             Top10BaseWeekSWM aggregate = new Top10BaseWeekSWM();
             
 			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
-			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
 			List<Double> averageConsumptions = new ArrayList<>();
-
 			DataQueryBuilder queryBuilder = new DataQueryBuilder();
-			queryBuilder.timezone(config.getTimezone()).sliding(-7, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
-							.users("utility", userUUIDs).meter().sum();
+                           
+            for(UUID uuid : uuidList){
+                queryBuilder.timezone(config.getTimezone()).sliding(-7, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+                                .user("user", uuid).meter().average();    
+                DataQuery query = queryBuilder.build();
+                DataQueryResponse queryResponse = dataService.execute(query);
+                ArrayList<GroupDataSeries> dataSeriesMeter = queryResponse.getMeters(); 
+                
+                for (GroupDataSeries series : dataSeriesMeter) {
+                    if (!series.getPoints().isEmpty()) {
+                        ArrayList<DataPoint> userPoints = series.getPoints();
+                        DataPoint dataPoint = userPoints.get(0);
 
-			DataQuery query = queryBuilder.build();
-			DataQueryResponse queryResponse = dataService.execute(query);
-			ArrayList<GroupDataSeries> dataSeriesMeter = queryResponse.getMeters();
+                        MeterDataPoint meterDataPoint = (MeterDataPoint) dataPoint;
+                        Map<EnumMetric, Double> metricsMap = meterDataPoint.getVolume();
+                        averageConsumptions.add(metricsMap.get(EnumMetric.AVERAGE));
+                    }
+                }                
+            }
 
-			for (GroupDataSeries series : dataSeriesMeter) {
-				if (series.getPopulation() == 0) {
-					return;
-				}
-				if (!series.getPoints().isEmpty()) {
-					ArrayList<DataPoint> userPoints = series.getPoints();
-					DataPoint dataPoint = userPoints.get(0);
-					MeterDataPoint meterDataPoint = (MeterDataPoint) dataPoint;
-					Map<EnumMetric, Double> metricsMap = meterDataPoint.getVolume();
-					averageConsumptions.add(metricsMap.get(EnumMetric.SUM) / series.getPopulation());
-				}
-			}
 			if (!averageConsumptions.isEmpty()) {
 				Collections.sort(averageConsumptions);
 				int top10BaseIndex = (int) (averageConsumptions.size() * 10) / 100;
@@ -277,30 +283,29 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
             Top25BaseWeekSWM aggregate = new Top25BaseWeekSWM();
             
 			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
-			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
 			List<Double> averageConsumptions = new ArrayList<>();
 
 			DataQueryBuilder queryBuilder = new DataQueryBuilder();
-			queryBuilder.timezone(config.getTimezone()).sliding(-7, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
-							.users("utility", userUUIDs).meter().sum();
+            
+            for(UUID uuid : uuidList){
+                queryBuilder.timezone(config.getTimezone()).sliding(-7, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+                                .user("user", uuid).meter().average();    
+                DataQuery query = queryBuilder.build();
+                DataQueryResponse queryResponse = dataService.execute(query);
+                ArrayList<GroupDataSeries> dataSeriesMeter = queryResponse.getMeters(); 
+                
+                for (GroupDataSeries series : dataSeriesMeter) {
+                    if (!series.getPoints().isEmpty()) {
+                        ArrayList<DataPoint> userPoints = series.getPoints();
+                        DataPoint dataPoint = userPoints.get(0);
 
-			DataQuery query = queryBuilder.build();
-			DataQueryResponse queryResponse = dataService.execute(query);
-			ArrayList<GroupDataSeries> dataSeriesMeter = queryResponse.getMeters();
+                        MeterDataPoint meterDataPoint = (MeterDataPoint) dataPoint;
+                        Map<EnumMetric, Double> metricsMap = meterDataPoint.getVolume();
+                        averageConsumptions.add(metricsMap.get(EnumMetric.AVERAGE));
+                    }
+                }                
+            }
 
-			for (GroupDataSeries series : dataSeriesMeter) {
-                System.out.println("population: " + series.getPopulation());
-				if (series.getPopulation() == 0) {
-					return;
-				}
-				if (!series.getPoints().isEmpty()) {
-					ArrayList<DataPoint> userPoints = series.getPoints();
-					DataPoint dataPoint = userPoints.get(0);
-					MeterDataPoint meterDataPoint = (MeterDataPoint) dataPoint;
-					Map<EnumMetric, Double> metricsMap = meterDataPoint.getVolume();
-					averageConsumptions.add(metricsMap.get(EnumMetric.SUM) / series.getPopulation());
-				}
-			}
 			if (!averageConsumptions.isEmpty()) {
 				Collections.sort(averageConsumptions);
 				int top25BaseIndex = (int) (averageConsumptions.size() * 25) / 100;
@@ -421,30 +426,29 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
             Top10BaseMonthAmphiro aggregate = new Top10BaseMonthAmphiro();
             
 			List<UUID> uuidList = groupRepository.getUtilityByIdMemberKeys(config.getUtilityId());
-			UUID[] userUUIDs = ((List<UUID>) uuidList).toArray(new UUID[uuidList.size()]);
 			List<Double> averageConsumptions = new ArrayList<>();
 
-			DataQueryBuilder queryBuilder = new DataQueryBuilder();
-			queryBuilder.timezone(config.getTimezone()).sliding(-30, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
-							.users("utility", userUUIDs).amphiro().sum();
+			DataQueryBuilder queryBuilder = new DataQueryBuilder();   
+            
+            for(UUID uuid : uuidList){
+                queryBuilder.timezone(config.getTimezone()).sliding(-30, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+                                .user("user", uuid).amphiro().average();    
+                DataQuery query = queryBuilder.build();
+                DataQueryResponse queryResponse = dataService.execute(query);
+                ArrayList<GroupDataSeries> amphiroDataSeries = queryResponse.getDevices(); 
+                
+                for (GroupDataSeries series : amphiroDataSeries) {
+                    if (!series.getPoints().isEmpty()) {
+                        ArrayList<DataPoint> userPoints = series.getPoints();
+                        DataPoint dataPoint = userPoints.get(0);
 
-			DataQuery query = queryBuilder.build();
-			DataQueryResponse queryResponse = dataService.execute(query);
-			ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
+                        MeterDataPoint meterDataPoint = (MeterDataPoint) dataPoint;
+                        Map<EnumMetric, Double> metricsMap = meterDataPoint.getVolume();
+                        averageConsumptions.add(metricsMap.get(EnumMetric.AVERAGE));
+                    }
+                }                
+            }             
 
-			for (GroupDataSeries series : dataSeriesAmphiro) {
-				if (series.getPopulation() == 0) {
-					return;
-				}
-				if (!series.getPoints().isEmpty()) {
-					ArrayList<DataPoint> userPoints = series.getPoints();
-					DataPoint dataPoint = userPoints.get(0);
-					AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-					Map<EnumMetric, Double> metricsMap = amphiroDataPoint.getVolume();
-					Double averageMonthlyConsumptionAmphiro = metricsMap.get(EnumMetric.SUM) / series.getPopulation();
-					averageConsumptions.add(averageMonthlyConsumptionAmphiro);
-				}
-			}
 			if (!averageConsumptions.isEmpty()) {
 				Collections.sort(averageConsumptions);
 				int top10BaseIndex = (int) (averageConsumptions.size() * 10) / 100;
