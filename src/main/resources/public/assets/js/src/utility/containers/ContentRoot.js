@@ -272,7 +272,7 @@ var ContentRoot = React.createClass({
                           </Link>
                         </li>
                         <li>
-                          <Link to='/analytics/messages'>
+                          <Link to='/support/messages'>
                             <span  style={{paddingLeft: 18}}>
                               <i className='fa fa-commenting fa-fw'></i>{' ' + _t({ id: 'Section.ManageAlerts.Messages'})}
                             </span>
