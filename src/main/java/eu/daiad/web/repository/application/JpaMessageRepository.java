@@ -746,7 +746,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
         
         Date slqDateStart = new Date(query.getTime().getStart());
         Date slqDateEnd = new Date(query.getTime().getEnd());
-
+        
         Query nativeQuery = entityManager.createNativeQuery("select\n" +
             "rt.dynamic_recommendation_id as id,\n" +
             "rt.title as title,\n" +
@@ -812,7 +812,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
         List<ReceiverAccount> receivers = new ArrayList<>();
 
 		TypedQuery<eu.daiad.web.domain.application.AccountDynamicRecommendation> accountRecommendationQuery = entityManager
-						.createQuery("select a from account_dynamic_recommendation a where a.account.utility.id = :utilityId and a.recommendation = :id and a.createdOn > :startDate and a.createdOn < :endDate",
+						.createQuery("select a from account_dynamic_recommendation a where a.account.utility.id = :utilityId and a.recommendation.id = :id and a.createdOn > :startDate and a.createdOn < :endDate",
 										eu.daiad.web.domain.application.AccountDynamicRecommendation.class);
         
         accountRecommendationQuery.setParameter("utilityId", utilityId);
