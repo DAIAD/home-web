@@ -144,9 +144,10 @@ Additional information on how to configuring Log4j2 can be found at [Log4j2] (ht
 |daiad.amphiro.validation-string|Enforce constraints for Amphiro measurements|true|
 |daiad.docs.require-authentication|Require authentication for documentation and project site|true|
 |daiad.password.reset.token.duration|Password reset token duration in hours|3|
+|daiad.captcha.google.key|The client site key for Google reCAPTCHA API||
 
 # Application Profile Specific Settings
-
+"6Ld0DCoTAAAAAMwgf6LGOz2_CgJWo6pe0-nrer25"
 `config/application-<profile>.properties`: Additional application configuration properties for the active profile.
 
 |Property|Description|Default|

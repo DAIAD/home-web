@@ -38,6 +38,7 @@ import eu.daiad.web.model.user.Account;
 import eu.daiad.web.model.user.UserRegistrationRequest;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IUserRepository;
+import eu.daiad.web.security.IPasswordValidator;
 import eu.daiad.web.service.mail.IMailService;
 import eu.daiad.web.service.mail.Message;
 
@@ -254,7 +255,7 @@ public class UserService extends BaseService implements IUserService {
         }
 
         // Generate password reset token, pin and target URL
-        PasswordResetToken token = userRepository.createPasswordResetToken(username);
+        PasswordResetToken token = userRepository.createPasswordResetToken(application, username);
 
         String url = baseSiteUrl + "password/reset/" + token.getToken().toString() + "/";
 
@@ -301,6 +302,12 @@ public class UserService extends BaseService implements IUserService {
     
     @Override
     public void resetPasswordRedeemToken(UUID token, String pin, String password) throws ApplicationException {
+        List<ErrorCode> errors = passwordValidator.validate(password);
+        
+        if(!errors.isEmpty()) {
+            throw createApplicationException(errors.get(0));
+        }
+
         userRepository.resetPassword(token, pin, password);
     }
 

@@ -18,6 +18,19 @@ var ContentRoot = require('./ContentRoot');
 
 var App = React.createClass({
   render: function() {
+    if((!this.props.isAuthenticated) && (this.props.routes)) {
+      for(var index in this.props.routes) {
+        if(this.props.routes[index].path == '/password/reset/:token') {
+          // Reset password          
+          return (
+            <ReactIntl.IntlProvider locale={this.props.locale} messages={this.props.messages} >
+              {this.props.children}
+            </ReactIntl.IntlProvider>
+          );
+        }
+      }
+    }
+
     return (
       <ReactIntl.IntlProvider locale={this.props.locale} messages={this.props.messages} >
         <ContentRoot locale={this.props.locale} >
@@ -30,6 +43,7 @@ var App = React.createClass({
 
 function mapStateToProps(state) {
   return {
+    isAuthenticated: state.session.isAuthenticated,
     locale: state.i18n.locale,
     messages: state.i18n.data[state.i18n.locale].messages
   };

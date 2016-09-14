@@ -41,6 +41,7 @@ import eu.daiad.web.domain.application.PasswordResetTokenEntity;
 import eu.daiad.web.domain.application.Role;
 import eu.daiad.web.domain.application.Survey;
 import eu.daiad.web.domain.application.Utility;
+import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.EnumGender;
 import eu.daiad.web.model.EnumValueDescription;
 import eu.daiad.web.model.admin.AccountWhiteListInfo;
@@ -365,7 +366,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
     }
     
     @Override
-    public PasswordResetToken createPasswordResetToken(String username) throws ApplicationException {
+    public PasswordResetToken createPasswordResetToken(EnumApplication application, String username) throws ApplicationException {
         // Find user
         TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager.createQuery(
                         "select a from account a where a.username = :username",
@@ -395,10 +396,56 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         token.setAccount(account);
         token.setValid(true);
         token.setPin(RandomStringUtils.randomNumeric(4));
+        token.setApplication(application);
         
         entityManager.persist(token);
         
-        return new PasswordResetToken(token.getToken(), token.getPin());
+        String locale = account.getLocale();
+        if(StringUtils.isBlank(locale)) {
+            locale = account.getUtility().getLocale();
+        }
+        if(StringUtils.isBlank(locale)) {
+            locale = "en";
+        }
+
+        return new PasswordResetToken(token.getToken(), token.getPin(), locale);
+    }
+    
+    @Override
+    public PasswordResetToken getPasswordResetTokenById(UUID token) {
+        TypedQuery<PasswordResetTokenEntity> tokenQuery = entityManager.createQuery(
+                        "select t from password_reset_token t where t.token = :token", PasswordResetTokenEntity.class);
+        tokenQuery.setParameter("token", token);
+
+        List<PasswordResetTokenEntity> tokens = tokenQuery.getResultList();
+
+        if (tokens.isEmpty()) {
+            return null;
+        }
+
+        PasswordResetTokenEntity passwordResetTokenEntity = tokens.get(0);
+        
+        if(passwordResetTokenEntity.isExpired(passwordResetTokenDuration)) {
+            return null;
+        }
+        
+        if(passwordResetTokenEntity.isReedemed()) {
+            return null;
+        }
+        
+        if(!passwordResetTokenEntity.isValid()) {
+            return null;
+        }
+
+        String locale = passwordResetTokenEntity.getAccount().getLocale();
+        if(StringUtils.isBlank(locale)) {
+            locale = passwordResetTokenEntity.getAccount().getUtility().getLocale();
+        }
+        if(StringUtils.isBlank(locale)) {
+            locale = "en";
+        }
+        
+        return new PasswordResetToken(passwordResetTokenEntity.getToken(), passwordResetTokenEntity.getPin(), locale); 
     }
     
     @Override
@@ -426,7 +473,8 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             throw createApplicationException(UserErrorCode.PASSWORD_RESET_TOKEN_EXPIRED);
         }
         
-        if(!passwordResetTokenEntity.getPin().equals(pin)) {
+        if ((passwordResetTokenEntity.getApplication() == EnumApplication.MOBILE)
+                        && (!passwordResetTokenEntity.getPin().equals(pin))) {
             throw createApplicationException(UserErrorCode.PASSWORD_RESET_PIN_MISMATCH);
         }
 
