@@ -147,7 +147,7 @@ Additional information on how to configuring Log4j2 can be found at [Log4j2] (ht
 |daiad.captcha.google.key|The client site key for Google reCAPTCHA API||
 
 # Application Profile Specific Settings
-"6Ld0DCoTAAAAAMwgf6LGOz2_CgJWo6pe0-nrer25"
+
 `config/application-<profile>.properties`: Additional application configuration properties for the active profile.
 
 |Property|Description|Default|
