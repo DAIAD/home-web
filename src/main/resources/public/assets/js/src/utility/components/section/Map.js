@@ -66,6 +66,9 @@ var onPopulationEditorChange = function(e) {
   this.props.actions.setEditorValue('population', e);
 };
 
+var onFavouriteEditorChange = function (e) {
+  this.props.actions.setEditorValue('favourite', e.value);
+};
 
 var _setEditor = function(key) {
   this.props.actions.setEditor(key);
@@ -101,6 +104,8 @@ var AnalyticsMap = React.createClass({
   },
 
   render: function() {
+    var _t = this.context.intl.formatMessage;
+  
     // Filter configuration
     var intervalLabel ='';
     if(this.props.interval) {
@@ -133,6 +138,26 @@ var AnalyticsMap = React.createClass({
       </div>
     );
 
+    var favouriteEditor = (
+      <div>
+        <div className='col-md-3'>
+          <input  id='label' name='favourite' type='favourite' ref='favourite' autofocus 
+            placeholder='Label ...' className='form-control' style={{ marginBottom : 15 }}/>
+          <span className='help-block'>Insert a label for this favourite</span>
+        </div>
+        <div className='col-md-6'>
+          <input  id='name' name='name' type='name' ref='name' autofocus disabled 
+            placeholder='Map - DAIAD - Alicante - Meter - 30/08/2016 - 13/09/2016' className='form-control' style={{ marginBottom : 15 }}/>
+          <span className='help-block'>Auto-generated Identifier</span>
+        </div>
+        <div className='col-md-3'>
+          <Bootstrap.Button bsStyle='success' >
+            {_t({ id:'Buttons.AddFavourite'})}
+          </Bootstrap.Button>
+        </div>         
+      </div> 
+    );
+         
     var sourceEditor = (
       <div className='col-md-3'>
         <Select name='source'
@@ -181,6 +206,15 @@ var AnalyticsMap = React.createClass({
             </Bootstrap.ListGroupItem>
           );
         break;
+      case 'favourite':
+        filter = (
+            <Bootstrap.ListGroupItem>
+              <div className="row">
+                {favouriteEditor}
+              </div>
+            </Bootstrap.ListGroupItem>
+          );
+        break;        
     }
     // Map configuration
     var mapTitle = (
@@ -212,6 +246,11 @@ var AnalyticsMap = React.createClass({
             <i className='fa fa-calendar fa-fw'></i>
           </Bootstrap.Button>
         </span>
+        <span style={{float: 'right',  marginTop: -3, marginLeft: 5}}>
+        <Bootstrap.Button bsStyle='default' className='btn-circle' onClick={_setEditor.bind(this, 'favourite')}>
+            <i className='fa fa-star-o fa-fw'></i>
+          </Bootstrap.Button>
+        </span>       
       </span>
     );
     
@@ -271,7 +310,7 @@ var AnalyticsMap = React.createClass({
           <Bootstrap.Button bsStyle='default' className='btn-circle' disabled >
             <i className='fa fa-calendar fa-fw'></i>
           </Bootstrap.Button>
-        </span>
+        </span>      
       </span>
     );    
 
@@ -307,7 +346,7 @@ var AnalyticsMap = React.createClass({
     );
     mapFilterTags.push( 
       <FilterTag key='source' text={ this.props.source === 'METER' ? 'Meter' : 'Amphiro B1' } icon='database' />
-    );
+    );  
 
     map = (
       <Bootstrap.ListGroup fill>
@@ -401,6 +440,8 @@ AnalyticsMap.icon = 'map';
 AnalyticsMap.title = 'Section.Map';
 
 function mapStateToProps(state) {
+  console.log("MAP STATE: ");
+  console.log(state);
   return {
       source: state.map.source,
       geometry: state.map.geometry,

@@ -49,6 +49,8 @@ Page.icon = 'pie-chart';
 Page.title = 'Section.Analytics.ReportPanel';
 
 function mapStateToProps(state, ownProps) {
+  console.log('CHARTS STATE:');
+  console.log(state);
   return {
     config: state.config,
   };

@@ -98,6 +98,7 @@ var ReportPanel = React.createClass({
       },
       
       helpMessages: {
+        'favourite': 'Open favourite settings for this chart.',
         'source': 'Specify the source device for measurements.',
         'population-group': 'Target a group (or cluster of groups) of consumers.',
         'timespan': 'Specify the time range you are interested into.',
@@ -121,6 +122,13 @@ var ReportPanel = React.createClass({
         key: 'parameters',
         //component: 'div', // Note default is Bootstrap.ButtonGroup
         buttons: [
+          {
+            key: 'favourite', 
+            tooltip: {message: 'Favourite settings', placement: 'bottom'}, 
+            iconName: 'star-o',
+            //text: 'Favourite',
+            buttonProps: {bsStyle: 'default', /*className: 'btn-circle'*/ },
+          },        
           {
             key: 'source', 
             tooltip: {message: 'Select source of measurements', placement: 'bottom'}, 
@@ -508,6 +516,32 @@ var ReportPanel = React.createClass({
 
     var fragment1; // single element or array of keyed elements
     switch (this.state.formFragment) {
+      case 'favourite':
+        {
+          var {source} = this.props;
+          var sourceOptions = new Map(
+            _.intersection(_.keys(sources), fields[this.props.field].sources)
+              .map(k => ([k, sources[k].title]))
+          );
+          fragment1 = ( 
+      <div>
+        <div className='col-md-3'>
+          <input  id='label' name='favourite' type='favourite' ref='favourite' autofocus 
+            placeholder='Label ...' className='form-control' style={{ marginBottom : 15 }}/>
+          <span className='help-block'>Insert a label for this favourite</span>
+        </div>
+        <div className='col-md-6'>
+          <input  id='name' name='name' type='name' ref='name' autofocus disabled 
+            placeholder='Chart - Meter - DAIAD - Week - Average of daily consumption - Last Quarter Meter - Group Everyone' className='form-control' style={{ marginBottom : 15 }}/>
+          <span className='help-block'>Auto-generated Identifier</span>
+        </div>
+        <div className='col-md-3'>
+          <Bootstrap.Button bsStyle='success' >Add Favourite</Bootstrap.Button>
+        </div>         
+      </div> 
+          );
+        } 
+        break;    
       case 'source':
         {
           var {source} = this.props;

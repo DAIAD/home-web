@@ -24,6 +24,8 @@ var { connect } = require('react-redux');
 var { openFavourite, closeFavourite } 
  = require('../../../actions/FavouritesActions');
 
+//var ViewChart = require('../../../report-measurements/pane');
+
 var createPoints = function() {
 	var points = [];
 	
@@ -157,7 +159,7 @@ var Favourites = React.createClass({
  				    footerContent = (
 	 				     <Bootstrap.ListGroupItem>
 		 				      <span style={{ paddingLeft : 7}}> </span>
-			 			      <Link to='/analytics/map' style={{ paddingLeft : 7, float: 'right'}}>View Maps</Link>
+			 			      <Link to='/analytics/map' state={this.state} style={{ paddingLeft : 7, float: 'right'}}>View Maps</Link>
 				 	     </Bootstrap.ListGroupItem>
 				     );  
            break;
@@ -253,6 +255,20 @@ var Favourites = React.createClass({
      console.log(this);
 				}
 			}, {
+				name: 'copy',
+				type:'action',
+				icon: 'copy',
+				handler: function() {
+					console.log(this);
+				}
+			}, {
+				name: 'link',
+				type:'action',
+				icon: 'link',
+				handler: function() {
+					console.log(this);
+				}
+			}, {
 				name: 'remove',
 				type:'action',
 				icon: 'remove',
@@ -263,12 +279,13 @@ var Favourites = React.createClass({
 			rows: [{
 				id: 1,
 				type: 'Chart',
-				owner: 'Admin@daiad',
+				owner: 'admin@daiad',
 				createdOn: new Date((new Date()).getTime() + Math.random() * 3600000)
 			},{
 				id: 2,
 				type: 'Map',
-				owner: 'Admin@daiad',
+    label: 'My favourite map',
+				owner: 'admin@daiad',
 				createdOn: new Date((new Date()).getTime() + Math.random() * 3600000)
 			}],
 			pager: {
