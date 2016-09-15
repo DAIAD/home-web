@@ -1077,7 +1077,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
                                 DataPoint dataPoint = serie.getPoints().get(0);
                                 AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
                                 userAverageMonthlyConsumption = (amphiroDataPoint.getVolume().get(EnumMetric.SUM)) / 3;
-                                if (amphiroDataPoint.getDuration().get(EnumMetric.AVERAGE) > (aggregates.getAverageDurationAmphiro().getValue()*1.2)) {
+                                if (amphiroDataPoint.getDuration().get(EnumMetric.AVERAGE) > (aggregates.getAverageDurationAmphiro().getValue()*1.5)) {
                                         fireAlert = true;
                                 }
                         }
