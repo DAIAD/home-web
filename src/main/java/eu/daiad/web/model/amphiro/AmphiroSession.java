@@ -9,75 +9,131 @@ import eu.daiad.web.model.KeyValuePair;
 
 public class AmphiroSession extends AmphiroAbstractSession {
 
-	private long id;
+    private long id;
 
-	private boolean history;
+    private boolean history;
 
-	@JsonIgnore
-	private AmphiroSessionDeleteAction delete;
+    @JsonIgnore
+    private Member member;
 
-	private ArrayList<KeyValuePair> properties;
+    @JsonIgnore
+    private AmphiroSessionDeleteAction delete;
 
-	public AmphiroSession() {
-		this.properties = new ArrayList<KeyValuePair>();
-	}
+    private ArrayList<KeyValuePair> properties;
 
-	public long getId() {
-		return id;
-	}
+    public AmphiroSession() {
+        this.properties = new ArrayList<KeyValuePair>();
+    }
 
-	public void setId(long id) {
-		this.id = id;
-	}
+    public long getId() {
+        return id;
+    }
 
-	public boolean isHistory() {
-		return history;
-	}
+    public void setId(long id) {
+        this.id = id;
+    }
 
-	public void setHistory(boolean history) {
-		this.history = history;
-	}
+    public boolean isHistory() {
+        return history;
+    }
 
-	public void setTimestamp(long timestamp) {
-		this.timestamp = timestamp;
-	}
+    public void setHistory(boolean history) {
+        this.history = history;
+    }
 
-	public ArrayList<KeyValuePair> getProperties() {
-		return properties;
-	}
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
 
-	public void setProperties(ArrayList<KeyValuePair> properties) {
-		if (properties == null) {
-			this.properties = new ArrayList<KeyValuePair>();
-		} else {
-			this.properties = properties;
-		}
-	}
+    public ArrayList<KeyValuePair> getProperties() {
+        return properties;
+    }
 
-	public void addProperty(String key, String value) {
-		if (properties == null) {
-			properties = new ArrayList<KeyValuePair>();
-		}
-		properties.add(new KeyValuePair(key, value));
-	}
+    public void setProperties(ArrayList<KeyValuePair> properties) {
+        if (properties == null) {
+            this.properties = new ArrayList<KeyValuePair>();
+        } else {
+            this.properties = properties;
+        }
+    }
 
-	public String getPropertyByKey(String key) {
-		for (int i = 0, count = this.properties.size(); i < count; i++) {
-			if (this.properties.get(i).getKey().equals(key)) {
-				return this.properties.get(i).getValue();
-			}
-		}
-		return null;
-	}
+    public void addProperty(String key, String value) {
+        if (properties == null) {
+            properties = new ArrayList<KeyValuePair>();
+        }
+        properties.add(new KeyValuePair(key, value));
+    }
 
-	@JsonIgnore
-	public AmphiroSessionDeleteAction getDelete() {
-		return delete;
-	}
+    public String getPropertyByKey(String key) {
+        for (int i = 0, count = this.properties.size(); i < count; i++) {
+            if (this.properties.get(i).getKey().equals(key)) {
+                return this.properties.get(i).getValue();
+            }
+        }
+        return null;
+    }
 
-	@JsonProperty
-	public void setDelete(AmphiroSessionDeleteAction delete) {
-		this.delete = delete;
-	}
-	
+    @JsonIgnore
+    public AmphiroSessionDeleteAction getDelete() {
+        return delete;
+    }
+
+    @JsonProperty
+    public void setDelete(AmphiroSessionDeleteAction delete) {
+        this.delete = delete;
+    }
+
+    @JsonIgnore
+    public Member getMember() {
+        return member;
+    }
+
+    @JsonProperty
+    public void setMember(Member member) {
+        this.member = member;
+    }
+
+    public static class Member {
+
+        private int index;
+
+        private String name;
+
+        private boolean autoSelection;
+
+        private long timestamp;
+
+        public int getIndex() {
+            return index;
+        }
+
+        public void setIndex(int index) {
+            this.index = index;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public boolean isAutoSelection() {
+            return autoSelection;
+        }
+
+        public void setAutoSelection(boolean autoSelection) {
+            this.autoSelection = autoSelection;
+        }
+
+        public long getTimestamp() {
+            return timestamp;
+        }
+
+        public void setTimestamp(long timestamp) {
+            this.timestamp = timestamp;
+        }
+
+    }
 }

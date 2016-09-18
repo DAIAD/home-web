@@ -111,7 +111,7 @@ function registerAmphiro() { return; }
  * @apiParam (KeyValuePair) {String}           value                       Value.
  *
  * @apiParam (WaterMeterDeviceRegistrationRequest extends DeviceRegistration)    {String}     userKey       Owner unique id (UUID).
- * @apiParam (WaterMeterDeviceRegistrationRequest extends DeviceRegistration)    {String}     serial 		Device serial number.
+ * @apiParam (WaterMeterDeviceRegistrationRequest extends DeviceRegistration)    {String}     serial        Device serial number.
  * @apiParam (WaterMeterDeviceRegistrationRequest extends DeviceRegistration)    {Object}     location      Device location as a GeoJSON expression.
  *
  * @apiParamExample {json} Request Example
@@ -286,9 +286,16 @@ function deviceQuery() { return; }
  * @apiSuccess {Object[]} devices             Array of <code>DeviceConfigurationCollection</code>.
  *
  * @apiSuccess (DeviceConfigurationCollection) {String}           key             Device unique key (UUID).
+ * @apiSuccess (DeviceConfigurationCollection) {String}           name            User friendly name for the device i.e. Shower #1.
  * @apiSuccess (DeviceConfigurationCollection) {String}           macAddress      Device MAC address.
+ * @apiSuccess (DeviceConfigurationCollection) {String}           aesKey          Device AES key.
+ * @apiSuccess (DeviceConfigurationCollection) {Object[]}         [properties]    Array of <code>KeyValuePair</code> objects representing device properties.
+ * @apiSuccess (DeviceConfigurationCollection) {Number}           registeredOn    Device registration time stamp.
  * @apiSuccess (DeviceConfigurationCollection) {Object[]}         configurations  Array of <code>DeviceAmphiroConfiguration</code>.
  *
+ * @apiSuccess (KeyValuePair) {String}           key                         Key.
+ * @apiSuccess (KeyValuePair) {String}           value                       Value
+ * .
  * @apiSuccess (DeviceAmphiroConfiguration) {String}           version             Configuration version (UUID).
  * @apiSuccess (DeviceAmphiroConfiguration) {String}           title               Title.
  * @apiSuccess (DeviceAmphiroConfiguration) {Number}           createdOn           Creation date time stamp.
@@ -305,7 +312,14 @@ function deviceQuery() { return; }
  *   "errors": [],
  *   "devices": [   {
  *     "key": "4b6bb490-1c03-4c9d-b5d0-1dbb758bf71a",
+ *     "name": "Amphiro #1",
  *     "macAddress": "77:84:bd:b7:74:10",
+ *     "aesKey": "YhSHlzInBoA_iVWa88wFFFbdKwbA8EerklKt8SgnVkg",
+ *     "registeredOn": 1461152210528,
+ *     "properties": [ {
+ *       "key": "model",
+ *       "value": "b1"
+ *     }],
  *     "configurations": [ {
  *       "version": "aeea36cc-cefb-47db-ac0f-8c5dbc95b0f9",
  *       "title": "Off Configuration",
@@ -450,3 +464,82 @@ function deviceNotify() { return; }
  *
  */
 function registerRest() { return; }
+
+/**
+ * @api {post} /v1/device/update Update device
+ * @apiVersion 0.0.1
+ * @apiName DeviceUpdate
+ * @apiGroup Device
+ * @apiPermission ROLE_USER
+ *
+ * @apiDescription Updates device settings. The action updates only specific keys from the <code>properties</code> array. The updatable keys are:
+ * <br/><code>cost-water</code>
+ * <br/><code>cost-energy</code>
+ * <br/><code>heating-system</code>
+ * <br/><code>heating-efficiency</code>
+ * <br/><code>share-of-solar</code>
+ *
+ * @apiParam (DeviceUpdateRequest)             {Object}     credentials                 User credentials
+ * @apiParam (DeviceUpdateRequest)             {String}     credentials.username        User name.
+ * @apiParam (DeviceUpdateRequest)             {String}     credentials.password        Password.
+ * @apiParam (DeviceUpdateRequest)             {String}     updates                     Array of objects that derive from type <code>DeviceUpdate</code>. 
+ *
+ * @apiParam (DeviceUpdate)                    {String}     type                        Sets the type of the object. Valid values are <code>METER</code> and <code>AMPHIRO</code>. Current version supports only <code>AMPHIRO</code>.
+ * @apiParam (DeviceUpdate)                    {String}     key                         Unique device key (UUID).
+ * @apiParam (DeviceUpdate)                    {String}     properties                  Array of <code>KeyValuePair</code> objects representing device properties.
+ *
+ * @apiParam (KeyValuePair)                    {String}     key                         Key.
+ * @apiParam (KeyValuePair)                    {String}     value                       Value.
+ * 
+ * @apiParam (AmphiroDeviceUpdate extends DeviceUpdate) {String}     name               User friendly name for the device i.e. Shower #1.
+ *
+ *
+ * @apiParamExample {json} Request Example
+ * {
+ *   "credentials": {
+ *     "username":"george.papadopoulos@daiad.eu",
+ *     "password":"****",
+ *   },
+ *   "updates": [{
+ *     "type":"AMPHIRO",
+ *     "key":"4b6bb490-1c03-4c9d-b5d0-1dbb758bf71a",
+ *     "name":"Shower #1",
+ *     "properties": [{
+ *       "key":"cost-energy",
+ *       "value":"0.75"
+ *     }, {
+ *       "key":"share-of-solar",
+ *       "value":"5"
+ *     }]
+ *   }]
+ * }
+ *
+ * @apiSuccess {Boolean}  success             Returns <code>true</code> or <code>false</code> indicating success of the operation.
+ * @apiSuccess {Object[]} errors              Array of <code>Error</code>
+ *
+ *
+ * @apiSuccessExample {json} Response Example
+ * HTTP/1.1 200 OK
+ * {
+ *   "errors": [],
+ *   "success": true
+ * }
+ *
+ * @apiError {Boolean} success Always <code>false</code>.
+ * @apiError {Object[]} errors Array of <code>Error</code> objects.
+ *
+ * @apiError (Error) {String} code          Unique error code.
+ * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
+ *
+ * @apiErrorExample Error Response Example
+ * HTTP/1.1 200 OK
+ * {
+ *   errors: [{
+ *     code: "DeviceErrorCode.NOT_FOUND",
+ *     description: "Device a9509da9-edf5-4838-acf4-8f1b73485d7a was not found."
+ *   }],
+ *   success: false
+ * }
+ *
+ */
+function deviceQuery() { return; }

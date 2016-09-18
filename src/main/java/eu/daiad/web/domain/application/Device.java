@@ -93,6 +93,16 @@ public class Device {
 		return properties;
 	}
 
+    public DeviceProperty getProperty(String key) {
+        for(DeviceProperty property : this.properties) {
+            if(property.getKey().equals(key)) {
+                return property;
+            }
+        }
+        
+        return null;
+    }
+    
 	public EnumDeviceType getType() {
 		return EnumDeviceType.UNDEFINED;
 	}

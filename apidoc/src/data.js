@@ -569,7 +569,13 @@ function query() { return; }
  * @apiParam (AmphiroSession) {Number}       duration              Session duration.
  * @apiParam (AmphiroSession) {Number}       temperature           Average temperature.
  * @apiParam (AmphiroSession) {Number}       flow                  Average flow.
+ * @apiParam (AmphiroSession) {Object}       [member]              Househild member.
  *
+ * @apiParam (Member)         {Number}       index                 Unique household member index.
+ * @apiParam (Member)         {String}       name                  Name.
+ * @apiParam (Member)         {Boolean}      autoSelection         True if member index is set automatically by the system to the default value. False if the user has manually assigned a member.
+ * @apiParam (Member)         {Number}       timestamp             Most recent member assignment time stamp.
+ * 
  * @apiParam (KeyValuePair) {String}         key                   Key.
  * @apiParam (KeyValuePair) {String}         value                 Value.
  *
@@ -598,7 +604,13 @@ function query() { return; }
  *      "volume":34.2,
  *      "energy":10,
  *      "flow":5,
- *      "properties":[]
+ *      "properties":[],
+ *      "member": {
+ *        "index": "0",
+ *        "name": "George",
+ *        "autoSelection": true,
+ *        "timestamp" : 1461060000000
+ *      }
  *   }],
  *      "measurements":[{
  *      "sessionId":1,

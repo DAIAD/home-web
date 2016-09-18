@@ -1,10 +1,12 @@
 package eu.daiad.web.model.device;
 
+import java.util.UUID;
+
 import eu.daiad.web.model.RestResponse;
 
 public class DeviceRegistrationResponse extends RestResponse {
 
-	private String deviceKey;
+	private UUID deviceKey;
 
 	public DeviceRegistrationResponse() {
 		super();
@@ -14,11 +16,11 @@ public class DeviceRegistrationResponse extends RestResponse {
 		super(code, description);
 	}
 
-	public String getDeviceKey() {
+	public UUID getDeviceKey() {
 		return this.deviceKey;
 	}
 
-	public void setDeviceKey(String value) {
+	public void setDeviceKey(UUID value) {
 		this.deviceKey = value;
 	}
 }
