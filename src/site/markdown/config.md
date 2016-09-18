@@ -145,6 +145,7 @@ Additional information on how to configuring Log4j2 can be found at [Log4j2] (ht
 |daiad.docs.require-authentication|Require authentication for documentation and project site|true|
 |daiad.password.reset.token.duration|Password reset token duration in hours|3|
 |daiad.captcha.google.key|The client site key for Google reCAPTCHA API||
+|daiad.amphiro.properties.*|Amphiro b1 default properties||
 
 # Application Profile Specific Settings
 

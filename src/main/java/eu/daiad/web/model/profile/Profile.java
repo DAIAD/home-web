@@ -42,7 +42,9 @@ public class Profile {
     private ArrayList<DeviceRegistration> devices;
 
     private UtilityInfo utility;
-
+   
+    private Household household;
+    
     public Profile() {
         this.devices = new ArrayList<DeviceRegistration>();
     }
@@ -184,6 +186,14 @@ public class Profile {
 
     public void setUtility(UtilityInfo utility) {
         this.utility = utility;
+    }
+
+    public Household getHousehold() {
+        return household;
+    }
+
+    public void setHousehold(Household household) {
+        this.household = household;
     }
 
 }

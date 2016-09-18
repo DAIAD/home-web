@@ -63,7 +63,6 @@ public interface IUserService {
      * @param token the token created by @{link IUserService#resetPasswordCreateToken} call.
      * @param pin the PIN associated to the specified password reset token.
      * @param password the new password.
-     * @return a token for setting the password. The token is valid for a specific time interval.
      * 
      * @throws ApplicationException if token does not exists or it is expired.
      */

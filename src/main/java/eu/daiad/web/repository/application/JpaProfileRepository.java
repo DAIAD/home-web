@@ -1,6 +1,8 @@
 package eu.daiad.web.repository.application;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -13,6 +15,7 @@ import javax.persistence.TypedQuery;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
+import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.security.core.Authentication;
@@ -25,6 +28,8 @@ import eu.daiad.web.domain.application.AccountProfileHistoryEntry;
 import eu.daiad.web.domain.application.DeviceAmphiro;
 import eu.daiad.web.domain.application.DeviceAmphiroConfiguration;
 import eu.daiad.web.domain.application.DeviceAmphiroConfigurationDefault;
+import eu.daiad.web.domain.application.HouseholdEntity;
+import eu.daiad.web.domain.application.HouseholdMemberEntity;
 import eu.daiad.web.domain.application.Utility;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.device.Device;
@@ -37,6 +42,8 @@ import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.error.ProfileErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.profile.EnumMobileMode;
+import eu.daiad.web.model.profile.Household;
+import eu.daiad.web.model.profile.HouseholdMember;
 import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.profile.ProfileDeactivateRequest;
 import eu.daiad.web.model.profile.ProfileModeChange;
@@ -45,6 +52,7 @@ import eu.daiad.web.model.profile.ProfileModesChanges;
 import eu.daiad.web.model.profile.ProfileModesFilterOptions;
 import eu.daiad.web.model.profile.ProfileModesRequest;
 import eu.daiad.web.model.profile.ProfileModesSubmitChangesRequest;
+import eu.daiad.web.model.profile.UpdateHouseholdRequest;
 import eu.daiad.web.model.profile.UpdateProfileRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.utility.UtilityInfo;
@@ -66,6 +74,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
     @Override
     public Profile getProfileByUsername(EnumApplication application) throws ApplicationException {
         try {
+            // Check user permissions
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             AuthenticatedUser user = null;
 
@@ -94,16 +103,19 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                                     application);
             }
 
+            // Load account data
             TypedQuery<eu.daiad.web.domain.application.Account> userQuery = entityManager.createQuery(
                             "select a from account a where a.username = :username",
                             eu.daiad.web.domain.application.Account.class).setFirstResult(0).setMaxResults(1);
             userQuery.setParameter("username", user.getUsername());
 
+            // Load registered device data
             Account account = userQuery.getSingleResult();
 
             ArrayList<Device> devices = this.deviceRepository.getUserDevices(account.getKey(),
                             new DeviceRegistrationQuery());
 
+            // Initialize profile
             Profile profile = new Profile();
 
             profile.setVersion(account.getProfile().getVersion());
@@ -116,16 +128,21 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             profile.setCountry(account.getCountry());
             profile.setLocale(account.getLocale());
             profile.setApplication(application);
-
+            profile.setPhoto(account.getPhoto());
+            
             profile.setDailyMeterBudget(account.getProfile().getDailyMeterBudget());
             profile.setDailyAmphiroBudget(account.getProfile().getDailyAmphiroBudget());
 
+            profile.setUtility(new UtilityInfo(account.getUtility()));
+            
+            // Initialize devices
             ArrayList<DeviceRegistration> registrations = new ArrayList<DeviceRegistration>();
             for (Iterator<Device> d = devices.iterator(); d.hasNext();) {
                 registrations.add(d.next().toDeviceRegistration());
             }
             profile.setDevices(registrations);
 
+            // Initialize application mode and configuration
             switch (application) {
                 case HOME:
                     profile.setMode(account.getProfile().getWebMode());
@@ -144,7 +161,9 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                                     application);
             }
 
-            profile.setUtility(new UtilityInfo(account.getUtility()));
+            // Initialize household
+            Household household = new Household(account.getHousehold());
+            profile.setHousehold(household);
 
             return profile;
         } catch (Exception ex) {
@@ -641,6 +660,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                         Account.class).setFirstResult(0).setMaxResults(1);
         query.setParameter("key", user.getKey());
 
+        // Update account and profile
         Account account = query.getSingleResult();
 
         switch (updates.getApplication()) {
@@ -681,6 +701,25 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
         account.setAddress(updates.getAddress());
         account.setCountry(updates.getCountry());
         account.setPostalCode(updates.getPostalCode());
+        
+        account.setPhoto(updates.getPhoto());
+        account.setBirthdate(updates.getBirthdate());
+        account.setGender(updates.getGender());
+
+        // Update default household member
+        HouseholdMemberEntity member = account.getHousehold().getDefaultMember();
+        if (member != null) {
+            member.setUpdatedOn(DateTime.now());
+            member.setGender(account.getGender());
+            member.setPhoto(account.getPhoto());
+            if(StringUtils.isBlank(member.getName())) {
+                member.setName(account.getFirstname());    
+            }
+            if ((member.getAge() == null) && (account.getBirthdate() != null)) {
+                member.setAge(new Period(account.getBirthdate(), DateTime.now()).getYears());
+            }
+        }
+
     }
 
     @Override
@@ -730,6 +769,94 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
         }
     }
 
+    @Override
+    public void saveHousehold(UpdateHouseholdRequest updates) {
+        // Get account
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        AuthenticatedUser user = null;
+
+        if (auth.getPrincipal() instanceof AuthenticatedUser) {
+            user = (AuthenticatedUser) auth.getPrincipal();
+        } else {
+            throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+        }
+
+        TypedQuery<Account> query = entityManager.createQuery("select a from account a where a.key = :key",
+                        Account.class).setFirstResult(0).setMaxResults(1);
+        query.setParameter("key", user.getKey());
+
+        Account account = query.getSingleResult();
+
+        // Initialize household
+        HouseholdEntity householdEntity = account.getHousehold();
+
+        if (householdEntity == null) {
+            householdEntity = new HouseholdEntity();
+            householdEntity.setAccount(account);
+            householdEntity.setCreatedOn(account.getCreatedOn());
+            householdEntity.setUpdatedOn(account.getCreatedOn());
+            this.entityManager.persist(householdEntity);
+        }
+
+        // Sort members
+        List<HouseholdMember> members = updates.getMembers();
+
+        Collections.sort(members, new Comparator<HouseholdMember>() {
+
+            @Override
+            public int compare(HouseholdMember first, HouseholdMember second) {
+                if (first.getIndex() == second.getIndex()) {
+                    throw new RuntimeException("Member index must be unique.");
+                } else if (first.getIndex() < second.getIndex()) {
+                    return -1;
+                } else {
+                    return 1;
+                }
+            }
+        });
+
+        for (int memberIndex = 0, total = members.size(); memberIndex < total; memberIndex++) {
+            HouseholdMember member = members.get(memberIndex);
+
+            if (memberIndex != member.getIndex()) {
+                throw createApplicationException(ProfileErrorCode.HOUSEHOLD_MEMBER_UNEXPECTED_INDEX);
+            }
+
+            HouseholdMemberEntity householdMemberEntity = null;
+
+            if (account.getHousehold().getMembers().size() > memberIndex) {
+                householdMemberEntity = account.getHousehold().getMember(memberIndex);
+                householdMemberEntity.setUpdatedOn(DateTime.now());
+            } else {
+                householdMemberEntity = new HouseholdMemberEntity();
+                householdMemberEntity.setCreatedOn(DateTime.now());
+                householdMemberEntity.setUpdatedOn(DateTime.now());
+
+                householdMemberEntity.setIndex(memberIndex);
+
+                householdMemberEntity.setHousehold(householdEntity);
+
+                this.entityManager.persist(householdMemberEntity);
+            }
+
+            if (memberIndex == 0) {
+                account.setPhoto(member.getPhoto());
+                account.setGender(member.getGender());
+            }
+
+            householdMemberEntity.setName(member.getName());
+            householdMemberEntity.setGender(member.getGender());
+            householdMemberEntity.setAge(member.getAge());
+            householdMemberEntity.setPhoto(member.getPhoto());
+        }
+        
+        for (int m = members.size(), count = householdEntity.getMembers().size(); m < count; m++) {
+            if (m != 0) {
+                householdEntity.getMembers().remove(householdEntity.getMember(m));    
+            }
+        }
+    }
+    
     private void setMobileMode(Account account, int mode) {
         UUID newVersion = UUID.randomUUID();
 
@@ -749,4 +876,5 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
         this.entityManager.persist(historyEntry);
     }
+    
 }

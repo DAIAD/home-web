@@ -22,6 +22,7 @@ import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.profile.NotifyProfileRequest;
 import eu.daiad.web.model.profile.ProfileResponse;
+import eu.daiad.web.model.profile.UpdateHouseholdRequest;
 import eu.daiad.web.model.profile.UpdateProfileRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.Credentials;
@@ -30,9 +31,7 @@ import eu.daiad.web.repository.application.IProfileRepository;
 import eu.daiad.web.util.ValidationUtils;
 
 /**
- * 
  * Provides actions for loading and updating user profile.
- *
  */
 @RestController("RestProfileController")
 public class ProfileController extends BaseRestController {
@@ -45,12 +44,11 @@ public class ProfileController extends BaseRestController {
     /**
      * Loads user profile data.
      * 
-     * @param data
-     *            user credentials.
+     * @param data user credentials.
      * @return the user profile.
      */
     @RequestMapping(value = "/api/v1/profile/load", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-    public RestResponse loadProfile(@RequestBody Credentials data) {
+    public RestResponse getProfile(@RequestBody Credentials data) {
         RestResponse response = new RestResponse();
 
         try {
@@ -76,11 +74,9 @@ public class ProfileController extends BaseRestController {
     }
 
     /**
-     * Saves client application specific information e.g. the web application
-     * layout to the server.
+     * Updates user profile
      * 
-     * @param request
-     *            the profile data to store
+     * @param request the profile data to store
      * @return the controller's response.
      */
     @RequestMapping(value = "/api/v1/profile/save", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
@@ -132,12 +128,35 @@ public class ProfileController extends BaseRestController {
         return response;
     }
 
+
+    /**
+     * Updates user household information.
+     * 
+     * @param request the profile data to store
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/api/v1/household", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    public RestResponse saveHousehold(@RequestBody UpdateHouseholdRequest request) {
+        RestResponse response = new RestResponse();
+
+        try {
+            this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
+
+            this.profileRepository.saveHousehold(request);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
+
     /**
      * Updates user profile that a specific application configuration version
      * has been applied to the mobile client.
      * 
-     * @param request
-     *            the notification request.
+     * @param request the notification request.
      * @return the controller's response.
      */
     @RequestMapping(value = "/api/v1/profile/notify", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")

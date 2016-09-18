@@ -4,7 +4,8 @@ import eu.daiad.web.model.error.ErrorCode;
 
 public enum ProfileErrorCode implements ErrorCode {
 	PROFILE_NOT_SUPPORTED,
-	PROFILE_VERSION_NOT_FOUND;
+	PROFILE_VERSION_NOT_FOUND,
+	HOUSEHOLD_MEMBER_UNEXPECTED_INDEX;
 
 	@Override
 	public String getMessageKey() {

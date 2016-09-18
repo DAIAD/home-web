@@ -206,6 +206,7 @@ var user = function(state, action) {
           id : action.user.id,
           firstName : action.user.firstName,
           lastName : action.user.lastName,
+          photo: action.user.photo,
           email : action.user.email,
           gender : action.user.gender,
           registeredOn : new Date(action.user.registrationDateMils),
