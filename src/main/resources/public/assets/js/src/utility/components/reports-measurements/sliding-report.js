@@ -19,6 +19,10 @@ var Chart = require('./chart-container');
 var Report = React.createClass({
   statics: {
     defaults: {
+      chartProps: {
+        width: 780,
+        height: 300,
+      }
     },
 
     _assertProps: function (props, nextProps) {
@@ -65,7 +69,13 @@ var Report = React.createClass({
 
   render: function () {
     var {now, field, report: {level, reportName}, reportKey} = this.props;
-    var chartProps = {field, level, reportName, reportKey};    
+    var chartProps = {
+      ...this.constructor.defaults.chartProps,
+      field, 
+      level, 
+      reportName,
+      reportKey
+    };    
     return (
       <Chart {...chartProps} /> 
     );

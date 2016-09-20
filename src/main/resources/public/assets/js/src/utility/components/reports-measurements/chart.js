@@ -14,6 +14,8 @@ var {timespanPropType, populationPropType, seriesPropType, configPropType} = req
 
 var PropTypes = React.PropTypes;
 
+var theme = require('../chart/themes/blue');
+
 var Chart = React.createClass({
   statics: {
     nameTemplates: {
@@ -22,18 +24,9 @@ var Chart = React.createClass({
     },
    
     defaults: {
-      lineWidth: 1,
       smooth: false,
       tooltip: true,
-      fill: 0.333,
-      colors: [
-        '#2D6E8D', '#DB5563', '#9056B4', '#DD4BCF', '#30EC9F',
-        '#C23531', '#2F4554', '#61A0A8', '#ECA63F', '#41B024',
-      ],
-      symbolSize: 4,
-      grid: {
-        x: '80', x2: '35', y: '30', y2: '30',
-      },
+      fill: 0.3,
       xAxis: {
         dateformat: {
           'minute': 'HH:mm',
@@ -56,8 +49,8 @@ var Chart = React.createClass({
     finished: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
     // Appearence
     draw: PropTypes.bool, // allow parental control on our updates 
-    width: PropTypes.number,
-    height: PropTypes.number,
+    width: PropTypes.number.isRequired,
+    height: PropTypes.number.isRequired,
     scaleTimeAxis: PropTypes.bool,
   }, 
   
@@ -66,8 +59,6 @@ var Chart = React.createClass({
   getDefaultProps: function () {
     return {
       draw: true,
-      width: this.defaults.width,
-      height: this.defaults.height,
       series: [],
       finished: true,
       scaleTimeAxis: false,
@@ -92,7 +83,6 @@ var Chart = React.createClass({
     
     series = (series || []).map(s => ({
       name: this._getNameForSeries(s),
-      symbolSize: defaults.symbolSize,
       fill: defaults.fill,
       smooth: defaults.smooth,
       data: s.data,
@@ -107,9 +97,7 @@ var Chart = React.createClass({
           height={this.props.height}
           loading={this.props.finished? null : {text: 'Loading data...'}}
           tooltip={defaults.tooltip}
-          lineWidth={defaults.lineWidth}
-          color={defaults.colors}
-          grid={defaults.grid}
+          theme={theme}
           xAxis={{
             data: xaxisData,
             boundaryGap: false, 
