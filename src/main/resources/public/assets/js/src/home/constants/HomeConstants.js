@@ -94,39 +94,22 @@ module.exports = {
     {id: 'stat', title: 'Stat'}, 
     {id: 'chart', title: 'Chart'}
   ],
-  STATIC_RECOMMENDATIONS: [
-    {
-       "id": 1,
-        "title": "Consider checking for leaks in your home. A small water leak can go undetected for years, increase your water bill and potentially cause damage to your home",
-       "description": "Checking for leaks is really simple, and you should do it once every 2 months. It is easier to check for leaks at night, before everyone goes to sleep. Make sure all water taps and fixtures are closed and check the reading in your water meter. First thing in the morning, check again. If you see the same reading, everything is good! If not, it means there may be a small leak somewhere in your house.",
-       "category": 1,
-       "image": null,
-       "imageLink": null,
-       "prompt": null,
-       "externaLink": null,
-       "unread": true
-    },
-          {
-        "id": 2,
-        "title": "Don’t forget to fix your dripping taps",
-     "description": "A single dripping tap can lead to annual water losses of hundreds of liters. Why not save this water and use your savings to buy concert tickets instead?",
-        "category": 1,
-        "image": null,
-        "imageLink": null,
-        "prompt": null,
-        "externaLink": null
-    },
-          {
-       "id": 8,
-       "title": "Consider purchasing an eco-efficient washing machine",
-       "description": "Modern washing machines are intelligent enough to use the optimal amount of water and energy required for each load. Replacing your old washing machine with an eco-efficient one can save you more than 300 Euros in energy and water costs over its life.",
-       "category": 2,
-       "image":
-"iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAFOUlEQVR4nO2czXXqMBBGXUJKyNJKNpSQEiiBEuggehVQQkrIEuyNS6AESnAJvIVlkOUZ68+SxmS+c7TJEUb4Wp6LZ+GgRALAyEWBkIsDIRYGAixMBBiYSDEwkCIhYEQCwMhFgZCLAyEWBgIsTAQYmEgxMJAiIWBEAsDIRYrEDH88xRu+ZoVCLeCjYEQawyEWPsPFf2Nkva9TvUAAAAASUVORK5CYII=",
-       "imageLink": "/assets/images/Area Chart-100.png",
-       "prompt": "Would you like to check out a list of water efficient washing machines?",
-       "externaLink": null
-    }
+  WIDGET_TYPES: [
+    {id: 'totalVolumeStat', title: 'Shower Volume Stat', description: 'A stat widget displaying the total consumption for your last 10 showers. You can later change this to show the last 20 or 50 showers.', devType: 'AMPHIRO', data: {type: 'total', metric: 'volume', display: 'stat'}},
+    {id: 'totalVolumeChart', title: 'Shower Volume Chart', description: 'A chart widget presenting the consumption for your last 10 showers for all installed devices. You can later change this to show the last 20 or 50 showers.', devType: 'AMPHIRO', data: {type: 'total', metric: 'volume', display: 'chart'}},
+    {id: 'totalEnergyStat', title: 'Shower Energy Stat', description: 'A stat widget displaying the total energy consumption for your last 10 showers. You can later change this to show the last 20 or 50 showers.', devType: 'AMPHIRO', data: {type: 'total', metric: 'energy', display: 'stat'}},
+    {id: 'totalEnergyChart', title: 'Shower Energy Chart', description: 'A chart widget displaying the total energy progress for your last 10 showers. You can later change this to show the last 20 or 50 showers.', devType: 'AMPHIRO', data: {type: 'total', metric: 'energy', display: 'chart'}},
+    {id: 'totalTemperatureStat', title: 'Shower Temperature Stat', description: 'A widget displaying the average temperature for your last 10 showers. You can later change this to show the last 20 or 50 showers.', devType: 'AMPHIRO', data: {type: 'total', metric: 'temperature', display: 'stat'}},
+    {id: 'totalTemperatureChart', title: 'Shower Temperature Chart', description: 'A widget displaying the average temperature variation for your last 10 showers. You can later change this to show the last 20 or 50 showers.', devType: 'AMPHIRO', data: {type: 'total', metric: 'temperature', display: 'chart'}},
+    
+    {id: 'totalDifferenceStat', description: 'A widget displaying your household\'s total water consumption for the last month. You can later change it to daily, weekly or yearly consumption.', title: 'Total Volume Stat', devType:'METER', data: {type: 'total', metric: 'difference', display: 'stat'}}, 
+    {id: 'totalDifferenceChart', title: 'Total Volume Chart', description: 'A chart widget displaying your household\'s total water consumption progress for the last month. You can later change it to daily, weekly or yearly consumption.', devType:'METER', data: {type: 'total', metric: 'difference', display: 'chart'}}, 
+    {id: 'last', title: 'Last shower', description: 'A widget displaying the last shower recorded for all your devices.', devType: 'AMPHIRO', data: {type: 'last', metric: 'volume', display: 'chart'}},
+    {id:'efficiencyEnergy', title: 'Energy efficiency', description: 'A widget displaying your shower energy score for the last 10 showers. You can later change this to see the energy efficiency for the last 20 or 50 showers.', devType: 'AMPHIRO', data: {type: 'efficiency', metric: 'energy', display: 'stat'}},
+    {id: 'breakdown', title: 'Water breakdown', description: 'A chart widget displaying your computed water use per household appliance.', devType: 'METER', data: {type: 'breakdown', metric: 'difference', display: 'chart'}},
+    {id: 'forecast', title: 'Forecast', description: 'A chart widget depicting our estimations for your water use for the next month based on your use so far! You can later change this to see estimations for the next day, week, or year.', devType: 'METER', data: {type: 'forecast', metric: 'difference', display: 'chart'}},
+    {id: 'comparison', title: 'Comparison', description: 'A widget showing your consumption in comparison to others, like your neighbors or your city average for the last month. You can later change this to see comparison data for the current day, week, or year.', devType: 'METER', data: {type: 'comparison', metric: 'difference', display: 'chart'}},
+    {id: 'budget', title: 'Daily Budget', description: 'A widget showing your consumption based on your daily budget.', devType: 'METER', data: {type: 'budget', metric: 'difference', display: 'chart', period: 'day'}}
   ]
 };
 
