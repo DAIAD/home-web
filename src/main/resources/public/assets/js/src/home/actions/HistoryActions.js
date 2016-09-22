@@ -181,7 +181,7 @@ const fetchData = function () {
         return;
       }
 
-      dispatch(QueryActions.queryDeviceSessionsCache({ deviceKey: getState().section.history.activeDevice, type: 'SLIDING', length: lastNFilterToLength(getState().section.history.timeFilter)}))
+      dispatch(QueryActions.queryDeviceSessionsCache({ deviceKey: getState().section.history.activeDevice, type: 'SLIDING', length: lastNFilterToLength(getState().section.history.timeFilter), csrf: getState().user.csrf}))
         .then(sessions => dispatch(setSessions(sessions)))
         .then(() => dispatch(setDataSynced()))
         .catch(error => { 
@@ -191,7 +191,7 @@ const fetchData = function () {
         });
     }
     else if (getState().section.history.activeDeviceType === 'METER') {
-      dispatch(QueryActions.queryMeterHistoryCache({deviceKey: getState().section.history.activeDevice, time:getState().section.history.time}))
+      dispatch(QueryActions.queryMeterHistoryCache({deviceKey: getState().section.history.activeDevice, time:getState().section.history.time, csrf: getState().user.csrf}))
         .then(sessions => dispatch(setSessions(sessions)))
         .then(() => dispatch(setDataSynced()))
         .catch(error => { 
@@ -201,7 +201,7 @@ const fetchData = function () {
         });
 
         if (getState().section.history.comparison === 'last') {
-        dispatch(QueryActions.queryMeterHistoryCache({deviceKey:getState().section.history.activeDevice, time:getPreviousPeriod(getState().section.history.timeFilter, getState().section.history.time.startDate)}))
+        dispatch(QueryActions.queryMeterHistoryCache({deviceKey:getState().section.history.activeDevice, time:getPreviousPeriod(getState().section.history.timeFilter, getState().section.history.time.startDate), csrf: getState().user.csrf}))
         .then(sessions => dispatch(setComparisonSessions(sessions)))
         .catch(error => { 
           dispatch(setComparisonSessions([]));

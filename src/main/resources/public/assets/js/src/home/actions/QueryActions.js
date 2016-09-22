@@ -16,7 +16,7 @@ var meterAPI = require('../api/meter');
 var { reduceSessions, getLastSession, getDeviceTypeByKey, updateOrAppendToSession } = require('../utils/transformations');
 var { getDeviceKeysByType, filterDataByDeviceKeys } = require('../utils/device');
 var { lastNFilterToLength, getCacheKey } =  require('../utils/general');
-var { getTimeByPeriod, getLastShowerTime, getPreviousPeriodSoFar } = require('../utils/time');
+//var { getTimeByPeriod, getLastShowerTime, getPreviousPeriodSoFar } = require('../utils/time');
 
 
 const requestedQuery = function() {
@@ -50,7 +50,7 @@ const queryDeviceSessionsCache = function(options) {
     }
     
     //fetch all items to save in cache
-    const newOptions = Object.assign({}, options, {deviceKey:getDeviceKeysByType(getState().user.profile.devices, 'AMPHIRO')}, {csrf: getState().user.csrf});
+    const newOptions = Object.assign({}, options, {deviceKey:getDeviceKeysByType(getState().user.profile.devices, 'AMPHIRO')});
     
     return dispatch(queryDeviceSessions(newOptions))
     .then(devices => {
@@ -88,7 +88,7 @@ const queryDeviceSessions = function(options) {
 
     //const data = Object.assign({}, options, {deviceKey:deviceKey}, {csrf: getState().user.csrf});
  
-    const data = Object.assign({}, options, {csrf: getState().user.csrf});
+    const data = Object.assign({}, options);
 
     return deviceAPI.querySessions(data)
     .then(response => {
@@ -186,7 +186,7 @@ const queryMeterHistoryCache = function(options) {
     }
 
     //fetch all meters requested in order to save to cache 
-    const newOptions = Object.assign({}, {time, deviceKey:getDeviceKeysByType(getState().user.profile.devices, 'METER')}, {csrf: getState().user.csrf}); 
+    const newOptions = Object.assign({}, options, {time, deviceKey:getDeviceKeysByType(getState().user.profile.devices, 'METER')}); 
             
     return dispatch(queryMeterHistory(newOptions))
     .then(series => {
@@ -214,7 +214,6 @@ const queryMeterHistoryCache = function(options) {
 const queryMeterHistory = function(options) {
   return function(dispatch, getState) {
     const { deviceKey, time } = options;
-
     if (!deviceKey || !time || !time.startDate || !time.endDate) throw new Error(`Not sufficient data provided for meter history query: deviceKey:${deviceKey}, time: ${time}`);
 
     dispatch(requestedQuery());
@@ -272,6 +271,7 @@ const queryMeterStatus = function(deviceKey) {
  * Fetch data based on provided options and handle query response before returning
  * 
  * @param {Object} options - Options to fetch data 
+ * @param {Boolean} options.cache - Whether cache query functions should be called or not 
  * @param {String} options.deviceType - The type of device to query. One of METER, AMPHIRO
  * @param {String} options.period - The period to query.
  *                                  For METER one of day, week, month, year, custom (time-based)
@@ -288,45 +288,59 @@ const queryMeterStatus = function(deviceKey) {
  */
 const fetchInfoboxData = function(options) {
   return function(dispatch, getState) {
-    const { type, deviceType, period } = options;
+    const { type, deviceType, time, prevTime, query } = options;
+    const cache = query.cache || false;
+    const { deviceKey } = query;
 
-    let time = options.time ? options.time : getTimeByPeriod(period);
+    //let time = options.time ? options.time : getTimeByPeriod(period);
 
-    if (!type || !deviceType || !period) throw new Error('fetchInfoboxData: Insufficient data provided');
+    if (!type || !deviceType || !deviceKey) {
+      console.error('fetchInfoboxData: Insufficient data provided (need type, deviceType, deviceKey):', options);
+      throw new Error('fetchInfoboxData: Insufficient data provided:');
+    }
 
-    const device = getDeviceKeysByType(getState().user.profile.devices, deviceType);
-    
-    if (!device || !device.length) return new Promise((resolve, reject) => resolve()); 
+    //const device = getDeviceKeysByType(getState().user.profile.devices, deviceType);
 
-    if (type === "last") {
-
-      return dispatch(fetchLastDeviceSession(device))
-      .then(response => ({data: response.data, index: response.index, device: response.device, showerId: response.id, time: response.timestamp}));
-
+    let queryMeter, queryDevice;
+    if (cache) {
+      queryMeter = queryMeterHistoryCache;
+      queryDevice = queryDeviceSessionsCache;
     }
     else {
+      queryMeter = queryMeterHistory;
+      queryDevice = queryDeviceSessions;
+    }
 
-      if (deviceType === 'METER') {
-        
-        return dispatch(queryMeterHistoryCache({deviceKey:device, time}))
-        .then(data => ({data}))
-        .then(res => {
-          if (type === 'TOTAL') {
-            //fetch previous period data for comparison 
-            let prevTime = getPreviousPeriodSoFar(period);
-            return dispatch(queryMeterHistoryCache({deviceKey:device, prevTime}))
-            .then(prevData => Object.assign({}, res, {previous:prevData, prevTime}))
-              .catch(error => { 
-                console.error('Caught error in infobox previous period data fetch:', error); 
-              });
-          }
-          else {
-            return Promise.resolve(res);
-          }
-        });
+    //If no device in array just return 
+    if (!deviceKey || !deviceKey.length) return Promise.resolve(); 
+
+    if (deviceType === 'METER') {      
+      return dispatch(queryMeter(Object.assign({}, options.query, {time})))
+      .then(data => ({data}))
+      .then(res => {
+        if (type === 'total' && prevTime) {
+          //fetch previous period data for comparison 
+          //let prevTime = getPreviousPeriodSoFar(period);
+          return dispatch(queryMeter(Object.assign({}, options.query, {time:prevTime})))
+          //return dispatch(queryMeter({deviceKey:device, time:prevTime, csrf: getState().user.csrf}))
+          .then(prevData => Object.assign({}, res, {previous:prevData, prevTime}))
+            .catch(error => { 
+              console.error('Caught error in infobox previous period data fetch:', error); 
+            });
+        }
+        else {
+          return Promise.resolve(res);
+        }
+      });
+    }
+    else if (deviceType === 'AMPHIRO') {
+      if (type === "last") {
+        return dispatch(fetchLastDeviceSession(deviceKey))
+        .then(response => ({data: response.data, index: response.index, device: response.device, showerId: response.id, time: response.timestamp}));
       }
-      else if (deviceType === 'AMPHIRO') {
-        return dispatch(queryDeviceSessionsCache({deviceKey:device, type: 'SLIDING', length:lastNFilterToLength(period)}))
+      else {
+        return dispatch(queryDevice(Object.assign({}, options.query)))
+        //return dispatch(queryDevice({deviceKey:device, type: 'SLIDING', length:lastNFilterToLength(period), csrf: getState().user.csrf}))
         .then(data => ({data}));
       }
     }
