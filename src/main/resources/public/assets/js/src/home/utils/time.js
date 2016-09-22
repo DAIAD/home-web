@@ -69,7 +69,7 @@ const getPreviousPeriodSoFar = function(period, timestamp=moment().valueOf()) {
   let sPeriod = period === 'week' ? 'isoweek' : period;
   return {
     startDate: moment(timestamp).startOf(sPeriod).subtract(1, period).valueOf(),
-    endDate: moment(timestamp).subtract(1, period).valueOf(),
+    endDate: moment(timestamp).endOf(getLowerGranularityPeriod(period)).subtract(1, period).valueOf(),
     granularity: convertPeriodToGranularity(period)
   };
 };
