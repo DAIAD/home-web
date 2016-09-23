@@ -2,7 +2,6 @@ package eu.daiad.web.repository.application;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import org.joda.time.DateTimeZone;
 
@@ -36,6 +35,6 @@ public interface IAmphiroIndexOrderedRepository {
     
     public abstract ArrayList<GroupDataSeries> query(ExpandedDataQuery query) throws ApplicationException;
     
-    public abstract void assignMemberToSession(UUID userKey, List<MemberAssignmentRequest.Assignment> assignments) throws Exception;
+    public abstract void assignMemberToSession(AuthenticatedUser user, List<MemberAssignmentRequest.Assignment> assignments) throws Exception;
 
 }

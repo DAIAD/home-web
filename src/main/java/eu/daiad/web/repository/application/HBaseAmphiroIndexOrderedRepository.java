@@ -71,13 +71,17 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository implements IAmphiroIndexOrderedRepository {
 
     private static final String dataSessionLoggerName = "AmphiroSessionLogger";
-    
+
+    private static final String dataSessionMemberLoggerName = "AmphiroSessionMemberLogger";
+
     private static final String dataMeasurementLoggerName = "AmphiroMeasurementLogger";
 
     private static final Log logger = LogFactory.getLog(HBaseAmphiroIndexOrderedRepository.class);
 
     private static final Log dataSessionLogger = LogFactory.getLog(dataSessionLoggerName);
     
+    private static final Log dataSessionMemberLogger = LogFactory.getLog(dataSessionMemberLoggerName);
+
     private static final Log dataMeasurementLogger = LogFactory.getLog(dataMeasurementLoggerName);
 
     private final String ERROR_RELEASE_RESOURCES = "Failed to release resources";
@@ -549,6 +553,29 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                 tokens.add(Float.toString(measurement.getTemperature()));
 
                 dataMeasurementLogger.info(StringUtils.join(tokens, ";"));
+            }
+        }
+    }
+
+    private void logMemberAssignmentData(AuthenticatedUser user, List<MemberAssignmentRequest.Assignment> assignments) {
+        if (assignments != null) {
+            for (MemberAssignmentRequest.Assignment assignment : assignments) {
+                List<String> tokens = new ArrayList<String>();
+
+                tokens.add("v2");
+
+                tokens.add(Integer.toString(user.getId()));
+                tokens.add(user.getKey().toString());
+                tokens.add(user.getUsername());
+
+                tokens.add(assignment.getDeviceKey().toString());
+
+                tokens.add("MANUAL");
+                tokens.add(Long.toString(assignment.getSessionId()));
+                tokens.add(Long.toString(assignment.getTimestamp()));
+                tokens.add(Integer.toString(assignment.getMemberIndex()));
+
+                dataSessionMemberLogger.info(StringUtils.join(tokens, ";"));
             }
         }
     }
@@ -1650,14 +1677,16 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 
 
     @Override
-    public void assignMemberToSession(UUID userKey, List<MemberAssignmentRequest.Assignment> assignments) throws Exception {
+    public void assignMemberToSession(AuthenticatedUser user,  List<MemberAssignmentRequest.Assignment> assignments) throws Exception {
         if (assignments != null) {
+            logMemberAssignmentData(user, assignments);
+            
             for (MemberAssignmentRequest.Assignment assignment : assignments) {
                 AmphiroSessionIndexIntervalQuery query = new AmphiroSessionIndexIntervalQuery();
                 
                 query.setDeviceKey(assignment.getDeviceKey());
                 query.setSessionId(assignment.getSessionId());
-                query.setUserKey(userKey);
+                query.setUserKey(user.getKey());
                 query.setExcludeMeasurements(true);
                 
                 AmphiroSessionIndexIntervalQueryResult result = this.getSession(query);
@@ -1665,8 +1694,8 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                     throw createApplicationException(DataErrorCode.SESSION_NOT_FOUND).set("session", assignment.getSessionId());
                 }
                 
-                assignMeterToSessionInUserTable(userKey, assignment, result.getSession());
-                assignMeterToSessionInTimeTable(userKey, assignment, result.getSession());
+                assignMeterToSessionInUserTable(user.getKey(), assignment, result.getSession());
+                assignMeterToSessionInTimeTable(user.getKey(), assignment, result.getSession());
             }
         }
     }

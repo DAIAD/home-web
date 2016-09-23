@@ -351,7 +351,7 @@ public class DataController extends BaseRestController {
         try {
             authenticatedUser = this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
                        
-            amphiroIndexOrderedRepository.assignMemberToSession(authenticatedUser.getKey(), request.getAssignments());
+            amphiroIndexOrderedRepository.assignMemberToSession(authenticatedUser, request.getAssignments());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
