@@ -22,6 +22,19 @@
 			"password":"Κωδικός πρόσβασης"
 		}
 	},
+  "PasswordResetForm": {
+    "title": "Ενημέρωση Κωδικού",
+    "placehoder": {
+      "password1": "Νέος κωδικός",
+      "password2": "Επιβεβαίωση κωδικού"
+    },
+    "button": {
+      "reset": "Ενημέρωση"
+    },
+    "message": {
+      "success" : "Your password has been successfully reset. Click to return to the login page."
+    }
+  },
 	"Section": {
       "Dashboard": "Περίληψη",
 	    "Analytics":"Ανάλυση",
@@ -51,6 +64,9 @@
         "Data": "Διαχείριση Δεδομένων",
         "Development": "Ανάπτυξη"
 	    }
+	},
+	"Page": {
+	  "PasswordReset":"Reset Password"
 	},
 	"Demographics" : {
 		"Group" : "Ομάδες Καταναλωτών",
@@ -252,31 +268,52 @@
 		"Meters" : "Μετρητές",
 		"Devices" : "Συσκευές Amphiro"
 	},
-	"Error": {
-		"400" : "Bad request",
-		"403" : "Η πιστοποίηση απέτυχε",
-		"404" : "Not found",
-		"500" : "Internal server error",
-		"SharedErrorCode.AUTHENTICATION": "Authentication has failed. Please try again.",
-		"SharedErrorCode.SESSION_EXPIRED": "Η συνεδρία έχει λήξει.",
-    "ValidationError.User.NO_FIRST_NAME": "Λείπει το Όνομα.",
-    "ValidationError.User.NO_LAST_NAME": "Λείπει το Επώνυμο.",
-    "ValidationError.User.NO_EMAIL": "Λείπει το E-mail.",
-    "ValidationError.User.NO_GENDER": "Λείπει το Φύλο.",
-    "ValidationError.User.NO_UTILITY": "Λείπει η Ομάδα.",
-    "ValidationError.User.INVALID_EMAIL": "Η διεύθυνση E-mail δεν είναι έγκυρη.",
-    "ValidationError.User.TOO_LONG_FIRST_NAME" : "Το Όνομα ξεπερνά το μέγιστο μήκος (40 χρακτήρες).",
-    "ValidationError.User.TOO_LONG_LAST_NAME" : "Το Επώνυμο ξεπερνά το μέγιστο μήκος (70 χρακτήρες).",
-    "ValidationError.User.TOO_LONG_EMAIL" : "Το E-mail ξεπερνά το μέγιστο μήκος (100 χρακτήρες).",
-    "ValidationError.User.TOO_LONG_ADDRESS" : "Η Διεύθυνση ξεπερνά το μέγιστο μήκος (90 χρακτήρες).",
-    "ValidationError.User.TOO_LONG_POSTAL_CODE" : "Ο Ταχυδρομικός Κωδικός ξεπερνά το μέγιστο μήκος (10 χαρακτήρες).",
-    "UserErrorCode.USERNAME_EXISTS_IN_WHITELIST": "Υπάρχει ήδη στη user white list χρήστης με αυτή τη διεύθυνση E-mail.",
-    "GroupErrorCode.GROUP_EXISTS": "Μια ομάδα με αυτό το όνομα υπάρχει ήδη.",
-    "GroupErrorCode.GROUP_DOES_NOT_EXIST" : "Δεν υπάρχει ομάδα με αυτό το id.",
-    "ValidationError.Group.NO_GROUP_NAME": "Λείπει το Όνομα Ομάδας.",
-    "ValidationError.Group.NO_GROUP_MEMBERS": "Κανένα Μέλος δεν προστέθηκε σε αυτήν την Ομάδα.",
-    "ValidationError.Favourite.NO_LABEL": "Δεν δόθηκε ετικέτα για αυτό το Αγαπημένο."
-	}, 
+  "Error": {
+    "400" : "Bad request",
+    "403" : "Authentication has failed",
+    "404" : "Not found",
+    "500" : "Internal server error",
+    "SharedErrorCode.AUTHENTICATION": "Authentication has failed. Please try again.",
+    "SharedErrorCode.SESSION_EXPIRED": "Your session has expired.",
+    "SharedErrorCode.AUTHENTICATION_NO_CREDENTIALS": "Authentication has failed. No credentials.",
+    "SharedErrorCode.AUTHORIZATION": "Authorization has failed.",
+    "SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION": "Authorization has failed. Anonymous session.",
+    "SharedErrorCode.AUTHORIZATION_MISSING_ROLE": "Authorization has failed. Missing required role.",
+    "ValidationError.User.NO_FIRST_NAME": "First name is missing.",
+    "ValidationError.User.NO_LAST_NAME": "Last name is missing.",
+    "ValidationError.User.NO_EMAIL": "E-mail address is missing.",
+    "ValidationError.User.NO_GENDER": "Gender is missing.",
+    "ValidationError.User.NO_UTILITY": "Utility is missing.",
+    "ValidationError.User.INVALID_EMAIL": "The E-mail address is invalid.",
+    "ValidationError.User.TOO_LONG_FIRST_NAME" : "First name exceeds maximum length (40 characters).",
+    "ValidationError.User.TOO_LONG_LAST_NAME" : "Last name exceeds maximum length (70 characters).",
+    "ValidationError.User.TOO_LONG_EMAIL" : "E-mail exceeds maximum length (100 characters).",
+    "ValidationError.User.TOO_LONG_ADDRESS" : "Address exceeds maximum length (90 characters).",
+    "ValidationError.User.TOO_LONG_POSTAL_CODE" : "Postal code exceeds maximum length (10 characters).",
+    "UserErrorCode.USERNAME_EXISTS_IN_WHITELIST": "A user with this E-mail already exists in the user white list.",
+    "UserErrorCode.PASSWORD_RESET_TOKEN_NOT_FOUND": "Token was not found.",
+    "UserErrorCode.PASSWORD_RESET_TOKEN_EXPIRED": "Token has expired.",
+    "UserErrorCode.PASSWORD_RESET_TOKEN_ALREADY_REEDEMED": "Token has already been redeemed.",
+    "UserErrorCode.PASSWORD_RESET_TOKEN_USER_NOT_FOUND": "User has been deleted.",
+    "UserErrorCode.PASSWORD_RESET_PIN_MISMATCH": "Invalid PIN.",
+    "UserErrorCode.PASSWORD_RESET_NOT_ALLOWED": "Password reset is disabled.",
+    "UserErrorCode.PASSWORD_RESET_APPLICATION_NOT_SUPPORTED": "Application is not supported.",
+    "GroupErrorCode.GROUP_EXISTS": "A group with this name already exists.",
+    "GroupErrorCode.GROUP_DOES_NOT_EXIST" : "No Group exists with this id.",
+    "ValidationError.Group.NO_GROUP_NAME": "Group name is missing",
+    "ValidationError.Group.NO_GROUP_MEMBERS": "No Members were assigned to this Group.",
+    "ValidationError.Favourite.NO_LABEL": "No Label was entered for this Favourite.",
+    "reports": {
+      "measurements": {
+        "TIMESPAN_INVALID": "The given timespan is invalid.",
+        "TIMESPAN_TOO_NARROW": "The given timespan is too narrow.",
+        "TIMESPAN_TOO_WIDE": "The given timespan is too wide."
+      }  
+    },
+    "PasswordErrorCode.INVALID_LENGTH": "Password length must be at least 8 characters long.",
+    "PasswordErrorCode.VERIFICATION_FAILED": "The two password values do not match.",
+    "PasswordErrorCode.CAPTCHA_ERROR": "CAPTCHA value is required."
+  }, 
   "Success": {
     "UserSuccess.USER_ADDED_WHITELIST" : "Ο χρήστης εγγράφηκε επιτυχώς στη user white list.",
     "GroupSuccess.GROUP_CREATED" : "Η ομάδα δημιουργήθηκε επιτυχώς.",

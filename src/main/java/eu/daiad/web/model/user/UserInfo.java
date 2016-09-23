@@ -42,6 +42,8 @@ public class UserInfo {
 
     private ModeInfo mode;
 
+    private byte[] photo;
+
     public UserInfo(eu.daiad.web.domain.application.Account account) {
         this.id = account.getKey();
         this.firstName = account.getFirstname();
@@ -54,6 +56,7 @@ public class UserInfo {
         this.address = account.getAddress();
         this.postalCode = account.getPostalCode();
         this.fullname = account.getFullname();
+        this.photo = account.getPhoto();
     }
 
     public UUID getId() {
@@ -146,6 +149,10 @@ public class UserInfo {
 
     public void setMode(ModeInfo mode) {
         this.mode = mode;
+    }
+
+    public byte[] getPhoto() {
+        return photo;
     }
 
     public static class ModeInfo {

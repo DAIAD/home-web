@@ -1,5 +1,6 @@
 package eu.daiad.web.repository.application;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,9 +15,10 @@ import com.vividsolutions.jts.geom.Geometry;
 import eu.daiad.web.domain.application.Account;
 import eu.daiad.web.domain.application.AreaGroupMemberEntity;
 import eu.daiad.web.domain.application.DeviceMeter;
+import eu.daiad.web.repository.BaseRepository;
 
 @Repository
-public class JpaSpatialRepository implements ISpatialRepository {
+public class JpaSpatialRepository extends BaseRepository implements ISpatialRepository {
 
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
@@ -69,6 +71,37 @@ public class JpaSpatialRepository implements ISpatialRepository {
         return areaQuery.getResultList();
     }
 
+    @Override
+    public List<AreaGroupMemberEntity> getAllAreas() {
+        Integer utilityId = getCurrentUtilityId();
+
+        if (utilityId == null) {
+            return new ArrayList<AreaGroupMemberEntity>();
+        }
+
+        return getAllAreasByUtilityId(utilityId);
+    }
+
+    @Override
+    public List<AreaGroupMemberEntity> getAllAreasByUtilityId(int utilityId) {
+        TypedQuery<AreaGroupMemberEntity> areaQuery = entityManager.createQuery(
+                        "select a from area_group_item a where a.utility.id = :utilityId", AreaGroupMemberEntity.class);
+
+        areaQuery.setParameter("utilityId", utilityId);
+
+        return areaQuery.getResultList();
+    }
+
+    @Override
+    public List<AreaGroupMemberEntity> getAllAreasByUtilityKey(UUID utilityKey) {
+        TypedQuery<AreaGroupMemberEntity> areaQuery = entityManager.createQuery(
+                        "select a from area_group_item a where a.utility.key = :utilityKey", AreaGroupMemberEntity.class);
+
+        areaQuery.setParameter("utilityKey", utilityKey);
+
+        return areaQuery.getResultList();
+    }
+    
     @Override
     public AreaGroupMemberEntity getAreaByKey(UUID areaKey) {
         TypedQuery<AreaGroupMemberEntity> areaQuery = entityManager.createQuery(

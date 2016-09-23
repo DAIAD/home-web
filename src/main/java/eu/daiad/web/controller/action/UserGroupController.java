@@ -105,7 +105,7 @@ public class UserGroupController extends BaseController {
 	/**
 	 * Returns the accounts that are members of the group.
 	 * 
-	 * @param group_id the group id.
+	 * @param groupId the group id.
 	 * @return the controller's response.
 	 */
 	@RequestMapping(value = "/action/group/accounts/current/{groupId}", method = RequestMethod.GET, produces = "application/json")
@@ -218,7 +218,7 @@ public class UserGroupController extends BaseController {
 	/**
 	 * It returns the list of groups in which the user is member.
 	 * 
-	 * @param user_id
+	 * @param key
 	 * @return the user groups
 	 */
 	

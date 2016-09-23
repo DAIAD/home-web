@@ -23,13 +23,13 @@ public class MessageCalculationConfiguration {
 	private double averageGbpPerKwh = 0.15;
 	private double eurosPerLiter = 0.0024;
 
-	private Integer dailyBudget = 50;
-	private Integer weeklyBudget = 350;
-	private Integer monthlyBudget = 1500;
+	private Integer dailyBudget = 300;
+	private Integer weeklyBudget = 2100;
+	private Integer monthlyBudget = 9000;
 
-	private Integer dailyBudgetAmphiro = 20;
-	private Integer weeklyBudgetAmphiro = 140;
-	private Integer monthlyBudgetAmphiro = 600;
+	private Integer dailyBudgetAmphiro = 100;
+	private Integer weeklyBudgetAmphiro = 700;
+	private Integer monthlyBudgetAmphiro = 3000;
 
 	private Integer utilityId;
 

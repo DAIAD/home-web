@@ -16,6 +16,7 @@ import eu.daiad.web.service.message.aggregates.Top25BaseWeekSWM;
 public class ConsumptionAggregateContainer {
     
     private int population;
+    private int utilityId;
     private AverageMonthlySWM averageMonthlySWM = new AverageMonthlySWM();
     private AverageWeeklySWM averageWeeklySWM = new AverageWeeklySWM();
     private Top10BaseMonthSWM top10BaseMonthSWM = new Top10BaseMonthSWM();
@@ -222,23 +223,32 @@ public class ConsumptionAggregateContainer {
         this.population = population;
     }
     
+    public int getUtilityId() {
+        return utilityId;
+    }
+
+    public void setUtilityId(int utilityId) {
+        this.utilityId = utilityId;
+    }    
+    
 	@Override
 	public String toString() {
-		return "MessageAggregatesContainer{" 
-						+ "\naverageMonthlyConsumptionSWM=" + averageMonthlySWM.getValue()
-						+ ",\naverageWeeklyConsumptionSWM=" + averageWeeklySWM.getValue()
-						+ ",\ntop10BaseMonthThresholdSWM=" + top10BaseMonthSWM.getValue()
-						+ ",\ntop10BaseWeekThresholdSWM=" + top10BaseWeekSWM.getValue() 
-                        + ",\ntop25BaseWeekThresholdSWM=" + top25BaseWeekSWM.getValue()                
-                        + "\naverageMonthlyConsumptionAmphiro=" + averageMonthlyAmphiro.getValue()
-						+ ",\naverageWeeklyConsumptionAmphiro=" + averageWeeklyAmphiro.getValue()
-                        + ",\ntop10BaseThresholdAmphiro=" + top10BaseMonthAmphiro.getValue()
-						+ ",\naverageTemperatureAmphiro=" + averageTemperatureAmphiro.getValue()
-                        + ",\naverageSessionConsumptionAmphiro=" + averageSessionAmphiro.getValue()
-                        + ",\naverageFlowAmphiro=" + averageFlowAmphiro.getValue()
-                        + ",\naverageDurationAmphiro=" + averageDurationAmphiro.getValue()
-						+ ",\nshowerDurationThresholdMinutes=" + showerDurationThresholdMinutes
-                        + ",\ntemperatureThresholdCelsius=" + temperatureThreshold
+		return "\nMessage-service aggregate values: {" 
+						+ "\nAverage Monthly Consumption (SWM)=" + averageMonthlySWM.getValue()
+						+ ",\nAverage Weekly Consumption (SWM)=" + averageWeeklySWM.getValue()
+						+ ",\nTop10 base month threshold (SWM)=" + top10BaseMonthSWM.getValue()
+						+ ",\nTop10 base week threshold (SWM)=" + top10BaseWeekSWM.getValue() 
+                        + ",\nTop25 base week threshold (SWM)=" + top25BaseWeekSWM.getValue()                
+                        + "\nAverage Monthly Consumption (Amphiro)=" + averageMonthlyAmphiro.getValue()
+						+ ",\nAverage Weekly Consumption (Amphiro)=" + averageWeeklyAmphiro.getValue()
+                        + ",\nTop10 base threshold (Amphiro)=" + top10BaseMonthAmphiro.getValue()
+						+ ",\nAverage temperature (Amphiro)=" + averageTemperatureAmphiro.getValue()
+                        + ",\nAverage session consumption (Amphiro)=" + averageSessionAmphiro.getValue()
+                        + ",\nAverage flow (Amphiro)=" + averageFlowAmphiro.getValue()
+                        + ",\nAverage duration (Amphiro)=" + averageDurationAmphiro.getValue()
+						+ ",\nShower duration threshold (Minutes)=" + showerDurationThresholdMinutes
+                        + ",\nTemperature Threshold (Celsius)=" + temperatureThreshold
+						+ ",\nPopulation=" + population + "(Utility id: " + utilityId + ")"                   
 						+ "\n}";
 	}
 }

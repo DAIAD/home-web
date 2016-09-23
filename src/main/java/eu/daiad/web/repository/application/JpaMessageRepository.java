@@ -53,12 +53,7 @@ import eu.daiad.web.model.message.ReceiverAccount;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.BaseRepository;
 import java.sql.Date;
-import javax.persistence.ColumnResult;
-import javax.persistence.EntityResult;
-import javax.persistence.FieldResult;
 import javax.persistence.Query;
-import javax.persistence.SqlResultSetMapping;
-import org.hibernate.transform.Transformers;
 
 @Repository
 @Transactional("applicationTransactionManager")
@@ -717,6 +712,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 	@Override
 	public List<AlertAnalytics> getAlertStatistics(String locale, int utilityId, MessageStatisticsQuery query) {
 
+        //TODO - align sql dates with joda datetimes
         Date slqDateStart = new Date(query.getTime().getStart());
         Date slqDateEnd = new Date(query.getTime().getEnd());
 
@@ -732,7 +728,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             "\n" +
             "left join public.account_alert aa on at.alert_id = aa.alert_id and acc.id=aa.account_id\n" +
             "where \n" +
-            "(acc.utility_id=?1) and (aa.created_on > ?2 and aa.created_on < ?3 or aa.created_on is NULL)\n" +
+            "(acc.utility_id=?1) and (aa.created_on >= ?2 and aa.created_on <= ?3 or aa.created_on is NULL)\n" +
             "group by\n" +
             "at.alert_id,at.title,at.locale, at.description", AlertAnalytics.class);
         
@@ -750,7 +746,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
         
         Date slqDateStart = new Date(query.getTime().getStart());
         Date slqDateEnd = new Date(query.getTime().getEnd());
-
+        
         Query nativeQuery = entityManager.createNativeQuery("select\n" +
             "rt.dynamic_recommendation_id as id,\n" +
             "rt.title as title,\n" +
@@ -763,7 +759,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             "\n" +
             "left join public.account_dynamic_recommendation ar on rt.dynamic_recommendation_id = ar.dynamic_recommendation_id and acc.id=ar.account_id\n" +
             "where \n" +
-            "(acc.utility_id=?1) and (ar.created_on > ?2 and ar.created_on < ?3 or ar.created_on is NULL)\n" +
+            "(acc.utility_id=?1) and (ar.created_on >= ?2 and ar.created_on <= ?3 or ar.created_on is NULL)\n" +
             "group by\n" +
             "rt.dynamic_recommendation_id,rt.title,rt.locale, rt.description", RecommendationAnalytics.class);
 
@@ -816,7 +812,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
         List<ReceiverAccount> receivers = new ArrayList<>();
 
 		TypedQuery<eu.daiad.web.domain.application.AccountDynamicRecommendation> accountRecommendationQuery = entityManager
-						.createQuery("select a from account_dynamic_recommendation a where a.account.utility.id = :utilityId and a.recommendation = :id and a.createdOn > :startDate and a.createdOn < :endDate",
+						.createQuery("select a from account_dynamic_recommendation a where a.account.utility.id = :utilityId and a.recommendation.id = :id and a.createdOn > :startDate and a.createdOn < :endDate",
 										eu.daiad.web.domain.application.AccountDynamicRecommendation.class);
         
         accountRecommendationQuery.setParameter("utilityId", utilityId);
@@ -1140,3 +1136,10 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 	// }
 
 }
+
+//select at.alert_id as id, at.title as title, at.description as description,at.locale as locale,count(distinct (aa.id)) as total 
+//from public.alert_translation at left join account acc on acc.locale = at.locale left join public.account_alert aa on at.alert_id = aa.alert_id and acc.id=aa.account_id
+//where 
+//            (acc.utility_id=?1) and (aa.created_on > ?2 and aa.created_on < ?3 or aa.created_on is NULL)
+//            group by
+//            at.alert_id,at.title,at.locale, at.description

@@ -16,6 +16,7 @@ import eu.daiad.web.model.AuthenticatedRequest;
 import eu.daiad.web.model.DeviceMeasurementCollection;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.amphiro.AmphiroMeasurementCollection;
+import eu.daiad.web.model.amphiro.MemberAssignmentRequest;
 import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -132,7 +133,7 @@ public class DataController extends BaseRestController {
     /**
      * Loads all saved data queries.
      * 
-     * @param data authentication request.
+     * @param request authentication request.
      * @return the saved data queries
      */
     @RequestMapping(value = "/api/v1/data/query/load", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
@@ -330,6 +331,31 @@ public class DataController extends BaseRestController {
             success = false;
         } finally {
             logDataUploadSession(authenticatedUser, device, success);
+        }
+
+        return response;
+    }
+
+    /**
+     * Assigns household members to amphiro b1 sessions.
+     * 
+     * @param request member assignment data
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/api/v2/data/session/member", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    public RestResponse assignMemberToSession(@RequestBody MemberAssignmentRequest request) {
+        RestResponse response = new RestResponse();
+
+        AuthenticatedUser authenticatedUser = null;
+
+        try {
+            authenticatedUser = this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
+                       
+            amphiroIndexOrderedRepository.assignMemberToSession(authenticatedUser, request.getAssignments());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
         }
 
         return response;

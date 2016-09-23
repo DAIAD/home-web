@@ -10,9 +10,15 @@ import eu.daiad.web.domain.application.AreaGroupMemberEntity;
 public interface ISpatialRepository {
 
     abstract Geometry getUserLocationByUserKey(UUID userKey);
-    
+
     abstract List<AreaGroupMemberEntity> getAreasByAreaGroupKey(UUID groupKey);
-    
+
+    abstract List<AreaGroupMemberEntity> getAllAreas();
+
+    abstract List<AreaGroupMemberEntity> getAllAreasByUtilityId(int utilityId);
+
+    abstract List<AreaGroupMemberEntity> getAllAreasByUtilityKey(UUID utilityKey);
+
     abstract AreaGroupMemberEntity getAreaByKey(UUID areaKey);
-    
+
 }

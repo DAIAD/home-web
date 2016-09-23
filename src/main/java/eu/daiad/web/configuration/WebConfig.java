@@ -14,9 +14,7 @@ import com.fasterxml.jackson.datatype.joda.JodaModule;
 import eu.daiad.web.controller.ErrorController;
 
 /**
- * 
  * Provides basic application configuration.
- *
  */
 @Configuration
 public class WebConfig extends WebMvcConfigurerAdapter {
@@ -37,7 +35,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 	/**
 	 * Overrides the default {@link Jackson2ObjectMapperBuilder}.
 	 * 
-	 * @return the object mapper builder.
+	 * @return the new object
 	 */
 	@Bean
 	public Jackson2ObjectMapperBuilder objectMapperBuilder() {

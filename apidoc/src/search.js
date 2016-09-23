@@ -10,7 +10,7 @@
  * @apiParam (DeviceRegistrationRequest) {Object}     credentials                 User credentials
  * @apiParam (DeviceRegistrationRequest) {String}     credentials.username        User name.
  * @apiParam (DeviceRegistrationRequest) {String}     credentials.password        Password.
- * @apiParam (DeviceRegistrationRequest) {String[]}   deviceKey              	  Array of unique identifiers (UUID) for authenticated user meter devices.
+ * @apiParam (DeviceRegistrationRequest) {String[]}   deviceKey                   Array of unique identifiers (UUID) for authenticated user meter devices.
  * 
  * @apiParamExample {json} Request Example
  * {
@@ -78,7 +78,7 @@ function meterStatus() { return; }
  * @apiParam (WaterMeterMeasurementQuery) {Object}     credentials                 User credentials
  * @apiParam (WaterMeterMeasurementQuery) {String}     credentials.username        User name.
  * @apiParam (WaterMeterMeasurementQuery) {String}     credentials.password        Password.
- * @apiParam (WaterMeterMeasurementQuery) {String[]}   deviceKey              	   Array of unique identifiers (UUID) for authenticated user meter devices.
+ * @apiParam (WaterMeterMeasurementQuery) {String[]}   deviceKey                   Array of unique identifiers (UUID) for authenticated user meter devices.
  * @apiParam (WaterMeterMeasurementQuery) {Number}     granularity                 Sets the data aggregation level. Valid values are:<br/><br/>
  * 0: <code>NONE</code><br/>
  * 1: <code>HOUR</code><br/>
@@ -180,7 +180,7 @@ function meterMeasurements() { return; }
  * @apiParam (AmphiroMeasurementTimeIntervalQuery) {Object}     credentials                 User credentials
  * @apiParam (AmphiroMeasurementTimeIntervalQuery) {String}     credentials.username        User name.
  * @apiParam (AmphiroMeasurementTimeIntervalQuery) {String}     credentials.password        Password.
- * @apiParam (AmphiroMeasurementTimeIntervalQuery) {String[]}   deviceKey              	   Array of unique identifiers (UUID) for authenticated user Amphiro devices.
+ * @apiParam (AmphiroMeasurementTimeIntervalQuery) {String[]}   deviceKey                  Array of unique identifiers (UUID) for authenticated user Amphiro devices.
  * @apiParam (AmphiroMeasurementTimeIntervalQuery) {Number}     granularity                 Sets the data aggregation level. Valid values are:<br/><br/>
  * 0: <code>NONE</code><br/>
  * 1: <code>HOUR</code><br/>
@@ -292,7 +292,7 @@ function amphiroMesurementsByTime() { return; }
  * @apiParam (AmphiroMeasurementIndexIntervalQuery) {String}     credentials.password        Password.
  * @apiParam (AmphiroMeasurementIndexIntervalQuery) {String}     credentials.password        Password.
  * @apiParam (AmphiroMeasurementIndexIntervalQuery) {String}     type                        Query type. Valid values are <code>ABSOLUTE</code> and <code>SLIDING</code>.<br/><code>ABSOLUTE</code> queries return specific intervals of sessions.<br/><code>SLIDING</code> queries return the <code>length</code> most recent sessions.
- * @apiParam (AmphiroMeasurementIndexIntervalQuery) {String[]}   deviceKey              	 Array of unique identifiers (UUID) for authenticated user Amphiro devices.
+ * @apiParam (AmphiroMeasurementIndexIntervalQuery) {String[]}   deviceKey                   Array of unique identifiers (UUID) for authenticated user Amphiro devices.
  * @apiParam (AmphiroMeasurementIndexIntervalQuery) {Number}     startIndex                  Session start index for <code>ABSOLUTE</code> queries.
  * @apiParam (AmphiroMeasurementIndexIntervalQuery) {Number}     endIndex                    Session end index for <code>ABSOLUTE</code> queries.
  * @apiParam (AmphiroMeasurementIndexIntervalQuery) {Number}     length                      Result size for <code>SLIDING</code>.
@@ -375,7 +375,7 @@ function amphiroMesurementsByIndex() { return; }
  * @apiParam (AmphiroSessionCollectionTimeIntervalQuery) {Object}     credentials                 User credentials
  * @apiParam (AmphiroSessionCollectionTimeIntervalQuery) {String}     credentials.username        User name.
  * @apiParam (AmphiroSessionCollectionTimeIntervalQuery) {String}     credentials.password        Password.
- * @apiParam (AmphiroSessionCollectionTimeIntervalQuery) {String[]}   deviceKey              	  Array of unique identifiers (UUID) for authenticated user Amphiro devices.
+ * @apiParam (AmphiroSessionCollectionTimeIntervalQuery) {String[]}   deviceKey                   Array of unique identifiers (UUID) for authenticated user Amphiro devices.
  * @apiParam (AmphiroSessionCollectionTimeIntervalQuery) {Number}     granularity                 Sets the data aggregation level. Valid values are:<br/><br/>
  * 0: <code>NONE</code><br/>
  * 1: <code>HOUR</code><br/>
@@ -499,7 +499,7 @@ function amphiroSessionsByTime() { return; }
  * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {String}     credentials.username        User name.
  * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {String}     credentials.password        Password.
  * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {String}     type                        Query type. Valid values are <code>ABSOLUTE</code> and <code>SLIDING</code>.<br/><code>ABSOLUTE</code> queries return specific intervals of sessions.<br/><code>SLIDING</code> queries return the <code>length</code> most recent sessions.
- * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {String[]}   deviceKey              	   Array of unique identifiers (UUID) for authenticated user Amphiro devices.
+ * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {String[]}   deviceKey                   Array of unique identifiers (UUID) for authenticated user Amphiro devices.
  * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {Number}     startIndex                  Session start index for <code>ABSOLUTE</code> queries.
  * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {Number}     endIndex                    Session end index for <code>ABSOLUTE</code> queries.
  * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {Number}     length                      Result size for <code>SLIDING</code>.
@@ -534,10 +534,18 @@ function amphiroSessionsByTime() { return; }
  * @apiSuccess (AmphiroSession)  {Number}               energy             Total energy.
  * @apiSuccess (AmphiroSession)  {Number}               temperature        Average temperature.
  * @apiSuccess (AmphiroSession)  {Number}               flow               Average flow.
- * @apiSuccess (AmphiroSession)  {Ojbect[]}             properties   Array of <code>KeyValuePair</code>.
+ * @apiSuccess (AmphiroSession)  {Ojbect[]}             properties         Array of <code>KeyValuePair</code>.
+ * @apiSuccess (AmphiroSession)  {Object}               [member]           Household member.
  * 
- * @apiParam (KeyValuePair) {String}           key                         Key.
- * @apiParam (KeyValuePair) {String}           value                       Value.
+ * @apiSuccess (KeyValuePair)    {String}               key                Key.
+ * @apiSuccess (KeyValuePair)    {String}               value              Value.
+ *
+ * @apiSuccess (Member)          {Number}               index              Unique household member index.
+ * @apiSuccess (Member)          {String}               mode               Indicates the source of the value. Valid values are:
+ * </br><code>AUTO</code> : Set to the default user automatically.
+ * </br><code>SYSTEM</code> : Computed using an analysis algorithm.
+ * </br><code>MANUAL</code> : Set by the user explicitly.
+ * @apiSuccess (Member)          {Number}               timestamp          Most recent member assignment time stamp.
  * 
  * 
  * @apiSuccessExample {json} Response Example
@@ -556,7 +564,12 @@ function amphiroSessionsByTime() { return; }
  *       "flow": 5,
  *       "id": 1,
  *       "history": false,
- *       "properties": []
+ *       "properties": [],
+ *       "member" : {
+ *         "index" : 4,
+ *         "mode" : "MANUAL",
+ *         "timestamp" : 1461064312345
+ *       }
  *     }]
  *   }],
  *   "success": true
@@ -593,8 +606,8 @@ function amphiroSessionsByIndex() { return; }
  * @apiParam (AmphiroSessionTimeIntervalQuery) {Object}     credentials                 User credentials
  * @apiParam (AmphiroSessionTimeIntervalQuery) {String}     credentials.username        User name.
  * @apiParam (AmphiroSessionTimeIntervalQuery) {String}     credentials.password        Password.
- * @apiParam (AmphiroSessionTimeIntervalQuery) {String}     deviceKey              	    Device unique id (UUID).
- * @apiParam (AmphiroSessionTimeIntervalQuery) {Number}     sessionId              	    Session unique per device id.
+ * @apiParam (AmphiroSessionTimeIntervalQuery) {String}     deviceKey                   Device unique id (UUID).
+ * @apiParam (AmphiroSessionTimeIntervalQuery) {Number}     sessionId                   Session unique per device id.
  * @apiParam (AmphiroSessionTimeIntervalQuery) {Number}     startDate                   Time interval start time stamp.
  * @apiParam (AmphiroSessionTimeIntervalQuery) {Number}     endDate                     Time interval end time stamp.
  * 
@@ -694,8 +707,8 @@ function amphiroSingleSessionByTime() { return; }
  * @apiParam (AmphiroSessionIndexIntervalQuery) {Object}     credentials                 User credentials
  * @apiParam (AmphiroSessionIndexIntervalQuery) {String}     credentials.username        User name.
  * @apiParam (AmphiroSessionIndexIntervalQuery) {String}     credentials.password        Password.
- * @apiParam (AmphiroSessionIndexIntervalQuery) {String}     deviceKey              	    Device unique id (UUID).
- * @apiParam (AmphiroSessionIndexIntervalQuery) {Number}     sessionId              	    Session unique per device id.
+ * @apiParam (AmphiroSessionIndexIntervalQuery) {String}     deviceKey                      Device unique id (UUID).
+ * @apiParam (AmphiroSessionIndexIntervalQuery) {Number}     sessionId                      Session unique per device id.
  * 
  * @apiParamExample {json} Request Example
  * {
@@ -721,9 +734,17 @@ function amphiroSingleSessionByTime() { return; }
  * @apiSuccess (AmphiroSessionDetails)    {Number}      flow         Average flow.
  * @apiSuccess (AmphiroSessionDetails)    {Ojbect[]}    properties   Array of <code>KeyValuePair</code>.
  * @apiSuccess (AmphiroSessionDetails)    {Object[]}    measurements Array of <code>AmphiroMeasurement</code>.
+ * @apiSuccess (AmphiroSessionDetails)    {Object}      [member]     Household member.
  * 
  * @apiSuccess (KeyValuePair)             {String}      key                Key.
  * @apiSuccess (KeyValuePair)             {String}      value              Value.
+ *
+ * @apiSuccess (Member)          {Number}               index              Unique household member index.
+ * @apiSuccess (Member)          {String}               mode               Indicates the source of the value. Valid values are:
+ * </br><code>AUTO</code> : Set to the default user automatically.
+ * </br><code>SYSTEM</code> : Computed using an analysis algorithm.
+ * </br><code>MANUAL</code> : Set by the user explicitly.
+ * @apiSuccess (Member)          {Number}               timestamp          Most recent member assignment time stamp.
  * 
  * @apiSuccess (AmphiroMeasurement)       {Number}      sessionId          Session unique per device id.
  * @apiSuccess (AmphiroMeasurement)       {Number}      index              Measurement index in session.
@@ -755,7 +776,12 @@ function amphiroSingleSessionByTime() { return; }
  *       "temperature": 20,
  *       "volume": 1.1,
  *       "energy": 3
- *     }]
+ *     }],
+ *     "member" : {
+ *       "index" : 4,
+ *       "mode" : "MANUAL",
+ *       "timestamp" : 1461064312345
+ *     }
  *   },
  *   "success": true
  * }

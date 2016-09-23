@@ -10,9 +10,11 @@ import com.vividsolutions.jts.geom.Geometry;
 
 import eu.daiad.web.domain.application.DeviceAmphiroConfigurationDefault;
 import eu.daiad.web.model.KeyValuePair;
+import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceConfigurationCollection;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
+import eu.daiad.web.model.device.DeviceUpdateRequest;
 import eu.daiad.web.model.device.WaterMeterDevice;
 import eu.daiad.web.model.error.ApplicationException;
 
@@ -20,7 +22,7 @@ public interface IDeviceRepository {
 
     abstract void removeDevice(UUID deviceKey);
 
-    abstract UUID createAmphiroDevice(UUID userKey, String name, String macAddress, String aesKey,
+    abstract AmphiroDevice createAmphiroDevice(UUID userKey, String name, String macAddress, String aesKey,
                     ArrayList<KeyValuePair> properties) throws ApplicationException;
 
     List<DeviceAmphiroConfigurationDefault> getAmphiroDefaultConfigurations() throws ApplicationException;
@@ -54,5 +56,7 @@ public interface IDeviceRepository {
                     throws ApplicationException;
 
     abstract void setLastDataUploadDate(UUID userKey, UUID deviceKey, DateTime when, boolean success);
+
+    abstract void updateDevice(UUID userKey, DeviceUpdateRequest request);
 
 }

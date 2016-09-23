@@ -1,4 +1,4 @@
-package eu.daiad.web.service;
+package eu.daiad.web.service.etl;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -40,6 +40,7 @@ import eu.daiad.web.model.meter.WaterMeterMeasurementQuery;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQueryResult;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
+import eu.daiad.web.service.BaseService;
 
 @Service
 public class ExportService extends BaseService implements IExportService {

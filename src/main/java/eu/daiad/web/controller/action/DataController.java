@@ -62,9 +62,9 @@ import eu.daiad.web.model.spatial.ReferenceSystem;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IDataService;
-import eu.daiad.web.service.IExportService;
 import eu.daiad.web.service.IFileDataLoaderService;
 import eu.daiad.web.service.IWaterMeterDataLoaderService;
+import eu.daiad.web.service.etl.IExportService;
 
 /**
  * Provides methods for managing, querying and exporting data.
@@ -293,7 +293,6 @@ public class DataController extends BaseController {
     /**
      * Loads all saved data queries.
      * 
-     * @param data authentication request.
      * @return the saved data queries
      */
     @RequestMapping(value = "/action/data/query/load", method = RequestMethod.GET, consumes = "application/json", produces = "application/json")

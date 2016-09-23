@@ -1,10 +1,14 @@
 package eu.daiad.web.model.profile;
 
+import org.joda.time.DateTime;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import eu.daiad.web.model.AuthenticatedRequest;
 import eu.daiad.web.model.EnumApplication;
+import eu.daiad.web.model.EnumGender;
 
 public class UpdateProfileRequest extends AuthenticatedRequest {
 
@@ -22,15 +26,22 @@ public class UpdateProfileRequest extends AuthenticatedRequest {
     private String lastname;
 
     private String address;
-    
+
+    private DateTime birthdate;
+
+    @JsonDeserialize(using = EnumGender.Deserializer.class)
+    private EnumGender gender;
+
     private String country;
-    
+
     @JsonProperty("zip")
     private String postalCode;
-    
+
     private String locale;
 
     private String timezone;
+
+    private byte[] photo;
 
     public String getConfiguration() {
         return configuration;
@@ -118,6 +129,30 @@ public class UpdateProfileRequest extends AuthenticatedRequest {
 
     public void setPostalCode(String postalCode) {
         this.postalCode = postalCode;
+    }
+
+    public byte[] getPhoto() {
+        return photo;
+    }
+
+    public void setPhoto(byte[] photo) {
+        this.photo = photo;
+    }
+
+    public DateTime getBirthdate() {
+        return birthdate;
+    }
+
+    public void setBirthdate(DateTime birthdate) {
+        this.birthdate = birthdate;
+    }
+
+    public EnumGender getGender() {
+        return gender;
+    }
+
+    public void setGender(EnumGender gender) {
+        this.gender = gender;
     }
 
 }

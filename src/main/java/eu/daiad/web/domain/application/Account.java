@@ -64,6 +64,9 @@ public class Account {
     @OneToOne(mappedBy = "account")
     private AccountProfile profile;
 
+    @OneToOne(mappedBy = "account")
+    private HouseholdEntity household;
+
     @Basic(fetch = FetchType.LAZY)
     @Type(type = "org.hibernate.type.BinaryType")
     private byte photo[];
@@ -94,6 +97,9 @@ public class Account {
 
     @Column(name = "change_password_on_login")
     private boolean changePasswordOnNextLogin;
+
+    @Column(name = "allow_password_reset")
+    private boolean allowPasswordReset;
 
     @Basic()
     private boolean locked;
@@ -230,6 +236,14 @@ public class Account {
         this.changePasswordOnNextLogin = changePasswordOnNextLogin;
     }
 
+    public boolean isAllowPasswordReset() {
+        return allowPasswordReset;
+    }
+
+    public void setAllowPasswordReset(boolean allowPasswordReset) {
+        this.allowPasswordReset = allowPasswordReset;
+    }
+
     public boolean isLocked() {
         return locked;
     }
@@ -346,6 +360,14 @@ public class Account {
         this.location = location;
     }
 
+    public HouseholdEntity getHousehold() {
+        return household;
+    }
+
+    public void setHousehold(HouseholdEntity household) {
+        this.household = household;
+    }
+
     public String getFullname() {
         String fullname = (StringUtils.isBlank(this.firstname) ? "" : this.firstname) + " "
                         + (StringUtils.isBlank(this.lastname) ? "" : this.lastname);
@@ -356,5 +378,5 @@ public class Account {
 
         return fullname.trim();
     }
-
+ 
 }

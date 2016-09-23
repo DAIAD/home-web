@@ -49,6 +49,10 @@
  * @apiSuccess (Profile) {Object[]} devices       Array of <code>DeviceRegistration</code> objects representing the Amphiro or Smart Water Meter devices registered to the authenticated user. Instances are implemented by classes <code>WaterMeterDeviceRegistration</code> and <code>AmphiroDeviceRegistration</code>.
  * @apiSuccess (Profile) {Number}     dailyMeterBudget            Daily smart water meter water consumption budget.
  * @apiSuccess (Profile) {Number}     dailyAmphiroBudget          Daily Amphiro B1 water consumption budget
+ * @apiSuccess (Profile) {String}     configuration         Application configuration serialized as a JSON object.
+ * @apiSuccess (Profile) {Object[]}   devices               Array of <code>DeviceRegistration</code> objects representing the Amphiro or Smart Water Meter devices registered to the authenticated user. Instances are implemented by classes <code>WaterMeterDeviceRegistration</code> and <code>AmphiroDeviceRegistration</code>.
+ * @apiSuccess (Profile) {Object}     utility               Utility information.
+ * @apiSuccess (Profile) {Object}     household             Household information.
  * 
  * @apiSuccess (DeviceRegistration) {String}     type              Device type. Valid values are <code>METER</code> and <code>AMPHIRO</code>.
  * @apiSuccess (DeviceRegistration) {String}     deviceKey         Unique device id (UUID).
@@ -62,6 +66,30 @@
  * @apiSuccess (AmphiroDeviceRegistration extends DeviceRegistration)    {String}     name       User friendly name for the device i.e. Shower #1.
  * @apiSuccess (AmphiroDeviceRegistration extends DeviceRegistration)    {String}     macAddress Device unique MAC address.
  * @apiSuccess (AmphiroDeviceRegistration extends DeviceRegistration)    {String}     aesKey     Device AES key.
+  *
+ * @apiSuccess (Utility)    {String}     id                  Utility unique numerical identifier.
+ * @apiSuccess (Utility)    {String}     key                 Utility unique key (UUID).
+ * @apiSuccess (Utility)    {String}     name                Name.
+ * @apiSuccess (Utility)    {String}     country             Country.
+ * @apiSuccess (Utility)    {String}     timezone            Time zone.
+ * @apiSuccess (Utility)    {String}     locale              Locale.
+ * @apiSuccess (Utility)    {String}     city                City.
+ * 
+ * @apiSuccess (Household)  {Number}     createdOn           Creation time stamp.
+ * @apiSuccess (Household)  {Number}     updatedOn           Last update time stamp.
+ * @apiSuccess (Household)  {Number}     femaleMembers       Total number of female members.
+ * @apiSuccess (Household)  {Number}     totalMembers        Total number of members.
+ * @apiSuccess (Household)  {Number}     maleMembers         Total number of male members.
+ * @apiSuccess (Household)  {Object[]}   members             Array of <code>Member</code> objects. The default member is not included in this collection.
+ *
+ * @apiSuccess (Member)     {Number}     index               Unique index.
+ * @apiSuccess (Member)     {Boolean}    active              <code>true</code> if the member is not delete; Otherwise <code>false</code>.
+ * @apiSuccess (Member)     {String}     name                Name.
+ * @apiSuccess (Member)     {Number}     age                 Age.
+ * @apiSuccess (Member)     {String}     gender              Gender. Valid values are <code>MALE</code> and <code>FEMALE</code>.
+ * @apiSuccess (Member)     {String}     photo               Base64 encoded member image.
+ * @apiSuccess (Member)     {Number}     createdOn           Creation time stamp.
+ * @apiSuccess (Member)     {Number}     updatedOn           Last update time stamp.
  * 
  * @apiSuccessExample {json} Response Example
  * HTTP/1.1 200 OK
@@ -107,7 +135,33 @@
  *         "key": "import.file",
  *         "value": "3d0acf5c-e85b-4885-9476-77475913295d.xlsx"
  *       }]
- *     }]
+ *     }],
+ *     "utility":       {
+ *       "id": 1,
+ *       "key": "2b480134-6f05-488f-9f9b-99607a93c6c4",
+ *       "name": "DAIAD",
+ *       "country": "Greece",
+ *       "timezone": "Europe/Athens",
+ *       "locale": "el",
+ *       "city": "Athens"
+ *     },
+ *     "household":{
+ *       "members": [{
+ *         "index": 14,
+ *         "active": true,
+ *         "name": "George",
+ *         "age": 34,
+ *         "gender": "MALE",
+ *         "photo": null,
+ *         "createdOn": 1474162191385,
+ *         "updatedOn": 1474162451597
+ *       }],
+ *       "createdOn": 1474162191385,
+ *       "updatedOn": 1474162191385,
+ *       "femaleMembers": 0,
+ *       "totalMembers": 1,
+ *       "maleMembers": 1
+ *     }
  *   },
  *   "success": true
  * }

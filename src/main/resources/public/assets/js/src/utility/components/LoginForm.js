@@ -66,7 +66,7 @@ var LoginForm = React.createClass({
 				</div>
 			</div>
 		);
-	},
+	}
 
 });
 

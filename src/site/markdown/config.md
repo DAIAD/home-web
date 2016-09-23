@@ -57,6 +57,26 @@ Additional information on how to configuring Log4j2 can be found at [Log4j2] (ht
 |pool-size|Number of threads for the ThreadPoolTaskScheduler instance|10|
 |thread-name-prefix|Prefix for thread names for job launcher custom TaskExecutor|batch-|
 
+# Mail
+
+`config/mail.properties`: Mail properties. All properties prefixed with `spring.mail` are specific to Spring Boot auto-configuration. The properties prefixed with `spring.mail.properties` are specific to JavaMail API. Additional information for configuration properties can be found at [Spring Documentation](https://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html) and [Java Mail Documentation](https://javamail.java.net/nonav/docs/api/com/sun/mail/smtp/package-summary.html).
+
+|Property|Description|Default|
+|---|---|---|
+|spring.mail.default-encoding|Default mail encoding|UTF-8|
+|spring.mail.host|The mail server host address||
+|spring.mail.port|The mail server port||
+|spring.mail.protocol|The protocol used||
+|spring.mail.username|User name if authentication is required||
+|spring.mail.password|Password if authentication is required||
+|spring.mail.properties.mail.smtps.auth|Authentication is required||
+|spring.mail.properties.mail.smtp.ssl.enable|Secure connection is required||
+|spring.mail.properties.mail.transport.protocol|The transport protocol used||
+|daiad.mail.enabled|Enable mail|false|
+|daiad.mail.template.prefix|The path where mail templates are stored|classpath:/mail/templates/|
+|daiad.mail.sender.address|Mail sender default address||
+|daiad.mail.sender.name|Mail sender default name||
+
 # HBASE
 
 `config/hbase.properties`: HBASE configuration properties. At least the `hbase.zookeeper.quorum` property must be set.
@@ -92,12 +112,14 @@ Additional information on how to configuring Log4j2 can be found at [Log4j2] (ht
 
 |Property|Description|Default|
 |---|---|---|
+|daiad.url|The base url of the web application|[https://app.dev.daiad.eu/](https://app.dev.daiad.eu/)|
 |spring.profiles.active|Set active profile|development|
 |spring.main.show_banner|Hide Spring boot banner|false|
 |logging.config|Log4j configuration properties|classpath:log4j2.xml|
 |hbase.properties|HBASE configuration properties source|classpath:config/hbase.properties|
 |scheduler.properties|Scheduler properties source|classpath:config/scheduler.properties|
 |batch.properties|Batch properties source|classpath:config/batch.properties|
+|mail.properties|Mail properties source|classpath:config/mail.properties|
 |security.basic.enabled|Disable basic authentication|false|
 |spring.thymeleaf.cache|Disable thymeleaf view engine cache|false|
 |tmp.folder|Temporary folder for storing files|/tmp/|
@@ -120,6 +142,10 @@ Additional information on how to configuring Log4j2 can be found at [Log4j2] (ht
 |daiad.manager.flyway.baseline-version|Version to start migration for the `daiad` database|1_0_2|
 |daiad.manager.flyway.locations|Baseline description for the `daiad` database|classpath:db/migration/daiad-manager/|
 |daiad.amphiro.validation-string|Enforce constraints for Amphiro measurements|true|
+|daiad.docs.require-authentication|Require authentication for documentation and project site|true|
+|daiad.password.reset.token.duration|Password reset token duration in hours|3|
+|daiad.captcha.google.key|The client site key for Google reCAPTCHA API||
+|daiad.amphiro.properties.*|Amphiro b1 default properties||
 
 # Application Profile Specific Settings
 

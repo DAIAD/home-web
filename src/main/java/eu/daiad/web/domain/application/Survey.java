@@ -52,7 +52,7 @@ public class Survey {
     private String apartmentSizeBracket;
 
     @Basic()
-    private int age;
+    private Integer age;
 
     @Column(name = "household_member_total")
     private int householdMemberTotal;
@@ -157,11 +157,11 @@ public class Survey {
         this.apartmentSizeBracket = apartmentSizeBracket;
     }
 
-    public int getAge() {
+    public Integer getAge() {
         return age;
     }
 
-    public void setAge(int age) {
+    public void setAge(Integer age) {
         this.age = age;
     }
 

@@ -1,5 +1,6 @@
 package eu.daiad.web.service.message;
 
+import eu.daiad.web.model.device.Device;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,8 @@ import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
+//import eu.daiad.web.service.weather.DailyWeatherData;
+//import eu.daiad.web.service.weather.IWeatherRepository;
 
 @Service()
 public class DefaultMessageResolverService implements IMessageResolverService {
@@ -47,7 +50,10 @@ public class DefaultMessageResolverService implements IMessageResolverService {
         
     @Autowired 
     IDeviceRepository deviceRepository;
-        
+    
+//    @Autowired
+//    private IWeatherRepository weatherRepository;       
+    
     @Override
 	public PendingMessageStatus resolve(MessageCalculationConfiguration config,
 					ConsumptionAggregateContainer aggregates, UUID accountKey) {      
@@ -212,6 +218,17 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 	public boolean alertWaterQualitySWM(UUID accountKey, DateTimeZone timezone) {
 		boolean fireAlert = false;
 
+        //check for outside temperature.
+//        int utilityId = userRepository.getUserByKey(accountKey).getUtilityId();
+//        List<DailyWeatherData> dailyWeatherData = 
+//                weatherRepository.getDailyData(0, utilityId, DateTime.now(timezone).minusDays(1), DateTime.now(timezone));
+//        
+//        Double maxTemperature = dailyWeatherData.get(0).getMaxTemperature();
+//        
+//        if(maxTemperature < 27){
+//            return false;
+//        }
+        
 		DataQueryBuilder queryBuilder = new DataQueryBuilder();
 		queryBuilder.timezone(timezone).sliding(-24, EnumTimeUnit.HOUR, EnumTimeAggregation.HOUR)
 						.user("user", accountKey).meter().sum();
@@ -286,10 +303,18 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		MeterDataPoint meterPoint = (MeterDataPoint) dataPoint;
 		Double lastDaySum = meterPoint.getVolume().get(EnumMetric.SUM);
 
-		double percentUsed = (config.getDailyBudget() * lastDaySum) / 100;
-
+		double percentUsed = ((100 * lastDaySum) / config.getDailyBudget());
 		if (percentUsed > 80) {
-			return new SimpleEntry<>(lastDaySum.intValue(), config.getDailyBudget());
+            
+            Double remainingLitres;
+            if(lastDaySum > config.getDailyBudget()){
+                remainingLitres = 0.0;
+            }
+            else{
+                remainingLitres = config.getDailyBudget() - lastDaySum;
+            }
+            
+			return new SimpleEntry<>(lastDaySum.intValue(), remainingLitres.intValue());
 		} else {
 			return null;
 		}
@@ -318,10 +343,18 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		MeterDataPoint meterPoint = (MeterDataPoint) dataPoint;
 		Double lastWeekSum = meterPoint.getVolume().get(EnumMetric.SUM);
 
-		double percentUsed = (config.getWeeklyBudget() * lastWeekSum) / 100;
-
+		double percentUsed = (( 100 * lastWeekSum) / config.getWeeklyBudget());   
+        
+        Double remainingLitres;
+        if(lastWeekSum > config.getWeeklyBudget()){
+            remainingLitres = 0.0;
+        }
+        else{
+            remainingLitres = config.getWeeklyBudget() - lastWeekSum;
+        }
+        
 		if (percentUsed > 80) {
-			return new SimpleEntry<>(lastWeekSum.intValue(), config.getWeeklyBudget());
+			return new SimpleEntry<>(lastWeekSum.intValue(), remainingLitres.intValue());
 		} else {
 			return null;
 		}
@@ -350,10 +383,18 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		AmphiroDataPoint amphiroPoint = (AmphiroDataPoint) dataPoint;
 		Double lastDaySum = amphiroPoint.getVolume().get(EnumMetric.SUM);
 
-		double percentUsed = (config.getDailyBudgetAmphiro() * lastDaySum) / 100;
+		double percentUsed = (100 * lastDaySum) / config.getDailyBudgetAmphiro();
 
+        Double remainingLitres;
+        if(lastDaySum > config.getDailyBudgetAmphiro()){
+            remainingLitres = 0.0;
+        }
+        else{
+            remainingLitres = config.getDailyBudgetAmphiro() - lastDaySum;
+        }
+        
 		if (percentUsed > 80) {
-			return new SimpleEntry<>(lastDaySum.intValue(), config.getDailyBudgetAmphiro());
+			return new SimpleEntry<>(lastDaySum.intValue(), remainingLitres.intValue());
 		} else {
 			return null;
 		}
@@ -382,10 +423,18 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		AmphiroDataPoint amphiroPoint = (AmphiroDataPoint) dataPoint;
 		Double lastWeekSum = amphiroPoint.getVolume().get(EnumMetric.SUM);
 
-		double percentUsed = (config.getWeeklyBudgetAmphiro() * lastWeekSum) / 100;
+		double percentUsed = (100 * lastWeekSum) / config.getWeeklyBudgetAmphiro();
 
+        Double remainingLitres;
+        if(lastWeekSum > config.getWeeklyBudgetAmphiro()){
+            remainingLitres = 0.0;
+        }
+        else{
+            remainingLitres = config.getWeeklyBudgetAmphiro() - lastWeekSum;
+        }
+        
 		if (percentUsed > 80) {
-			return new SimpleEntry<>(lastWeekSum.intValue(), config.getWeeklyBudgetAmphiro());
+			return new SimpleEntry<>(lastWeekSum.intValue(), remainingLitres.intValue());
 		} else {
 			return null;
 		}
@@ -414,7 +463,6 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		MeterDataPoint meterPoint = (MeterDataPoint) dataPoint;
 		Double lastDaySum = meterPoint.getVolume().get(EnumMetric.SUM);
 		SimpleEntry<Boolean, Integer> entry;
-
 		if (lastDaySum > config.getDailyBudget() * 1.2) {
 			entry = new SimpleEntry<>(true, config.getDailyBudget());
 		} else {
@@ -623,6 +671,10 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 			return new SimpleEntry<>(false, null);
 		}
 
+        if(dataSeriesAmphiro.get(0).getPoints().isEmpty()){
+            return new SimpleEntry<>(false, null);            
+        }
+        
 		for (GroupDataSeries serie : dataSeriesAmphiro) {
 			if (!serie.getPoints().isEmpty()) { // check for non existent data
 				ArrayList<DataPoint> points = serie.getPoints();
@@ -1025,7 +1077,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
                                 DataPoint dataPoint = serie.getPoints().get(0);
                                 AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
                                 userAverageMonthlyConsumption = (amphiroDataPoint.getVolume().get(EnumMetric.SUM)) / 3;
-                                if (amphiroDataPoint.getDuration().get(EnumMetric.AVERAGE) > aggregates.getAverageDurationAmphiro().getValue()) {
+                                if (amphiroDataPoint.getDuration().get(EnumMetric.AVERAGE) > (aggregates.getAverageDurationAmphiro().getValue()*1.5)) {
                                         fireAlert = true;
                                 }
                         }
@@ -1296,12 +1348,12 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 
     private boolean isMeterInstalledForUser(UUID userKey){
         DeviceRegistrationQuery query = new DeviceRegistrationQuery(EnumDeviceType.METER);
-        return deviceRepository.getUserDevices(userKey, query).isEmpty(); 
+        return !deviceRepository.getUserDevices(userKey, query).isEmpty(); 
     }
         
     private boolean isAmphiroInstalledForUser(UUID userKey){
         DeviceRegistrationQuery query = new DeviceRegistrationQuery(EnumDeviceType.AMPHIRO);
-        return deviceRepository.getUserDevices(userKey, query).isEmpty(); 
+        return !deviceRepository.getUserDevices(userKey, query).isEmpty(); 
     }        
                 
 	private int computeConsecutiveZeroConsumptions(List<Double> values) {

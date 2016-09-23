@@ -3,6 +3,7 @@ package eu.daiad.web.model.security;
 import java.util.Collection;
 import java.util.UUID;
 
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.SpringSecurityCoreVersion;
@@ -50,6 +51,8 @@ public class AuthenticatedUser extends User {
 
     private EnumUtilityMode utilityMode = EnumUtilityMode.INACTIVE;
 
+    private boolean allowPasswordReset = false;
+
     public AuthenticatedUser(int id, UUID key, String username, String password, int utilityId, UUID utilityKey,
                     boolean isLocked, Collection<? extends GrantedAuthority> authorities) {
         super(username, password, true, true, true, !isLocked, authorities);
@@ -75,6 +78,18 @@ public class AuthenticatedUser extends User {
 
     public void setLastname(String lastname) {
         this.lastname = lastname;
+    }
+
+    public String getFullname() {
+        if ((!StringUtils.isBlank(firstname)) && (!StringUtils.isBlank(lastname))) {
+            return String.format("%s , %s", lastname, firstname);
+        } else if (!StringUtils.isBlank(lastname)) {
+            return lastname;
+        } else if (!StringUtils.isBlank(firstname)) {
+            return firstname;
+        }
+
+        return null;
     }
 
     public UUID getKey() {
@@ -179,5 +194,13 @@ public class AuthenticatedUser extends User {
 
     public UUID getUtilityKey() {
         return utilityKey;
+    }
+
+    public boolean isAllowPasswordReset() {
+        return allowPasswordReset;
+    }
+
+    public void setAllowPasswordReset(boolean allowPasswordReset) {
+        this.allowPasswordReset = allowPasswordReset;
     }
 }

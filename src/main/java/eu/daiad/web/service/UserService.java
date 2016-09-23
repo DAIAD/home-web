@@ -3,10 +3,13 @@ package eu.daiad.web.service;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTimeZone;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.logging.MappedDiagnosticContextKeys;
 import eu.daiad.web.logging.MappedDiagnosticContextValues;
+import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.admin.AccountWhiteListEntry;
 import eu.daiad.web.model.device.Device;
@@ -28,17 +32,33 @@ import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
+import eu.daiad.web.model.security.PasswordResetMailModel;
+import eu.daiad.web.model.security.PasswordResetToken;
 import eu.daiad.web.model.user.Account;
 import eu.daiad.web.model.user.UserRegistrationRequest;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IUserRepository;
+import eu.daiad.web.security.IPasswordValidator;
+import eu.daiad.web.service.mail.IMailService;
+import eu.daiad.web.service.mail.Message;
 
 @Service
 public class UserService extends BaseService implements IUserService {
 
+    private static final Log logger = LogFactory.getLog(UserService.class);
+
+    private final static String PASSWORD_RESET_MAIL_TEMPLATE_HOME = "password-reset-web";
+    
+    private final static String PASSWORD_RESET_MAIL_TEMPLATE_UTILITY = "password-reset-web";
+    
+    private final static String PASSWORD_RESET_MAIL_TEMPLATE_MOBILE = "password-reset-mobile";
+    
+    @Value("${daiad.url}")
+    private String baseSiteUrl;
+   
     @Value("${security.white-list}")
     private boolean enforceWhiteListCheck;
-
+    
     @Autowired
     private IUserRepository userRepository;
 
@@ -48,6 +68,9 @@ public class UserService extends BaseService implements IUserService {
     @Autowired
     private IPasswordValidator passwordValidator;
 
+    @Autowired
+    private IMailService mailService;
+    
     @Override
     @Transactional("applicationTransactionManager")
     public UUID createUser(UserRegistrationRequest request) throws ApplicationException {
@@ -118,11 +141,16 @@ public class UserService extends BaseService implements IUserService {
 
     @Override
     @Transactional("applicationTransactionManager")
-    public void setPassword(String username, String password) throws ApplicationException {
+    public void changePassword(String username, String password) throws ApplicationException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         AuthenticatedUser authenticatedUser = (AuthenticatedUser) authentication.getPrincipal();
 
-        if (!authenticatedUser.hasRole(EnumRole.ROLE_ADMIN)) {
+        // Check permissions
+        if (authenticatedUser.hasRole(EnumRole.ROLE_USER)) {
+            if (!authenticatedUser.getUsername().equals(username)) {
+                throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+            }
+        } else if (!authenticatedUser.hasRole(EnumRole.ROLE_ADMIN)) {
             throw createApplicationException(SharedErrorCode.AUTHORIZATION);
         }
 
@@ -136,13 +164,13 @@ public class UserService extends BaseService implements IUserService {
         if (authenticatedUser.getUtilityId() != user.getUtilityId()) {
             throw createApplicationException(SharedErrorCode.AUTHORIZATION);
         }
-
+        
         List<ErrorCode> errors = passwordValidator.validate(password);
         if (!errors.isEmpty()) {
             throw createApplicationException(errors.get(0));
         }
 
-        userRepository.setPassword(username, password);
+        userRepository.changePassword(username, password);
     }
 
     @Override
@@ -200,9 +228,87 @@ public class UserService extends BaseService implements IUserService {
         if (authenticatedUser.getUtilityId() != user.getUtilityId()) {
             throw createApplicationException(SharedErrorCode.AUTHORIZATION);
         }
+        
+        if(authenticatedUser.getUsername().equals(username)) {
+            throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+        }
 
         // Revoke role
         userRepository.revokeRole(username, role);
+    }
+   
+    @Override
+    public UUID resetPasswordCreateToken(String username, boolean sendMail, EnumApplication application) throws ApplicationException {
+        // Find user
+        AuthenticatedUser user = userRepository.getUserByName(username);
+        if (user == null) {
+            throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
+        }
+
+        // Administrator password reset must be performed manually
+        if (user.hasRole(EnumRole.ROLE_ADMIN)) {
+            throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+        }
+
+        if (!user.isAllowPasswordReset()) {
+            throw createApplicationException(UserErrorCode.PASSWORD_RESET_NOT_ALLOWED);
+        }
+
+        // Generate password reset token, pin and target URL
+        PasswordResetToken token = userRepository.createPasswordResetToken(application, username);
+
+        String url = baseSiteUrl + "password/reset/" + token.getToken().toString() + "/";
+
+        // Send email
+        if (sendMail) {
+            Message message = new Message();
+
+            message.setSubject(messageSource.getMessage("ResetPassword.Mail.Subject", null, "Password Reset",
+                            new Locale(user.getLocale())));
+
+            if (StringUtils.isBlank(user.getFullname())) {
+                message.setRecipients(user.getUsername());
+            } else {
+                message.setRecipients(user.getUsername(), user.getFullname());
+            }
+
+            message.setLocale(user.getLocale());
+            message.setModel(new PasswordResetMailModel(user, url, token.getPin()));
+
+            if (application == null) {
+                application = EnumApplication.UNDEFINED;
+            }
+            switch(application) {
+                case HOME:
+                    message.setTemplate(PASSWORD_RESET_MAIL_TEMPLATE_HOME);
+                    break;
+                case UTILITY:
+                    message.setTemplate(PASSWORD_RESET_MAIL_TEMPLATE_UTILITY);
+                    break;
+                case MOBILE:
+                    message.setTemplate(PASSWORD_RESET_MAIL_TEMPLATE_MOBILE);
+                    break;
+                default:
+                    throw createApplicationException(UserErrorCode.PASSWORD_RESET_APPLICATION_NOT_SUPPORTED);
+            }
+
+            mailService.send(message);
+        }
+
+        logger.warn(String.format("Password reset token has been created for user [%s].", username));
+
+        return token.getToken();
+    }
+    
+    @Override
+    public void resetPasswordRedeemToken(UUID token, String pin, String password) throws ApplicationException {
+        List<ErrorCode> errors = passwordValidator.validate(password);
+        
+        if(!errors.isEmpty()) {
+            throw createApplicationException(errors.get(0));
+        }
+
+        userRepository.resetPassword(token, pin, password);
     }
 
 }

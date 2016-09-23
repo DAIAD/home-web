@@ -110,17 +110,17 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
         }
 
         alertWaterLeakSWM(config, status, account);
-        alertWaterQualitySWM(config, status, account);
+        //alertWaterQualitySWM(config, status, account);
         // alertPromptGoodJobMonthlySWM(config, aggregates, status, account);
         // //inactive prompt
         // promptGoodJobWeeklySWM(account); using monthly for now.
         alertTooMuchWaterConsumptionSWM(config, aggregates, status, account);
         alertReducedWaterUseSWM(config, status, account);
 
-        alertNearDailyBudgetSWM(config, status, account);
-        alertNearWeeklyBudgetSWM(config, status, account);
-        alertReachedDailyBudgetSWM(config, status, account);
-        alertWaterChampionSWM(config, status, account);
+        //alertNearDailyBudgetSWM(config, status, account);
+        //alertNearWeeklyBudgetSWM(config, status, account);
+        //alertReachedDailyBudgetSWM(config, status, account);
+        //alertWaterChampionSWM(config, status, account);
 
         alertWaterEfficiencyLeaderSWM(config, aggregates, status, account);
         // alertKeepUpSavingWaterSWM(config, status, account); //inactive prompt

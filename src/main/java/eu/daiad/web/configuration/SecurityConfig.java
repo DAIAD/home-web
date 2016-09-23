@@ -35,6 +35,11 @@ import eu.daiad.web.security.RESTLogoutSuccessHandler;
 @Order(SecurityProperties.ACCESS_OVERRIDE_ORDER)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+    private static final String[] AUTHORIZED_PATHS = { "/", "/login", "/logout", "/error/**", "/password/reset/**",
+                    "/action/user/password/reset/token/redeem", "/home/**", "/utility/**", "/assets/**", "/api/**" };
+
+    private static final String DOCUMENTATION_PATH = "/docs/**";
+    
     @Bean
     protected ErrorProperties errorProperties() {
         return new ErrorProperties();
@@ -79,12 +84,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         // Allow anonymous access to selected requests
-        http.authorizeRequests().antMatchers("/", "/login", "/logout", "/error/**", "/home/**", "/utility/**",
-                        "/assets/**", "/api/**").permitAll();
+        http.authorizeRequests().antMatchers(AUTHORIZED_PATHS).permitAll();
         if(documentationRequiresAuthentication) {
-            http.authorizeRequests().antMatchers("/docs/**").access("hasRole('ROLE_ADMIN')");
+            http.authorizeRequests().antMatchers(DOCUMENTATION_PATH).access("hasRole('ROLE_ADMIN')");
         } else {
-            http.authorizeRequests().antMatchers("/docs/**").permitAll();
+            http.authorizeRequests().antMatchers(DOCUMENTATION_PATH).permitAll();
         }
 
         // Disable CSRF for API requests

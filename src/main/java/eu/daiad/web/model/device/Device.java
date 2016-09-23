@@ -40,6 +40,16 @@ public abstract class Device {
         return this.properties;
     }
 
+    public String getProperty(String key) {
+        for(KeyValuePair property : this.properties) {
+            if(property.getKey().equals(key)) {
+                return property.getValue();
+            }
+        }
+        
+        return null;
+    }
+
     public void setProperties(ArrayList<KeyValuePair> properties) {
         if (properties == null) {
             this.properties = new ArrayList<KeyValuePair>();

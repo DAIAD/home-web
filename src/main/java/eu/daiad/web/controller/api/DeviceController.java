@@ -13,7 +13,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseRestController;
+import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.device.AmphiroDeviceRegistrationRequest;
 import eu.daiad.web.model.device.AmphiroDeviceRegistrationResponse;
 import eu.daiad.web.model.device.Device;
@@ -26,6 +28,7 @@ import eu.daiad.web.model.device.DeviceRegistrationQueryResult;
 import eu.daiad.web.model.device.DeviceRegistrationRequest;
 import eu.daiad.web.model.device.DeviceRegistrationResponse;
 import eu.daiad.web.model.device.DeviceResetRequest;
+import eu.daiad.web.model.device.DeviceUpdateRequest;
 import eu.daiad.web.model.device.NotifyConfigurationRequest;
 import eu.daiad.web.model.device.ShareDeviceRequest;
 import eu.daiad.web.model.device.WaterMeterDeviceRegistrationRequest;
@@ -36,9 +39,7 @@ import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 
 /**
- * 
  * Provides actions for configuring Amphiro B1 devices and smart water meters.
- *
  */
 @RestController("RestDeviceController")
 public class DeviceController extends BaseRestController {
@@ -61,8 +62,6 @@ public class DeviceController extends BaseRestController {
 	public RestResponse registerAmphiro(@RequestBody DeviceRegistrationRequest data) {
 		RestResponse response = new RestResponse();
 
-		UUID deviceKey = null;
-
 		try {
 			AuthenticatedUser user = this.authenticate(data.getCredentials(), EnumRole.ROLE_USER);
 
@@ -71,23 +70,32 @@ public class DeviceController extends BaseRestController {
 					if (data instanceof AmphiroDeviceRegistrationRequest) {
 						AmphiroDeviceRegistrationRequest amphiroData = (AmphiroDeviceRegistrationRequest) data;
 
-						Device device = deviceRepository.getUserAmphiroDeviceByMacAddress(user.getKey(),
+	                    // Check if a device with the same MAC Address is already registered
+						AmphiroDevice existingDevice = (AmphiroDevice) deviceRepository.getUserAmphiroDeviceByMacAddress(user.getKey(),
 										amphiroData.getMacAddress());
 
-						if (device != null) {
+						if (existingDevice != null) {
 							throw createApplicationException(DeviceErrorCode.ALREADY_EXISTS).set("id",
 											amphiroData.getMacAddress());
 						}
 
-						deviceKey = deviceRepository.createAmphiroDevice(user.getKey(), amphiroData.getName(),
-										amphiroData.getMacAddress(), amphiroData.getAesKey(),
-										amphiroData.getProperties());
+						// Create new device
+                        AmphiroDevice newDevice = deviceRepository.createAmphiroDevice(user.getKey(), amphiroData
+                                        .getName(), amphiroData.getMacAddress(), amphiroData.getAesKey(), amphiroData
+                                        .getProperties());
 
+                        // Get device configuration
 						ArrayList<DeviceConfigurationCollection> deviceConfigurationCollection = deviceRepository
-										.getConfiguration(user.getKey(), new UUID[] { deviceKey });
+										.getConfiguration(user.getKey(), new UUID[] { newDevice.getKey() });
 
-						AmphiroDeviceRegistrationResponse deviceResponse = new AmphiroDeviceRegistrationResponse();
-						deviceResponse.setDeviceKey(deviceKey.toString());
+						// Update response
+                        AmphiroDeviceRegistrationResponse deviceResponse = new AmphiroDeviceRegistrationResponse();
+                        deviceResponse.setDeviceKey(newDevice.getKey());
+                        deviceResponse.setAesKey(newDevice.getAesKey());
+                        deviceResponse.setMacAddress(newDevice.getMacAddress());
+                        deviceResponse.setName(newDevice.getName());
+                        deviceResponse.setRegisteredOn(newDevice.getRegisteredOn());
+
 
 						if (deviceConfigurationCollection.size() == 1) {
 							for (DeviceAmphiroConfiguration configuration : deviceConfigurationCollection.get(0)
@@ -95,6 +103,10 @@ public class DeviceController extends BaseRestController {
 								deviceResponse.getConfigurations().add(configuration);
 							}
 						}
+						
+                        for (KeyValuePair p : newDevice.getProperties()) {
+                            deviceResponse.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
+                        }
 
 						return deviceResponse;
 					}
@@ -152,7 +164,7 @@ public class DeviceController extends BaseRestController {
 										meterData.getProperties(), meterData.getLocation());
 
 						DeviceRegistrationResponse deviceResponse = new DeviceRegistrationResponse();
-						deviceResponse.setDeviceKey(deviceKey.toString());
+						deviceResponse.setDeviceKey(deviceKey);
 
 						return deviceResponse;
 					}
@@ -310,4 +322,28 @@ public class DeviceController extends BaseRestController {
 
 		return response;
 	}
+	
+    /**
+     * Updates a device properties.
+     *  
+     * @param request the update request.
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/api/v1/device/update", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    public RestResponse update(@RequestBody DeviceUpdateRequest request) {
+        RestResponse response = new RestResponse();
+
+        try {
+            AuthenticatedUser user = this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
+
+            deviceRepository.updateDevice(user.getKey(), request);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
+    
 }

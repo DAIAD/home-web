@@ -30,7 +30,7 @@ public interface IWeatherRepository {
     /**
      * Returns meta data for the weather service with the given name.
      * 
-     * @param serviceId The service name.
+     * @param serviceName The service name.
      * @return The service meta data.
      */
     WeatherServiceEntity getServiceByName(String serviceName);
@@ -38,10 +38,10 @@ public interface IWeatherRepository {
     /**
      * Updates weather data for a specific utility as loaded from a specific weather data harvester.
      * 
-     * @param Identifier of the weather service used for generating the data.
-     * @param Identifier of the utility the data refer to.
-     * @param Weather data generation time stamp from the data provider.
-     * @param data The weather data.
+     * @param serviceId identifier of the weather service used for generating the data.
+     * @param utilityId identifier of the utility the data refer to.
+     * @param createdOn weather data generation time stamp from the data provider.
+     * @param data the weather data.
      */
     void update(int serviceId, int utilityId, DateTime createdOn, List<DailyWeatherData> data);
 

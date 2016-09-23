@@ -42,7 +42,13 @@
 <script th:inline="javascript">
     var properties = {
         reload: [[${reload}]],
-       	locale: 'en'
+       	locale: 'en',
+       	captchaKey: [[${googleReCAPTCHASiteKey}]]
+    };
+
+
+    var recaptchaOptions = {
+      lang: [[${locale}]]
     };
 </script>
 </head>

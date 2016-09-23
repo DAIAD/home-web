@@ -49,10 +49,12 @@ import eu.daiad.web.model.amphiro.AmphiroSessionIndexIntervalQuery;
 import eu.daiad.web.model.amphiro.AmphiroSessionIndexIntervalQueryResult;
 import eu.daiad.web.model.amphiro.AmphiroSessionUpdate;
 import eu.daiad.web.model.amphiro.AmphiroSessionUpdateCollection;
+import eu.daiad.web.model.amphiro.MemberAssignmentRequest;
 import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DataErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.model.profile.EnumMemberSelectionMode;
 import eu.daiad.web.model.query.AmphiroDataPoint;
 import eu.daiad.web.model.query.AmphiroUserDataPoint;
 import eu.daiad.web.model.query.DataPoint;
@@ -69,13 +71,17 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository implements IAmphiroIndexOrderedRepository {
 
     private static final String dataSessionLoggerName = "AmphiroSessionLogger";
-    
+
+    private static final String dataSessionMemberLoggerName = "AmphiroSessionMemberLogger";
+
     private static final String dataMeasurementLoggerName = "AmphiroMeasurementLogger";
 
     private static final Log logger = LogFactory.getLog(HBaseAmphiroIndexOrderedRepository.class);
 
     private static final Log dataSessionLogger = LogFactory.getLog(dataSessionLoggerName);
     
+    private static final Log dataSessionMemberLogger = LogFactory.getLog(dataSessionMemberLoggerName);
+
     private static final Log dataMeasurementLogger = LogFactory.getLog(dataMeasurementLoggerName);
 
     private final String ERROR_RELEASE_RESOURCES = "Failed to release resources";
@@ -261,6 +267,22 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                     column = Bytes.toBytes("m:f");
                     put.addColumn(columnFamily, column, Bytes.toBytes(s.getFlow()));
 
+                    if (s.getMember() != null) {
+                        column = Bytes.toBytes("l:i");
+                        put.addColumn(columnFamily, column, Bytes.toBytes(s.getMember().getIndex()));
+
+                        column = Bytes.toBytes("l:m");
+                        put.addColumn(columnFamily, column, s.getMember().getMode().toString().getBytes(StandardCharsets.UTF_8));
+
+                        if (s.getMember().getTimestamp() == null) {
+                            column = Bytes.toBytes("l:t");
+                            put.addColumn(columnFamily, column, Bytes.toBytes(s.getTimestamp()));
+                        } else {
+                            column = Bytes.toBytes("l:t");
+                            put.addColumn(columnFamily, column, Bytes.toBytes(s.getMember().getTimestamp()));
+                        }
+                    }
+
                     for (int p = 0, count = s.getProperties().size(); p < count; p++) {
                         column = Bytes.toBytes(s.getProperties().get(p).getKey());
                         put.addColumn(columnFamily, column, s.getProperties().get(p).getValue().getBytes(
@@ -422,7 +444,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                 column = Bytes.toBytes("m:d");
                 put.addColumn(columnFamily, column, Bytes.toBytes(s.getDuration()));
 
-                column = Bytes.toBytes("m:t");
+                column = Bytes.toBytes("m:t");  
                 put.addColumn(columnFamily, column, Bytes.toBytes(s.getTemperature()));
 
                 column = Bytes.toBytes("m:f");
@@ -430,6 +452,22 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 
                 column = Bytes.toBytes("s:h");
                 put.addColumn(columnFamily, column, Bytes.toBytes(s.isHistory()));
+
+                if (s.getMember() != null) {
+                    column = Bytes.toBytes("l:i");
+                    put.addColumn(columnFamily, column, Bytes.toBytes(s.getMember().getIndex()));
+
+                    column = Bytes.toBytes("l:m");
+                    put.addColumn(columnFamily, column, s.getMember().getMode().toString().getBytes(StandardCharsets.UTF_8));
+
+                    if (s.getMember().getTimestamp() == null) {
+                        column = Bytes.toBytes("l:t");
+                        put.addColumn(columnFamily, column, Bytes.toBytes(s.getTimestamp()));
+                    } else {
+                        column = Bytes.toBytes("l:t");
+                        put.addColumn(columnFamily, column, Bytes.toBytes(s.getMember().getTimestamp()));
+                    }
+                }
 
                 for (int p = 0, count = s.getProperties().size(); p < count; p++) {
                     column = Bytes.toBytes(s.getProperties().get(p).getKey());
@@ -474,6 +512,20 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                 tokens.add(Float.toString(session.getEnergy()));
                 tokens.add(Float.toString(session.getTemperature()));
                 tokens.add(Float.toString(session.getFlow()));
+                
+                if (session.getMember() == null) {
+                    tokens.add("");
+                    tokens.add("");
+                    tokens.add("");
+                } else {
+                    tokens.add(Integer.toString(session.getMember().getIndex()));
+                    tokens.add(session.getMember().getMode().toString());
+                    if (session.getMember().getTimestamp() == null) {
+                        tokens.add(Long.toString(session.getTimestamp()));
+                    } else {
+                        tokens.add(Long.toString(session.getMember().getTimestamp()));
+                    }
+                }
 
                 dataSessionLogger.info(StringUtils.join(tokens, ";"));
             }
@@ -501,6 +553,29 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                 tokens.add(Float.toString(measurement.getTemperature()));
 
                 dataMeasurementLogger.info(StringUtils.join(tokens, ";"));
+            }
+        }
+    }
+
+    private void logMemberAssignmentData(AuthenticatedUser user, List<MemberAssignmentRequest.Assignment> assignments) {
+        if (assignments != null) {
+            for (MemberAssignmentRequest.Assignment assignment : assignments) {
+                List<String> tokens = new ArrayList<String>();
+
+                tokens.add("v2");
+
+                tokens.add(Integer.toString(user.getId()));
+                tokens.add(user.getKey().toString());
+                tokens.add(user.getUsername());
+
+                tokens.add(assignment.getDeviceKey().toString());
+
+                tokens.add("MANUAL");
+                tokens.add(Long.toString(assignment.getSessionId()));
+                tokens.add(Long.toString(assignment.getTimestamp()));
+                tokens.add(Integer.toString(assignment.getMemberIndex()));
+
+                dataSessionMemberLogger.info(StringUtils.join(tokens, ";"));
             }
         }
     }
@@ -996,6 +1071,10 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                     AmphiroSession session = new AmphiroSession();
                     session.setId(sessionId);
 
+                    Integer memberIndex = null;
+                    EnumMemberSelectionMode memberMode = EnumMemberSelectionMode.AUTO;
+                    Long memberTimestamp = null;
+
                     for (Entry<byte[], byte[]> entry : map.entrySet()) {
 
                         String qualifier = Bytes.toString(entry.getKey());
@@ -1028,6 +1107,15 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                             case "m:f":
                                 session.setFlow(Bytes.toFloat(entry.getValue()));
                                 break;
+                            case "l:i":
+                                memberIndex = Bytes.toInt(entry.getValue());
+                                break;
+                            case "l:m":
+                                memberMode = EnumMemberSelectionMode.fromString(new String(entry.getValue(), StandardCharsets.UTF_8));
+                                break;
+                            case "l:t":
+                                memberTimestamp = Bytes.toLong(entry.getValue());
+                                break;
                             default:
                                 session.addProperty(qualifier, new String(entry.getValue(), StandardCharsets.UTF_8));
                                 break;
@@ -1035,6 +1123,15 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                     }
 
                     if (totalSessions < maxTotalSessions) {
+                        if (memberIndex != null) {
+                            session.setMember(new AmphiroSession.Member());
+                            
+                            session.getMember().setIndex(memberIndex);
+                            session.getMember().setMode(memberMode);
+                            session.getMember().setTimestamp(memberTimestamp == null ? session.getTimestamp() : memberTimestamp);
+                        }
+
+                        
                         sessions.add(session);
                         totalSessions++;
                     }
@@ -1119,6 +1216,10 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                 AmphiroSessionDetails session = new AmphiroSessionDetails();
                 session.setId(query.getSessionId());
 
+                Integer memberIndex = null;
+                EnumMemberSelectionMode memberMode = EnumMemberSelectionMode.AUTO;
+                Long memberTimestamp = null;
+                
                 for (Entry<byte[], byte[]> entry : map.entrySet()) {
 
                     String qualifier = Bytes.toString(entry.getKey());
@@ -1151,14 +1252,32 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                         case "m:f":
                             session.setFlow(Bytes.toFloat(entry.getValue()));
                             break;
+                        case "l:i":
+                            memberIndex = Bytes.toInt(entry.getValue());
+                            break;
+                        case "l:m":
+                            memberMode = EnumMemberSelectionMode.fromString(new String(entry.getValue(), StandardCharsets.UTF_8));
+                            break;
+                        case "l:t":
+                            memberTimestamp = Bytes.toLong(entry.getValue());
+                            break;
                         default:
                             session.addProperty(qualifier, new String(entry.getValue(), StandardCharsets.UTF_8));
                             break;
                     }
                 }
 
-                session.setMeasurements(this.getSessionMeasurements(query));
-
+                if (memberIndex != null) {
+                    session.setMember(new AmphiroSession.Member());
+                    
+                    session.getMember().setIndex(memberIndex);
+                    session.getMember().setMode(memberMode);
+                    session.getMember().setTimestamp(memberTimestamp == null ? session.getTimestamp() : memberTimestamp);
+                }
+                
+                if (!query.isExcludeMeasurements()) {
+                    session.setMeasurements(this.getSessionMeasurements(query));
+                }
                 data.setSession(session);
             }
 
@@ -1556,6 +1675,167 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
         return result;
     }
 
+
+    @Override
+    public void assignMemberToSession(AuthenticatedUser user,  List<MemberAssignmentRequest.Assignment> assignments) throws Exception {
+        if (assignments != null) {
+            logMemberAssignmentData(user, assignments);
+            
+            for (MemberAssignmentRequest.Assignment assignment : assignments) {
+                AmphiroSessionIndexIntervalQuery query = new AmphiroSessionIndexIntervalQuery();
+                
+                query.setDeviceKey(assignment.getDeviceKey());
+                query.setSessionId(assignment.getSessionId());
+                query.setUserKey(user.getKey());
+                query.setExcludeMeasurements(true);
+                
+                AmphiroSessionIndexIntervalQueryResult result = this.getSession(query);
+                if(result.getSession() == null) {
+                    throw createApplicationException(DataErrorCode.SESSION_NOT_FOUND).set("session", assignment.getSessionId());
+                }
+                
+                assignMeterToSessionInUserTable(user.getKey(), assignment, result.getSession());
+                assignMeterToSessionInTimeTable(user.getKey(), assignment, result.getSession());
+            }
+        }
+    }
+    
+    private void assignMeterToSessionInUserTable(UUID userKey, 
+                                                 MemberAssignmentRequest.Assignment assignment, 
+                                                 AmphiroSessionDetails session) throws Exception {
+        Table table = null;
+
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+
+            table = connection.getTable(this.amphiroTableSessionByUser);
+            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+
+            byte[] rowKey;
+
+            byte[] userKeyBytes = userKey.toString().getBytes("UTF-8");
+            byte[] userKeyHash = md.digest(userKeyBytes);
+
+            byte[] deviceKey = assignment.getDeviceKey().toString().getBytes("UTF-8");
+            byte[] deviceKeyHash = md.digest(deviceKey);
+
+            byte[] sessionIdBytes = Bytes.toBytes(Long.MAX_VALUE - assignment.getSessionId());
+
+            // Construct row key
+            rowKey = new byte[userKeyHash.length + deviceKeyHash.length + sessionIdBytes.length];
+
+            System.arraycopy(userKeyHash, 0, rowKey, 0, userKeyHash.length);
+            System.arraycopy(deviceKeyHash, 0, rowKey, userKeyHash.length, deviceKeyHash.length);
+            System.arraycopy(sessionIdBytes, 0, rowKey, (userKeyHash.length + deviceKeyHash.length),
+                            sessionIdBytes.length);
+
+            // Update row
+            Put put = new Put(rowKey);
+            byte[] column;
+
+            column = Bytes.toBytes("l:i");
+            put.addColumn(columnFamily, column, Bytes.toBytes(assignment.getMemberIndex()));
+
+            column = Bytes.toBytes("l:m");
+            put.addColumn(columnFamily, column, EnumMemberSelectionMode.MANUAL.toString().getBytes(StandardCharsets.UTF_8));
+
+            if (assignment.getTimestamp() == null) {
+                column = Bytes.toBytes("l:t");
+                put.addColumn(columnFamily, column, Bytes.toBytes(session.getTimestamp()));
+            } else {
+                column = Bytes.toBytes("l:t");
+                put.addColumn(columnFamily, column, Bytes.toBytes(assignment.getTimestamp()));
+            }
+            
+            table.put(put);
+        } finally {
+            try {
+                if (table != null) {
+                    table.close();
+                    table = null;
+                }
+            } catch (Exception ex) {
+                logger.error(ERROR_RELEASE_RESOURCES, ex);
+            }
+        }
+    }
+    
+    private void assignMeterToSessionInTimeTable(UUID userKey, 
+                                                 MemberAssignmentRequest.Assignment assignment, 
+                                                 AmphiroSessionDetails session) throws Exception {
+        Table table = null;
+
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+
+            table = connection.getTable(this.amphiroTableSessionByTime);
+            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+
+            long timestamp, offset, timeBucket;
+
+            byte[] partitionBytes, timeBucketBytes, rowKey;
+
+            byte[] userKeyBytes = userKey.toString().getBytes("UTF-8");
+            byte[] userKeyHash = md.digest(userKeyBytes);
+
+            byte[] deviceKey = assignment.getDeviceKey().toString().getBytes("UTF-8");
+            byte[] deviceKeyHash = md.digest(deviceKey);
+
+            byte[] sessionIdBytes = Bytes.toBytes(assignment.getSessionId());
+
+            short partition = (short) (session.getTimestamp() % this.timePartitions);
+            partitionBytes = Bytes.toBytes(partition);
+
+            timestamp = session.getTimestamp() / 1000;
+            offset = timestamp % EnumTimeInterval.DAY.getValue();
+            timeBucket = timestamp - offset;
+
+            timeBucketBytes = Bytes.toBytes(timeBucket);
+
+            rowKey = new byte[partitionBytes.length + timeBucketBytes.length + userKeyHash.length
+                            + deviceKeyHash.length + sessionIdBytes.length];
+
+            System.arraycopy(partitionBytes, 0, rowKey, 0, partitionBytes.length);
+            System.arraycopy(timeBucketBytes, 0, rowKey, partitionBytes.length, timeBucketBytes.length);
+            System.arraycopy(userKeyHash, 0, rowKey, (partitionBytes.length + timeBucketBytes.length),
+                            userKeyHash.length);
+            System.arraycopy(deviceKeyHash, 0, rowKey,
+                            (partitionBytes.length + timeBucketBytes.length + userKeyHash.length),
+                            deviceKeyHash.length);
+            System.arraycopy(sessionIdBytes, 0, rowKey, (partitionBytes.length + timeBucketBytes.length
+                            + userKeyHash.length + deviceKeyHash.length), sessionIdBytes.length);
+
+            Put put = new Put(rowKey);
+
+            byte[] column;
+
+            column = Bytes.toBytes("l:i");
+            put.addColumn(columnFamily, column, Bytes.toBytes(assignment.getMemberIndex()));
+
+            column = Bytes.toBytes("l:m");
+            put.addColumn(columnFamily, column, EnumMemberSelectionMode.MANUAL.toString().getBytes(StandardCharsets.UTF_8));
+
+            if (assignment.getTimestamp() == null) {
+                column = Bytes.toBytes("l:t");
+                put.addColumn(columnFamily, column, Bytes.toBytes(session.getTimestamp()));
+            } else {
+                column = Bytes.toBytes("l:t");
+                put.addColumn(columnFamily, column, Bytes.toBytes(assignment.getTimestamp()));
+            }
+
+            table.put(put);
+        } finally {
+            try {
+                if (table != null) {
+                    table.close();
+                    table = null;
+                }
+            } catch (Exception ex) {
+                logger.error(ERROR_RELEASE_RESOURCES, ex);
+            }
+        }
+    }
+    
     private void cleanSeries(ExpandedDataQuery query, ArrayList<GroupDataSeries> result) {
         int filterIndex = 0;
         for (final ExpandedPopulationFilter filter : query.getGroups()) {

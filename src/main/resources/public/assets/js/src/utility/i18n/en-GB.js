@@ -22,6 +22,19 @@
 			"password":"Password"
 		}
 	},
+  "PasswordResetForm": {
+    "title": "Password Reset",
+    "placehoder": {
+      "password1": "Enter password",
+      "password2": "Re-enter password"
+    },
+    "button": {
+      "reset": "Reset"
+    },
+    "message": {
+      "success" : "Your password has been successfully reset. Click to return to the login page."
+    }
+  },
 	"Section": {
       "Dashboard": "Dashboard",
       "Map": "Map",
@@ -58,6 +71,9 @@
         "Development": "Development"
       }
 	},
+  "Page": {
+    "PasswordReset":"Reset Password"
+  },
 	"Demographics" : {
 		"Group" : "Groups",
 		"Favourites" : {
@@ -264,8 +280,12 @@
 		"403" : "Authentication has failed",
 		"404" : "Not found",
 		"500" : "Internal server error",
-		"SharedErrorCode.AUTHENTICATION": "Authentication has failed. Please try again.",
-		"SharedErrorCode.SESSION_EXPIRED": "Your session has expired.",
+    "SharedErrorCode.AUTHENTICATION": "Authentication has failed. Please try again.",
+    "SharedErrorCode.SESSION_EXPIRED": "Your session has expired.",
+    "SharedErrorCode.AUTHENTICATION_NO_CREDENTIALS": "Authentication has failed. No credentials.",
+    "SharedErrorCode.AUTHORIZATION": "Authorization has failed.",
+    "SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION": "Authorization has failed. Anonymous session.",
+    "SharedErrorCode.AUTHORIZATION_MISSING_ROLE": "Authorization has failed. Missing required role.",
     "ValidationError.User.NO_FIRST_NAME": "First name is missing.",
     "ValidationError.User.NO_LAST_NAME": "Last name is missing.",
     "ValidationError.User.NO_EMAIL": "E-mail address is missing.",
@@ -278,6 +298,13 @@
     "ValidationError.User.TOO_LONG_ADDRESS" : "Address exceeds maximum length (90 characters).",
     "ValidationError.User.TOO_LONG_POSTAL_CODE" : "Postal code exceeds maximum length (10 characters).",
     "UserErrorCode.USERNAME_EXISTS_IN_WHITELIST": "A user with this E-mail already exists in the user white list.",
+    "UserErrorCode.PASSWORD_RESET_TOKEN_NOT_FOUND": "Token was not found.",
+    "UserErrorCode.PASSWORD_RESET_TOKEN_EXPIRED": "Token has expired.",
+    "UserErrorCode.PASSWORD_RESET_TOKEN_ALREADY_REEDEMED": "Token has already been redeemed.",
+    "UserErrorCode.PASSWORD_RESET_TOKEN_USER_NOT_FOUND": "User has been deleted.",
+    "UserErrorCode.PASSWORD_RESET_PIN_MISMATCH": "Invalid PIN.",
+    "UserErrorCode.PASSWORD_RESET_NOT_ALLOWED": "Password reset is disabled.",
+    "UserErrorCode.PASSWORD_RESET_APPLICATION_NOT_SUPPORTED": "Application is not supported.",
     "GroupErrorCode.GROUP_EXISTS": "A group with this name already exists.",
     "GroupErrorCode.GROUP_DOES_NOT_EXIST" : "No Group exists with this id.",
     "ValidationError.Group.NO_GROUP_NAME": "Group name is missing",
@@ -289,7 +316,10 @@
         "TIMESPAN_TOO_NARROW": "The given timespan is too narrow.",
         "TIMESPAN_TOO_WIDE": "The given timespan is too wide."
       }  
-    }
+    },
+    "PasswordErrorCode.INVALID_LENGTH": "Password length must be at least 8 characters long.",
+    "PasswordErrorCode.VERIFICATION_FAILED": "The two password values do not match.",
+    "PasswordErrorCode.CAPTCHA_ERROR": "CAPTCHA value is required."
 	}, 
   "Success": {
     "UserSuccess.USER_ADDED_WHITELIST" : "User was succesfully registered in the user white list.",
