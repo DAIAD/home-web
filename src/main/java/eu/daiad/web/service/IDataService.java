@@ -29,10 +29,9 @@ public interface IDataService {
     /**
      * Stores a data query and assigns a unique name to it.
      * 
-     * @param name the query name
-     * @param query the query
+     * @param query the data query along with label and tags
      */
-    abstract void storeQuery(String name, DataQuery query);
+    abstract void storeQuery(NamedDataQuery query);
  
     /**
      * Loads all saved queries.

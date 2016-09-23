@@ -56,6 +56,8 @@ import eu.daiad.web.model.query.DataQueryCollectionResponse;
 import eu.daiad.web.model.query.DataQueryRequest;
 import eu.daiad.web.model.query.ForecastQuery;
 import eu.daiad.web.model.query.ForecastQueryRequest;
+import eu.daiad.web.model.query.NamedDataQuery;
+import eu.daiad.web.model.query.PopulationFilter;
 import eu.daiad.web.model.query.StoreDataQueryRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.spatial.ReferenceSystem;
@@ -65,6 +67,7 @@ import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.IExportService;
 import eu.daiad.web.service.IFileDataLoaderService;
 import eu.daiad.web.service.IWaterMeterDataLoaderService;
+import java.lang.reflect.Field;
 
 /**
  * Provides methods for managing, querying and exporting data.
@@ -262,25 +265,26 @@ public class DataController extends BaseController {
     /**
      * Saves a data query.
      * 
-     * @param data the query.
+     * @param request the data.
      * @return the result of the save operation.
      */
     @RequestMapping(value = "/action/data/query/store", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ "ROLE_ADMIN" })
-    public RestResponse storeQuery(@AuthenticationPrincipal AuthenticatedUser user,@RequestBody StoreDataQueryRequest data) {
+    public RestResponse storeQuery(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody StoreDataQueryRequest request) {
         RestResponse response = new RestResponse();
 
-        try {
+        try {     
+
             // Set defaults if needed
-            DataQuery query = data.getQuery();
-            if (query != null) {
+            DataQuery query = request.getNamedQuery().getQuery();
+            if (query != null) {     
                 // Initialize time zone
-                if (StringUtils.isBlank(query.getTimezone())) {
-                    query.setTimezone(user.getTimezone());
+                if (StringUtils.isBlank(query.getTimezone())) {              
+                    request.getNamedQuery().getQuery().setTimezone(user.getTimezone());
                 }
             }
 
-            dataService.storeQuery(data.getTitle(), data.getQuery());
+            dataService.storeQuery(request.getNamedQuery());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 

@@ -27,7 +27,6 @@ import eu.daiad.web.model.device.WaterMeterDevice;
 import eu.daiad.web.model.error.Error;
 import eu.daiad.web.model.error.ErrorCode;
 import eu.daiad.web.model.error.QueryErrorCode;
-import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
 import eu.daiad.web.model.query.AreaSpatialFilter;
 import eu.daiad.web.model.query.ClusterPopulationFilter;
@@ -55,6 +54,7 @@ import eu.daiad.web.model.query.UtilityPopulationFilter;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
+import eu.daiad.web.repository.application.IFavouriteRepository;
 import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.ISpatialRepository;
 import eu.daiad.web.repository.application.IUserRepository;
@@ -87,6 +87,9 @@ public class DataService extends BaseService implements IDataService {
 
     @Autowired
     IWaterMeterForecastRepository waterMeterForecastRepository;
+    
+    @Autowired    
+    IFavouriteRepository favouriteRepository;
 
     protected String getMessage(ErrorCode error) {
         return messageSource.getMessage(error.getMessageKey(), null, error.getMessageKey(), null);
@@ -1111,12 +1114,18 @@ public class DataService extends BaseService implements IDataService {
         }
     }
 
-    public void storeQuery(String name, DataQuery query) {
-        throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
+    @Override
+    public void storeQuery(NamedDataQuery query) {
+        favouriteRepository.insertFavouriteQuery(query);
+        
+        //throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
     }
 
+    @Override
     public List<NamedDataQuery> getAllQueries() {
-        throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
+        System.out.println("Loading favourite queries not implemented");
+        //throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
+        return null;
     }
 
 }

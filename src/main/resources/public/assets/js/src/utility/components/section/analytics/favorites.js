@@ -7,25 +7,18 @@ var Breadcrumb = require('../../Breadcrumb');
 var Chart = require('../../Chart');
 var ClusterChart = require('../../ClusterChart');
 
-var ChartWizard = require('../../ChartWizard');
-var ChartConfig = require('../../ChartConfig');
-var Tag = require('../../Tag');
-var Message = require('../../Message');
-var JobConfigAnalysis = require('../../JobConfigAnalysis');
-var FilterTag = require('../../chart/dimension/FilterTag');
 var Timeline = require('../../Timeline');
-
 var LeafletMap = require('../../LeafletMap');
 var Table = require('../../Table');
 var { Link } = require('react-router');
 var { bindActionCreators } = require('redux');
 var { connect } = require('react-redux');
 
-var { openFavourite, closeFavourite } 
+var { fetchFavouriteQueries, openFavourite, closeFavourite, setActiveFavourite } 
  = require('../../../actions/FavouritesActions');
 
 //var ViewChart = require('../../../report-measurements/pane');
-
+var rows;
 var createPoints = function() {
 	var points = [];
 	
@@ -62,31 +55,59 @@ var createTimeLabels = function(ref, hours) {
 
 var Favourites = React.createClass({
 	 contextTypes: {
-	   intl: React.PropTypes.object
+	   intl: React.PropTypes.object,
+    router: function() { return React.PropTypes.func.isRequired; } 
+    //using this instead of  router: React.PropTypes.func due to warning
+    //https://github.com/react-bootstrap/react-router-bootstrap/issues/91
 	 },
 
-	 toggleView(view) {
-		  this.setState({chart : !this.state.chart});
-  },
-
-	 toggleMode(mode, e) {
-		  this.setState({
-			   mode : mode
-		  });
-  },
-  	
-  toggleExpanded() {
-    this.setState({expanded: !this.state.expanded});
-  },
-    
   componentWillMount : function() {
+  
+     rows = [
+       {
+				     id: 1,
+				     type: 'Chart',
+				     owner: 'admin@daiad',
+				     createdOn: new Date((new Date()).getTime() + Math.random() * 3600000)
+			    },{
+				     id: 2,
+				     type: 'Map',
+         label: 'My favourite map',
+				     owner: 'admin@daiad',
+				     createdOn: new Date((new Date()).getTime() + Math.random() * 3600000)
+			    }
+     ];  
+  
+  
+  
+  
+    this.props.actions.fetchFavouriteQueries();
 		  this.setState({points : createPoints()});
 	 },
 	
   clickedOpenFavourite(favourite) {
     this.props.actions.openFavourite(favourite);
   },
- 
+
+  editFavourite(favourite) {
+    this.props.actions.setActiveFavourite(favourite);
+    switch (favourite.type) {
+      case 'Map':
+        this.context.router.push('/analytics/map'); 
+        break;
+      case 'Chart':
+        this.context.router.push('/analytics/panel');  
+        break;
+      default:
+        console.log('Favourite type [' + favourite.type + '] is not supported.');
+        break;
+    }
+  },
+
+  duplicateFavourite(favourite) {
+
+  },
+  
   render: function() {
  
  		 var icon = 'list';
@@ -159,7 +180,9 @@ var Favourites = React.createClass({
  				    footerContent = (
 	 				     <Bootstrap.ListGroupItem>
 		 				      <span style={{ paddingLeft : 7}}> </span>
-			 			      <Link to='/analytics/map' state={this.state} style={{ paddingLeft : 7, float: 'right'}}>View Maps</Link>
+			 			      <Link to='/analytics/map' style={{ paddingLeft : 7, float: 'right'}}>View Maps</Link>
+			 		       <span style={{ paddingLeft : 7}}> </span>
+			 			      <Link to='/' style={{ paddingLeft : 7, float: 'right'}}>View Dashboard</Link>            
 				 	     </Bootstrap.ListGroupItem>
 				     );  
            break;
@@ -176,6 +199,8 @@ var Favourites = React.createClass({
 	 				     <Bootstrap.ListGroupItem>
 		 				      <span style={{ paddingLeft : 7}}> </span>
 			 			      <Link to='/analytics/panel' style={{ paddingLeft : 7, float: 'right'}}>View Charts</Link>
+			 		       <span style={{ paddingLeft : 7}}> </span>
+			 			      <Link to='/' style={{ paddingLeft : 7, float: 'right'}}>View Dashboard</Link>              
 				 	     </Bootstrap.ListGroupItem>
 				     ); 
            break;
@@ -183,7 +208,6 @@ var Favourites = React.createClass({
          title = this.props.selectedFavourite.type;
      }
     
-    //
  		  toggleTitle = (
     	  <span>
 		 		    <span>
@@ -215,6 +239,7 @@ var Favourites = React.createClass({
          <Bootstrap.ListGroup fill>
            <Bootstrap.ListGroupItem>
              {infoText}
+             {dashboardLinkFooter}
            </Bootstrap.ListGroupItem>
          </Bootstrap.ListGroup>
        </Bootstrap.Panel>  
@@ -222,77 +247,61 @@ var Favourites = React.createClass({
    }
    
   	var favs = {
-			fields: [{
-				name: 'id',
-				hidden: true
-			}, {
-				name: 'type',
-				title: 'Type'
-			}, {
-				name: 'label',
-				title: 'Label'			
-			}, {
-				name: 'owner',
-				title: 'Owner'			
-			}, {
-				name: 'createdOn',
-				title: 'Created On',
-				type: 'datetime'
-			}, {
-				name: 'view',
-				type:'action',
-				icon: 'eye',
-				handler: function() {
-					console.log(this);
-     self.clickedOpenFavourite(this.props.row);
-				}
-			}, {
-				name: 'edit',
-				type:'action',
-				icon: 'pencil',
-				handler: function() {
-     console.log('go to corresponding menu tab in edit mode');
-     console.log(this);
-				}
-			}, {
-				name: 'copy',
-				type:'action',
-				icon: 'copy',
-				handler: function() {
-					console.log(this);
-				}
-			}, {
-				name: 'link',
-				type:'action',
-				icon: 'link',
-				handler: function() {
-					console.log(this);
-				}
-			}, {
-				name: 'remove',
-				type:'action',
-				icon: 'remove',
-				handler: function() {
-					console.log(this);
-				}
-			}],
-			rows: [{
-				id: 1,
-				type: 'Chart',
-				owner: 'admin@daiad',
-				createdOn: new Date((new Date()).getTime() + Math.random() * 3600000)
-			},{
-				id: 2,
-				type: 'Map',
-    label: 'My favourite map',
-				owner: 'admin@daiad',
-				createdOn: new Date((new Date()).getTime() + Math.random() * 3600000)
-			}],
-			pager: {
-				index: 0,
-				size: 2,
-				count:3
-			}
+			  fields: [{
+				   name: 'id',
+				   hidden: true
+			  }, {
+				   name: 'type',
+				   title: 'Type'
+			  }, {
+				   name: 'label',
+				   title: 'Label'			
+			  }, {
+				   name: 'createdOn',
+				   title: 'Created On',
+				   type: 'datetime'
+			  }, {
+				   name: 'view',
+				   type:'action',
+				   icon: 'eye',
+				   handler: function() {
+         self.clickedOpenFavourite(this.props.row);
+				   }
+			  }, {
+				   name: 'edit',
+				   type:'action',
+				   icon: 'pencil',
+				   handler: function() {
+         self.editFavourite(this.props.row);
+				   }
+			  }, {
+				   name: 'copy',
+				   type:'action',
+				   icon: 'copy',
+				   handler: function() {
+         self.duplicateFavourite(this.props.row);
+				   }
+			  }, {
+				   name: 'link',
+				   type:'action',
+				   icon: 'link',
+				   handler: function() {
+					    console.log(this);
+				   }
+			  }, {
+				   name: 'remove',
+				   type:'action',
+				   icon: 'remove',
+				   handler: function() {
+					    console.log(this);
+				   }
+			  }],
+			  rows: rows,
+			  pager: {
+				   index: 0,
+				   size: 2,
+				   count:3
+			  }
 	 	};
 
 	 	var favouriteContent = (
@@ -316,7 +325,6 @@ var Favourites = React.createClass({
 						 	     </Bootstrap.ListGroup>
 						     </Bootstrap.Panel>
              {togglePanel}
-             {dashboardLinkFooter}
  					   </div>
 	 		   </div>
     </div>
@@ -325,8 +333,6 @@ var Favourites = React.createClass({
 });
 
 function mapStateToProps(state) {
-  console.log('map state to props');
-  console.log(state);
   return {
     showSelected: state.favourites.showSelected,
     selectedFavourite: state.favourites.selectedFavourite
@@ -335,7 +341,8 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
   return {
-    actions : bindActionCreators(Object.assign({}, { openFavourite, closeFavourite}) , dispatch)                                                     
+    actions : bindActionCreators(Object.assign({}, { fetchFavouriteQueries, openFavourite, 
+                                                     closeFavourite, setActiveFavourite}) , dispatch)                                                     
   };
 }
 

@@ -15,7 +15,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import eu.daiad.web.domain.application.Account;
+import eu.daiad.web.domain.application.DataQueryEntity;
 import eu.daiad.web.domain.application.Favourite;
 import eu.daiad.web.domain.application.FavouriteAccount;
 import eu.daiad.web.domain.application.FavouriteGroup;
@@ -33,6 +36,9 @@ import eu.daiad.web.model.favourite.FavouriteGroupInfo;
 import eu.daiad.web.model.favourite.FavouriteInfo;
 import eu.daiad.web.model.favourite.UpsertFavouriteRequest;
 import eu.daiad.web.model.group.EnumGroupType;
+import eu.daiad.web.model.query.DataQuery;
+import eu.daiad.web.model.query.NamedDataQuery;
+import eu.daiad.web.model.query.PopulationFilter;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.BaseRepository;
 
@@ -480,4 +486,19 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
         return (!query.getResultList().isEmpty());
     }
 
+    @Override
+    public void insertFavouriteQuery(NamedDataQuery query) {
+        
+        try {
+
+            DataQueryEntity dataQueryEntity = new DataQueryEntity();
+            dataQueryEntity.setName(query.getTitle());
+            dataQueryEntity.setQuery(new ObjectMapper().writeValueAsString(query.getQuery()));
+            this.entityManager.persist(dataQueryEntity);
+
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        }
+
+    }    
 }

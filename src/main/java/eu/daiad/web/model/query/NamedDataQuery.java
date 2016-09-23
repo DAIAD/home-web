@@ -1,9 +1,13 @@
 package eu.daiad.web.model.query;
 
-public class NamedDataQuery {
+import eu.daiad.web.model.AuthenticatedRequest;
+
+public class NamedDataQuery extends AuthenticatedRequest {
 
     private String title;
 
+    private String tags;
+    
     private DataQuery query;
 
     public String getTitle() {
@@ -22,4 +26,11 @@ public class NamedDataQuery {
         this.query = query;
     }
 
+    public String getTags() {
+        return tags;
+    }
+
+    public void setTags(String tags) {
+        this.tags = tags;
+    }
 }

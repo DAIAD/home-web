@@ -18,7 +18,7 @@ var DateRangePicker = require('react-bootstrap-daterangepicker');
 
 var { getTimeline, getFeatures, getChart,
       setEditor, setEditorValue,
-      setTimezone } = require('../../actions/MapActions');
+      setTimezone, addFavourite} = require('../../actions/MapActions');
 
 var _getTimelineValues = function(timeline) {
   if(timeline) {
@@ -82,15 +82,26 @@ var _onFeatureChange = function(features) {
   }
 };
 
-var AnalyticsMap = React.createClass({
+var favouriteIcon = 'star-o';
 
+var AnalyticsMap = React.createClass({
+  
   contextTypes: {
       intl: React.PropTypes.object
   },
 
+  componentWillMount : function() {
+    if(this.props.favourite){
+      favouriteIcon = 'star';
+    }
+    else{
+      favouriteIcon = 'star-o';
+    }
+  },
+  
   componentDidMount : function() {
     var utility = this.props.profile.utility;
-  
+
     this.props.actions.setTimezone(utility.timezone);
 
     if(!this.props.map.timeline) {
@@ -103,9 +114,26 @@ var AnalyticsMap = React.createClass({
     }
   },
 
-  render: function() {
-    var _t = this.context.intl.formatMessage;
+  clickedAddFavourite : function() {
+    favouriteIcon = 'star';
+    var namedQuery = this.props.map.query;
+    namedQuery.title = this.refs.favouriteLabel.value;
+    namedQuery.tags = this.props.population.label;
+
+    var request =  {
+      'namedQuery' : namedQuery
+    };
+
+    this.props.actions.addFavourite(request);
+  },
   
+  render: function() {
+
+    if(this.props.favourite){
+      console.log('favourite not null, render active favourite');
+    }
+    
+    var _t = this.context.intl.formatMessage;
     // Filter configuration
     var intervalLabel ='';
     if(this.props.interval) {
@@ -141,7 +169,7 @@ var AnalyticsMap = React.createClass({
     var favouriteEditor = (
       <div>
         <div className='col-md-3'>
-          <input  id='label' name='favourite' type='favourite' ref='favourite' autofocus 
+          <input  id='favouriteLabel' name='favouriteLabel' type='favourite' ref='favouriteLabel' autofocus 
             placeholder='Label ...' className='form-control' style={{ marginBottom : 15 }}/>
           <span className='help-block'>Insert a label for this favourite</span>
         </div>
@@ -151,7 +179,7 @@ var AnalyticsMap = React.createClass({
           <span className='help-block'>Auto-generated Identifier</span>
         </div>
         <div className='col-md-3'>
-          <Bootstrap.Button bsStyle='success' >
+          <Bootstrap.Button bsStyle='success' onClick={this.clickedAddFavourite}>
             {_t({ id:'Buttons.AddFavourite'})}
           </Bootstrap.Button>
         </div>         
@@ -216,6 +244,7 @@ var AnalyticsMap = React.createClass({
           );
         break;        
     }
+    
     // Map configuration
     var mapTitle = (
       <span>
@@ -248,7 +277,7 @@ var AnalyticsMap = React.createClass({
         </span>
         <span style={{float: 'right',  marginTop: -3, marginLeft: 5}}>
         <Bootstrap.Button bsStyle='default' className='btn-circle' onClick={_setEditor.bind(this, 'favourite')}>
-            <i className='fa fa-star-o fa-fw'></i>
+            <i className={'fa fa-' + favouriteIcon + ' fa-fw'}></i>
           </Bootstrap.Button>
         </span>       
       </span>
@@ -440,8 +469,6 @@ AnalyticsMap.icon = 'map';
 AnalyticsMap.title = 'Section.Map';
 
 function mapStateToProps(state) {
-  console.log("MAP STATE: ");
-  console.log(state);
   return {
       source: state.map.source,
       geometry: state.map.geometry,
@@ -452,15 +479,16 @@ function mapStateToProps(state) {
       map: state.map.map,
       chart: state.map.chart,
       profile: state.session.profile,
-      routing: state.routing
+      routing: state.routing,
+      favourite: state.favourites.selectedFavourite
   };
 }
 
 function mapDispatchToProps(dispatch) {
   return {
     actions : bindActionCreators(Object.assign({}, { getTimeline, getFeatures, getChart,
-                                                     setEditor, setEditorValue,
-                                                     setTimezone }) , dispatch)
+                                                     setEditor, setEditorValue, setTimezone,
+                                                     addFavourite}) , dispatch)
   };
 }
 

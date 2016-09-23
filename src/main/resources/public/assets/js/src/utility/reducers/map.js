@@ -10,7 +10,8 @@ var _createMapInitialState = function(interval) {
     meters : null,
     devices : null,
     timeline : null,
-    features : null
+    features : null,
+    favourite: null
   };
 };
 
@@ -391,6 +392,14 @@ var map = function(state, action) {
       return Object.assign({}, state, {
         timezone : action.timezone
       });
+    case types.MAP_ADD_FAVOURITE_REQUEST:
+      return Object.assign({}, state, {
+        isLoading : true
+      });
+    case types.MAP_ADD_FAVOURITE_RESPONSE:
+      return Object.assign({}, state, {
+        isLoading : false
+      });       
     case types.USER_RECEIVED_LOGOUT:
       return _createInitialState();
 

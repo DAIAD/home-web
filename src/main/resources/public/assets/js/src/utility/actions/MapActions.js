@@ -1,7 +1,22 @@
 var adminAPI = require('../api/admin');
 var queryAPI = require('../api/query');
+var favouritesAPI = require('../api/favourites');
 
 var types = require('../constants/MapActionTypes');
+
+var addFavouriteRequest = function () {
+  return {
+    type: types.MAP_ADD_FAVOURITE_REQUEST
+  };
+};
+
+var addFavouriteResponse = function (success, errors) {
+  return {
+    type: types.MAP_ADD_FAVOURITE_RESPONSE,
+    success: success,
+    errors: errors
+  };
+};
 
 var _buildTimelineQuery = function(population, source, geometry, timezone, interval) {
   var spatial = [
@@ -141,17 +156,16 @@ var MapActions = {
       var query = _buildTimelineQuery(population, source, geometry, timezone, interval);
 
       dispatch(_getTimelineInit(population, query));
-
       return queryAPI.queryMeasurements(query).then(function(response) {
         var data = {
           meters : null,
           devices : null,
           areas : null
         };
-        if (response.success) {
+        if (response.success) {     
           data.areas = response.areas;
           data.meters = response.meters;
-          data.devices = response.devices;
+          data.devices = response.devices;            
         }
         dispatch(_getTimelineComplete(response.success, response.errors, data));
 
@@ -179,7 +193,7 @@ var MapActions = {
 
         if (response.success) {
           data.meters = response.meters;
-          data.devices = response.devices;
+          data.devices = response.devices;             
         }
         dispatch(_getChartComplete(response.success, response.errors, data));
       }, function(error) {
@@ -208,7 +222,7 @@ var MapActions = {
         if (response.success) {
           data.areas = response.areas;
           data.meters = response.meters;
-          data.devices = response.devices;
+          data.devices = response.devices;        
         }
         dispatch(_getTimelineComplete(response.success, response.errors, data));
 
@@ -230,6 +244,16 @@ var MapActions = {
     return {
       type : types.MAP_SET_TIMEZONE,
       timezone : timezone
+    };
+  },
+  addFavourite : function(favourite) {
+    return function(dispatch, getState) {
+      dispatch(addFavouriteRequest());
+      return favouritesAPI.addFavourite(favourite).then(function (response) {
+        dispatch(addFavouriteResponse(response.success, response.errors));
+      }, function (error) {
+        dispatch(addFavouriteResponse(false, error));
+      });
     };
   }
 };

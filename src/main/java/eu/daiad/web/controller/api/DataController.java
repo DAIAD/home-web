@@ -27,7 +27,7 @@ import eu.daiad.web.model.query.DataQueryCollectionResponse;
 import eu.daiad.web.model.query.DataQueryRequest;
 import eu.daiad.web.model.query.ForecastQuery;
 import eu.daiad.web.model.query.ForecastQueryRequest;
-import eu.daiad.web.model.query.StoreDataQueryRequest;
+import eu.daiad.web.model.query.NamedDataQuery;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
@@ -104,10 +104,11 @@ public class DataController extends BaseRestController {
      * @return the result of the save operation.
      */
     @RequestMapping(value = "/api/v1/data/query/store", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-    public RestResponse storeQuery(@RequestBody StoreDataQueryRequest data) {
+    public RestResponse storeQuery(@RequestBody NamedDataQuery data) {
         RestResponse response = new RestResponse();
 
         try {
+            
             AuthenticatedUser user = this.authenticate(data.getCredentials(), EnumRole.ROLE_ADMIN);
 
             // Set defaults if needed
@@ -119,7 +120,7 @@ public class DataController extends BaseRestController {
                 }
             }
 
-            dataService.storeQuery(data.getTitle(), data.getQuery());
+            dataService.storeQuery(data);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 

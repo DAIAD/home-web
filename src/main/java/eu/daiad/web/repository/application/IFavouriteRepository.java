@@ -7,6 +7,8 @@ import eu.daiad.web.model.favourite.UpsertFavouriteRequest;
 import eu.daiad.web.model.favourite.FavouriteAccountInfo;
 import eu.daiad.web.model.favourite.FavouriteGroupInfo;
 import eu.daiad.web.model.favourite.FavouriteInfo;
+import eu.daiad.web.model.query.DataQuery;
+import eu.daiad.web.model.query.NamedDataQuery;
 
 public interface IFavouriteRepository {
 
@@ -31,5 +33,7 @@ public interface IFavouriteRepository {
     abstract boolean isUserFavorite(UUID ownerKey, UUID userKey);
 
     abstract boolean isGroupFavorite(UUID ownerKey, UUID groupKey);
+    
+    abstract void insertFavouriteQuery(NamedDataQuery query);
 
 }
