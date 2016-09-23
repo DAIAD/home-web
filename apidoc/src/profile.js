@@ -80,9 +80,10 @@
  * @apiSuccess (Household)  {Number}     femaleMembers       Total number of female members.
  * @apiSuccess (Household)  {Number}     totalMembers        Total number of members.
  * @apiSuccess (Household)  {Number}     maleMembers         Total number of male members.
- * @apiSuccess (Household)  {Object[]}   members             Array of <code>Member</code> objects
+ * @apiSuccess (Household)  {Object[]}   members             Array of <code>Member</code> objects. The default member is not included in this collection.
  *
  * @apiSuccess (Member)     {Number}     index               Unique index.
+ * @apiSuccess (Member)     {Boolean}    active              <code>true</code> if the member is not delete; Otherwise <code>false</code>.
  * @apiSuccess (Member)     {String}     name                Name.
  * @apiSuccess (Member)     {Number}     age                 Age.
  * @apiSuccess (Member)     {String}     gender              Gender. Valid values are <code>MALE</code> and <code>FEMALE</code>.
@@ -148,7 +149,8 @@
  *     },
  *     "household":{
  *       "members": [{
- *         "index": 0,
+ *         "index": 14,
+ *         "active": true,
  *         "name": "George",
  *         "age": 34,
  *         "gender": "MALE",
@@ -312,7 +314,7 @@ function notifyProfile() { return; }
  * @apiGroup Profile
  * @apiPermission ROLE_USER
  *
- * @apiDescription Updates household member information. The operation expects that the member indexes are consecutive. If a missing index is detected in the sequence, an error is returned.<br /><br />If an index is missing a new member is created. Existing indexes result in updating the existing members. Any indexes that exist in the database but are not included in the request, are deleted. The default member also updates the fields <code>gender</code> and <code>photo</code> of the user's profile. The default member can not be deleted.
+ * @apiDescription Updates household member information. If an index is missing a new member is created. Existing indexes result in updating the existing members. Any indexes that exist in the database but are not included in the request, are deleted.
  *
  * @apiParam (UpdateHouseholdRequest) {Object}     credentials                 User credentials
  * @apiParam (UpdateHouseholdRequest) {String}     credentials.username        User name.
@@ -320,6 +322,7 @@ function notifyProfile() { return; }
  * @apiParam (UpdateHouseholdRequest) {Object[]}   members                     Array of <code>Member</code> objects.
  * 
  * @apiParam (Member)     {Number}     index               Unique index.
+ * @apiParam (Member)     {Boolean}    active              <code>true</code> if the member is not delete; Otherwise <code>false</code>.
  * @apiParam (Member)     {String}     name                Name.
  * @apiParam (Member)     {Number}     age                 Age.
  * @apiParam (Member)     {String}     gender              Gender. Valid values are <code>MALE</code> and <code>FEMALE</code>.
@@ -332,7 +335,8 @@ function notifyProfile() { return; }
  *     "password":"****",
  *   },
  *   "members": [{
- *     "index": 0,
+ *     "index": 14,
+ *     "active": true,
  *     "name": "George",
  *     "age": 34,
  *     "gender": "MALE",

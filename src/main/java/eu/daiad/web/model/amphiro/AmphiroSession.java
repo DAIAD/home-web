@@ -2,10 +2,14 @@ package eu.daiad.web.model.amphiro;
 
 import java.util.ArrayList;
 
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import eu.daiad.web.model.KeyValuePair;
+import eu.daiad.web.model.profile.EnumMemberSelectionMode;
 
 public class AmphiroSession extends AmphiroAbstractSession {
 
@@ -13,7 +17,6 @@ public class AmphiroSession extends AmphiroAbstractSession {
 
     private boolean history;
 
-    @JsonIgnore
     private Member member;
 
     @JsonIgnore
@@ -83,12 +86,10 @@ public class AmphiroSession extends AmphiroAbstractSession {
         this.delete = delete;
     }
 
-    @JsonIgnore
     public Member getMember() {
         return member;
     }
 
-    @JsonProperty
     public void setMember(Member member) {
         this.member = member;
     }
@@ -97,11 +98,10 @@ public class AmphiroSession extends AmphiroAbstractSession {
 
         private int index;
 
-        private String name;
+        @Enumerated(EnumType.STRING)
+        private EnumMemberSelectionMode mode;
 
-        private boolean autoSelection;
-
-        private long timestamp;
+        private Long timestamp;
 
         public int getIndex() {
             return index;
@@ -111,27 +111,19 @@ public class AmphiroSession extends AmphiroAbstractSession {
             this.index = index;
         }
 
-        public String getName() {
-            return name;
+        public EnumMemberSelectionMode getMode() {
+            return mode;
         }
 
-        public void setName(String name) {
-            this.name = name;
+        public void setMode(EnumMemberSelectionMode mode) {
+            this.mode = mode;
         }
 
-        public boolean isAutoSelection() {
-            return autoSelection;
-        }
-
-        public void setAutoSelection(boolean autoSelection) {
-            this.autoSelection = autoSelection;
-        }
-
-        public long getTimestamp() {
+        public Long getTimestamp() {
             return timestamp;
         }
 
-        public void setTimestamp(long timestamp) {
+        public void setTimestamp(Long timestamp) {
             this.timestamp = timestamp;
         }
 

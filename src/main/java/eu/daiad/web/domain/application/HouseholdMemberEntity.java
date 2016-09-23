@@ -62,6 +62,9 @@ public class HouseholdMemberEntity {
     @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
     private DateTime updatedOn = new DateTime();
 
+    @Basic()
+    private boolean active;
+
     public long getRowVersion() {
         return rowVersion;
     }
@@ -136,6 +139,14 @@ public class HouseholdMemberEntity {
 
     public int getId() {
         return id;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
 }

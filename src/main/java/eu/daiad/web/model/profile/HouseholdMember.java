@@ -14,6 +14,8 @@ public class HouseholdMember {
 
     private int index;
 
+    private boolean active;
+
     private String name;
 
     private Integer age;
@@ -87,6 +89,14 @@ public class HouseholdMember {
     @JsonIgnore
     public void setUpdatedOn(DateTime updatedOn) {
         this.updatedOn = updatedOn;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
 }

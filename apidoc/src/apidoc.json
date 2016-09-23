@@ -30,6 +30,7 @@
     "DataStoreByTime",
     "DataStoreByIndex",
     "Search",
+    "AssignMemberToSession",
     "MeterStatus",
     "MeterMeasurements",
     "AmphiroMeasurementByTime",

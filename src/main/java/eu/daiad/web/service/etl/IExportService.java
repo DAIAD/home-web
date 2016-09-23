@@ -1,4 +1,4 @@
-package eu.daiad.web.service;
+package eu.daiad.web.service.etl;
 
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.export.ExportUserDataQuery;

@@ -806,7 +806,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             @Override
             public int compare(HouseholdMember first, HouseholdMember second) {
                 if (first.getIndex() == second.getIndex()) {
-                    throw new RuntimeException("Member index must be unique.");
+                    throw createApplicationException(ProfileErrorCode.HOUSEHOLD_MEMBER_DUPLICATE_INDEX).set("index", first.getIndex());
                 } else if (first.getIndex() < second.getIndex()) {
                     return -1;
                 } else {
@@ -815,44 +815,40 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             }
         });
 
-        for (int memberIndex = 0, total = members.size(); memberIndex < total; memberIndex++) {
-            HouseholdMember member = members.get(memberIndex);
+        for (HouseholdMember member : members) {
+            HouseholdMemberEntity householdMemberEntity = account.getHousehold().getMember(member.getIndex());
 
-            if (memberIndex != member.getIndex()) {
-                throw createApplicationException(ProfileErrorCode.HOUSEHOLD_MEMBER_UNEXPECTED_INDEX);
-            }
-
-            HouseholdMemberEntity householdMemberEntity = null;
-
-            if (account.getHousehold().getMembers().size() > memberIndex) {
-                householdMemberEntity = account.getHousehold().getMember(memberIndex);
-                householdMemberEntity.setUpdatedOn(DateTime.now());
-            } else {
+            if (householdMemberEntity == null) {
                 householdMemberEntity = new HouseholdMemberEntity();
-                householdMemberEntity.setCreatedOn(DateTime.now());
-                householdMemberEntity.setUpdatedOn(DateTime.now());
 
-                householdMemberEntity.setIndex(memberIndex);
+                householdMemberEntity.setIndex(member.getIndex());
+                householdMemberEntity.setCreatedOn(DateTime.now());
+                householdMemberEntity.setUpdatedOn(householdMemberEntity.getCreatedOn());
 
                 householdMemberEntity.setHousehold(householdEntity);
 
                 this.entityManager.persist(householdMemberEntity);
+            } else {
+                householdMemberEntity.setUpdatedOn(DateTime.now());
             }
 
-            if (memberIndex == 0) {
+            /*
+            if (member.getIndex() == 0) {
                 account.setPhoto(member.getPhoto());
                 account.setGender(member.getGender());
             }
+            */
 
+            householdMemberEntity.setActive(member.isActive());
             householdMemberEntity.setName(member.getName());
             householdMemberEntity.setGender(member.getGender());
             householdMemberEntity.setAge(member.getAge());
             householdMemberEntity.setPhoto(member.getPhoto());
         }
         
-        for (int m = members.size(), count = householdEntity.getMembers().size(); m < count; m++) {
-            if (m != 0) {
-                householdEntity.getMembers().remove(householdEntity.getMember(m));    
+        for (HouseholdMemberEntity householdMemberEntity : account.getHousehold().getMembers()) {
+            if(updates.getMember(householdMemberEntity.getIndex()) == null) {
+                householdMemberEntity.setActive(false);
             }
         }
     }

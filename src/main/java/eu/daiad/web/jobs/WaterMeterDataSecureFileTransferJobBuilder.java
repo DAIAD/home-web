@@ -32,10 +32,6 @@ public class WaterMeterDataSecureFileTransferJobBuilder implements IJobBuilder {
 	@Autowired
 	private IWaterMeterDataLoaderService loader;
 
-	public WaterMeterDataSecureFileTransferJobBuilder() {
-
-	}
-
 	private Step transferData() {
 		return stepBuilderFactory.get("transferData").tasklet(new StoppableTasklet() {
 			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {

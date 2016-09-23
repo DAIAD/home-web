@@ -15,6 +15,8 @@ public class AmphiroSessionIndexIntervalQuery extends AuthenticatedRequest {
 
 	private long sessionId;
 
+	private boolean excludeMeasurements = false;
+	
 	public UUID getUserKey() {
 		return userKey;
 	}
@@ -38,5 +40,13 @@ public class AmphiroSessionIndexIntervalQuery extends AuthenticatedRequest {
 	public void setSessionId(long sessionId) {
 		this.sessionId = sessionId;
 	}
+
+    public boolean isExcludeMeasurements() {
+        return excludeMeasurements;
+    }
+
+    public void setExcludeMeasurements(boolean excludeMeasurements) {
+        this.excludeMeasurements = excludeMeasurements;
+    }
 
 }

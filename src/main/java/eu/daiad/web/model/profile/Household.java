@@ -33,10 +33,11 @@ public class Household {
         for (HouseholdMemberEntity m : entity.getMembers()) {
             HouseholdMember member = new HouseholdMember();
 
+            member.setIndex(m.getIndex());
+            member.setActive(m.isActive());
+            member.setName(m.getName());
             member.setAge(m.getAge());
             member.setGender(m.getGender());
-            member.setIndex(m.getIndex());
-            member.setName(m.getName());
             member.setPhoto(m.getPhoto());
 
             member.setCreatedOn(m.getCreatedOn());

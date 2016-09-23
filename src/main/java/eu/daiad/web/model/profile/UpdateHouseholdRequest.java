@@ -20,4 +20,14 @@ public class UpdateHouseholdRequest extends AuthenticatedRequest {
         this.members = members;
     }
 
+    public HouseholdMember getMember(int index) {
+        for (HouseholdMember m : members) {
+            if (m.getIndex() == index) {
+                return m;
+            }
+        }
+
+        return null;
+    }
+
 }
