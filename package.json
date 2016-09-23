@@ -11,7 +11,7 @@
     "bootstrap-select": "~1.9.4",
     "classnames": "^2.2.3",
     "clone": "~1.0.2",
-    "echarts": "^3.0.2",
+    "echarts": "3.1.10",
     "es6-promise": "~3.0.2",
     "events": "~1.1.0",
     "flux": "~2.1.1",
