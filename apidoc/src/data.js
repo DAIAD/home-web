@@ -693,7 +693,7 @@ function query() { return; }
 function storeDataByIndex() { return; }
 
 /**
- * @api {post} /api/v2/data/session/member Assign members
+ * @api {post} /v2/data/session/member Assign members
  * @apiVersion 0.0.2
  * @apiName AssignMemberToSession
  * @apiGroup Data
