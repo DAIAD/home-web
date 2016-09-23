@@ -95,9 +95,11 @@ public class HouseholdEntity {
         return id;
     }
 
+    /*
     public HouseholdMemberEntity getDefaultMember() {
         return this.getMember(0);
     }
+    */
 
     public HouseholdMemberEntity getMember(int index) {
         for (HouseholdMemberEntity m : members) {

@@ -608,9 +608,8 @@ function query() { return; }
  *      "flow":5,
  *      "properties":[],
  *      "member": {
- *        "index": "0",
- *        "name": "George",
- *        "autoSelection": true,
+ *        "index": 11,
+ *        "mode": "MANUAL",
  *        "timestamp" : 1461060000000
  *      }
  *   }],

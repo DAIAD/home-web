@@ -706,6 +706,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
         account.setBirthdate(updates.getBirthdate());
         account.setGender(updates.getGender());
 
+        /*
         // Update default household member
         HouseholdMemberEntity member = account.getHousehold().getDefaultMember();
         if (member != null) {
@@ -719,6 +720,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                 member.setAge(new Period(account.getBirthdate(), DateTime.now()).getYears());
             }
         }
+        */
 
     }
 
