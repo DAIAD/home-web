@@ -29,6 +29,10 @@
  * @apiSuccess (Profile) {String} username        Authenticated user name.
  * @apiSuccess (Profile) {String} firstname       First name.
  * @apiSuccess (Profile) {String} lastname        Last name
+ * @apiSuccess (Profile) {String} address         Address.
+ * @apiSuccess (Profile) {Number} birthdate       Birthdate.
+ * @apiSuccess (Profile) {String} gender          Gender. Valid values are <code>MALE</code>, <code>FEMALE</code> and <code>UNDEFINED</code>.
+ * @apiSuccess (Profile) {String} zip             Postal code.
  * @apiSuccess (Profile) {String} email           Email address.
  * @apiSuccess (Profile) {String} photo           Base64 encoded user image.
  * @apiSuccess (Profile) {String} locale          Locale.

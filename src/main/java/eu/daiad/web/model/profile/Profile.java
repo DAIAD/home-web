@@ -3,7 +3,13 @@ package eu.daiad.web.model.profile;
 import java.util.ArrayList;
 import java.util.UUID;
 
+import org.joda.time.DateTime;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 import eu.daiad.web.model.EnumApplication;
+import eu.daiad.web.model.EnumGender;
 import eu.daiad.web.model.device.DeviceRegistration;
 import eu.daiad.web.model.utility.UtilityInfo;
 
@@ -31,6 +37,16 @@ public class Profile {
 
     private String country;
 
+    private String address;
+
+    private DateTime birthdate;
+
+    @JsonDeserialize(using = EnumGender.Deserializer.class)
+    private EnumGender gender;
+
+    @JsonProperty("zip")
+    private String postalCode;
+
     private int mode = 0;
 
     private String configuration;
@@ -42,9 +58,9 @@ public class Profile {
     private ArrayList<DeviceRegistration> devices;
 
     private UtilityInfo utility;
-   
+
     private Household household;
-    
+
     public Profile() {
         this.devices = new ArrayList<DeviceRegistration>();
     }
@@ -194,6 +210,38 @@ public class Profile {
 
     public void setHousehold(Household household) {
         this.household = household;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public DateTime getBirthdate() {
+        return birthdate;
+    }
+
+    public void setBirthdate(DateTime birthdate) {
+        this.birthdate = birthdate;
+    }
+
+    public EnumGender getGender() {
+        return gender;
+    }
+
+    public void setGender(EnumGender gender) {
+        this.gender = gender;
+    }
+
+    public String getPostalCode() {
+        return postalCode;
+    }
+
+    public void setPostalCode(String postalCode) {
+        this.postalCode = postalCode;
     }
 
 }
