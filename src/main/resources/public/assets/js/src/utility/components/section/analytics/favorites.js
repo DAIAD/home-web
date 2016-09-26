@@ -14,7 +14,7 @@ var { Link } = require('react-router');
 var { bindActionCreators } = require('redux');
 var { connect } = require('react-redux');
 
-var { fetchFavouriteQueries, openFavourite, closeFavourite, setActiveFavourite } 
+var { fetchFavouriteQueries, openFavourite, closeFavourite, setActiveFavourite, addCopy } 
  = require('../../../actions/FavouritesActions');
 
 //var ViewChart = require('../../../report-measurements/pane');
@@ -62,25 +62,6 @@ var Favourites = React.createClass({
 	 },
 
   componentWillMount : function() {
-  
-     rows = [
-       {
-				     id: 1,
-				     type: 'Chart',
-				     owner: 'admin@daiad',
-				     createdOn: new Date((new Date()).getTime() + Math.random() * 3600000)
-			    },{
-				     id: 2,
-				     type: 'Map',
-         label: 'My favourite map',
-				     owner: 'admin@daiad',
-				     createdOn: new Date((new Date()).getTime() + Math.random() * 3600000)
-			    }
-     ];  
-  
-  
-  
-  
     this.props.actions.fetchFavouriteQueries();
 		  this.setState({points : createPoints()});
 	 },
@@ -92,7 +73,7 @@ var Favourites = React.createClass({
   editFavourite(favourite) {
     this.props.actions.setActiveFavourite(favourite);
     switch (favourite.type) {
-      case 'Map':
+      case 'MAP':
         this.context.router.push('/analytics/map'); 
         break;
       case 'Chart':
@@ -104,12 +85,16 @@ var Favourites = React.createClass({
     }
   },
 
-  duplicateFavourite(favourite) {
-
+  duplicateFavourite(namedQuery) {
+    var request =  {
+      'namedQuery' : namedQuery
+    };
+    namedQuery.title = namedQuery.title + ' (copy)';
+    this.props.actions.addCopy(request);   
+    this.props.actions.fetchFavouriteQueries();
   },
   
   render: function() {
- 
  		 var icon = 'list';
     var self = this;
    
@@ -154,8 +139,7 @@ var Favourites = React.createClass({
   
    if(this.props.selectedFavourite){
      switch(this.props.selectedFavourite.type) {
-       case 'Map':
-       
+       case 'MAP':   
 		       title = 'Map'; 
 		       dataContent = (
 			        <Bootstrap.ListGroupItem>
@@ -245,20 +229,20 @@ var Favourites = React.createClass({
        </Bootstrap.Panel>  
      );
    }
-   
+
   	var favs = {
 			  fields: [{
 				   name: 'id',
 				   hidden: true
 			  }, {
-				   name: 'type',
-				   title: 'Type'
-			  }, {
-				   name: 'label',
+				   name: 'title',
 				   title: 'Label'			
 			  }, {
+				   name: 'tags',
+				   title: 'Tags'			
+			  }, {
 				   name: 'createdOn',
-				   title: 'Created On',
+				   title: 'Date',
 				   type: 'datetime'
 			  }, {
 				   name: 'view',
@@ -296,11 +280,11 @@ var Favourites = React.createClass({
 					    console.log(this);
 				   }
 			  }],
-			  rows: rows,
+			  rows: this.props.favourites ? this.props.favourites : rows,
 			  pager: {
 				   index: 0,
-				   size: 2,
-				   count:3
+				   size: 5,
+				   count: this.props.favourites ? this.props.favourites.length : 0
 			  }
 	 	};
 
@@ -310,39 +294,51 @@ var Favourites = React.createClass({
 			 	</div>
 		 );
 
- 		return (
-	 		 <div className='container-fluid' style={{ paddingTop: 10 }}>
-		 		  <div className='row'>
-			 		   <div className='col-md-12'>
-				 		    <Breadcrumb routes={this.props.routes}/>
-					    </div>
- 				  </div>
-	 			  <div className='row'>
-		 			   <div className='col-lg-12'>
-			 			    <Bootstrap.Panel header={configTitle}>
-				 			     <Bootstrap.ListGroup fill>
-               {favouriteContent}
-						 	     </Bootstrap.ListGroup>
-						     </Bootstrap.Panel>
-             {togglePanel}
- 					   </div>
-	 		   </div>
-    </div>
-   );
+   if(this.props.favourites && !this.props.isLoading){
+ 		  return (
+	 		   <div className='container-fluid' style={{ paddingTop: 10 }}>
+		 		    <div className='row'>
+			 		     <div className='col-md-12'>
+				 		      <Breadcrumb routes={this.props.routes}/>
+					      </div>
+ 				    </div>
+	 			    <div className='row'>
+		 			     <div className='col-lg-12'>
+			 			      <Bootstrap.Panel header={configTitle}>
+				 			       <Bootstrap.ListGroup fill>
+                 {favouriteContent}
+						 	       </Bootstrap.ListGroup>
+						       </Bootstrap.Panel>
+               {togglePanel}
+ 					     </div>
+	 		     </div>
+      </div>
+     );   
+   }
+   else{
+      return (
+        <div>
+          <img className='preloader' src='/assets/images/utility/preloader-counterclock.png' />
+          <img className='preloader-inner' src='/assets/images/utility/preloader-clockwise.png' />
+        </div>
+      );    
+   }
+
   }
 });
 
 function mapStateToProps(state) {
   return {
     showSelected: state.favourites.showSelected,
-    selectedFavourite: state.favourites.selectedFavourite
+    selectedFavourite: state.favourites.selectedFavourite,
+    favourites: state.favourites.favourites
   };
 }
 
 function mapDispatchToProps(dispatch) {
   return {
     actions : bindActionCreators(Object.assign({}, { fetchFavouriteQueries, openFavourite, 
-                                                     closeFavourite, setActiveFavourite}) , dispatch)                                                     
+                                                     closeFavourite, setActiveFavourite, addCopy}) , dispatch)                                                     
   };
 }
 

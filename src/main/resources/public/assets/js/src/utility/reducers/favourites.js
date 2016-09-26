@@ -34,7 +34,15 @@ var favourites = function (state, action) {
       return Object.assign({}, state, {
         isActiveFavourite: true,
         selectedFavourite: action.selectedFavourite
-      });       
+      });  
+    case types.FAVOURITES_ADD_FAVOURITE_REQUEST:
+      return Object.assign({}, state, {
+        isLoading : true
+      });
+    case types.FAVOURITES_ADD_FAVOURITE_RESPONSE:
+      return Object.assign({}, state, {
+        isLoading : false
+      });         
     default:
       return state || initialState;
   }

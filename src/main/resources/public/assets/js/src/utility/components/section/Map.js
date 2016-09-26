@@ -1,7 +1,6 @@
 var React = require('react');
 var { bindActionCreators } = require('redux');
 var { connect } = require('react-redux');
-var moment = require('moment');
 var Bootstrap = require('react-bootstrap');
 var { Link } = require('react-router');
 var Breadcrumb = require('../Breadcrumb');
@@ -82,7 +81,7 @@ var _onFeatureChange = function(features) {
   }
 };
 
-var favouriteIcon = 'star-o';
+var favouriteIcon;
 
 var AnalyticsMap = React.createClass({
   
@@ -92,10 +91,7 @@ var AnalyticsMap = React.createClass({
 
   componentWillMount : function() {
     if(this.props.favourite){
-      favouriteIcon = 'star';
-    }
-    else{
-      favouriteIcon = 'star-o';
+      //set filters and state
     }
   },
   
@@ -115,10 +111,17 @@ var AnalyticsMap = React.createClass({
   },
 
   clickedAddFavourite : function() {
-    favouriteIcon = 'star';
+    
+    var tags = 'Map - ' + (this.props.source || 'METER') + 
+      ' - '+ this.props.interval[0].format("DD/MM/YYYY") + 
+        ' to ' + this.props.interval[1].format("DD/MM/YYYY") + 
+          (this.props.population ? ' - ' + this.props.population.label : '') + 
+            (this.props.geometry ? ' - Custom' : '');
+
     var namedQuery = this.props.map.query;
+    namedQuery.type = 'Map';
+    namedQuery.tags = tags;
     namedQuery.title = this.refs.favouriteLabel.value;
-    namedQuery.tags = this.props.population.label;
 
     var request =  {
       'namedQuery' : namedQuery
@@ -128,12 +131,27 @@ var AnalyticsMap = React.createClass({
   },
   
   render: function() {
+    var favouriteIcon, label;
+    if(this.props.isBeingEdited && !this.props.favourite){
+      favouriteIcon = 'star-o';
+    }
+    else{
+      favouriteIcon = 'star';
+    }
+
+    var tags = 'Map - ' + (this.props.source || 'METER') + 
+      ' - '+ this.props.interval[0].format("DD/MM/YYYY") + 
+        ' to ' + this.props.interval[1].format("DD/MM/YYYY") + 
+          (this.props.population ? ' - ' + this.props.population.label : '') + 
+            (this.props.geometry ? ' - Custom' : '');
 
     if(this.props.favourite){
       console.log('favourite not null, render active favourite');
+      
     }
     
     var _t = this.context.intl.formatMessage;
+    
     // Filter configuration
     var intervalLabel ='';
     if(this.props.interval) {
@@ -166,23 +184,31 @@ var AnalyticsMap = React.createClass({
       </div>
     );
 
+    var addFavouriteText;
+    if(this.props.favourite){
+      addFavouriteText = 'Buttons.UpdateFavourite';    
+    }  
+    else{
+      addFavouriteText = 'Buttons.AddFavourite';      
+    }
+
     var favouriteEditor = (
       <div>
         <div className='col-md-3'>
           <input  id='favouriteLabel' name='favouriteLabel' type='favourite' ref='favouriteLabel' autofocus 
-            placeholder='Label ...' className='form-control' style={{ marginBottom : 15 }}/>
+            placeholder={this.props.favourite ? this.props.favourite.title : 'Label ...'} className='form-control' style={{ marginBottom : 15 }}/>
           <span className='help-block'>Insert a label for this favourite</span>
         </div>
         <div className='col-md-6'>
           <input  id='name' name='name' type='name' ref='name' autofocus disabled 
-            placeholder='Map - DAIAD - Alicante - Meter - 30/08/2016 - 13/09/2016' className='form-control' style={{ marginBottom : 15 }}/>
+            placeholder={tags} className='form-control' style={{ marginBottom : 15 }}/>
           <span className='help-block'>Auto-generated Identifier</span>
         </div>
         <div className='col-md-3'>
-          <Bootstrap.Button bsStyle='success' onClick={this.clickedAddFavourite}>
-            {_t({ id:'Buttons.AddFavourite'})}
+          <Bootstrap.Button bsStyle='success' onClick={this.clickedAddFavourite} disabled={!this.props.isBeingEdited}>
+            {_t({ id:addFavouriteText})}
           </Bootstrap.Button>
-        </div>         
+        </div>              
       </div> 
     );
          
@@ -421,26 +447,6 @@ var AnalyticsMap = React.createClass({
         </Bootstrap.ListGroupItem>
       </Bootstrap.ListGroup>
     );
-    
-    var chartPanel = ( <div /> );
-    if(this.props.chart.series) {
-      chartPanel = (
-        <div key='0' className='draggable'>
-          <Bootstrap.Panel header={chartTitle}>
-            <Bootstrap.ListGroup fill>
-              {chart} 
-              <Bootstrap.ListGroupItem className='clearfix'>        
-                <div className='pull-left'>
-                  {chartFilterTags}
-                </div>
-                <span style={{ paddingLeft : 7}}> </span>
-                <Link className='pull-right' to='/analytics' style={{ paddingLeft : 7, paddingTop: 12 }}>View analytics</Link>
-              </Bootstrap.ListGroupItem>
-            </Bootstrap.ListGroup>
-          </Bootstrap.Panel>
-        </div>
-      );
-    }
 
     var mapPanel = (
       <Bootstrap.Panel header={mapTitle}>
@@ -480,7 +486,8 @@ function mapStateToProps(state) {
       chart: state.map.chart,
       profile: state.session.profile,
       routing: state.routing,
-      favourite: state.favourites.selectedFavourite
+      favourite: state.favourites.selectedFavourite,
+      isBeingEdited: state.map.isBeingEdited
   };
 }
 

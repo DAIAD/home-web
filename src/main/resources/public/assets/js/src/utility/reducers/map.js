@@ -51,7 +51,8 @@ var _createInitialState = function() {
     },
     map : _createMapInitialState(interval),
     chart : _createChartInitialState(interval),
-    editor : 'interval'
+    editor : 'interval',
+    isBeingEdited : false
   };
 };
 
@@ -344,12 +345,14 @@ var map = function(state, action) {
       switch (action.editor) {
         case 'interval':
           return Object.assign({}, state, {
-            interval : action.value
+            interval : action.value,
+            isBeingEdited : true
           });
 
         case 'source':
           return Object.assign({}, state, {
-            source : action.value
+            source : action.value,
+            isBeingEdited : true
           });
 
         case 'population':
@@ -362,7 +365,8 @@ var map = function(state, action) {
                   utility : group.key,
                   label : group.name,
                   type : 'UTILITY'
-                }
+                },
+                isBeingEdited : true
               });
             case 'SEGMENT':
             case 'SET':
@@ -375,14 +379,16 @@ var map = function(state, action) {
                   group : group.key,
                   label : label,
                   type : 'GROUP'
-                }
+                },
+                isBeingEdited : true
               });
           }
 
           return state;
         case 'spatial':
           return Object.assign({}, state, {
-            geometry : action.value
+            geometry : action.value,
+            isBeingEdited : true
           });
       }
 
@@ -390,7 +396,8 @@ var map = function(state, action) {
 
     case types.MAP_SET_TIMEZONE:
       return Object.assign({}, state, {
-        timezone : action.timezone
+        timezone : action.timezone,
+        isBeingEdited : true
       });
     case types.MAP_ADD_FAVOURITE_REQUEST:
       return Object.assign({}, state, {
@@ -398,7 +405,8 @@ var map = function(state, action) {
       });
     case types.MAP_ADD_FAVOURITE_RESPONSE:
       return Object.assign({}, state, {
-        isLoading : false
+        isLoading : false,
+        isBeingEdited : false
       });       
     case types.USER_RECEIVED_LOGOUT:
       return _createInitialState();

@@ -16,18 +16,50 @@ var receivedFavouriteQueries = function (success, errors, favourites) {
   };
 };
 
+var addFavouriteRequest = function () {
+  return {
+    type: types.FAVOURITES_ADD_FAVOURITE_REQUEST
+  };
+};
+
+var addFavouriteResponse = function (success, errors) {
+  return {
+    type: types.FAVOURITES_ADD_FAVOURITE_RESPONSE,
+    success: success,
+    errors: errors
+  };
+};
+
 var FavouritesActions = {
 
   fetchFavouriteQueries : function() {
     return function(dispatch, getState) {
       dispatch(requestedFavouriteQueries());
       return favouritesAPI.fetchFavouriteQueries().then(function (response) {
-        dispatch(receivedFavouriteQueries(response.success, response.errors, response.favourites));
+        dispatch(receivedFavouriteQueries(response.success, response.errors, response.queries));
       }, function (error) {
         dispatch(receivedFavouriteQueries(false, error, null));
       });
     };
-  },    
+  },
+  
+  addCopy : function(favourite) {
+    return function(dispatch, getState) {
+      dispatch(addFavouriteRequest());
+      return favouritesAPI.addFavourite(favourite).then(function (response) {
+        dispatch(addFavouriteResponse(response.success, response.errors));     
+        dispatch(requestedFavouriteQueries());
+        return favouritesAPI.fetchFavouriteQueries().then(function (response) {
+          dispatch(receivedFavouriteQueries(response.success, response.errors, response.queries));
+        }, function (error) {
+          dispatch(receivedFavouriteQueries(false, error, null));
+        });      
+          }, function (error) {
+            dispatch(addFavouriteResponse(false, error));
+        });
+    };
+  },
+  
   openFavourite : function(favourite) {
     return {
       type : types.FAVOURITES_OPEN_SELECTED,
@@ -35,6 +67,7 @@ var FavouritesActions = {
       selectedFavourite: favourite
     };
   },
+  
   closeFavourite : function() {
     return{
       type : types.FAVOURITES_CLOSE_SELECTED,
@@ -42,6 +75,7 @@ var FavouritesActions = {
       selectedFavourite : null
     };
   },
+  
   setActiveFavourite : function(favourite) {
 
     return {
