@@ -56,8 +56,6 @@ import eu.daiad.web.model.query.DataQueryCollectionResponse;
 import eu.daiad.web.model.query.DataQueryRequest;
 import eu.daiad.web.model.query.ForecastQuery;
 import eu.daiad.web.model.query.ForecastQueryRequest;
-import eu.daiad.web.model.query.NamedDataQuery;
-import eu.daiad.web.model.query.PopulationFilter;
 import eu.daiad.web.model.query.StoreDataQueryRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.spatial.ReferenceSystem;
@@ -67,7 +65,6 @@ import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.IExportService;
 import eu.daiad.web.service.IFileDataLoaderService;
 import eu.daiad.web.service.IWaterMeterDataLoaderService;
-import java.lang.reflect.Field;
 
 /**
  * Provides methods for managing, querying and exporting data.
@@ -265,6 +262,7 @@ public class DataController extends BaseController {
     /**
      * Saves a data query.
      * 
+     * @param user the user
      * @param request the data.
      * @return the result of the save operation.
      */
@@ -283,8 +281,8 @@ public class DataController extends BaseController {
                     request.getNamedQuery().getQuery().setTimezone(user.getTimezone());
                 }
             }
-
-            dataService.storeQuery(request.getNamedQuery());
+            
+            dataService.storeQuery(request.getNamedQuery(), user.getKey());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -295,17 +293,51 @@ public class DataController extends BaseController {
     }
 
     /**
+     * Saves a data query.
+     * 
+     * @param user the user
+     * @param request the data.
+     * @return the result of the save operation.
+     */
+    @RequestMapping(value = "/action/data/query/update", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @Secured({ "ROLE_ADMIN" })
+    public RestResponse updateStoredQuery(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody StoreDataQueryRequest request) {
+        RestResponse response = new RestResponse();
+
+        try {     
+
+            // Set defaults if needed
+            DataQuery query = request.getNamedQuery().getQuery();
+            if (query != null) {     
+                // Initialize time zone
+                if (StringUtils.isBlank(query.getTimezone())) {              
+                    request.getNamedQuery().getQuery().setTimezone(user.getTimezone());
+                }
+            }
+            
+            dataService.updateStoredQuery(request.getNamedQuery(), user.getKey());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
+    
+    /**
      * Loads all saved data queries.
      * 
+     * @param user the user
      * @return the saved data queries
      */
     @RequestMapping(value = "/action/data/query/load", method = RequestMethod.GET, consumes = "application/json", produces = "application/json")
     @Secured({ "ROLE_ADMIN" })
-    public RestResponse getAllQueries() {
+    public RestResponse getAllQueries(@AuthenticationPrincipal AuthenticatedUser user) {
         try {
             DataQueryCollectionResponse response = new DataQueryCollectionResponse();
             
-            response.setQueries(dataService.getAllQueries());
+            response.setQueries(dataService.getQueriesForOwner(user.getId()));
             
             return response;
         } catch (Exception ex) {
