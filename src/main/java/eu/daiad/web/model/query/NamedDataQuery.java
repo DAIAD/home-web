@@ -1,15 +1,35 @@
 package eu.daiad.web.model.query;
 
-import eu.daiad.web.model.AuthenticatedRequest;
+import org.joda.time.DateTime;
 
-public class NamedDataQuery extends AuthenticatedRequest {
+public class NamedDataQuery {
+    
+	public enum EnumFavouriteType {
+		UNDEFINED, MAP, CHART;
+	}  
+
+	public NamedDataQuery() {
+		this.type = EnumQueryFavouriteType.UNDEFINED;
+	}    
+    
+	private EnumQueryFavouriteType type;
 
     private String title;
 
     private String tags;
     
+    private DateTime createdOn;
+    
     private DataQuery query;
 
+    public EnumQueryFavouriteType getType() {
+        return type;
+    }
+    
+    public void setType(EnumQueryFavouriteType type) {
+        this.type = type;
+    } 
+    
     public String getTitle() {
         return title;
     }
@@ -32,5 +52,13 @@ public class NamedDataQuery extends AuthenticatedRequest {
 
     public void setTags(String tags) {
         this.tags = tags;
+    }
+
+    public DateTime getCreatedOn() {
+        return createdOn;
+    }
+
+    public void setCreatedOn(DateTime createdOn) {
+        this.createdOn = createdOn;
     }
 }
