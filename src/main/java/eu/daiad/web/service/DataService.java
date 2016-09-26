@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.io.IOException;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -18,6 +19,8 @@ import org.springframework.stereotype.Service;
 
 import com.ibm.icu.text.MessageFormat;
 import com.vividsolutions.jts.geom.Geometry;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 
 import eu.daiad.web.domain.application.AreaGroupMemberEntity;
 import eu.daiad.web.model.device.Device;
@@ -60,6 +63,7 @@ import eu.daiad.web.repository.application.ISpatialRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IWaterMeterForecastRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
+import eu.daiad.web.domain.application.Account;
 
 @Service
 public class DataService extends BaseService implements IDataService {
@@ -1115,17 +1119,37 @@ public class DataService extends BaseService implements IDataService {
     }
 
     @Override
-    public void storeQuery(NamedDataQuery query) {
-        favouriteRepository.insertFavouriteQuery(query);
+    public void storeQuery(NamedDataQuery query, UUID key) {
+        Account account = userRepository.getAccountByKey(key);
+        favouriteRepository.insertFavouriteQuery(query, account);
         
-        //throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
+    }
+    
+    @Override
+    public void updateStoredQuery(NamedDataQuery query, UUID key) {
+        Account account = userRepository.getAccountByKey(key);
+        favouriteRepository.updateFavouriteQuery(query, account);
+        
+    }    
+
+    @Override
+    public void storeQuery(NamedDataQuery query, String username) {
+        Account account = userRepository.getAccountByUsername(username);
+        favouriteRepository.insertFavouriteQuery(query, account);
+
+    }
+    
+    @Override
+    public List<NamedDataQuery> getQueriesForOwner(int accountId) 
+            throws JsonMappingException, JsonParseException, IOException{
+        List<NamedDataQuery> namedQueries = favouriteRepository.getFavouriteQueriesForOwner(accountId);
+        return namedQueries;
     }
 
     @Override
     public List<NamedDataQuery> getAllQueries() {
-        System.out.println("Loading favourite queries not implemented");
-        //throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
-        return null;
-    }
+        List<NamedDataQuery> namedQueries = favouriteRepository.getAllFavouriteQueries();
+        return namedQueries;
+    }    
 
 }
