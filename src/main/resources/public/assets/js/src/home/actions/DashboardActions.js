@@ -1,4 +1,8 @@
-    /*
+var { getTimeByPeriod, getLastShowerTime, getPreviousPeriodSoFar } = require('../utils/time');
+var { getDeviceKeysByType } = require('../utils/device');
+var { lastNFilterToLength } =  require('../utils/general');
+
+/*
 /**
  * Dashboard Actions module.
  * Action creators for Dashboard section
@@ -98,7 +102,35 @@ const updateInfobox = function(id, data) {
     dispatch(updateLayoutItem(id, data.display, data.type));
 
     dispatch(setDirty()); 
-    dispatch(QueryActions.fetchInfoboxData(Object.assign({}, getState().section.dashboard.infobox.find(i=>i.id===id))))
+    
+    const infobox = getState().section.dashboard.infobox.find(i=>i.id===id);
+    const { type, deviceType, period } = infobox;
+    const deviceKey = getDeviceKeysByType(getState().user.profile.devices, deviceType);
+    
+    infobox.time = infobox.time ? infobox.time : getTimeByPeriod(period);
+
+    if (deviceType === 'METER') {
+        infobox.query = {
+          cache: true,
+          deviceKey,
+          csrf: getState().user.csrf 
+        };
+
+        if (type === 'total') {
+          infobox.prevTime = getPreviousPeriodSoFar(period);
+        }
+    }
+    else if (deviceType === 'AMPHIRO') {
+      infobox.query = {
+        cache: true,
+        type: 'SLIDING',
+        length: lastNFilterToLength(period),
+        deviceKey,
+        csrf: getState().user.csrf 
+      };
+    }
+
+    return dispatch(QueryActions.fetchInfoboxData(Object.assign({}, infobox)))
     .then(res => dispatch(setInfoboxData(id, res)))
     .catch(error => { 
           console.error('Caught error in infobox data fetch:', error); 
@@ -177,7 +209,50 @@ const updateLayoutItem = function(id, display, type) {
       dispatch(updateLayout(layout));
   };
 };
+/*
+const prepareInfoboxes = function() {
+  return function(dispatch, getState) {
+    console.log('preparing infoboxes', getState().section.dashboard.infobox);
+    return getState().section.dashboard.infobox.map(infobox => {
 
+      const { type, deviceType, period, id } = infobox;
+
+
+      if (!id || !type || !deviceType || !period) throw new Error('prepareInfoboxes: Insufficient data provided');
+
+      const options = {};
+      options.time = infobox.time ? infobox.time : getTimeByPeriod(period);
+      const deviceKey = getDeviceKeysByType(getState().user.profile.devices, deviceType);
+
+      let prevTime = null;
+
+      if (deviceType === 'METER') {
+        options.query = {
+          cache: true,
+          deviceKey,
+          csrf: getState().user.csrf 
+        };
+
+        if (type === 'total') {
+          options.prevTime = getPreviousPeriodSoFar(period);
+        }
+      }
+      else if (deviceType === 'AMPHIRO') {
+        options.query = {
+          cache: true,
+          type: 'SLIDING',
+          length: lastNFilterToLength(period),
+          deviceKey,
+          csrf: getState().user.csrf 
+        };
+      }
+
+      dispatch(setInfoboxData(id, options));
+    });
+
+  };
+};
+*/
 /**
  * Fetch data for all infoboxes in state 
  * 
@@ -188,32 +263,9 @@ const fetchAllInfoboxesData = function() {
    * sequential execution to take advantage of cache
    */
     return getState().section.dashboard.infobox.map(infobox => {
-      return QueryActions.fetchInfoboxData(infobox);
+      return updateInfobox(infobox.id, {});
     })
-    .reduce((prev, curr, i, arr) => {
-      if (i===0) { 
-        //console.time('total');
-        //console.time(i); 
-      }
-      return prev.then(() => {
-        //console.log('tick');
-        return dispatch(curr)
-          .then(res =>  {
-            //console.timeEnd(i-1);
-            //console.time(i); 
-            if (i === arr.length-1) {
-              //console.timeEnd('total');
-            }
-            const id = getState().section.dashboard.infobox[i].id;
-            dispatch(setInfoboxData(id, res));
-          })
-          .catch(error => { 
-            console.error('Caught error in infobox data fetch:', error); 
-            dispatch(setInfoboxData(id, {data: [], error: 'Oops sth went wrong'})); 
-          });
-      });
-    }, Promise.resolve());
-    
+    .reduce((prev, curr, i, arr) => prev.then(() => dispatch(curr)), Promise.resolve());
   };
 };
 

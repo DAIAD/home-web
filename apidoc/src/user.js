@@ -20,6 +20,7 @@
  * @apiParam {String} [account.zip]           Postal code.
  * @apiParam {String} [account.locale]        Locale. Valid values are <code>en</code>, <code>el</code>, <code>es</code> and <code>de</code>
  * @apiParam {Object} [account.location]      Location expressed using GeoJSON.
+ * @apiParam {String} [account.photo]         User phote as a base64 encoded image.
  *
  * @apiParamExample {json} Request Example (White List Filtering)
  * {
@@ -92,7 +93,7 @@ function registerUser() { return; }
  *
  * @apiParamExample {json} Request Example
  * {
- *   "account" : {
+ *   "credentials" : {
  *     "username":"george.papadopoulos@daiad.eu",
  *     "password":"****"
  *   },
@@ -145,12 +146,13 @@ function changePassword() { return; }
  *
  * @apiParamExample {json} Request Example
  * {
- *   "username":"george.papadopoulos@daiad.eu"
+ *   "username":"george.papadopoulos@daiad.eu",
+ *   "application":"MOBILE"
  * }
  *
  * @apiSuccess {Boolean}  success           Returns <code>true</code> or <code>false</code> indicating success of the operation.
  * @apiSuccess {Object[]} errors            Array of <code>Error</code>
- * @apiSuccess {String}   token				The password reset token.
+ * @apiSuccess {String}   token             The password reset token.
  *
  * @apiSuccessExample {json} Response Example
  * HTTP/1.1 200 OK
@@ -187,7 +189,7 @@ function passwordResetTokenCreate() { return; }
  *
  * @apiDescription Resets a user's password given a valid token and password.
  *
- * @apiParam {String} token   	A valid password reset token.
+ * @apiParam {String} token     A valid password reset token.
  * @apiParam {String} password  The new password.
  * @apiParam {String} pin       Four digit PIN required for reseting the password. 
  * 
@@ -239,11 +241,11 @@ function passwordResetTokenRedeem() { return; }
  * @apiParam {Object} credentials             User credentials
  * @apiParam {String} credentials.username    User name.
  * @apiParam {String} credentials.password    Password.
- * @apiParam {String} username   			  The of the user to which the role is granted to.
- * @apiParam {String} role  				  The role name. Valid values are:<br />
- * 										      <code>ROLE_USER</code>
- * 										      <code>ROLE_SUPERUSER</code>
- * 										      <code>ROLE_ADMIN</code>
+ * @apiParam {String} username                The of the user to which the role is granted to.
+ * @apiParam {String} role                    The role name. Valid values are:<br />
+ *                                            <code>ROLE_USER</code>
+ *                                            <code>ROLE_SUPERUSER</code>
+ *                                            <code>ROLE_ADMIN</code>
  *
  * @apiParamExample {json} Request Example
  * {
@@ -296,11 +298,11 @@ function grantRole() { return; }
  * @apiParam {Object} credentials             User credentials
  * @apiParam {String} credentials.username    User name.
  * @apiParam {String} credentials.password    Password.
- * @apiParam {String} username   			  The of the user to which the role is granted to.
- * @apiParam {String} role  				  The role name. Valid values are:<br />
- * 										      <code>ROLE_USER</code>
- * 										      <code>ROLE_SUPERUSER</code>
- * 										      <code>ROLE_ADMIN</code>
+ * @apiParam {String} username                The of the user to which the role is granted to.
+ * @apiParam {String} role                    The role name. Valid values are:<br />
+ *                                            <code>ROLE_USER</code>
+ *                                            <code>ROLE_SUPERUSER</code>
+ *                                            <code>ROLE_ADMIN</code>
  *
  * @apiParamExample {json} Request Example
  * {

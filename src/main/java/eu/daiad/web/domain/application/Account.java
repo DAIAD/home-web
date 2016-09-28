@@ -64,6 +64,9 @@ public class Account {
     @OneToOne(mappedBy = "account")
     private AccountProfile profile;
 
+    @OneToOne(mappedBy = "account")
+    private HouseholdEntity household;
+
     @Basic(fetch = FetchType.LAZY)
     @Type(type = "org.hibernate.type.BinaryType")
     private byte photo[];
@@ -357,6 +360,14 @@ public class Account {
         this.location = location;
     }
 
+    public HouseholdEntity getHousehold() {
+        return household;
+    }
+
+    public void setHousehold(HouseholdEntity household) {
+        this.household = household;
+    }
+
     public String getFullname() {
         String fullname = (StringUtils.isBlank(this.firstname) ? "" : this.firstname) + " "
                         + (StringUtils.isBlank(this.lastname) ? "" : this.lastname);
@@ -367,5 +378,5 @@ public class Account {
 
         return fullname.trim();
     }
-
+ 
 }

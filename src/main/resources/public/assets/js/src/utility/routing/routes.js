@@ -26,6 +26,7 @@ var UserSettings = require('../components/section/settings/UserSettings');
 var SystemSettings = require('../components/section/settings/SystemSettings');
 var DataManagement = require('../components/section/support/Data');
 var Development = require('../components/section/support/Development');
+var PasswordReset = require('../components/PasswordReset');
 
 module.exports = (
   <Route path="/" component={App} >
@@ -56,5 +57,6 @@ module.exports = (
     <Route path="/support/data" component={DataManagement}/>
     <Route path="/support/messages" component={MessageAnalytics} />    
     <Route path="/support/development" component={Development}/>
+		<Route path="/password/reset/:token" component={PasswordReset}/>
   </Route>
 );

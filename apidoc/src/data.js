@@ -569,7 +569,15 @@ function query() { return; }
  * @apiParam (AmphiroSession) {Number}       duration              Session duration.
  * @apiParam (AmphiroSession) {Number}       temperature           Average temperature.
  * @apiParam (AmphiroSession) {Number}       flow                  Average flow.
+ * @apiParam (AmphiroSession) {Object}       [member]              Household member.
  *
+ * @apiParam (Member)         {Number}       index                 Unique household member index.
+ * @apiParam (Member)         {String}       mode                  Indicates the source of the value. Valid values are:
+ * </br><code>AUTO</code> : Set to the default user automatically.
+ * </br><code>SYSTEM</code> : Computed using an analysis algorithm.
+ * </br><code>MANUAL</code> : Set by the user explicitly.
+ * @apiParam (Member)         {Number}       timestamp             Most recent member assignment time stamp.
+ * 
  * @apiParam (KeyValuePair) {String}         key                   Key.
  * @apiParam (KeyValuePair) {String}         value                 Value.
  *
@@ -598,7 +606,12 @@ function query() { return; }
  *      "volume":34.2,
  *      "energy":10,
  *      "flow":5,
- *      "properties":[]
+ *      "properties":[],
+ *      "member": {
+ *        "index": 11,
+ *        "mode": "MANUAL",
+ *        "timestamp" : 1461060000000
+ *      }
  *   }],
  *      "measurements":[{
  *      "sessionId":1,
@@ -679,3 +692,63 @@ function query() { return; }
  */
 function storeDataByIndex() { return; }
 
+/**
+ * @api {post} /v2/data/session/member Assign members
+ * @apiVersion 0.0.2
+ * @apiName AssignMemberToSession
+ * @apiGroup Data
+ * @apiPermission ROLE_USER
+ *
+ * @apiDescription Assignms household members to shower sessions.
+ *
+ * @apiParam (MemberAssignmentRequest) {Object}   credentials              User credentials
+ * @apiParam (MemberAssignmentRequest) {String}   credentials.username     User name
+ * @apiParam (MemberAssignmentRequest) {String}   credentials.password     User password
+ * @apiParam (MemberAssignmentRequest) {Object[]} assignments              Array of <code>Assignment</code> objects.
+ *
+ * @apiParam (Assignment) {String}   deviceKey    Device unique key (UUID).
+ * @apiParam (Assignment) {Number}   sessionId    Session id.
+ * @apiParam (Assignment) {Number}   memberIndex  Household member unique index.
+ * @apiParam (Assignment) {Number}   timestamp    Update operation time stamp.
+ *
+ * @apiParamExample {json} Request Example
+ * {
+ *   "credentials": {
+ *     username: "user@daiad.eu",
+ *     password: "****"
+ *   },
+ *   "assignments":[{
+ *     "deviceKey": "4b6bb490-1c03-4c9d-b5d0-1dbb758bf71a",
+ *     "sessionId":2,
+ *     "memberIndex":14,
+ *     "timestamp" : 1461060000000
+ *   }]
+ * }
+ *
+ * @apiSuccess {Boolean}  success                 Returns <code>true</code> or <code>false</code> indicating success of the operation.
+ * @apiSuccess {Object[]} errors                  Array of <code>Error</code> objects.
+ *
+ * @apiSuccessExample {json} Response Example
+ * HTTP/1.1 200 OK
+ * {
+ *   "errors": [],
+ *   "success": true
+ * }
+ *
+ * @apiError {Boolean} success Always <code>false</code>.
+ * @apiError {Object[]} errors Array of <code>Error</code> objects.
+ *
+ * @apiError (Error) {String} code          Unique error code.
+ * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
+ *
+ * @apiErrorExample Error Response Example
+ * HTTP/1.1 200 OK
+ * {
+ *   errors: [{
+ *     code: "DataErrorCode.SESSION_NOT_FOUND",
+ *     description: "Session 4 was not found."
+ *   }],
+ *   success: false
+ * }
+ */
+function assignMemberToSession() { return; }

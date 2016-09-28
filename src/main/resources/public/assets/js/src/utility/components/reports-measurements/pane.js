@@ -105,6 +105,11 @@ var ReportPanel = React.createClass({
         'report-name': 'Select the metric to be applied to measurements.',
         'level': 'Specify the level of detail (unit of time for charts).'
       },
+
+      chartProps: {
+        width: 780,
+        height: 300,
+      },
     },
     
     templates: {
@@ -338,6 +343,7 @@ var ReportPanel = React.createClass({
   },
 
   render: function () {
+    var {defaults} = this.constructor;
     var {field, title, level, reportName, finished, series} = this.props;
     var {dirty, draw, error} = this.state;
 
@@ -378,6 +384,7 @@ var ReportPanel = React.createClass({
           </ListGroupItem>
           <ListGroupItem className="report-chart-wrapper">
             <Chart 
+              {...defaults.chartProps}
               draw={draw}
               field={field} 
               level={level} 
@@ -1295,5 +1302,7 @@ module.exports = {
   Panel: ReportPanel,
   Form: ReportForm, 
   Info: ReportInfo, 
-  Chart: (props) => (<ChartContainer {...props} reportKey={REPORT_KEY} />),
+  Chart: (props) => (
+    <ChartContainer {...props} reportKey={REPORT_KEY} />
+  ),
 };

@@ -28,6 +28,7 @@ import eu.daiad.web.model.profile.ProfileModesRequest;
 import eu.daiad.web.model.profile.ProfileModesResponse;
 import eu.daiad.web.model.profile.ProfileModesSubmitChangesRequest;
 import eu.daiad.web.model.profile.ProfileResponse;
+import eu.daiad.web.model.profile.UpdateHouseholdRequest;
 import eu.daiad.web.model.profile.UpdateProfileRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IProfileRepository;
@@ -35,7 +36,6 @@ import eu.daiad.web.util.ValidationUtils;
 
 /**
  * Provides methods for managing user profile.
- *
  */
 @RestController
 public class ProfileController extends BaseController {
@@ -70,10 +70,8 @@ public class ProfileController extends BaseController {
      * It lists all modes (mobile, amphiro, social) for all users matching the
      * specified filter options (if any).
      * 
-     * @param user
-     *            the authenticated user.
-     * @param filters
-     *            the filter options
+     * @param user the authenticated user.
+     * @param filters the filter options
      * @return the array of modes for the matching users
      * @throws JsonProcessingException
      */
@@ -98,8 +96,7 @@ public class ProfileController extends BaseController {
      * It returns all available filter options for the user modes (including
      * possible mode values and utility names)
      * 
-     * @param user
-     *            the authenticated user.
+     * @param user the authenticated user.
      * @return the available filter options.
      * @throws JsonProcessingException
      */
@@ -123,10 +120,8 @@ public class ProfileController extends BaseController {
     /**
      * Given an array of altered modes, this changes are applied.
      * 
-     * @param user
-     *            the authenticated user.
-     * @param modeChanges
-     *            the array of mode changes.
+     * @param user the authenticated user.
+     * @param modeChanges the array of mode changes.
      * @return the controller's response.
      * @throws JsonProcessingException
      */
@@ -150,10 +145,8 @@ public class ProfileController extends BaseController {
     /**
      * Deactivates a user.
      * 
-     * @param user
-     *            the authenticated user.
-     * @param userDeactId
-     *            the user to deactivate
+     * @param user the authenticated user.
+     * @param userDeactId the user to deactivate
      * @return the controller's response.
      * @throws JsonProcessingException
      */
@@ -174,6 +167,13 @@ public class ProfileController extends BaseController {
         return response;
     }
 
+    /**
+     * Updates user profile
+     * 
+     * @param user the authenticated user 
+     * @param request the profile data to store 
+     * @return the controller's response.
+     */
     @RequestMapping(value = "/action/profile/save", method = RequestMethod.POST, produces = "application/json")
     @Secured({ "ROLE_USER", "ROLE_SUPERUSER", "ROLE_ADMIN" })
     public RestResponse saveProfile(@AuthenticationPrincipal AuthenticatedUser user,
@@ -220,4 +220,27 @@ public class ProfileController extends BaseController {
 
         return response;
     }
+    
+    /**
+     * Updates user household information.
+     * 
+     * @param request the profile data to store
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/action/household", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @Secured({ "ROLE_USER" })
+    public RestResponse saveHousehold(@RequestBody UpdateHouseholdRequest request) {
+        RestResponse response = new RestResponse();
+
+        try {
+            this.profileRepository.saveHousehold(request);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
+
 }

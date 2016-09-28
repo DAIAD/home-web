@@ -31,7 +31,7 @@ const initHome = function (profile) {
         if (configuration.layout) dispatch(DashboardActions.updateLayout(configuration.layout, false));
 
     }
-    
+
     if (getMeterCount(getState().user.profile.devices) === 0) {
       dispatch(HistoryActions.setActiveDeviceType('AMPHIRO', true));
       
@@ -49,7 +49,6 @@ const initHome = function (profile) {
     const profileData = { firstname, lastname, email, username, locale, address, zip, country, timezone };
     dispatch(FormActions.setForm('profileForm', profileData));
     
-
     return dispatch(DashboardActions.fetchAllInfoboxesData())
     .then(() => {
       dispatch(LocaleActions.setLocale(profile.locale));

@@ -1,4 +1,4 @@
-package eu.daiad.web.service;
+package eu.daiad.web.security;
 
 import java.util.List;
 

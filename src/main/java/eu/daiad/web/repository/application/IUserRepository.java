@@ -3,6 +3,7 @@ package eu.daiad.web.repository.application;
 import java.util.List;
 import java.util.UUID;
 
+import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.admin.AccountActivity;
 import eu.daiad.web.model.admin.AccountWhiteListEntry;
 import eu.daiad.web.model.admin.AccountWhiteListInfo;
@@ -25,7 +26,9 @@ public interface IUserRepository {
 
     void changePassword(String username, String password) throws ApplicationException;
 
-    PasswordResetToken createPasswordResetToken(String username) throws ApplicationException;
+    PasswordResetToken createPasswordResetToken(EnumApplication application, String username) throws ApplicationException;
+
+    PasswordResetToken getPasswordResetTokenById(UUID token);
 
     void resetPassword(UUID token, String pin, String password) throws ApplicationException;
 

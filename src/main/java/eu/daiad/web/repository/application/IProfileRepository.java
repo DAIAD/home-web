@@ -13,21 +13,25 @@ import eu.daiad.web.model.profile.ProfileModes;
 import eu.daiad.web.model.profile.ProfileModesFilterOptions;
 import eu.daiad.web.model.profile.ProfileModesRequest;
 import eu.daiad.web.model.profile.ProfileModesSubmitChangesRequest;
+import eu.daiad.web.model.profile.UpdateHouseholdRequest;
 import eu.daiad.web.model.profile.UpdateProfileRequest;
 
 public interface IProfileRepository {
 
-	public abstract Profile getProfileByUsername(EnumApplication application) throws ApplicationException;
+    public abstract Profile getProfileByUsername(EnumApplication application) throws ApplicationException;
 
-	public abstract List<ProfileModes> getProfileModes(ProfileModesRequest filters) throws ApplicationException;
+    public abstract List<ProfileModes> getProfileModes(ProfileModesRequest filters) throws ApplicationException;
 
-	public abstract void saveProfile(UpdateProfileRequest updates);
+    public abstract void saveProfile(UpdateProfileRequest updates);
 
-	public abstract void notifyProfile(EnumApplication application, UUID version, DateTime updatedOn);
+    public abstract void notifyProfile(EnumApplication application, UUID version, DateTime updatedOn);
 
-	public abstract ProfileModesFilterOptions getFilterOptions();
+    public abstract ProfileModesFilterOptions getFilterOptions();
 
-	public abstract void setProfileModes(ProfileModesSubmitChangesRequest modeChanges);
+    public abstract void setProfileModes(ProfileModesSubmitChangesRequest modeChanges);
 
-	public abstract void deactivateProfile(ProfileDeactivateRequest userDeactId);
+    public abstract void deactivateProfile(ProfileDeactivateRequest userDeactId);
+
+    public abstract void saveHousehold(UpdateHouseholdRequest updates);
+    
 }

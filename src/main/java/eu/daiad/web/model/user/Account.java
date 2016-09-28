@@ -17,170 +17,180 @@ import eu.daiad.web.model.EnumGender;
 
 public class Account {
 
-	public interface AccountDefaultValidation {
+    public interface AccountDefaultValidation {
 
-	}
+    }
 
-	public interface AccountSimpleValidation {
+    public interface AccountSimpleValidation {
 
-	}
+    }
 
-	@NotEmpty(groups = { AccountSimpleValidation.class, AccountDefaultValidation.class })
-	@Size(max = 100, groups = { AccountSimpleValidation.class, AccountDefaultValidation.class })
-	@Email(groups = { AccountSimpleValidation.class, AccountDefaultValidation.class })
-	private String username;
+    @NotEmpty(groups = { AccountSimpleValidation.class, AccountDefaultValidation.class })
+    @Size(max = 100, groups = { AccountSimpleValidation.class, AccountDefaultValidation.class })
+    @Email(groups = { AccountSimpleValidation.class, AccountDefaultValidation.class })
+    private String username;
 
-	@NotEmpty(groups = { AccountSimpleValidation.class, AccountDefaultValidation.class })
-	@Size(min = 8, groups = { AccountSimpleValidation.class, AccountDefaultValidation.class })
-	private String password;
+    @NotEmpty(groups = { AccountSimpleValidation.class, AccountDefaultValidation.class })
+    @Size(min = 8, groups = { AccountSimpleValidation.class, AccountDefaultValidation.class })
+    private String password;
 
-	@NotEmpty(groups = { AccountDefaultValidation.class })
-	@Size(max = 40, groups = { AccountDefaultValidation.class })
-	private String firstname;
+    @NotEmpty(groups = { AccountDefaultValidation.class })
+    @Size(max = 40, groups = { AccountDefaultValidation.class })
+    private String firstname;
 
-	@NotEmpty(groups = { AccountDefaultValidation.class })
-	@Size(max = 70, groups = { AccountDefaultValidation.class })
-	private String lastname;
+    @NotEmpty(groups = { AccountDefaultValidation.class })
+    @Size(max = 70, groups = { AccountDefaultValidation.class })
+    private String lastname;
 
-	@JsonDeserialize(using = EnumGender.Deserializer.class)
-	@NotNull(groups = { AccountDefaultValidation.class })
-	private EnumGender gender;
+    @JsonDeserialize(using = EnumGender.Deserializer.class)
+    @NotNull(groups = { AccountDefaultValidation.class })
+    private EnumGender gender;
 
-	@NotNull(groups = { AccountDefaultValidation.class })
-	@Past(groups = { AccountDefaultValidation.class })
-	private DateTime birthdate;
+    @NotNull(groups = { AccountDefaultValidation.class })
+    @Past(groups = { AccountDefaultValidation.class })
+    private DateTime birthdate;
 
-	@NotNull(groups = { AccountDefaultValidation.class })
-	@Size(max = 50, groups = { AccountDefaultValidation.class })
-	private String country;
+    @NotNull(groups = { AccountDefaultValidation.class })
+    @Size(max = 50, groups = { AccountDefaultValidation.class })
+    private String country;
 
-	@Size(max = 60, groups = { AccountDefaultValidation.class })
-	private String city;
+    @Size(max = 60, groups = { AccountDefaultValidation.class })
+    private String city;
 
-	@Size(max = 90, groups = { AccountDefaultValidation.class })
-	private String address;
+    @Size(max = 90, groups = { AccountDefaultValidation.class })
+    private String address;
 
-	@NotNull(groups = { AccountDefaultValidation.class })
-	@Size(max = 50, groups = { AccountDefaultValidation.class })
-	private String timezone;
+    @NotNull(groups = { AccountDefaultValidation.class })
+    @Size(max = 50, groups = { AccountDefaultValidation.class })
+    private String timezone;
 
-	@NotNull(groups = { AccountDefaultValidation.class })
-	@Size(max = 10, groups = { AccountDefaultValidation.class })
-	private String postalCode;
+    @NotNull(groups = { AccountDefaultValidation.class })
+    @Size(max = 10, groups = { AccountDefaultValidation.class })
+    private String postalCode;
 
-	@NotNull(groups = { AccountDefaultValidation.class })
-	@NotEmpty(groups = { AccountDefaultValidation.class })
-	@Pattern(regexp = "en|el|es|de", groups = { AccountDefaultValidation.class })
-	private String locale;
+    @NotNull(groups = { AccountDefaultValidation.class })
+    @NotEmpty(groups = { AccountDefaultValidation.class })
+    @Pattern(regexp = "en|el|es|de", groups = { AccountDefaultValidation.class })
+    private String locale;
 
-	private Geometry location;
+    private Geometry location;
 
-	public EnumGender getGender() {
-		if (this.gender == null) {
-			return EnumGender.UNDEFINED;
-		}
-		return gender;
-	}
+    private byte[] photo;
 
-	public void setGender(EnumGender gender) {
-		this.gender = gender;
-	}
+    public EnumGender getGender() {
+        if (this.gender == null) {
+            return EnumGender.UNDEFINED;
+        }
+        return gender;
+    }
 
-	public DateTime getBirthdate() {
-		return birthdate;
-	}
+    public void setGender(EnumGender gender) {
+        this.gender = gender;
+    }
 
-	public void setBirthdate(DateTime birthdate) {
-		this.birthdate = birthdate;
-	}
+    public DateTime getBirthdate() {
+        return birthdate;
+    }
 
-	public String getCountry() {
-		return country;
-	}
+    public void setBirthdate(DateTime birthdate) {
+        this.birthdate = birthdate;
+    }
 
-	public void setCountry(String country) {
-		this.country = country;
-	}
+    public String getCountry() {
+        return country;
+    }
 
-	public String getPostalCode() {
-		return postalCode;
-	}
+    public void setCountry(String country) {
+        this.country = country;
+    }
 
-	@JsonSetter("zip")
-	public void setPostalCode(String postalCode) {
-		this.postalCode = postalCode;
-	}
+    public String getPostalCode() {
+        return postalCode;
+    }
 
-	public String getTimezone() {
-		return timezone;
-	}
+    @JsonSetter("zip")
+    public void setPostalCode(String postalCode) {
+        this.postalCode = postalCode;
+    }
 
-	public void setTimezone(String timezone) {
-		this.timezone = timezone;
-	}
+    public String getTimezone() {
+        return timezone;
+    }
 
-	public void setUsername(String value) {
-		this.username = value;
-	}
+    public void setTimezone(String timezone) {
+        this.timezone = timezone;
+    }
 
-	public String getUsername() {
-		return this.username;
-	}
+    public void setUsername(String value) {
+        this.username = value;
+    }
 
-	public void setPassword(String value) {
-		this.password = value;
-	}
+    public String getUsername() {
+        return this.username;
+    }
 
-	public String getPassword() {
-		return this.password;
-	}
+    public void setPassword(String value) {
+        this.password = value;
+    }
 
-	public String getFirstname() {
-		return firstname;
-	}
+    public String getPassword() {
+        return this.password;
+    }
 
-	public void setFirstname(String firstName) {
-		this.firstname = firstName;
-	}
+    public String getFirstname() {
+        return firstname;
+    }
 
-	public String getLastname() {
-		return lastname;
-	}
+    public void setFirstname(String firstName) {
+        this.firstname = firstName;
+    }
 
-	public void setLastname(String lastName) {
-		this.lastname = lastName;
-	}
+    public String getLastname() {
+        return lastname;
+    }
 
-	public String getLocale() {
-		return locale;
-	}
+    public void setLastname(String lastName) {
+        this.lastname = lastName;
+    }
 
-	public void setLocale(String locale) {
-		this.locale = locale;
-	}
+    public String getLocale() {
+        return locale;
+    }
 
-	public String getCity() {
-		return city;
-	}
+    public void setLocale(String locale) {
+        this.locale = locale;
+    }
 
-	public void setCity(String city) {
-		this.city = city;
-	}
+    public String getCity() {
+        return city;
+    }
 
-	public String getAddress() {
-		return address;
-	}
+    public void setCity(String city) {
+        this.city = city;
+    }
 
-	public void setAddress(String address) {
-		this.address = address;
-	}
+    public String getAddress() {
+        return address;
+    }
 
-	public Geometry getLocation() {
-		return location;
-	}
+    public void setAddress(String address) {
+        this.address = address;
+    }
 
-	public void setLocation(Geometry location) {
-		this.location = location;
-	}
+    public Geometry getLocation() {
+        return location;
+    }
+
+    public void setLocation(Geometry location) {
+        this.location = location;
+    }
+
+    public byte[] getPhoto() {
+        return photo;
+    }
+
+    public void setPhoto(byte[] photo) {
+        this.photo = photo;
+    }
 
 }

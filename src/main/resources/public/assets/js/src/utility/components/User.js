@@ -648,6 +648,16 @@ var User = React.createClass({
       );
 		}
 		if (this.props.user) {
+		  var imageSource = '/assets/images/utility/profile.png';
+
+		  if(this.props.user.photo) {
+		    imageSource = "data:image/jpg;base64," + this.props.user.photo;
+		  }
+
+      var userImage = (
+        <img src={imageSource} style={{borderRadius: '50%', width: '100%', height: '100%'}} />
+      );
+
   		return (
     		<div className='container-fluid' style={{ paddingTop: 10 }}>
     		  {amphiroConfigurationModal}
@@ -659,7 +669,7 @@ var User = React.createClass({
                     <div className='row'>
                       <div className='col-md-3'>
                         <div style={{width: '100px', height: '100px',  border: '#3498db solid 3px', borderRadius: '50%', padding: 3 }}>
-                          <img src='/assets/images/utility/profile.png' style={{borderRadius: '50%', width: '100%', height: '100%'}} />
+                          {userImage}
                         </div>
                       </div>
                       <div className='col-md-9'>

@@ -6,6 +6,8 @@ import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -16,6 +18,8 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
+
+import eu.daiad.web.model.EnumApplication;
 
 @Entity(name = "password_reset_token")
 @Table(schema = "public", name = "password_reset_token")
@@ -45,6 +49,9 @@ public class PasswordResetTokenEntity {
 
     @Basic()
     private String pin;
+
+    @Enumerated(EnumType.STRING)
+    private EnumApplication application;
 
     @Basic()
     private boolean valid = true;
@@ -103,6 +110,14 @@ public class PasswordResetTokenEntity {
 
     public boolean isReedemed() {
         return (this.redeemedOn != null);
+    }
+
+    public EnumApplication getApplication() {
+        return application;
+    }
+
+    public void setApplication(EnumApplication application) {
+        this.application = application;
     }
 
 }

@@ -14,9 +14,7 @@ import com.fasterxml.jackson.datatype.joda.JodaModule;
 import eu.daiad.web.controller.ErrorController;
 
 /**
- * 
  * Provides basic application configuration.
- *
  */
 @Configuration
 public class WebConfig extends WebMvcConfigurerAdapter {

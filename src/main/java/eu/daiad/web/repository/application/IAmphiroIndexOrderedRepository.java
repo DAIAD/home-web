@@ -1,6 +1,7 @@
 package eu.daiad.web.repository.application;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.joda.time.DateTimeZone;
 
@@ -12,6 +13,7 @@ import eu.daiad.web.model.amphiro.AmphiroSessionCollectionIndexIntervalQueryResu
 import eu.daiad.web.model.amphiro.AmphiroSessionIndexIntervalQuery;
 import eu.daiad.web.model.amphiro.AmphiroSessionIndexIntervalQueryResult;
 import eu.daiad.web.model.amphiro.AmphiroSessionUpdateCollection;
+import eu.daiad.web.model.amphiro.MemberAssignmentRequest;
 import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.query.ExpandedDataQuery;
@@ -32,5 +34,7 @@ public interface IAmphiroIndexOrderedRepository {
     public abstract AmphiroSessionIndexIntervalQueryResult getSession(AmphiroSessionIndexIntervalQuery query);
     
     public abstract ArrayList<GroupDataSeries> query(ExpandedDataQuery query) throws ApplicationException;
+    
+    public abstract void assignMemberToSession(AuthenticatedUser user, List<MemberAssignmentRequest.Assignment> assignments) throws Exception;
 
 }

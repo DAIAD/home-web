@@ -72,9 +72,7 @@ public class DefaultMailService implements IMailService {
      * Sends a mail. The mail content is generated from a template. Data is
      * provided using an object. The content of the mail is localized.
      * 
-     * @param locale the selected locale.
-     * @param template the template to render.
-     * @param model the model with any data required for rendering the mail.
+     * @param message the message to be sent
      */
     @Override
     public void send(Message message) {
