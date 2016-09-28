@@ -164,15 +164,21 @@ const transformInfoboxData = function (infobox, devices, intl) {
       //highlight = `${reduced} ${mu}`;
       better = reduced < previousReduced;
       comparePercentage = previousReduced === 0 ? null : Math.round((Math.abs(reduced - previousReduced) / previousReduced)*100);
+      
+      chartData = data ? data.map(devData => {
+        const sessions = getDataSessions(devices, devData)
+        .map(session => Object.assign({}, session, { 
+          duration: Math.round(100* session.duration / 60) /100,
+          energy: Math.round(session.energy / 10)/100,
+        }));
+        
+        return ({
+          title: getDeviceNameByKey(devices, devData.deviceKey), 
+          data: deviceType === 'METER' ? getChartMeterData(sessions, chartCategories, infobox.metric, time) : getChartAmphiroData(sessions, chartCategories, infobox.metric)
+         });
+          
+      }) : []; 
 
-      chartData = data ? data.map(devData => ({ 
-        title: getDeviceNameByKey(devices, devData.deviceKey), 
-        //data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, chartCategories)
-        data: deviceType === 'METER' ? getChartMeterData(getDataSessions(devices, devData), chartCategories, infobox.metric, time) : getChartAmphiroData(getDataSessions(devices, devData), chartCategories, infobox.metric)
-        //}))
-      //data: getChartDataByFilter(getDataSessions(devices, devData), infobox.metric, chartCategories)
-      })) : [];
-     
     }
     else if (type === 'efficiency') {
       device = getDeviceKeysByType(devices, deviceType);
@@ -333,6 +339,7 @@ const reduceSessions = function (devices, data) {
                                devName:getDeviceNameByKey(devices, device.deviceKey),
                                duration: session.duration ? Math.floor(session.duration / 60) : null,
                                friendlyDuration: getFriendlyDuration(session.duration), 
+
                                temperature: session.temperature ? Math.round(session.temperature * 10)/10 : null,
                                energyClass: getEnergyClass(session.energy), 
                                

@@ -87,7 +87,8 @@ const login = function(username, password) {
     })
     .catch((errors) => {
       console.error('Error caught on user login:', errors);
-      return errors;
+      throw errors;
+      //return errors;
     });
   };
 };
@@ -116,7 +117,8 @@ const refreshProfile = function() {
     })
     .catch((errors) => {
       console.error('Error caught on profile refresh:', errors);
-      return errors;
+      throw errors;
+      //return errors;
     });
   };
 };
