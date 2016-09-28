@@ -324,6 +324,39 @@ public class DataController extends BaseController {
 
         return response;
     }
+
+    /**
+     * Deletes a data query.
+     * 
+     * @param user the user
+     * @param request the data.
+     * @return the result of the delete operation.
+     */
+    @RequestMapping(value = "/action/data/query/delete", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @Secured({ "ROLE_ADMIN" })
+    public RestResponse deleteStoredQuery(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody StoreDataQueryRequest request) {
+        RestResponse response = new RestResponse();
+
+        try {     
+
+            // Set defaults if needed
+            DataQuery query = request.getNamedQuery().getQuery();
+            if (query != null) {     
+                // Initialize time zone
+                if (StringUtils.isBlank(query.getTimezone())) {              
+                    request.getNamedQuery().getQuery().setTimezone(user.getTimezone());
+                }
+            }
+            
+            dataService.deleteStoredQuery(request.getNamedQuery(), user.getKey());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
     
     /**
      * Loads all saved data queries.

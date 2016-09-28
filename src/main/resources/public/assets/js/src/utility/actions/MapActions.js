@@ -255,7 +255,17 @@ var MapActions = {
         dispatch(addFavouriteResponse(false, error));
       });
     };
-  }
+  },
+  updateFavourite : function(favourite) {
+    return function(dispatch, getState) {
+      dispatch(addFavouriteRequest());
+      return favouritesAPI.updateFavourite(favourite).then(function (response) {
+        dispatch(addFavouriteResponse(response.success, response.errors));
+      }, function (error) {
+        dispatch(addFavouriteResponse(false, error));
+      });
+    };
+  }  
 };
 
 module.exports = MapActions;

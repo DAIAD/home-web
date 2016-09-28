@@ -42,6 +42,8 @@ import eu.daiad.web.model.query.NamedDataQuery;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.BaseRepository;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Repository
 @Transactional("applicationTransactionManager")
@@ -489,16 +491,18 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
     @Override
     public void insertFavouriteQuery(NamedDataQuery namedDataQuery, Account account) {
-        
+
         try {
 
             DataQueryEntity dataQueryEntity = new DataQueryEntity();
+            
             dataQueryEntity.setType(namedDataQuery.getType());
             dataQueryEntity.setName(namedDataQuery.getTitle());
             dataQueryEntity.setTags(namedDataQuery.getTags());
             dataQueryEntity.setQuery(new ObjectMapper().writeValueAsString(namedDataQuery.getQuery()));
             dataQueryEntity.setOwner(account);
             dataQueryEntity.setUpdatedOn(DateTime.now());
+            
             this.entityManager.persist(dataQueryEntity);
 
         } catch (Exception ex) {
@@ -508,22 +512,48 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
     @Override
     public void updateFavouriteQuery(NamedDataQuery namedDataQuery, Account account) {
+
+        //TODO - resolve when same favourite title already exists       
+        try {             
+            TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> query = entityManager.createQuery(
+                            "SELECT d FROM data_query d WHERE d.owner.id = :accountId and d.id = :id",
+                            eu.daiad.web.domain.application.DataQueryEntity.class).setFirstResult(0).setMaxResults(1);
+            
+            query.setParameter("id", namedDataQuery.getId());
+            query.setParameter("accountId", account.getId());
+
+            DataQueryEntity dataQueryEntity = query.getSingleResult();
+            
+            dataQueryEntity.setName(namedDataQuery.getTitle());
+            dataQueryEntity.setQuery(new ObjectMapper().writeValueAsString(namedDataQuery.getQuery()));
+            dataQueryEntity.setTags(namedDataQuery.getTags());
         
-//        try {
-//
-//            DataQueryEntity dataQueryEntity = new DataQueryEntity();
-//            dataQueryEntity.setType(namedDataQuery.getType());
-//            dataQueryEntity.setName(namedDataQuery.getTitle());
-//            dataQueryEntity.setTags(namedDataQuery.getTags());
-//            dataQueryEntity.setQuery(new ObjectMapper().writeValueAsString(namedDataQuery.getQuery()));
-//            dataQueryEntity.setOwner(account);
-//            dataQueryEntity.setUpdatedOn(DateTime.now());
-//            this.entityManager.persist(dataQueryEntity);
-//
-//        } catch (Exception ex) {
-//            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
-//        }
+            this.entityManager.persist(dataQueryEntity);
+
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        }
     }  
+    
+    @Override
+    public void deleteFavouriteQuery(NamedDataQuery namedDataQuery, Account account) {
+        
+        try {             
+            TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> query = entityManager.createQuery(
+                            "SELECT d FROM data_query d WHERE d.owner.id = :accountId and d.id = :id",
+                            eu.daiad.web.domain.application.DataQueryEntity.class).setFirstResult(0).setMaxResults(1);
+            
+            query.setParameter("id", namedDataQuery.getId());
+            query.setParameter("accountId", account.getId());
+
+            DataQueryEntity dataQueryEntity = query.getSingleResult();
+        
+            this.entityManager.remove(dataQueryEntity);
+
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        }
+    }      
     
     @Override
     public List<NamedDataQuery> getFavouriteQueriesForOwner(int accountId) 
@@ -532,14 +562,15 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
         List<NamedDataQuery> namedDataQueries = new ArrayList<>();
              
         TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> query = entityManager.createQuery(
-                        "SELECT d FROM data_query d WHERE d.owner.id = :accountId",
+                        "SELECT d FROM data_query d WHERE d.owner.id = :accountId order by d.updatedOn desc",
                         eu.daiad.web.domain.application.DataQueryEntity.class);    
         query.setParameter("accountId", accountId);
 
         for(DataQueryEntity queryEntity : query.getResultList()){
 
             NamedDataQuery namedDataQuery = new NamedDataQuery();
-
+            
+            namedDataQuery.setId(queryEntity.getId());
             namedDataQuery.setType(queryEntity.getType());
             namedDataQuery.setTitle(queryEntity.getName());
             namedDataQuery.setTags(queryEntity.getTags());
@@ -554,19 +585,33 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
     @Override
     public List<NamedDataQuery> getAllFavouriteQueries(){
+        throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
         
-        TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> query = entityManager.createQuery(
-                        "SELECT d FROM data_query d",
-                        eu.daiad.web.domain.application.DataQueryEntity.class);    
-        
-        List<NamedDataQuery> namedDataQueries = new ArrayList<>();
-        
-        for(DataQueryEntity queryEntity : query.getResultList()){
-            NamedDataQuery namedDataQuery = new NamedDataQuery();
-            namedDataQuery.setTitle(queryEntity.getName());
-            //namedQuery.setTags(q.getTags()); TODO - define getTags method
-            namedDataQueries.add(namedDataQuery);
-        }
-        return namedDataQueries;
+//        TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> query = entityManager.createQuery(
+//                        "SELECT d FROM data_query d",
+//                        eu.daiad.web.domain.application.DataQueryEntity.class);    
+//        
+//        List<NamedDataQuery> namedDataQueries = new ArrayList<>();
+//        try {        
+//            for(DataQueryEntity queryEntity : query.getResultList()){
+//
+//                    NamedDataQuery namedDataQuery = new NamedDataQuery();
+//
+//                    namedDataQuery.setId(queryEntity.getId());
+//                    namedDataQuery.setType(queryEntity.getType());
+//                    namedDataQuery.setTitle(queryEntity.getName());
+//                    namedDataQuery.setTags(queryEntity.getTags());
+//                    namedDataQuery.setQuery(queryEntity.toDataQuery());
+//                    namedDataQuery.setCreatedOn(queryEntity.getUpdatedOn());
+//
+//                    namedDataQueries.add(namedDataQuery);
+//
+//            }
+//        } catch (JsonMappingException ex) {
+//            Logger.getLogger(JpaFavouriteRepository.class.getName()).log(Level.SEVERE, null, ex);
+//        } catch (IOException ex) {
+//            Logger.getLogger(JpaFavouriteRepository.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//        return namedDataQueries;
     }    
 }

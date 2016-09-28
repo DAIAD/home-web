@@ -6,7 +6,7 @@ var Bootstrap = require('react-bootstrap');
 var Breadcrumb = require('../../Breadcrumb');
 var Chart = require('../../Chart');
 var ClusterChart = require('../../ClusterChart');
-
+var Modal = require('../../Modal');
 var Timeline = require('../../Timeline');
 var LeafletMap = require('../../LeafletMap');
 var Table = require('../../Table');
@@ -14,8 +14,9 @@ var { Link } = require('react-router');
 var { bindActionCreators } = require('redux');
 var { connect } = require('react-redux');
 
-var { fetchFavouriteQueries, openFavourite, closeFavourite, setActiveFavourite, addCopy } 
- = require('../../../actions/FavouritesActions');
+var { fetchFavouriteQueries, openFavourite, 
+      closeFavourite, setActiveFavourite, 
+      addCopy, deleteFavourite, openWarning, closeWarning, resetMapState} = require('../../../actions/FavouritesActions');
 
 //var ViewChart = require('../../../report-measurements/pane');
 var rows;
@@ -62,6 +63,7 @@ var Favourites = React.createClass({
 	 },
 
   componentWillMount : function() {
+    this.props.actions.resetMapState();
     this.props.actions.fetchFavouriteQueries();
 		  this.setState({points : createPoints()});
 	 },
@@ -92,6 +94,13 @@ var Favourites = React.createClass({
     namedQuery.title = namedQuery.title + ' (copy)';
     this.props.actions.addCopy(request);   
     this.props.actions.fetchFavouriteQueries();
+  },
+  
+  clickedDeleteFavourite(namedQuery) {
+    var request =  {
+      'namedQuery' : namedQuery
+    };
+    this.props.actions.openWarning(request);  
   },
   
   render: function() {
@@ -277,7 +286,7 @@ var Favourites = React.createClass({
 				   type:'action',
 				   icon: 'remove',
 				   handler: function() {
-					    console.log(this);
+         self.clickedDeleteFavourite(this.props.row);
 				   }
 			  }],
 			  rows: this.props.favourites ? this.props.favourites : rows,
@@ -293,6 +302,46 @@ var Favourites = React.createClass({
 			 	  <Table data={favs}></Table>
 			 	</div>
 		 );
+
+    if(this.props.showDeleteMessage){
+      var modal;
+      var warning = 'Delete Announcement?';
+			   var actions = [{
+				      action: this.props.actions.closeWarning,
+				      name: "Cancel"
+			     }, {
+				      action: this.props.actions.deleteFavourite,
+				      name: "Delete",
+				      style: 'danger'
+			     }];    
+        
+      return (      
+	 		    <div className='container-fluid' style={{ paddingTop: 10 }}>
+		 		     <div className='row'>
+			 		      <div className='col-md-12'>
+				 		       <Breadcrumb routes={this.props.routes}/>
+					       </div>
+ 				     </div>
+	 			     <div className='row'>
+		 			      <div className='col-lg-12'>
+			 			       <Bootstrap.Panel header={configTitle}>
+				 			        <Bootstrap.ListGroup fill>
+                  {favouriteContent}
+						 	        </Bootstrap.ListGroup>
+						        </Bootstrap.Panel>
+                {togglePanel}
+ 					      </div>
+	 		      </div>       
+  		      <Modal show = {this.props.showDeleteMessage}
+            onClose = {this.props.actions.closeWarning}
+            title = {warning}
+            text = {'You are about to delete the favourite with label "' + 
+              this.props.favouriteToBeDeleted.namedQuery.title + '". Are you sure?'}
+  		        actions = {actions}
+  		      />
+        </div> 
+      );   
+    }
 
    if(this.props.favourites && !this.props.isLoading){
  		  return (
@@ -328,17 +377,22 @@ var Favourites = React.createClass({
 });
 
 function mapStateToProps(state) {
+  console.log(state);
   return {
     showSelected: state.favourites.showSelected,
     selectedFavourite: state.favourites.selectedFavourite,
-    favourites: state.favourites.favourites
+    favourites: state.favourites.favourites,
+    showDeleteMessage: state.favourites.showDeleteMessage,
+    favouriteToBeDeleted: state.favourites.favouriteToBeDeleted
   };
 }
 
 function mapDispatchToProps(dispatch) {
   return {
     actions : bindActionCreators(Object.assign({}, { fetchFavouriteQueries, openFavourite, 
-                                                     closeFavourite, setActiveFavourite, addCopy}) , dispatch)                                                     
+                                                     closeFavourite, setActiveFavourite, 
+                                                     addCopy, deleteFavourite, openWarning, 
+                                                     closeWarning, resetMapState}) , dispatch)                                                     
   };
 }
 

@@ -3,7 +3,7 @@ package eu.daiad.web.model.query;
 import org.joda.time.DateTime;
 
 public class NamedDataQuery {
-    
+
 	public enum EnumFavouriteType {
 		UNDEFINED, MAP, CHART;
 	}  
@@ -13,6 +13,8 @@ public class NamedDataQuery {
 	}    
     
 	private EnumQueryFavouriteType type;
+    
+    private long id;
 
     private String title;
 
@@ -29,6 +31,14 @@ public class NamedDataQuery {
     public void setType(EnumQueryFavouriteType type) {
         this.type = type;
     } 
+    
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
     
     public String getTitle() {
         return title;

@@ -30,6 +30,14 @@ var addFavouriteResponse = function (success, errors) {
   };
 };
 
+var deleteFavouriteResponse = function (success, errors) {
+  return {
+    type: types.FAVOURITES_DELETE_QUERY_RESPONSE,
+    success: success,
+    errors: errors
+  };
+};
+
 var FavouritesActions = {
 
   fetchFavouriteQueries : function() {
@@ -59,7 +67,23 @@ var FavouritesActions = {
         });
     };
   },
-  
+  deleteFavourite : function(event) {
+    return function(dispatch, getState) {     
+      dispatch(addFavouriteRequest());
+      var fav = getState(event).favourites.favouriteToBeDeleted;
+      return favouritesAPI.deleteFavourite(fav).then(function (response) {
+        dispatch(deleteFavouriteResponse(response.success, response.errors));     
+        dispatch(requestedFavouriteQueries());
+        return favouritesAPI.fetchFavouriteQueries().then(function (response) {
+          dispatch(receivedFavouriteQueries(response.success, response.errors, response.queries));
+        }, function (error) {
+          dispatch(receivedFavouriteQueries(false, error, null));
+        });      
+          }, function (error) {
+            dispatch(deleteFavouriteResponse(false, error));
+        });
+    };
+  },
   openFavourite : function(favourite) {
     return {
       type : types.FAVOURITES_OPEN_SELECTED,
@@ -82,8 +106,24 @@ var FavouritesActions = {
       type: types.FAVOURITES_SET_ACTIVE_FAVOURITE,
       selectedFavourite: favourite 
     };
-  }        
-    
+  },
+  openWarning : function(favourite) {
+    return {
+      type : types.FAVOURITES_DELETE_QUERY_REQUEST,
+      favouriteToBeDeleted: favourite
+    };
+  },    
+  closeWarning : function() {
+    return {
+      type : types.FAVOURITES_CANCEL_DELETE_QUERY,
+      favouriteToBeDeleted: null
+    };
+  },
+  resetMapState : function() {
+    return {
+      type : types.FAVOURITES_RESET_MAP_STATE
+    };
+  } 
 };
 
 

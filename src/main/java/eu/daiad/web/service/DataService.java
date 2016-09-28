@@ -1133,6 +1133,13 @@ public class DataService extends BaseService implements IDataService {
     }    
 
     @Override
+    public void deleteStoredQuery(NamedDataQuery query, UUID key) {
+        Account account = userRepository.getAccountByKey(key);
+        favouriteRepository.deleteFavouriteQuery(query, account);
+        
+    }    
+    
+    @Override
     public void storeQuery(NamedDataQuery query, String username) {
         Account account = userRepository.getAccountByUsername(username);
         favouriteRepository.insertFavouriteQuery(query, account);

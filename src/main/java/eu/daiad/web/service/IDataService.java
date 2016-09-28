@@ -55,7 +55,15 @@ public interface IDataService {
      * @param username the user's name
      */
     abstract void storeQuery(NamedDataQuery query, String username);    
- 
+
+    /**
+     * Deletes a data query.
+     * 
+     * @param query the query
+     * @param key the user's UUID key
+     */
+    abstract void deleteStoredQuery(NamedDataQuery query, UUID key);   
+    
     /**
      * Loads user's saved queries.
      *  

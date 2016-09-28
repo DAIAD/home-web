@@ -8,11 +8,11 @@ var FavouritesAPI = {
     addFavourite: function(request) {
       return api.json('/action/data/query/store', request);
     },
-    updateQuery: function(query) {
-      //return api.json('/action/favourite/update/query/', query);
+    updateFavourite: function(request) {
+      return api.json('/action/data/query/update', request);
     },
-    deleteQuery: function(query) {
-      //return api.json('/action/favourite/delete/query/', query);
+    deleteFavourite: function(request) {
+      return api.json('/action/data/query/delete', request);
     }
   };
 

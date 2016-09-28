@@ -1,11 +1,14 @@
 var types = require('../constants/FavouritesActionTypes');
+var moment = require('moment');
 
 var initialState = {
   isLoading: false,
   isActiveFavourite: false,
   favourites: null,
   showSelected: false,
-  selectedFavourite: null
+  selectedFavourite: null,
+  showDeleteMessage: false,
+  favouriteToBeDeleted: null
 };
 
 var favourites = function (state, action) {
@@ -42,6 +45,27 @@ var favourites = function (state, action) {
     case types.FAVOURITES_ADD_FAVOURITE_RESPONSE:
       return Object.assign({}, state, {
         isLoading : false
+      });  
+    case types.FAVOURITES_DELETE_QUERY_REQUEST:
+      return Object.assign({}, state, {
+        showDeleteMessage : true,
+        favouriteToBeDeleted: action.favouriteToBeDeleted
+      });    
+    case types.FAVOURITES_CONFIRM_DELETE_QUERY:
+      return Object.assign({}, state, {
+        isLoading : true
+      });  
+    case types.FAVOURITES_CANCEL_DELETE_QUERY:
+      return Object.assign({}, state, {
+        showDeleteMessage : false
+      });       
+    case types.FAVOURITES_DELETE_QUERY_RESPONSE:
+      return Object.assign({}, state, {
+        isLoading : false,
+        showDeleteMessage : false,
+        isActiveFavourite: false,
+        showSelected: false,        
+        selectedFavourite: null
       });         
     default:
       return state || initialState;

@@ -14,10 +14,11 @@ var Timeline = require('../Timeline');
 var GroupSearchTextBox = require('../GroupSearchTextBox');
 var {FormattedMessage, FormattedTime, FormattedDate} = require('react-intl');
 var DateRangePicker = require('react-bootstrap-daterangepicker');
+var moment = require('moment');
 
 var { getTimeline, getFeatures, getChart,
       setEditor, setEditorValue,
-      setTimezone, addFavourite} = require('../../actions/MapActions');
+      setTimezone, addFavourite, updateFavourite } = require('../../actions/MapActions');
 
 var _getTimelineValues = function(timeline) {
   if(timeline) {
@@ -49,6 +50,7 @@ var _onIntervalEditorChange = function (event, picker) {
 };
 
 var _onSourceEditorChange = function (e) {
+  console.log(e);
   this.props.actions.setEditorValue('source', e.value);
 };
 
@@ -91,6 +93,7 @@ var AnalyticsMap = React.createClass({
 
   componentWillMount : function() {
     if(this.props.favourite){
+      console.log(this.props.favourite.query.time);
       //set filters and state
     }
   },
@@ -127,7 +130,13 @@ var AnalyticsMap = React.createClass({
       'namedQuery' : namedQuery
     };
 
-    this.props.actions.addFavourite(request);
+    if(this.props.favourite){
+      namedQuery.id = this.props.favourite.id;
+      this.props.actions.updateFavourite(request);  
+    }
+    else{
+      this.props.actions.addFavourite(request);    
+    }
   },
   
   render: function() {
@@ -144,19 +153,17 @@ var AnalyticsMap = React.createClass({
         ' to ' + this.props.interval[1].format("DD/MM/YYYY") + 
           (this.props.population ? ' - ' + this.props.population.label : '') + 
             (this.props.geometry ? ' - Custom' : '');
-
-    if(this.props.favourite){
-      console.log('favourite not null, render active favourite');
-      
-    }
     
     var _t = this.context.intl.formatMessage;
     
     // Filter configuration
     var intervalLabel ='';
     if(this.props.interval) {
-      var start = this.props.interval[0].format('DD/MM/YYYY');
-      var end = this.props.interval[1].format('DD/MM/YYYY');
+      var start = this.props.favourite ? 
+        moment(this.props.favourite.query.time.start).format('DD/MM/YYYY') : this.props.interval[0].format('DD/MM/YYYY');
+      var end = this.props.favourite ? 
+        moment(this.props.favourite.query.time.end).format('DD/MM/YYYY') : this.props.interval[1].format('DD/MM/YYYY');
+        
       intervalLabel = start + ' - ' + end;
       if (start === end) {
         intervalLabel = start;
@@ -165,8 +172,8 @@ var AnalyticsMap = React.createClass({
 
     var intervalEditor = (
       <div className='col-md-3'>
-        <DateRangePicker  startDate={this.props.interval[0]} 
-                  endDate={this.props.interval[1]} 
+        <DateRangePicker  startDate={this.props.favourite ? moment(this.props.favourite.query.time.start) : this.props.interval[0]} 
+                  endDate={this.props.favourite ? moment(this.props.favourite.query.time.end) : this.props.interval[1]} 
                   ranges={this.props.ranges} 
                   onEvent={_onIntervalEditorChange.bind(this)}>
           <div className='clearfix Select-control' style={{ cursor: 'pointer', padding: '5px 10px', width: '100%'}}>
@@ -176,7 +183,7 @@ var AnalyticsMap = React.createClass({
           <span className='help-block'>Select time interval</span>
       </div>
     );
-    
+   
     var populationEditor = (
       <div className='col-md-3'>
         <GroupSearchTextBox name='groupname' onChange={onPopulationEditorChange.bind(this)}/>
@@ -195,8 +202,10 @@ var AnalyticsMap = React.createClass({
     var favouriteEditor = (
       <div>
         <div className='col-md-3'>
-          <input  id='favouriteLabel' name='favouriteLabel' type='favourite' ref='favouriteLabel' autofocus 
-            placeholder={this.props.favourite ? this.props.favourite.title : 'Label ...'} className='form-control' style={{ marginBottom : 15 }}/>
+          <input id='favouriteLabel' name='favouriteLabel' type='favourite' ref='favouriteLabel' autofocus 
+            defaultValue ={this.props.favourite ? this.props.favourite.title : null}
+            placeholder={this.props.favourite ? this.props.favourite.title : 'Label ...'} 
+            className='form-control' style={{ marginBottom : 15 }}/>
           <span className='help-block'>Insert a label for this favourite</span>
         </div>
         <div className='col-md-6'>
@@ -215,7 +224,7 @@ var AnalyticsMap = React.createClass({
     var sourceEditor = (
       <div className='col-md-3'>
         <Select name='source'
-          value={ this.props.source || 'METER' }
+          value={this.props.source ? this.props.source : (this.props.favourite ? this.props.favourite.query.source : 'METER')}
           options={[
             { value: 'METER', label: 'Meter' },
             { value: 'AMPHIRO', label: 'Amphiro B1' }
@@ -226,7 +235,6 @@ var AnalyticsMap = React.createClass({
           <span className='help-block'>Select a data source</span>
         </div>
     );
-
     
     var filter = null;
 
@@ -487,7 +495,8 @@ function mapStateToProps(state) {
       profile: state.session.profile,
       routing: state.routing,
       favourite: state.favourites.selectedFavourite,
-      isBeingEdited: state.map.isBeingEdited
+      isBeingEdited: state.map.isBeingEdited,
+      filtersChanged: state.map.filterChanged
   };
 }
 
@@ -495,7 +504,7 @@ function mapDispatchToProps(dispatch) {
   return {
     actions : bindActionCreators(Object.assign({}, { getTimeline, getFeatures, getChart,
                                                      setEditor, setEditorValue, setTimezone,
-                                                     addFavourite}) , dispatch)
+                                                     addFavourite, updateFavourite}) , dispatch)
   };
 }
 

@@ -43,6 +43,8 @@ public interface IFavouriteRepository {
     
     abstract void updateFavouriteQuery(NamedDataQuery namedDataQuery, Account account);
     
+    abstract void deleteFavouriteQuery(NamedDataQuery namedDataQuery, Account account);
+        
     abstract List<NamedDataQuery> getFavouriteQueriesForOwner(int accountId) 
             throws JsonMappingException, JsonParseException, IOException;
     
