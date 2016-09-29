@@ -79,20 +79,20 @@ public class PendingMessageStatus {
 	// returns liters more than average
 	private SimpleEntry<Boolean, Integer> recommendReduceFlowWhenNotNeededAmphiro;
         
-        private boolean initialStaticTips;
-        
-        // returns random static tip
+    private boolean initialStaticTips;
+
+    // returns random static tip
 	private boolean produceStaticTip;
         
-        private boolean meterInstalled;
-        
-        private boolean amphiroInstalled;
+    private boolean meterInstalled;
 
-        public boolean isInitialStaticTips(){
-                return initialStaticTips;
-        }
+    private boolean amphiroInstalled;
+
+    public boolean isInitialStaticTips(){
+            return initialStaticTips;
+    }
         
-        public boolean isMeterInstalled() {
+    public boolean isMeterInstalled() {
 		return meterInstalled;
 	}
         
@@ -273,7 +273,7 @@ public class PendingMessageStatus {
 		return alertTop10SaverSWM;
 	}
         
-        public boolean isStaticTipToBeProduced() {
+    public boolean isStaticTipToBeProduced() {
 		return produceStaticTip;
 	}
 
@@ -330,19 +330,19 @@ public class PendingMessageStatus {
 		this.recommendReduceFlowWhenNotNeededAmphiro = recommendReduceFlowWhenNotNeededAmphiro;
 	}
         
-        public void setInitialStaticTips(boolean initialStaticTips){
-            this.initialStaticTips = initialStaticTips;
-        }
-        
-        public void setStaticTip(boolean produceStaticTip){
-                this.produceStaticTip = produceStaticTip;
-        }
-        
-        public void setMeterInstalled(boolean meterInstalled){
-                this.meterInstalled = meterInstalled;
-        }
-        
-        public void setAmphiroInstalled(boolean amphiroInstalled){
-                this.amphiroInstalled = amphiroInstalled;
-        }        
+    public void setInitialStaticTips(boolean initialStaticTips){
+        this.initialStaticTips = initialStaticTips;
+    }
+
+    public void setStaticTip(boolean produceStaticTip){
+            this.produceStaticTip = produceStaticTip;
+    }
+
+    public void setMeterInstalled(boolean meterInstalled){
+            this.meterInstalled = meterInstalled;
+    }
+
+    public void setAmphiroInstalled(boolean amphiroInstalled){
+            this.amphiroInstalled = amphiroInstalled;
+    }        
 }

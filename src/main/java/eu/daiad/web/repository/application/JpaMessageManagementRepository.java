@@ -222,14 +222,13 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // random static tip
     private void computeStaticTipsForUser(MessageCalculationConfiguration config, PendingMessageStatus status,
                     Account account) {
-
+        
         if (status.isInitialStaticTips()) {
             List<StaticRecommendation> randomTips = getInitialRandomStaticRecommendationForLocale(account.getLocale());
             for (StaticRecommendation randomTip : randomTips) {
                 createAccountStaticRecommendation(account, randomTip, DateTime.now());
             }
-        } else if (DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()
-                        || DateTime.now().getDayOfWeek() == DateTimeConstants.WEDNESDAY) {
+        } else if (config.isOnDemandExecution() || DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
             if (status.isStaticTipToBeProduced()) {
                 StaticRecommendation randomTip = getRandomStaticRecommendationForLocale(account.getLocale());
                 if (randomTip != null) {
@@ -241,12 +240,24 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 1 alert - Check for water leaks!
     private void alertWaterLeakSWM(MessageCalculationConfiguration config, PendingMessageStatus status, Account account) {
-        if (DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()
-                        || DateTime.now().getDayOfWeek() == DateTimeConstants.WEDNESDAY) {
-            if (status.isAlertWaterLeakSWM()) {
-                createAccountAlert(account, getAlertByType(EnumAlertType.WATER_LEAK), DateTime.now());
+
+        if(!isAlertProducedOverThreeTimesForUser(EnumAlertType.WATER_LEAK.getValue(), account)){
+            
+            if(config.isOnDemandExecution()){
+                if (status.isAlertWaterLeakSWM()) {
+                    createAccountAlert(account, getAlertByType(EnumAlertType.WATER_LEAK), DateTime.now());
+                }
+                return;
             }
+
+            if (DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()
+                            || DateTime.now().getDayOfWeek() == DateTimeConstants.WEDNESDAY) {
+                if (status.isAlertWaterLeakSWM()) {
+                    createAccountAlert(account, getAlertByType(EnumAlertType.WATER_LEAK), DateTime.now());
+                }
+            }            
         }
+        
     }
 
     // 2 alert - Shower still on!
@@ -368,6 +379,14 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 13 alert - You are a real water champion!
     private void alertWaterChampionSWM(MessageCalculationConfiguration config, PendingMessageStatus status,
                     Account account) {
+        
+        if(config.isOnDemandExecution()){
+            if (status.isAlertWaterChampionSWM()) {
+                createAccountAlert(account, getAlertByType(EnumAlertType.WATER_CHAMPION), DateTime.now());
+            }
+            return;
+        }        
+        
         if (DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
             if (status.isAlertWaterChampionSWM()) {
                 createAccountAlert(account, getAlertByType(EnumAlertType.WATER_CHAMPION), DateTime.now());
@@ -378,7 +397,15 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 14 alert - You are a real shower champion!
     private void alertShowerChampionAmphiro(MessageCalculationConfiguration config, PendingMessageStatus status,
                     Account account) {
-        if (DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
+        
+        if(config.isOnDemandExecution()){
+            if (status.isAlertShowerChampionAmphiro()) {
+                createAccountAlert(account, getAlertByType(EnumAlertType.SHOWER_CHAMPION), DateTime.now());
+            }
+            return;
+        }        
+        
+        if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
             if (status.isAlertShowerChampionAmphiro()) {
                 createAccountAlert(account, getAlertByType(EnumAlertType.SHOWER_CHAMPION), DateTime.now());
             }
@@ -388,57 +415,88 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 15 alert - You are using too much water {integer1}
     private void alertTooMuchWaterConsumptionSWM(MessageCalculationConfiguration config,
                     ConsumptionAggregateContainer aggregates, PendingMessageStatus status, Account account) {
-        if (DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
-            if (status.getAlertTooMuchWaterConsumptionSWM().getKey()) {
-                AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.TOO_MUCH_WATER_SWM),
-                                DateTime.now());
+        
+        if(isAlertAlreadyProducedThisWeekForUser(EnumAlertType.TOO_MUCH_WATER_SWM.getValue(), account)){
+            if(config.isOnDemandExecution()){
+                if (status.getAlertTooMuchWaterConsumptionSWM().getKey()) {
+                    AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.TOO_MUCH_WATER_SWM),
+                                    DateTime.now());
 
-                setAccountAlertProperty(alert, config.getIntKey1(), status.getAlertTooMuchWaterConsumptionSWM()
-                                .getValue().toString());
-            }
+                    setAccountAlertProperty(alert, config.getIntKey1(), status.getAlertTooMuchWaterConsumptionSWM()
+                                    .getValue().toString());
+                }
+                return;
+            }        
+
+            if (DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
+                if (status.getAlertTooMuchWaterConsumptionSWM().getKey()) {
+                    AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.TOO_MUCH_WATER_SWM),
+                                    DateTime.now());
+
+                    setAccountAlertProperty(alert, config.getIntKey1(), status.getAlertTooMuchWaterConsumptionSWM()
+                                    .getValue().toString());
+                }
+            }            
         }
     }
 
     // 16 alert - You are using too much water in the shower {integer1}
     private void alertTooMuchWaterConsumptionAmphiro(MessageCalculationConfiguration config,
                     ConsumptionAggregateContainer aggregates, PendingMessageStatus status, Account account) {
-        if (DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
-            if (status.getAlertTooMuchWaterConsumptionAmphiro().getKey()) {
-                AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.TOO_MUCH_WATER_AMPHIRO),
-                                DateTime.now());
 
-                setAccountAlertProperty(alert, config.getIntKey1(), status.getAlertTooMuchWaterConsumptionAmphiro()
-                                .getValue().toString());
+        if(isAlertAlreadyProducedThisWeekForUser(EnumAlertType.TOO_MUCH_WATER_AMPHIRO.getValue(), account)){
+            if(config.isOnDemandExecution()){
+                if (status.getAlertTooMuchWaterConsumptionAmphiro().getKey()) {
+                    AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.TOO_MUCH_WATER_AMPHIRO),
+                                    DateTime.now());
+
+                    setAccountAlertProperty(alert, config.getIntKey1(), status.getAlertTooMuchWaterConsumptionAmphiro()
+                                    .getValue().toString());
+                }
+                return;
             }
-        }
+
+            if (DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
+                if (status.getAlertTooMuchWaterConsumptionAmphiro().getKey()) {
+                    AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.TOO_MUCH_WATER_AMPHIRO),
+                                    DateTime.now());
+
+                    setAccountAlertProperty(alert, config.getIntKey1(), status.getAlertTooMuchWaterConsumptionAmphiro()
+                                    .getValue().toString());
+                }
+            }            
+        }        
     }
 
     // 17 alert - You are spending too much energy for showering {integer1}
     // {currency}
     private void alertTooMuchEnergyAmphiro(MessageCalculationConfiguration config,
                     ConsumptionAggregateContainer aggregates, PendingMessageStatus status, Account account) {
-        if (DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
-            if (status.getAlertTooMuchEnergyAmphiro().getKey()) {
-                AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.TOO_MUCH_ENERGY),
-                                DateTime.now());
+        
+        if(isAlertAlreadyProducedThisWeekForUser(EnumAlertType.TOO_MUCH_ENERGY.getValue(), account)){          
+            if (config.isOnDemandExecution() || DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
+                if (status.getAlertTooMuchEnergyAmphiro().getKey()) {
+                    AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.TOO_MUCH_ENERGY),
+                                    DateTime.now());
 
-                Double pricePerKWH;
-                switch (account.getCountry()) {
-                    case "United Kingdom":
-                        pricePerKWH = config.getAverageGbpPerKwh();
-                        break;
-                    case "Spain":
-                        pricePerKWH = config.getEurosPerKwh();
-                        break;
-                    default:
-                        pricePerKWH = config.getEurosPerKwh();
-                        break;
+                    Double pricePerKWH;
+                    switch (account.getCountry()) {
+                        case "United Kingdom":
+                            pricePerKWH = config.getAverageGbpPerKwh();
+                            break;
+                        case "Spain":
+                            pricePerKWH = config.getEurosPerKwh();
+                            break;
+                        default:
+                            pricePerKWH = config.getEurosPerKwh();
+                            break;
+                    }
+
+                    Double annualShowerConsumption = status.getAlertTooMuchEnergyAmphiro().getValue();
+                    Double eurosSavedPerYear = ((2 * annualShowerConsumption * 1000 * 1.163 * pricePerKWH) / 1000000);
+
+                    setAccountAlertProperty(alert, config.getCurrencyKey1(), eurosSavedPerYear.toString());
                 }
-
-                Double annualShowerConsumption = status.getAlertTooMuchEnergyAmphiro().getValue();
-                Double eurosSavedPerYear = ((2 * annualShowerConsumption * 1000 * 1.163 * pricePerKWH) / 1000000);
-
-                setAccountAlertProperty(alert, config.getCurrencyKey1(), eurosSavedPerYear.toString());
             }
         }
     }
@@ -447,9 +505,9 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // percent
     private void alertReducedWaterUseSWM(MessageCalculationConfiguration config, PendingMessageStatus status,
                     Account account) {
-
+        
         if (!isAlertAlreadyProducedForUser(EnumAlertType.REDUCED_WATER_USE.getValue(), account)) {
-            if (DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
+            if (config.isOnDemandExecution() || DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
                 if (status.getAlertReducedWaterUseSWM().getKey()) {
                     AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.REDUCED_WATER_USE),
                                     DateTime.now());
@@ -465,8 +523,9 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // {integer1} percent
     private void alertImprovedShowerEfficiencyAmphiro(MessageCalculationConfiguration config,
                     PendingMessageStatus status, Account account) {
+        
         if (!isAlertAlreadyProducedForUser(EnumAlertType.IMPROVED_SHOWER_EFFICIENCY.getValue(), account)) {
-            if (DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
+            if (config.isOnDemandExecution() || DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
                 if (status.getAlertImprovedShowerEfficiencyAmphiro().getKey()) {
                     AccountAlert alert = createAccountAlert(account,
                                     getAlertByType(EnumAlertType.IMPROVED_SHOWER_EFFICIENCY), DateTime.now());
@@ -483,15 +542,17 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     private void alertWaterEfficiencyLeaderSWM(MessageCalculationConfiguration config,
                     ConsumptionAggregateContainer aggregates, PendingMessageStatus status, Account account) {
 
-        if (DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
-            if (status.getAlertWaterEfficiencyLeaderSWM().getKey()) {
-                AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.WATER_EFFICIENCY_LEADER),
-                                DateTime.now());
+        if(isAlertAlreadyProducedThisMonthForUser(EnumAlertType.WATER_EFFICIENCY_LEADER.getValue(), account)){          
+            if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
+                if (status.getAlertWaterEfficiencyLeaderSWM().getKey()) {
+                    AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.WATER_EFFICIENCY_LEADER),
+                                    DateTime.now());
 
-                setAccountAlertProperty(alert, config.getIntKey1(), status.getAlertWaterEfficiencyLeaderSWM()
-                                .getValue().toString());
+                    setAccountAlertProperty(alert, config.getIntKey1(), status.getAlertWaterEfficiencyLeaderSWM()
+                                    .getValue().toString());
+                }
             }
-        }
+        }    
     }
 
     // 21 alert - Keep up saving water!
@@ -506,7 +567,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 22 alert - You are doing a great job!
     private void alertPromptGoodJobMonthlySWM(MessageCalculationConfiguration config,
                     ConsumptionAggregateContainer aggregates, PendingMessageStatus status, Account account) {
-        if (DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
+        if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
             if (status.isAlertPromptGoodJobMonthlySWM()) {
                 createAccountAlert(account, getAlertByType(EnumAlertType.GOOD_JOB_MONTHLY), DateTime.now());
             }
@@ -516,7 +577,8 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 23 alert - You have already saved {integer1} litres of water!
     private void alertLitresSavedSWM(MessageCalculationConfiguration config, PendingMessageStatus status,
                     Account account) {
-        if (DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
+        
+        if (config.isOnDemandExecution() || DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
             if (status.getAlertLitresSavedSWM().getKey()) {
                 AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.LITERS_ALREADY_SAVED),
                                 DateTime.now());
@@ -530,8 +592,9 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 24 alert - Congratulations! You are one of the top 25% savers in your
     // region.
     private void alertTop25SaverSWM(MessageCalculationConfiguration config, ConsumptionAggregateContainer aggregates,
-                    PendingMessageStatus status, Account account) {
-        if (DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
+                    PendingMessageStatus status, Account account) {     
+        
+        if (config.isOnDemandExecution() || DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
             if (status.isAlertTop25SaverWeeklySWM()) {
                 createAccountAlert(account, getAlertByType(EnumAlertType.TOP_25_PERCENT_OF_SAVERS), DateTime.now());
             }
@@ -542,7 +605,8 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // city.
     private void alertTop10SaverSWM(MessageCalculationConfiguration config, ConsumptionAggregateContainer aggregates,
                     PendingMessageStatus status, Account account) {
-        if (DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
+
+        if (config.isOnDemandExecution() || DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
             if (status.isAlertTop10SaverSWM()) {
                 createAccountAlert(account, getAlertByType(EnumAlertType.TOP_10_PERCENT_OF_SAVERS), DateTime.now());
             }
@@ -552,21 +616,23 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 1 recommendation - Spend 1 less minute in the shower and save {integer1}
     // {integer2}
     private void recommendLessShowerTimeAmphiro(MessageCalculationConfiguration config,
-                    ConsumptionAggregateContainer aggregates, PendingMessageStatus status, Account account) {
-        if (DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
-            if (status.getRecommendShampooChangeAmphiro().getKey()) {
-                AccountDynamicRecommendation recommendation = createAccountDynamicRecommendation(account,
-                                getDynamicRecommendationByType(EnumDynamicRecommendationType.LESS_SHOWER_TIME),
-                                DateTime.now());
+                    ConsumptionAggregateContainer aggregates, PendingMessageStatus status, Account account) {     
+        if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.LESS_SHOWER_TIME.getValue(), account)){         
+            if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
+                if (status.getRecommendShampooChangeAmphiro().getKey()) {
+                    AccountDynamicRecommendation recommendation = createAccountDynamicRecommendation(account,
+                                    getDynamicRecommendationByType(EnumDynamicRecommendationType.LESS_SHOWER_TIME),
+                                    DateTime.now());
 
-                // Float euros = (float)
-                // (EUROS_PER_LITRE*recommendLessShowerTime.getValue());
-                // will use liters instead of currency here.
-                Integer liters1 = status.getRecommendShampooChangeAmphiro().getValue();
-                Integer liters2 = 2 * status.getRecommendShampooChangeAmphiro().getValue();
+                    // Float euros = (float)
+                    // (EUROS_PER_LITRE*recommendLessShowerTime.getValue());
+                    // will use liters instead of currency here.
+                    Integer liters1 = status.getRecommendShampooChangeAmphiro().getValue();
+                    Integer liters2 = 2 * status.getRecommendShampooChangeAmphiro().getValue();
 
-                setAccountDynamicRecommendationProperty(recommendation, config.getIntKey1(), liters1.toString());
-                setAccountDynamicRecommendationProperty(recommendation, config.getIntKey2(), liters2.toString());
+                    setAccountDynamicRecommendationProperty(recommendation, config.getIntKey1(), liters1.toString());
+                    setAccountDynamicRecommendationProperty(recommendation, config.getIntKey2(), liters2.toString());
+                }
             }
         }
     }
@@ -575,53 +641,56 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // water in the shower. {currency2}
     private void recommendLowerTemperatureAmphiro(MessageCalculationConfiguration config,
                     ConsumptionAggregateContainer aggregates, PendingMessageStatus status, Account account) {
-        if (DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
-            if (status.getRecommendLowerTemperatureAmphiro().getKey()) {
-                AccountDynamicRecommendation recommendation = createAccountDynamicRecommendation(account,
-                                getDynamicRecommendationByType(EnumDynamicRecommendationType.LOWER_TEMPERATURE),
-                                DateTime.now());
 
-                Integer annualShowerConsumption = status.getRecommendLowerTemperatureAmphiro().getValue();
+        if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.LOWER_TEMPERATURE.getValue(), account)){         
+            if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
+                if (status.getRecommendLowerTemperatureAmphiro().getKey()) {
+                    AccountDynamicRecommendation recommendation = createAccountDynamicRecommendation(account,
+                                    getDynamicRecommendationByType(EnumDynamicRecommendationType.LOWER_TEMPERATURE),
+                                    DateTime.now());
 
-                // formula: degrees * litres * kcal * kwh * kwh price
+                    Integer annualShowerConsumption = status.getRecommendLowerTemperatureAmphiro().getValue();
 
-                // formula description:
-                // http://antoine.frostburg.edu/chem/senese/101/thermo/faq/energy-required-for-temperature-rise.shtml
-                // https://answers.yahoo.com/question/index?qid=20071209205616AADfWQ3
+                    // formula: degrees * litres * kcal * kwh * kwh price
 
-                // 1 calorie will raise the temperature of 1 gram of water 1
-                // degree Celsius.
-                // 1000 calories will raise the temperature of 1 litre of water
-                // 1 degree Celsius
-                // 1 cal is 1.163E-6 kWh (1.163*10^-6)
-                // https://www.unitjuggler.com/convert-energy-from-cal-to-kWh.html
-                // kwh greek price is 0.224 euros clean
-                // http://www.adslgr.com/forum/threads/860523-%CE%A4%CE%B9%CE%BC%CE%AE-%CE
-                // %BA%CE%B9%CE%BB%CE%BF%CE%B2%CE%B1%CF%84%CF%8E%CF%81%CE%B1%CF%82-%CE%94%CE%95%CE%97-2015
-                // example:
-                // 2 degrees, total 30 showers per month for 2 people, 40 liters
-                // per shower.
-                // 2*12*30*40*1000*1.163*10^-6*0.224 euros
-                // =7.50 euros
+                    // formula description:
+                    // http://antoine.frostburg.edu/chem/senese/101/thermo/faq/energy-required-for-temperature-rise.shtml
+                    // https://answers.yahoo.com/question/index?qid=20071209205616AADfWQ3
 
-                Double pricePerKWH;
-                switch (account.getCountry()) {
-                    case "United Kingdom":
-                        pricePerKWH = config.getAverageGbpPerKwh();
-                        break;
-                    case "Spain":
-                        pricePerKWH = config.getEurosPerKwh();
-                        break;
-                    default:
-                        pricePerKWH = config.getEurosPerKwh();
-                        break;
+                    // 1 calorie will raise the temperature of 1 gram of water 1
+                    // degree Celsius.
+                    // 1000 calories will raise the temperature of 1 litre of water
+                    // 1 degree Celsius
+                    // 1 cal is 1.163E-6 kWh (1.163*10^-6)
+                    // https://www.unitjuggler.com/convert-energy-from-cal-to-kWh.html
+                    // kwh greek price is 0.224 euros clean
+                    // http://www.adslgr.com/forum/threads/860523-%CE%A4%CE%B9%CE%BC%CE%AE-%CE
+                    // %BA%CE%B9%CE%BB%CE%BF%CE%B2%CE%B1%CF%84%CF%8E%CF%81%CE%B1%CF%82-%CE%94%CE%95%CE%97-2015
+                    // example:
+                    // 2 degrees, total 30 showers per month for 2 people, 40 liters
+                    // per shower.
+                    // 2*12*30*40*1000*1.163*10^-6*0.224 euros
+                    // =7.50 euros
+
+                    Double pricePerKWH;
+                    switch (account.getCountry()) {
+                        case "United Kingdom":
+                            pricePerKWH = config.getAverageGbpPerKwh();
+                            break;
+                        case "Spain":
+                            pricePerKWH = config.getEurosPerKwh();
+                            break;
+                        default:
+                            pricePerKWH = config.getEurosPerKwh();
+                            break;
+                    }
+                    Double eurosSavedPerYear = ((2 * annualShowerConsumption * 1000 * 1.163 * pricePerKWH) / 1000000);
+                    // degrees will be a fixed number set to 2.
+                    setAccountDynamicRecommendationProperty(recommendation, config.getCurrencyKey1(), eurosSavedPerYear
+                                    .toString());
+                    setAccountDynamicRecommendationProperty(recommendation, config.getCurrencyKey2(), eurosSavedPerYear
+                                    .toString());
                 }
-                Double eurosSavedPerYear = ((2 * annualShowerConsumption * 1000 * 1.163 * pricePerKWH) / 1000000);
-                // degrees will be a fixed number set to 2.
-                setAccountDynamicRecommendationProperty(recommendation, config.getCurrencyKey1(), eurosSavedPerYear
-                                .toString());
-                setAccountDynamicRecommendationProperty(recommendation, config.getCurrencyKey2(), eurosSavedPerYear
-                                .toString());
             }
         }
     }
@@ -630,16 +699,19 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // {integer1} {integer2}
     private void recommendLowerFlowAmphiro(MessageCalculationConfiguration config,
                     ConsumptionAggregateContainer aggregates, PendingMessageStatus status, Account account) {
-        if (DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
-            if (status.getRecommendLowerFlowAmphiro().getKey()) {
-                AccountDynamicRecommendation recommendation = createAccountDynamicRecommendation(account,
-                                getDynamicRecommendationByType(EnumDynamicRecommendationType.LOWER_FLOW), DateTime
-                                                .now());
 
-                setAccountDynamicRecommendationProperty(recommendation, config.getIntKey1(), status
-                                .getRecommendLowerFlowAmphiro().getValue().toString());
-                setAccountDynamicRecommendationProperty(recommendation, config.getIntKey2(), status
-                                .getRecommendLowerFlowAmphiro().getValue().toString());
+        if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.LOWER_FLOW.getValue(), account)){          
+            if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
+                if (status.getRecommendLowerFlowAmphiro().getKey()) {
+                    AccountDynamicRecommendation recommendation = createAccountDynamicRecommendation(account,
+                                    getDynamicRecommendationByType(EnumDynamicRecommendationType.LOWER_FLOW), DateTime
+                                                    .now());
+
+                    setAccountDynamicRecommendationProperty(recommendation, config.getIntKey1(), status
+                                    .getRecommendLowerFlowAmphiro().getValue().toString());
+                    setAccountDynamicRecommendationProperty(recommendation, config.getIntKey2(), status
+                                    .getRecommendLowerFlowAmphiro().getValue().toString());
+                }
             }
         }
     }
@@ -647,18 +719,21 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 4 recommendation - Change your shower head and save {integer1} {integer2}
     private void recommendShowerHeadChangeAmphiro(MessageCalculationConfiguration config,
                     ConsumptionAggregateContainer aggregates, PendingMessageStatus status, Account account) {
-        if (DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
-            if (status.getRecommendShowerHeadChangeAmphiro().getKey()) {
-                AccountDynamicRecommendation recommendation = createAccountDynamicRecommendation(account,
-                                getDynamicRecommendationByType(EnumDynamicRecommendationType.CHANGE_SHOWERHEAD),
-                                DateTime.now());
 
-                Integer annualLitresSaved = status.getRecommendShowerHeadChangeAmphiro().getValue();
+        if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.CHANGE_SHOWERHEAD.getValue(), account)){           
+            if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
+                if (status.getRecommendShowerHeadChangeAmphiro().getKey()) {
+                    AccountDynamicRecommendation recommendation = createAccountDynamicRecommendation(account,
+                                    getDynamicRecommendationByType(EnumDynamicRecommendationType.CHANGE_SHOWERHEAD),
+                                    DateTime.now());
 
-                setAccountDynamicRecommendationProperty(recommendation, config.getIntKey1(), annualLitresSaved
-                                .toString());
-                setAccountDynamicRecommendationProperty(recommendation, config.getIntKey2(), annualLitresSaved
-                                .toString());
+                    Integer annualLitresSaved = status.getRecommendShowerHeadChangeAmphiro().getValue();
+
+                    setAccountDynamicRecommendationProperty(recommendation, config.getIntKey1(), annualLitresSaved
+                                    .toString());
+                    setAccountDynamicRecommendationProperty(recommendation, config.getIntKey2(), annualLitresSaved
+                                    .toString());
+                }
             }
         }
     }
@@ -667,14 +742,17 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // percent
     private void recommendShampooAmphiro(MessageCalculationConfiguration config,
                     ConsumptionAggregateContainer aggregates, PendingMessageStatus status, Account account) {
-        if (DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
-            if (status.getRecommendShampooChangeAmphiro().getKey()) {
-                AccountDynamicRecommendation recommendation = createAccountDynamicRecommendation(account,
-                                getDynamicRecommendationByType(EnumDynamicRecommendationType.SHAMPOO_CHANGE), DateTime
-                                                .now());
 
-                setAccountDynamicRecommendationProperty(recommendation, config.getIntKey1(), status
-                                .getRecommendShampooChangeAmphiro().getValue().toString());
+        if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.SHAMPOO_CHANGE.getValue(), account)){            
+            if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
+                if (status.getRecommendShampooChangeAmphiro().getKey()) {
+                    AccountDynamicRecommendation recommendation = createAccountDynamicRecommendation(account,
+                                    getDynamicRecommendationByType(EnumDynamicRecommendationType.SHAMPOO_CHANGE), DateTime
+                                                    .now());
+
+                    setAccountDynamicRecommendationProperty(recommendation, config.getIntKey1(), status
+                                    .getRecommendShampooChangeAmphiro().getValue().toString());
+                }
             }
         }
     }
@@ -683,19 +761,22 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // need it {integer1} {integer2}
     private void recommendReduceFlowWhenNotNeededAmphiro(MessageCalculationConfiguration config,
                     ConsumptionAggregateContainer aggregates, PendingMessageStatus status, Account account) {
-        if (DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
-            if (status.getRecommendReduceFlowWhenNotNeededAmphiro().getKey()) {
-                AccountDynamicRecommendation recommendation = createAccountDynamicRecommendation(
-                                account,
-                                getDynamicRecommendationByType(EnumDynamicRecommendationType.REDUCE_FLOW_WHEN_NOT_NEEDED),
-                                DateTime.now());
 
-                Integer moreShowerWaterThanOthers = status.getRecommendReduceFlowWhenNotNeededAmphiro().getValue();
+        if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.REDUCE_FLOW_WHEN_NOT_NEEDED.getValue(), account)){          
+            if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
+                if (status.getRecommendReduceFlowWhenNotNeededAmphiro().getKey()) {
+                    AccountDynamicRecommendation recommendation = createAccountDynamicRecommendation(
+                                    account,
+                                    getDynamicRecommendationByType(EnumDynamicRecommendationType.REDUCE_FLOW_WHEN_NOT_NEEDED),
+                                    DateTime.now());
 
-                setAccountDynamicRecommendationProperty(recommendation, config.getIntKey1(), moreShowerWaterThanOthers
-                                .toString());
-                setAccountDynamicRecommendationProperty(recommendation, config.getIntKey2(), moreShowerWaterThanOthers
-                                .toString());
+                    Integer moreShowerWaterThanOthers = status.getRecommendReduceFlowWhenNotNeededAmphiro().getValue();
+
+                    setAccountDynamicRecommendationProperty(recommendation, config.getIntKey1(), moreShowerWaterThanOthers
+                                    .toString());
+                    setAccountDynamicRecommendationProperty(recommendation, config.getIntKey2(), moreShowerWaterThanOthers
+                                    .toString());
+                }
             }
         }
     }
@@ -780,6 +861,65 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
         return !resultsList.isEmpty();
 
     }
+    
+    private boolean isAlertAlreadyProducedThisWeekForUser(int alertId, Account account) {
+        TypedQuery<eu.daiad.web.domain.application.AccountAlert> query = entityManager.createQuery(
+                        "select a from account_alert a where a.account.id = :accountId and a.alert.id = :alertId and a.createdOn > :date",
+                        eu.daiad.web.domain.application.AccountAlert.class).setFirstResult(0).setMaxResults(1);
+
+        query.setParameter("accountId", account.getId());
+        query.setParameter("alertId", alertId);
+        query.setParameter("date", DateTime.now().minusDays(7));
+
+        List<AccountAlert> resultsList = query.getResultList();
+
+        return !resultsList.isEmpty();
+
+    }    
+    
+    private boolean isAlertAlreadyProducedThisMonthForUser(int alertId, Account account) {
+        TypedQuery<eu.daiad.web.domain.application.AccountAlert> query = entityManager.createQuery(
+                        "select a from account_alert a where a.account.id = :accountId and a.alert.id = :alertId and a.createdOn > :date",
+                        eu.daiad.web.domain.application.AccountAlert.class).setFirstResult(0).setMaxResults(1);
+
+        query.setParameter("accountId", account.getId());
+        query.setParameter("alertId", alertId);
+        query.setParameter("date", DateTime.now().minusMonths(1));
+
+        List<AccountAlert> resultsList = query.getResultList();
+
+        return !resultsList.isEmpty();
+
+    } 
+    
+    private boolean isRecommendationAlreadyProducedThisMonthForUser(int recommendationId, Account account) {
+        TypedQuery<eu.daiad.web.domain.application.AccountDynamicRecommendation> query = entityManager.createQuery(
+            "select a from account_dynamic_recommendation a where a.account.id = :accountId and a.recommendation.id = :recommendationId and a.createdOn > :date",
+            eu.daiad.web.domain.application.AccountDynamicRecommendation.class).setFirstResult(0).setMaxResults(1);
+
+        query.setParameter("accountId", account.getId());
+        query.setParameter("recommendationId", recommendationId);
+        query.setParameter("date", DateTime.now().minusMonths(1));
+
+        List<AccountDynamicRecommendation> resultsList = query.getResultList();
+
+        return !resultsList.isEmpty();
+
+    } 
+    
+    private boolean isAlertProducedOverThreeTimesForUser(int alertId, Account account) {
+        TypedQuery<eu.daiad.web.domain.application.AccountAlert> query = entityManager.createQuery(
+                        "select a from account_alert a where a.account.id = :accountId and a.alert.id = :alertId",
+                        eu.daiad.web.domain.application.AccountAlert.class).setFirstResult(0).setMaxResults(5);
+
+        query.setParameter("accountId", account.getId());
+        query.setParameter("alertId", alertId);
+
+        List<AccountAlert> resultsList = query.getResultList();
+
+        return resultsList.size() > 3;
+
+    }      
 
     private void setAccountAlertProperty(AccountAlert alert, String key, String value) {
         AccountAlertProperty accountAlertProperty = new AccountAlertProperty();
