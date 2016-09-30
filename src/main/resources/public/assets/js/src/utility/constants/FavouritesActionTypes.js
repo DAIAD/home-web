@@ -1,6 +1,7 @@
 var mirrorToPath = require('../helpers/path-mirror.js');
 
 var types = mirrorToPath({
+  FAVOURITES_SET_TIMEZONE : null,
   FAVOURITES_FAVOURITES_REQUEST : null,
   FAVOURITES_FAVOURITES_RESPONSE : null,
   FAVOURITES_OPEN_SELECTED : null,
@@ -16,7 +17,10 @@ var types = mirrorToPath({
   FAVOURITES_DELETE_QUERY_RESPONSE : null,
   FAVOURITES_ADD_FAVOURITE_REQUEST : null,
   FAVOURITES_ADD_FAVOURITE_RESPONSE : null,
-  FAVOURITES_RESET_MAP_STATE : null
+  FAVOURITES_RESET_MAP_STATE : null,
+  FAVOURITES_GET_FEATURES : null,
+  FAVOURITES_TIMELINE_REQUEST :null,
+  FAVOURITES_TIMELINE_RESPONSE: null
 });
 
 module.exports = types;

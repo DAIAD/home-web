@@ -52,7 +52,13 @@ var _createInitialState = function() {
     map : _createMapInitialState(interval),
     chart : _createChartInitialState(interval),
     editor : 'interval',
-    isBeingEdited : false
+    isBeingEdited : false,
+    defaultFavouriteValues : {
+      interval : false,
+      source : false,
+      population : false,
+      spatial : false
+    }
   };
 };
 

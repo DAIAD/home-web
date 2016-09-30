@@ -14,10 +14,11 @@ var { Link } = require('react-router');
 var { bindActionCreators } = require('redux');
 var { connect } = require('react-redux');
 
-var { fetchFavouriteQueries, openFavourite, 
+var { setTimezone, fetchFavouriteQueries, openFavourite, 
       closeFavourite, setActiveFavourite, 
-      addCopy, deleteFavourite, openWarning, closeWarning, resetMapState} = require('../../../actions/FavouritesActions');
-
+      addCopy, deleteFavourite, openWarning,
+      closeWarning, resetMapState, getFavouriteFeatures} = require('../../../actions/FavouritesActions');
+          
 //var ViewChart = require('../../../report-measurements/pane');
 var rows;
 var createPoints = function() {
@@ -28,6 +29,10 @@ var createPoints = function() {
 	}
 	
 	return points;
+};
+
+var _onChangeTimeline = function(value, label, index) {
+  this.props.actions.getFeatures(index, value);
 };
 
 var createSeries = function(ref, days, baseConsumption, offset) {
@@ -67,8 +72,16 @@ var Favourites = React.createClass({
     this.props.actions.fetchFavouriteQueries();
 		  this.setState({points : createPoints()});
 	 },
-	
+  
+  componentDidMount : function() {
+    var utility = this.props.profile.utility;
+    this.props.actions.setTimezone(utility.timezone);
+	 },	
+  
   clickedOpenFavourite(favourite) {
+    favourite.timezone = this.props.profile.utility.timezone;
+
+    this.props.actions.getFavouriteFeatures(favourite);
     this.props.actions.openFavourite(favourite);
   },
 
@@ -153,12 +166,22 @@ var Favourites = React.createClass({
 		       dataContent = (
 			        <Bootstrap.ListGroupItem>
 				         <LeafletMap style={{ width: '100%', height: 400}} 
-							        elementClassName='mixin'
-							        prefix='map'
-						         center={[38.35, -0.48]} 
-               zoom={13}
-				           mode={LeafletMap.MODE_HEATMAP}
-							        data={this.state.points} />
+                      elementClassName='mixin'
+                      prefix='map'
+                      center={[38.36, -0.479]} 
+                      zoom={13}
+                      mode={[LeafletMap.MODE_DRAW, LeafletMap.MODE_CHOROPLETH]}
+                      choropleth= {{
+                        colors : ['#2166ac', '#67a9cf', '#d1e5f0', '#fddbc7', '#ef8a62', '#b2182b'],
+                        min : this.props.map.timeline ? this.props.map.timeline.min : 0,
+                        max : this.props.map.timeline ? this.props.map.timeline.max : 0,
+                        data : this.props.map.features
+                      }}
+                      overlays={[
+                        { url : '/assets/data/meters.geojson',
+                          popupContent : 'serial'
+                        }
+                      ]} />
  				        <Timeline 	onChange={onChangeTimeline.bind(this)} 
 	 						       style={{paddingTop: 10}}
 		 					       min={1}
@@ -379,20 +402,27 @@ var Favourites = React.createClass({
 function mapStateToProps(state) {
   console.log(state);
   return {
+    profile: state.session.profile,
     showSelected: state.favourites.showSelected,
     selectedFavourite: state.favourites.selectedFavourite,
     favourites: state.favourites.favourites,
     showDeleteMessage: state.favourites.showDeleteMessage,
-    favouriteToBeDeleted: state.favourites.favouriteToBeDeleted
+    favouriteToBeDeleted: state.favourites.favouriteToBeDeleted,
+    map: state.favourites.map,
+    
+    source: state.favourites.source,
+    geometry: state.favourites.geometry,
+    population: state.favourites.population,
+    interval: state.favourites.interval
   };
 }
 
 function mapDispatchToProps(dispatch) {
   return {
-    actions : bindActionCreators(Object.assign({}, { fetchFavouriteQueries, openFavourite, 
+    actions : bindActionCreators(Object.assign({}, { setTimezone, fetchFavouriteQueries, openFavourite, 
                                                      closeFavourite, setActiveFavourite, 
                                                      addCopy, deleteFavourite, openWarning, 
-                                                     closeWarning, resetMapState}) , dispatch)                                                     
+                                                     closeWarning, resetMapState, getFavouriteFeatures}) , dispatch)                                                     
   };
 }
 

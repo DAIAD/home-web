@@ -18,7 +18,7 @@ var moment = require('moment');
 
 var { getTimeline, getFeatures, getChart,
       setEditor, setEditorValue,
-      setTimezone, addFavourite, updateFavourite } = require('../../actions/MapActions');
+      setTimezone, addFavourite, updateFavourite, setEditorValuesBatch } = require('../../actions/MapActions');
 
 var _getTimelineValues = function(timeline) {
   if(timeline) {
@@ -46,15 +46,17 @@ var _onChangeTimeline = function(value, label, index) {
 };
 
 var _onIntervalEditorChange = function (event, picker) {
+  this.props.defaultFavouriteValues.interval = false;
   this.props.actions.setEditorValue('interval', [picker.startDate, picker.endDate]);
 };
 
 var _onSourceEditorChange = function (e) {
-  console.log(e);
+  this.props.defaultFavouriteValues.source = false;
   this.props.actions.setEditorValue('source', e.value);
 };
 
 var onPopulationEditorChange = function(e) {
+  this.props.defaultFavouriteValues.population = false;
   if(!e) {
     var utility = this.props.profile.utility;
 
@@ -93,9 +95,19 @@ var AnalyticsMap = React.createClass({
 
   componentWillMount : function() {
     if(this.props.favourite){
-      console.log(this.props.favourite.query.time);
-      //set filters and state
+      this.props.defaultFavouriteValues.interval = true;
+      this.props.defaultFavouriteValues.source = true;
+      this.props.defaultFavouriteValues.population = true;
+      this.props.defaultFavouriteValues.spatial = true;
+      this.props.actions.setEditorValuesBatch(false);
     }
+    else{
+      this.props.defaultFavouriteValues.interval = false;
+      this.props.defaultFavouriteValues.source = false;
+      this.props.defaultFavouriteValues.population = false;
+      this.props.defaultFavouriteValues.spatial = false;
+      this.props.actions.setEditorValuesBatch(true);
+    }      
   },
   
   componentDidMount : function() {
@@ -115,7 +127,7 @@ var AnalyticsMap = React.createClass({
 
   clickedAddFavourite : function() {
     
-    var tags = 'Map - ' + (this.props.source || 'METER') + 
+    var tags = 'Map - ' + (this.props.defaultFavouriteValues.source ? this.props.favourite.query.source : this.props.source) + 
       ' - '+ this.props.interval[0].format("DD/MM/YYYY") + 
         ' to ' + this.props.interval[1].format("DD/MM/YYYY") + 
           (this.props.population ? ' - ' + this.props.population.label : '') + 
@@ -148,7 +160,7 @@ var AnalyticsMap = React.createClass({
       favouriteIcon = 'star';
     }
 
-    var tags = 'Map - ' + (this.props.source || 'METER') + 
+    var tags = 'Map - ' + (this.props.defaultFavouriteValues.source ? this.props.favourite.query.source : this.props.source) + 
       ' - '+ this.props.interval[0].format("DD/MM/YYYY") + 
         ' to ' + this.props.interval[1].format("DD/MM/YYYY") + 
           (this.props.population ? ' - ' + this.props.population.label : '') + 
@@ -159,9 +171,9 @@ var AnalyticsMap = React.createClass({
     // Filter configuration
     var intervalLabel ='';
     if(this.props.interval) {
-      var start = this.props.favourite ? 
+      var start = this.props.defaultFavouriteValues.interval ? 
         moment(this.props.favourite.query.time.start).format('DD/MM/YYYY') : this.props.interval[0].format('DD/MM/YYYY');
-      var end = this.props.favourite ? 
+      var end = this.props.defaultFavouriteValues.interval ? 
         moment(this.props.favourite.query.time.end).format('DD/MM/YYYY') : this.props.interval[1].format('DD/MM/YYYY');
         
       intervalLabel = start + ' - ' + end;
@@ -171,11 +183,15 @@ var AnalyticsMap = React.createClass({
     }     
 
     var intervalEditor = (
-      <div className='col-md-3'>
-        <DateRangePicker  startDate={this.props.favourite ? moment(this.props.favourite.query.time.start) : this.props.interval[0]} 
-                  endDate={this.props.favourite ? moment(this.props.favourite.query.time.end) : this.props.interval[1]} 
-                  ranges={this.props.ranges} 
-                  onEvent={_onIntervalEditorChange.bind(this)}>
+      <div className='col-md-3'> 
+        <DateRangePicker  
+          startDate={this.props.defaultFavouriteValues.interval ? 
+                      moment(this.props.favourite.query.time.start) : this.props.interval[0]} 
+          endDate={this.props.defaultFavouriteValues.interval ? 
+                      moment(this.props.favourite.query.time.end) : this.props.interval[1]} 
+          ranges={this.props.ranges} 
+          onEvent={_onIntervalEditorChange.bind(this)}
+        >
           <div className='clearfix Select-control' style={{ cursor: 'pointer', padding: '5px 10px', width: '100%'}}>
             <span>{intervalLabel}</span>
           </div>
@@ -186,7 +202,10 @@ var AnalyticsMap = React.createClass({
    
     var populationEditor = (
       <div className='col-md-3'>
-        <GroupSearchTextBox name='groupname' onChange={onPopulationEditorChange.bind(this)}/>
+        <GroupSearchTextBox 
+          value={this.props.defaultFavouriteValues.population ? this.props.favourite.query.population : this.props.population} 
+          name='groupname' 
+          onChange={onPopulationEditorChange.bind(this)}/>
         <span className='help-block'>Select a consumer group</span>
       </div>
     );
@@ -224,7 +243,7 @@ var AnalyticsMap = React.createClass({
     var sourceEditor = (
       <div className='col-md-3'>
         <Select name='source'
-          value={this.props.source ? this.props.source : (this.props.favourite ? this.props.favourite.query.source : 'METER')}
+          value={this.props.defaultFavouriteValues.source ? this.props.favourite.query.source : this.props.source}
           options={[
             { value: 'METER', label: 'Meter' },
             { value: 'AMPHIRO', label: 'Amphiro B1' }
@@ -398,6 +417,7 @@ var AnalyticsMap = React.createClass({
       );
     }
 
+    //TODO - set conditions for favourite
     mapFilterTags.push( 
       <FilterTag key='time' text={intervalLabel} icon='calendar' />
     );
@@ -408,7 +428,7 @@ var AnalyticsMap = React.createClass({
       <FilterTag key='spatial' text={ this.props.geometry ? 'Custom' : 'Alicante' } icon='map' />
     );
     mapFilterTags.push( 
-      <FilterTag key='source' text={ this.props.source === 'METER' ? 'Meter' : 'Amphiro B1' } icon='database' />
+      <FilterTag key='source' text={ this.props.defaultFavouriteValues.source ? this.props.favourite.query.source : this.props.source} icon='database' />
     );  
 
     map = (
@@ -483,6 +503,7 @@ AnalyticsMap.icon = 'map';
 AnalyticsMap.title = 'Section.Map';
 
 function mapStateToProps(state) {
+console.log(state);
   return {
       source: state.map.source,
       geometry: state.map.geometry,
@@ -496,7 +517,8 @@ function mapStateToProps(state) {
       routing: state.routing,
       favourite: state.favourites.selectedFavourite,
       isBeingEdited: state.map.isBeingEdited,
-      filtersChanged: state.map.filterChanged
+      filtersChanged: state.map.filterChanged,
+      defaultFavouriteValues : state.map.defaultFavouriteValues
   };
 }
 
@@ -504,7 +526,7 @@ function mapDispatchToProps(dispatch) {
   return {
     actions : bindActionCreators(Object.assign({}, { getTimeline, getFeatures, getChart,
                                                      setEditor, setEditorValue, setTimezone,
-                                                     addFavourite, updateFavourite}) , dispatch)
+                                                     addFavourite, updateFavourite, setEditorValuesBatch}) , dispatch)
   };
 }
 

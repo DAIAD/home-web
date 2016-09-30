@@ -1,7 +1,6 @@
-var adminAPI = require('../api/admin');
 var queryAPI = require('../api/query');
 var favouritesAPI = require('../api/favourites');
-
+var moment = require('moment');
 var types = require('../constants/MapActionTypes');
 
 var addFavouriteRequest = function () {
@@ -178,7 +177,78 @@ var MapActions = {
       });
     };
   },
+  
+  setEditorValuesBatch : function(isDefault) {
 
+    //TODO when switching from favourites to map and vice versa the memo does not appear every 2nd switch
+    return function(dispatch, getState) {
+      
+      var utility = getState().session.profile.utility;
+      MapActions.setTimezone(utility.timezone); 
+      var timezone = getState().map.timezone;
+    
+      var population, interval, source, geometry;
+      
+      if(isDefault){
+        if(!getState().map.timeline) {
+          population = {
+            utility: utility.key,
+            label: utility.name,
+            type: 'UTILITY'
+          };
+        }        
+        interval = [moment().subtract(14, 'day'), moment()];
+        dispatch(_setEditorValue('population', population));
+        dispatch(_setEditorValue('interval', interval));
+        dispatch(_setEditorValue('source', 'METER'));
+        
+        if(getState().map.features){
+          dispatch('spatial', getState().map.features[0].geometry);        
+        }
+      }
+      else if(getState().favourites.selectedFavourite){
+      
+        population = {
+          key: getState().favourites.selectedFavourite.query.population[0].utility,
+          name: getState().favourites.selectedFavourite.query.population[0].label,
+          type: getState().favourites.selectedFavourite.query.population[0].type
+        };   
+        
+        interval = [moment(getState().favourites.selectedFavourite.query.time.start),
+                    moment(getState().favourites.selectedFavourite.query.time.end)];
+        source = getState().favourites.selectedFavourite.query.source;
+        geometry = getState().favourites.selectedFavourite.geometry;  
+        
+        dispatch(_setEditorValue('population', population));
+        dispatch(_setEditorValue('interval', interval));
+        dispatch(_setEditorValue('source', source));        
+      }
+
+      var query = _buildTimelineQuery(population, source, geometry, timezone, interval);
+
+      dispatch(_getTimelineInit(population, query));
+      return queryAPI.queryMeasurements(query).then(function(response) {
+        var data = {
+          meters : null,
+          devices : null,
+          areas : null
+        };
+        if (response.success) {     
+          data.areas = response.areas;
+          data.meters = response.meters;
+          data.devices = response.devices;            
+        }
+        dispatch(_getTimelineComplete(response.success, response.errors, data));
+
+        dispatch(_getFeatures(0, null, null));
+
+      }, function(error) {
+        dispatch(_getTimelineComplete(false, error, null));
+
+        dispatch(_getFeatures(0, null, null));
+      });
+    };
+  },
   getChart : function(key, name, timezone) {
     return function(dispatch, getState) {
       var query = _buildChartQuery(key, name, timezone, getState().map.interval);
