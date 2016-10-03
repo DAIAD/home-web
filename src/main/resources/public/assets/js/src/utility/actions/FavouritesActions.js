@@ -85,12 +85,28 @@ var _buildTimelineQuery = function(population, source, geometry, timezone, inter
   };
 };
 
+var _getTimelineInit = function(population, query) {
+  return {
+    type : types.FAVOURITES_TIMELINE_REQUEST,
+    query : query,
+    population : population
+  };
+};
+
 var _getTimelineComplete = function(success, errors, data) {
   return {
     type : types.FAVOURITES_TIMELINE_RESPONSE,
     success : success,
     errors : errors,
     data : data
+  };
+};
+
+var _setEditorValue = function(editor, value) {
+  return {
+    type : types.FAVOURITES_SET_EDITOR_VALUE,
+    editor : editor,
+    value : value
   };
 };
 
@@ -156,51 +172,67 @@ var FavouritesActions = {
     };
   },
   openFavourite : function(favourite) {
-    return {
+    return{
       type : types.FAVOURITES_OPEN_SELECTED,
       showSelected : true,
       selectedFavourite: favourite
     };
   },
-  getFavouriteFeatures : function(favourite) {
+  getFavourite : function(favourite) {
+    //getState().favourites.selectedFavourite
+    console.log('getFavouriteFeatures');
     return function(dispatch, getState) {
-      //dispatch(_openFavourite(favourite));
-      var population = {
-          utility: '80de55eb-9bde-4477-a97a-b6048a1fcc9a',
-          label: 'DAIAD',
-          type: 'UTILITY'
-      };      
+      var population, source, geometry, interval, timezone;
       
-      //var population = favourite.query.population;
-      var timezone = favourite.query.timezone;
-      var interval = [moment(favourite.query.time.start), moment(favourite.query.time.end)];
-      var source = favourite.query.source;
-      var geometry = favourite.query.geometry;
+        population = {
+          utility: favourite.query.population[0].utility,
+          label: favourite.query.population[0].label,
+          type: favourite.query.population[0].type
+        };         
+        interval = [moment(favourite.query.time.start),
+                    moment(favourite.query.time.end)];
+        source = favourite.query.source;
+        
+        if( (!getState().map.features) || (getState().map.features.length === 0) ){
+          geometry = null;
+        } else {
+          geometry = getState().map.features[0].geometry;
+        }        
+        dispatch(_setEditorValue('population', population));
+        dispatch(_setEditorValue('interval', interval));
+        dispatch(_setEditorValue('spatial', geometry));
+        dispatch(_setEditorValue('source', source));  
+      
 
       var query = _buildTimelineQuery(population, source, geometry, timezone, interval);
-
-      //dispatch(_getTimelineInit(population, query));
+      dispatch(_getTimelineInit(population, query));
+      
       return queryAPI.queryMeasurements(query).then(function(response) {
+        console.log('response');
+        console.log(response);
         var data = {
           meters : null,
           devices : null,
           areas : null
         };
-        if (response.success) {     
+        if (response.success) { 
           data.areas = response.areas;
           data.meters = response.meters;
           data.devices = response.devices;            
         }
+
         dispatch(_getTimelineComplete(response.success, response.errors, data));
 
         dispatch(_getFeatures(0, null, null));
-
       }, function(error) {
         dispatch(_getTimelineComplete(false, error, null));
 
         dispatch(_getFeatures(0, null, null));
       });
     };
+  },  
+  getFeatures : function(index, timestamp, label) {
+    return _getFeatures(index, timestamp, label);
   },  
   closeFavourite : function() {
     return{

@@ -94,19 +94,24 @@ var AnalyticsMap = React.createClass({
   },
 
   componentWillMount : function() {
+    var isDefault;
     if(this.props.favourite){
+      isDefault = false;
       this.props.defaultFavouriteValues.interval = true;
       this.props.defaultFavouriteValues.source = true;
       this.props.defaultFavouriteValues.population = true;
       this.props.defaultFavouriteValues.spatial = true;
-      this.props.actions.setEditorValuesBatch(false);
+      
+      this.props.actions.setEditorValuesBatch(isDefault);
     }
     else{
+      isDefault = true;
       this.props.defaultFavouriteValues.interval = false;
       this.props.defaultFavouriteValues.source = false;
       this.props.defaultFavouriteValues.population = false;
       this.props.defaultFavouriteValues.spatial = false;
-      this.props.actions.setEditorValuesBatch(true);
+      
+      this.props.actions.setEditorValuesBatch(isDefault);
     }      
   },
   
@@ -127,12 +132,13 @@ var AnalyticsMap = React.createClass({
 
   clickedAddFavourite : function() {
     
-    var tags = 'Map - ' + (this.props.defaultFavouriteValues.source ? this.props.favourite.query.source : this.props.source) + 
-      ' - '+ this.props.interval[0].format("DD/MM/YYYY") + 
-        ' to ' + this.props.interval[1].format("DD/MM/YYYY") + 
-          (this.props.population ? ' - ' + this.props.population.label : '') + 
-            (this.props.geometry ? ' - Custom' : '');
-
+    var tags = 'Map - ' + 
+      (this.props.defaultFavouriteValues.source ? this.props.favourite.query.source : this.props.source) + 
+        ' - '+ this.props.interval[0].format("DD/MM/YYYY") + 
+          ' to ' + this.props.interval[1].format("DD/MM/YYYY") + 
+            (this.props.population ? ' - ' + this.props.population.label : '') + 
+              (this.props.geometry ? ' - Custom' : '');
+                    
     var namedQuery = this.props.map.query;
     namedQuery.type = 'Map';
     namedQuery.tags = tags;
@@ -160,11 +166,12 @@ var AnalyticsMap = React.createClass({
       favouriteIcon = 'star';
     }
 
-    var tags = 'Map - ' + (this.props.defaultFavouriteValues.source ? this.props.favourite.query.source : this.props.source) + 
-      ' - '+ this.props.interval[0].format("DD/MM/YYYY") + 
-        ' to ' + this.props.interval[1].format("DD/MM/YYYY") + 
-          (this.props.population ? ' - ' + this.props.population.label : '') + 
-            (this.props.geometry ? ' - Custom' : '');
+    var tags = 'Map - ' +
+      (this.props.defaultFavouriteValues.source ? this.props.favourite.query.source : this.props.source) + 
+        ' - '+ this.props.interval[0].format("DD/MM/YYYY") + 
+          ' to ' + this.props.interval[1].format("DD/MM/YYYY") + 
+            (this.props.population ? ' - ' + this.props.population.label : '') + 
+              (this.props.geometry ? ' - Custom' : '');
     
     var _t = this.context.intl.formatMessage;
     
@@ -350,7 +357,7 @@ var AnalyticsMap = React.createClass({
         });
       }
   
-      if(this.props.chart.series.devices) {       
+      if(this.props.chart.series.devices) {    
         chartData.series.push({
           legend: 'Amphiro B1',
           xAxis: 'date',
@@ -503,7 +510,7 @@ AnalyticsMap.icon = 'map';
 AnalyticsMap.title = 'Section.Map';
 
 function mapStateToProps(state) {
-console.log(state);
+  console.log(state);
   return {
       source: state.map.source,
       geometry: state.map.geometry,

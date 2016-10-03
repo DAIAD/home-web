@@ -10,6 +10,7 @@ var Modal = require('../../Modal');
 var Timeline = require('../../Timeline');
 var LeafletMap = require('../../LeafletMap');
 var Table = require('../../Table');
+var {FormattedMessage, FormattedTime, FormattedDate} = require('react-intl');
 var { Link } = require('react-router');
 var { bindActionCreators } = require('redux');
 var { connect } = require('react-redux');
@@ -17,10 +18,31 @@ var { connect } = require('react-redux');
 var { setTimezone, fetchFavouriteQueries, openFavourite, 
       closeFavourite, setActiveFavourite, 
       addCopy, deleteFavourite, openWarning,
-      closeWarning, resetMapState, getFavouriteFeatures} = require('../../../actions/FavouritesActions');
+      closeWarning, resetMapState, getFavourite, getFeatures} = require('../../../actions/FavouritesActions');
           
 //var ViewChart = require('../../../report-measurements/pane');
-var rows;
+
+var _getTimelineValues = function(timeline) {
+  if(timeline) {
+    return timeline.getTimestamps();
+  } 
+  return [];
+};
+
+var _getTimelineLabels = function(timeline) {
+  if(timeline) {
+    return timeline.getTimestamps().map(function(timestamp) {
+      return (
+        <FormattedTime  value={new Date(timestamp)} 
+                        day='numeric' 
+                        month='numeric' 
+                        year='numeric'/>
+      );      
+    });
+  } 
+  return [];
+};
+
 var createPoints = function() {
 	var points = [];
 	
@@ -80,8 +102,7 @@ var Favourites = React.createClass({
   
   clickedOpenFavourite(favourite) {
     favourite.timezone = this.props.profile.utility.timezone;
-
-    this.props.actions.getFavouriteFeatures(favourite);
+    this.props.actions.getFavourite(favourite);
     this.props.actions.openFavourite(favourite);
   },
 
@@ -162,7 +183,7 @@ var Favourites = React.createClass({
    if(this.props.selectedFavourite){
      switch(this.props.selectedFavourite.type) {
        case 'MAP':   
-		       title = 'Map'; 
+		       title = 'Map: ' + this.props.selectedFavourite.title; 
 		       dataContent = (
 			        <Bootstrap.ListGroupItem>
 				         <LeafletMap style={{ width: '100%', height: 400}} 
@@ -182,13 +203,12 @@ var Favourites = React.createClass({
                           popupContent : 'serial'
                         }
                       ]} />
- 				        <Timeline 	onChange={onChangeTimeline.bind(this)} 
-	 						       style={{paddingTop: 10}}
-		 					       min={1}
-			 				       max={24}
-				 			       value={24}
-					 		       type='time'
-						         data={createTimeLabels(moment(new Date(today.getFullYear(), today.getMonth(), today.getDate(), today.getHours(), 0, 0)), 24)}>
+ 				        <Timeline 	onChange={_onChangeTimeline.bind(this)} 
+                      labels={ _getTimelineLabels(this.props.map.timeline) }
+                      values={ _getTimelineValues(this.props.map.timeline) }
+                      defaultIndex={this.props.map.index}
+                      speed={1000}
+                      animate={false}>
 				         </Timeline>
 			        </Bootstrap.ListGroupItem>
 		       );  
@@ -312,7 +332,7 @@ var Favourites = React.createClass({
          self.clickedDeleteFavourite(this.props.row);
 				   }
 			  }],
-			  rows: this.props.favourites ? this.props.favourites : rows,
+			  rows: this.props.favourites ? this.props.favourites : [],
 			  pager: {
 				   index: 0,
 				   size: 5,
@@ -409,7 +429,6 @@ function mapStateToProps(state) {
     showDeleteMessage: state.favourites.showDeleteMessage,
     favouriteToBeDeleted: state.favourites.favouriteToBeDeleted,
     map: state.favourites.map,
-    
     source: state.favourites.source,
     geometry: state.favourites.geometry,
     population: state.favourites.population,
@@ -419,10 +438,10 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
   return {
-    actions : bindActionCreators(Object.assign({}, { setTimezone, fetchFavouriteQueries, openFavourite, 
-                                                     closeFavourite, setActiveFavourite, 
-                                                     addCopy, deleteFavourite, openWarning, 
-                                                     closeWarning, resetMapState, getFavouriteFeatures}) , dispatch)                                                     
+    actions : bindActionCreators(Object.assign({}, { setTimezone, fetchFavouriteQueries, 
+                                                     openFavourite, closeFavourite, setActiveFavourite, 
+                                                     addCopy, deleteFavourite, openWarning, closeWarning, 
+                                                     resetMapState, getFavourite, getFeatures}) , dispatch)                                                     
   };
 }
 

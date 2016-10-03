@@ -141,7 +141,7 @@ var _extractTimeline = function(meters, areas) {
 
   return timeline;
 };
-//TODO separate map reducer
+
 var mapReducer = function(state, action) {
   switch (action.type) {
     case types.FAVOURITES_TIMELINE_REQUEST:
@@ -156,10 +156,9 @@ var mapReducer = function(state, action) {
       });
     case types.FAVOURITES_TIMELINE_RESPONSE:
       if (action.success) {
-        var source = (state.selectedFavourite.query.source == 'METER') ? action.data.meters : action.data.devices;
+        var source = (state.query.query.source == 'METER') ? action.data.meters : action.data.devices;
 
         return Object.assign({}, state, {
-          map : mapReducer(state.map, action),
           areas : action.data.areas,
           meters : action.data.meters,
           devices : action.data.devices,
@@ -203,6 +202,21 @@ var favourites = function (state, action) {
         isLoading: false,
         favourites: action.favourites
       });       
+    case types.FAVOURITES_TIMELINE_REQUEST:
+      return Object.assign({}, state, {
+        map : mapReducer(state.map, action),
+        population : action.population
+      }); 
+    case types.FAVOURITES_TIMELINE_RESPONSE:
+      return Object.assign({}, state, {
+        isLoading : false,
+        map : mapReducer(state.map, action)
+      });   
+    case types.FAVOURITES_GET_FEATURES:
+      return Object.assign({}, state, {
+        isLoading : false,
+        map : mapReducer(state.map, action)
+      });      
     case types.FAVOURITES_OPEN_SELECTED:
       return Object.assign({}, state, {
         showSelected: true,

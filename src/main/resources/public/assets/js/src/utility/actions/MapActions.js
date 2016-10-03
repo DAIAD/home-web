@@ -169,7 +169,6 @@ var MapActions = {
         dispatch(_getTimelineComplete(response.success, response.errors, data));
 
         dispatch(_getFeatures(0, null, null));
-
       }, function(error) {
         dispatch(_getTimelineComplete(false, error, null));
 
@@ -180,52 +179,56 @@ var MapActions = {
   
   setEditorValuesBatch : function(isDefault) {
 
-    //TODO when switching from favourites to map and vice versa the memo does not appear every 2nd switch
     return function(dispatch, getState) {
       
       var utility = getState().session.profile.utility;
       MapActions.setTimezone(utility.timezone); 
       var timezone = getState().map.timezone;
-    
-      var population, interval, source, geometry;
-      
+      var population, source, geometry, interval;
       if(isDefault){
         if(!getState().map.timeline) {
           population = {
             utility: utility.key,
             label: utility.name,
             type: 'UTILITY'
-          };
-        }        
+          };        
+        } 
+
+        source = 'METER';
         interval = [moment().subtract(14, 'day'), moment()];
+        if( (!getState().map.features) || (getState().map.features.length === 0) ){
+          geometry = null;
+        } else {
+          geometry = getState().map.features[0].geometry;
+        }
         dispatch(_setEditorValue('population', population));
         dispatch(_setEditorValue('interval', interval));
-        dispatch(_setEditorValue('source', 'METER'));
+        dispatch(_setEditorValue('source', source));
+        dispatch(_setEditorValue('spatial', geometry));     
         
-        if(getState().map.features){
-          dispatch('spatial', getState().map.features[0].geometry);        
-        }
       }
       else if(getState().favourites.selectedFavourite){
-      
         population = {
-          key: getState().favourites.selectedFavourite.query.population[0].utility,
-          name: getState().favourites.selectedFavourite.query.population[0].label,
+          utility: getState().favourites.selectedFavourite.query.population[0].utility,
+          label: getState().favourites.selectedFavourite.query.population[0].label,
           type: getState().favourites.selectedFavourite.query.population[0].type
-        };   
-        
+        };         
         interval = [moment(getState().favourites.selectedFavourite.query.time.start),
                     moment(getState().favourites.selectedFavourite.query.time.end)];
         source = getState().favourites.selectedFavourite.query.source;
-        geometry = getState().favourites.selectedFavourite.geometry;  
         
+        if( (!getState().map.features) || (getState().map.features.length === 0) ){
+          geometry = null;
+        } else {
+          geometry = getState().map.features[0].geometry;
+        }        
         dispatch(_setEditorValue('population', population));
         dispatch(_setEditorValue('interval', interval));
-        dispatch(_setEditorValue('source', source));        
+        dispatch(_setEditorValue('spatial', geometry));
+        dispatch(_setEditorValue('source', source));  
       }
 
       var query = _buildTimelineQuery(population, source, geometry, timezone, interval);
-
       dispatch(_getTimelineInit(population, query));
       return queryAPI.queryMeasurements(query).then(function(response) {
         var data = {
@@ -233,7 +236,7 @@ var MapActions = {
           devices : null,
           areas : null
         };
-        if (response.success) {     
+        if (response.success) { 
           data.areas = response.areas;
           data.meters = response.meters;
           data.devices = response.devices;            
@@ -241,7 +244,6 @@ var MapActions = {
         dispatch(_getTimelineComplete(response.success, response.errors, data));
 
         dispatch(_getFeatures(0, null, null));
-
       }, function(error) {
         dispatch(_getTimelineComplete(false, error, null));
 
