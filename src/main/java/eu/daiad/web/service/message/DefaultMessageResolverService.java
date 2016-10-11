@@ -70,6 +70,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		status.setAlertWaterQualitySWM(this.alertWaterQualitySWM(accountKey, config.getTimezone()));
 
 		status.setAlertNearDailyBudgetSWM(this.alertNearDailyBudgetSWM(config, accountKey, config.getTimezone()));
+        
 		status.setAlertNearWeeklyBudgetSWM(this.alertNearWeeklyBudgetSWM(config, accountKey, config.getTimezone()));
 
 		status.setAlertReachedDailyBudgetSWM(this.alertReachedDailyBudgetSWM(config, accountKey, config.getTimezone()));
@@ -163,7 +164,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
         
 	// 1 alert - Check for water leaks!
 	private boolean alertWaterLeakSWM(UUID accountKey, DateTimeZone timezone) {
-		boolean fireAlert = true;
+		boolean fireAlert = false;
 		DataQueryBuilder queryBuilder = new DataQueryBuilder();
 		queryBuilder.timezone(timezone).sliding(-48, EnumTimeUnit.HOUR, EnumTimeAggregation.HOUR)
 						.user("user", accountKey).meter().sum();
@@ -177,9 +178,12 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 				ArrayList<DataPoint> points = serie.getPoints();
 				for (DataPoint point : points) {
 					MeterDataPoint meterPoint = (MeterDataPoint) point;
-					if (meterPoint.getVolume().get(EnumMetric.SUM) == 0) {
-						fireAlert = false;
+					if (meterPoint.getVolume().get(EnumMetric.SUM) > 2) { //2 litres threshold per hour
+						fireAlert = true;
 					}
+                    else{
+                        return false;
+                    }
 				}
 			}
 		}

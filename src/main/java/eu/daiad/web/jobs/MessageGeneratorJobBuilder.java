@@ -42,6 +42,8 @@ public class MessageGeneratorJobBuilder implements IJobBuilder {
 					// Initialize configuration
 					MessageCalculationConfiguration config = new MessageCalculationConfiguration();
 
+                    config.setOnDemandExecution(true);
+                    
 					config.setStaticTipInterval(Integer.parseInt((String) chunkContext.getStepContext()
 									.getJobParameters().get("static.tip.interval")));
 					config.setAggregateComputationInterval(Integer.parseInt((String) chunkContext.getStepContext()

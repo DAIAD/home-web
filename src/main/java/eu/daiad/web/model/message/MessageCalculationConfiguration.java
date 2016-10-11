@@ -30,6 +30,8 @@ public class MessageCalculationConfiguration {
 	private Integer dailyBudgetAmphiro = 100;
 	private Integer weeklyBudgetAmphiro = 700;
 	private Integer monthlyBudgetAmphiro = 3000;
+    
+    private boolean onDemandExecution;
 
 	private Integer utilityId;
 
@@ -186,5 +188,13 @@ public class MessageCalculationConfiguration {
 	public void setTimezone(DateTimeZone timezone) {
 		this.timezone = timezone;
 	}
+
+    public boolean isOnDemandExecution() {
+        return onDemandExecution;
+    }
+
+    public void setOnDemandExecution(boolean onDemandExecution) {
+        this.onDemandExecution = onDemandExecution;
+    }
 
 }
