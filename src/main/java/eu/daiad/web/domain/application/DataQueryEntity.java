@@ -49,6 +49,15 @@ public class DataQueryEntity {
     @Basic    
     private String tags;
     
+    @Column(name = "report_name")
+    private String reportName;    
+
+    @Column(name = "time_level")
+    private String level; 
+
+    @Column(name = "field")
+    private String field; 
+    
     @Enumerated(EnumType.STRING)
     private EnumQueryFavouriteType type;
 
@@ -114,5 +123,28 @@ public class DataQueryEntity {
     public void setTags(String tags) {
         this.tags = tags;
     }
+    
+    public String getReportName() {
+        return reportName;
+    }
 
+    public void setReportName(String reportName) {
+        this.reportName = reportName;
+    }
+    
+    public String getLevel() {
+        return level;
+    }
+
+    public void setLevel(String level) {
+        this.level = level;
+    }
+    
+    public String getField() {
+        return field;
+    }
+
+    public void setField(String field) {
+        this.field = field;
+    }    
 }

@@ -9,6 +9,23 @@ var TimeSpan = require('../model/timespan');
 var population = require('../model/population');
 var {toUtcTime} = require('../helpers/timestamps');
 var {queryMeasurements} = require('../service/query');
+var favouritesAPI = require('../api/favourites');
+
+
+var addFavouriteRequest = function () {
+  return {
+    type: ActionTypes.reports.measurements.ADD_FAVOURITE_REQUEST
+  };
+};
+
+var addFavouriteResponse = function (success, errors) {
+  return {
+    type: ActionTypes.reports.measurements.ADD_FAVOURITE_RESPONSE,
+    success: success,
+    errors: errors,
+    isBeingEdited: false
+  };
+};
 
 // Define actions
 
@@ -43,7 +60,7 @@ var actions = {
     reportName,
     key,
     data,
-    timestamp: (t || new Date()).getTime(),
+    timestamp: (t || new Date()).getTime()
   }),
 
   setDataError: (field, level, reportName, key, errors, t=null) => ({
@@ -53,7 +70,7 @@ var actions = {
     reportName,
     key,
     errors,
-    timestamp: (t || new Date()).getTime(),
+    timestamp: (t || new Date()).getTime()
   }),
 
   setTimespan: (field, level, reportName, key, timespan) => ({
@@ -71,7 +88,7 @@ var actions = {
     level,
     reportName,
     key,
-    source,
+    source
   }),
 
   setPopulation: (field, level, reportName, key, population) => ({
@@ -80,9 +97,29 @@ var actions = {
     level,
     reportName,
     key,
-    population,
+    population
   }),
-
+  
+  addFavourite : function(favourite) {
+    return function(dispatch, getState) {
+      dispatch(addFavouriteRequest());
+      return favouritesAPI.addFavourite(favourite).then(function (response) {
+        dispatch(addFavouriteResponse(response.success, response.errors));
+      }, function (error) {
+        dispatch(addFavouriteResponse(false, error));
+      });
+    };
+  },
+  updateFavourite : function(favourite) {
+    return function(dispatch, getState) {
+      dispatch(addFavouriteRequest());
+      return favouritesAPI.updateFavourite(favourite).then(function (response) {
+        dispatch(addFavouriteResponse(response.success, response.errors));
+      }, function (error) {
+        dispatch(addFavouriteResponse(false, error));
+      });
+    };  
+  },
   // Complex actions: functions processed by thunk middleware
   
   refreshData: (field, level, reportName, key) => (dispatch, getState) => {
@@ -97,7 +134,7 @@ var actions = {
     var report = levels[level].reports[reportName];
     
     var {timespan: ts, source, requested, population: target} = _state[k];
-    
+
     // Throttle requests
     var now = new Date();
     if (requested && (now.getTime() - requested < 1e+3)) {

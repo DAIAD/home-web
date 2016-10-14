@@ -159,10 +159,12 @@ var AnalyticsMap = React.createClass({
   
   render: function() {
     var favouriteIcon, label;
-    if(this.props.isBeingEdited && !this.props.favourite){
+    if(this.props.favourite && this.props.favourite.type == 'CHART'){
+      favouriteIcon = 'star-o';
+    } else if(this.props.isBeingEdited && !this.props.favourite){
       favouriteIcon = 'star-o';
     }
-    else{
+    else {
       favouriteIcon = 'star';
     }
 
@@ -424,7 +426,6 @@ var AnalyticsMap = React.createClass({
       );
     }
 
-    //TODO - set conditions for favourite
     mapFilterTags.push( 
       <FilterTag key='time' text={intervalLabel} icon='calendar' />
     );
@@ -510,7 +511,6 @@ AnalyticsMap.icon = 'map';
 AnalyticsMap.title = 'Section.Map';
 
 function mapStateToProps(state) {
-  console.log(state);
   return {
       source: state.map.source,
       geometry: state.map.geometry,

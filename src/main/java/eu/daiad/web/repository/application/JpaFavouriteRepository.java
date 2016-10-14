@@ -491,7 +491,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
     @Override
     public void insertFavouriteQuery(NamedDataQuery namedDataQuery, Account account) {
-
+        //TODO - resolve when same favourite title already exists
         try {
 
             DataQueryEntity dataQueryEntity = new DataQueryEntity();
@@ -499,6 +499,9 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             dataQueryEntity.setType(namedDataQuery.getType());
             dataQueryEntity.setName(namedDataQuery.getTitle());
             dataQueryEntity.setTags(namedDataQuery.getTags());
+            dataQueryEntity.setReportName(namedDataQuery.getReportName());
+            dataQueryEntity.setLevel(namedDataQuery.getLevel());
+            dataQueryEntity.setField(namedDataQuery.getField());
             dataQueryEntity.setQuery(new ObjectMapper().writeValueAsString(namedDataQuery.getQuery()));
             dataQueryEntity.setOwner(account);
             dataQueryEntity.setUpdatedOn(DateTime.now());
@@ -527,6 +530,9 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             dataQueryEntity.setName(namedDataQuery.getTitle());
             dataQueryEntity.setQuery(new ObjectMapper().writeValueAsString(namedDataQuery.getQuery()));
             dataQueryEntity.setTags(namedDataQuery.getTags());
+            dataQueryEntity.setReportName(namedDataQuery.getReportName());
+            dataQueryEntity.setLevel(namedDataQuery.getLevel());
+            dataQueryEntity.setField(namedDataQuery.getField());
         
             this.entityManager.persist(dataQueryEntity);
 
@@ -574,6 +580,9 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             namedDataQuery.setType(queryEntity.getType());
             namedDataQuery.setTitle(queryEntity.getName());
             namedDataQuery.setTags(queryEntity.getTags());
+            namedDataQuery.setReportName(queryEntity.getReportName());
+            namedDataQuery.setLevel(queryEntity.getLevel());
+            namedDataQuery.setField(queryEntity.getField());
             namedDataQuery.setQuery(queryEntity.toDataQuery());
             namedDataQuery.setCreatedOn(queryEntity.getUpdatedOn());
 

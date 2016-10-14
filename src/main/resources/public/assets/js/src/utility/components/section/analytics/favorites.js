@@ -4,7 +4,6 @@ var moment = require('moment');
 var Bootstrap = require('react-bootstrap');
 
 var Breadcrumb = require('../../Breadcrumb');
-var Chart = require('../../Chart');
 var ClusterChart = require('../../ClusterChart');
 var Modal = require('../../Modal');
 var Timeline = require('../../Timeline');
@@ -15,10 +14,15 @@ var { Link } = require('react-router');
 var { bindActionCreators } = require('redux');
 var { connect } = require('react-redux');
 
+var Chart = require('../../reports-measurements/chart');
+var {timespanPropType, populationPropType, seriesPropType, configPropType} = require('../../../prop-types');
+var population2 = require('../../../model/population');
+
 var { setTimezone, fetchFavouriteQueries, openFavourite, 
       closeFavourite, setActiveFavourite, 
       addCopy, deleteFavourite, openWarning,
-      closeWarning, resetMapState, getFavourite, getFeatures} = require('../../../actions/FavouritesActions');
+      closeWarning, resetMapState, getFavouriteMap,
+      getFavouriteChart, getFeatures} = require('../../../actions/FavouritesActions');
           
 //var ViewChart = require('../../../report-measurements/pane');
 
@@ -84,7 +88,8 @@ var createTimeLabels = function(ref, hours) {
 var Favourites = React.createClass({
 	 contextTypes: {
 	   intl: React.PropTypes.object,
-    router: function() { return React.PropTypes.func.isRequired; } 
+    config: configPropType,
+    router: function() { return React.PropTypes.func.isRequired; },
     //using this instead of  router: React.PropTypes.func due to warning
     //https://github.com/react-bootstrap/react-router-bootstrap/issues/91
 	 },
@@ -99,10 +104,26 @@ var Favourites = React.createClass({
     var utility = this.props.profile.utility;
     this.props.actions.setTimezone(utility.timezone);
 	 },	
+  componentWillUnmount : function() {
+    //TODO - in case we want the 'Map' section to display the default view of the map,
+    //even when there is an active favourite open in the favourite's section, we should de-activate the favourite
+    //when unmounting, based on the cause of the unmount. 
+    //Keep the favourite active only after the clickedEditFavourite action.
+  },
   
   clickedOpenFavourite(favourite) {
     favourite.timezone = this.props.profile.utility.timezone;
-    this.props.actions.getFavourite(favourite);
+    this.props.actions.closeFavourite();
+    if(favourite.type == 'MAP'){
+      this.props.actions.getFavouriteMap(favourite);
+    }
+    else if(favourite.type == 'CHART'){
+      this.props.actions.getFavouriteChart(favourite);    
+    }
+    else{
+        console.error(sprintf('Favourite type (%s) not supported.', favourite.type));
+    }
+
     this.props.actions.openFavourite(favourite);
   },
 
@@ -112,7 +133,7 @@ var Favourites = React.createClass({
       case 'MAP':
         this.context.router.push('/analytics/map'); 
         break;
-      case 'Chart':
+      case 'CHART':
         this.context.router.push('/analytics/panel');  
         break;
       default:
@@ -177,9 +198,17 @@ var Favourites = React.createClass({
   
    var title, dataContent, footerContent, toggleTitle, togglePanel, today = new Date();
    var onChangeTimeline = function(value) {
-	 	  this.setState({points: createPoints()});
+	 	  //this.setState({points: createPoints()});
  		};  
-  
+   
+    var defaults= {
+      chartProps: {
+        width: 780,
+        height: 300,
+      }
+    };
+    
+
    if(this.props.selectedFavourite){
      switch(this.props.selectedFavourite.type) {
        case 'MAP':   
@@ -187,28 +216,28 @@ var Favourites = React.createClass({
 		       dataContent = (
 			        <Bootstrap.ListGroupItem>
 				         <LeafletMap style={{ width: '100%', height: 400}} 
-                      elementClassName='mixin'
-                      prefix='map'
-                      center={[38.36, -0.479]} 
-                      zoom={13}
-                      mode={[LeafletMap.MODE_DRAW, LeafletMap.MODE_CHOROPLETH]}
-                      choropleth= {{
-                        colors : ['#2166ac', '#67a9cf', '#d1e5f0', '#fddbc7', '#ef8a62', '#b2182b'],
-                        min : this.props.map.timeline ? this.props.map.timeline.min : 0,
-                        max : this.props.map.timeline ? this.props.map.timeline.max : 0,
-                        data : this.props.map.features
-                      }}
-                      overlays={[
-                        { url : '/assets/data/meters.geojson',
-                          popupContent : 'serial'
-                        }
-                      ]} />
+               elementClassName='mixin'
+               prefix='map'
+               center={[38.36, -0.479]} 
+               zoom={13}
+               mode={[LeafletMap.MODE_DRAW, LeafletMap.MODE_CHOROPLETH]}
+               choropleth= {{
+                 colors : ['#2166ac', '#67a9cf', '#d1e5f0', '#fddbc7', '#ef8a62', '#b2182b'],
+                 min : this.props.map.timeline ? this.props.map.timeline.min : 0,
+                 max : this.props.map.timeline ? this.props.map.timeline.max : 0,
+                 data : this.props.map.features
+               }}
+               overlays={[
+                 { url : '/assets/data/meters.geojson',
+                   popupContent : 'serial'
+                 }
+               ]} />
  				        <Timeline 	onChange={_onChangeTimeline.bind(this)} 
-                      labels={ _getTimelineLabels(this.props.map.timeline) }
-                      values={ _getTimelineValues(this.props.map.timeline) }
-                      defaultIndex={this.props.map.index}
-                      speed={1000}
-                      animate={false}>
+               labels={ _getTimelineLabels(this.props.map.timeline) }
+               values={ _getTimelineValues(this.props.map.timeline) }
+               defaultIndex={this.props.map.index}
+               speed={1000}
+               animate={false}>
 				         </Timeline>
 			        </Bootstrap.ListGroupItem>
 		       );  
@@ -222,23 +251,35 @@ var Favourites = React.createClass({
 				 	     </Bootstrap.ListGroupItem>
 				     );  
            break;
-       case 'Chart':
-     
+       case 'CHART':
          title = 'Chart';
-		       dataContent = (
-			        <Bootstrap.ListGroupItem>
- 
-	 		       </Bootstrap.ListGroupItem>
-         );
-      
- 				    footerContent = (
-	 				     <Bootstrap.ListGroupItem>
-		 				      <span style={{ paddingLeft : 7}}> </span>
-			 			      <Link to='/analytics/panel' style={{ paddingLeft : 7, float: 'right'}}>View Charts</Link>
-			 		       <span style={{ paddingLeft : 7}}> </span>
-			 			      <Link to='/' style={{ paddingLeft : 7, float: 'right'}}>View Dashboard</Link>              
-				 	     </Bootstrap.ListGroupItem>
-				     ); 
+         
+		         dataContent = (
+             <Bootstrap.ListGroup fill>
+               <Bootstrap.ListGroupItem className="report-chart-wrapper">
+                 <Chart 
+                   {...defaults.chartProps}
+                   draw={this.props.draw}
+                   field={this.props.selectedFavourite.field} 
+                   level={this.props.selectedFavourite.level} 
+                   reportName={this.props.selectedFavourite.reportName} 
+                   finished={this.props.finished}
+                   series={this.props.data}
+                   context={this.props.config}
+                 />
+              </Bootstrap.ListGroupItem>
+            </Bootstrap.ListGroup>
+           );
+        
+ 				      footerContent = (
+	 				       <Bootstrap.ListGroupItem>
+		 				        <span style={{ paddingLeft : 7}}> </span>
+			 			        <Link to='/analytics/panel' style={{ paddingLeft : 7, float: 'right'}}>View Charts</Link>
+			 		         <span style={{ paddingLeft : 7}}> </span>
+			 			        <Link to='/' style={{ paddingLeft : 7, float: 'right'}}>View Dashboard</Link>              
+				 	       </Bootstrap.ListGroupItem>
+				       ); 
+
            break;
        default:
          title = this.props.selectedFavourite.type;
@@ -420,7 +461,6 @@ var Favourites = React.createClass({
 });
 
 function mapStateToProps(state) {
-  console.log(state);
   return {
     profile: state.session.profile,
     showSelected: state.favourites.showSelected,
@@ -432,7 +472,11 @@ function mapStateToProps(state) {
     source: state.favourites.source,
     geometry: state.favourites.geometry,
     population: state.favourites.population,
-    interval: state.favourites.interval
+    interval: state.favourites.interval,
+    config: state.config,
+    draw: state.favourites.draw,
+    finished: state.favourites.finished,
+    data: state.favourites.data    
   };
 }
 
@@ -441,7 +485,8 @@ function mapDispatchToProps(dispatch) {
     actions : bindActionCreators(Object.assign({}, { setTimezone, fetchFavouriteQueries, 
                                                      openFavourite, closeFavourite, setActiveFavourite, 
                                                      addCopy, deleteFavourite, openWarning, closeWarning, 
-                                                     resetMapState, getFavourite, getFeatures}) , dispatch)                                                     
+                                                     resetMapState, getFavouriteMap, getFavouriteChart, 
+                                                     getFeatures}) , dispatch)                                                     
   };
 }
 

@@ -19,6 +19,7 @@ var population = require('../../model/population');
 var {computeKey} = require('../../reports').measurements;
 var {timespanPropType, populationPropType, seriesPropType, configPropType} = require('../../prop-types');
 var {equalsPair} = require('../../helpers/comparators');
+var {toUtcTime} = require('../../helpers/timestamps');
 
 var Chart = require('./chart');
 
@@ -26,6 +27,8 @@ var {Button, ButtonGroup, Collapse, Panel, ListGroup, ListGroupItem} = Bootstrap
 var {PropTypes} = React;
 
 const REPORT_KEY = 'pane';
+
+var favouriteIcon;
 
 // Todo Move under react-intl
 const ErrorMessages = {
@@ -222,7 +225,7 @@ var ReportPanel = React.createClass({
   
   // Lifecycle
   
-  getInitialState: function () {
+  getInitialState: function () {  
     return {
       draw: true, // should draw chart?
       fadeIn: false, // animation effect in progress
@@ -234,7 +237,7 @@ var ReportPanel = React.createClass({
     };  
   },
   
-  getDefaultProps: function () {
+  getDefaultProps: function () { 
     return {
       field: 'volume',
       level: 'week',
@@ -244,9 +247,38 @@ var ReportPanel = React.createClass({
       population: null,
       finished :null,
       fadeIn: false, // {className: 'fade-in', duration: 0.5},
+      defaultFavouriteValues : {
+        timespan : false,
+        source : false,
+        population : false,
+        metricLevel : false
+      }
     };
   },
-
+  
+  componentWillMount: function() {
+    var isDefault;
+    if(this.props.favouriteChart){
+      isDefault = false;
+      this.props.defaultFavouriteValues.timespan = true;
+      this.props.defaultFavouriteValues.source = true;
+      this.props.defaultFavouriteValues.population = true;
+      this.props.defaultFavouriteValues.metricLevel = true;
+      
+      //refresh data!
+      //this.props.actions.setEditorValuesBatch(isDefault);
+    }
+    else{
+      isDefault = true;
+      this.props.defaultFavouriteValues.timespan = false;
+      this.props.defaultFavouriteValues.source = false;
+      this.props.defaultFavouriteValues.population = false;
+      this.props.defaultFavouriteValues.metricLevel = false;
+      
+      //refresh data!
+      //this.props.actions.setEditorValuesBatch(isDefault);
+    }   
+  },
   componentDidMount: function () {
     var cls = this.constructor;
     var {field, level, reportName} = this.props;
@@ -344,9 +376,28 @@ var ReportPanel = React.createClass({
 
   render: function () {
     var {defaults} = this.constructor;
-    var {field, title, level, reportName, finished, series} = this.props;
     var {dirty, draw, error} = this.state;
+    
+    if(this.props.favouriteChart && this.props.favouriteChart.type == 'CHART' 
+       && this.props.defaultFavouriteValues.source
+       && this.props.defaultFavouriteValues.timespan
+       && this.props.defaultFavouriteValues.population
+       && this.props.defaultFavouriteValues.metricLevel) { //&& !this.props.isBeingEdited){ 
+      favouriteIcon = 'star';
+      this.props.favouriteChart.finished = this.props.finished;
 
+      if(this.props.favouriteSeries){
+        this.props.favouriteChart.series = this.props.favouriteSeries;
+      }
+      else{
+        this.props.favouriteChart.series = this.props.series; 
+      }
+      var {field, title, level, reportName, finished, series} = this.props.favouriteChart;
+    } else {
+      favouriteIcon = 'star-o';
+      var {field, title, level, reportName, finished, series} = this.props;
+   
+    }
     var toolbarSpec = this._specForToolbar();
     var header = (
       <div className="header-wrapper">
@@ -442,12 +493,17 @@ var ReportPanel = React.createClass({
 
   _setSource: function (source) {
     var {field, level, reportName} = this.props;
+
+    this.props.defaultFavouriteValues.source = false;
+    
     this.props.setSource(field, level, reportName, source);
     this.setState({dirty: true});
     return false;
   },
   
   _setReport: function (level, reportName) {
+    this.props.defaultFavouriteValues.metricLevel = false;
+    
     this.props.setReport(level, reportName);
     this.setState({dirty: true});
     return false;
@@ -460,6 +516,9 @@ var ReportPanel = React.createClass({
   },
 
   _setTimespan: function (value) {
+  
+    this.props.defaultFavouriteValues.timespan = false;
+      
     var error = null, timespan = null;
     
     // Validate
@@ -493,6 +552,9 @@ var ReportPanel = React.createClass({
   },
   
   _setPopulation: function (clusterKey, groupKey) {
+  
+    this.props.defaultFavouriteValues.population = false;
+    
     var {field, level, reportName} = this.props;
     var {config} = this.context;
     
@@ -520,32 +582,74 @@ var ReportPanel = React.createClass({
     var {config} = this.context;
     var {fields, sources, levels} = config.reports.byType.measurements;
     var {level} = this.props;
-
+    var clusterKey;
     var fragment1; // single element or array of keyed elements
     switch (this.state.formFragment) {
       case 'favourite':
+        var favouriteButtonText = this.props.favouriteChart ? 'Update Favourite' : 'Add Favourite';
         {
-          var {source} = this.props;
-          var sourceOptions = new Map(
-            _.intersection(_.keys(sources), fields[this.props.field].sources)
-              .map(k => ([k, sources[k].title]))
-          );
+          //Calculate tags
+          var [t1, t2] = computeTimespan(this.props.timespan);
+          
+          var start = this.props.defaultFavouriteValues.timespan ? 
+            moment(this.props.favouriteChart.query.time.start).format("DD/MM/YYYY") : t1.format("DD/MM/YYYY");
+            
+          var end = this.props.defaultFavouriteValues.timespan ? 
+            moment(this.props.favouriteChart.query.time.start).format("DD/MM/YYYY") : t2.format("DD/MM/YYYY");            
+          
+          if(this.props.defaultFavouriteValues.population){
+            clusterKey = population.Group.fromString(this.props.favouriteChart.query.population[0].label).clusterKey;
+
+            if(this.props.favouriteChart.query.population.length > 1){ //ClusterGroup with all groups
+              groupKey = null;
+            } else if(this.props.favouriteChart.query.population[0].type == 'UTILITY') { //Utility all
+              clusterKey = groupKey = null;
+            } else if(this.props.favouriteChart.query.population.length == 1){ //ClusterGroup with subgroup
+              groupKey = population.Group.fromString(this.props.favouriteChart.query.population[0].label).key;
+            } else{
+              console.error('Could not resolve options for favourite population!');
+            }
+          }      
+
+          var {clusters} = config.utility;
+          var selectedCluster = !clusterKey? null : clusters.find(c => (c.key == clusterKey));
+          var favouritePopulationTag = selectedCluster ? selectedCluster.name : 'Everyone';
+          
+          var [clusterKey2, groupKey2] = population.extractGroupParams(this.props.population);
+          
+          var selectedCluster2 = !clusterKey2? null : clusters.find(c => (c.key == clusterKey2));
+          var selectedPopulationTag = selectedCluster2 ? selectedCluster2.name : 'Everyone';
+          
+          var defaultSource = this.props.source == 'device' ? 'AMPHIRO' : 'METER';
+          
+          var tags = 'Chart - ' + (this.props.defaultFavouriteValues.source ? this.props.favouriteChart.query.source : defaultSource) + ' - ' + 
+              (start + ' to ' + end) + ' - ' + 
+                  (this.props.defaultFavouriteValues.levelMetric ? 'Level: ' + 
+                      this.props.favouriteChart.level : 'Level: ' + this.props.level) + ' - ' + 
+                          (this.props.defaultFavouriteValues.population ? favouritePopulationTag : selectedPopulationTag);
+          // \Calculate tags
+
           fragment1 = ( 
-      <div>
-        <div className='col-md-3'>
-          <input  id='label' name='favourite' type='favourite' ref='favourite' autofocus 
-            placeholder='Label ...' className='form-control' style={{ marginBottom : 15 }}/>
-          <span className='help-block'>Insert a label for this favourite</span>
-        </div>
-        <div className='col-md-6'>
-          <input  id='name' name='name' type='name' ref='name' autofocus disabled 
-            placeholder='Chart - Meter - DAIAD - Week - Average of daily consumption - Last Quarter Meter - Group Everyone' className='form-control' style={{ marginBottom : 15 }}/>
-          <span className='help-block'>Auto-generated Identifier</span>
-        </div>
-        <div className='col-md-3'>
-          <Bootstrap.Button bsStyle='success' >Add Favourite</Bootstrap.Button>
-        </div>         
-      </div> 
+            <div>
+              <div className='col-md-3'>
+                <input  id='label' name='favourite' type='favourite' ref='favourite' autofocus 
+                  defaultValue ={this.props.favouriteChart ? this.props.favouriteChart.title : null}
+                  placeholder='Label ...' className='form-control' style={{ marginBottom : 15 }}/>
+                <span className='help-block'>Insert a label for this favourite</span>
+              </div>
+            <div className='col-md-6'>
+              <input  id='name' name='name' type='name' ref='name' autofocus disabled 
+                placeholder={tags} className='form-control' style={{ marginBottom : 15 }}/>
+              <span className='help-block'>Auto-generated Identifier</span>
+            </div>
+            <div className='col-md-3'>
+              <Bootstrap.Button 
+                onClick={this._clickedAddFavourite} 
+                bsStyle='success' disabled={!this.props.isBeingEdited}>
+                {favouriteButtonText} 
+              </Bootstrap.Button>
+            </div>         
+          </div> 
           );
         } 
         break;    
@@ -556,6 +660,16 @@ var ReportPanel = React.createClass({
             _.intersection(_.keys(sources), fields[this.props.field].sources)
               .map(k => ([k, sources[k].title]))
           );
+
+          if(this.props.defaultFavouriteValues.source){
+            if(this.props.favouriteChart.series[0].source == 'AMPHIRO'){    
+              source = 'device';
+            } 
+            else{
+              source = 'meter';
+            }
+          } 
+          
           fragment1 = ( 
             <div className="form-group">
               <label className="col-sm-2 control-label">Source:</label>
@@ -582,6 +696,9 @@ var ReportPanel = React.createClass({
               _.mapValues(levels[level].reports, (r, k) => ([k, r.title]))
             )  
           );
+
+          level = this.props.defaultFavouriteValues.metricLevel ? this.props.favouriteChart.level : level;
+          //reportName = this.props.defaultFavouriteValues.reportName ? this.props.favouriteChart.reportName : reportName;//TODO
           fragment1 = [
             (
               <div key="level" className="form-group" >
@@ -613,8 +730,11 @@ var ReportPanel = React.createClass({
         break;
       case 'timespan':
         {
-          var {timespan} = this.state;
-          var [t0, t1] = computeTimespan(timespan);
+          var {timespan} = this.props.defaultFavouriteValues.timespan ? computeTimespan(
+              [this.props.favouriteChart.query.time.start,this.props.favouriteChart.query.time.end]) : this.state;
+
+          var [t0, t1] = this.props.defaultFavouriteValues.timespan ? computeTimespan(
+              [this.props.favouriteChart.query.time.start,this.props.favouriteChart.query.time.end]) : computeTimespan(timespan);
 
           var datetimeProps = _.merge({}, defaults.datetimeInputProps, {
             inputProps: {
@@ -668,8 +788,23 @@ var ReportPanel = React.createClass({
               options: new Map(clusters.map(c => ([c.key, c.name ])))
             },
           ];
-
+          
           var [clusterKey, groupKey] = population.extractGroupParams(target);
+          
+          if(this.props.defaultFavouriteValues.population){
+            clusterKey = population.Group.fromString(this.props.favouriteChart.query.population[0].label).clusterKey;
+
+            if(this.props.favouriteChart.query.population.length > 1){ //ClusterGroup with all groups
+              groupKey = null;
+            } else if(this.props.favouriteChart.query.population[0].type == 'UTILITY') { //Utility all
+              clusterKey = groupKey = null;
+            } else if(this.props.favouriteChart.query.population.length == 1){ //ClusterGroup with subgroup
+              groupKey = population.Group.fromString(this.props.favouriteChart.query.population[0].label).key;
+            } else{
+              console.error('Could not resolve options for favourite population!');
+            }
+          }
+           
           var selectedCluster = !clusterKey? null : clusters.find(c => (c.key == clusterKey));
 
           var groupOptions = [
@@ -733,6 +868,88 @@ var ReportPanel = React.createClass({
     
     if (nextValue != null)
       this.setState({disabledButtons: nextValue});
+  },
+  
+  _clickedAddFavourite: function() {
+  
+    var {config} = this.context;
+    var [t1, t2] = computeTimespan(this.props.timespan);
+          
+    var start = this.props.defaultFavouriteValues.timespan ? 
+        moment(this.props.favouriteChart.query.time.start).format("DD/MM/YYYY") : t1.format("DD/MM/YYYY");
+            
+    var end = this.props.defaultFavouriteValues.timespan ? 
+        moment(this.props.favouriteChart.query.time.end).format("DD/MM/YYYY") : t2.format("DD/MM/YYYY");            
+          
+    var clusterKey, groupKey;
+    if(this.props.defaultFavouriteValues.population){
+      clusterKey = population.Group.fromString(this.props.favouriteChart.query.population[0].label).clusterKey;
+
+      if(this.props.favouriteChart.query.population.length > 1){ //ClusterGroup with all groups
+        groupKey = null;
+      } else if(this.props.favouriteChart.query.population[0].type == 'UTILITY') { //Utility all
+        clusterKey = groupKey = null;
+      } else if(this.props.favouriteChart.query.population.length == 1){ //ClusterGroup with subgroup
+        groupKey = population.Group.fromString(this.props.favouriteChart.query.population[0].label).key;
+      } else{
+        console.error('Could not resolve options for favourite population!');
+      }
+    }         
+                         
+    var {clusters} = config.utility;
+    var selectedCluster = !clusterKey? null : clusters.find(c => (c.key == clusterKey));
+    var favouritePopulationTag = selectedCluster ? selectedCluster.name : 'Everyone';
+          
+    var [clusterKey2, groupKey2] = population.extractGroupParams(this.props.population);
+          
+    var selectedCluster2 = !clusterKey2? null : clusters.find(c => (c.key == clusterKey2));
+    var selectedPopulationTag = selectedCluster2 ? selectedCluster2.name : 'Everyone';
+          
+    var defaultSource = this.props.source == 'device' ? 'AMPHIRO' : 'METER';
+    var tags = 'Chart - ' + (this.props.defaultFavouriteValues.source ? 
+        this.props.favouriteChart.query.source : defaultSource) + ' - ' + 
+            (start + ' to ' + end) + ' - ' + 
+                (this.props.defaultFavouriteValues.levelMetric ? 'Level: ' + 
+                    this.props.favouriteChart.level : 'Level: ' + this.props.level) + ' - ' + 
+                        (this.props.defaultFavouriteValues.population ? 
+                            favouritePopulationTag : selectedPopulationTag);                         
+
+    var namedQuery = {};
+    namedQuery.type = 'Chart';
+    namedQuery.tags = tags;
+    namedQuery.title = this.refs.favourite.value;
+    namedQuery.reportName = this.props.reportName;
+    namedQuery.level = this.props.level;    
+    namedQuery.field = this.props.field;     
+    namedQuery.query = {};
+    //the metric should same for all series. Getting value from the first series:  
+    namedQuery.query.metrics = [this.props.series[0].metric];
+    namedQuery.query.source = this.props.source;
+    //namedQuery.query.source = this.props.series[0].source;
+    namedQuery.query.time = {};
+    namedQuery.query.time.start = this.props.series[0].timespan[0];
+    namedQuery.query.time.end = this.props.series[0].timespan[1];
+    namedQuery.query.time.granularity = this.props.level.toUpperCase();//this.props.series[0].granularity;//TODO
+    var pop = [];
+    for(var i = 0; i<this.props.series.length; i++){
+      pop.push(this.props.series[i].population);
+      if (this.props.series[i].population.type == 'UTILITY'){
+        break;
+      }
+    }
+    namedQuery.query.population = pop;
+    namedQuery.query.timezone = "Etc/GMT"; //TODO - add current user's timezone from state
+    var request =  {
+      'namedQuery' : namedQuery
+    };
+
+    if(this.props.favouriteChart){
+      namedQuery.id = this.props.favouriteChart.id;
+      this.props.updateFavourite(request);  
+    }
+    else{
+      this.props.addFavourite(request);
+    }
   },
   
   _specForToolbar: function () {
@@ -816,7 +1033,7 @@ var ReportForm = React.createClass({
 
   // Lifecycle
 
-  getInitialState: function () {
+  getInitialState: function () {  
     return {
       dirty: false,
       error: null,
@@ -866,7 +1083,7 @@ var ReportForm = React.createClass({
       this.setState({timespan: nextProps.timespan});
     }
   },
-
+  
   render: function () {
     var cls = this.constructor;
     var {config} = this.context;
@@ -1220,13 +1437,19 @@ ReportPanel = ReactRedux.connect(
       // Found an initialized intance of the report for (field, level, reportName)
       var {source, timespan, population, series, finished} = r1;
       _.extend(stateProps, {source, timespan, population, series, finished});
+      
+      stateProps.isBeingEdited = state.reports.measurements[key].isBeingEdited;      
     }
+    stateProps.defaultFavouriteValues = state.defaultFavouriteValues;
+    stateProps.favouriteChart = state.favourites.selectedFavourite;
+    stateProps.favouriteSeries = state.favourites.data;
 
     return stateProps;
   }, 
   (dispatch, ownProps) => {
     var {setField, setLevel, setReport} = chartingActions;
-    var {initialize, setSource, setTimespan, setPopulation, refreshData} = reportingActions;
+    var {initialize, setSource, setTimespan, setPopulation, 
+         refreshData, addFavourite, updateFavourite} = reportingActions;
     return {
       setField: (field) => (dispatch(setField(field))),
       setReport: (level, reportName) => (dispatch(setReport(level, reportName))), 
@@ -1245,6 +1468,12 @@ ReportPanel = ReactRedux.connect(
       setPopulation: (field, level, reportName, p) => (
         dispatch(setPopulation(field, level, reportName, REPORT_KEY, p))
       ),
+      addFavourite: (query) => (
+        dispatch(addFavourite(query))
+      ),
+      updateFavourite: (query) => (
+        dispatch(updateFavourite(query))
+      )     
     };
   }, 
 )(ReportPanel);

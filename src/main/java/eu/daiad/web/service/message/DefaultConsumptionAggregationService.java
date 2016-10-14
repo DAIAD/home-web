@@ -442,7 +442,7 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
                         ArrayList<DataPoint> userPoints = series.getPoints();
                         DataPoint dataPoint = userPoints.get(0);
 
-                        MeterDataPoint meterDataPoint = (MeterDataPoint) dataPoint;
+                        AmphiroDataPoint meterDataPoint = (AmphiroDataPoint) dataPoint;
                         Map<EnumMetric, Double> metricsMap = meterDataPoint.getVolume();
                         averageConsumptions.add(metricsMap.get(EnumMetric.AVERAGE));
                     }

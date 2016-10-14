@@ -20,6 +20,12 @@ public class NamedDataQuery {
 
     private String tags;
     
+    private String reportName;
+    
+    private String level;    
+    
+    private String field;        
+
     private DateTime createdOn;
     
     private DataQuery query;
@@ -64,6 +70,30 @@ public class NamedDataQuery {
         this.tags = tags;
     }
 
+    public String getReportName() {
+        return reportName;
+    }
+
+    public void setReportName(String reportName) {
+        this.reportName = reportName;
+    }
+
+    public String getLevel() {
+        return level;
+    }
+
+    public void setLevel(String level) {
+        this.level = level;
+    }
+
+    public String getField() {
+        return field;
+    }
+
+    public void setField(String field) {
+        this.field = field;
+    }
+    
     public DateTime getCreatedOn() {
         return createdOn;
     }

@@ -22,7 +22,10 @@ var initialState = {
   showDeleteMessage: false,
   favouriteToBeDeleted: null,
   map : _createMapInitialState(),
-  features: null
+  features: null,
+  draw: false,
+  finished: null,
+  data: null
 };
 
 var _extractTimeline = function(meters, areas) {
@@ -212,10 +215,21 @@ var favourites = function (state, action) {
         isLoading : false,
         map : mapReducer(state.map, action)
       });   
+    case types.FAVOURITES_CHART_REQUEST:
+      return Object.assign({}, state, {
+        draw: false,
+        finished: null
+      }); 
+    case types.FAVOURITES_CHART_RESPONSE:
+      return Object.assign({}, state, {
+        draw: true,
+        finished: true,//todo add millis
+        data: action.data
+      });         
     case types.FAVOURITES_GET_FEATURES:
       return Object.assign({}, state, {
-        isLoading : false,
-        map : mapReducer(state.map, action)
+        isLoading: false,
+        map: mapReducer(state.map, action)
       });      
     case types.FAVOURITES_OPEN_SELECTED:
       return Object.assign({}, state, {
@@ -226,7 +240,8 @@ var favourites = function (state, action) {
       return Object.assign({}, state, {
         isActiveFavourite: false,
         showSelected: false,
-        selectedFavourite: null
+        selectedFavourite: null,
+        finished: null
       });
     case types.FAVOURITES_SET_ACTIVE_FAVOURITE:
       return Object.assign({}, state, {

@@ -2,6 +2,8 @@ var types = require('../constants/FavouritesActionTypes');
 var favouritesAPI = require('../api/favourites');
 var queryAPI = require('../api/query');
 var moment = require('moment');
+var population = require('../model/population');
+var {queryMeasurements} = require('../service/query');
 
 var requestedFavouriteQueries = function () {
   return {
@@ -38,14 +40,6 @@ var deleteFavouriteResponse = function (success, errors) {
     success: success,
     errors: errors
   };
-};
-
-var _openFavourite = function(favourite) {
-    return {
-      type : types.FAVOURITES_OPEN_SELECTED,
-      showSelected : true,
-      selectedFavourite: favourite
-    };
 };
 
 var _buildTimelineQuery = function(population, source, geometry, timezone, interval) {
@@ -119,6 +113,21 @@ var _getFeatures = function(index, timestamp, label) {
   };
 };
 
+var _chartRequest = function() {
+  return {
+    type : types.FAVOURITES_CHART_REQUEST
+  };
+};
+
+var _chartResponse = function(success, errors, data) {
+  return {
+    type : types.FAVOURITES_CHART_RESPONSE,
+    success : success, 
+    errors : errors,
+    data : data
+  };
+};
+
 var FavouritesActions = {
 
   setTimezone : function(timezone) {
@@ -178,9 +187,7 @@ var FavouritesActions = {
       selectedFavourite: favourite
     };
   },
-  getFavourite : function(favourite) {
-    //getState().favourites.selectedFavourite
-    console.log('getFavouriteFeatures');
+  getFavouriteMap : function(favourite) {
     return function(dispatch, getState) {
       var population, source, geometry, interval, timezone;
       
@@ -203,13 +210,10 @@ var FavouritesActions = {
         dispatch(_setEditorValue('spatial', geometry));
         dispatch(_setEditorValue('source', source));  
       
-
       var query = _buildTimelineQuery(population, source, geometry, timezone, interval);
       dispatch(_getTimelineInit(population, query));
       
       return queryAPI.queryMeasurements(query).then(function(response) {
-        console.log('response');
-        console.log(response);
         var data = {
           meters : null,
           devices : null,
@@ -231,6 +235,54 @@ var FavouritesActions = {
       });
     };
   },  
+  getFavouriteChart : function(favourite) {
+  
+  return function(dispatch, getState) {
+    dispatch(_chartRequest());
+    return queryAPI.queryMeasurements({query: favourite.query}).then(
+      res => {
+        if (res.errors.length) 
+          throw 'The request is rejected: ' + res.errors[0].description; 
+
+        var source = favourite.query.source;
+    
+        var resultSets = (favourite.query.source == 'AMPHIRO') ? res.devices : res.meters;
+
+        var res1 = (resultSets || []).map(rs => {
+          var [g, rr] = population.fromString(rs.label);
+          
+          if (rr) {
+          // Shape a result with ranking on users
+            return null; //TODO - fix dots not working in this block
+//          var points = rs.points.map(p => ({
+//            timestamp: p.timestamp,
+//            values: p.users.map(u => u[rr.field][rr.metric]).sort(rr.comparator),
+//          }));
+//          return _.times(rr.limit, (i) => ({
+//            params:{source, timespan: favourite.query.timespan, granularity: favourite.query.granularity},
+//            metric: rr.metric,
+//            population: g,
+//            ranking: {...rr.toJSON(), index: i},
+//            data: points.map(p => ([p.timestamp, p.values[i] || null])),
+//          }));
+          } else {   
+            // Shape a normal timeseries result for requested metrics
+            // Todo support other metrics (as client-side "average")
+            return favourite.query.metrics.map(metric => ({
+              source, 
+              timespan: [favourite.query.time.start,favourite.query.time.end], 
+              granularity: favourite.query.time.granularity,
+              metric,
+              population: g,
+              data: rs.points.map(p => ([p.timestamp, p.volume[metric]])),
+            }));
+          }          
+        });
+          dispatch(_chartResponse(res.success, res.errors, _.flatten(res1)));
+          return _.flatten(res1);    
+      });
+    };
+  },  
   getFeatures : function(index, timestamp, label) {
     return _getFeatures(index, timestamp, label);
   },  
@@ -238,12 +290,13 @@ var FavouritesActions = {
     return{
       type : types.FAVOURITES_CLOSE_SELECTED,
       showSelected : false,
-      selectedFavourite : null
+      selectedFavourite : null,
+      finished: null,
+      data: null
     };
   },
   
   setActiveFavourite : function(favourite) {
-
     return {
       type: types.FAVOURITES_SET_ACTIVE_FAVOURITE,
       selectedFavourite: favourite 

@@ -14,10 +14,10 @@ var reduce = function (state={}, action={}) {
   var type = _.findKey(ActionTypes.reports.measurements, v => (v == action.type));
   if (!type)
     return state; // not interested
-
+    
   var {field, level, reportName, key} = action;
-  if (field == null || level == null || reportName == null || key == null)
-    return state; // malformed action; dont touch state
+  if (field == null || level == null || reportName == null || key == null || action.query)
+    return state; // malformed action; dont touch state 
   key = reports.measurements.computeKey(field, level, reportName, key);
   
   var r = null; // updated entry for key
@@ -37,8 +37,15 @@ var reduce = function (state={}, action={}) {
           requests: 0,
           finished: null,
           errors: null,
+          isBeingEdited : true,
+          defaultFavouriteValues : {
+            timespan : false,
+            source : false,
+            population : false,
+            metricLevel : false
+          }
         };
-      } 
+      }
       break;
     case 'REQUEST_DATA':
       assertInitialized(state, key);
@@ -63,7 +70,8 @@ var reduce = function (state={}, action={}) {
       if (state[key].source != action.source) {
         r = _.extend({}, state[key], {
           source: action.source,
-          invalid: true
+          invalid: true,
+          isBeingEdited: true
         });
       } 
       break;
@@ -72,7 +80,8 @@ var reduce = function (state={}, action={}) {
       if (state[key].timespan != action.timespan) {
         r = _.extend({}, state[key], {
           timespan: action.timespan,
-          invalid: true
+          invalid: true,
+          isBeingEdited: true
         });
       } 
       break;
@@ -82,9 +91,18 @@ var reduce = function (state={}, action={}) {
         r = _.extend({}, state[key], {
           population: action.population,
           invalid: true,
+          isBeingEdited: true
         });
       }
       break;
+    case 'ADD_FAVOURITE_REQUEST':
+      break;   
+    case 'ADD_FAVOURITE_RESPONSE':
+      assertInitialized(state, key);
+      r = _.extend({}, state[key], {
+        isBeingEdited : false
+      }); 
+      break;        
     default:
       // Unknown action; dont touch state
       break;
