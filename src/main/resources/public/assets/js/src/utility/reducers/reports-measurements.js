@@ -37,7 +37,6 @@ var reduce = function (state={}, action={}) {
           requests: 0,
           finished: null,
           errors: null,
-          isBeingEdited : true,
           defaultFavouriteValues : {
             timespan : false,
             source : false,
@@ -70,8 +69,7 @@ var reduce = function (state={}, action={}) {
       if (state[key].source != action.source) {
         r = _.extend({}, state[key], {
           source: action.source,
-          invalid: true,
-          isBeingEdited: true
+          invalid: true
         });
       } 
       break;
@@ -80,8 +78,7 @@ var reduce = function (state={}, action={}) {
       if (state[key].timespan != action.timespan) {
         r = _.extend({}, state[key], {
           timespan: action.timespan,
-          invalid: true,
-          isBeingEdited: true
+          invalid: true
         });
       } 
       break;
@@ -90,17 +87,17 @@ var reduce = function (state={}, action={}) {
       if (state[key].population != action.population) {
         r = _.extend({}, state[key], {
           population: action.population,
-          invalid: true,
-          isBeingEdited: true
+          invalid: true
         });
       }
       break;
     case 'ADD_FAVOURITE_REQUEST':
+    
       break;   
     case 'ADD_FAVOURITE_RESPONSE':
       assertInitialized(state, key);
       r = _.extend({}, state[key], {
-        isBeingEdited : false
+        invalid : false
       }); 
       break;        
     default:

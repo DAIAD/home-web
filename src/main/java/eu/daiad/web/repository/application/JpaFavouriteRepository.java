@@ -1,5 +1,6 @@
 package eu.daiad.web.repository.application;
 
+import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.joda.JodaModule;
 
 import eu.daiad.web.domain.application.Account;
 import eu.daiad.web.domain.application.DataQueryEntity;
@@ -42,8 +44,7 @@ import eu.daiad.web.model.query.NamedDataQuery;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.BaseRepository;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 @Repository
 @Transactional("applicationTransactionManager")
@@ -491,18 +492,40 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
     @Override
     public void insertFavouriteQuery(NamedDataQuery namedDataQuery, Account account) {
-        //TODO - resolve when same favourite title already exists
-        try {
 
+
+
+        try {
+            Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
+            // Add additional modules to JSON parser
+            builder.modules(new JodaModule(), new JtsModule());
+            ObjectMapper objectMapper = builder.build();
+            
+            TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> queryCheck = entityManager.createQuery(
+                            "SELECT d FROM data_query d WHERE d.owner.id = :accountId and d.name = :name",
+                            eu.daiad.web.domain.application.DataQueryEntity.class).setFirstResult(0).setMaxResults(1);
+            
+            queryCheck.setParameter("accountId", account.getId());    
+            queryCheck.setParameter("name", namedDataQuery.getTitle());
+
+            List<DataQueryEntity> duplicate = queryCheck.getResultList();
+            
+            String finalTitle;
+            if(duplicate.size() > 0){
+                finalTitle = namedDataQuery.getTitle() + " (duplicate title) " + duplicate.get(0).getId();                    
+            } else {
+                finalTitle = namedDataQuery.getTitle();
+            }  
+            
             DataQueryEntity dataQueryEntity = new DataQueryEntity();
             
             dataQueryEntity.setType(namedDataQuery.getType());
-            dataQueryEntity.setName(namedDataQuery.getTitle());
+            dataQueryEntity.setName(finalTitle);
             dataQueryEntity.setTags(namedDataQuery.getTags());
             dataQueryEntity.setReportName(namedDataQuery.getReportName());
             dataQueryEntity.setLevel(namedDataQuery.getLevel());
             dataQueryEntity.setField(namedDataQuery.getField());
-            dataQueryEntity.setQuery(new ObjectMapper().writeValueAsString(namedDataQuery.getQuery()));
+            dataQueryEntity.setQuery(objectMapper.writeValueAsString(namedDataQuery.getQuery()));
             dataQueryEntity.setOwner(account);
             dataQueryEntity.setUpdatedOn(DateTime.now());
             
@@ -515,9 +538,25 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
     @Override
     public void updateFavouriteQuery(NamedDataQuery namedDataQuery, Account account) {
+    
+        try {       
+            
+            TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> queryCheck = entityManager.createQuery(
+                            "SELECT d FROM data_query d WHERE d.owner.id = :accountId and d.name = :name",
+                            eu.daiad.web.domain.application.DataQueryEntity.class).setFirstResult(0).setMaxResults(1);
+            
+            queryCheck.setParameter("accountId", account.getId());    
+            queryCheck.setParameter("name", namedDataQuery.getTitle());
 
-        //TODO - resolve when same favourite title already exists       
-        try {             
+            List<DataQueryEntity> duplicate = queryCheck.getResultList();
+            
+            String finalTitle;
+            if(duplicate.size() > 0){
+                finalTitle = namedDataQuery.getTitle() + " (duplicate title) "+ duplicate.get(0).getId();                    
+            } else {
+                finalTitle = namedDataQuery.getTitle();
+            }             
+            
             TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> query = entityManager.createQuery(
                             "SELECT d FROM data_query d WHERE d.owner.id = :accountId and d.id = :id",
                             eu.daiad.web.domain.application.DataQueryEntity.class).setFirstResult(0).setMaxResults(1);
@@ -527,7 +566,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
             DataQueryEntity dataQueryEntity = query.getSingleResult();
             
-            dataQueryEntity.setName(namedDataQuery.getTitle());
+            dataQueryEntity.setName(finalTitle);
             dataQueryEntity.setQuery(new ObjectMapper().writeValueAsString(namedDataQuery.getQuery()));
             dataQueryEntity.setTags(namedDataQuery.getTags());
             dataQueryEntity.setReportName(namedDataQuery.getReportName());

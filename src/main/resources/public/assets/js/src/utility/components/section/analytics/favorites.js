@@ -161,26 +161,6 @@ var Favourites = React.createClass({
   render: function() {
  		 var icon = 'list';
     var self = this;
-   
-  	 var chartData = {
-		    series: [{
-		        legend: 'Alicante (average)',
-		        xAxis: 'date',
-		        yAxis: 'volume',
-		        data: createSeries(moment(new Date()).subtract(28, 'days'), 29, 180, 60)
-		    }, {
-		        legend: 'User 1',
-		        xAxis: 'date',
-		        yAxis: 'volume',
-		        data: createSeries(moment(new Date()).subtract(28, 'days'), 29, 150, 30)
-		    }]
-		  };
-  		
-    var chartOptions = {
-            tooltip: {
-                show: true
-            }
-    };
 
 		  const dashboardLinkFooter = (
 			   <Bootstrap.ListGroupItem>
@@ -252,7 +232,7 @@ var Favourites = React.createClass({
 				     );  
            break;
        case 'CHART':
-         title = 'Chart';
+         title = 'Chart: ' + this.props.selectedFavourite.title;
          
 		         dataContent = (
              <Bootstrap.ListGroup fill>

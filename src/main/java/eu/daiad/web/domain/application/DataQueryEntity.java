@@ -1,5 +1,6 @@
 package eu.daiad.web.domain.application;
 
+import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import java.io.IOException;
 
 import javax.persistence.Basic;
@@ -20,11 +21,13 @@ import org.joda.time.DateTime;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.joda.JodaModule;
 
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.EnumQueryFavouriteType;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 @Entity(name = "data_query")
 @Table(schema = "public", name = "data_query")
@@ -112,8 +115,11 @@ public class DataQueryEntity {
         if (StringUtils.isBlank(this.query)) {
             return null;
         }
-
-        return (new ObjectMapper()).readValue(query, DataQuery.class);
+        
+        Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
+        builder.modules(new JodaModule(), new JtsModule());
+        ObjectMapper objectMapper = builder.build();
+        return (objectMapper).readValue(query, DataQuery.class);
     }
 
     public String getTags() {

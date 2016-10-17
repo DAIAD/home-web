@@ -119,12 +119,13 @@ var _chartRequest = function() {
   };
 };
 
-var _chartResponse = function(success, errors, data) {
+var _chartResponse = function(success, errors, data, t=null) {
   return {
     type : types.FAVOURITES_CHART_RESPONSE,
     success : success, 
     errors : errors,
-    data : data
+    data : data,
+    timestamp: (t || new Date()).getTime()
   };
 };
 
@@ -253,18 +254,20 @@ var FavouritesActions = {
           
           if (rr) {
           // Shape a result with ranking on users
-            return null; //TODO - fix dots not working in this block
-//          var points = rs.points.map(p => ({
-//            timestamp: p.timestamp,
-//            values: p.users.map(u => u[rr.field][rr.metric]).sort(rr.comparator),
-//          }));
-//          return _.times(rr.limit, (i) => ({
-//            params:{source, timespan: favourite.query.timespan, granularity: favourite.query.granularity},
-//            metric: rr.metric,
-//            population: g,
-//            ranking: {...rr.toJSON(), index: i},
-//            data: points.map(p => ([p.timestamp, p.values[i] || null])),
-//          }));
+            //return null; //TODO - fix dots not working in this block
+            console.log(rr);
+            var points = rs.points.map(p => ({
+              timestamp: p.timestamp,
+              values: p.users.map(u => u[rr.field][rr.metric]).sort(rr.comparator),
+            }));
+//            return _.times(rr.limit, (i) => ({
+//              params:{source, timespan: favourite.query.timespan, granularity: favourite.query.granularity},
+//              metric: rr.metric,
+//              population: g,
+//              ranking: {...rr.toJSON(), index: i},
+//              data: points.map(p => ([p.timestamp, p.values[i] || null])),
+//            }));
+              return null;
           } else {   
             // Shape a normal timeseries result for requested metrics
             // Todo support other metrics (as client-side "average")

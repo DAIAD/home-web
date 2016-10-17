@@ -22,8 +22,7 @@ var addFavouriteResponse = function (success, errors) {
   return {
     type: ActionTypes.reports.measurements.ADD_FAVOURITE_RESPONSE,
     success: success,
-    errors: errors,
-    isBeingEdited: false
+    errors: errors
   };
 };
 

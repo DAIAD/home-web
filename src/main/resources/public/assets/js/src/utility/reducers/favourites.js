@@ -217,13 +217,14 @@ var favourites = function (state, action) {
       });   
     case types.FAVOURITES_CHART_REQUEST:
       return Object.assign({}, state, {
+        data: null,
         draw: false,
-        finished: null
+        finished: false
       }); 
     case types.FAVOURITES_CHART_RESPONSE:
       return Object.assign({}, state, {
         draw: true,
-        finished: true,//todo add millis
+        finished: action.timestamp,
         data: action.data
       });         
     case types.FAVOURITES_GET_FEATURES:
@@ -241,7 +242,8 @@ var favourites = function (state, action) {
         isActiveFavourite: false,
         showSelected: false,
         selectedFavourite: null,
-        finished: null
+        finished: null,
+        data: null
       });
     case types.FAVOURITES_SET_ACTIVE_FAVOURITE:
       return Object.assign({}, state, {

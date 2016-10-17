@@ -258,15 +258,13 @@ var ReportPanel = React.createClass({
   
   componentWillMount: function() {
     var isDefault;
-    if(this.props.favouriteChart){
+    if(this.props.favouriteChart && this.props.favouriteChart.type == 'CHART'){
       isDefault = false;
       this.props.defaultFavouriteValues.timespan = true;
       this.props.defaultFavouriteValues.source = true;
       this.props.defaultFavouriteValues.population = true;
       this.props.defaultFavouriteValues.metricLevel = true;
-      
-      //refresh data!
-      //this.props.actions.setEditorValuesBatch(isDefault);
+
     }
     else{
       isDefault = true;
@@ -274,9 +272,6 @@ var ReportPanel = React.createClass({
       this.props.defaultFavouriteValues.source = false;
       this.props.defaultFavouriteValues.population = false;
       this.props.defaultFavouriteValues.metricLevel = false;
-      
-      //refresh data!
-      //this.props.actions.setEditorValuesBatch(isDefault);
     }   
   },
   componentDidMount: function () {
@@ -289,6 +284,35 @@ var ReportPanel = React.createClass({
      
     var {timespan} = cls.configForReport(this.props, this.context);
     this.props.initializeReport(field, level, reportName, {timespan});
+    
+    if(this.props.favouriteChart && this.props.favouriteChart.type == 'CHART'){
+      var clusterKey, groupKey;
+      clusterKey = population.Group.fromString(this.props.favouriteChart.query.population[0].label).clusterKey;
+
+      if(this.props.favouriteChart.query.population.length > 1){ //ClusterGroup with all groups
+              groupKey = null;
+            } else if(this.props.favouriteChart.query.population[0].type == 'UTILITY') { //Utility all
+              clusterKey = groupKey = null;
+            } else if(this.props.favouriteChart.query.population.length == 1){ //ClusterGroup with subgroup
+              groupKey = population.Group.fromString(this.props.favouriteChart.query.population[0].label).key;
+            } else{
+              console.error('Could not resolve options for favourite population!');
+      }      
+      this._setPopulation(clusterKey, groupKey); 
+      
+      var source;
+      if(this.props.defaultFavouriteValues.source){
+            if(this.props.favouriteChart.query.source == 'AMPHIRO'){    
+              source = 'device';
+            } 
+            else{
+              source = 'meter';
+            }
+      }       
+      this._setSource(source);
+
+    }    
+    
     this.props.refreshData(field, level, reportName)
       .then(() => (this.setState({draw: false})));
   },
@@ -377,12 +401,11 @@ var ReportPanel = React.createClass({
   render: function () {
     var {defaults} = this.constructor;
     var {dirty, draw, error} = this.state;
-    
     if(this.props.favouriteChart && this.props.favouriteChart.type == 'CHART' 
        && this.props.defaultFavouriteValues.source
        && this.props.defaultFavouriteValues.timespan
        && this.props.defaultFavouriteValues.population
-       && this.props.defaultFavouriteValues.metricLevel) { //&& !this.props.isBeingEdited){ 
+       && this.props.defaultFavouriteValues.metricLevel) { 
       favouriteIcon = 'star';
       this.props.favouriteChart.finished = this.props.finished;
 
@@ -629,6 +652,7 @@ var ReportPanel = React.createClass({
                           (this.props.defaultFavouriteValues.population ? favouritePopulationTag : selectedPopulationTag);
           // \Calculate tags
 
+          var enableHelpText = this.state.dirty ? 'Refresh to enable saving.' : '';
           fragment1 = ( 
             <div>
               <div className='col-md-3'>
@@ -645,10 +669,11 @@ var ReportPanel = React.createClass({
             <div className='col-md-3'>
               <Bootstrap.Button 
                 onClick={this._clickedAddFavourite} 
-                bsStyle='success' disabled={!this.props.isBeingEdited}>
+                bsStyle='success' disabled={this.state.dirty}>
                 {favouriteButtonText} 
               </Bootstrap.Button>
-            </div>         
+              <span className='help-block'>{enableHelpText}</span>
+            </div>      
           </div> 
           );
         } 
@@ -662,7 +687,7 @@ var ReportPanel = React.createClass({
           );
 
           if(this.props.defaultFavouriteValues.source){
-            if(this.props.favouriteChart.series[0].source == 'AMPHIRO'){    
+            if(this.props.favouriteChart.query.source == 'AMPHIRO'){    
               source = 'device';
             } 
             else{
@@ -698,7 +723,6 @@ var ReportPanel = React.createClass({
           );
 
           level = this.props.defaultFavouriteValues.metricLevel ? this.props.favouriteChart.level : level;
-          //reportName = this.props.defaultFavouriteValues.reportName ? this.props.favouriteChart.reportName : reportName;//TODO
           fragment1 = [
             (
               <div key="level" className="form-group" >
@@ -922,34 +946,66 @@ var ReportPanel = React.createClass({
     namedQuery.level = this.props.level;    
     namedQuery.field = this.props.field;     
     namedQuery.query = {};
-    //the metric should same for all series. Getting value from the first series:  
-    namedQuery.query.metrics = [this.props.series[0].metric];
+    //the metric should same for all series, except on peaks that MIN and MAX are both required  
+    var tempMetrics = [];
+    for(var i = 0; i<this.props.series.length; i++){
+      tempMetrics.push(this.props.series[i].metric);
+    }  
+    var metricSet = [...new Set(tempMetrics)];
+    namedQuery.query.metrics = metricSet;
     namedQuery.query.source = this.props.source;
-    //namedQuery.query.source = this.props.series[0].source;
     namedQuery.query.time = {};
     namedQuery.query.time.start = this.props.series[0].timespan[0];
-    namedQuery.query.time.end = this.props.series[0].timespan[1];
-    namedQuery.query.time.granularity = this.props.level.toUpperCase();//this.props.series[0].granularity;//TODO
-    var pop = [];
+    namedQuery.query.time.end = this.props.series[0].timespan[1];  
+    namedQuery.query.time.granularity = this.props.level.toUpperCase();
+    
+//    var [g, rr] = population.fromString(this.props.series[0].population.name);//label
+//    console.log('[g, rr]');
+//    console.log([g, rr]);
+    
+    var tempPop = [];
+    //var tempRank = [];
+    
+    //todo fix issue with ranking, not reaching to server
     for(var i = 0; i<this.props.series.length; i++){
-      pop.push(this.props.series[i].population);
-      if (this.props.series[i].population.type == 'UTILITY'){
-        break;
+      if(this.props.series[i].ranking){
+        console.log(this.props.series[i].ranking);
+        
+        this.props.series[i].population.ranking = {};
+        this.props.series[i].population.ranking.field = this.props.series[i].ranking.field;
+        this.props.series[i].population.ranking.limit = this.props.series[i].ranking.limit;
+        this.props.series[i].population.ranking.metric = this.props.series[i].ranking.metric;
+        this.props.series[i].population.ranking.type = this.props.series[i].ranking.type;
+
+        tempPop.push(this.props.series[i].population);
+      } else{
+        tempPop.push(this.props.series[i].population);      
       }
+      //tempRank.push(this.props.series[i].ranking);
     }
-    namedQuery.query.population = pop;
-    namedQuery.query.timezone = "Etc/GMT"; //TODO - add current user's timezone from state
+    var populationSet = [...new Set(tempPop)];
+    
+//    console.log(populationSet);
+//    for(var i = 0; i< populationSet.length; i++){
+//      console.log('ranking ' + i);
+//      console.log(this.props.series[i].ranking);
+//      populationSet[i].population.ranking = this.props.series[i].ranking;
+//    }
+    namedQuery.query.population = populationSet;
+        
+    namedQuery.query.timezone = "Etc/GMT"; 
     var request =  {
       'namedQuery' : namedQuery
     };
 
-    if(this.props.favouriteChart){
+    if(this.props.favouriteChart && this.props.favouriteChart.type == 'CHART'){
       namedQuery.id = this.props.favouriteChart.id;
       this.props.updateFavourite(request);  
     }
     else{
       this.props.addFavourite(request);
     }
+    this.setState({dirty: true});
   },
   
   _specForToolbar: function () {
@@ -1437,8 +1493,7 @@ ReportPanel = ReactRedux.connect(
       // Found an initialized intance of the report for (field, level, reportName)
       var {source, timespan, population, series, finished} = r1;
       _.extend(stateProps, {source, timespan, population, series, finished});
-      
-      stateProps.isBeingEdited = state.reports.measurements[key].isBeingEdited;      
+          
     }
     stateProps.defaultFavouriteValues = state.defaultFavouriteValues;
     stateProps.favouriteChart = state.favourites.selectedFavourite;
