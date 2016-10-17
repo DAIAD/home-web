@@ -827,7 +827,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		SimpleEntry<Boolean, Integer> entry;
 		Double percentDifference = 100 - ((lastWeekSum * 100) / firstWeekSum);
 
-		if (percentDifference >= 20 && percentDifference < 60) {
+		if (percentDifference >= 10 && percentDifference < 60) {
 			entry = new SimpleEntry<>(true, percentDifference.intValue());
 		} else {
 			entry = new SimpleEntry<>(false, percentDifference.intValue());
