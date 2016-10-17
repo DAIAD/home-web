@@ -1,6 +1,5 @@
 package eu.daiad.web.service.message;
 
-import eu.daiad.web.model.device.Device;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.List;
@@ -705,6 +704,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 	public SimpleEntry<Boolean, Integer> alertReducedWaterUseSWM(UUID accountKey, DateTime startingWeek,
 					DateTimeZone timezone) {
 
+        boolean fireAlert = false;
 		DataQueryBuilder firstWeekDataQueryBuilder = new DataQueryBuilder();
 		firstWeekDataQueryBuilder.timezone(timezone)
 						.absolute(startingWeek, startingWeek.plusDays(7), EnumTimeAggregation.ALL).meter()
@@ -735,9 +735,21 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		ArrayList<DataPoint> lastWeekDataPoints = lastWeekDataSeriesMeter.getPoints();
 
 		if (lastWeekDataPoints == null || lastWeekDataPoints.isEmpty()) {
+            
 			return new SimpleEntry<>(false, null);
 		}
-
+        
+		List<Double> values = new ArrayList<>();
+		for (DataPoint point : lastWeekDataPoints) {
+			MeterDataPoint meterPoint = (MeterDataPoint) point;
+			Double daySum = meterPoint.getVolume().get(EnumMetric.SUM);
+			values.add(daySum);
+		}
+        
+		if (computeConsecutiveZeroConsumptions(values) > 3) {
+			return new SimpleEntry<>(false, null);
+		} 
+        
 		DataPoint lastWeekDataPoint = lastWeekDataPoints.get(0);
 		MeterDataPoint lastWeekMeterDataPoint = (MeterDataPoint) lastWeekDataPoint;
 		Double lastWeekSum = lastWeekMeterDataPoint.getVolume().get(EnumMetric.SUM);
@@ -745,7 +757,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		SimpleEntry<Boolean, Integer> entry;
 		Double percentDifference = 100 - ((lastWeekSum * 100) / firstWeekSum);
 
-		if (percentDifference >= 20) {
+		if (percentDifference > 10 && percentDifference < 60) {
 			entry = new SimpleEntry<>(true, percentDifference.intValue());
 		} else {
 			entry = new SimpleEntry<>(false, percentDifference.intValue());
@@ -800,11 +812,22 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataPoint lastWeekDataPoint = lastWeekDataPoints.get(0);
 		AmphiroDataPoint lastWeekAmphiroPoint = (AmphiroDataPoint) lastWeekDataPoint;
 		Double lastWeekSum = lastWeekAmphiroPoint.getVolume().get(EnumMetric.SUM);
-
+        
+		List<Double> values = new ArrayList<>();
+		for (DataPoint point : lastWeekDataPoints) {
+			AmphiroDataPoint amphiroPoint = (AmphiroDataPoint) point;
+			Double daySum = amphiroPoint.getVolume().get(EnumMetric.SUM);
+			values.add(daySum);
+		}
+        
+		if (computeConsecutiveZeroConsumptions(values) > 3) {
+			return new SimpleEntry<>(false, null);
+		} 
+        
 		SimpleEntry<Boolean, Integer> entry;
 		Double percentDifference = 100 - ((lastWeekSum * 100) / firstWeekSum);
 
-		if (percentDifference >= 20) {
+		if (percentDifference >= 10 && percentDifference < 60) {
 			entry = new SimpleEntry<>(true, percentDifference.intValue());
 		} else {
 			entry = new SimpleEntry<>(false, percentDifference.intValue());
