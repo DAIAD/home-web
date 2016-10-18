@@ -262,25 +262,28 @@ public class DataController extends BaseController {
     /**
      * Saves a data query.
      * 
-     * @param data the query.
+     * @param user the user
+     * @param request the data.
      * @return the result of the save operation.
      */
     @RequestMapping(value = "/action/data/query/store", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ "ROLE_ADMIN" })
-    public RestResponse storeQuery(@AuthenticationPrincipal AuthenticatedUser user,@RequestBody StoreDataQueryRequest data) {
+    public RestResponse storeQuery(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody StoreDataQueryRequest request) {
         RestResponse response = new RestResponse();
 
-        try {
+        try {     
+
+            
             // Set defaults if needed
-            DataQuery query = data.getQuery();
-            if (query != null) {
+            DataQuery query = request.getNamedQuery().getQuery();
+            if (query != null) {     
                 // Initialize time zone
-                if (StringUtils.isBlank(query.getTimezone())) {
-                    query.setTimezone(user.getTimezone());
+                if (StringUtils.isBlank(query.getTimezone())) {              
+                    request.getNamedQuery().getQuery().setTimezone(user.getTimezone());
                 }
             }
-
-            dataService.storeQuery(data.getTitle(), data.getQuery());
+            
+            dataService.storeQuery(request.getNamedQuery(), user.getKey());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -291,17 +294,84 @@ public class DataController extends BaseController {
     }
 
     /**
+     * Saves a data query.
+     * 
+     * @param user the user
+     * @param request the data.
+     * @return the result of the save operation.
+     */
+    @RequestMapping(value = "/action/data/query/update", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @Secured({ "ROLE_ADMIN" })
+    public RestResponse updateStoredQuery(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody StoreDataQueryRequest request) {
+        RestResponse response = new RestResponse();
+
+        try {     
+
+            // Set defaults if needed
+            DataQuery query = request.getNamedQuery().getQuery();
+            if (query != null) {     
+                // Initialize time zone
+                if (StringUtils.isBlank(query.getTimezone())) {              
+                    request.getNamedQuery().getQuery().setTimezone(user.getTimezone());
+                }
+            }
+            
+            dataService.updateStoredQuery(request.getNamedQuery(), user.getKey());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
+
+    /**
+     * Deletes a data query.
+     * 
+     * @param user the user
+     * @param request the data.
+     * @return the result of the delete operation.
+     */
+    @RequestMapping(value = "/action/data/query/delete", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @Secured({ "ROLE_ADMIN" })
+    public RestResponse deleteStoredQuery(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody StoreDataQueryRequest request) {
+        RestResponse response = new RestResponse();
+
+        try {     
+
+            // Set defaults if needed
+            DataQuery query = request.getNamedQuery().getQuery();
+            if (query != null) {     
+                // Initialize time zone
+                if (StringUtils.isBlank(query.getTimezone())) {              
+                    request.getNamedQuery().getQuery().setTimezone(user.getTimezone());
+                }
+            }
+            
+            dataService.deleteStoredQuery(request.getNamedQuery(), user.getKey());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
+    
+    /**
      * Loads all saved data queries.
      * 
+     * @param user the user
      * @return the saved data queries
      */
     @RequestMapping(value = "/action/data/query/load", method = RequestMethod.GET, consumes = "application/json", produces = "application/json")
     @Secured({ "ROLE_ADMIN" })
-    public RestResponse getAllQueries() {
+    public RestResponse getAllQueries(@AuthenticationPrincipal AuthenticatedUser user) {
         try {
             DataQueryCollectionResponse response = new DataQueryCollectionResponse();
             
-            response.setQueries(dataService.getAllQueries());
+            response.setQueries(dataService.getQueriesForOwner(user.getId()));
             
             return response;
         } catch (Exception ex) {

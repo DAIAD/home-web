@@ -14,7 +14,9 @@ var types = mirrorToPath({
   USER_RECEIVED_LOGOUT : null,
 
   MAP_SELECT_EDITOR : null,
-  MAP_SET_EDITOR_VALUE : null
+  MAP_SET_EDITOR_VALUE : null,
+  MAP_ADD_FAVOURITE_REQUEST : null,
+  MAP_ADD_FAVOURITE_RESPONSE : null  
 });
 
 module.exports = types;

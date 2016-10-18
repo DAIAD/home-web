@@ -101,26 +101,27 @@ public class DataController extends BaseRestController {
     /**
      * Saves a data query.
      * 
-     * @param data the query.
+     * @param request the request
      * @return the result of the save operation.
      */
     @RequestMapping(value = "/api/v1/data/query/store", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-    public RestResponse storeQuery(@RequestBody StoreDataQueryRequest data) {
+    public RestResponse storeQuery(@RequestBody StoreDataQueryRequest request) {
         RestResponse response = new RestResponse();
 
         try {
-            AuthenticatedUser user = this.authenticate(data.getCredentials(), EnumRole.ROLE_ADMIN);
+            
+            AuthenticatedUser user = this.authenticate(request.getCredentials(), EnumRole.ROLE_ADMIN);
 
             // Set defaults if needed
-            DataQuery query = data.getQuery();
+            DataQuery query = request.getNamedQuery().getQuery();
             if (query != null) {
                 // Initialize time zone
                 if (StringUtils.isBlank(query.getTimezone())) {
-                    query.setTimezone(user.getTimezone());
+                    request.getNamedQuery().getQuery().setTimezone(user.getTimezone());
                 }
             }
-
-            dataService.storeQuery(data.getTitle(), data.getQuery());
+            
+            dataService.storeQuery(request.getNamedQuery(), request.getCredentials().getUsername());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 

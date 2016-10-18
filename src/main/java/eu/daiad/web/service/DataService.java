@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.io.IOException;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -18,6 +19,8 @@ import org.springframework.stereotype.Service;
 
 import com.ibm.icu.text.MessageFormat;
 import com.vividsolutions.jts.geom.Geometry;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 
 import eu.daiad.web.domain.application.AreaGroupMemberEntity;
 import eu.daiad.web.model.device.Device;
@@ -27,7 +30,6 @@ import eu.daiad.web.model.device.WaterMeterDevice;
 import eu.daiad.web.model.error.Error;
 import eu.daiad.web.model.error.ErrorCode;
 import eu.daiad.web.model.error.QueryErrorCode;
-import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
 import eu.daiad.web.model.query.AreaSpatialFilter;
 import eu.daiad.web.model.query.ClusterPopulationFilter;
@@ -55,11 +57,13 @@ import eu.daiad.web.model.query.UtilityPopulationFilter;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
+import eu.daiad.web.repository.application.IFavouriteRepository;
 import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.ISpatialRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IWaterMeterForecastRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
+import eu.daiad.web.domain.application.Account;
 
 @Service
 public class DataService extends BaseService implements IDataService {
@@ -87,6 +91,9 @@ public class DataService extends BaseService implements IDataService {
 
     @Autowired
     IWaterMeterForecastRepository waterMeterForecastRepository;
+    
+    @Autowired    
+    IFavouriteRepository favouriteRepository;
 
     protected String getMessage(ErrorCode error) {
         return messageSource.getMessage(error.getMessageKey(), null, error.getMessageKey(), null);
@@ -1111,12 +1118,45 @@ public class DataService extends BaseService implements IDataService {
         }
     }
 
-    public void storeQuery(String name, DataQuery query) {
-        throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
+    @Override
+    public void storeQuery(NamedDataQuery query, UUID key) {
+        Account account = userRepository.getAccountByKey(key);
+        favouriteRepository.insertFavouriteQuery(query, account);
+        
+    }
+    
+    @Override
+    public void updateStoredQuery(NamedDataQuery query, UUID key) {
+        Account account = userRepository.getAccountByKey(key);
+        favouriteRepository.updateFavouriteQuery(query, account);
+        
+    }    
+
+    @Override
+    public void deleteStoredQuery(NamedDataQuery query, UUID key) {
+        Account account = userRepository.getAccountByKey(key);
+        favouriteRepository.deleteFavouriteQuery(query, account);
+        
+    }    
+    
+    @Override
+    public void storeQuery(NamedDataQuery query, String username) {
+        Account account = userRepository.getAccountByUsername(username);
+        favouriteRepository.insertFavouriteQuery(query, account);
+
+    }
+    
+    @Override
+    public List<NamedDataQuery> getQueriesForOwner(int accountId) 
+            throws JsonMappingException, JsonParseException, IOException{
+        List<NamedDataQuery> namedQueries = favouriteRepository.getFavouriteQueriesForOwner(accountId);
+        return namedQueries;
     }
 
+    @Override
     public List<NamedDataQuery> getAllQueries() {
-        throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
-    }
+        List<NamedDataQuery> namedQueries = favouriteRepository.getAllFavouriteQueries();
+        return namedQueries;
+    }    
 
 }

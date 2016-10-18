@@ -76,8 +76,15 @@ var Chart = React.createClass({
     var {defaults} = this.constructor;
     var {field, level, reportName} = this.props;
     var {config} = this.context;
-    var {title, unit, name: fieldName} = config.reports.byType.measurements.fields[field];
+
+    if(typeof config === "undefined"){
+      var {title, unit, name: fieldName} = this.props.context.reports.byType.measurements.fields[field];
+    } else {
+      var {title, unit, name: fieldName} = config.reports.byType.measurements.fields[field];  
+    }
     
+    //var {title, unit, name: fieldName} = config.reports.byType.measurements.fields[field];
+
     var {xaxisData, series} = this._consolidateData();
     xaxisData || (xaxisData = []);
     
@@ -121,14 +128,24 @@ var Chart = React.createClass({
     var {field, level, reportName, series, scaleTimeAxis} = this.props;
     
     var {config} = this.context;
-    var _config = config.reports.byType.measurements;
+    //var _config = config.reports.byType.measurements;
+    if(typeof config === "undefined"){
+      var _config = this.props.context.reports.byType.measurements;
+    } else {
+      var _config = config.reports.byType.measurements;  
+    }    
 
     if (!series || !series.length || series.every(s => !s.data.length))
       return result; // no data available
-    
+      
     var report = _config.levels[level].reports[reportName];
-    var {bucket, duration} = config.reports.levels[level];
     
+    if(typeof config === "undefined"){
+      var {bucket, duration} = this.props.context.reports.levels[level];
+    } else {
+      var {bucket, duration} = config.reports.levels[level];
+    }       
+
     var [d, durationUnit] = duration;
     d = moment.duration(d, durationUnit);
 
@@ -192,15 +209,18 @@ var Chart = React.createClass({
   _getNameForSeries: function ({ranking, population: target, metric}) {
     var {nameTemplates} = this.constructor;
     var {config} = this.context;
-    
+
     var label;
     if (target instanceof population.Utility) {
       // Use utility's friendly name
       label = 'Utility'; //config.utility.name;
     } else if (target instanceof population.ClusterGroup) {
       // Use group's friendly name
-      var cluster = config.utility.clusters
-        .find(c => (c.key == target.clusterKey));
+      if(typeof config === "undefined"){
+        var cluster = this.props.context.utility.clusters.find(c => (c.key == target.clusterKey));        
+      } else {
+        var cluster = config.utility.clusters.find(c => (c.key == target.clusterKey));
+      }
       label = cluster.name + ': ' +
           cluster.groups.find(g => (g.key == target.key)).name;
     }

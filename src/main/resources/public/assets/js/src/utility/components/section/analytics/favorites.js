@@ -2,19 +2,50 @@ var React = require('react');
 var ReactDOM = require('react-dom');
 var moment = require('moment');
 var Bootstrap = require('react-bootstrap');
-var { Link } = require('react-router');
+
 var Breadcrumb = require('../../Breadcrumb');
-var Chart = require('../../Chart');
 var ClusterChart = require('../../ClusterChart');
+var Modal = require('../../Modal');
+var Timeline = require('../../Timeline');
 var LeafletMap = require('../../LeafletMap');
 var Table = require('../../Table');
-var ChartWizard = require('../../ChartWizard');
-var ChartConfig = require('../../ChartConfig');
-var Tag = require('../../Tag');
-var Message = require('../../Message');
-var JobConfigAnalysis = require('../../JobConfigAnalysis');
-var FilterTag = require('../../chart/dimension/FilterTag');
-var Timeline = require('../../Timeline');
+var {FormattedMessage, FormattedTime, FormattedDate} = require('react-intl');
+var { Link } = require('react-router');
+var { bindActionCreators } = require('redux');
+var { connect } = require('react-redux');
+
+var Chart = require('../../reports-measurements/chart');
+var {timespanPropType, populationPropType, seriesPropType, configPropType} = require('../../../prop-types');
+var population2 = require('../../../model/population');
+
+var { setTimezone, fetchFavouriteQueries, openFavourite, 
+      closeFavourite, setActiveFavourite, 
+      addCopy, deleteFavourite, openWarning,
+      closeWarning, resetMapState, getFavouriteMap,
+      getFavouriteChart, getFeatures} = require('../../../actions/FavouritesActions');
+          
+//var ViewChart = require('../../../report-measurements/pane');
+
+var _getTimelineValues = function(timeline) {
+  if(timeline) {
+    return timeline.getTimestamps();
+  } 
+  return [];
+};
+
+var _getTimelineLabels = function(timeline) {
+  if(timeline) {
+    return timeline.getTimestamps().map(function(timestamp) {
+      return (
+        <FormattedTime  value={new Date(timestamp)} 
+                        day='numeric' 
+                        month='numeric' 
+                        year='numeric'/>
+      );      
+    });
+  } 
+  return [];
+};
 
 var createPoints = function() {
 	var points = [];
@@ -24,6 +55,10 @@ var createPoints = function() {
 	}
 	
 	return points;
+};
+
+var _onChangeTimeline = function(value, label, index) {
+  this.props.actions.getFeatures(index, value);
 };
 
 var createSeries = function(ref, days, baseConsumption, offset) {
@@ -50,486 +85,393 @@ var createTimeLabels = function(ref, hours) {
 	return series.reverse();
 };
 
-var Analytics = React.createClass({
-	contextTypes: {
-	    intl: React.PropTypes.object
-	},
-	
-	getInitialState() {
-		return {
-			chart: false,
-			mode: 'queries',
-			points: [],
-			interval:[moment(new Date()).subtract(28, 'days'), moment()]
-    	};
-	},
+var Favourites = React.createClass({
+	 contextTypes: {
+	   intl: React.PropTypes.object,
+    config: configPropType,
+    router: function() { return React.PropTypes.func.isRequired; },
+    //using this instead of  router: React.PropTypes.func due to warning
+    //https://github.com/react-bootstrap/react-router-bootstrap/issues/91
+	 },
 
-	toggleView(view) {
-		this.setState({chart : !this.state.chart});
-  	},
+  componentWillMount : function() {
+    this.props.actions.resetMapState();
+    this.props.actions.fetchFavouriteQueries();
+		  this.setState({points : createPoints()});
+	 },
+  
+  componentDidMount : function() {
+    var utility = this.props.profile.utility;
+    this.props.actions.setTimezone(utility.timezone);
+	 },	
+  componentWillUnmount : function() {
+    //TODO - in case we want the 'Map' section to display the default view of the map,
+    //even when there is an active favourite open in the favourite's section, we should de-activate the favourite
+    //when unmounting, based on the cause of the unmount. 
+    //Keep the favourite active only after the clickedEditFavourite action.
+  },
+  
+  clickedOpenFavourite(favourite) {
+    favourite.timezone = this.props.profile.utility.timezone;
+    this.props.actions.closeFavourite();
+    if(favourite.type == 'MAP'){
+      this.props.actions.getFavouriteMap(favourite);
+    }
+    else if(favourite.type == 'CHART'){
+      this.props.actions.getFavouriteChart(favourite);    
+    }
+    else{
+        console.error(sprintf('Favourite type (%s) not supported.', favourite.type));
+    }
 
-	toggleMode(mode, e) {
-		this.setState({
-			mode : mode
-		});
-  	},
-  	
-  	toggleExpanded() {
-  		this.setState({expanded: !this.state.expanded});
-  	},
+    this.props.actions.openFavourite(favourite);
+  },
+
+  editFavourite(favourite) {
+    this.props.actions.setActiveFavourite(favourite);
+    switch (favourite.type) {
+      case 'MAP':
+        this.context.router.push('/analytics/map'); 
+        break;
+      case 'CHART':
+        this.context.router.push('/analytics/panel');  
+        break;
+      default:
+        console.log('Favourite type [' + favourite.type + '] is not supported.');
+        break;
+    }
+  },
+
+  duplicateFavourite(namedQuery) {
+    var request =  {
+      'namedQuery' : namedQuery
+    };
+    namedQuery.title = namedQuery.title + ' (copy)';
+    this.props.actions.addCopy(request);   
+    this.props.actions.fetchFavouriteQueries();
+  },
+  
+  clickedDeleteFavourite(namedQuery) {
+    var request =  {
+      'namedQuery' : namedQuery
+    };
+    this.props.actions.openWarning(request);  
+  },
+  
+  render: function() {
+ 		 var icon = 'list';
+    var self = this;
+
+		  const dashboardLinkFooter = (
+			   <Bootstrap.ListGroupItem>
+			 		  <span style={{ paddingLeft : 7}}> </span>
+			 			   <Link to='/' style={{ paddingLeft : 7, float: 'right'}}>View Dashboard</Link>
+			 		</Bootstrap.ListGroupItem>
+	 		); 
+ 
+		  const configTitle = (
+		 		 <span>
+			 		  <i className={'fa fa-' + icon + ' fa-fw'}></i>
+			 		  <span style={{ paddingLeft: 4 }}>{'Favourite Selection'}</span>
+			 	 </span>
+	 		);
+  
+   var title, dataContent, footerContent, toggleTitle, togglePanel, today = new Date();
+   var onChangeTimeline = function(value) {
+	 	  //this.setState({points: createPoints()});
+ 		};  
+   
+    var defaults= {
+      chartProps: {
+        width: 780,
+        height: 300,
+      }
+    };
     
-  	componentWillMount : function() {
-		this.setState({points : createPoints()});
-	},
-	
-  	render: function() {
-  		var chartData = {
-		    series: [{
-		        legend: 'Alicante (average)',
-		        xAxis: 'date',
-		        yAxis: 'volume',
-		        data: createSeries(moment(new Date()).subtract(28, 'days'), 29, 180, 60)
-		    }, {
-		        legend: 'User 1',
-		        xAxis: 'date',
-		        yAxis: 'volume',
-		        data: createSeries(moment(new Date()).subtract(28, 'days'), 29, 150, 30)
-		    }]
-		};
-  		
-        var chartOptions = {
-            tooltip: {
-                show: true
-            }
-        };
+
+   if(this.props.selectedFavourite){
+     switch(this.props.selectedFavourite.type) {
+       case 'MAP':   
+		       title = 'Map: ' + this.props.selectedFavourite.title; 
+		       dataContent = (
+			        <Bootstrap.ListGroupItem>
+				         <LeafletMap style={{ width: '100%', height: 400}} 
+               elementClassName='mixin'
+               prefix='map'
+               center={[38.36, -0.479]} 
+               zoom={13}
+               mode={[LeafletMap.MODE_DRAW, LeafletMap.MODE_CHOROPLETH]}
+               choropleth= {{
+                 colors : ['#2166ac', '#67a9cf', '#d1e5f0', '#fddbc7', '#ef8a62', '#b2182b'],
+                 min : this.props.map.timeline ? this.props.map.timeline.min : 0,
+                 max : this.props.map.timeline ? this.props.map.timeline.max : 0,
+                 data : this.props.map.features
+               }}
+               overlays={[
+                 { url : '/assets/data/meters.geojson',
+                   popupContent : 'serial'
+                 }
+               ]} />
+ 				        <Timeline 	onChange={_onChangeTimeline.bind(this)} 
+               labels={ _getTimelineLabels(this.props.map.timeline) }
+               values={ _getTimelineValues(this.props.map.timeline) }
+               defaultIndex={this.props.map.index}
+               speed={1000}
+               animate={false}>
+				         </Timeline>
+			        </Bootstrap.ListGroupItem>
+		       );  
+     
+ 				    footerContent = (
+	 				     <Bootstrap.ListGroupItem>
+		 				      <span style={{ paddingLeft : 7}}> </span>
+			 			      <Link to='/analytics/map' style={{ paddingLeft : 7, float: 'right'}}>View Maps</Link>
+			 		       <span style={{ paddingLeft : 7}}> </span>
+			 			      <Link to='/' style={{ paddingLeft : 7, float: 'right'}}>View Dashboard</Link>            
+				 	     </Bootstrap.ListGroupItem>
+				     );  
+           break;
+       case 'CHART':
+         title = 'Chart: ' + this.props.selectedFavourite.title;
+           console.log('RENDERING CHART, SERIES:');
+           console.log(this.props.data);
+		         dataContent = (
+             <Bootstrap.ListGroup fill>
+               <Bootstrap.ListGroupItem className="report-chart-wrapper">
+                 <Chart 
+                   {...defaults.chartProps}
+                   draw={this.props.draw}
+                   field={this.props.selectedFavourite.field} 
+                   level={this.props.selectedFavourite.level} 
+                   reportName={this.props.selectedFavourite.reportName} 
+                   finished={this.props.finished}
+                   series={this.props.data}
+                   context={this.props.config}
+                 />
+              </Bootstrap.ListGroupItem>
+            </Bootstrap.ListGroup>
+           );
         
-		var modeTitle = 'Queries', icon = 'list';
-		switch(this.state.mode) {
-			case 'job':
-				icon = 'cog';
-				modeTitle = 'Job Scheduling';
-				break;
-			case 'chart':
-				icon = 'bar-chart';
-				modeTitle = 'Chart Configuration';
-				break;
-			case 'history':
-				icon = 'clock-o';
-				modeTitle = 'Job Management';
-				break;
-			default:
-				icon = 'list';
-				modeTitle ='Chart Selection';
-				break;
-		}
+ 				      footerContent = (
+	 				       <Bootstrap.ListGroupItem>
+		 				        <span style={{ paddingLeft : 7}}> </span>
+			 			        <Link to='/analytics/panel' style={{ paddingLeft : 7, float: 'right'}}>View Charts</Link>
+			 		         <span style={{ paddingLeft : 7}}> </span>
+			 			        <Link to='/' style={{ paddingLeft : 7, float: 'right'}}>View Dashboard</Link>              
+				 	       </Bootstrap.ListGroupItem>
+				       ); 
 
-		const configTitle = (
-				<span>
-					<i className={'fa fa-' + icon + ' fa-fw'}></i>
-					<span style={{ paddingLeft: 4 }}>{modeTitle}</span>
-					<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-						<Bootstrap.Button	bsStyle='default' className='btn-circle' onClick={this.toggleMode.bind(this, 'history')}>
-							<i className='fa fa-clock-o fa-fw'></i>
-						</Bootstrap.Button>
-					</span>
-					<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-						<Bootstrap.Button	bsStyle='default' className='btn-circle' onClick={this.toggleMode.bind(this, 'chart')}>
-							<i className='fa fa-bar-chart fa-fw'></i>
-						</Bootstrap.Button>
-					</span>
-					<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-						<Bootstrap.Button	bsStyle='default' className='btn-circle' onClick={this.toggleMode.bind(this, 'job')}>
-							<i className='fa fa-cog fa-fw'></i>
-						</Bootstrap.Button>
-					</span>
-					<span style={{float: 'right',  marginTop: -3 }}>
-						<Bootstrap.Button	bsStyle='default' className='btn-circle' onClick={this.toggleMode.bind(this, 'queries')}>
-							<i className='fa fa-list fa-fw'></i>
-						</Bootstrap.Button>
-					</span>
-				</span>
-			);
-		
-		const dataTitle1 = (
-			<span>
-				<i className={'fa fa-' + (this.state.chart ? 'map' : 'bar-chart') + ' fa-fw'}></i>
-				<span style={{ paddingLeft: 4 }}>Daily consumption for the last 30 days</span>
-				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-					<Bootstrap.Button	bsStyle='default' className='btn-circle'>
-						<i className='fa fa-remove fa-fw'></i>
-					</Bootstrap.Button>
-				</span>
-				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-					<Bootstrap.Button	bsStyle='default' className='btn-circle'>
-						<i className='fa fa-copy fa-fw'></i>
-					</Bootstrap.Button>
-				</span>
-				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-					<Bootstrap.Button	bsStyle='default' className='btn-circle'>
-						<i className='fa fa-pencil fa-fw'></i>
-					</Bootstrap.Button>
-				</span>
-				<span style={{float: 'right',  marginTop: -3 }}>
-					<Bootstrap.Button	bsStyle='default' className='btn-circle' onClick={this.toggleView}>
-						<i className={'fa fa-' + (this.state.chart ? 'bar-chart' : 'map') + ' fa-fw'}></i>
-					</Bootstrap.Button>
-				</span>
-			</span>
-		);
-		
-		const dataTitle2 = (
-			<span>
-				<i className='fa fa-map fa-fw'></i>
-				<span style={{ paddingLeft: 4 }}>Favourite users hourly consumption heatmap for the last 24 hours</span>
-				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-					<Bootstrap.Button bsStyle='default' className='btn-circle'>
-						<i className='fa fa-remove fa-fw'></i>
-					</Bootstrap.Button>
-				</span>
-				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-					<Bootstrap.Button	bsStyle='default' className='btn-circle'>
-						<i className='fa fa-copy fa-fw'></i>
-					</Bootstrap.Button>
-				</span>
-				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-					<Bootstrap.Button	bsStyle='default' className='btn-circle'>
-						<i className='fa fa-pencil fa-fw'></i>
-					</Bootstrap.Button>
-				</span>
-			</span>
-		);
-		var configContent, dataContent1, dataContent2;
-		if(this.state.chart) {
-			dataContent1 = (
-				<LeafletMap style={{ width: '100%', height: 600}} 
-							elementClassName='mixin'
-							prefix='map'
-						  center={[38.35, -0.48]} 
-					    zoom={13}
-				      mode={LeafletMap.MODE_VECTOR} 
-				/>
-			);
-		} else {
-			dataContent1 = (
-				<Chart 	style={{ width: '100%', height: 600 }} 
-						elementClassName='mixin'
-						prefix='chart'
-						options={chartOptions}
-						data={chartData}
-						type='line'/>
-			);
-		}
+           break;
+       default:
+         title = this.props.selectedFavourite.type;
+     }
+    
+ 		  toggleTitle = (
+    	  <span>
+		 		    <span>
+			 		    <i className={'fa fa-' + icon + ' fa-fw'}></i>
+				 	    <span style={{ paddingLeft: 4 }}>{title}</span>
+				     </span>
+				     <span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
+					      <Bootstrap.Button	bsStyle='default' className='btn-circle' onClick={this.props.actions.closeFavourite}>
+						       <i className='fa fa-remove fa-fw'></i>
+					      </Bootstrap.Button>
+ 				    </span> 
+       </span>
+		 	 );    
+   
+     togglePanel = (
+       <Bootstrap.Panel expanded={this.state.expanded} onSelect={this.toggleExpanded} header={toggleTitle}>
+				     <Bootstrap.ListGroup fill>
+           {dataContent}
+           {footerContent}
+						   </Bootstrap.ListGroup>
+				   </Bootstrap.Panel>
+     ); 
+ 
+   } else{
+  
+     var infoText = (<span>Click a favourite to view ...</span>);
+     togglePanel = 	(        
+       <Bootstrap.Panel >
+         <Bootstrap.ListGroup fill>
+           <Bootstrap.ListGroupItem>
+             {infoText}
+             {dashboardLinkFooter}
+           </Bootstrap.ListGroupItem>
+         </Bootstrap.ListGroup>
+       </Bootstrap.Panel>  
+     );
+   }
 
-		var onChangeTimeline = function(value) {
-			this.setState({points: createPoints()});
-		};
-		
-		var mapFilterTags = [];
-		mapFilterTags.push( 
-			<FilterTag key='time' text='Last 24 hours' icon='calendar' />
-    	);
-		mapFilterTags.push( 
-			<FilterTag key='population' text='Favourites' icon='group' />
-    	);
-		mapFilterTags.push( 
-			<FilterTag key='source' text='Meter' icon='database' />
-    	);
-			
-		var today = new Date();
-		dataContent2 = (
-			<Bootstrap.ListGroupItem>
-				<LeafletMap style={{ width: '100%', height: 600}} 
-							elementClassName='mixin'
-							prefix='map'
-						  center={[38.35, -0.48]} 
-              zoom={13}
-				      mode={LeafletMap.MODE_HEATMAP}
-							data={this.state.points} />
-				<Timeline 	onChange={onChangeTimeline.bind(this)} 
-							style={{paddingTop: 10}}
-							min={1}
-							max={24}
-							value={24}
-							type='time'
-						    data={createTimeLabels(moment(new Date(today.getFullYear(), today.getMonth(), today.getDate(), today.getHours(), 0, 0)), 24)}>
-				</Timeline>
-			</Bootstrap.ListGroupItem>
-		);
+  	var favs = {
+			  fields: [{
+				   name: 'id',
+				   hidden: true
+			  }, {
+				   name: 'title',
+				   title: 'Label'			
+			  }, {
+				   name: 'tags',
+				   title: 'Tags'			
+			  }, {
+				   name: 'createdOn',
+				   title: 'Date',
+				   type: 'datetime'
+			  }, {
+				   name: 'view',
+				   type:'action',
+				   icon: 'eye',
+				   handler: function() {
+         self.clickedOpenFavourite(this.props.row);
+				   }
+			  }, {
+				   name: 'edit',
+				   type:'action',
+				   icon: 'pencil',
+				   handler: function() {
+         self.editFavourite(this.props.row);
+				   }
+			  }, {
+				   name: 'copy',
+				   type:'action',
+				   icon: 'copy',
+				   handler: function() {
+         self.duplicateFavourite(this.props.row);
+				   }
+			  }, {
+				   name: 'link',
+				   type:'action',
+				   icon: 'link',
+				   handler: function() {
+					    console.log(this);
+				   }
+			  }, {
+				   name: 'remove',
+				   type:'action',
+				   icon: 'remove',
+				   handler: function() {
+         self.clickedDeleteFavourite(this.props.row);
+				   }
+			  }],
+			  rows: this.props.favourites ? this.props.favourites : [],
+			  pager: {
+				   index: 0,
+				   size: 5,
+				   count: this.props.favourites ? this.props.favourites.length : 0
+			  }
+	 	};
 
-  		var jobs = {
-			fields: [{
-				name: 'id',
-				hidden: true
-			}, {
-				name: 'description',
-				title: 'Description'
-			}, {
-				name: 'owner',
-				title: 'Owner'			
-			}, {
-				name: 'createdOn',
-				title: 'Created On',
-				type: 'datetime'
-			}, {
-				name: 'scheduledOn',
-				title: 'Next Execution',
-				type: 'datetime'
-			}, {
-				name: 'status',
-				title: 'Status'
-			}, {
-				name: 'progress',
-				title: 'Progress',
-				type: 'progress'
-			}, {
-				name: 'edit',
-				type:'action',
-				icon: 'pencil',
-				handler: function() {
-					console.log(this);
-				}
-			}, {
-				name: 'cancel',
-				type:'action',
-				icon: 'remove',
-				handler: function() {
-					console.log(this);
-				}
-			}],
-			rows: [{
-				id: 1,
-				description: 'Daily average consumption over time interval 01/01/2016 - 31/01/2016',
-				owner: 'George',
-				createdOn: new Date((new Date()).getTime() + Math.random() * 3600000),
-				scheduledOn: new Date((new Date()).getTime() + Math.random() * 3600000),
-				status: 'Running',
-				progress: 45
-			}],
-			pager: {
-				index: 0,
-				size: 1,
-				count:2
-			}
-		};
-  		
-  		var footerContent;
-  		
-		switch(this.state.mode) {
-			case 'job':
-				configContent = (
-					<JobConfigAnalysis />
-				);
-				break;
-			case 'chart':
-				configContent = (
-					<ChartConfig />
-				);
-				break;
-			case 'history':
-				configContent = (
-					<div style={{ padding: 10}}>
-						<Table data={jobs}></Table>
-					</div>
-				);
-				
-				footerContent = (
-					<Bootstrap.ListGroupItem>
-						<span style={{ paddingLeft : 7}}> </span>
-						<Link to='/scheduler' style={{ paddingLeft : 7, float: 'right'}}>View job management</Link>
-					</Bootstrap.ListGroupItem>
-				);
-				break;
-			default:
-				var actions = [{
-					name: 'edit',
-					icon: 'pencil',
-					handler: function() {
-						console.log(this);
-					}
-				}, {
-					name: 'copy',
-					icon: 'copy',
-					handler: function() {
-						console.log(this);
-					}
-				}, {
-					name: 'remove',
-					icon: 'remove',
-					handler: function() {
-						console.log(this);
-					}
-				}];
+	 	var favouriteContent = (
+		   <div style={{ padding: 10}}>
+			 	  <Table data={favs}></Table>
+			 	</div>
+		 );
 
-				configContent = (
-					<Tag.Collection>
-						<Tag.Item key={1} text='Daily consumption for the last 30 days' actions={actions} checked={true} />
-						<Tag.Item key={3} text='Favourite users hourly consumption heatmap for the last 24 hours' actions={actions} checked={true} />
-					</Tag.Collection>
-				);
-
-				break;
-		}
-
-		var content;
-		var chartFilterTags = [];
+    if(this.props.showDeleteMessage){
+      var modal;
+      var warning = 'Delete Announcement?';
+			   var actions = [{
+				      action: this.props.actions.closeWarning,
+				      name: "Cancel"
+			     }, {
+				      action: this.props.actions.deleteFavourite,
+				      name: "Delete",
+				      style: 'danger'
+			     }];    
         
-		var intervalLabel ='';
-        if(this.state.interval) {
-        	var start = this.state.interval[0].format('DD/MM/YYYY');
-        	var end = this.state.interval[1].format('DD/MM/YYYY');
-        	intervalLabel = start + ' - ' + end;
-        	if (start === end) {
-        		intervalLabel = start;
-        	}
-        }  
+      return (      
+	 		    <div className='container-fluid' style={{ paddingTop: 10 }}>
+		 		     <div className='row'>
+			 		      <div className='col-md-12'>
+				 		       <Breadcrumb routes={this.props.routes}/>
+					       </div>
+ 				     </div>
+	 			     <div className='row'>
+		 			      <div className='col-lg-12'>
+			 			       <Bootstrap.Panel header={configTitle}>
+				 			        <Bootstrap.ListGroup fill>
+                  {favouriteContent}
+						 	        </Bootstrap.ListGroup>
+						        </Bootstrap.Panel>
+                {togglePanel}
+ 					      </div>
+	 		      </div>       
+  		      <Modal show = {this.props.showDeleteMessage}
+            onClose = {this.props.actions.closeWarning}
+            title = {warning}
+            text = {'You are about to delete the favourite with label "' + 
+              this.props.favouriteToBeDeleted.namedQuery.title + '". Are you sure?'}
+  		        actions = {actions}
+  		      />
+        </div> 
+      );   
+    }
 
-    	chartFilterTags.push( 
-			<FilterTag key='time' text={intervalLabel} icon='calendar' />
-    	);
-    	chartFilterTags.push( 
-			<FilterTag key='population' text='Alicante, User 1' icon='group' />
-    	);
-    	chartFilterTags.push( 
-			<FilterTag key='spatial' text='Alicante' icon='map' />
-    	);
-    	chartFilterTags.push( 
-			<FilterTag key='source' text='Meter, Amphiro' icon='database' />
-    	);
+   if(this.props.favourites && !this.props.isLoading){
+ 		  return (
+	 		   <div className='container-fluid' style={{ paddingTop: 10 }}>
+		 		    <div className='row'>
+			 		     <div className='col-md-12'>
+				 		      <Breadcrumb routes={this.props.routes}/>
+					      </div>
+ 				    </div>
+	 			    <div className='row'>
+		 			     <div className='col-lg-12'>
+			 			      <Bootstrap.Panel header={configTitle}>
+				 			       <Bootstrap.ListGroup fill>
+                 {favouriteContent}
+						 	       </Bootstrap.ListGroup>
+						       </Bootstrap.Panel>
+               {togglePanel}
+ 					     </div>
+	 		     </div>
+      </div>
+     );   
+   }
+   else{
+      return (
+        <div>
+          <img className='preloader' src='/assets/images/utility/preloader-counterclock.png' />
+          <img className='preloader-inner' src='/assets/images/utility/preloader-clockwise.png' />
+        </div>
+      );    
+   }
 
-		
-		if(this.state.mode === 'queries') {
-			content = (
-				<div className='row'>
-					<div className='col-lg-6'>
-						<Bootstrap.Panel header={dataTitle1}>
-							<Bootstrap.ListGroup fill>
-								<Bootstrap.ListGroupItem>
-									{dataContent1}
-								</Bootstrap.ListGroupItem>
-								<Bootstrap.ListGroupItem className='clearfix'>				
-									<div className='pull-left'>
-										{chartFilterTags}
-									</div>
-									<span style={{ paddingLeft : 7}}> </span>
-									<Link className='pull-right' to='/forecasting' style={{ paddingLeft : 7, paddingTop: 12 }}>View forecasting</Link>
-								</Bootstrap.ListGroupItem>
-							</Bootstrap.ListGroup>
-						</Bootstrap.Panel>
-					</div>
-					<div className='col-lg-6'>
-						<Bootstrap.Panel header={dataTitle2}>
-							<Bootstrap.ListGroup fill>
-								{dataContent2}
-								<Bootstrap.ListGroupItem className='clearfix'>
-									<div className='pull-left'>
-										{mapFilterTags}
-									</div>
-									<span style={{ paddingLeft : 7}}> </span>
-									<Link className='pull-right' to='/forecasting' style={{ paddingLeft : 7, paddingTop: 12 }}>View forecasting</Link>
-								</Bootstrap.ListGroupItem>
-							</Bootstrap.ListGroup>
-						</Bootstrap.Panel>
-					</div>
-				</div>
-			);
-		}
-		const clusterTitle = (
-			<span>
-				<i className='fa fa-map fa-fw'></i>
-				<span style={{ paddingLeft: 4 }}>Clusters of households based on income and consumption</span>
-				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-					<Bootstrap.Button bsStyle='default' className='btn-circle'>
-						<i className='fa fa-remove fa-fw'></i>
-					</Bootstrap.Button>
-				</span>
-				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-					<Bootstrap.Button	bsStyle='default' className='btn-circle'>
-						<i className='fa fa-copy fa-fw'></i>
-					</Bootstrap.Button>
-				</span>
-				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-					<Bootstrap.Button	bsStyle='default' className='btn-circle'>
-						<i className='fa fa-pencil fa-fw'></i>
-					</Bootstrap.Button>
-				</span>
-			</span>
-		);
-
-		var clusterFilterTags = [];
-
-		clusterFilterTags.push( 
-			<FilterTag key='filter1' text='01/01/2015 - 01/12/2015' icon='calendar' />
-    	);
-		clusterFilterTags.push( 
-			<FilterTag key='filter2' text='Alicante' icon='map' />
-    	);
-		clusterFilterTags.push( 
-			<FilterTag key='filter3' text='Income' icon='euro' />
-    	);
-		clusterFilterTags.push( 
-			<FilterTag key='filter4' text='Consumption' icon='tachometer' />
-    	);
-    	
-		var contentCluster = (
-			<div className='row'>
-				<div className='col-lg-12'>
-					<Bootstrap.Panel header={clusterTitle}>
-						<Bootstrap.ListGroup fill>
-							<Bootstrap.ListGroupItem>
-								<ClusterChart 	style={{ width: '100%', height: 600 }} 
-												elementClassName='mixin'
-												prefix='chart'/>
-							</Bootstrap.ListGroupItem>
-							<Bootstrap.ListGroupItem className='clearfix'>
-								<div className='pull-left'>
-									{clusterFilterTags}
-								</div>
-								<span style={{ paddingLeft : 7}}> </span>
-								<Link className='pull-right' to='/forecasting' style={{ paddingLeft : 7, paddingTop: 12 }}>View forecasting</Link>
-							</Bootstrap.ListGroupItem>
-						</Bootstrap.ListGroup>
-					</Bootstrap.Panel>
-				</div>
-			</div>
-		);
-
-		const jobTitle = (
-			<span>
-				<i className='fa fa-clock-o fa-fw'></i>
-				<span style={{ paddingLeft: 4 }}>Active Jobs</span>
-				<span style={{float: 'right',  marginTop: -3, marginLeft: 5 }}>
-					<Bootstrap.Button	bsStyle="default" className="btn-circle">
-						<Bootstrap.Glyphicon glyph="plus" />
-					</Bootstrap.Button>
-				</span>
-			</span>
-		);
-			
-		return (
-			<div className='container-fluid' style={{ paddingTop: 10 }}>
-				<div className='row'>
-					<div className='col-md-12'>
-						<Breadcrumb routes={this.props.routes}/>
-					</div>
-				</div>
-				<div className='row'>
-					<div className='col-lg-12'>
-						<Bootstrap.Panel expanded={this.state.expanded} onSelect={this.toggleExpanded} header={configTitle}>
-							<Bootstrap.ListGroup fill>
-								{configContent}
-								{footerContent}		
-							</Bootstrap.ListGroup>
-						</Bootstrap.Panel>
-					</div>
-				</div>
-				{content}
-				{contentCluster}
-            </div>
- 		);
-  	}
+  }
 });
 
-Analytics.icon = 'bar-chart';
-Analytics.title = 'Section.Analytics.Fav';
+function mapStateToProps(state) {
+  return {
+    profile: state.session.profile,
+    showSelected: state.favourites.showSelected,
+    selectedFavourite: state.favourites.selectedFavourite,
+    favourites: state.favourites.favourites,
+    showDeleteMessage: state.favourites.showDeleteMessage,
+    favouriteToBeDeleted: state.favourites.favouriteToBeDeleted,
+    map: state.favourites.map,
+    source: state.favourites.source,
+    geometry: state.favourites.geometry,
+    population: state.favourites.population,
+    interval: state.favourites.interval,
+    config: state.config,
+    draw: state.favourites.draw,
+    finished: state.favourites.finished,
+    data: state.favourites.data    
+  };
+}
 
-module.exports = Analytics;
+function mapDispatchToProps(dispatch) {
+  return {
+    actions : bindActionCreators(Object.assign({}, { setTimezone, fetchFavouriteQueries, 
+                                                     openFavourite, closeFavourite, setActiveFavourite, 
+                                                     addCopy, deleteFavourite, openWarning, closeWarning, 
+                                                     resetMapState, getFavouriteMap, getFavouriteChart, 
+                                                     getFeatures}) , dispatch)                                                     
+  };
+}
+
+Favourites.icon = 'bar-chart';
+Favourites.title = 'Section.Analytics.Fav';
+
+module.exports = connect(mapStateToProps, mapDispatchToProps)(Favourites);
