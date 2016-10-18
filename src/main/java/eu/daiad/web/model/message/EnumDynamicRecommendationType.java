@@ -5,12 +5,16 @@ import java.util.Map;
 
 public enum EnumDynamicRecommendationType {
 	UNDEFINED(0),
+	
 	LESS_SHOWER_TIME(1),
 	LOWER_TEMPERATURE(2),
 	LOWER_FLOW(3),
 	CHANGE_SHOWERHEAD(4),
 	SHAMPOO_CHANGE(5),
-	REDUCE_FLOW_WHEN_NOT_NEEDED(6);
+	REDUCE_FLOW_WHEN_NOT_NEEDED(6),
+	
+	// Let insights begin at >= 1000 
+	INSIGHT_DAILY_CONSUMPTION_A1(1000);
 
 	private final int value;
 
