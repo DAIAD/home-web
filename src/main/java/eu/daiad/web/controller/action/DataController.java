@@ -54,7 +54,6 @@ import eu.daiad.web.model.loader.UploadRequest;
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryCollectionResponse;
 import eu.daiad.web.model.query.DataQueryRequest;
-import eu.daiad.web.model.query.EnumRankingType;
 import eu.daiad.web.model.query.ForecastQuery;
 import eu.daiad.web.model.query.ForecastQueryRequest;
 import eu.daiad.web.model.query.StoreDataQueryRequest;
@@ -273,8 +272,8 @@ public class DataController extends BaseController {
         RestResponse response = new RestResponse();
 
         try {     
+
             
-            System.out.println(request.getNamedQuery().getQuery().getPopulation().get(0).getRanking());
             // Set defaults if needed
             DataQuery query = request.getNamedQuery().getQuery();
             if (query != null) {     

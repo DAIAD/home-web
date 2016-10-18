@@ -287,16 +287,19 @@ var ReportPanel = React.createClass({
     
     if(this.props.favouriteChart && this.props.favouriteChart.type == 'CHART'){
       var clusterKey, groupKey;
-      clusterKey = population.Group.fromString(this.props.favouriteChart.query.population[0].label).clusterKey;
-
+      
+      if(population.Group.fromString(this.props.favouriteChart.query.population[0].label)){
+        clusterKey = population.Group.fromString(this.props.favouriteChart.query.population[0].label).clusterKey;
+      }
+ 
       if(this.props.favouriteChart.query.population.length > 1){ //ClusterGroup with all groups
-              groupKey = null;
-            } else if(this.props.favouriteChart.query.population[0].type == 'UTILITY') { //Utility all
-              clusterKey = groupKey = null;
-            } else if(this.props.favouriteChart.query.population.length == 1){ //ClusterGroup with subgroup
-              groupKey = population.Group.fromString(this.props.favouriteChart.query.population[0].label).key;
-            } else{
-              console.error('Could not resolve options for favourite population!');
+        groupKey = null;
+      } else if(this.props.favouriteChart.query.population[0].type == 'UTILITY') { //Utility all
+        clusterKey = groupKey = null;
+      } else if(this.props.favouriteChart.query.population.length == 1){ //ClusterGroup with subgroup
+        groupKey = population.Group.fromString(this.props.favouriteChart.query.population[0].label).key;
+      } else{
+        console.error('Could not resolve options for favourite population!');
       }      
       this._setPopulation(clusterKey, groupKey); 
       
@@ -439,7 +442,6 @@ var ReportPanel = React.createClass({
     var formFragment = this._renderFormFragment();
 
     var reportTitle = this._titleForReport();
-
     return (
       <Panel header={header} footer={footer}>
         <ListGroup fill>
@@ -959,45 +961,46 @@ var ReportPanel = React.createClass({
     namedQuery.query.time.end = this.props.series[0].timespan[1];  
     namedQuery.query.time.granularity = this.props.level.toUpperCase();
     
-//    var [g, rr] = population.fromString(this.props.series[0].population.name);//label
-//    console.log('[g, rr]');
-//    console.log([g, rr]);
-    
     var tempPop = [];
-    //var tempRank = [];
-    
-    //todo fix issue with ranking, not reaching to server
+    //todo fix population shape
     for(var i = 0; i<this.props.series.length; i++){
+      let popu = {};
       if(this.props.series[i].ranking){
-        console.log(this.props.series[i].ranking);
-        
-        this.props.series[i].population.ranking = {};
-        this.props.series[i].population.ranking.field = this.props.series[i].ranking.field;
-        this.props.series[i].population.ranking.limit = this.props.series[i].ranking.limit;
-        this.props.series[i].population.ranking.metric = this.props.series[i].ranking.metric;
-        this.props.series[i].population.ranking.type = this.props.series[i].ranking.type;
 
-        tempPop.push(this.props.series[i].population);
-      } else{
+
+        var target = this.props.series[i].population;
+        var [clusterKey, groupKey] = population.extractGroupParams(target);
+        if (target instanceof population.Utility || target == null) {
+          popu.label = ('UTILITY:'+this.props.series[i].population.key.toString() + '/' + new population.Ranking(this.props.series[i].ranking).toString());
+          popu.utility = groupKey; 
+        } else if (target instanceof population.Cluster) {
+          popu.label = ('CLUSTER:'+clusterKey + '/' + new population.Ranking(this.props.series[i].ranking).toString());
+          popu.group = groupKey;
+        } else if (target instanceof population.ClusterGroup) {
+          popu.label = ('CLUSTER:'+clusterKey +':'+ groupKey+ '/' + new population.Ranking(this.props.series[i].ranking).toString());
+          popu.group = groupKey;
+        }    
+        
+        //popu.type = this.props.series[i].population.type;
+        popu.type = this.props.series[i].population.type;
+        
+        popu.ranking = {};
+        popu.ranking.field = this.props.series[i].ranking.field.toUpperCase();
+        popu.ranking.limit = this.props.series[i].ranking.limit;
+        popu.ranking.metric = this.props.series[i].ranking.metric;
+        popu.ranking.type = this.props.series[i].ranking.type;         
+        tempPop.push(popu);        
+      } else{   
         tempPop.push(this.props.series[i].population);      
       }
-      //tempRank.push(this.props.series[i].ranking);
     }
-    var populationSet = [...new Set(tempPop)];
-    
-//    console.log(populationSet);
-//    for(var i = 0; i< populationSet.length; i++){
-//      console.log('ranking ' + i);
-//      console.log(this.props.series[i].ranking);
-//      populationSet[i].population.ranking = this.props.series[i].ranking;
-//    }
-    namedQuery.query.population = populationSet;
-        
+    //namedQuery.query.population =  _.uniqBy(tempPop, function(popu) { return [popu.label, popu.ranking].join(); }); 
+    namedQuery.query.population =  _.uniq(tempPop); 
+
     namedQuery.query.timezone = "Etc/GMT"; 
     var request =  {
       'namedQuery' : namedQuery
     };
-
     if(this.props.favouriteChart && this.props.favouriteChart.type == 'CHART'){
       namedQuery.id = this.props.favouriteChart.id;
       this.props.updateFavourite(request);  

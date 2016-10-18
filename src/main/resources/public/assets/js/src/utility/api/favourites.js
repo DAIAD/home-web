@@ -8,7 +8,7 @@ var FavouritesAPI = {
     addFavourite: function(request) {
       return api.json('/action/data/query/store', request);
     },
-    updateFavourite: function(request) {
+    updateFavourite: function(request) {  
       return api.json('/action/data/query/update', request);
     },
     deleteFavourite: function(request) {

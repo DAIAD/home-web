@@ -4,6 +4,9 @@ var queryAPI = require('../api/query');
 var moment = require('moment');
 var population = require('../model/population');
 var {queryMeasurements} = require('../service/query');
+var _ = require('lodash');
+
+var sprintf = require('sprintf');
 
 var requestedFavouriteQueries = function () {
   return {
@@ -246,28 +249,27 @@ var FavouritesActions = {
           throw 'The request is rejected: ' + res.errors[0].description; 
 
         var source = favourite.query.source;
-    
-        var resultSets = (favourite.query.source == 'AMPHIRO') ? res.devices : res.meters;
 
-        var res1 = (resultSets || []).map(rs => {
+        var resultSets = (favourite.query.source == 'AMPHIRO') ? res.devices : res.meters;
+        
+        var res1 = (resultSets || []).map(rs => {      
           var [g, rr] = population.fromString(rs.label);
           
           if (rr) {
-          // Shape a result with ranking on users
-            //return null; //TODO - fix dots not working in this block
-            console.log(rr);
             var points = rs.points.map(p => ({
               timestamp: p.timestamp,
               values: p.users.map(u => u[rr.field][rr.metric]).sort(rr.comparator),
             }));
-//            return _.times(rr.limit, (i) => ({
-//              params:{source, timespan: favourite.query.timespan, granularity: favourite.query.granularity},
-//              metric: rr.metric,
-//              population: g,
-//              ranking: {...rr.toJSON(), index: i},
-//              data: points.map(p => ([p.timestamp, p.values[i] || null])),
-//            }));
-              return null;
+            // Shape a result with ranking on users  //TODO - fix dot notation jshint errors in this block            
+            return _.times(rr.limit, (i) => ({
+              source, 
+              timespan: [favourite.query.time.start,favourite.query.time.end], 
+              granularity: favourite.query.time.granularity,
+              metric: favourite.query.metric,
+              population: g,
+              ranking: {...rr.toJSON(), index: i}, 
+              data: points.map(p => ([p.timestamp, p.values[i] || null])),
+            }));
           } else {   
             // Shape a normal timeseries result for requested metrics
             // Todo support other metrics (as client-side "average")

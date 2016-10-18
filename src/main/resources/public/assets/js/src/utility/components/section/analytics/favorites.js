@@ -233,7 +233,8 @@ var Favourites = React.createClass({
            break;
        case 'CHART':
          title = 'Chart: ' + this.props.selectedFavourite.title;
-         
+           console.log('RENDERING CHART, SERIES:');
+           console.log(this.props.data);
 		         dataContent = (
              <Bootstrap.ListGroup fill>
                <Bootstrap.ListGroupItem className="report-chart-wrapper">
