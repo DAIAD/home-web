@@ -7,7 +7,7 @@ var QueryAPI = {
   },
   queryForecast: function(query) {
     return api.json('/action/data/meter/forecast', query);
-  },
+  }
 };
 
 module.exports = QueryAPI;

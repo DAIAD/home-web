@@ -1144,5 +1144,36 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }
     }
+    
+    @Override
+    public eu.daiad.web.domain.application.Account getAccountByKey(UUID key) {
+        try {
+            
+            TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager.createQuery(
+                            "select a from account a where a.key = :key", eu.daiad.web.domain.application.Account.class)
+                            .setFirstResult(0).setMaxResults(1);
 
+            query.setParameter("key", key);     
+            
+            return query.getSingleResult();
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        }
+
+    }
+    
+    @Override
+    public eu.daiad.web.domain.application.Account getAccountByUsername(String username) {
+        try{
+            TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager.createQuery(
+                            "select a from account a where a.username = :username",
+                            eu.daiad.web.domain.application.Account.class).setFirstResult(0).setMaxResults(1);
+
+            query.setParameter("username", username);
+
+            return query.getSingleResult();            
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        }
+    }
 }

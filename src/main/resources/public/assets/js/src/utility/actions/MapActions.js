@@ -1,7 +1,21 @@
-var adminAPI = require('../api/admin');
 var queryAPI = require('../api/query');
-
+var favouritesAPI = require('../api/favourites');
+var moment = require('moment');
 var types = require('../constants/MapActionTypes');
+
+var addFavouriteRequest = function () {
+  return {
+    type: types.MAP_ADD_FAVOURITE_REQUEST
+  };
+};
+
+var addFavouriteResponse = function (success, errors) {
+  return {
+    type: types.MAP_ADD_FAVOURITE_RESPONSE,
+    success: success,
+    errors: errors
+  };
+};
 
 var _buildTimelineQuery = function(population, source, geometry, timezone, interval) {
   var spatial = [
@@ -141,22 +155,20 @@ var MapActions = {
       var query = _buildTimelineQuery(population, source, geometry, timezone, interval);
 
       dispatch(_getTimelineInit(population, query));
-
       return queryAPI.queryMeasurements(query).then(function(response) {
         var data = {
           meters : null,
           devices : null,
           areas : null
         };
-        if (response.success) {
+        if (response.success) {     
           data.areas = response.areas;
           data.meters = response.meters;
-          data.devices = response.devices;
+          data.devices = response.devices;            
         }
         dispatch(_getTimelineComplete(response.success, response.errors, data));
 
         dispatch(_getFeatures(0, null, null));
-
       }, function(error) {
         dispatch(_getTimelineComplete(false, error, null));
 
@@ -164,7 +176,81 @@ var MapActions = {
       });
     };
   },
+  
+  setEditorValuesBatch : function(isDefault) {
 
+    return function(dispatch, getState) {
+      
+      var utility = getState().session.profile.utility;
+      MapActions.setTimezone(utility.timezone); 
+      var timezone = getState().map.timezone;
+      var population, source, geometry, interval;
+      if(isDefault){
+        if(!getState().map.timeline) {
+          population = {
+            utility: utility.key,
+            label: utility.name,
+            type: 'UTILITY'
+          };        
+        } 
+
+        source = 'METER';
+        interval = [moment().subtract(14, 'day'), moment()];
+        if( (!getState().map.features) || (getState().map.features.length === 0) ){
+          geometry = null;
+        } else {
+          geometry = getState().map.features[0].geometry;
+        }
+        dispatch(_setEditorValue('population', population));
+        dispatch(_setEditorValue('interval', interval));
+        dispatch(_setEditorValue('source', source));
+        dispatch(_setEditorValue('spatial', geometry));     
+        
+      }
+      else if(getState().favourites.selectedFavourite){
+        population = {
+          utility: getState().favourites.selectedFavourite.query.population[0].utility,
+          label: getState().favourites.selectedFavourite.query.population[0].label,
+          type: getState().favourites.selectedFavourite.query.population[0].type
+        };         
+        interval = [moment(getState().favourites.selectedFavourite.query.time.start),
+                    moment(getState().favourites.selectedFavourite.query.time.end)];
+        source = getState().favourites.selectedFavourite.query.source;
+        
+        if( (!getState().map.features) || (getState().map.features.length === 0) ){
+          geometry = null;
+        } else {
+          geometry = getState().map.features[0].geometry;
+        }        
+        dispatch(_setEditorValue('population', population));
+        dispatch(_setEditorValue('interval', interval));
+        dispatch(_setEditorValue('spatial', geometry));
+        dispatch(_setEditorValue('source', source));  
+      }
+
+      var query = _buildTimelineQuery(population, source, geometry, timezone, interval);
+      dispatch(_getTimelineInit(population, query));
+      return queryAPI.queryMeasurements(query).then(function(response) {
+        var data = {
+          meters : null,
+          devices : null,
+          areas : null
+        };
+        if (response.success) { 
+          data.areas = response.areas;
+          data.meters = response.meters;
+          data.devices = response.devices;            
+        }
+        dispatch(_getTimelineComplete(response.success, response.errors, data));
+
+        dispatch(_getFeatures(0, null, null));
+      }, function(error) {
+        dispatch(_getTimelineComplete(false, error, null));
+
+        dispatch(_getFeatures(0, null, null));
+      });
+    };
+  },
   getChart : function(key, name, timezone) {
     return function(dispatch, getState) {
       var query = _buildChartQuery(key, name, timezone, getState().map.interval);
@@ -179,7 +265,7 @@ var MapActions = {
 
         if (response.success) {
           data.meters = response.meters;
-          data.devices = response.devices;
+          data.devices = response.devices;             
         }
         dispatch(_getChartComplete(response.success, response.errors, data));
       }, function(error) {
@@ -208,7 +294,7 @@ var MapActions = {
         if (response.success) {
           data.areas = response.areas;
           data.meters = response.meters;
-          data.devices = response.devices;
+          data.devices = response.devices;        
         }
         dispatch(_getTimelineComplete(response.success, response.errors, data));
 
@@ -231,7 +317,27 @@ var MapActions = {
       type : types.MAP_SET_TIMEZONE,
       timezone : timezone
     };
-  }
+  },
+  addFavourite : function(favourite) {
+    return function(dispatch, getState) {
+      dispatch(addFavouriteRequest());
+      return favouritesAPI.addFavourite(favourite).then(function (response) {
+        dispatch(addFavouriteResponse(response.success, response.errors));
+      }, function (error) {
+        dispatch(addFavouriteResponse(false, error));
+      });
+    };
+  },
+  updateFavourite : function(favourite) {
+    return function(dispatch, getState) {
+      dispatch(addFavouriteRequest());
+      return favouritesAPI.updateFavourite(favourite).then(function (response) {
+        dispatch(addFavouriteResponse(response.success, response.errors));
+      }, function (error) {
+        dispatch(addFavouriteResponse(false, error));
+      });
+    };
+  }  
 };
 
 module.exports = MapActions;

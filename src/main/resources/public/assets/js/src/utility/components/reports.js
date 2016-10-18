@@ -240,7 +240,7 @@ var PilotReports = React.createClass({
         <reports.ReportsPanel />
       </div>
     );
-  },
+  }
 
 });
 
