@@ -45,7 +45,7 @@ public class DataQuery {
     public void setMetrics(EnumMetric[] metrics) {
         this.metrics = metrics;
     }
-
+    
     public ArrayList<PopulationFilter> getPopulation() {
         return population;
     }

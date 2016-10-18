@@ -1,5 +1,6 @@
 package eu.daiad.web.domain.application;
 
+import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import java.io.IOException;
 
 import javax.persistence.Basic;
@@ -20,8 +21,13 @@ import org.joda.time.DateTime;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.joda.JodaModule;
 
 import eu.daiad.web.model.query.DataQuery;
+import eu.daiad.web.model.query.EnumQueryFavouriteType;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 @Entity(name = "data_query")
 @Table(schema = "public", name = "data_query")
@@ -42,11 +48,33 @@ public class DataQueryEntity {
 
     @Basic
     private String query;
+ 
+    @Basic    
+    private String tags;
+    
+    @Column(name = "report_name")
+    private String reportName;    
+
+    @Column(name = "time_level")
+    private String level; 
+
+    @Column(name = "field")
+    private String field; 
+    
+    @Enumerated(EnumType.STRING)
+    private EnumQueryFavouriteType type;
 
     @Column(name = "date_modified")
     @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
     private DateTime updatedOn = new DateTime();
+    
+    public EnumQueryFavouriteType getType() {
+        return type;
+    }
 
+    public void setType(EnumQueryFavouriteType type) {
+        this.type = type;
+    }
     public Account getOwner() {
         return owner;
     }
@@ -62,7 +90,7 @@ public class DataQueryEntity {
     public void setName(String name) {
         this.name = name;
     }
-
+    
     public String getQuery() {
         return query;
     }
@@ -87,8 +115,42 @@ public class DataQueryEntity {
         if (StringUtils.isBlank(this.query)) {
             return null;
         }
-
-        return (new ObjectMapper()).readValue(query, DataQuery.class);
+        
+        Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
+        builder.modules(new JodaModule(), new JtsModule());
+        ObjectMapper objectMapper = builder.build();
+        return (objectMapper).readValue(query, DataQuery.class);
     }
 
+    public String getTags() {
+        return tags;
+    }
+
+    public void setTags(String tags) {
+        this.tags = tags;
+    }
+    
+    public String getReportName() {
+        return reportName;
+    }
+
+    public void setReportName(String reportName) {
+        this.reportName = reportName;
+    }
+    
+    public String getLevel() {
+        return level;
+    }
+
+    public void setLevel(String level) {
+        this.level = level;
+    }
+    
+    public String getField() {
+        return field;
+    }
+
+    public void setField(String field) {
+        this.field = field;
+    }    
 }

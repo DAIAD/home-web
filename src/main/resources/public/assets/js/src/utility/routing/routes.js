@@ -37,7 +37,6 @@ module.exports = (
     <Route path="/analytics/fav" component={analytics.Fav} />
     <Route path="/analytics/basic-reports" component={analytics.BasicReports} />
     <Route path="/analytics/panel" component={analytics.ReportPanel} />
-    <Route path="/analytics/messages" component={MessageAnalytics} />
 		<Route path="/analytics/map" component={AnalyticsMap} />
     <Route path="/trials/overview" component={trials.Overview}/>
     <Route path="/trials/pilot-reports" component={trials.PilotReports}/>
@@ -56,6 +55,7 @@ module.exports = (
     <Route path="/settings/system" component={SystemSettings}/>
     <Route path="/support/logging" component={Logging} />
     <Route path="/support/data" component={DataManagement}/>
+    <Route path="/support/messages" component={MessageAnalytics} />    
     <Route path="/support/development" component={Development}/>
 		<Route path="/password/reset/:token" component={PasswordReset}/>
   </Route>

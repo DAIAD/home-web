@@ -63,5 +63,9 @@ public interface IUserRepository {
     UserInfo getUserInfoByKey(UUID user_id);
 
     UserQueryResult search(UserQuery query);
+    
+    eu.daiad.web.domain.application.Account getAccountByKey(UUID key);
+    
+    eu.daiad.web.domain.application.Account getAccountByUsername(String username);
 
 }

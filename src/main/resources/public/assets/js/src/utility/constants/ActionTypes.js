@@ -138,7 +138,9 @@ var types = mirrorToPath({
       SET_TIMESPAN: null,
       SET_POPULATION: null,
       REQUEST_DATA: null,
-      SET_DATA: null
+      SET_DATA: null,
+      ADD_FAVOURITE_REQUEST: null,
+      ADD_FAVOURITE_RESPONSE: null
     },
 
     // Reports on system utilization

@@ -29,7 +29,6 @@ import eu.daiad.web.model.message.MultiTypeMessageResponse;
 import eu.daiad.web.model.message.RecommendationReceiversResponse;
 import eu.daiad.web.model.message.SingleTypeMessageResponse;
 import eu.daiad.web.model.message.StaticRecommendation;
-import eu.daiad.web.model.query.PopulationFilter;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IMessageRepository;
 import java.util.List;

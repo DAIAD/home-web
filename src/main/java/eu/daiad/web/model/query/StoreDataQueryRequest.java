@@ -4,24 +4,14 @@ import eu.daiad.web.model.AuthenticatedRequest;
 
 public class StoreDataQueryRequest extends AuthenticatedRequest {
 
-    private String title;
+    private NamedDataQuery namedQuery;
 
-    private DataQuery query;
-
-    public String getTitle() {
-        return title;
+    public NamedDataQuery getNamedQuery() {
+        return namedQuery;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public DataQuery getQuery() {
-        return query;
-    }
-
-    public void setQuery(DataQuery query) {
-        this.query = query;
-    }
+    public void setNamedQuery(NamedDataQuery namedQuery) {
+        this.namedQuery = namedQuery;
+    }  
 
 }
