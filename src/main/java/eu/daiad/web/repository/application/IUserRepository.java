@@ -3,6 +3,7 @@ package eu.daiad.web.repository.application;
 import java.util.List;
 import java.util.UUID;
 
+import eu.daiad.web.domain.application.SurveyEntity;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.admin.AccountActivity;
 import eu.daiad.web.model.admin.AccountWhiteListEntry;
@@ -67,5 +68,7 @@ public interface IUserRepository {
     eu.daiad.web.domain.application.Account getAccountByKey(UUID key);
     
     eu.daiad.web.domain.application.Account getAccountByUsername(String username);
+
+    List<SurveyEntity> getSurveyDataByUtilityId(int utilityId);
 
 }

@@ -70,10 +70,6 @@ public class UpdateAmphiroDataSchemaJobBuilder implements IJobBuilder {
 	@Autowired
 	private IAmphiroIndexOrderedRepository amphiroIndexOrderedRepository;
 
-	public UpdateAmphiroDataSchemaJobBuilder() {
-
-	}
-
 	private AmphiroMeasurementCollection createInsertRequest(UUID deviceKey, AmphiroSessionTimeIntervalQueryResult data) {
 		AmphiroMeasurementCollection request = new AmphiroMeasurementCollection();
 		request.setDeviceKey(deviceKey);

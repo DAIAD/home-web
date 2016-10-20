@@ -567,7 +567,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
             for (int i = 0; i < data.getMeasurements().size(); i++) {
                 AmphiroMeasurement m = data.getMeasurements().get(i);
 
-                if (m.getVolume() <= 0) {
+                if (m.getVolume() < 0) {
                     continue;
                 }
 

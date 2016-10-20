@@ -42,7 +42,7 @@ import eu.daiad.web.domain.application.HouseholdEntity;
 import eu.daiad.web.domain.application.HouseholdMemberEntity;
 import eu.daiad.web.domain.application.PasswordResetTokenEntity;
 import eu.daiad.web.domain.application.Role;
-import eu.daiad.web.domain.application.Survey;
+import eu.daiad.web.domain.application.SurveyEntity;
 import eu.daiad.web.domain.application.Utility;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.EnumGender;
@@ -70,13 +70,13 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
     private static final Log logger = LogFactory.getLog(JpaUserRepository.class);
 
     private static final String DEFAULT_UTILITY_NAME = "DAIAD";
-    
+
     @Value("${security.white-list}")
     private boolean enforceWhiteListCheck;
 
     @Value("${daiad.password.reset.token.duration}")
     private int passwordResetTokenDuration;
-    
+
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
 
@@ -290,18 +290,18 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                 account.setAddress(user.getAddress());
                 account.setTimezone(user.getTimezone());
                 account.setPostalCode(user.getPostalCode());
-                
+
                 if ((user.getLocation() != null) && (user.getLocation() instanceof Point)) {
                     account.setLocation(user.getLocation());
                 }
-                
+
                 account.setPhoto(user.getPhoto());
             }
 
             account.setLocked(false);
             account.setChangePasswordOnNextLogin(false);
             account.setAllowPasswordReset(false);
-            
+
             account.setUtility(utility);
 
             // Assign default ROLE_USER role to the new user
@@ -354,27 +354,27 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             }
 
             // Optionally load data from survey table
-            Survey survey = null;
-            
-            TypedQuery<Survey> surveyQuery = entityManager.createQuery(
-                            "select s from survey s where s.username = :username", Survey.class).setFirstResult(0)
+            SurveyEntity survey = null;
+
+            TypedQuery<SurveyEntity> surveyQuery = entityManager.createQuery(
+                            "select s from survey s where s.username = :username", SurveyEntity.class).setFirstResult(0)
                             .setMaxResults(1);
             surveyQuery.setParameter("username", account.getUsername());
 
-            List<Survey> surveys = surveyQuery.getResultList();
+            List<SurveyEntity> surveys = surveyQuery.getResultList();
             if (!surveys.isEmpty()) {
                 survey = surveys.get(0);
             }
-            
+
             // Initialize household
             HouseholdEntity household = new HouseholdEntity();
             household.setAccount(account);
             household.setCreatedOn(account.getCreatedOn());
             household.setUpdatedOn(account.getCreatedOn());
             this.entityManager.persist(household);
-            
+
             HouseholdMemberEntity householdMember = new HouseholdMemberEntity();
-            
+
             householdMember.setIndex(0);
             householdMember.setCreatedOn(account.getCreatedOn());
             householdMember.setUpdatedOn(account.getCreatedOn());
@@ -387,7 +387,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                 householdMember.setAge(survey.getAge());
             }
             householdMember.setHousehold(household);
-            
+
             this.entityManager.persist(householdMember);
 
             this.entityManager.flush();
@@ -415,7 +415,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
 
         logger.warn(String.format("Password for user [%s] has been updated", username));
     }
-    
+
     @Override
     public PasswordResetToken createPasswordResetToken(EnumApplication application, String username) throws ApplicationException {
         // Find user
@@ -428,7 +428,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         if (accounts.isEmpty()) {
             throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
         }
-        
+
         eu.daiad.web.domain.application.Account account = accounts.get(0);
 
         // Reset any existing tokens that are still valid
@@ -436,21 +436,21 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                         "select t from password_reset_token t where t.valid = true and t.account.id = :accountId",
                         eu.daiad.web.domain.application.PasswordResetTokenEntity.class);
         tokenQuery.setParameter("accountId", account.getId());
-        
+
         for(PasswordResetTokenEntity oldToken : tokenQuery.getResultList()){
             oldToken.setValid(false);
         }
-        
+
         // Create new token
         PasswordResetTokenEntity token = new PasswordResetTokenEntity();
-        
+
         token.setAccount(account);
         token.setValid(true);
         token.setPin(RandomStringUtils.randomNumeric(4));
         token.setApplication(application);
-        
+
         entityManager.persist(token);
-        
+
         String locale = account.getLocale();
         if(StringUtils.isBlank(locale)) {
             locale = account.getUtility().getLocale();
@@ -461,7 +461,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
 
         return new PasswordResetToken(token.getToken(), token.getPin(), locale);
     }
-    
+
     @Override
     public PasswordResetToken getPasswordResetTokenById(UUID token) {
         TypedQuery<PasswordResetTokenEntity> tokenQuery = entityManager.createQuery(
@@ -475,15 +475,15 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         }
 
         PasswordResetTokenEntity passwordResetTokenEntity = tokens.get(0);
-        
+
         if(passwordResetTokenEntity.isExpired(passwordResetTokenDuration)) {
             return null;
         }
-        
+
         if(passwordResetTokenEntity.isReedemed()) {
             return null;
         }
-        
+
         if(!passwordResetTokenEntity.isValid()) {
             return null;
         }
@@ -495,10 +495,10 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         if(StringUtils.isBlank(locale)) {
             locale = "en";
         }
-        
-        return new PasswordResetToken(passwordResetTokenEntity.getToken(), passwordResetTokenEntity.getPin(), locale); 
+
+        return new PasswordResetToken(passwordResetTokenEntity.getToken(), passwordResetTokenEntity.getPin(), locale);
     }
-    
+
     @Override
     public void resetPassword(UUID token, String pin, String password) throws ApplicationException {
         // Find token
@@ -523,7 +523,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         if (passwordResetTokenEntity.isExpired(passwordResetTokenDuration)) {
             throw createApplicationException(UserErrorCode.PASSWORD_RESET_TOKEN_EXPIRED);
         }
-        
+
         if ((passwordResetTokenEntity.getApplication() == EnumApplication.MOBILE)
                         && (!passwordResetTokenEntity.getPin().equals(pin))) {
             throw createApplicationException(UserErrorCode.PASSWORD_RESET_PIN_MISMATCH);
@@ -633,7 +633,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                 user.setPostalCode(account.getPostalCode());
                 user.setTimezone(account.getTimezone());
                 user.setAllowPasswordReset(account.isAllowPasswordReset());
-                
+
                 user.setWebMode(EnumWebMode.fromInteger(account.getProfile().getWebMode()));
                 user.setMobileMode(EnumMobileMode.fromInteger(account.getProfile().getMobileMode()));
                 user.setUtilityMode(EnumUtilityMode.fromInteger(account.getProfile().getUtilityMode()));
@@ -647,47 +647,50 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
 
     @Override
     public AuthenticatedUser getUserByUtilityAndKey(int utilityId, UUID key) throws ApplicationException {
-        try {
-            AuthenticatedUser user = null;
+        AuthenticatedUser user = null;
 
-            TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager.createQuery(
-                            "select a from account a where a.key = :key and a.utility.id = :utility_id",
-                            eu.daiad.web.domain.application.Account.class).setFirstResult(0).setMaxResults(1);
-            query.setParameter("utility_id", utilityId);
-            query.setParameter("key", key);
+        TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager.createQuery(
+                        "select a from account a where a.key = :key and a.utility.id = :utility_id",
+                        eu.daiad.web.domain.application.Account.class).setFirstResult(0).setMaxResults(1);
+        query.setParameter("utility_id", utilityId);
+        query.setParameter("key", key);
 
-            List<eu.daiad.web.domain.application.Account> result = query.getResultList();
-            if (result.size() != 0) {
-                eu.daiad.web.domain.application.Account account = result.get(0);
+        List<eu.daiad.web.domain.application.Account> result = query.getResultList();
 
-                List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
-                for (AccountRole r : account.getRoles()) {
-                    authorities.add(new SimpleGrantedAuthority(r.getRole().getName()));
-                }
-                user = new AuthenticatedUser(account.getId(), account.getKey(), account.getUsername(), account
-                                .getPassword(), account.getUtility().getId(), account.getUtility().getKey(), account
-                                .isLocked(), authorities);
+        if (result.size() != 0) {
+            eu.daiad.web.domain.application.Account account = result.get(0);
 
-                user.setCreatedOn(account.getCreatedOn());
-                user.setBirthdate(account.getBirthdate());
-                user.setCountry(account.getCountry());
-                user.setLocale(account.getLocale());
-                user.setFirstname(account.getFirstname());
-                user.setLastname(account.getLastname());
-                user.setGender(account.getGender());
-                user.setPostalCode(account.getPostalCode());
-                user.setTimezone(account.getTimezone());
-                user.setAllowPasswordReset(account.isAllowPasswordReset());
-                
-                user.setWebMode(EnumWebMode.fromInteger(account.getProfile().getWebMode()));
-                user.setMobileMode(EnumMobileMode.fromInteger(account.getProfile().getMobileMode()));
-                user.setUtilityMode(EnumUtilityMode.fromInteger(account.getProfile().getUtilityMode()));
+            List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
+            for (AccountRole r : account.getRoles()) {
+                authorities.add(new SimpleGrantedAuthority(r.getRole().getName()));
             }
 
-            return user;
-        } catch (Exception ex) {
-            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+            user = new AuthenticatedUser(account.getId(),
+                            account.getKey(),
+                            account.getUsername(),
+                            account.getPassword(),
+                            account.getUtility().getId(),
+                            account.getUtility().getKey(),
+                            account.isLocked(),
+                            authorities);
+
+           user.setCreatedOn(account.getCreatedOn());
+           user.setBirthdate(account.getBirthdate());
+           user.setCountry(account.getCountry());
+           user.setLocale(account.getLocale());
+           user.setFirstname(account.getFirstname());
+           user.setLastname(account.getLastname());
+           user.setGender(account.getGender());
+           user.setPostalCode(account.getPostalCode());
+           user.setTimezone(account.getTimezone());
+           user.setAllowPasswordReset(account.isAllowPasswordReset());
+
+            user.setWebMode(EnumWebMode.fromInteger(account.getProfile().getWebMode()));
+            user.setMobileMode(EnumMobileMode.fromInteger(account.getProfile().getMobileMode()));
+            user.setUtilityMode(EnumUtilityMode.fromInteger(account.getProfile().getUtilityMode()));
         }
+
+        return user;
     }
 
     @Override
@@ -1123,15 +1126,15 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                 }
             }
 
-            TypedQuery<eu.daiad.web.domain.application.Survey> surveyQuery = entityManager.createQuery(
+            TypedQuery<SurveyEntity> surveyQuery = entityManager.createQuery(
                             "SELECT s FROM survey s WHERE s.username = :username",
-                            eu.daiad.web.domain.application.Survey.class).setFirstResult(0).setMaxResults(1);
+                            SurveyEntity.class).setFirstResult(0).setMaxResults(1);
             surveyQuery.setParameter("username", account.getUsername());
 
-            List<eu.daiad.web.domain.application.Survey> surveys = surveyQuery.getResultList();
+            List<SurveyEntity> surveys = surveyQuery.getResultList();
 
             if (!surveys.isEmpty()) {
-                Survey survey = surveys.get(0);
+                SurveyEntity survey = surveys.get(0);
 
                 userInfo.setTabletOs(survey.getTabletOs());
                 userInfo.setSmartPhoneOs(survey.getSmartPhoneOs());
@@ -1144,24 +1147,24 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }
     }
-    
+
     @Override
     public eu.daiad.web.domain.application.Account getAccountByKey(UUID key) {
         try {
-            
+
             TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager.createQuery(
                             "select a from account a where a.key = :key", eu.daiad.web.domain.application.Account.class)
                             .setFirstResult(0).setMaxResults(1);
 
-            query.setParameter("key", key);     
-            
+            query.setParameter("key", key);
+
             return query.getSingleResult();
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }
 
     }
-    
+
     @Override
     public eu.daiad.web.domain.application.Account getAccountByUsername(String username) {
         try{
@@ -1171,9 +1174,21 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
 
             query.setParameter("username", username);
 
-            return query.getSingleResult();            
+            return query.getSingleResult();
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }
     }
+
+    @Override
+    public List<SurveyEntity> getSurveyDataByUtilityId(int utilityId) {
+        String queryString = "SELECT s FROM survey s WHERE s.utility.id = :utilityId";
+
+        TypedQuery<SurveyEntity> surveyQuery = entityManager.createQuery(queryString, SurveyEntity.class);
+
+        surveyQuery.setParameter("utilityId", utilityId);
+
+        return surveyQuery.getResultList();
+    }
+
 }

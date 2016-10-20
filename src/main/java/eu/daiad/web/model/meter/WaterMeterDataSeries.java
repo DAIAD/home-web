@@ -3,6 +3,7 @@ package eu.daiad.web.model.meter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 
 import org.joda.time.DateTime;
@@ -24,7 +25,7 @@ public class WaterMeterDataSeries {
 
 	private WaterMeterDataPoint reference;
 
-	private ArrayList<WaterMeterDataPoint> values = new ArrayList<WaterMeterDataPoint>();
+	private List<WaterMeterDataPoint> values = new ArrayList<WaterMeterDataPoint>();
 
 	private long minTimestamp;
 
@@ -56,7 +57,7 @@ public class WaterMeterDataSeries {
 		return maxTimestamp;
 	}
 
-	public ArrayList<WaterMeterDataPoint> getValues() {
+	public List<WaterMeterDataPoint> getValues() {
 		return values;
 	}
 

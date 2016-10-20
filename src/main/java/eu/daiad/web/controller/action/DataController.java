@@ -1,12 +1,8 @@
 package eu.daiad.web.controller.action;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -17,7 +13,6 @@ import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -33,21 +28,16 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.google.common.collect.ImmutableMap;
-
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.device.AmphiroDevice;
-import eu.daiad.web.model.device.Device;
-import eu.daiad.web.model.device.DeviceRegistrationQuery;
-import eu.daiad.web.model.device.WaterMeterDevice;
 import eu.daiad.web.model.error.ActionErrorCode;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.QueryErrorCode;
 import eu.daiad.web.model.error.ResourceNotFoundException;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.model.error.UserErrorCode;
 import eu.daiad.web.model.export.DownloadFileResponse;
-import eu.daiad.web.model.export.ExportUserDataQuery;
-import eu.daiad.web.model.export.ExportUserDataRequest;
+import eu.daiad.web.model.export.UserDataExportRequest;
 import eu.daiad.web.model.loader.EnumUploadFileType;
 import eu.daiad.web.model.loader.ImportWaterMeterFileConfiguration;
 import eu.daiad.web.model.loader.UploadRequest;
@@ -59,12 +49,12 @@ import eu.daiad.web.model.query.ForecastQueryRequest;
 import eu.daiad.web.model.query.StoreDataQueryRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.spatial.ReferenceSystem;
-import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.IFileDataLoaderService;
 import eu.daiad.web.service.IWaterMeterDataLoaderService;
-import eu.daiad.web.service.etl.IExportService;
+import eu.daiad.web.service.etl.IDataExportService;
+import eu.daiad.web.service.etl.UserDataExportQuery;
 
 /**
  * Provides methods for managing, querying and exporting data.
@@ -72,196 +62,157 @@ import eu.daiad.web.service.etl.IExportService;
 @RestController
 public class DataController extends BaseController {
 
-	private static final Log logger = LogFactory.getLog(DataController.class);
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
+    private static final Log logger = LogFactory.getLog(DataController.class);
 
-	@Value("${tmp.folder}")
-	private String temporaryPath;
+    /**
+     * Media type for ZIP archive file format.
+     */
+    private final static MediaType APPLICATION_ZIP = MediaType.parseMediaType("application/zip");
 
-	@Autowired
-	private IExportService exportService;
+    /**
+     * Folder where temporary files are saved.
+     */
+    @Value("${tmp.folder}")
+    private String workingDirectory;
 
-	@Autowired
-	private IDataService dataService;
+    /**
+     * Service for exporting data.
+     */
+    @Autowired
+    private IDataExportService exportService;
 
-	@Autowired
-	private IFileDataLoaderService fileDataLoaderService;
+    /**
+     * Repository for accessing user data.
+     */
+    @Autowired
+    private IUserRepository userRepository;
 
-	@Autowired
-	private IWaterMeterDataLoaderService waterMeterDataLoaderService;
+    /**
+     * Service for importing data.
+     */
+    @Autowired
+    private IFileDataLoaderService fileDataLoaderService;
 
-	@Autowired
-	private IUserRepository userRepository;
+    /**
+     * Service for importing smart water meter data.
+     */
+    @Autowired
+    private IWaterMeterDataLoaderService waterMeterDataLoaderService;
 
-	@Autowired
-	private IDeviceRepository deviceRepository;
+    /**
+     * Service for querying smart water and amphiro b1 data in HBASE.
+     */
+    @Autowired
+    private IDataService dataService;
 
-	@Autowired
-	Environment environment;
+    /**
+     * Uploads a data file to the server and perform an action on it e.g. import smart water meter data, assign
+     * accounts to smart water meters etc.
+     *
+     * @param request the upload file and action.
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/action/upload", method = RequestMethod.POST, produces = "application/json")
+    @ResponseBody
+    @Secured({ "ROLE_ADMIN" })
+    public RestResponse upload(UploadRequest request) {
+        try {
+            if (request.getFiles() != null) {
+                // Create working directory if not already exists
+                FileUtils.forceMkdir(new File(workingDirectory));
 
-	private void saveFile(String filename, byte[] bytes) throws IOException {
-		BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(filename)));
-		stream.write(bytes);
-		stream.close();
-	}
+                switch (request.getType()) {
+                    case METER:
+                        // Check SRID
+                        Integer srid = request.getSrid();
 
-	/**
-	 * Uploads a data file to the server and perform an action on it e.g. import smart water meter data, assigne
-	 * users to smart water meters etc.
-	 * 
-	 * @param request the upload file and action.
-	 * @return the controller's response.
-	 */
-	@RequestMapping(value = "/action/upload", method = RequestMethod.POST, produces = "application/json")
-	@ResponseBody
-	@Secured({ "ROLE_ADMIN" })
-	public RestResponse upload(UploadRequest request) {
-		RestResponse response = new RestResponse();
+                        if (srid == null) {
+                            return new RestResponse(SharedErrorCode.INVALID_SRID, this.getMessage(SharedErrorCode.INVALID_SRID));
+                        }
 
-		try {
-			// Get the filename and build the local file path (be sure that the
-			// application have write permissions on such directory)
-			if (request.getFiles() != null) {
-				FileUtils.forceMkdir(new File(temporaryPath));
+                        for (MultipartFile file : request.getFiles()) {
+                            String filename = createTemporaryFilename(file.getBytes());
 
-				String timezone;
-				Set<String> zones ;
+                            ImportWaterMeterFileConfiguration configuration = new ImportWaterMeterFileConfiguration(filename);
 
-				switch (request.getType()) {
-					case METER:
-						// Check SRID
-						Integer srid = request.getSrid();
+                            configuration.setSourceReferenceSystem(new ReferenceSystem(request.getSrid()));
+                            configuration.setFirstRowHeader(request.isFirstRowHeader());
 
-						if (srid == null) {
-							response.add(SharedErrorCode.INVALID_SRID, this.getMessage(SharedErrorCode.INVALID_SRID));
-						}
-
-						if (response.getSuccess()) {
-							for (MultipartFile file : request.getFiles()) {
-								String filename = Paths.get(temporaryPath,
-												UUID.randomUUID().toString() + "-" + file.getOriginalFilename())
-												.toString();
-
-								this.saveFile(filename, file.getBytes());
-
-								ImportWaterMeterFileConfiguration configuration = new ImportWaterMeterFileConfiguration(
-												filename);
-								configuration.setSourceReferenceSystem(new ReferenceSystem(request.getSrid()));
-								configuration.setFirstRowHeader(request.isFirstRowHeader());
-
-								this.fileDataLoaderService.importWaterMeter(configuration);
-							}
-						}
-						break;
-					case METER_DATA:
-						// Check time zone
-						timezone = request.getTimezone();
-
-						zones = DateTimeZone.getAvailableIDs();
-
-						if (StringUtils.isBlank(timezone)) {
-							response.add(SharedErrorCode.INVALID_TIME_ZONE,
-											this.getMessage(SharedErrorCode.INVALID_TIME_ZONE));
-						} else if (!zones.contains(timezone)) {
-							Map<String, Object> properties = ImmutableMap.<String, Object> builder()
-											.put("timezone", timezone).build();
-
-							response.add(SharedErrorCode.TIMEZONE_NOT_FOUND,
-											this.getMessage(SharedErrorCode.TIMEZONE_NOT_FOUND, properties));
-						}
-
-						if (response.getSuccess()) {
-							for (MultipartFile file : request.getFiles()) {
-								String filename = Paths.get(temporaryPath,
-												UUID.randomUUID().toString() + "-" + file.getOriginalFilename())
-												.toString();
-
-								this.saveFile(filename, file.getBytes());
-
-								this.waterMeterDataLoaderService.parse(filename, request.getTimezone(), EnumUploadFileType.METER_DATA);
-							}
-						}
-						break;
-					case METER_DATA_FORECAST:
+                            fileDataLoaderService.importWaterMeter(configuration);
+                        }
+                        break;
+                    case METER_DATA:
                         // Check time zone
-                        timezone = request.getTimezone();
+                        validateTimezone(request.getTimezone());
 
-                        zones = DateTimeZone.getAvailableIDs();
+                        for (MultipartFile file : request.getFiles()) {
+                            String filename = createTemporaryFilename(file.getBytes());
 
-                        if (StringUtils.isBlank(timezone)) {
-                            response.add(SharedErrorCode.INVALID_TIME_ZONE,
-                                            this.getMessage(SharedErrorCode.INVALID_TIME_ZONE));
-                        } else if (!zones.contains(timezone)) {
-                            Map<String, Object> properties = ImmutableMap.<String, Object> builder()
-                                            .put("timezone", timezone).build();
-
-                            response.add(SharedErrorCode.TIMEZONE_NOT_FOUND,
-                                            this.getMessage(SharedErrorCode.TIMEZONE_NOT_FOUND, properties));
+                            waterMeterDataLoaderService.parse(filename, request.getTimezone(), EnumUploadFileType.METER_DATA);
                         }
+                        break;
+                    case METER_DATA_FORECAST:
+                        // Check time zone
+                        validateTimezone(request.getTimezone());
 
-                        if (response.getSuccess()) {
-                            for (MultipartFile file : request.getFiles()) {
-                                String filename = Paths.get(temporaryPath,
-                                                UUID.randomUUID().toString() + "-" + file.getOriginalFilename())
-                                                .toString();
+                        for (MultipartFile file : request.getFiles()) {
+                            String filename = createTemporaryFilename(file.getBytes());
 
-                                this.saveFile(filename, file.getBytes());
-
-                                this.waterMeterDataLoaderService.parse(filename, request.getTimezone(), EnumUploadFileType.METER_DATA_FORECAST);
-                            }
+                            this.waterMeterDataLoaderService.parse(filename, request.getTimezone(), EnumUploadFileType.METER_DATA_FORECAST);
                         }
-					    break;
-					default:
-						break;
-				}
-			}
-		} catch (ApplicationException ex) {
-			response.add(ex.getCode(), this.getMessage(ex));
-		} catch (Exception ex) {
-			logger.error(ex.getMessage(), ex);
+                        break;
+                    default:
+                        throw ApplicationException.create(SharedErrorCode.NOT_IMPLEMENTED, getMessage(SharedErrorCode.NOT_IMPLEMENTED));
+                }
+            }
+        } catch (ApplicationException ex) {
+            return new RestResponse(ex.getCode(), getMessage(ex));
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
 
-			response.add(SharedErrorCode.UNKNOWN, "Failed to upload file.");
-		}
+            return createResponse(SharedErrorCode.UNKNOWN);
+        }
 
-		return response;
-	}
+        return new RestResponse();
+    }
 
-	/**
-	 * Query Amphiro B1 session data and smart water meter readings using one or more filtering
-	 * criteria. Depending on the search criteria, one or more data series may be returned.
-	 * @param user the currently authenticated user.
-	 * @param data the data query.
-	 * @return the data series.
-	 */
-	@RequestMapping(value = "/action/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@ResponseBody
-	@Secured({ "ROLE_ADMIN" })
-	public RestResponse query(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody DataQueryRequest data) {
-		RestResponse response = new RestResponse();
+    /**
+     * Query amphiro b1 session data and smart water meter readings using one or more filtering
+     * criteria. Depending on the search criteria, one or more data series may be returned.
+     *
+     * @param user the currently authenticated user.
+     * @param data the data query.
+     * @return the data series.
+     */
+    @RequestMapping(value = "/action/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @ResponseBody
+    @Secured({ "ROLE_ADMIN" })
+    public RestResponse query(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody DataQueryRequest data) {
+        try {
+            DataQuery query = data.getQuery();
 
-		try {
-			// Set defaults if needed
-			DataQuery query = data.getQuery();
-			if (query != null) {
-				// Initialize time zone
-				if (StringUtils.isBlank(query.getTimezone())) {
-					query.setTimezone(user.getTimezone());
-				}
-			}
+            if (query == null) {
+                return createResponse(QueryErrorCode.EMPTY_QUERY);
+            }
 
-			return dataService.execute(query);
-		} catch (Exception ex) {
-			logger.error(ex.getMessage(), ex);
+            if(StringUtils.isBlank(query.getTimezone())) {
+                query.setTimezone(user.getTimezone());
+            }
 
-			response.add(this.getError(ex));
-		}
+            return dataService.execute(query);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
 
-		return response;
-	}
-
+            return new RestResponse(getError(ex));
+        }
+    }
 
     /**
      * Saves a data query.
-     * 
+     *
      * @param user the user
      * @param request the data.
      * @return the result of the save operation.
@@ -269,33 +220,30 @@ public class DataController extends BaseController {
     @RequestMapping(value = "/action/data/query/store", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ "ROLE_ADMIN" })
     public RestResponse storeQuery(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody StoreDataQueryRequest request) {
-        RestResponse response = new RestResponse();
-
-        try {     
-
-            
-            // Set defaults if needed
+        try {
             DataQuery query = request.getNamedQuery().getQuery();
-            if (query != null) {     
-                // Initialize time zone
-                if (StringUtils.isBlank(query.getTimezone())) {              
-                    request.getNamedQuery().getQuery().setTimezone(user.getTimezone());
-                }
+
+            if (query == null) {
+                return createResponse(QueryErrorCode.EMPTY_QUERY);
             }
-            
+
+            if (StringUtils.isBlank(query.getTimezone())) {
+                query.setTimezone(user.getTimezone());
+            }
+
             dataService.storeQuery(request.getNamedQuery(), user.getKey());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            response.add(this.getError(ex));
+            return new RestResponse(getError(ex));
         }
 
-        return response;
+        return new RestResponse();
     }
 
     /**
      * Saves a data query.
-     * 
+     *
      * @param user the user
      * @param request the data.
      * @return the result of the save operation.
@@ -305,17 +253,17 @@ public class DataController extends BaseController {
     public RestResponse updateStoredQuery(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody StoreDataQueryRequest request) {
         RestResponse response = new RestResponse();
 
-        try {     
+        try {
 
             // Set defaults if needed
             DataQuery query = request.getNamedQuery().getQuery();
-            if (query != null) {     
+            if (query != null) {
                 // Initialize time zone
-                if (StringUtils.isBlank(query.getTimezone())) {              
+                if (StringUtils.isBlank(query.getTimezone())) {
                     request.getNamedQuery().getQuery().setTimezone(user.getTimezone());
                 }
             }
-            
+
             dataService.updateStoredQuery(request.getNamedQuery(), user.getKey());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -328,7 +276,7 @@ public class DataController extends BaseController {
 
     /**
      * Deletes a data query.
-     * 
+     *
      * @param user the user
      * @param request the data.
      * @return the result of the delete operation.
@@ -338,17 +286,17 @@ public class DataController extends BaseController {
     public RestResponse deleteStoredQuery(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody StoreDataQueryRequest request) {
         RestResponse response = new RestResponse();
 
-        try {     
+        try {
 
             // Set defaults if needed
             DataQuery query = request.getNamedQuery().getQuery();
-            if (query != null) {     
+            if (query != null) {
                 // Initialize time zone
-                if (StringUtils.isBlank(query.getTimezone())) {              
+                if (StringUtils.isBlank(query.getTimezone())) {
                     request.getNamedQuery().getQuery().setTimezone(user.getTimezone());
                 }
             }
-            
+
             dataService.deleteStoredQuery(request.getNamedQuery(), user.getKey());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -358,10 +306,10 @@ public class DataController extends BaseController {
 
         return response;
     }
-    
+
     /**
      * Loads all saved data queries.
-     * 
+     *
      * @param user the user
      * @return the saved data queries
      */
@@ -370,20 +318,17 @@ public class DataController extends BaseController {
     public RestResponse getAllQueries(@AuthenticationPrincipal AuthenticatedUser user) {
         try {
             DataQueryCollectionResponse response = new DataQueryCollectionResponse();
-            
+
             response.setQueries(dataService.getQueriesForOwner(user.getId()));
-            
+
             return response;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            RestResponse response = new RestResponse();
-            response.add(this.getError(ex));
-            
-            return response;
+            return new RestResponse(getError(ex));
         }
     }
-    
+
     /**
      * Returns forecasting results for a smart water meter
      *
@@ -394,146 +339,145 @@ public class DataController extends BaseController {
     @ResponseBody
     @Secured({ "ROLE_ADMIN" })
     public RestResponse forecast(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody ForecastQueryRequest data) {
-        RestResponse response = new RestResponse();
-
         try {
-            // Set defaults if needed
             ForecastQuery query = data.getQuery();
-            if (query != null) {
-                // Initialize time zone
-                if (StringUtils.isBlank(query.getTimezone())) {
-                    query.setTimezone(user.getTimezone());
-                }
+
+            if (query == null) {
+                return createResponse(QueryErrorCode.EMPTY_QUERY);
+            }
+
+            if (StringUtils.isBlank(query.getTimezone())) {
+                query.setTimezone(user.getTimezone());
             }
 
             return dataService.execute(query);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            response.add(this.getError(ex));
+            return new RestResponse(getError(ex));
         }
-
-        return response;
     }
 
-	/**
-	 * Exports Amphiro B1 sessions and smart water meter data for a single user based on a query.
-	 * 
-	 * @param user the currently authenticated user.
-	 * @param data the query for selecting the data to export.
-	 * @return a token for downloading the generated file.
-	 */
-	@RequestMapping(value = "/action/data/export", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@ResponseBody
-	@Secured({ "ROLE_ADMIN" })
-	public RestResponse export(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody ExportUserDataRequest data) {
-		RestResponse response = new RestResponse();
+    /**
+     * Exports amphiro b1 sessions and smart water meter data for a single user based on a query.
+     *
+     * @param user the currently authenticated user.
+     * @param data the query for selecting the data to export.
+     * @return a token for downloading the generated file.
+     */
+    @RequestMapping(value = "/action/data/export", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @ResponseBody
+    @Secured({ "ROLE_ADMIN" })
+    public RestResponse export(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody UserDataExportRequest data) {
+        try {
+            switch (data.getType()) {
+                case USER:
+                    UserDataExportQuery exportQuery = new UserDataExportQuery();
 
-		try {
-			switch (data.getType()) {
-				case USER_DATA:
-					ExportUserDataQuery userQuery = new ExportUserDataQuery();
+                    // Get account for which data export is requested
+                    AuthenticatedUser exportedUser = userRepository.getUserByUtilityAndKey(user.getUtilityId(), data.getUserKey());
+                    if(exportedUser == null) {
+                        throw createApplicationException(UserErrorCode.USER_KEY_NOT_FOUND);
+                    }
 
-					// Get user
-					AuthenticatedUser owner = userRepository.getUserByUtilityAndKey(user.getUtilityId(),
-									data.getUserKey());
+                    exportQuery.setUserKey(exportedUser.getKey());
+                    exportQuery.setDeviceKeys(data.getDeviceKeys());
 
-					userQuery.setUserKey(data.getUserKey());
-					userQuery.setUsername(owner.getUsername());
+                    exportQuery.setStartTimstamp(data.getStartDateTime());
+                    exportQuery.setEndTimestamp(data.getEndDateTime());
 
-					// Get devices
-					ArrayList<Device> devices = deviceRepository.getUserDevices(owner.getKey(),
-									new DeviceRegistrationQuery());
+                    if (StringUtils.isBlank(data.getTimezone())) {
+                        exportQuery.setTimezone(exportedUser.getTimezone());
+                    } else {
+                        exportQuery.setTimezone(data.getTimezone());
+                    }
 
-					for (Device d : devices) {
-						boolean fetch = false;
+                    return new DownloadFileResponse(this.exportService.export(exportQuery));
+                default:
+                    throw createApplicationException(ActionErrorCode.EXPORT_TYPE_NOT_SUPPORTED).set("type", data.getType());
+            }
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
 
-						if ((data.getDeviceKeys() == null) || (data.getDeviceKeys().length == 0)) {
-							fetch = true;
-						} else {
-							for (UUID deviceKey : data.getDeviceKeys()) {
-								if (d.getKey().equals(deviceKey)) {
-									fetch = true;
-									break;
-								}
-							}
-						}
-						if (fetch) {
-							switch (d.getType()) {
-								case AMPHIRO:
-									userQuery.getAmphiroKeys().add(d.getKey());
-									userQuery.getAmphiroNames().add(((AmphiroDevice) d).getName());
+            return new RestResponse(this.getError(ex));
+        }
+    }
 
-									break;
-								case METER:
-									userQuery.getMeterKeys().add(d.getKey());
-									userQuery.getMeterNames().add(((WaterMeterDevice) d).getSerial());
+    /**
+     * Downloads a file that contains exported user data based on a unique token.
+     *
+     * @param token the token used to identify the file to download.
+     * @return the file.
+     */
+    @RequestMapping(value = "/action/data/download/{token}", method = RequestMethod.GET)
+    @Secured({ "ROLE_ADMIN" })
+    public ResponseEntity<InputStreamResource> download(@PathVariable("token") String token) {
+        try {
+            File path = new File(workingDirectory);
 
-									break;
-								default:
-									// Ignore device
-							}
-						}
-					}
+            File file = new File(path, token + ".zip");
 
-					// Set time constraints
-					userQuery.setStartDateTime(data.getStartDateTime());
-					userQuery.setEndDateTime(data.getEndDateTime());
+            if (file.exists()) {
+                FileSystemResource fileResource = new FileSystemResource(file);
 
-					if (StringUtils.isBlank(data.getTimezone())) {
-						userQuery.setTimezone(owner.getTimezone());
-					} else {
-						userQuery.setTimezone(data.getTimezone());
-					}
+                return ResponseEntity.ok()
+                                     .headers(getDownloadResponseHeaders())
+                                     .contentLength(fileResource.contentLength())
+                                     .contentType(APPLICATION_ZIP)
+                                     .body(new InputStreamResource(fileResource.getInputStream()));
+            }
+        } catch (Exception ex) {
+            logger.error(String.format("File [%s] was not found.", token), ex);
+        }
 
-					String token = this.exportService.export(userQuery);
+        throw new ResourceNotFoundException();
+    }
 
-					response = new DownloadFileResponse(token);
+    /**
+     * Create HTTP headers for downloading file.
+     *
+     * @return the response headers.
+     */
+    private HttpHeaders getDownloadResponseHeaders() {
+        HttpHeaders headers = new HttpHeaders();
 
-					break;
-				default:
-					throw createApplicationException(ActionErrorCode.EXPORT_TYPE_NOT_SUPPORTED).set("type",
-									data.getType());
-			}
-		} catch (Exception ex) {
-			logger.error(ex.getMessage(), ex);
+        headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
+        headers.add("Pragma", "no-cache");
+        headers.add("Expires", "0");
 
-			response.add(this.getError(ex));
-		}
+        return headers;
+    }
 
-		return response;
-	}
+    /**
+     * Creates a new unique filename given an initial filename and stores the given array of bytes.
+     *
+     * @param data the content to write to the file
+     * @return a unique filename.
+     * @throws IOException in case of an I/O error
+     */
+    private String createTemporaryFilename(byte[] data) throws IOException {
+        String filename =  Paths.get(workingDirectory, UUID.randomUUID().toString()).toString();
 
-	/**
-	 * Downloads a file that contains exported user data based on a unique token.
-	 * 
-	 * @param token the token used to identify the file to download.
-	 * @return the file.
-	 */
-	@RequestMapping(value = "/action/data/download/{token}", method = RequestMethod.GET)
-	@Secured({ "ROLE_ADMIN" })
-	public ResponseEntity<InputStreamResource> download(@PathVariable("token") String token) {
-		try {
-			File path = new File(temporaryPath);
+        FileUtils.writeByteArrayToFile(new File(filename),  data);
 
-			File file = new File(path, token + ".zip");
+        return filename;
+    }
 
-			if (file.exists()) {
-				FileSystemResource fileResource = new FileSystemResource(file);
+    /**
+     * Validates a given time zone.
+     *
+     * @param timezone the time zone to validate.
+     * @throws IOException in case the time zone is missing or is not valid.
+     */
+    private void validateTimezone(String timezone) throws ApplicationException {
+        Set<String> zones = DateTimeZone.getAvailableIDs();
 
-				HttpHeaders headers = new HttpHeaders();
-				headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
-				headers.add("Pragma", "no-cache");
-				headers.add("Expires", "0");
+        if (StringUtils.isBlank(timezone)) {
+            throw ApplicationException.create(SharedErrorCode.INVALID_TIME_ZONE, getMessage(SharedErrorCode.INVALID_TIME_ZONE));
+        } else if (!zones.contains(timezone)) {
+            throw ApplicationException.create(SharedErrorCode.TIMEZONE_NOT_FOUND, getMessage(SharedErrorCode.INVALID_TIME_ZONE))
+                                      .set("timezone", timezone);
+        }
+    }
 
-				return ResponseEntity.ok().headers(headers).contentLength(fileResource.contentLength())
-								.contentType(MediaType.parseMediaType("application/zip"))
-								.body(new InputStreamResource(fileResource.getInputStream()));
-			}
-		} catch (Exception ex) {
-			logger.error(String.format("File [%s] was not found.", token), ex);
-		}
-
-		throw new ResourceNotFoundException();
-	}
 }

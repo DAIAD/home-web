@@ -14,7 +14,7 @@ import eu.daiad.web.model.EnumGender;
 
 @Entity(name = "survey")
 @Table(schema = "public", name = "survey")
-public class Survey {
+public class SurveyEntity {
 
     @Id()
     @Column(name = "username")
@@ -68,6 +68,9 @@ public class Survey {
 
     @Column(name = "meter_id")
     private String meter;
+
+    @Column(name = "shower_per_week")
+    private Integer showersPerWeek;
 
     public String getUsername() {
         return username;
@@ -203,6 +206,14 @@ public class Survey {
 
     public void setMeter(String meter) {
         this.meter = meter;
+    }
+
+    public Integer getShowersPerWeek() {
+        return showersPerWeek;
+    }
+
+    public void setShowersPerWeek(Integer showersPerWeek) {
+        this.showersPerWeek = showersPerWeek;
     }
 
 }

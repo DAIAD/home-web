@@ -1,6 +1,6 @@
 package eu.daiad.web.controller.api;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.logging.Log;
@@ -85,7 +85,7 @@ public class DeviceController extends BaseRestController {
                                         .getProperties());
 
                         // Get device configuration
-						ArrayList<DeviceConfigurationCollection> deviceConfigurationCollection = deviceRepository
+                        List<DeviceConfigurationCollection> deviceConfigurationCollection = deviceRepository
 										.getConfiguration(user.getKey(), new UUID[] { newDevice.getKey() });
 
 						// Update response
@@ -196,7 +196,7 @@ public class DeviceController extends BaseRestController {
 		try {
 			AuthenticatedUser user = this.authenticate(query.getCredentials(), EnumRole.ROLE_USER);
 
-			ArrayList<Device> devices = deviceRepository.getUserDevices(user.getKey(), query);
+			List<Device> devices = deviceRepository.getUserDevices(user.getKey(), query);
 
 			DeviceRegistrationQueryResult queryResponse = new DeviceRegistrationQueryResult();
 			queryResponse.setDevices(devices);
@@ -249,8 +249,7 @@ public class DeviceController extends BaseRestController {
 
 			DeviceConfigurationResponse configurationResponse = new DeviceConfigurationResponse();
 
-			ArrayList<DeviceConfigurationCollection> deviceConfigurations = deviceRepository.getConfiguration(
-							user.getKey(), request.getDeviceKey());
+			List<DeviceConfigurationCollection> deviceConfigurations = deviceRepository.getConfiguration(user.getKey(), request.getDeviceKey());
 
 			for (int c = deviceConfigurations.size() - 1; c >= 0; c--) {
 				for (int i = deviceConfigurations.get(c).getConfigurations().size() - 1; i >= 0; i--) {

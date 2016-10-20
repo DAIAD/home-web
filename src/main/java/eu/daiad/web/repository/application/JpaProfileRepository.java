@@ -15,7 +15,6 @@ import javax.persistence.TypedQuery;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
-import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.security.core.Authentication;
@@ -42,10 +41,13 @@ import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.error.ProfileErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.profile.EnumMobileMode;
+import eu.daiad.web.model.profile.EnumUtilityMode;
+import eu.daiad.web.model.profile.EnumWebMode;
 import eu.daiad.web.model.profile.Household;
 import eu.daiad.web.model.profile.HouseholdMember;
 import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.profile.ProfileDeactivateRequest;
+import eu.daiad.web.model.profile.ProfileHistoryEntry;
 import eu.daiad.web.model.profile.ProfileModeChange;
 import eu.daiad.web.model.profile.ProfileModes;
 import eu.daiad.web.model.profile.ProfileModesChanges;
@@ -112,8 +114,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             // Load registered device data
             Account account = userQuery.getSingleResult();
 
-            ArrayList<Device> devices = this.deviceRepository.getUserDevices(account.getKey(),
-                            new DeviceRegistrationQuery());
+            List<Device> devices = this.deviceRepository.getUserDevices(account.getKey(), new DeviceRegistrationQuery());
 
             // Initialize profile
             Profile profile = new Profile();
@@ -133,12 +134,12 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             profile.setLocale(account.getLocale());
             profile.setApplication(application);
             profile.setPhoto(account.getPhoto());
-            
+
             profile.setDailyMeterBudget(account.getProfile().getDailyMeterBudget());
             profile.setDailyAmphiroBudget(account.getProfile().getDailyAmphiroBudget());
 
             profile.setUtility(new UtilityInfo(account.getUtility()));
-            
+
             // Initialize devices
             ArrayList<DeviceRegistration> registrations = new ArrayList<DeviceRegistration>();
             for (Iterator<Device> d = devices.iterator(); d.hasNext();) {
@@ -254,8 +255,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                 }
 
                 // Amphiro b1 flag
-                ArrayList<Device> devices = this.deviceRepository.getUserDevices(account.getKey(),
-                                new DeviceRegistrationQuery());
+                List<Device> devices = deviceRepository.getUserDevices(account.getKey(), new DeviceRegistrationQuery());
                 List<UUID> deviceKeyList = new ArrayList<UUID>();
                 for (Device device : devices) {
                     if (device.getType() == EnumDeviceType.AMPHIRO) {
@@ -265,8 +265,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
                 if (deviceKeyList.size() > 0) {
                     UUID[] deviceKeys = deviceKeyList.toArray(new UUID[0]);
-                    ArrayList<DeviceConfigurationCollection> deviceConfigurations = this.deviceRepository
-                                    .getConfiguration(account.getKey(), deviceKeys);
+                    List<DeviceConfigurationCollection> deviceConfigurations = deviceRepository.getConfiguration(account.getKey(), deviceKeys);
 
                     // Get only the conf of the first amphiro device, since all
                     // amphiro devices ought to have the same conf.
@@ -705,7 +704,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
         account.setAddress(updates.getAddress());
         account.setCountry(updates.getCountry());
         account.setPostalCode(updates.getPostalCode());
-        
+
         account.setPhoto(updates.getPhoto());
         account.setBirthdate(updates.getBirthdate());
         account.setGender(updates.getGender());
@@ -718,7 +717,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             member.setGender(account.getGender());
             member.setPhoto(account.getPhoto());
             if(StringUtils.isBlank(member.getName())) {
-                member.setName(account.getFirstname());    
+                member.setName(account.getFirstname());
             }
             if ((member.getAge() == null) && (account.getBirthdate() != null)) {
                 member.setAge(new Period(account.getBirthdate(), DateTime.now()).getYears());
@@ -851,14 +850,14 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             householdMemberEntity.setAge(member.getAge());
             householdMemberEntity.setPhoto(member.getPhoto());
         }
-        
+
         for (HouseholdMemberEntity householdMemberEntity : account.getHousehold().getMembers()) {
             if(updates.getMember(householdMemberEntity.getIndex()) == null) {
                 householdMemberEntity.setActive(false);
             }
         }
     }
-    
+
     private void setMobileMode(Account account, int mode) {
         UUID newVersion = UUID.randomUUID();
 
@@ -878,5 +877,49 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
         this.entityManager.persist(historyEntry);
     }
-    
+
+    @Override
+    public List<ProfileHistoryEntry> getProfileHistoryByUserKey(UUID userKey) {
+        String sqlString = "select a from account a where a.key = :userKey";
+
+        TypedQuery<Account> query = entityManager.createQuery(sqlString, Account.class).setFirstResult(0)
+                        .setMaxResults(1);
+        query.setParameter("userKey", userKey);
+
+        Account account = query.getSingleResult();
+
+        List<ProfileHistoryEntry> entries = new ArrayList<ProfileHistoryEntry>();
+
+        for (AccountProfileHistoryEntry h : account.getProfile().getHistory()) {
+            ProfileHistoryEntry entry = new ProfileHistoryEntry();
+
+            entry.setAcknowledgedOn(h.getAcknowledgedOn());
+            entry.setEnabledOn(h.getEnabledOn());
+            entry.setId(h.getId());
+            entry.setMobileMode(EnumMobileMode.fromInteger(h.getMobileMode()));
+            entry.setWebMode(EnumWebMode.fromInteger(h.getWebMode()));
+            entry.setUtilityMode(EnumUtilityMode.fromInteger(h.getUtilityMode()));
+            entry.setUpdatedOn(h.getUpdatedOn());
+            entry.setVersion(h.getVersion());
+
+            entries.add(entry);
+        }
+
+        Collections.sort(entries, new Comparator<ProfileHistoryEntry>() {
+
+            @Override
+            public int compare(ProfileHistoryEntry e1, ProfileHistoryEntry e2) {
+                if (e1.getUpdatedOn().getMillis() == e2.getUpdatedOn().getMillis()) {
+                    throw new RuntimeException("History entry updated timestamp must be unique.");
+                } else if (e1.getUpdatedOn().getMillis() < e2.getUpdatedOn().getMillis()) {
+                    return -1;
+                } else {
+                    return 1;
+                }
+            }
+        });
+
+        return entries;
+    }
+
 }

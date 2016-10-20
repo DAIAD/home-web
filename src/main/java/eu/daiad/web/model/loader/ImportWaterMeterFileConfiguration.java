@@ -2,27 +2,53 @@ package eu.daiad.web.model.loader;
 
 import eu.daiad.web.model.spatial.ReferenceSystem;
 
+/**
+ * Configuration for importing smart water meter data to HBASE.
+ */
 public class ImportWaterMeterFileConfiguration {
 
+    /**
+     * The filename from where to read data.
+     */
 	private String filename;
 
+	/**
+	 * Source spatial reference system.
+	 */
 	private ReferenceSystem sourceReferenceSystem = new ReferenceSystem(4326);
 
+	/**
+	 * Target spatial reference system.
+	 */
 	private ReferenceSystem targetReferenceSystem = new ReferenceSystem(4326);
 
+	/**
+	 * The index of the column containing the user name.
+	 */
 	private int usernameCellIndex = 0;
 
+	/**
+	 * The index of the column containing the smart water meter unique serial number.
+	 */
 	private int meterIdCellIndex = 1;
 
+	/**
+	 * The index of the column containing the longitude value.
+	 */
 	private int longitudeCellIndex = 2;
 
+	/**
+	 * The index of the column containing the latitude value.
+	 */
 	private int latitudeCellIndex = 3;
 
+	/**
+	 * Indicates if the first row contains the column names and should be skipped.
+	 */
 	private boolean firstRowHeader = false;
 
 	public ImportWaterMeterFileConfiguration(String filename) {
 		this.filename = filename;
-
 	}
 
 	public String getFilename() {

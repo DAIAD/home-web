@@ -1,5 +1,6 @@
 package eu.daiad.web.repository.application;
 
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -104,24 +105,21 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
             // Get current status if no difference is computed
             WaterMeterMeasurement first = data.getMeasurements().get(0);
             if (first.getDifference() == null) {
-                WaterMeterStatusQueryResult status = this.getStatus(new String[] { serial }, new DateTime(first
-                                .getTimestamp(), DateTimeZone.UTC).getMillis());
+                WaterMeterStatusQueryResult status = this.getStatus(new String[] { serial },
+                                                                    new DateTime(first.getTimestamp(), DateTimeZone.UTC).getMillis());
 
                 if (status.getDevices().size() == 0) {
                     // This is the first measurement for this water meter
                     first.setDifference(0.0f);
                 } else if (first.getTimestamp() == status.getDevices().get(0).getTimestamp()) {
-                    first.setDifference(first.getVolume() - status.getDevices().get(0).getVolume()
-                                    + status.getDevices().get(0).getVariation());
+                    first.setDifference(first.getVolume() - status.getDevices().get(0).getVolume() + status.getDevices().get(0).getVariation());
                 } else {
                     first.setDifference(first.getVolume() - status.getDevices().get(0).getVolume());
                 }
             }
             for (int i = 1, count = data.getMeasurements().size(); i < count; i++) {
                 if (data.getMeasurements().get(i).getDifference() == null) {
-                    data.getMeasurements().get(i).setDifference(
-                                    data.getMeasurements().get(i).getVolume()
-                                                    - data.getMeasurements().get(i - 1).getVolume());
+                    data.getMeasurements().get(i).setDifference(data.getMeasurements().get(i).getVolume() - data.getMeasurements().get(i - 1).getVolume());
                 }
             }
 
@@ -148,7 +146,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
             for (int i = 0; i < data.getMeasurements().size(); i++) {
                 WaterMeterMeasurement m = data.getMeasurements().get(i);
 
-                if ((m.getVolume() <= 0) || (m.getDifference() <= 0)) {
+                if (m.getVolume() < 0) {
                     continue;
                 }
 
@@ -178,6 +176,9 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
 
                 column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("d")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.getDifference()));
+
+                column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("s")));
+                p.addColumn(columnFamily, column, serial.getBytes(StandardCharsets.UTF_8));
 
                 table.put(p);
             }
@@ -212,7 +213,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
             for (int i = 0; i < data.getMeasurements().size(); i++) {
                 WaterMeterMeasurement m = data.getMeasurements().get(i);
 
-                if ((m.getVolume() <= 0) || (m.getDifference() <= 0)) {
+                if (m.getVolume() < 0) {
                     continue;
                 }
 
@@ -248,6 +249,9 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
 
                 column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("d")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.getDifference()));
+
+                column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("s")));
+                p.addColumn(columnFamily, column, serial.getBytes(StandardCharsets.UTF_8));
 
                 table.put(p);
             }
@@ -405,8 +409,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
     }
 
     @Override
-    public WaterMeterMeasurementQueryResult searchMeasurements(String serials[], DateTimeZone timezone,
-                    WaterMeterMeasurementQuery query) {
+    public WaterMeterMeasurementQueryResult searchMeasurements(String serials[], DateTimeZone timezone, WaterMeterMeasurementQuery query) {
         Table table = null;
         ResultScanner scanner = null;
 
@@ -503,7 +506,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
 
                     long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 16, 24));
 
-                    float volume = -1, difference = -1;
+                    Float volume = null, difference = null;
                     long timestamp = 0;
 
                     for (Entry<byte[], byte[]> entry : map.entrySet()) {
@@ -522,18 +525,13 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                                 difference = Bytes.toFloat(entry.getValue());
                             }
 
-                            if ((volume > 0) && (difference >= 0)) {
+                            if ((volume != null) && (difference != null)) {
                                 series.add(timestamp, volume, difference, timezone);
-                                volume = -1;
-                                difference = -1;
+
+                                volume = null;
+                                difference = null;
                             }
                         }
-                    }
-
-                    if ((volume > 0) && (difference >= 0)) {
-                        series.add(timestamp, volume, difference, timezone);
-                        volume = 0;
-                        difference = 0;
                     }
                 }
 

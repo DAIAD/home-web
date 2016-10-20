@@ -214,7 +214,7 @@ public class UserController extends BaseController {
             response.setGroups(userGroupRepository.getGroupsByMember(key));
             response.setFavorite(favouriteRepository.isUserFavorite(user.getKey(), response.getUser().getId()));
 
-            ArrayList<Device> amphiroDevices = this.getAmphiroDevices(key);
+            List<Device> amphiroDevices = getAmphiroDevices(key);
 
             response.setConfigurations(new ArrayList<DeviceAmphiroConfiguration>());
             for (Device d : amphiroDevices) {
@@ -262,14 +262,14 @@ public class UserController extends BaseController {
         return result.getDevices();
     }
 
-    private ArrayList<Device> getAmphiroDevices(UUID userkey) {
+    private List<Device> getAmphiroDevices(UUID userkey) {
         DeviceRegistrationQuery deviceQuery = new DeviceRegistrationQuery();
         deviceQuery.setType(EnumDeviceType.AMPHIRO);
 
-        return this.deviceRepository.getUserDevices(userkey, deviceQuery);
+        return deviceRepository.getUserDevices(userkey, deviceQuery);
     }
 
-    private ArrayList<AmphiroSessionCollection> getDevices(UUID userkey, ArrayList<Device> devices, String timezone) {
+    private List<AmphiroSessionCollection> getDevices(UUID userkey, List<Device> devices, String timezone) {
         List<String> names = new ArrayList<String>();
         List<UUID> deviceKeys = new ArrayList<UUID>();
 

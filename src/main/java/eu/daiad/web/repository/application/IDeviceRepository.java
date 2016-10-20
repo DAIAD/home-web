@@ -1,6 +1,5 @@
 package eu.daiad.web.repository.application;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,43 +19,39 @@ import eu.daiad.web.model.error.ApplicationException;
 
 public interface IDeviceRepository {
 
-    abstract void removeDevice(UUID deviceKey);
+    void removeDevice(UUID deviceKey);
 
-    abstract AmphiroDevice createAmphiroDevice(UUID userKey, String name, String macAddress, String aesKey,
-                    ArrayList<KeyValuePair> properties) throws ApplicationException;
+    AmphiroDevice createAmphiroDevice(UUID userKey, String name, String macAddress, String aesKey, List<KeyValuePair> properties) throws ApplicationException;
 
     List<DeviceAmphiroConfigurationDefault> getAmphiroDefaultConfigurations() throws ApplicationException;
 
-    abstract UUID createMeterDevice(String username, String serial, ArrayList<KeyValuePair> properties,
-                    Geometry location) throws ApplicationException;
+    UUID createMeterDevice(String username, String serial, List<KeyValuePair> properties, Geometry location) throws ApplicationException;
 
-    abstract void updateMeterLocation(String username, String serial, Geometry location) throws ApplicationException;
+    void updateMeterLocation(String username, String serial, Geometry location) throws ApplicationException;
 
-    abstract Device getUserDeviceByKey(UUID userKey, UUID deviceKey) throws ApplicationException;
+    Device getUserDeviceByKey(UUID userKey, UUID deviceKey) throws ApplicationException;
 
-    abstract WaterMeterDevice getUserWaterMeterByKey(UUID userKey, UUID deviceKey);
+    WaterMeterDevice getUserWaterMeterByKey(UUID userKey, UUID deviceKey);
 
-    abstract Device getDeviceByKey(UUID deviceKey) throws ApplicationException;
+    Device getDeviceByKey(UUID deviceKey) throws ApplicationException;
 
-    abstract Device getUserAmphiroDeviceByMacAddress(UUID userKey, String macAddress) throws ApplicationException;
+    Device getUserAmphiroDeviceByMacAddress(UUID userKey, String macAddress) throws ApplicationException;
 
-    abstract Device getUserWaterMeterDeviceBySerial(UUID userKey, String serial) throws ApplicationException;
+    Device getUserWaterMeterDeviceBySerial(UUID userKey, String serial) throws ApplicationException;
 
-    abstract Device getWaterMeterDeviceBySerial(String serial) throws ApplicationException;
+    Device getWaterMeterDeviceBySerial(String serial) throws ApplicationException;
 
-    abstract ArrayList<Device> getUserDevices(UUID userKey, DeviceRegistrationQuery query) throws ApplicationException;
+    List<Device> getUserDevices(UUID userKey, DeviceRegistrationQuery query) throws ApplicationException;
 
-    abstract void shareDevice(UUID ownerID, String assigneeUsername, UUID deviceKey, boolean shared)
-                    throws ApplicationException;
+    void shareDevice(UUID ownerID, String assigneeUsername, UUID deviceKey, boolean shared) throws ApplicationException;
 
-    abstract ArrayList<DeviceConfigurationCollection> getConfiguration(UUID userKey, UUID deviceKeys[])
-                    throws ApplicationException;
+    List<DeviceConfigurationCollection> getConfiguration(UUID userKey, UUID deviceKeys[]) throws ApplicationException;
 
-    abstract void notifyConfiguration(UUID userKey, UUID deviceKey, UUID version, DateTime updatedOn)
-                    throws ApplicationException;
+    void notifyConfiguration(UUID userKey, UUID deviceKey, UUID version, DateTime updatedOn) throws ApplicationException;
 
-    abstract void setLastDataUploadDate(UUID userKey, UUID deviceKey, DateTime when, boolean success);
+    void setLastDataUploadDate(UUID userKey, UUID deviceKey, DateTime when, boolean success);
 
-    abstract void updateDevice(UUID userKey, DeviceUpdateRequest request);
+    void updateDevice(UUID userKey, DeviceUpdateRequest request);
 
+    List<eu.daiad.web.model.device.DeviceAmphiroConfiguration> getDeviceConfigurationHistory(UUID deviceKey);
 }

@@ -31,7 +31,7 @@ var AdminAPI = {
 
   exportUserData : function(userKey) {
     return api.json('/action/data/export', {
-      type : 'USER_DATA',
+      type : 'USER',
       userKey : userKey,
       deviceKeys : [],
       startDateTime : null,

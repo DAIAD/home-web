@@ -16,173 +16,184 @@ import org.joda.time.DateTime;
 @Table(schema = "public", name = "upload")
 public class Upload {
 
-	@Id()
-	@Column(name = "id")
-	@SequenceGenerator(sequenceName = "upload_id_seq", name = "upload_id_seq", allocationSize = 1, initialValue = 1)
-	@GeneratedValue(generator = "upload_id_seq", strategy = GenerationType.SEQUENCE)
-	private long id;
+    @Id()
+    @Column(name = "id")
+    @SequenceGenerator(sequenceName = "upload_id_seq", name = "upload_id_seq", allocationSize = 1, initialValue = 1)
+    @GeneratedValue(generator = "upload_id_seq", strategy = GenerationType.SEQUENCE)
+    private long id;
 
-	@Basic
-	private String source;
+    @Basic
+    private String source;
 
-	@Column(name = "remote_folder")
-	private String remoteFolder;
+    @Column(name = "remote_folder")
+    private String remoteFolder;
 
-	@Column(name = "local_folder")
-	private String localFolder;
+    @Column(name = "local_folder")
+    private String localFolder;
 
-	@Column(name = "remote_filename")
-	private String remoteFilename;
+    @Column(name = "remote_filename")
+    private String remoteFilename;
 
-	@Column(name = "local_filename")
-	private String localFilename;
+    @Column(name = "local_filename")
+    private String localFilename;
 
-	@Column(name = "file_size")
-	private long size;
+    @Column(name = "file_size")
+    private long size;
 
-	@Column(name = "row_count")
-	long totalRows = 0;
+    @Column(name = "row_count")
+    long totalRows = 0;
 
-	@Column(name = "row_processed")
-	long proccessedRows = 0;
+    @Column(name = "row_processed")
+    long proccessedRows = 0;
 
-	@Column(name = "row_skipped")
-	long skippedRows = 0;
+    @Column(name = "row_skipped")
+    long skippedRows = 0;
 
-	@Column(name = "date_modified")
-	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-	private DateTime modifiedOn;
+    @Column(name = "row_negative_difference")
+    long negativeDifferenceRows = 0;
 
-	@Column(name = "upload_start_on")
-	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-	private DateTime uploadStartedOn;
+    @Column(name = "date_modified")
+    @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+    private DateTime modifiedOn;
 
-	@Column(name = "upload_end_on")
-	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-	private DateTime uploadCompletedOn;
+    @Column(name = "upload_start_on")
+    @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+    private DateTime uploadStartedOn;
 
-	@Column(name = "process_start_on")
-	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-	private DateTime processingStartedOn;
+    @Column(name = "upload_end_on")
+    @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+    private DateTime uploadCompletedOn;
 
-	@Column(name = "process_end_on")
-	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-	private DateTime processingCompletedOn;
+    @Column(name = "process_start_on")
+    @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+    private DateTime processingStartedOn;
 
-	public String getRemoteFolder() {
-		return remoteFolder;
-	}
+    @Column(name = "process_end_on")
+    @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+    private DateTime processingCompletedOn;
 
-	public void setRemoteFolder(String remoteFolder) {
-		this.remoteFolder = remoteFolder;
-	}
+    public String getRemoteFolder() {
+        return remoteFolder;
+    }
 
-	public String getLocalFolder() {
-		return localFolder;
-	}
+    public void setRemoteFolder(String remoteFolder) {
+        this.remoteFolder = remoteFolder;
+    }
 
-	public void setLocalFolder(String localFolder) {
-		this.localFolder = localFolder;
-	}
+    public String getLocalFolder() {
+        return localFolder;
+    }
 
-	public String getRemoteFilename() {
-		return remoteFilename;
-	}
+    public void setLocalFolder(String localFolder) {
+        this.localFolder = localFolder;
+    }
 
-	public void setRemoteFilename(String remoteFilename) {
-		this.remoteFilename = remoteFilename;
-	}
+    public String getRemoteFilename() {
+        return remoteFilename;
+    }
 
-	public String getLocalFilename() {
-		return localFilename;
-	}
+    public void setRemoteFilename(String remoteFilename) {
+        this.remoteFilename = remoteFilename;
+    }
 
-	public void setLocalFilename(String localFilename) {
-		this.localFilename = localFilename;
-	}
+    public String getLocalFilename() {
+        return localFilename;
+    }
 
-	public long getSize() {
-		return size;
-	}
+    public void setLocalFilename(String localFilename) {
+        this.localFilename = localFilename;
+    }
 
-	public void setSize(long size) {
-		this.size = size;
-	}
+    public long getSize() {
+        return size;
+    }
 
-	public DateTime getModifiedOn() {
-		return modifiedOn;
-	}
+    public void setSize(long size) {
+        this.size = size;
+    }
 
-	public void setModifiedOn(DateTime modifiedOn) {
-		this.modifiedOn = modifiedOn;
-	}
+    public DateTime getModifiedOn() {
+        return modifiedOn;
+    }
 
-	public DateTime getUploadStartedOn() {
-		return uploadStartedOn;
-	}
+    public void setModifiedOn(DateTime modifiedOn) {
+        this.modifiedOn = modifiedOn;
+    }
 
-	public void setUploadStartedOn(DateTime uploadStartedOn) {
-		this.uploadStartedOn = uploadStartedOn;
-	}
+    public DateTime getUploadStartedOn() {
+        return uploadStartedOn;
+    }
 
-	public DateTime getUploadCompletedOn() {
-		return uploadCompletedOn;
-	}
+    public void setUploadStartedOn(DateTime uploadStartedOn) {
+        this.uploadStartedOn = uploadStartedOn;
+    }
 
-	public void setUploadCompletedOn(DateTime uploadCompletedOn) {
-		this.uploadCompletedOn = uploadCompletedOn;
-	}
+    public DateTime getUploadCompletedOn() {
+        return uploadCompletedOn;
+    }
 
-	public DateTime getProcessingStartedOn() {
-		return processingStartedOn;
-	}
+    public void setUploadCompletedOn(DateTime uploadCompletedOn) {
+        this.uploadCompletedOn = uploadCompletedOn;
+    }
 
-	public void setProcessingStartedOn(DateTime processingStartedOn) {
-		this.processingStartedOn = processingStartedOn;
-	}
+    public DateTime getProcessingStartedOn() {
+        return processingStartedOn;
+    }
 
-	public DateTime getProcessingCompletedOn() {
-		return processingCompletedOn;
-	}
+    public void setProcessingStartedOn(DateTime processingStartedOn) {
+        this.processingStartedOn = processingStartedOn;
+    }
 
-	public void setProcessingCompletedOn(DateTime processingCompletedOn) {
-		this.processingCompletedOn = processingCompletedOn;
-	}
+    public DateTime getProcessingCompletedOn() {
+        return processingCompletedOn;
+    }
 
-	public long getId() {
-		return id;
-	}
+    public void setProcessingCompletedOn(DateTime processingCompletedOn) {
+        this.processingCompletedOn = processingCompletedOn;
+    }
 
-	public String getSource() {
-		return source;
-	}
+    public long getId() {
+        return id;
+    }
 
-	public void setSource(String source) {
-		this.source = source;
-	}
+    public String getSource() {
+        return source;
+    }
 
-	public long getProccessedRows() {
-		return proccessedRows;
-	}
+    public void setSource(String source) {
+        this.source = source;
+    }
 
-	public void setProccessedRows(long proccessedRows) {
-		this.proccessedRows = proccessedRows;
-	}
+    public long getProccessedRows() {
+        return proccessedRows;
+    }
 
-	public long getSkippedRows() {
-		return skippedRows;
-	}
+    public void setProccessedRows(long proccessedRows) {
+        this.proccessedRows = proccessedRows;
+    }
 
-	public void setSkippedRows(long skippedRows) {
-		this.skippedRows = skippedRows;
-	}
+    public long getSkippedRows() {
+        return skippedRows;
+    }
 
-	public long getTotalRows() {
-		return totalRows;
-	}
+    public void setSkippedRows(long skippedRows) {
+        this.skippedRows = skippedRows;
+    }
 
-	public void setTotalRows(long totalRows) {
-		this.totalRows = totalRows;
-	}
+    public long getTotalRows() {
+        return totalRows;
+    }
+
+    public void setTotalRows(long totalRows) {
+        this.totalRows = totalRows;
+    }
+
+    public long getNegativeDifferenceRows() {
+        return negativeDifferenceRows;
+    }
+
+    public void setNegativeDifferenceRows(long negativeDifferenceRows) {
+        this.negativeDifferenceRows = negativeDifferenceRows;
+    }
 
 }
