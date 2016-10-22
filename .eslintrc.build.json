@@ -1,0 +1,30 @@
+{
+  "parser": "babel-eslint",
+
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "script",
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "experimentalObjectRestSpread": true
+  },
+
+  "env": {
+    "browser": true,
+    "node": true
+  },
+
+  "plugins" : ["eslint-plugin-react"],
+    
+  "extends": [
+    "eslint:all",
+    "eslint:recommended",
+    "plugin:react/recommended"
+  ],
+
+  "rules": {
+    "indent": ["error", 2],
+    "no-cond-assign": ["error", "always"]
+  }
+}

@@ -1,7 +1,5 @@
 module.exports = function(grunt) {
 
-  //require('time-grunt')(grunt);
-
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     clean: {
@@ -44,47 +42,58 @@ module.exports = function(grunt) {
       }
     },
     jsdoc: {
-          home: {
-            src: [
-              'src/main/resources/public/assets/js/src/home/**/*.js', 
-              'src/main/resources/public/assets/js/src/home/README.md', 
-              '!src/main/resources/public/assets/js/src/home/i18n/**'
-            ],
-            options: {
-              exclude: ['i18n'], 
-              destination: 'jsdoc/home'
-            }
-          }
-        },
-    jshint: {
-      options: {
-        ignores: [
-          // The following are ignored due to problems with ES6 syntax
-          'src/main/resources/public/assets/js/src/utility/service/query.js', // ES6 spread operator
-          'src/main/resources/public/assets/js/src/utility/components/reports-measurements/pane.js', // ES6 spread operator
-          'src/main/resources/public/assets/js/src/utility/components/reports-measurements/chart.js', // ES6 spread operator
-          'src/main/resources/public/assets/js/src/utility/components/reports-measurements/sliding-report.js', // ES6 spread operator
-          'src/main/resources/public/assets/js/src/utility/components/reports-measurements/unit-reports.js', // https://github.com/jshint/jshint/issues/1925
-          'src/main/resources/public/assets/js/src/utility/components/reports-measurements/overview.js', // ES6 spread operator
+      home: {
+        src: [
+          'src/main/resources/public/assets/js/src/home/**/*.js',
+          'src/main/resources/public/assets/js/src/home/README.md',
+          '!src/main/resources/public/assets/js/src/home/i18n/**'
         ],
-        //unused: true,
-        eqnull: true,
-        additionalSuffixes: ['.js'],
-        reporter: require('jshint-stylish'),
-        esnext: true,
-        //force: true
+        options: {
+          exclude: ['i18n'],
+          destination: 'jsdoc/home'
+        }
+      }
+    },
+    eslint: {
+      'utility-build': {
+        src: [
+          'src/main/resources/public/assets/js/src/utility/**/*.js',
+          '!src/main/resources/public/assets/js/src/utility/i18n/**/*.js'
+        ],
+        options: {
+          configFile: '.eslintrc.build.json'
+        },
       },
-      utility: [
-        'src/main/resources/public/assets/js/src/utility/**/*.js',
-        '!src/main/resources/public/assets/js/src/utility/i18n/**/*.js'
-      ],
-      home: [
-        'src/main/resources/public/assets/js/src/home/**/*.js',
-        '!src/main/resources/public/assets/js/src/home/i18n/**/*.js'
-      ]
+      'home-build': {
+        src: [
+          'src/main/resources/public/assets/js/src/home/**/*.js',
+          '!src/main/resources/public/assets/js/src/home/i18n/**/*.js'
+        ],
+        options: {
+          configFile: '.eslintrc.build.json'
+        }
+      },
+      'utility-dev': {
+        src: [
+          'src/main/resources/public/assets/js/src/utility/**/*.js',
+          '!src/main/resources/public/assets/js/src/utility/i18n/**/*.js'
+        ],
+        options: {
+          configFile: '.eslintrc.dev.json'
+        },
+      },
+      'home-dev': {
+        src: [
+          'src/main/resources/public/assets/js/src/home/**/*.js',
+          '!src/main/resources/public/assets/js/src/home/i18n/**/*.js'
+        ],
+        options: {
+          configFile: '.eslintrc.dev.json'
+        }
+      }
     },
     browserify: {
-      options: { 
+      options: {
         watch: true,
         keepAlive: false,
         browserifyOptions: {
@@ -94,6 +103,7 @@ module.exports = function(grunt) {
           'echarts'
         ],
         transform: [
+          // Configuration options for babel are in file .babelrc
           ["babelify"],
           ["envify"],
           ["browserify-shim"]
@@ -183,7 +193,7 @@ module.exports = function(grunt) {
           'src/main/resources/public/assets/js/build/vendor/util.js': [],
         },
       },
-     'vendor-react': {
+      'vendor-react': {
         options: {
           require: [
             'react',
@@ -325,7 +335,6 @@ module.exports = function(grunt) {
         dest: 'src/main/resources/public/assets/js/build/home/bundle.min.js',
       },
     },
-
     sync: {
       debug: {
         files: [{
@@ -465,7 +474,7 @@ module.exports = function(grunt) {
           'src/main/resources/public/assets/js/src/utility/**/*.js',
         ],
         tasks: [
-          'jshint:utility',
+          'eslint-dev:utility',
           'sync:utility',
           'sync:debug',
         ],
@@ -485,7 +494,7 @@ module.exports = function(grunt) {
           'src/main/resources/public/assets/js/src/home/**/*.js'
         ],
         tasks: [
-          'jshint:home',
+          'eslint-dev:home',
           'sync:home',
           'sync:debug',
         ],
@@ -500,7 +509,6 @@ module.exports = function(grunt) {
 
   // Load the plugins
   grunt.loadNpmTasks('grunt-contrib-clean');
-  grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-concat');
@@ -508,22 +516,22 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-apidoc');
   grunt.loadNpmTasks('grunt-jsdoc');
-  grunt.loadNpmTasks('grunt-jsxhint');
+  grunt.loadNpmTasks('grunt-eslint');
 
   // Default task(s).
   grunt.registerTask('build', [
-    'clean', 
-    'jshint', 
-    'browserify', 'uglify', 'concat', 
-    'docs', 
+    'clean',
+    'eslint:utility-build', 'eslint:home-build',
+    'browserify', 'uglify', 'concat',
+    'docs',
     'sync:home', 'sync:utility', 'sync:home'
   ]);
 
   grunt.registerTask('develop', [
-    'clean', 
-    'jshint', 
-    'browserify', 'uglify:vendor-leaflet', 'uglify:vendor-jquery', 
-    'sync:home', 'sync:utility', 'sync:debug', 
+    'clean',
+    'eslint:utility-dev', 'eslint:home-dev',
+    'browserify', 'uglify:vendor-leaflet', 'uglify:vendor-jquery',
+    'sync:home', 'sync:utility', 'sync:debug',
     'watch'
   ]);
 

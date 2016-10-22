@@ -40,7 +40,7 @@
 		<geotools.version>14.2</geotools.version>
 		<hibernate-spatial.version>5.1.0.Final</hibernate-spatial.version>
 		<apache.poi.version>3.14</apache.poi.version>
-        <apache.csv.version>1.1</apache.csv.version>
+		<apache.csv.version>1.1</apache.csv.version>
 		<org.jadira.usertype.version>5.0.0.GA</org.jadira.usertype.version>
 
 		<dependency.locations.enabled>false</dependency.locations.enabled>
@@ -129,9 +129,9 @@
 		</dependency>
 
 		<dependency>
-		    <groupId>org.springframework.ws</groupId>
-		    <artifactId>spring-xml</artifactId>
-		    <version>2.0.2.RELEASE</version>
+			<groupId>org.springframework.ws</groupId>
+			<artifactId>spring-xml</artifactId>
+			<version>2.0.2.RELEASE</version>
 		</dependency>
 
 		<dependency>
@@ -362,11 +362,11 @@
 			<version>${apache.poi.version}</version>
 		</dependency>
 
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-csv</artifactId>
-            <version>${apache.csv.version}</version>
-        </dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-csv</artifactId>
+			<version>${apache.csv.version}</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.flywaydb</groupId>
@@ -375,20 +375,20 @@
 		</dependency>
 
         <!--
-		<dependency>
-			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-clients_2.10</artifactId>
-			<version>1.0.3</version>
-		</dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-clients_2.10</artifactId>
+            <version>1.0.3</version>
+        </dependency>
         -->
 
         <!--
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-tomcat</artifactId>
-			<scope>provided</scope>
-		</dependency>
-		-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-tomcat</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        -->
 
 	</dependencies>
 
@@ -411,7 +411,7 @@
 			<plugin>
 				<groupId>com.github.eirslett</groupId>
 				<artifactId>frontend-maven-plugin</artifactId>
-				<version>0.0.28</version>
+				<version>1.1</version>
 				<executions>
 					<execution>
 						<id>node-isntall</id>
@@ -419,8 +419,8 @@
 							<goal>install-node-and-npm</goal>
 						</goals>
 						<configuration>
-							<nodeVersion>v0.12.9</nodeVersion>
-							<npmVersion>3.8.0</npmVersion>
+							<nodeVersion>v4.6.0</nodeVersion>
+							<npmVersion>3.10.9</npmVersion>
 						</configuration>
 					</execution>
 					<execution>
@@ -448,8 +448,8 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-site-plugin</artifactId>
 				<configuration>
-                    <outputDirectory>${basedir}/src/main/resources/public/docs/site/</outputDirectory>
-                </configuration>
+					<outputDirectory>${basedir}/src/main/resources/public/docs/site/</outputDirectory>
+				</configuration>
 			</plugin>
 
 		</plugins>
