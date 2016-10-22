@@ -474,7 +474,7 @@ module.exports = function(grunt) {
           'src/main/resources/public/assets/js/src/utility/**/*.js',
         ],
         tasks: [
-          'eslint-dev:utility',
+          'eslint:utility-dev',
           'sync:utility',
           'sync:debug',
         ],
@@ -494,7 +494,7 @@ module.exports = function(grunt) {
           'src/main/resources/public/assets/js/src/home/**/*.js'
         ],
         tasks: [
-          'eslint-dev:home',
+          'eslint:home-dev',
           'sync:home',
           'sync:debug',
         ],
