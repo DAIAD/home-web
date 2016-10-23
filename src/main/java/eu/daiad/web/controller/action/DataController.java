@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,7 +37,12 @@ import eu.daiad.web.model.error.QueryErrorCode;
 import eu.daiad.web.model.error.ResourceNotFoundException;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
+import eu.daiad.web.model.export.DataExportFileQuery;
+import eu.daiad.web.model.export.DataExportFileQueryResult;
+import eu.daiad.web.model.export.DataExportFileRequest;
+import eu.daiad.web.model.export.DataExportFileResponse;
 import eu.daiad.web.model.export.DownloadFileResponse;
+import eu.daiad.web.model.export.ExportFile;
 import eu.daiad.web.model.export.UserDataExportRequest;
 import eu.daiad.web.model.loader.EnumUploadFileType;
 import eu.daiad.web.model.loader.ImportWaterMeterFileConfiguration;
@@ -49,6 +55,7 @@ import eu.daiad.web.model.query.ForecastQueryRequest;
 import eu.daiad.web.model.query.StoreDataQueryRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.spatial.ReferenceSystem;
+import eu.daiad.web.repository.application.IExportRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.IFileDataLoaderService;
@@ -107,6 +114,12 @@ public class DataController extends BaseController {
      */
     @Autowired
     private IDataService dataService;
+
+    /**
+     * Repository for accessing exported data files.
+     */
+    @Autowired
+    private IExportRepository exportRepository;
 
     /**
      * Uploads a data file to the server and perform an action on it e.g. import smart water meter data, assign
@@ -421,7 +434,7 @@ public class DataController extends BaseController {
                 FileSystemResource fileResource = new FileSystemResource(file);
 
                 return ResponseEntity.ok()
-                                     .headers(getDownloadResponseHeaders())
+                                     .headers(getDownloadResponseHeaders("user-export-data.zip"))
                                      .contentLength(fileResource.contentLength())
                                      .contentType(APPLICATION_ZIP)
                                      .body(new InputStreamResource(fileResource.getInputStream()));
@@ -436,14 +449,19 @@ public class DataController extends BaseController {
     /**
      * Create HTTP headers for downloading file.
      *
+     * @param filename optional file name
      * @return the response headers.
      */
-    private HttpHeaders getDownloadResponseHeaders() {
+    private HttpHeaders getDownloadResponseHeaders(String filename) {
         HttpHeaders headers = new HttpHeaders();
 
         headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
         headers.add("Pragma", "no-cache");
         headers.add("Expires", "0");
+
+        if(!StringUtils.isBlank(filename)) {
+            headers.add("content-disposition", "attachment; filename=\"" + filename +"\"");
+        }
 
         return headers;
     }
@@ -480,4 +498,78 @@ public class DataController extends BaseController {
         }
     }
 
+    /**
+     * Returns all the exported data files. The operation supports pagination.
+     *
+     * @param user the currently authenticated user.
+     * @param data the data query.
+     * @return the response with the exported data files.
+     */
+    @RequestMapping(value = "/action/export/files", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @ResponseBody
+    @Secured({ "ROLE_ADMIN" })
+    public RestResponse getExportDataFiles(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody DataExportFileRequest data) {
+        try {
+            // Initialize and configure query
+            DataExportFileQuery query = data.getQuery();
+            if (query == null) {
+                query = new DataExportFileQuery();
+            }
+            query.setUtilityId(user.getUtilityId());
+            query.setDays(30);
+
+            if (query.getIndex() < 0) {
+                query.setIndex(0);
+            }
+            if (query.getSize() < 1) {
+                query.setSize(10);
+            }
+
+            DataExportFileQueryResult result = exportRepository.getValidExportFiles(query);
+
+            DataExportFileResponse response = new DataExportFileResponse();
+            response.setIndex(query.getIndex());
+            response.setSize(query.getSize());
+            response.setFiles(result.getFiles());
+            response.setTotal(result.getTotal());
+
+            return response;
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            return new RestResponse(getError(ex));
+        }
+    }
+
+    /**
+     * Downloads a file that contains exported user data based on a unique token.
+     *
+     * @param token the token used to identify the file to download.
+     * @return the file.
+     */
+    @RequestMapping(value = "/action/export/download/{token}", method = RequestMethod.GET)
+    @Secured({ "ROLE_ADMIN" })
+    public ResponseEntity<InputStreamResource> downloadExportedDataFile(@PathVariable("token") String token) {
+        try {
+            UUID key = UUID.fromString(token);
+
+            ExportFile exportFile = exportRepository.getExportFileByKey(key);
+
+            File file = new File(FilenameUtils.concat(exportFile.getPath(), exportFile.getFilename()));
+
+            if(file.exists()) {
+                FileSystemResource fileResource = new FileSystemResource(file);
+
+                return ResponseEntity.ok()
+                                     .headers(getDownloadResponseHeaders(exportFile.getFilename()))
+                                     .contentLength(fileResource.contentLength())
+                                     .contentType(APPLICATION_ZIP)
+                                     .body(new InputStreamResource(fileResource.getInputStream()));
+            }
+        } catch (Exception ex) {
+            logger.error(String.format("File [%s] was not found.", token), ex);
+        }
+
+        throw new ResourceNotFoundException();
+    }
 }

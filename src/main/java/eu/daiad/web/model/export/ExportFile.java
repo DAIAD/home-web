@@ -4,6 +4,9 @@ import java.util.UUID;
 
 import org.joda.time.DateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Represents an export file created by {@link eu.daiad.web.service.etl.IDataExportService}
  */
@@ -17,16 +20,19 @@ public class ExportFile {
     /**
      * Utility id from which data was exported.
      */
+    @JsonIgnore
     private int utilityId;
 
     /**
      * Utility name from which data was exported.
      */
+    @JsonProperty("utility")
     private String utilityName;
 
     /**
      * Path where the exported file is stored.
      */
+    @JsonIgnore
     private String path;
 
     /**

@@ -1,9 +1,10 @@
 package eu.daiad.web.repository.application;
 
-import java.util.List;
 import java.util.UUID;
 
 import eu.daiad.web.domain.admin.ExportFileEntity;
+import eu.daiad.web.model.export.DataExportFileQuery;
+import eu.daiad.web.model.export.DataExportFileQueryResult;
 import eu.daiad.web.model.export.ExportFile;
 
 /**
@@ -37,28 +38,26 @@ public interface IExportRepository {
     /**
      * Get all exported files for a specific utility.
      * 
-     * @param utilityId the utility id.
+     * @param query query that selects exported data files.
      * @return a list of the exported data files.
      */
-    List<ExportFile> getAllExportFilesByUtilityId(int utilityId);
+    DataExportFileQueryResult getAllExportFiles(DataExportFileQuery query);
     
     /**
      * Get all valid exported files for a specific utility.
      * 
-     * @param utilityId the utility id.
-     * @param days the number of days after which a file is marked as expired.
+     * @param query query that selects exported data files.
      * @return a list of valid exported data files.
      */
-    List<ExportFile> getValidExportFilesByUtilityId(int utilityId, int days);
+    DataExportFileQueryResult getValidExportFiles(DataExportFileQuery query);
 
     /**
      * Get all expired exported files for a specific utility.
      * 
-     * @param utilityId the utility id.
-     * @param days the number of days after which a file is marked as expired.
+     * @param query query that selects exported data files.
      * @return a list of expired exported data files.
      */
-    List<ExportFile> getExpiredExportFilesByUtilityId(int utilityId, int days);
+    DataExportFileQueryResult getExpiredExportFiles(DataExportFileQuery query);
     
     /**
      * Deletes all expired exported files for a specific utility.

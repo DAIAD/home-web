@@ -16,6 +16,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.domain.admin.ExportFileEntity;
+import eu.daiad.web.model.export.DataExportFileQuery;
+import eu.daiad.web.model.export.DataExportFileQueryResult;
 import eu.daiad.web.model.export.ExportFile;
 
 /**
@@ -33,7 +35,7 @@ public class JpaExportRepository implements IExportRepository {
 
     /**
      * Store an instance of {@link ExportFileEntity}.
-     * 
+     *
      * @param entity the entity to store.
      */
     @Override
@@ -44,7 +46,7 @@ public class JpaExportRepository implements IExportRepository {
 
     /**
      * Get an exported file with the given id.
-     * 
+     *
      * @param id of the file.
      * @return the exported file.
      */
@@ -62,13 +64,13 @@ public class JpaExportRepository implements IExportRepository {
         if(entities.isEmpty()) {
             return null;
         }
-        
+
         return exportEntityToObject(entities.get(0));
     }
-    
+
     /**
      * Get an exported file with the given key.
-     * 
+     *
      * @param key of the file.
      * @return the exported file.
      */
@@ -86,68 +88,120 @@ public class JpaExportRepository implements IExportRepository {
         if(entities.isEmpty()) {
             return null;
         }
-        
-        return exportEntityToObject(entities.get(0));  
+
+        return exportEntityToObject(entities.get(0));
     }
-    
+
     /**
      * Get all exported files for a specific utility.
-     * 
-     * @param utilityId the utility id.
+     *
+     * @param query query that selects exported data files.
      * @return a list of the exported data files.
      */
     @Override
-    public List<ExportFile> getAllExportFilesByUtilityId(int utilityId) {
-        String queryString = "select e from export e where e.utilityId = :utilityId";
+    public DataExportFileQueryResult getAllExportFiles(DataExportFileQuery query) {
+        int total;
+        List<ExportFile> files;
 
-        TypedQuery<ExportFileEntity> query = entityManager.createQuery(queryString, ExportFileEntity.class);
+        // Count
+        String qlStringCount = "select count(e.id) from export e where e.utilityId = :utilityId";
 
-        query.setParameter("utilityId", utilityId);
+        TypedQuery<Number> countQuery = entityManager.createQuery(qlStringCount, Number.class);
+        countQuery.setParameter("utilityId", query.getUtilityId());
 
-        return exportEntityListToObjectList(query.getResultList());
+        total = ((Number) countQuery.getSingleResult()).intValue();
+
+        // Select
+        String qlStringSelect = "select e from export e where e.utilityId = :utilityId";
+
+        TypedQuery<ExportFileEntity> selectQuery = entityManager.createQuery(qlStringSelect, ExportFileEntity.class);
+        selectQuery.setParameter("utilityId", query.getUtilityId());
+
+        selectQuery.setFirstResult(query.getIndex() * query.getSize());
+        selectQuery.setMaxResults(query.getSize());
+
+        files = exportEntityListToObjectList(selectQuery.getResultList());
+
+        // Compose response
+        return new DataExportFileQueryResult(total, files);
+
     }
-    
+
     /**
      * Get all valid exported files for a specific utility.
-     * 
-     * @param utilityId the utility id.
-     * @param days the number of days after which a file is marked as expired.
+     *
+     * @param query query that selects exported data files.
      * @return a list of valid exported data files.
      */
     @Override
-    public List<ExportFile> getValidExportFilesByUtilityId(int utilityId, int days) {
-        String queryString = "select e from export e where e.utilityId = :utilityId and e.createdOn >= :createdOn";
+    public DataExportFileQueryResult getValidExportFiles(DataExportFileQuery query) {
+        int total;
+        List<ExportFile> files;
 
-        TypedQuery<ExportFileEntity> query = entityManager.createQuery(queryString, ExportFileEntity.class);
+        // Count
+        String qlStringCount = "select count(e.id) from export e where e.utilityId = :utilityId and e.createdOn >= :createdOn";
 
-        query.setParameter("utilityId", utilityId);
-        query.setParameter("createdOn", new DateTime().minusDays(days));
+        TypedQuery<Number> countQuery = entityManager.createQuery(qlStringCount, Number.class);
+        countQuery.setParameter("utilityId", query.getUtilityId());
+        countQuery.setParameter("createdOn", new DateTime().minusDays(query.getDays()));
 
-        return exportEntityListToObjectList( query.getResultList());
+        total = ((Number) countQuery.getSingleResult()).intValue();
+
+        // Select
+        String qlStringSelect = "select e from export e where e.utilityId = :utilityId and e.createdOn >= :createdOn";
+
+        TypedQuery<ExportFileEntity> selectQuery = entityManager.createQuery(qlStringSelect, ExportFileEntity.class);
+        selectQuery.setParameter("utilityId", query.getUtilityId());
+        selectQuery.setParameter("createdOn", new DateTime().minusDays(query.getDays()));
+
+        selectQuery.setFirstResult(query.getIndex() * query.getSize());
+        selectQuery.setMaxResults(query.getSize());
+
+        files = exportEntityListToObjectList(selectQuery.getResultList());
+
+        // Compose response
+        return new DataExportFileQueryResult(total, files);
     }
 
     /**
      * Get all expired exported files for a specific utility.
-     * 
-     * @param utilityId the utility id.
-     * @param days the number of days after which a file is marked as expired.
+     *
+     * @param query query that selects exported data files.
      * @return a list of expired exported data files.
      */
     @Override
-    public List<ExportFile> getExpiredExportFilesByUtilityId(int utilityId, int days) {
-        String queryString = "select e from export e where e.utilityId = :utilityId and e.createdOn < :createdOn";
+    public DataExportFileQueryResult getExpiredExportFiles(DataExportFileQuery query) {
+        int total;
+        List<ExportFile> files;
 
-        TypedQuery<ExportFileEntity> query = entityManager.createQuery(queryString, ExportFileEntity.class);
+        // Count
+        String qlStringCount = "select count(e.id) from export e where e.utilityId = :utilityId and e.createdOn < :createdOn";
 
-        query.setParameter("utilityId", utilityId);
-        query.setParameter("createdOn", new DateTime().minusDays(days));
+        TypedQuery<Number> countQuery = entityManager.createQuery(qlStringCount, Number.class);
+        countQuery.setParameter("utilityId", query.getUtilityId());
+        countQuery.setParameter("createdOn", new DateTime().minusDays(query.getDays()));
 
-        return exportEntityListToObjectList(query.getResultList());        
+        total = ((Number) countQuery.getSingleResult()).intValue();
+
+        // Select
+        String qlStringSelect = "select e from export e where e.utilityId = :utilityId and e.createdOn < :createdOn";
+
+        TypedQuery<ExportFileEntity> selectQuery = entityManager.createQuery(qlStringSelect, ExportFileEntity.class);
+        selectQuery.setParameter("utilityId", query.getUtilityId());
+        selectQuery.setParameter("createdOn", new DateTime().minusDays(query.getDays()));
+
+        selectQuery.setFirstResult(query.getIndex() * query.getSize());
+        selectQuery.setMaxResults(query.getSize());
+
+        files = exportEntityListToObjectList(selectQuery.getResultList());
+
+        // Compose response
+        return new DataExportFileQueryResult(total, files);
     }
-    
+
     /**
      * Deletes all expired exported files for a specific utility.
-     * 
+     *
      * @param utilityId the utility id.
      * @param days the number of days after which a file is marked as expired.
      */
@@ -160,45 +214,45 @@ public class JpaExportRepository implements IExportRepository {
         query.setParameter("utilityId", utilityId);
         query.setParameter("createdOn", new DateTime().minusDays(days));
 
-    
+
         List<ExportFileEntity> entities = query.getResultList();
-        
+
         for(ExportFileEntity entity : entities) {
             this.entityManager.remove(entity);
-            
+
             File file = new File(FilenameUtils.concat(entity.getPath(), entity.getFilename()));
-            
+
             if(file.exists()) {
                 FileUtils.deleteQuietly(file);
             }
         }
     }
-    
+
     /**
      * Creates a list of @{link ExportFile} from a list of @{link ExportFileEntity}
-     * 
+     *
      * @param entities the list of @{link ExportFileEntity} to convert.
      * @return a new list of @{link ExportFile}.
      */
     private List<ExportFile> exportEntityListToObjectList(List<ExportFileEntity> entities) {
         List<ExportFile> objects = new ArrayList<ExportFile>();
-        
+
         for(ExportFileEntity entity : entities) {
             objects.add(exportEntityToObject(entity));
         }
-        
+
         return objects;
     }
 
     /**
      * Creates an instance of @{link ExportFile} from an instance of @{link ExportFileEntity}
-     * 
+     *
      * @param entity the entity to convert.
      * @return a new instance of @{link ExportFile}.
      */
     private ExportFile exportEntityToObject(ExportFileEntity entity) {
         ExportFile obj = new ExportFile();
-        
+
         obj.setCompletedOn(entity.getCompletedOn());
         obj.setCreatedOn(entity.getCompletedOn());
         obj.setDescription(entity.getDescription());

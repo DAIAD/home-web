@@ -123,21 +123,21 @@ public class DataExportJobBuilder implements IJobBuilder {
                         // Export meter data for trial users only
                         query.setFilename(String.format("meter-%s-trial",utility.getName()));
                         query.setExportUserDataOnly(true);
-                        query.setDescription(String.format("Meter data of all trial users in [%s].", utility.getName()));
+                        query.setDescription(String.format("Meter data for all trial users in [%s].", utility.getName()));
                         query.setSource(EnumDataSource.METER);
                         exportService.export(query);
                         
                         // Export meter data for all users
                         query.setFilename(String.format("meter-%s-all",utility.getName()));
                         query.setExportUserDataOnly(false);
-                        query.setDescription(String.format("Meter data of all users in [%s].", utility.getName()));
+                        query.setDescription(String.format("Meter data for all users in [%s].", utility.getName()));
                         query.setSource(EnumDataSource.METER);
                         exportService.export(query);
                         
                         // Export amphiro data for trial users
                         query.setFilename(String.format("amphiro-%s-trial",utility.getName()));
                         query.setExportUserDataOnly(false);
-                        query.setDescription(String.format("Amphiro b1 data of trial users in [%s].", utility.getName()));
+                        query.setDescription(String.format("Amphiro b1 data for trial users in [%s].", utility.getName()));
                         query.setSource(EnumDataSource.AMPHIRO);
                         exportService.export(query);
                     }
