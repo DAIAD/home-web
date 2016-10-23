@@ -423,7 +423,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
 
         // Compute any missing values
         for (int i = 0, count = rows.size(); i < count; i++) {
-            // Set difference for the first row for every unique serial
+            // Set difference for the first row for every unique serial number
             if ((i == 0) || (!rows.get(i).serial.equals(rows.get(i - 1).serial))) {
                 if (rows.get(i).difference == null) {
                     WaterMeterStatusQueryResult meterStatus = this.waterMeterMeasurementRepository.getStatus(new String[] { rows.get(i).serial }, rows.get(i).timestamp - 1);
@@ -434,7 +434,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
                         rows.get(i).difference = rows.get(i).volume - meterStatus.getDevices().get(0).getVolume();
 
                         if (rows.get(i).difference < 0) {
-                            rows.get(i).difference = 0f;
+                            status.increaseNegativeDifference();
                         }
                     }
                 }
@@ -451,7 +451,11 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
                 float diff = rows.get(i).volume - rows.get(i - 1).volume;
 
                 if (diff != rows.get(i).difference) {
-                    rows.get(i).difference = (diff > 0 ? diff : 0f);
+                    rows.get(i).difference = diff;
+
+                    if (diff < 0) {
+                        status.increaseNegativeDifference();
+                    }
                 }
             }
         }

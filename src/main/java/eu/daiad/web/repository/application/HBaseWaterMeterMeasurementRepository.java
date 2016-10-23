@@ -651,7 +651,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                     long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 2, 10));
                     byte[] serialHash = Arrays.copyOfRange(r.getRow(), 10, 26);
 
-                    float difference = 0, volume = 0;
+                    Float volume = null, difference = null;
                     long lastTimestamp = 0;
 
                     for (Entry<byte[], byte[]> entry : map.entrySet()) {
@@ -671,7 +671,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                             }
 
                             if (lastTimestamp == timestamp) {
-                                if (difference > 0) {
+                                if ((difference != null) && (volume != null)) {
                                     int filterIndex = 0;
                                     for (ExpandedPopulationFilter filter : query.getGroups()) {
                                         GroupDataSeries series = result.get(filterIndex);
@@ -686,8 +686,8 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
 
                                         filterIndex++;
                                     }
+                                    volume = difference = null;
                                 }
-                                volume = difference = 0;
                             } else {
                                 lastTimestamp = timestamp;
                             }

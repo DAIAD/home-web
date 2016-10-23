@@ -112,7 +112,7 @@ public class JpaExportRepository implements IExportRepository {
         total = ((Number) countQuery.getSingleResult()).intValue();
 
         // Select
-        String qlStringSelect = "select e from export e where e.utilityId = :utilityId";
+        String qlStringSelect = "select e from export e where e.utilityId = :utilityId order by e.createdOn desc, e.filename";
 
         TypedQuery<ExportFileEntity> selectQuery = entityManager.createQuery(qlStringSelect, ExportFileEntity.class);
         selectQuery.setParameter("utilityId", query.getUtilityId());
@@ -148,7 +148,7 @@ public class JpaExportRepository implements IExportRepository {
         total = ((Number) countQuery.getSingleResult()).intValue();
 
         // Select
-        String qlStringSelect = "select e from export e where e.utilityId = :utilityId and e.createdOn >= :createdOn";
+        String qlStringSelect = "select e from export e where e.utilityId = :utilityId and e.createdOn >= :createdOn order by e.createdOn desc, e.filename";
 
         TypedQuery<ExportFileEntity> selectQuery = entityManager.createQuery(qlStringSelect, ExportFileEntity.class);
         selectQuery.setParameter("utilityId", query.getUtilityId());
@@ -184,7 +184,7 @@ public class JpaExportRepository implements IExportRepository {
         total = ((Number) countQuery.getSingleResult()).intValue();
 
         // Select
-        String qlStringSelect = "select e from export e where e.utilityId = :utilityId and e.createdOn < :createdOn";
+        String qlStringSelect = "select e from export e where e.utilityId = :utilityId and e.createdOn < :createdOn order by e.createdOn desc, e.filename";
 
         TypedQuery<ExportFileEntity> selectQuery = entityManager.createQuery(qlStringSelect, ExportFileEntity.class);
         selectQuery.setParameter("utilityId", query.getUtilityId());
