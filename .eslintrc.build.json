@@ -20,7 +20,6 @@
   ],
   "rules": {
     "react/prop-types" : "off",
-    "react/display-name": "off",
     "no-console": ["warn", { "allow": ["warn", "error"]}],
     "no-unused-vars": ["warn", {"args": "none"}]
   },
