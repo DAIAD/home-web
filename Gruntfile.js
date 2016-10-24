@@ -21,7 +21,7 @@ module.exports = function(grunt) {
           'src/main/resources/public/assets/js/build/home/*.js.map',
           'src/main/resources/public/assets/js/build/home/*.min.js',
           'src/main/resources/public/assets/js/build/home/*.min.js.map',
-          'src/main/resources/public/assets/js/build/home/i18n/*.js'
+          'src/main/resources/public/assets/js/build/home/i18n/*.json'
         ],
       },
       'vendor': {
@@ -45,11 +45,9 @@ module.exports = function(grunt) {
       home: {
         src: [
           'src/main/resources/public/assets/js/src/home/**/*.js',
-          'src/main/resources/public/assets/js/src/home/README.md',
-          '!src/main/resources/public/assets/js/src/home/i18n/**'
+          'src/main/resources/public/assets/js/src/home/README.md'
         ],
         options: {
-          exclude: ['i18n'],
           destination: 'jsdoc/home'
         }
       }
@@ -66,8 +64,7 @@ module.exports = function(grunt) {
       },
       'home-build': {
         src: [
-          'src/main/resources/public/assets/js/src/home/**/*.js',
-          '!src/main/resources/public/assets/js/src/home/i18n/**/*.js'
+          'src/main/resources/public/assets/js/src/home/**/*.js'
         ],
         options: {
           configFile: '.eslintrc.build.json'
@@ -84,8 +81,7 @@ module.exports = function(grunt) {
       },
       'home-dev': {
         src: [
-          'src/main/resources/public/assets/js/src/home/**/*.js',
-          '!src/main/resources/public/assets/js/src/home/i18n/**/*.js'
+          'src/main/resources/public/assets/js/src/home/**/*.js'
         ],
         options: {
           configFile: '.eslintrc.dev.json'
@@ -352,7 +348,7 @@ module.exports = function(grunt) {
         }, {
           expand: true,
           cwd: 'src/main/resources/public/assets/js/src/home/i18n/',
-          src: ['*.js'],
+          src: ['*.json'],
           dest: 'target/classes/public/assets/js/build/home/i18n/',
           filter: 'isFile'
         }, {
@@ -447,7 +443,7 @@ module.exports = function(grunt) {
         files: [{
           expand: true,
           cwd: 'src/main/resources/public/assets/js/src/home/i18n/',
-          src: ['*.js'],
+          src: ['*.json'],
           dest: 'src/main/resources/public/assets/js/build/home/i18n/',
           filter: 'isFile'
         }, {
