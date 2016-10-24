@@ -539,7 +539,12 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
     @Override
     public void updateFavouriteQuery(NamedDataQuery namedDataQuery, Account account) {
     
-        try {       
+        try { 
+            
+            Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
+            // Add additional modules to JSON parser
+            builder.modules(new JodaModule(), new JtsModule());
+            ObjectMapper objectMapper = builder.build();            
             
             TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> queryCheck = entityManager.createQuery(
                             "SELECT d FROM data_query d WHERE d.owner.id = :accountId and d.name = :name",
@@ -567,7 +572,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             DataQueryEntity dataQueryEntity = query.getSingleResult();
             
             dataQueryEntity.setName(finalTitle);
-            dataQueryEntity.setQuery(new ObjectMapper().writeValueAsString(namedDataQuery.getQuery()));
+            dataQueryEntity.setQuery(objectMapper.writeValueAsString(namedDataQuery.getQuery()));
             dataQueryEntity.setTags(namedDataQuery.getTags());
             dataQueryEntity.setReportName(namedDataQuery.getReportName());
             dataQueryEntity.setLevel(namedDataQuery.getLevel());
