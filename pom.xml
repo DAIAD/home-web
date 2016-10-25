@@ -42,8 +42,7 @@
 		<hibernate-spatial.version>5.1.0.Final</hibernate-spatial.version>
 		<apache.poi.version>3.14</apache.poi.version>
 		<org.jadira.usertype.version>5.0.0.GA</org.jadira.usertype.version>
-
-		<dependency.locations.enabled>false</dependency.locations.enabled>
+        <dependency.locations.enabled>false</dependency.locations.enabled>
 	</properties>
 
 	<repositories>
@@ -426,8 +425,11 @@
 				<groupId>com.github.eirslett</groupId>
 				<artifactId>frontend-maven-plugin</artifactId>
 				<version>0.0.28</version>
-				<executions>
-					<execution>
+                <configuration>
+                    <skip>false</skip>
+                </configuration>
+                <executions>
+                    <execution>
 						<id>node-isntall</id>
 						<goals>
 							<goal>install-node-and-npm</goal>
@@ -454,7 +456,7 @@
 						<configuration>
 							<arguments>run build</arguments>
 						</configuration>
-					</execution>
+                    </execution>
 				</executions>
 			</plugin>
 
