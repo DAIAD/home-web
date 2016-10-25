@@ -20,7 +20,8 @@
   ],
   "rules": {
     "react/prop-types" : "off",
-    "no-console": ["warn", { "allow": ["warn", "error"]}],
+    "react/no-find-dom-node" : "off",
+    "no-console": ["warn", { "allow": ["assert", "warn", "error"]}],
     "no-unused-vars": ["warn", {"args": "none"}]
   },
   "globals": {
