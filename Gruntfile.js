@@ -21,7 +21,7 @@ module.exports = function(grunt) {
           'src/main/resources/public/assets/js/build/home/*.js.map',
           'src/main/resources/public/assets/js/build/home/*.min.js',
           'src/main/resources/public/assets/js/build/home/*.min.js.map',
-          'src/main/resources/public/assets/js/build/home/i18n/*.js'
+          'src/main/resources/public/assets/js/build/home/i18n/*.json'
         ],
       },
       'vendor': {
@@ -45,11 +45,9 @@ module.exports = function(grunt) {
       home: {
         src: [
           'src/main/resources/public/assets/js/src/home/**/*.js',
-          'src/main/resources/public/assets/js/src/home/README.md',
-          '!src/main/resources/public/assets/js/src/home/i18n/**'
+          'src/main/resources/public/assets/js/src/home/README.md'
         ],
         options: {
-          exclude: ['i18n'],
           destination: 'jsdoc/home'
         }
       }
@@ -66,8 +64,7 @@ module.exports = function(grunt) {
       },
       'home-build': {
         src: [
-          'src/main/resources/public/assets/js/src/home/**/*.js',
-          '!src/main/resources/public/assets/js/src/home/i18n/**/*.js'
+          'src/main/resources/public/assets/js/src/home/**/*.js'
         ],
         options: {
           configFile: '.eslintrc.build.json'
@@ -84,8 +81,7 @@ module.exports = function(grunt) {
       },
       'home-dev': {
         src: [
-          'src/main/resources/public/assets/js/src/home/**/*.js',
-          '!src/main/resources/public/assets/js/src/home/i18n/**/*.js'
+          'src/main/resources/public/assets/js/src/home/**/*.js'
         ],
         options: {
           configFile: '.eslintrc.dev.json'
@@ -103,11 +99,104 @@ module.exports = function(grunt) {
           'echarts'
         ],
         transform: [
-          // Configuration options for babel are in file .babelrc
           ["babelify"],
           ["envify"],
           ["browserify-shim"]
         ]
+      },
+      homeLive: {
+        options: {
+          watch: true,
+          keepAlive: true,
+          browserifyOptions: {
+            debug: true,
+          },
+          plugin: [
+            ["livereactload"]
+          ],
+          transform: [
+            [{passthrough: 'warnings', configFile: '.eslintrc.dev.json'}, "eslintify"],
+            ["babelify"],
+            ["envify"],
+            ["browserify-shim"]
+          ]
+        },
+        files: {
+          'target/classes/public/assets/js/build/home/bundle.js': [
+            'src/main/resources/public/assets/js/src/home/main.js'
+          ]
+        }
+      },
+      utilityLive: {
+        options: {
+          watch: true,
+          keepAlive: true,
+          browserifyOptions: {
+            debug: true,
+          },
+          plugin: [
+            ["livereactload"]
+          ],
+          transform: [
+            [{passthrough: 'warnings', configFile: '.eslintrc.dev.json'}, "eslintify"],
+            ["babelify"],
+            ["envify"],
+            ["browserify-shim"]
+          ],
+          // Exclude from being bundled into main app
+          // The following will be resolved globally (shim) or via earlier vendor includes
+          external: [
+            // required from vendor/util.js
+            'fetch',
+            'lodash',
+            'es6-promise',
+            'moment',
+            'moment-timezone',
+            'numeral',
+            'clone',
+            'keymirror',
+            'sprintf',
+            'history',
+            // required from vendor/react.js
+            'react',
+            'react-dom',
+            'react-addons-pure-render-mixin',
+            'react-router',
+            'react-datetime',
+            'react-intl',
+            'react-intl/locale-data/de',
+            'react-intl/locale-data/el',
+            'react-intl/locale-data/en',
+            'react-intl/locale-data/es',
+            'react-grid-layout',
+            'react-select',
+            'react-bootstrap',
+            'react-router-bootstrap',
+            'react-router-redux',
+            'react-bootstrap-daterangepicker',
+            'react-bootstrap-datetimepicker',
+            'react-scroll-up',
+            'react-dropzone',
+            'redux',
+            'react-redux',
+            'redux-thunk',
+            'redux-logger',
+            // required from vendor/jquery.js
+            'jquery',
+            // required from vendor/leaflet.js
+            'leaflet',
+            'leaflet.heat',
+            'leaflet-draw',
+            'leaflet-choropleth',
+            // globals
+            'echarts',
+          ],
+      },
+        files: {
+          'src/main/resources/public/assets/js/build/utility/bundle.js': [
+            'src/main/resources/public/assets/js/src/utility/index.js'
+          ]
+        }
       },
       utility: {
         options: {
@@ -352,7 +441,7 @@ module.exports = function(grunt) {
         }, {
           expand: true,
           cwd: 'src/main/resources/public/assets/js/src/home/i18n/',
-          src: ['*.js'],
+          src: ['*.json'],
           dest: 'target/classes/public/assets/js/build/home/i18n/',
           filter: 'isFile'
         }, {
@@ -447,7 +536,7 @@ module.exports = function(grunt) {
         files: [{
           expand: true,
           cwd: 'src/main/resources/public/assets/js/src/home/i18n/',
-          src: ['*.js'],
+          src: ['*.json'],
           dest: 'src/main/resources/public/assets/js/build/home/i18n/',
           filter: 'isFile'
         }, {
@@ -522,7 +611,8 @@ module.exports = function(grunt) {
   grunt.registerTask('build', [
     'clean',
     'eslint:utility-build', 'eslint:home-build',
-    'browserify', 'uglify', 'concat',
+    'browserify:home', 'browserify:utility', 'browserify:vendor-util', 'browserify:vendor-react', 'browserify:vendor-leaflet', 'browserify:vendor-jquery', 
+    'uglify', 'concat',
     'docs',
     'sync:home', 'sync:utility', 'sync:home'
   ]);
@@ -530,9 +620,23 @@ module.exports = function(grunt) {
   grunt.registerTask('develop', [
     'clean',
     'eslint:utility-dev', 'eslint:home-dev',
-    'browserify', 'uglify:vendor-leaflet', 'uglify:vendor-jquery',
+    'browserify:home', 'browserify:utility', 'browserify:vendor-util', 'browserify:vendor-react', 'browserify:vendor-leaflet', 'browserify:vendor-jquery',
+    'uglify:vendor-leaflet', 'uglify:vendor-jquery',
     'sync:home', 'sync:utility', 'sync:debug',
     'watch'
+  ]);
+  
+  grunt.registerTask('develop-home-live', [
+    'clean:home', 'clean:vendor', 
+    'sync:home', 'sync:debug', 
+    'browserify:homeLive'
+  ]);
+
+  grunt.registerTask('develop-utility-live', [
+    'clean:utility', 'clean:vendor', 
+    'sync:utility', 'sync:debug', 
+    'browserify:vendor-util', 'browserify:vendor-react', 'browserify:vendor-leaflet', 'browserify:vendor-jquery',
+    'browserify:utilityLive'
   ]);
 
   grunt.registerTask('docs', ['apidoc:utility', 'jsdoc:home']);

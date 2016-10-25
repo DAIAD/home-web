@@ -8,6 +8,13 @@
     ["react-intl", {
         "messagesDir": "src/main/resources/public/assets/js/src/utility/i18n/",
         "enforceDescriptions": false
-    }]
+    }],
+    ["react-transform", {
+      "transforms": [{
+        "transform": "livereactload/babel-transform",
+        "imports": ["react"]
+        }]
+      }] 
+
   ]
 }
