@@ -1,5 +1,7 @@
 package eu.daiad.web.model.message;
 
+import java.util.Map;
+
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
@@ -19,6 +21,8 @@ public class MessageCalculationConfiguration {
 	private String intKey2 = "integer2";
 	private String currencyKey1 = "currency1";
 	private String currencyKey2 = "currency2";
+	private String dayKey = "day";
+	
 	private double eurosPerKwh = 0.224;
 	private double averageGbpPerKwh = 0.15;
 	private double eurosPerLiter = 0.0024;
@@ -32,10 +36,6 @@ public class MessageCalculationConfiguration {
 	private Integer monthlyBudgetAmphiro = 3000;
     
     private boolean onDemandExecution;
-
-	private Integer utilityId;
-
-	private DateTimeZone timezone;
 
 	public int getComputeThisDayOfMonth() {
 		return computeThisDayOfMonth;
@@ -173,22 +173,6 @@ public class MessageCalculationConfiguration {
 		this.monthlyBudgetAmphiro = monthlyBudgetAmphiro;
 	}
 
-	public Integer getUtilityId() {
-		return utilityId;
-	}
-
-	public void setUtilityId(Integer utilityId) {
-		this.utilityId = utilityId;
-	}
-
-	public DateTimeZone getTimezone() {
-		return timezone;
-	}
-
-	public void setTimezone(DateTimeZone timezone) {
-		this.timezone = timezone;
-	}
-
     public boolean isOnDemandExecution() {
         return onDemandExecution;
     }
@@ -196,5 +180,4 @@ public class MessageCalculationConfiguration {
     public void setOnDemandExecution(boolean onDemandExecution) {
         this.onDemandExecution = onDemandExecution;
     }
-
 }

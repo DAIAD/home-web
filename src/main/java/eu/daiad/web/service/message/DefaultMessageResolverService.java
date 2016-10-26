@@ -12,7 +12,7 @@ import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import eu.daiad.web.model.message.ConsumptionAggregateContainer;
+import eu.daiad.web.model.message.ConsumptionStats;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.model.message.PendingMessageStatus;
 import eu.daiad.web.model.query.AmphiroDataPoint;
@@ -26,6 +26,7 @@ import eu.daiad.web.model.query.EnumTimeUnit;
 import eu.daiad.web.model.query.GroupDataSeries;
 import eu.daiad.web.model.query.MeterDataPoint;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IMessageManagementRepository;
 import eu.daiad.web.repository.application.IUserRepository;
@@ -53,88 +54,114 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 //    @Autowired
 //    private IWeatherRepository weatherRepository;       
     
+    private static final Float AMPHIRO_TEMPERATURE_THRESHOLD = 45f;
+    private static final Integer AMPHIRO_DURATION_THRESHOLD_IN_MINUTES = 30;
+    
     @Override
-	public PendingMessageStatus resolve(MessageCalculationConfiguration config,
-					ConsumptionAggregateContainer aggregates, UUID accountKey) {      
+	public PendingMessageStatus resolve(
+	        MessageCalculationConfiguration config, UtilityInfo utility, ConsumptionStats stats, UUID accountKey) 
+    {      
 		AuthenticatedUser account = this.userRepository.getUserByKey(accountKey);
-
+		
+		DateTimeZone tz = DateTimeZone.forID(utility.getTimezone());
+		
 		PendingMessageStatus status = new PendingMessageStatus();
 
-        status.setMeterInstalled(this.isMeterInstalledForUser(accountKey));
+        status.setMeterInstalled(
+                this.isMeterInstalledForUser(accountKey));
                 
-        status.setAmphiroInstalled(this.isAmphiroInstalledForUser(accountKey));                
+        status.setAmphiroInstalled(
+                this.isAmphiroInstalledForUser(accountKey));                
                 
-		status.setAlertWaterLeakSWM(this.alertWaterLeakSWM(accountKey, config.getTimezone()));
+		status.setAlertWaterLeakSWM(
+		        this.alertWaterLeakSWM(accountKey, tz));
 
-		status.setAlertWaterQualitySWM(this.alertWaterQualitySWM(accountKey, config.getTimezone()));
+		status.setAlertWaterQualitySWM(
+		        this.alertWaterQualitySWM(accountKey, tz));
 
-		status.setAlertNearDailyBudgetSWM(this.alertNearDailyBudgetSWM(config, accountKey, config.getTimezone()));
+		status.setAlertNearDailyBudgetSWM(
+		        this.alertNearDailyBudgetSWM(config, accountKey, tz));
         
-		status.setAlertNearWeeklyBudgetSWM(this.alertNearWeeklyBudgetSWM(config, accountKey, config.getTimezone()));
+		status.setAlertNearWeeklyBudgetSWM(
+		        this.alertNearWeeklyBudgetSWM(config, accountKey, tz));
 
-		status.setAlertReachedDailyBudgetSWM(this.alertReachedDailyBudgetSWM(config, accountKey, config.getTimezone()));
+		status.setAlertReachedDailyBudgetSWM(
+		        this.alertReachedDailyBudgetSWM(config, accountKey, tz));
 
-		status.setAlertWaterChampionSWM(this.alertWaterChampionSWM(config, accountKey, config.getTimezone()));
+		status.setAlertWaterChampionSWM(
+		        this.alertWaterChampionSWM(config, accountKey, tz));
 
-		status.setAlertTooMuchWaterConsumptionSWM(this.alertTooMuchWaterConsumptionSWM(aggregates, accountKey,
-						config.getTimezone()));
+		status.setAlertTooMuchWaterConsumptionSWM(
+		        this.alertTooMuchWaterConsumptionSWM(stats, accountKey, tz));
 
-		status.setAlertReducedWaterUseSWM(this.alertReducedWaterUseSWM(accountKey, account.getCreatedOn(),
-						config.getTimezone()));
+		status.setAlertReducedWaterUseSWM(
+		        this.alertReducedWaterUseSWM(accountKey, account.getCreatedOn(), tz));
 
-		status.setAlertWaterEfficiencyLeaderSWM(this.alertWaterEfficiencyLeaderSWM(aggregates, accountKey,
-						config.getTimezone()));
+		status.setAlertWaterEfficiencyLeaderSWM(
+		        this.alertWaterEfficiencyLeaderSWM(stats, accountKey, tz));
 
-		status.setAlertPromptGoodJobMonthlySWM(this.alertPromptGoodJobMonthlySWM(aggregates, accountKey,
-						config.getTimezone()));
+		status.setAlertPromptGoodJobMonthlySWM(
+		        this.alertPromptGoodJobMonthlySWM(stats, accountKey, tz));
 
-		status.setAlertLitresSavedSWM(this.alertLitresSavedSWM(accountKey, config.getTimezone()));
+		status.setAlertLitresSavedSWM(
+		        this.alertLitresSavedSWM(accountKey, tz));
 
-		status.setAlertTop25SaverWeeklySWM(this.alertTop25SaverWeeklySWM(aggregates, accountKey, config.getTimezone()));
-		status.setAlertTop10SaverSWM(this.alertTop10SaverSWM(aggregates, accountKey, config.getTimezone()));
+		status.setAlertTop25SaverWeeklySWM(
+		        this.alertTop25SaverWeeklySWM(stats, accountKey, tz));
+		
+		status.setAlertTop10SaverSWM(
+		        this.alertTop10SaverSWM(stats, accountKey, tz));
 
-		status.setAlertShowerStillOnAmphiro(this.alertShowerStillOnAmphiro(aggregates, accountKey, config.getTimezone()));
+		status.setAlertShowerStillOnAmphiro(
+		        this.alertShowerStillOnAmphiro(stats, accountKey, tz));
 
-		status.setAlertHotTemperatureAmphiro(this.alertHotTemperatureAmphiro(aggregates, accountKey,
-						config.getTimezone()));
+		status.setAlertHotTemperatureAmphiro(
+		        this.alertHotTemperatureAmphiro(stats, accountKey, tz));
 
-		status.setAlertNearDailyBudgetAmphiro(this.alertNearDailyBudgetAmphiro(config, accountKey, config.getTimezone()));
-		status.setAlertNearWeeklyBudgetAmphiro(this.alertNearWeeklyBudgetAmphiro(config, accountKey,
-						config.getTimezone()));
+		status.setAlertNearDailyBudgetAmphiro(
+		        this.alertNearDailyBudgetAmphiro(config, accountKey, tz));
+		
+		status.setAlertNearWeeklyBudgetAmphiro(
+		        this.alertNearWeeklyBudgetAmphiro(config, accountKey, tz));
 
-		status.setAlertReachedDailyBudgetAmphiro(this.alertReachedDailyBudgetAmphiro(config, accountKey,
-						config.getTimezone()));
+		status.setAlertReachedDailyBudgetAmphiro(
+		        this.alertReachedDailyBudgetAmphiro(config, accountKey, tz));
 
-		status.setAlertShowerChampionAmphiro(this.alertShowerChampionAmphiro(config, accountKey, config.getTimezone()));
+		status.setAlertShowerChampionAmphiro(
+		        this.alertShowerChampionAmphiro(config, accountKey, tz));
 
-		status.setAlertTooMuchWaterConsumptionAmphiro(this.alertTooMuchWaterConsumptionAmphiro(aggregates, accountKey,
-						config.getTimezone()));
+		status.setAlertTooMuchWaterConsumptionAmphiro(
+		        this.alertTooMuchWaterConsumptionAmphiro(stats, accountKey, tz));
 
-		status.setAlertTooMuchEnergyAmphiro(this.alertTooMuchEnergyAmphiro(aggregates, accountKey, config.getTimezone()));
+		status.setAlertTooMuchEnergyAmphiro(
+		        this.alertTooMuchEnergyAmphiro(stats, accountKey, tz));
 
-		status.setAlertImprovedShowerEfficiencyAmphiro(this.alertImprovedShowerEfficiencyAmphiro(accountKey,
-						account.getCreatedOn(), config.getTimezone()));
+		status.setAlertImprovedShowerEfficiencyAmphiro(
+		        this.alertImprovedShowerEfficiencyAmphiro(accountKey, account.getCreatedOn(), tz));
 
-		status.setRecommendLessShowerTimeAmphiro(this.recommendLessShowerTimeAmphiro(aggregates, accountKey,
-						config.getTimezone()));
+		status.setRecommendLessShowerTimeAmphiro(
+		        this.recommendLessShowerTimeAmphiro(stats, accountKey, tz));
 
-		status.setRecommendLowerTemperatureAmphiro(this.recommendLowerTemperatureAmphiro(aggregates, accountKey,
-						config.getTimezone()));
+		status.setRecommendLowerTemperatureAmphiro(
+		        this.recommendLowerTemperatureAmphiro(stats, accountKey, tz));
 
-		status.setRecommendLowerFlowAmphiro(this.recommendLowerFlowAmphiro(aggregates, accountKey, config.getTimezone()));
+		status.setRecommendLowerFlowAmphiro(
+		        this.recommendLowerFlowAmphiro(stats, accountKey, tz));
 
-		status.setRecommendShowerHeadChangeAmphiro(this.recommendShowerHeadChangeAmphiro(aggregates, accountKey,
-						config.getTimezone()));
+		status.setRecommendShowerHeadChangeAmphiro(
+		        this.recommendShowerHeadChangeAmphiro(stats, accountKey, tz));
 
-		status.setRecommendShampooChangeAmphiro(this.recommendShampooChangeAmphiro(aggregates, accountKey,
-						config.getTimezone()));
+		status.setRecommendShampooChangeAmphiro(
+		        this.recommendShampooChangeAmphiro(stats, accountKey, tz));
 
-		status.setRecommendReduceFlowWhenNotNeededAmphiro(this.recommendReduceFlowWhenNotNeededAmphiro(aggregates,
-						accountKey, config.getTimezone()));
+		status.setRecommendReduceFlowWhenNotNeededAmphiro(
+		        this.recommendReduceFlowWhenNotNeededAmphiro(stats, accountKey, tz));
                 
-        status.setInitialStaticTips(this.initialStaticTipsForAccount(account));
+        status.setInitialStaticTips(
+                this.initialStaticTipsForAccount(account));
                 
-        status.setStaticTip(this.produceStaticTipForAccount(account, config.getStaticTipInterval()));
+        status.setStaticTip(
+                this.produceStaticTipForAccount(account, config.getStaticTipInterval()));
                 
 		return status;
 	}
@@ -190,11 +217,12 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 	}
 
 	// 2 alert - Shower still on!
-	public boolean alertShowerStillOnAmphiro(ConsumptionAggregateContainer aggregates, UUID accountKey,
-					DateTimeZone timezone) {
-
-		boolean fireAlert = false;
-		Integer durationThresholdMinutes = aggregates.getShowerDurationThresholdMinutes();
+	public boolean alertShowerStillOnAmphiro(ConsumptionStats aggregates, UUID accountKey,
+					DateTimeZone timezone) 
+	{
+	    
+	    boolean fireAlert = false;
+		
 		DataQueryBuilder queryBuilder = new DataQueryBuilder();
 		queryBuilder.timezone(timezone).sliding(-24, EnumTimeUnit.HOUR, EnumTimeAggregation.HOUR)
 						.user("user", accountKey).amphiro().max();
@@ -208,7 +236,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
                                 ArrayList<DataPoint> points = serie.getPoints();
                                 for (DataPoint point : points) {
                                         AmphiroDataPoint amphiroPoint = (AmphiroDataPoint) point;
-                                        if (amphiroPoint.getDuration().get(EnumMetric.MAX) > durationThresholdMinutes) {
+                                        if (amphiroPoint.getDuration().get(EnumMetric.MAX) > AMPHIRO_DURATION_THRESHOLD_IN_MINUTES) {
                                                 fireAlert = true;
                                         }
                                 }
@@ -257,10 +285,10 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 	}
 
 	// 6 alert - Water too hot!
-	public boolean alertHotTemperatureAmphiro(ConsumptionAggregateContainer aggregates, UUID accountKey,
-					DateTimeZone timezone) {
+	public boolean alertHotTemperatureAmphiro(ConsumptionStats aggregates, UUID accountKey,
+					DateTimeZone timezone) 
+	{
 		boolean fireAlert = false;
-		Float temperatureThreshold = aggregates.getTemperatureThreshold();
 		DataQueryBuilder queryBuilder = new DataQueryBuilder();
 		queryBuilder.timezone(timezone).sliding(-24, EnumTimeUnit.HOUR, EnumTimeAggregation.HOUR)
 						.user("user", accountKey).amphiro().max();
@@ -274,7 +302,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 				ArrayList<DataPoint> points = serie.getPoints();
 				for (DataPoint point : points) {
 					AmphiroDataPoint amphiroPoint = (AmphiroDataPoint) point;
-					if (amphiroPoint.getTemperature().get(EnumMetric.MAX) > temperatureThreshold) {
+					if (amphiroPoint.getTemperature().get(EnumMetric.MAX) > AMPHIRO_TEMPERATURE_THRESHOLD) {
 						fireAlert = true;
 					}
 				}
@@ -580,7 +608,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 	}
 
 	// 15 alert - You are using too much water {integer1}
-	public SimpleEntry<Boolean, Double> alertTooMuchWaterConsumptionSWM(ConsumptionAggregateContainer aggregates,
+	public SimpleEntry<Boolean, Double> alertTooMuchWaterConsumptionSWM(ConsumptionStats aggregates,
 					UUID accountKey, DateTimeZone timezone) {
 
 		if (aggregates.getAverageWeeklySWM().getValue() == null) {
@@ -616,7 +644,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 	}
 
 	// 16 alert - You are using too much water in the shower {integer1}
-	public SimpleEntry<Boolean, Double> alertTooMuchWaterConsumptionAmphiro(ConsumptionAggregateContainer aggregates,
+	public SimpleEntry<Boolean, Double> alertTooMuchWaterConsumptionAmphiro(ConsumptionStats aggregates,
 					UUID accountKey, DateTimeZone timezone) {
 
 		if (aggregates.getAverageWeeklyAmphiro().getValue() == null) {
@@ -655,14 +683,13 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 
 	// TODO : Fix bug - returning false positive with 0 energy consumption
 
-	// 17 alert - You are spending too much energy for showering {integer1}
-	// {currency}
-	public SimpleEntry<Boolean, Double> alertTooMuchEnergyAmphiro(ConsumptionAggregateContainer aggregates,
-					UUID accountKey, DateTimeZone timezone) {
-
-		boolean fireAlert = true;
+	// 17 alert - You are spending too much energy for showering {integer1} {currency}
+	public SimpleEntry<Boolean, Double> alertTooMuchEnergyAmphiro(ConsumptionStats aggregates,
+					UUID accountKey, DateTimeZone timezone) 
+	{	    
+	    boolean fireAlert = true;
 		double monthlyShowerConsumption = 0;
-		Float temperatureThreshold = aggregates.getTemperatureThreshold();
+		
 		DataQueryBuilder queryBuilder = new DataQueryBuilder();
 		queryBuilder.timezone(timezone).sliding(-30, EnumTimeUnit.DAY, EnumTimeAggregation.DAY)
 						.user("user", accountKey).amphiro().sum().average();
@@ -686,7 +713,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 					AmphiroDataPoint amphiroPoint = (AmphiroDataPoint) point;
 					monthlyShowerConsumption = monthlyShowerConsumption + amphiroPoint.getVolume().get(EnumMetric.SUM);
 
-					if (amphiroPoint.getTemperature().get(EnumMetric.AVERAGE) > temperatureThreshold) {
+					if (amphiroPoint.getTemperature().get(EnumMetric.AVERAGE) > AMPHIRO_TEMPERATURE_THRESHOLD) {
 						fireAlert = true && fireAlert;
 					} else {
 						fireAlert = false; // if one average temp is below
@@ -837,7 +864,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 
 	// 20 alert - Congratulations! You are a water efficiency leader {integer1}
 	// litres
-	public SimpleEntry<Boolean, Integer> alertWaterEfficiencyLeaderSWM(ConsumptionAggregateContainer aggregates,
+	public SimpleEntry<Boolean, Integer> alertWaterEfficiencyLeaderSWM(ConsumptionStats aggregates,
 					UUID accountKey, DateTimeZone timezone) {
 
 		if (aggregates.getTop10BaseMonthSWM().getValue() == null || aggregates.getAverageMonthlySWM().getValue() == null) {
@@ -885,7 +912,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 	// 21 alert does not need a computation here.
 
 	// 22 alert - You are doing a great job!
-	public boolean alertPromptGoodJobMonthlySWM(ConsumptionAggregateContainer aggregates, UUID accountKey,
+	public boolean alertPromptGoodJobMonthlySWM(ConsumptionStats aggregates, UUID accountKey,
 					DateTimeZone timezone) {
 		if (aggregates.getAverageMonthlySWM() == null) {
 			return false;
@@ -1005,7 +1032,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 
 	// 24 alert - Congratulations! You are one of the top 25% savers in your
 	// region.
-	public boolean alertTop25SaverWeeklySWM(ConsumptionAggregateContainer aggregates, UUID accountKey,
+	public boolean alertTop25SaverWeeklySWM(ConsumptionStats aggregates, UUID accountKey,
 					DateTimeZone timezone) {
 
 		if (aggregates.getTop25BaseWeekSWM() == null || aggregates.getTop25BaseWeekSWM().getValue() == null) {
@@ -1044,7 +1071,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 
 	// 25 alert - Congratulations! You are among the top group of savers in your
 	// city.
-	public boolean alertTop10SaverSWM(ConsumptionAggregateContainer aggregates, UUID accountKey, DateTimeZone timezone) {
+	public boolean alertTop10SaverSWM(ConsumptionStats aggregates, UUID accountKey, DateTimeZone timezone) {
 
 		if (aggregates.getTop10BaseWeekSWM().getValue() == null) {
 			return false;
@@ -1078,7 +1105,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 
 	// 1 recommendation - Spend 1 less minute in the shower and save {integer1}
 	// {integer2}
-	public SimpleEntry<Boolean, Integer> recommendLessShowerTimeAmphiro(ConsumptionAggregateContainer aggregates,
+	public SimpleEntry<Boolean, Integer> recommendLessShowerTimeAmphiro(ConsumptionStats aggregates,
 					UUID accountKey, DateTimeZone timezone) {
 
 		if (aggregates.getAverageDurationAmphiro().getValue() == null || aggregates.getAverageMonthlyAmphiro().getValue() == null) {
@@ -1122,7 +1149,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 
 	// 2 recommendation - You could save {currency1} euros if you used a bit
 	// less hot water in the shower. {currency2}
-	public SimpleEntry<Boolean, Integer> recommendLowerTemperatureAmphiro(ConsumptionAggregateContainer aggregates,
+	public SimpleEntry<Boolean, Integer> recommendLowerTemperatureAmphiro(ConsumptionStats aggregates,
 					UUID accountKey, DateTimeZone timezone) {
 		if (aggregates.getAverageTemperatureAmphiro().getValue() == null) {
 			return new SimpleEntry<>(false, null);
@@ -1160,7 +1187,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 
 	// 3 recommendation - Reduce the water flow in the shower and gain
 	// {integer1} {integer2}
-	public SimpleEntry<Boolean, Integer> recommendLowerFlowAmphiro(ConsumptionAggregateContainer aggregates,
+	public SimpleEntry<Boolean, Integer> recommendLowerFlowAmphiro(ConsumptionStats aggregates,
 					UUID accountKey, DateTimeZone timezone) {
 
 		if (aggregates.getAverageMonthlyAmphiro().getValue() == null) {
@@ -1225,7 +1252,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 	}
 
 	// 4 recommendation - Change your shower head and save {integer1} {integer2}
-	public SimpleEntry<Boolean, Integer> recommendShowerHeadChangeAmphiro(ConsumptionAggregateContainer aggregates,
+	public SimpleEntry<Boolean, Integer> recommendShowerHeadChangeAmphiro(ConsumptionStats aggregates,
 					UUID accountKey, DateTimeZone timezone) {
 		if (aggregates.getAverageMonthlyAmphiro().getValue() == null) {
 			return new SimpleEntry<>(false, null);
@@ -1290,7 +1317,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 
 	// 5 recommendation - Have you considered changing your shampoo? {integer1}
 	// percent
-	public SimpleEntry<Boolean, Integer> recommendShampooChangeAmphiro(ConsumptionAggregateContainer aggregates,
+	public SimpleEntry<Boolean, Integer> recommendShampooChangeAmphiro(ConsumptionStats aggregates,
 					UUID accountKey, DateTimeZone timezone) {
 		if (aggregates.getAverageMonthlyAmphiro().getValue() == null) {
 			return new SimpleEntry<>(false, null);
@@ -1331,7 +1358,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 	// 6 recommendation - When showering, reduce the water flow when you do not
 	// need it {integer1} {integer2}
 	public SimpleEntry<Boolean, Integer> recommendReduceFlowWhenNotNeededAmphiro(
-					ConsumptionAggregateContainer aggregates, UUID accountKey, DateTimeZone timezone) {
+					ConsumptionStats aggregates, UUID accountKey, DateTimeZone timezone) {
 		if (aggregates.getAverageSessionAmphiro().getValue() == null) {
 			return new SimpleEntry<>(false, null);
 		}

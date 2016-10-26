@@ -2,9 +2,10 @@ package eu.daiad.web.service.message;
 
 import java.util.UUID;
 
-import eu.daiad.web.model.message.ConsumptionAggregateContainer;
+import eu.daiad.web.model.message.ConsumptionStats;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.model.message.PendingMessageStatus;
+import eu.daiad.web.model.utility.UtilityInfo;
 
 public interface IMessageResolverService {
 
@@ -17,7 +18,7 @@ public interface IMessageResolverService {
 	 * @param accountKey the user key.
 	 * @return information about which messages should be created.
 	 */
-	public abstract PendingMessageStatus resolve(MessageCalculationConfiguration config,
-					ConsumptionAggregateContainer aggregates, UUID accountKey);
+	public PendingMessageStatus resolve(
+	        MessageCalculationConfiguration config, UtilityInfo utility, ConsumptionStats stats, UUID accountKey);
 
 }
