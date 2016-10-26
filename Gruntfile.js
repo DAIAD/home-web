@@ -193,7 +193,7 @@ module.exports = function(grunt) {
           ],
       },
         files: {
-          'src/main/resources/public/assets/js/build/utility/bundle.js': [
+            'target/classes/public/assets/js/build/utility/bundle.js': [
             'src/main/resources/public/assets/js/src/utility/index.js'
           ]
         }
