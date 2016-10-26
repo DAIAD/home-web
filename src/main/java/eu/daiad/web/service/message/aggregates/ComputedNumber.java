@@ -39,11 +39,7 @@ public class ComputedNumber
     public void setValue(Double value)
     {
         this.value = value;
-    }
-
-    public void setTimestamp(DateTime timestamp)
-    {
-        this.timestamp = timestamp;
+        this.timestamp = DateTime.now();
     }
     
     public void reset()
@@ -55,7 +51,10 @@ public class ComputedNumber
     @Override
     public String toString()
     {
-        return String.format("<ComputedNumber val=%.3f computed=\"%s\">",
-                this.value, this.timestamp);
+        if (value != null)
+            return String.format("<ComputedNumber value=%.3f at=\"%s\">", 
+                    value, timestamp);
+        else
+            return "<ComputedNumber value=NULL>";
     }
 }

@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 import eu.daiad.web.model.message.ConsumptionStats;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
-import eu.daiad.web.model.message.PendingMessageStatus;
+import eu.daiad.web.model.message.CandidateMessageStatus;
 import eu.daiad.web.model.query.AmphiroDataPoint;
 import eu.daiad.web.model.query.DataPoint;
 import eu.daiad.web.model.query.DataQuery;
@@ -58,14 +58,14 @@ public class DefaultMessageResolverService implements IMessageResolverService {
     private static final Integer AMPHIRO_DURATION_THRESHOLD_IN_MINUTES = 30;
     
     @Override
-	public PendingMessageStatus resolve(
+	public CandidateMessageStatus resolve(
 	        MessageCalculationConfiguration config, UtilityInfo utility, ConsumptionStats stats, UUID accountKey) 
     {      
 		AuthenticatedUser account = this.userRepository.getUserByKey(accountKey);
 		
 		DateTimeZone tz = DateTimeZone.forID(utility.getTimezone());
 		
-		PendingMessageStatus status = new PendingMessageStatus();
+		CandidateMessageStatus status = new CandidateMessageStatus();
 
         status.setMeterInstalled(
                 this.isMeterInstalledForUser(accountKey));

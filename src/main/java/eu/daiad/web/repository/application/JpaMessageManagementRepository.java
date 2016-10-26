@@ -31,7 +31,7 @@ import eu.daiad.web.model.message.ConsumptionStats;
 import eu.daiad.web.model.message.EnumAlertType;
 import eu.daiad.web.model.message.EnumDynamicRecommendationType;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
-import eu.daiad.web.model.message.PendingMessageStatus;
+import eu.daiad.web.model.message.CandidateMessageStatus;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.BaseRepository;
@@ -44,31 +44,36 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     EntityManager entityManager;
 
     @Override
-    public void executeAccount(MessageCalculationConfiguration config, ConsumptionStats aggregates,
-                    PendingMessageStatus status, UUID accountkey) {
+    public void executeAccount(
+            MessageCalculationConfiguration config, ConsumptionStats aggregates,
+            CandidateMessageStatus messageStatus, UUID accountkey) 
+    {
         Account account = getAccountByKey(accountkey);
-
-        this.executeAccount(config, aggregates, status, account);
+        this.executeAccount(config, aggregates, messageStatus, account);
     }
 
-    private void executeAccount(MessageCalculationConfiguration config, ConsumptionStats aggregates,
-                    PendingMessageStatus status, Account account) {
-        computeAmphiroMessagesForUser(config, aggregates, status, account);
-        computeSmartWaterMeterMessagesForUser(config, aggregates, status, account);
-        computeStaticTipsForUser(config, status, account);
+    private void executeAccount(
+            MessageCalculationConfiguration config, ConsumptionStats aggregates,
+            CandidateMessageStatus messageStatus, Account account) 
+    {
+        computeAmphiroMessagesForUser(config, aggregates, messageStatus, account);
+        
+        computeMeterMessagesForUser(config, aggregates, messageStatus, account);
+        
+        computeStaticTipsForUser(config, messageStatus, account);
     }
 
     @Override
-    public DateTime getLastDateOfAccountStaticRecommendation(AuthenticatedUser user) {
+    public DateTime getLastDateOfAccountStaticRecommendation(AuthenticatedUser user) 
+    {
         DateTime lastCreatedOn = null;
-        TypedQuery<AccountStaticRecommendation> accountStaticRecommendationQuery = entityManager
-                        .createQuery("select a from account_static_recommendation a where a.account.id = :accountId order by a.createdOn desc",
-                                        eu.daiad.web.domain.application.AccountStaticRecommendation.class);
-        accountStaticRecommendationQuery.setParameter("accountId", user.getId());
+        TypedQuery<AccountStaticRecommendation> q = entityManager.createQuery(
+                "select a from account_static_recommendation a " + 
+                    "where a.account.id = :accountId order by a.createdOn desc",
+                eu.daiad.web.domain.application.AccountStaticRecommendation.class);
+        q.setParameter("accountId", user.getId());
 
-        List<AccountStaticRecommendation> accountStaticRecommendations = accountStaticRecommendationQuery
-                        .getResultList();
-
+        List<AccountStaticRecommendation> accountStaticRecommendations = q.getResultList();
         if (!accountStaticRecommendations.isEmpty()) {
             lastCreatedOn = accountStaticRecommendations.get(0).getCreatedOn();
         }
@@ -76,9 +81,10 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
         return lastCreatedOn;
     }
 
-    private void computeAmphiroMessagesForUser(MessageCalculationConfiguration config,
-                    ConsumptionStats aggregates, PendingMessageStatus status, Account account) {
-
+    private void computeAmphiroMessagesForUser(
+            MessageCalculationConfiguration config,
+            ConsumptionStats aggregates, CandidateMessageStatus status, Account account)
+    {
         if (!status.isAmphiroInstalled()) {
             return;
         }
@@ -103,52 +109,55 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     }
 
-    private void computeSmartWaterMeterMessagesForUser(MessageCalculationConfiguration config,
-                    ConsumptionStats aggregates, PendingMessageStatus status, Account account) {
-        if (!status.isMeterInstalled()) {
+    private void computeMeterMessagesForUser(
+            MessageCalculationConfiguration config, ConsumptionStats aggregates, 
+            CandidateMessageStatus messageStatus, Account account) 
+    {
+        if (!messageStatus.isMeterInstalled()) {
             return;
         }
 
-        alertWaterLeakSWM(config, status, account);
+        alertWaterLeakSWM(config, messageStatus, account);
         //alertWaterQualitySWM(config, status, account);
         // alertPromptGoodJobMonthlySWM(config, aggregates, status, account);
         // //inactive prompt
         // promptGoodJobWeeklySWM(account); using monthly for now.
-        alertTooMuchWaterConsumptionSWM(config, aggregates, status, account);
-        alertReducedWaterUseSWM(config, status, account);
+        alertTooMuchWaterConsumptionSWM(config, aggregates, messageStatus, account);
+        alertReducedWaterUseSWM(config, messageStatus, account);
 
         //alertNearDailyBudgetSWM(config, status, account);
         //alertNearWeeklyBudgetSWM(config, status, account);
         //alertReachedDailyBudgetSWM(config, status, account);
         //alertWaterChampionSWM(config, status, account);
 
-        alertWaterEfficiencyLeaderSWM(config, aggregates, status, account);
+        alertWaterEfficiencyLeaderSWM(config, aggregates, messageStatus, account);
         // alertKeepUpSavingWaterSWM(config, status, account); //inactive prompt
 
         // alertLitresSavedSWM(config, status, account); //inactive prompt
         // alertTop25SaverSWM(config, aggregates, status, account); //inactive
-        // prompt
         // alertTop10SaverSWM(config, aggregates, status, account); //inactive
-        // prompt
     }
 
-    private Alert getAlertByType(EnumAlertType type) {
+    private Alert getAlertByType(EnumAlertType type) 
+    {
         TypedQuery<eu.daiad.web.domain.application.Alert> query = entityManager.createQuery(
-                        "select a from alert a where a.id = :id", eu.daiad.web.domain.application.Alert.class)
-                        .setFirstResult(0).setMaxResults(1);
+                    "select a from alert a where a.id = :id", 
+                    eu.daiad.web.domain.application.Alert.class)
+                .setFirstResult(0)
+                .setMaxResults(1);
 
         query.setParameter("id", type.getValue());
-
         return query.getSingleResult();
     }
 
     private DynamicRecommendation getDynamicRecommendationByType(EnumDynamicRecommendationType type) {
         TypedQuery<eu.daiad.web.domain.application.DynamicRecommendation> query = entityManager.createQuery(
-                        "select d from dynamic_recommendation d where d.id = :id",
-                        eu.daiad.web.domain.application.DynamicRecommendation.class).setFirstResult(0).setMaxResults(1);
+                    "select d from dynamic_recommendation d where d.id = :id",
+                    eu.daiad.web.domain.application.DynamicRecommendation.class)
+                .setFirstResult(0)
+                .setMaxResults(1);
 
         query.setParameter("id", type.getValue());
-
         return query.getSingleResult();
     }
 
@@ -220,7 +229,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     }
 
     // random static tip
-    private void computeStaticTipsForUser(MessageCalculationConfiguration config, PendingMessageStatus status,
+    private void computeStaticTipsForUser(MessageCalculationConfiguration config, CandidateMessageStatus status,
                     Account account) {
         
         if (status.isInitialStaticTips()) {
@@ -239,7 +248,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     }
 
     // 1 alert - Check for water leaks!
-    private void alertWaterLeakSWM(MessageCalculationConfiguration config, PendingMessageStatus status, Account account) {
+    private void alertWaterLeakSWM(MessageCalculationConfiguration config, CandidateMessageStatus status, Account account) {
 
         if(!isAlertProducedOverThreeTimesForUser(EnumAlertType.WATER_LEAK.getValue(), account)){
             
@@ -261,7 +270,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     }
 
     // 2 alert - Shower still on!
-    private void alertShowerStillOnAmphiro(ConsumptionStats aggregates, PendingMessageStatus status,
+    private void alertShowerStillOnAmphiro(ConsumptionStats aggregates, CandidateMessageStatus status,
                     Account account) {
         if (status.isAlertShowerStillOnAmphiro()) {
             createAccountAlert(account, getAlertByType(EnumAlertType.SHOWER_ON), DateTime.now());
@@ -277,7 +286,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // hour, a new alert is generated every hour ...
 
     // 5 alert - Water quality not assured!
-    private void alertWaterQualitySWM(MessageCalculationConfiguration config, PendingMessageStatus status,
+    private void alertWaterQualitySWM(MessageCalculationConfiguration config, CandidateMessageStatus status,
                     Account account) {
         if (status.isAlertWaterQualitySWM()) {
             createAccountAlert(account, getAlertByType(EnumAlertType.WATER_QUALITY), DateTime.now());
@@ -286,14 +295,14 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 6 alert - Water too hot!
     private void alertHotTemperatureAmphiro(MessageCalculationConfiguration config,
-                    ConsumptionStats aggregates, PendingMessageStatus status, Account account) {
+                    ConsumptionStats aggregates, CandidateMessageStatus status, Account account) {
         if (status.isAlertHotTemperatureAmphiro()) {
             createAccountAlert(account, getAlertByType(EnumAlertType.HOT_TEMPERATURE), DateTime.now());
         }
     }
 
     // 7 alert - Reached 80% of your daily water budget {integer1} {integer2}
-    private void alertNearDailyBudgetSWM(MessageCalculationConfiguration config, PendingMessageStatus status,
+    private void alertNearDailyBudgetSWM(MessageCalculationConfiguration config, CandidateMessageStatus status,
                     Account account) {
         if (status.getAlertNearDailyBudgetSWM() != null) {
             AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.NEAR_DAILY_WATER_BUDGET),
@@ -306,7 +315,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     }
 
     // 8 alert - Reached 80% of your daily water budget {integer1} {integer2}
-    private void alertNearWeeklyBudgetSWM(MessageCalculationConfiguration config, PendingMessageStatus status,
+    private void alertNearWeeklyBudgetSWM(MessageCalculationConfiguration config, CandidateMessageStatus status,
                     Account account) {
         if (status.getAlertNearWeeklyBudgetSWM() != null) {
             AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.NEAR_WEEKLY_WATER_BUDGET),
@@ -320,7 +329,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     }
 
     // 9 alert - Reached 80% of your daily shower budget {integer1} {integer2}
-    private void alertNearDailyBudgetAmphiro(MessageCalculationConfiguration config, PendingMessageStatus status,
+    private void alertNearDailyBudgetAmphiro(MessageCalculationConfiguration config, CandidateMessageStatus status,
                     Account account) {
         if (status.getAlertNearDailyBudgetAmphiro() != null) {
             AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.NEAR_DAILY_SHOWER_BUDGET),
@@ -334,7 +343,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     }
 
     // 10 alert - Reached 80% of your weekly shower budget {integer1} {integer2}
-    private void alertNearWeeklyBudgetAmphiro(MessageCalculationConfiguration config, PendingMessageStatus status,
+    private void alertNearWeeklyBudgetAmphiro(MessageCalculationConfiguration config, CandidateMessageStatus status,
                     Account account) {
         if (DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
             if (status.getAlertNearWeeklyBudgetAmphiro() != null) {
@@ -350,7 +359,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     }
 
     // 11 alert - Reached daily Water Budget {integer1}
-    private void alertReachedDailyBudgetSWM(MessageCalculationConfiguration config, PendingMessageStatus status,
+    private void alertReachedDailyBudgetSWM(MessageCalculationConfiguration config, CandidateMessageStatus status,
                     Account account) {
         if (status.getAlertReachedDailyBudgetSWM() != null) {
             AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.REACHED_DAILY_WATER_BUDGET),
@@ -362,7 +371,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     }
 
     // 12 alert - Reached daily Shower Budget {integer1}
-    private void alertReachedDailyBudgetAmphiro(MessageCalculationConfiguration config, PendingMessageStatus status,
+    private void alertReachedDailyBudgetAmphiro(MessageCalculationConfiguration config, CandidateMessageStatus status,
                     Account account) {
         if (status.getAlertReachedDailyBudgetSWM() != null) {
             if (status.getAlertReachedDailyBudgetSWM().getKey()) {
@@ -377,7 +386,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     }
 
     // 13 alert - You are a real water champion!
-    private void alertWaterChampionSWM(MessageCalculationConfiguration config, PendingMessageStatus status,
+    private void alertWaterChampionSWM(MessageCalculationConfiguration config, CandidateMessageStatus status,
                     Account account) {
         
         if(config.isOnDemandExecution()){
@@ -395,7 +404,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     }
 
     // 14 alert - You are a real shower champion!
-    private void alertShowerChampionAmphiro(MessageCalculationConfiguration config, PendingMessageStatus status,
+    private void alertShowerChampionAmphiro(MessageCalculationConfiguration config, CandidateMessageStatus status,
                     Account account) {
         
         if(config.isOnDemandExecution()){
@@ -414,7 +423,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 15 alert - You are using too much water {integer1}
     private void alertTooMuchWaterConsumptionSWM(MessageCalculationConfiguration config,
-                    ConsumptionStats aggregates, PendingMessageStatus status, Account account) {
+                    ConsumptionStats aggregates, CandidateMessageStatus status, Account account) {
         
         if(isAlertAlreadyProducedThisWeekForUser(EnumAlertType.TOO_MUCH_WATER_SWM.getValue(), account)){
             if(config.isOnDemandExecution()){
@@ -442,7 +451,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 16 alert - You are using too much water in the shower {integer1}
     private void alertTooMuchWaterConsumptionAmphiro(MessageCalculationConfiguration config,
-                    ConsumptionStats aggregates, PendingMessageStatus status, Account account) {
+                    ConsumptionStats aggregates, CandidateMessageStatus status, Account account) {
 
         if(isAlertAlreadyProducedThisWeekForUser(EnumAlertType.TOO_MUCH_WATER_AMPHIRO.getValue(), account)){
             if(config.isOnDemandExecution()){
@@ -471,7 +480,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 17 alert - You are spending too much energy for showering {integer1}
     // {currency}
     private void alertTooMuchEnergyAmphiro(MessageCalculationConfiguration config,
-                    ConsumptionStats aggregates, PendingMessageStatus status, Account account) {
+                    ConsumptionStats aggregates, CandidateMessageStatus status, Account account) {
         
         if(isAlertAlreadyProducedThisWeekForUser(EnumAlertType.TOO_MUCH_ENERGY.getValue(), account)){          
             if (config.isOnDemandExecution() || DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
@@ -503,7 +512,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 18 alert - Well done! You have greatly reduced your water use {integer1}
     // percent
-    private void alertReducedWaterUseSWM(MessageCalculationConfiguration config, PendingMessageStatus status,
+    private void alertReducedWaterUseSWM(MessageCalculationConfiguration config, CandidateMessageStatus status,
                     Account account) {
         
         if (!isAlertAlreadyProducedForUser(EnumAlertType.REDUCED_WATER_USE.getValue(), account)) {
@@ -522,7 +531,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 19 alert - Well done! You have greatly improved your shower efficiency
     // {integer1} percent
     private void alertImprovedShowerEfficiencyAmphiro(MessageCalculationConfiguration config,
-                    PendingMessageStatus status, Account account) {
+                    CandidateMessageStatus status, Account account) {
         
         if (!isAlertAlreadyProducedForUser(EnumAlertType.IMPROVED_SHOWER_EFFICIENCY.getValue(), account)) {
             if (config.isOnDemandExecution() || DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
@@ -540,7 +549,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 20 alert - Congratulations! You are a water efficiency leader {integer1}
     // litres
     private void alertWaterEfficiencyLeaderSWM(MessageCalculationConfiguration config,
-                    ConsumptionStats aggregates, PendingMessageStatus status, Account account) {
+                    ConsumptionStats aggregates, CandidateMessageStatus status, Account account) {
 
         if(isAlertAlreadyProducedThisMonthForUser(EnumAlertType.WATER_EFFICIENCY_LEADER.getValue(), account)){          
             if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
@@ -556,7 +565,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     }
 
     // 21 alert - Keep up saving water!
-    private void alertKeepUpSavingWaterSWM(MessageCalculationConfiguration config, PendingMessageStatus status,
+    private void alertKeepUpSavingWaterSWM(MessageCalculationConfiguration config, CandidateMessageStatus status,
                     Account account) {
         // compute only if the message list is empty
         if (!isAlertAlreadyProducedForUser(EnumAlertType.KEEP_UP_SAVING_WATER.getValue(), account)) {
@@ -566,7 +575,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 22 alert - You are doing a great job!
     private void alertPromptGoodJobMonthlySWM(MessageCalculationConfiguration config,
-                    ConsumptionStats aggregates, PendingMessageStatus status, Account account) {
+                    ConsumptionStats aggregates, CandidateMessageStatus status, Account account) {
         if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
             if (status.isAlertPromptGoodJobMonthlySWM()) {
                 createAccountAlert(account, getAlertByType(EnumAlertType.GOOD_JOB_MONTHLY), DateTime.now());
@@ -575,7 +584,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     }
 
     // 23 alert - You have already saved {integer1} litres of water!
-    private void alertLitresSavedSWM(MessageCalculationConfiguration config, PendingMessageStatus status,
+    private void alertLitresSavedSWM(MessageCalculationConfiguration config, CandidateMessageStatus status,
                     Account account) {
         
         if (config.isOnDemandExecution() || DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
@@ -592,7 +601,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 24 alert - Congratulations! You are one of the top 25% savers in your
     // region.
     private void alertTop25SaverSWM(MessageCalculationConfiguration config, ConsumptionStats aggregates,
-                    PendingMessageStatus status, Account account) {     
+                    CandidateMessageStatus status, Account account) {     
         
         if (config.isOnDemandExecution() || DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
             if (status.isAlertTop25SaverWeeklySWM()) {
@@ -604,7 +613,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 25 alert - Congratulations! You are among the top group of savers in your
     // city.
     private void alertTop10SaverSWM(MessageCalculationConfiguration config, ConsumptionStats aggregates,
-                    PendingMessageStatus status, Account account) {
+                    CandidateMessageStatus status, Account account) {
 
         if (config.isOnDemandExecution() || DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
             if (status.isAlertTop10SaverSWM()) {
@@ -616,7 +625,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 1 recommendation - Spend 1 less minute in the shower and save {integer1}
     // {integer2}
     private void recommendLessShowerTimeAmphiro(MessageCalculationConfiguration config,
-                    ConsumptionStats aggregates, PendingMessageStatus status, Account account) {     
+                    ConsumptionStats aggregates, CandidateMessageStatus status, Account account) {     
         if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.LESS_SHOWER_TIME.getValue(), account)){         
             if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
                 if (status.getRecommendShampooChangeAmphiro().getKey()) {
@@ -640,7 +649,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 2 recommendation - You could save {currency1} if you used a bit less hot
     // water in the shower. {currency2}
     private void recommendLowerTemperatureAmphiro(MessageCalculationConfiguration config,
-                    ConsumptionStats aggregates, PendingMessageStatus status, Account account) {
+                    ConsumptionStats aggregates, CandidateMessageStatus status, Account account) {
 
         if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.LOWER_TEMPERATURE.getValue(), account)){         
             if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
@@ -698,7 +707,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 3 recommendation - Reduce the water flow in the shower and gain
     // {integer1} {integer2}
     private void recommendLowerFlowAmphiro(MessageCalculationConfiguration config,
-                    ConsumptionStats aggregates, PendingMessageStatus status, Account account) {
+                    ConsumptionStats aggregates, CandidateMessageStatus status, Account account) {
 
         if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.LOWER_FLOW.getValue(), account)){          
             if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
@@ -718,7 +727,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 4 recommendation - Change your shower head and save {integer1} {integer2}
     private void recommendShowerHeadChangeAmphiro(MessageCalculationConfiguration config,
-                    ConsumptionStats aggregates, PendingMessageStatus status, Account account) {
+                    ConsumptionStats aggregates, CandidateMessageStatus status, Account account) {
 
         if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.CHANGE_SHOWERHEAD.getValue(), account)){           
             if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
@@ -741,7 +750,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 5 recommendation - Have you considered changing your shampoo? {integer1}
     // percent
     private void recommendShampooAmphiro(MessageCalculationConfiguration config,
-                    ConsumptionStats aggregates, PendingMessageStatus status, Account account) {
+                    ConsumptionStats aggregates, CandidateMessageStatus status, Account account) {
 
         if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.SHAMPOO_CHANGE.getValue(), account)){            
             if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
@@ -760,7 +769,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 6 recommendation - When showering, reduce the water flow when you do not
     // need it {integer1} {integer2}
     private void recommendReduceFlowWhenNotNeededAmphiro(MessageCalculationConfiguration config,
-                    ConsumptionStats aggregates, PendingMessageStatus status, Account account) {
+                    ConsumptionStats aggregates, CandidateMessageStatus status, Account account) {
 
         if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.REDUCE_FLOW_WHEN_NOT_NEEDED.getValue(), account)){          
             if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {

@@ -168,18 +168,18 @@ public class ConsumptionStats {
 	@Override
 	public String toString() {
 		return "\nMessage-service stats: (Utility #" + utilityId + ")\n" 
-						+ "\n    Average Monthly Consumption (SWM) = " + averageMonthlySWM.getValue()
-						+ "\n    Average Weekly Consumption (SWM) = " + averageWeeklySWM.getValue()
-						+ "\n    Top10 base month threshold (SWM) = " + top10BaseMonthSWM.getValue()
-						+ "\n    Top10 base week threshold (SWM) = " + top10BaseWeekSWM.getValue() 
-                        + "\n    Top25 base week threshold (SWM) = " + top25BaseWeekSWM.getValue()                
-                        + "\n    Average Monthly Consumption (Amphiro) = " + averageMonthlyAmphiro.getValue()
-						+ "\n    Average Weekly Consumption (Amphiro) = " + averageWeeklyAmphiro.getValue()
-                        + "\n    Top10 base threshold (Amphiro) = " + top10BaseMonthAmphiro.getValue()
-						+ "\n    Average temperature (Amphiro) = " + averageTemperatureAmphiro.getValue()
-                        + "\n    Average session consumption (Amphiro) = " + averageSessionAmphiro.getValue()
-                        + "\n    Average flow (Amphiro) = " + averageFlowAmphiro.getValue()
-                        + "\n    Average duration (Amphiro) = " + averageDurationAmphiro.getValue()
-						+ "\n";
+		        + "\n   * Average Monthly Consumption (Meter)   = " + averageMonthlySWM
+		        + "\n   * Average Weekly Consumption (Meter)    = " + averageWeeklySWM
+		        + "\n   * Top 10% base month threshold (Meter)  = " + top10BaseMonthSWM
+		        + "\n   * Top 10% base week threshold (Meter)   = " + top10BaseWeekSWM 
+		        + "\n   * Top 25% base week threshold (Meter)   = " + top25BaseWeekSWM                
+		        + "\n   * Average Monthly Consumption (Amphiro) = " + averageMonthlyAmphiro
+		        + "\n   * Average Weekly Consumption (Amphiro)  = " + averageWeeklyAmphiro
+		        + "\n   * Top 10% base threshold (Amphiro)      = " + top10BaseMonthAmphiro
+		        + "\n   * Average temperature (Amphiro)         = " + averageTemperatureAmphiro
+		        + "\n   * Average session consumption (Amphiro) = " + averageSessionAmphiro
+		        + "\n   * Average flow (Amphiro)                = " + averageFlowAmphiro
+		        + "\n   * Average duration (Amphiro)            = " + averageDurationAmphiro
+		        + "\n";
 	}
 }

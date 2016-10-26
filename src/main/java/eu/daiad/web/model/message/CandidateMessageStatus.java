@@ -3,7 +3,7 @@ package eu.daiad.web.model.message;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Map.Entry;
 
-public class PendingMessageStatus {
+public class CandidateMessageStatus {
 
 	private boolean alertWaterLeakSWM;
 

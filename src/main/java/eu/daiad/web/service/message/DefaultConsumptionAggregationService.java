@@ -158,7 +158,10 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 	            result = null;
 	        }
 	    }
-
+	    
+	    logger.info("Meter - Computed utility average of last " + days + " days: " + 
+	            ((result == null)? "NULL" : result.toString()));
+	    
 	    return (result != null)? new ComputedNumber(result) : null;
 	}
 		
@@ -178,7 +181,7 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 	    // Compute average for all users.
 	    
 	    List<UUID> uuids = groupRepository.getUtilityByIdMemberKeys(utility.getId());
-	    List<Double> averageConsumptions = new ArrayList<>();
+	    List<Double> averages = new ArrayList<>();
 
 	    DataQueryBuilder qb = new DataQueryBuilder();
 	    qb.timezone(utility.getTimezone());
@@ -195,20 +198,24 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 	                DataPoint dataPoint = userPoints.get(0);
 	                MeterDataPoint meterDataPoint = (MeterDataPoint) dataPoint;
 	                Map<EnumMetric, Double> ma = meterDataPoint.getVolume();
-	                averageConsumptions.add(ma.get(EnumMetric.AVERAGE));
+	                averages.add(ma.get(EnumMetric.AVERAGE));
 	            }
 	        }                
 	    }            
 	    
 	    // The base threshold is the consumption of the last user of the top K%
 	          
-	    if (!averageConsumptions.isEmpty()) {
-	        Collections.sort(averageConsumptions);
-	        int i = (int) ((averageConsumptions.size() * percentage) / 100);
-	        result = averageConsumptions.get(i);
+	    if (!averages.isEmpty()) {
+	        Collections.sort(averages);
+	        int i = (int) ((averages.size() * percentage) / 100);
+	        result = averages.get(i);
 	    } else {
 	        result = null;
 	    }
+	    
+	    logger.info(
+	            "Meter - Computed utility threshold of top " + percentage + "% of last " + days + " days: " + 
+	            ((result == null)? "NULL" : result.toString()));
 	    
 	    return (result != null)? new ComputedNumber(result) : null;
 	}
@@ -246,6 +253,10 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 	        }
 	    }
 	    
+	    logger.info(
+	            "Amphiro - Computed average of last " + days + " days: " + 
+	            ((result == null)? "NULL" : result.toString()));
+	    
 	    return (result != null)? new ComputedNumber(result) : null;
 	}
     
@@ -254,7 +265,7 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 	    Double result = null;
             
 	    List<UUID> uuids = groupRepository.getUtilityByIdMemberKeys(utility.getId());
-	    List<Double> averageConsumptions = new ArrayList<>();
+	    List<Double> averages = new ArrayList<>();
 
 	    DataQueryBuilder qb = new DataQueryBuilder();
 	    qb.timezone(utility.getTimezone());
@@ -270,18 +281,22 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 	                DataPoint dataPoint = userPoints.get(0);
 	                AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
 	                Map<EnumMetric, Double> metricsMap = amphiroDataPoint.getVolume();
-	                averageConsumptions.add(metricsMap.get(EnumMetric.AVERAGE));
+	                averages.add(metricsMap.get(EnumMetric.AVERAGE));
 	            }
 	        }                
 	    }             
 
-	    if (!averageConsumptions.isEmpty()) {
-	        Collections.sort(averageConsumptions);
-	        int i = (int) (averageConsumptions.size() * percentage) / 100;
-	        result = averageConsumptions.get(i);                 
+	    if (!averages.isEmpty()) {
+	        Collections.sort(averages);
+	        int i = (int) (averages.size() * percentage) / 100;
+	        result = averages.get(i);                 
 	    } else {
 	        result = null;
 	    }
+	    
+	    logger.info(
+	            "Amphiro - Computed threshold of top " + percentage + "% of last " + days + " days: " + 
+	            ((result == null)? "NULL" : result.toString()));
 	    
 	    return (result != null)? new ComputedNumber(result) : null;
 	}
@@ -310,6 +325,10 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 	           result = null;
 	        }
 	    }
+        
+	    logger.info(
+                "Amphiro - Computed average temperature of last " + days + " days: " + 
+                ((result == null)? "NULL" : result.toString()));
 	    
 	    return (result != null)? new ComputedNumber(result) : null;
 	}
@@ -339,6 +358,10 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 	        }
 	    }
 	    
+	    logger.info(
+	            "Amphiro - Computed average session of last " + days + " days: " + 
+	             ((result == null)? "NULL" : result.toString()));
+	    
 	    return (result != null)? new ComputedNumber(result) : null;
 	}
     
@@ -366,7 +389,11 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 	            result = null;
 	        }
 	    }
-		
+	    
+	    logger.info(
+	            "Amphiro - Computed average flow of last " + days + " days: " + 
+	            ((result == null)? "NULL" : result.toString()));
+	    
 	    return (result != null)? new ComputedNumber(result) : null;
 	}
     
@@ -393,6 +420,10 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 	            result = null;
 	        }
 	    }
+	    
+	    logger.info(
+	            "Amphiro - Computed average duration of last " + days + " days: " + 
+	            ((result == null)? "NULL" : result.toString()));
 	    
 	    return (result != null)? new ComputedNumber(result) : null;
 	}

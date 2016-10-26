@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 import eu.daiad.web.model.message.ConsumptionStats;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
-import eu.daiad.web.model.message.PendingMessageStatus;
+import eu.daiad.web.model.message.CandidateMessageStatus;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IMessageManagementRepository;
@@ -44,7 +44,12 @@ public class DefaultMessageService implements IMessageService {
 	@Override
 	public void executeAll(MessageCalculationConfiguration config) 
 	{
-	    for (UtilityInfo utility : utilityRepository.getUtilities()) {
+	    List<UtilityInfo> utilities = utilityRepository.getUtilities();
+	    
+	    //// Testing - Check only 1st utility
+	    //utilities = utilities.subList(0, 1);
+	    
+	    for (UtilityInfo utility: utilities) {
 			logger.info("About to generate messages for utility " + utility.getName() + "...");
 	        executeUtility(config, utility.getKey());
 		}
@@ -54,8 +59,8 @@ public class DefaultMessageService implements IMessageService {
 	public void executeUtility(MessageCalculationConfiguration config, UUID utilityKey) 
 	{
 		UtilityInfo utility = this.utilityRepository.getUtilityByKey(utilityKey);
-		ConsumptionStats aggregates = aggregationService.compute(utility);
-		executeUtility(config, utility, aggregates);
+		ConsumptionStats stats = aggregationService.compute(utility);
+        executeUtility(config, utility, stats);
 	}
 
 	private void executeUtility(
@@ -65,7 +70,7 @@ public class DefaultMessageService implements IMessageService {
 	    for (UUID accountKey: accountKeys) {
 			logger.info("[DRY-RUN] About to generate messages for account " +
 			        accountKey + " at utility #" + utility.getId());
-	        // Fixme executeAccount(config, utility, stats, accountKey);
+	        executeAccount(config, utility, stats, accountKey);
 		}
 	}
 
@@ -80,8 +85,8 @@ public class DefaultMessageService implements IMessageService {
 	private void executeAccount(
 	        MessageCalculationConfiguration config, UtilityInfo utility, ConsumptionStats stats, UUID accountKey) 
 	{
-		PendingMessageStatus status = messageResolverService.resolve(config, utility, stats, accountKey);
-		messageManagementRepository.executeAccount(config, stats, status, accountKey);
+		CandidateMessageStatus messageStatus = messageResolverService.resolve(config, utility, stats, accountKey);
+		messageManagementRepository.executeAccount(config, stats, messageStatus, accountKey);
 	}
 
 }
