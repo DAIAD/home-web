@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Represents the results of an export operation. 
+ * Represents the results of an export operation.
  */
 public class ExportResult {
 
@@ -44,8 +44,25 @@ public class ExportResult {
     }
 
     /**
+     * Checks if the result is empty.
+     * @return true if no file exists or all files have no data rows; Otherwise false
+     */
+    public boolean isEmpty() {
+        if (files.isEmpty()) {
+            return true;
+        }
+        for (FileLabelPair f : files) {
+            if (!f.isEmpty()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Increments total number of exported rows by {@code value}.
-     * 
+     *
      * @param value the value to increment the total number of exported rows.
      */
     public void increment(long value) {
@@ -54,7 +71,7 @@ public class ExportResult {
 
     /**
      * Adds a message to the result.
-     * 
+     *
      * @param userKey unique user key.
      * @param username user name.
      * @param deviceKey unique device key.

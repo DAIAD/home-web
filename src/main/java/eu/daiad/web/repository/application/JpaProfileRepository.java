@@ -197,9 +197,9 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
             String queryFilterPart = "";
             if (filters.getNameFilter() != null && filters.getNameFilter().length() > 0) {
-                queryFilterPart = " AND (LOWER(a.firstname) LIKE :searchTerm "
-                                + "OR LOWER(a.lastname) LIKE :searchTerm " + "OR LOWER(a.username) LIKE :searchTerm "
-                                + "ORDER BY a.lastname, a.username)";
+                queryFilterPart = " AND ( LOWER(a.firstname) LIKE :searchTerm OR " +
+                                  "       LOWER(a.lastname) LIKE :searchTerm OR " +
+                                  "       LOWER(a.username) LIKE :searchTerm ) ";
             }
 
             String queryString = "select a from account a join a.roles r " + "where r.role.name = :userRole"

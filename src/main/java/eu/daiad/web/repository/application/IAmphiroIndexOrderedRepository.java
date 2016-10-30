@@ -22,19 +22,16 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 
 public interface IAmphiroIndexOrderedRepository {
 
-    public AmphiroSessionUpdateCollection storeData(AuthenticatedUser user, AmphiroDevice device,
-                    AmphiroMeasurementCollection data) throws ApplicationException;
+    AmphiroSessionUpdateCollection storeData(AuthenticatedUser user, AmphiroDevice device, AmphiroMeasurementCollection data) throws ApplicationException;
 
-    public abstract AmphiroMeasurementIndexIntervalQueryResult searchMeasurements(DateTimeZone timezone,
-                    AmphiroMeasurementIndexIntervalQuery query);
+    AmphiroMeasurementIndexIntervalQueryResult searchMeasurements(DateTimeZone timezone, AmphiroMeasurementIndexIntervalQuery query);
 
-    public abstract AmphiroSessionCollectionIndexIntervalQueryResult searchSessions(String[] name,
-                    DateTimeZone timezone, AmphiroSessionCollectionIndexIntervalQuery query);
+    AmphiroSessionCollectionIndexIntervalQueryResult searchSessions(String[] name, DateTimeZone timezone, AmphiroSessionCollectionIndexIntervalQuery query);
 
-    public abstract AmphiroSessionIndexIntervalQueryResult getSession(AmphiroSessionIndexIntervalQuery query);
-    
-    public abstract ArrayList<GroupDataSeries> query(ExpandedDataQuery query) throws ApplicationException;
-    
-    public abstract void assignMemberToSession(AuthenticatedUser user, List<MemberAssignmentRequest.Assignment> assignments) throws Exception;
+    AmphiroSessionIndexIntervalQueryResult getSession(AmphiroSessionIndexIntervalQuery query);
+
+    ArrayList<GroupDataSeries> query(ExpandedDataQuery query) throws ApplicationException;
+
+    void assignMemberToSession(AuthenticatedUser user, List<MemberAssignmentRequest.Assignment> assignments) throws Exception;
 
 }

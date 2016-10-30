@@ -1,5 +1,8 @@
 package eu.daiad.web.model.amphiro;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class AmphiroMeasurement {
@@ -83,6 +86,11 @@ public class AmphiroMeasurement {
 
     public void setSession(AmphiroSession session) {
         this.session = session;
+    }
+
+    @JsonIgnore
+    public DateTime getUtcDate() {
+        return new DateTime(this.timestamp, DateTimeZone.UTC);
     }
 
 }
