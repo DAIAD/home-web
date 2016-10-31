@@ -63,8 +63,10 @@ public class RESTAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuc
 					profile = profileRepository.getProfileByUsername(EnumApplication.HOME);
 				}
 
-				AuthenticationResponse authenticationResponse = new AuthenticationResponse(new Runtime(
-								environment.getActiveProfiles()), profile);
+				AuthenticationResponse authenticationResponse = new AuthenticationResponse(
+	                new Runtime(environment.getActiveProfiles()),
+	                profile,
+	                user.roleToStringArray());
 
 				CsrfToken sessionToken = (CsrfToken) request.getSession().getAttribute(
 								CsrfConstants.DEFAULT_CSRF_TOKEN_ATTR_NAME);

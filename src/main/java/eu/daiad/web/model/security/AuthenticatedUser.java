@@ -172,6 +172,16 @@ public class AuthenticatedUser extends User {
         return false;
     }
 
+    public String[] roleToStringArray() {
+        List<String> roles = new ArrayList<String>();
+
+        for (GrantedAuthority authority : this.getAuthorities()) {
+            roles.add(authority.getAuthority());
+        }
+
+        return roles.toArray(new String[] {});
+    }
+
     public EnumWebMode getWebMode() {
         return webMode;
     }

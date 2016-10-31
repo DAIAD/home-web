@@ -56,14 +56,16 @@ public class ProfileController extends BaseRestController {
     @RequestMapping(value = "/api/v1/profile/load", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse getProfile(@RequestBody Credentials data) {
         try {
-            AuthenticatedUser user = this.authenticate(data);
+            AuthenticatedUser user = authenticate(data);
 
             if (user.hasRole(EnumRole.ROLE_USER)) {
-                return new ProfileResponse(this.getRuntime(), this.profileRepository
-                                .getProfileByUsername(EnumApplication.MOBILE));
+                return new ProfileResponse(getRuntime(),
+                                           profileRepository.getProfileByUsername(EnumApplication.MOBILE),
+                                           user.roleToStringArray());
             } else if (user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
-                return new ProfileResponse(this.getRuntime(), this.profileRepository
-                                .getProfileByUsername(EnumApplication.UTILITY));
+                return new ProfileResponse(getRuntime(),
+                                           profileRepository.getProfileByUsername(EnumApplication.UTILITY),
+                                           user.roleToStringArray());
             } else {
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION);
             }
@@ -86,7 +88,7 @@ public class ProfileController extends BaseRestController {
         RestResponse response = new RestResponse();
 
         try {
-            AuthenticatedUser user = this.authenticate(request.getCredentials());
+            AuthenticatedUser user = authenticate(request.getCredentials());
 
             if (user.hasRole(EnumRole.ROLE_USER)) {
                 request.setApplication(EnumApplication.MOBILE);
@@ -119,7 +121,7 @@ public class ProfileController extends BaseRestController {
             }
 
             if (response.getSuccess()) {
-                this.profileRepository.saveProfile(request);
+                profileRepository.saveProfile(request);
             }
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -142,9 +144,9 @@ public class ProfileController extends BaseRestController {
         RestResponse response = new RestResponse();
 
         try {
-            this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
+            authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
-            this.profileRepository.saveHousehold(request);
+            profileRepository.saveHousehold(request);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -166,9 +168,9 @@ public class ProfileController extends BaseRestController {
         RestResponse response = new RestResponse();
 
         try {
-            this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
+            authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
-            this.profileRepository.notifyProfile(EnumApplication.MOBILE, request.getVersion(), new DateTime(request.getUpdatedOn()));
+            profileRepository.notifyProfile(EnumApplication.MOBILE, request.getVersion(), new DateTime(request.getUpdatedOn()));
 
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);

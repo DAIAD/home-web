@@ -64,10 +64,14 @@ public class ProfileController extends BaseController {
     public RestResponse getProfile(@AuthenticationPrincipal AuthenticatedUser user) {
         try {
             if (user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
-                return new ProfileResponse(this.getRuntime(), profileRepository.getProfileByUsername(EnumApplication.UTILITY));
+                return new ProfileResponse(getRuntime(),
+                                           profileRepository.getProfileByUsername(EnumApplication.UTILITY),
+                                           user.roleToStringArray());
             }
 
-            return new ProfileResponse(this.getRuntime(), profileRepository.getProfileByUsername(EnumApplication.HOME));
+            return new ProfileResponse(getRuntime(),
+                                       profileRepository.getProfileByUsername(EnumApplication.HOME),
+                                       user.roleToStringArray());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -198,10 +202,10 @@ public class ProfileController extends BaseController {
             if (response.getSuccess()) {
                 if (user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
                     request.setApplication(EnumApplication.UTILITY);
-                    this.profileRepository.saveProfile(request);
+                    profileRepository.saveProfile(request);
                 } else {
                     request.setApplication(EnumApplication.HOME);
-                    this.profileRepository.saveProfile(request);
+                    profileRepository.saveProfile(request);
                 }
             }
         } catch (Exception ex) {
@@ -225,7 +229,7 @@ public class ProfileController extends BaseController {
         RestResponse response = new RestResponse();
 
         try {
-            this.profileRepository.saveHousehold(request);
+            profileRepository.saveHousehold(request);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 

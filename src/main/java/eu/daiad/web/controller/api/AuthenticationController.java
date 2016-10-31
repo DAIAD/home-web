@@ -12,6 +12,7 @@ import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.profile.Profile;
+import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.AuthenticationResponse;
 import eu.daiad.web.model.security.Credentials;
 import eu.daiad.web.repository.application.IProfileRepository;
@@ -42,11 +43,11 @@ public class AuthenticationController extends BaseRestController {
     @RequestMapping(value = "/api/v1/auth/login", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse login(@RequestBody Credentials credentials) {
         try {
-            this.authenticate(credentials);
+            AuthenticatedUser user = authenticate(credentials);
 
             Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE);
 
-            return new AuthenticationResponse(this.getRuntime(), profile);
+            return new AuthenticationResponse(getRuntime(), profile, user.roleToStringArray());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
