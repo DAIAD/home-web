@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
-import eu.daiad.web.domain.application.Account;
+import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.DeviceMeter;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.admin.AccountWhiteListInfo;
@@ -42,6 +42,7 @@ import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.security.PasswordChangeRequest;
 import eu.daiad.web.model.security.PasswordResetTokenCreateRequest;
 import eu.daiad.web.model.security.PasswordResetTokenRedeemRequest;
+import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.model.user.DeviceMeterInfo;
 import eu.daiad.web.model.user.UserInfo;
 import eu.daiad.web.model.user.UserInfoCollectionResponse;
@@ -59,39 +60,72 @@ import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 import eu.daiad.web.service.IUserService;
 
 /**
- * Provides methods for user management 
+ * Provides methods for user management.
  */
 @RestController
 public class UserController extends BaseController {
 
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
     private static final Log logger = LogFactory.getLog(UserController.class);
 
+    /**
+     * True if the white list is enabled.
+     */
     @Value("${security.white-list}")
     private boolean enforceWhiteListCheck;
 
+    /**
+     * Service for creating new user accounts.
+     */
     @Autowired
     private IUserService userService;
-    
+
+    /**
+     * Repository for accessing user data.
+     */
     @Autowired
     private IUserRepository userRepository;
 
+    /**
+     * Repository for accessing device data.
+     */
     @Autowired
     private IDeviceRepository deviceRepository;
 
+    /**
+     * Repository for accessing amphiro b1 data.
+     */
     @Autowired
     private IAmphiroIndexOrderedRepository amphiroIndexOrderedRepository;
 
+    /**
+     * Repository for accessing smart water meter data.
+     */
     @Autowired
     private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
 
+    /**
+     * Repository for accessing user defined group data.
+     */
     @Autowired
     private IUserGroupRepository userGroupRepository;
 
+    /**
+     * Repository for accessing favourite data.
+     */
     @Autowired
     private IFavouriteRepository favouriteRepository;
 
+    /**
+     * Searches user by name prefix.
+     *
+     * @param prefix the prefix to search for.
+     * @return a list of users.
+     */
     @RequestMapping(value = "/action/user/search/prefix/{prefix}", method = RequestMethod.GET, produces = "application/json")
-    @Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public @ResponseBody RestResponse filterUserByPrefix(@PathVariable String prefix) {
         try {
             UserInfoCollectionResponse response = new UserInfoCollectionResponse();
@@ -102,21 +136,19 @@ public class UserController extends BaseController {
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            RestResponse response = new RestResponse();
-            response.add(this.getError(ex));
-
-            return response;
+            return new RestResponse(getError(ex));
         }
     }
 
     /**
-     * Returns application events.
-     * 
-     * @param request the request
-     * @return the events
+     * Searches users.
+     *
+     * @param user the currently authenticated user.
+     * @param request the query for filtering users.
+     * @return a list of users.
      */
     @RequestMapping(value = "/action/user/search", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-    @Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse search(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody UserQueryRequest request) {
         try {
             // Set default values
@@ -141,7 +173,7 @@ public class UserController extends BaseController {
 
             List<UserInfo> accounts = new ArrayList<UserInfo>();
 
-            for (Account entity : result.getAccounts()) {
+            for (AccountEntity entity : result.getAccounts()) {
                 UserInfo account = new UserInfo(entity);
 
                 account.setLocation(entity.getLocation());
@@ -163,50 +195,45 @@ public class UserController extends BaseController {
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            RestResponse errorResponse = new RestResponse();
-            errorResponse.add(this.getError(ex));
-
-            return errorResponse;
+            return new RestResponse(getError(ex));
         }
     }
 
     /**
      * Adds a user to the white list.
-     * 
+     *
      * @param user the currently authenticated user.
      * @param userInfo the user to add.
      * @return the controller's response.
      */
     @RequestMapping(value = "/action/user/create", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-    @Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public @ResponseBody RestResponse addUserToWhiteList(@AuthenticationPrincipal AuthenticatedUser user,
-                    @RequestBody AccountWhiteListInfo userInfo) {
-        RestResponse response = new RestResponse();
-
+                                                         @RequestBody AccountWhiteListInfo userInfo) {
         try {
             userRepository.insertAccountWhiteListEntry(userInfo);
-
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            response.add(this.getError(ex));
+            return new RestResponse(this.getError(ex));
         }
 
-        return response;
+        return new RestResponse();
     }
 
     /**
      * Returns basic info for a user given his key. Notice that it does not
      * provide info, regarding the groups it participates or the devices he
      * owns.
-     * 
-     * @param user the authenticated user
-     * @return the key of the user for which data is requested
+     *
+     * @param user the authenticated user.
+     * @param key the key of the user for which data is requested.
+     * @return information about the requested user.
      */
     @RequestMapping(value = "/action/user/{key}", method = RequestMethod.GET, produces = "application/json")
-    @Secured({ "ROLE_SUPERUSER", "ROLE_ADMIN" })
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public @ResponseBody RestResponse getUserInfoByKey(@AuthenticationPrincipal AuthenticatedUser user,
-                    @PathVariable UUID key) {
+                                                       @PathVariable UUID key) {
         try {
             UserInfoResponse response = new UserInfoResponse();
 
@@ -228,13 +255,16 @@ public class UserController extends BaseController {
         } catch (ApplicationException ex) {
             logger.error(ex.getMessage(), ex);
 
-            RestResponse response = new RestResponse();
-            response.add(this.getError(ex));
-
-            return response;
+            return new RestResponse(getError(ex));
         }
     }
 
+    /**
+     * Get the status of the smart water meters for the user with the given key.
+     *
+     * @param userkey the user key.
+     * @return a list of smart water meter status objects.
+     */
     private List<WaterMeterStatus> getMeters(UUID userkey) {
         DeviceRegistrationQuery deviceQuery = new DeviceRegistrationQuery();
         deviceQuery.setType(EnumDeviceType.METER);
@@ -262,6 +292,12 @@ public class UserController extends BaseController {
         return result.getDevices();
     }
 
+    /**
+     * Get the amphiro b1 devices registered to the user with the given key.
+     *
+     * @param userkey the user key.
+     * @return a list of amphiro b1 device objects.
+     */
     private List<Device> getAmphiroDevices(UUID userkey) {
         DeviceRegistrationQuery deviceQuery = new DeviceRegistrationQuery();
         deviceQuery.setType(EnumDeviceType.AMPHIRO);
@@ -269,6 +305,15 @@ public class UserController extends BaseController {
         return deviceRepository.getUserDevices(userkey, deviceQuery);
     }
 
+    /**
+     * Get the amphiro b1 devices registered to the user with the given key
+     * alongside with the most recent session.
+     *
+     * @param userkey the user key.
+     * @param devices a list of devices to search for.
+     * @param timezone the time zone used for reference for expressing timestamps.
+     * @return a list of amphiro b1 device objects with sessions.
+     */
     private List<AmphiroSessionCollection> getDevices(UUID userkey, List<Device> devices, String timezone) {
         List<String> names = new ArrayList<String>();
         List<UUID> deviceKeys = new ArrayList<UUID>();
@@ -289,15 +334,15 @@ public class UserController extends BaseController {
     }
 
     /**
-     * Adds a user to the favorite list
-     * 
-     * @param userKey the key of the user to add
-     * @return the result of the operation
+     * Adds a user to the favorite list.
+     *
+     * @param userKey the key of the user to add.
+     * @return the result of the operation.
      */
     @RequestMapping(value = "/action/user/favorite/{userKey}", method = RequestMethod.PUT, produces = "application/json")
-    @Secured({ "ROLE_ADMIN" })
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public @ResponseBody RestResponse addFavorite(@AuthenticationPrincipal AuthenticatedUser user,
-                    @PathVariable UUID userKey) {
+                                                  @PathVariable UUID userKey) {
         try {
             favouriteRepository.addUserFavorite(user.getKey(), userKey);
 
@@ -305,21 +350,18 @@ public class UserController extends BaseController {
         } catch (ApplicationException ex) {
             logger.error(ex.getMessage(), ex);
 
-            RestResponse response = new RestResponse();
-            response.add(this.getError(ex));
-
-            return response;
+            return new RestResponse(getError(ex));
         }
     }
 
     /**
      * Removes a user from the favorite list
-     * 
+     *
      * @param userKey the key of the user to remove
      * @return the result of the operation
      */
     @RequestMapping(value = "/action/user/favorite/{userKey}", method = RequestMethod.DELETE, produces = "application/json")
-    @Secured({ "ROLE_ADMIN" })
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public @ResponseBody RestResponse removeFavorite(@AuthenticationPrincipal AuthenticatedUser user,
                     @PathVariable UUID userKey) {
         try {
@@ -329,30 +371,27 @@ public class UserController extends BaseController {
         } catch (ApplicationException ex) {
             logger.error(ex.getMessage(), ex);
 
-            RestResponse response = new RestResponse();
-            response.add(this.getError(ex));
-
-            return response;
+            return new RestResponse(getError(ex));
         }
     }
 
     /**
      * Changes a user's password.
-     * 
-     * @param data the request.
+     *
+     * @param user the currently authenticated user.
+     * @param data the new password and optionally a user name for changing the password of a different user.
      * @return the controller's response.
      */
     @RequestMapping(value = "/action/user/password/change", method = RequestMethod.POST, produces = "application/json")
-    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
-    public RestResponse changePassword(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody PasswordChangeRequest data) {
-        RestResponse response = new RestResponse();
-
+    @Secured({ RoleConstant.ROLE_USER, RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse changePassword(@AuthenticationPrincipal AuthenticatedUser user,
+                                       @RequestBody PasswordChangeRequest data) {
         try {
-            if (user.hasRole(EnumRole.ROLE_ADMIN)) {
+            if (user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
                 if(StringUtils.isBlank(data.getUsername())) {
                     userService.changePassword(user.getUsername(), data.getPassword());
                 } else {
-                    userService.changePassword(data.getUsername(), data.getPassword());    
+                    userService.changePassword(data.getUsername(), data.getPassword());
                 }
             } else if(user.hasRole(EnumRole.ROLE_USER)){
                 if(StringUtils.isBlank(data.getUsername())) {
@@ -366,54 +405,51 @@ public class UserController extends BaseController {
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            response.add(this.getError(ex));
+            return new RestResponse(getError(ex));
         }
 
-        return response;
+        return new RestResponse();
     }
 
     /**
      * Requests a token for resetting a user's password.
-     * 
+     *
+     * @param user the currently authenticated user.
      * @param request the name of the user.
      * @return the controller's response.
      */
     @RequestMapping(value = "/action/user/password/reset/token/create", method = RequestMethod.POST, produces = "application/json")
     public RestResponse resetPasswordCreateToken(@AuthenticationPrincipal AuthenticatedUser user,
-                    @RequestBody PasswordResetTokenCreateRequest request) {
-        RestResponse response = new RestResponse();
-
+                                                 @RequestBody PasswordResetTokenCreateRequest request) {
         try {
             userService.resetPasswordCreateToken(request.getUsername(), true, request.getApplication());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
             // Do not send detailed error information
-            response.add(this.getErrorUnknown());
+            return new RestResponse(this.getErrorUnknown());
         }
 
-        return response;
+        return new RestResponse();
     }
-    
+
     /**
      * Resets a user's password given a valid token and password.
-     * 
+     *
      * @param request the token and new password values.
      * @return the controller's response.
      */
     @RequestMapping(value = "/action/user/password/reset/token/redeem", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse resetPasswordRedeemToken(@RequestBody PasswordResetTokenRedeemRequest request) {
-        RestResponse response = new RestResponse();
-
         try {
             userService.resetPasswordRedeemToken(request.getToken(), request.getPin(), request.getPassword());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            response.add(this.getError(ex));
+            return new RestResponse(getError(ex));
         }
 
-        return response;
+        return new RestResponse();
     }
 
 }

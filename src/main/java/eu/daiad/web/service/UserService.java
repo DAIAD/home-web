@@ -48,17 +48,17 @@ public class UserService extends BaseService implements IUserService {
     private static final Log logger = LogFactory.getLog(UserService.class);
 
     private final static String PASSWORD_RESET_MAIL_TEMPLATE_HOME = "password-reset-web";
-    
+
     private final static String PASSWORD_RESET_MAIL_TEMPLATE_UTILITY = "password-reset-web";
-    
+
     private final static String PASSWORD_RESET_MAIL_TEMPLATE_MOBILE = "password-reset-mobile";
-    
+
     @Value("${daiad.url}")
     private String baseSiteUrl;
-   
+
     @Value("${security.white-list}")
     private boolean enforceWhiteListCheck;
-    
+
     @Autowired
     private IUserRepository userRepository;
 
@@ -70,7 +70,7 @@ public class UserService extends BaseService implements IUserService {
 
     @Autowired
     private IMailService mailService;
-    
+
     @Override
     @Transactional("applicationTransactionManager")
     public UUID createUser(UserRegistrationRequest request) throws ApplicationException {
@@ -150,7 +150,7 @@ public class UserService extends BaseService implements IUserService {
             if (!authenticatedUser.getUsername().equals(username)) {
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION);
             }
-        } else if (!authenticatedUser.hasRole(EnumRole.ROLE_ADMIN)) {
+        } else if (!authenticatedUser.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
             throw createApplicationException(SharedErrorCode.AUTHORIZATION);
         }
 
@@ -164,7 +164,7 @@ public class UserService extends BaseService implements IUserService {
         if (authenticatedUser.getUtilityId() != user.getUtilityId()) {
             throw createApplicationException(SharedErrorCode.AUTHORIZATION);
         }
-        
+
         List<ErrorCode> errors = passwordValidator.validate(password);
         if (!errors.isEmpty()) {
             throw createApplicationException(errors.get(0));
@@ -180,7 +180,7 @@ public class UserService extends BaseService implements IUserService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         AuthenticatedUser authenticatedUser = (AuthenticatedUser) authentication.getPrincipal();
 
-        if (!authenticatedUser.hasRole(EnumRole.ROLE_ADMIN)) {
+        if (!authenticatedUser.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
             throw createApplicationException(SharedErrorCode.AUTHORIZATION);
         }
 
@@ -210,7 +210,7 @@ public class UserService extends BaseService implements IUserService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         AuthenticatedUser authenticatedUser = (AuthenticatedUser) authentication.getPrincipal();
 
-        if (!authenticatedUser.hasRole(EnumRole.ROLE_ADMIN)) {
+        if (!authenticatedUser.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
             throw createApplicationException(SharedErrorCode.AUTHORIZATION);
         }
 
@@ -228,7 +228,7 @@ public class UserService extends BaseService implements IUserService {
         if (authenticatedUser.getUtilityId() != user.getUtilityId()) {
             throw createApplicationException(SharedErrorCode.AUTHORIZATION);
         }
-        
+
         if(authenticatedUser.getUsername().equals(username)) {
             throw createApplicationException(SharedErrorCode.AUTHORIZATION);
         }
@@ -236,7 +236,7 @@ public class UserService extends BaseService implements IUserService {
         // Revoke role
         userRepository.revokeRole(username, role);
     }
-   
+
     @Override
     public UUID resetPasswordCreateToken(String username, boolean sendMail, EnumApplication application) throws ApplicationException {
         // Find user
@@ -246,7 +246,7 @@ public class UserService extends BaseService implements IUserService {
         }
 
         // Administrator password reset must be performed manually
-        if (user.hasRole(EnumRole.ROLE_ADMIN)) {
+        if (user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
             throw createApplicationException(SharedErrorCode.AUTHORIZATION);
         }
 
@@ -299,11 +299,11 @@ public class UserService extends BaseService implements IUserService {
 
         return token.getToken();
     }
-    
+
     @Override
     public void resetPasswordRedeemToken(UUID token, String pin, String password) throws ApplicationException {
         List<ErrorCode> errors = passwordValidator.validate(password);
-        
+
         if(!errors.isEmpty()) {
             throw createApplicationException(errors.get(0));
         }

@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.vividsolutions.jts.geom.Geometry;
 
-import eu.daiad.web.domain.application.AccountWhiteListEntry;
+import eu.daiad.web.domain.application.AccountWhiteListEntity;
 import eu.daiad.web.domain.application.DeviceAmphiro;
 import eu.daiad.web.domain.application.DeviceAmphiroConfiguration;
 import eu.daiad.web.domain.application.DeviceAmphiroConfigurationDefault;
@@ -63,13 +63,13 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
     @Override
     public AmphiroDevice createAmphiroDevice(UUID userKey, String name, String macAddress, String aesKey, List<KeyValuePair> properties) throws ApplicationException {
         try {
-            TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager
+            TypedQuery<eu.daiad.web.domain.application.AccountEntity> query = entityManager
                             .createQuery("select a from account a where a.key = :key",
-                                            eu.daiad.web.domain.application.Account.class).setFirstResult(0)
+                                            eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0)
                             .setMaxResults(1);
             query.setParameter("key", userKey);
 
-            eu.daiad.web.domain.application.Account account = query.getSingleResult();
+            eu.daiad.web.domain.application.AccountEntity account = query.getSingleResult();
 
             eu.daiad.web.domain.application.DeviceAmphiro amphiro = new eu.daiad.web.domain.application.DeviceAmphiro();
             amphiro.setName(name);
@@ -145,17 +145,17 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
         UUID deviceKey = null;
 
         // Get user
-        TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager.createQuery(
+        TypedQuery<eu.daiad.web.domain.application.AccountEntity> accountQuery = entityManager.createQuery(
                         "select a from account a where a.username = :username",
-                        eu.daiad.web.domain.application.Account.class).setFirstResult(0).setMaxResults(1);
+                        eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0).setMaxResults(1);
 
         accountQuery.setParameter("username", username);
 
-        List<eu.daiad.web.domain.application.Account> accounts = accountQuery.getResultList();
+        List<eu.daiad.web.domain.application.AccountEntity> accounts = accountQuery.getResultList();
 
         // If user exists add meter
         if (accounts.size() == 1) {
-            eu.daiad.web.domain.application.Account account = accounts.get(0);
+            eu.daiad.web.domain.application.AccountEntity account = accounts.get(0);
 
             // Check if a meter already exists
             DeviceRegistrationQuery meterQuery = new DeviceRegistrationQuery();
@@ -191,16 +191,16 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
             deviceKey = meter.getKey();
         } else if (enforceWhiteListCheck) {
             // If the user does not exist, update white list
-            TypedQuery<AccountWhiteListEntry> entryQuery = entityManager.createQuery(
+            TypedQuery<AccountWhiteListEntity> entryQuery = entityManager.createQuery(
                             "select a from account_white_list a where a.username = :username",
-                            AccountWhiteListEntry.class).setFirstResult(0).setMaxResults(1);
+                            AccountWhiteListEntity.class).setFirstResult(0).setMaxResults(1);
 
             entryQuery.setParameter("username", username);
 
-            List<AccountWhiteListEntry> entries = entryQuery.getResultList();
+            List<AccountWhiteListEntity> entries = entryQuery.getResultList();
 
             if (entries.size() == 1) {
-                AccountWhiteListEntry entry = entries.get(0);
+                AccountWhiteListEntity entry = entries.get(0);
 
                 entry.setMeterSerial(serial);
                 entry.setMeterLocation(location);
@@ -230,14 +230,14 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
             throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
         }
 
-        TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager.createQuery(
+        TypedQuery<eu.daiad.web.domain.application.AccountEntity> accountQuery = entityManager.createQuery(
                         "select a from account a where a.username = :username and a.utility.id = :utility_id",
-                        eu.daiad.web.domain.application.Account.class).setFirstResult(0).setMaxResults(1);
+                        eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0).setMaxResults(1);
 
         accountQuery.setParameter("username", username);
         accountQuery.setParameter("utility_id", user.getUtilityId());
 
-        List<eu.daiad.web.domain.application.Account> accounts = accountQuery.getResultList();
+        List<eu.daiad.web.domain.application.AccountEntity> accounts = accountQuery.getResultList();
 
         if (accounts.size() == 1) {
             // Update account location if not already set
@@ -613,19 +613,19 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
             }
 
             // Get assignee
-            TypedQuery<eu.daiad.web.domain.application.Account> userQuery = entityManager.createQuery(
+            TypedQuery<eu.daiad.web.domain.application.AccountEntity> userQuery = entityManager.createQuery(
                             "select a from account a where a.username = :username and a.utility.id = :utility_id",
-                            eu.daiad.web.domain.application.Account.class).setFirstResult(0).setMaxResults(1);
+                            eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0).setMaxResults(1);
             userQuery.setParameter("username", assigneeUsername);
             userQuery.setParameter("utility_id", device.getAccount().getUtility().getId());
 
-            List<eu.daiad.web.domain.application.Account> users = userQuery.getResultList();
+            List<eu.daiad.web.domain.application.AccountEntity> users = userQuery.getResultList();
 
             if (users.size() == 0) {
                 throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", assigneeUsername);
             }
 
-            eu.daiad.web.domain.application.Account assignee = users.get(0);
+            eu.daiad.web.domain.application.AccountEntity assignee = users.get(0);
 
             if (assignee.getId() == device.getAccount().getId()) {
                 return;

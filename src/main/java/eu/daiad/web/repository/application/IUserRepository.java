@@ -61,13 +61,13 @@ public interface IUserRepository {
 
     List<UUID> getUserKeysForUtility(int utilityId);
 
-    UserInfo getUserInfoByKey(UUID user_id);
+    UserInfo getUserInfoByKey(UUID key);
 
     UserQueryResult search(UserQuery query);
-    
-    eu.daiad.web.domain.application.Account getAccountByKey(UUID key);
-    
-    eu.daiad.web.domain.application.Account getAccountByUsername(String username);
+
+    eu.daiad.web.domain.application.AccountEntity getAccountByKey(UUID key);
+
+    eu.daiad.web.domain.application.AccountEntity getAccountByUsername(String username);
 
     List<SurveyEntity> getSurveyDataByUtilityId(int utilityId);
 

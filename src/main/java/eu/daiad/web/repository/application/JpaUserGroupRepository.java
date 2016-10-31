@@ -16,13 +16,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import eu.daiad.web.domain.application.Account;
+import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.Favourite;
 import eu.daiad.web.domain.application.FavouriteGroup;
 import eu.daiad.web.domain.application.Group;
 import eu.daiad.web.domain.application.GroupMember;
 import eu.daiad.web.domain.application.GroupSet;
-import eu.daiad.web.domain.application.Utility;
+import eu.daiad.web.domain.application.UtilityEntity;
 import eu.daiad.web.model.admin.AccountActivity;
 import eu.daiad.web.model.error.GroupErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
@@ -48,7 +48,7 @@ public class JpaUserGroupRepository extends BaseRepository implements IUserGroup
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
-			if (!user.hasRole(EnumRole.ROLE_ADMIN) && !user.hasRole(EnumRole.ROLE_SUPERUSER)) {
+            if (!user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
 				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
@@ -77,18 +77,18 @@ public class JpaUserGroupRepository extends BaseRepository implements IUserGroup
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
-			if (!user.hasRole(EnumRole.ROLE_ADMIN) && !user.hasRole(EnumRole.ROLE_SUPERUSER)) {
+			if (!user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
 				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
-			TypedQuery<Account> groupMemberQuery = entityManager.createQuery(
-							"SELECT m.account FROM group_member m WHERE m.group.key = :group_key", Account.class)
+			TypedQuery<AccountEntity> groupMemberQuery = entityManager.createQuery(
+							"SELECT m.account FROM group_member m WHERE m.group.key = :group_key", AccountEntity.class)
 							.setFirstResult(0);
 			groupMemberQuery.setParameter("group_key", group_id);
 
-			List<Account> members = groupMemberQuery.getResultList();
+			List<AccountEntity> members = groupMemberQuery.getResultList();
 			List<GroupMemberInfo> groupMembersInfo = new ArrayList<GroupMemberInfo>();
-			for (Account member : members) {
+			for (AccountEntity member : members) {
 				groupMembersInfo.add(new GroupMemberInfo(member));
 			}
 
@@ -97,41 +97,41 @@ public class JpaUserGroupRepository extends BaseRepository implements IUserGroup
 			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
 	}
-    
+
 	@Override
 	public List<AccountActivity> getGroupAccounts(UUID group_id) {
 		try {
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
-                        
-            
-			if (!user.hasRole(EnumRole.ROLE_ADMIN) && !user.hasRole(EnumRole.ROLE_SUPERUSER)) {
+
+
+			if (!user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
 				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
-			}            
-            
-			TypedQuery<Account> groupMemberQuery = entityManager.createQuery(
-							"SELECT a.account FROM group_member a WHERE a.group.key = :group_key", Account.class)
+			}
+
+			TypedQuery<AccountEntity> groupMemberQuery = entityManager.createQuery(
+							"SELECT a.account FROM group_member a WHERE a.group.key = :group_key", AccountEntity.class)
 							.setFirstResult(0);
 			groupMemberQuery.setParameter("group_key", group_id);
-            
-			List<Account> accounts = groupMemberQuery.getResultList();
-            
+
+			List<AccountEntity> accounts = groupMemberQuery.getResultList();
+
             List<AccountActivity> accountActivityList = new ArrayList<>();
-            
-            for (Account a : accounts) {
+
+            for (AccountEntity a : accounts) {
                 eu.daiad.web.model.admin.AccountActivity accountActivity = new eu.daiad.web.model.admin.AccountActivity();
                 accountActivity.setAccountId(a.getId());
                 accountActivity.setUsername(a.getUsername());
                 accountActivity.setLastName(a.getLastname());
                 accountActivityList.add(accountActivity);
-            }        
+            }
 
             return accountActivityList;
 		} catch (Exception ex) {
 
 			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
 		}
-	}    
+	}
 
 	@Override
 	public List<GroupMemberInfo> getGroupPossibleMembers(UUID group_id) {
@@ -139,32 +139,32 @@ public class JpaUserGroupRepository extends BaseRepository implements IUserGroup
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
-			if (!user.hasRole(EnumRole.ROLE_ADMIN) && !user.hasRole(EnumRole.ROLE_SUPERUSER)) {
+			if (!user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
 				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
-			TypedQuery<Account> groupPossibleMemberQuery;
+			TypedQuery<AccountEntity> groupPossibleMemberQuery;
 
 			if (group_id != null) {
 				groupPossibleMemberQuery = entityManager
 								.createQuery("SELECT a FROM account a, group g JOIN a.utility u JOIN a.roles ar JOIN ar.role r "
 												+ "WHERE a.utility = g.utility AND g.key = :group_key "
 												+ "AND a.id NOT IN (SELECT m.account.id FROM group_member m JOIN m.group g WHERE g.key = :group_key) "
-												+ "AND r.name = :user_role", Account.class).setFirstResult(0);
+												+ "AND r.name = :user_role", AccountEntity.class).setFirstResult(0);
 				groupPossibleMemberQuery.setParameter("group_key", group_id);
 				groupPossibleMemberQuery.setParameter("user_role", EnumRole.ROLE_USER.toString());
 			} else {
 				groupPossibleMemberQuery = entityManager.createQuery(
 								"SELECT a FROM account a JOIN a.utility u JOIN a.roles ar JOIN ar.role r "
 												+ "WHERE r.name = :user_role " + "AND a.utility.id = :utility_id",
-								Account.class).setFirstResult(0);
+								AccountEntity.class).setFirstResult(0);
 				groupPossibleMemberQuery.setParameter("utility_id", user.getUtilityId());
 				groupPossibleMemberQuery.setParameter("user_role", EnumRole.ROLE_USER.toString());
 			}
 
-			List<Account> possibleMembers = groupPossibleMemberQuery.getResultList();
+			List<AccountEntity> possibleMembers = groupPossibleMemberQuery.getResultList();
 			List<GroupMemberInfo> groupMembersInfo = new ArrayList<GroupMemberInfo>();
-			for (Account possibleMember : possibleMembers) {
+			for (AccountEntity possibleMember : possibleMembers) {
 				groupMembersInfo.add(new GroupMemberInfo(possibleMember));
 			}
 
@@ -180,7 +180,7 @@ public class JpaUserGroupRepository extends BaseRepository implements IUserGroup
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
-			if (!user.hasRole(EnumRole.ROLE_ADMIN) && !user.hasRole(EnumRole.ROLE_SUPERUSER)) {
+			if (!user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
 				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
@@ -196,27 +196,27 @@ public class JpaUserGroupRepository extends BaseRepository implements IUserGroup
 			}
 
 			// Get admin's account
-			TypedQuery<eu.daiad.web.domain.application.Account> adminAccountQuery = entityManager
+			TypedQuery<eu.daiad.web.domain.application.AccountEntity> adminAccountQuery = entityManager
 							.createQuery("select a from account a where a.id = :adminId",
-											eu.daiad.web.domain.application.Account.class).setFirstResult(0)
+											eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0)
 							.setMaxResults(1);
 			adminAccountQuery.setParameter("adminId", user.getId());
-			Account adminAccount = adminAccountQuery.getSingleResult();
+			AccountEntity adminAccount = adminAccountQuery.getSingleResult();
 
 			// Get admin's utility
-			TypedQuery<eu.daiad.web.domain.application.Utility> utilityQuery = entityManager
+			TypedQuery<eu.daiad.web.domain.application.UtilityEntity> utilityQuery = entityManager
 							.createQuery("select a.utility from account a where a.id = :adminId",
-											eu.daiad.web.domain.application.Utility.class).setFirstResult(0)
+											eu.daiad.web.domain.application.UtilityEntity.class).setFirstResult(0)
 							.setMaxResults(1);
 			utilityQuery.setParameter("adminId", user.getId());
-			Utility utilityEntry = utilityQuery.getSingleResult();
+			UtilityEntity utilityEntry = utilityQuery.getSingleResult();
 
 			// Get Members
-			TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager.createQuery(
+			TypedQuery<eu.daiad.web.domain.application.AccountEntity> accountQuery = entityManager.createQuery(
 							"select a from account a where a.key IN :memberKeys",
-							eu.daiad.web.domain.application.Account.class).setFirstResult(0);
+							eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0);
 			accountQuery.setParameter("memberKeys", Arrays.asList(groupSetInfo.getMembers()));
-			List<Account> memberAccounts = accountQuery.getResultList();
+			List<AccountEntity> memberAccounts = accountQuery.getResultList();
 
 			GroupSet newGroupSet = new GroupSet();
 			newGroupSet.setUtility(utilityEntry);
@@ -228,7 +228,7 @@ public class JpaUserGroupRepository extends BaseRepository implements IUserGroup
 			this.entityManager.persist(newGroupSet);
 			this.entityManager.flush();
 
-			for (Account memberAcccount : memberAccounts) {
+			for (AccountEntity memberAcccount : memberAccounts) {
 				GroupMember member = new GroupMember();
 				member.setGroup(newGroupSet);
 				member.setAccount(memberAcccount);
@@ -247,16 +247,16 @@ public class JpaUserGroupRepository extends BaseRepository implements IUserGroup
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
-			if (!user.hasRole(EnumRole.ROLE_ADMIN) && !user.hasRole(EnumRole.ROLE_SUPERUSER)) {
+			if (!user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
 				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
-			TypedQuery<Utility> utilityQuery = entityManager
-							.createQuery("SELECT u FROM utility u WHERE u.id = :admin_utility_id", Utility.class)
+			TypedQuery<UtilityEntity> utilityQuery = entityManager
+							.createQuery("SELECT u FROM utility u WHERE u.id = :admin_utility_id", UtilityEntity.class)
 							.setFirstResult(0).setMaxResults(1);
 			utilityQuery.setParameter("admin_utility_id", user.getUtilityId());
 
-			Utility adminUtility = utilityQuery.getSingleResult();
+			UtilityEntity adminUtility = utilityQuery.getSingleResult();
 
 			TypedQuery<Group> groupQuery = entityManager
 							.createQuery("SELECT g FROM group g WHERE g.key = :group_id", Group.class)
@@ -281,7 +281,7 @@ public class JpaUserGroupRepository extends BaseRepository implements IUserGroup
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
-			if (!user.hasRole(EnumRole.ROLE_ADMIN) && !user.hasRole(EnumRole.ROLE_SUPERUSER)) {
+            if (!user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
 				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
@@ -327,14 +327,14 @@ public class JpaUserGroupRepository extends BaseRepository implements IUserGroup
 		}
 
 	}
-	
+
 	@Override
 	public List<GroupInfo> getGroupsByMember(UUID user_id) {
 		try {
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			AuthenticatedUser requestingUser = (AuthenticatedUser) auth.getPrincipal();
 
-			if (!requestingUser.hasRole("ROLE_ADMIN") && !requestingUser.hasRole("ROLE_SUPERUSER")) {
+			if (!requestingUser.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
 				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 

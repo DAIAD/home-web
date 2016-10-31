@@ -23,218 +23,191 @@ import eu.daiad.web.model.group.GroupInfoResponse;
 import eu.daiad.web.model.group.GroupListInfoResponse;
 import eu.daiad.web.model.group.GroupMemberInfoResponse;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.repository.application.IUserGroupRepository;
 
 /**
  * Provides actions for managing user defined groups.
- *
  */
 @RestController
 public class UserGroupController extends BaseController {
-	
-	private static final Log logger = LogFactory.getLog(UserGroupController.class);
-	
-	@Autowired
-	private IUserGroupRepository repository;
-	
-	/**
-	 * Enumerates user defined groups.
-	 * 
-	 * @return the available groups.
-	 */
-	@RequestMapping(value = "/action/group/list", method = RequestMethod.GET, produces = "application/json")
-	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN" })
-	public RestResponse getGroupsInfo() {
-		RestResponse response = new RestResponse();
-		
-		try{						
-			return new GroupListInfoResponse(repository.getGroups());
-			
-		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
 
-			response.add(this.getError(ex));
-		}
-		return response;
-	}
-	
-	/**
-	 * Get a group by its id.
-	 * 
-	 * @param group_id the group id.
-	 * @return the controller's response.
-	 */
-	@RequestMapping(value = "/action/group/{group_id}", method = RequestMethod.GET, produces = "application/json")
-	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN" })
-	public RestResponse getGroupInfoByKey(@PathVariable UUID group_id) {
-		RestResponse response = new RestResponse();
-		
-		try{
-			return new GroupInfoResponse(repository.getSingleGroupByKey(group_id));
-			
-		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
+    private static final Log logger = LogFactory.getLog(UserGroupController.class);
 
-			response.add(this.getError(ex));
-		}
-		return response;
-	}
-	
-	/**
-	 * Gets the members of a group.
-	 * 
-	 * @param group_id the group id.
-	 * @return the contrller's response.
-	 */
-	@RequestMapping(value = "/action/group/members/current/{group_id}", method = RequestMethod.GET, produces = "application/json")
-	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN" })
-	public RestResponse getGroupCurrentMemberInfo(@PathVariable UUID group_id) {
-		RestResponse response = new RestResponse();
-		
-		try{						
-			return new GroupMemberInfoResponse(repository.getGroupCurrentMembers(group_id));
-			
-		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+    /**
+     * Repository for accessing user defined groups.
+     */
+    @Autowired
+    private IUserGroupRepository userGroupRepository;
 
-			response.add(this.getError(ex));
-		}
-		return response;
-	}
-    
-	/**
-	 * Returns the accounts that are members of the group.
-	 * 
-	 * @param groupId the group id.
-	 * @return the controller's response.
-	 */
-	@RequestMapping(value = "/action/group/accounts/current/{groupId}", method = RequestMethod.GET, produces = "application/json")
-	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN" })
-	public RestResponse getGroupAccounts(@PathVariable UUID groupId) {
-		RestResponse response = new RestResponse();
-		
-		try{				
+    /**
+     * Enumerates user defined groups.
+     *
+     * @return the available groups.
+     */
+    @RequestMapping(value = "/action/group/list", method = RequestMethod.GET, produces = "application/json")
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse getGroupsInfo() {
+        try{
+            return new GroupListInfoResponse(userGroupRepository.getGroups());
+        } catch (ApplicationException ex) {
+            logger.error(ex.getMessage(), ex);
+
+            return new RestResponse(getError(ex));
+        }
+    }
+
+    /**
+     * Get a group by its id.
+     *
+     * @param key the group key.
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/action/group/{key}", method = RequestMethod.GET, produces = "application/json")
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse getGroupInfoByKey(@PathVariable UUID key) {
+        try{
+            return new GroupInfoResponse(userGroupRepository.getSingleGroupByKey(key));
+        } catch (ApplicationException ex) {
+            logger.error(ex.getMessage(), ex);
+
+            return new RestResponse(getError(ex));
+        }
+    }
+
+    /**
+     * Gets the members of a group.
+     *
+     * @param key the group key.
+     * @return the contrller's response.
+     */
+    @RequestMapping(value = "/action/group/members/current/{key}", method = RequestMethod.GET, produces = "application/json")
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse getGroupCurrentMemberInfo(@PathVariable UUID key) {
+        try{
+            return new GroupMemberInfoResponse(userGroupRepository.getGroupCurrentMembers(key));
+        } catch (ApplicationException ex) {
+            logger.error(ex.getMessage(), ex);
+
+            return new RestResponse(getError(ex));
+        }
+    }
+
+    /**
+     * Returns the accounts that are members of the group.
+     *
+     * @param groupId the group key.
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/action/group/accounts/current/{key}", method = RequestMethod.GET, produces = "application/json")
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse getGroupAccounts(@PathVariable UUID key) {
+        try{
             AccountActivityResponse activityResponse = new AccountActivityResponse();
-            activityResponse.getAccounts().addAll(repository.getGroupAccounts(groupId));
-            
-			return activityResponse;
-			
-		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+            activityResponse.getAccounts().addAll(userGroupRepository.getGroupAccounts(key));
 
-			response.add(this.getError(ex));
-		}
-		return response;
-	}    
-	
-	/**
-	 * Returns all the users that are eligible to join a new user defined group.
-	 * 
-	 * @return the users.
-	 */
-	@RequestMapping(value = "/action/group/members/possible/", method = RequestMethod.GET, produces = "application/json")
-	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN" })
-	public RestResponse getNewGroupPossibleMemberInfo() {
-		RestResponse response = new RestResponse();
-		
-		try{		
-			return new GroupMemberInfoResponse(repository.getGroupPossibleMembers(null));
-			
-		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+            return activityResponse;
+        } catch (ApplicationException ex) {
+            logger.error(ex.getMessage(), ex);
 
-			response.add(this.getError(ex));
-		}
-		return response;
-	}
-	
-	/**
-	 * Returns the members that are eligible for joining a group.
-	 * 
-	 * @param group_id the group id.
-	 * @return the controller's response.
-	 */
-	@RequestMapping(value = "/action/group/members/possible/{group_id}", method = RequestMethod.GET, produces = "application/json")
-	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN" })
-	public RestResponse getGroupPossibleMemberInfo(@PathVariable UUID group_id) {
-		RestResponse response = new RestResponse();
-		
-		try{		
-			return new GroupMemberInfoResponse(repository.getGroupPossibleMembers(group_id));
-			
-		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+            return new RestResponse(getError(ex));
+        }
+    }
 
-			response.add(this.getError(ex));
-		}
-		return response;
-	}
-	
-	/**
-	 * Creates a new user defined set.
-	 * 
-	 * @param user the currently authenticated user
-	 * @param groupSetInfo the group to create
-	 * @return the controller's response
-	 */
-	@RequestMapping(value = "/action/group/set/create", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN"})
-	public @ResponseBody RestResponse createGroupSet(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody CreateGroupSetRequest groupSetInfo){
-		RestResponse response = new RestResponse();
-		
-		try {
-			repository.createGroupSet(groupSetInfo);
-			
-		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
-			response.add(this.getError(ex));
-		}
+    /**
+     * Returns all the users that are eligible to join a new user defined group.
+     *
+     * @return the users.
+     */
+    @RequestMapping(value = "/action/group/members/possible/", method = RequestMethod.GET, produces = "application/json")
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse getNewGroupPossibleMemberInfo() {
+        try{
+            return new GroupMemberInfoResponse(userGroupRepository.getGroupPossibleMembers(null));
 
-		return response;
-	}
-	
-	/**
-	 * Deletes a user defined group by its id.
-	 * 
-	 * @param group_id the group id.
-	 * @return the controller's response.
-	 */
-	@RequestMapping(value = "/action/group/delete/{group_id}", method = RequestMethod.GET, produces = "application/json")
-	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN"})
-	public @ResponseBody RestResponse deleteGroup(@PathVariable UUID group_id){
-		RestResponse response = new RestResponse();
-		
-		try{
-			repository.deleteGroup(group_id);
-			
-		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+        } catch (ApplicationException ex) {
+            logger.error(ex.getMessage(), ex);
 
-			response.add(this.getError(ex));
-		}
-		return response;
-	}
-	
-	/**
-	 * It returns the list of groups in which the user is member.
-	 * 
-	 * @param key
-	 * @return the user groups
-	 */
-	
-	@RequestMapping(value = "/action/group/list/member/{key}", method = RequestMethod.GET, produces = "application/json")
-	@Secured({"ROLE_SUPERUSER", "ROLE_ADMIN"})
-	public @ResponseBody RestResponse getGroupsByMember(@PathVariable UUID key){
-		RestResponse response = new RestResponse();
-		
-		try{
-			return new GroupListInfoResponse(repository.getGroupsByMember(key));
-			
-		} catch (ApplicationException ex) {
-			logger.error(ex.getMessage(), ex);
+             return new RestResponse(getError(ex));
+        }
+    }
 
-			response.add(this.getError(ex));
-		}
-		return response;
-	}
+    /**
+     * Returns the members that are eligible for joining a group.
+     *
+     * @param key the group key.
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/action/group/members/possible/{key}", method = RequestMethod.GET, produces = "application/json")
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse getGroupPossibleMemberInfo(@PathVariable UUID key) {
+        try{
+            return new GroupMemberInfoResponse(userGroupRepository.getGroupPossibleMembers(key));
+        } catch (ApplicationException ex) {
+            logger.error(ex.getMessage(), ex);
+
+            return new RestResponse(getError(ex));
+        }
+    }
+
+    /**
+     * Creates a new user defined set.
+     *
+     * @param user the currently authenticated user
+     * @param groupSetInfo the group to create
+     * @return the controller's response
+     */
+    @RequestMapping(value = "/action/group/set/create", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public @ResponseBody RestResponse createGroupSet(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody CreateGroupSetRequest groupSetInfo){
+        try {
+            userGroupRepository.createGroupSet(groupSetInfo);
+        } catch (ApplicationException ex) {
+            logger.error(ex.getMessage(), ex);
+
+            return new RestResponse(getError(ex));
+        }
+
+        return new RestResponse();
+    }
+
+    /**
+     * Deletes a user defined group by its id.
+     *
+     * @param key the group key.
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/action/group/delete/{key}", method = RequestMethod.GET, produces = "application/json")
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public @ResponseBody RestResponse deleteGroup(@PathVariable UUID key){
+        try{
+            userGroupRepository.deleteGroup(key);
+        } catch (ApplicationException ex) {
+            logger.error(ex.getMessage(), ex);
+
+            return new RestResponse(getError(ex));
+        }
+        return new RestResponse();
+    }
+
+    /**
+     * It returns the list of groups in which the user is member.
+     *
+     * @param key
+     * @return the user groups
+     */
+    @RequestMapping(value = "/action/group/list/member/{key}", method = RequestMethod.GET, produces = "application/json")
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public @ResponseBody RestResponse getGroupsByMember(@PathVariable UUID key){
+        try{
+            return new GroupListInfoResponse(userGroupRepository.getGroupsByMember(key));
+        } catch (ApplicationException ex) {
+            logger.error(ex.getMessage(), ex);
+
+            return new RestResponse(getError(ex));
+        }
+    }
 }

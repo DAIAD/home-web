@@ -14,7 +14,7 @@ import org.joda.time.format.DateTimeFormatter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import eu.daiad.web.domain.application.Utility;
+import eu.daiad.web.domain.application.UtilityEntity;
 import eu.daiad.web.domain.application.WeatherDailyDataEntity;
 import eu.daiad.web.domain.application.WeatherHourlyDataEntity;
 import eu.daiad.web.domain.application.WeatherServiceEntity;
@@ -51,7 +51,7 @@ public class JpaWeatherRepository extends BaseRepository implements IWeatherRepo
 
         return null;
     }
-    
+
     @Override
     public WeatherServiceEntity getServiceByName(String serviceName) {
         TypedQuery<WeatherServiceEntity> serviceQuery = entityManager.createQuery(
@@ -68,7 +68,7 @@ public class JpaWeatherRepository extends BaseRepository implements IWeatherRepo
 
         return null;
     }
-    
+
 
     @Override
     public void update(int serviceId, int utilityId, DateTime createdOn, List<DailyWeatherData> data) {
@@ -105,8 +105,8 @@ public class JpaWeatherRepository extends BaseRepository implements IWeatherRepo
             entity = new WeatherDailyDataEntity();
 
             // TODO : Cache responses
-            TypedQuery<Utility> utilityQuery = entityManager.createQuery(
-                            "select u from utility u where u.id = :utilityId", Utility.class).setFirstResult(0)
+            TypedQuery<UtilityEntity> utilityQuery = entityManager.createQuery(
+                            "select u from utility u where u.id = :utilityId", UtilityEntity.class).setFirstResult(0)
                             .setMaxResults(1);
 
             utilityQuery.setParameter("utilityId", utilityId);

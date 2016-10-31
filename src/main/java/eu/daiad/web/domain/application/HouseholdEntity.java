@@ -37,7 +37,7 @@ public class HouseholdEntity {
 
     @OneToOne(fetch = FetchType.LAZY)
     @PrimaryKeyJoinColumn()
-    private Account account;
+    private AccountEntity account;
 
     @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
     @JoinColumn(name = "household_id")
@@ -59,11 +59,11 @@ public class HouseholdEntity {
         this.rowVersion = rowVersion;
     }
 
-    public Account getAccount() {
+    public AccountEntity getAccount() {
         return account;
     }
 
-    public void setAccount(Account account) {
+    public void setAccount(AccountEntity account) {
         this.account = account;
     }
 

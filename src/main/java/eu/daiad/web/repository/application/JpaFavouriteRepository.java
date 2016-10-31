@@ -1,8 +1,6 @@
 package eu.daiad.web.repository.application;
 
-import com.bedatadriven.jackson.datatype.jts.JtsModule;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -13,15 +11,19 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
 import org.joda.time.DateTime;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.bedatadriven.jackson.datatype.jts.JtsModule;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 
-import eu.daiad.web.domain.application.Account;
+import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.DataQueryEntity;
 import eu.daiad.web.domain.application.Favourite;
 import eu.daiad.web.domain.application.FavouriteAccount;
@@ -42,9 +44,8 @@ import eu.daiad.web.model.favourite.UpsertFavouriteRequest;
 import eu.daiad.web.model.group.EnumGroupType;
 import eu.daiad.web.model.query.NamedDataQuery;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.BaseRepository;
-import java.io.IOException;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 @Repository
 @Transactional("applicationTransactionManager")
@@ -60,11 +61,11 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
             // Retrieve admin's account
-            TypedQuery<Account> accountQuery = entityManager.createQuery("SELECT a FROM account a WHERE a.key = :key",
-                            Account.class).setFirstResult(0).setMaxResults(1);
+            TypedQuery<AccountEntity> accountQuery = entityManager.createQuery("SELECT a FROM account a WHERE a.key = :key",
+                            AccountEntity.class).setFirstResult(0).setMaxResults(1);
             accountQuery.setParameter("key", user.getKey());
 
-            Account adminAccount = accountQuery.getSingleResult();
+            AccountEntity adminAccount = accountQuery.getSingleResult();
 
             TypedQuery<Favourite> favouriteQuery = entityManager.createQuery(
                             "SELECT f FROM favourite f WHERE f.owner = :owner", Favourite.class).setFirstResult(0);
@@ -85,7 +86,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
     }
 
     @Override
-    public FavouriteAccountInfo checkFavouriteAccount(UUID account_id) {
+    public FavouriteAccountInfo checkFavouriteAccount(UUID key) {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
@@ -93,12 +94,12 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             FavouriteAccountInfo favouriteAccountInfo = null;
 
             // Retrieve admin's account
-            TypedQuery<Account> adminAccountQuery = entityManager.createQuery(
-                            "SELECT a FROM account a WHERE a.key = :key", Account.class).setFirstResult(0)
+            TypedQuery<AccountEntity> adminAccountQuery = entityManager.createQuery(
+                            "SELECT a FROM account a WHERE a.key = :key", AccountEntity.class).setFirstResult(0)
                             .setMaxResults(1);
             adminAccountQuery.setParameter("key", user.getKey());
 
-            Account adminAccount = adminAccountQuery.getSingleResult();
+            AccountEntity adminAccount = adminAccountQuery.getSingleResult();
 
             TypedQuery<Favourite> favouriteQuery = entityManager.createQuery(
                             "SELECT f FROM favourite f WHERE f.owner = :owner", Favourite.class).setFirstResult(0);
@@ -109,7 +110,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             for (Favourite favourite : favourites) {
                 if (favourite.getType() == EnumFavouriteType.ACCOUNT) {
                     FavouriteAccount favouriteAccount = (FavouriteAccount) favourite;
-                    if (favouriteAccount.getAccount().getKey().equals(account_id)) {
+                    if (favouriteAccount.getAccount().getKey().equals(key)) {
                         favouriteAccountInfo = new FavouriteAccountInfo(favouriteAccount);
                     }
                 }
@@ -120,17 +121,17 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             // in order to send a CandidateFavouriteAccountInfo Object
             if (favouriteAccountInfo == null) {
                 try {
-                    TypedQuery<Account> accountQuery = entityManager.createQuery(
-                                    "SELECT a FROM account a WHERE a.key = :key", Account.class).setFirstResult(0)
+                    TypedQuery<AccountEntity> accountQuery = entityManager.createQuery(
+                                    "SELECT a FROM account a WHERE a.key = :key", AccountEntity.class).setFirstResult(0)
                                     .setMaxResults(1);
-                    accountQuery.setParameter("key", account_id);
+                    accountQuery.setParameter("key", key);
 
-                    Account account = accountQuery.getSingleResult();
+                    AccountEntity account = accountQuery.getSingleResult();
 
                     return new CandidateFavouriteAccountInfo(account);
 
                 } catch (NoResultException ex) {
-                    throw wrapApplicationException(ex, UserErrorCode.USERID_NOT_FOUND).set("account_id", account_id);
+                    throw wrapApplicationException(ex, UserErrorCode.USER_KEY_NOT_FOUND).set("key", key);
                 }
             }
 
@@ -149,11 +150,11 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             FavouriteGroupInfo favouriteGroupInfo = null;
 
             // Retrieve admin's account
-            TypedQuery<Account> accountQuery = entityManager.createQuery("SELECT a FROM account a WHERE a.key = :key",
-                            Account.class).setFirstResult(0).setMaxResults(1);
+            TypedQuery<AccountEntity> accountQuery = entityManager.createQuery("SELECT a FROM account a WHERE a.key = :key",
+                            AccountEntity.class).setFirstResult(0).setMaxResults(1);
             accountQuery.setParameter("key", user.getKey());
 
-            Account adminAccount = accountQuery.getSingleResult();
+            AccountEntity adminAccount = accountQuery.getSingleResult();
 
             TypedQuery<Favourite> favouriteQuery = entityManager.createQuery(
                             "SELECT f FROM favourite f WHERE f.owner = :owner", Favourite.class).setFirstResult(0);
@@ -203,12 +204,12 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
             // Retrieve admin's account
-            TypedQuery<Account> adminAccountQuery = entityManager.createQuery(
-                            "SELECT a FROM account a WHERE a.key = :key", Account.class).setFirstResult(0)
+            TypedQuery<AccountEntity> adminAccountQuery = entityManager.createQuery(
+                            "SELECT a FROM account a WHERE a.key = :key", AccountEntity.class).setFirstResult(0)
                             .setMaxResults(1);
             adminAccountQuery.setParameter("key", user.getKey());
 
-            Account adminAccount = adminAccountQuery.getSingleResult();
+            AccountEntity adminAccount = adminAccountQuery.getSingleResult();
 
             // Checking if the Favourite's type is invalid
             if (favouriteInfo.getType() != EnumFavouriteType.GROUP
@@ -218,21 +219,20 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
             if (favouriteInfo.getType() == EnumFavouriteType.ACCOUNT) {
                 // checking if the Account exists at all
-                Account account = null;
+                AccountEntity account = null;
                 try {
-                    TypedQuery<Account> accountQuery = entityManager.createQuery(
-                                    "SELECT a FROM account a WHERE a.key = :key", Account.class).setFirstResult(0)
+                    TypedQuery<AccountEntity> accountQuery = entityManager.createQuery(
+                                    "SELECT a FROM account a WHERE a.key = :key", AccountEntity.class).setFirstResult(0)
                                     .setMaxResults(1);
                     accountQuery.setParameter("key", favouriteInfo.getKey());
 
                     account = accountQuery.getSingleResult();
                 } catch (NoResultException ex) {
-                    throw wrapApplicationException(ex, UserErrorCode.USERID_NOT_FOUND).set("accountId",
-                                    favouriteInfo.getKey());
+                    throw wrapApplicationException(ex, UserErrorCode.USER_KEY_NOT_FOUND).set("key", favouriteInfo.getKey());
                 }
 
                 // Checking if the selected account belongs to the same utility
-                // as admin
+                // as administrator
                 if (account.getUtility().getId() != adminAccount.getUtility().getId()) {
                     throw createApplicationException(UserErrorCode.ACCOUNT_ACCESS_RESTRICTED);
                 }
@@ -332,7 +332,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
-            if (!user.hasRole("ROLE_ADMIN") && !user.hasRole("ROLE_SUPERUSER")) {
+            if (!user.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION);
             }
 
@@ -347,11 +347,11 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
                 // Check that admin is the owner of the group
                 // Get admin's account
-                TypedQuery<eu.daiad.web.domain.application.Account> adminAccountQuery = entityManager.createQuery(
+                TypedQuery<eu.daiad.web.domain.application.AccountEntity> adminAccountQuery = entityManager.createQuery(
                                 "select a from account a where a.id = :adminId",
-                                eu.daiad.web.domain.application.Account.class).setFirstResult(0).setMaxResults(1);
+                                eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0).setMaxResults(1);
                 adminAccountQuery.setParameter("adminId", user.getId());
-                Account adminAccount = adminAccountQuery.getSingleResult();
+                AccountEntity adminAccount = adminAccountQuery.getSingleResult();
 
                 if (favourite.getOwner() == adminAccount) {
                     this.entityManager.remove(favourite);
@@ -377,16 +377,16 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             return;
         }
 
-        TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager.createQuery(
-                        "select a from account a where a.key = :key", eu.daiad.web.domain.application.Account.class);
+        TypedQuery<eu.daiad.web.domain.application.AccountEntity> query = entityManager.createQuery(
+                        "select a from account a where a.key = :key", eu.daiad.web.domain.application.AccountEntity.class);
 
         query.setParameter("key", ownerKey);
 
-        eu.daiad.web.domain.application.Account owner = query.getSingleResult();
+        eu.daiad.web.domain.application.AccountEntity owner = query.getSingleResult();
 
         query.setParameter("key", userKey);
 
-        eu.daiad.web.domain.application.Account account = query.getSingleResult();
+        eu.daiad.web.domain.application.AccountEntity account = query.getSingleResult();
 
         eu.daiad.web.domain.application.FavouriteAccount favorite = new eu.daiad.web.domain.application.FavouriteAccount();
         favorite.setAccount(account);
@@ -433,12 +433,12 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             return;
         }
 
-        TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager.createQuery(
-                        "select a from account a where a.key = :key", eu.daiad.web.domain.application.Account.class);
+        TypedQuery<eu.daiad.web.domain.application.AccountEntity> accountQuery = entityManager.createQuery(
+                        "select a from account a where a.key = :key", eu.daiad.web.domain.application.AccountEntity.class);
 
         accountQuery.setParameter("key", ownerKey);
 
-        eu.daiad.web.domain.application.Account owner = accountQuery.getSingleResult();
+        eu.daiad.web.domain.application.AccountEntity owner = accountQuery.getSingleResult();
 
         TypedQuery<eu.daiad.web.domain.application.Group> groupQuery = entityManager.createQuery(
                         "select g from group g where g.key = :key", eu.daiad.web.domain.application.Group.class);
@@ -491,7 +491,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
     }
 
     @Override
-    public void insertFavouriteQuery(NamedDataQuery namedDataQuery, Account account) {
+    public void insertFavouriteQuery(NamedDataQuery namedDataQuery, AccountEntity account) {
 
 
 
@@ -500,25 +500,25 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             // Add additional modules to JSON parser
             builder.modules(new JodaModule(), new JtsModule());
             ObjectMapper objectMapper = builder.build();
-            
+
             TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> queryCheck = entityManager.createQuery(
                             "SELECT d FROM data_query d WHERE d.owner.id = :accountId and d.name = :name",
                             eu.daiad.web.domain.application.DataQueryEntity.class).setFirstResult(0).setMaxResults(1);
-            
-            queryCheck.setParameter("accountId", account.getId());    
+
+            queryCheck.setParameter("accountId", account.getId());
             queryCheck.setParameter("name", namedDataQuery.getTitle());
 
             List<DataQueryEntity> duplicate = queryCheck.getResultList();
-            
+
             String finalTitle;
             if(duplicate.size() > 0){
-                finalTitle = namedDataQuery.getTitle() + " (duplicate title) " + duplicate.get(0).getId();                    
+                finalTitle = namedDataQuery.getTitle() + " (duplicate title) " + duplicate.get(0).getId();
             } else {
                 finalTitle = namedDataQuery.getTitle();
-            }  
-            
+            }
+
             DataQueryEntity dataQueryEntity = new DataQueryEntity();
-            
+
             dataQueryEntity.setType(namedDataQuery.getType());
             dataQueryEntity.setName(finalTitle);
             dataQueryEntity.setTags(namedDataQuery.getTags());
@@ -528,98 +528,98 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             dataQueryEntity.setQuery(objectMapper.writeValueAsString(namedDataQuery.getQuery()));
             dataQueryEntity.setOwner(account);
             dataQueryEntity.setUpdatedOn(DateTime.now());
-            
+
             this.entityManager.persist(dataQueryEntity);
 
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }
-    }    
+    }
 
     @Override
-    public void updateFavouriteQuery(NamedDataQuery namedDataQuery, Account account) {
-    
-        try { 
-            
+    public void updateFavouriteQuery(NamedDataQuery namedDataQuery, AccountEntity account) {
+
+        try {
+
             Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
             // Add additional modules to JSON parser
             builder.modules(new JodaModule(), new JtsModule());
-            ObjectMapper objectMapper = builder.build();            
-            
+            ObjectMapper objectMapper = builder.build();
+
             TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> queryCheck = entityManager.createQuery(
                             "SELECT d FROM data_query d WHERE d.owner.id = :accountId and d.name = :name",
                             eu.daiad.web.domain.application.DataQueryEntity.class).setFirstResult(0).setMaxResults(1);
-            
-            queryCheck.setParameter("accountId", account.getId());    
+
+            queryCheck.setParameter("accountId", account.getId());
             queryCheck.setParameter("name", namedDataQuery.getTitle());
 
             List<DataQueryEntity> duplicate = queryCheck.getResultList();
-            
+
             String finalTitle;
             if(duplicate.size() > 0){
-                finalTitle = namedDataQuery.getTitle() + " (duplicate title) "+ duplicate.get(0).getId();                    
+                finalTitle = namedDataQuery.getTitle() + " (duplicate title) "+ duplicate.get(0).getId();
             } else {
                 finalTitle = namedDataQuery.getTitle();
-            }             
-            
+            }
+
             TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> query = entityManager.createQuery(
                             "SELECT d FROM data_query d WHERE d.owner.id = :accountId and d.id = :id",
                             eu.daiad.web.domain.application.DataQueryEntity.class).setFirstResult(0).setMaxResults(1);
-            
+
             query.setParameter("id", namedDataQuery.getId());
             query.setParameter("accountId", account.getId());
 
             DataQueryEntity dataQueryEntity = query.getSingleResult();
-            
+
             dataQueryEntity.setName(finalTitle);
             dataQueryEntity.setQuery(objectMapper.writeValueAsString(namedDataQuery.getQuery()));
             dataQueryEntity.setTags(namedDataQuery.getTags());
             dataQueryEntity.setReportName(namedDataQuery.getReportName());
             dataQueryEntity.setLevel(namedDataQuery.getLevel());
             dataQueryEntity.setField(namedDataQuery.getField());
-        
+
             this.entityManager.persist(dataQueryEntity);
 
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }
-    }  
-    
+    }
+
     @Override
-    public void deleteFavouriteQuery(NamedDataQuery namedDataQuery, Account account) {
-        
-        try {             
+    public void deleteFavouriteQuery(NamedDataQuery namedDataQuery, AccountEntity account) {
+
+        try {
             TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> query = entityManager.createQuery(
                             "SELECT d FROM data_query d WHERE d.owner.id = :accountId and d.id = :id",
                             eu.daiad.web.domain.application.DataQueryEntity.class).setFirstResult(0).setMaxResults(1);
-            
+
             query.setParameter("id", namedDataQuery.getId());
             query.setParameter("accountId", account.getId());
 
             DataQueryEntity dataQueryEntity = query.getSingleResult();
-        
+
             this.entityManager.remove(dataQueryEntity);
 
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }
-    }      
-    
+    }
+
     @Override
-    public List<NamedDataQuery> getFavouriteQueriesForOwner(int accountId) 
+    public List<NamedDataQuery> getFavouriteQueriesForOwner(int accountId)
             throws JsonMappingException, JsonParseException, IOException{
-        
+
         List<NamedDataQuery> namedDataQueries = new ArrayList<>();
-             
+
         TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> query = entityManager.createQuery(
                         "SELECT d FROM data_query d WHERE d.owner.id = :accountId order by d.updatedOn desc",
-                        eu.daiad.web.domain.application.DataQueryEntity.class);    
+                        eu.daiad.web.domain.application.DataQueryEntity.class);
         query.setParameter("accountId", accountId);
 
         for(DataQueryEntity queryEntity : query.getResultList()){
 
             NamedDataQuery namedDataQuery = new NamedDataQuery();
-            
+
             namedDataQuery.setId(queryEntity.getId());
             namedDataQuery.setType(queryEntity.getType());
             namedDataQuery.setTitle(queryEntity.getName());
@@ -639,13 +639,13 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
     @Override
     public List<NamedDataQuery> getAllFavouriteQueries(){
         throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
-        
+
 //        TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> query = entityManager.createQuery(
 //                        "SELECT d FROM data_query d",
-//                        eu.daiad.web.domain.application.DataQueryEntity.class);    
-//        
+//                        eu.daiad.web.domain.application.DataQueryEntity.class);
+//
 //        List<NamedDataQuery> namedDataQueries = new ArrayList<>();
-//        try {        
+//        try {
 //            for(DataQueryEntity queryEntity : query.getResultList()){
 //
 //                    NamedDataQuery namedDataQuery = new NamedDataQuery();
@@ -666,5 +666,5 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 //            Logger.getLogger(JpaFavouriteRepository.class.getName()).log(Level.SEVERE, null, ex);
 //        }
 //        return namedDataQueries;
-    }    
+    }
 }

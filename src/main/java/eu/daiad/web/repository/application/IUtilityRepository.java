@@ -9,12 +9,12 @@ import eu.daiad.web.model.utility.UtilityInfo;
 
 public interface IUtilityRepository {
 
-    abstract List<UtilityInfo> getUtilities();
+    List<UtilityInfo> getUtilities();
 
-    abstract UtilityInfo getUtilityById(int id);
+    UtilityInfo getUtilityById(int id);
 
-    abstract UtilityInfo getUtilityByKey(UUID key);
+    UtilityInfo getUtilityByKey(UUID key);
 
-    abstract Map<String, Counter> getCounters(int id);
+    Map<String, Counter> getCounters(int id);
 
 }

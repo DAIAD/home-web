@@ -41,7 +41,7 @@ public class DataQueryEntity {
 
     @ManyToOne()
     @JoinColumn(name = "account_id", nullable = false)
-    private Account owner;
+    private AccountEntity owner;
 
     @Basic
     private String name;
@@ -75,11 +75,11 @@ public class DataQueryEntity {
     public void setType(EnumQueryFavouriteType type) {
         this.type = type;
     }
-    public Account getOwner() {
+    public AccountEntity getOwner() {
         return owner;
     }
 
-    public void setOwner(Account owner) {
+    public void setOwner(AccountEntity owner) {
         this.owner = owner;
     }
 

@@ -54,6 +54,7 @@ import eu.daiad.web.model.query.ForecastQuery;
 import eu.daiad.web.model.query.ForecastQueryRequest;
 import eu.daiad.web.model.query.StoreDataQueryRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.model.spatial.ReferenceSystem;
 import eu.daiad.web.repository.application.IExportRepository;
 import eu.daiad.web.repository.application.IUserRepository;
@@ -130,7 +131,7 @@ public class DataController extends BaseController {
      */
     @RequestMapping(value = "/action/upload", method = RequestMethod.POST, produces = "application/json")
     @ResponseBody
-    @Secured({ "ROLE_ADMIN" })
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse upload(UploadRequest request) {
         try {
             if (request.getFiles() != null) {
@@ -202,7 +203,7 @@ public class DataController extends BaseController {
      */
     @RequestMapping(value = "/action/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @ResponseBody
-    @Secured({ "ROLE_ADMIN" })
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse query(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody DataQueryRequest data) {
         try {
             DataQuery query = data.getQuery();
@@ -231,7 +232,7 @@ public class DataController extends BaseController {
      * @return the result of the save operation.
      */
     @RequestMapping(value = "/action/data/query/store", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-    @Secured({ "ROLE_ADMIN" })
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse storeQuery(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody StoreDataQueryRequest request) {
         try {
             DataQuery query = request.getNamedQuery().getQuery();
@@ -262,7 +263,7 @@ public class DataController extends BaseController {
      * @return the result of the save operation.
      */
     @RequestMapping(value = "/action/data/query/update", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-    @Secured({ "ROLE_ADMIN" })
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse updateStoredQuery(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody StoreDataQueryRequest request) {
         RestResponse response = new RestResponse();
 
@@ -295,7 +296,7 @@ public class DataController extends BaseController {
      * @return the result of the delete operation.
      */
     @RequestMapping(value = "/action/data/query/delete", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-    @Secured({ "ROLE_ADMIN" })
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse deleteStoredQuery(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody StoreDataQueryRequest request) {
         RestResponse response = new RestResponse();
 
@@ -327,7 +328,7 @@ public class DataController extends BaseController {
      * @return the saved data queries
      */
     @RequestMapping(value = "/action/data/query/load", method = RequestMethod.GET, consumes = "application/json", produces = "application/json")
-    @Secured({ "ROLE_ADMIN" })
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse getAllQueries(@AuthenticationPrincipal AuthenticatedUser user) {
         try {
             DataQueryCollectionResponse response = new DataQueryCollectionResponse();
@@ -350,7 +351,7 @@ public class DataController extends BaseController {
      */
     @RequestMapping(value = "/action/data/meter/forecast", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @ResponseBody
-    @Secured({ "ROLE_ADMIN" })
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse forecast(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody ForecastQueryRequest data) {
         try {
             ForecastQuery query = data.getQuery();
@@ -380,7 +381,7 @@ public class DataController extends BaseController {
      */
     @RequestMapping(value = "/action/data/export", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @ResponseBody
-    @Secured({ "ROLE_ADMIN" })
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse export(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody UserDataExportRequest data) {
         try {
             switch (data.getType()) {
@@ -423,7 +424,7 @@ public class DataController extends BaseController {
      * @return the file.
      */
     @RequestMapping(value = "/action/data/download/{token}", method = RequestMethod.GET)
-    @Secured({ "ROLE_ADMIN" })
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public ResponseEntity<InputStreamResource> download(@PathVariable("token") String token) {
         try {
             File path = new File(workingDirectory);
@@ -507,7 +508,7 @@ public class DataController extends BaseController {
      */
     @RequestMapping(value = "/action/export/files", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @ResponseBody
-    @Secured({ "ROLE_ADMIN" })
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse getExportDataFiles(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody DataExportFileRequest data) {
         try {
             // Initialize and configure query
@@ -548,7 +549,7 @@ public class DataController extends BaseController {
      * @return the file.
      */
     @RequestMapping(value = "/action/export/download/{token}", method = RequestMethod.GET)
-    @Secured({ "ROLE_ADMIN" })
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public ResponseEntity<InputStreamResource> downloadExportedDataFile(@PathVariable("token") String token) {
         try {
             UUID key = UUID.fromString(token);

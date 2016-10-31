@@ -12,7 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import com.vividsolutions.jts.geom.Geometry;
 
-import eu.daiad.web.domain.application.Account;
+import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AreaGroupMemberEntity;
 import eu.daiad.web.domain.application.DeviceMeter;
 import eu.daiad.web.repository.BaseRepository;
@@ -26,19 +26,19 @@ public class JpaSpatialRepository extends BaseRepository implements ISpatialRepo
     @Override
     public Geometry getUserLocationByUserKey(UUID userKey) {
         // Get account
-        TypedQuery<Account> accountQuery = entityManager.createQuery("select a from account a where a.key = :userKey",
-                        Account.class).setFirstResult(0).setMaxResults(1);
+        TypedQuery<AccountEntity> accountQuery = entityManager.createQuery("select a from account a where a.key = :userKey",
+                        AccountEntity.class).setFirstResult(0).setMaxResults(1);
 
         accountQuery.setParameter("userKey", userKey);
 
-        List<Account> accounts = accountQuery.getResultList();
+        List<AccountEntity> accounts = accountQuery.getResultList();
 
         if (accounts.isEmpty()) {
             return null;
         }
 
         // If account location is set, return it
-        Account account = accounts.get(0);
+        AccountEntity account = accounts.get(0);
         if (account.getLocation() != null) {
             return account.getLocation();
         }

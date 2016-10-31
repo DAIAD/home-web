@@ -28,7 +28,7 @@ public class WeatherServiceUtilityEntity {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "utility_id", nullable = false)
-    private Utility utility;
+    private UtilityEntity utility;
 
     @ManyToOne()
     @JoinColumn(name = "service_id", nullable = false)
@@ -42,7 +42,7 @@ public class WeatherServiceUtilityEntity {
         return id;
     }
 
-    public Utility getUtility() {
+    public UtilityEntity getUtility() {
         return utility;
     }
 

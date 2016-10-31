@@ -42,7 +42,7 @@ public class Favourite {
 
     @ManyToOne()
     @JoinColumn(name = "owner_id", nullable = false)
-    private Account owner;
+    private AccountEntity owner;
 
     @Basic()
     private String label;
@@ -55,11 +55,11 @@ public class Favourite {
         return EnumFavouriteType.UNDEFINED;
     }
 
-    public Account getOwner() {
+    public AccountEntity getOwner() {
         return owner;
     }
 
-    public void setOwner(Account owner) {
+    public void setOwner(AccountEntity owner) {
         this.owner = owner;
     }
 

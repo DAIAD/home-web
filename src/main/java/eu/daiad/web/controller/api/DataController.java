@@ -44,23 +44,44 @@ import eu.daiad.web.service.IDataService;
 @RestController("RestDataController")
 public class DataController extends BaseRestController {
 
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
     private static final Log logger = LogFactory.getLog(DataController.class);
 
+    /**
+     * Folder for storing temporary files.
+     */
     @Value("${tmp.folder}")
     private String temporaryPath;
 
+    /**
+     * Repository for accessing amphiro b1 data indexed by time.
+     */
     @Autowired
     private IAmphiroTimeOrderedRepository amphiroTimeOrderedRepository;
 
+    /**
+     * Repository for accessing amphiro b1 data indexed by shower id.
+     */
     @Autowired
     private IAmphiroIndexOrderedRepository amphiroIndexOrderedRepository;
 
+    /**
+     * Repository for accessing smart water meter data.
+     */
     @Autowired
     private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
 
+    /**
+     * Repository for accessing device data.
+     */
     @Autowired
     private IDeviceRepository deviceRepository;
 
+    /**
+     * Service for querying amphiro b1 and smart water meter data stored in HBase.
+     */
     @Autowired
     private IDataService dataService;
 
@@ -68,16 +89,14 @@ public class DataController extends BaseRestController {
      * General purpose method for querying data using a set of filtering
      * criteria. Depending on the given criteria, more than one data series may
      * be returned.
-     * 
+     *
      * @param data the query.
      * @return the data series.
      */
     @RequestMapping(value = "/api/v1/data/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse query(@RequestBody DataQueryRequest data) {
-        RestResponse response = new RestResponse();
-
         try {
-            AuthenticatedUser user = this.authenticate(data.getCredentials(), EnumRole.ROLE_ADMIN);
+            AuthenticatedUser user = this.authenticate(data.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
             // Set defaults if needed
             DataQuery query = data.getQuery();
@@ -92,15 +111,13 @@ public class DataController extends BaseRestController {
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            response.add(this.getError(ex));
+            return new RestResponse(getError(ex));
         }
-
-        return response;
     }
 
     /**
      * Saves a data query.
-     * 
+     *
      * @param request the request
      * @return the result of the save operation.
      */
@@ -109,8 +126,8 @@ public class DataController extends BaseRestController {
         RestResponse response = new RestResponse();
 
         try {
-            
-            AuthenticatedUser user = this.authenticate(request.getCredentials(), EnumRole.ROLE_ADMIN);
+
+            AuthenticatedUser user = this.authenticate(request.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
             // Set defaults if needed
             DataQuery query = request.getNamedQuery().getQuery();
@@ -120,7 +137,7 @@ public class DataController extends BaseRestController {
                     request.getNamedQuery().getQuery().setTimezone(user.getTimezone());
                 }
             }
-            
+
             dataService.storeQuery(request.getNamedQuery(), request.getCredentials().getUsername());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -133,14 +150,14 @@ public class DataController extends BaseRestController {
 
     /**
      * Loads all saved data queries.
-     * 
+     *
      * @param request authentication request.
      * @return the saved data queries
      */
     @RequestMapping(value = "/api/v1/data/query/load", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse getAllQueries(@RequestBody AuthenticatedRequest request) {
         try {
-            this.authenticate(request.getCredentials(), EnumRole.ROLE_ADMIN);
+            this.authenticate(request.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
             DataQueryCollectionResponse response = new DataQueryCollectionResponse();
 
@@ -150,25 +167,20 @@ public class DataController extends BaseRestController {
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            RestResponse response = new RestResponse();
-            response.add(this.getError(ex));
-
-            return response;
+            return new RestResponse(getError(ex));
         }
     }
 
     /**
      * Returns forecasting results for a smart water meter
-     * 
+     *
      * @param data the query.
      * @return the data series.
      */
     @RequestMapping(value = "/api/v1/data/meter/forecast", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse forecast(@RequestBody ForecastQueryRequest data) {
-        RestResponse response = new RestResponse();
-
         try {
-            AuthenticatedUser user = this.authenticate(data.getCredentials(), EnumRole.ROLE_ADMIN);
+            AuthenticatedUser user = this.authenticate(data.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
             // Set defaults if needed
             ForecastQuery query = data.getQuery();
@@ -183,16 +195,14 @@ public class DataController extends BaseRestController {
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            response.add(this.getError(ex));
+            return new RestResponse(getError(ex));
         }
-
-        return response;
     }
 
     /**
      * Stores Amphiro B1 session and measurement data. Sessions are index by
      * time.
-     * 
+     *
      * @param data the data to store.
      * @return the controller's response.
      */
@@ -230,7 +240,7 @@ public class DataController extends BaseRestController {
                     break;
                 case METER:
                     if (data instanceof WaterMeterMeasurementCollection) {
-                        authenticatedUser = this.authenticate(data.getCredentials(), EnumRole.ROLE_ADMIN);
+                        authenticatedUser = this.authenticate(data.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
                         device = this.deviceRepository.getDeviceByKey(data.getDeviceKey());
 
@@ -266,7 +276,7 @@ public class DataController extends BaseRestController {
 
     /**
      * Stores Amphiro B1 session and measurement data. Sessions are index by id.
-     * 
+     *
      * @param data the data to store
      * @return the controller's response.
      */
@@ -303,7 +313,7 @@ public class DataController extends BaseRestController {
                     break;
                 case METER:
                     if (data instanceof WaterMeterMeasurementCollection) {
-                        authenticatedUser = this.authenticate(data.getCredentials(), EnumRole.ROLE_ADMIN);
+                        authenticatedUser = this.authenticate(data.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
                         device = this.deviceRepository.getDeviceByKey(data.getDeviceKey());
 
@@ -339,7 +349,7 @@ public class DataController extends BaseRestController {
 
     /**
      * Assigns household members to amphiro b1 sessions.
-     * 
+     *
      * @param request member assignment data
      * @return the controller's response.
      */
@@ -351,7 +361,7 @@ public class DataController extends BaseRestController {
 
         try {
             authenticatedUser = this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
-                       
+
             amphiroIndexOrderedRepository.assignMemberToSession(authenticatedUser, request.getAssignments());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -362,6 +372,13 @@ public class DataController extends BaseRestController {
         return response;
     }
 
+    /**
+     * Logs the last data upload operation for a device.
+     *
+     * @param user the currently authenticated user.
+     * @param device the device that uploaded data.
+     * @param success if the operation was successful.
+     */
     private void logDataUploadSession(AuthenticatedUser user, Device device, boolean success) {
         try {
             if ((user == null) || (device == null)) {

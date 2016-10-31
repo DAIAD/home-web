@@ -17,36 +17,40 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IDeviceRepository;
 
 /**
- * Provides actions for configuring Amphiro B1 devices and smart water meters.
+ * Provides actions for configuring amphiro b1 devices and smart water meters.
  */
 @RestController()
 public class DeviceController extends BaseRestController {
 
-	private static final Log logger = LogFactory.getLog(DeviceController.class);
-
-	@Autowired
-	private IDeviceRepository deviceRepository;
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
+    private static final Log logger = LogFactory.getLog(DeviceController.class);
 
     /**
-     * Updates a device properties.
-     *  
-     * @param request the update request.
+     * Repository for accessing device data.
+     */
+    @Autowired
+    private IDeviceRepository deviceRepository;
+
+    /**
+     * Updates the properties of a device.
+     *
+     * @param request the device and the properties to update.
      * @return the controller's response.
      */
     @RequestMapping(value = "/action/device/update", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ "ROLE_RUSER" })
     public RestResponse update(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody DeviceUpdateRequest request) {
-        RestResponse response = new RestResponse();
-
         try {
             deviceRepository.updateDevice(user.getKey(), request);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            response.add(this.getError(ex));
+            return new RestResponse(getError(ex));
         }
 
-        return response;
+        return new RestResponse();
     }
 
 }

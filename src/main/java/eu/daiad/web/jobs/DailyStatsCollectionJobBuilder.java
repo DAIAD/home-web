@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import eu.daiad.web.domain.admin.DailyCounterEntity;
-import eu.daiad.web.domain.application.Utility;
+import eu.daiad.web.domain.application.UtilityEntity;
 
 @Component
 public class DailyStatsCollectionJobBuilder implements IJobBuilder {
@@ -57,10 +57,10 @@ public class DailyStatsCollectionJobBuilder implements IJobBuilder {
                     DateTime today = new DateTime();
 
                     // Get all utilities
-                    TypedQuery<Utility> utilityQuery = entityManager.createQuery("select u from utility u ",
-                                    Utility.class);
+                    TypedQuery<UtilityEntity> utilityQuery = entityManager.createQuery("select u from utility u ",
+                                    UtilityEntity.class);
 
-                    for (Utility utility : utilityQuery.getResultList()) {
+                    for (UtilityEntity utility : utilityQuery.getResultList()) {
                         // Get total users
                         Long totalUsers;
 

@@ -28,71 +28,73 @@ import eu.daiad.web.repository.application.ILogEventRepository;
 @RestController("ApiLogEventController")
 public class LogEventController extends BaseRestController {
 
-	private static final Log logger = LogFactory.getLog(LogEventController.class);
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
+    private static final Log logger = LogFactory.getLog(LogEventController.class);
 
-	@Autowired
-	private ILogEventRepository logEventRepository;
+    /**
+     * Repository for accessing log events.
+     */
+    @Autowired
+    private ILogEventRepository logEventRepository;
 
-	/**
-	 * Returns application events.
-	 * 
-	 * @param request
-	 *            the request
-	 * @return the events
-	 */
-	@RequestMapping(value = "/api/v1/admin/logging/events", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public RestResponse getEvents(@RequestBody LogEventQueryRequest request) {
-		try {
-			this.authenticate(request.getCredentials(), EnumRole.ROLE_ADMIN);
+    /**
+     * Returns application events.
+     *
+     * @param request query for filtering log events.
+     * @return a list of log events.
+     */
+    @RequestMapping(value = "/api/v1/admin/logging/events", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    public RestResponse getEvents(@RequestBody LogEventQueryRequest request) {
+        try {
+            this.authenticate(request.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN);
 
-			// Set default values
-			if (request.getQuery() == null) {
-				request.setQuery(new LogEventQuery());
-			}
-			if ((request.getQuery().getIndex() == null) || (request.getQuery().getIndex() < 0)) {
-				request.getQuery().setIndex(0);
-			}
-			if (request.getQuery().getSize() == null) {
-				request.getQuery().setSize(10);
-			}
+            // Set default values
+            if (request.getQuery() == null) {
+                request.setQuery(new LogEventQuery());
+            }
+            if ((request.getQuery().getIndex() == null) || (request.getQuery().getIndex() < 0)) {
+                request.getQuery().setIndex(0);
+            }
+            if (request.getQuery().getSize() == null) {
+                request.getQuery().setSize(10);
+            }
 
-			LogEventQueryResult result = logEventRepository.getLogEvents(request.getQuery());
+            LogEventQueryResult result = logEventRepository.getLogEvents(request.getQuery());
 
-			LogEventQueryResponse response = new LogEventQueryResponse();
+            LogEventQueryResponse response = new LogEventQueryResponse();
 
-			response.setTotal(result.getTotal());
+            response.setTotal(result.getTotal());
 
-			response.setIndex(request.getQuery().getIndex());
-			response.setSize(request.getQuery().getSize());
+            response.setIndex(request.getQuery().getIndex());
+            response.setSize(request.getQuery().getSize());
 
-			List<LogEvent> events = new ArrayList<LogEvent>();
+            List<LogEvent> events = new ArrayList<LogEvent>();
 
-			for (LogEventEntity entity : result.getEvents()) {
-				LogEvent e = new LogEvent();
+            for (LogEventEntity entity : result.getEvents()) {
+                LogEvent e = new LogEvent();
 
-				e.setAccount(entity.getAccount());
-				e.setCategory(entity.getCategory());
-				e.setCode(entity.getCode());
-				e.setId(entity.getId());
-				e.setLevel(entity.getLevel());
-				e.setLogger(entity.getLogger());
-				e.setMessage(entity.getMessage());
-				e.setRemoteAddress(entity.getRemoteAddress());
-				e.setTimestamp(entity.getTimestamp().getMillis());
+                e.setAccount(entity.getAccount());
+                e.setCategory(entity.getCategory());
+                e.setCode(entity.getCode());
+                e.setId(entity.getId());
+                e.setLevel(entity.getLevel());
+                e.setLogger(entity.getLogger());
+                e.setMessage(entity.getMessage());
+                e.setRemoteAddress(entity.getRemoteAddress());
+                e.setTimestamp(entity.getTimestamp().getMillis());
 
-				events.add(e);
-			}
-			response.setEvents(events);
+                events.add(e);
+            }
+            response.setEvents(events);
 
-			return response;
-		} catch (Exception ex) {
-			logger.error(ex.getMessage(), ex);
+            return response;
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
 
-			RestResponse errorResponse = new RestResponse();
-			errorResponse.add(this.getError(ex));
-
-			return errorResponse;
-		}
-	}
+            return new RestResponse(getError(ex));
+        }
+    }
 
 }
