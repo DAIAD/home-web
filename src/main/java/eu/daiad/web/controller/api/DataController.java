@@ -16,6 +16,7 @@ import eu.daiad.web.model.AuthenticatedRequest;
 import eu.daiad.web.model.DeviceMeasurementCollection;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.amphiro.AmphiroMeasurementCollection;
+import eu.daiad.web.model.amphiro.IgnoreShowerRequest;
 import eu.daiad.web.model.amphiro.MemberAssignmentRequest;
 import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.device.Device;
@@ -96,7 +97,7 @@ public class DataController extends BaseRestController {
     @RequestMapping(value = "/api/v1/data/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse query(@RequestBody DataQueryRequest data) {
         try {
-            AuthenticatedUser user = this.authenticate(data.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
+            AuthenticatedUser user = authenticate(data.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
             // Set defaults if needed
             DataQuery query = data.getQuery();
@@ -127,7 +128,7 @@ public class DataController extends BaseRestController {
 
         try {
 
-            AuthenticatedUser user = this.authenticate(request.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
+            AuthenticatedUser user = authenticate(request.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
             // Set defaults if needed
             DataQuery query = request.getNamedQuery().getQuery();
@@ -157,7 +158,7 @@ public class DataController extends BaseRestController {
     @RequestMapping(value = "/api/v1/data/query/load", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse getAllQueries(@RequestBody AuthenticatedRequest request) {
         try {
-            this.authenticate(request.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
+            authenticate(request.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
             DataQueryCollectionResponse response = new DataQueryCollectionResponse();
 
@@ -180,7 +181,7 @@ public class DataController extends BaseRestController {
     @RequestMapping(value = "/api/v1/data/meter/forecast", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse forecast(@RequestBody ForecastQueryRequest data) {
         try {
-            AuthenticatedUser user = this.authenticate(data.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
+            AuthenticatedUser user = authenticate(data.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
             // Set defaults if needed
             ForecastQuery query = data.getQuery();
@@ -219,9 +220,9 @@ public class DataController extends BaseRestController {
             switch (data.getType()) {
                 case AMPHIRO:
                     if (data instanceof AmphiroMeasurementCollection) {
-                        authenticatedUser = this.authenticate(data.getCredentials(), EnumRole.ROLE_USER);
+                        authenticatedUser = authenticate(data.getCredentials(), EnumRole.ROLE_USER);
 
-                        device = this.deviceRepository.getUserDeviceByKey(authenticatedUser.getKey(), data
+                        device = deviceRepository.getUserDeviceByKey(authenticatedUser.getKey(), data
                                         .getDeviceKey());
 
                         if (device == null) {
@@ -240,9 +241,9 @@ public class DataController extends BaseRestController {
                     break;
                 case METER:
                     if (data instanceof WaterMeterMeasurementCollection) {
-                        authenticatedUser = this.authenticate(data.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
+                        authenticatedUser = authenticate(data.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
-                        device = this.deviceRepository.getDeviceByKey(data.getDeviceKey());
+                        device = deviceRepository.getDeviceByKey(data.getDeviceKey());
 
                         if (device == null) {
                             throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key",
@@ -293,9 +294,9 @@ public class DataController extends BaseRestController {
             switch (data.getType()) {
                 case AMPHIRO:
                     if (data instanceof AmphiroMeasurementCollection) {
-                        authenticatedUser = this.authenticate(data.getCredentials(), EnumRole.ROLE_USER);
+                        authenticatedUser = authenticate(data.getCredentials(), EnumRole.ROLE_USER);
 
-                        device = this.deviceRepository.getUserDeviceByKey(authenticatedUser.getKey(), data
+                        device = deviceRepository.getUserDeviceByKey(authenticatedUser.getKey(), data
                                         .getDeviceKey());
 
                         if (device == null) {
@@ -313,9 +314,9 @@ public class DataController extends BaseRestController {
                     break;
                 case METER:
                     if (data instanceof WaterMeterMeasurementCollection) {
-                        authenticatedUser = this.authenticate(data.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
+                        authenticatedUser = authenticate(data.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
-                        device = this.deviceRepository.getDeviceByKey(data.getDeviceKey());
+                        device = deviceRepository.getDeviceByKey(data.getDeviceKey());
 
                         if (device == null) {
                             throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key",
@@ -360,7 +361,7 @@ public class DataController extends BaseRestController {
         AuthenticatedUser authenticatedUser = null;
 
         try {
-            authenticatedUser = this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
+            authenticatedUser = authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
             amphiroIndexOrderedRepository.assignMemberToSession(authenticatedUser, request.getAssignments());
         } catch (Exception ex) {
@@ -388,5 +389,31 @@ public class DataController extends BaseRestController {
         } catch (Exception ex) {
             // Ignore exceptions
         }
+    }
+
+
+    /**
+     * Assigns household members to amphiro b1 sessions.
+     *
+     * @param request member assignment data
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/api/v2/data/session/ignore", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    public RestResponse invalidateSession(@RequestBody IgnoreShowerRequest request) {
+        RestResponse response = new RestResponse();
+
+        AuthenticatedUser authenticatedUser = null;
+
+        try {
+            authenticatedUser = authenticate(request.getCredentials(), EnumRole.ROLE_USER);
+
+            amphiroIndexOrderedRepository.ignoreSession(authenticatedUser, request.getSessions());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
     }
 }

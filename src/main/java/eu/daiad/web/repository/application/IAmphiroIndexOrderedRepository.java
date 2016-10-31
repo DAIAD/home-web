@@ -13,6 +13,7 @@ import eu.daiad.web.model.amphiro.AmphiroSessionCollectionIndexIntervalQueryResu
 import eu.daiad.web.model.amphiro.AmphiroSessionIndexIntervalQuery;
 import eu.daiad.web.model.amphiro.AmphiroSessionIndexIntervalQueryResult;
 import eu.daiad.web.model.amphiro.AmphiroSessionUpdateCollection;
+import eu.daiad.web.model.amphiro.IgnoreShowerRequest;
 import eu.daiad.web.model.amphiro.MemberAssignmentRequest;
 import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.error.ApplicationException;
@@ -33,5 +34,7 @@ public interface IAmphiroIndexOrderedRepository {
     ArrayList<GroupDataSeries> query(ExpandedDataQuery query) throws ApplicationException;
 
     void assignMemberToSession(AuthenticatedUser user, List<MemberAssignmentRequest.Assignment> assignments) throws Exception;
+
+    void ignoreSession(AuthenticatedUser user, List<IgnoreShowerRequest.Session> sessions) throws Exception;
 
 }
