@@ -39,7 +39,8 @@ public class HBaseInitializer implements CommandLineRunner {
      * HBase tables required by DAIAD. If a table does not exist, it is created
      * when the application starts.
      */
-    private static final String tables[] = { "amphiro-sessions-index",
+    private static final String tables[] = { "counters",
+                                             "amphiro-sessions-index",
                                              "amphiro-sessions-index-v2",
                                              "amphiro-sessions-index-v3",
                                              "amphiro-sessions-by-time",

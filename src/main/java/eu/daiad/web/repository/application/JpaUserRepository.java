@@ -121,8 +121,8 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                     role.setName(r.name());
                     role.setDescription(description);
 
-                    this.entityManager.persist(role);
-                    this.entityManager.flush();
+                    entityManager.persist(role);
+                    entityManager.flush();
                 }
             }
         } catch (Exception ex) {
@@ -186,8 +186,8 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                     account.getUtilities().add(accountUtility);
 
                     // Create account
-                    this.entityManager.persist(account);
-                    this.entityManager.flush();
+                    entityManager.persist(account);
+                    entityManager.flush();
 
                     // Create profile
                     AccountProfile profile = new AccountProfile();
@@ -197,7 +197,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                     profile.setUpdatedOn(account.getCreatedOn());
 
                     profile.setAccount(account);
-                    this.entityManager.persist(profile);
+                    entityManager.persist(profile);
 
                     // Create profile history entry
                     AccountProfileHistoryEntry entry = new AccountProfileHistoryEntry();
@@ -208,7 +208,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                     entry.setUtilityMode(profile.getUtilityMode());
 
                     entry.setProfile(profile);
-                    this.entityManager.persist(entry);
+                    entityManager.persist(entry);
 
                     // Log account creation and random password
                     logger.info(String.format("Default administrator has been crearted for utility [%s]. User name : %s. Password : %s",
@@ -266,10 +266,10 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
 
         try {
             // Check if user name is available
-            if (this.isUsernameReserved(user.getUsername())) {
+            if (isUsernameReserved(user.getUsername())) {
                 throw createApplicationException(UserErrorCode.USERNANE_RESERVED).set("username", user.getUsername());
             }
-            if (this.getUserByName(user.getUsername()) != null) {
+            if (getUserByName(user.getUsername()) != null) {
                 throw createApplicationException(UserErrorCode.USERNANE_NOT_AVAILABLE).set("username", user.getUsername());
             }
 
@@ -387,8 +387,8 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             account.getUtilities().add(accountUtility);
 
             // Create user
-            this.entityManager.persist(account);
-            this.entityManager.flush();
+            entityManager.persist(account);
+            entityManager.flush();
 
             // Initialize user profile
             AccountProfile profile = new AccountProfile();
@@ -403,7 +403,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             profile.setUpdatedOn(account.getCreatedOn());
 
             profile.setAccount(account);
-            this.entityManager.persist(profile);
+            entityManager.persist(profile);
 
             // Create historical record for the first profile update
             AccountProfileHistoryEntry profileHistoryEntry = new AccountProfileHistoryEntry();
@@ -414,7 +414,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             profileHistoryEntry.setUtilityMode(profile.getUtilityMode());
 
             profileHistoryEntry.setProfile(profile);
-            this.entityManager.persist(profileHistoryEntry);
+            entityManager.persist(profileHistoryEntry);
 
             // Update white list
             if (whiteListEntry != null) {
@@ -440,7 +440,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             household.setAccount(account);
             household.setCreatedOn(account.getCreatedOn());
             household.setUpdatedOn(account.getCreatedOn());
-            this.entityManager.persist(household);
+            entityManager.persist(household);
 
             HouseholdMemberEntity householdMember = new HouseholdMemberEntity();
 
@@ -457,8 +457,8 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             }
             householdMember.setHousehold(household);
 
-            this.entityManager.persist(householdMember);
-            this.entityManager.flush();
+            entityManager.persist(householdMember);
+            entityManager.flush();
 
             return account.getKey();
         } catch (Exception ex) {
@@ -632,7 +632,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         }
 
         // Set password
-        this.changePassword(account.getUsername(), password);
+        changePassword(account.getUsername(), password);
 
         // Update token
         passwordResetTokenEntity.setRedeemedOn(DateTime.now());
@@ -874,25 +874,24 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         }
 
         if (user != null) {
-            return this.getAccountActivity(user.getUtilityId());
+            return this.getAccountActivity(user.getUtilities());
         }
 
         return new ArrayList<AccountActivity>();
     }
 
     /**
-     * Get account activity for the users of the given utility.
+     * Get account activity for the users of the given utilities.
      *
-     * @param utilityId the utility id.
+     * @param utilities the ids of the utilities.
      * @return a list of the users for the given utility.
      */
-    @Override
-    public List<AccountActivity> getAccountActivity(int utilityId) {
-        String activityQueryString = "select a from trial_account_activity a where a.utilityId = :utility_id order by a.username";
+    public List<AccountActivity> getAccountActivity(List<Integer> utilities) {
+        String activityQueryString = "select a from trial_account_activity a where a.utilityId in :utilities order by a.username";
 
         TypedQuery<AccountActivityEntity> query = entityManager.createQuery(activityQueryString, AccountActivityEntity.class);
 
-        query.setParameter("utility_id", utilityId);
+        query.setParameter("utilities", utilities);
 
         ArrayList<AccountActivity> results = new ArrayList<AccountActivity>();
 
@@ -1111,7 +1110,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         newEntry.setDefaultMobileMode(EnumMobileMode.LEARNING.getValue());
         newEntry.setDefaultWebMode(EnumWebMode.INACTIVE.getValue());
 
-        this.entityManager.persist(newEntry);
+        entityManager.persist(newEntry);
     }
 
     /**

@@ -40,8 +40,8 @@ public class JpaExportRepository implements IExportRepository {
      */
     @Override
     public void create(ExportFileEntity entity) {
-        this.entityManager.persist(entity);
-        this.entityManager.flush();
+        entityManager.persist(entity);
+        entityManager.flush();
     }
 
     /**
@@ -104,18 +104,18 @@ public class JpaExportRepository implements IExportRepository {
         List<ExportFile> files;
 
         // Count
-        String qlStringCount = "select count(e.id) from export e where e.utilityId = :utilityId";
+        String qlStringCount = "select count(e.id) from export e where e.utilityId in :utilities";
 
         TypedQuery<Number> countQuery = entityManager.createQuery(qlStringCount, Number.class);
-        countQuery.setParameter("utilityId", query.getUtilityId());
+        countQuery.setParameter("utilities", query.getUtilities());
 
         total = ((Number) countQuery.getSingleResult()).intValue();
 
         // Select
-        String qlStringSelect = "select e from export e where e.utilityId = :utilityId order by e.createdOn desc, e.filename";
+        String qlStringSelect = "select e from export e where e.utilityId in :utilities order by e.createdOn desc, e.filename";
 
         TypedQuery<ExportFileEntity> selectQuery = entityManager.createQuery(qlStringSelect, ExportFileEntity.class);
-        selectQuery.setParameter("utilityId", query.getUtilityId());
+        selectQuery.setParameter("utilityId", query.getUtilities());
 
         selectQuery.setFirstResult(query.getIndex() * query.getSize());
         selectQuery.setMaxResults(query.getSize());
@@ -139,19 +139,19 @@ public class JpaExportRepository implements IExportRepository {
         List<ExportFile> files;
 
         // Count
-        String qlStringCount = "select count(e.id) from export e where e.utilityId = :utilityId and e.createdOn >= :createdOn";
+        String qlStringCount = "select count(e.id) from export e where e.utilityId in :utilities and e.createdOn >= :createdOn";
 
         TypedQuery<Number> countQuery = entityManager.createQuery(qlStringCount, Number.class);
-        countQuery.setParameter("utilityId", query.getUtilityId());
+        countQuery.setParameter("utilities", query.getUtilities());
         countQuery.setParameter("createdOn", new DateTime().minusDays(query.getDays()));
 
         total = ((Number) countQuery.getSingleResult()).intValue();
 
         // Select
-        String qlStringSelect = "select e from export e where e.utilityId = :utilityId and e.createdOn >= :createdOn order by e.createdOn desc, e.filename";
+        String qlStringSelect = "select e from export e where e.utilityId in :utilities and e.createdOn >= :createdOn order by e.createdOn desc, e.filename";
 
         TypedQuery<ExportFileEntity> selectQuery = entityManager.createQuery(qlStringSelect, ExportFileEntity.class);
-        selectQuery.setParameter("utilityId", query.getUtilityId());
+        selectQuery.setParameter("utilities", query.getUtilities());
         selectQuery.setParameter("createdOn", new DateTime().minusDays(query.getDays()));
 
         selectQuery.setFirstResult(query.getIndex() * query.getSize());
@@ -175,19 +175,19 @@ public class JpaExportRepository implements IExportRepository {
         List<ExportFile> files;
 
         // Count
-        String qlStringCount = "select count(e.id) from export e where e.utilityId = :utilityId and e.createdOn < :createdOn";
+        String qlStringCount = "select count(e.id) from export e where e.utilityId in :utilities and e.createdOn < :createdOn";
 
         TypedQuery<Number> countQuery = entityManager.createQuery(qlStringCount, Number.class);
-        countQuery.setParameter("utilityId", query.getUtilityId());
+        countQuery.setParameter("utilities", query.getUtilities());
         countQuery.setParameter("createdOn", new DateTime().minusDays(query.getDays()));
 
         total = ((Number) countQuery.getSingleResult()).intValue();
 
         // Select
-        String qlStringSelect = "select e from export e where e.utilityId = :utilityId and e.createdOn < :createdOn order by e.createdOn desc, e.filename";
+        String qlStringSelect = "select e from export e where e.utilityId in :utilities and e.createdOn < :createdOn order by e.createdOn desc, e.filename";
 
         TypedQuery<ExportFileEntity> selectQuery = entityManager.createQuery(qlStringSelect, ExportFileEntity.class);
-        selectQuery.setParameter("utilityId", query.getUtilityId());
+        selectQuery.setParameter("utilities", query.getUtilities());
         selectQuery.setParameter("createdOn", new DateTime().minusDays(query.getDays()));
 
         selectQuery.setFirstResult(query.getIndex() * query.getSize());
@@ -218,7 +218,7 @@ public class JpaExportRepository implements IExportRepository {
         List<ExportFileEntity> entities = query.getResultList();
 
         for(ExportFileEntity entity : entities) {
-            this.entityManager.remove(entity);
+            entityManager.remove(entity);
 
             File file = new File(FilenameUtils.concat(entity.getPath(), entity.getFilename()));
 

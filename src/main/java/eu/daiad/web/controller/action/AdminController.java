@@ -66,7 +66,7 @@ public class AdminController extends BaseController {
         try {
             AccountActivityResponse response = new AccountActivityResponse();
 
-            List<AccountActivity> records = userRepository.getAccountActivity(user.getUtilityId());
+            List<AccountActivity> records = userRepository.getAccountActivity();
 
             for (AccountActivity a : records) {
                 response.getAccounts().add(a);
@@ -94,7 +94,7 @@ public class AdminController extends BaseController {
         try {
             GroupQueryResponse response = new GroupQueryResponse();
 
-            response.setGroups(this.groupRepository.getAll(user.getUtilityKey()));
+            response.setGroups(groupRepository.getAll(user.getUtilityKey()));
 
             return response;
         } catch (Exception ex) {
@@ -115,7 +115,7 @@ public class AdminController extends BaseController {
         try {
             CounterCollectionResponse response = new CounterCollectionResponse();
 
-            response.setCounters(this.utilityRepository.getCounters(user.getUtilityId()));
+            response.setCounters(utilityRepository.getCounters(user.getUtilityId()));
 
             return response;
         } catch (Exception ex) {

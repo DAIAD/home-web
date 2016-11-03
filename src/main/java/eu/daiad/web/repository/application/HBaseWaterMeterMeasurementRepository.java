@@ -20,11 +20,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
-import eu.daiad.web.hbase.HBaseConnectionManager;
 import eu.daiad.web.model.TemporalConstants;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DataErrorCode;
@@ -53,36 +50,9 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
 
     private static final Log logger = LogFactory.getLog(HBaseWaterMeterMeasurementRepository.class);
 
-    private final String ERROR_RELEASE_RESOURCES = "Failed to release resources";
-
-    private enum EnumTimeInterval {
-        UNDEFINED(0), HOUR(3600), DAY(86400);
-
-        private final int value;
-
-        private EnumTimeInterval(int value) {
-            this.value = value;
-        }
-
-        public int getValue() {
-            return this.value;
-        }
-    }
-
     private final String meterTableMeasurementByMeter = "daiad:meter-measurements-by-user";
 
     private final String meterTableMeasurementByTime = "daiad:meter-measurements-by-time";
-
-    private final String columnFamilyName = "cf";
-
-    @Value("${hbase.data.time.partitions}")
-    private short timePartitions;
-
-    @Value("${scanner.cache.size}")
-    private int scanCacheSize = 1;
-
-    @Autowired
-    private HBaseConnectionManager connection;
 
     @Override
     public void store(String serial, WaterMeterMeasurementCollection data) {
@@ -93,6 +63,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
 
             // Sort measurements
             Collections.sort(data.getMeasurements(), new Comparator<WaterMeterMeasurement>() {
+                @Override
                 public int compare(WaterMeterMeasurement o1, WaterMeterMeasurement o2) {
                     if (o1.getTimestamp() <= o2.getTimestamp()) {
                         return -1;
@@ -123,8 +94,8 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                 }
             }
 
-            this.storeDataByMeter(serial, data);
-            this.storeDataByTime(serial, data);
+            storeDataByMeter(serial, data);
+            storeDataByTime(serial, data);
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }
@@ -134,11 +105,11 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
     private void storeDataByMeter(String serial, WaterMeterMeasurementCollection data) {
         Table table = null;
         try {
-            table = connection.getTable(this.meterTableMeasurementByMeter);
+            table = connection.getTable(meterTableMeasurementByMeter);
 
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             byte[] meterSerial = serial.getBytes("UTF-8");
             byte[] meterSerialHash = md.digest(meterSerial);
@@ -171,13 +142,13 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
 
                 Put p = new Put(rowKey);
 
-                byte[] column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("v")));
+                byte[] column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("v")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.getVolume()));
 
-                column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("d")));
+                column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("d")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.getDifference()));
 
-                column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("s")));
+                column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("s")));
                 p.addColumn(columnFamily, column, serial.getBytes(StandardCharsets.UTF_8));
 
                 table.put(p);
@@ -191,7 +162,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -201,11 +172,11 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
         Table table = null;
 
         try {
-            table = connection.getTable(this.meterTableMeasurementByTime);
+            table = connection.getTable(meterTableMeasurementByTime);
 
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             byte[] meterSerial = serial.getBytes("UTF-8");
             byte[] meterSerialHash = md.digest(meterSerial);
@@ -217,7 +188,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                     continue;
                 }
 
-                short partition = (short) (m.getTimestamp() % this.timePartitions);
+                short partition = (short) (m.getTimestamp() % timePartitions);
                 byte[] partitionBytes = Bytes.toBytes(partition);
 
                 long timestamp = (Long.MAX_VALUE / 1000) - (m.getTimestamp() / 1000);
@@ -244,13 +215,13 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
 
                 Put p = new Put(rowKey);
 
-                byte[] column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("v")));
+                byte[] column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("v")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.getVolume()));
 
-                column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("d")));
+                column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("d")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.getDifference()));
 
-                column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("s")));
+                column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("s")));
                 p.addColumn(columnFamily, column, serial.getBytes(StandardCharsets.UTF_8));
 
                 table.put(p);
@@ -264,7 +235,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -308,8 +279,8 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            table = connection.getTable(this.meterTableMeasurementByMeter);
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            table = connection.getTable(meterTableMeasurementByMeter);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             for (int deviceIndex = 0; deviceIndex < serials.length; deviceIndex++) {
                 byte[] meterSerial = serials[deviceIndex].getBytes("UTF-8");
@@ -317,9 +288,9 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
 
                 Scan scan = new Scan();
                 scan.addFamily(columnFamily);
-                scan.setStartRow(this.getDeviceTimeRowKey(meterSerialHash, (Long.MAX_VALUE / 1000)
+                scan.setStartRow(getDeviceTimeRowKey(meterSerialHash, (Long.MAX_VALUE / 1000)
                                 - (maxDateTime / 1000), EnumTimeInterval.HOUR));
-                scan.setStopRow(this.calculateTheClosestNextRowKeyForPrefix(meterSerialHash));
+                scan.setStopRow(calculateTheClosestNextRowKeyForPrefix(meterSerialHash));
                 scan.setCaching(2);
 
                 scanner = table.getScanner(scan);
@@ -403,7 +374,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -477,8 +448,8 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            table = connection.getTable(this.meterTableMeasurementByMeter);
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            table = connection.getTable(meterTableMeasurementByMeter);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             for (int deviceIndex = 0; deviceIndex < serials.length; deviceIndex++) {
                 byte[] meterSerial = serials[deviceIndex].getBytes("UTF-8");
@@ -487,10 +458,10 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                 Scan scan = new Scan();
                 scan.addFamily(columnFamily);
 
-                scan.setStartRow(this.getDeviceTimeRowKey(meterSerialHash, (Long.MAX_VALUE / 1000L)
+                scan.setStartRow(getDeviceTimeRowKey(meterSerialHash, (Long.MAX_VALUE / 1000L)
                                 - (endDate.getMillis() / 1000L), EnumTimeInterval.HOUR));
 
-                scan.setStopRow(this.calculateTheClosestNextRowKeyForPrefix(this.getDeviceTimeRowKey(meterSerialHash,
+                scan.setStopRow(calculateTheClosestNextRowKeyForPrefix(getDeviceTimeRowKey(meterSerialHash,
                                 (Long.MAX_VALUE / 1000L) - (startDate.getMillis() / 1000L), EnumTimeInterval.HOUR)));
 
                 scanner = table.getScanner(scan);
@@ -552,7 +523,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -567,8 +538,8 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
             result.add(new GroupDataSeries(filter.getLabel(), filter.getUsers().size(), filter.getAreaId()));
         }
         try {
-            table = connection.getTable(this.meterTableMeasurementByTime);
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            table = connection.getTable(meterTableMeasurementByTime);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             DateTime startDate = new DateTime(query.getStartDateTime(), DateTimeZone.UTC);
             DateTime endDate = new DateTime(query.getEndDateTime(), DateTimeZone.UTC);
@@ -614,7 +585,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
 
             for (short p = 0; p < timePartitions; p++) {
                 Scan scan = new Scan();
-                scan.setCaching(this.scanCacheSize);
+                scan.setCaching(scanCacheSize);
                 scan.addFamily(columnFamily);
 
                 byte[] partitionBytes = Bytes.toBytes(p);
@@ -708,7 +679,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
 

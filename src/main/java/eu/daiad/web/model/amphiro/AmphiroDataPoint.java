@@ -4,7 +4,7 @@ public class AmphiroDataPoint extends AmphiroAbstractDataPoint {
 
 	private long sessionId;
 
-	private int index;
+	private long index;
 
 	private boolean history;
 
@@ -16,11 +16,11 @@ public class AmphiroDataPoint extends AmphiroAbstractDataPoint {
 		this.sessionId = sessionId;
 	}
 
-	public int getIndex() {
+	public long getIndex() {
 		return index;
 	}
 
-	public void setIndex(int index) {
+	public void setIndex(long index) {
 		this.index = index;
 	}
 
@@ -31,7 +31,7 @@ public class AmphiroDataPoint extends AmphiroAbstractDataPoint {
 	public void setHistory(boolean history) {
 		this.history = history;
 	}
-	
+
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
 	}

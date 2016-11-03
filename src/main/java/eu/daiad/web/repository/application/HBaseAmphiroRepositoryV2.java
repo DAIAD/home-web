@@ -25,13 +25,10 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import com.google.common.collect.ImmutableMap;
 
-import eu.daiad.web.hbase.HBaseConnectionManager;
 import eu.daiad.web.model.amphiro.AmphiroAbstractDataPoint;
 import eu.daiad.web.model.amphiro.AmphiroAbstractSession;
 import eu.daiad.web.model.amphiro.AmphiroDataSeries;
@@ -68,51 +65,10 @@ import eu.daiad.web.model.query.RankingDataPoint;
 import eu.daiad.web.model.query.UserDataPoint;
 import eu.daiad.web.model.security.AuthenticatedUser;
 
-@Repository()
-public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository implements IAmphiroIndexOrderedRepository {
+@Repository("hBaseAmphiroRepositoryV2")
+public class HBaseAmphiroRepositoryV2 extends AbstractAmphiroHBaseRepository implements IAmphiroIndexOrderedRepository {
 
-    private static final String sessionLoggerName = "AmphiroSessionLogger";
-
-    private static final String sessionMemberLoggerName = "AmphiroSessionMemberLogger";
-
-    private static final String sessionMeasurementLoggerName = "AmphiroMeasurementLogger";
-
-    private static final String sessionIgnoreLoggerName = "AmphiroSessionIgnoreLogger";
-
-    private static final Log logger = LogFactory.getLog(HBaseAmphiroIndexOrderedRepository.class);
-
-    private static final Log sessionLogger = LogFactory.getLog(sessionLoggerName);
-
-    private static final Log sessionMemberLogger = LogFactory.getLog(sessionMemberLoggerName);
-
-    private static final Log sessionMeasurementLogger = LogFactory.getLog(sessionMeasurementLoggerName);
-
-    private static final Log sessionIgnoreLogger = LogFactory.getLog(sessionIgnoreLoggerName);
-
-    private final String ERROR_RELEASE_RESOURCES = "Failed to release resources";
-
-    private enum EnumTimeInterval {
-        UNDEFINED(0), HOUR(3600), DAY(86400);
-
-        private final int value;
-
-        private EnumTimeInterval(int value) {
-            this.value = value;
-        }
-
-        public int getValue() {
-            return value;
-        }
-    }
-
-    @Value("${hbase.data.time.partitions}")
-    private short timePartitions;
-
-    @Value("${scanner.cache.size}")
-    private int scanCacheSize = 1;
-
-    @Value("${daiad.amphiro.validation-string:true}")
-    private boolean strictAmphiroValidation;
+    private static final Log logger = LogFactory.getLog(HBaseAmphiroRepositoryV2.class);
 
     private final String amphiroTableSessionIndex = "daiad:amphiro-sessions-index-v2";
 
@@ -122,10 +78,15 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 
     private final String amphiroTableSessionByUser = "daiad:amphiro-sessions-by-user-v2";
 
-    private final String columnFamilyName = "cf";
-
-    @Autowired
-    private HBaseConnectionManager connection;
+    /**
+     * Returns the current API version.
+     *
+     * @return the API version.
+     */
+    @Override
+    protected String getVersion() {
+        return "v2";
+    }
 
     private void refreshSessionTimestampIndex(UUID userKey, AmphiroMeasurementCollection data) throws Exception {
         Table table = null;
@@ -135,7 +96,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 
             table = connection.getTable(amphiroTableSessionIndex);
 
-            byte[] columnFamily = Bytes.toBytes(columnFamilyName);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
             byte[] columnQualifier = Bytes.toBytes("ts");
 
             for (int i = 0, length = data.getSessions().size(); i < length; i++) {
@@ -176,7 +137,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -189,7 +150,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(amphiroTableSessionByUser);
-            byte[] columnFamily = Bytes.toBytes(columnFamilyName);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             for (int i = data.getSessions().size() - 1; i >= 0; i--) {
                 AmphiroSession s = data.getSessions().get(i);
@@ -352,7 +313,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -364,7 +325,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(amphiroTableSessionByTime);
-            byte[] columnFamily = Bytes.toBytes(columnFamilyName);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             for (int i = 0; i < data.getSessions().size(); i++) {
                 AmphiroSession s = data.getSessions().get(i);
@@ -489,7 +450,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -499,7 +460,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
             for (AmphiroSession session : data.getSessions()) {
                 List<String> tokens = new ArrayList<String>();
 
-                tokens.add("v2");
+                tokens.add(getVersion());
 
                 tokens.add(Integer.toString(user.getId()));
                 tokens.add(user.getKey().toString());
@@ -539,7 +500,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
             for (AmphiroMeasurement measurement : data.getMeasurements()) {
                 List<String> tokens = new ArrayList<String>();
 
-                tokens.add("v2");
+                tokens.add(getVersion());
 
                 tokens.add(Integer.toString(user.getId()));
                 tokens.add(user.getKey().toString());
@@ -549,7 +510,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                 tokens.add(device.getKey().toString());
 
                 tokens.add(Long.toString(measurement.getSessionId()));
-                tokens.add(Integer.toString(measurement.getIndex()));
+                tokens.add(Long.toString(measurement.getIndex()));
                 tokens.add(Boolean.toString(measurement.isHistory()));
                 tokens.add(Long.toString(measurement.getTimestamp()));
 
@@ -567,7 +528,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
             for (MemberAssignmentRequest.Assignment assignment : assignments) {
                 List<String> tokens = new ArrayList<String>();
 
-                tokens.add("v2");
+                tokens.add(getVersion());
 
                 tokens.add(Integer.toString(user.getId()));
                 tokens.add(user.getKey().toString());
@@ -588,7 +549,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
     private void preProcessData(AmphiroMeasurementCollection data) {
         try {
             // Sort sessions
-            ArrayList<AmphiroSession> sessions = data.getSessions();
+            List<AmphiroSession> sessions = data.getSessions();
 
             Collections.sort(sessions, new Comparator<AmphiroSession>() {
 
@@ -605,7 +566,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
             });
 
             // Sort measurements
-            ArrayList<AmphiroMeasurement> measurements = data.getMeasurements();
+            List<AmphiroMeasurement> measurements = data.getMeasurements();
 
             if ((measurements != null) && (measurements.size() > 0)) {
 
@@ -712,7 +673,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(amphiroTableMeasurements);
-            byte[] columnFamily = Bytes.toBytes(columnFamilyName);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             for (int i = 0; i < data.getMeasurements().size(); i++) {
                 AmphiroMeasurement m = data.getMeasurements().get(i);
@@ -764,14 +725,14 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
 
     @Override
-    public AmphiroSessionUpdateCollection storeData(AuthenticatedUser user, AmphiroDevice device,
-                    AmphiroMeasurementCollection data) throws ApplicationException {
+    public AmphiroSessionUpdateCollection store(AuthenticatedUser user, AmphiroDevice device,
+                                                AmphiroMeasurementCollection data) throws ApplicationException {
         AmphiroSessionUpdateCollection updates = new AmphiroSessionUpdateCollection();
 
         try {
@@ -796,24 +757,9 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
         return updates;
     }
 
-    private byte[] appendLength(byte[] array) throws Exception {
-        byte[] length = { (byte) array.length };
-
-        return concatenate(length, array);
-    }
-
-    private byte[] concatenate(byte[] a, byte[] b) {
-        int lengthA = a.length;
-        int lengthB = b.length;
-        byte[] concat = new byte[lengthA + lengthB];
-        System.arraycopy(a, 0, concat, 0, lengthA);
-        System.arraycopy(b, 0, concat, lengthA, lengthB);
-        return concat;
-    }
-
     @Override
-    public AmphiroMeasurementIndexIntervalQueryResult searchMeasurements(DateTimeZone timezone,
-                    AmphiroMeasurementIndexIntervalQuery query) {
+    public AmphiroMeasurementIndexIntervalQueryResult getMeasurements(DateTimeZone timezone,
+                                                                      AmphiroMeasurementIndexIntervalQuery query) {
         AmphiroMeasurementIndexIntervalQueryResult data = new AmphiroMeasurementIndexIntervalQueryResult();
 
         long startIndex = Long.MAX_VALUE;
@@ -840,7 +786,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(amphiroTableMeasurements);
-            byte[] columnFamily = Bytes.toBytes(columnFamilyName);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
             byte[] userKeyHash = md.digest(userKey);
@@ -985,14 +931,15 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
 
     @Override
-    public AmphiroSessionCollectionIndexIntervalQueryResult searchSessions(String[] names, DateTimeZone timezone,
-                    AmphiroSessionCollectionIndexIntervalQuery query) {
+    public AmphiroSessionCollectionIndexIntervalQueryResult getSessions(String[] names,
+                                                                        DateTimeZone timezone,
+                                                                        AmphiroSessionCollectionIndexIntervalQuery query) {
         AmphiroSessionCollectionIndexIntervalQueryResult data = new AmphiroSessionCollectionIndexIntervalQueryResult();
 
         long startIndex = Long.MAX_VALUE;
@@ -1019,7 +966,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(amphiroTableSessionByUser);
-            byte[] columnFamily = Bytes.toBytes(columnFamilyName);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
             byte[] userKeyHash = md.digest(userKey);
@@ -1179,7 +1126,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -1195,7 +1142,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(amphiroTableSessionByUser);
-            byte[] columnFamily = Bytes.toBytes(columnFamilyName);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
             byte[] userKeyHash = md.digest(userKey);
@@ -1300,7 +1247,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -1316,7 +1263,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
 
             table = connection.getTable(amphiroTableMeasurements);
 
-            byte[] columnFamily = Bytes.toBytes(columnFamilyName);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
             byte[] userKeyHash = md.digest(userKey);
@@ -1398,7 +1345,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -1414,7 +1361,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
         }
         try {
             table = connection.getTable(amphiroTableSessionByTime);
-            byte[] columnFamily = Bytes.toBytes(columnFamilyName);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             DateTime startDate = new DateTime(query.getStartDateTime(), DateTimeZone.UTC);
             DateTime endDate = new DateTime(query.getEndDateTime(), DateTimeZone.UTC);
@@ -1568,7 +1515,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
 
@@ -1681,7 +1628,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
     }
 
     @Override
-    public void assignMemberToSession(AuthenticatedUser user,  List<MemberAssignmentRequest.Assignment> assignments) throws Exception {
+    public void assignMember(AuthenticatedUser user, List<MemberAssignmentRequest.Assignment> assignments) throws Exception {
         if (assignments != null) {
             logMemberAssignmentData(user, assignments);
 
@@ -1713,7 +1660,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(amphiroTableSessionByUser);
-            byte[] columnFamily = Bytes.toBytes(columnFamilyName);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             byte[] rowKey;
 
@@ -1759,7 +1706,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -1773,7 +1720,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(amphiroTableSessionByTime);
-            byte[] columnFamily = Bytes.toBytes(columnFamilyName);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             long timestamp, offset, timeBucket;
 
@@ -1835,13 +1782,13 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
 
     @Override
-    public void ignoreSession(AuthenticatedUser user,  List<IgnoreShowerRequest.Session> sessions) throws Exception {
+    public void ignore(AuthenticatedUser user,  List<IgnoreShowerRequest.Session> sessions) throws Exception {
         if (sessions != null) {
             logIgnoreSessionData(user, sessions);
 
@@ -1869,7 +1816,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
             for (IgnoreShowerRequest.Session session : sessions) {
                 List<String> tokens = new ArrayList<String>();
 
-                tokens.add("v2");
+                tokens.add(getVersion());
 
                 tokens.add(Integer.toString(user.getId()));
                 tokens.add(user.getKey().toString());
@@ -1895,7 +1842,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(amphiroTableSessionByUser);
-            byte[] columnFamily = Bytes.toBytes(columnFamilyName);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             byte[] rowKey;
 
@@ -1938,7 +1885,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -1952,7 +1899,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(amphiroTableSessionByTime);
-            byte[] columnFamily = Bytes.toBytes(columnFamilyName);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             long timestamp, offset, timeBucket;
 
@@ -2011,7 +1958,7 @@ public class HBaseAmphiroIndexOrderedRepository extends HBaseBaseRepository impl
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }

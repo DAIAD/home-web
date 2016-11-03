@@ -175,7 +175,7 @@ public class DataController extends BaseController {
                         for (MultipartFile file : request.getFiles()) {
                             String filename = createTemporaryFilename(file.getBytes());
 
-                            this.waterMeterDataLoaderService.parse(filename, request.getTimezone(), EnumUploadFileType.METER_DATA_FORECAST);
+                            waterMeterDataLoaderService.parse(filename, request.getTimezone(), EnumUploadFileType.METER_DATA_FORECAST);
                         }
                         break;
                     default:
@@ -406,7 +406,7 @@ public class DataController extends BaseController {
                         exportQuery.setTimezone(data.getTimezone());
                     }
 
-                    return new DownloadFileResponse(this.exportService.export(exportQuery));
+                    return new DownloadFileResponse(exportService.export(exportQuery));
                 default:
                     throw createApplicationException(ActionErrorCode.EXPORT_TYPE_NOT_SUPPORTED).set("type", data.getType());
             }
@@ -516,7 +516,7 @@ public class DataController extends BaseController {
             if (query == null) {
                 query = new DataExportFileQuery();
             }
-            query.setUtilityId(user.getUtilityId());
+            query.setUtilities(user.getUtilities());
             query.setDays(30);
 
             if (query.getIndex() < 0) {
@@ -545,12 +545,14 @@ public class DataController extends BaseController {
     /**
      * Downloads a file that contains exported user data based on a unique token.
      *
+     * @param user the currently authenticated user.
      * @param token the token used to identify the file to download.
      * @return the file.
      */
     @RequestMapping(value = "/action/export/download/{token}", method = RequestMethod.GET)
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public ResponseEntity<InputStreamResource> downloadExportedDataFile(@PathVariable("token") String token) {
+    public ResponseEntity<InputStreamResource> downloadExportedDataFile(@AuthenticationPrincipal AuthenticatedUser user,
+                                                                        @PathVariable("token") String token) {
         try {
             UUID key = UUID.fromString(token);
 
@@ -558,7 +560,7 @@ public class DataController extends BaseController {
 
             File file = new File(FilenameUtils.concat(exportFile.getPath(), exportFile.getFilename()));
 
-            if(file.exists()) {
+            if(file.exists() && (user.getUtilities().contains(exportFile.getUtilityId()))) {
                 FileSystemResource fileResource = new FileSystemResource(file);
 
                 return ResponseEntity.ok()

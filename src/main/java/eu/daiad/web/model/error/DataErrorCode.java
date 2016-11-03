@@ -6,10 +6,12 @@ public enum DataErrorCode implements ErrorCode {
 	NO_SESSION_FOUND_FOR_MEASUREMENT,
 	HISTORY_SESSION_MEASUREMENT_FOUND,
 	MEASUREMENT_NO_UNIQUE_INDEX,
-	SESSION_NOT_FOUND;
+	SESSION_NOT_FOUND,
+	DUPLICATE_SESSION_ID,
+	HBASE_INVALID_COLUMN;
 
 	@Override
 	public String getMessageKey() {
-		return (this.getClass().getSimpleName() + '.' + this.name());
+		return (this.getClass().getSimpleName() + '.' + name());
 	}
 }

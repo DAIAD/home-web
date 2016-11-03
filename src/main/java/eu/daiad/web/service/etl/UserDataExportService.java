@@ -215,7 +215,7 @@ public class UserDataExportService extends AbstractDataExportService {
         query.setLength(Integer.MAX_VALUE);
 
         AmphiroSessionCollectionIndexIntervalQueryResult amphiroCollection = this.amphiroIndexOrderedRepository
-                        .searchSessions(deviceNames, DateTimeZone.forID(timezone), query);
+                        .getSessions(deviceNames, DateTimeZone.forID(timezone), query);
 
         // Create one sheet per device
         for (AmphiroSessionCollection device : amphiroCollection.getDevices()) {

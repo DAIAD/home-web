@@ -192,7 +192,7 @@ public class SearchController extends BaseRestController {
 
             this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
 
-            AmphiroMeasurementIndexIntervalQueryResult data = amphiroIndexOrderedRepository.searchMeasurements(
+            AmphiroMeasurementIndexIntervalQueryResult data = amphiroIndexOrderedRepository.getMeasurements(
                             DateTimeZone.forID(user.getTimezone()), query);
 
             return data;
@@ -254,7 +254,7 @@ public class SearchController extends BaseRestController {
 
             String[] names = this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
 
-            AmphiroSessionCollectionIndexIntervalQueryResult data = amphiroIndexOrderedRepository.searchSessions(names,
+            AmphiroSessionCollectionIndexIntervalQueryResult data = amphiroIndexOrderedRepository.getSessions(names,
                             DateTimeZone.forID(user.getTimezone()), query);
 
             return data;

@@ -9,7 +9,7 @@ public class AmphiroMeasurement {
 
     private long sessionId;
 
-    private int index;
+    private long index;
 
     private boolean history;
 
@@ -32,11 +32,11 @@ public class AmphiroMeasurement {
         this.sessionId = sessionId;
     }
 
-    public int getIndex() {
+    public long getIndex() {
         return index;
     }
 
-    public void setIndex(int index) {
+    public void setIndex(long index) {
         this.index = index;
     }
 
@@ -90,7 +90,13 @@ public class AmphiroMeasurement {
 
     @JsonIgnore
     public DateTime getUtcDate() {
-        return new DateTime(this.timestamp, DateTimeZone.UTC);
+        return new DateTime(timestamp, DateTimeZone.UTC);
     }
 
+    public boolean equalByValue(AmphiroMeasurement value) {
+        return ((sessionId == value.sessionId) &&
+                (volume == value.volume) &&
+                (energy == value.energy) &&
+                (temperature == value.temperature));
+    }
 }

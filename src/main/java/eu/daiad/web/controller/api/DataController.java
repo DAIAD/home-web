@@ -308,7 +308,7 @@ public class DataController extends BaseRestController {
                             throw createApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type",
                                             data.getType().toString());
                         }
-                        response = amphiroIndexOrderedRepository.storeData(authenticatedUser, (AmphiroDevice) device,
+                        response = amphiroIndexOrderedRepository.store(authenticatedUser, (AmphiroDevice) device,
                                         (AmphiroMeasurementCollection) data);
                     }
                     break;
@@ -363,7 +363,7 @@ public class DataController extends BaseRestController {
         try {
             authenticatedUser = authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
-            amphiroIndexOrderedRepository.assignMemberToSession(authenticatedUser, request.getAssignments());
+            amphiroIndexOrderedRepository.assignMember(authenticatedUser, request.getAssignments());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -407,7 +407,7 @@ public class DataController extends BaseRestController {
         try {
             authenticatedUser = authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
-            amphiroIndexOrderedRepository.ignoreSession(authenticatedUser, request.getSessions());
+            amphiroIndexOrderedRepository.ignore(authenticatedUser, request.getSessions());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 

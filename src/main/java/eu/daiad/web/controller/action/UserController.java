@@ -329,7 +329,7 @@ public class UserController extends BaseController {
         query.setType(EnumIndexIntervalQuery.SLIDING);
         query.setUserKey(userkey);
 
-        return amphiroIndexOrderedRepository.searchSessions(names.toArray(new String[] {}),
+        return amphiroIndexOrderedRepository.getSessions(names.toArray(new String[] {}),
                         DateTimeZone.forID(timezone), query).getDevices();
     }
 

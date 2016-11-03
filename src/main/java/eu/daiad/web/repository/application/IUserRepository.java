@@ -51,8 +51,6 @@ public interface IUserRepository {
 
     List<AccountActivity> getAccountActivity();
 
-    List<AccountActivity> getAccountActivity(int utilityId);
-
     List<UUID> getUserKeysForGroup(UUID groupKey);
 
     List<UUID> getUserKeysForUtility();

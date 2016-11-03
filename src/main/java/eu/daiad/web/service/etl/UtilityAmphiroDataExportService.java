@@ -213,6 +213,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
             row.add(session.getMember().getMode().toString());
             row.add(Integer.toString(session.getMember().getIndex()));
         }
+        row.add(Boolean.toString(session.isIgnored()));
 
         return row;
     }
@@ -255,10 +256,12 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
      */
     private void exportAmphiroSessionData(UtilityDataExportQuery query, ExportResult result) throws IOException {
         long totalRows = 0;
+        long totalValidRows = 0;
         long totalRemovedRows = 0;
         long totalIndexRows = 0;
 
-        String dataFilename = createTemporaryFilename(query.getWorkingDirectory());
+        String allFilename = createTemporaryFilename(query.getWorkingDirectory());
+        String validFilename = createTemporaryFilename(query.getWorkingDirectory());
         String removeFilename = createTemporaryFilename(query.getWorkingDirectory());
         String filterFilename = createTemporaryFilename(query.getWorkingDirectory());
 
@@ -266,10 +269,16 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
 
         CSVFormat format = CSVFormat.RFC4180.withDelimiter(DELIMITER);
 
-        CSVPrinter dataPrinter = new CSVPrinter(
+        CSVPrinter allPrinter = new CSVPrinter(
+                                    new BufferedWriter(
+                                        new OutputStreamWriter(
+                                            new FileOutputStream(allFilename, true),
+                                            Charset.forName("UTF-8").newEncoder())), format);
+
+        CSVPrinter validPrinter = new CSVPrinter(
                                      new BufferedWriter(
                                          new OutputStreamWriter(
-                                             new FileOutputStream(dataFilename, true),
+                                             new FileOutputStream(validFilename, true),
                                              Charset.forName("UTF-8").newEncoder())), format);
 
         CSVPrinter removedDataPrinter = new CSVPrinter(
@@ -299,24 +308,10 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
         row.add("history");
         row.add("household member selection mode");
         row.add("household member index");
+        row.add("ignore");
 
-        dataPrinter.printRecord(row);
-
-        row = new ArrayList<String>();
-
-        row.add("user key");
-        row.add("device key");
-        row.add("session id");
-        row.add("local datetime");
-        row.add("volume");
-        row.add("temperature");
-        row.add("energy");
-        row.add("flow");
-        row.add("duration");
-        row.add("history");
-        row.add("household member selection mode");
-        row.add("household member index");
-
+        allPrinter.printRecord(row);
+        validPrinter.printRecord(row);
         removedDataPrinter.printRecord(row);
 
         // Process all users
@@ -350,7 +345,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                 sessionQuery.setLength(Integer.MAX_VALUE);
 
                 AmphiroSessionCollectionIndexIntervalQueryResult amphiroCollection = amphiroIndexOrderedRepository
-                                .searchSessions(deviceNames.toArray(new String[] {}), DateTimeZone.forID(query.getTimezone()), sessionQuery);
+                                .getSessions(deviceNames.toArray(new String[] {}), DateTimeZone.forID(query.getTimezone()), sessionQuery);
 
                 // Process shower sessions for every device
                 for (AmphiroSessionCollection device : amphiroCollection.getDevices()) {
@@ -363,6 +358,14 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                     for (int i = sessions.size() - 1; i >= 0; i--) {
                         AmphiroSession session = (AmphiroSession) sessions.get(i);
 
+                        // Always export session to a file that contains all the
+                        // session data
+                        row = createAmphiroSessionRow(user.getKey(), device.getDeviceKey(), formatter, session);
+
+                        allPrinter.printRecord(row);
+                        totalRows++;
+
+                        // Validate
                         if((session.getVolume() < 8) ||
                            (session.getDuration() < 60) ||
                            (session.getFlow() < 3)) {
@@ -387,8 +390,8 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                             // ... and add to the removed session collection
                             removedSessions.add(session);
                         } else {
-                            totalRows++;
-                            dataPrinter.printRecord(row);
+                            totalValidRows++;
+                            validPrinter.printRecord(row);
                         }
                     }
 
@@ -432,8 +435,11 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
             }
         }
 
-        dataPrinter.flush();
-        dataPrinter.close();
+        allPrinter.flush();
+        allPrinter.close();
+
+        validPrinter.flush();
+        validPrinter.close();
 
         removedDataPrinter.flush();
         removedDataPrinter.close();
@@ -441,9 +447,10 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
         removedIndexPrinter.flush();
         removedIndexPrinter.close();
 
-        result.increment(totalRows + totalRemovedRows + totalIndexRows);
+        result.increment(totalValidRows + totalRemovedRows + totalIndexRows);
 
-        result.getFiles().add(new FileLabelPair(new File(dataFilename), "shower-data.csv", totalRows));
+        result.getFiles().add(new FileLabelPair(new File(allFilename), "shower-data-all.csv", totalRows));
+        result.getFiles().add(new FileLabelPair(new File(validFilename), "shower-data-valid.csv", totalValidRows));
         result.getFiles().add(new FileLabelPair(new File(removeFilename), "shower-data-removed.csv", totalRemovedRows));
         result.getFiles().add(new FileLabelPair(new File(filterFilename), "shower-data-removed-index.csv", totalIndexRows));
     }
@@ -516,7 +523,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                 userSessionQuery.setLength(Integer.MAX_VALUE);
 
                 AmphiroSessionCollectionIndexIntervalQueryResult amphiroCollection = amphiroIndexOrderedRepository
-                                .searchSessions(deviceNames.toArray(new String[] {}), DateTimeZone.forID(query.getTimezone()), userSessionQuery);
+                                .getSessions(deviceNames.toArray(new String[] {}), DateTimeZone.forID(query.getTimezone()), userSessionQuery);
 
                 // Process shower sessions for every device and extract time series for real time ones.
                 for (AmphiroSessionCollection device : amphiroCollection.getDevices()) {
@@ -673,7 +680,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                 sessionQuery.setLength(Integer.MAX_VALUE);
 
                 AmphiroSessionCollectionIndexIntervalQueryResult amphiroCollection = amphiroIndexOrderedRepository
-                                .searchSessions(deviceNames.toArray(new String[] {}), DateTimeZone.forID(query.getTimezone()), sessionQuery);
+                                .getSessions(deviceNames.toArray(new String[] {}), DateTimeZone.forID(query.getTimezone()), sessionQuery);
 
                 for (AmphiroSessionCollection device : amphiroCollection.getDevices()) {
                     try {
@@ -689,7 +696,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                         }
 
                         // Get timeline
-                        PhaseTimeline phaseTimeline = this.constructAmphiroPhaseTimeline(user.getKey(), device.getDeviceKey());
+                        PhaseTimeline phaseTimeline = constructAmphiroPhaseTimeline(user.getKey(), device.getDeviceKey());
 
                         Phase phase1 = phaseTimeline.getPhase(EnumPhase.BASELINE);
                         Phase phase2a = phaseTimeline.getPhase(EnumPhase.MOBILE_ON_AMPHIRO_OFF);
@@ -831,13 +838,13 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                         row.add(device.getDeviceKey().toString());
                         row.add(device.getName());
 
-                        this.createPhaseRowWithShowers(EnumPhase.BASELINE,row, phase1, formatter);
+                        createPhaseRowWithShowers(EnumPhase.BASELINE,row, phase1, formatter);
                         if(phase2a != null) {
-                            this.createPhaseRowWithShowers(phase2a.getPhase(), row, phase2a, formatter);
+                            createPhaseRowWithShowers(phase2a.getPhase(), row, phase2a, formatter);
                         } else {
-                            this.createPhaseRowWithShowers(phase2b.getPhase(),row, phase2b, formatter);
+                            createPhaseRowWithShowers(phase2b.getPhase(),row, phase2b, formatter);
                         }
-                        this.createPhaseRowWithShowers(EnumPhase.MOBILE_ON_AMPHIRO_ON,row, phase3, formatter);
+                        createPhaseRowWithShowers(EnumPhase.MOBILE_ON_AMPHIRO_ON,row, phase3, formatter);
 
                         totalRows++;
 

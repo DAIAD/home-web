@@ -204,7 +204,7 @@ public class SearchController extends BaseController {
 
 			query.setUserKey(user.getKey());
 
-			return amphiroIndexOrderedRepository.searchMeasurements(DateTimeZone.forID(user.getTimezone()), query);
+			return amphiroIndexOrderedRepository.getMeasurements(DateTimeZone.forID(user.getTimezone()), query);
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
 
@@ -280,7 +280,7 @@ public class SearchController extends BaseController {
 
 			String[] names = this.checkAmphiroOwnership(query.getUserKey(), query.getDeviceKey());
 
-			return amphiroIndexOrderedRepository.searchSessions(names, DateTimeZone.forID(user.getTimezone()), query);
+			return amphiroIndexOrderedRepository.getSessions(names, DateTimeZone.forID(user.getTimezone()), query);
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
 
