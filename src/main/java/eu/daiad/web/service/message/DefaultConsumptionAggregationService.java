@@ -8,11 +8,14 @@ import java.util.UUID;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
 
 import eu.daiad.web.model.message.ConsumptionStats;
-import eu.daiad.web.model.message.MessageCalculationConfiguration;
+import eu.daiad.web.model.message.ConsumptionStats.EnumStatistic;
 import eu.daiad.web.model.query.AmphiroDataPoint;
 import eu.daiad.web.model.query.DataPoint;
 import eu.daiad.web.model.query.DataQuery;
@@ -28,15 +31,25 @@ import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.aggregates.ComputedNumber;
+ 
+import static eu.daiad.web.model.device.EnumDeviceType.AMPHIRO;
+import static eu.daiad.web.model.device.EnumDeviceType.METER;
+import static eu.daiad.web.model.query.EnumDataField.VOLUME;
+import static eu.daiad.web.model.query.EnumDataField.TEMPERATURE;
+import static eu.daiad.web.model.query.EnumDataField.DURATION;
+import static eu.daiad.web.model.query.EnumDataField.FLOW;
+import static eu.daiad.web.model.query.EnumDataField.ENERGY;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-//TODO - define some sanity values for checking the produced results
 
 @Service
-public class DefaultConsumptionAggregationService implements IConsumptionAggregationService {
-
+@ConfigurationProperties(prefix = "daiad.services.consumption-aggregation")
+public class DefaultConsumptionAggregationService implements IConsumptionAggregationService 
+{
+    private static final Log logger = LogFactory.getLog(DefaultConsumptionAggregationService.class);
+    
 	@Autowired
 	IUserRepository userRepository;
 
@@ -45,387 +58,383 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 
 	@Autowired
 	IDataService dataService;
-    
-    private static final Log logger = LogFactory.getLog(DefaultConsumptionAggregationService.class);
+	
+	private DateTimeZone defaultTimezone;
+	
+	@Value("${daiad.default-timezone:Europe/Athens}")
+	public void setDefaultTimezone(String name) {
+	    defaultTimezone = DateTimeZone.forID(name);
+	}
+	
+	private class Aggregator
+	{
+	    private final UtilityInfo utility;
+	    
+	    private final DateTime refDate;
+	    
+	    public Aggregator(UtilityInfo utility, LocalDateTime refDate)
+        {
+            this.utility = utility;
+            
+            if (refDate == null)
+                refDate = LocalDateTime.now();
+            this.refDate = refDate.toDateTime(DateTimeZone.forID(utility.getTimezone()));
+        }
+	    
+	    /**
+	     * Factory method for creating a DataQueryBuilder inside a given utility.
+	     */
+	    public DataQueryBuilder newQueryBuilder()
+	    {
+	        DataQueryBuilder qb = new DataQueryBuilder();
+	        qb.timezone(DateTimeZone.forID(utility.getTimezone()));
+	        return qb;
+	    }
+	    
+	    /**
+	     * Compute average consumption (lit) for meters, for a given time interval
+	     * @param days A sliding time interval (in days) 
+	     */
+	    private ComputedNumber computeMeterAverage(int days)
+	    {
+	        DataQueryBuilder querybuilder = newQueryBuilder()
+	                .utility("utility", utility.getKey())
+	                .sliding(refDate, -days, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+	                .meter()
+	                .sum();   
+	        DataQuery query = querybuilder.build();
+	        DataQueryResponse queryResponse = dataService.execute(query);
+	        ArrayList<GroupDataSeries> meterSeries = queryResponse.getMeters();
 
+	        if (meterSeries.size() > 1)
+	            logger.warn("computeMeterAverage: Received > 1 series!");
+	        
+	        Double result = null;       
+	        GroupDataSeries series = meterSeries.get(0);
+	        if (series.getPopulation() > 0 && series.getPoints().size() > 0) {
+	            MeterDataPoint datapoint = (MeterDataPoint) series.getPoints().get(0);
+	            Map<EnumMetric, Double> ma = datapoint.getVolume();
+	            result = ma.get(EnumMetric.SUM) / series.getPopulation();
+	        }
+
+	        logger.info("Meter - Computed utility average of last " + days + " days: " + 
+	                ((result == null)? "NULL" : result.toString()));
+	        
+	        return (result != null)? new ComputedNumber(result) : null;
+	    }
+	    
+	    /**
+	     * Compute the threshold consumption (lit) of a bottom percentage of users for a given
+	     * time interval.
+	     * @param days A sliding time interval (in days)
+	     * @param percentage The percentage of users
+	     */
+	    private ComputedNumber computeMeterBottomThreshold(int days, int percentage) 
+	    {  
+	        // Compute average for all users.
+	        
+	        List<UUID> uuids = groupRepository.getUtilityByIdMemberKeys(utility.getId());
+	        List<Double> averages = new ArrayList<>();
+	        for (UUID uuid: uuids) {
+	            DataQueryBuilder querybuilder = newQueryBuilder()
+	                .user("user", uuid)    
+	                .sliding(refDate, -days, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+	                .meter()
+	                .average();  
+	            DataQuery query = querybuilder.build();
+	            DataQueryResponse queryResponse = dataService.execute(query);
+	            ArrayList<GroupDataSeries> meterSeries = queryResponse.getMeters(); 
+	             
+	            double s = .0; // sum of averages of meters belonging to a specific user
+	            int n = 0;     // number of active meters for a specific user  
+	            for (GroupDataSeries series : meterSeries) {
+	                if (!series.getPoints().isEmpty()) {
+	                    MeterDataPoint datapoint = (MeterDataPoint) series.getPoints().get(0);
+	                    Map<EnumMetric, Double> ma = datapoint.getVolume();
+	                    n++;
+	                    s += ma.get(EnumMetric.AVERAGE);
+	                }
+	            }
+	            if (n > 0)
+	                averages.add(s / n);
+	        }            
+	        
+	        // The base threshold is the consumption of the last user of the top K%
+            
+	        Double result = null;       
+	        if (!averages.isEmpty()) {
+	            Collections.sort(averages);
+	            int i = (int) ((averages.size() * percentage) / 100);
+	            result = averages.get(i);
+	        }
+	        
+	        logger.info("Meter - Computed utility threshold of top " + percentage + "% of last " + days + " days: " + 
+	                ((result == null)? "NULL" : result.toString()));
+	        
+	        return (result != null)? new ComputedNumber(result) : null;
+	    }
+	
+	    /**
+	     * Compute average consumption (lit) for Amphiro B1 devices, for the given time interval
+	     * @param days A sliding time interval (in days)
+	     */
+	    private ComputedNumber computeAmphiroAverage(int days) 
+	    {
+	        DataQueryBuilder querybuilder = newQueryBuilder()
+	                .utility("utility", utility.getKey())
+	                .sliding(refDate, -days, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+	                .amphiro()
+	                .sum();
+	        DataQuery query = querybuilder.build();
+	        DataQueryResponse queryResponse = dataService.execute(query);
+	        ArrayList<GroupDataSeries> amphiroSeries = queryResponse.getDevices();
+
+	        if (amphiroSeries.size() > 1)
+	            logger.warn("computeAmphiroAverage: Received > 1 series!");
+	        
+	        Double result = null;
+	        GroupDataSeries series = amphiroSeries.get(0);
+	        if (series.getPopulation() > 0 && series.getPoints().size() > 0) {
+	            AmphiroDataPoint datapoint = (AmphiroDataPoint) series.getPoints().get(0);
+	            Map<EnumMetric, Double> ma = datapoint.getVolume();
+	            result = ma.get(EnumMetric.SUM) / series.getPopulation();
+	        }
+
+	        logger.info("Amphiro - Computed average of last " + days + " days: " + 
+	                ((result == null)? "NULL" : result.toString()));
+	        
+	        return (result != null)? new ComputedNumber(result) : null;
+	    }
+	    
+	    /**
+	     * Compute average per-session consumption (lit) for Amphiro B1 devices, for the given time interval
+	     * @param days days A sliding time interval (in days)
+	     */
+	    private ComputedNumber computeAmphiroAveragePerSession(int days)
+	    {
+	        DataQueryBuilder querybuilder = newQueryBuilder()
+	                .utility("utility", utility.getKey())
+	                .sliding(refDate, -days, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+	                .amphiro()
+	                .average();
+	        DataQuery query = querybuilder.build();
+	        DataQueryResponse queryResponse = dataService.execute(query);
+	        ArrayList<GroupDataSeries> amphiroSeries = queryResponse.getDevices();
+
+	        if (amphiroSeries.size() > 1)
+	            logger.warn("computeAmphiroAveragePerSession: Received > 1 series!");
+	        
+	        Double result = null;
+	        GroupDataSeries series = amphiroSeries.get(0);
+	        if (series.getPopulation() > 0 && series.getPoints().size() > 0) {
+	            AmphiroDataPoint datapoint = (AmphiroDataPoint) series.getPoints().get(0);
+	            Map<EnumMetric, Double> ma = datapoint.getVolume();
+	            result = ma.get(EnumMetric.AVERAGE);
+	        }
+
+	        logger.info("Amphiro - Computed average of last " + days + " days: " + 
+	                ((result == null)? "NULL" : result.toString()));
+
+	        return (result != null)? new ComputedNumber(result) : null;
+	    }
+	    
+	    private ComputedNumber computeAmphiroBottomThreshold(int days, int percentage) 
+	    {
+	        List<UUID> uuids = groupRepository.getUtilityByIdMemberKeys(utility.getId());
+	        List<Double> averages = new ArrayList<>();
+	        for (UUID uuid : uuids) {
+	            DataQueryBuilder querybuilder = newQueryBuilder()
+	                .user("user", uuid)
+	                .sliding(refDate, -days, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+	                .amphiro()
+	                .average();    
+	            DataQuery query = querybuilder.build();
+	            DataQueryResponse queryResponse = dataService.execute(query);
+	            ArrayList<GroupDataSeries> amphiroSeries = queryResponse.getDevices(); 
+	            
+	            int n = 0;
+	            double s = .0;
+	            for (GroupDataSeries series : amphiroSeries) {
+	                if (!series.getPoints().isEmpty()) {
+	                    AmphiroDataPoint datapoint = (AmphiroDataPoint) series.getPoints().get(0);
+	                    Map<EnumMetric, Double> ma = datapoint.getVolume();
+	                    n++; 
+	                    s += ma.get(EnumMetric.AVERAGE);
+	                }
+	            }
+	            if (n > 0)
+	                averages.add(s / n);
+	        }             
+	        
+	        Double result = null;
+	        if (!averages.isEmpty()) {
+	            Collections.sort(averages);
+	            int i = (int) (averages.size() * percentage) / 100;
+	            result = averages.get(i);                 
+	        }
+	        
+	        logger.info("Amphiro - Computed threshold of top " + percentage + "% of last " + days + " days: " + 
+	                ((result == null)? "NULL" : result.toString()));
+	        
+	        return (result != null)? new ComputedNumber(result) : null;
+	    }
+	    
+	    private ComputedNumber computeAmphiroAverageTemperature(int days)
+	    {     
+	        DataQueryBuilder querybuilder = newQueryBuilder()
+	                .utility("utility", utility.getKey())
+	                .sliding(refDate, -days, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+	                .amphiro()
+	                .average();
+
+	        DataQuery query = querybuilder.build();
+	        DataQueryResponse queryResponse = dataService.execute(query);
+	        ArrayList<GroupDataSeries> amphiroSeries = queryResponse.getDevices();
+	        
+	        if (amphiroSeries.size() > 1)
+	            logger.warn("computeAmphiroAverageTemperature: Received > 1 series!");
+	        
+	        Double result = null;
+	        GroupDataSeries series = amphiroSeries.get(0);
+	        if (series.getPopulation() > 0 && series.getPoints().size() > 0) {
+	            AmphiroDataPoint datapoint = (AmphiroDataPoint) series.getPoints().get(0);
+	            Map<EnumMetric, Double> ma = datapoint.getTemperature();
+	            result = ma.get(EnumMetric.AVERAGE);
+	        }
+	        
+	        logger.info(
+	                "Amphiro - Computed average temperature of last " + days + " days: " + 
+	                ((result == null)? "NULL" : result.toString()));
+	        
+	        return (result != null)? new ComputedNumber(result) : null;
+	    }
+	    
+	    private ComputedNumber computeAmphiroAverageDuration(int days) 
+	    {
+	        DataQueryBuilder querybuilder = newQueryBuilder()
+	                .utility("utility", utility.getKey())
+	                .sliding(refDate, -days, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+	                .amphiro()
+	                .average();
+
+	        DataQuery query = querybuilder.build();
+	        DataQueryResponse queryResponse = dataService.execute(query);
+	        ArrayList<GroupDataSeries> amphiroSeries = queryResponse.getDevices();
+	     
+	        if (amphiroSeries.size() > 1)
+                logger.warn("computeAmphiroAverageDuration: Received > 1 series!");
+	        
+	        Double result = null;
+	        GroupDataSeries series = amphiroSeries.get(0);
+	        if (series.getPopulation() > 0 && series.getPoints().size() > 0) {
+                AmphiroDataPoint datapoint = (AmphiroDataPoint) series.getPoints().get(0);
+                Map<EnumMetric, Double> ma = datapoint.getDuration();
+                result = ma.get(EnumMetric.AVERAGE);
+            }
+
+	        logger.info(
+	                "Amphiro - Computed average duration of last " + days + " days: " + 
+	                ((result == null)? "NULL" : result.toString()));
+	        
+	        return (result != null)? new ComputedNumber(result) : null;
+	    }
+	    
+	    private ComputedNumber computeAmphiroAverageFlow(int days) 
+	    {
+	        DataQueryBuilder querybuilder = newQueryBuilder()
+	                .utility("utility", utility.getKey())
+	                .sliding(refDate, -days, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+	                .amphiro()
+	                .average();
+
+	        DataQuery query = querybuilder.build();
+	        DataQueryResponse queryResponse = dataService.execute(query);
+	        ArrayList<GroupDataSeries> amphiroSeries = queryResponse.getDevices();
+	        
+	        if (amphiroSeries.size() > 1)
+	            logger.warn("computeAmphiroAverageFlow: Received > 1 series!");
+	        
+	        Double result = null;
+	        GroupDataSeries series = amphiroSeries.get(0);
+            if (series.getPopulation() > 0 && series.getPoints().size() > 0) {
+                AmphiroDataPoint datapoint = (AmphiroDataPoint) series.getPoints().get(0);
+                Map<EnumMetric, Double> ma = datapoint.getFlow();
+                result = ma.get(EnumMetric.AVERAGE);
+            }
+	        	        
+	        logger.info(
+	                "Amphiro - Computed average flow of last " + days + " days: " + 
+	                ((result == null)? "NULL" : result.toString()));
+	        
+	        return (result != null)? new ComputedNumber(result) : null;
+	    }
+	}
+	
     /**
-     * Should a ComputedNumber considered stale?
-     * 
+     * Should a ComputedNumber be considered stale?
      * @param n
      * @param days The maximum age (in days)
-     * @return
      */
-    private boolean shouldRefresh(ComputedNumber n, MessageCalculationConfiguration config)
+    private static boolean shouldRefresh(ComputedNumber n, int maxAgeInDays)
     {
         if (n == null || n.getValue() == null)
-            return true;
-        
-        int maxAgeInDays = config.getAggregateComputationInterval();
+            return true;       
         DateTime t1 = n.getTimestamp();
         DateTime t0 = DateTime.now().minusDays(maxAgeInDays);
         if (t1 == null || t1.isBefore(t0))
             return true;
-        
         return false;
     }
     
-    /**
-     * Factory method for creating a DataQueryBuilder targeting a specific utility.
-     * The timezone will be inferred from the utility's timezone.
-     * 
-     * @return
-     */
-    private DataQueryBuilder newQueryBuilder(UtilityInfo utility)
-    {
-        DataQueryBuilder qb = new DataQueryBuilder();
-        
-        // Fixme: Why perform a query with (thousands of) user IDs instead of utility ID
-        List<UUID> uuids = groupRepository.getUtilityByIdMemberKeys(utility.getId());
-        UUID[] uuids1 = ((List<UUID>) uuids).toArray(new UUID[uuids.size()]);
-        qb.users("utility", uuids1);
-        
-        qb.timezone(DateTimeZone.forID(utility.getTimezone()));
-        
-        return qb;
-    }
-    
 	@Override
-	public ConsumptionStats compute(UtilityInfo utility) {
+	public ConsumptionStats compute(UtilityInfo utility, LocalDateTime refDate) {
         
 		ConsumptionStats stats = new ConsumptionStats(utility.getId());
-        		
+        
+		Aggregator aggregator = this.new Aggregator(utility, refDate);
+		
 		// Meter
 		
-        stats.setAverageMonthlySWM(computeMeterAverage(utility, 30));
+		stats.set(EnumStatistic.AVERAGE_MONTHLY, METER, VOLUME,
+		        aggregator.computeMeterAverage(30));
 		
-        stats.setAverageWeeklySWM(computeMeterAverage(utility, 7));
+		stats.set(EnumStatistic.AVERAGE_WEEKLY, METER, VOLUME,
+		        aggregator.computeMeterAverage(7));
+		
+        stats.set(EnumStatistic.THRESHOLD_BOTTOM_10P_MONTHLY, METER, VOLUME,
+                aggregator.computeMeterBottomThreshold(30, 10));
         
-        stats.setTop10BaseMonthSWM(computeMeterTopThreshold(utility, 30, 10));
+        stats.set(EnumStatistic.THRESHOLD_BOTTOM_10P_WEEKLY, METER, VOLUME,
+                aggregator.computeMeterBottomThreshold(7, 10));
         
-        stats.setTop10BaseWeekSWM(computeMeterTopThreshold(utility, 7, 10));
-        
-        stats.setTop25BaseWeekSWM(computeMeterTopThreshold(utility, 7, 25));
+        stats.set(EnumStatistic.THRESHOLD_BOTTOM_25P_WEEKLY, METER, VOLUME,
+                aggregator.computeMeterBottomThreshold(7, 25));
         
         // Amphiro B1
 		
-        stats.setAverageMonthlyAmphiro(computeAmphiroAverage(utility, 30));
+        stats.set(EnumStatistic.AVERAGE_MONTHLY, AMPHIRO, VOLUME,
+                aggregator.computeAmphiroAverage(30));
 		
-        stats.setAverageWeeklyAmphiro(computeAmphiroAverage(utility, 7));					
-		
-        stats.setTop10BaseMonthAmphiro(computeAmphiroTopThreshold(utility, 30, 10));
-		
-        stats.setAverageTemperatureAmphiro(computeAmphiroAverageTemperature(utility, 30));
-		
-        stats.setAverageDurationAmphiro(computeAmphiroAverageDuration(utility, 30));
-		
-        stats.setAverageFlowAmphiro(computeAmphiroAverageFlow(utility, 30));
-		
-        stats.setAverageSessionAmphiro(computeAmphiroAverageSession(utility, 30));
+        stats.set(EnumStatistic.AVERAGE_MONTHLY_PER_SESSION, AMPHIRO, VOLUME,
+                aggregator.computeAmphiroAveragePerSession(30));
         
+        stats.set(EnumStatistic.AVERAGE_WEEKLY, AMPHIRO, VOLUME,
+                aggregator.computeAmphiroAverage(7));					
+		
+        stats.set(EnumStatistic.THRESHOLD_BOTTOM_10P_MONTHLY, AMPHIRO, VOLUME,
+                aggregator.computeAmphiroBottomThreshold(30, 10));
+		
+        stats.set(EnumStatistic.AVERAGE_MONTHLY, AMPHIRO, TEMPERATURE, 
+                aggregator.computeAmphiroAverageTemperature(30));
+		
+        stats.set(EnumStatistic.AVERAGE_MONTHLY, AMPHIRO, DURATION, 
+                aggregator.computeAmphiroAverageDuration(30));
+		
+        stats.set(EnumStatistic.AVERAGE_MONTHLY, AMPHIRO, FLOW,
+                aggregator.computeAmphiroAverageFlow(30));
+	    
         logger.info(stats.toString());
         
 		return stats;
 	}
-
-	/**
-	 * Compute average for meters, for a given time interval
-	 * 
-	 * @param utility
-	 * @param days A sliding time interval (in days) 
-	 * @return
-	 */
-	private ComputedNumber computeMeterAverage(UtilityInfo utility, int days)
-	{
-	    Double result = null;
-        
-	    DataQueryBuilder qb = newQueryBuilder(utility);
-	    qb.sliding(-days, EnumTimeUnit.DAY, EnumTimeAggregation.ALL).meter().sum();
-	    DataQuery query = qb.build();
-	    DataQueryResponse queryResponse = dataService.execute(query);
-	    ArrayList<GroupDataSeries> dataSeriesMeter = queryResponse.getMeters();
-
-	    // Fixme: The result value is overwritten in each iteration!
-	    for (GroupDataSeries series : dataSeriesMeter) {
-	        if (series.getPopulation() == 0)
-	            continue;
-	        if (!series.getPoints().isEmpty()) {
-	            ArrayList<DataPoint> points = series.getPoints();
-	            DataPoint dataPoint = points.get(0);
-	            MeterDataPoint meterDataPoint = (MeterDataPoint) dataPoint;
-	            Map<EnumMetric, Double> ma = meterDataPoint.getVolume();
-	            result = ma.get(EnumMetric.SUM) / series.getPopulation();
-	        } else {
-	            result = null;
-	        }
-	    }
-	    
-	    logger.info("Meter - Computed utility average of last " + days + " days: " + 
-	            ((result == null)? "NULL" : result.toString()));
-	    
-	    return (result != null)? new ComputedNumber(result) : null;
-	}
-		
-	/**
-	 * Compute the threshold consumption of a top percentage of users for a given
-	 * time interval 
-	 * 
-	 * @param utility
-	 * @param days A sliding time interval (in days)
-	 * @param percentage The top percentage of users in terms of consumption
-	 * @return
-	 */
-	private ComputedNumber computeMeterTopThreshold(UtilityInfo utility, int days, int percentage) 
-	{  
-	    Double result = null;
-
-	    // Compute average for all users.
-	    
-	    List<UUID> uuids = groupRepository.getUtilityByIdMemberKeys(utility.getId());
-	    List<Double> averages = new ArrayList<>();
-
-	    DataQueryBuilder qb = new DataQueryBuilder();
-	    qb.timezone(utility.getTimezone());
-	    for (UUID uuid : uuids) {
-	        qb.sliding(-days, EnumTimeUnit.DAY, EnumTimeAggregation.ALL).user("user", uuid).meter().average();    
-	        DataQuery query = qb.build();
-	        DataQueryResponse queryResponse = dataService.execute(query);
-	        ArrayList<GroupDataSeries> dataSeriesMeter = queryResponse.getMeters(); 
-	        
-	        // Fixme: Adds multiple meters, hence we dont compute the per-user average! 
-	        for (GroupDataSeries series : dataSeriesMeter) {
-	            if (!series.getPoints().isEmpty()) {
-	                ArrayList<DataPoint> userPoints = series.getPoints();
-	                DataPoint dataPoint = userPoints.get(0);
-	                MeterDataPoint meterDataPoint = (MeterDataPoint) dataPoint;
-	                Map<EnumMetric, Double> ma = meterDataPoint.getVolume();
-	                averages.add(ma.get(EnumMetric.AVERAGE));
-	            }
-	        }                
-	    }            
-	    
-	    // The base threshold is the consumption of the last user of the top K%
-	          
-	    if (!averages.isEmpty()) {
-	        Collections.sort(averages);
-	        int i = (int) ((averages.size() * percentage) / 100);
-	        result = averages.get(i);
-	    } else {
-	        result = null;
-	    }
-	    
-	    logger.info(
-	            "Meter - Computed utility threshold of top " + percentage + "% of last " + days + " days: " + 
-	            ((result == null)? "NULL" : result.toString()));
-	    
-	    return (result != null)? new ComputedNumber(result) : null;
-	}
-
-	/**
-     * Compute average for Amphiro B1 devices, for a given time interval
-     * 
-     * @param utility
-     * @param days A sliding time interval (in days) 
-     * @return
-     */
-	private ComputedNumber computeAmphiroAverage(UtilityInfo utility, int days) 
-	{
-	    Double result = null;
-	    
-	    DataQueryBuilder qb = newQueryBuilder(utility);
-	    qb.sliding(-days, EnumTimeUnit.DAY, EnumTimeAggregation.ALL).amphiro().sum();
-
-	    DataQuery query = qb.build();
-	    DataQueryResponse queryResponse = dataService.execute(query);
-	    ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
-
-	    // Fixme: The result value is overwritten in each iteration!
-	    for (GroupDataSeries series : dataSeriesAmphiro) {
-	        if (series.getPopulation() == 0) 
-	            continue;
-	        if (!series.getPoints().isEmpty()) {
-	            ArrayList<DataPoint> points = series.getPoints();
-	            DataPoint dataPoint = points.get(0);
-	            AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-	            Map<EnumMetric, Double> ma = amphiroDataPoint.getVolume();
-	            result = ma.get(EnumMetric.SUM) / series.getPopulation();
-	        } else {
-	            result = null;
-	        }
-	    }
-	    
-	    logger.info(
-	            "Amphiro - Computed average of last " + days + " days: " + 
-	            ((result == null)? "NULL" : result.toString()));
-	    
-	    return (result != null)? new ComputedNumber(result) : null;
-	}
-    
-	private ComputedNumber computeAmphiroTopThreshold(UtilityInfo utility, int days, int percentage) 
-	{
-	    Double result = null;
-            
-	    List<UUID> uuids = groupRepository.getUtilityByIdMemberKeys(utility.getId());
-	    List<Double> averages = new ArrayList<>();
-
-	    DataQueryBuilder qb = new DataQueryBuilder();
-	    qb.timezone(utility.getTimezone());
-	    for (UUID uuid : uuids) {
-	        qb.sliding(-days, EnumTimeUnit.DAY, EnumTimeAggregation.ALL).user("user", uuid).amphiro().average();    
-	        DataQuery query = qb.build();
-	        DataQueryResponse queryResponse = dataService.execute(query);
-	        ArrayList<GroupDataSeries> amphiroDataSeries = queryResponse.getDevices(); 
-
-	        for (GroupDataSeries series : amphiroDataSeries) {
-	            if (!series.getPoints().isEmpty()) {
-	                ArrayList<DataPoint> userPoints = series.getPoints();
-	                DataPoint dataPoint = userPoints.get(0);
-	                AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-	                Map<EnumMetric, Double> metricsMap = amphiroDataPoint.getVolume();
-	                averages.add(metricsMap.get(EnumMetric.AVERAGE));
-	            }
-	        }                
-	    }             
-
-	    if (!averages.isEmpty()) {
-	        Collections.sort(averages);
-	        int i = (int) (averages.size() * percentage) / 100;
-	        result = averages.get(i);                 
-	    } else {
-	        result = null;
-	    }
-	    
-	    logger.info(
-	            "Amphiro - Computed threshold of top " + percentage + "% of last " + days + " days: " + 
-	            ((result == null)? "NULL" : result.toString()));
-	    
-	    return (result != null)? new ComputedNumber(result) : null;
-	}
-
-	private ComputedNumber computeAmphiroAverageTemperature(UtilityInfo utility, int days)
-	{
-	    Double result = null;
-	         
-	    DataQueryBuilder qb = newQueryBuilder(utility);
-	    qb.sliding(-days, EnumTimeUnit.DAY, EnumTimeAggregation.ALL).amphiro().average();
-
-	    DataQuery query = qb.build();
-	    DataQueryResponse queryResponse = dataService.execute(query);
-	    ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
-
-	    // Fixme: The result value is overwritten in each iteration!
-	    for (GroupDataSeries series : dataSeriesAmphiro) {
-	        if (series.getPopulation() == 0)
-	            continue;
-	        if (!series.getPoints().isEmpty()) {
-	            ArrayList<DataPoint> point = series.getPoints();
-	            AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) point.get(0);
-	            Map<EnumMetric, Double> metricsMap = amphiroDataPoint.getTemperature();
-	            result = metricsMap.get(EnumMetric.AVERAGE);;
-	        } else {
-	           result = null;
-	        }
-	    }
-        
-	    logger.info(
-                "Amphiro - Computed average temperature of last " + days + " days: " + 
-                ((result == null)? "NULL" : result.toString()));
-	    
-	    return (result != null)? new ComputedNumber(result) : null;
-	}
-
-	private ComputedNumber computeAmphiroAverageSession(UtilityInfo utility, int days) 
-	{
-	    Double result = null;
-
-	    DataQueryBuilder qb = newQueryBuilder(utility);
-	    qb.sliding(-days, EnumTimeUnit.DAY, EnumTimeAggregation.ALL).amphiro().average();
-
-	    DataQuery query = qb.build();
-	    DataQueryResponse queryResponse = dataService.execute(query);
-	    ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
-
-	    // Fixme: The result value is overwritten in each iteration!
-	    for (GroupDataSeries series : dataSeriesAmphiro) {
-	        if (series.getPopulation() == 0)
-	            continue;
-	        if (!series.getPoints().isEmpty()) {
-	            ArrayList<DataPoint> point = series.getPoints();
-	            AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) point.get(0);
-	            Map<EnumMetric, Double> metricsMap = amphiroDataPoint.getVolume();
-	            result = metricsMap.get(EnumMetric.AVERAGE);
-	        } else {
-	            result = null;
-	        }
-	    }
-	    
-	    logger.info(
-	            "Amphiro - Computed average session of last " + days + " days: " + 
-	             ((result == null)? "NULL" : result.toString()));
-	    
-	    return (result != null)? new ComputedNumber(result) : null;
-	}
-    
-	private ComputedNumber computeAmphiroAverageFlow(UtilityInfo utility, int days) 
-	{
-	    Double result = null;
-  
-	    DataQueryBuilder qb = newQueryBuilder(utility);
-	    qb.sliding(-days, EnumTimeUnit.DAY, EnumTimeAggregation.ALL).amphiro().average();
-
-	    DataQuery query = qb.build();
-	    DataQueryResponse queryResponse = dataService.execute(query);
-	    ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
-	    
-	    // Fixme: The result value is overwritten in each iteration!
-	    for (GroupDataSeries series : dataSeriesAmphiro) {
-	        if (series.getPopulation() == 0) 
-	            continue;
-	        if (!series.getPoints().isEmpty()) {
-	            ArrayList<DataPoint> point = series.getPoints();
-	            AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) point.get(0);
-	            Map<EnumMetric, Double> metricsMap = amphiroDataPoint.getFlow();
-	            result = metricsMap.get(EnumMetric.AVERAGE);                     
-	        } else {
-	            result = null;
-	        }
-	    }
-	    
-	    logger.info(
-	            "Amphiro - Computed average flow of last " + days + " days: " + 
-	            ((result == null)? "NULL" : result.toString()));
-	    
-	    return (result != null)? new ComputedNumber(result) : null;
-	}
-    
-	private ComputedNumber computeAmphiroAverageDuration(UtilityInfo utility, int days) 
-	{
-	    Double result = null;
-
-	    DataQueryBuilder qb = newQueryBuilder(utility);
-	    qb.sliding(-days, EnumTimeUnit.DAY, EnumTimeAggregation.ALL).amphiro().average();
-
-	    DataQuery query = qb.build();
-	    DataQueryResponse queryResponse = dataService.execute(query);
-	    ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
-
-	    for (GroupDataSeries series : dataSeriesAmphiro) {
-	        if (series.getPopulation() == 0) 
-	            continue;
-	        if (!series.getPoints().isEmpty()) {
-	            ArrayList<DataPoint> point = series.getPoints();
-	            AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) point.get(0);
-	            Map<EnumMetric, Double> metricsMap = amphiroDataPoint.getDuration();
-	            result = metricsMap.get(EnumMetric.AVERAGE);                     
-	        } else {
-	            result = null;
-	        }
-	    }
-	    
-	    logger.info(
-	            "Amphiro - Computed average duration of last " + days + " days: " + 
-	            ((result == null)? "NULL" : result.toString()));
-	    
-	    return (result != null)? new ComputedNumber(result) : null;
-	}
-
 }

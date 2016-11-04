@@ -1,185 +1,150 @@
 package eu.daiad.web.model.message;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.util.StringUtils;
+
+import com.google.common.collect.ImmutableMap;
+
+import eu.daiad.web.model.device.EnumDeviceType;
+import eu.daiad.web.model.query.EnumDataField;
 import eu.daiad.web.service.message.aggregates.ComputedNumber;
 
+/**
+ * A container for commonly computed statistics for a group (or an entire utility) of users
+ * 
+ * Todo: Factor-out utility
+ */
 public class ConsumptionStats {
+    
+    /**
+     * Represents available statistics
+     */
+    public static enum EnumStatistic {
+        
+        AVERAGE_MONTHLY,
+        AVERAGE_WEEKLY,
+        AVERAGE_MONTHLY_PER_SESSION, // Meaningful only for volume/duration
+        AVERAGE_WEEKLY_PER_SESSION,  // Meaningful only for volume/duration
+        THRESHOLD_BOTTOM_10P_MONTHLY,
+        THRESHOLD_BOTTOM_10P_WEEKLY,
+        THRESHOLD_BOTTOM_25P_MONTHLY,
+        THRESHOLD_BOTTOM_25P_WEEKLY;
+        
+        private static Map<EnumStatistic, String> titles;      
+        static {         
+            titles = ImmutableMap.<EnumStatistic, String>builder()
+                    .put(AVERAGE_MONTHLY, "Average monthly")
+                    .put(AVERAGE_WEEKLY, "Average weekly")
+                    .put(AVERAGE_MONTHLY_PER_SESSION, "Average monthly per-session")
+                    .put(AVERAGE_WEEKLY_PER_SESSION, "Average weekly per-session")
+                    .put(THRESHOLD_BOTTOM_10P_MONTHLY, "Bottom 10% monthly threshold")
+                    .put(THRESHOLD_BOTTOM_10P_WEEKLY, "Bottom 10% weekly threshold")
+                    .put(THRESHOLD_BOTTOM_25P_MONTHLY, "Bottom 25% monthly threshold")
+                    .put(THRESHOLD_BOTTOM_25P_WEEKLY, "Bottom 25% weekly threshold")
+                    .build();
+        }
+        
+        public String getTitle() {
+            return titles.get(this);
+        }
+    }
+    
+    /**
+     * Represents a key for a statistic to be computed
+     */
+    private static class Key {
+        
+        private final EnumStatistic statistic;
+        private final EnumDataField field;
+        private final EnumDeviceType device;
+        
+        public Key(EnumStatistic statistic, EnumDeviceType device, EnumDataField field) {
+            this.statistic = statistic;
+            this.device = device;
+            this.field = field;
+        }
+        
+        public Key(EnumStatistic statistic, EnumDeviceType device) {
+            this(statistic, device, EnumDataField.VOLUME);
+        }
+        
+        @Override
+        public boolean equals(Object o)
+        {
+            Key k;
+            try {
+                k = (Key) o;
+            } catch (ClassCastException e) {
+                return false;
+            }
+            return k.statistic == statistic && k.device == device && k.field == field;
+        }
+        
+        @Override
+        public int hashCode()
+        {
+            Integer i = statistic.ordinal() + device.ordinal() * (1<<10) + field.ordinal() * (1<<12);
+            return i.hashCode();
+        }
+        
+        @Override
+        public String toString()
+        {
+            return String.format("(%s,%s,%s)", statistic, device, field);
+        }
+    }
     
     private final int utilityId;
     
-    // Todo Document units for various computed numbers
-    
-    private ComputedNumber averageMonthlySWM;
-    private ComputedNumber averageWeeklySWM;
-    private ComputedNumber top10BaseMonthSWM;
-    private ComputedNumber top10BaseWeekSWM;
-    private ComputedNumber top25BaseWeekSWM;
-    
-    private ComputedNumber averageMonthlyAmphiro;
-    private ComputedNumber averageWeeklyAmphiro;
-    private ComputedNumber top10BaseMonthAmphiro;
-    private ComputedNumber averageTemperatureAmphiro;
-    private ComputedNumber averageSessionAmphiro;
-    private ComputedNumber averageFlowAmphiro;
-    private ComputedNumber averageDurationAmphiro;
+    private HashMap<Key, ComputedNumber> stats; 
 
 	public ConsumptionStats(int utilityId) {
 	    this.utilityId = utilityId;
+	    this.stats = new HashMap<>();
 	}
 
-	public ComputedNumber getAverageMonthlyAmphiro() {
-		return averageMonthlyAmphiro;
+	public void set(EnumStatistic metric, EnumDeviceType device, EnumDataField field, ComputedNumber value) {
+	    stats.put(new Key(metric, device, field), value);
+	}
+	
+	public void set(EnumStatistic metric, EnumDeviceType device, ComputedNumber value) {
+	    stats.put(new Key(metric, device), value);
+	}
+	
+	public ComputedNumber get(EnumStatistic metric, EnumDeviceType device, EnumDataField field) {
+	    return stats.get(new Key(metric, device, field));
 	}
 
-	public void setAverageMonthlyAmphiro(ComputedNumber averageMonthlyAmphiro) {
-		this.averageMonthlyAmphiro = averageMonthlyAmphiro;
+	public ComputedNumber get(EnumStatistic metric, EnumDeviceType device) {
+	    return stats.get(new Key(metric, device));
 	}
-    
-	public ComputedNumber getAverageWeeklyAmphiro() {
-		return averageWeeklyAmphiro;
-	}
-
-	public void setAverageWeeklyAmphiro(ComputedNumber averageWeeklyAmphiro) {
-		this.averageWeeklyAmphiro = averageWeeklyAmphiro;
-	}
-    
-	public ComputedNumber getAverageMonthlySWM() {
-        return averageMonthlySWM;
-	}    
-    
-	public void setAverageMonthlySWM(ComputedNumber averageMonthlySWM) {
-        this.averageMonthlySWM = averageMonthlySWM;
-	}  
-    
-	public ComputedNumber getAverageWeeklySWM() {
-		return averageWeeklySWM;
-	}
-
-	public void setAverageWeeklySWM(ComputedNumber averageWeeklySWM) {
-		this.averageWeeklySWM = averageWeeklySWM;
-	}
-    
-	public ComputedNumber getTop10BaseMonthSWM() {
-		return top10BaseMonthSWM;
-	}
-
-	public void setTop10BaseMonthSWM(ComputedNumber top10BaseMonthSWM) {
-		this.top10BaseMonthSWM = top10BaseMonthSWM;
-	}    
-    
-	public ComputedNumber getTop10BaseWeekSWM() {
-		return top10BaseWeekSWM;
-	}
-
-	public void setTop10BaseWeekSWM(ComputedNumber top10BaseWeekSWM) {
-		this.top10BaseWeekSWM = top10BaseWeekSWM;
-	}
-    
-	public ComputedNumber getTop10BaseMonthAmphiro() {
-		return top10BaseMonthAmphiro;
-	}
-
-	public void setTop10BaseMonthAmphiro(ComputedNumber top10BaseMonthAmphiro) {
-		this.top10BaseMonthAmphiro = top10BaseMonthAmphiro;
-	}
-    
-	public ComputedNumber getTop25BaseWeekSWM() {
-		return top25BaseWeekSWM;
-	}
-
-	public void setTop25BaseWeekSWM(ComputedNumber top25BaseWeekSWM) {
-		this.top25BaseWeekSWM = top25BaseWeekSWM;
-	}
-
-	public ComputedNumber getAverageTemperatureAmphiro() {
-		return averageTemperatureAmphiro;
-	}
-
-	public void setAverageTemperatureAmphiro(ComputedNumber averageTemperatureAmphiro) {
-		this.averageTemperatureAmphiro = averageTemperatureAmphiro;
-	}
-
-	public ComputedNumber getAverageFlowAmphiro() {
-		return averageFlowAmphiro;
-	}
-
-	public void setAverageFlowAmphiro(ComputedNumber averageFlowAmphiro) {
-		this.averageFlowAmphiro = averageFlowAmphiro;
-	}
-
-	public ComputedNumber getAverageDurationAmphiro() {
-		return averageDurationAmphiro;
-	}
-
-	public void setAverageDurationAmphiro(ComputedNumber averageDurationAmphiro) {
-		this.averageDurationAmphiro = averageDurationAmphiro;
-	}
-
-	public ComputedNumber getAverageSessionAmphiro() {
-		return averageSessionAmphiro;
-	}
-
-	public void setAverageSessionAmphiro(ComputedNumber averageSessionAmphiro) {
-		this.averageSessionAmphiro = averageSessionAmphiro;
-	}
-
+	
 	public void resetValues() {
-
-        if (averageMonthlySWM != null)
-            averageMonthlySWM.reset();
-        
-        if (averageWeeklySWM != null)
-            averageWeeklySWM.reset();
-        
-        if (top10BaseMonthSWM != null)
-            top10BaseMonthSWM.reset(); 
-       
-        if (top10BaseWeekSWM != null)
-            top10BaseWeekSWM.reset();
-
-        if (top25BaseWeekSWM != null)
-            top25BaseWeekSWM.reset();
-        
-        if (averageMonthlyAmphiro != null)
-            averageMonthlyAmphiro.reset();
-
-        if (averageWeeklyAmphiro != null)
-            averageWeeklyAmphiro.reset();
-        
-        if (top10BaseMonthAmphiro != null)
-            top10BaseMonthAmphiro.reset();
-
-        if (averageTemperatureAmphiro != null) 
-            averageTemperatureAmphiro.reset();
-        
-        if (averageSessionAmphiro != null)
-            averageSessionAmphiro.reset();
-          
-        if (averageFlowAmphiro != null)
-            averageFlowAmphiro.reset();      
-
-        if (averageDurationAmphiro != null)
-            averageDurationAmphiro.reset();
+	    for (ComputedNumber n: stats.values())
+	        n.reset();
 	}
-    
+	
     public int getUtilityId() {
         return utilityId;
-    }
-
-	@Override
-	public String toString() {
-		return "\nMessage-service stats: (Utility #" + utilityId + ")\n" 
-		        + "\n   * Average Monthly Consumption (Meter)   = " + averageMonthlySWM
-		        + "\n   * Average Weekly Consumption (Meter)    = " + averageWeeklySWM
-		        + "\n   * Top 10% base month threshold (Meter)  = " + top10BaseMonthSWM
-		        + "\n   * Top 10% base week threshold (Meter)   = " + top10BaseWeekSWM 
-		        + "\n   * Top 25% base week threshold (Meter)   = " + top25BaseWeekSWM                
-		        + "\n   * Average Monthly Consumption (Amphiro) = " + averageMonthlyAmphiro
-		        + "\n   * Average Weekly Consumption (Amphiro)  = " + averageWeeklyAmphiro
-		        + "\n   * Top 10% base threshold (Amphiro)      = " + top10BaseMonthAmphiro
-		        + "\n   * Average temperature (Amphiro)         = " + averageTemperatureAmphiro
-		        + "\n   * Average session consumption (Amphiro) = " + averageSessionAmphiro
-		        + "\n   * Average flow (Amphiro)                = " + averageFlowAmphiro
-		        + "\n   * Average duration (Amphiro)            = " + averageDurationAmphiro
-		        + "\n";
 	}
+    
+    @Override
+    public String toString()
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Consumption stats for utility #" + utilityId + ":\n");
+        for (Key k: stats.keySet()) {
+            ComputedNumber n = stats.get(k);
+            sb.append(String.format(
+                    " * %-10.10s - %-12.12s - %-35.35s = %s\n",
+                    StringUtils.capitalize(k.device.name().toLowerCase()),
+                    StringUtils.capitalize(k.field.name().toLowerCase()),
+                    k.statistic.getTitle(),
+                    (n == null || n.getValue() == null)? "NULL" : String.format("%.2f", n.getValue()) 
+            ));
+        }   
+        return sb.toString();
+    }
 }

@@ -46,8 +46,8 @@ public class DefaultMessageService implements IMessageService {
 	{
 	    List<UtilityInfo> utilities = utilityRepository.getUtilities();
 	    
-	    //// Testing - Check only 1st utility
-	    //utilities = utilities.subList(0, 1);
+	    // Fixme Testing - Check only 1st utility
+	    utilities = utilities.subList(0, 1);
 	    
 	    for (UtilityInfo utility: utilities) {
 			logger.info("About to generate messages for utility " + utility.getName() + "...");
@@ -59,7 +59,7 @@ public class DefaultMessageService implements IMessageService {
 	public void executeUtility(MessageCalculationConfiguration config, UUID utilityKey) 
 	{
 		UtilityInfo utility = this.utilityRepository.getUtilityByKey(utilityKey);
-		ConsumptionStats stats = aggregationService.compute(utility);
+		ConsumptionStats stats = aggregationService.compute(utility, null);
         executeUtility(config, utility, stats);
 	}
 
@@ -68,9 +68,9 @@ public class DefaultMessageService implements IMessageService {
 	{
 		List<UUID> accountKeys = groupRepository.getUtilityByIdMemberKeys(utility.getId()); 
 	    for (UUID accountKey: accountKeys) {
-			logger.info("[DRY-RUN] About to generate messages for account " +
+			logger.info("[DRY-RUN] Generate messages for account " +
 			        accountKey + " at utility #" + utility.getId());
-	        executeAccount(config, utility, stats, accountKey);
+	        // Fixme executeAccount(config, utility, stats, accountKey);
 		}
 	}
 
@@ -78,7 +78,7 @@ public class DefaultMessageService implements IMessageService {
 	public void executeAccount(MessageCalculationConfiguration config, UUID utilityKey, UUID accountKey) 
 	{
 		UtilityInfo utility = utilityRepository.getUtilityByKey(utilityKey);
-		ConsumptionStats stats = aggregationService.compute(utility);
+		ConsumptionStats stats = aggregationService.compute(utility, null);
 		executeAccount(config, utility, stats, accountKey);
 	}
 

@@ -9,10 +9,12 @@ import java.util.UUID;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import eu.daiad.web.model.message.ConsumptionStats;
+import eu.daiad.web.model.message.ConsumptionStats.EnumStatistic;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.model.message.CandidateMessageStatus;
 import eu.daiad.web.model.query.AmphiroDataPoint;
@@ -20,6 +22,7 @@ import eu.daiad.web.model.query.DataPoint;
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
+import eu.daiad.web.model.query.EnumDataField;
 import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.EnumTimeAggregation;
 import eu.daiad.web.model.query.EnumTimeUnit;
@@ -31,10 +34,17 @@ import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IMessageManagementRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IDataService;
+import eu.daiad.web.service.message.aggregates.ComputedNumber;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
-//import eu.daiad.web.service.weather.DailyWeatherData;
-//import eu.daiad.web.service.weather.IWeatherRepository;
+import static eu.daiad.web.model.device.EnumDeviceType.AMPHIRO;
+import static eu.daiad.web.model.device.EnumDeviceType.METER;
+import static eu.daiad.web.model.query.EnumDataField.VOLUME;
+import static eu.daiad.web.model.query.EnumDataField.TEMPERATURE;
+import static eu.daiad.web.model.query.EnumDataField.DURATION;
+import static eu.daiad.web.model.query.EnumDataField.FLOW;
+import static eu.daiad.web.model.query.EnumDataField.ENERGY;
+
 
 @Service()
 public class DefaultMessageResolverService implements IMessageResolverService {
@@ -49,10 +59,7 @@ public class DefaultMessageResolverService implements IMessageResolverService {
     IMessageManagementRepository messageManagementRepository;
         
     @Autowired 
-    IDeviceRepository deviceRepository;
-    
-//    @Autowired
-//    private IWeatherRepository weatherRepository;       
+    IDeviceRepository deviceRepository;      
     
     private static final Float AMPHIRO_TEMPERATURE_THRESHOLD = 45f;
     private static final Integer AMPHIRO_DURATION_THRESHOLD_IN_MINUTES = 30;
@@ -608,10 +615,11 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 	}
 
 	// 15 alert - You are using too much water {integer1}
-	public SimpleEntry<Boolean, Double> alertTooMuchWaterConsumptionSWM(ConsumptionStats aggregates,
-					UUID accountKey, DateTimeZone timezone) {
-
-		if (aggregates.getAverageWeeklySWM().getValue() == null) {
+	public SimpleEntry<Boolean, Double> alertTooMuchWaterConsumptionSWM(ConsumptionStats stats,
+					UUID accountKey, DateTimeZone timezone) 
+	{  
+	    ComputedNumber weeklyAverage = stats.get(EnumStatistic.AVERAGE_WEEKLY, METER, VOLUME);
+	    if (weeklyAverage == null || weeklyAverage.getValue() == null) {
 			return new SimpleEntry<>(false, null);
 		}
 
@@ -634,22 +642,24 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		MeterDataPoint meterPoint = (MeterDataPoint) dataPoint;
 		Double lastWeekSum = meterPoint.getVolume().get(EnumMetric.SUM);
 
-		if (lastWeekSum > 2 * aggregates.getAverageWeeklySWM().getValue()) {
+		if (lastWeekSum > 2 * weeklyAverage.getValue()) {
 			// return annual savings if average behavior is adopted. Multiply
 			// with 52 weeks for annual value (liters).
-			return new SimpleEntry<>(true, (lastWeekSum - aggregates.getAverageWeeklySWM().getValue()) * 52);
+			return new SimpleEntry<>(true, (lastWeekSum - weeklyAverage.getValue()) * 52);
 		} else {
 			return new SimpleEntry<>(false, null);
 		}
 	}
 
 	// 16 alert - You are using too much water in the shower {integer1}
-	public SimpleEntry<Boolean, Double> alertTooMuchWaterConsumptionAmphiro(ConsumptionStats aggregates,
-					UUID accountKey, DateTimeZone timezone) {
-
-		if (aggregates.getAverageWeeklyAmphiro().getValue() == null) {
+	public SimpleEntry<Boolean, Double> alertTooMuchWaterConsumptionAmphiro(ConsumptionStats stats,
+					UUID accountKey, DateTimeZone timezone) 
+	{
+	    ComputedNumber weeklyAverage = stats.get(EnumStatistic.AVERAGE_WEEKLY, AMPHIRO, VOLUME);
+		if (weeklyAverage == null || weeklyAverage.getValue() == null) {
 			return new SimpleEntry<>(false, null);
 		}
+		
 		DataQueryBuilder dataQueryBuilder = new DataQueryBuilder();
 		dataQueryBuilder.timezone(timezone).sliding(-7, EnumTimeUnit.DAY, EnumTimeAggregation.ALL).amphiro()
 						.user("user", accountKey).sum();
@@ -670,11 +680,10 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		Double lastWeekSum = amphiroPoint.getVolume().get(EnumMetric.SUM);
 		SimpleEntry<Boolean, Double> entry;
 
-		if (lastWeekSum > 2 * aggregates.getAverageWeeklyAmphiro().getValue()) {
-
+		if (lastWeekSum > 2 * weeklyAverage.getValue()) {
 			// return annual savings if average behavior is adopted. Multiply
 			// with 52 weeks for annual value.
-			entry = new SimpleEntry<>(true, (lastWeekSum - aggregates.getAverageWeeklyAmphiro().getValue()) * 52);
+			entry = new SimpleEntry<>(true, (lastWeekSum - weeklyAverage.getValue()) * 52);
 		} else {
 			entry = new SimpleEntry<>(false, null);
 		}
@@ -864,16 +873,16 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 
 	// 20 alert - Congratulations! You are a water efficiency leader {integer1}
 	// litres
-	public SimpleEntry<Boolean, Integer> alertWaterEfficiencyLeaderSWM(ConsumptionStats aggregates,
-					UUID accountKey, DateTimeZone timezone) {
-
-		if (aggregates.getTop10BaseMonthSWM().getValue() == null || aggregates.getAverageMonthlySWM().getValue() == null) {
-
+	public SimpleEntry<Boolean, Integer> alertWaterEfficiencyLeaderSWM(ConsumptionStats stats,
+					UUID accountKey, DateTimeZone timezone) 
+	{
+		ComputedNumber monthlyAverage = stats.get(EnumStatistic.AVERAGE_MONTHLY, METER, VOLUME);
+		if (monthlyAverage == null || monthlyAverage.getValue() == null)
+		    return new SimpleEntry<>(false, null);
+		
+		ComputedNumber monthlyThreshold = stats.get(EnumStatistic.THRESHOLD_BOTTOM_10P_MONTHLY, METER, VOLUME);
+	    if (monthlyThreshold == null || monthlyThreshold.getValue() == null) 
 			return new SimpleEntry<>(false, null);
-		}
-
-		Double baseTop10Consumption = aggregates.getTop10BaseMonthSWM().getValue();
-		Double averageMonthlyAllUsers = aggregates.getAverageMonthlySWM().getValue();
 
 		DataQueryBuilder dataQueryBuilder = new DataQueryBuilder();
 		dataQueryBuilder.timezone(timezone).sliding(-30, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
@@ -881,42 +890,38 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 
 		DataQuery query = dataQueryBuilder.build();
 		DataQueryResponse result = dataService.execute(query);
-                
-                if(result.getMeters().isEmpty()){
-                    return new SimpleEntry<>(false, null);
-                }
+		
+        if (result.getMeters().isEmpty())
+            return new SimpleEntry<>(false, null);
                 
 		GroupDataSeries meter = result.getMeters().get(0);
 		ArrayList<DataPoint> dataPoints = meter.getPoints();
 
-		if (dataPoints == null || dataPoints.isEmpty()) {
+		if (dataPoints == null || dataPoints.isEmpty())
 			return new SimpleEntry<>(false, null);
-		}
 
 		DataPoint dataPoint = dataPoints.get(0);
 		MeterDataPoint meterDataPoint = (MeterDataPoint) dataPoint;
 		Map<EnumMetric, Double> m = meterDataPoint.getVolume();
-		Double currentMonthAverage = (m.get(EnumMetric.SUM)) / 30;
+		Double monthlyUserAverage = (m.get(EnumMetric.SUM)) / 30;
 
-		SimpleEntry<Boolean, Integer> entry;
-		if (currentMonthAverage < baseTop10Consumption) {
-			int litersSavedInYear = (int) (averageMonthlyAllUsers - currentMonthAverage) * 12;
-			entry = new SimpleEntry<>(true, litersSavedInYear);
+		if (monthlyUserAverage < Math.min(monthlyThreshold.getValue(), monthlyAverage.getValue())) {
+			int litersSavedInYear = (int) (monthlyAverage.getValue() - monthlyUserAverage) * 12;
+			return new SimpleEntry<>(true, litersSavedInYear);
 		} else {
-			entry = new SimpleEntry<>(false, null);
+			return new SimpleEntry<>(false, null);
 		}
-
-		return entry;
 	}
 
 	// 21 alert does not need a computation here.
 
 	// 22 alert - You are doing a great job!
-	public boolean alertPromptGoodJobMonthlySWM(ConsumptionStats aggregates, UUID accountKey,
-					DateTimeZone timezone) {
-		if (aggregates.getAverageMonthlySWM() == null) {
+	public boolean alertPromptGoodJobMonthlySWM(ConsumptionStats stats, 
+	        UUID accountKey, DateTimeZone timezone) 
+	{
+		ComputedNumber monthlyAverage = stats.get(EnumStatistic.AVERAGE_WEEKLY, METER, VOLUME);
+	    if (monthlyAverage == null || monthlyAverage.getValue() == null)
 			return false;
-		}
 
 		boolean fireAlert;
 		Double currentMonthConsumptionSWM = null;
@@ -966,9 +971,8 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 			if (percentDifferenceFromPreviousMonth > 25) {
 				fireAlert = true;
 			} else {
-
-				fireAlert = percentDifferenceFromPreviousMonth > 6
-								&& currentMonthConsumptionSWM < aggregates.getAverageMonthlySWM().getValue();
+				fireAlert = (percentDifferenceFromPreviousMonth > 6) &&
+					(currentMonthConsumptionSWM < monthlyAverage.getValue());
 			}
 		} else {
 			fireAlert = false;
@@ -1030,16 +1034,14 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		return new SimpleEntry<>(false, null);
 	}
 
-	// 24 alert - Congratulations! You are one of the top 25% savers in your
-	// region.
-	public boolean alertTop25SaverWeeklySWM(ConsumptionStats aggregates, UUID accountKey,
-					DateTimeZone timezone) {
-
-		if (aggregates.getTop25BaseWeekSWM() == null || aggregates.getTop25BaseWeekSWM().getValue() == null) {
+	// 24 alert - Congratulations! You are one of the top 25% savers in your region.
+	public boolean alertTop25SaverWeeklySWM(ConsumptionStats stats, UUID accountKey, DateTimeZone timezone) 
+	{
+		ComputedNumber weeklyThreshold = stats.get(EnumStatistic.THRESHOLD_BOTTOM_25P_WEEKLY, METER, VOLUME);
+	    if (weeklyThreshold == null || weeklyThreshold.getValue() == null)
 			return false;
-		}
-
-		Double currentWeekConsumptionSWM = null;
+	    
+		Double weeklyUserConsumption = null;
 		DataQueryBuilder currentWeekQueryBuilder = new DataQueryBuilder();
 		currentWeekQueryBuilder.timezone(timezone).sliding(-7, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
 						.user("user", accountKey).meter().sum();
@@ -1048,9 +1050,8 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQueryResponse currentWeekQueryResponse = dataService.execute(currentWeekQuery);
 		ArrayList<GroupDataSeries> currentWeekDataSeriesMeter = currentWeekQueryResponse.getMeters();
         
-		if (currentWeekDataSeriesMeter == null || currentWeekDataSeriesMeter.isEmpty()) {
+		if (currentWeekDataSeriesMeter == null || currentWeekDataSeriesMeter.isEmpty())
 			return false;
-		}
         
 		for (GroupDataSeries serie : currentWeekDataSeriesMeter) {
 			if (!serie.getPoints().isEmpty()) {
@@ -1058,26 +1059,23 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 				DataPoint dataPoint = points.get(0);
 				MeterDataPoint meterDataPoint = (MeterDataPoint) dataPoint;
 				Map<EnumMetric, Double> metricsMap = meterDataPoint.getVolume();
-				currentWeekConsumptionSWM = (metricsMap.get(EnumMetric.SUM)) / 7;
+				weeklyUserConsumption = (metricsMap.get(EnumMetric.SUM)) / 7;
 			}
 		}
 
-        if(currentWeekConsumptionSWM == null){
+        if(weeklyUserConsumption == null)
             return false;
-        }
-        
-		return currentWeekConsumptionSWM < aggregates.getTop25BaseWeekSWM().getValue();
+		return (weeklyUserConsumption < weeklyThreshold.getValue());
 	}
 
-	// 25 alert - Congratulations! You are among the top group of savers in your
-	// city.
-	public boolean alertTop10SaverSWM(ConsumptionStats aggregates, UUID accountKey, DateTimeZone timezone) {
-
-		if (aggregates.getTop10BaseWeekSWM().getValue() == null) {
+	// 25 alert - Congratulations! You are among the top 10% group of savers in your region.
+	public boolean alertTop10SaverSWM(ConsumptionStats stats, UUID accountKey, DateTimeZone timezone) 
+	{
+		ComputedNumber weeklyThreshold = stats.get(EnumStatistic.THRESHOLD_BOTTOM_10P_WEEKLY, METER, VOLUME);
+	    if (weeklyThreshold == null || weeklyThreshold.getValue() == null)
 			return false;
-		}
 
-		Double currentWeekConsumptionSWM = null;
+		Double weeklyUserConsumption = null;
 		DataQueryBuilder currentWeekQueryBuilder = new DataQueryBuilder();
 		currentWeekQueryBuilder.timezone(timezone).sliding(-7, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
 						.user("user", accountKey).meter().sum();
@@ -1096,24 +1094,29 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 				DataPoint dataPoint = points.get(0);
 				MeterDataPoint meterDataPoint = (MeterDataPoint) dataPoint;
 				Map<EnumMetric, Double> metricsMap = meterDataPoint.getVolume();
-				currentWeekConsumptionSWM = (metricsMap.get(EnumMetric.SUM)) / 7;
+				weeklyUserConsumption = (metricsMap.get(EnumMetric.SUM)) / 7;
 			}
 		}
-		return ((currentWeekConsumptionSWM != null) && (currentWeekConsumptionSWM < aggregates
-						.getTop10BaseWeekSWM().getValue()));
+		
+		return (
+		   (weeklyUserConsumption != null) && 
+		   (weeklyUserConsumption < weeklyThreshold.getValue()));
 	}
 
-	// 1 recommendation - Spend 1 less minute in the shower and save {integer1}
-	// {integer2}
-	public SimpleEntry<Boolean, Integer> recommendLessShowerTimeAmphiro(ConsumptionStats aggregates,
-					UUID accountKey, DateTimeZone timezone) {
-
-		if (aggregates.getAverageDurationAmphiro().getValue() == null || aggregates.getAverageMonthlyAmphiro().getValue() == null) {
+	// 1 recommendation - Spend 1 less minute in the shower and save {integer1} {integer2}
+	public SimpleEntry<Boolean, Integer> recommendLessShowerTimeAmphiro(ConsumptionStats stats,
+					UUID accountKey, DateTimeZone timezone) 
+	{
+		ComputedNumber monthlyAverageDuration = stats.get(EnumStatistic.AVERAGE_MONTHLY, AMPHIRO, DURATION);
+		if (monthlyAverageDuration == null || monthlyAverageDuration.getValue() == null)
+		    return new SimpleEntry<>(false, null);
+		
+		ComputedNumber monthlyAverageConsumption = stats.get(EnumStatistic.AVERAGE_MONTHLY, AMPHIRO, VOLUME);
+	    if (monthlyAverageConsumption == null || monthlyAverageConsumption.getValue() == null)
 			return new SimpleEntry<>(false, null);
-		}
 
 		boolean fireAlert = false;
-		double userAverageMonthlyConsumption = 0;
+		double monthlyUserAverageConsumption = 0;
 		DataQueryBuilder durationQueryBuilder = new DataQueryBuilder();
 		durationQueryBuilder.timezone(timezone).sliding(-3, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
 						.user("user", accountKey).amphiro().average();
@@ -1122,25 +1125,22 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQueryResponse queryResponse = dataService.execute(durationQuery);
 		ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
 
-		if (dataSeriesAmphiro == null || dataSeriesAmphiro.isEmpty()) {
+		if (dataSeriesAmphiro == null || dataSeriesAmphiro.isEmpty())
 			return new SimpleEntry<>(false, null);
-		}
 
 		for (GroupDataSeries serie : dataSeriesAmphiro) {
-                        if (!serie.getPoints().isEmpty()) {
-                                DataPoint dataPoint = serie.getPoints().get(0);
-                                AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-                                userAverageMonthlyConsumption = (amphiroDataPoint.getVolume().get(EnumMetric.SUM)) / 3;
-                                if (amphiroDataPoint.getDuration().get(EnumMetric.AVERAGE) > (aggregates.getAverageDurationAmphiro().getValue()*1.5)) {
-                                        fireAlert = true;
-                                }
-                        }
+		    if (!serie.getPoints().isEmpty()) {
+		        DataPoint dataPoint = serie.getPoints().get(0);
+		        AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
+		        monthlyUserAverageConsumption = (amphiroDataPoint.getVolume().get(EnumMetric.SUM)) / 3;
+		        if (amphiroDataPoint.getDuration().get(EnumMetric.AVERAGE) > (monthlyAverageDuration.getValue() * 1.5)) {
+		            fireAlert = true;
+		        }
+		    }
 		}
-
-		Double averageMonthlyConsumptionAggregate = aggregates.getAverageMonthlyAmphiro().getValue();
-		if ((averageMonthlyConsumptionAggregate != null)
-						&& (userAverageMonthlyConsumption > averageMonthlyConsumptionAggregate)) {
-			Double annualSavings = (userAverageMonthlyConsumption - averageMonthlyConsumptionAggregate) * 12;
+		
+		if ((monthlyUserAverageConsumption > monthlyAverageConsumption.getValue())) {
+			Double annualSavings = (monthlyUserAverageConsumption - monthlyAverageConsumption.getValue()) * 12;
 			return new SimpleEntry<>(fireAlert, annualSavings.intValue());
 		} else {
 			return new SimpleEntry<>(false, null);
@@ -1149,11 +1149,12 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 
 	// 2 recommendation - You could save {currency1} euros if you used a bit
 	// less hot water in the shower. {currency2}
-	public SimpleEntry<Boolean, Integer> recommendLowerTemperatureAmphiro(ConsumptionStats aggregates,
-					UUID accountKey, DateTimeZone timezone) {
-		if (aggregates.getAverageTemperatureAmphiro().getValue() == null) {
+	public SimpleEntry<Boolean, Integer> recommendLowerTemperatureAmphiro(ConsumptionStats stats,
+					UUID accountKey, DateTimeZone timezone) 
+	{
+		ComputedNumber monthlyAverage = stats.get(EnumStatistic.AVERAGE_MONTHLY, AMPHIRO, TEMPERATURE);
+	    if (monthlyAverage == null || monthlyAverage.getValue() == null)
 			return new SimpleEntry<>(false, null);
-		}
 
 		boolean fireAlert = false;
 		double userAverageMonthlyConsumption = 0;
@@ -1165,239 +1166,238 @@ public class DefaultMessageResolverService implements IMessageResolverService {
 		DataQueryResponse queryResponse = dataService.execute(durationQuery);
 		ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
 
-		if (dataSeriesAmphiro == null || dataSeriesAmphiro.isEmpty()) {
+		if (dataSeriesAmphiro == null || dataSeriesAmphiro.isEmpty())
 			return new SimpleEntry<>(false, null);
-		}
 
 		for (GroupDataSeries serie : dataSeriesAmphiro) {
-                        if (!serie.getPoints().isEmpty()) {
-                                DataPoint p = serie.getPoints().get(0);
-                                AmphiroDataPoint amphiroPoint = (AmphiroDataPoint) p;
-                                userAverageMonthlyConsumption = (amphiroPoint.getVolume().get(EnumMetric.SUM)) / 3;
-
-                                if (amphiroPoint.getTemperature().get(EnumMetric.AVERAGE) > aggregates.getAverageTemperatureAmphiro().getValue()) {
-                                        fireAlert = true;
-                                }
-                        }
+		    if (!serie.getPoints().isEmpty()) {
+		        DataPoint p = serie.getPoints().get(0);
+		        AmphiroDataPoint amphiroPoint = (AmphiroDataPoint) p;
+		        userAverageMonthlyConsumption = (amphiroPoint.getVolume().get(EnumMetric.SUM)) / 3;
+		        if (amphiroPoint.getTemperature().get(EnumMetric.AVERAGE) > monthlyAverage.getValue()) {
+		            fireAlert = true;
+		        }
+		    }
 		}
 
 		Double annualConsumption = userAverageMonthlyConsumption * 12;
 		return new SimpleEntry<>(fireAlert, annualConsumption.intValue());
 	}
 
-	// 3 recommendation - Reduce the water flow in the shower and gain
-	// {integer1} {integer2}
-	public SimpleEntry<Boolean, Integer> recommendLowerFlowAmphiro(ConsumptionStats aggregates,
-					UUID accountKey, DateTimeZone timezone) {
-
-		if (aggregates.getAverageMonthlyAmphiro().getValue() == null) {
+	// 3 recommendation - Reduce the water flow in the shower and gain {integer1} {integer2}
+	public SimpleEntry<Boolean, Integer> recommendLowerFlowAmphiro(ConsumptionStats stats,
+					UUID accountKey, DateTimeZone timezone)
+	{
+		ComputedNumber monthlyAverageFlow = stats.get(EnumStatistic.AVERAGE_MONTHLY, AMPHIRO, FLOW);
+	    if (monthlyAverageFlow == null || monthlyAverageFlow.getValue() == null)
 			return new SimpleEntry<>(false, null);
-		}
+	    
+        ComputedNumber monthlyAverageConsumption = stats.get(EnumStatistic.AVERAGE_MONTHLY, AMPHIRO, VOLUME);
+        if (monthlyAverageConsumption == null || monthlyAverageConsumption.getValue() == null)
+            return new SimpleEntry<>(false, null);
+	    
+		double monthlyUserAverageFlow = 0;
+		double quarterUserConsumption = 0;
+		DataQueryBuilder queryBuilder = new DataQueryBuilder();
+		queryBuilder.timezone(timezone)
+		    .sliding(-3, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+		    .user("user", accountKey).amphiro().average();
 
-		double userAverageFlow = 0;
-		double userThreeMonthsConsumption = 0;
-		DataQueryBuilder flowQueryBuilder = new DataQueryBuilder();
-		flowQueryBuilder.timezone(timezone).sliding(-3, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
-						.user("user", accountKey).amphiro().average();
-
-		DataQuery flowQuery = flowQueryBuilder.build();
-		DataQueryResponse queryResponse = dataService.execute(flowQuery);
+		DataQuery query = queryBuilder.build();
+		DataQueryResponse queryResponse = dataService.execute(query);
 		ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
 
-		if (dataSeriesAmphiro == null || dataSeriesAmphiro.isEmpty()) {
-			return new SimpleEntry<>(false, null);
-		}
+		if (dataSeriesAmphiro == null || dataSeriesAmphiro.isEmpty())
+		    return new SimpleEntry<>(false, null);
 
 		for (GroupDataSeries serie : dataSeriesAmphiro) {
-                        if (!serie.getPoints().isEmpty()) {
-                                DataPoint dataPoint = serie.getPoints().get(0);
-                                AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-                                userAverageFlow = amphiroDataPoint.getFlow().get(EnumMetric.AVERAGE);
-                        }
+		    if (!serie.getPoints().isEmpty()) {
+		        DataPoint dataPoint = serie.getPoints().get(0);
+		        AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
+		        monthlyUserAverageFlow = amphiroDataPoint.getFlow().get(EnumMetric.AVERAGE);
+		    }
 		}
 
-		if (userAverageFlow > aggregates.getAverageFlowAmphiro().getValue()) {
-			DataQueryBuilder volumeQueryBuilder = new DataQueryBuilder();
-			volumeQueryBuilder.timezone(timezone).sliding(-3, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
-							.user("user", accountKey).amphiro().sum();
+		if (monthlyUserAverageFlow > monthlyAverageFlow.getValue()) {
+		    DataQueryBuilder volumeQueryBuilder = new DataQueryBuilder();
+		    volumeQueryBuilder.timezone(timezone).sliding(-3, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+		    .user("user", accountKey).amphiro().sum();
 
-			DataQuery volumeQuery = flowQueryBuilder.build();
-			DataQueryResponse volumeQueryResponse = dataService.execute(volumeQuery);
-			ArrayList<GroupDataSeries> volumeDataSeriesAmphiro = volumeQueryResponse.getDevices();
+		    DataQuery volumeQuery = queryBuilder.build();
+		    DataQueryResponse volumeQueryResponse = dataService.execute(volumeQuery);
+		    ArrayList<GroupDataSeries> volumeDataSeriesAmphiro = volumeQueryResponse.getDevices();
 
-			if (volumeDataSeriesAmphiro == null || volumeDataSeriesAmphiro.isEmpty()) {
-				return new SimpleEntry<>(false, null);
-			}
+		    if (volumeDataSeriesAmphiro == null || volumeDataSeriesAmphiro.isEmpty()) {
+		        return new SimpleEntry<>(false, null);
+		    }
 
-			for (GroupDataSeries serie : volumeDataSeriesAmphiro) {
-                                if (!serie.getPoints().isEmpty()) {
-                                        DataPoint dataPoint = serie.getPoints().get(0);
-                                        AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-                                        userThreeMonthsConsumption = amphiroDataPoint.getVolume().get(EnumMetric.SUM);
-                                }
-			}
+		    for (GroupDataSeries serie : volumeDataSeriesAmphiro) {
+		        if (!serie.getPoints().isEmpty()) {
+		            DataPoint dataPoint = serie.getPoints().get(0);
+		            AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
+		            quarterUserConsumption = amphiroDataPoint.getVolume().get(EnumMetric.SUM);
+		        }
+		    }
 
-			Double userAnnualConsumption = userThreeMonthsConsumption * 4;
-			Double averageAnnualConsumption = aggregates.getAverageMonthlyAmphiro().getValue() * 12;
-			if (userAnnualConsumption > (averageAnnualConsumption)) {
-				Double literSavedAnnualy = userAnnualConsumption - averageAnnualConsumption;
+		    Double userAnnualConsumption = quarterUserConsumption * 4;
+		    Double averageAnnualConsumption = monthlyAverageConsumption.getValue() * 12;
+		    if (userAnnualConsumption > (averageAnnualConsumption)) {
+		        Double literSavedAnnualy = userAnnualConsumption - averageAnnualConsumption;
 
-				return new SimpleEntry<>(true, literSavedAnnualy.intValue());
-			} else {
-				return new SimpleEntry<>(false, null);
-			}
+		        return new SimpleEntry<>(true, literSavedAnnualy.intValue());
+		    } else {
+		        return new SimpleEntry<>(false, null);
+		    }
 		} else {
-			return new SimpleEntry<>(false, null);
+		    return new SimpleEntry<>(false, null);
 		}
 	}
 
 	// 4 recommendation - Change your shower head and save {integer1} {integer2}
-	public SimpleEntry<Boolean, Integer> recommendShowerHeadChangeAmphiro(ConsumptionStats aggregates,
-					UUID accountKey, DateTimeZone timezone) {
-		if (aggregates.getAverageMonthlyAmphiro().getValue() == null) {
-			return new SimpleEntry<>(false, null);
-		}
+	public SimpleEntry<Boolean, Integer> recommendShowerHeadChangeAmphiro(ConsumptionStats stats,
+					UUID accountKey, DateTimeZone timezone) 
+	{
+        ComputedNumber monthlyAverageFlow = stats.get(EnumStatistic.AVERAGE_MONTHLY, AMPHIRO, FLOW);
+        if (monthlyAverageFlow == null || monthlyAverageFlow.getValue() == null)
+            return new SimpleEntry<>(false, null);
+	    
+	    ComputedNumber monthlyAverageConsumption = stats.get(EnumStatistic.AVERAGE_MONTHLY, AMPHIRO, VOLUME);
+        if (monthlyAverageConsumption == null || monthlyAverageConsumption.getValue() == null)
+            return new SimpleEntry<>(false, null);
 
 		boolean fireAlert = false;
 		double userAverageFlow = 0;
 		double userThreeMonthsConsumption = 0;
 		DataQueryBuilder flowQueryBuilder = new DataQueryBuilder();
 		flowQueryBuilder.timezone(timezone).sliding(-3, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
-						.user("user", accountKey).amphiro().average();
+		    .user("user", accountKey).amphiro().average();
 
 		DataQuery flowQuery = flowQueryBuilder.build();
 		DataQueryResponse queryResponse = dataService.execute(flowQuery);
 		ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
 
 		if (dataSeriesAmphiro == null || dataSeriesAmphiro.isEmpty()) {
-			return new SimpleEntry<>(false, null);
+		    return new SimpleEntry<>(false, null);
 		}
 
 		for (GroupDataSeries serie : dataSeriesAmphiro) {
-                        if (!serie.getPoints().isEmpty()) {
-                                DataPoint dataPoint = serie.getPoints().get(0);
-                                AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-                                userAverageFlow = amphiroDataPoint.getFlow().get(EnumMetric.AVERAGE);
-                        }
+		    if (!serie.getPoints().isEmpty()) {
+		        DataPoint dataPoint = serie.getPoints().get(0);
+		        AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
+		        userAverageFlow = amphiroDataPoint.getFlow().get(EnumMetric.AVERAGE);
+		    }
 		}
 
-		if (userAverageFlow > aggregates.getAverageFlowAmphiro().getValue()) {
-			DataQueryBuilder volumeQueryBuilder = new DataQueryBuilder();
-			volumeQueryBuilder.timezone(timezone).sliding(-3, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
-							.user("user", accountKey).amphiro().sum();
+		if (userAverageFlow > monthlyAverageFlow.getValue()) {
+		    DataQueryBuilder volumeQueryBuilder = new DataQueryBuilder();
+		    volumeQueryBuilder.timezone(timezone).sliding(-3, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+		        .user("user", accountKey).amphiro().sum();
 
-			DataQuery volumeQuery = flowQueryBuilder.build();
-			DataQueryResponse volumeQueryResponse = dataService.execute(volumeQuery);
-			ArrayList<GroupDataSeries> volumeDataSeriesAmphiro = volumeQueryResponse.getDevices();
+		    DataQuery volumeQuery = flowQueryBuilder.build();
+		    DataQueryResponse volumeQueryResponse = dataService.execute(volumeQuery);
+		    ArrayList<GroupDataSeries> volumeDataSeriesAmphiro = volumeQueryResponse.getDevices();
 
-			if (volumeDataSeriesAmphiro == null || volumeDataSeriesAmphiro.isEmpty()) {
-				return new SimpleEntry<>(false, null);
-			}
+		    if (volumeDataSeriesAmphiro == null || volumeDataSeriesAmphiro.isEmpty()) {
+		        return new SimpleEntry<>(false, null);
+		    }
 
-			for (GroupDataSeries serie : volumeDataSeriesAmphiro) {
-                                if (!serie.getPoints().isEmpty()) {
-                                        DataPoint dataPoint = serie.getPoints().get(0);
-                                        AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-                                        userThreeMonthsConsumption = amphiroDataPoint.getVolume().get(EnumMetric.SUM);
-                                }
-			}
+		    for (GroupDataSeries serie : volumeDataSeriesAmphiro) {
+		        if (!serie.getPoints().isEmpty()) {
+		            DataPoint dataPoint = serie.getPoints().get(0);
+		            AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
+		            userThreeMonthsConsumption = amphiroDataPoint.getVolume().get(EnumMetric.SUM);
+		        }
+		    }
 
-			Double userAnnualConsumption = userThreeMonthsConsumption * 4;
-			Double averageAnnualConsumption = aggregates.getAverageMonthlyAmphiro().getValue() * 12;
-			if (userAnnualConsumption > (averageAnnualConsumption)) {
-				Double literSavedAnnualy = userAnnualConsumption - averageAnnualConsumption;
-				return new SimpleEntry<>(fireAlert, literSavedAnnualy.intValue());
-			} else {
-				return new SimpleEntry<>(false, null);
-			}
+		    Double userAnnualConsumption = userThreeMonthsConsumption * 4;
+		    Double averageAnnualConsumption = monthlyAverageConsumption.getValue() * 12;
+		    if (userAnnualConsumption > (averageAnnualConsumption)) {
+		        Double literSavedAnnualy = userAnnualConsumption - averageAnnualConsumption;
+		        return new SimpleEntry<>(fireAlert, literSavedAnnualy.intValue());
+		    } else {
+		        return new SimpleEntry<>(false, null);
+		    }
 		} else {
-			return new SimpleEntry<>(false, null);
+		    return new SimpleEntry<>(false, null);
 		}
 	}
 
 	// 5 recommendation - Have you considered changing your shampoo? {integer1}
 	// percent
-	public SimpleEntry<Boolean, Integer> recommendShampooChangeAmphiro(ConsumptionStats aggregates,
-					UUID accountKey, DateTimeZone timezone) {
-		if (aggregates.getAverageMonthlyAmphiro().getValue() == null) {
-			return new SimpleEntry<>(false, null);
-		}
-
+	public SimpleEntry<Boolean, Integer> recommendShampooChangeAmphiro(ConsumptionStats stats,
+	        UUID accountKey, DateTimeZone timezone) 
+	{
+	    ComputedNumber monthlyAverageConsumption = stats.get(EnumStatistic.AVERAGE_MONTHLY, AMPHIRO, VOLUME);
+	    if (monthlyAverageConsumption == null || monthlyAverageConsumption.getValue() == null)
+	        return new SimpleEntry<>(false, null);
+	    
 		double userAverageMonthlyConsumption = 0;
 		DataQueryBuilder durationQueryBuilder = new DataQueryBuilder();
 		durationQueryBuilder.timezone(timezone).sliding(-3, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
-						.user("user", accountKey).amphiro().sum();
+		        .user("user", accountKey).amphiro().sum();
 
 		DataQuery durationQuery = durationQueryBuilder.build();
 		DataQueryResponse queryResponse = dataService.execute(durationQuery);
 		ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
 
-		if (dataSeriesAmphiro == null || dataSeriesAmphiro.isEmpty()) {
-			return new SimpleEntry<>(false, null);
-		}
+		if (dataSeriesAmphiro == null || dataSeriesAmphiro.isEmpty())
+		    return new SimpleEntry<>(false, null);
 
 		for (GroupDataSeries serie : dataSeriesAmphiro) {
-                        if (!serie.getPoints().isEmpty()) {
-                                DataPoint dataPoint = serie.getPoints().get(0);
-                                AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-                                userAverageMonthlyConsumption = amphiroDataPoint.getVolume().get(EnumMetric.SUM) / 3;
-                        }
+		    if (!serie.getPoints().isEmpty()) {
+		        DataPoint dataPoint = serie.getPoints().get(0);
+		        AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
+		        userAverageMonthlyConsumption = amphiroDataPoint.getVolume().get(EnumMetric.SUM) / 3;
+		    }
 		}
 
-		Double averageMonthlyConsumptionAmphiro = aggregates.getAverageMonthlyAmphiro().getValue();
-		if (userAverageMonthlyConsumption > averageMonthlyConsumptionAmphiro) {
-			double userConsumptionPercent = (userAverageMonthlyConsumption * 100) / averageMonthlyConsumptionAmphiro;
-			int consumptionExcessPercent = (int) (userConsumptionPercent - 100);
-
-			return new SimpleEntry<>(true, consumptionExcessPercent);
+		if (userAverageMonthlyConsumption > monthlyAverageConsumption.getValue()) {
+		    double userConsumptionPercent = 
+		            (userAverageMonthlyConsumption * 100) / monthlyAverageConsumption.getValue();
+		    return new SimpleEntry<>(true, (int) (userConsumptionPercent - 100));
 		} else {
-			return new SimpleEntry<>(false, null);
+		    return new SimpleEntry<>(false, null);
 		}
 	}
 
-	// 6 recommendation - When showering, reduce the water flow when you do not
-	// need it {integer1} {integer2}
-	public SimpleEntry<Boolean, Integer> recommendReduceFlowWhenNotNeededAmphiro(
-					ConsumptionStats aggregates, UUID accountKey, DateTimeZone timezone) {
-		if (aggregates.getAverageSessionAmphiro().getValue() == null) {
-			return new SimpleEntry<>(false, null);
-		}
+	// 6 recommendation - When showering, reduce the water flow when you do not need it {integer1} {integer2}
+	public SimpleEntry<Boolean, Integer> recommendReduceFlowWhenNotNeededAmphiro(ConsumptionStats stats,
+	        UUID accountKey, DateTimeZone timezone) 
+	{
+	    ComputedNumber monthlyAveragePerSession = stats.get(EnumStatistic.AVERAGE_MONTHLY_PER_SESSION, AMPHIRO, VOLUME);
+        if (monthlyAveragePerSession == null || monthlyAveragePerSession.getValue() == null)
+            return new SimpleEntry<>(false, null);
+	    
+	    boolean fireAlert = false;
+	    double monthlyUserAveragePerSession = 0;
+	    DataQueryBuilder durationQueryBuilder = new DataQueryBuilder();
+	    durationQueryBuilder.timezone(timezone).sliding(-3, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+	        .user("user", accountKey).amphiro().average();
 
-		boolean fireAlert = false;
-		double averageSessionConsumption = 0;
-		DataQueryBuilder durationQueryBuilder = new DataQueryBuilder();
-		durationQueryBuilder.timezone(timezone).sliding(-3, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
-						.user("user", accountKey).amphiro().average();
+	    DataQuery durationQuery = durationQueryBuilder.build();
+	    DataQueryResponse queryResponse = dataService.execute(durationQuery);
+	    ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
 
-		DataQuery durationQuery = durationQueryBuilder.build();
-		DataQueryResponse queryResponse = dataService.execute(durationQuery);
-		ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
+	    if (dataSeriesAmphiro == null || dataSeriesAmphiro.isEmpty())
+	        return new SimpleEntry<>(false, null);
+	    
+	    for (GroupDataSeries series: dataSeriesAmphiro) {
+	        if (!series.getPoints().isEmpty()) {
+	            AmphiroDataPoint datapoint = (AmphiroDataPoint) series.getPoints().get(0);
+	            monthlyUserAveragePerSession = datapoint.getVolume().get(EnumMetric.AVERAGE);
+	        }
+	    }
 
-		if (dataSeriesAmphiro == null || dataSeriesAmphiro.isEmpty()) {
-			return new SimpleEntry<>(false, null);
-		}
-
-		for (GroupDataSeries serie : dataSeriesAmphiro) {
-                        if (!serie.getPoints().isEmpty()) {
-                                DataPoint dataPoint = serie.getPoints().get(0);
-                                AmphiroDataPoint amphiroDataPoint = (AmphiroDataPoint) dataPoint;
-                                averageSessionConsumption = amphiroDataPoint.getVolume().get(EnumMetric.AVERAGE);
-                        }
-		}
-
-		// TODO - calculate the number of sessions per year when available
-		// TODO - add additional check for flow adjustments during the session
-		// when available
-		int numberOfSessionsPerYear = 100;
-		Double averageSessionConsumptionAggregate = aggregates.getAverageSessionAmphiro().getValue();
-		if (averageSessionConsumption > averageSessionConsumptionAggregate) {
-			Double moreLitersThanOthersPerYear = (averageSessionConsumption - averageSessionConsumptionAggregate)
-							* numberOfSessionsPerYear;
-
-			return new SimpleEntry<>(fireAlert, moreLitersThanOthersPerYear.intValue());
-		} else {
-			return new SimpleEntry<>(false, null);
-		}
+	    // TODO - calculate the number of sessions per year when available
+	    // TODO - add additional check for flow adjustments during the session when available
+	    int numberOfSessionsPerYear = 100;
+	    if (monthlyUserAveragePerSession > monthlyAveragePerSession.getValue()) {
+	        Double moreLitersThanOthersInYear = 
+	                (monthlyUserAveragePerSession - monthlyAveragePerSession.getValue()) * numberOfSessionsPerYear;
+	        return new SimpleEntry<>(fireAlert, moreLitersThanOthersInYear.intValue());
+	    } else {
+	        return new SimpleEntry<>(false, null);
+	    }
 	}
 
     private boolean isMeterInstalledForUser(UUID userKey){

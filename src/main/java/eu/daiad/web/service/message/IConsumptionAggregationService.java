@@ -1,7 +1,8 @@
 package eu.daiad.web.service.message;
 
+import org.joda.time.LocalDateTime;
+
 import eu.daiad.web.model.message.ConsumptionStats;
-import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.model.utility.UtilityInfo;
 
 public interface IConsumptionAggregationService {
@@ -11,8 +12,10 @@ public interface IConsumptionAggregationService {
 	 * is used for generating messages for a single user.
 	 * 
 	 * @param utility
+	 * @param refDate a reference date for statistics to be computed. 
+	 *    If null is supplied, assume the current date.
 	 * @return utility-wide statistics
 	 */
-	public ConsumptionStats compute(UtilityInfo utility);
+	public ConsumptionStats compute(UtilityInfo utility, LocalDateTime refDate);
 
 }
