@@ -111,6 +111,8 @@ public class DataExportJobBuilder implements IJobBuilder {
 
                     String dateFormat = (String) chunkContext.getStepContext().getJobParameters().get("format.date");
 
+                    int defaultUtilityId = Integer.parseInt((String) chunkContext.getStepContext().getJobParameters().get("meter.default.utility"));
+
                     // Export data for every utility
                     for (int index = 0, count = utilityId.length; index < count; index++) {
                         UtilityInfo utility = utilityRepository.getUtilityById(Integer.parseInt(utilityId[index]));
@@ -121,21 +123,23 @@ public class DataExportJobBuilder implements IJobBuilder {
                         query.setDateFormat(dateFormat);
                         
                         // Export meter data for trial users only
-                        query.setFilename(String.format("meter-%s-trial",utility.getName()));
+                        query.setFilename(String.format("meter-%s-trial",utility.getName()).toLowerCase());
                         query.setExportUserDataOnly(true);
                         query.setDescription(String.format("Meter data for all trial users in [%s].", utility.getName()));
                         query.setSource(EnumDataSource.METER);
                         exportService.export(query);
-                        
-                        // Export meter data for all users
-                        query.setFilename(String.format("meter-%s-all",utility.getName()));
-                        query.setExportUserDataOnly(false);
-                        query.setDescription(String.format("Meter data for all users in [%s].", utility.getName()));
-                        query.setSource(EnumDataSource.METER);
-                        exportService.export(query);
-                        
+
+                        // Export meter data for all users if this is the default utility
+                        if (utility.getId() == defaultUtilityId) {
+                            query.setFilename(String.format("meter-%s-all", utility.getName()).toLowerCase());
+                            query.setExportUserDataOnly(false);
+                            query.setDescription(String.format("Meter data for all users in [%s].", utility.getName()));
+                            query.setSource(EnumDataSource.METER);
+                            exportService.export(query);
+                        }
+
                         // Export amphiro data for trial users
-                        query.setFilename(String.format("amphiro-%s-trial",utility.getName()));
+                        query.setFilename(String.format("amphiro-%s-trial",utility.getName()).toLowerCase());
                         query.setExportUserDataOnly(false);
                         query.setDescription(String.format("Amphiro b1 data for trial users in [%s].", utility.getName()));
                         query.setSource(EnumDataSource.AMPHIRO);

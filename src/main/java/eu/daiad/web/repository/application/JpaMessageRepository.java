@@ -18,7 +18,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ibm.icu.text.MessageFormat;
-import eu.daiad.web.domain.application.Account;
+import eu.daiad.web.domain.application.AccountEntity;
 
 import eu.daiad.web.domain.application.AccountAlert;
 import eu.daiad.web.domain.application.AccountAlertProperty;
@@ -944,12 +944,12 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 
         for(ReceiverAccount receiver : receiverAccountList){
             
-            TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager
+            TypedQuery<eu.daiad.web.domain.application.AccountEntity> accountQuery = entityManager
                             .createQuery("select a from account a where a.id = :id",
-                                            eu.daiad.web.domain.application.Account.class).setFirstResult(0).setMaxResults(1);           
+                                            eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0).setMaxResults(1);           
             accountQuery.setParameter("id", receiver.getAccountId());    
-            List<Account> accounts = accountQuery.getResultList();    
-            Account receiverAccount= null;
+            List<AccountEntity> accounts = accountQuery.getResultList();    
+            AccountEntity receiverAccount= null;
             
             if(accounts.size() == 1){
                 receiverAccount = accounts.get(0);

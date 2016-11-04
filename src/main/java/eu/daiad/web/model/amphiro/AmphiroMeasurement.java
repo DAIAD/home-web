@@ -1,12 +1,15 @@
 package eu.daiad.web.model.amphiro;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class AmphiroMeasurement {
 
     private long sessionId;
 
-    private int index;
+    private long index;
 
     private boolean history;
 
@@ -29,11 +32,11 @@ public class AmphiroMeasurement {
         this.sessionId = sessionId;
     }
 
-    public int getIndex() {
+    public long getIndex() {
         return index;
     }
 
-    public void setIndex(int index) {
+    public void setIndex(long index) {
         this.index = index;
     }
 
@@ -85,4 +88,15 @@ public class AmphiroMeasurement {
         this.session = session;
     }
 
+    @JsonIgnore
+    public DateTime getUtcDate() {
+        return new DateTime(timestamp, DateTimeZone.UTC);
+    }
+
+    public boolean equalByValue(AmphiroMeasurement value) {
+        return ((sessionId == value.sessionId) &&
+                (volume == value.volume) &&
+                (energy == value.energy) &&
+                (temperature == value.temperature));
+    }
 }

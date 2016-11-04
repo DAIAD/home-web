@@ -27,7 +27,7 @@ public class WeatherDailyDataEntity {
 
     @ManyToOne(cascade = { CascadeType.ALL })
     @JoinColumn(name = "utility_id", nullable = false)
-    private Utility utility;
+    private UtilityEntity utility;
 
     @ManyToOne(cascade = { CascadeType.ALL })
     @JoinColumn(name = "service_id", nullable = false)
@@ -70,11 +70,11 @@ public class WeatherDailyDataEntity {
     @Column(name = "date", columnDefinition = "bpchar", length = 10)
     private String date;
 
-    public Utility getUtility() {
+    public UtilityEntity getUtility() {
         return utility;
     }
 
-    public void setUtility(Utility utility) {
+    public void setUtility(UtilityEntity utility) {
         this.utility = utility;
     }
 

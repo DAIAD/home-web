@@ -23,7 +23,7 @@ import org.joda.time.DateTime;
 
 @Entity(name = "utility")
 @Table(schema = "public", name = "utility")
-public class Utility {
+public class UtilityEntity {
 
 	@Id()
 	@Column(name = "id")
@@ -51,7 +51,7 @@ public class Utility {
 
 	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
 	@JoinColumn(name = "utility_id")
-	private Set<Account> accounts = new HashSet<Account>();
+	private Set<AccountEntity> accounts = new HashSet<AccountEntity>();
 
 	@Column(name = "default_admin_username", nullable = false, unique = true)
 	private String defaultAdministratorUsername;
@@ -88,7 +88,7 @@ public class Utility {
 		this.description = description;
 	}
 
-	public Set<Account> getAccounts() {
+	public Set<AccountEntity> getAccounts() {
 		return accounts;
 	}
 

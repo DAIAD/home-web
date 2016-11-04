@@ -14,7 +14,7 @@ import org.joda.time.DateTime;
 
 @Entity(name = "trial_account_activity")
 @Table(schema = "public", name = "trial_account_activity")
-public class AccountActivity {
+public class AccountActivityEntity {
 
 	@Id()
 	@Column(name = "id")

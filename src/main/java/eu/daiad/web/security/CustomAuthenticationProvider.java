@@ -8,7 +8,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.util.matcher.RegexRequestMatcher;
@@ -68,7 +67,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
 			// Set impersonating user
             if (impersonate) {
-                if (user.hasRole(EnumRole.ROLE_ADMIN)) {
+                if (user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
                     AuthenticatedUser impersonatedUser = (AuthenticatedUser) userService
                                     .loadUserByUsername(username[1]);
 
@@ -91,7 +90,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 			EnumApplication application = EnumApplication.fromString(sra.getRequest().getParameter("application"));
 
 			if (application == EnumApplication.UNDEFINED) {
-				if (user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+				if (user.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
 					application = EnumApplication.UTILITY;
 				} else if (apiMatcher.matches(sra.getRequest())) {
 					application = EnumApplication.MOBILE;
@@ -104,7 +103,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 			// Check credentials for requested application
 			switch (application) {
 				case UTILITY:
-					if (!user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+					if (!user.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
 						throw new BadCredentialsException(
 										String.format("Application UTILITY authorization has failed for user [%s] and role ROLE_ADMIN.",
 										                authentication.getName()));
@@ -116,7 +115,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 					}
 					break;
 				case HOME:
-					if (!user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER"))) {
+					if (!user.hasRole(EnumRole.ROLE_USER)) {
 						throw new BadCredentialsException(String.format(
 										"Application HOME authorization has failed for user [%s] and role ROLE_USER.",
 										authentication.getName()));
@@ -128,7 +127,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 					}
 					break;
 				case MOBILE:
-					if (!user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER"))) {
+					if (!user.hasRole(EnumRole.ROLE_USER)) {
 						throw new BadCredentialsException(
 										String.format("Application MOBILE authorization has failed for user [%s] and role ROLE_USER.",
 										                authentication.getName()));

@@ -22,14 +22,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import eu.daiad.web.domain.application.Account;
+import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AccountProfileHistoryEntry;
 import eu.daiad.web.domain.application.DeviceAmphiro;
 import eu.daiad.web.domain.application.DeviceAmphiroConfiguration;
 import eu.daiad.web.domain.application.DeviceAmphiroConfigurationDefault;
 import eu.daiad.web.domain.application.HouseholdEntity;
 import eu.daiad.web.domain.application.HouseholdMemberEntity;
-import eu.daiad.web.domain.application.Utility;
+import eu.daiad.web.domain.application.UtilityEntity;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceConfigurationCollection;
@@ -57,6 +57,8 @@ import eu.daiad.web.model.profile.ProfileModesSubmitChangesRequest;
 import eu.daiad.web.model.profile.UpdateHouseholdRequest;
 import eu.daiad.web.model.profile.UpdateProfileRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.security.EnumRole;
+import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.BaseRepository;
 
@@ -89,30 +91,27 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             switch (application) {
                 case HOME:
                 case MOBILE:
-                    if (!user.hasRole("ROLE_USER")) {
-                        throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
-                                        application);
+                    if (!user.hasRole(EnumRole.ROLE_USER)) {
+                        throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application", application);
                     }
                     break;
                 case UTILITY:
-                    if (!user.hasRole("ROLE_ADMIN")) {
-                        throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
-                                        application);
+                    if (!user.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
+                        throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application", application);
                     }
                     break;
                 default:
-                    throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
-                                    application);
+                    throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application", application);
             }
 
             // Load account data
-            TypedQuery<eu.daiad.web.domain.application.Account> userQuery = entityManager.createQuery(
+            TypedQuery<eu.daiad.web.domain.application.AccountEntity> userQuery = entityManager.createQuery(
                             "select a from account a where a.username = :username",
-                            eu.daiad.web.domain.application.Account.class).setFirstResult(0).setMaxResults(1);
+                            eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0).setMaxResults(1);
             userQuery.setParameter("username", user.getUsername());
 
             // Load registered device data
-            Account account = userQuery.getSingleResult();
+            AccountEntity account = userQuery.getSingleResult();
 
             List<Device> devices = this.deviceRepository.getUserDevices(account.getKey(), new DeviceRegistrationQuery());
 
@@ -189,29 +188,29 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
             }
 
-            if (!user.hasRole("ROLE_ADMIN")) {
+            if (!user.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION);
             }
 
-            TypedQuery<eu.daiad.web.domain.application.Account> userQuery = null;
+            TypedQuery<eu.daiad.web.domain.application.AccountEntity> userQuery = null;
 
             String queryFilterPart = "";
             if (filters.getNameFilter() != null && filters.getNameFilter().length() > 0) {
-                queryFilterPart = " AND (LOWER(a.firstname) LIKE :searchTerm "
-                                + "OR LOWER(a.lastname) LIKE :searchTerm " + "OR LOWER(a.username) LIKE :searchTerm "
-                                + "ORDER BY a.lastname, a.username)";
+                queryFilterPart = " AND ( LOWER(a.firstname) LIKE :searchTerm OR " +
+                                  "       LOWER(a.lastname) LIKE :searchTerm OR " +
+                                  "       LOWER(a.username) LIKE :searchTerm ) ";
             }
 
             String queryString = "select a from account a join a.roles r " + "where r.role.name = :userRole"
                             + queryFilterPart + " ORDER BY a.lastname, a.username";
-            userQuery = entityManager.createQuery(queryString, eu.daiad.web.domain.application.Account.class)
+            userQuery = entityManager.createQuery(queryString, eu.daiad.web.domain.application.AccountEntity.class)
                             .setFirstResult(0);
-            userQuery.setParameter("userRole", "ROLE_USER");
+            userQuery.setParameter("userRole", RoleConstant.ROLE_USER);
 
             if (filters.getNameFilter() != null && filters.getNameFilter().length() > 0) {
                 userQuery.setParameter("searchTerm", "%" + filters.getNameFilter().toLowerCase() + "%");
             }
-            List<Account> accounts = userQuery.getResultList();
+            List<AccountEntity> accounts = userQuery.getResultList();
             List<ProfileModes> profileModesList = new ArrayList<ProfileModes>();
 
             // List all DeviceAmphiroConfigurationDefault's in a simple HashMap
@@ -222,7 +221,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                 simplifiedDefaultConfs.put(defaultConfiguration.getId(), defaultConfiguration.getTitle());
             }
 
-            for (Account account : accounts) {
+            for (AccountEntity account : accounts) {
                 ProfileModes profileModes = new ProfileModes();
 
                 // User Id
@@ -239,7 +238,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                 profileModes.setEmail(account.getUsername());
 
                 // Utility name & Id
-                Utility utility = account.getUtility();
+                UtilityEntity utility = account.getUtility();
                 profileModes.setGroupId(utility.getKey());
                 profileModes.setGroupName(utility.getName());
                 // Applying Utility filter
@@ -336,7 +335,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
             }
 
-            if (!user.hasRole("ROLE_ADMIN")) {
+            if (!user.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION);
             }
 
@@ -357,12 +356,12 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
             for (ProfileModesChanges modeChanges : modeChangesObject.getModeChanges()) {
 
-                TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager.createQuery(
+                TypedQuery<eu.daiad.web.domain.application.AccountEntity> accountQuery = entityManager.createQuery(
                                 "select a from account a where a.key = :key",
-                                eu.daiad.web.domain.application.Account.class).setFirstResult(0).setMaxResults(1);
+                                eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0).setMaxResults(1);
                 accountQuery.setParameter("key", modeChanges.getId());
 
-                Account account = accountQuery.getSingleResult();
+                AccountEntity account = accountQuery.getSingleResult();
 
                 for (ProfileModeChange modeChange : modeChanges.getChanges()) {
                     switch (modeChange.getMode()) {
@@ -476,17 +475,17 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
             }
 
-            if (!user.hasRole("ROLE_ADMIN")) {
+            if (!user.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION);
             }
 
-            TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager
+            TypedQuery<eu.daiad.web.domain.application.AccountEntity> accountQuery = entityManager
                             .createQuery("select a from account a where a.key = :key",
-                                            eu.daiad.web.domain.application.Account.class).setFirstResult(0)
+                                            eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0)
                             .setMaxResults(1);
             accountQuery.setParameter("key", userDeactId.getUserDeactId());
 
-            Account account = accountQuery.getSingleResult();
+            AccountEntity account = accountQuery.getSingleResult();
             UUID newVersion = UUID.randomUUID();
 
             account.getProfile().setVersion(newVersion);
@@ -576,7 +575,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
             }
 
-            if (!user.hasRole("ROLE_ADMIN")) {
+            if (!user.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
                 throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED);
             }
 
@@ -587,7 +586,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                             "SELECT DISTINCT (u.name) FROM utility u INNER JOIN u.accounts a "
                                             + "INNER JOIN a.roles r WHERE r.role.name = :userRole", String.class)
                             .setFirstResult(0);
-            utilityNameQuery.setParameter("userRole", "ROLE_USER");
+            utilityNameQuery.setParameter("userRole", RoleConstant.ROLE_USER);
 
             List<String> utilityOptions = utilityNameQuery.getResultList();
             profileModesFilterOptions.setGroupName(utilityOptions);
@@ -612,13 +611,13 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             // check if there is at least a user without registered amphiro
             // devices
             // TODO Refactor query
-            TypedQuery<eu.daiad.web.domain.application.Account> userQuery = entityManager.createQuery(
+            TypedQuery<eu.daiad.web.domain.application.AccountEntity> userQuery = entityManager.createQuery(
                             "SELECT a FROM account a JOIN a.roles r WHERE r.role.name = :userRole",
-                            eu.daiad.web.domain.application.Account.class).setFirstResult(0);
-            userQuery.setParameter("userRole", "ROLE_USER");
+                            eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0);
+            userQuery.setParameter("userRole", RoleConstant.ROLE_USER);
 
-            List<Account> userAccounts = userQuery.getResultList();
-            for (Account a : userAccounts) {
+            List<AccountEntity> userAccounts = userQuery.getResultList();
+            for (AccountEntity a : userAccounts) {
                 int amphiroCount = 0;
                 for (eu.daiad.web.domain.application.Device d : a.getDevices()) {
                     if (d.getType() == EnumDeviceType.AMPHIRO) {
@@ -659,12 +658,12 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
         }
 
-        TypedQuery<Account> query = entityManager.createQuery("select a from account a where a.key = :key",
-                        Account.class).setFirstResult(0).setMaxResults(1);
+        TypedQuery<AccountEntity> query = entityManager.createQuery("select a from account a where a.key = :key",
+                        AccountEntity.class).setFirstResult(0).setMaxResults(1);
         query.setParameter("key", user.getKey());
 
         // Update account and profile
-        Account account = query.getSingleResult();
+        AccountEntity account = query.getSingleResult();
 
         switch (updates.getApplication()) {
             case HOME:
@@ -741,11 +740,11 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
             }
 
-            TypedQuery<Account> query = entityManager.createQuery("select a from account a where a.key = :key",
-                            Account.class).setFirstResult(0).setMaxResults(1);
+            TypedQuery<AccountEntity> query = entityManager.createQuery("select a from account a where a.key = :key",
+                            AccountEntity.class).setFirstResult(0).setMaxResults(1);
             query.setParameter("key", user.getKey());
 
-            Account account = query.getSingleResult();
+            AccountEntity account = query.getSingleResult();
 
             switch (application) {
                 case HOME:
@@ -786,11 +785,11 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
         }
 
-        TypedQuery<Account> query = entityManager.createQuery("select a from account a where a.key = :key",
-                        Account.class).setFirstResult(0).setMaxResults(1);
+        TypedQuery<AccountEntity> query = entityManager.createQuery("select a from account a where a.key = :key",
+                        AccountEntity.class).setFirstResult(0).setMaxResults(1);
         query.setParameter("key", user.getKey());
 
-        Account account = query.getSingleResult();
+        AccountEntity account = query.getSingleResult();
 
         // Initialize household
         HouseholdEntity householdEntity = account.getHousehold();
@@ -858,7 +857,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
         }
     }
 
-    private void setMobileMode(Account account, int mode) {
+    private void setMobileMode(AccountEntity account, int mode) {
         UUID newVersion = UUID.randomUUID();
 
         account.getProfile().setVersion(newVersion);
@@ -882,11 +881,11 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
     public List<ProfileHistoryEntry> getProfileHistoryByUserKey(UUID userKey) {
         String sqlString = "select a from account a where a.key = :userKey";
 
-        TypedQuery<Account> query = entityManager.createQuery(sqlString, Account.class).setFirstResult(0)
+        TypedQuery<AccountEntity> query = entityManager.createQuery(sqlString, AccountEntity.class).setFirstResult(0)
                         .setMaxResults(1);
         query.setParameter("userKey", userKey);
 
-        Account account = query.getSingleResult();
+        AccountEntity account = query.getSingleResult();
 
         List<ProfileHistoryEntry> entries = new ArrayList<ProfileHistoryEntry>();
 

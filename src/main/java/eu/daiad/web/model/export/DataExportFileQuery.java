@@ -1,11 +1,13 @@
 package eu.daiad.web.model.export;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class DataExportFileQuery {
 
     @JsonIgnore
-    private int utilityId;
+    private List<Integer> utilities;
 
     @JsonIgnore
     private Integer days;
@@ -14,12 +16,12 @@ public class DataExportFileQuery {
 
     private int size;
 
-    public int getUtilityId() {
-        return utilityId;
+    public List<Integer> getUtilities() {
+        return utilities;
     }
 
-    public void setUtilityId(int utilityId) {
-        this.utilityId = utilityId;
+    public void setUtilities(List<Integer> utilities) {
+        this.utilities = utilities;
     }
 
     public Integer getDays() {

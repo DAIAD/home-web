@@ -3,39 +3,38 @@ package eu.daiad.web.model.amphiro;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 public class AmphiroSessionDetails extends AmphiroSession {
 
-	private ArrayList<AmphiroMeasurement> measurements;
+	private List<AmphiroMeasurement> measurements;
 
 	public AmphiroSessionDetails() {
 		super();
 
-		this.measurements = new ArrayList<AmphiroMeasurement>();
+		measurements = new ArrayList<AmphiroMeasurement>();
 	}
 
 	public void add(AmphiroMeasurement measurement) {
-		this.measurements.add(measurement);
+		measurements.add(measurement);
 	}
 
-	public ArrayList<AmphiroMeasurement> getMeasurements() {
-		Collections.sort(this.measurements,
-				new Comparator<AmphiroMeasurement>() {
+	public List<AmphiroMeasurement> getMeasurements() {
+		Collections.sort(measurements, new Comparator<AmphiroMeasurement>() {
+			@Override
+            public int compare(AmphiroMeasurement o1, AmphiroMeasurement o2) {
+				if (o1.getIndex() <= o2.getIndex()) {
+					return -1;
+				} else {
+					return 1;
+				}
+			}
+		});
 
-					public int compare(AmphiroMeasurement o1,
-							AmphiroMeasurement o2) {
-						if (o1.getIndex() <= o2.getIndex()) {
-							return -1;
-						} else {
-							return 1;
-						}
-					}
-				});
-
-		return this.measurements;
+		return measurements;
 	}
 
-	public void setMeasurements(ArrayList<AmphiroMeasurement> measurements) {
+	public void setMeasurements(List<AmphiroMeasurement> measurements) {
 		if (measurements == null) {
 			new ArrayList<AmphiroMeasurement>();
 		} else {

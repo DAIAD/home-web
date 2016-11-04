@@ -1,6 +1,6 @@
 package eu.daiad.web.model.favourite;
 
-import eu.daiad.web.domain.application.Account;
+import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.model.EnumGender;
 
 public class CandidateFavouriteAccountInfo extends FavouriteAccountInfo {
@@ -14,7 +14,7 @@ public class CandidateFavouriteAccountInfo extends FavouriteAccountInfo {
 	private int numOfDevices;
 	
 
-	public CandidateFavouriteAccountInfo(Account account) {
+	public CandidateFavouriteAccountInfo(AccountEntity account) {
 		super(account.getKey());
 		
 		if (account.getFirstname() != null && account.getLastname() != null){

@@ -27,55 +27,58 @@ import eu.daiad.web.model.scheduling.ExecutionQueryResult;
 import eu.daiad.web.model.scheduling.JobCollectionResponse;
 import eu.daiad.web.model.scheduling.JobExecutionInfo;
 import eu.daiad.web.model.scheduling.JobResponse;
+import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.service.scheduling.ISchedulerService;
 
 /**
- * Provides actions for scheduling jobs.
- *
+ * Provides actions for query, scheduling and launching jobs.
  */
 @RestController
 public class SchedulerController extends BaseController {
 
-    private static final Log logger = LogFactory.getLog(AdminController.class);
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
+    private static final Log logger = LogFactory.getLog(SchedulerController.class);
 
+    /**
+     * Server time zone.
+     */
     @Value("${daiad.batch.server-time-zone:Europe/Athens}")
     private String serverTimeZone;
 
+    /**
+     * Scheduler service used for querying, scheduling and launching jobs.
+     */
     @Autowired
-    private ISchedulerService jobService;
+    private ISchedulerService schedulerService;
 
     /**
      * Gets all registered jobs.
-     * 
+     *
      * @return the jobs.
      */
     @RequestMapping(value = "/action/scheduler/jobs", method = RequestMethod.GET, produces = "application/json")
-    @Secured("ROLE_ADMIN")
+    @Secured({ RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse getJobs() {
-        RestResponse response = null;
-
         try {
-            return new JobCollectionResponse(this.jobService.getJobs());
+            return new JobCollectionResponse(this.schedulerService.getJobs());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            response = new RestResponse();
-            response.add(this.getError(ex));
+            return new RestResponse(getError(ex));
         }
-
-        return response;
     }
 
     /**
      * Returns all job executions, optionally filtered by a query.
-     * 
-     * @param request the request
+     *
+     * @param request query for filtering job executions.
      * @return the executions.
      */
     @RequestMapping(value = "/action/scheduler/executions", method = RequestMethod.POST, produces = "application/json")
-    @Secured("ROLE_ADMIN")
+    @Secured({ RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse getExecutions(@RequestBody ExecutionQueryRequest request) {
-
         try {
             // Set default values
             if (request.getQuery() == null) {
@@ -88,7 +91,7 @@ public class SchedulerController extends BaseController {
                 request.getQuery().setSize(10);
             }
 
-            ExecutionQueryResult result = jobService.getJobExecutions(request.getQuery());
+            ExecutionQueryResult result = schedulerService.getJobExecutions(request.getQuery());
 
             ExecutionQueryResponse response = new ExecutionQueryResponse();
 
@@ -127,162 +130,135 @@ public class SchedulerController extends BaseController {
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            RestResponse response = new RestResponse();
-            response.add(this.getError(ex));
-
-            return response;
+            return new RestResponse(getError(ex));
         }
     }
 
     /**
      * Loads a job based on its id and a subset of its executions.
-     * 
-     * @param jobId
-     *            the job id.
-     * @param startPosition
-     *            the execution start index.
-     * @param maxResult
-     *            the maximum number of executions to return.
+     *
+     * @param jobId the job id.
+     * @param startPosition the execution start index.
+     * @param maxResult the maximum number of executions to return.
      * @return the job and its executions.
      */
     @RequestMapping(value = "/action/scheduler/job/{jobId}/{startPosition}/{maxResult}", method = RequestMethod.GET, produces = "application/json")
-    @Secured("ROLE_ADMIN")
+    @Secured({ RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse getJob(long jobId, int startPosition, int maxResult) {
-        RestResponse response = null;
-
         try {
             JobResponse controllerResponse = new JobResponse();
 
-            controllerResponse.setJob(this.jobService.getJob(jobId));
-            controllerResponse.setExecutions(this.jobService.getJobExecutions(jobId, startPosition, maxResult));
+            controllerResponse.setJob(this.schedulerService.getJob(jobId));
+            controllerResponse.setExecutions(this.schedulerService.getJobExecutions(jobId, startPosition, maxResult));
 
             return controllerResponse;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            response = new RestResponse();
-            response.add(this.getError(ex));
+            return new RestResponse(getError(ex));
         }
-
-        return response;
     }
 
     /**
      * Enables a job by its id.
-     * 
+     *
      * @param jobId the job id.
      * @return the controller's response.
      */
     @RequestMapping(value = "/action/scheduler/job/enable/{jobId}", method = RequestMethod.PUT, produces = "application/json")
-    @Secured("ROLE_ADMIN")
+    @Secured({ RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse enableJob(@PathVariable long jobId) {
-        RestResponse response = new RestResponse();
-
         try {
-            this.jobService.enable(jobId);
+            this.schedulerService.enable(jobId);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            response.add(this.getError(ex));
+            return new RestResponse(getError(ex));
         }
 
-        return response;
+        return new RestResponse();
     }
 
     /**
      * Disables a job by its id.
-     * 
-     * @param jobId
-     *            the job id.
+     *
+     * @param jobId the job id.
      * @return the controller's response.
      */
     @RequestMapping(value = "/action/scheduler/job/disable/{jobId}", method = RequestMethod.PUT, produces = "application/json")
-    @Secured("ROLE_ADMIN")
+    @Secured({ RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse disableJob(@PathVariable long jobId) {
-        RestResponse response = new RestResponse();
-
         try {
-            this.jobService.disable(jobId);
+            this.schedulerService.disable(jobId);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            response.add(this.getError(ex));
+            return new RestResponse(getError(ex));
         }
 
-        return response;
+        return new RestResponse();
     }
 
     /**
      * Launches a job by its id.
-     * 
-     * @param jobId
-     *            the job id.
+     *
+     * @param jobId the job id.
      * @return the controller's response.
      */
     @RequestMapping(value = "/action/scheduler/job/launch/{jobId}", method = RequestMethod.PUT, produces = "application/json")
-    @Secured("ROLE_ADMIN")
+    @Secured({ RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse launchJob(@PathVariable long jobId) {
-        RestResponse response = new RestResponse();
-
         try {
-            this.jobService.launch(jobId);
+            this.schedulerService.launch(jobId);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            response.add(this.getError(ex));
+            new RestResponse(getError(ex));
         }
 
-        return response;
+        return new RestResponse();
     }
 
     /**
      * Returns the message of an execution by its id.
-     * 
-     * @param executionId
-     *            the execution id.
+     *
+     * @param executionId the execution id.
      * @return the execution message.
      */
     @RequestMapping(value = "/action/scheduler/execution/{executionId}/message/'", method = RequestMethod.GET, produces = "application/json")
-    @Secured("ROLE_ADMIN")
+    @Secured({ RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse getExecutionMessage(@PathVariable long executionId) {
-
         try {
             ExecutionMessageResponse response = new ExecutionMessageResponse();
 
-            response.setMessage(this.jobService.getExecutionMessage(executionId));
+            response.setMessage(this.schedulerService.getExecutionMessage(executionId));
 
             return response;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            RestResponse response = new RestResponse();
-            response.add(this.getError(ex));
-
-            return response;
+            return new RestResponse(getError(ex));
         }
     }
 
     /**
      * Sends a message to stop a job execution. The scheduler does not
      * guarantees immediate job termination.
-     * 
-     * @param executionId
-     *            the execution id.
+     *
+     * @param executionId the execution id.
      * @return the controller's response.
      */
     @RequestMapping(value = "/action/scheduler/execution/stop/{executionId}", method = RequestMethod.DELETE, produces = "application/json")
-    @Secured("ROLE_ADMIN")
+    @Secured({ RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse stopExecution(long executionId) {
-        RestResponse response = new RestResponse();
-
         try {
-            this.jobService.stop(executionId);
+            this.schedulerService.stop(executionId);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            response.add(this.getError(ex));
+            return new RestResponse(this.getError(ex));
         }
 
-        return response;
+        return new RestResponse();
     }
 }

@@ -33,7 +33,7 @@ import eu.daiad.web.model.EnumGender;
 
 @Entity(name = "account")
 @Table(schema = "public", name = "account")
-public class Account {
+public class AccountEntity {
 
     @Id()
     @Column(name = "id")
@@ -47,11 +47,15 @@ public class Account {
 
     @ManyToOne(cascade = { CascadeType.ALL })
     @JoinColumn(name = "utility_id", nullable = false)
-    private Utility utility;
+    private UtilityEntity utility;
 
     @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
     @JoinColumn(name = "account_id")
     private Set<AccountRole> roles = new HashSet<AccountRole>();
+
+    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
+    @JoinColumn(name = "account_id")
+    private Set<AccountUtilityEntity> utilities = new HashSet<AccountUtilityEntity>();
 
     @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id")
@@ -59,7 +63,7 @@ public class Account {
 
     @OneToOne(mappedBy = "account")
     @JoinColumn(name = "account_id")
-    private AccountWhiteListEntry whiteListEntry;
+    private AccountWhiteListEntity whiteListEntry;
 
     @OneToOne(mappedBy = "account")
     private AccountProfile profile;
@@ -149,11 +153,11 @@ public class Account {
         this.id = id;
     }
 
-    public Utility getUtility() {
+    public UtilityEntity getUtility() {
         return utility;
     }
 
-    public void setUtility(Utility utility) {
+    public void setUtility(UtilityEntity utility) {
         this.utility = utility;
     }
 
@@ -268,6 +272,10 @@ public class Account {
         return roles;
     }
 
+    public Set<AccountUtilityEntity> getUtilities() {
+        return utilities;
+    }
+
     public String getTimezone() {
         return timezone;
     }
@@ -378,5 +386,5 @@ public class Account {
 
         return fullname.trim();
     }
- 
+
 }

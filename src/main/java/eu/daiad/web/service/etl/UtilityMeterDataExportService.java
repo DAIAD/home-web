@@ -44,8 +44,6 @@ import eu.daiad.web.model.meter.WaterMeterDataSeries;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQuery;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQueryResult;
 import eu.daiad.web.model.security.AuthenticatedUser;
-import eu.daiad.web.repository.application.IDeviceRepository;
-import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 
 /**
@@ -64,23 +62,11 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
      * HBASE table that indexes meters by serial number and time stamp.
      */
     private final String meterTableMeasurementByMeter = "daiad:meter-measurements-by-user";
-    
+
     /**
      * Default column family name used by all HBASE tables.
      */
     private final String columnFamilyName = "cf";
-    
-    /**
-     * Repository for accessing user data.
-     */
-    @Autowired
-    private IUserRepository userRepository;
-
-    /**
-     * Repository for accessing device (smart water meter or amphiro b1) data.
-     */
-    @Autowired
-    private IDeviceRepository deviceRepository;
 
     /**
      * HBASE connection managed by the Spring framework.
@@ -96,7 +82,7 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
 
     /**
      * Exports data for a single utility to a file. Any exported data file is replaced.
-     *  
+     *
      * @param query the query that selects the data to export.
      * @return the result of the export operation.
      * @throws ApplicationException if the query execution or file creation fails.
@@ -105,9 +91,12 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
         try {
             ExportResult exportResult = new ExportResult();
 
+            long totalUsers = 0;
+            long totalRows = 0;
+
             // Initialize directories
             if(StringUtils.isBlank(query.getWorkingDirectory())) {
-               query.setWorkingDirectory(workingDirectory); 
+               query.setWorkingDirectory(workingDirectory);
             }
             ensureDirectory(query.getWorkingDirectory());
             ensureDirectory(query.getTargetDirectory());
@@ -116,10 +105,10 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
             if(StringUtils.isBlank(query.getTimezone())) {
                 query.setTimezone(query.getUtility().getTimezone());
             }
-            
+
             // Set time zone
             ensureTimezone(query.getTimezone());
-            
+
             // Set default file name
             if (StringUtils.isBlank(query.getFilename())) {
                 query.setFilename(query.getUtility().getName());
@@ -130,7 +119,6 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
             String userFilename = createTemporaryFilename(query.getWorkingDirectory());
 
             if (query.isExportUserDataOnly()) {
-
                 // Prepare user printer
                 CSVFormat format = CSVFormat.RFC4180.withDelimiter(DELIMITER);
 
@@ -139,22 +127,24 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
                                                 new OutputStreamWriter(
                                                     new FileOutputStream(userFilename, true),
                                                     Charset.forName("UTF-8").newEncoder())), format);
-                
+
                 ArrayList<String> row = new ArrayList<String>();
 
                 row.add("user key");
                 row.add("user name");
                 row.add("meter id");
-                
+
                 userPrinter.printRecord(row);
 
                 // Export data for every trial user
                 List<UUID> userKeys = userRepository.getUserKeysForUtility(query.getUtility().getKey());
 
                 for (UUID userKey : userKeys) {
+                    long totalUserRows = 0;
+
                     // Get user
                     AuthenticatedUser user = userRepository.getUserByKey(userKey);
-                    
+
                     // Get meter
                     DeviceRegistrationQuery deviceQuery = new DeviceRegistrationQuery(EnumDeviceType.METER);
 
@@ -169,39 +159,51 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
 
                         WaterMeterMeasurementQueryResult result = this.waterMeterMeasurementRepository.searchMeasurements(
                             new String[] { meterDevice.getSerial() },
-                            DateTimeZone.forID(query.getTimezone()), 
+                            DateTimeZone.forID(query.getTimezone()),
                             meterQuery);
 
                         // Export data
                         for (WaterMeterDataSeries series : result.getSeries()) {
-                            exportResult.increment(exportUtilityUserMeterData(dataFilename, query.getTimezone(), series));
+                            totalUserRows = exportUtilityUserMeterData(dataFilename, query.getTimezone(), series);
                         }
-                        
-                        // Export user name
-                        row = new ArrayList<String>();
 
-                        row.add(user.getKey().toString());
-                        row.add(user.getUsername());
-                        row.add(meterDevice.getSerial());
-                        
-                        userPrinter.printRecord(row);
+                        // Export user only if at least one measurement is found
+                        if (totalUserRows > 0) {
+                            row = new ArrayList<String>();
+
+                            row.add(user.getKey().toString());
+                            row.add(user.getUsername());
+                            row.add(meterDevice.getSerial());
+
+                            userPrinter.printRecord(row);
+
+                            totalUsers++;
+                            totalRows += totalUserRows;
+                        }
                     }
                 }
-                
+
                 userPrinter.flush();
                 userPrinter.close();
-                
-                exportResult.getFiles().add(new FileLabelPair( new File(userFilename), "user.csv"));
+
+                exportResult.getFiles().add(new FileLabelPair( new File(userFilename), "user.csv", totalUsers));
+
+                // Export phases only if users with at least one measurement exist
+                if (totalUsers > 0) {
+                    exportPhaseTimestamps(query, exportResult);
+                }
             } else {
-                exportResult.increment(exportAllMeterData(dataFilename, 
-                                                          query.getTimezone(),
-                                                          query.getStartTimstamp(),
-                                                          query.getEndTimestamp(),
-                                                          query.getDateFormat()));
+                totalRows = exportAllMeterData(dataFilename,
+                                               query.getTimezone(),
+                                               query.getStartTimstamp(),
+                                               query.getEndTimestamp(),
+                                               query.getDateFormat());
             }
 
-            exportResult.getFiles().add(new FileLabelPair( new File(dataFilename), "data.csv"));
-            
+            exportResult.getFiles().add(new FileLabelPair( new File(dataFilename), "data.csv", totalRows));
+
+            exportResult.increment(totalRows + totalUsers);
+
             return exportResult;
         } catch (Exception ex) {
             throw wrapApplicationException(ex);
@@ -210,7 +212,7 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
 
     /**
      * Exports data the smart water meter of a single user of a utility.
-     * 
+     *
      * @param filename the name of the file where the exported data is saved.
      * @param timezone the time zone for formatting the dates.
      * @param series the exported data.
@@ -219,9 +221,9 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
      */
     private long exportUtilityUserMeterData(String filename, String timezone, WaterMeterDataSeries series) throws IOException {
         long counter = 0;
-        
+
         DateTimeFormatter formatter = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss").withZone(DateTimeZone.forID(timezone));
-        
+
         CSVFormat format = CSVFormat.RFC4180.withDelimiter(DELIMITER);
 
         CSVPrinter printer = new CSVPrinter(
@@ -241,33 +243,33 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
             row.add(Float.toString(point.getDifference()));
 
             printer.printRecord(row);
-            
+
             counter++;
         }
-        
+
         printer.flush();
         printer.close();
-        
+
         return counter;
     }
 
 
     /**
      * Exports data the smart water meter of a single user of a utility.
-     * 
+     *
      * @param filename the name of the file where the exported data is saved.
      * @param timezone the time zone for formatting the dates.
      * @param startDateTime the time interval date time.
      * @param endDateTime the time interval date time.
      * @param dateFormat date format pattern.
-     * @return the number of rows written. 
+     * @return the number of rows written.
      * @throws IOException in case an I/O exception occurs.
      */
     private long exportAllMeterData(String filename, String timezone, Long startTimestamp, Long endTimestamp, String dateFormat) throws IOException {
         long counter = 0;
 
         DateTimeFormatter formatter = DateTimeFormat.forPattern(dateFormat).withZone(DateTimeZone.forID(timezone));
-        
+
         CSVFormat format = CSVFormat.RFC4180.withDelimiter(DELIMITER);
 
         CSVPrinter printer = new CSVPrinter(
@@ -280,7 +282,7 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
         // Execute full table scan on HBASE table
         Table table = null;
         ResultScanner scanner = null;
-        
+
         if (startTimestamp == null) {
             startTimestamp = new DateTime(0L, DateTimeZone.UTC).getMillis();
         }
@@ -333,7 +335,7 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
                                         volume,
                                         difference
                                     ));
-                        
+
                         volume = null;
                         difference = null;
                         counter++;
@@ -359,13 +361,13 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
 
         printer.flush();
         printer.close();
-        
+
         return counter;
     }
 
     /**
      * Creates a list of String arguments.
-     * 
+     *
      * @param serial the meter serial.
      * @param date the date formatted at a specific time zone.
      * @param volume the current volume.

@@ -2,19 +2,19 @@ package eu.daiad.web.model.user;
 
 import java.util.List;
 
-import eu.daiad.web.domain.application.Account;
+import eu.daiad.web.domain.application.AccountEntity;
 
 public class UserQueryResult {
 
-    private List<Account> accounts;
+    private List<AccountEntity> accounts;
 
     private int total;
 
-    public List<Account> getAccounts() {
+    public List<AccountEntity> getAccounts() {
         return accounts;
     }
 
-    public void setAccounts(List<Account> accounts) {
+    public void setAccounts(List<AccountEntity> accounts) {
         this.accounts = accounts;
     }
 

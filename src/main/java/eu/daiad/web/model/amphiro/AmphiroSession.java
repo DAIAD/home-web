@@ -22,10 +22,16 @@ public class AmphiroSession extends AmphiroAbstractSession {
     @JsonIgnore
     private AmphiroSessionDeleteAction delete;
 
+    @JsonIgnore
+    private SessionVersions versions;
+
+    @JsonIgnore
+    private boolean ignored;
+
     private ArrayList<KeyValuePair> properties;
 
     public AmphiroSession() {
-        this.properties = new ArrayList<KeyValuePair>();
+        properties = new ArrayList<KeyValuePair>();
     }
 
     public long getId() {
@@ -42,10 +48,6 @@ public class AmphiroSession extends AmphiroAbstractSession {
 
     public void setHistory(boolean history) {
         this.history = history;
-    }
-
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
     }
 
     public ArrayList<KeyValuePair> getProperties() {
@@ -68,9 +70,9 @@ public class AmphiroSession extends AmphiroAbstractSession {
     }
 
     public String getPropertyByKey(String key) {
-        for (int i = 0, count = this.properties.size(); i < count; i++) {
-            if (this.properties.get(i).getKey().equals(key)) {
-                return this.properties.get(i).getValue();
+        for (int i = 0, count = properties.size(); i < count; i++) {
+            if (properties.get(i).getKey().equals(key)) {
+                return properties.get(i).getValue();
             }
         }
         return null;
@@ -96,18 +98,18 @@ public class AmphiroSession extends AmphiroAbstractSession {
 
     public static class Member {
 
-        private int index;
+        private Integer index;
 
         @Enumerated(EnumType.STRING)
         private EnumMemberSelectionMode mode;
 
         private Long timestamp;
 
-        public int getIndex() {
+        public Integer getIndex() {
             return index;
         }
 
-        public void setIndex(int index) {
+        public void setIndex(Integer index) {
             this.index = index;
         }
 
@@ -128,4 +130,21 @@ public class AmphiroSession extends AmphiroAbstractSession {
         }
 
     }
+
+    public SessionVersions getVersions() {
+        return versions;
+    }
+
+    public void setVersions(SessionVersions versions) {
+        this.versions = versions;
+    }
+
+    public boolean isIgnored() {
+        return ignored;
+    }
+
+    public void setIgnored(boolean ignored) {
+        this.ignored = ignored;
+    }
+
 }

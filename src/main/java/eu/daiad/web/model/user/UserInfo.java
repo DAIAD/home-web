@@ -44,7 +44,7 @@ public class UserInfo {
 
     private byte[] photo;
 
-    public UserInfo(eu.daiad.web.domain.application.Account account) {
+    public UserInfo(eu.daiad.web.domain.application.AccountEntity account) {
         this.id = account.getKey();
         this.firstName = account.getFirstname();
         this.lastName = account.getLastname();

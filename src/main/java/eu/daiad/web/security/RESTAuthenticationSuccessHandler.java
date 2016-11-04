@@ -25,6 +25,7 @@ import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.AuthenticationResponse;
 import eu.daiad.web.model.security.CsrfConstants;
+import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.application.IProfileRepository;
 import eu.daiad.web.util.AjaxUtils;
 
@@ -56,14 +57,16 @@ public class RESTAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuc
 				AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
 				Profile profile;
-				if (user.hasRole("ROLE_ADMIN")) {
+                if (user.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
 					profile = profileRepository.getProfileByUsername(EnumApplication.UTILITY);
 				} else {
 					profile = profileRepository.getProfileByUsername(EnumApplication.HOME);
 				}
 
-				AuthenticationResponse authenticationResponse = new AuthenticationResponse(new Runtime(
-								environment.getActiveProfiles()), profile);
+				AuthenticationResponse authenticationResponse = new AuthenticationResponse(
+	                new Runtime(environment.getActiveProfiles()),
+	                profile,
+	                user.roleToStringArray());
 
 				CsrfToken sessionToken = (CsrfToken) request.getSession().getAttribute(
 								CsrfConstants.DEFAULT_CSRF_TOKEN_ATTR_NAME);

@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public abstract class AmphiroAbstractSession {
 
-	protected long timestamp;
+	protected Long timestamp;
 
 	protected int duration;
 
@@ -19,13 +19,17 @@ public abstract class AmphiroAbstractSession {
 
 	protected float flow;
 
-	public long getTimestamp() {
+	public Long getTimestamp() {
 		return timestamp;
 	}
 
+    public void setTimestamp(Long timestamp) {
+        this.timestamp = timestamp;
+    }
+
 	@JsonIgnore
 	public DateTime getUtcDate() {
-		return new DateTime(this.timestamp, DateTimeZone.UTC);
+		return new DateTime(timestamp, DateTimeZone.UTC);
 	}
 
 	public int getDuration() {

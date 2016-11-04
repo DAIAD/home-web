@@ -11,9 +11,12 @@ public class FileLabelPair {
 
     private String label;
 
-    public FileLabelPair(File file, String label) {
+    private long rows;
+
+    public FileLabelPair(File file, String label, long rows) {
         this.file = file;
         this.label = label;
+        this.rows = rows;
     }
 
     public File getFile() {
@@ -23,4 +26,13 @@ public class FileLabelPair {
     public String getLabel() {
         return label;
     }
+
+    public long getRows() {
+        return rows;
+    }
+
+    public boolean isEmpty() {
+        return (rows == 0);
+    }
+
 }

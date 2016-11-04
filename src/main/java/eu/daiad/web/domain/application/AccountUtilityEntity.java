@@ -3,7 +3,6 @@ package eu.daiad.web.domain.application;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -15,32 +14,27 @@ import javax.persistence.Table;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-@Entity(name = "account_role")
-@Table(schema = "public", name = "account_role")
-public class AccountRole {
-
+@Entity(name = "account_utility")
+@Table(schema = "public", name = "account_utility")
+public class AccountUtilityEntity {
 
 	@Id()
 	@Column(name = "id")
-	@SequenceGenerator(sequenceName = "account_role_id_seq", name = "account_role_id_seq", allocationSize = 1, initialValue = 1)
-	@GeneratedValue(generator = "account_role_id_seq", strategy = GenerationType.SEQUENCE)
+	@SequenceGenerator(sequenceName = "account_utility_id_seq", name = "account_utility_id_seq", allocationSize = 1, initialValue = 1)
+	@GeneratedValue(generator = "account_utility_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
-	
+
 	@ManyToOne(cascade = { CascadeType.ALL })
 	@JoinColumn(name = "account_id", nullable = false)
 	private AccountEntity owner;
-	
+
 	@ManyToOne(cascade = { CascadeType.ALL })
-	@JoinColumn(name = "role_id", nullable = false)
-	private Role role;	
-	
+	@JoinColumn(name = "utility_id", nullable = false)
+	private UtilityEntity utility;
+
 	@Column(name = "date_assigned")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime assignedOn = new DateTime();
-	
-	@ManyToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
-	@JoinColumn(name = "assigned_by", nullable = true)
-	private AccountEntity assignedBy;
 
 	public AccountEntity getOwner() {
 		return owner;
@@ -50,12 +44,12 @@ public class AccountRole {
 		this.owner = owner;
 	}
 
-	public Role getRole() {
-		return role;
+	public UtilityEntity getUtility() {
+		return utility;
 	}
 
-	public void setRole(Role role) {
-		this.role = role;
+	public void setUtility(UtilityEntity utility) {
+		this.utility = utility;
 	}
 
 	public DateTime getAssignedOn() {
@@ -64,14 +58,6 @@ public class AccountRole {
 
 	public void setAssignedOn(DateTime assignedOn) {
 		this.assignedOn = assignedOn;
-	}
-
-	public AccountEntity getAssignedBy() {
-		return assignedBy;
-	}
-
-	public void setAssignedBy(AccountEntity assignedBy) {
-		this.assignedBy = assignedBy;
 	}
 
 	public int getId() {

@@ -351,7 +351,7 @@ public class FileDataLoaderService extends BaseService implements IFileDataLoade
                 sessionQuery.setDeviceKey(new UUID[] { device.getKey() });
 
                 AmphiroMeasurementIndexIntervalQueryResult existingSessions = amphiroIndexOrderedRepository
-                                .searchMeasurements(timezone, sessionQuery);
+                                .getMeasurements(timezone, sessionQuery);
 
                 if ((existingSessions.getSeries() == null)
                                 || (existingSessions.getSeries().get(0).getPoints().size() == 0)) {
@@ -380,7 +380,7 @@ public class FileDataLoaderService extends BaseService implements IFileDataLoade
                     }
 
                     data.setSessions(sessions);
-                    amphiroIndexOrderedRepository.storeData(user, (AmphiroDevice) device, data);
+                    amphiroIndexOrderedRepository.store(user, (AmphiroDevice) device, data);
                 }
             }
         }

@@ -25,11 +25,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Repository;
 
-import eu.daiad.web.hbase.HBaseConnectionManager;
 import eu.daiad.web.model.TemporalConstants;
 import eu.daiad.web.model.amphiro.AmphiroAbstractDataPoint;
 import eu.daiad.web.model.amphiro.AmphiroAbstractSession;
@@ -61,40 +59,11 @@ import eu.daiad.web.model.query.RankingDataPoint;
 import eu.daiad.web.model.query.UserDataPoint;
 import eu.daiad.web.model.security.AuthenticatedUser;
 
-@Repository()
-public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository implements IAmphiroTimeOrderedRepository {
+@Primary()
+@Repository("hBaseAmphiroRepositoryV1")
+public class HBaseAmphiroRepositoryV1 extends AbstractAmphiroHBaseRepository implements IAmphiroTimeOrderedRepository {
 
-    private static final String dataSessionLoggerName = "AmphiroSessionLogger";
-    
-    private static final String dataMeasurementLoggerName = "AmphiroMeasurementLogger";
-
-    private static final Log logger = LogFactory.getLog(HBaseAmphiroTimeOrderedRepository.class);
-
-    private static final Log dataSessionLogger = LogFactory.getLog(dataSessionLoggerName);
-    
-    private static final Log dataMeasurementLogger = LogFactory.getLog(dataMeasurementLoggerName);
-
-    private final String ERROR_RELEASE_RESOURCES = "Failed to release resources";
-
-    private enum EnumTimeInterval {
-        UNDEFINED(0), HOUR(3600), DAY(86400);
-
-        private final int value;
-
-        private EnumTimeInterval(int value) {
-            this.value = value;
-        }
-
-        public int getValue() {
-            return this.value;
-        }
-    }
-
-    @Value("${hbase.data.time.partitions}")
-    private short timePartitions;
-
-    @Value("${scanner.cache.size}")
-    private int scanCacheSize = 1;
+    private static final Log logger = LogFactory.getLog(HBaseAmphiroRepositoryV1.class);
 
     private final String amphiroTableSessionIndex = "daiad:amphiro-sessions-index";
 
@@ -104,10 +73,15 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
 
     private final String amphiroTableSessionByUser = "daiad:amphiro-sessions-by-user";
 
-    private final String columnFamilyName = "cf";
-
-    @Autowired
-    private HBaseConnectionManager connection;
+    /**
+     * Returns the current API version.
+     *
+     * @return the API version.
+     */
+    @Override
+    protected String getVersion() {
+        return "v1";
+    }
 
     private void updateSessionIndex(UUID userKey, AmphiroMeasurementCollection data) throws Exception {
         Table table = null;
@@ -115,9 +89,9 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            table = connection.getTable(this.amphiroTableSessionIndex);
+            table = connection.getTable(amphiroTableSessionIndex);
 
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
             byte[] columnQualifier = Bytes.toBytes("ts");
 
             for (int i = data.getSessions().size() - 1; i >= 0; i--) {
@@ -164,7 +138,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -175,8 +149,8 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            table = connection.getTable(this.amphiroTableSessionByUser);
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            table = connection.getTable(amphiroTableSessionByUser);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             for (int i = 0; i < data.getSessions().size(); i++) {
                 AmphiroSession s = data.getSessions().get(i);
@@ -273,7 +247,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -284,8 +258,8 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            table = connection.getTable(this.amphiroTableSessionByTime);
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            table = connection.getTable(amphiroTableSessionByTime);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             for (int i = 0; i < data.getSessions().size(); i++) {
                 AmphiroSession s = data.getSessions().get(i);
@@ -304,7 +278,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
 
                 // Delete existing record
                 if ((!s.isHistory()) && (s.getDelete() != null)) {
-                    for (short partitionIndex = 0; partitionIndex < this.timePartitions; partitionIndex++) {
+                    for (short partitionIndex = 0; partitionIndex < timePartitions; partitionIndex++) {
                         partitionBytes = Bytes.toBytes(partitionIndex);
 
                         timestamp = s.getDelete().getTimestamp() / 1000;
@@ -333,7 +307,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
 
                 // Insert new record
 
-                short partition = (short) (s.getTimestamp() % this.timePartitions);
+                short partition = (short) (s.getTimestamp() % timePartitions);
                 partitionBytes = Bytes.toBytes(partition);
 
                 timestamp = s.getTimestamp() / 1000;
@@ -395,7 +369,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -405,7 +379,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
             for (AmphiroSession session : data.getSessions()) {
                 List<String> tokens = new ArrayList<String>();
 
-                tokens.add("v1");
+                tokens.add(getVersion());
 
                 tokens.add(Integer.toString(user.getId()));
                 tokens.add(user.getKey().toString());
@@ -424,14 +398,14 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
                 tokens.add(Float.toString(session.getTemperature()));
                 tokens.add(Float.toString(session.getFlow()));
 
-                dataSessionLogger.info(StringUtils.join(tokens, ";"));
+                sessionLogger.info(StringUtils.join(tokens, ";"));
             }
         }
         if (data.getMeasurements() != null) {
             for (AmphiroMeasurement measurement : data.getMeasurements()) {
                 List<String> tokens = new ArrayList<String>();
 
-                tokens.add("v1");
+                tokens.add(getVersion());
 
                 tokens.add(Integer.toString(user.getId()));
                 tokens.add(user.getKey().toString());
@@ -441,7 +415,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
                 tokens.add(device.getKey().toString());
 
                 tokens.add(Long.toString(measurement.getSessionId()));
-                tokens.add(Integer.toString(measurement.getIndex()));
+                tokens.add(Long.toString(measurement.getIndex()));
                 tokens.add(Boolean.toString(measurement.isHistory()));
                 tokens.add(Long.toString(measurement.getTimestamp()));
 
@@ -449,7 +423,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
                 tokens.add(Float.toString(measurement.getEnergy()));
                 tokens.add(Float.toString(measurement.getTemperature()));
 
-                dataMeasurementLogger.info(StringUtils.join(tokens, ";"));
+                sessionMeasurementLogger.info(StringUtils.join(tokens, ";"));
             }
         }
     }
@@ -457,7 +431,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
     private void preProcessData(AmphiroMeasurementCollection data) {
         try {
             // Sort sessions
-            ArrayList<AmphiroSession> sessions = data.getSessions();
+            List<AmphiroSession> sessions = data.getSessions();
 
             Collections.sort(sessions, new Comparator<AmphiroSession>() {
 
@@ -482,7 +456,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
             }
 
             // Sort measurements
-            ArrayList<AmphiroMeasurement> measurements = data.getMeasurements();
+            List<AmphiroMeasurement> measurements = data.getMeasurements();
 
             if ((measurements != null) && (measurements.size() > 0)) {
 
@@ -549,7 +523,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
                 }
             }
         } catch (ApplicationException ex) {
-            logger.warn(this.jsonToString(data));
+            logger.warn(jsonToString(data));
 
             throw ex;
         }
@@ -561,8 +535,8 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            table = connection.getTable(this.amphiroTableMeasurements);
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            table = connection.getTable(amphiroTableMeasurements);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             for (int i = 0; i < data.getMeasurements().size(); i++) {
                 AmphiroMeasurement m = data.getMeasurements().get(i);
@@ -593,18 +567,18 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
 
                 Put p = new Put(rowKey);
 
-                byte[] column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("s")));
+                byte[] column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("s")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.getSessionId()));
 
-                column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("i")));
+                column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("i")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.getIndex()));
-                column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("v")));
+                column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("v")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.getVolume()));
-                column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("t")));
+                column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("t")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.getTemperature()));
-                column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("e")));
+                column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("e")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.getEnergy()));
-                column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("h")));
+                column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("h")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.isHistory()));
 
                 table.put(p);
@@ -616,7 +590,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -629,18 +603,18 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
                 return;
             }
 
-            this.logData(user, device, data);
+            logData(user, device, data);
 
-            this.preProcessData(data);
+            preProcessData(data);
 
-            this.updateSessionIndex(user.getKey(), data);
+            updateSessionIndex(user.getKey(), data);
 
             if (data.getSessions().size() > 0) {
-                this.storeSessionByUser(user.getKey(), data);
-                this.storeSessionByTime(user.getKey(), data);
+                storeSessionByUser(user.getKey(), data);
+                storeSessionByTime(user.getKey(), data);
 
                 if ((data.getMeasurements() != null) && (data.getMeasurements().size() > 0)) {
-                    this.storeMeasurements(user.getKey(), data);
+                    storeMeasurements(user.getKey(), data);
                 }
             }
         } catch (Exception ex) {
@@ -649,11 +623,11 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
     }
 
     private byte[] getUserDeviceHourRowKey(byte[] userKeyHash, byte[] deviceKeyHash, DateTime date) throws Exception {
-        return this.getUserDeviceTimeRowKey(userKeyHash, deviceKeyHash, date.getMillis(), EnumTimeInterval.HOUR);
+        return getUserDeviceTimeRowKey(userKeyHash, deviceKeyHash, date.getMillis(), EnumTimeInterval.HOUR);
     }
 
     private byte[] getUserDeviceDayRowKey(byte[] userKeyHash, byte[] deviceKeyHash, DateTime date) throws Exception {
-        return this.getUserDeviceTimeRowKey(userKeyHash, deviceKeyHash, date.getMillis(), EnumTimeInterval.DAY);
+        return getUserDeviceTimeRowKey(userKeyHash, deviceKeyHash, date.getMillis(), EnumTimeInterval.DAY);
     }
 
     private byte[] getUserDeviceTimeRowKey(byte[] userKeyHash, byte[] deviceKeyHash, long date,
@@ -683,21 +657,6 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
                         timeBucketBytes.length);
 
         return rowKey;
-    }
-
-    private byte[] appendLength(byte[] array) throws Exception {
-        byte[] length = { (byte) array.length };
-
-        return concatenate(length, array);
-    }
-
-    private byte[] concatenate(byte[] a, byte[] b) {
-        int lengthA = a.length;
-        int lengthB = b.length;
-        byte[] concat = new byte[lengthA + lengthB];
-        System.arraycopy(a, 0, concat, 0, lengthA);
-        System.arraycopy(b, 0, concat, lengthA, lengthB);
-        return concat;
     }
 
     @Override
@@ -753,8 +712,8 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            table = connection.getTable(this.amphiroTableMeasurements);
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            table = connection.getTable(amphiroTableMeasurements);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
             byte[] userKeyHash = md.digest(userKey);
@@ -767,8 +726,8 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
 
                 Scan scan = new Scan();
                 scan.addFamily(columnFamily);
-                scan.setStartRow(this.getUserDeviceHourRowKey(userKeyHash, deviceKeyHash, startDate));
-                scan.setStopRow(this.calculateTheClosestNextRowKeyForPrefix(this.getUserDeviceHourRowKey(userKeyHash,
+                scan.setStartRow(getUserDeviceHourRowKey(userKeyHash, deviceKeyHash, startDate));
+                scan.setStopRow(calculateTheClosestNextRowKeyForPrefix(getUserDeviceHourRowKey(userKeyHash,
                                 deviceKeyHash, endDate)));
 
                 scanner = table.getScanner(scan);
@@ -862,7 +821,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -930,8 +889,8 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            table = connection.getTable(this.amphiroTableSessionByUser);
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            table = connection.getTable(amphiroTableSessionByUser);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
             byte[] userKeyHash = md.digest(userKey);
@@ -946,8 +905,8 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
 
                 Scan scan = new Scan();
                 scan.addFamily(columnFamily);
-                scan.setStartRow(this.getUserDeviceDayRowKey(userKeyHash, deviceKeyHash, startDate));
-                scan.setStopRow(this.calculateTheClosestNextRowKeyForPrefix(this.getUserDeviceDayRowKey(userKeyHash,
+                scan.setStartRow(getUserDeviceDayRowKey(userKeyHash, deviceKeyHash, startDate));
+                scan.setStopRow(calculateTheClosestNextRowKeyForPrefix(getUserDeviceDayRowKey(userKeyHash,
                                 deviceKeyHash, endDate)));
 
                 scanner = table.getScanner(scan);
@@ -1037,7 +996,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -1056,8 +1015,8 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            table = connection.getTable(this.amphiroTableSessionByUser);
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            table = connection.getTable(amphiroTableSessionByUser);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
             byte[] userKeyHash = md.digest(userKey);
@@ -1068,8 +1027,8 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
             Scan scan = new Scan();
             scan.addFamily(columnFamily);
 
-            scan.setStartRow(this.getUserDeviceDayRowKey(userKeyHash, deviceKeyHash, startDate));
-            scan.setStopRow(this.calculateTheClosestNextRowKeyForPrefix(this.getUserDeviceDayRowKey(userKeyHash,
+            scan.setStartRow(getUserDeviceDayRowKey(userKeyHash, deviceKeyHash, startDate));
+            scan.setStopRow(calculateTheClosestNextRowKeyForPrefix(getUserDeviceDayRowKey(userKeyHash,
                             deviceKeyHash, endDate)));
 
             scanner = table.getScanner(scan);
@@ -1119,7 +1078,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
                                 && (session.getTimestamp() <= endDate.getMillis())
                                 && (session.getId() == query.getSessionId())) {
 
-                    session.setMeasurements(this.getSessionMeasurements(query));
+                    session.setMeasurements(getSessionMeasurements(query));
 
                     data.setSession(session);
                     break;
@@ -1140,7 +1099,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -1157,8 +1116,8 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            table = connection.getTable(this.amphiroTableMeasurements);
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            table = connection.getTable(amphiroTableMeasurements);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
             byte[] userKeyKey = md.digest(userKey);
@@ -1168,8 +1127,8 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
 
             Scan scan = new Scan();
             scan.addFamily(columnFamily);
-            scan.setStartRow(this.getUserDeviceHourRowKey(userKeyKey, deviceKeyHash, startDate));
-            scan.setStopRow(this.calculateTheClosestNextRowKeyForPrefix(this.getUserDeviceHourRowKey(userKeyKey,
+            scan.setStartRow(getUserDeviceHourRowKey(userKeyKey, deviceKeyHash, startDate));
+            scan.setStopRow(calculateTheClosestNextRowKeyForPrefix(getUserDeviceHourRowKey(userKeyKey,
                             deviceKeyHash, endDate)));
 
             scanner = table.getScanner(scan);
@@ -1240,7 +1199,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -1255,8 +1214,8 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
             result.add(new GroupDataSeries(filter.getLabel(), filter.getUsers().size(), filter.getAreaId()));
         }
         try {
-            table = connection.getTable(this.amphiroTableSessionByTime);
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            table = connection.getTable(amphiroTableSessionByTime);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             DateTime startDate = new DateTime(query.getStartDateTime(), DateTimeZone.UTC);
             DateTime endDate = new DateTime(query.getEndDateTime(), DateTimeZone.UTC);
@@ -1302,7 +1261,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
 
             for (short p = 0; p < timePartitions; p++) {
                 Scan scan = new Scan();
-                scan.setCaching(this.scanCacheSize);
+                scan.setCaching(scanCacheSize);
                 scan.addFamily(columnFamily);
 
                 byte[] partitionBytes = Bytes.toBytes(p);
@@ -1410,7 +1369,7 @@ public class HBaseAmphiroTimeOrderedRepository extends HBaseBaseRepository imple
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
 

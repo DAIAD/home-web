@@ -2,7 +2,7 @@ package eu.daiad.web.model.group;
 
 import java.util.UUID;
 
-import eu.daiad.web.domain.application.Account;
+import eu.daiad.web.domain.application.AccountEntity;
 
 public class GroupMemberInfo {
 	
@@ -14,7 +14,7 @@ public class GroupMemberInfo {
 	
 	private long registrationDateMils;
 	
-	public GroupMemberInfo(Account account){
+	public GroupMemberInfo(AccountEntity account){
 		this.id = account.getKey();
 		if (account.getFirstname() != null || account.getLastname() != null){
 			this.name = account.getFirstname() + " " + account.getLastname();

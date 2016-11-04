@@ -14,83 +14,112 @@ import org.springframework.stereotype.Component;
 import eu.daiad.web.hbase.HBaseConnectionManager;
 
 /**
- * Initializes HBASE tables.
- *
+ * Initializes HBase schema.
  */
 @Component
 public class HBaseInitializer implements CommandLineRunner {
 
-	private static final Log logger = LogFactory.getLog(HBaseInitializer.class);
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
+    private static final Log logger = LogFactory.getLog(HBaseInitializer.class);
 
-	@Autowired
-	private HBaseConnectionManager connection;
+    /**
+     * Wrapper to HBase connection.
+     */
+    @Autowired
+    private HBaseConnectionManager connection;
 
-	private final String namespace = "daiad";
+    /**
+     * Default namespace for all DAIAD HBase tables.
+     */
+    private static final String namespace = "daiad";
 
-	private final String tables[] = { "amphiro-sessions-index", "amphiro-sessions-by-time", "amphiro-sessions-by-user",
-					"amphiro-measurements", "meter-measurements-by-time", "meter-measurements-by-user",
-					"arduino-measurements", "amphiro-sessions-index-v2", "amphiro-sessions-by-time-v2",
-					"amphiro-sessions-by-user-v2", "amphiro-measurements-v2", "meter-forecast-by-user",
-					"meter-forecast-by-time" };
+    /**
+     * HBase tables required by DAIAD. If a table does not exist, it is created
+     * when the application starts.
+     */
+    private static final String tables[] = { "counters",
+                                             "amphiro-sessions-index",
+                                             "amphiro-sessions-index-v2",
+                                             "amphiro-sessions-index-v3",
+                                             "amphiro-sessions-by-time",
+                                             "amphiro-sessions-by-time-v2",
+                                             "amphiro-sessions-by-time-v3",
+                                             "amphiro-sessions-by-user",
+                                             "amphiro-sessions-by-user-v2",
+                                             "amphiro-sessions-by-user-v3",
+                                             "amphiro-measurements",
+                                             "amphiro-measurements-v2",
+                                             "amphiro-measurements-v3",
+                                             "meter-forecast-by-user",
+                                             "meter-forecast-by-time",
+                                             "meter-measurements-by-time",
+                                             "meter-measurements-by-user",
+                                             "meter-measurements-aggregate-by-time",
+                                             "arduino-measurements" };
 
-	private final String columnFamily = "cf";
+    /**
+     * Default column family for all DAIAD HBase tables.
+     */
+    private static final String columnFamily = "cf";
 
-	/**
-	 * On application start and after the Spring Application context is configured, this method creates
-	 * all missing HBASE table required by the application.
-	 */
-	@Override
-	public void run(String... args) throws Exception {
-		Admin admin = null;
+    /**
+     * On application start and after the Spring Application context is configured, this method creates
+     * all missing HBase tables required by the application.
+     */
+    @Override
+    public void run(String... args) throws Exception {
+        Admin admin = null;
 
-		try {
-			if (connection.isAborted()) {
-				throw new Exception("aborted");
-			}
-			if (connection.isClosed()) {
-				throw new Exception("closed");
-			}
+        try {
+            if (connection.isAborted()) {
+                throw new Exception("HBase: Connection has been aborted.");
+            }
+            if (connection.isClosed()) {
+                throw new Exception("HBase: Connection is closed.");
+            }
 
-			admin = connection.getAdmin();
+            admin = connection.getAdmin();
 
-			boolean createNamespace = true;
+            boolean createNamespace = true;
 
-			for (NamespaceDescriptor ns : admin.listNamespaceDescriptors()) {
-				if (ns.getName().equals(this.namespace)) {
-					createNamespace = false;
-					break;
-				}
-			}
+            for (NamespaceDescriptor ns : admin.listNamespaceDescriptors()) {
+                if (ns.getName().equals(namespace)) {
+                    createNamespace = false;
+                    break;
+                }
+            }
 
-			if (createNamespace) {
-				admin.createNamespace(NamespaceDescriptor.create(this.namespace).build());
-			}
+            if (createNamespace) {
+                admin.createNamespace(NamespaceDescriptor.create(namespace).build());
+            }
 
-			for (String qualifier : this.tables) {
-				String fullname = String.format("%s:%s", this.namespace, qualifier);
+            for (String qualifier : tables) {
+                String fullname = String.format("%s:%s", namespace, qualifier);
 
-				TableName tableName = TableName.valueOf(fullname);
+                TableName tableName = TableName.valueOf(fullname);
 
-				if (!admin.tableExists(tableName)) {
-					HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
+                if (!admin.tableExists(tableName)) {
+                    HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
 
-					tableDescriptor.addFamily(new HColumnDescriptor(this.columnFamily));
+                    tableDescriptor.addFamily(new HColumnDescriptor(columnFamily));
 
-					admin.createTable(tableDescriptor);
-					logger.info(String.format("HBASE table [%s] has been created.", fullname));
-				}
-			}
-		} catch (Exception ex) {
-			logger.fatal("Failed to create HBASE schema.", ex);
-		} finally {
-			try {
-				if (admin != null) {
-					admin.close();
-					admin = null;
-				}
-			} catch (Exception ex) {
-				logger.error("Failed to release HBASE connection resources.", ex);
-			}
-		}
-	}
+                    admin.createTable(tableDescriptor);
+                    logger.info(String.format("HBase: Table [%s] has been created.", fullname));
+                }
+            }
+        } catch (Exception ex) {
+            logger.fatal("HBase: Failed to initialize schema.", ex);
+        } finally {
+            try {
+                if (admin != null) {
+                    admin.close();
+                    admin = null;
+                }
+            } catch (Exception ex) {
+                logger.error("HBase: Failed to release resources.", ex);
+            }
+        }
+    }
 }

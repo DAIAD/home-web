@@ -10,14 +10,14 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import eu.daiad.web.model.EnumValueDescription;
 
 public enum EnumRole {
+    @EnumValueDescription("Allows access to DAIAD@Utility. User can access all registered utilities and perform generic system administrative tasks.")
+    ROLE_SYSTEM_ADMIN,
+
+    @EnumValueDescription("Allows access to DAIAD@Utility. User may access specific utilities only and perform utility specific administrative tasks.")
+    ROLE_UTILITY_ADMIN,
+
 	@EnumValueDescription("Allows access to DAIAD@Home for the current user")
-	ROLE_USER,
-
-	@EnumValueDescription("Allows restricted access to DAIAD@Utility")
-	ROLE_SUPERUSER,
-
-	@EnumValueDescription("Allows access to DAIAD@Utility and all users that belong to it")
-	ROLE_ADMIN;
+	ROLE_USER;
 
 	public static EnumRole fromString(String value) {
 		for (EnumRole item : EnumRole.values()) {

@@ -15,7 +15,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.domain.admin.DailyCounterEntity;
-import eu.daiad.web.domain.application.Utility;
+import eu.daiad.web.domain.application.UtilityEntity;
 import eu.daiad.web.model.admin.Counter;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.BaseRepository;
@@ -38,13 +38,13 @@ public class JpaUtilityRepository extends BaseRepository implements IUtilityRepo
 
     @Override
     public List<UtilityInfo> getUtilities() {
-        TypedQuery<Utility> utilityQuery = entityManager.createQuery("SELECT u  FROM utility u", Utility.class)
+        TypedQuery<UtilityEntity> utilityQuery = entityManager.createQuery("SELECT u  FROM utility u", UtilityEntity.class)
                         .setFirstResult(0);
 
-        List<Utility> utilities = utilityQuery.getResultList();
+        List<UtilityEntity> utilities = utilityQuery.getResultList();
         List<UtilityInfo> utilitiesInfo = new ArrayList<UtilityInfo>();
 
-        for (Utility utility : utilities) {
+        for (UtilityEntity utility : utilities) {
             UtilityInfo utilityInfo = new UtilityInfo(utility);
             utilitiesInfo.add(utilityInfo);
         }
@@ -54,8 +54,8 @@ public class JpaUtilityRepository extends BaseRepository implements IUtilityRepo
 
     @Override
     public UtilityInfo getUtilityById(int id) {
-        TypedQuery<Utility> utilityQuery = entityManager.createQuery("SELECT u FROM utility u where u.id = :id",
-                        Utility.class).setFirstResult(0);
+        TypedQuery<UtilityEntity> utilityQuery = entityManager.createQuery("SELECT u FROM utility u where u.id = :id",
+                        UtilityEntity.class).setFirstResult(0);
 
         utilityQuery.setParameter("id", id);
 
@@ -64,8 +64,8 @@ public class JpaUtilityRepository extends BaseRepository implements IUtilityRepo
 
     @Override
     public UtilityInfo getUtilityByKey(UUID key) {
-        TypedQuery<Utility> utilityQuery = entityManager.createQuery("SELECT u FROM utility u where u.key = :key",
-                        Utility.class).setFirstResult(0);
+        TypedQuery<UtilityEntity> utilityQuery = entityManager.createQuery("SELECT u FROM utility u where u.key = :key",
+                        UtilityEntity.class).setFirstResult(0);
 
         utilityQuery.setParameter("key", key);
 

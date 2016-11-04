@@ -14,18 +14,18 @@ public class GroupSet extends Group {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "owner_id", nullable = false)
-	private Account owner;
+	private AccountEntity owner;
 
 	@Override
 	public EnumGroupType getType() {
 		return EnumGroupType.SET;
 	}
 
-	public Account getOwner() {
+	public AccountEntity getOwner() {
 		return owner;
 	}
 
-	public void setOwner(Account owner) {
+	public void setOwner(AccountEntity owner) {
 		this.owner = owner;
 	}
 

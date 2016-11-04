@@ -79,15 +79,15 @@ public class UserDataExportService extends AbstractDataExportService {
 
     /**
      * Exports data for a single user to a temporary file.
-     *  
+     *
      * @param query the query that selects the data to export.
      * @return the result of the export operation.
-     * 
+     *
      * @throws ApplicationException if the query execution or file creation fails.
      */
     public ExportResult export(UserDataExportQuery query) throws ApplicationException {
         ExportResult result = new ExportResult();
-        
+
         XSSFWorkbook workbook = null;
 
         try {
@@ -98,19 +98,19 @@ public class UserDataExportService extends AbstractDataExportService {
 
             // Get user
             AuthenticatedUser user = userRepository.getUserByKey(query.getUserKey());
-            
+
             // Check time zone
             if (StringUtils.isBlank(query.getTimezone())) {
                 query.setTimezone(user.getTimezone());
             }
             ensureTimezone(query.getTimezone());
-            
+
             // Get user devices
             List<Device> devices = deviceRepository.getUserDevices(query.getUserKey(), new DeviceRegistrationQuery());
 
             List<String> amphiroName = new ArrayList<String>();
             List<UUID> amphiroKey = new ArrayList<UUID>();
-            
+
             List<String> meterSerial = new ArrayList<String>();
             List<UUID> meterKey = new ArrayList<UUID>();
 
@@ -127,7 +127,7 @@ public class UserDataExportService extends AbstractDataExportService {
                         }
                     }
                 }
-                
+
                 if (fetch) {
                     switch (d.getType()) {
                         case AMPHIRO:
@@ -145,12 +145,12 @@ public class UserDataExportService extends AbstractDataExportService {
                     }
                 }
             }
-            
+
             // Initialize excel work book
             workbook = new XSSFWorkbook();
 
             // Load sessions
-            result.increment(exportUserAmphiroDataToExcel(workbook, 
+            result.increment(exportUserAmphiroDataToExcel(workbook,
                                                          query.getUserKey(),
                                                          amphiroKey.toArray(new UUID[amphiroKey.size()]),
                                                          amphiroName.toArray(new String[amphiroName.size()]),
@@ -158,7 +158,7 @@ public class UserDataExportService extends AbstractDataExportService {
                                                          "yyyy-MM-dd HH:mm:ss"));
 
             // Load readings
-            result.increment(exportUserMeterDataToExcel(workbook, 
+            result.increment(exportUserMeterDataToExcel(workbook,
                                                         query.getUserKey(),
                                                         meterKey.toArray(new UUID[meterKey.size()]),
                                                         meterSerial.toArray(new String[meterSerial.size()]),
@@ -171,8 +171,8 @@ public class UserDataExportService extends AbstractDataExportService {
             excelFileStream.close();
             excelFileStream = null;
 
-            result.getFiles().add(new FileLabelPair(excelFile, user.getUsername() + ".xlsx"));
-            
+            result.getFiles().add(new FileLabelPair(excelFile, user.getUsername() + ".xlsx", result.getTotalRows()));
+
             return result;
         } catch (Exception ex) {
             throw wrapApplicationException(ex);
@@ -188,10 +188,10 @@ public class UserDataExportService extends AbstractDataExportService {
         }
     }
 
-    
+
     /**
      * Exports amphiro b1 sessions.
-     * 
+     *
      * @param workbook the EXCEL workbook to write to.
      * @param userKey the unique user key (UUID).
      * @param deviceKeys the unique device keys (UUID).
@@ -208,14 +208,14 @@ public class UserDataExportService extends AbstractDataExportService {
 
         // Load data
         AmphiroSessionCollectionIndexIntervalQuery query = new AmphiroSessionCollectionIndexIntervalQuery();
-        
+
         query.setUserKey(userKey);
         query.setDeviceKey(deviceKeys);
         query.setType(EnumIndexIntervalQuery.SLIDING);
         query.setLength(Integer.MAX_VALUE);
 
         AmphiroSessionCollectionIndexIntervalQueryResult amphiroCollection = this.amphiroIndexOrderedRepository
-                        .searchSessions(deviceNames, DateTimeZone.forID(timezone), query);
+                        .getSessions(deviceNames, DateTimeZone.forID(timezone), query);
 
         // Create one sheet per device
         for (AmphiroSessionCollection device : amphiroCollection.getDevices()) {
@@ -232,7 +232,7 @@ public class UserDataExportService extends AbstractDataExportService {
 
             // Write header
             Row row = sheet.createRow(rowIndex++);
-            
+
             row.createCell(0).setCellValue("Session Id");
             row.createCell(1).setCellValue("Date Time");
             row.createCell(2).setCellValue("Volume");
@@ -268,13 +268,13 @@ public class UserDataExportService extends AbstractDataExportService {
                 row.createCell(7).setCellValue(((AmphiroSession) session).isHistory() ? "YES" : "NO");
             }
         }
-        
+
         return totalRows;
     }
 
     /**
      * Exports amphiro b1 sessions.
-     * 
+     *
      * @param workbook the EXCEL workbook to write to.
      * @param userKey the unique user key (UUID).
      * @param meterKeys the unique meter keys (UUID).
@@ -293,7 +293,7 @@ public class UserDataExportService extends AbstractDataExportService {
 
         // Configure date time format
         DateTimeFormatter formatter = DateTimeFormat.forPattern(dateFormat).withZone(DateTimeZone.forID(timezone));
-        
+
         // Load data
         WaterMeterMeasurementQuery query = new WaterMeterMeasurementQuery();
 

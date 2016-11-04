@@ -26,7 +26,7 @@ public class AccountStaticRecommendation {
 
 	@ManyToOne(cascade = { CascadeType.ALL })
 	@JoinColumn(name = "account_id", nullable = false)
-	private Account account;
+	private AccountEntity account;
 
 	@ManyToOne(cascade = { CascadeType.ALL })
 	@JoinColumn(name = "static_recommendation_id", nullable = false)
@@ -44,11 +44,11 @@ public class AccountStaticRecommendation {
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime receiveAcknowledgedOn;
 
-	public Account getAccount() {
+	public AccountEntity getAccount() {
 		return account;
 	}
 
-	public void setAccount(Account account) {
+	public void setAccount(AccountEntity account) {
 		this.account = account;
 	}
 

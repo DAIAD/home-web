@@ -577,7 +577,7 @@ function query() { return; }
  * </br><code>SYSTEM</code> : Computed using an analysis algorithm.
  * </br><code>MANUAL</code> : Set by the user explicitly.
  * @apiParam (Member)         {Number}       timestamp             Most recent member assignment time stamp.
- * 
+ *
  * @apiParam (KeyValuePair) {String}         key                   Key.
  * @apiParam (KeyValuePair) {String}         value                 Value.
  *
@@ -699,7 +699,7 @@ function storeDataByIndex() { return; }
  * @apiGroup Data
  * @apiPermission ROLE_USER
  *
- * @apiDescription Assignms household members to shower sessions.
+ * @apiDescription Assigns household members to shower sessions.
  *
  * @apiParam (MemberAssignmentRequest) {Object}   credentials              User credentials
  * @apiParam (MemberAssignmentRequest) {String}   credentials.username     User name
@@ -752,3 +752,62 @@ function storeDataByIndex() { return; }
  * }
  */
 function assignMemberToSession() { return; }
+
+/**
+ * @api {post} /v2/data/session/ignore Ignore showers
+ * @apiVersion 0.0.2
+ * @apiName IgnoreSession
+ * @apiGroup Data
+ * @apiPermission ROLE_USER
+ *
+ * @apiDescription Mark an amphiro b1 session as not being a shower.
+ *
+ * @apiParam (IgnoreShowerRequest) {Object}   credentials              User credentials
+ * @apiParam (IgnoreShowerRequest) {String}   credentials.username     User name
+ * @apiParam (IgnoreShowerRequest) {String}   credentials.password     User password
+ * @apiParam (IgnoreShowerRequest) {Object[]} sessions                 Array of <code>Session</code> objects.
+ *
+ * @apiParam (Session) {String}   deviceKey    Device unique key (UUID).
+ * @apiParam (Session) {Number}   sessionId    Session id.
+ * @apiParam (Session) {Number}   timestamp    Update operation time stamp.
+ *
+ * @apiParamExample {json} Request Example
+ * {
+ *   "credentials": {
+ *     username: "user@daiad.eu",
+ *     password: "****"
+ *   },
+ *   "sessions":[{
+ *     "deviceKey": "4b6bb490-1c03-4c9d-b5d0-1dbb758bf71a",
+ *     "sessionId":2,
+ *     "timestamp" : 1461060000000
+ *   }]
+ * }
+ *
+ * @apiSuccess {Boolean}  success                 Returns <code>true</code> or <code>false</code> indicating success of the operation.
+ * @apiSuccess {Object[]} errors                  Array of <code>Error</code> objects.
+ *
+ * @apiSuccessExample {json} Response Example
+ * HTTP/1.1 200 OK
+ * {
+ *   "errors": [],
+ *   "success": true
+ * }
+ *
+ * @apiError {Boolean} success Always <code>false</code>.
+ * @apiError {Object[]} errors Array of <code>Error</code> objects.
+ *
+ * @apiError (Error) {String} code          Unique error code.
+ * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
+ *
+ * @apiErrorExample Error Response Example
+ * HTTP/1.1 200 OK
+ * {
+ *   errors: [{
+ *     code: "DataErrorCode.SESSION_NOT_FOUND",
+ *     description: "Session 4 was not found."
+ *   }],
+ *   success: false
+ * }
+ */
+function ignoreSession() { return; }

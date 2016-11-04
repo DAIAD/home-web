@@ -42,7 +42,7 @@ public class AccountProfile {
 
 	@OneToOne(fetch = FetchType.LAZY)
 	@PrimaryKeyJoinColumn()
-	private Account account;
+	private AccountEntity account;
 
 	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
 	@JoinColumn(name = "profile_id")
@@ -96,7 +96,7 @@ public class AccountProfile {
 		this.webConfiguration = webConfiguration;
 	}
 
-	public void setAccount(Account account) {
+	public void setAccount(AccountEntity account) {
 		this.account = account;
 	}
 

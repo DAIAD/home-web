@@ -27,26 +27,29 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
-import eu.daiad.web.domain.application.AccountActivity;
+import eu.daiad.web.domain.application.AccountActivityEntity;
+import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AccountProfile;
 import eu.daiad.web.domain.application.AccountProfileHistoryEntry;
 import eu.daiad.web.domain.application.AccountRole;
-import eu.daiad.web.domain.application.AccountWhiteListEntry;
+import eu.daiad.web.domain.application.AccountUtilityEntity;
+import eu.daiad.web.domain.application.AccountWhiteListEntity;
 import eu.daiad.web.domain.application.HouseholdEntity;
 import eu.daiad.web.domain.application.HouseholdMemberEntity;
 import eu.daiad.web.domain.application.PasswordResetTokenEntity;
 import eu.daiad.web.domain.application.Role;
 import eu.daiad.web.domain.application.SurveyEntity;
-import eu.daiad.web.domain.application.Utility;
+import eu.daiad.web.domain.application.UtilityEntity;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.EnumGender;
 import eu.daiad.web.model.EnumValueDescription;
+import eu.daiad.web.model.admin.AccountActivity;
+import eu.daiad.web.model.admin.AccountWhiteListEntry;
 import eu.daiad.web.model.admin.AccountWhiteListInfo;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
@@ -63,40 +66,63 @@ import eu.daiad.web.model.user.UserQuery;
 import eu.daiad.web.model.user.UserQueryResult;
 import eu.daiad.web.repository.BaseRepository;
 
+/**
+ * Provides methods for managing user accounts.
+ */
 @Repository
 @Transactional("applicationTransactionManager")
 public class JpaUserRepository extends BaseRepository implements IUserRepository {
 
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
     private static final Log logger = LogFactory.getLog(JpaUserRepository.class);
 
+    /**
+     * Default utility name. If white list functionality is disabled, a new user
+     * account is assigned to the default utility.
+     */
     private static final String DEFAULT_UTILITY_NAME = "DAIAD";
 
+    /**
+     * Enables/Disables white list functionality.
+     */
     @Value("${security.white-list}")
     private boolean enforceWhiteListCheck;
 
+    /**
+     * Password reset token interval in hours.
+     */
     @Value("${daiad.password.reset.token.duration}")
     private int passwordResetTokenDuration;
 
+    /**
+     *  Java Persistence entity manager.
+     */
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
 
+    /**
+     * Initializes roles.
+     *
+     * @throws ApplicationException if role initialization has failed.
+     */
     private void initializeRoles() throws ApplicationException {
         try {
             for (EnumRole r : EnumRole.class.getEnumConstants()) {
-                TypedQuery<Role> roleQuery = entityManager.createQuery("select r from role r where r.name = :name",
-                                Role.class);
+                TypedQuery<Role> roleQuery = entityManager.createQuery("select r from role r where r.name = :name", Role.class);
                 roleQuery.setParameter("name", r.toString());
 
                 List<Role> roles = roleQuery.getResultList();
                 if (roles.size() == 0) {
                     Role role = new Role();
 
-                    String description = EnumRole.class.getField(r.name()).getAnnotation(EnumValueDescription.class)
-                                    .value();
+                    String description = EnumRole.class.getField(r.name()).getAnnotation(EnumValueDescription.class).value();
                     role.setName(r.name());
                     role.setDescription(description);
 
-                    this.entityManager.persist(role);
+                    entityManager.persist(role);
+                    entityManager.flush();
                 }
             }
         } catch (Exception ex) {
@@ -104,25 +130,32 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         }
     }
 
+    /**
+     * Initializes administration accounts for registered utilities.
+     *
+     * @throws ApplicationException if account creation has failed.
+     */
     private void initializeAdministrators() throws ApplicationException {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
         try {
-            TypedQuery<eu.daiad.web.domain.application.Utility> utilityQuery = entityManager.createQuery(
-                            "select u from utility u", eu.daiad.web.domain.application.Utility.class);
+            String utilityQueryString = "select u from utility u";
 
-            for (eu.daiad.web.domain.application.Utility utility : utilityQuery.getResultList()) {
-                TypedQuery<eu.daiad.web.domain.application.Account> userQuery = entityManager.createQuery(
-                                "select a from account a where a.username = :username",
-                                eu.daiad.web.domain.application.Account.class);
+            TypedQuery<UtilityEntity> utilityQuery = entityManager.createQuery(utilityQueryString, UtilityEntity.class);
+
+            for (UtilityEntity utility : utilityQuery.getResultList()) {
+                String accountQueryString = "select a from account a where a.username = :username";
+
+                TypedQuery<AccountEntity> userQuery = entityManager.createQuery(accountQueryString,  AccountEntity.class);
                 userQuery.setParameter("username", utility.getDefaultAdministratorUsername());
 
-                List<eu.daiad.web.domain.application.Account> users = userQuery.getResultList();
+                List<AccountEntity> users = userQuery.getResultList();
 
-                if (users.size() == 0) {
+                if (users.isEmpty()) {
                     String password = UUID.randomUUID().toString();
 
-                    eu.daiad.web.domain.application.Account account = new eu.daiad.web.domain.application.Account();
+                    // Create account
+                    AccountEntity account = new AccountEntity();
                     account.setUsername(utility.getDefaultAdministratorUsername());
                     account.setPassword(encoder.encode(password));
                     account.setLocked(false);
@@ -130,10 +163,12 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                     account.setUtility(utility);
                     account.setLocale(Locale.ENGLISH.getLanguage());
 
-                    TypedQuery<Role> roleQuery = entityManager.createQuery("select r from role r where r.name = :name",
-                                    Role.class);
-                    roleQuery.setParameter("name", EnumRole.ROLE_ADMIN.name());
+                    String roleQueryString = "select r from role r where r.name = :name";
 
+                    TypedQuery<Role> roleQuery = entityManager.createQuery(roleQueryString, Role.class);
+                    roleQuery.setParameter("name", EnumRole.ROLE_UTILITY_ADMIN.name());
+
+                    // Assign role
                     Role role = roleQuery.getSingleResult();
 
                     AccountRole assignedRole = new AccountRole();
@@ -143,9 +178,18 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
 
                     account.getRoles().add(assignedRole);
 
-                    this.entityManager.persist(account);
-                    this.entityManager.flush();
+                    // Assign utilities
+                    AccountUtilityEntity accountUtility = new AccountUtilityEntity();
+                    accountUtility.setOwner(account);
+                    accountUtility.setAssignedOn(account.getCreatedOn());
 
+                    account.getUtilities().add(accountUtility);
+
+                    // Create account
+                    entityManager.persist(account);
+                    entityManager.flush();
+
+                    // Create profile
                     AccountProfile profile = new AccountProfile();
                     profile.setMobileMode(EnumMobileMode.INACTIVE.getValue());
                     profile.setWebMode(EnumWebMode.INACTIVE.getValue());
@@ -153,8 +197,9 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                     profile.setUpdatedOn(account.getCreatedOn());
 
                     profile.setAccount(account);
-                    this.entityManager.persist(profile);
+                    entityManager.persist(profile);
 
+                    // Create profile history entry
                     AccountProfileHistoryEntry entry = new AccountProfileHistoryEntry();
                     entry.setVersion(profile.getVersion());
                     entry.setUpdatedOn(account.getCreatedOn());
@@ -163,12 +208,13 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                     entry.setUtilityMode(profile.getUtilityMode());
 
                     entry.setProfile(profile);
-                    this.entityManager.persist(entry);
+                    entityManager.persist(entry);
 
-                    logger.info(String
-                                    .format("Default administrator has been crearted for utility [%s]. User name : %s. Password : %s",
-                                                    utility.getName(), utility.getDefaultAdministratorUsername(),
-                                                    password));
+                    // Log account creation and random password
+                    logger.info(String.format("Default administrator has been crearted for utility [%s]. User name : %s. Password : %s",
+                                              utility.getName(),
+                                              utility.getDefaultAdministratorUsername(),
+                                              password));
                 }
             }
         } catch (Exception ex) {
@@ -176,8 +222,10 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         }
     }
 
+    /**
+     * Initializes application security configuration.
+     */
     @Override
-    @Transactional(transactionManager = "transactionManager", propagation = Propagation.REQUIRES_NEW)
     public void initializeSecurityConfiguration() {
         try {
             // Initialize all system roles
@@ -186,80 +234,92 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             // Create an administrator for any registered utility
             initializeAdministrators();
         } catch (ApplicationException ex) {
-            logger.error("Database initialization has failed.");
+            logger.error("Database initialization has failed.", ex);
         }
     }
 
+    /**
+     * Checks if the user name is reserved.
+     *
+     * @param username the user name to check.
+     * @return if the user name is reserved.
+     */
     private boolean isUsernameReserved(String username) {
-        TypedQuery<eu.daiad.web.domain.application.Utility> userQuery = entityManager.createQuery(
-                        "select u from utility u where u.defaultAdministratorUsername = :username",
-                        eu.daiad.web.domain.application.Utility.class);
+        String userQueryString = "select u from utility u where u.defaultAdministratorUsername = :username";
+
+        TypedQuery<UtilityEntity> userQuery = entityManager.createQuery(userQueryString, UtilityEntity.class);
 
         userQuery.setParameter("username", username);
 
-        return (userQuery.getResultList().size() != 0);
+        return (!userQuery.getResultList().isEmpty());
     }
 
+    /**
+     * Creates a new account.
+     *
+     * @param user the account data
+     * @throws ApplicationException if account creation has failed.
+     */
     @Override
     public UUID createUser(Account user) throws ApplicationException {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
         try {
             // Check if user name is available
-            if (this.isUsernameReserved(user.getUsername())) {
+            if (isUsernameReserved(user.getUsername())) {
                 throw createApplicationException(UserErrorCode.USERNANE_RESERVED).set("username", user.getUsername());
             }
-            if (this.getUserByName(user.getUsername()) != null) {
-                throw createApplicationException(UserErrorCode.USERNANE_NOT_AVAILABLE).set("username",
-                                user.getUsername());
+            if (getUserByName(user.getUsername()) != null) {
+                throw createApplicationException(UserErrorCode.USERNANE_NOT_AVAILABLE).set("username", user.getUsername());
             }
 
             // Get matching white list entry if the white least feature is supported
-            AccountWhiteListEntry whiteListEntry = null;
+            AccountWhiteListEntity whiteListEntry = null;
 
             if (enforceWhiteListCheck) {
-                TypedQuery<eu.daiad.web.domain.application.AccountWhiteListEntry> query = entityManager.createQuery(
-                                "select a from account_white_list a where a.username = :username",
-                                eu.daiad.web.domain.application.AccountWhiteListEntry.class).setFirstResult(0)
-                                .setMaxResults(1);
+                String whiteListQueryString = "select a from account_white_list a where a.username = :username";
+
+                TypedQuery<AccountWhiteListEntity> query = entityManager.createQuery(whiteListQueryString, AccountWhiteListEntity.class)
+                                                                        .setFirstResult(0)
+                                                                        .setMaxResults(1);
                 query.setParameter("username", user.getUsername());
 
-                List<eu.daiad.web.domain.application.AccountWhiteListEntry> result = query.getResultList();
+                List<AccountWhiteListEntity> result = query.getResultList();
                 if (result.isEmpty()) {
-                    throw createApplicationException(UserErrorCode.WHITELIST_MISMATCH).set("username",
-                                    user.getUsername());
+                    throw createApplicationException(UserErrorCode.WHITELIST_MISMATCH).set("username", user.getUsername());
                 } else {
                     whiteListEntry = result.get(0);
                 }
             }
 
             // Decide utility to which the user is assigned to
-            Utility utility = null;
+            UtilityEntity utility = null;
 
             if (whiteListEntry != null) {
-                TypedQuery<eu.daiad.web.domain.application.Utility> query = entityManager.createQuery(
-                                "select u from utility u where u.id = :id",
-                                eu.daiad.web.domain.application.Utility.class);
+                String utilityQueryString = "select u from utility u where u.id = :id";
+
+                TypedQuery<UtilityEntity> query = entityManager.createQuery(utilityQueryString, UtilityEntity.class);
                 query.setParameter("id", whiteListEntry.getUtility().getId());
 
                 utility = query.getSingleResult();
             } else {
-                TypedQuery<eu.daiad.web.domain.application.Utility> query = entityManager.createQuery(
-                                "select u from utility u where u.name = :name",
-                                eu.daiad.web.domain.application.Utility.class);
+                String utilityQueryString = "select u from utility u where u.name = :name";
+
+                TypedQuery<UtilityEntity> query = entityManager.createQuery(utilityQueryString, UtilityEntity.class);
                 query.setParameter("name", DEFAULT_UTILITY_NAME);
 
                 utility = query.getSingleResult();
             }
 
             // Create and initialize user
-            eu.daiad.web.domain.application.Account account = new eu.daiad.web.domain.application.Account();
+            AccountEntity account = new AccountEntity();
             account.setUsername(user.getUsername());
             account.setPassword(encoder.encode(user.getPassword()));
 
             account.setEmail(user.getUsername());
 
             if (whiteListEntry != null) {
+                // Set user properties from the white list
                 account.setFirstname(whiteListEntry.getFirstname());
                 account.setLastname(whiteListEntry.getLastname());
                 account.setBirthdate(whiteListEntry.getBirthdate());
@@ -279,6 +339,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                     account.setLocation(whiteListEntry.getMeterLocation());
                 }
             } else {
+                // Set user properties
                 account.setFirstname(user.getFirstname());
                 account.setLastname(user.getLastname());
                 account.setBirthdate(user.getBirthdate());
@@ -318,8 +379,16 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
 
             account.getRoles().add(assignedRole);
 
-            this.entityManager.persist(account);
-            this.entityManager.flush();
+            // Assign utilities
+            AccountUtilityEntity accountUtility = new AccountUtilityEntity();
+            accountUtility.setOwner(account);
+            accountUtility.setAssignedOn(account.getCreatedOn());
+
+            account.getUtilities().add(accountUtility);
+
+            // Create user
+            entityManager.persist(account);
+            entityManager.flush();
 
             // Initialize user profile
             AccountProfile profile = new AccountProfile();
@@ -334,7 +403,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             profile.setUpdatedOn(account.getCreatedOn());
 
             profile.setAccount(account);
-            this.entityManager.persist(profile);
+            entityManager.persist(profile);
 
             // Create historical record for the first profile update
             AccountProfileHistoryEntry profileHistoryEntry = new AccountProfileHistoryEntry();
@@ -345,9 +414,9 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             profileHistoryEntry.setUtilityMode(profile.getUtilityMode());
 
             profileHistoryEntry.setProfile(profile);
-            this.entityManager.persist(profileHistoryEntry);
+            entityManager.persist(profileHistoryEntry);
 
-
+            // Update white list
             if (whiteListEntry != null) {
                 whiteListEntry.setRegisteredOn(DateTime.now());
                 whiteListEntry.setAccount(account);
@@ -371,7 +440,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             household.setAccount(account);
             household.setCreatedOn(account.getCreatedOn());
             household.setUpdatedOn(account.getCreatedOn());
-            this.entityManager.persist(household);
+            entityManager.persist(household);
 
             HouseholdMemberEntity householdMember = new HouseholdMemberEntity();
 
@@ -388,9 +457,8 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             }
             householdMember.setHousehold(household);
 
-            this.entityManager.persist(householdMember);
-
-            this.entityManager.flush();
+            entityManager.persist(householdMember);
+            entityManager.flush();
 
             return account.getKey();
         } catch (Exception ex) {
@@ -398,43 +466,58 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         }
     }
 
+    /**
+     * Changes user password.
+     *
+     * @param username the user name.
+     * @param password the new password.
+     */
     @Override
     public void changePassword(String username, String password) throws ApplicationException {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-        TypedQuery<eu.daiad.web.domain.application.Account> userQuery = entityManager.createQuery(
-                        "select a from account a where a.username = :username",
-                        eu.daiad.web.domain.application.Account.class);
+        String userQueryString = "select a from account a where a.username = :username";
+
+        TypedQuery<AccountEntity> userQuery = entityManager.createQuery(userQueryString, AccountEntity.class);
         userQuery.setParameter("username", username);
 
-        eu.daiad.web.domain.application.Account user = userQuery.getSingleResult();
+        AccountEntity user = userQuery.getSingleResult();
 
         user.setPassword(encoder.encode(password));
 
         entityManager.flush();
 
+        // Log password changes
         logger.warn(String.format("Password for user [%s] has been updated", username));
     }
 
+    /**
+     * Create password reset token.
+     *
+     * @param application the application which requested the password reset token.
+     * @param username the name of the user who requested the password reset token.
+     */
     @Override
     public PasswordResetToken createPasswordResetToken(EnumApplication application, String username) throws ApplicationException {
         // Find user
-        TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager.createQuery(
-                        "select a from account a where a.username = :username",
-                        eu.daiad.web.domain.application.Account.class).setFirstResult(0).setMaxResults(1);
+        String userQueryString = "select a from account a where a.username = :username";
+
+        TypedQuery<AccountEntity> accountQuery = entityManager.createQuery(userQueryString, AccountEntity.class)
+                                                              .setFirstResult(0)
+                                                              .setMaxResults(1);
         accountQuery.setParameter("username", username);
 
-        List<eu.daiad.web.domain.application.Account> accounts = accountQuery.getResultList();
+        List<AccountEntity> accounts = accountQuery.getResultList();
         if (accounts.isEmpty()) {
             throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
         }
 
-        eu.daiad.web.domain.application.Account account = accounts.get(0);
+        AccountEntity account = accounts.get(0);
 
         // Reset any existing tokens that are still valid
-        TypedQuery<eu.daiad.web.domain.application.PasswordResetTokenEntity> tokenQuery = entityManager.createQuery(
-                        "select t from password_reset_token t where t.valid = true and t.account.id = :accountId",
-                        eu.daiad.web.domain.application.PasswordResetTokenEntity.class);
+        String tokenQueryString = "select t from password_reset_token t where t.valid = true and t.account.id = :accountId";
+
+        TypedQuery<PasswordResetTokenEntity> tokenQuery = entityManager.createQuery(tokenQueryString, PasswordResetTokenEntity.class);
         tokenQuery.setParameter("accountId", account.getId());
 
         for(PasswordResetTokenEntity oldToken : tokenQuery.getResultList()){
@@ -462,10 +545,16 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         return new PasswordResetToken(token.getToken(), token.getPin(), locale);
     }
 
+    /**
+     * Find a password reset token by id.
+     *
+     * @param token the token id to search for.
+     */
     @Override
     public PasswordResetToken getPasswordResetTokenById(UUID token) {
-        TypedQuery<PasswordResetTokenEntity> tokenQuery = entityManager.createQuery(
-                        "select t from password_reset_token t where t.token = :token", PasswordResetTokenEntity.class);
+        String tokenQueryString = "select t from password_reset_token t where t.token = :token";
+
+        TypedQuery<PasswordResetTokenEntity> tokenQuery = entityManager.createQuery(tokenQueryString, PasswordResetTokenEntity.class);
         tokenQuery.setParameter("token", token);
 
         List<PasswordResetTokenEntity> tokens = tokenQuery.getResultList();
@@ -499,12 +588,19 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         return new PasswordResetToken(passwordResetTokenEntity.getToken(), passwordResetTokenEntity.getPin(), locale);
     }
 
+    /**
+     * Resets user password.
+     *
+     * @param token a valid password reset token.
+     * @param pin a 4-digit number used for validating the user email address.
+     * @param password the new password.
+     */
     @Override
     public void resetPassword(UUID token, String pin, String password) throws ApplicationException {
         // Find token
-        TypedQuery<eu.daiad.web.domain.application.PasswordResetTokenEntity> tokenQuery = entityManager.createQuery(
-                        "select t from password_reset_token t where t.token = :token",
-                        eu.daiad.web.domain.application.PasswordResetTokenEntity.class);
+        String tokenQueryString = "select t from password_reset_token t where t.token = :token";
+
+        TypedQuery<PasswordResetTokenEntity> tokenQuery = entityManager.createQuery(tokenQueryString, PasswordResetTokenEntity.class);
         tokenQuery.setParameter("token", token);
 
         List<PasswordResetTokenEntity> tokens = tokenQuery.getResultList();
@@ -530,13 +626,13 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         }
 
         // Get account
-        eu.daiad.web.domain.application.Account account = passwordResetTokenEntity.getAccount();
+        AccountEntity account = passwordResetTokenEntity.getAccount();
         if (account == null) {
             throw createApplicationException(UserErrorCode.PASSWORD_RESET_TOKEN_USER_NOT_FOUND);
         }
 
         // Set password
-        this.changePassword(account.getUsername(), password);
+        changePassword(account.getUsername(), password);
 
         // Update token
         passwordResetTokenEntity.setRedeemedOn(DateTime.now());
@@ -545,167 +641,169 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         logger.warn(String.format("Password for user [%s] has been reset.", account.getUsername()));
     }
 
+    /**
+     * Grants a role to a user.
+     *
+     * @param username the name of the user.
+     * @role role the role to assign.
+     */
     @Override
     public void grantRole(String username, EnumRole role) throws ApplicationException {
         throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
     }
 
+    /**
+     * Revokes a role from a user.
+     *
+     * @param username the name of the user.
+     * @role role the role to assign.
+     */
     @Override
     public void revokeRole(String username, EnumRole role) throws ApplicationException {
         throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
     }
 
+    /**
+     * Find a user by name.
+     *
+     * @param username the user name to search for.
+     */
     @Override
     public AuthenticatedUser getUserByName(String username) throws ApplicationException {
         try {
-            AuthenticatedUser user = null;
+            String accountQueryString = "select a from account a where a.username = :username";
 
-            TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager.createQuery(
-                            "select a from account a where a.username = :username",
-                            eu.daiad.web.domain.application.Account.class).setFirstResult(0).setMaxResults(1);
+            TypedQuery<AccountEntity> query = entityManager.createQuery(accountQueryString, AccountEntity.class)
+                                                           .setFirstResult(0)
+                                                           .setMaxResults(1);
             query.setParameter("username", username);
 
-            List<eu.daiad.web.domain.application.Account> result = query.getResultList();
-            if (result.size() != 0) {
-                eu.daiad.web.domain.application.Account account = result.get(0);
-
-                List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
-                for (AccountRole r : account.getRoles()) {
-                    authorities.add(new SimpleGrantedAuthority(r.getRole().getName()));
-                }
-                user = new AuthenticatedUser(account.getId(), account.getKey(), account.getUsername(), account
-                                .getPassword(), account.getUtility().getId(), account.getUtility().getKey(), account
-                                .isLocked(), authorities);
-
-                user.setCreatedOn(account.getCreatedOn());
-                user.setBirthdate(account.getBirthdate());
-                user.setCountry(account.getCountry());
-                user.setLocale(account.getLocale());
-                user.setFirstname(account.getFirstname());
-                user.setLastname(account.getLastname());
-                user.setGender(account.getGender());
-                user.setPostalCode(account.getPostalCode());
-                user.setTimezone(account.getTimezone());
-                user.setAllowPasswordReset(account.isAllowPasswordReset());
-
-                user.setWebMode(EnumWebMode.fromInteger(account.getProfile().getWebMode()));
-                user.setMobileMode(EnumMobileMode.fromInteger(account.getProfile().getMobileMode()));
-                user.setUtilityMode(EnumUtilityMode.fromInteger(account.getProfile().getUtilityMode()));
+            List<AccountEntity> result = query.getResultList();
+            if (!result.isEmpty()) {
+                return accountEntityToUser(result.get(0));
             }
 
-            return user;
+            return null;
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }
     }
 
+    /**
+     * Find a user by key.
+     *
+     * @param key the user key to search for.
+     */
     @Override
     public AuthenticatedUser getUserByKey(UUID key) throws ApplicationException {
         try {
-            AuthenticatedUser user = null;
+            String accountQueryString = "select a from account a where a.key = :key";
 
-            TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager
-                            .createQuery("select a from account a where a.key = :key",
-                                            eu.daiad.web.domain.application.Account.class).setFirstResult(0)
-                            .setMaxResults(1);
+            TypedQuery<AccountEntity> query = entityManager.createQuery(accountQueryString, AccountEntity.class)
+                                                           .setFirstResult(0)
+                                                           .setMaxResults(1);
             query.setParameter("key", key);
 
-            List<eu.daiad.web.domain.application.Account> result = query.getResultList();
-            if (result.size() != 0) {
-                eu.daiad.web.domain.application.Account account = result.get(0);
-
-                List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
-                for (AccountRole r : account.getRoles()) {
-                    authorities.add(new SimpleGrantedAuthority(r.getRole().getName()));
-                }
-
-                user = new AuthenticatedUser(account.getId(), account.getKey(), account.getUsername(), account
-                                .getPassword(), account.getUtility().getId(), account.getUtility().getKey(), account
-                                .isLocked(), authorities);
-
-                user.setCreatedOn(account.getCreatedOn());
-                user.setBirthdate(account.getBirthdate());
-                user.setCountry(account.getCountry());
-                user.setLocale(account.getLocale());
-                user.setFirstname(account.getFirstname());
-                user.setLastname(account.getLastname());
-                user.setGender(account.getGender());
-                user.setPostalCode(account.getPostalCode());
-                user.setTimezone(account.getTimezone());
-                user.setAllowPasswordReset(account.isAllowPasswordReset());
-
-                user.setWebMode(EnumWebMode.fromInteger(account.getProfile().getWebMode()));
-                user.setMobileMode(EnumMobileMode.fromInteger(account.getProfile().getMobileMode()));
-                user.setUtilityMode(EnumUtilityMode.fromInteger(account.getProfile().getUtilityMode()));
+            List<AccountEntity> result = query.getResultList();
+            if (!result.isEmpty()) {
+                return accountEntityToUser(result.get(0));
             }
-
-            return user;
+            return null;
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }
     }
 
-    @Override
-    public AuthenticatedUser getUserByUtilityAndKey(int utilityId, UUID key) throws ApplicationException {
-        AuthenticatedUser user = null;
+    /**
+     * Converts an instance of {@link AccountEntity} to an instance of {@link AuthenticatedUser}.
+     *
+     * @param entity an instance of {@link AccountEntity}.
+     * @return a new instance of {@link AuthenticatedUser}.
+     */
+    private AuthenticatedUser accountEntityToUser(AccountEntity entity) {
+        List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
+        for (AccountRole r : entity.getRoles()) {
+            authorities.add(new SimpleGrantedAuthority(r.getRole().getName()));
+        }
 
-        TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager.createQuery(
-                        "select a from account a where a.key = :key and a.utility.id = :utility_id",
-                        eu.daiad.web.domain.application.Account.class).setFirstResult(0).setMaxResults(1);
-        query.setParameter("utility_id", utilityId);
-        query.setParameter("key", key);
+        AuthenticatedUser user = new AuthenticatedUser(entity.getId(),
+                                                       entity.getKey(),
+                                                       entity.getUsername(),
+                                                       entity.getPassword(),
+                                                       entity.getUtility().getId(),
+                                                       entity.getUtility().getKey(),
+                                                       entity.isLocked(),
+                                                       authorities);
 
-        List<eu.daiad.web.domain.application.Account> result = query.getResultList();
+        user.setCreatedOn(entity.getCreatedOn());
+        user.setBirthdate(entity.getBirthdate());
+        user.setCountry(entity.getCountry());
+        user.setLocale(entity.getLocale());
+        user.setFirstname(entity.getFirstname());
+        user.setLastname(entity.getLastname());
+        user.setGender(entity.getGender());
+        user.setPostalCode(entity.getPostalCode());
+        user.setTimezone(entity.getTimezone());
+        user.setAllowPasswordReset(entity.isAllowPasswordReset());
 
-        if (result.size() != 0) {
-            eu.daiad.web.domain.application.Account account = result.get(0);
+        user.setWebMode(EnumWebMode.fromInteger(entity.getProfile().getWebMode()));
+        user.setMobileMode(EnumMobileMode.fromInteger(entity.getProfile().getMobileMode()));
+        user.setUtilityMode(EnumUtilityMode.fromInteger(entity.getProfile().getUtilityMode()));
 
-            List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
-            for (AccountRole r : account.getRoles()) {
-                authorities.add(new SimpleGrantedAuthority(r.getRole().getName()));
-            }
-
-            user = new AuthenticatedUser(account.getId(),
-                            account.getKey(),
-                            account.getUsername(),
-                            account.getPassword(),
-                            account.getUtility().getId(),
-                            account.getUtility().getKey(),
-                            account.isLocked(),
-                            authorities);
-
-           user.setCreatedOn(account.getCreatedOn());
-           user.setBirthdate(account.getBirthdate());
-           user.setCountry(account.getCountry());
-           user.setLocale(account.getLocale());
-           user.setFirstname(account.getFirstname());
-           user.setLastname(account.getLastname());
-           user.setGender(account.getGender());
-           user.setPostalCode(account.getPostalCode());
-           user.setTimezone(account.getTimezone());
-           user.setAllowPasswordReset(account.isAllowPasswordReset());
-
-            user.setWebMode(EnumWebMode.fromInteger(account.getProfile().getWebMode()));
-            user.setMobileMode(EnumMobileMode.fromInteger(account.getProfile().getMobileMode()));
-            user.setUtilityMode(EnumUtilityMode.fromInteger(account.getProfile().getUtilityMode()));
+        for(AccountUtilityEntity accountUtility : entity.getUtilities()) {
+            user.getUtilities().add(accountUtility.getUtility().getId());
         }
 
         return user;
     }
 
+    /**
+     * Find a user by key for the given utility.
+     *
+     * @param utilityId the utility id.
+     * @param key the user id.
+     * @return the user.
+     */
     @Override
-    public eu.daiad.web.model.admin.AccountWhiteListEntry getAccountWhiteListEntry(String username) {
-        TypedQuery<AccountWhiteListEntry> entityQuery = entityManager.createQuery(
-                        "select a from account_white_list a where a.username = :username", AccountWhiteListEntry.class)
-                        .setFirstResult(0).setMaxResults(1);
+    public AuthenticatedUser getUserByUtilityAndKey(int utilityId, UUID key) {
+        String accountQueryString = "select a from account a where a.key = :key and a.utility.id = :utility_id";
+
+        TypedQuery<AccountEntity> query = entityManager.createQuery(accountQueryString, AccountEntity.class)
+                                                       .setFirstResult(0)
+                                                       .setMaxResults(1);
+        query.setParameter("utility_id", utilityId);
+        query.setParameter("key", key);
+
+        List<AccountEntity> result = query.getResultList();
+
+        if (!result.isEmpty()) {
+            return accountEntityToUser(result.get(0));
+
+        }
+
+        return null;
+    }
+
+    /**
+     * Find a white list entry by user name.
+     *
+     * @param username the name of the user.
+     */
+    @Override
+    public AccountWhiteListEntry getAccountWhiteListEntry(String username) {
+        String entryQueryString = "select a from account_white_list a where a.username = :username";
+
+        TypedQuery<AccountWhiteListEntity> entityQuery = entityManager.createQuery(entryQueryString, AccountWhiteListEntity.class)
+                                                                      .setFirstResult(0)
+                                                                      .setMaxResults(1);
         entityQuery.setParameter("username", username);
 
-        List<AccountWhiteListEntry> entries = entityQuery.getResultList();
+        List<AccountWhiteListEntity> entries = entityQuery.getResultList();
 
         if (entries.size() == 1) {
-            AccountWhiteListEntry entry = entries.get(0);
+            AccountWhiteListEntity entry = entries.get(0);
 
-            eu.daiad.web.model.admin.AccountWhiteListEntry result = new eu.daiad.web.model.admin.AccountWhiteListEntry();
+            AccountWhiteListEntry result = new AccountWhiteListEntry();
 
             if (entry.getAccount() != null) {
                 result.setAccountId(entry.getAccount().getId());
@@ -735,6 +833,12 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         return null;
     }
 
+    /**
+     * Updates login statistics for an account.
+     *
+     * @param id the account id.
+     * @param success if the login operation was successful.
+     */
     @Override
     public void updateLoginStats(int id, boolean success) {
         try {
@@ -755,8 +859,13 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         }
     }
 
+    /**
+     * Get account activity.
+     *
+     * @return a list with all the users.
+     */
     @Override
-    public List<eu.daiad.web.model.admin.AccountActivity> getAccountActivity() {
+    public List<AccountActivity> getAccountActivity() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         AuthenticatedUser user = null;
 
@@ -765,88 +874,93 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         }
 
         if (user != null) {
-            return this.getAccountActivity(user.getUtilityId());
+            return this.getAccountActivity(user.getUtilities());
         }
 
-        return new ArrayList<eu.daiad.web.model.admin.AccountActivity>();
+        return new ArrayList<AccountActivity>();
     }
 
-    @Override
-    public List<eu.daiad.web.model.admin.AccountActivity> getAccountActivity(int utilityId) {
-        try {
-            TypedQuery<AccountActivity> query = entityManager
-                            .createQuery("select a from trial_account_activity a where a.utilityId = :utility_id order by a.username",
-                                            AccountActivity.class);
+    /**
+     * Get account activity for the users of the given utilities.
+     *
+     * @param utilities the ids of the utilities.
+     * @return a list of the users for the given utility.
+     */
+    public List<AccountActivity> getAccountActivity(List<Integer> utilities) {
+        String activityQueryString = "select a from trial_account_activity a where a.utilityId in :utilities order by a.username";
 
-            query.setParameter("utility_id", utilityId);
+        TypedQuery<AccountActivityEntity> query = entityManager.createQuery(activityQueryString, AccountActivityEntity.class);
 
-            ArrayList<eu.daiad.web.model.admin.AccountActivity> results = new ArrayList<eu.daiad.web.model.admin.AccountActivity>();
+        query.setParameter("utilities", utilities);
 
-            for (AccountActivity a : query.getResultList()) {
-                eu.daiad.web.model.admin.AccountActivity account = new eu.daiad.web.model.admin.AccountActivity();
+        ArrayList<AccountActivity> results = new ArrayList<AccountActivity>();
 
-                account.setId(a.getId());
-                account.setKey(a.getKey());
-                account.setUtilityId(a.getUtilityId());
-                account.setAccountId(a.getAccountId());
-                account.setAccountRegisteredOn(a.getAccountRegisteredOn() != null ? a.getAccountRegisteredOn()
-                                .getMillis() : null);
-                account.setUtilityName(a.getUtilityName());
-                account.setUsername(a.getUsername());
-                account.setFirstName(a.getFirstName());
-                account.setLastName(a.getLastName());
+        for (AccountActivityEntity a : query.getResultList()) {
+            AccountActivity account = new AccountActivity();
 
-                account.setNumberOfAmphiroDevices(a.getNumberOfAmphiroDevices());
-                account.setNumberOfMeters(a.getNumberOfMeters());
+            account.setId(a.getId());
+            account.setKey(a.getKey());
+            account.setUtilityId(a.getUtilityId());
+            account.setAccountId(a.getAccountId());
+            account.setAccountRegisteredOn(a.getAccountRegisteredOn() != null ? a.getAccountRegisteredOn().getMillis() : null);
+            account.setUtilityName(a.getUtilityName());
+            account.setUsername(a.getUsername());
+            account.setFirstName(a.getFirstName());
+            account.setLastName(a.getLastName());
 
-                account.setLastDataUploadFailure((a.getLastDataUploadFailure() != null) ? a.getLastDataUploadFailure()
-                                .getMillis() : null);
-                account.setLastDataUploadSuccess(a.getLastDataUploadSuccess() != null ? a.getLastDataUploadSuccess()
-                                .getMillis() : null);
-                account.setLastLoginFailure(a.getLastLoginFailure() != null ? a.getLastLoginFailure().getMillis()
-                                : null);
-                account.setLastLoginSuccess(a.getLastLoginSuccess() != null ? a.getLastLoginSuccess().getMillis()
-                                : null);
+            account.setNumberOfAmphiroDevices(a.getNumberOfAmphiroDevices());
+            account.setNumberOfMeters(a.getNumberOfMeters());
 
-                account.setLeastAmphiroRegistration(a.getLeastAmphiroRegistration() != null ? a
-                                .getLeastAmphiroRegistration().getMillis() : null);
-                account.setLeastMeterRegistration(a.getLeastMeterRegistration() != null ? a.getLeastMeterRegistration()
-                                .getMillis() : null);
+            account.setLastDataUploadFailure((a.getLastDataUploadFailure() != null) ? a.getLastDataUploadFailure().getMillis() : null);
+            account.setLastDataUploadSuccess(a.getLastDataUploadSuccess() != null ? a.getLastDataUploadSuccess().getMillis() : null);
+            account.setLastLoginFailure(a.getLastLoginFailure() != null ? a.getLastLoginFailure().getMillis() : null);
+            account.setLastLoginSuccess(a.getLastLoginSuccess() != null ? a.getLastLoginSuccess().getMillis() : null);
+            account.setLeastAmphiroRegistration(a.getLeastAmphiroRegistration() != null ? a.getLeastAmphiroRegistration().getMillis() : null);
+            account.setLeastMeterRegistration(a.getLeastMeterRegistration() != null ? a.getLeastMeterRegistration().getMillis() : null);
 
-                account.setTransmissionCount(a.getTransmissionCount());
-                account.setTransmissionIntervalMax(a.getTransmissionIntervalMax());
-                account.setTransmissionIntervalSum(a.getTransmissionIntervalSum());
+            account.setTransmissionCount(a.getTransmissionCount());
+            account.setTransmissionIntervalMax(a.getTransmissionIntervalMax());
+            account.setTransmissionIntervalSum(a.getTransmissionIntervalSum());
 
-                results.add(account);
-            }
-
-            return results;
-        } catch (Exception ex) {
-            logger.error(String.format("Failed to load account activity for utility [%d]", utilityId), ex);
+            results.add(account);
         }
 
-        return null;
+        return results;
     }
 
+    /**
+     * Searches users by user name prefix.
+     *
+     * @param prefix the prefix used for filtering users.
+     * @return a list of users.
+     */
     @Override
     public List<UserInfo> filterUserByPrefix(String prefix) {
         List<UserInfo> accounts = new ArrayList<UserInfo>();
 
-        TypedQuery<eu.daiad.web.domain.application.Account> accountQuery = entityManager.createQuery(
-                        "select a from account a where (lower(a.firstname) like lower(:prefix) or lower(a.lastname) like lower(:prefix)) "
-                                        + "and (a.utility.id = :utility_id)",
-                        eu.daiad.web.domain.application.Account.class).setMaxResults(100);
+        String accountQueryString = "select a from account a " +
+                                    "where (lower(a.firstname) like lower(:prefix) or lower(a.lastname) like lower(:prefix)) and " +
+                                    "      (a.utility.id = :utility_id)";
+
+        TypedQuery<AccountEntity> accountQuery = entityManager.createQuery(accountQueryString, AccountEntity.class)
+                                                              .setMaxResults(100);
 
         accountQuery.setParameter("prefix", prefix + '%');
         accountQuery.setParameter("utility_id", getCurrentUtilityId());
 
-        for (eu.daiad.web.domain.application.Account account : accountQuery.getResultList()) {
+        for (AccountEntity account : accountQuery.getResultList()) {
             accounts.add(new UserInfo(account));
         }
 
         return accounts;
     }
 
+    /**
+     * Search for users.
+     *
+     * @param query query for filtering users.
+     * @return a list of accounts.
+     */
     @Override
     public UserQueryResult search(UserQuery query) {
         // Prepare response
@@ -918,8 +1032,8 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             command += " order by a.lastname, a.firstname";
         }
 
-        TypedQuery<eu.daiad.web.domain.application.Account> entityQuery = entityManager.createQuery(command,
-                        eu.daiad.web.domain.application.Account.class);
+        TypedQuery<AccountEntity> entityQuery = entityManager.createQuery(command,
+                        AccountEntity.class);
 
         if (!StringUtils.isBlank(query.getText())) {
             entityQuery.setParameter("text", query.getText() + "%");
@@ -939,7 +1053,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         result.setAccounts(entityQuery.getResultList());
 
         // Force device loading
-        for (eu.daiad.web.domain.application.Account a : result.getAccounts()) {
+        for (AccountEntity a : result.getAccounts()) {
             a.getDevices().size();
         }
 
@@ -947,56 +1061,64 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
 
     }
 
+    /**
+     * Create a new account white list entry.
+     *
+     * @param userinfo the new account white list entry.
+     */
     @Override
     public void insertAccountWhiteListEntry(AccountWhiteListInfo userInfo) {
-        try {
+        String whiteListQueryString = "select a from account_white_list a where a.username = :username";
 
-            TypedQuery<eu.daiad.web.domain.application.AccountWhiteListEntry> whitelistQuery = entityManager
-                            .createQuery("select a from account_white_list a where a.username = :username",
-                                            eu.daiad.web.domain.application.AccountWhiteListEntry.class)
-                            .setFirstResult(0).setMaxResults(1);
-            whitelistQuery.setParameter("username", userInfo.getEmail());
-            List<AccountWhiteListEntry> whitelistEntries = whitelistQuery.getResultList();
+        TypedQuery<AccountWhiteListEntity> whitelistQuery = entityManager.createQuery(whiteListQueryString, AccountWhiteListEntity.class)
+                                                                         .setFirstResult(0)
+                                                                         .setMaxResults(1);
 
-            if (!whitelistEntries.isEmpty()) {
-                throw createApplicationException(UserErrorCode.USERNAME_EXISTS_IN_WHITELIST).set("username",
-                                userInfo.getEmail());
-            }
+        whitelistQuery.setParameter("username", userInfo.getEmail());
+        List<AccountWhiteListEntity> whitelistEntries = whitelistQuery.getResultList();
 
-            AccountWhiteListEntry newEntry = new AccountWhiteListEntry(userInfo.getEmail());
-            newEntry.setFirstname(userInfo.getFirstName());
-            newEntry.setLastname(userInfo.getLastName());
-            newEntry.setGender(EnumGender.fromString(userInfo.getGender()));
-
-            // Get Utility
-            TypedQuery<eu.daiad.web.domain.application.Utility> utilityQuery = entityManager.createQuery(
-                            "select u from utility u where u.id = :id", eu.daiad.web.domain.application.Utility.class)
-                            .setFirstResult(0).setMaxResults(1);
-            utilityQuery.setParameter("id", userInfo.getUtilityId());
-            List<Utility> utilityEntry = utilityQuery.getResultList();
-
-            if (utilityEntry.isEmpty()) {
-                throw createApplicationException(UserErrorCode.UTILITY_DOES_NOT_EXIST).set("id",
-                                userInfo.getUtilityId());
-            }
-            newEntry.setUtility(utilityEntry.get(0));
-            newEntry.setCountry(utilityEntry.get(0).getCountry());
-            newEntry.setCity(utilityEntry.get(0).getCity());
-            newEntry.setTimezone(utilityEntry.get(0).getTimezone());
-            newEntry.setLocale(utilityEntry.get(0).getLocale());
-
-            newEntry.setAddress(userInfo.getAddress());
-            newEntry.setPostalCode(userInfo.getPostalCode());
-            newEntry.setDefaultMobileMode(EnumMobileMode.LEARNING.getValue());
-            newEntry.setDefaultWebMode(EnumWebMode.INACTIVE.getValue());
-
-            this.entityManager.persist(newEntry);
-
-        } catch (Exception ex) {
-            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        if (!whitelistEntries.isEmpty()) {
+            throw createApplicationException(UserErrorCode.USERNAME_EXISTS_IN_WHITELIST).set("username", userInfo.getEmail());
         }
+
+        AccountWhiteListEntity newEntry = new AccountWhiteListEntity(userInfo.getEmail());
+        newEntry.setFirstname(userInfo.getFirstName());
+        newEntry.setLastname(userInfo.getLastName());
+        newEntry.setGender(EnumGender.fromString(userInfo.getGender()));
+
+        // Get Utility
+        String utilityQueryString = "select u from utility u where u.id = :id";
+
+        TypedQuery<UtilityEntity> utilityQuery = entityManager.createQuery(utilityQueryString, UtilityEntity.class)
+                                                              .setFirstResult(0)
+                                                              .setMaxResults(1);
+
+        utilityQuery.setParameter("id", userInfo.getUtilityId());
+        List<UtilityEntity> utilityEntry = utilityQuery.getResultList();
+
+        if (utilityEntry.isEmpty()) {
+            throw createApplicationException(UserErrorCode.UTILITY_DOES_NOT_EXIST).set("id", userInfo.getUtilityId());
+        }
+        newEntry.setUtility(utilityEntry.get(0));
+        newEntry.setCountry(utilityEntry.get(0).getCountry());
+        newEntry.setCity(utilityEntry.get(0).getCity());
+        newEntry.setTimezone(utilityEntry.get(0).getTimezone());
+        newEntry.setLocale(utilityEntry.get(0).getLocale());
+
+        newEntry.setAddress(userInfo.getAddress());
+        newEntry.setPostalCode(userInfo.getPostalCode());
+        newEntry.setDefaultMobileMode(EnumMobileMode.LEARNING.getValue());
+        newEntry.setDefaultWebMode(EnumWebMode.INACTIVE.getValue());
+
+        entityManager.persist(newEntry);
     }
 
+    /**
+     * Get the unique user keys for a given user group key.
+     *
+     * @param groupKey the user group key.
+     * @return a list of user keys.
+     */
     @Override
     public List<UUID> getUserKeysForGroup(UUID groupKey) {
         ArrayList<UUID> result = new ArrayList<UUID>();
@@ -1017,6 +1139,12 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         return result;
     }
 
+    /**
+     * Get the unique user keys for a given utility key.
+     *
+     * @param groupKey the utility key.
+     * @return a list of user keys.
+     */
     @Override
     public List<UUID> getUserKeysForUtility(UUID utilityKey) {
         ArrayList<UUID> result = new ArrayList<UUID>();
@@ -1036,25 +1164,33 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         return result;
     }
 
+    /**
+     * Get the unique user keys for a given utility id.
+     *
+     * @param utility the utility id.
+     * @return a list of user keys.
+     */
     @Override
     public List<UUID> getUserKeysForUtility(int utilityId) {
         ArrayList<UUID> result = new ArrayList<UUID>();
-        try {
-            Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from utility u "
-                            + "inner join account a on u.id = a.utility_id where u.id = :utilityId");
-            query.setParameter("utilityId", utilityId);
 
-            List<?> keys = query.getResultList();
-            for (Object key : keys) {
-                result.add(UUID.fromString((String) key));
-            }
-        } catch (Exception ex) {
-            logger.error(String.format("Failed to load user keys for utility [%d]", utilityId), ex);
+        Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from utility u "
+                        + "inner join account a on u.id = a.utility_id where u.id = :utilityId");
+        query.setParameter("utilityId", utilityId);
+
+        List<?> keys = query.getResultList();
+        for (Object key : keys) {
+            result.add(UUID.fromString((String) key));
         }
 
         return result;
     }
 
+    /**
+     * Get the unique user keys for the default utility of the currently authenticated user.
+     *
+     * @return a list of user keys.
+     */
     @Override
     public List<UUID> getUserKeysForUtility() {
         ArrayList<UUID> result = new ArrayList<UUID>();
@@ -1086,22 +1222,28 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         return result;
     }
 
+    /**
+     * Get user information for the given user key.
+     *
+     * @param key the user key.
+     * @return the user information.
+     */
     @Override
-    public UserInfo getUserInfoByKey(UUID user_id) {
+    public UserInfo getUserInfoByKey(UUID key) {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
 
-            if (!user.hasRole("ROLE_ADMIN") && !user.hasRole("ROLE_SUPERUSER")) {
+            if (!user.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION);
             }
 
-            TypedQuery<eu.daiad.web.domain.application.Account> userQuery = entityManager.createQuery(
-                            "SELECT a FROM account a WHERE a.key = :user_id",
-                            eu.daiad.web.domain.application.Account.class).setFirstResult(0).setMaxResults(1);
-            userQuery.setParameter("user_id", user_id);
+            TypedQuery<AccountEntity> userQuery = entityManager.createQuery(
+                            "SELECT a FROM account a WHERE a.key = :key",
+                            AccountEntity.class).setFirstResult(0).setMaxResults(1);
+            userQuery.setParameter("key", key);
 
-            eu.daiad.web.domain.application.Account account = userQuery.getSingleResult();
+            AccountEntity account = userQuery.getSingleResult();
 
             UserInfo userInfo = new UserInfo(account);
 
@@ -1142,44 +1284,56 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
 
             return userInfo;
         } catch (NoResultException ex) {
-            throw wrapApplicationException(ex, UserErrorCode.USERID_NOT_FOUND).set("accountId", user_id);
+            throw wrapApplicationException(ex, UserErrorCode.USER_KEY_NOT_FOUND).set("key", key.toString());
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }
     }
 
+    /**
+     * Get an account by key.
+     *
+     * @param key the account key.
+     * @return an {@link AccountEntity} entity.
+     */
     @Override
-    public eu.daiad.web.domain.application.Account getAccountByKey(UUID key) {
-        try {
+    public AccountEntity getAccountByKey(UUID key) {
+        String accountQueryString = "select a from account a where a.key = :key";
 
-            TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager.createQuery(
-                            "select a from account a where a.key = :key", eu.daiad.web.domain.application.Account.class)
-                            .setFirstResult(0).setMaxResults(1);
+        TypedQuery<AccountEntity> query = entityManager.createQuery(accountQueryString, AccountEntity.class)
+                                                       .setFirstResult(0)
+                                                       .setMaxResults(1);
 
-            query.setParameter("key", key);
+        query.setParameter("key", key);
 
-            return query.getSingleResult();
-        } catch (Exception ex) {
-            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
-        }
-
+        return query.getSingleResult();
     }
 
+    /**
+     * Get an account by user name.
+     *
+     * @param key the user name.
+     * @return an {@link AccountEntity} entity.
+     */
     @Override
-    public eu.daiad.web.domain.application.Account getAccountByUsername(String username) {
-        try{
-            TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager.createQuery(
-                            "select a from account a where a.username = :username",
-                            eu.daiad.web.domain.application.Account.class).setFirstResult(0).setMaxResults(1);
+    public AccountEntity getAccountByUsername(String username) {
+        String accountQueryString = "select a from account a where a.username = :username";
 
-            query.setParameter("username", username);
+        TypedQuery<AccountEntity> query = entityManager.createQuery(accountQueryString, AccountEntity.class)
+                                                       .setFirstResult(0)
+                                                       .setMaxResults(1);
 
-            return query.getSingleResult();
-        } catch (Exception ex) {
-            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
-        }
+        query.setParameter("username", username);
+
+        return query.getSingleResult();
     }
 
+    /**
+     * Gets survey data for the given utility id.
+     *
+     * @param utilityId the utility id.
+     * @return a list of {@link SurveyEntity} objects.
+     */
     @Override
     public List<SurveyEntity> getSurveyDataByUtilityId(int utilityId) {
         String queryString = "SELECT s FROM survey s WHERE s.utility.id = :utilityId";

@@ -130,18 +130,18 @@ public class DefaultDataExportService extends BaseService implements IDataExport
                     break;
             }
 
-            // Compress
-            if (!result.getFiles().isEmpty()) {
+            // Compress files and update export record
+            if (!result.isEmpty()) {
+                // Compress files
                 compressFiles(result.getFiles(), zipFile);
 
                 // Delete all unused files
-                for(FileLabelPair file : result.getFiles()) {
-                    FileUtils.deleteQuietly(file.getFile());
+                for (FileLabelPair file : result.getFiles()) {
+                    if(file.getFile().exists()) {
+                        FileUtils.deleteQuietly(file.getFile());
+                    }
                 }
-            }
 
-            // Update export record
-            if (result.getTotalRows() != 0) {
                 export.setSize(zipFile.length());
                 export.setCompletedOn(new DateTime());
                 export.setTotalRows(result.getTotalRows());
@@ -168,7 +168,7 @@ public class DefaultDataExportService extends BaseService implements IDataExport
             filename = filename.replaceAll("[^a-zA-Z0-9]", "-");
         }
 
-        DateTimeFormatter fileDateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd");
+        DateTimeFormatter fileDateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd-HHmmss");
 
         if(StringUtils.isBlank(extension)) {
             filename = String.format("%s-%s", filename.toLowerCase(), new DateTime().toString(fileDateFormatter));
@@ -205,18 +205,20 @@ public class DefaultDataExportService extends BaseService implements IDataExport
         ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(output));
 
         for (FileLabelPair file : files) {
-            ZipEntry zipEntry = new ZipEntry(file.getLabel());
-            zipOutputStream.putNextEntry(zipEntry);
+            if(file.getFile().exists()) {
+                ZipEntry zipEntry = new ZipEntry(file.getLabel());
+                zipOutputStream.putNextEntry(zipEntry);
 
-            FileInputStream in = new FileInputStream(file.getFile());
+                FileInputStream in = new FileInputStream(file.getFile());
 
-            while ((length = in.read(buffer)) > 0) {
-                zipOutputStream.write(buffer, 0, length);
+                while ((length = in.read(buffer)) > 0) {
+                    zipOutputStream.write(buffer, 0, length);
+                }
+                in.close();
+
+                zipOutputStream.flush();
+                zipOutputStream.closeEntry();
             }
-            in.close();
-
-            zipOutputStream.flush();
-            zipOutputStream.closeEntry();
         }
 
         zipOutputStream.close();

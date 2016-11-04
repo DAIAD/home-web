@@ -63,7 +63,7 @@ import eu.daiad.web.repository.application.ISpatialRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IWaterMeterForecastRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
-import eu.daiad.web.domain.application.Account;
+import eu.daiad.web.domain.application.AccountEntity;
 
 @Service
 public class DataService extends BaseService implements IDataService {
@@ -1120,28 +1120,28 @@ public class DataService extends BaseService implements IDataService {
 
     @Override
     public void storeQuery(NamedDataQuery query, UUID key) {
-        Account account = userRepository.getAccountByKey(key);
+        AccountEntity account = userRepository.getAccountByKey(key);
         favouriteRepository.insertFavouriteQuery(query, account);
         
     }
     
     @Override
     public void updateStoredQuery(NamedDataQuery query, UUID key) {
-        Account account = userRepository.getAccountByKey(key);
+        AccountEntity account = userRepository.getAccountByKey(key);
         favouriteRepository.updateFavouriteQuery(query, account);
         
     }    
 
     @Override
     public void deleteStoredQuery(NamedDataQuery query, UUID key) {
-        Account account = userRepository.getAccountByKey(key);
+        AccountEntity account = userRepository.getAccountByKey(key);
         favouriteRepository.deleteFavouriteQuery(query, account);
         
     }    
     
     @Override
     public void storeQuery(NamedDataQuery query, String username) {
-        Account account = userRepository.getAccountByUsername(username);
+        AccountEntity account = userRepository.getAccountByUsername(username);
         favouriteRepository.insertFavouriteQuery(query, account);
 
     }

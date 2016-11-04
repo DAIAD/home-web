@@ -1,6 +1,8 @@
 package eu.daiad.web.model.security;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
@@ -53,8 +55,16 @@ public class AuthenticatedUser extends User {
 
     private boolean allowPasswordReset = false;
 
-    public AuthenticatedUser(int id, UUID key, String username, String password, int utilityId, UUID utilityKey,
-                    boolean isLocked, Collection<? extends GrantedAuthority> authorities) {
+    private List<Integer> utilities = new ArrayList<Integer>();
+
+    public AuthenticatedUser(int id,
+                             UUID key,
+                             String username,
+                             String password,
+                             int utilityId,
+                             UUID utilityKey,
+                             boolean isLocked,
+                             Collection<? extends GrantedAuthority> authorities) {
         super(username, password, true, true, true, !isLocked, authorities);
 
         this.id = id;
@@ -140,8 +150,36 @@ public class AuthenticatedUser extends User {
         return this.getAuthorities().contains(new SimpleGrantedAuthority(role));
     }
 
-    public boolean hasRole(EnumRole role) {
-        return this.getAuthorities().contains(new SimpleGrantedAuthority(role.toString()));
+    public boolean hasRole(EnumRole ...roles) {
+        if ((roles != null) && (roles.length > 0)) {
+            for (EnumRole role : roles) {
+                if (this.getAuthorities().contains(new SimpleGrantedAuthority(role.toString()))) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public boolean canAccessUtility(int utilityId) {
+        for (Integer id : utilities) {
+            if (id.equals(utilityId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public String[] roleToStringArray() {
+        List<String> roles = new ArrayList<String>();
+
+        for (GrantedAuthority authority : this.getAuthorities()) {
+            roles.add(authority.getAuthority());
+        }
+
+        return roles.toArray(new String[] {});
     }
 
     public EnumWebMode getWebMode() {
@@ -202,5 +240,9 @@ public class AuthenticatedUser extends User {
 
     public void setAllowPasswordReset(boolean allowPasswordReset) {
         this.allowPasswordReset = allowPasswordReset;
+    }
+
+    public List<Integer> getUtilities() {
+        return utilities;
     }
 }

@@ -25,7 +25,7 @@ import eu.daiad.web.model.EnumGender;
 
 @Entity(name = "account_white_list")
 @Table(schema = "public", name = "account_white_list")
-public class AccountWhiteListEntry {
+public class AccountWhiteListEntity {
 
 	@Id()
 	@Column(name = "id")
@@ -39,11 +39,11 @@ public class AccountWhiteListEntry {
 
 	@ManyToOne(cascade = { CascadeType.ALL })
 	@JoinColumn(name = "utility_id", nullable = false)
-	private Utility utility;
+	private UtilityEntity utility;
 
 	@OneToOne()
 	@JoinColumn(name = "account_id", nullable = true)
-	private Account account;
+	private AccountEntity account;
 
 	@Basic()
 	private String username;
@@ -97,20 +97,20 @@ public class AccountWhiteListEntry {
 	@Column(name = "location")
 	private Geometry location;
 
-	public AccountWhiteListEntry() {
+	public AccountWhiteListEntity() {
 
 	}
 
-	public AccountWhiteListEntry(String username) {
+	public AccountWhiteListEntity(String username) {
 		this();
 		this.username = username;
 	}
 
-	public Account getAccount() {
+	public AccountEntity getAccount() {
 		return account;
 	}
 
-	public void setAccount(Account account) {
+	public void setAccount(AccountEntity account) {
 		this.account = account;
 	}
 
@@ -130,11 +130,11 @@ public class AccountWhiteListEntry {
 		return id;
 	}
 
-	public Utility getUtility() {
+	public UtilityEntity getUtility() {
 		return utility;
 	}
 
-	public void setUtility(Utility utility) {
+	public void setUtility(UtilityEntity utility) {
 		this.utility = utility;
 	}
 

@@ -44,7 +44,7 @@ public class AreaGroupEntity {
 
     @ManyToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     @JoinColumn(name = "utility_id", nullable = false)
-    private Utility utility;
+    private UtilityEntity utility;
 
     @OneToMany(cascade = { CascadeType.ALL })
     @JoinColumn(name = "area_group_id")
@@ -79,11 +79,11 @@ public class AreaGroupEntity {
         this.rowVersion = rowVersion;
     }
 
-    public Utility getUtility() {
+    public UtilityEntity getUtility() {
         return utility;
     }
 
-    public void setUtility(Utility utility) {
+    public void setUtility(UtilityEntity utility) {
         this.utility = utility;
     }
 

@@ -26,11 +26,11 @@ public class DeviceAmphiroPermission {
 
 	@ManyToOne(cascade = { CascadeType.ALL })
 	@JoinColumn(name = "owner_id", nullable = false)
-	private Account owner;
+	private AccountEntity owner;
 
 	@ManyToOne(cascade = { CascadeType.ALL })
 	@JoinColumn(name = "assignee_id", nullable = false)
-	private Account assignee;
+	private AccountEntity assignee;
 
 	@ManyToOne(cascade = { CascadeType.ALL })
 	@JoinColumn(name = "device_id", nullable = false)
@@ -40,19 +40,19 @@ public class DeviceAmphiroPermission {
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime assignedOn = new DateTime();
 
-	public Account getOwner() {
+	public AccountEntity getOwner() {
 		return owner;
 	}
 
-	public void setOwner(Account owner) {
+	public void setOwner(AccountEntity owner) {
 		this.owner = owner;
 	}
 
-	public Account getAssignee() {
+	public AccountEntity getAssignee() {
 		return assignee;
 	}
 
-	public void setAssignee(Account assignee) {
+	public void setAssignee(AccountEntity assignee) {
 		this.assignee = assignee;
 	}
 

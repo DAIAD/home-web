@@ -9,7 +9,7 @@ import eu.daiad.web.model.favourite.FavouriteGroupInfo;
 import eu.daiad.web.model.favourite.FavouriteInfo;
 import eu.daiad.web.model.query.NamedDataQuery;
 
-import eu.daiad.web.domain.application.Account;
+import eu.daiad.web.domain.application.AccountEntity;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -39,11 +39,11 @@ public interface IFavouriteRepository {
 
     abstract boolean isGroupFavorite(UUID ownerKey, UUID groupKey);
     
-    abstract void insertFavouriteQuery(NamedDataQuery query, Account account);
+    abstract void insertFavouriteQuery(NamedDataQuery query, AccountEntity account);
     
-    abstract void updateFavouriteQuery(NamedDataQuery namedDataQuery, Account account);
+    abstract void updateFavouriteQuery(NamedDataQuery namedDataQuery, AccountEntity account);
     
-    abstract void deleteFavouriteQuery(NamedDataQuery namedDataQuery, Account account);
+    abstract void deleteFavouriteQuery(NamedDataQuery namedDataQuery, AccountEntity account);
         
     abstract List<NamedDataQuery> getFavouriteQueriesForOwner(int accountId) 
             throws JsonMappingException, JsonParseException, IOException;
