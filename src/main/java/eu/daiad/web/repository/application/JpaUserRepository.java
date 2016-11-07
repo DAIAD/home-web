@@ -645,7 +645,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
      * Grants a role to a user.
      *
      * @param username the name of the user.
-     * @role role the role to assign.
+     * @param role the role to assign.
      */
     @Override
     public void grantRole(String username, EnumRole role) throws ApplicationException {
@@ -656,7 +656,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
      * Revokes a role from a user.
      *
      * @param username the name of the user.
-     * @role role the role to assign.
+     * @param role the role to assign.
      */
     @Override
     public void revokeRole(String username, EnumRole role) throws ApplicationException {
@@ -1064,7 +1064,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
     /**
      * Create a new account white list entry.
      *
-     * @param userinfo the new account white list entry.
+     * @param userInfo the new account white list entry.
      */
     @Override
     public void insertAccountWhiteListEntry(AccountWhiteListInfo userInfo) {
@@ -1142,7 +1142,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
     /**
      * Get the unique user keys for a given utility key.
      *
-     * @param groupKey the utility key.
+     * @param utilityKey the utility key.
      * @return a list of user keys.
      */
     @Override
@@ -1167,7 +1167,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
     /**
      * Get the unique user keys for a given utility id.
      *
-     * @param utility the utility id.
+     * @param utilityId the utility id.
      * @return a list of user keys.
      */
     @Override
@@ -1312,7 +1312,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
     /**
      * Get an account by user name.
      *
-     * @param key the user name.
+     * @param username the user name.
      * @return an {@link AccountEntity} entity.
      */
     @Override

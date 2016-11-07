@@ -99,7 +99,7 @@ public class UserGroupController extends BaseController {
     /**
      * Returns the accounts that are members of the group.
      *
-     * @param groupId the group key.
+     * @param key the group key.
      * @return the controller's response.
      */
     @RequestMapping(value = "/action/group/accounts/current/{key}", method = RequestMethod.GET, produces = "application/json")

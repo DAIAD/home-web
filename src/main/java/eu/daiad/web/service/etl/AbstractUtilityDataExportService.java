@@ -99,7 +99,6 @@ public abstract class AbstractUtilityDataExportService extends AbstractDataExpor
      *
      * @param query the query that selects the data to export.
      * @param result export result.
-     * @return total rows exported.
      * @throws IOException if file creation fails.
      */
     protected void exportPhaseTimestamps(UtilityDataExportQuery query, ExportResult result) throws IOException {
@@ -179,18 +178,18 @@ public abstract class AbstractUtilityDataExportService extends AbstractDataExpor
                             row.add(d.getKey().toString());
                             row.add(((AmphiroDevice) d).getName());
 
-                            this.createPhaseRowWithTimestamps(EnumPhase.BASELINE, row, phaseTimeline, formatter);
+                            createPhaseRowWithTimestamps(EnumPhase.BASELINE, row, phaseTimeline, formatter);
                             if(phaseTimeline.getPhase(EnumPhase.MOBILE_ON_AMPHIRO_OFF) != null) {
-                                this.createPhaseRowWithTimestamps(EnumPhase.MOBILE_ON_AMPHIRO_OFF, row, phaseTimeline, formatter);
+                                createPhaseRowWithTimestamps(EnumPhase.MOBILE_ON_AMPHIRO_OFF, row, phaseTimeline, formatter);
                             } else if(phaseTimeline.getPhase(EnumPhase.MOBILE_OFF_AMPHIRO_ON) != null) {
-                                this.createPhaseRowWithTimestamps(EnumPhase.MOBILE_OFF_AMPHIRO_ON, row, phaseTimeline, formatter);
+                                createPhaseRowWithTimestamps(EnumPhase.MOBILE_OFF_AMPHIRO_ON, row, phaseTimeline, formatter);
                             } else {
                                 row.add("");
                                 row.add("");
                                 row.add("");
                             }
                             if(phaseTimeline.getPhase(EnumPhase.MOBILE_ON_AMPHIRO_ON) != null) {
-                                this.createPhaseRowWithTimestamps(EnumPhase.MOBILE_ON_AMPHIRO_ON, row, phaseTimeline, formatter);
+                                createPhaseRowWithTimestamps(EnumPhase.MOBILE_ON_AMPHIRO_ON, row, phaseTimeline, formatter);
                             } else {
                                 row.add("");
                                 row.add("");
@@ -280,18 +279,18 @@ public abstract class AbstractUtilityDataExportService extends AbstractDataExpor
                             row.add(d.getKey().toString());
                             row.add(((WaterMeterDevice) d).getSerial());
 
-                            this.createPhaseRowWithTimestamps(EnumPhase.BASELINE, row, phaseTimeline, formatter);
+                            createPhaseRowWithTimestamps(EnumPhase.BASELINE, row, phaseTimeline, formatter);
                             if(phaseTimeline.getPhase(EnumPhase.MOBILE_ON_AMPHIRO_OFF) != null) {
-                                this.createPhaseRowWithTimestamps(EnumPhase.MOBILE_ON_AMPHIRO_OFF, row, phaseTimeline, formatter);
+                                createPhaseRowWithTimestamps(EnumPhase.MOBILE_ON_AMPHIRO_OFF, row, phaseTimeline, formatter);
                             } else if(phaseTimeline.getPhase(EnumPhase.MOBILE_OFF_AMPHIRO_ON) != null) {
-                                this.createPhaseRowWithTimestamps(EnumPhase.MOBILE_OFF_AMPHIRO_ON, row, phaseTimeline, formatter);
+                                createPhaseRowWithTimestamps(EnumPhase.MOBILE_OFF_AMPHIRO_ON, row, phaseTimeline, formatter);
                             } else {
                                 row.add("");
                                 row.add("");
                                 row.add("");
                             }
                             if(phaseTimeline.getPhase(EnumPhase.MOBILE_ON_AMPHIRO_ON) != null) {
-                                this.createPhaseRowWithTimestamps(EnumPhase.MOBILE_ON_AMPHIRO_ON, row, phaseTimeline, formatter);
+                                createPhaseRowWithTimestamps(EnumPhase.MOBILE_ON_AMPHIRO_ON, row, phaseTimeline, formatter);
                             } else {
                                 row.add("");
                                 row.add("");

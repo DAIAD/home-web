@@ -2030,13 +2030,15 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
     /**
      * Searches for sessions for one or more amphiro b1 devices.
      *
-     * @param name the names of the devices.
+     * @param names the names of the devices.
      * @param timezone the reference time zone.
      * @param query a query for filtering sessions.
      * @return a collection of sessions per device.
      */
     @Override
-    public AmphiroSessionCollectionIndexIntervalQueryResult getSessions(String[] names, DateTimeZone timezone, AmphiroSessionCollectionIndexIntervalQuery query) {
+    public AmphiroSessionCollectionIndexIntervalQueryResult getSessions(String[] names,
+                                                                        DateTimeZone timezone,
+                                                                        AmphiroSessionCollectionIndexIntervalQuery query) {
         AmphiroSessionCollectionIndexIntervalQueryResult data = new AmphiroSessionCollectionIndexIntervalQueryResult();
 
         long startIndex = Long.MAX_VALUE;
