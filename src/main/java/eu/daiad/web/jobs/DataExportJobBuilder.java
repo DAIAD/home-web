@@ -50,7 +50,7 @@ public class DataExportJobBuilder implements IJobBuilder {
      */
     @Autowired
     private IExportRepository exportRepository;
-    
+
     /**
      * Repository for accessing utility data.
      */
@@ -65,15 +65,16 @@ public class DataExportJobBuilder implements IJobBuilder {
 
     /**
      * Creates a step for deleting expired export data files.
-     * 
+     *
      * @return the step.
      */
     private Step cleanExpiredDataFiles() {
         return stepBuilderFactory.get("clean").tasklet(new StoppableTasklet() {
+            @Override
             public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
                 try {
                     String[] utilityId = StringUtils.split((String) chunkContext.getStepContext().getJobParameters().get("utility.id"), ',');
-                    
+
                     String days = (String) chunkContext.getStepContext().getJobParameters().get("expire.interval");
 
                     for (int index = 0, count = utilityId.length; index < count; index++) {
@@ -96,11 +97,12 @@ public class DataExportJobBuilder implements IJobBuilder {
 
     /**
      * Creates a step for exporting utility smart water meter and amphiro b1 data.
-     * 
+     *
      * @return the step.
      */
     private Step exportData() {
         return stepBuilderFactory.get("export").tasklet(new StoppableTasklet() {
+            @Override
             public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
                 try {
                     String[] utilityId = StringUtils.split((String) chunkContext.getStepContext().getJobParameters().get("utility.id"), ',');
@@ -116,12 +118,12 @@ public class DataExportJobBuilder implements IJobBuilder {
                     // Export data for every utility
                     for (int index = 0, count = utilityId.length; index < count; index++) {
                         UtilityInfo utility = utilityRepository.getUtilityById(Integer.parseInt(utilityId[index]));
-                        
+
                         UtilityDataExportQuery query = new UtilityDataExportQuery(utility, outputDirectory);
 
                         query.setWorkingDirectory(workingDirectory);
                         query.setDateFormat(dateFormat);
-                        
+
                         // Export meter data for trial users only
                         query.setFilename(String.format("meter-%s-trial",utility.getName()).toLowerCase());
                         query.setExportUserDataOnly(true);
@@ -162,10 +164,10 @@ public class DataExportJobBuilder implements IJobBuilder {
 
     /**
      * Builds a job with the given name and {@link JobParametersIncrementer} instance.
-     * 
+     *
      * @param name the job name.
-     * @param incrementer the j{@link JobParametersIncrementer} instance to be used during job execution.
-     * 
+     * @param incrementer the {@link JobParametersIncrementer} instance to be used during job execution.
+     *
      * @return a fully configured job.
      * @throws Exception in case the job can not be instantiated.
      */
