@@ -155,13 +155,13 @@ public class UserService extends BaseService implements IUserService {
         }
 
         // Validate request
-        AuthenticatedUser user = this.userRepository.getUserByName(username);
+        AuthenticatedUser user = userRepository.getUserByName(username);
 
         if (user == null) {
             throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
         }
 
-        if (authenticatedUser.getUtilityId() != user.getUtilityId()) {
+        if (!authenticatedUser.getUtilities().contains(user.getUtilityId())) {
             throw createApplicationException(SharedErrorCode.AUTHORIZATION);
         }
 
@@ -189,7 +189,7 @@ public class UserService extends BaseService implements IUserService {
             throw createApplicationException(UserErrorCode.NO_ROLE_SELECTED);
         }
 
-        AuthenticatedUser user = this.userRepository.getUserByName(username);
+        AuthenticatedUser user = userRepository.getUserByName(username);
 
         if (user == null) {
             throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
@@ -219,7 +219,7 @@ public class UserService extends BaseService implements IUserService {
             throw createApplicationException(UserErrorCode.NO_ROLE_SELECTED);
         }
 
-        AuthenticatedUser user = this.userRepository.getUserByName(username);
+        AuthenticatedUser user = userRepository.getUserByName(username);
 
         if (user == null) {
             throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
@@ -238,7 +238,12 @@ public class UserService extends BaseService implements IUserService {
     }
 
     @Override
-    public UUID resetPasswordCreateToken(String username, boolean sendMail, EnumApplication application) throws ApplicationException {
+    public UUID resetPasswordCreateToken(String username, EnumApplication application) throws ApplicationException {
+        // Check application
+        if ((application == null) || (application == EnumApplication.UNDEFINED)) {
+            throw createApplicationException(UserErrorCode.PASSWORD_RESET_APPLICATION_NOT_SUPPORTED);
+        }
+
         // Find user
         AuthenticatedUser user = userRepository.getUserByName(username);
         if (user == null) {
@@ -260,40 +265,35 @@ public class UserService extends BaseService implements IUserService {
         String url = baseSiteUrl + "password/reset/" + token.getToken().toString() + "/";
 
         // Send email
-        if (sendMail) {
-            Message message = new Message();
+        Message message = new Message();
 
-            message.setSubject(messageSource.getMessage("ResetPassword.Mail.Subject", null, "Password Reset",
-                            new Locale(user.getLocale())));
+        message.setSubject(messageSource.getMessage("ResetPassword.Mail.Subject", null, "Password Reset",
+                        new Locale(user.getLocale())));
 
-            if (StringUtils.isBlank(user.getFullname())) {
-                message.setRecipients(user.getUsername());
-            } else {
-                message.setRecipients(user.getUsername(), user.getFullname());
-            }
-
-            message.setLocale(user.getLocale());
-            message.setModel(new PasswordResetMailModel(user, url, token.getPin()));
-
-            if (application == null) {
-                application = EnumApplication.UNDEFINED;
-            }
-            switch(application) {
-                case HOME:
-                    message.setTemplate(PASSWORD_RESET_MAIL_TEMPLATE_HOME);
-                    break;
-                case UTILITY:
-                    message.setTemplate(PASSWORD_RESET_MAIL_TEMPLATE_UTILITY);
-                    break;
-                case MOBILE:
-                    message.setTemplate(PASSWORD_RESET_MAIL_TEMPLATE_MOBILE);
-                    break;
-                default:
-                    throw createApplicationException(UserErrorCode.PASSWORD_RESET_APPLICATION_NOT_SUPPORTED);
-            }
-
-            mailService.send(message);
+        if (StringUtils.isBlank(user.getFullname())) {
+            message.setRecipients(user.getUsername());
+        } else {
+            message.setRecipients(user.getUsername(), user.getFullname());
         }
+
+        message.setLocale(user.getLocale());
+        message.setModel(new PasswordResetMailModel(user, url, token.getPin()));
+
+        switch(application) {
+            case HOME:
+                message.setTemplate(PASSWORD_RESET_MAIL_TEMPLATE_HOME);
+                break;
+            case UTILITY:
+                message.setTemplate(PASSWORD_RESET_MAIL_TEMPLATE_UTILITY);
+                break;
+            case MOBILE:
+                message.setTemplate(PASSWORD_RESET_MAIL_TEMPLATE_MOBILE);
+                break;
+            default:
+                throw createApplicationException(UserErrorCode.PASSWORD_RESET_APPLICATION_NOT_SUPPORTED);
+        }
+
+        mailService.send(message);
 
         logger.warn(String.format("Password reset token has been created for user [%s].", username));
 

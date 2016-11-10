@@ -181,6 +181,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                     // Assign utilities
                     AccountUtilityEntity accountUtility = new AccountUtilityEntity();
                     accountUtility.setOwner(account);
+                    accountUtility.setUtility(utility);
                     accountUtility.setAssignedOn(account.getCreatedOn());
 
                     account.getUtilities().add(accountUtility);
@@ -382,6 +383,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             // Assign utilities
             AccountUtilityEntity accountUtility = new AccountUtilityEntity();
             accountUtility.setOwner(account);
+            accountUtility.setUtility(utility);
             accountUtility.setAssignedOn(account.getCreatedOn());
 
             account.getUtilities().add(accountUtility);

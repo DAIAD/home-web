@@ -113,7 +113,7 @@ public class UserController extends BaseRestController {
         RestResponse response = new RestResponse();
 
         try {
-            AuthenticatedUser user = this.authenticate(data.getCredentials());
+            AuthenticatedUser user = authenticate(data.getCredentials());
 
             if (user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
                 if(StringUtils.isBlank(data.getUsername())) {
@@ -148,7 +148,7 @@ public class UserController extends BaseRestController {
     @RequestMapping(value = "/api/v1/user/password/reset/token/create", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse resetPasswordCreateToken(@RequestBody PasswordResetTokenCreateRequest request) {
         try {
-            UUID token = userService.resetPasswordCreateToken(request.getUsername(), true, request.getApplication());
+            UUID token = userService.resetPasswordCreateToken(request.getUsername(), request.getApplication());
 
             return new PasswordResetTokenCreateResponse(token);
         } catch (Exception ex) {
@@ -191,7 +191,7 @@ public class UserController extends BaseRestController {
         RestResponse response = new RestResponse();
 
         try {
-            this.authenticate(request.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
+            authenticate(request.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
             userService.grantRole(request.getUsername(), request.getRole());
         } catch (Exception ex) {
@@ -214,7 +214,7 @@ public class UserController extends BaseRestController {
         RestResponse response = new RestResponse();
 
         try {
-            this.authenticate(request.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
+            authenticate(request.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
             userService.revokeRole(request.getUsername(), request.getRole());
         } catch (Exception ex) {

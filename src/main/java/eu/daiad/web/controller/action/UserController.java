@@ -272,7 +272,7 @@ public class UserController extends BaseController {
         List<String> serials = new ArrayList<String>();
         List<UUID> deviceKeys = new ArrayList<UUID>();
 
-        for (Device d : this.deviceRepository.getUserDevices(userkey, deviceQuery)) {
+        for (Device d : deviceRepository.getUserDevices(userkey, deviceQuery)) {
             serials.add(((WaterMeterDevice) d).getSerial());
             deviceKeys.add(((WaterMeterDevice) d).getKey());
         }
@@ -422,12 +422,12 @@ public class UserController extends BaseController {
     public RestResponse resetPasswordCreateToken(@AuthenticationPrincipal AuthenticatedUser user,
                                                  @RequestBody PasswordResetTokenCreateRequest request) {
         try {
-            userService.resetPasswordCreateToken(request.getUsername(), true, request.getApplication());
+            userService.resetPasswordCreateToken(request.getUsername(), request.getApplication());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
             // Do not send detailed error information
-            return new RestResponse(this.getErrorUnknown());
+            return new RestResponse(getErrorUnknown());
         }
 
         return new RestResponse();
