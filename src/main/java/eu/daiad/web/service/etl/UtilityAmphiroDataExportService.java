@@ -347,7 +347,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                 AmphiroSessionCollectionIndexIntervalQueryResult amphiroCollection = amphiroIndexOrderedRepository
                                 .getSessions(deviceNames.toArray(new String[] {}), DateTimeZone.forID(query.getTimezone()), sessionQuery);
 
-                // Process shower sessions for every device
+                // Process showers for every device
                 for (AmphiroSessionCollection device : amphiroCollection.getDevices()) {
                     int total = device.getSessions().size();
 
@@ -426,7 +426,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                             result.addMessage(user.getKey(),
                                               user.getUsername(),
                                               device.getDeviceKey(),
-                                              String.format("More than 30%% of shower sessions has been removed. Total [%d]. Removed [%d]",
+                                              String.format("More than 30%% of showers has been removed. Total [%d]. Removed [%d]",
                                                             total,
                                                             removedSessions.size()));
                         }
@@ -525,7 +525,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                 AmphiroSessionCollectionIndexIntervalQueryResult amphiroCollection = amphiroIndexOrderedRepository
                                 .getSessions(deviceNames.toArray(new String[] {}), DateTimeZone.forID(query.getTimezone()), userSessionQuery);
 
-                // Process shower sessions for every device and extract time series for real time ones.
+                // Process showers for every device and extract time series for real time ones.
                 for (AmphiroSessionCollection device : amphiroCollection.getDevices()) {
                     for (AmphiroAbstractSession session : device.getSessions()) {
                         AmphiroSession amphiroSession = (AmphiroSession) session;
@@ -853,7 +853,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                         result.addMessage(user.getKey(),
                                           user.getUsername(),
                                           device.getDeviceKey(),
-                                          String.format("Failed to export phase sid timeline for user [%s]: %s",
+                                          String.format("Failed to export shower id phase timeline for user [%s]: %s",
                                                         user.getUsername(),
                                                         ex.getMessage()));
                     }
@@ -869,7 +869,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
     }
 
     /**
-     * For a list of shower sessions, find the volume threshold for the given
+     * For a list of showers, find the volume threshold for the given
      * percentile based on volume.
      *
      * @param sessions the list of sessions.
@@ -1078,7 +1078,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                 }
             }
 
-            return null;
+            throw new RuntimeException(String.format("Cannot find previous id for shower id [%d]", id));
         }
 
         /**
@@ -1094,7 +1094,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                 }
             }
 
-            return null;
+            throw new RuntimeException(String.format("Cannot find next id for shower id [%d]", id));
         }
 
         /**

@@ -43,6 +43,11 @@ public class UpdateProfileRequest extends AuthenticatedRequest {
 
     private byte[] photo;
 
+    private Boolean garden;
+
+    @JsonDeserialize(using = EnumUnit.Deserializer.class)
+    private EnumUnit unit;
+
     public String getConfiguration() {
         return configuration;
     }
@@ -153,6 +158,22 @@ public class UpdateProfileRequest extends AuthenticatedRequest {
 
     public void setGender(EnumGender gender) {
         this.gender = gender;
+    }
+
+    public EnumUnit getUnit() {
+        return unit;
+    }
+
+    public void setUnit(EnumUnit unit) {
+        this.unit = unit;
+    }
+
+    public Boolean getGarden() {
+        return garden;
+    }
+
+    public void setGarden(Boolean garden) {
+        this.garden = garden;
     }
 
 }

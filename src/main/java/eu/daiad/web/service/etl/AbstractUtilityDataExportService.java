@@ -739,10 +739,10 @@ public abstract class AbstractUtilityDataExportService extends AbstractDataExpor
                         (p1.getMinSessionId() != null) && (p1.getMaxSessionId() != null) &&
                         (p2.getMinSessionId() != null) && (p2.getMaxSessionId() != null)) {
                         if((p1.getMaxSessionId() >= p2.getMinSessionId()) && (p1.getMaxSessionId() <= p2.getMaxSessionId())) {
-                            throw new RuntimeException(String.format("Phases [%s] and [%s] sid overlap. %s", p1.getPhase(), p2.getPhase(), this).trim());
+                            throw new RuntimeException(String.format("Phases [%s] and [%s] shower id overlap. %s", p1.getPhase(), p2.getPhase(), this).trim());
                         }
                         if((p1.getMinSessionId() >= p2.getMinSessionId()) && (p1.getMinSessionId() <= p2.getMaxSessionId())) {
-                            throw new RuntimeException(String.format("Phases [%s] and [%s] sid overlap. %s", p1.getPhase(), p2.getPhase(), this).trim());
+                            throw new RuntimeException(String.format("Phases [%s] and [%s] shower id overlap. %s", p1.getPhase(), p2.getPhase(), this).trim());
                         }
                     }
                 }

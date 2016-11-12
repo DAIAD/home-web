@@ -9,18 +9,18 @@ public interface IFileDataLoaderService {
 
 	/**
 	 * Assigns smart water meters to user accounts based on the given configuration.
-	 * 
+	 *
 	 * @param configuration the configuration
 	 * @throws ApplicationException if input file is not found or a user is not found.
 	 */
 	public abstract void importWaterMeter(ImportWaterMeterFileConfiguration configuration) throws ApplicationException;
 
 	/**
-	 * Inserts random shower sessions to all devices of users for a specific utility. The data generation is driven
-	 * by an external file that contains real shower sessions.
-	 * 
+	 * Inserts random showers to all devices of users for a specific utility. The data generation is driven
+	 * by an external file that contains real showers.
+	 *
 	 * @param utilityId the utility id.
-	 * @param filename the file name with shower sessions.
+	 * @param filename the file name with showers.
 	 * @param timezone the utility time zone.
 	 * @throws ApplicationException if the file or the utility is not found.
 	 */
@@ -28,11 +28,11 @@ public interface IFileDataLoaderService {
 					throws ApplicationException;
 
 	/**
-	 * Inserts random shower sessions to all devices of users for a specific utility. The data generation is driven
-	 * by an external file that contains real shower sessions.
-	 * 
+	 * Inserts random showers to all devices of users for a specific utility. The data generation is driven
+	 * by an external file that contains real showers.
+	 *
 	 * @param utilityId the utility id.
-	 * @param filename the file name with shower sessions.
+	 * @param filename the file name with showers.
 	 * @param timezone the utility time zone.
 	 * @throws ApplicationException if the file or the utility is not found.
 	 */

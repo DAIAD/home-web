@@ -50,6 +50,13 @@
  * <br/>2: <code>INACTIVE</code>
  * <br/>3: <code>LEARNING</code>
  * <br/>4: <code>BLOCK</code>
+ * @apiSuccess (Profile)   {Boolean}    social                <code>true</code> if social features are enabled; Otherwise <code>false</code>.
+ * @apiSuccess (Profile)   {String}     unit                  Measurement unit system. Valid values are:
+ * <br/><br/><code>UNDEFINED</code>: Measurement unit system is not set.
+ * <br/><code>METRIC</code>: Metric system
+ * <br/><code>IMPERIAL</code>:  Imperial system
+ * @apiSuccess (Profile)   {Boolean}    garden                <code>true</code> if the household has a garden; Otherwise <code>false</code>. The value may not be initialized. <code>null</code> may be returned.
+ * @apiSuccess (Profile)   {Number}     dailyMeterBudget      Daily smart water meter water consumption budget.
  * @apiSuccess (Profile)   {Number}     dailyMeterBudget      Daily smart water meter water consumption budget.
  * @apiSuccess (Profile)   {Number}     dailyAmphiroBudget    Daily Amphiro B1 water consumption budget.
  * @apiSuccess (Profile)   {String}     configuration         Application configuration serialized as a JSON object.
@@ -78,7 +85,7 @@
  * @apiSuccess (Utility)    {String}     timezone            Time zone.
  * @apiSuccess (Utility)    {String}     locale              Locale.
  * @apiSuccess (Utility)    {String}     city                City.
- * 
+ *
  * @apiSuccess (Household)  {Number}     createdOn           Creation time stamp.
  * @apiSuccess (Household)  {Number}     updatedOn           Last update time stamp.
  * @apiSuccess (Household)  {Number}     femaleMembers       Total number of female members.
@@ -94,7 +101,7 @@
  * @apiSuccess (Member)     {String}     photo               Base64 encoded member image.
  * @apiSuccess (Member)     {Number}     createdOn           Creation time stamp.
  * @apiSuccess (Member)     {Number}     updatedOn           Last update time stamp.
- * 
+ *
  * @apiSuccessExample {json} Response Example
  * HTTP/1.1 200 OK
  * {
@@ -115,6 +122,9 @@
  *     "timezone": "Europe/Athens",
  *     "country": "Greece",
  *     "mode": 1,
+ *     "social": true,
+ *     "garden": true,
+ *     "unit" : "METRIC",
  *     "dailyMeterBudget": null,
  *     "dailyAmphiroBudget": 80,
  *     "configuration": null,
@@ -216,7 +226,12 @@ function loadProfile() { return; }
  * @apiParam (UpdateProfileRequest) {String}     [locale]                    Locale.
  * @apiParam (UpdateProfileRequest) {String}     [timezone]                  Preferred time zone.
  * @apiParam (UpdateProfileRequest) {String}     photo                       Base64 encoded user image.
- * 
+ * @apiParam (UpdateProfileRequest) {String}     unit                        Measurement unit system. Valid values are:
+ * <br/><br/><code>UNDEFINED</code>: Measurement unit system is not set.
+ * <br/><code>METRIC</code>: Metric system
+ * <br/><code>IMPERIAL</code>:  Imperial system
+ * @apiParam (UpdateProfileRequest) {Boolean}    garden                      <code>true</code> if the household has a garden; Otherwise <code>false</code>.
+ *
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
@@ -225,7 +240,9 @@ function loadProfile() { return; }
  *   },
  *   "configuration": "{\"property1\":1,\"property2\":\"value2\"}"}",
  *   "dailyMeterBudget": 300,
- *   "dailyAmphiroBudget": 80
+ *   "dailyAmphiroBudget": 80,
+ *   "unit": "IMPERIAL",
+ *   "garden": false
  * }
  *
  * @apiSuccess {Boolean}  success             Returns <code>true</code> or <code>false</code> indicating success of the operation.
@@ -324,14 +341,14 @@ function notifyProfile() { return; }
  * @apiParam (UpdateHouseholdRequest) {String}     credentials.username        User name.
  * @apiParam (UpdateHouseholdRequest) {String}     credentials.password        Password.
  * @apiParam (UpdateHouseholdRequest) {Object[]}   members                     Array of <code>Member</code> objects.
- * 
+ *
  * @apiParam (Member)     {Number}     index               Unique index.
  * @apiParam (Member)     {Boolean}    active              <code>true</code> if the member is not delete; Otherwise <code>false</code>.
  * @apiParam (Member)     {String}     name                Name.
  * @apiParam (Member)     {Number}     age                 Age.
  * @apiParam (Member)     {String}     gender              Gender. Valid values are <code>MALE</code> and <code>FEMALE</code>.
  * @apiParam (Member)     {String}     photo               Base64 encoded member image.
- * 
+ *
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {

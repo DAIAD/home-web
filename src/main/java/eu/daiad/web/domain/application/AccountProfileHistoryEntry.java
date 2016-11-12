@@ -21,103 +21,114 @@ import org.joda.time.DateTime;
 @Table(schema = "public", name = "account_profile_history")
 public class AccountProfileHistoryEntry {
 
-	@Id()
-	@Column(name = "id")
-	@SequenceGenerator(sequenceName = "account_profile_history_id_seq", name = "account_profile_history_id_seq", allocationSize = 1, initialValue = 1)
-	@GeneratedValue(generator = "account_profile_history_id_seq", strategy = GenerationType.SEQUENCE)
-	private int id;
+    @Id()
+    @Column(name = "id")
+    @SequenceGenerator(sequenceName = "account_profile_history_id_seq", name = "account_profile_history_id_seq", allocationSize = 1, initialValue = 1)
+    @GeneratedValue(generator = "account_profile_history_id_seq", strategy = GenerationType.SEQUENCE)
+    private int id;
 
-	@ManyToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
-	@JoinColumn(name = "profile_id", nullable = false)
-	private AccountProfile profile;
+    @ManyToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_id", nullable = false)
+    private AccountProfile profile;
 
-	@Column()
-	@Type(type = "pg-uuid")
-	private UUID version;
+    @Column()
+    @Type(type = "pg-uuid")
+    private UUID version;
 
-	@Column(name = "updated_on")
-	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-	private DateTime updatedOn;
+    @Column(name = "updated_on")
+    @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+    private DateTime updatedOn;
 
-	@Column(name = "acknowledged_on")
-	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-	private DateTime acknowledgedOn;
+    @Column(name = "acknowledged_on")
+    @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+    private DateTime acknowledgedOn;
 
-	@Column(name = "enabled_on")
-	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-	private DateTime enabledOn;
+    @Column(name = "enabled_on")
+    @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+    private DateTime enabledOn;
 
-	@Column(name = "mobile_mode")
-	private int mobileMode;
+    @Column(name = "mobile_mode")
+    private int mobileMode;
 
-	@Column(name = "web_mode")
-	private int webMode;
+    @Column(name = "web_mode")
+    private int webMode;
 
-	@Column(name = "utility_mode")
-	private int utilityMode;
-	
-	public UUID getVersion() {
-		return version;
-	}
+    @Column(name = "utility_mode")
+    private int utilityMode;
 
-	public void setVersion(UUID version) {
-		this.version = version;
-	}
+    @Column(name = "social_enabled")
+    private boolean socialEnabled;
 
-	public DateTime getUpdatedOn() {
-		return updatedOn;
-	}
+    public UUID getVersion() {
+        return version;
+    }
 
-	public void setUpdatedOn(DateTime createdOn) {
-		this.updatedOn = createdOn;
-	}
+    public void setVersion(UUID version) {
+        this.version = version;
+    }
 
-	public DateTime getEnabledOn() {
-		return enabledOn;
-	}
+    public DateTime getUpdatedOn() {
+        return updatedOn;
+    }
 
-	public void setEnabledOn(DateTime enabledOn) {
-		this.enabledOn = enabledOn;
-	}
+    public void setUpdatedOn(DateTime createdOn) {
+        updatedOn = createdOn;
+    }
 
-	public int getId() {
-		return id;
-	}
+    public DateTime getEnabledOn() {
+        return enabledOn;
+    }
 
-	public void setProfile(AccountProfile profile) {
-		this.profile = profile;
-	}
+    public void setEnabledOn(DateTime enabledOn) {
+        this.enabledOn = enabledOn;
+    }
 
-	public int getMobileMode() {
-		return mobileMode;
-	}
+    public int getId() {
+        return id;
+    }
 
-	public void setMobileMode(int mobileMode) {
-		this.mobileMode = mobileMode;
-	}
+    public void setProfile(AccountProfile profile) {
+        this.profile = profile;
+    }
 
-	public int getWebMode() {
-		return webMode;
-	}
+    public int getMobileMode() {
+        return mobileMode;
+    }
 
-	public void setWebMode(int webMode) {
-		this.webMode = webMode;
-	}
+    public void setMobileMode(int mobileMode) {
+        this.mobileMode = mobileMode;
+    }
 
-	public int getUtilityMode() {
-		return utilityMode;
-	}
+    public int getWebMode() {
+        return webMode;
+    }
 
-	public void setUtilityMode(int utilityMode) {
-		this.utilityMode = utilityMode;
-	}
+    public void setWebMode(int webMode) {
+        this.webMode = webMode;
+    }
 
-	public DateTime getAcknowledgedOn() {
-		return acknowledgedOn;
-	}
+    public int getUtilityMode() {
+        return utilityMode;
+    }
 
-	public void setAcknowledgedOn(DateTime acknowledgedOn) {
-		this.acknowledgedOn = acknowledgedOn;
-	}
+    public void setUtilityMode(int utilityMode) {
+        this.utilityMode = utilityMode;
+    }
+
+    public boolean isSocialEnabled() {
+        return socialEnabled;
+    }
+
+    public void setSocialEnabled(boolean socialEnabled) {
+        this.socialEnabled = socialEnabled;
+    }
+
+    public DateTime getAcknowledgedOn() {
+        return acknowledgedOn;
+    }
+
+    public void setAcknowledgedOn(DateTime acknowledgedOn) {
+        this.acknowledgedOn = acknowledgedOn;
+    }
 
 }

@@ -113,12 +113,12 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             // Load registered device data
             AccountEntity account = userQuery.getSingleResult();
 
-            List<Device> devices = this.deviceRepository.getUserDevices(account.getKey(), new DeviceRegistrationQuery());
+            List<Device> devices = deviceRepository.getUserDevices(account.getKey(), new DeviceRegistrationQuery());
 
             // Initialize profile
             Profile profile = new Profile();
-
             profile.setVersion(account.getProfile().getVersion());
+
             profile.setKey(account.getKey());
             profile.setUsername(account.getUsername());
             profile.setEmail(account.getEmail());
@@ -136,6 +136,8 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
             profile.setDailyMeterBudget(account.getProfile().getDailyMeterBudget());
             profile.setDailyAmphiroBudget(account.getProfile().getDailyAmphiroBudget());
+            profile.setUnit(account.getProfile().getUnit());
+            profile.setGarden(account.getProfile().getGarden());
 
             profile.setUtility(new UtilityInfo(account.getUtility()));
 
@@ -151,14 +153,17 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                 case HOME:
                     profile.setMode(account.getProfile().getWebMode());
                     profile.setConfiguration(account.getProfile().getWebConfiguration());
+                    profile.setSocial(account.getProfile().isSocialEnabled());
                     break;
                 case MOBILE:
                     profile.setMode(account.getProfile().getMobileMode());
                     profile.setConfiguration(account.getProfile().getMobileConfiguration());
+                    profile.setSocial(account.getProfile().isSocialEnabled());
                     break;
                 case UTILITY:
                     profile.setMode(account.getProfile().getUtilityMode());
                     profile.setConfiguration(account.getProfile().getUtilityConfiguration());
+                    profile.setSocial(false);
                     break;
                 default:
                     throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
@@ -177,474 +182,484 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
     @Override
     public List<ProfileModes> getProfileModes(ProfileModesRequest filters) throws ApplicationException {
-        try {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        AuthenticatedUser user = null;
 
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            AuthenticatedUser user = null;
-
-            if (auth.getPrincipal() instanceof AuthenticatedUser) {
-                user = (AuthenticatedUser) auth.getPrincipal();
-            } else {
-                throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
-            }
-
-            if (!user.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
-                throw createApplicationException(SharedErrorCode.AUTHORIZATION);
-            }
-
-            TypedQuery<eu.daiad.web.domain.application.AccountEntity> userQuery = null;
-
-            String queryFilterPart = "";
-            if (filters.getNameFilter() != null && filters.getNameFilter().length() > 0) {
-                queryFilterPart = " AND ( LOWER(a.firstname) LIKE :searchTerm OR " +
-                                  "       LOWER(a.lastname) LIKE :searchTerm OR " +
-                                  "       LOWER(a.username) LIKE :searchTerm ) ";
-            }
-
-            String queryString = "select a from account a join a.roles r " + "where r.role.name = :userRole"
-                            + queryFilterPart + " ORDER BY a.lastname, a.username";
-            userQuery = entityManager.createQuery(queryString, eu.daiad.web.domain.application.AccountEntity.class)
-                            .setFirstResult(0);
-            userQuery.setParameter("userRole", RoleConstant.ROLE_USER);
-
-            if (filters.getNameFilter() != null && filters.getNameFilter().length() > 0) {
-                userQuery.setParameter("searchTerm", "%" + filters.getNameFilter().toLowerCase() + "%");
-            }
-            List<AccountEntity> accounts = userQuery.getResultList();
-            List<ProfileModes> profileModesList = new ArrayList<ProfileModes>();
-
-            // List all DeviceAmphiroConfigurationDefault's in a simple HashMap
-            List<DeviceAmphiroConfigurationDefault> defaultConfigurations = this.deviceRepository
-                            .getAmphiroDefaultConfigurations();
-            HashMap<Integer, String> simplifiedDefaultConfs = new HashMap<Integer, String>();
-            for (DeviceAmphiroConfigurationDefault defaultConfiguration : defaultConfigurations) {
-                simplifiedDefaultConfs.put(defaultConfiguration.getId(), defaultConfiguration.getTitle());
-            }
-
-            for (AccountEntity account : accounts) {
-                ProfileModes profileModes = new ProfileModes();
-
-                // User Id
-                profileModes.setId(account.getKey());
-
-                // User name
-                if (account.getFirstname() != null && account.getLastname() != null) {
-                    profileModes.setName(account.getFirstname() + " " + account.getLastname());
-                } else {
-                    profileModes.setName(account.getUsername());
-                }
-
-                // E-mail
-                profileModes.setEmail(account.getUsername());
-
-                // Utility name & Id
-                UtilityEntity utility = account.getUtility();
-                profileModes.setGroupId(utility.getKey());
-                profileModes.setGroupName(utility.getName());
-                // Applying Utility filter
-                if (filters.getGroupName() != null && !filters.getGroupName().equals(profileModes.getGroupName())) {
-                    continue;
-                }
-
-                // Active flag
-                if (account.getProfile().getMobileMode() == EnumMobileMode.BLOCK.getValue()) {
-                    profileModes.setActive(false);
-                } else {
-                    profileModes.setActive(true);
-                }
-
-                // Amphiro b1 flag
-                List<Device> devices = deviceRepository.getUserDevices(account.getKey(), new DeviceRegistrationQuery());
-                List<UUID> deviceKeyList = new ArrayList<UUID>();
-                for (Device device : devices) {
-                    if (device.getType() == EnumDeviceType.AMPHIRO) {
-                        deviceKeyList.add(device.getKey());
-                    }
-                }
-
-                if (deviceKeyList.size() > 0) {
-                    UUID[] deviceKeys = deviceKeyList.toArray(new UUID[0]);
-                    List<DeviceConfigurationCollection> deviceConfigurations = deviceRepository.getConfiguration(account.getKey(), deviceKeys);
-
-                    // Get only the conf of the first amphiro device, since all
-                    // amphiro devices ought to have the same conf.
-                    if (deviceConfigurations.get(0).getConfigurations().get(0).getTitle()
-                                    .equals(simplifiedDefaultConfs
-                                                    .get(DeviceAmphiroConfigurationDefault.CONFIG_ENABLED_METRIC))
-                                    || deviceConfigurations
-                                                    .get(0)
-                                                    .getConfigurations()
-                                                    .get(0)
-                                                    .getTitle()
-                                                    .equals(simplifiedDefaultConfs
-                                                                    .get(DeviceAmphiroConfigurationDefault.CONFIG_ENABLED_IMPERIAL))) {
-                        profileModes.setAmphiro(ProfileModes.AmphiroModeState.ON);
-
-                    } else {
-                        profileModes.setAmphiro(ProfileModes.AmphiroModeState.OFF);
-                    }
-
-                } else {
-                    profileModes.setAmphiro(ProfileModes.AmphiroModeState.NOT_APPLICABLE);
-                }
-                // Applying Amphiro filter
-                if (filters.getAmphiro() != null && !filters.getAmphiro().equals(profileModes.getAmphiro().toString())) {
-                    continue;
-                }
-
-                // Mobile Flag
-                if (account.getProfile().getMobileMode() == EnumMobileMode.ACTIVE.getValue()) {
-                    profileModes.setMobile(ProfileModes.MobileModeState.ON);
-                } else {
-                    profileModes.setMobile(ProfileModes.MobileModeState.OFF);
-                }
-                // Applying Mobile filter
-                if (filters.getMobile() != null) {
-                    if (!filters.getMobile().equals(profileModes.getMobile().toString()))
-                        continue;
-                }
-
-                // Social Flag
-                profileModes.setSocial(ProfileModes.SocialModeState.OFF);
-
-                // Applying Social filter
-                if (filters.getSocial() != null) {
-                    if (!filters.getSocial().equals(profileModes.getSocial().toString())) {
-                        continue;
-                    }
-                }
-                profileModesList.add(profileModes);
-            }
-
-            return profileModesList;
-        } catch (Exception ex) {
-            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        if (auth.getPrincipal() instanceof AuthenticatedUser) {
+            user = (AuthenticatedUser) auth.getPrincipal();
+        } else {
+            throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
         }
+
+        if (!user.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
+            throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+        }
+
+        TypedQuery<AccountEntity> userQuery = null;
+
+        String queryFilterPart = "";
+        if (!StringUtils.isBlank(filters.getNameFilter())) {
+            queryFilterPart = " AND ( LOWER(a.firstname) LIKE :searchTerm OR "
+                            + "       LOWER(a.lastname) LIKE :searchTerm OR "
+                            + "       LOWER(a.username) LIKE :searchTerm ) ";
+        }
+
+        String queryString = "select    a " +
+                             "from      account a join a.roles r " +
+                             "where     r.role.name = :userRole " +
+                             queryFilterPart +
+                             "order by  a.lastname, a.username";
+
+        userQuery = entityManager.createQuery(queryString, AccountEntity.class).setFirstResult(0);
+        userQuery.setParameter("userRole", RoleConstant.ROLE_USER);
+
+        if (!StringUtils.isBlank(filters.getNameFilter())) {
+            userQuery.setParameter("searchTerm", "%" + filters.getNameFilter().toLowerCase() + "%");
+        }
+
+        List<AccountEntity> accounts = userQuery.getResultList();
+        List<ProfileModes> profileModesList = new ArrayList<ProfileModes>();
+
+        // List all DeviceAmphiroConfigurationDefault's in a simple HashMap
+        List<DeviceAmphiroConfigurationDefault> defaultConfigurations = deviceRepository.getAmphiroDefaultConfigurations();
+
+        HashMap<Integer, String> simplifiedDefaultConfs = new HashMap<Integer, String>();
+        for (DeviceAmphiroConfigurationDefault defaultConfiguration : defaultConfigurations) {
+            simplifiedDefaultConfs.put(defaultConfiguration.getId(), defaultConfiguration.getTitle());
+        }
+
+        for (AccountEntity account : accounts) {
+            ProfileModes profileModes = new ProfileModes();
+
+            profileModes.setId(account.getKey());
+            profileModes.setName(account.getFullname());
+            profileModes.setEmail(account.getUsername());
+
+            UtilityEntity utility = account.getUtility();
+            profileModes.setGroupId(utility.getKey());
+            profileModes.setGroupName(utility.getName());
+
+            // Applying Utility filter
+            if (filters.getGroupName() != null && !filters.getGroupName().equals(profileModes.getGroupName())) {
+                continue;
+            }
+
+            // Active flag
+            if (account.getProfile().getMobileMode() == EnumMobileMode.BLOCK.getValue()) {
+                profileModes.setActive(false);
+            } else {
+                profileModes.setActive(true);
+            }
+
+            // Amphiro b1 flag
+            List<Device> devices = deviceRepository.getUserDevices(account.getKey(), new DeviceRegistrationQuery());
+            List<UUID> deviceKeyList = new ArrayList<UUID>();
+            for (Device device : devices) {
+                if (device.getType() == EnumDeviceType.AMPHIRO) {
+                    deviceKeyList.add(device.getKey());
+                }
+            }
+
+            if (deviceKeyList.size() > 0) {
+                UUID[] deviceKeys = deviceKeyList.toArray(new UUID[0]);
+                List<DeviceConfigurationCollection> deviceConfigurations = deviceRepository.getConfiguration(account.getKey(), deviceKeys);
+
+                // Get only the configuration of the first amphiro device, since all
+                // amphiro devices ought to have the same configuration.
+                if (deviceConfigurations.get(0).getConfigurations().get(0).getTitle()
+                                .equals(simplifiedDefaultConfs
+                                                .get(DeviceAmphiroConfigurationDefault.CONFIG_ENABLED_METRIC))
+                                || deviceConfigurations
+                                                .get(0)
+                                                .getConfigurations()
+                                                .get(0)
+                                                .getTitle()
+                                                .equals(simplifiedDefaultConfs
+                                                                .get(DeviceAmphiroConfigurationDefault.CONFIG_ENABLED_IMPERIAL))) {
+                    profileModes.setAmphiro(ProfileModes.AmphiroModeState.ON);
+                } else {
+                    profileModes.setAmphiro(ProfileModes.AmphiroModeState.OFF);
+                }
+
+            } else {
+                profileModes.setAmphiro(ProfileModes.AmphiroModeState.NOT_APPLICABLE);
+            }
+
+            // Applying Amphiro filter
+            if (filters.getAmphiro() != null && !filters.getAmphiro().equals(profileModes.getAmphiro().toString())) {
+                continue;
+            }
+
+            // Mobile Flag
+            if (account.getProfile().getMobileMode() == EnumMobileMode.ACTIVE.getValue()) {
+                profileModes.setMobile(ProfileModes.MobileModeState.ON);
+            } else {
+                profileModes.setMobile(ProfileModes.MobileModeState.OFF);
+            }
+
+            // Applying Mobile filter
+            if (filters.getMobile() != null) {
+                if (!filters.getMobile().equals(profileModes.getMobile().toString()))
+                    continue;
+            }
+
+            // Web Flag
+            if (account.getProfile().getWebMode() == EnumWebMode.ACTIVE.getValue()) {
+                profileModes.setWeb(ProfileModes.WebModeState.ON);
+            } else {
+                profileModes.setWeb(ProfileModes.WebModeState.OFF);
+            }
+
+            // Social Flag
+            if(account.getProfile().isSocialEnabled()) {
+                profileModes.setSocial(ProfileModes.SocialModeState.ON);
+            } else {
+                profileModes.setSocial(ProfileModes.SocialModeState.OFF);
+            }
+
+            // Applying Social filter
+            if ((filters.getSocial() != null) && (!filters.getSocial().equals(profileModes.getSocial().toString()))) {
+                continue;
+            }
+
+            profileModesList.add(profileModes);
+        }
+
+        return profileModesList;
     }
 
     @Override
     public void setProfileModes(ProfileModesSubmitChangesRequest modeChangesObject) throws ApplicationException {
-        try {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        AuthenticatedUser user = null;
 
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            AuthenticatedUser user = null;
+        if (auth.getPrincipal() instanceof AuthenticatedUser) {
+            user = (AuthenticatedUser) auth.getPrincipal();
+        } else {
+            throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+        }
 
-            if (auth.getPrincipal() instanceof AuthenticatedUser) {
-                user = (AuthenticatedUser) auth.getPrincipal();
+        if (!user.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
+            throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+        }
+
+        List<DeviceAmphiroConfigurationDefault> configurations = deviceRepository
+                        .getAmphiroDefaultConfigurations();
+
+        // Organizing amphiro default configurations in a handy HashMap
+        HashMap<String, DeviceAmphiroConfigurationDefault> defaultconfigurations = new HashMap<String, DeviceAmphiroConfigurationDefault>();
+        for (DeviceAmphiroConfigurationDefault defconf : configurations) {
+            if (defconf.getTitle().equals("Enabled Configuration (Metric Units)")) {
+                defaultconfigurations.put("ON_Metric", defconf);
+            } else if (defconf.getTitle().equals("Enabled Configuration (Imperial Units)")) {
+                defaultconfigurations.put("ON_Imperial", defconf);
             } else {
-                throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+                defaultconfigurations.put("OFF", defconf);
             }
+        }
 
-            if (!user.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
-                throw createApplicationException(SharedErrorCode.AUTHORIZATION);
-            }
+        for (ProfileModesChanges modeChanges : modeChangesObject.getModeChanges()) {
 
-            List<DeviceAmphiroConfigurationDefault> configurations = this.deviceRepository
-                            .getAmphiroDefaultConfigurations();
+            String accountQueryString = "select a from account a where a.key = :key";
+            TypedQuery<AccountEntity> accountQuery = entityManager.createQuery(accountQueryString, AccountEntity.class)
+                                                                  .setFirstResult(0).setMaxResults(1);
+            accountQuery.setParameter("key", modeChanges.getId());
 
-            // Organizing amphiro default configurations in a handy HashMap
-            HashMap<String, DeviceAmphiroConfigurationDefault> defaultconfigurations = new HashMap<String, DeviceAmphiroConfigurationDefault>();
-            for (DeviceAmphiroConfigurationDefault defconf : configurations) {
-                if (defconf.getTitle().equals("Enabled Configuration (Metric Units)")) {
-                    defaultconfigurations.put("ON_Metric", defconf);
-                } else if (defconf.getTitle().equals("Enabled Configuration (Imperial Units)")) {
-                    defaultconfigurations.put("ON_Imperial", defconf);
-                } else {
-                    defaultconfigurations.put("OFF", defconf);
-                }
-            }
+            AccountEntity account = accountQuery.getSingleResult();
 
-            for (ProfileModesChanges modeChanges : modeChangesObject.getModeChanges()) {
-
-                TypedQuery<eu.daiad.web.domain.application.AccountEntity> accountQuery = entityManager.createQuery(
-                                "select a from account a where a.key = :key",
-                                eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0).setMaxResults(1);
-                accountQuery.setParameter("key", modeChanges.getId());
-
-                AccountEntity account = accountQuery.getSingleResult();
-
-                for (ProfileModeChange modeChange : modeChanges.getChanges()) {
-                    switch (modeChange.getMode()) {
-                        case "amphiro":
-
-                            // Selecting the suitable default configuration
-                            DeviceAmphiroConfigurationDefault newDefaultConfiguration = null;
-                            if (modeChange.getValue().equals("OFF")) {
-                                newDefaultConfiguration = defaultconfigurations.get("OFF");
-                            } else if (modeChange.getValue().equals("ON")) {
-                                if (account.getUtility().getName().equals("St Albans")) {
-                                    newDefaultConfiguration = defaultconfigurations.get("ON_Imperial");
-                                } else if (account.getUtility().getName().equals("Alicante")) {
-                                    newDefaultConfiguration = defaultconfigurations.get("ON_Metric");
-                                } else {
-                                    if (account.getLocale().equals("en")) {
-                                        newDefaultConfiguration = defaultconfigurations.get("ON_Imperial");
-                                    } else {
-                                        newDefaultConfiguration = defaultconfigurations.get("ON_Metric");
-                                    }
-                                }
-
-                                // Set also mobile mode to OFF, if the user
-                                // hasn't set explicitly mobile mode
-                                boolean mobileModeChangeExists = false;
-                                for (ProfileModeChange change : modeChanges.getChanges()) {
-                                    if (change.getMode().equals("mobile")) {
-                                        mobileModeChangeExists = true;
-                                    }
-                                }
-                                if (!mobileModeChangeExists) {
-                                    this.setMobileMode(account, EnumMobileMode.INACTIVE.getValue());
-                                }
-
+            for (ProfileModeChange modeChange : modeChanges.getChanges()) {
+                switch (modeChange.getMode()) {
+                    case "amphiro":
+                        // Selecting the suitable default configuration
+                        DeviceAmphiroConfigurationDefault newDefaultConfiguration = null;
+                        if (modeChange.getValue().equals("OFF")) {
+                            newDefaultConfiguration = defaultconfigurations.get("OFF");
+                        } else if (modeChange.getValue().equals("ON")) {
+                            if (account.getUtility().getName().equals("St Albans")) {
+                                newDefaultConfiguration = defaultconfigurations.get("ON_Imperial");
+                            } else if (account.getUtility().getName().equals("Alicante")) {
+                                newDefaultConfiguration = defaultconfigurations.get("ON_Metric");
                             } else {
-                                newDefaultConfiguration = defaultconfigurations.get("OFF");
-                            }
-
-                            // Get the current (active and inactive)
-                            // configurations and set them as inactive
-                            Set<eu.daiad.web.domain.application.Device> devices = account.getDevices();
-                            for (eu.daiad.web.domain.application.Device device : devices) {
-
-                                if (device.getType() == EnumDeviceType.AMPHIRO) {
-
-                                    DeviceAmphiroConfiguration newConfiguration = new DeviceAmphiroConfiguration();
-
-                                    newConfiguration.setActive(true);
-                                    newConfiguration.setCreatedOn(new DateTime());
-                                    newConfiguration.setTitle(newDefaultConfiguration.getTitle());
-                                    newConfiguration.setBlock(newDefaultConfiguration.getBlock());
-                                    newConfiguration.setValue1(newDefaultConfiguration.getValue1());
-                                    newConfiguration.setValue2(newDefaultConfiguration.getValue2());
-                                    newConfiguration.setValue3(newDefaultConfiguration.getValue3());
-                                    newConfiguration.setValue4(newDefaultConfiguration.getValue4());
-                                    newConfiguration.setValue5(newDefaultConfiguration.getValue5());
-                                    newConfiguration.setValue6(newDefaultConfiguration.getValue6());
-                                    newConfiguration.setValue7(newDefaultConfiguration.getValue7());
-                                    newConfiguration.setValue8(newDefaultConfiguration.getValue8());
-                                    newConfiguration.setValue9(newDefaultConfiguration.getValue9());
-                                    newConfiguration.setValue10(newDefaultConfiguration.getValue10());
-                                    newConfiguration.setValue11(newDefaultConfiguration.getValue11());
-                                    newConfiguration.setValue12(newDefaultConfiguration.getValue12());
-                                    newConfiguration.setNumberOfFrames(newDefaultConfiguration.getNumberOfFrames());
-                                    newConfiguration.setFrameDuration(newDefaultConfiguration.getFrameDuration());
-
-                                    DeviceAmphiro deviceAmphiro = (DeviceAmphiro) device;
-                                    for (DeviceAmphiroConfiguration currentConfiguration : deviceAmphiro
-                                                    .getConfigurations()) {
-                                        currentConfiguration.setActive(false);
-                                    }
-                                    deviceAmphiro.getConfigurations().add(newConfiguration);
+                                if (account.getLocale().equals("en")) {
+                                    newDefaultConfiguration = defaultconfigurations.get("ON_Imperial");
+                                } else {
+                                    newDefaultConfiguration = defaultconfigurations.get("ON_Metric");
                                 }
                             }
 
-                            break;
-                        case "mobile":
-
-                            int newMode = EnumMobileMode.UNDEFINED.getValue();
-                            if (modeChange.getValue().equals("ON")) {
-                                newMode = EnumMobileMode.ACTIVE.getValue();
-                            } else if (modeChange.getValue().equals("OFF")) {
-                                newMode = EnumMobileMode.INACTIVE.getValue();
+                            // Set also mobile mode to OFF, if the user
+                            // hasn't set explicitly mobile mode
+                            boolean mobileModeChangeExists = false;
+                            for (ProfileModeChange change : modeChanges.getChanges()) {
+                                if (change.getMode().equals("mobile")) {
+                                    mobileModeChangeExists = true;
+                                }
                             }
-                            this.setMobileMode(account, newMode);
+                            if (!mobileModeChangeExists) {
+                                setMobileMode(account, EnumMobileMode.INACTIVE.getValue());
+                            }
+                        } else {
+                            newDefaultConfiguration = defaultconfigurations.get("OFF");
+                        }
 
-                            break;
-                        case "social":
-                            break;
-                    }
+                        // Get the current (active and inactive)
+                        // configurations and set them as inactive
+                        Set<eu.daiad.web.domain.application.Device> devices = account.getDevices();
+                        for (eu.daiad.web.domain.application.Device device : devices) {
 
-                    this.entityManager.persist(account);
+                            if (device.getType() == EnumDeviceType.AMPHIRO) {
+                                DeviceAmphiroConfiguration newConfiguration = new DeviceAmphiroConfiguration();
+
+                                newConfiguration.setActive(true);
+                                newConfiguration.setCreatedOn(new DateTime());
+                                newConfiguration.setTitle(newDefaultConfiguration.getTitle());
+                                newConfiguration.setBlock(newDefaultConfiguration.getBlock());
+                                newConfiguration.setValue1(newDefaultConfiguration.getValue1());
+                                newConfiguration.setValue2(newDefaultConfiguration.getValue2());
+                                newConfiguration.setValue3(newDefaultConfiguration.getValue3());
+                                newConfiguration.setValue4(newDefaultConfiguration.getValue4());
+                                newConfiguration.setValue5(newDefaultConfiguration.getValue5());
+                                newConfiguration.setValue6(newDefaultConfiguration.getValue6());
+                                newConfiguration.setValue7(newDefaultConfiguration.getValue7());
+                                newConfiguration.setValue8(newDefaultConfiguration.getValue8());
+                                newConfiguration.setValue9(newDefaultConfiguration.getValue9());
+                                newConfiguration.setValue10(newDefaultConfiguration.getValue10());
+                                newConfiguration.setValue11(newDefaultConfiguration.getValue11());
+                                newConfiguration.setValue12(newDefaultConfiguration.getValue12());
+                                newConfiguration.setNumberOfFrames(newDefaultConfiguration.getNumberOfFrames());
+                                newConfiguration.setFrameDuration(newDefaultConfiguration.getFrameDuration());
+
+                                DeviceAmphiro deviceAmphiro = (DeviceAmphiro) device;
+                                for (DeviceAmphiroConfiguration currentConfiguration : deviceAmphiro
+                                                .getConfigurations()) {
+                                    currentConfiguration.setActive(false);
+                                }
+                                deviceAmphiro.getConfigurations().add(newConfiguration);
+                            }
+                        }
+
+                        break;
+                    case "mobile":
+                        int newMobileMode = EnumMobileMode.UNDEFINED.getValue();
+                        if (modeChange.getValue().equals("ON")) {
+                            newMobileMode = EnumMobileMode.ACTIVE.getValue();
+                        } else if (modeChange.getValue().equals("OFF")) {
+                            newMobileMode = EnumMobileMode.INACTIVE.getValue();
+                        }
+                        setMobileMode(account, newMobileMode);
+
+                        break;
+                    case "web":
+                        int newWebMode = EnumWebMode.UNDEFINED.getValue();
+                        if (modeChange.getValue().equals("ON")) {
+                            newWebMode = EnumWebMode.ACTIVE.getValue();
+                        } else if (modeChange.getValue().equals("OFF")) {
+                            newWebMode = EnumWebMode.INACTIVE.getValue();
+                        }
+                        setWebMode(account, newWebMode);
+
+                        break;
+                    case "social":
+                        boolean isSocialEnabled = false;
+                        if (modeChange.getValue().equals("ON")) {
+                            isSocialEnabled = true;
+                        } else if (modeChange.getValue().equals("OFF")) {
+                            isSocialEnabled = false;
+                        }
+                        setSocial(account, isSocialEnabled);
+
+                        break;
                 }
-            }
 
-        } catch (Exception ex) {
-            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+                entityManager.persist(account);
+            }
         }
     }
 
     @Override
     public void deactivateProfile(ProfileDeactivateRequest userDeactId) {
-        try {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        AuthenticatedUser user = null;
 
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            AuthenticatedUser user = null;
-
-            if (auth.getPrincipal() instanceof AuthenticatedUser) {
-                user = (AuthenticatedUser) auth.getPrincipal();
-            } else {
-                throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
-            }
-
-            if (!user.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
-                throw createApplicationException(SharedErrorCode.AUTHORIZATION);
-            }
-
-            TypedQuery<eu.daiad.web.domain.application.AccountEntity> accountQuery = entityManager
-                            .createQuery("select a from account a where a.key = :key",
-                                            eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0)
-                            .setMaxResults(1);
-            accountQuery.setParameter("key", userDeactId.getUserDeactId());
-
-            AccountEntity account = accountQuery.getSingleResult();
-            UUID newVersion = UUID.randomUUID();
-
-            account.getProfile().setVersion(newVersion);
-
-            int newMode = EnumMobileMode.BLOCK.getValue();
-            account.getProfile().setMobileMode(newMode);
-
-            DateTime now = new DateTime();
-            account.getProfile().setUpdatedOn(now);
-
-            AccountProfileHistoryEntry historyEntry = new AccountProfileHistoryEntry();
-            historyEntry.setProfile(account.getProfile());
-            historyEntry.setUpdatedOn(now);
-            historyEntry.setVersion(newVersion);
-            historyEntry.setMobileMode(newMode);
-            historyEntry.setUtilityMode(account.getProfile().getUtilityMode());
-            historyEntry.setWebMode(account.getProfile().getWebMode());
-
-            // Deactivate with amphiro devices
-            List<DeviceAmphiroConfigurationDefault> configurations = this.deviceRepository
-                            .getAmphiroDefaultConfigurations();
-
-            DeviceAmphiroConfigurationDefault offConfiguration = null;
-            for (DeviceAmphiroConfigurationDefault defconf : configurations) {
-                if (defconf.getTitle().equals("Off Configuration")) {
-                    offConfiguration = defconf;
-                }
-            }
-
-            if (offConfiguration == null) {
-                throw createApplicationException(DeviceErrorCode.OFF_AMPHIRO_CONFIGURATION_NOT_FOUND);
-            }
-
-            // Get the current (active and inactive) configurations and set them
-            // as inactive
-            Set<eu.daiad.web.domain.application.Device> devices = account.getDevices();
-            for (eu.daiad.web.domain.application.Device device : devices) {
-
-                if (device.getType() == EnumDeviceType.AMPHIRO) {
-
-                    DeviceAmphiroConfiguration newConfiguration = new DeviceAmphiroConfiguration();
-
-                    newConfiguration.setActive(true);
-                    newConfiguration.setCreatedOn(new DateTime());
-                    newConfiguration.setTitle(offConfiguration.getTitle());
-                    newConfiguration.setBlock(offConfiguration.getBlock());
-                    newConfiguration.setValue1(offConfiguration.getValue1());
-                    newConfiguration.setValue2(offConfiguration.getValue2());
-                    newConfiguration.setValue3(offConfiguration.getValue3());
-                    newConfiguration.setValue4(offConfiguration.getValue4());
-                    newConfiguration.setValue5(offConfiguration.getValue5());
-                    newConfiguration.setValue6(offConfiguration.getValue6());
-                    newConfiguration.setValue7(offConfiguration.getValue7());
-                    newConfiguration.setValue8(offConfiguration.getValue8());
-                    newConfiguration.setValue9(offConfiguration.getValue9());
-                    newConfiguration.setValue10(offConfiguration.getValue10());
-                    newConfiguration.setValue11(offConfiguration.getValue11());
-                    newConfiguration.setValue12(offConfiguration.getValue12());
-                    newConfiguration.setNumberOfFrames(offConfiguration.getNumberOfFrames());
-                    newConfiguration.setFrameDuration(offConfiguration.getFrameDuration());
-
-                    DeviceAmphiro deviceAmphiro = (DeviceAmphiro) device;
-                    for (DeviceAmphiroConfiguration currentConfiguration : deviceAmphiro.getConfigurations()) {
-                        currentConfiguration.setActive(false);
-                    }
-                    deviceAmphiro.getConfigurations().add(newConfiguration);
-                }
-            }
-
-            this.entityManager.persist(account);
-            this.entityManager.persist(historyEntry);
-
-        } catch (Exception ex) {
-            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        if (auth.getPrincipal() instanceof AuthenticatedUser) {
+            user = (AuthenticatedUser) auth.getPrincipal();
+        } else {
+            throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
         }
+
+        if (!user.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
+            throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+        }
+
+        String accountQueryString = "select a from account a where a.key = :key";
+        TypedQuery<AccountEntity> accountQuery = entityManager.createQuery(accountQueryString, AccountEntity.class)
+                                                              .setFirstResult(0)
+                                                              .setMaxResults(1);
+
+        accountQuery.setParameter("key", userDeactId.getUserDeactId());
+
+        AccountEntity account = accountQuery.getSingleResult();
+        UUID newVersion = UUID.randomUUID();
+
+        account.getProfile().setVersion(newVersion);
+
+        account.getProfile().setMobileMode(EnumMobileMode.BLOCK.getValue());
+        account.getProfile().setWebMode(EnumWebMode.INACTIVE.getValue());
+        account.getProfile().setUtilityMode(EnumUtilityMode.INACTIVE.getValue());
+        account.getProfile().setSocialEnabled(false);
+
+        DateTime now = new DateTime();
+        account.getProfile().setUpdatedOn(now);
+
+        AccountProfileHistoryEntry historyEntry = new AccountProfileHistoryEntry();
+        historyEntry.setProfile(account.getProfile());
+        historyEntry.setUpdatedOn(now);
+        historyEntry.setVersion(newVersion);
+        historyEntry.setMobileMode(EnumMobileMode.BLOCK.getValue());
+        historyEntry.setWebMode(EnumWebMode.INACTIVE.getValue());
+        historyEntry.setUtilityMode(EnumUtilityMode.INACTIVE.getValue());
+        historyEntry.setSocialEnabled(false);
+
+        // Deactivate with amphiro devices
+        List<DeviceAmphiroConfigurationDefault> configurations = deviceRepository.getAmphiroDefaultConfigurations();
+
+        DeviceAmphiroConfigurationDefault offConfiguration = null;
+        for (DeviceAmphiroConfigurationDefault defconf : configurations) {
+            if (defconf.getTitle().equals("Off Configuration")) {
+                offConfiguration = defconf;
+            }
+        }
+
+        if (offConfiguration == null) {
+            throw createApplicationException(DeviceErrorCode.OFF_AMPHIRO_CONFIGURATION_NOT_FOUND);
+        }
+
+        // Get the current (active and inactive) configurations and set them
+        // as inactive
+        Set<eu.daiad.web.domain.application.Device> devices = account.getDevices();
+        for (eu.daiad.web.domain.application.Device device : devices) {
+
+            if (device.getType() == EnumDeviceType.AMPHIRO) {
+
+                DeviceAmphiroConfiguration newConfiguration = new DeviceAmphiroConfiguration();
+
+                newConfiguration.setActive(true);
+                newConfiguration.setCreatedOn(new DateTime());
+                newConfiguration.setTitle(offConfiguration.getTitle());
+                newConfiguration.setBlock(offConfiguration.getBlock());
+                newConfiguration.setValue1(offConfiguration.getValue1());
+                newConfiguration.setValue2(offConfiguration.getValue2());
+                newConfiguration.setValue3(offConfiguration.getValue3());
+                newConfiguration.setValue4(offConfiguration.getValue4());
+                newConfiguration.setValue5(offConfiguration.getValue5());
+                newConfiguration.setValue6(offConfiguration.getValue6());
+                newConfiguration.setValue7(offConfiguration.getValue7());
+                newConfiguration.setValue8(offConfiguration.getValue8());
+                newConfiguration.setValue9(offConfiguration.getValue9());
+                newConfiguration.setValue10(offConfiguration.getValue10());
+                newConfiguration.setValue11(offConfiguration.getValue11());
+                newConfiguration.setValue12(offConfiguration.getValue12());
+                newConfiguration.setNumberOfFrames(offConfiguration.getNumberOfFrames());
+                newConfiguration.setFrameDuration(offConfiguration.getFrameDuration());
+
+                DeviceAmphiro deviceAmphiro = (DeviceAmphiro) device;
+                for (DeviceAmphiroConfiguration currentConfiguration : deviceAmphiro.getConfigurations()) {
+                    currentConfiguration.setActive(false);
+                }
+                deviceAmphiro.getConfigurations().add(newConfiguration);
+            }
+        }
+
+        entityManager.persist(account);
+        entityManager.persist(historyEntry);
     }
 
     @Override
     public ProfileModesFilterOptions getFilterOptions() throws ApplicationException {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            AuthenticatedUser user = null;
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        AuthenticatedUser user = null;
 
-            if (auth.getPrincipal() instanceof AuthenticatedUser) {
-                user = (AuthenticatedUser) auth.getPrincipal();
-            } else {
-                throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
-            }
-
-            if (!user.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
-                throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED);
-            }
-
-            ProfileModesFilterOptions profileModesFilterOptions = new ProfileModesFilterOptions();
-
-            // Get distinct utility names for simple user accounts
-            TypedQuery<String> utilityNameQuery = entityManager.createQuery(
-                            "SELECT DISTINCT (u.name) FROM utility u INNER JOIN u.accounts a "
-                                            + "INNER JOIN a.roles r WHERE r.role.name = :userRole", String.class)
-                            .setFirstResult(0);
-            utilityNameQuery.setParameter("userRole", RoleConstant.ROLE_USER);
-
-            List<String> utilityOptions = utilityNameQuery.getResultList();
-            profileModesFilterOptions.setGroupName(utilityOptions);
-
-            // Get distinct amphiro names for simple user accounts
-            profileModesFilterOptions.setAmphiro(new ArrayList<String>());
-            TypedQuery<String> amphiroQuery = entityManager.createQuery(
-                            "SELECT DISTINCT(dc.title) FROM device_amphiro_config dc", String.class).setFirstResult(0);
-
-            List<String> deviceConfigOptions = amphiroQuery.getResultList();
-
-            for (String dc : deviceConfigOptions) {
-                if (dc.equals("Default Configuration")) {
-                    profileModesFilterOptions.getAmphiro().add("OFF");
-                } else if (dc.startsWith("Enabled Configuration")) {
-                    profileModesFilterOptions.getAmphiro().add("ON");
-                }
-                if (profileModesFilterOptions.getAmphiro().size() > 1) {
-                    break;
-                }
-            }
-            // check if there is at least a user without registered amphiro
-            // devices
-            // TODO Refactor query
-            TypedQuery<eu.daiad.web.domain.application.AccountEntity> userQuery = entityManager.createQuery(
-                            "SELECT a FROM account a JOIN a.roles r WHERE r.role.name = :userRole",
-                            eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0);
-            userQuery.setParameter("userRole", RoleConstant.ROLE_USER);
-
-            List<AccountEntity> userAccounts = userQuery.getResultList();
-            for (AccountEntity a : userAccounts) {
-                int amphiroCount = 0;
-                for (eu.daiad.web.domain.application.Device d : a.getDevices()) {
-                    if (d.getType() == EnumDeviceType.AMPHIRO) {
-                        amphiroCount++;
-                    }
-                }
-                if (amphiroCount == 0) {
-                    profileModesFilterOptions.getAmphiro().add("NOT_APPLICABLE");
-                    break;
-                }
-            }
-
-            // Get distinct mobile names for simple user accounts
-            profileModesFilterOptions.setMobile(new ArrayList<String>());
-            profileModesFilterOptions.getMobile().add("ON");
-            profileModesFilterOptions.getMobile().add("OFF");
-
-            // Get distinct social names for simple user accounts
-            // TODO: Currently social is not supported
-            profileModesFilterOptions.setSocial(new ArrayList<String>());
-            profileModesFilterOptions.getSocial().add("ON");
-            profileModesFilterOptions.getSocial().add("OFF");
-
-            return profileModesFilterOptions;
-        } catch (Exception ex) {
-            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        if (auth.getPrincipal() instanceof AuthenticatedUser) {
+            user = (AuthenticatedUser) auth.getPrincipal();
+        } else {
+            throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
         }
+
+        if (!user.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
+            throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED);
+        }
+
+        ProfileModesFilterOptions profileModesFilterOptions = new ProfileModesFilterOptions();
+
+        // Get distinct utility names for simple user accounts
+        String utilityQuery = "select   distinct (a.utility.name) " +
+                              "from     account a inner join a.roles r " +
+                              "where    a.utility.id in :utilities and r.role.name = :role";
+
+        TypedQuery<String> utilityNameQuery = entityManager.createQuery(utilityQuery, String.class).setFirstResult(0);
+        utilityNameQuery.setParameter("utilities", user.getUtilities());
+        utilityNameQuery.setParameter("role", RoleConstant.ROLE_USER);
+
+        List<String> utilityOptions = utilityNameQuery.getResultList();
+        profileModesFilterOptions.setGroupName(utilityOptions);
+
+        // Get distinct amphiro names for simple user accounts
+        profileModesFilterOptions.setAmphiro(new ArrayList<String>());
+        TypedQuery<String> amphiroQuery = entityManager.createQuery(
+                        "SELECT DISTINCT(dc.title) FROM device_amphiro_config dc", String.class).setFirstResult(0);
+
+        List<String> deviceConfigOptions = amphiroQuery.getResultList();
+
+        for (String dc : deviceConfigOptions) {
+            if (dc.equals("Default Configuration")) {
+                profileModesFilterOptions.getAmphiro().add("OFF");
+            } else if (dc.startsWith("Enabled Configuration")) {
+                profileModesFilterOptions.getAmphiro().add("ON");
+            }
+            if (profileModesFilterOptions.getAmphiro().size() > 1) {
+                break;
+            }
+        }
+        // check if there is at least a user without registered amphiro
+        // devices
+        // TODO Refactor query
+        TypedQuery<AccountEntity> userQuery = entityManager.createQuery(
+                        "SELECT a FROM account a JOIN a.roles r WHERE a.utility.id in :utilities and r.role.name = :role",
+                        AccountEntity.class).setFirstResult(0);
+        userQuery.setParameter("utilities", user.getUtilities());
+        userQuery.setParameter("role", RoleConstant.ROLE_USER);
+
+        List<AccountEntity> userAccounts = userQuery.getResultList();
+        for (AccountEntity a : userAccounts) {
+            int amphiroCount = 0;
+            for (eu.daiad.web.domain.application.Device d : a.getDevices()) {
+                if (d.getType() == EnumDeviceType.AMPHIRO) {
+                    amphiroCount++;
+                }
+            }
+            if (amphiroCount == 0) {
+                profileModesFilterOptions.getAmphiro().add("NOT_APPLICABLE");
+                break;
+            }
+        }
+
+        // Get distinct mobile names for simple user accounts
+        profileModesFilterOptions.setMobile(new ArrayList<String>());
+        profileModesFilterOptions.getMobile().add("ON");
+        profileModesFilterOptions.getMobile().add("OFF");
+
+        // Get distinct web names for simple user accounts
+        profileModesFilterOptions.setWeb(new ArrayList<String>());
+        profileModesFilterOptions.getWeb().add("ON");
+        profileModesFilterOptions.getWeb().add("OFF");
+
+        // Get distinct social names for simple user accounts
+        // TODO: Currently social is not supported
+        profileModesFilterOptions.setSocial(new ArrayList<String>());
+        profileModesFilterOptions.getSocial().add("ON");
+        profileModesFilterOptions.getSocial().add("OFF");
+
+        return profileModesFilterOptions;
     }
 
     @Override
@@ -682,6 +697,8 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
         account.getProfile().setDailyMeterBudget(updates.getDailyMeterBudget());
         account.getProfile().setDailyAmphiroBudget(updates.getDailyAmphiroBudget());
+        account.getProfile().setUnit(updates.getUnit());
+        account.getProfile().setGarden(updates.getGarden());
 
         if (!StringUtils.isBlank(updates.getLastname())) {
             account.setLastname(updates.getLastname());
@@ -799,7 +816,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             householdEntity.setAccount(account);
             householdEntity.setCreatedOn(account.getCreatedOn());
             householdEntity.setUpdatedOn(account.getCreatedOn());
-            this.entityManager.persist(householdEntity);
+            entityManager.persist(householdEntity);
         }
 
         // Sort members
@@ -831,7 +848,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
                 householdMemberEntity.setHousehold(householdEntity);
 
-                this.entityManager.persist(householdMemberEntity);
+                entityManager.persist(householdMemberEntity);
             } else {
                 householdMemberEntity.setUpdatedOn(DateTime.now());
             }
@@ -873,10 +890,52 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
         historyEntry.setMobileMode(mode);
         historyEntry.setUtilityMode(account.getProfile().getUtilityMode());
         historyEntry.setWebMode(account.getProfile().getWebMode());
+        historyEntry.setSocialEnabled(account.getProfile().isSocialEnabled());
 
-        this.entityManager.persist(historyEntry);
+        entityManager.persist(historyEntry);
     }
 
+    private void setWebMode(AccountEntity account, int mode) {
+        UUID newVersion = UUID.randomUUID();
+
+        account.getProfile().setVersion(newVersion);
+
+        account.getProfile().setWebMode(mode);
+        DateTime now = new DateTime();
+        account.getProfile().setUpdatedOn(now);
+
+        AccountProfileHistoryEntry historyEntry = new AccountProfileHistoryEntry();
+        historyEntry.setProfile(account.getProfile());
+        historyEntry.setUpdatedOn(now);
+        historyEntry.setVersion(newVersion);
+        historyEntry.setMobileMode(account.getProfile().getMobileMode());
+        historyEntry.setUtilityMode(account.getProfile().getUtilityMode());
+        historyEntry.setWebMode(mode);
+        historyEntry.setSocialEnabled(account.getProfile().isSocialEnabled());
+
+        entityManager.persist(historyEntry);
+    }
+
+    private void setSocial(AccountEntity account, boolean enabled) {
+        UUID newVersion = UUID.randomUUID();
+
+        account.getProfile().setVersion(newVersion);
+
+        account.getProfile().setSocialEnabled(enabled);
+        DateTime now = new DateTime();
+        account.getProfile().setUpdatedOn(now);
+
+        AccountProfileHistoryEntry historyEntry = new AccountProfileHistoryEntry();
+        historyEntry.setProfile(account.getProfile());
+        historyEntry.setUpdatedOn(now);
+        historyEntry.setVersion(newVersion);
+        historyEntry.setMobileMode(account.getProfile().getMobileMode());
+        historyEntry.setUtilityMode(account.getProfile().getUtilityMode());
+        historyEntry.setWebMode(account.getProfile().getWebMode());
+        historyEntry.setSocialEnabled(enabled);
+
+        entityManager.persist(historyEntry);
+    }
     @Override
     public List<ProfileHistoryEntry> getProfileHistoryByUserKey(UUID userKey) {
         String sqlString = "select a from account a where a.key = :userKey";
@@ -898,6 +957,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             entry.setMobileMode(EnumMobileMode.fromInteger(h.getMobileMode()));
             entry.setWebMode(EnumWebMode.fromInteger(h.getWebMode()));
             entry.setUtilityMode(EnumUtilityMode.fromInteger(h.getUtilityMode()));
+            entry.setSocialEnabled(h.isSocialEnabled());
             entry.setUpdatedOn(h.getUpdatedOn());
             entry.setVersion(h.getVersion());
 
