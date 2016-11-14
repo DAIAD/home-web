@@ -1,6 +1,7 @@
-package eu.daiad.web.model.message;
+package eu.daiad.web.model;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.springframework.util.StringUtils;
@@ -12,11 +13,9 @@ import eu.daiad.web.model.query.EnumDataField;
 import eu.daiad.web.service.message.aggregates.ComputedNumber;
 
 /**
- * A container for commonly computed statistics for a group (or an entire utility) of users
- * 
- * Todo: Factor-out utility
+ * A container for common statistics for a group (or an entire utility) of users
  */
-public class ConsumptionStats {
+public class ConsumptionStats implements Iterable<ConsumptionStats.Key> {
     
     /**
      * Represents available statistics
@@ -54,7 +53,7 @@ public class ConsumptionStats {
     /**
      * Represents a key for a statistic to be computed
      */
-    private static class Key {
+    public static class Key {
         
         private final EnumStatistic statistic;
         private final EnumDataField field;
@@ -94,31 +93,48 @@ public class ConsumptionStats {
         {
             return String.format("(%s,%s,%s)", statistic, device, field);
         }
+
+        public EnumStatistic getStatistic()
+        {
+            return statistic;
+        }
+
+        public EnumDataField getField()
+        {
+            return field;
+        }
+
+        public EnumDeviceType getDevice()
+        {
+            return device;
+        }
     }
-    
-    private final int utilityId;
-    
+        
     private HashMap<Key, ComputedNumber> stats; 
 
-	public ConsumptionStats(int utilityId) {
-	    this.utilityId = utilityId;
+	public ConsumptionStats() {
 	    this.stats = new HashMap<>();
 	}
 
-	public void set(EnumStatistic metric, EnumDeviceType device, EnumDataField field, ComputedNumber value) {
-	    stats.put(new Key(metric, device, field), value);
+	public void set(EnumStatistic statistic, EnumDeviceType device, EnumDataField field, ComputedNumber value) {
+	    stats.put(new Key(statistic, device, field), value);
 	}
 	
-	public void set(EnumStatistic metric, EnumDeviceType device, ComputedNumber value) {
-	    stats.put(new Key(metric, device), value);
+	public void set(EnumStatistic statistic, EnumDeviceType device, ComputedNumber value) {
+	    stats.put(new Key(statistic, device), value);
 	}
 	
-	public ComputedNumber get(EnumStatistic metric, EnumDeviceType device, EnumDataField field) {
-	    return stats.get(new Key(metric, device, field));
+	public ComputedNumber get(Key key)
+	{
+	    return stats.get(key);
+	}
+	
+	public ComputedNumber get(EnumStatistic statistic, EnumDeviceType device, EnumDataField field) {
+	    return stats.get(new Key(statistic, device, field));
 	}
 
-	public ComputedNumber get(EnumStatistic metric, EnumDeviceType device) {
-	    return stats.get(new Key(metric, device));
+	public ComputedNumber get(EnumStatistic statistic, EnumDeviceType device) {
+	    return stats.get(new Key(statistic, device));
 	}
 	
 	public void resetValues() {
@@ -126,15 +142,15 @@ public class ConsumptionStats {
 	        n.reset();
 	}
 	
-    public int getUtilityId() {
-        return utilityId;
+	public boolean isEmpty()
+	{
+	    return stats.isEmpty();
 	}
-    
+	
     @Override
     public String toString()
     {
         StringBuilder sb = new StringBuilder();
-        sb.append("Consumption stats for utility #" + utilityId + ":\n");
         for (Key k: stats.keySet()) {
             ComputedNumber n = stats.get(k);
             sb.append(String.format(
@@ -146,5 +162,11 @@ public class ConsumptionStats {
             ));
         }   
         return sb.toString();
+    }
+
+    @Override
+    public Iterator<Key> iterator()
+    {
+        return stats.keySet().iterator();
     }
 }

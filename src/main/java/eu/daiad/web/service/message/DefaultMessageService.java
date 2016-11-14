@@ -6,17 +6,20 @@ import java.util.UUID;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-import eu.daiad.web.model.message.ConsumptionStats;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
+import eu.daiad.web.model.ConsumptionStats;
 import eu.daiad.web.model.message.CandidateMessageStatus;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IMessageManagementRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IUtilityRepository;
+import eu.daiad.web.service.IConsumptionStatsService;
 
 @Service
 public class DefaultMessageService implements IMessageService {
@@ -36,10 +39,11 @@ public class DefaultMessageService implements IMessageService {
 	IMessageManagementRepository messageManagementRepository;
 
 	@Autowired
-	IConsumptionAggregationService aggregationService;
+	@Qualifier("cachingConsumptionStatsService")
+	IConsumptionStatsService statsService;
 
 	@Autowired
-	IMessageResolverService messageResolverService;
+	IMessageResolverService messageResolver;
 
 	@Override
 	public void executeAll(MessageCalculationConfiguration config) 
@@ -59,7 +63,8 @@ public class DefaultMessageService implements IMessageService {
 	public void executeUtility(MessageCalculationConfiguration config, UUID utilityKey) 
 	{
 		UtilityInfo utility = this.utilityRepository.getUtilityByKey(utilityKey);
-		ConsumptionStats stats = aggregationService.compute(utility, null);
+		LocalDateTime refDate = LocalDateTime.parse("2016-09-30"); // Fixme Testing
+		ConsumptionStats stats = statsService.getStats(utility, refDate);
         executeUtility(config, utility, stats);
 	}
 
@@ -67,10 +72,10 @@ public class DefaultMessageService implements IMessageService {
 	        MessageCalculationConfiguration config, UtilityInfo utility, ConsumptionStats stats) 
 	{
 		List<UUID> accountKeys = groupRepository.getUtilityByIdMemberKeys(utility.getId()); 
-	    for (UUID accountKey: accountKeys) {
-			logger.info("[DRY-RUN] Generate messages for account " +
-			        accountKey + " at utility #" + utility.getId());
-	        // Fixme executeAccount(config, utility, stats, accountKey);
+	    		
+		for (UUID accountKey: accountKeys) {
+		    logger.info("Generate messages for account " + accountKey + " at utility #" + utility.getId());
+		    executeAccount(config, utility, stats, accountKey);
 		}
 	}
 
@@ -78,14 +83,14 @@ public class DefaultMessageService implements IMessageService {
 	public void executeAccount(MessageCalculationConfiguration config, UUID utilityKey, UUID accountKey) 
 	{
 		UtilityInfo utility = utilityRepository.getUtilityByKey(utilityKey);
-		ConsumptionStats stats = aggregationService.compute(utility, null);
+		ConsumptionStats stats = statsService.getStats(utility, null);
 		executeAccount(config, utility, stats, accountKey);
 	}
 
 	private void executeAccount(
 	        MessageCalculationConfiguration config, UtilityInfo utility, ConsumptionStats stats, UUID accountKey) 
 	{
-		CandidateMessageStatus messageStatus = messageResolverService.resolve(config, utility, stats, accountKey);
+		CandidateMessageStatus messageStatus = messageResolver.resolve(config, utility, stats, accountKey);
 		messageManagementRepository.executeAccount(config, stats, messageStatus, accountKey);
 	}
 

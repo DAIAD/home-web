@@ -1,4 +1,4 @@
-package eu.daiad.web.service.message;
+package eu.daiad.web.service;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,8 +14,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
 
-import eu.daiad.web.model.message.ConsumptionStats;
-import eu.daiad.web.model.message.ConsumptionStats.EnumStatistic;
+import eu.daiad.web.model.ConsumptionStats;
+import eu.daiad.web.model.ConsumptionStats.EnumStatistic;
 import eu.daiad.web.model.query.AmphiroDataPoint;
 import eu.daiad.web.model.query.DataPoint;
 import eu.daiad.web.model.query.DataQuery;
@@ -29,7 +29,6 @@ import eu.daiad.web.model.query.MeterDataPoint;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IUserRepository;
-import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.aggregates.ComputedNumber;
  
 import static eu.daiad.web.model.device.EnumDeviceType.AMPHIRO;
@@ -55,7 +54,7 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 
 	@Autowired
 	IGroupRepository groupRepository;
-
+	
 	@Autowired
 	IDataService dataService;
 	
@@ -389,7 +388,7 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 	@Override
 	public ConsumptionStats compute(UtilityInfo utility, LocalDateTime refDate) {
         
-		ConsumptionStats stats = new ConsumptionStats(utility.getId());
+		ConsumptionStats stats = new ConsumptionStats();
         
 		Aggregator aggregator = this.new Aggregator(utility, refDate);
 		
@@ -432,8 +431,6 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 		
         stats.set(EnumStatistic.AVERAGE_MONTHLY, AMPHIRO, FLOW,
                 aggregator.computeAmphiroAverageFlow(30));
-	    
-        logger.info(stats.toString());
         
 		return stats;
 	}

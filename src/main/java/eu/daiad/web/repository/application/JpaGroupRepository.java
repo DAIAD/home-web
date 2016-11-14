@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
@@ -38,6 +39,27 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
 
+
+    @Override
+    public Group getByKey(UUID key)
+    {
+        TypedQuery<eu.daiad.web.domain.application.Group> query = entityManager.createQuery(
+                "SELECT g FROM Group g WHERE g.key = :key",
+                eu.daiad.web.domain.application.Group.class
+        );
+        query.setParameter("key", key);   
+        query.setMaxResults(1);
+        
+        eu.daiad.web.domain.application.Group g; 
+        try {
+            g = query.getSingleResult();
+        } catch (NoResultException e) {
+            g = null;
+        }
+        
+        return (g == null)? null : groupEntityToGroupObject(g);
+    }
+    
     @Override
     public List<Group> getAll(UUID utilityKey) {
         TypedQuery<eu.daiad.web.domain.application.Group> entityQuery = entityManager.createQuery(

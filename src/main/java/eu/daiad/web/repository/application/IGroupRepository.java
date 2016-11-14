@@ -10,8 +10,10 @@ import eu.daiad.web.model.query.EnumClusterType;
 
 public interface IGroupRepository {
 
+    Group getByKey(UUID key);
+    
     List<Group> getAll(UUID utilityKey);
-
+    
     List<Group> getGroupsByUtilityKey(UUID utilityKey);
     
     List<Group> getGroupsByUtilityId(int utilityId);

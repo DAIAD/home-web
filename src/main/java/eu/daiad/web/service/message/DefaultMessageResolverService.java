@@ -13,8 +13,6 @@ import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import eu.daiad.web.model.message.ConsumptionStats;
-import eu.daiad.web.model.message.ConsumptionStats.EnumStatistic;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.model.message.CandidateMessageStatus;
 import eu.daiad.web.model.query.AmphiroDataPoint;
@@ -35,6 +33,8 @@ import eu.daiad.web.repository.application.IMessageManagementRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.aggregates.ComputedNumber;
+import eu.daiad.web.model.ConsumptionStats;
+import eu.daiad.web.model.ConsumptionStats.EnumStatistic;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import static eu.daiad.web.model.device.EnumDeviceType.AMPHIRO;
