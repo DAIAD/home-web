@@ -33,15 +33,15 @@ public class ConsumptionStatsRepository implements IConsumptionStatsRepository
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
     
-    private eu.daiad.web.domain.application.Utility getUtility(UUID key)
+    private eu.daiad.web.domain.application.UtilityEntity getUtility(UUID key)
     {
-        TypedQuery<eu.daiad.web.domain.application.Utility> query = entityManager.createQuery(
+        TypedQuery<eu.daiad.web.domain.application.UtilityEntity> query = entityManager.createQuery(
                 "SELECT u FROM utility u WHERE u.key = :key",
-                eu.daiad.web.domain.application.Utility.class
+                eu.daiad.web.domain.application.UtilityEntity.class
         );
         query.setParameter("key", key);
         
-        eu.daiad.web.domain.application.Utility u;
+        eu.daiad.web.domain.application.UtilityEntity u;
         try {
             u = query.getSingleResult();
         } catch (NoResultException e) {
@@ -68,7 +68,7 @@ public class ConsumptionStatsRepository implements IConsumptionStatsRepository
     }
     
     private List<eu.daiad.web.domain.application.ConsumptionStats> findByGroupAndDate(
-            eu.daiad.web.domain.application.Utility utility, 
+            eu.daiad.web.domain.application.UtilityEntity utility, 
             eu.daiad.web.domain.application.Group group,
             LocalDateTime refDate)
     { 
@@ -102,7 +102,7 @@ public class ConsumptionStatsRepository implements IConsumptionStatsRepository
     {
         logger.info("Fetching stats for utility " + utilityKey + " at " + refDate + " ...");
         
-        eu.daiad.web.domain.application.Utility utility = getUtility(utilityKey);
+        eu.daiad.web.domain.application.UtilityEntity utility = getUtility(utilityKey);
         if (utility == null) {
             throw new IllegalArgumentException("No such utility: " + utilityKey);
         }
@@ -124,7 +124,7 @@ public class ConsumptionStatsRepository implements IConsumptionStatsRepository
     {
         logger.info("Saving stats for utility " + utilityKey + " at " + refDate + " ...");
         
-        eu.daiad.web.domain.application.Utility utility = getUtility(utilityKey);
+        eu.daiad.web.domain.application.UtilityEntity utility = getUtility(utilityKey);
         if (utility == null) {
             throw new IllegalArgumentException("No such utility: " + utilityKey);
         }

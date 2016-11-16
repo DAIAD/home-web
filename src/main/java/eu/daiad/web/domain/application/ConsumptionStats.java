@@ -45,7 +45,7 @@ public class ConsumptionStats
 
     @ManyToOne
     @JoinColumn(name = "utility", nullable = false)
-    private Utility utility;
+    private UtilityEntity utility;
     
     @Column(name = "ref_date", nullable = false)
     @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
@@ -72,14 +72,14 @@ public class ConsumptionStats
 
     protected ConsumptionStats() {}
     
-    public ConsumptionStats(Utility utility, Group group, DateTime refDate) 
+    public ConsumptionStats(UtilityEntity utility, Group group, DateTime refDate) 
     {
         this.utility = utility;
         this.group = group;
         this.refDate = refDate;
     }
     
-    public ConsumptionStats(Utility utility, Group group, LocalDateTime refDate)
+    public ConsumptionStats(UtilityEntity utility, Group group, LocalDateTime refDate)
     {
         DateTimeZone tz = DateTimeZone.forID(utility.getTimezone());
         this.utility = utility;
@@ -87,9 +87,9 @@ public class ConsumptionStats
         this.refDate = refDate.toDateTime(tz);
     }
     
-    public Pair<Utility, Group> getPopulationGroup()
+    public Pair<UtilityEntity, Group> getPopulationGroup()
     {
-        return Pair.<Utility, Group>of(utility, group);
+        return Pair.<UtilityEntity, Group>of(utility, group);
     }
 
     public DateTime getRefDate()

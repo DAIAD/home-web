@@ -50,13 +50,13 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
             MessageCalculationConfiguration config, ConsumptionStats aggregates,
             MessageResolutionStatus messageStatus, UUID accountkey) 
     {
-        Account account = getAccountByKey(accountkey);
+        AccountEntity account = getAccountByKey(accountkey);
         this.executeAccount(config, aggregates, messageStatus, account);
     }
 
     private void executeAccount(
             MessageCalculationConfiguration config, ConsumptionStats aggregates,
-            MessageResolutionStatus messageStatus, Account account) 
+            MessageResolutionStatus messageStatus, AccountEntity account) 
     {
         computeAmphiroMessagesForUser(config, aggregates, messageStatus, account);
         
@@ -85,7 +85,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     private void computeAmphiroMessagesForUser(
             MessageCalculationConfiguration config,
-            ConsumptionStats stats, MessageResolutionStatus messageStatus, Account account)
+            ConsumptionStats stats, MessageResolutionStatus messageStatus, AccountEntity account)
     {
         if (!messageStatus.isAmphiroInstalled()) {
             return;
@@ -114,7 +114,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     private void computeMeterMessagesForUser(
             MessageCalculationConfiguration config, ConsumptionStats stats, 
-            MessageResolutionStatus messageStatus, Account account) 
+            MessageResolutionStatus messageStatus, AccountEntity account) 
     {
         if (!messageStatus.isMeterInstalled()) {
             return;
@@ -236,7 +236,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // random static tip
     private void computeStaticTipsForUser(
-            MessageCalculationConfiguration config, MessageResolutionStatus status, Account account) 
+            MessageCalculationConfiguration config, MessageResolutionStatus status, AccountEntity account) 
     {    
         if (status.isInitialStaticTips()) {
             List<StaticRecommendation> randomTips = getInitialRandomStaticRecommendationForLocale(account.getLocale());
@@ -255,7 +255,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 1 alert - Check for water leaks!
     private void alertWaterLeakSWM(
-            MessageCalculationConfiguration config, MessageResolutionStatus status, Account account) 
+            MessageCalculationConfiguration config, MessageResolutionStatus status, AccountEntity account) 
     {
         if(!isAlertProducedOverThreeTimesForUser(EnumAlertType.WATER_LEAK.getValue(), account)){      
             if(config.isOnDemandExecution()){
@@ -276,7 +276,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 2 alert - Shower still on!
     private void alertShowerStillOnAmphiro(
-            ConsumptionStats aggregates, MessageResolutionStatus status, Account account) 
+            ConsumptionStats aggregates, MessageResolutionStatus status, AccountEntity account) 
     {
         if (status.isAlertShowerStillOnAmphiro()) {
             createAccountAlert(account, getAlertByType(EnumAlertType.SHOWER_ON), DateTime.now());
@@ -292,7 +292,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 5 alert - Water quality not assured!
     private void alertWaterQualitySWM(
-            MessageCalculationConfiguration config, MessageResolutionStatus status, Account account) 
+            MessageCalculationConfiguration config, MessageResolutionStatus status, AccountEntity account) 
     {
         if (status.isAlertWaterQualitySWM()) {
             createAccountAlert(account, getAlertByType(EnumAlertType.WATER_QUALITY), DateTime.now());
@@ -302,7 +302,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 6 alert - Water too hot!
     private void alertHotTemperatureAmphiro(
             MessageCalculationConfiguration config, 
-            ConsumptionStats aggregates, MessageResolutionStatus status, Account account) 
+            ConsumptionStats aggregates, MessageResolutionStatus status, AccountEntity account) 
     {
         if (status.isAlertHotTemperatureAmphiro()) {
             createAccountAlert(account, getAlertByType(EnumAlertType.HOT_TEMPERATURE), DateTime.now());
@@ -311,7 +311,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 7 alert - Reached 80% of your daily water budget {integer1} {integer2}
     private void alertNearDailyBudgetSWM(
-            MessageCalculationConfiguration config, MessageResolutionStatus status, Account account) 
+            MessageCalculationConfiguration config, MessageResolutionStatus status, AccountEntity account) 
     {
         if (status.getAlertNearDailyBudgetSWM() != null) {
             AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.NEAR_DAILY_WATER_BUDGET),
@@ -325,7 +325,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 8 alert - Reached 80% of your daily water budget {integer1} {integer2}
     private void alertNearWeeklyBudgetSWM(
-            MessageCalculationConfiguration config, MessageResolutionStatus status, Account account) 
+            MessageCalculationConfiguration config, MessageResolutionStatus status, AccountEntity account) 
     {
         if (status.getAlertNearWeeklyBudgetSWM() != null) {
             AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.NEAR_WEEKLY_WATER_BUDGET),
@@ -339,7 +339,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 9 alert - Reached 80% of your daily shower budget {integer1} {integer2}
     private void alertNearDailyBudgetAmphiro(MessageCalculationConfiguration config, MessageResolutionStatus status,
-                    Account account) {
+                    AccountEntity account) {
         if (status.getAlertNearDailyBudgetAmphiro() != null) {
             AccountAlert alert = createAccountAlert(account, getAlertByType(EnumAlertType.NEAR_DAILY_SHOWER_BUDGET),
                             DateTime.now());
@@ -353,7 +353,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 10 alert - Reached 80% of your weekly shower budget {integer1} {integer2}
     private void alertNearWeeklyBudgetAmphiro(
-            MessageCalculationConfiguration config, MessageResolutionStatus status, Account account) 
+            MessageCalculationConfiguration config, MessageResolutionStatus status, AccountEntity account) 
     {
         if (DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
             if (status.getAlertNearWeeklyBudgetAmphiro() != null) {
@@ -369,7 +369,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 11 alert - Reached daily Water Budget {integer1}
     private void alertReachedDailyBudgetSWM(
-            MessageCalculationConfiguration config, MessageResolutionStatus status, Account account) 
+            MessageCalculationConfiguration config, MessageResolutionStatus status, AccountEntity account) 
     {
         if (status.getAlertReachedDailyBudgetSWM() != null) {
             AccountAlert alert = createAccountAlert(
@@ -381,7 +381,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 12 alert - Reached daily Shower Budget {integer1}
     private void alertReachedDailyBudgetAmphiro(
-            MessageCalculationConfiguration config, MessageResolutionStatus status, Account account) 
+            MessageCalculationConfiguration config, MessageResolutionStatus status, AccountEntity account) 
     {
         if (status.getAlertReachedDailyBudgetSWM() != null) {
             if (status.getAlertReachedDailyBudgetSWM().getKey()) {
@@ -396,7 +396,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 13 alert - You are a real water champion!
     private void alertWaterChampionSWM(
-            MessageCalculationConfiguration config, MessageResolutionStatus status, Account account) 
+            MessageCalculationConfiguration config, MessageResolutionStatus status, AccountEntity account) 
     { 
         if(config.isOnDemandExecution()){
             if (status.isAlertWaterChampionSWM()) {
@@ -413,7 +413,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 14 alert - You are a real shower champion!
     private void alertShowerChampionAmphiro(
-            MessageCalculationConfiguration config, MessageResolutionStatus status, Account account) 
+            MessageCalculationConfiguration config, MessageResolutionStatus status, AccountEntity account) 
     {    
         if(config.isOnDemandExecution()){
             if (status.isAlertShowerChampionAmphiro()) {
@@ -431,7 +431,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 15 alert - You are using too much water {integer1}
     private void alertTooMuchWaterConsumptionSWM(
             MessageCalculationConfiguration config,
-            ConsumptionStats aggregates, MessageResolutionStatus status, Account account) 
+            ConsumptionStats aggregates, MessageResolutionStatus status, AccountEntity account) 
     {    
         if(isAlertAlreadyProducedThisWeekForUser(EnumAlertType.TOO_MUCH_WATER_SWM.getValue(), account)){
             if(config.isOnDemandExecution()){
@@ -457,7 +457,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 16 alert - You are using too much water in the shower {integer1}
     private void alertTooMuchWaterConsumptionAmphiro(
             MessageCalculationConfiguration config, 
-            ConsumptionStats aggregates, MessageResolutionStatus status, Account account) 
+            ConsumptionStats aggregates, MessageResolutionStatus status, AccountEntity account) 
     {
         if(isAlertAlreadyProducedThisWeekForUser(EnumAlertType.TOO_MUCH_WATER_AMPHIRO.getValue(), account)){
             if(config.isOnDemandExecution()){
@@ -483,7 +483,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 17 alert - You are spending too much energy for showering {integer1} {currency}
     private void alertTooMuchEnergyAmphiro(
             MessageCalculationConfiguration config, 
-            ConsumptionStats aggregates, MessageResolutionStatus status, Account account) 
+            ConsumptionStats aggregates, MessageResolutionStatus status, AccountEntity account) 
     {    
         if(isAlertAlreadyProducedThisWeekForUser(EnumAlertType.TOO_MUCH_ENERGY.getValue(), account)){          
             if (config.isOnDemandExecution() || DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
@@ -512,7 +512,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 18 alert - Well done! You have greatly reduced your water use {integer1} percent
     private void alertReducedWaterUseSWM(
-            MessageCalculationConfiguration config, MessageResolutionStatus status, Account account) 
+            MessageCalculationConfiguration config, MessageResolutionStatus status, AccountEntity account) 
     {    
         if (!isAlertAlreadyProducedForUser(EnumAlertType.REDUCED_WATER_USE.getValue(), account)) {
             if (config.isOnDemandExecution() || DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
@@ -529,7 +529,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 19 alert - Well done! You have greatly improved your shower efficiency {integer1} percent
     private void alertImprovedShowerEfficiencyAmphiro(
-            MessageCalculationConfiguration config, MessageResolutionStatus status, Account account) 
+            MessageCalculationConfiguration config, MessageResolutionStatus status, AccountEntity account) 
     {    
         if (!isAlertAlreadyProducedForUser(EnumAlertType.IMPROVED_SHOWER_EFFICIENCY.getValue(), account)) {
             if (config.isOnDemandExecution() || DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
@@ -547,7 +547,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 20 alert - Congratulations! You are a water efficiency leader {integer1} litres
     private void alertWaterEfficiencyLeaderSWM(
             MessageCalculationConfiguration config, 
-            ConsumptionStats aggregates, MessageResolutionStatus status, Account account) 
+            ConsumptionStats aggregates, MessageResolutionStatus status, AccountEntity account) 
     {
         if(isAlertAlreadyProducedThisMonthForUser(EnumAlertType.WATER_EFFICIENCY_LEADER.getValue(), account)){          
             if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
@@ -564,7 +564,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 21 alert - Keep up saving water!
     private void alertKeepUpSavingWaterSWM(
-            MessageCalculationConfiguration config, MessageResolutionStatus status, Account account) 
+            MessageCalculationConfiguration config, MessageResolutionStatus status, AccountEntity account) 
     {
         // compute only if the message list is empty
         if (!isAlertAlreadyProducedForUser(EnumAlertType.KEEP_UP_SAVING_WATER.getValue(), account)) {
@@ -575,7 +575,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 22 alert - You are doing a great job!
     private void alertPromptGoodJobMonthlySWM(
             MessageCalculationConfiguration config,
-            ConsumptionStats aggregates, MessageResolutionStatus status, Account account) 
+            ConsumptionStats aggregates, MessageResolutionStatus status, AccountEntity account) 
     {
         if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
             if (status.isAlertPromptGoodJobMonthlySWM()) {
@@ -586,7 +586,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 23 alert - You have already saved {integer1} litres of water!
     private void alertLitresSavedSWM(
-            MessageCalculationConfiguration config, MessageResolutionStatus status, Account account) 
+            MessageCalculationConfiguration config, MessageResolutionStatus status, AccountEntity account) 
     {
         if (config.isOnDemandExecution() || DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
             if (status.getAlertLitresSavedSWM().getKey()) {
@@ -600,7 +600,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 24 alert - Congratulations! You are one of the top 25% savers in your region.
     private void alertTop25SaverSWM(
             MessageCalculationConfiguration config, 
-            ConsumptionStats aggregates, MessageResolutionStatus status, Account account) 
+            ConsumptionStats aggregates, MessageResolutionStatus status, AccountEntity account) 
     {         
         if (config.isOnDemandExecution() || DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
             if (status.isAlertTop25SaverWeeklySWM()) {
@@ -612,7 +612,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 25 alert - Congratulations! You are among the top group of savers in your
     // city.
     private void alertTop10SaverSWM(MessageCalculationConfiguration config, ConsumptionStats aggregates,
-                    MessageResolutionStatus status, Account account) {
+                    MessageResolutionStatus status, AccountEntity account) {
 
         if (config.isOnDemandExecution() || DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
             if (status.isAlertTop10SaverSWM()) {
@@ -623,7 +623,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 1 recommendation - Spend 1 less minute in the shower and save {integer1} {integer2}
     private void recommendLessShowerTimeAmphiro(
-            MessageCalculationConfiguration config, ConsumptionStats aggregates, MessageResolutionStatus status, Account account) 
+            MessageCalculationConfiguration config, ConsumptionStats aggregates, MessageResolutionStatus status, AccountEntity account) 
     {     
         if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.LESS_SHOWER_TIME.getValue(), account)){         
             if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
@@ -647,7 +647,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 2 recommendation - You could save {currency1} if you used a bit less hot water in the shower. {currency2}
     private void recommendLowerTemperatureAmphiro(
             MessageCalculationConfiguration config,
-            ConsumptionStats aggregates, MessageResolutionStatus status, Account account) 
+            ConsumptionStats aggregates, MessageResolutionStatus status, AccountEntity account) 
     {
         if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.LOWER_TEMPERATURE.getValue(), account)){         
             if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
@@ -704,7 +704,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 3 recommendation - Reduce the water flow in the shower and gain {integer1} {integer2}
     private void recommendLowerFlowAmphiro(
             MessageCalculationConfiguration config,
-            ConsumptionStats aggregates, MessageResolutionStatus status, Account account) 
+            ConsumptionStats aggregates, MessageResolutionStatus status, AccountEntity account) 
     {
         if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.LOWER_FLOW.getValue(), account)){          
             if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
@@ -724,7 +724,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     // 4 recommendation - Change your shower head and save {integer1} {integer2}
     private void recommendShowerHeadChangeAmphiro(
-            MessageCalculationConfiguration config, ConsumptionStats aggregates, MessageResolutionStatus status, Account account) 
+            MessageCalculationConfiguration config, ConsumptionStats aggregates, MessageResolutionStatus status, AccountEntity account) 
     {
         if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.CHANGE_SHOWERHEAD.getValue(), account)){           
             if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
@@ -745,7 +745,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 5 recommendation - Have you considered changing your shampoo? {integer1} percent
     private void recommendShampooAmphiro(
             MessageCalculationConfiguration config,
-            ConsumptionStats aggregates, MessageResolutionStatus status, Account account)
+            ConsumptionStats aggregates, MessageResolutionStatus status, AccountEntity account)
     {
         if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.SHAMPOO_CHANGE.getValue(), account)){            
             if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
@@ -762,7 +762,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     // 6 recommendation - When showering, reduce the water flow when you dont need it {integer1} {integer2}
     private void recommendReduceFlowWhenNotNeededAmphiro(
             MessageCalculationConfiguration config, 
-            ConsumptionStats aggregates, MessageResolutionStatus status, Account account) 
+            ConsumptionStats aggregates, MessageResolutionStatus status, AccountEntity account) 
     {
         if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.REDUCE_FLOW_WHEN_NOT_NEEDED.getValue(), account)){          
             if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
@@ -784,10 +784,10 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     private List<Integer> getAllUtilities() {
         List<Integer> groups = new ArrayList<>();
         try {
-            TypedQuery<eu.daiad.web.domain.application.Utility> query = entityManager.createQuery(
-                            "select a from utility a", eu.daiad.web.domain.application.Utility.class);
-            List<eu.daiad.web.domain.application.Utility> result = query.getResultList();
-            for (eu.daiad.web.domain.application.Utility group : result) {
+            TypedQuery<eu.daiad.web.domain.application.UtilityEntity> query = entityManager.createQuery(
+                            "select a from utility a", eu.daiad.web.domain.application.UtilityEntity.class);
+            List<eu.daiad.web.domain.application.UtilityEntity> result = query.getResultList();
+            for (eu.daiad.web.domain.application.UtilityEntity group : result) {
                 groups.add(group.getId());
             }
             return groups;
@@ -796,16 +796,16 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
         }
     }
 
-    private List<Account> getUsersOfUtility(int utilityId) {
-        List<Account> userAccounts = new ArrayList<>();
+    private List<AccountEntity> getUsersOfUtility(int utilityId) {
+        List<AccountEntity> userAccounts = new ArrayList<>();
         try {
-            TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager.createQuery(
+            TypedQuery<eu.daiad.web.domain.application.AccountEntity> query = entityManager.createQuery(
                             "select a from account a where a.utility.id = :id",
-                            eu.daiad.web.domain.application.Account.class);
+                            eu.daiad.web.domain.application.AccountEntity.class);
             query.setParameter("id", utilityId);
 
-            List<eu.daiad.web.domain.application.Account> result = query.getResultList();
-            for (eu.daiad.web.domain.application.Account account : result) {
+            List<eu.daiad.web.domain.application.AccountEntity> result = query.getResultList();
+            for (eu.daiad.web.domain.application.AccountEntity account : result) {
                 for (AccountRole accountRole : account.getRoles()) {
                     if (accountRole.getRole().getName().equals(EnumRole.ROLE_USER.toString())) {
                         userAccounts.add(getAccountByUsername(account.getUsername()));
@@ -818,25 +818,26 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
         }
     }
 
-    private Account getAccountByKey(UUID key) {
-        TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager.createQuery(
-                        "select a from account a where a.key = :key", eu.daiad.web.domain.application.Account.class)
-                        .setFirstResult(0).setMaxResults(1);
+    private AccountEntity getAccountByKey(UUID key) {
+        TypedQuery<eu.daiad.web.domain.application.AccountEntity> query = entityManager.createQuery(
+                        "select a from account a where a.key = :key", 
+                        eu.daiad.web.domain.application.AccountEntity.class)
+                .setFirstResult(0).setMaxResults(1);
 
         query.setParameter("key", key);
         return query.getSingleResult();
     }
 
-    private Account getAccountByUsername(String username) {
-        TypedQuery<eu.daiad.web.domain.application.Account> query = entityManager.createQuery(
+    private AccountEntity getAccountByUsername(String username) {
+        TypedQuery<eu.daiad.web.domain.application.AccountEntity> query = entityManager.createQuery(
                         "select a from account a where a.username = :username",
-                        eu.daiad.web.domain.application.Account.class).setFirstResult(0).setMaxResults(1);
+                        eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0).setMaxResults(1);
 
         query.setParameter("username", username);
         return query.getSingleResult();
     }
 
-    private List<AccountAlert> getAccountAlertsByUser(Account account) {
+    private List<AccountAlert> getAccountAlertsByUser(AccountEntity account) {
         TypedQuery<eu.daiad.web.domain.application.AccountAlert> query = entityManager.createQuery(
                         "select a from account_alert a where a.account.id = :accountId",
                         eu.daiad.web.domain.application.AccountAlert.class);
@@ -845,7 +846,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
         return query.getResultList();
     }
 
-    private boolean isAlertAlreadyProducedForUser(int alertId, Account account) {
+    private boolean isAlertAlreadyProducedForUser(int alertId, AccountEntity account) {
         TypedQuery<eu.daiad.web.domain.application.AccountAlert> query = entityManager.createQuery(
                         "select a from account_alert a where a.account.id = :accountId and a.alert.id = :alertId",
                         eu.daiad.web.domain.application.AccountAlert.class).setFirstResult(0).setMaxResults(1);
@@ -858,7 +859,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     }
     
-    private boolean isAlertAlreadyProducedThisWeekForUser(int alertId, Account account) {
+    private boolean isAlertAlreadyProducedThisWeekForUser(int alertId, AccountEntity account) {
         TypedQuery<eu.daiad.web.domain.application.AccountAlert> query = entityManager.createQuery(
                         "select a from account_alert a where a.account.id = :accountId and a.alert.id = :alertId and a.createdOn > :date",
                         eu.daiad.web.domain.application.AccountAlert.class).setFirstResult(0).setMaxResults(1);
@@ -872,7 +873,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     }    
     
-    private boolean isAlertAlreadyProducedThisMonthForUser(int alertId, Account account) {
+    private boolean isAlertAlreadyProducedThisMonthForUser(int alertId, AccountEntity account) {
         TypedQuery<eu.daiad.web.domain.application.AccountAlert> query = entityManager.createQuery(
                         "select a from account_alert a where a.account.id = :accountId and a.alert.id = :alertId and a.createdOn > :date",
                         eu.daiad.web.domain.application.AccountAlert.class).setFirstResult(0).setMaxResults(1);
@@ -887,7 +888,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     } 
     
-    private boolean isRecommendationAlreadyProducedThisMonthForUser(int recommendationId, Account account) {
+    private boolean isRecommendationAlreadyProducedThisMonthForUser(int recommendationId, AccountEntity account) {
         TypedQuery<eu.daiad.web.domain.application.AccountDynamicRecommendation> query = entityManager.createQuery(
             "select a from account_dynamic_recommendation a where a.account.id = :accountId and a.recommendation.id = :recommendationId and a.createdOn > :date",
             eu.daiad.web.domain.application.AccountDynamicRecommendation.class).setFirstResult(0).setMaxResults(1);
@@ -900,7 +901,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
         return !resultsList.isEmpty();
     } 
     
-    private boolean isAlertProducedOverThreeTimesForUser(int alertId, Account account) {
+    private boolean isAlertProducedOverThreeTimesForUser(int alertId, AccountEntity account) {
         TypedQuery<eu.daiad.web.domain.application.AccountAlert> query = entityManager.createQuery(
                         "select a from account_alert a where a.account.id = :accountId and a.alert.id = :alertId",
                         eu.daiad.web.domain.application.AccountAlert.class).setFirstResult(0).setMaxResults(5);
@@ -913,7 +914,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
     private void insightA1(
             MessageCalculationConfiguration config,
-            EnumDeviceType deviceType, MessageResolutionStatus status, Account account)
+            EnumDeviceType deviceType, MessageResolutionStatus status, AccountEntity account)
     {
         InsightA1Parameters insight = status.getInsightA1(deviceType);
         if (insight == null)
@@ -972,7 +973,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
         this.entityManager.persist(accountDynamicRecommendationProperty);
     }
 
-    private AccountAlert createAccountAlert(Account account, Alert alert, DateTime timestamp) 
+    private AccountAlert createAccountAlert(AccountEntity account, Alert alert, DateTime timestamp) 
     {
         AccountAlert accountAlert = new AccountAlert();
 
@@ -985,7 +986,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     }
 
     private AccountDynamicRecommendation createAccountDynamicRecommendation(
-            Account account, DynamicRecommendation recommendation, DateTime createdOn) 
+            AccountEntity account, DynamicRecommendation recommendation, DateTime createdOn) 
     {
         AccountDynamicRecommendation accountDynamicRecommendation = new AccountDynamicRecommendation();
 
@@ -998,7 +999,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     }
 
     private AccountStaticRecommendation createAccountStaticRecommendation(
-            Account account, StaticRecommendation recommendation, DateTime createdOn) 
+            AccountEntity account, StaticRecommendation recommendation, DateTime createdOn) 
     {
         AccountStaticRecommendation accountStaticRecommendation = new AccountStaticRecommendation();
 
