@@ -69,4 +69,6 @@ public interface IUserRepository {
 
     List<SurveyEntity> getSurveyDataByUtilityId(int utilityId);
 
+    SurveyEntity getSurveyByKey(UUID userKey);
+
 }

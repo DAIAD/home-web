@@ -1,4 +1,4 @@
-package eu.daiad.web.jobs;
+package eu.daiad.web.job.builder;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

@@ -1347,4 +1347,27 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         return surveyQuery.getResultList();
     }
 
+    /**
+     * Get survey data for a single user.
+     *
+     * @param userKey the user key.
+     * @return the user survey data.
+     */
+    @Override
+    public SurveyEntity getSurveyByKey(UUID userKey) {
+        String nativeSurveyQueryString = "select s.* from survey s inner join account a on a.username = s.username where a.key = :key";
+
+        Query surveyQuery = entityManager.createNativeQuery(nativeSurveyQueryString, SurveyEntity.class)
+                                         .setFirstResult(0)
+                                         .setMaxResults(1);
+        surveyQuery.setParameter("key", userKey);
+
+        List<SurveyEntity> surveys = surveyQuery.getResultList();
+        if (!surveys.isEmpty()) {
+            return surveys.get(0);
+        }
+
+        return null;
+    }
+
 }

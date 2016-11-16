@@ -56,18 +56,19 @@
  * <br/><code>METRIC</code>: Metric system
  * <br/><code>IMPERIAL</code>:  Imperial system
  * @apiSuccess (Profile)   {Boolean}    garden                <code>true</code> if the household has a garden; Otherwise <code>false</code>. The value may not be initialized. <code>null</code> may be returned.
- * @apiSuccess (Profile)   {Number}     dailyMeterBudget      Daily smart water meter water consumption budget.
- * @apiSuccess (Profile)   {Number}     dailyMeterBudget      Daily smart water meter water consumption budget.
- * @apiSuccess (Profile)   {Number}     dailyAmphiroBudget    Daily Amphiro B1 water consumption budget.
- * @apiSuccess (Profile)   {String}     configuration         Application configuration serialized as a JSON object.
- * @apiSuccess (Profile)   {Object[]}   devices               Array of <code>DeviceRegistration</code> objects representing the Amphiro or Smart Water Meter devices registered to the authenticated user. Instances are implemented by classes <code>WaterMeterDeviceRegistration</code> and <code>AmphiroDeviceRegistration</code>.
- * @apiSuccess (Profile)   {Object}     utility               Utility information.
- * @apiSuccess (Profile)   {Object}     household             Household information.
+ * @apiSuccess (Profile)            {Number}     dailyMeterBudget      Daily smart water meter water consumption budget.
+ * @apiSuccess (Profile)            {Number}     dailyMeterBudget      Daily smart water meter water consumption budget.
+ * @apiSuccess (Profile)            {Number}     dailyAmphiroBudget    Daily Amphiro B1 water consumption budget.
+ * @apiSuccess (Profile)            {String}     configuration         Application configuration serialized as a JSON object.
+ * @apiSuccess (Profile)            {Object[]}   devices               Array of <code>DeviceRegistration</code> objects representing the Amphiro or Smart Water Meter devices registered to the authenticated user. Instances are implemented by classes <code>WaterMeterDeviceRegistration</code> and <code>AmphiroDeviceRegistration</code>.
+ * @apiSuccess (Profile)            {Object}     utility               Utility information.
+ * @apiSuccess (Profile)            {Object}     household             Household information.
+ * @apiSuccess (Profile)            {Object}     comparison            Comparison and ranking data.
  *
- * @apiSuccess (DeviceRegistration) {String}     type              Device type. Valid values are <code>METER</code> and <code>AMPHIRO</code>.
- * @apiSuccess (DeviceRegistration) {String}     deviceKey         Unique device id (UUID).
- * @apiSuccess (DeviceRegistration) {Object[]}   properties        Array of <code>KeyValuePair</code> objects. representing device properties.
- * @apiSuccess (DeviceRegistration) {Number}     registeredOn      Device registration time stamp.
+ * @apiSuccess (DeviceRegistration) {String}     type                  Device type. Valid values are <code>METER</code> and <code>AMPHIRO</code>.
+ * @apiSuccess (DeviceRegistration) {String}     deviceKey             Unique device id (UUID).
+ * @apiSuccess (DeviceRegistration) {Object[]}   properties            Array of <code>KeyValuePair</code> objects. representing device properties.
+ * @apiSuccess (DeviceRegistration) {Number}     registeredOn          Device registration time stamp.
  *
  * @apiSuccess (KeyValuePair) {String}           key               Key.
  * @apiSuccess (KeyValuePair) {String}           value             Value.
@@ -101,6 +102,32 @@
  * @apiSuccess (Member)     {String}     photo               Base64 encoded member image.
  * @apiSuccess (Member)     {Number}     createdOn           Creation time stamp.
  * @apiSuccess (Member)     {Number}     updatedOn           Last update time stamp.
+ *
+ * @apiSuccess (Comparison) {Ojbect}     waterIq                Object of type <code>WaterIQ</code> with water IQ data.
+ * @apiSuccess (Comparison) {Ojbect}     last1MonthConsumption  Object of type <code>MonthlyConsumption</code> with water consumption data for the last month.
+ * @apiSuccess (Comparison) {Ojbect}     last6MonthConsumption  Object of type <code>MonthlyConsumption</code> with water consumption data for the last 6 months.
+ *
+ * @apiSuccess (WaterIQ)    {Object[]}   user                   Array of <code>WaterIQRanking</code> objects.
+ * @apiSuccess (WaterIQ)    {Object}     similar                Similar users ranking data.
+ * @apiSuccess (WaterIQ)    {Number}     similar.volume         User average water consumption.
+ * @apiSuccess (WaterIQ)    {String}     similar.value          Similar users ranking.
+ * @apiSuccess (WaterIQ)    {Object}     nearest                Nearest users (neighbors) ranking data.
+ * @apiSuccess (WaterIQ)    {Number}     nearest.volume         User average water consumption.
+ * @apiSuccess (WaterIQ)    {String}     nearest.value          User group ranking.
+ * @apiSuccess (WaterIQ)    {Object}     all                    All utility users ranking data.
+ * @apiSuccess (WaterIQ)    {Number}     all.volume             User average water consumption.
+ * @apiSuccess (WaterIQ)    {String}     all.value              Utility ranking.
+ *
+ * @apiSuccess (WaterIQRanking)    {Number}      volume         User water consumption.
+ * @apiSuccess (WaterIQRanking)    {String}      value          User ranking.
+ * @apiSuccess (WaterIQRanking)    {Number}      timestamp      Date the ranking was computed.
+ * @apiSuccess (WaterIQRanking)    {String}      from           Time interval start date formatted using the pattern <code>yyyyMMdd</code>.
+ * @apiSuccess (WaterIQRanking)    {String}      to             Time interval end date formatted using the pattern <code>yyyyMMdd</code>.
+ *
+ * @apiSuccess (MonthlyConsumption) {Number}     user           User total water consumption.
+ * @apiSuccess (MonthlyConsumption) {Number}     similar        Similar users total water consumption.
+ * @apiSuccess (MonthlyConsumption) {Number}     nearest        Nearest users (neighbors) total water consumption.
+ * @apiSuccess (MonthlyConsumption) {Number}     all            All utility users total water consumption.
  *
  * @apiSuccessExample {json} Response Example
  * HTTP/1.1 200 OK
@@ -177,6 +204,41 @@
  *       "femaleMembers": 0,
  *       "totalMembers": 1,
  *       "maleMembers": 1
+ *     },
+ *     "comparison": {
+ *       "waterIq": {
+ *         "user": [{
+ *           "volume": 0,
+ *           "value": "A",
+ *           "timestamp": 1479248441586,
+ *           "from": "20161107",
+ *           "to": "20161113"
+ *         }],
+ *         "similar": {
+ *           "volume": 532.56,
+ *           "value": "B"
+ *         },
+ *         "nearest": {
+ *           "volume": 658.24,
+ *           "value": "B"
+ *         },
+ *         "all": {
+ *           "volume": 624.63,
+ *           "value": "B"
+ *         }
+ *       },
+ *       "last1MonthConsumption": {
+ *         "user": 1585,
+ *         "similar": 221789,
+ *         "nearest": 375452,
+ *         "all": 573165
+ *       },
+ *       "last6MonthConsumption": {
+ *         "user": 9613,
+ *         "similar": 1127948,
+ *         "nearest": 1856284,
+ *         "all": 3027088
+ *       }
  *     }
  *   },
  *   "success": true

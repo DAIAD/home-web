@@ -45,7 +45,7 @@ import org.springframework.stereotype.Service;
 
 import eu.daiad.web.domain.admin.ScheduledJob;
 import eu.daiad.web.domain.admin.ScheduledJobExecution;
-import eu.daiad.web.jobs.IJobBuilder;
+import eu.daiad.web.job.builder.IJobBuilder;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SchedulerErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;

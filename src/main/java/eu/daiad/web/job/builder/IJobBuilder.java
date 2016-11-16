@@ -1,4 +1,4 @@
-package eu.daiad.web.jobs;
+package eu.daiad.web.job.builder;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParametersIncrementer;

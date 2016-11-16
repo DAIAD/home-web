@@ -21,6 +21,7 @@ import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.profile.NotifyProfileRequest;
+import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.profile.ProfileResponse;
 import eu.daiad.web.model.profile.UpdateHouseholdRequest;
 import eu.daiad.web.model.profile.UpdateProfileRequest;
@@ -28,6 +29,7 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.Credentials;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.application.IProfileRepository;
+import eu.daiad.web.repository.application.IWaterIqRepository;
 import eu.daiad.web.util.ValidationUtils;
 
 /**
@@ -48,6 +50,12 @@ public class ProfileController extends BaseRestController {
     private IProfileRepository profileRepository;
 
     /**
+     * Repository for accessing water IQ data.
+     */
+    @Autowired
+    private IWaterIqRepository waterIqRepository;
+
+    /**
      * Loads user profile data.
      *
      * @param data user credentials.
@@ -59,8 +67,13 @@ public class ProfileController extends BaseRestController {
             AuthenticatedUser user = authenticate(data);
 
             if (user.hasRole(EnumRole.ROLE_USER)) {
+                Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE);
+
+                // Get water IQ data
+                profile.setComparison(waterIqRepository.getWaterIqByUserId(user.getId()));
+
                 return new ProfileResponse(getRuntime(),
-                                           profileRepository.getProfileByUsername(EnumApplication.MOBILE),
+                                           profile,
                                            user.roleToStringArray());
             } else if (user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
                 return new ProfileResponse(getRuntime(),

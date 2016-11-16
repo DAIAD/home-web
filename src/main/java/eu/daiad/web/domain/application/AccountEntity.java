@@ -71,6 +71,13 @@ public class AccountEntity {
     @OneToOne(mappedBy = "account")
     private HouseholdEntity household;
 
+    @OneToOne(mappedBy = "account", fetch = FetchType.LAZY)
+    private WaterIqEntity waterIq;
+
+    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id")
+    private Set<WaterIqHistoryEntity> waterIqHistory = new HashSet<WaterIqHistoryEntity>();
+
     @Basic(fetch = FetchType.LAZY)
     @Type(type = "org.hibernate.type.BinaryType")
     private byte photo[];
@@ -376,9 +383,21 @@ public class AccountEntity {
         this.household = household;
     }
 
+    public WaterIqEntity getWaterIq() {
+        return waterIq;
+    }
+
+    public void setWaterIq(WaterIqEntity waterIq) {
+        this.waterIq = waterIq;
+    }
+
+    public Set<WaterIqHistoryEntity> getWaterIqHistory() {
+        return waterIqHistory;
+    }
+
     public String getFullname() {
-        String fullname = (StringUtils.isBlank(this.firstname) ? "" : this.firstname) + " "
-                        + (StringUtils.isBlank(this.lastname) ? "" : this.lastname);
+        String fullname = (StringUtils.isBlank(firstname) ? "" : firstname) + " "
+                        + (StringUtils.isBlank(lastname) ? "" : lastname);
 
         if (StringUtils.isBlank(fullname)) {
             return null;

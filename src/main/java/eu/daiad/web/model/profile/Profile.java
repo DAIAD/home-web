@@ -68,6 +68,8 @@ public class Profile {
 
     private Household household;
 
+    private ComparisonRanking comparison;
+
     public Profile() {
         devices = new ArrayList<DeviceRegistration>();
     }
@@ -273,6 +275,14 @@ public class Profile {
 
     public void setSocial(boolean social) {
         this.social = social;
+    }
+
+    public ComparisonRanking getComparison() {
+        return comparison;
+    }
+
+    public void setComparison(ComparisonRanking comparison) {
+        this.comparison = comparison;
     }
 
 }
