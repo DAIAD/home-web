@@ -1,24 +1,25 @@
 package eu.daiad.web.model.message;
 
+import java.util.Map;
+
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDateTime;
 
-public class MessageCalculationConfiguration {
-
-	private int computeThisDayOfMonth = new DateTime().dayOfMonth().getMaximumValue();
-	private int computeThisDayOfWeek = DateTimeConstants.SUNDAY;
-
-	// send static tip every 7 days
+public class MessageCalculationConfiguration 
+{    
+	private LocalDateTime refDate;
+    
+    // send static tip every 7 days
 	private int staticTipInterval = DateTimeConstants.DAYS_PER_WEEK;
-
-	// compute aggregates every week
-	private int aggregateComputationInterval = DateTimeConstants.DAYS_PER_WEEK;
 
 	private String intKey1 = "integer1";
 	private String intKey2 = "integer2";
 	private String currencyKey1 = "currency1";
 	private String currencyKey2 = "currency2";
+	private String dayKey = "day";
+	
 	private double eurosPerKwh = 0.224;
 	private double averageGbpPerKwh = 0.15;
 	private double eurosPerLiter = 0.0024;
@@ -33,56 +34,43 @@ public class MessageCalculationConfiguration {
     
     private boolean onDemandExecution;
 
-	private Integer utilityId;
-
-	private DateTimeZone timezone;
-
+    public MessageCalculationConfiguration(LocalDateTime refDate)
+    {
+        this.refDate = refDate;
+    }
+    
+    public MessageCalculationConfiguration()
+    {
+        this.refDate = LocalDateTime.now();
+    }
+    
+    public LocalDateTime getRefDate()
+    {
+        return refDate;
+    }
+    
 	public int getComputeThisDayOfMonth() {
-		return computeThisDayOfMonth;
-	}
-
-	public void setComputeThisDayOfMonth(int computeThisDayOfMonth) {
-		this.computeThisDayOfMonth = computeThisDayOfMonth;
+		return new DateTime().dayOfMonth().getMaximumValue();
 	}
 
 	public int getComputeThisDayOfWeek() {
-		return computeThisDayOfWeek;
-	}
-
-	public void setComputeThisDayOfWeek(int computeThisDayOfWeek) {
-		this.computeThisDayOfWeek = computeThisDayOfWeek;
+		return DateTimeConstants.SUNDAY;
 	}
 
 	public String getIntKey1() {
 		return intKey1;
 	}
 
-	public void setIntKey1(String intKey1) {
-		this.intKey1 = intKey1;
-	}
-
 	public String getIntKey2() {
 		return intKey2;
-	}
-
-	public void setIntKey2(String intKey2) {
-		this.intKey2 = intKey2;
 	}
 
 	public String getCurrencyKey1() {
 		return currencyKey1;
 	}
 
-	public void setCurrencyKey1(String currencyKey1) {
-		this.currencyKey1 = currencyKey1;
-	}
-
 	public String getCurrencyKey2() {
 		return currencyKey2;
-	}
-
-	public void setCurrencyKey2(String currencyKey2) {
-		this.currencyKey2 = currencyKey2;
 	}
 
 	public int getStaticTipInterval() {
@@ -115,14 +103,6 @@ public class MessageCalculationConfiguration {
 
 	public void setEurosPerLiter(double eurosPerLiter) {
 		this.eurosPerLiter = eurosPerLiter;
-	}
-
-	public int getAggregateComputationInterval() {
-		return aggregateComputationInterval;
-	}
-
-	public void setAggregateComputationInterval(int aggregateComputationInterval) {
-		this.aggregateComputationInterval = aggregateComputationInterval;
 	}
 
 	public Integer getDailyBudget() {
@@ -173,22 +153,6 @@ public class MessageCalculationConfiguration {
 		this.monthlyBudgetAmphiro = monthlyBudgetAmphiro;
 	}
 
-	public Integer getUtilityId() {
-		return utilityId;
-	}
-
-	public void setUtilityId(Integer utilityId) {
-		this.utilityId = utilityId;
-	}
-
-	public DateTimeZone getTimezone() {
-		return timezone;
-	}
-
-	public void setTimezone(DateTimeZone timezone) {
-		this.timezone = timezone;
-	}
-
     public boolean isOnDemandExecution() {
         return onDemandExecution;
     }
@@ -196,5 +160,4 @@ public class MessageCalculationConfiguration {
     public void setOnDemandExecution(boolean onDemandExecution) {
         this.onDemandExecution = onDemandExecution;
     }
-
 }

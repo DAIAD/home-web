@@ -190,7 +190,12 @@ public class DataQueryBuilder {
         this.query.setSource(EnumMeasurementDataSource.METER);
         return this;
     }
-
+    
+    public DataQueryBuilder source(EnumMeasurementDataSource s) {
+        this.query.setSource(s);
+        return this;
+    }
+    
     public DataQueryBuilder sum() {
         if (!this.metrics.contains(EnumMetric.SUM)) {
             this.metrics.add(EnumMetric.SUM);

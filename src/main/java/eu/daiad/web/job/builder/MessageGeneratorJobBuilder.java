@@ -1,7 +1,10 @@
 package eu.daiad.web.job.builder;
 
+import java.util.Map;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.joda.time.LocalDateTime;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParametersIncrementer;
 import org.springframework.batch.core.Step;
@@ -19,6 +22,7 @@ import eu.daiad.web.service.message.IMessageService;
 
 @Component
 public class MessageGeneratorJobBuilder implements IJobBuilder {
+    
 	private static final Log logger = LogFactory.getLog(MessageGeneratorJobBuilder.class);
 
 	@Autowired
@@ -31,7 +35,6 @@ public class MessageGeneratorJobBuilder implements IJobBuilder {
 	private IMessageService messageService;
 
 	public MessageGeneratorJobBuilder() {
-
 	}
 
 	private Step generateMessages() {
@@ -39,42 +42,50 @@ public class MessageGeneratorJobBuilder implements IJobBuilder {
 			@Override
 			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
 				try {
-					// Initialize configuration
-					MessageCalculationConfiguration config = new MessageCalculationConfiguration();
+				    Map<String, Object> params = chunkContext.getStepContext().getJobParameters();
+				    
+				    LocalDateTime refDate = params.containsKey("ref-date")? 
+				            LocalDateTime.parse((String) params.get("ref-date")) :
+				            LocalDateTime.now().minusDays(1);
+				    
+					MessageCalculationConfiguration config = new MessageCalculationConfiguration(refDate);
 
                     config.setOnDemandExecution(true);
                     
-					config.setStaticTipInterval(Integer.parseInt((String) chunkContext.getStepContext()
-									.getJobParameters().get("static.tip.interval")));
-					config.setAggregateComputationInterval(Integer.parseInt((String) chunkContext.getStepContext()
-									.getJobParameters().get("aggregate.computation.interval")));
+					config.setStaticTipInterval(
+					        Integer.parseInt((String) params.get("static.tip.interval")));
 
-					config.setEurosPerKwh(Double.parseDouble((String) chunkContext.getStepContext().getJobParameters()
-									.get("euros.per.kwh")));
-					config.setAverageGbpPerKwh(Double.parseDouble((String) chunkContext.getStepContext()
-									.getJobParameters().get("average.gbp.per.kwh")));
-					config.setEurosPerLiter(Double.parseDouble((String) chunkContext.getStepContext()
-									.getJobParameters().get("euros.per.liter")));
+					config.setEurosPerKwh(
+					        Double.parseDouble((String) params.get("euros.per.kwh")));
+					
+					config.setAverageGbpPerKwh(
+					        Double.parseDouble((String) params.get("average.gbp.per.kwh")));
+					
+					config.setEurosPerLiter(
+					        Double.parseDouble((String) params.get("euros.per.liter")));
 
-					config.setDailyBudget(Integer.parseInt((String) chunkContext.getStepContext().getJobParameters()
-									.get("daily.budget")));
-					config.setWeeklyBudget(Integer.parseInt((String) chunkContext.getStepContext().getJobParameters()
-									.get("weekly.budget")));
-					config.setMonthlyBudget(Integer.parseInt((String) chunkContext.getStepContext().getJobParameters()
-									.get("monthly.budget")));
+					config.setDailyBudget(
+					        Integer.parseInt((String) params.get("daily.budget")));
+					
+					config.setWeeklyBudget(
+					        Integer.parseInt((String) params.get("weekly.budget")));
+					
+					config.setMonthlyBudget(
+					        Integer.parseInt((String) params.get("monthly.budget")));
 
-					config.setDailyBudgetAmphiro(Integer.parseInt((String) chunkContext.getStepContext()
-									.getJobParameters().get("daily.budget.amphiro")));
-					config.setWeeklyBudgetAmphiro(Integer.parseInt((String) chunkContext.getStepContext()
-									.getJobParameters().get("weekly.budget.amphiro")));
-					config.setMonthlyBudgetAmphiro(Integer.parseInt((String) chunkContext.getStepContext()
-									.getJobParameters().get("monthly.budget.amphiro")));
+					config.setDailyBudgetAmphiro(
+					        Integer.parseInt((String) params.get("daily.budget.amphiro")));
+					
+					config.setWeeklyBudgetAmphiro(
+					        Integer.parseInt((String) params.get("weekly.budget.amphiro")));
+					
+					config.setMonthlyBudgetAmphiro(
+					        Integer.parseInt((String) params.get("monthly.budget.amphiro")));
 
-					// Execute message generation
+					// Generate messages for everything!
 					messageService.executeAll(config);
 				} catch (Exception ex) {
 					logger.fatal("Failed to complete message calculation process.", ex);
-
 					throw ex;
 				}
 				return RepeatStatus.FINISHED;
@@ -90,6 +101,9 @@ public class MessageGeneratorJobBuilder implements IJobBuilder {
 
 	@Override
 	public Job build(String name, JobParametersIncrementer incrementer) throws Exception {
-		return jobBuilderFactory.get(name).incrementer(incrementer).start(generateMessages()).build();
+		return jobBuilderFactory.get(name)
+		        .incrementer(incrementer)
+		        .start(generateMessages())
+		        .build();
 	}
 }
