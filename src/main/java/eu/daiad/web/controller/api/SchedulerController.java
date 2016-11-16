@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.RestResponse;
-import eu.daiad.web.model.security.Credentials;
+import eu.daiad.web.model.scheduling.LaunchJobRequest;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.service.scheduling.ISchedulerService;
 
@@ -35,18 +35,18 @@ public class SchedulerController extends BaseRestController {
     /**
      * Launches a job by its name.
      *
-     * @param credentials the user credentials.
-     * @param jobName the name of the job
+     * @param request authentication information and custom job parameters.
+     * @param jobName the name of the job.
      * @return the controller's response.
      */
     @RequestMapping(value = "/api/v1/admin/scheduler/launch/{jobName}", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-    public RestResponse launch(@RequestBody Credentials credentials, @PathVariable String jobName) {
+    public RestResponse launch(@RequestBody LaunchJobRequest request, @PathVariable String jobName) {
         RestResponse response = new RestResponse();
 
         try {
-            this.authenticate(credentials, EnumRole.ROLE_SYSTEM_ADMIN);
+            authenticate(request.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN);
 
-            this.schedulerService.launch(jobName);
+            schedulerService.launch(jobName, request.getParameters());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
