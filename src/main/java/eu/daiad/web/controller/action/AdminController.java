@@ -20,6 +20,7 @@ import eu.daiad.web.model.admin.CounterCollectionResponse;
 import eu.daiad.web.model.group.GroupQueryRequest;
 import eu.daiad.web.model.group.GroupQueryResponse;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IUtilityRepository;
@@ -30,99 +31,97 @@ import eu.daiad.web.repository.application.IUtilityRepository;
 @RestController
 public class AdminController extends BaseController {
 
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
     private static final Log logger = LogFactory.getLog(AdminController.class);
 
+    /**
+     * Repository for accessing group data.
+     */
     @Autowired
     private IGroupRepository groupRepository;
 
+    /**
+     * Repository for accessing user data.
+     */
     @Autowired
     private IUserRepository userRepository;
 
+    /**
+     * Repository for accessing utility data.
+     */
     @Autowired
     private IUtilityRepository utilityRepository;
 
     /**
      * Returns information about all trial user activity.
-     * 
-     * @param user
-     *            the currently authenticated user.
+     *
+     * @param user the currently authenticated user.
      * @return the user activity.
      */
-    @RequestMapping(value = "/action/admin/trial/activity", method = RequestMethod.GET, produces = "application/json")
-    @Secured("ROLE_ADMIN")
-    public RestResponse getTrialUserActivity(@AuthenticationPrincipal AuthenticatedUser user) {
-        RestResponse response = null;
-
+    @RequestMapping(value = "/action/admin/user/activity", method = RequestMethod.GET, produces = "application/json")
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse getUserActivity(@AuthenticationPrincipal AuthenticatedUser user) {
         try {
-            AccountActivityResponse controllerResponse = new AccountActivityResponse();
+            AccountActivityResponse response = new AccountActivityResponse();
 
-            List<AccountActivity> records = userRepository.getAccountActivity(user.getUtilityId());
+            List<AccountActivity> records = userRepository.getAccountActivity();
 
             for (AccountActivity a : records) {
-                controllerResponse.getAccounts().add(a);
+                response.getAccounts().add(a);
             }
 
-            response = controllerResponse;
+            return response;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            response = new RestResponse();
-            response.add(this.getError(ex));
+            return new RestResponse(getError(ex));
         }
-
-        return response;
     }
 
     /**
      * Returns all available groups including clusters, segments and user
      * defined user groups. Optionally filters data.
-     * 
-     * @param request
-     *            the query to filter data.
+     *
+     * @param request the query to filter data.
      * @return the selected groups.
      */
     @RequestMapping(value = "/action/admin/group/query", method = RequestMethod.POST, produces = "application/json")
-    @Secured("ROLE_ADMIN")
-    public RestResponse getGroups(@AuthenticationPrincipal AuthenticatedUser user,
-                    @RequestBody GroupQueryRequest request) {
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse getGroups(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody GroupQueryRequest request) {
 
         try {
             GroupQueryResponse response = new GroupQueryResponse();
 
-            response.setGroups(this.groupRepository.getAll(user.getUtilityKey()));
+            response.setGroups(groupRepository.getAll(user.getUtilityKey()));
 
             return response;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            RestResponse response = new RestResponse();
-            response.add(this.getError(ex));
-
-            return response;
+            return new RestResponse(getError(ex));
         }
     }
 
     /**
      * Returns all available counter values
-     * 
+     *
      * @return the selected groups.
      */
     @RequestMapping(value = "/action/admin/counter", method = RequestMethod.GET, produces = "application/json")
-    @Secured("ROLE_ADMIN")
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse getCounters(@AuthenticationPrincipal AuthenticatedUser user) {
         try {
             CounterCollectionResponse response = new CounterCollectionResponse();
 
-            response.setCounters(this.utilityRepository.getCounters(user.getUtilityId()));
+            response.setCounters(utilityRepository.getCounters(user.getUtilityId()));
 
             return response;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            RestResponse response = new RestResponse();
-            response.add(this.getError(ex));
-
-            return response;
+            return new RestResponse(getError(ex));
         }
     }
 }

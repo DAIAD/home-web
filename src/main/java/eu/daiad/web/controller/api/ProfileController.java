@@ -21,6 +21,7 @@ import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.profile.NotifyProfileRequest;
+import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.profile.ProfileResponse;
 import eu.daiad.web.model.profile.UpdateHouseholdRequest;
 import eu.daiad.web.model.profile.UpdateProfileRequest;
@@ -28,6 +29,7 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.Credentials;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.application.IProfileRepository;
+import eu.daiad.web.repository.application.IWaterIqRepository;
 import eu.daiad.web.util.ValidationUtils;
 
 /**
@@ -36,30 +38,47 @@ import eu.daiad.web.util.ValidationUtils;
 @RestController("RestProfileController")
 public class ProfileController extends BaseRestController {
 
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
     private static final Log logger = LogFactory.getLog(ProfileController.class);
 
+    /**
+     * Repository for accessing user profile data.
+     */
     @Autowired
     private IProfileRepository profileRepository;
 
     /**
+     * Repository for accessing water IQ data.
+     */
+    @Autowired
+    private IWaterIqRepository waterIqRepository;
+
+    /**
      * Loads user profile data.
-     * 
+     *
      * @param data user credentials.
      * @return the user profile.
      */
     @RequestMapping(value = "/api/v1/profile/load", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse getProfile(@RequestBody Credentials data) {
-        RestResponse response = new RestResponse();
-
         try {
-            AuthenticatedUser user = this.authenticate(data);
+            AuthenticatedUser user = authenticate(data);
 
             if (user.hasRole(EnumRole.ROLE_USER)) {
-                return new ProfileResponse(this.getRuntime(), this.profileRepository
-                                .getProfileByUsername(EnumApplication.MOBILE));
-            } else if (user.hasRole(EnumRole.ROLE_ADMIN)) {
-                return new ProfileResponse(this.getRuntime(), this.profileRepository
-                                .getProfileByUsername(EnumApplication.UTILITY));
+                Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE);
+
+                // Get water IQ data
+                profile.setComparison(waterIqRepository.getWaterIqByUserId(user.getId()));
+
+                return new ProfileResponse(getRuntime(),
+                                           profile,
+                                           user.roleToStringArray());
+            } else if (user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
+                return new ProfileResponse(getRuntime(),
+                                           profileRepository.getProfileByUsername(EnumApplication.UTILITY),
+                                           user.roleToStringArray());
             } else {
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION);
             }
@@ -67,16 +86,14 @@ public class ProfileController extends BaseRestController {
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            response.add(this.getError(ex));
+            return new RestResponse(getError(ex));
         }
-
-        return response;
     }
 
     /**
-     * Updates user profile
-     * 
-     * @param request the profile data to store
+     * Updates user profile.
+     *
+     * @param request the profile data to store.
      * @return the controller's response.
      */
     @RequestMapping(value = "/api/v1/profile/save", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
@@ -84,11 +101,11 @@ public class ProfileController extends BaseRestController {
         RestResponse response = new RestResponse();
 
         try {
-            AuthenticatedUser user = this.authenticate(request.getCredentials());
+            AuthenticatedUser user = authenticate(request.getCredentials());
 
             if (user.hasRole(EnumRole.ROLE_USER)) {
                 request.setApplication(EnumApplication.MOBILE);
-            } else if (user.hasRole(EnumRole.ROLE_ADMIN)) {
+            } else if (user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
                 request.setApplication(EnumApplication.UTILITY);
             } else {
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION);
@@ -117,7 +134,7 @@ public class ProfileController extends BaseRestController {
             }
 
             if (response.getSuccess()) {
-                this.profileRepository.saveProfile(request);
+                profileRepository.saveProfile(request);
             }
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -131,7 +148,7 @@ public class ProfileController extends BaseRestController {
 
     /**
      * Updates user household information.
-     * 
+     *
      * @param request the profile data to store
      * @return the controller's response.
      */
@@ -140,9 +157,9 @@ public class ProfileController extends BaseRestController {
         RestResponse response = new RestResponse();
 
         try {
-            this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
+            authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
-            this.profileRepository.saveHousehold(request);
+            profileRepository.saveHousehold(request);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -155,7 +172,7 @@ public class ProfileController extends BaseRestController {
     /**
      * Updates user profile that a specific application configuration version
      * has been applied to the mobile client.
-     * 
+     *
      * @param request the notification request.
      * @return the controller's response.
      */
@@ -164,10 +181,9 @@ public class ProfileController extends BaseRestController {
         RestResponse response = new RestResponse();
 
         try {
-            this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
+            authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
-            this.profileRepository.notifyProfile(EnumApplication.MOBILE, request.getVersion(), new DateTime(request
-                            .getUpdatedOn()));
+            profileRepository.notifyProfile(EnumApplication.MOBILE, request.getVersion(), new DateTime(request.getUpdatedOn()));
 
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);

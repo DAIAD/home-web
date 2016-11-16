@@ -1,6 +1,7 @@
 package eu.daiad.web.model.query;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class ExpandedPopulationFilter {
@@ -9,13 +10,13 @@ public class ExpandedPopulationFilter {
 
     private Long areaId;
 
-    private ArrayList<UUID> users = new ArrayList<UUID>();
+    private List<UUID> users = new ArrayList<UUID>();
 
-    private ArrayList<String> labels = new ArrayList<String>();
+    private List<String> labels = new ArrayList<String>();
 
-    private ArrayList<byte[]> hashes = new ArrayList<byte[]>();
+    private List<byte[]> hashes = new ArrayList<byte[]>();
 
-    private ArrayList<byte[]> serials = new ArrayList<byte[]>();
+    private List<byte[]> serials = new ArrayList<byte[]>();
 
     private Ranking ranking;
 
@@ -40,19 +41,19 @@ public class ExpandedPopulationFilter {
         this.label = label;
     }
 
-    public ArrayList<UUID> getUsers() {
+    public List<UUID> getUsers() {
         return users;
     }
 
-    public ArrayList<byte[]> getHashes() {
+    public List<byte[]> getHashes() {
         return hashes;
     }
 
-    public ArrayList<byte[]> getSerials() {
+    public List<byte[]> getSerials() {
         return serials;
     }
 
-    public ArrayList<String> getLabels() {
+    public List<String> getLabels() {
         return labels;
     }
 

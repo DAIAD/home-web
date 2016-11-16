@@ -2,48 +2,71 @@ package eu.daiad.web.model.loader;
 
 public class FileProcessingStatus {
 
-	private int totalRows = 0;
+    private int totalRows = 0;
 
-	private int processedRows = 0;
+    private int processedRows = 0;
 
-	private int skippedRows = 0;
+    private int skippedRows = 0;
 
-	public int getTotalRows() {
-		return totalRows;
-	}
+    private Long minTimestamp;
 
-	public void setTotalRows(int totalRows) {
-		this.totalRows = totalRows;
-	}
+    private Long maxTimestamp;
 
-	public int getProcessedRows() {
-		return processedRows;
-	}
+    private int negativeDifference = 0;
 
-	public void setProcessedRows(int processedRows) {
-		this.processedRows = processedRows;
-	}
+    public int getNegativeDifference() {
+        return negativeDifference;
+    }
 
-	public int getSkippedRows() {
-		return skippedRows;
-	}
+    public int getTotalRows() {
+        return totalRows;
+    }
 
-	public void setSkippedRows(int skippedRows) {
-		this.skippedRows = skippedRows;
-	}
+    public void setTotalRows(int totalRows) {
+        this.totalRows = totalRows;
+    }
 
-	public void processRow() {
-		this.processedRows++;
-	}
+    public int getProcessedRows() {
+        return processedRows;
+    }
 
-	public void skipRow() {
-		this.skippedRows++;
-	}
+    public void setProcessedRows(int processedRows) {
+        this.processedRows = processedRows;
+    }
 
-	@Override
-	public String toString() {
-		return "FileProcessingStatus [totalRows=" + totalRows + ", processedRows=" + processedRows + ", skippedRows="
-						+ skippedRows + "]";
-	}
+    public int getSkippedRows() {
+        return skippedRows;
+    }
 
+    public void setSkippedRows(int skippedRows) {
+        this.skippedRows = skippedRows;
+    }
+
+    public void processRow() {
+        this.processedRows++;
+    }
+
+    public void skipRow() {
+        this.skippedRows++;
+    }
+
+    public Long getMinTimestamp() {
+        return minTimestamp;
+    }
+
+    public void setMinTimestamp(Long minTimestamp) {
+        this.minTimestamp = minTimestamp;
+    }
+
+    public Long getMaxTimestamp() {
+        return maxTimestamp;
+    }
+
+    public void setMaxTimestamp(Long maxTimestamp) {
+        this.maxTimestamp = maxTimestamp;
+    }
+
+    public void increaseNegativeDifference() {
+        this.negativeDifference++;
+    }
 }

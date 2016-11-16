@@ -28,7 +28,7 @@ public class AccountRole {
 	
 	@ManyToOne(cascade = { CascadeType.ALL })
 	@JoinColumn(name = "account_id", nullable = false)
-	private Account owner;
+	private AccountEntity owner;
 	
 	@ManyToOne(cascade = { CascadeType.ALL })
 	@JoinColumn(name = "role_id", nullable = false)
@@ -40,13 +40,13 @@ public class AccountRole {
 	
 	@ManyToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
 	@JoinColumn(name = "assigned_by", nullable = true)
-	private Account assignedBy;
+	private AccountEntity assignedBy;
 
-	public Account getOwner() {
+	public AccountEntity getOwner() {
 		return owner;
 	}
 
-	public void setOwner(Account owner) {
+	public void setOwner(AccountEntity owner) {
 		this.owner = owner;
 	}
 
@@ -66,11 +66,11 @@ public class AccountRole {
 		this.assignedOn = assignedOn;
 	}
 
-	public Account getAssignedBy() {
+	public AccountEntity getAssignedBy() {
 		return assignedBy;
 	}
 
-	public void setAssignedBy(Account assignedBy) {
+	public void setAssignedBy(AccountEntity assignedBy) {
 		this.assignedBy = assignedBy;
 	}
 

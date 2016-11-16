@@ -1,5 +1,6 @@
 package eu.daiad.web.repository.application;
 
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,11 +20,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
-import eu.daiad.web.hbase.HBaseConnectionManager;
 import eu.daiad.web.model.TemporalConstants;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DataErrorCode;
@@ -52,36 +50,9 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
 
     private static final Log logger = LogFactory.getLog(HBaseWaterMeterMeasurementRepository.class);
 
-    private final String ERROR_RELEASE_RESOURCES = "Failed to release resources";
-
-    private enum EnumTimeInterval {
-        UNDEFINED(0), HOUR(3600), DAY(86400);
-
-        private final int value;
-
-        private EnumTimeInterval(int value) {
-            this.value = value;
-        }
-
-        public int getValue() {
-            return this.value;
-        }
-    }
-
     private final String meterTableMeasurementByMeter = "daiad:meter-measurements-by-user";
 
     private final String meterTableMeasurementByTime = "daiad:meter-measurements-by-time";
-
-    private final String columnFamilyName = "cf";
-
-    @Value("${hbase.data.time.partitions}")
-    private short timePartitions;
-
-    @Value("${scanner.cache.size}")
-    private int scanCacheSize = 1;
-
-    @Autowired
-    private HBaseConnectionManager connection;
 
     @Override
     public void store(String serial, WaterMeterMeasurementCollection data) {
@@ -92,6 +63,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
 
             // Sort measurements
             Collections.sort(data.getMeasurements(), new Comparator<WaterMeterMeasurement>() {
+                @Override
                 public int compare(WaterMeterMeasurement o1, WaterMeterMeasurement o2) {
                     if (o1.getTimestamp() <= o2.getTimestamp()) {
                         return -1;
@@ -104,29 +76,26 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
             // Get current status if no difference is computed
             WaterMeterMeasurement first = data.getMeasurements().get(0);
             if (first.getDifference() == null) {
-                WaterMeterStatusQueryResult status = this.getStatus(new String[] { serial }, new DateTime(first
-                                .getTimestamp(), DateTimeZone.UTC).getMillis());
+                WaterMeterStatusQueryResult status = this.getStatus(new String[] { serial },
+                                                                    new DateTime(first.getTimestamp(), DateTimeZone.UTC).getMillis());
 
                 if (status.getDevices().size() == 0) {
                     // This is the first measurement for this water meter
                     first.setDifference(0.0f);
                 } else if (first.getTimestamp() == status.getDevices().get(0).getTimestamp()) {
-                    first.setDifference(first.getVolume() - status.getDevices().get(0).getVolume()
-                                    + status.getDevices().get(0).getVariation());
+                    first.setDifference(first.getVolume() - status.getDevices().get(0).getVolume() + status.getDevices().get(0).getVariation());
                 } else {
                     first.setDifference(first.getVolume() - status.getDevices().get(0).getVolume());
                 }
             }
             for (int i = 1, count = data.getMeasurements().size(); i < count; i++) {
                 if (data.getMeasurements().get(i).getDifference() == null) {
-                    data.getMeasurements().get(i).setDifference(
-                                    data.getMeasurements().get(i).getVolume()
-                                                    - data.getMeasurements().get(i - 1).getVolume());
+                    data.getMeasurements().get(i).setDifference(data.getMeasurements().get(i).getVolume() - data.getMeasurements().get(i - 1).getVolume());
                 }
             }
 
-            this.storeDataByMeter(serial, data);
-            this.storeDataByTime(serial, data);
+            storeDataByMeter(serial, data);
+            storeDataByTime(serial, data);
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }
@@ -136,11 +105,11 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
     private void storeDataByMeter(String serial, WaterMeterMeasurementCollection data) {
         Table table = null;
         try {
-            table = connection.getTable(this.meterTableMeasurementByMeter);
+            table = connection.getTable(meterTableMeasurementByMeter);
 
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             byte[] meterSerial = serial.getBytes("UTF-8");
             byte[] meterSerialHash = md.digest(meterSerial);
@@ -148,7 +117,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
             for (int i = 0; i < data.getMeasurements().size(); i++) {
                 WaterMeterMeasurement m = data.getMeasurements().get(i);
 
-                if ((m.getVolume() <= 0) || (m.getDifference() <= 0)) {
+                if (m.getVolume() < 0) {
                     continue;
                 }
 
@@ -173,11 +142,14 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
 
                 Put p = new Put(rowKey);
 
-                byte[] column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("v")));
+                byte[] column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("v")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.getVolume()));
 
-                column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("d")));
+                column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("d")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.getDifference()));
+
+                column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("s")));
+                p.addColumn(columnFamily, column, serial.getBytes(StandardCharsets.UTF_8));
 
                 table.put(p);
             }
@@ -190,7 +162,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -200,11 +172,11 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
         Table table = null;
 
         try {
-            table = connection.getTable(this.meterTableMeasurementByTime);
+            table = connection.getTable(meterTableMeasurementByTime);
 
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             byte[] meterSerial = serial.getBytes("UTF-8");
             byte[] meterSerialHash = md.digest(meterSerial);
@@ -212,11 +184,11 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
             for (int i = 0; i < data.getMeasurements().size(); i++) {
                 WaterMeterMeasurement m = data.getMeasurements().get(i);
 
-                if ((m.getVolume() <= 0) || (m.getDifference() <= 0)) {
+                if (m.getVolume() < 0) {
                     continue;
                 }
 
-                short partition = (short) (m.getTimestamp() % this.timePartitions);
+                short partition = (short) (m.getTimestamp() % timePartitions);
                 byte[] partitionBytes = Bytes.toBytes(partition);
 
                 long timestamp = (Long.MAX_VALUE / 1000) - (m.getTimestamp() / 1000);
@@ -243,11 +215,14 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
 
                 Put p = new Put(rowKey);
 
-                byte[] column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("v")));
+                byte[] column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("v")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.getVolume()));
 
-                column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("d")));
+                column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("d")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.getDifference()));
+
+                column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("s")));
+                p.addColumn(columnFamily, column, serial.getBytes(StandardCharsets.UTF_8));
 
                 table.put(p);
             }
@@ -260,7 +235,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -304,8 +279,8 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            table = connection.getTable(this.meterTableMeasurementByMeter);
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            table = connection.getTable(meterTableMeasurementByMeter);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             for (int deviceIndex = 0; deviceIndex < serials.length; deviceIndex++) {
                 byte[] meterSerial = serials[deviceIndex].getBytes("UTF-8");
@@ -313,9 +288,9 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
 
                 Scan scan = new Scan();
                 scan.addFamily(columnFamily);
-                scan.setStartRow(this.getDeviceTimeRowKey(meterSerialHash, (Long.MAX_VALUE / 1000)
+                scan.setStartRow(getDeviceTimeRowKey(meterSerialHash, (Long.MAX_VALUE / 1000)
                                 - (maxDateTime / 1000), EnumTimeInterval.HOUR));
-                scan.setStopRow(this.calculateTheClosestNextRowKeyForPrefix(meterSerialHash));
+                scan.setStopRow(calculateTheClosestNextRowKeyForPrefix(meterSerialHash));
                 scan.setCaching(2);
 
                 scanner = table.getScanner(scan);
@@ -399,14 +374,13 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
 
     @Override
-    public WaterMeterMeasurementQueryResult searchMeasurements(String serials[], DateTimeZone timezone,
-                    WaterMeterMeasurementQuery query) {
+    public WaterMeterMeasurementQueryResult searchMeasurements(String serials[], DateTimeZone timezone, WaterMeterMeasurementQuery query) {
         Table table = null;
         ResultScanner scanner = null;
 
@@ -474,8 +448,8 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            table = connection.getTable(this.meterTableMeasurementByMeter);
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            table = connection.getTable(meterTableMeasurementByMeter);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             for (int deviceIndex = 0; deviceIndex < serials.length; deviceIndex++) {
                 byte[] meterSerial = serials[deviceIndex].getBytes("UTF-8");
@@ -484,10 +458,10 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                 Scan scan = new Scan();
                 scan.addFamily(columnFamily);
 
-                scan.setStartRow(this.getDeviceTimeRowKey(meterSerialHash, (Long.MAX_VALUE / 1000L)
+                scan.setStartRow(getDeviceTimeRowKey(meterSerialHash, (Long.MAX_VALUE / 1000L)
                                 - (endDate.getMillis() / 1000L), EnumTimeInterval.HOUR));
 
-                scan.setStopRow(this.calculateTheClosestNextRowKeyForPrefix(this.getDeviceTimeRowKey(meterSerialHash,
+                scan.setStopRow(calculateTheClosestNextRowKeyForPrefix(getDeviceTimeRowKey(meterSerialHash,
                                 (Long.MAX_VALUE / 1000L) - (startDate.getMillis() / 1000L), EnumTimeInterval.HOUR)));
 
                 scanner = table.getScanner(scan);
@@ -503,7 +477,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
 
                     long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 16, 24));
 
-                    float volume = -1, difference = -1;
+                    Float volume = null, difference = null;
                     long timestamp = 0;
 
                     for (Entry<byte[], byte[]> entry : map.entrySet()) {
@@ -522,18 +496,13 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                                 difference = Bytes.toFloat(entry.getValue());
                             }
 
-                            if ((volume > 0) && (difference >= 0)) {
+                            if ((volume != null) && (difference != null)) {
                                 series.add(timestamp, volume, difference, timezone);
-                                volume = -1;
-                                difference = -1;
+
+                                volume = null;
+                                difference = null;
                             }
                         }
-                    }
-
-                    if ((volume > 0) && (difference >= 0)) {
-                        series.add(timestamp, volume, difference, timezone);
-                        volume = 0;
-                        difference = 0;
                     }
                 }
 
@@ -554,7 +523,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -569,8 +538,8 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
             result.add(new GroupDataSeries(filter.getLabel(), filter.getUsers().size(), filter.getAreaId()));
         }
         try {
-            table = connection.getTable(this.meterTableMeasurementByTime);
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            table = connection.getTable(meterTableMeasurementByTime);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             DateTime startDate = new DateTime(query.getStartDateTime(), DateTimeZone.UTC);
             DateTime endDate = new DateTime(query.getEndDateTime(), DateTimeZone.UTC);
@@ -616,7 +585,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
 
             for (short p = 0; p < timePartitions; p++) {
                 Scan scan = new Scan();
-                scan.setCaching(this.scanCacheSize);
+                scan.setCaching(scanCacheSize);
                 scan.addFamily(columnFamily);
 
                 byte[] partitionBytes = Bytes.toBytes(p);
@@ -653,7 +622,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                     long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 2, 10));
                     byte[] serialHash = Arrays.copyOfRange(r.getRow(), 10, 26);
 
-                    float difference = 0, volume = 0;
+                    Float volume = null, difference = null;
                     long lastTimestamp = 0;
 
                     for (Entry<byte[], byte[]> entry : map.entrySet()) {
@@ -673,7 +642,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                             }
 
                             if (lastTimestamp == timestamp) {
-                                if (difference > 0) {
+                                if ((difference != null) && (volume != null)) {
                                     int filterIndex = 0;
                                     for (ExpandedPopulationFilter filter : query.getGroups()) {
                                         GroupDataSeries series = result.get(filterIndex);
@@ -688,8 +657,8 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
 
                                         filterIndex++;
                                     }
+                                    volume = difference = null;
                                 }
-                                volume = difference = 0;
                             } else {
                                 lastTimestamp = timestamp;
                             }
@@ -710,7 +679,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
 

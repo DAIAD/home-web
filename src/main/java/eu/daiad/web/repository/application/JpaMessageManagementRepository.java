@@ -16,7 +16,7 @@ import org.joda.time.DateTimeConstants;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import eu.daiad.web.domain.application.Account;
+import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AccountAlert;
 import eu.daiad.web.domain.application.AccountAlertProperty;
 import eu.daiad.web.domain.application.AccountDynamicRecommendation;

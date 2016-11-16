@@ -33,7 +33,7 @@ public class PasswordResetTokenEntity {
 
     @ManyToOne(cascade = { CascadeType.ALL })
     @JoinColumn(name = "account_id", nullable = false)
-    private Account account;
+    private AccountEntity account;
 
     @Column(name = "created_on")
     @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
@@ -72,11 +72,11 @@ public class PasswordResetTokenEntity {
         this.pin = pin;
     }
 
-    public Account getAccount() {
+    public AccountEntity getAccount() {
         return account;
     }
 
-    public void setAccount(Account account) {
+    public void setAccount(AccountEntity account) {
         this.account = account;
     }
 

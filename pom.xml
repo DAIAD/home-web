@@ -34,13 +34,13 @@
 
     <properties>
         <java-version>1.7</java-version>
-        <spring.boot.version>1.4.0.M3</spring.boot.version>
         <jackson.version>2.5.4</jackson.version>
         <hadoop.version>2.6.0</hadoop.version>
         <hbase.version>1.0.0</hbase.version>
         <geotools.version>14.2</geotools.version>
         <hibernate-spatial.version>5.1.0.Final</hibernate-spatial.version>
         <apache.poi.version>3.14</apache.poi.version>
+        <apache.csv.version>1.1</apache.csv.version>
         <org.jadira.usertype.version>5.0.0.GA</org.jadira.usertype.version>
         <dependency.locations.enabled>false</dependency.locations.enabled>
     </properties>

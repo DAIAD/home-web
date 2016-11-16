@@ -19,11 +19,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
-import eu.daiad.web.hbase.HBaseConnectionManager;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DataErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
@@ -45,36 +42,9 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
 
     private static final Log logger = LogFactory.getLog(HBaseWaterMeterForecastRepository.class);
 
-    private final String ERROR_RELEASE_RESOURCES = "Failed to release resources";
-
-    private enum EnumTimeInterval {
-        UNDEFINED(0), HOUR(3600), DAY(86400);
-
-        private final int value;
-
-        private EnumTimeInterval(int value) {
-            this.value = value;
-        }
-
-        public int getValue() {
-            return this.value;
-        }
-    }
-
     private final String meterTableForecastByUser = "daiad:meter-forecast-by-user";
 
     private final String meterTableForecastByTime = "daiad:meter-forecast-by-time";
-
-    private final String columnFamilyName = "cf";
-
-    @Value("${hbase.data.time.partitions}")
-    private short timePartitions;
-
-    @Value("${scanner.cache.size}")
-    private int scanCacheSize = 1;
-
-    @Autowired
-    private HBaseConnectionManager connection;
 
     @Override
     public void store(String serial, WaterMeterForecastCollection data) {
@@ -85,6 +55,7 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
 
             // Sort measurements
             Collections.sort(data.getMeasurements(), new Comparator<WaterMeterForecast>() {
+                @Override
                 public int compare(WaterMeterForecast o1, WaterMeterForecast o2) {
                     if (o1.getTimestamp() <= o2.getTimestamp()) {
                         return -1;
@@ -94,8 +65,8 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
                 }
             });
 
-            this.storeDataByMeter(serial, data);
-            this.storeDataByTime(serial, data);
+            storeDataByMeter(serial, data);
+            storeDataByTime(serial, data);
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }
@@ -105,11 +76,11 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
     private void storeDataByMeter(String serial, WaterMeterForecastCollection data) {
         Table table = null;
         try {
-            table = connection.getTable(this.meterTableForecastByUser);
+            table = connection.getTable(meterTableForecastByUser);
 
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             byte[] meterSerial = serial.getBytes("UTF-8");
             byte[] meterSerialHash = md.digest(meterSerial);
@@ -142,7 +113,7 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
 
                 Put p = new Put(rowKey);
 
-                byte[] column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("d")));
+                byte[] column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("d")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.getDifference()));
 
                 table.put(p);
@@ -156,7 +127,7 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -166,11 +137,11 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
         Table table = null;
 
         try {
-            table = connection.getTable(this.meterTableForecastByTime);
+            table = connection.getTable(meterTableForecastByTime);
 
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             byte[] meterSerial = serial.getBytes("UTF-8");
             byte[] meterSerialHash = md.digest(meterSerial);
@@ -181,7 +152,7 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
                 if (m.getDifference() <= 0) {
                     continue;
                 }
-                short partition = (short) (m.getTimestamp() % this.timePartitions);
+                short partition = (short) (m.getTimestamp() % timePartitions);
                 byte[] partitionBytes = Bytes.toBytes(partition);
 
                 long timestamp = (Long.MAX_VALUE / 1000) - (m.getTimestamp() / 1000);
@@ -208,7 +179,7 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
 
                 Put p = new Put(rowKey);
 
-                byte[] column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("d")));
+                byte[] column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("d")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.getDifference()));
 
                 table.put(p);
@@ -222,7 +193,7 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
     }
@@ -237,8 +208,8 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
             result.add(new GroupDataSeries(filter.getLabel(), filter.getUsers().size(), filter.getAreaId()));
         }
         try {
-            table = connection.getTable(this.meterTableForecastByTime);
-            byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            table = connection.getTable(meterTableForecastByTime);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
             DateTime startDate = new DateTime(query.getStartDateTime(), DateTimeZone.UTC);
             DateTime endDate = new DateTime(query.getEndDateTime(), DateTimeZone.UTC);
@@ -284,7 +255,7 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
 
             for (short p = 0; p < timePartitions; p++) {
                 Scan scan = new Scan();
-                scan.setCaching(this.scanCacheSize);
+                scan.setCaching(scanCacheSize);
                 scan.addFamily(columnFamily);
 
                 byte[] partitionBytes = Bytes.toBytes(p);
@@ -370,7 +341,7 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
                     table = null;
                 }
             } catch (Exception ex) {
-                logger.error(ERROR_RELEASE_RESOURCES, ex);
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
 

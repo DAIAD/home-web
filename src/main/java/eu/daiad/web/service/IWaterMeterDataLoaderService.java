@@ -1,10 +1,15 @@
 package eu.daiad.web.service;
 
+import java.io.IOException;
+
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.loader.DataTransferConfiguration;
 import eu.daiad.web.model.loader.EnumUploadFileType;
 import eu.daiad.web.model.loader.FileProcessingStatus;
 
+/**
+ * Provides methods for importing smart water meter readings to HBASE.
+ */
 public interface IWaterMeterDataLoaderService {
 
 	/**
@@ -13,7 +18,7 @@ public interface IWaterMeterDataLoaderService {
 	 * 
 	 * @param config the configuration
 	 */
-	public abstract void load(DataTransferConfiguration config);
+	void load(DataTransferConfiguration config);
 
 	/**
 	 * Loads smart water meter readings data from a file into HBASE.
@@ -25,6 +30,6 @@ public interface IWaterMeterDataLoaderService {
 	 * 
 	 * @throws ApplicationException if the file or the time zone is not found.
 	 */
-	public abstract FileProcessingStatus parse(String filename, String timezone, EnumUploadFileType type) throws ApplicationException;
+	FileProcessingStatus parse(String filename, String timezone, EnumUploadFileType type) throws ApplicationException, IOException;
 
 }

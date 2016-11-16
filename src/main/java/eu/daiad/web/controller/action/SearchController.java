@@ -17,9 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.amphiro.AmphiroMeasurementIndexIntervalQuery;
-import eu.daiad.web.model.amphiro.AmphiroMeasurementIndexIntervalQueryResult;
 import eu.daiad.web.model.amphiro.AmphiroMeasurementTimeIntervalQuery;
-import eu.daiad.web.model.amphiro.AmphiroMeasurementTimeIntervalQueryResult;
 import eu.daiad.web.model.amphiro.AmphiroSessionCollectionIndexIntervalQuery;
 import eu.daiad.web.model.amphiro.AmphiroSessionCollectionTimeIntervalQuery;
 import eu.daiad.web.model.amphiro.AmphiroSessionIndexIntervalQuery;
@@ -29,6 +27,7 @@ import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
+import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQuery;
 import eu.daiad.web.model.meter.WaterMeterStatus;
@@ -36,6 +35,7 @@ import eu.daiad.web.model.meter.WaterMeterStatusQuery;
 import eu.daiad.web.model.meter.WaterMeterStatusQueryResult;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
+import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 import eu.daiad.web.repository.application.IAmphiroTimeOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
@@ -64,13 +64,13 @@ public class SearchController extends BaseController {
 
 	/**
 	 * Returns the status of one or more smart water meters.
-	 * 
+	 *
 	 * @param user the currently authenticated user.
 	 * @param query the query.
 	 * @return the meter status.
 	 */
 	@RequestMapping(value = "/action/meter/status", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured({ "ROLE_USER", "ROLE_ADMIN" })
+	@Secured({ RoleConstant.ROLE_USER, RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
 	public RestResponse getMeterStatus(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody WaterMeterStatusQuery query) {
 		RestResponse response = new RestResponse();
@@ -78,7 +78,7 @@ public class SearchController extends BaseController {
 		try {
 			// If user has not administrative permissions or user key is null,
 			// use the key of the authenticated user
-			if ((query.getUserKey() == null) || (!user.hasRole(EnumRole.ROLE_ADMIN))) {
+			if ((query.getUserKey() == null) || (!user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN))) {
 				query.setUserKey(user.getKey());
 			}
 
@@ -132,13 +132,13 @@ public class SearchController extends BaseController {
 
 	/**
 	 * Loads smart water meter readings on a given query.
-	 * 
+	 *
 	 * @param user the currently authenticated user.
 	 * @param query the query.
 	 * @return the meter readings.
 	 */
 	@RequestMapping(value = "/action/meter/history", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured({ "ROLE_USER", "ROLE_ADMIN" })
+	@Secured({ RoleConstant.ROLE_USER, RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
 	public RestResponse searchWaterMeterMeasurements(@AuthenticationPrincipal AuthenticatedUser user,
 					@RequestBody WaterMeterMeasurementQuery query) {
 		RestResponse response = new RestResponse();
@@ -146,7 +146,7 @@ public class SearchController extends BaseController {
 		try {
 			// If user has not administrative permissions or user key is null,
 			// use the key of the authenticated user
-			if ((query.getUserKey() == null) || (!user.hasRole(EnumRole.ROLE_ADMIN))) {
+			if ((query.getUserKey() == null) || (!user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN))) {
 				query.setUserKey(user.getKey());
 			}
 
@@ -190,93 +190,76 @@ public class SearchController extends BaseController {
 
 	/**
 	 * Loads Amphiro B1 session measurements based on a given query. Amphiro B1 sessions are indexed by id.
-	 * 
+	 *
 	 * @param user the currently authenticated user.
 	 * @param query the query.
 	 * @return the measurements.
 	 */
 	@RequestMapping(value = "/action/device/index/measurement/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured("ROLE_USER")
+	@Secured({ RoleConstant.ROLE_USER })
 	public RestResponse searchAmphiroMeasurementsByIndex(@AuthenticationPrincipal AuthenticatedUser user,
-					@RequestBody AmphiroMeasurementIndexIntervalQuery query) {
-		RestResponse response = new RestResponse();
-
+					                                     @RequestBody AmphiroMeasurementIndexIntervalQuery query) {
 		try {
 			this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
 
 			query.setUserKey(user.getKey());
 
-			AmphiroMeasurementIndexIntervalQueryResult data = amphiroIndexOrderedRepository.searchMeasurements(
-							DateTimeZone.forID(user.getTimezone()), query);
-
-			return data;
+			return amphiroIndexOrderedRepository.getMeasurements(DateTimeZone.forID(user.getTimezone()), query);
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
 
-			response.add(this.getError(ex));
+			return new RestResponse(getError(ex));
 		}
-
-		return response;
 	}
 
 	/**
 	 * Loads Amphiro B1 session measurements based on a given query. Amphiro B1 sessions are indexed by time.
-	 * 
+	 *
 	 * @param user the currently authenticated user.
 	 * @param query the query.
 	 * @return the measurements.
 	 */
 	@RequestMapping(value = "/action/device/time/measurement/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured("ROLE_USER")
+	@Secured({ RoleConstant.ROLE_USER })
 	public RestResponse searchAmphiroMeasurementsByTime(@AuthenticationPrincipal AuthenticatedUser user,
-					@RequestBody AmphiroMeasurementTimeIntervalQuery query) {
-		RestResponse response = new RestResponse();
-
+					                                    @RequestBody AmphiroMeasurementTimeIntervalQuery query) {
 		try {
 			this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
 
 			query.setUserKey(user.getKey());
 
-			AmphiroMeasurementTimeIntervalQueryResult data = amphiroTimeOrderedRepository.searchMeasurements(
-							DateTimeZone.forID(user.getTimezone()), query);
-
-			return data;
+			return amphiroTimeOrderedRepository.searchMeasurements(DateTimeZone.forID(user.getTimezone()), query);
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
 
-			response.add(this.getError(ex));
+			return new RestResponse(getError(ex));
 		}
-
-		return response;
 	}
 
 	/**
 	 * Loads Amphiro B1 sessions based on a given query. Amphiro B1 sessions are indexed by id.
-	 * 
+	 *
 	 * @param user the currently authenticated user.
 	 * @param query the query.
 	 * @return the measurements.
 	 */
 	@RequestMapping(value = "/action/device/index/session/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured({ "ROLE_USER", "ROLE_ADMIN" })
+	@Secured({ RoleConstant.ROLE_USER, RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
 	public RestResponse searchAmphiroSessionsWithIndexOrdering(@AuthenticationPrincipal AuthenticatedUser user,
-					@RequestBody AmphiroSessionCollectionIndexIntervalQuery query) {
-		RestResponse response = new RestResponse();
-
+					                                           @RequestBody AmphiroSessionCollectionIndexIntervalQuery query) {
 		try {
 			// If user has not administrative permissions or user key is null,
 			// use the key of the authenticated user
-			if ((query.getUserKey() == null) || (!user.hasRole(EnumRole.ROLE_ADMIN))) {
+			if ((query.getUserKey() == null) || (!user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN))) {
 				query.setUserKey(user.getKey());
 			}
 
 			// Check utility access
 			if (!user.getKey().equals(query.getUserKey())) {
-				AuthenticatedUser deviceOwner = userRepository.getUserByUtilityAndKey(user.getUtilityId(),
-								query.getUserKey());
+				AuthenticatedUser deviceOwner = userRepository.getUserByUtilityAndKey(user.getUtilityId(), query.getUserKey());
 				if (deviceOwner == null) {
 					throw createApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
-									.set("owner", query.getUserKey());
+									                                                      .set("owner", query.getUserKey());
 				}
 			}
 
@@ -297,43 +280,38 @@ public class SearchController extends BaseController {
 
 			String[] names = this.checkAmphiroOwnership(query.getUserKey(), query.getDeviceKey());
 
-			return amphiroIndexOrderedRepository.searchSessions(names, DateTimeZone.forID(user.getTimezone()), query);
+			return amphiroIndexOrderedRepository.getSessions(names, DateTimeZone.forID(user.getTimezone()), query);
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
 
-			response.add(this.getError(ex));
+			return new RestResponse(getError(ex));
 		}
-
-		return response;
 	}
 
 	/**
 	 * Loads Amphiro B1 sessions based on a given query. Amphiro B1 sessions are indexed by time.
-	 * 
+	 *
 	 * @param user the currently authenticated user.
 	 * @param query the query.
 	 * @return the measurements.
 	 */
 	@RequestMapping(value = "/action/device/time/session/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured({ "ROLE_USER", "ROLE_ADMIN" })
+	@Secured({ RoleConstant.ROLE_USER, RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
 	public RestResponse searchAmphiroSessionsWithTimeOrdering(@AuthenticationPrincipal AuthenticatedUser user,
-					@RequestBody AmphiroSessionCollectionTimeIntervalQuery query) {
-		RestResponse response = new RestResponse();
-
+					                                          @RequestBody AmphiroSessionCollectionTimeIntervalQuery query) {
 		try {
 			// If user has not administrative permissions or user key is null,
 			// use the key of the authenticated user
-			if ((query.getUserKey() == null) || (!user.hasRole(EnumRole.ROLE_ADMIN))) {
+			if ((query.getUserKey() == null) || (!user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN))) {
 				query.setUserKey(user.getKey());
 			}
 
 			// Check utility access
 			if (!user.getKey().equals(query.getUserKey())) {
-				AuthenticatedUser deviceOwner = userRepository.getUserByUtilityAndKey(user.getUtilityId(),
-								query.getUserKey());
+				AuthenticatedUser deviceOwner = userRepository.getUserByUtilityAndKey(user.getUtilityId(), query.getUserKey());
 				if (deviceOwner == null) {
 					throw createApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
-									.set("owner", query.getUserKey());
+									                                                      .set("owner", query.getUserKey());
 				}
 			}
 
@@ -358,25 +336,21 @@ public class SearchController extends BaseController {
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
 
-			response.add(this.getError(ex));
+			return new RestResponse(getError(ex));
 		}
-
-		return response;
 	}
 
 	/**
 	 * Loads an Amphiro B1 session based on a given query. Amphiro B1 session is indexed by id.
-	 * 
+	 *
 	 * @param user the currently authenticated user.
 	 * @param query the query
 	 * @return the sessions
 	 */
 	@RequestMapping(value = "/action/device/index/session", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured("ROLE_USER")
+	@Secured({ RoleConstant.ROLE_USER })
 	public RestResponse getAmphiroSessionByIndex(@AuthenticationPrincipal AuthenticatedUser user,
-					@RequestBody AmphiroSessionIndexIntervalQuery query) {
-		RestResponse response = new RestResponse();
-
+					                             @RequestBody AmphiroSessionIndexIntervalQuery query) {
 		try {
 			this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
 
@@ -386,25 +360,21 @@ public class SearchController extends BaseController {
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
 
-			response.add(this.getError(ex));
+			return new RestResponse(getError(ex));
 		}
-
-		return response;
 	}
 
 	/**
 	 * Loads an Amphiro B1 session based on a given query. Amphiro B1 session is indexed by time.
-	 * 
+	 *
 	 * @param user the currently authenticated user.
 	 * @param query the query
 	 * @return the sessions
 	 */
 	@RequestMapping(value = "/action/device/time/session", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	@Secured("ROLE_USER")
+	@Secured({ RoleConstant.ROLE_USER })
 	public RestResponse getAmphiroSessionByTime(@AuthenticationPrincipal AuthenticatedUser user,
-					@RequestBody AmphiroSessionTimeIntervalQuery query) {
-		RestResponse response = new RestResponse();
-
+					                            @RequestBody AmphiroSessionTimeIntervalQuery query) {
 		try {
 			this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
 
@@ -414,13 +384,19 @@ public class SearchController extends BaseController {
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
 
-			response.add(this.getError(ex));
+			return new RestResponse(getError(ex));
 		}
-
-		return response;
 	}
 
-	private String[] checkAmphiroOwnership(UUID userKey, UUID deviceKey) {
+    /**
+     * Checks if the user can access a specific amphiro b1 device.
+     *
+     * @param userKey the user key.
+     * @param deviceKey the device key.
+     * @return the name of the device if the user can access the device.
+     * @throws ApplicationException if the user can not access the device.
+     */
+	private String[] checkAmphiroOwnership(UUID userKey, UUID deviceKey) throws ApplicationException {
 		if (deviceKey != null) {
 			return this.checkAmphiroOwnership(userKey, new UUID[] { deviceKey });
 		}
@@ -428,7 +404,15 @@ public class SearchController extends BaseController {
 		return new String[] { null };
 	}
 
-	private String[] checkAmphiroOwnership(UUID userKey, UUID devices[]) {
+    /**
+     * Checks if the user can access the specific amphiro b1 devices.
+     *
+     * @param userKey the user key.
+     * @param devices the device keys.
+     * @return the names of the devices if the user can access the devices.
+     * @throws ApplicationException if the user can not access the devices.
+     */
+	private String[] checkAmphiroOwnership(UUID userKey, UUID devices[]) throws ApplicationException {
 		ArrayList<String> nameList = new ArrayList<String>();
 
 		if (devices != null) {
@@ -448,7 +432,15 @@ public class SearchController extends BaseController {
 		return nameList.toArray(nameArray);
 	}
 
-	private String[] checkMeterOwnership(UUID userKey, UUID devices[]) {
+    /**
+     * Checks if the user can access the specific smart water meters.
+     *
+     * @param userKey the user key.
+     * @param devices the smart water meter keys.
+     * @return the serial numbers of the smart water meters if the user can access the devices.
+     * @throws ApplicationException if the user can not access the devices.
+     */
+	private String[] checkMeterOwnership(UUID userKey, UUID devices[]) throws ApplicationException {
 		ArrayList<String> serialList = new ArrayList<String>();
 
 		if (devices != null) {

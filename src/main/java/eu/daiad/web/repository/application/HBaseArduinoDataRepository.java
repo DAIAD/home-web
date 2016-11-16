@@ -16,240 +16,205 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import eu.daiad.web.hbase.HBaseConnectionManager;
 import eu.daiad.web.model.arduino.ArduinoIntervalQuery;
 import eu.daiad.web.model.arduino.ArduinoIntervalQueryResult;
 import eu.daiad.web.model.arduino.ArduinoMeasurement;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
-import eu.daiad.web.repository.BaseRepository;
+import eu.daiad.web.repository.AbstractHBaseRepository;
 
 @Repository()
-public class HBaseArduinoDataRepository extends BaseRepository implements IArduinoDataRepository {
+public class HBaseArduinoDataRepository extends AbstractHBaseRepository implements IArduinoDataRepository {
 
-	private final String ERROR_RELEASE_RESOURCES = "Failed to release resources";
+    private final String arduinoTableMeasurements = "daiad:arduino-measurements";
 
-	private enum EnumTimeInterval {
-		UNDEFINED(0), HOUR(3600), DAY(86400);
+    private static final Log logger = LogFactory.getLog(HBaseArduinoDataRepository.class);
 
-		private final int value;
 
-		private EnumTimeInterval(int value) {
-			this.value = value;
-		}
+    @SuppressWarnings("resource")
+    @Override
+    public void storeData(String deviceKey, ArrayList<ArduinoMeasurement> data) throws ApplicationException {
+        Table table = null;
 
-		public int getValue() {
-			return this.value;
-		}
-	}
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
 
-	private final String arduinoTableMeasurements = "daiad:arduino-measurements";
+            table = connection.getTable(arduinoTableMeasurements);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
-	private final String columnFamilyName = "cf";
+            byte[] deviceKeyBytes = deviceKey.getBytes("UTF-8");
+            byte[] deviceKeyHash = md.digest(deviceKeyBytes);
 
-	private static final Log logger = LogFactory.getLog(HBaseArduinoDataRepository.class);
+            for (int i = 0; i < data.size(); i++) {
+                ArduinoMeasurement m = data.get(i);
 
-	@Autowired
-	private HBaseConnectionManager connection;
+                if (m.getVolume() <= 0) {
+                    continue;
+                }
 
-	@SuppressWarnings("resource")
-	@Override
-	public void storeData(String deviceKey, ArrayList<ArduinoMeasurement> data) throws ApplicationException {
-		Table table = null;
+                long timestamp = (Long.MAX_VALUE - (m.getTimestamp() / 1000));
 
-		try {
-			MessageDigest md = MessageDigest.getInstance("MD5");
+                long timeSlice = timestamp % 3600;
+                byte[] timeSliceBytes = Bytes.toBytes((short) timeSlice);
+                if (timeSliceBytes.length != 2) {
+                    throw new RuntimeException("Invalid byte array length!");
+                }
 
-			table = connection.getTable(this.arduinoTableMeasurements);
-			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+                long timeBucket = timestamp - timeSlice;
 
-			byte[] deviceKeyBytes = deviceKey.getBytes("UTF-8");
-			byte[] deviceKeyHash = md.digest(deviceKeyBytes);
+                byte[] timeBucketBytes = Bytes.toBytes(timeBucket);
+                if (timeBucketBytes.length != 8) {
+                    throw new RuntimeException("Invalid byte array length!");
+                }
 
-			for (int i = 0; i < data.size(); i++) {
-				ArduinoMeasurement m = data.get(i);
+                byte[] rowKey = new byte[deviceKeyHash.length + timeBucketBytes.length];
+                System.arraycopy(deviceKeyHash, 0, rowKey, 0, deviceKeyHash.length);
+                System.arraycopy(timeBucketBytes, 0, rowKey, (deviceKeyHash.length), timeBucketBytes.length);
 
-				if (m.getVolume() <= 0) {
-					continue;
-				}
+                Put p = new Put(rowKey);
 
-				long timestamp = (Long.MAX_VALUE - (m.getTimestamp() / 1000));
+                byte[] column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("v")));
+                p.addColumn(columnFamily, column, Bytes.toBytes(m.getVolume()));
 
-				long timeSlice = timestamp % 3600;
-				byte[] timeSliceBytes = Bytes.toBytes((short) timeSlice);
-				if (timeSliceBytes.length != 2) {
-					throw new RuntimeException("Invalid byte array length!");
-				}
+                table.put(p);
+            }
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        } finally {
+            try {
+                if (table != null) {
+                    table.close();
+                    table = null;
+                }
+            } catch (Exception ex) {
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
+            }
+        }
+    }
 
-				long timeBucket = timestamp - timeSlice;
+    private byte[] getDeviceTimeRowKey(byte[] deviceKeyHash, long date, EnumTimeInterval interval) throws Exception {
 
-				byte[] timeBucketBytes = Bytes.toBytes(timeBucket);
-				if (timeBucketBytes.length != 8) {
-					throw new RuntimeException("Invalid byte array length!");
-				}
+        long intervalInSeconds = EnumTimeInterval.HOUR.getValue();
+        switch (interval) {
+            case HOUR:
+                intervalInSeconds = interval.getValue();
+                break;
+            case DAY:
+                intervalInSeconds = interval.getValue();
+                break;
+            default:
+                throw new RuntimeException(String.format("Time interval [%s] is not supported.", interval.toString()));
+        }
 
-				byte[] rowKey = new byte[deviceKeyHash.length + timeBucketBytes.length];
-				System.arraycopy(deviceKeyHash, 0, rowKey, 0, deviceKeyHash.length);
-				System.arraycopy(timeBucketBytes, 0, rowKey, (deviceKeyHash.length), timeBucketBytes.length);
+        long timestamp = Long.MAX_VALUE - (date / 1000);
+        long timeSlice = timestamp % intervalInSeconds;
+        long timeBucket = timestamp - timeSlice;
+        byte[] timeBucketBytes = Bytes.toBytes(timeBucket);
 
-				Put p = new Put(rowKey);
+        byte[] rowKey = new byte[deviceKeyHash.length + 8];
+        System.arraycopy(deviceKeyHash, 0, rowKey, 0, deviceKeyHash.length);
+        System.arraycopy(timeBucketBytes, 0, rowKey, deviceKeyHash.length, timeBucketBytes.length);
 
-				byte[] column = this.concatenate(timeSliceBytes, this.appendLength(Bytes.toBytes("v")));
-				p.addColumn(columnFamily, column, Bytes.toBytes(m.getVolume()));
+        return rowKey;
+    }
 
-				table.put(p);
-			}
-		} catch (Exception ex) {
-			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
-		} finally {
-			try {
-				if (table != null) {
-					table.close();
-					table = null;
-				}
-			} catch (Exception ex) {
-				logger.error(ERROR_RELEASE_RESOURCES, ex);
-			}
-		}
-	}
 
-	private byte[] getDeviceTimeRowKey(byte[] deviceKeyHash, long date, EnumTimeInterval interval) throws Exception {
+    @Override
+    public ArduinoIntervalQueryResult searchData(ArduinoIntervalQuery query) throws ApplicationException {
+        ArduinoIntervalQueryResult data = new ArduinoIntervalQueryResult();
 
-		long intervalInSeconds = EnumTimeInterval.HOUR.getValue();
-		switch (interval) {
-			case HOUR:
-				intervalInSeconds = interval.getValue();
-				break;
-			case DAY:
-				intervalInSeconds = interval.getValue();
-				break;
-			default:
-				throw new RuntimeException(String.format("Time interval [%s] is not supported.", interval.toString()));
-		}
+        Table table = null;
+        ResultScanner scanner = null;
 
-		long timestamp = Long.MAX_VALUE - (date / 1000);
-		long timeSlice = timestamp % intervalInSeconds;
-		long timeBucket = timestamp - timeSlice;
-		byte[] timeBucketBytes = Bytes.toBytes(timeBucket);
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
 
-		byte[] rowKey = new byte[deviceKeyHash.length + 8];
-		System.arraycopy(deviceKeyHash, 0, rowKey, 0, deviceKeyHash.length);
-		System.arraycopy(timeBucketBytes, 0, rowKey, deviceKeyHash.length, timeBucketBytes.length);
+            table = connection.getTable(arduinoTableMeasurements);
+            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
 
-		return rowKey;
-	}
+            byte[] deviceKeyBytes = query.getDeviceKey().getBytes("UTF-8");
+            byte[] deviceKeyHash = md.digest(deviceKeyBytes);
 
-	private byte[] appendLength(byte[] array) throws Exception {
-		byte[] length = { (byte) array.length };
+            Scan scan = new Scan();
+            scan.addFamily(columnFamily);
 
-		return concatenate(length, array);
-	}
+            byte[] startRow = getDeviceTimeRowKey(deviceKeyHash, query.getTimestampEnd(), EnumTimeInterval.HOUR);
 
-	private byte[] concatenate(byte[] a, byte[] b) {
-		int lengthA = a.length;
-		int lengthB = b.length;
-		byte[] concat = new byte[lengthA + lengthB];
-		System.arraycopy(a, 0, concat, 0, lengthA);
-		System.arraycopy(b, 0, concat, lengthA, lengthB);
-		return concat;
-	}
+            scan.setStartRow(startRow);
 
-	@Override
-	public ArduinoIntervalQueryResult searchData(ArduinoIntervalQuery query) throws ApplicationException {
-		ArduinoIntervalQueryResult data = new ArduinoIntervalQueryResult();
+            byte[] stopRow = new byte[startRow.length + 1];
+            System.arraycopy(getDeviceTimeRowKey(deviceKeyHash, query.getTimestampStart(), EnumTimeInterval.HOUR),
+                            0, stopRow, 0, startRow.length);
 
-		Table table = null;
-		ResultScanner scanner = null;
+            scan.setStopRow(stopRow);
 
-		try {
-			MessageDigest md = MessageDigest.getInstance("MD5");
+            scanner = table.getScanner(scan);
 
-			table = connection.getTable(this.arduinoTableMeasurements);
-			byte[] columnFamily = Bytes.toBytes(this.columnFamilyName);
+            boolean isScanCompleted = false;
 
-			byte[] deviceKeyBytes = query.getDeviceKey().getBytes("UTF-8");
-			byte[] deviceKeyHash = md.digest(deviceKeyBytes);
+            for (Result r = scanner.next(); r != null; r = scanner.next()) {
+                NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
 
-			Scan scan = new Scan();
-			scan.addFamily(columnFamily);
+                long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 16, 24));
 
-			byte[] startRow = this.getDeviceTimeRowKey(deviceKeyHash, query.getTimestampEnd(), EnumTimeInterval.HOUR);
+                for (Entry<byte[], byte[]> entry : map.entrySet()) {
+                    short offset = Bytes.toShort(Arrays.copyOfRange(entry.getKey(), 0, 2));
 
-			scan.setStartRow(startRow);
+                    long timestamp = (Long.MAX_VALUE - (timeBucket + (long) offset)) * 1000L;
 
-			byte[] stopRow = new byte[startRow.length + 1];
-			System.arraycopy(this.getDeviceTimeRowKey(deviceKeyHash, query.getTimestampStart(), EnumTimeInterval.HOUR),
-							0, stopRow, 0, startRow.length);
+                    int length = (int) Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
+                    byte[] slice = Arrays.copyOfRange(entry.getKey(), 3, 3 + length);
 
-			scan.setStopRow(stopRow);
+                    String qualifier = Bytes.toString(slice);
+                    if (qualifier.equals("v")) {
+                        if (timestamp < query.getTimestampStart()) {
+                            isScanCompleted = true;
+                            break;
+                        }
 
-			scanner = table.getScanner(scan);
+                        if (timestamp <= query.getTimestampEnd()) {
+                            long volume = Bytes.toLong(entry.getValue());
 
-			boolean isScanCompleted = false;
+                            data.add(timestamp, volume);
+                        }
+                    }
+                }
+                if (isScanCompleted) {
+                    break;
+                }
+            }
 
-			for (Result r = scanner.next(); r != null; r = scanner.next()) {
-				NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
+            Collections.sort(data.getMeasurements(), new Comparator<ArduinoMeasurement>() {
 
-				long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 16, 24));
+                @Override
+                public int compare(ArduinoMeasurement o1, ArduinoMeasurement o2) {
+                    if (o1.getTimestamp() <= o2.getTimestamp()) {
+                        return -1;
+                    } else {
+                        return 1;
+                    }
+                }
+            });
 
-				for (Entry<byte[], byte[]> entry : map.entrySet()) {
-					short offset = Bytes.toShort(Arrays.copyOfRange(entry.getKey(), 0, 2));
-
-					long timestamp = (Long.MAX_VALUE - (timeBucket + (long) offset)) * 1000L;
-
-					int length = (int) Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
-					byte[] slice = Arrays.copyOfRange(entry.getKey(), 3, 3 + length);
-
-					String qualifier = Bytes.toString(slice);
-					if (qualifier.equals("v")) {
-						if (timestamp < query.getTimestampStart()) {
-							isScanCompleted = true;
-							break;
-						}
-
-						if (timestamp <= query.getTimestampEnd()) {
-							long volume = Bytes.toLong(entry.getValue());
-
-							data.add(timestamp, volume);
-						}
-					}
-				}
-				if (isScanCompleted) {
-					break;
-				}
-			}
-
-			Collections.sort(data.getMeasurements(), new Comparator<ArduinoMeasurement>() {
-
-				public int compare(ArduinoMeasurement o1, ArduinoMeasurement o2) {
-					if (o1.getTimestamp() <= o2.getTimestamp()) {
-						return -1;
-					} else {
-						return 1;
-					}
-				}
-			});
-
-			return data;
-		} catch (Exception ex) {
-			throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
-		} finally {
-			try {
-				if (scanner != null) {
-					scanner.close();
-					scanner = null;
-				}
-				if (table != null) {
-					table.close();
-					table = null;
-				}
-			} catch (Exception ex) {
-				logger.error(ERROR_RELEASE_RESOURCES, ex);
-			}
-		}
-	}
+            return data;
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        } finally {
+            try {
+                if (scanner != null) {
+                    scanner.close();
+                    scanner = null;
+                }
+                if (table != null) {
+                    table.close();
+                    table = null;
+                }
+            } catch (Exception ex) {
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
+            }
+        }
+    }
 
 }

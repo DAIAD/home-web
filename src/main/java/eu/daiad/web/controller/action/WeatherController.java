@@ -17,12 +17,14 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
-import eu.daiad.web.domain.application.Utility;
+import eu.daiad.web.domain.application.UtilityEntity;
 import eu.daiad.web.domain.application.WeatherServiceEntity;
 import eu.daiad.web.domain.application.WeatherServiceUtilityEntity;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.WeatherErrorCode;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.model.weather.WeatherQueryResponse;
 import eu.daiad.web.model.weather.WeatherService;
@@ -32,19 +34,31 @@ import eu.daiad.web.service.weather.HourlyWeatherData;
 import eu.daiad.web.service.weather.IWeatherRepository;
 
 /**
- * Provides actions for querying weather services and data.
+ * Provides actions for querying weather service and data.
  */
 @RestController
 public class WeatherController extends BaseController {
 
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
     private static final Log logger = LogFactory.getLog(WeatherController.class);
 
+    /**
+     * Repository for accessing weather data.
+     */
     @Autowired
     private IWeatherRepository weatherRepository;
 
+    /**
+     * Returns the registered weather services.
+     *
+     * @param user the authenticated user.
+     * @return the registered weather services.
+     */
     @RequestMapping(value = "/action/weather/service", method = RequestMethod.GET, produces = "application/json")
-    @Secured("ROLE_USER, ROLE_SUPERUSER, ROLE_ADMIN")
-    public RestResponse getTrialUserActivity(@AuthenticationPrincipal AuthenticatedUser user) {
+    @Secured({ RoleConstant.ROLE_USER, RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse getWeatherService(@AuthenticationPrincipal AuthenticatedUser user) {
         try {
             WeatherServiceResponse weatherServiceResponse = new WeatherServiceResponse();
 
@@ -57,7 +71,9 @@ public class WeatherController extends BaseController {
                 service.setName(serviceEntity.getName());
 
                 for (WeatherServiceUtilityEntity utilityEntity : serviceEntity.getUtilities()) {
-                    service.getUtilities().add(new UtilityInfo(utilityEntity.getUtility()));
+                    if (user.canAccessUtility(utilityEntity.getId())) {
+                        service.getUtilities().add(new UtilityInfo(utilityEntity.getUtility()));
+                    }
                 }
 
                 weatherServiceResponse.getServices().add(service);
@@ -67,18 +83,30 @@ public class WeatherController extends BaseController {
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            RestResponse response = new RestResponse();
-            response.add(this.getError(ex));
-
-            return response;
+            return new RestResponse(getError(ex));
         }
     }
 
+    /**
+     * Queries weather data from a specific weather service for the given
+     * utility and time interval.
+     *
+     * @param user the authenticated user.
+     * @param service the weather service id or name.
+     * @param utility the utility id or name.
+     * @param interval the type of time interval e.g. {@code day} or {@code hour}.
+     * @param from the time interval start date formatted as {@code yyyyMMdd}.
+     * @param to the time interval end date formatted as {@code yyyyMMdd}.
+     * @return the weather data.
+     */
     @RequestMapping(value = "/action/weather/{service}/{utility}/{interval}/{from}/{to}", method = RequestMethod.GET, produces = "application/json")
-    @Secured("ROLE_USER, ROLE_SUPERUSER, ROLE_ADMIN")
+    @Secured({ RoleConstant.ROLE_USER, RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse getTrialUserActivity(@AuthenticationPrincipal AuthenticatedUser user,
-                    @PathVariable String service, @PathVariable String utility, @PathVariable String interval,
-                    @PathVariable String from, @PathVariable String to) {
+                                             @PathVariable String service,
+                                             @PathVariable String utility,
+                                             @PathVariable String interval,
+                                             @PathVariable String from,
+                                             @PathVariable String to) {
         try {
             WeatherQueryResponse weatherQueryResponse = new WeatherQueryResponse();
 
@@ -97,7 +125,7 @@ public class WeatherController extends BaseController {
             }
 
             // Check if utility is supported by the service
-            Utility utilityEntity = null;
+            UtilityEntity utilityEntity = null;
 
             if (!StringUtils.isBlank(utility)) {
                 Integer utilityId = null;
@@ -128,6 +156,12 @@ public class WeatherController extends BaseController {
                 return weatherQueryResponse.toRestResponse();
             }
 
+            if(!user.canAccessUtility(utilityEntity.getId())) {
+                weatherQueryResponse.add(this.getError(SharedErrorCode.AUTHORIZATION));
+
+                return weatherQueryResponse.toRestResponse();
+            }
+
             // Parse dates and get weather data
             DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyyMMdd").withZone(DateTimeZone.UTC);
 
@@ -152,17 +186,11 @@ public class WeatherController extends BaseController {
         } catch (IllegalArgumentException ex) {
             logger.error(ex.getMessage(), ex);
 
-            RestResponse response = new RestResponse();
-            response.add(this.getError(WeatherErrorCode.INVALID_DATETIME));
-
-            return response;
+            return new RestResponse(getError(WeatherErrorCode.INVALID_DATETIME));
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
-            RestResponse response = new RestResponse();
-            response.add(this.getError(ex));
-
-            return response;
+            return new RestResponse(getError(ex));
         }
     }
 }

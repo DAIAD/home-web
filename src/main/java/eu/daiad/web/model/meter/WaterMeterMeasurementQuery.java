@@ -4,34 +4,34 @@ import eu.daiad.web.model.TemporalConstants;
 
 public class WaterMeterMeasurementQuery extends WaterMeterStatusQuery {
 
-	private int granularity = TemporalConstants.NONE;
+    private int granularity = TemporalConstants.NONE;
 
-	private Long startDate;
+    private Long startDate;
 
-	private Long endDate;
+    private Long endDate;
 
-	public int getGranularity() {
-		return granularity;
-	}
+    public int getGranularity() {
+        return granularity;
+    }
 
-	public void setGranularity(int granularity) {
-		this.granularity = granularity;
-	}
+    public void setGranularity(int granularity) {
+        this.granularity = granularity;
+    }
 
-	public Long getStartDate() {
-		return startDate;
-	}
+    public Long getStartDate() {
+        return startDate;
+    }
 
-	public void setStartDate(Long startDate) {
-		this.startDate = startDate;
-	}
+    public void setStartDate(Long startDate) {
+        this.startDate = startDate;
+    }
 
-	public Long getEndDate() {
-		return endDate;
-	}
+    public Long getEndDate() {
+        return endDate;
+    }
 
-	public void setEndDate(Long endDate) {
-		this.endDate = endDate;
-	}
+    public void setEndDate(Long endDate) {
+        this.endDate = endDate;
+    }
 
 }

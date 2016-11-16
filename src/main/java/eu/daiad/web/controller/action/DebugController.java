@@ -45,6 +45,7 @@ import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.loader.UploadRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.model.user.Account;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IGroupRepository;
@@ -57,207 +58,245 @@ import eu.daiad.web.service.IFileDataLoaderService;
 @RestController
 public class DebugController extends BaseController {
 
-	private static final Log logger = LogFactory.getLog(DebugController.class);
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
+    private static final Log logger = LogFactory.getLog(DebugController.class);
 
-	@Value("${security.white-list}")
-	private boolean enforceWhiteListCheck;
+    /**
+     * True if user white list is enabled.
+     */
+    @Value("${security.white-list}")
+    private boolean enforceWhiteListCheck;
 
-	@Value("${tmp.folder}")
-	private String temporaryPath;
+    /**
+     * Folder for storing temporary files.
+     */
+    @Value("${tmp.folder}")
+    private String temporaryPath;
 
-	@Autowired
-	private IFileDataLoaderService fileDataLoaderService;
+    /**
+     * Service for importing data from uploaded files to PostgreSQL and HBase.
+     */
+    @Autowired
+    private IFileDataLoaderService fileDataLoaderService;
 
-	@Autowired
-	private IUserRepository userRepository;
+    /**
+     * Repository for accessing user data.
+     */
+    @Autowired
+    private IUserRepository userRepository;
 
-	@Autowired
-	private IGroupRepository groupRepository;
+    /**
+     * Repository for accessing group data.
+     */
+    @Autowired
+    private IGroupRepository groupRepository;
 
-	@Autowired
-	private IDeviceRepository deviceRepository;
+    /**
+     * Repository for accessing device data.
+     */
+    @Autowired
+    private IDeviceRepository deviceRepository;
 
-	private void saveFile(String filename, byte[] bytes) throws IOException {
-		BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(filename)));
-		stream.write(bytes);
-		stream.close();
-	}
+    /**
+     * Saves an array of bytes to a file.
+     *
+     * @param filename the filename.
+     * @param bytes the bytes to save.
+     * @throws IOException if an I/O exception occurs.
+     */
+    private void saveFile(String filename, byte[] bytes) throws IOException {
+        BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(filename)));
+        stream.write(bytes);
+        stream.close();
+    }
 
-	private String generateRandomMacAddress() {
-		Random rand = new Random();
+    /**
+     * Generates a random MAC address.
+     *
+     * @return a random MAC address.
+     */
+    private String generateRandomMacAddress() {
+        Random rand = new Random();
 
-		byte[] macAddress = new byte[6];
-		rand.nextBytes(macAddress);
+        byte[] macAddress = new byte[6];
+        rand.nextBytes(macAddress);
 
-		StringBuilder output = new StringBuilder(18);
-		for (byte b : macAddress) {
+        StringBuilder output = new StringBuilder(18);
+        for (byte b : macAddress) {
 
-			if (output.length() > 0)
-				output.append(":");
+            if (output.length() > 0)
+                output.append(":");
 
-			output.append(String.format("%02x", b));
-		}
+            output.append(String.format("%02x", b));
+        }
 
-		return output.toString();
-	}
+        return output.toString();
+    }
 
-	private String generateAesKey() throws NoSuchAlgorithmException {
-		KeyGenerator keyGen = KeyGenerator.getInstance("AES");
-		keyGen.init(256);
-		return Base64.encodeBase64URLSafeString(keyGen.generateKey().getEncoded());
-	}
+    /**
+     * Generates an AES key.
+     *
+     * @return the new AES key.
+     * @throws NoSuchAlgorithmException if the algorithm is not supported.
+     */
+    private String generateAesKey() throws NoSuchAlgorithmException {
+        KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+        keyGen.init(256);
+        return Base64.encodeBase64URLSafeString(keyGen.generateKey().getEncoded());
+    }
 
-	/**
-	 * Registers all users found in the white list that have not yet been assigned to an account.
-	 * 
-	 * @param request a default password for all new accounts.
-	 * @return the controller's response.
-	 */
-	@RequestMapping(value = "/action/debug/user/create", method = RequestMethod.POST, produces = "application/json")
-	@ResponseBody
-	@Secured({ "ROLE_ADMIN" })
-	public RestResponse createUsers(@RequestBody DebugUserRegisterRequest request) {
-		RestResponse response = new RestResponse();
+    /**
+     * Registers all users found in the white list that have not yet been assigned to an account.
+     *
+     * @param request a default password for all new accounts.
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/action/debug/user/create", method = RequestMethod.POST, produces = "application/json")
+    @ResponseBody
+    @Secured({ RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse createUsers(@RequestBody DebugUserRegisterRequest request) {
+        RestResponse response = new RestResponse();
 
-		try {
-			if (ArrayUtils.contains(this.getActiveProfiles(), "development")) {
-				String password = request.getPassword();
+        try {
+            if (ArrayUtils.contains(this.getActiveProfiles(), "development")) {
+                String password = request.getPassword();
 
-				if (StringUtils.isBlank(password)) {
-					response.add("DEBUG_USER_REGISTER_EMPTY_PASSWORD",
-									"Failed to register users. A password is required.");
-				} else {
+                if (StringUtils.isBlank(password)) {
+                    response.add("DEBUG_USER_REGISTER_EMPTY_PASSWORD", "Failed to register users. A password is required.");
+                } else {
 
-					for (AccountActivity entry : userRepository.getAccountActivity()) {
-						if (entry.getAccountRegisteredOn() == null) {
+                    for (AccountActivity entry : userRepository.getAccountActivity()) {
+                        if (entry.getAccountRegisteredOn() == null) {
 
-							Account account = new Account();
-							account.setUsername(entry.getUsername());
-							account.setPassword(password);
+                            Account account = new Account();
+                            account.setUsername(entry.getUsername());
+                            account.setPassword(password);
 
-							userRepository.createUser(account);
-						}
-					}
+                            userRepository.createUser(account);
+                        }
+                    }
 
-				}
-			} else {
-				response.add(SharedErrorCode.UNKNOWN, "Profile [development] is not enabled.");
-			}
-		} catch (Exception ex) {
-			logger.error(ex.getMessage(), ex);
+                }
+            } else {
+                response.add(SharedErrorCode.UNKNOWN, "Profile [development] is not enabled.");
+            }
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
 
-			response.add(SharedErrorCode.UNKNOWN, "Failed to register users.");
-		}
+            response.add(SharedErrorCode.UNKNOWN, "Failed to register users.");
+        }
 
-		return response;
-	}
+        return response;
+    }
 
-	/**
-	 * Registers a new Amphiro B1 device to all registered users that have no device registrations 
-	 * in their profile.
-	 * 
-	 * @param user the currently authenticated user.
-	 * @return the controller's response.
-	 */
-	@RequestMapping(value = "/action/debug/amphiro/create", method = RequestMethod.GET, produces = "application/json")
-	@ResponseBody
-	@Secured({ "ROLE_ADMIN" })
-	public RestResponse registerAmphiro(@AuthenticationPrincipal AuthenticatedUser user) {
-		RestResponse response = new RestResponse();
+    /**
+     * Registers a new amphiro b1 device to all registered users that have no device registrations
+     * in their profile.
+     *
+     * @param user the currently authenticated user.
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/action/debug/amphiro/create", method = RequestMethod.GET, produces = "application/json")
+    @ResponseBody
+    @Secured({ RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse registerAmphiro(@AuthenticationPrincipal AuthenticatedUser user) {
+        RestResponse response = new RestResponse();
 
-		try {
-			if (ArrayUtils.contains(this.getActiveProfiles(), "development")) {
+        try {
+            if (ArrayUtils.contains(this.getActiveProfiles(), "development")) {
 
-				DeviceRegistrationQuery deviceQuery = new DeviceRegistrationQuery();
-				deviceQuery.setType(EnumDeviceType.AMPHIRO);
+                DeviceRegistrationQuery deviceQuery = new DeviceRegistrationQuery();
+                deviceQuery.setType(EnumDeviceType.AMPHIRO);
 
-				ArrayList<KeyValuePair> properties = new ArrayList<KeyValuePair>();
-				properties.add(new KeyValuePair("debug.autogenerate", (new DateTime(DateTimeZone.UTC)).toString()));
+                ArrayList<KeyValuePair> properties = new ArrayList<KeyValuePair>();
+                properties.add(new KeyValuePair("debug.autogenerate", (new DateTime(DateTimeZone.UTC)).toString()));
 
-				for (UUID userKey : groupRepository.getUtilityByIdMemberKeys(user.getId())) {
-					if (deviceRepository.getUserDevices(userKey, deviceQuery).size() == 0) {
+                for (UUID userKey : groupRepository.getUtilityByIdMemberKeys(user.getId())) {
+                    if (deviceRepository.getUserDevices(userKey, deviceQuery).size() == 0) {
 
-						deviceRepository.createAmphiroDevice(userKey, "Amphiro #1", generateRandomMacAddress(),
-										generateAesKey(), properties);
+                        deviceRepository.createAmphiroDevice(userKey, "Amphiro #1", generateRandomMacAddress(),
+                                        generateAesKey(), properties);
 
-					}
-				}
-			} else {
-				response.add(SharedErrorCode.UNKNOWN, "Profile [development] is not enabled.");
-			}
-		} catch (Exception ex) {
-			logger.error(ex.getMessage(), ex);
+                    }
+                }
+            } else {
+                response.add(SharedErrorCode.UNKNOWN, "Profile [development] is not enabled.");
+            }
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
 
-			response.add(SharedErrorCode.UNKNOWN, "Failed to register users.");
-		}
+            response.add(SharedErrorCode.UNKNOWN, "Failed to register users.");
+        }
 
-		return response;
-	}
+        return response;
+    }
 
-	/**
-	 * Uploads a data file to the server and perform an action on it e.g. import test data
-	 * for Amphiro B1 devices.
-	 * 
-	 * @param user the currently authenticated user. 
-	 * @param request the upload file and action.
-	 * @return the controller's response.
-	 */
-	@RequestMapping(value = "/action/debug/amphiro/data/generate", method = RequestMethod.POST, produces = "application/json")
-	@ResponseBody
-	@Secured({ "ROLE_ADMIN" })
-	public RestResponse upload(@AuthenticationPrincipal AuthenticatedUser user, UploadRequest request) {
-		RestResponse response = new RestResponse();
+    /**
+     * Uploads a data file to the server and perform an action on it e.g. import test data
+     * for amphiro b1 devices.
+     *
+     * @param user the currently authenticated user.
+     * @param request the upload file and action.
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/action/debug/amphiro/data/generate", method = RequestMethod.POST, produces = "application/json")
+    @ResponseBody
+    @Secured({ RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse upload(@AuthenticationPrincipal AuthenticatedUser user, UploadRequest request) {
+        RestResponse response = new RestResponse();
 
-		try {
-			if (ArrayUtils.contains(this.getActiveProfiles(), "development")) {
-				if (request.getFiles() != null) {
-					FileUtils.forceMkdir(new File(temporaryPath));
+        try {
+            if (ArrayUtils.contains(this.getActiveProfiles(), "development")) {
+                if (request.getFiles() != null) {
+                    FileUtils.forceMkdir(new File(temporaryPath));
 
-					switch (request.getType()) {
-						case AMPHIRO_DATA:
-							// Check time zone
-							String timezone = request.getTimezone();
+                    switch (request.getType()) {
+                        case AMPHIRO_DATA:
+                            // Check time zone
+                            String timezone = request.getTimezone();
 
-							Set<String> zones = DateTimeZone.getAvailableIDs();
+                            Set<String> zones = DateTimeZone.getAvailableIDs();
 
-							if (StringUtils.isBlank(timezone)) {
-								response.add(SharedErrorCode.INVALID_TIME_ZONE,
-												this.getMessage(SharedErrorCode.INVALID_TIME_ZONE));
-							} else if (!zones.contains(timezone)) {
-								Map<String, Object> properties = ImmutableMap.<String, Object> builder()
-												.put("timezone", timezone).build();
+                            if (StringUtils.isBlank(timezone)) {
+                                response.add(SharedErrorCode.INVALID_TIME_ZONE,
+                                                this.getMessage(SharedErrorCode.INVALID_TIME_ZONE));
+                            } else if (!zones.contains(timezone)) {
+                                Map<String, Object> properties = ImmutableMap.<String, Object> builder()
+                                                .put("timezone", timezone).build();
 
-								response.add(SharedErrorCode.TIMEZONE_NOT_FOUND,
-												this.getMessage(SharedErrorCode.TIMEZONE_NOT_FOUND, properties));
-							}
+                                response.add(SharedErrorCode.TIMEZONE_NOT_FOUND,
+                                                this.getMessage(SharedErrorCode.TIMEZONE_NOT_FOUND, properties));
+                            }
 
-							if (response.getSuccess()) {
-								if ((request.getFiles() != null) && (request.getFiles().length == 1)) {
-									MultipartFile file = request.getFiles()[0];
-									String filename = Paths.get(temporaryPath,
-													UUID.randomUUID().toString() + "-" + file.getOriginalFilename())
-													.toString();
+                            if (response.getSuccess()) {
+                                if ((request.getFiles() != null) && (request.getFiles().length == 1)) {
+                                    MultipartFile file = request.getFiles()[0];
+                                    String filename = Paths.get(temporaryPath,
+                                                                UUID.randomUUID().toString() + "-" + file.getOriginalFilename()).toString();
 
-									this.saveFile(filename, file.getBytes());
+                                    this.saveFile(filename, file.getBytes());
 
-									this.fileDataLoaderService.importRandomAmphiroSessions(user.getUtilityId(),
-													filename, DateTimeZone.forID(request.getTimezone()));
-								}
-							}
-							break;
-						default:
-							break;
-					}
-				}
-			} else {
-				response.add(SharedErrorCode.UNKNOWN, "Profile [development] is not enabled.");
-			}
-		} catch (Exception ex) {
-			logger.error(ex.getMessage(), ex);
+                                    this.fileDataLoaderService.importRandomAmphiroSessions(user.getUtilityId(),
+                                                                                           filename,
+                                                                                           DateTimeZone.forID(request.getTimezone()));
+                                }
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            } else {
+                response.add(SharedErrorCode.UNKNOWN, "Profile [development] is not enabled.");
+            }
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
 
-			response.add(SharedErrorCode.UNKNOWN, "Failed to upload file.");
-		}
+            response.add(SharedErrorCode.UNKNOWN, "Failed to upload file.");
+        }
 
-		return response;
-	}
+        return response;
+    }
 }

@@ -76,6 +76,10 @@
     border-right: 1px solid rgba(127, 140, 141, 0.24);
 }
 
+.select-hide-arrow .Select-arrow {
+  display: none;
+}
+
 /* Bread crumb */
 
 ul.breadcrumbs-list {
@@ -843,3 +847,62 @@ div.measurement-value .delta > .sign {
 .leaflet-top {
 	z-index: 0;
 }
+
+/* Widgets */
+
+.widget {
+  float: left;
+  margin: 10px 0 10px 20px;
+  height: 180px;
+}
+
+.infobox {
+  display: flex;
+  flex-direction: column;
+  background: #FFF;
+  border: 1px #2D3580 solid;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+.infobox-header {
+  flex-grow: 0;
+  padding: 8px 5px 5px 8px;
+  min-height: 37px;
+  border-bottom: 1px #2D3580 solid;
+}
+.infobox-header h4 {
+  margin: 0;
+}
+.infobox-header span, .infobox-header div, .infobox-header a {
+  display: inline-block;
+  font-size: 0.95em;
+}
+
+.infobox-body {
+  flex-grow: 1;
+  flex-shrink: 1;
+  padding: 10px 20px;
+}
+.infobox-body span {
+  font-size: 1.02em;
+}
+.infobox-body p {
+  margin: 0;
+}
+.infobox-footer {
+  flex-grow: 0;
+  text-align: right;
+  padding: 5px;
+  min-height: 37px;
+  border-top: 1px #2D3580 solid;
+}
+.infobox-x {
+  font-weight: normal;
+  color: lightgrey;
+}
+.infobox-x:hover {
+  color: lightgrey;
+}
+.infobox-error {
+  font-size: 1.1em;

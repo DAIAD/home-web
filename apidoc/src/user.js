@@ -77,18 +77,18 @@
 function registerUser() { return; }
 
 /**
- * @api {post} /v1/user/password/change Change a user's password
+ * @api {post} /v1/user/password/change Change password
  * @apiVersion 0.0.1
  * @apiName PasswordChange
  * @apiGroup User
  * @apiPermission ROLE_USER, ROLE_ADMIN
  *
- * @apiDescription Changes the password of a user. If the authenticated user is an administrator, he can change the passwords of other users of the same utility by setting the <code>username</code> property.
+ * @apiDescription Changes the password of a user. If the authenticated user is an administrator, he can change the passwords of other users by setting the <code>username</code> property. The administrator must have access to the utility of the user.
  *
  * @apiParam {Object} credentials             User credentials
  * @apiParam {String} credentials.username    User name.
  * @apiParam {String} credentials.password    Password.
- * @apiParam {String} [username]        The name of the user for which the password is being changed.If the user does not have the <code>ROLE_ADMIN</code> role, this parameter is ignored and an error is returned.
+ * @apiParam {String} [username]              The name of the user for which the password is being changed.If the user does not have the <code>ROLE_SYSTEM_ADMIN</code> or <code>ROLE_UTILITY_ADMIN</code> role, this parameter is ignored and an error is returned.
  * @apiParam {String} password        The new password.
  *
  * @apiParamExample {json} Request Example
@@ -130,7 +130,7 @@ function registerUser() { return; }
 function changePassword() { return; }
 
 /**
- * @api {post} /v1/user/password/reset/token/create Request a password reset token
+ * @api {post} /v1/user/password/reset/token/create Request password reset token
  * @apiVersion 0.0.1
  * @apiName ResetPasswordTokenRequest
  * @apiGroup User
@@ -182,7 +182,7 @@ function changePassword() { return; }
 function passwordResetTokenCreate() { return; }
 
 /**
- * @api {post} /v1/user/password/reset/token/redeem Redeem a password reset token
+ * @api {post} /v1/user/password/reset/token/redeem Redeem password reset token
  * @apiVersion 0.0.1
  * @apiName ResetPasswordTokenRedeem
  * @apiGroup User

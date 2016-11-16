@@ -3,7 +3,10 @@ package eu.daiad.web.model.error;
 public enum SharedErrorCode implements ErrorCode {
 	UNKNOWN,
 	NOT_IMPLEMENTED,
+	RESOURCE_RELEASE_FAILED,
 	PARSE_ERROR,
+	JSON_SERIALIZE_ERROR,
+	INVALID_PARSED_OBJECT,
 	AUTHENTICATION,
 	AUTHENTICATION_NO_CREDENTIALS,
 	AUTHENTICATION_USERNAME,
@@ -22,6 +25,6 @@ public enum SharedErrorCode implements ErrorCode {
 
 	@Override
 	public String getMessageKey() {
-		return (this.getClass().getSimpleName() + '.' + this.name());
+		return (this.getClass().getSimpleName() + '.' + name());
 	}
 }

@@ -6,31 +6,37 @@ import eu.daiad.web.model.profile.Profile;
 
 public class AuthenticationResponse extends RestResponse {
 
-	private Runtime runtime;
+    private Runtime runtime;
 
-	private Profile profile;
+    private Profile profile;
 
-	public AuthenticationResponse(Runtime runtime, Profile profile) {
-		super();
+    private String[] roles;
 
-		this.runtime = runtime;
-		this.profile = profile;
-	}
+    public AuthenticationResponse(Runtime runtime, Profile profile, String[] roles) {
+        super();
 
-	public AuthenticationResponse(String code, String description) {
-		super(code, description);
-	}
+        this.runtime = runtime;
+        this.profile = profile;
+        this.roles = roles;
+    }
 
-	public Profile getProfile() {
-		return profile;
-	}
+    public AuthenticationResponse(String code, String description) {
+        super(code, description);
+    }
 
-	public void setProfile(Profile profile) {
-		this.profile = profile;
-	}
+    public Profile getProfile() {
+        return profile;
+    }
 
-	public Runtime getRuntime() {
-		return runtime;
-	}
+    public void setProfile(Profile profile) {
+        this.profile = profile;
+    }
 
+    public Runtime getRuntime() {
+        return runtime;
+    }
+
+    public String[] getRoles() {
+        return roles;
+    }
 }

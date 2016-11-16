@@ -21,7 +21,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
- * 
+ *
  * Provides configuration for the DAIAD database by declaring a set of beans. Moreover, it
  * configures the database migration process.
  *
@@ -31,62 +31,62 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 public class ApplicationPersistenceConfig {
 
-	@Value("${daiad.flyway.locations}")
-	private String locations;
+    @Value("${daiad.flyway.locations}")
+    private String locations;
 
-	@Value("${daiad.flyway.baseline-version}")
-	private String baselineVersion;
+    @Value("${daiad.flyway.baseline-version}")
+    private String baselineVersion;
 
-	@Value("${daiad.flyway.baseline-description}")
-	private String baselineDescription;
+    @Value("${daiad.flyway.baseline-description}")
+    private String baselineDescription;
 
-	@Bean(name = "applicationDataSource")
-	@Primary
-	@ConfigurationProperties(prefix = "datasource.default")
-	public DataSource applicationDataSource() {
-		return DataSourceBuilder.create().build();
-	}
 
-	@Bean(name = "applicationEntityManagerFactory")
-	@DependsOn("flyway")
-	@Primary
-	public LocalContainerEntityManagerFactoryBean applicationEntityManagerFactory(EntityManagerFactoryBuilder builder) {
-		return builder.dataSource(applicationDataSource()).packages("eu.daiad.web.domain.application")
-						.persistenceUnit("default").build();
-	}
+    @Primary
+    @Bean(name = "applicationDataSource")
+    @ConfigurationProperties(prefix = "datasource.default")
+    public DataSource applicationDataSource() {
+        return DataSourceBuilder.create().build();
+    }
 
-	@Bean(name = "applicationEntityManager")
-	@Primary
-	public EntityManager applicationEntityManager(
-					@Qualifier("applicationEntityManagerFactory") EntityManagerFactory applicationEntityManagerFactory) {
-		return applicationEntityManagerFactory.createEntityManager();
-	}
+    @Primary
+    @Bean(name = "applicationEntityManagerFactory")
+    @DependsOn("flyway")
+    public LocalContainerEntityManagerFactoryBean applicationEntityManagerFactory(EntityManagerFactoryBuilder builder) {
+        return builder.dataSource(applicationDataSource()).packages("eu.daiad.web.domain.application")
+                        .persistenceUnit("default").build();
+    }
 
-	@Bean(name = "applicationTransactionManager")
-	@Primary
-	public PlatformTransactionManager applicationTransactionManager(
-					@Qualifier("applicationEntityManagerFactory") EntityManagerFactory applicationEntityManagerFactory) {
-		return new JpaTransactionManager(applicationEntityManagerFactory);
-	}
+    @Primary
+    @Bean(name = "applicationEntityManager")
+    public EntityManager applicationEntityManager(@Qualifier("applicationEntityManagerFactory") EntityManagerFactory applicationEntityManagerFactory) {
+        return applicationEntityManagerFactory.createEntityManager();
+    }
 
-	/**
-	 * Configures the data migration process.
-	 * 
-	 * @return the object that implements the database migration process 
-	 */
-	@Bean(name = "flyway", initMethod = "migrate")
-	Flyway flyway() {
-		Flyway flyway = new Flyway();
+    @Primary
+    @Bean(name = "applicationTransactionManager")
+    public PlatformTransactionManager applicationTransactionManager(
+                    @Qualifier("applicationEntityManagerFactory") EntityManagerFactory applicationEntityManagerFactory) {
+        return new JpaTransactionManager(applicationEntityManagerFactory);
+    }
 
-		flyway.setBaselineOnMigrate(true);
-		flyway.setBaselineDescription(this.baselineDescription);
-		flyway.setBaselineVersionAsString(this.baselineVersion);
+    /**
+     * Configures the data migration process.
+     *
+     * @return the object that implements the database migration process
+     */
+    @Bean(name = "flyway", initMethod = "migrate")
+    Flyway flyway() {
+        Flyway flyway = new Flyway();
 
-		flyway.setLocations(this.locations);
+        flyway.setBaselineOnMigrate(true);
+        flyway.setBaselineDescription(this.baselineDescription);
+        flyway.setBaselineVersionAsString(this.baselineVersion);
 
-		flyway.setDataSource(applicationDataSource());
+        flyway.setLocations(this.locations);
 
-		return flyway;
-	}
+        flyway.setDataSource(applicationDataSource());
+
+        return flyway;
+    }
 
 }

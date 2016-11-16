@@ -31,7 +31,7 @@ public class AccountDynamicRecommendation {
 
 	@ManyToOne(cascade = { CascadeType.ALL })
 	@JoinColumn(name = "account_id", nullable = false)
-	private Account account;
+	private AccountEntity account;
 
 	@ManyToOne(cascade = { CascadeType.ALL })
 	@JoinColumn(name = "dynamic_recommendation_id", nullable = false)
@@ -53,11 +53,11 @@ public class AccountDynamicRecommendation {
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime receiveAcknowledgedOn;
 
-	public Account getAccount() {
+	public AccountEntity getAccount() {
 		return account;
 	}
 
-	public void setAccount(Account account) {
+	public void setAccount(AccountEntity account) {
 		this.account = account;
 	}
 

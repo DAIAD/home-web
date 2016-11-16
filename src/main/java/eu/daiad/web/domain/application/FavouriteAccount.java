@@ -13,13 +13,13 @@ public class FavouriteAccount extends Favourite {
 
 	@ManyToOne()
 	@JoinColumn(name = "account_id", nullable = false)
-	private Account account;
+	private AccountEntity account;
 
-	public Account getAccount() {
+	public AccountEntity getAccount() {
 		return account;
 	}
 
-	public void setAccount(Account account) {
+	public void setAccount(AccountEntity account) {
 		this.account = account;
 	}
 

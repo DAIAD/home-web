@@ -47,6 +47,13 @@ public class Profile {
     @JsonProperty("zip")
     private String postalCode;
 
+    private Boolean garden;
+
+    @JsonDeserialize(using = EnumUnit.Deserializer.class)
+    private EnumUnit unit;
+
+    private boolean social;
+
     private int mode = 0;
 
     private String configuration;
@@ -61,8 +68,10 @@ public class Profile {
 
     private Household household;
 
+    private ComparisonRanking comparison;
+
     public Profile() {
-        this.devices = new ArrayList<DeviceRegistration>();
+        devices = new ArrayList<DeviceRegistration>();
     }
 
     public UUID getKey() {
@@ -242,6 +251,38 @@ public class Profile {
 
     public void setPostalCode(String postalCode) {
         this.postalCode = postalCode;
+    }
+
+    public Boolean getGarden() {
+        return garden;
+    }
+
+    public void setGarden(Boolean garden) {
+        this.garden = garden;
+    }
+
+    public EnumUnit getUnit() {
+        return unit;
+    }
+
+    public void setUnit(EnumUnit unit) {
+        this.unit = unit;
+    }
+
+    public boolean isSocial() {
+        return social;
+    }
+
+    public void setSocial(boolean social) {
+        this.social = social;
+    }
+
+    public ComparisonRanking getComparison() {
+        return comparison;
+    }
+
+    public void setComparison(ComparisonRanking comparison) {
+        this.comparison = comparison;
     }
 
 }

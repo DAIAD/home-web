@@ -2,7 +2,7 @@ package eu.daiad.web.model.utility;
 
 import java.util.UUID;
 
-import eu.daiad.web.domain.application.Utility;
+import eu.daiad.web.domain.application.UtilityEntity;
 
 public class UtilityInfo {
 
@@ -14,7 +14,7 @@ public class UtilityInfo {
 	private String locale;
 	private String city;
 
-	public UtilityInfo(Utility utility) {
+	public UtilityInfo(UtilityEntity utility) {
 
 		this.id = utility.getId();
 		this.key = utility.getKey();

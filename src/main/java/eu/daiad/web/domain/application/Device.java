@@ -42,7 +42,7 @@ public class Device {
 
 	@ManyToOne(cascade = { CascadeType.ALL })
 	@JoinColumn(name = "account_id", nullable = false)
-	private Account account;
+	private AccountEntity account;
 
 	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
 	@JoinColumn(name = "device_id")
@@ -77,11 +77,11 @@ public class Device {
 		return id;
 	}
 
-	public Account getAccount() {
+	public AccountEntity getAccount() {
 		return account;
 	}
 
-	public void setAccount(Account account) {
+	public void setAccount(AccountEntity account) {
 		this.account = account;
 	}
 

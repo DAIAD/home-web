@@ -4,136 +4,161 @@ import java.util.UUID;
 
 public class ProfileModes {
 
-	public enum AmphiroModeState {
-		NOT_APPLICABLE(0), OFF(1), ON(2);
+    public enum AmphiroModeState {
+        NOT_APPLICABLE(0), OFF(1), ON(2);
 
-		private int amphiroModeState;
+        private int amphiroModeState;
 
-		AmphiroModeState(int state) {
-			amphiroModeState = state;
-		}
+        AmphiroModeState(int state) {
+            amphiroModeState = state;
+        }
 
-		public int getAmphiroModeState() {
-			return amphiroModeState;
-		}
-	}
+        public int getAmphiroModeState() {
+            return amphiroModeState;
+        }
+    }
 
-	public enum MobileModeState {
-		NOT_APPLICABLE(0), OFF(1), ON(2);
+    public enum MobileModeState {
+        NOT_APPLICABLE(0), OFF(1), ON(2);
 
-		private int mobileModeState;
+        private int mobileModeState;
 
-		MobileModeState(int state) {
-			mobileModeState = state;
-		}
+        MobileModeState(int state) {
+            mobileModeState = state;
+        }
 
-		public int getMobileModeState() {
-			return mobileModeState;
-		}
-	}
+        public int getMobileModeState() {
+            return mobileModeState;
+        }
+    }
 
-	public enum SocialModeState {
-		NOT_APPLICABLE(0), OFF(1), ON(2);
+    public enum WebModeState {
+        NOT_APPLICABLE(0), OFF(1), ON(2);
 
-		private int socialModeState;
+        private int webModeState;
 
-		SocialModeState(int state) {
-			socialModeState = state;
-		}
+        WebModeState(int state) {
+            webModeState = state;
+        }
 
-		public int getSocialModeState() {
-			return socialModeState;
-		}
-	}
+        public int getWebModeState() {
+            return webModeState;
+        }
 
-	private UUID id = null;
+    }
 
-	private String name = null;
-	
-	private String email = null;
+    public enum SocialModeState {
+        NOT_APPLICABLE(0), OFF(1), ON(2);
 
-	private MobileModeState mobile = MobileModeState.NOT_APPLICABLE;
+        private int socialModeState;
 
-	private AmphiroModeState amphiro = AmphiroModeState.NOT_APPLICABLE;
+        SocialModeState(int state) {
+            socialModeState = state;
+        }
 
-	private SocialModeState social = SocialModeState.NOT_APPLICABLE;
+        public int getSocialModeState() {
+            return socialModeState;
+        }
+    }
 
-	private UUID groupId = null;
+    private UUID id = null;
 
-	private String groupName = null;
+    private String name = null;
 
-	private boolean active = false;
+    private String email = null;
 
-	public UUID getId() {
-		return id;
-	}
+    private MobileModeState mobile = MobileModeState.NOT_APPLICABLE;
 
-	public void setId(UUID id) {
-		this.id = id;
-	}
+    private AmphiroModeState amphiro = AmphiroModeState.NOT_APPLICABLE;
 
-	public String getName() {
-		return name;
-	}
+    private WebModeState web = WebModeState.NOT_APPLICABLE;
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    private SocialModeState social = SocialModeState.NOT_APPLICABLE;
 
-	public String getEmail() {
-		return email;
-	}
+    private UUID groupId = null;
 
-	public void setEmail(String email) {
-		this.email = email;
-	}
+    private String groupName = null;
 
-	public MobileModeState getMobile() {
-		return mobile;
-	}
+    private boolean active = false;
 
-	public void setMobile(MobileModeState mobile) {
-		this.mobile = mobile;
-	}
+    public UUID getId() {
+        return id;
+    }
 
-	public AmphiroModeState getAmphiro() {
-		return amphiro;
-	}
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
-	public void setAmphiro(AmphiroModeState amphiro) {
-		this.amphiro = amphiro;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public SocialModeState getSocial() {
-		return social;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public void setSocial(SocialModeState social) {
-		this.social = social;
-	}
+    public String getEmail() {
+        return email;
+    }
 
-	public UUID getGroupId() {
-		return groupId;
-	}
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-	public void setGroupId(UUID uuid) {
-		this.groupId = uuid;
-	}
+    public MobileModeState getMobile() {
+        return mobile;
+    }
 
-	public String getGroupName() {
-		return groupName;
-	}
+    public void setMobile(MobileModeState mobile) {
+        this.mobile = mobile;
+    }
 
-	public void setGroupName(String groupName) {
-		this.groupName = groupName;
-	}
+    public AmphiroModeState getAmphiro() {
+        return amphiro;
+    }
 
-	public boolean isActive() {
-		return active;
-	}
+    public void setAmphiro(AmphiroModeState amphiro) {
+        this.amphiro = amphiro;
+    }
 
-	public void setActive(boolean active) {
-		this.active = active;
-	}
+    public WebModeState getWeb() {
+        return web;
+    }
+
+    public void setWeb(WebModeState web) {
+        this.web = web;
+    }
+
+    public SocialModeState getSocial() {
+        return social;
+    }
+
+    public void setSocial(SocialModeState social) {
+        this.social = social;
+    }
+
+    public UUID getGroupId() {
+        return groupId;
+    }
+
+    public void setGroupId(UUID uuid) {
+        groupId = uuid;
+    }
+
+    public String getGroupName() {
+        return groupName;
+    }
+
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
 
 }

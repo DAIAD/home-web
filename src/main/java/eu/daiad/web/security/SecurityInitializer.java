@@ -6,15 +6,25 @@ import org.springframework.stereotype.Component;
 
 import eu.daiad.web.repository.application.IUserRepository;
 
+/**
+ * Initializes application security configuration including roles and default
+ * utility administration accounts.
+ */
 @Component
 public class SecurityInitializer implements CommandLineRunner {
 
-	@Autowired
-	private IUserRepository userRepository;
+    /**
+     * Repository for accessing user data.
+     */
+    @Autowired
+    private IUserRepository userRepository;
 
-	@Override
-	public void run(String... args) throws Exception {
-		this.userRepository.initializeSecurityConfiguration();
-	}
+    /**
+     * Initializes security configuration.
+     */
+    @Override
+    public void run(String... args) throws Exception {
+        this.userRepository.initializeSecurityConfiguration();
+    }
 
 }
