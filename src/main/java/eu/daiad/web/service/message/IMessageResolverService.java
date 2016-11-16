@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.model.ConsumptionStats;
-import eu.daiad.web.model.message.CandidateMessageStatus;
+import eu.daiad.web.model.message.MessageResolutionStatus;
 import eu.daiad.web.model.utility.UtilityInfo;
 
 public interface IMessageResolverService {
@@ -19,7 +19,7 @@ public interface IMessageResolverService {
 	 * @param accountKey The user key.
 	 * @return information about which messages should be created.
 	 */
-	public CandidateMessageStatus resolve(
+	public MessageResolutionStatus resolve(
 	        MessageCalculationConfiguration config, UtilityInfo utility, ConsumptionStats stats, UUID accountKey);
 
 }

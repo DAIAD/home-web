@@ -9,6 +9,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
+import eu.daiad.web.model.device.EnumDeviceType;
+
 public enum EnumMeasurementDataSource {
     NONE(0), BOTH(1), AMPHIRO(2), METER(3), DEVICE(4);
 
@@ -44,6 +46,24 @@ public enum EnumMeasurementDataSource {
         return type;
     }
 
+    public static EnumMeasurementDataSource fromDeviceType(EnumDeviceType t)
+    {
+        EnumMeasurementDataSource s = null;
+        switch (t)
+        {
+        case AMPHIRO:
+            s = EnumMeasurementDataSource.AMPHIRO;
+            break;
+        case METER:
+            s = EnumMeasurementDataSource.METER;
+            break;
+        default:
+            s = EnumMeasurementDataSource.BOTH;
+            break;
+        }
+        return s;
+    }
+    
     public static EnumMeasurementDataSource fromString(String value) {
         for (EnumMeasurementDataSource item : EnumMeasurementDataSource.values()) {
             if (item.name().equalsIgnoreCase(value)) {

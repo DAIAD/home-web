@@ -610,9 +610,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                     break;
                 }
             }
-            // check if there is at least a user without registered amphiro
-            // devices
-            // TODO Refactor query
+            // check if there is at least a user without registered amphiro devices
             TypedQuery<eu.daiad.web.domain.application.Account> userQuery = entityManager.createQuery(
                             "SELECT a FROM account a JOIN a.roles r WHERE r.role.name = :userRole",
                             eu.daiad.web.domain.application.Account.class).setFirstResult(0);

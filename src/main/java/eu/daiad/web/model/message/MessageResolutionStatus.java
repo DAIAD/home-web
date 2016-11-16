@@ -3,7 +3,11 @@ package eu.daiad.web.model.message;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Map.Entry;
 
-public class CandidateMessageStatus {
+import org.joda.time.DateTimeConstants;
+
+import eu.daiad.web.model.device.EnumDeviceType;
+
+public class MessageResolutionStatus {
 
 	private boolean alertWaterLeakSWM;
 
@@ -51,47 +55,108 @@ public class CandidateMessageStatus {
 
 	private boolean alertPromptGoodJobMonthlySWM;
 
-	// using monthly instead
-	// private boolean alertPromptGoodJobWeeklySWM();
-
-	// returns liters saved
 	private SimpleEntry<Boolean, Integer> alertLitresSavedSWM;
 
 	private boolean alertTop25SaverWeeklySWM;
 
 	private boolean alertTop10SaverSWM;
 
-	// returns liters above
+	// liters above
 	private SimpleEntry<Boolean, Integer> recommendLessShowerTimeAmphiro;
 
-	// returns annual shower consumption(or guess annual from 1 month)
+	// annual shower consumption(or guess annual from 1 month)
 	private SimpleEntry<Boolean, Integer> recommendLowerTemperatureAmphiro;
 
-	// returns annual shower consumption (or guess annual from 1 month)
+	// annual shower consumption (or guess annual from 1 month)
 	private SimpleEntry<Boolean, Integer> recommendLowerFlowAmphiro;
 
-	// returns annual shower consumption (or guess annual from 1 month)
+	// annual shower consumption (or guess annual from 1 month)
 	private SimpleEntry<Boolean, Integer> recommendShowerHeadChangeAmphiro;
 
-	// returns percent of usage above others
+	// percent of usage above others
 	private SimpleEntry<Boolean, Integer> recommendShampooChangeAmphiro;
 
-	// returns liters more than average
+	// liters more than average
 	private SimpleEntry<Boolean, Integer> recommendReduceFlowWhenNotNeededAmphiro;
         
     private boolean initialStaticTips;
 
-    // returns random static tip
+    // random static tip
 	private boolean produceStaticTip;
         
     private boolean meterInstalled;
 
     private boolean amphiroInstalled;
 
+    public static class InsightA1Parameters
+    {        
+        // chosen from DateTimeConstants
+        private final int dayOfWeek;
+        
+        private final EnumDeviceType deviceType;
+        
+        private final double currentValue;
+        
+        // The average of past values 
+        private final double avgValue;
+        
+        public int getDayOfWeek()
+        {
+            return dayOfWeek;
+        }
+        
+        public EnumDeviceType getDeviceType()
+        {
+            return deviceType;
+        }
+
+        public double getCurrentValue()
+        {
+            return currentValue;
+        }
+
+        public double getAvgValue()
+        {
+            return avgValue;
+        }
+
+        public InsightA1Parameters(
+                int dayOfWeek, EnumDeviceType deviceType, double currentValue, double avgValue)
+        {
+            this.dayOfWeek = dayOfWeek;
+            this.deviceType = deviceType;
+            this.avgValue = avgValue;
+            this.currentValue = currentValue;
+        }
+        
+        public double getPercentChange()
+        {
+            return ((currentValue - avgValue) / avgValue) * 100.0;
+        }
+    }
+    
+    private final static int NumDeviceTypes = EnumDeviceType.values().length;
+    
+    private InsightA1Parameters[] insightA1 = new InsightA1Parameters[NumDeviceTypes];
+    
+    //
+    // ~ Getters/Setters
+    //
+    
     public boolean isInitialStaticTips(){
-            return initialStaticTips;
+        return initialStaticTips;
     }
         
+    public InsightA1Parameters getInsightA1(EnumDeviceType deviceType)
+    {
+        return insightA1[deviceType.ordinal()];
+    }
+    
+    public void setInsightA1(EnumDeviceType deviceType, InsightA1Parameters p)
+    {
+        insightA1[deviceType.ordinal()] = p;
+    }
+
     public boolean isMeterInstalled() {
 		return meterInstalled;
 	}

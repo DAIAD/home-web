@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.model.ConsumptionStats;
-import eu.daiad.web.model.message.CandidateMessageStatus;
+import eu.daiad.web.model.message.MessageResolutionStatus;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IMessageManagementRepository;
@@ -48,11 +48,7 @@ public class DefaultMessageService implements IMessageService {
 	@Override
 	public void executeAll(MessageCalculationConfiguration config) 
 	{
-	    List<UtilityInfo> utilities = utilityRepository.getUtilities();
-	    
-	    // Fixme Testing - Check only 1st utility
-	    utilities = utilities.subList(0, 1);
-	    
+	    List<UtilityInfo> utilities = utilityRepository.getUtilities();	    
 	    for (UtilityInfo utility: utilities) {
 			logger.info("About to generate messages for utility " + utility.getName() + "...");
 	        executeUtility(config, utility.getKey());
@@ -63,17 +59,15 @@ public class DefaultMessageService implements IMessageService {
 	public void executeUtility(MessageCalculationConfiguration config, UUID utilityKey) 
 	{
 		UtilityInfo utility = this.utilityRepository.getUtilityByKey(utilityKey);
-		LocalDateTime refDate = LocalDateTime.parse("2016-09-30"); // Fixme Testing
-		ConsumptionStats stats = statsService.getStats(utility, refDate);
+		ConsumptionStats stats = statsService.getStats(utility, config.getRefDate());
         executeUtility(config, utility, stats);
 	}
 
 	private void executeUtility(
 	        MessageCalculationConfiguration config, UtilityInfo utility, ConsumptionStats stats) 
 	{
-		List<UUID> accountKeys = groupRepository.getUtilityByIdMemberKeys(utility.getId()); 
-	    		
-		for (UUID accountKey: accountKeys) {
+		List<UUID> accountKeys = groupRepository.getUtilityByIdMemberKeys(utility.getId());		
+        for (UUID accountKey: accountKeys) {
 		    logger.info("Generate messages for account " + accountKey + " at utility #" + utility.getId());
 		    executeAccount(config, utility, stats, accountKey);
 		}
@@ -90,7 +84,7 @@ public class DefaultMessageService implements IMessageService {
 	private void executeAccount(
 	        MessageCalculationConfiguration config, UtilityInfo utility, ConsumptionStats stats, UUID accountKey) 
 	{
-		CandidateMessageStatus messageStatus = messageResolver.resolve(config, utility, stats, accountKey);
+		MessageResolutionStatus messageStatus = messageResolver.resolve(config, utility, stats, accountKey);
 		messageManagementRepository.executeAccount(config, stats, messageStatus, accountKey);
 	}
 

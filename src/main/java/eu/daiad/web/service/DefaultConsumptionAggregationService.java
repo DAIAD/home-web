@@ -104,7 +104,10 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 	        DataQuery query = querybuilder.build();
 	        DataQueryResponse queryResponse = dataService.execute(query);
 	        ArrayList<GroupDataSeries> meterSeries = queryResponse.getMeters();
-
+	       
+	        if (meterSeries.isEmpty())
+	            return null;
+	        
 	        if (meterSeries.size() > 1)
 	            logger.warn("computeMeterAverage: Received > 1 series!");
 	        
@@ -187,7 +190,10 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 	        DataQuery query = querybuilder.build();
 	        DataQueryResponse queryResponse = dataService.execute(query);
 	        ArrayList<GroupDataSeries> amphiroSeries = queryResponse.getDevices();
-
+	        
+	        if (amphiroSeries.isEmpty())
+	            return null;
+	        
 	        if (amphiroSeries.size() > 1)
 	            logger.warn("computeAmphiroAverage: Received > 1 series!");
 	        
@@ -219,7 +225,10 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 	        DataQuery query = querybuilder.build();
 	        DataQueryResponse queryResponse = dataService.execute(query);
 	        ArrayList<GroupDataSeries> amphiroSeries = queryResponse.getDevices();
-
+	        
+	        if (amphiroSeries.isEmpty())
+                return null;
+	        
 	        if (amphiroSeries.size() > 1)
 	            logger.warn("computeAmphiroAveragePerSession: Received > 1 series!");
 	        
@@ -290,6 +299,9 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 	        DataQueryResponse queryResponse = dataService.execute(query);
 	        ArrayList<GroupDataSeries> amphiroSeries = queryResponse.getDevices();
 	        
+	        if (amphiroSeries.isEmpty())
+                return null;
+	        
 	        if (amphiroSeries.size() > 1)
 	            logger.warn("computeAmphiroAverageTemperature: Received > 1 series!");
 	        
@@ -320,6 +332,9 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 	        DataQueryResponse queryResponse = dataService.execute(query);
 	        ArrayList<GroupDataSeries> amphiroSeries = queryResponse.getDevices();
 	     
+	        if (amphiroSeries.isEmpty())
+                return null;
+	        
 	        if (amphiroSeries.size() > 1)
                 logger.warn("computeAmphiroAverageDuration: Received > 1 series!");
 	        
@@ -349,6 +364,9 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 	        DataQuery query = querybuilder.build();
 	        DataQueryResponse queryResponse = dataService.execute(query);
 	        ArrayList<GroupDataSeries> amphiroSeries = queryResponse.getDevices();
+	        
+	        if (amphiroSeries.isEmpty())
+                return null;
 	        
 	        if (amphiroSeries.size() > 1)
 	            logger.warn("computeAmphiroAverageFlow: Received > 1 series!");

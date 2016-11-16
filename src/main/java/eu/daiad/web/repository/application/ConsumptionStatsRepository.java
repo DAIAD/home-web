@@ -133,14 +133,16 @@ public class ConsumptionStatsRepository implements IConsumptionStatsRepository
         
         // Prepare a set of (initially detached) entities
         ArrayList<eu.daiad.web.domain.application.ConsumptionStats> entities = new ArrayList<>(16);
-        for (ConsumptionStats.Key k: stats) {
+        for (ConsumptionStats.Key key: stats) {
             eu.daiad.web.domain.application.ConsumptionStats e = 
                     new eu.daiad.web.domain.application.ConsumptionStats(utility, group, refDate);
-            ComputedNumber n = stats.get(k);
-            e.setDevice(k.getDevice());
-            e.setField(k.getField());
-            e.setStatistic(k.getStatistic());
-            e.setValue(n);
+            ComputedNumber val = stats.get(key);
+            if (val == null)
+                continue;
+            e.setDevice(key.getDevice());
+            e.setField(key.getField());
+            e.setStatistic(key.getStatistic());
+            e.setValue(val);
             entities.add(e);
         }
         

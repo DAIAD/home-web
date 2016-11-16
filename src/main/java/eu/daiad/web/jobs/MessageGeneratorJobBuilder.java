@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.joda.time.LocalDateTime;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParametersIncrementer;
 import org.springframework.batch.core.Step;
@@ -42,16 +43,17 @@ public class MessageGeneratorJobBuilder implements IJobBuilder {
 			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
 				try {
 				    Map<String, Object> params = chunkContext.getStepContext().getJobParameters();
-				    				    
-					MessageCalculationConfiguration config = new MessageCalculationConfiguration();
+				    
+				    LocalDateTime refDate = params.containsKey("ref-date")? 
+				            LocalDateTime.parse((String) params.get("ref-date")) :
+				            LocalDateTime.now().minusDays(1);
+				    
+					MessageCalculationConfiguration config = new MessageCalculationConfiguration(refDate);
 
                     config.setOnDemandExecution(true);
                     
 					config.setStaticTipInterval(
 					        Integer.parseInt((String) params.get("static.tip.interval")));
-					
-					config.setAggregateComputationInterval(
-					        Integer.parseInt((String) params.get("aggregate.computation.interval")));
 
 					config.setEurosPerKwh(
 					        Double.parseDouble((String) params.get("euros.per.kwh")));
