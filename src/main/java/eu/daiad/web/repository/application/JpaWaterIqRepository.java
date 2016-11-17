@@ -88,25 +88,27 @@ public class JpaWaterIqRepository implements IWaterIqRepository {
         result.waterIq.all.value = entries.get(0).getAllUserValue();
         result.waterIq.all.volume = entries.get(0).getAllUserVolume();
 
-        result.last1MonthConsumption.user = entries.get(0).getUserLast1MonthConsmution();
-        result.last1MonthConsumption.similar = entries.get(0).getSimilarLast1MonthConsmution();
-        result.last1MonthConsumption.nearest = entries.get(0).getNearestLast1MonthConsmution();
-        result.last1MonthConsumption.all = entries.get(0).getAllLast1MonthConsmution();
-
-        result.last6MonthConsumption.user = entries.get(0).getUserLast6MonthConsmution();
-        result.last6MonthConsumption.similar = entries.get(0).getSimilarLast6MonthConsmution();
-        result.last6MonthConsumption.nearest = entries.get(0).getNearestLast6MonthConsmution();
-        result.last6MonthConsumption.all = entries.get(0).getAllLast6MonthConsmution();
-
         for (int i = 0, count = entries.size(); i < count; i++) {
-            ComparisonRanking.WaterIqWithTimestamp entry = new ComparisonRanking.WaterIqWithTimestamp();
-            entry.value = entries.get(i).getUserValue();
-            entry.volume = entries.get(i).getUserVolume();
-            entry.timestamp = entries.get(i).getCreatedOn().getMillis();
-            entry.from = entries.get(i).getFrom();
-            entry.to = entries.get(i).getTo();
+            ComparisonRanking.WaterIqWithTimestamp waterIq = new ComparisonRanking.WaterIqWithTimestamp();
+            waterIq.value = entries.get(i).getUserValue();
+            waterIq.volume = entries.get(i).getUserVolume();
+            waterIq.timestamp = entries.get(i).getCreatedOn().getMillis();
+            waterIq.from = entries.get(i).getFrom();
+            waterIq.to = entries.get(i).getTo();
 
-            result.waterIq.user.add(entry);
+            result.waterIq.user.add(waterIq);
+
+            ComparisonRanking.MonthlyConsumtpion monthlyConsumtpion = new ComparisonRanking.MonthlyConsumtpion();
+            monthlyConsumtpion.user = entries.get(i).getUserLast1MonthConsmution();
+            monthlyConsumtpion.similar = entries.get(i).getSimilarLast1MonthConsmution();
+            monthlyConsumtpion.nearest = entries.get(i).getNearestLast1MonthConsmution();
+            monthlyConsumtpion.all = entries.get(i).getAllLast1MonthConsmution();
+            monthlyConsumtpion.month = Integer.parseInt(entries.get(i).getFrom().substring(4, 6));
+            monthlyConsumtpion.from = entries.get(i).getFrom();
+            monthlyConsumtpion.to = entries.get(i).getTo();
+
+            result.monthlyConsumtpion.add(monthlyConsumtpion);
+
         }
         return result;
     }
@@ -124,8 +126,7 @@ public class JpaWaterIqRepository implements IWaterIqRepository {
                        ComparisonRanking.WaterIq similar,
                        ComparisonRanking.WaterIq nearest,
                        ComparisonRanking.WaterIq all,
-                       ComparisonRanking.MonthlyConsumtpion last1Month,
-                       ComparisonRanking.MonthlyConsumtpion last6Month) {
+                       ComparisonRanking.MonthlyConsumtpion monthlyConsumtpion) {
         DateTime updatedOn = new DateTime();
 
         // Get existing record
@@ -166,14 +167,10 @@ public class JpaWaterIqRepository implements IWaterIqRepository {
             waterIqEntity.setAllUserValue(all.value);
             waterIqEntity.setAllUserVolume(all.volume);
         }
-        waterIqEntity.setUserLast1MonthConsmution(last1Month.user);
-        waterIqEntity.setUserLast6MonthConsmution(last6Month.user);
-        waterIqEntity.setSimilarLast1MonthConsmution(last1Month.similar);
-        waterIqEntity.setSimilarLast6MonthConsmution(last6Month.similar);
-        waterIqEntity.setNearestLast1MonthConsmution(last1Month.nearest);
-        waterIqEntity.setNearestLast6MonthConsmution(last6Month.nearest);
-        waterIqEntity.setAllLast1MonthConsmution(last1Month.all);
-        waterIqEntity.setAllLast6MonthConsmution(last6Month.all);
+        waterIqEntity.setUserLast1MonthConsmution(monthlyConsumtpion.user);
+        waterIqEntity.setSimilarLast1MonthConsmution(monthlyConsumtpion.similar);
+        waterIqEntity.setNearestLast1MonthConsmution(monthlyConsumtpion.nearest);
+        waterIqEntity.setAllLast1MonthConsmution(monthlyConsumtpion.all);
 
         if(persist) {
             entityManager.persist(waterIqEntity);
@@ -217,14 +214,10 @@ public class JpaWaterIqRepository implements IWaterIqRepository {
             waterIqHistoryEntity.setAllUserVolume(all.volume);
         }
 
-        waterIqHistoryEntity.setUserLast1MonthConsmution(last1Month.user);
-        waterIqHistoryEntity.setUserLast6MonthConsmution(last6Month.user);
-        waterIqHistoryEntity.setSimilarLast1MonthConsmution(last1Month.similar);
-        waterIqHistoryEntity.setSimilarLast6MonthConsmution(last6Month.similar);
-        waterIqHistoryEntity.setNearestLast1MonthConsmution(last1Month.nearest);
-        waterIqHistoryEntity.setNearestLast6MonthConsmution(last6Month.nearest);
-        waterIqHistoryEntity.setAllLast1MonthConsmution(last1Month.all);
-        waterIqHistoryEntity.setAllLast6MonthConsmution(last6Month.all);
+        waterIqHistoryEntity.setUserLast1MonthConsmution(monthlyConsumtpion.user);
+        waterIqHistoryEntity.setSimilarLast1MonthConsmution(monthlyConsumtpion.similar);
+        waterIqHistoryEntity.setNearestLast1MonthConsmution(monthlyConsumtpion.nearest);
+        waterIqHistoryEntity.setAllLast1MonthConsmution(monthlyConsumtpion.all);
 
         if(persist) {
             entityManager.persist(waterIqHistoryEntity);

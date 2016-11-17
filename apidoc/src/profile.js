@@ -104,8 +104,7 @@
  * @apiSuccess (Member)     {Number}     updatedOn           Last update time stamp.
  *
  * @apiSuccess (Comparison) {Ojbect}     waterIq                Object of type <code>WaterIQ</code> with water IQ data.
- * @apiSuccess (Comparison) {Ojbect}     last1MonthConsumption  Object of type <code>MonthlyConsumption</code> with water consumption data for the last month.
- * @apiSuccess (Comparison) {Ojbect}     last6MonthConsumption  Object of type <code>MonthlyConsumption</code> with water consumption data for the last 6 months.
+ * @apiSuccess (Comparison) {Ojbect[]}   monthlyConsumtpion     Array of <code>MonthlyConsumption</code> objects.
  *
  * @apiSuccess (WaterIQ)    {Object[]}   user                   Array of <code>WaterIQRanking</code> objects.
  * @apiSuccess (WaterIQ)    {Object}     similar                Similar users ranking data.
@@ -128,6 +127,10 @@
  * @apiSuccess (MonthlyConsumption) {Number}     similar        Similar users total water consumption.
  * @apiSuccess (MonthlyConsumption) {Number}     nearest        Nearest users (neighbors) total water consumption.
  * @apiSuccess (MonthlyConsumption) {Number}     all            All utility users total water consumption.
+ * @apiSuccess (MonthlyConsumption) {Number}     month          Month index from 1 to 12.
+ * @apiSuccess (MonthlyConsumption) {String}     from           Time interval start date formatted using the pattern <code>yyyyMMdd</code>.
+ * @apiSuccess (MonthlyConsumption) {String}     to             Time interval end date formatted using the pattern <code>yyyyMMdd</code>.
+ *
  *
  * @apiSuccessExample {json} Response Example
  * HTTP/1.1 200 OK
@@ -227,18 +230,23 @@
  *           "value": "B"
  *         }
  *       },
- *       "last1MonthConsumption": {
- *         "user": 1585,
- *         "similar": 221789,
- *         "nearest": 375452,
- *         "all": 573165
- *       },
- *       "last6MonthConsumption": {
- *         "user": 9613,
- *         "similar": 1127948,
- *         "nearest": 1856284,
- *         "all": 3027088
- *       }
+ *       "monthlyConsumtpion": [{
+ *         "month": 6,
+ *         "from": "20160601",
+ *         "to": "20160630",
+ *         "user": 1188,
+ *         "similar": 233700,
+ *         "nearest": 364357,
+ *         "all": 586977
+ *       }, {
+ *         "month": 9,
+ *         "from": "20160901",
+ *         "to": "20160930",
+ *         "user": 195,
+ *         "similar": 195563,
+ *         "nearest": 323395,
+ *         "all": 508470
+ *       }]
  *     }
  *   },
  *   "success": true

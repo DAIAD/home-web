@@ -69,6 +69,11 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
     private final String PARAMETER_NEAREST_DISTANCE = "nearest.distance";
 
     /**
+     * Parameter name for setting the reference timestamp.
+     */
+    private final String PARAMETER_REF_TIMESTAMP = "reference.timestamp";
+
+    /**
      * User counter name.
      */
     private final String COUNTER_USER = "user";
@@ -156,8 +161,11 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                 // Water IQ data
                 UserWaterIqCollection waterIq = new UserWaterIqCollection(utility.getKey(), maxDistance);
 
-                // Get default time zone
-                DateTimeZone timezone = DateTimeZone.forID(utility.getTimezone());
+                // Initialize context
+                ExecutionContext context = new ExecutionContext();
+
+                context.timezone = DateTimeZone.forID(utility.getTimezone());
+                context.labels = names;
 
                 // Get utility counters. The job computes segments only
                 // for utilities that have at least a registered user
@@ -169,24 +177,35 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                     long totalMeters = counters.get(COUNTER_METER).getValue();
 
                     if ((totalUsers > 0) && (totalMeters > 0)) {
-                        // Find last Sunday before today
-                        DateTime now = new DateTime(timezone);
+                        // Get current date and time that will be used as a
+                        // reference point in time for computing all other dates
+                        // required by the step execution
+                        if (jobParameters.get(PARAMETER_REF_TIMESTAMP) != null) {
+                            context.reference = new DateTime(Long.parseLong((String) jobParameters.get(PARAMETER_REF_TIMESTAMP)),
+                                                             context.timezone);
+                        } else {
+                            context.reference = new DateTime(context.timezone);
+                        }
 
-                        int offset = (now.getDayOfWeek() ) % 7;
-
-                        DateTime end = now.minusDays(offset);
-
-                        // Get last Monday before today
-                        DateTime start = end.minusDays(6);
+                        // Get time interval
+                        context.start = context.reference.withDayOfMonth(1).minusMonths(1);
+                        context.end = context.start.dayOfMonth().withMaximumValue();
 
                         // Adjust start/end dates
-                        start = new  DateTime(start.getYear(), start.getMonthOfYear(), start.getDayOfMonth(), 0, 0, 0, timezone);
-                        end = new  DateTime(end.getYear(), end.getMonthOfYear(), end.getDayOfMonth(), 23, 59, 59, timezone);
+                        context.start = new DateTime(context.start.getYear(),
+                                                     context.start.getMonthOfYear(),
+                                                     context.start.getDayOfMonth(),
+                                                     0, 0, 0, context.timezone);
+
+                        context.end = new DateTime(context.end.getYear(),
+                                                   context.end.getMonthOfYear(),
+                                                   context.end.getDayOfMonth(),
+                                                   23, 59, 59, context.timezone);
 
                         // Build data query
                         DataQuery query = DataQueryBuilder.create()
-                                                          .timezone(timezone)
-                                                          .absolute(start, end, EnumTimeAggregation.ALL)
+                                                          .timezone(context.timezone)
+                                                          .absolute(context.start, context.end, EnumTimeAggregation.ALL)
                                                           .utilityTop(utility.getName(), utility.getKey(), EnumMetric.SUM, (int) totalMeters)
                                                           .meter()
                                                           .build();
@@ -268,7 +287,7 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                                     groupRepository.createCluster(cluster);
 
                                     // Update water IQ
-                                    updateWaterIq(now, timezone, start, end, names, waterIq);
+                                    updateWaterIq(context, waterIq);
                                 }
                             }
                         }
@@ -292,27 +311,23 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
     /**
      * Creates or updates a new/existing water IQ
      *
-     * @param reference reference date time for computing query time intervals.
-     * @param timezone time zone.
-     * @param start date interval start.
-     * @param end date interval end.
-     * @param labels segments names.
+     * @param context job execution data.
      * @param data water IQ data.
      */
-    private void updateWaterIq(DateTime reference, DateTimeZone timezone, DateTime start, DateTime end, String[] labels, UserWaterIqCollection data) {
+    private void updateWaterIq(ExecutionContext context, UserWaterIqCollection data) {
         DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyyMMdd");
 
-        String startAsText = start.toString(formatter);
-        String endAsText = end.toString(formatter);
+        String startAsText = context.start.toString(formatter);
+        String endAsText = context.end.toString(formatter);
 
-        ComparisonRanking.WaterIq all = convertWaterIq(labels, data.getAll());
+        ComparisonRanking.WaterIq all = convertWaterIq(context, data.getAll());
 
         for(UserWaterIq user : data.getUsers().values()) {
 
             // Build data query for last month consumption
             DataQuery last1MonthQuery = DataQueryBuilder.create()
-                                                        .timezone(timezone)
-                                                        .absolute(reference.minusDays(30), reference, EnumTimeAggregation.ALL)
+                                                        .timezone(context.timezone)
+                                                        .absolute(context.start, context.end, EnumTimeAggregation.ALL)
                                                         .user("self", user.getKey())
                                                         .users("similar", user.getSimilarUsers())
                                                         .users("nearest", user.getNearestUsers())
@@ -351,77 +366,66 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                 }
             }
 
-            // Build data query for last 6 month consumption
-            DataQuery last6MonthQuery = DataQueryBuilder.create()
-                                                        .timezone(timezone)
-                                                        .absolute(reference.minusDays(180), reference, EnumTimeAggregation.ALL)
-                                                        .user("self", user.getKey())
-                                                        .users("similar", user.getSimilarUsers())
-                                                        .users("nearest", user.getNearestUsers())
-                                                        .utility("utility", data.getUtilityKey())
-                                                        .sum()
-                                                        .meter()
-                                                        .build();
-
-            result = dataService.execute(last6MonthQuery);
-
-            Double self6Month = null, similar6Month = null, nearest6Month = null, utility6Month = null;
-            if (result.getSuccess()) {
-                for (GroupDataSeries series : result.getMeters()) {
-                    switch (series.getLabel()) {
-                        case "self":
-                            if (!series.getPoints().isEmpty()) {
-                                self6Month = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM);
-                            }
-                            break;
-                        case "similar":
-                            if (!series.getPoints().isEmpty()) {
-                                similar6Month = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM);
-                            }
-                            break;
-                        case "nearest":
-                            if (!series.getPoints().isEmpty()) {
-                                nearest6Month = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM);
-                            }
-                            break;
-                        case "utility":
-                            if (!series.getPoints().isEmpty()) {
-                                utility6Month = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM);
-                            }
-                            break;
-                    }
-                }
-            }
-
             waterIqRepository.update(user.getKey(),
                                      startAsText,
                                      endAsText,
-                                     convertWaterIq(labels, user.getSelf()),
-                                     convertWaterIq(labels, user.getSimilarWaterIq()),
-                                     convertWaterIq(labels, user.getNearestWaterIq()),
+                                     convertWaterIq(context, user.getSelf()),
+                                     convertWaterIq(context, user.getSimilarWaterIq()),
+                                     convertWaterIq(context, user.getNearestWaterIq()),
                                      all,
-                                     new ComparisonRanking.MonthlyConsumtpion(self1Month, similar1Month, nearest1Month, utility1Month),
-                                     new ComparisonRanking.MonthlyConsumtpion(self6Month, similar6Month, nearest6Month, utility6Month));
+                                     new ComparisonRanking.MonthlyConsumtpion(self1Month, similar1Month, nearest1Month, utility1Month));
         }
     }
 
     /**
      * Converts {@link WaterIq} to {@link ComparisonRanking.WaterIq}
      *
-     * @param labels segment labels.
+     * @param context job execution data.
      * @param waterIq the value to convert.
      * @return the new {@link ComparisonRanking.WaterIq} object.
      */
-    private ComparisonRanking.WaterIq convertWaterIq(String[] labels, WaterIq waterIq) {
+    private ComparisonRanking.WaterIq convertWaterIq(ExecutionContext context, WaterIq waterIq) {
         ComparisonRanking.WaterIq result = new  ComparisonRanking.WaterIq();
 
         result.volume = Math.round(waterIq.volume * 100) / 100d;
-        if (waterIq.value == labels.length) {
-            waterIq.value = labels.length - 1;
+        if (waterIq.value == context.labels.length) {
+            waterIq.value = context.labels.length - 1;
         }
-        result.value = labels[waterIq.value];
+        result.value = context.labels[waterIq.value];
 
         return result;
     }
 
+    /**
+     * A simple store for data required during the job execution
+     *
+     */
+    private static class ExecutionContext {
+
+        /**
+         * Reference date time for computing query time intervals.
+         */
+        DateTime reference;
+
+        /**
+         * Time zone.
+         */
+        DateTimeZone timezone;
+
+        /**
+         * Time interval start date.
+         */
+        DateTime start;
+
+        /**
+         * Time interval end date.
+         */
+        DateTime end;
+
+        /**
+         * Segment names used as waterIQ values.
+         */
+        String[] labels;
+
+    }
 }

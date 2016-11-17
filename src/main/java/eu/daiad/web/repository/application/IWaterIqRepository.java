@@ -15,8 +15,7 @@ public interface IWaterIqRepository {
                 ComparisonRanking.WaterIq similar,
                 ComparisonRanking.WaterIq nearest,
                 ComparisonRanking.WaterIq all,
-                ComparisonRanking.MonthlyConsumtpion last1Month,
-                ComparisonRanking.MonthlyConsumtpion last6Month);
+                ComparisonRanking.MonthlyConsumtpion monthlyConsumtpion);
 
     ComparisonRanking getWaterIqByUserId(int userId);
 }

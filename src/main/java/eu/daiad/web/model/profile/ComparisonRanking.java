@@ -10,9 +10,7 @@ public class ComparisonRanking {
 
     public WaterIqCollection waterIq = new WaterIqCollection();
 
-    public MonthlyConsumtpion last1MonthConsumption = new MonthlyConsumtpion();
-
-    public MonthlyConsumtpion last6MonthConsumption = new MonthlyConsumtpion();
+    public List<MonthlyConsumtpion> monthlyConsumtpion = new ArrayList<MonthlyConsumtpion>();
 
     public static class WaterIq {
 
@@ -55,6 +53,12 @@ public class ComparisonRanking {
             this.nearest = (nearest == null ? 0 : nearest);
             this.all = (all == null ? 0 : all);
         }
+
+        public int month;
+
+        public String from;
+
+        public String to;
 
         public double user;
 

@@ -89,18 +89,6 @@ public class WaterIqEntity {
     @Column(name = "all_1m_consumption")
     private double allLast1MonthConsmution;
 
-    @Column(name = "user_6m_consumption")
-    private double userLast6MonthConsmution;
-
-    @Column(name = "similar_6m_consumption")
-    private double similarLast6MonthConsmution;
-
-    @Column(name = "nearest_6m_consumption")
-    private double nearestLast6MonthConsmution;
-
-    @Column(name = "all_6m_consumption")
-    private double allLast6MonthConsmution;
-
     public int getId() {
         return id;
     }
@@ -239,38 +227,6 @@ public class WaterIqEntity {
 
     public void setAllLast1MonthConsmution(double allLast1MonthConsmution) {
         this.allLast1MonthConsmution = allLast1MonthConsmution;
-    }
-
-    public double getUserLast6MonthConsmution() {
-        return userLast6MonthConsmution;
-    }
-
-    public void setUserLast6MonthConsmution(double userLast6MonthConsmution) {
-        this.userLast6MonthConsmution = userLast6MonthConsmution;
-    }
-
-    public double getSimilarLast6MonthConsmution() {
-        return similarLast6MonthConsmution;
-    }
-
-    public void setSimilarLast6MonthConsmution(double similarLast6MonthConsmution) {
-        this.similarLast6MonthConsmution = similarLast6MonthConsmution;
-    }
-
-    public double getNearestLast6MonthConsmution() {
-        return nearestLast6MonthConsmution;
-    }
-
-    public void setNearestLast6MonthConsmution(double nearestLast6MonthConsmution) {
-        this.nearestLast6MonthConsmution = nearestLast6MonthConsmution;
-    }
-
-    public double getAllLast6MonthConsmution() {
-        return allLast6MonthConsmution;
-    }
-
-    public void setAllLast6MonthConsmution(double allLast6MonthConsmution) {
-        this.allLast6MonthConsmution = allLast6MonthConsmution;
     }
 
 }
