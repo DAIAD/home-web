@@ -155,7 +155,7 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
             groupRepository.deleteAllClusterByName(clusterName);
 
             // Delete stale water IQ data
-            waterIqRepository.clean(60);
+            waterIqRepository.clean(365);
 
             for (UtilityInfo utility : utilityRepository.getUtilities()) {
                 // Water IQ data

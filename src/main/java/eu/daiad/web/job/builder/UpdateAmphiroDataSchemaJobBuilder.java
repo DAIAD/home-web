@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.amphiro.AmphiroAbstractSession;
 import eu.daiad.web.model.amphiro.AmphiroMeasurement;
 import eu.daiad.web.model.amphiro.AmphiroMeasurementCollection;
@@ -141,6 +142,10 @@ public class UpdateAmphiroDataSchemaJobBuilder implements IJobBuilder {
         session.setTemperature(data.getTemperature());
         session.setVolume(data.getVolume());
         session.setTimestamp(data.getTimestamp());
+
+        for(KeyValuePair kvp : data.getProperties()) {
+            session.addProperty(kvp.getKey(), kvp.getValue());
+        }
 
         sessions.add(session);
         request.setSessions(sessions);
@@ -302,9 +307,6 @@ public class UpdateAmphiroDataSchemaJobBuilder implements IJobBuilder {
                                                     if ((totalSessions % 1000) == 0) {
                                                         logger.info(String.format("V1 to V3: Inserted %d sessions ...", totalSessions));
                                                     }
-                                                    if ((totalMeasurements > 0) && ((totalMeasurements % 1000) == 0)) {
-                                                        logger.info(String.format("V1 to V3: Inserted %d measurements ...", totalMeasurements));
-                                                    }
                                                 }
                                             }
                                         }
@@ -424,9 +426,6 @@ public class UpdateAmphiroDataSchemaJobBuilder implements IJobBuilder {
                                                     if ((totalSessions % 1000) == 0) {
                                                         logger.info(String.format("V2 to V3: Inserted %d sessions ...", totalSessions));
                                                     }
-                                                    if ((totalMeasurements > 0) && ((totalMeasurements % 1000) == 0)) {
-                                                        logger.info(String.format("V2 to V3: Inserted %d measurements ...", totalMeasurements));
-                                                    }
                                                 }
                                             }
                                         }
@@ -475,6 +474,7 @@ public class UpdateAmphiroDataSchemaJobBuilder implements IJobBuilder {
         return jobBuilderFactory.get(name)
                                 .incrementer(incrementer)
                                 .start(transferDataSchema2())
+                                .next(transferDataSchema1())
                                 .build();
     }
 }

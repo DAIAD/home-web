@@ -765,6 +765,10 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
                         case COLUMN_SHARED_IGNORE_VALUE:
                             realtime.setIgnored(Bytes.toBoolean(entry.getValue()));
                             historical.setIgnored(Bytes.toBoolean(entry.getValue()));
+                            break;
+                        case COLUMN_SHARED_IGNORE_TIMESTAMP:
+                            // Ignore
+                            break;
                         default:
                             if (qualifier.startsWith(COLUMN_HIST_PROPERTY_PREFIX)) {
                                 historical.addProperty(StringUtils.substringAfter(qualifier, COLUMN_HIST_PROPERTY_PREFIX),
@@ -1055,8 +1059,8 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
                     .set("session", assignment.getSessionId());
             }
 
-            assignMeterToSessionInUserTable(user.getKey(), assignment, sessions);
-            assignMeterToSessionInTimeTable(user.getKey(), assignment, sessions);
+            assignMemberToSessionInUserTable(user.getKey(), assignment, sessions);
+            assignMemberToSessionInTimeTable(user.getKey(), assignment, sessions);
         }
     }
 
@@ -1068,8 +1072,9 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
      * @param sessions session versions to update.
      * @throws Exception if session does not exists.
      */
-    private void assignMeterToSessionInUserTable(UUID userKey, MemberAssignmentRequest.Assignment assignment,
-                    SessionVersions sessions) throws Exception {
+    private void assignMemberToSessionInUserTable(UUID userKey,
+                                                  MemberAssignmentRequest.Assignment assignment,
+                                                  SessionVersions sessions) throws Exception {
         Table table = null;
 
         try {
@@ -1114,7 +1119,9 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
      * @throws Exception if session does not exists.
      */
 
-    private void assignMeterToSessionInTimeTable(UUID userKey, MemberAssignmentRequest.Assignment assignment, SessionVersions sessions) throws Exception {
+    private void assignMemberToSessionInTimeTable(UUID userKey,
+                                                  MemberAssignmentRequest.Assignment assignment,
+                                                  SessionVersions sessions) throws Exception {
         Table table = null;
 
         try {
@@ -1515,6 +1522,42 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
                     }
 
                     table.put(put);
+                } else {
+                    // No session is inserted. Check for additional properties.
+                    if ((!s.getVersions().isEmpty()) && (s.getProperties() != null) && (!s.getProperties().isEmpty())) {
+                        // There is at least one session (historical or
+                        // real-time) already stored and the new session has at
+                        // least one property
+                        put = new Put(rowKey);
+
+                        for (int p = 0, count = s.getProperties().size(); p < count; p++) {
+                            String name = s.getProperties().get(p).getKey();
+
+                            boolean exists = false;
+                            if (s.isHistory()) {
+                                if((s.getVersions().historical != null) &&
+                                   (s.getVersions().historical.getPropertyByKey(name) != null)) {
+                                    exists = true;
+                                }
+                                name = COLUMN_HIST_PROPERTY_PREFIX + name;
+                            } else {
+                                if ((s.getVersions().realtime != null) &&
+                                    (s.getVersions().realtime.getPropertyByKey(name) != null)) {
+                                    exists = true;
+                                }
+                                name = COLUMN_RT_PROPERTY_PREFIX + name;
+                            }
+
+                            if (!exists) {
+                                column = Bytes.toBytes(name);
+                                put.addColumn(columnFamily, column, s.getProperties().get(p).getValue().getBytes(StandardCharsets.UTF_8));
+                            }
+                        }
+
+                        if (put.size() > 0) {
+                            table.put(put);
+                        }
+                    }
                 }
             }
         } finally {
@@ -2159,6 +2202,10 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
                             case COLUMN_SHARED_IGNORE_VALUE:
                                 realtime.setIgnored(Bytes.toBoolean(entry.getValue()));
                                 historical.setIgnored(Bytes.toBoolean(entry.getValue()));
+                                break;
+                            case COLUMN_SHARED_IGNORE_TIMESTAMP:
+                                // Ignore
+                                break;
                             default:
                                 if (qualifier.startsWith(COLUMN_HIST_PROPERTY_PREFIX)) {
                                     historical.addProperty(StringUtils.substringAfter(qualifier, COLUMN_HIST_PROPERTY_PREFIX),
