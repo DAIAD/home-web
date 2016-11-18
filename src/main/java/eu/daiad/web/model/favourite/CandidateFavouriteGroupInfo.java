@@ -1,6 +1,6 @@
 package eu.daiad.web.model.favourite;
 
-import eu.daiad.web.domain.application.Group;
+import eu.daiad.web.domain.application.GroupEntity;
 
 public class CandidateFavouriteGroupInfo extends FavouriteGroupInfo {
 	
@@ -9,7 +9,7 @@ public class CandidateFavouriteGroupInfo extends FavouriteGroupInfo {
 	private String country;
 	private long groupCreationDateMils;
 
-	public CandidateFavouriteGroupInfo(Group group){
+	public CandidateFavouriteGroupInfo(GroupEntity group){
 		super(group.getKey());
 		this.groupName = group.getName();
 		this.groupCreationDateMils = group.getCreatedOn().getMillis();

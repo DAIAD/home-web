@@ -2,28 +2,28 @@ package eu.daiad.web.model.message;
 
 import java.util.List;
 
-import eu.daiad.web.domain.application.AlertAnalytics;
-import eu.daiad.web.domain.application.RecommendationAnalytics;
+import eu.daiad.web.domain.application.AlertAnalyticsEntity;
+import eu.daiad.web.domain.application.RecommendationAnalyticsEntity;
 import eu.daiad.web.model.RestResponse;
 
 public class MessageStatisticsResponse extends RestResponse{
     
-    private List<AlertAnalytics> alertStatistics;
-    private List<RecommendationAnalytics> recommendationStatistics;
+    private List<AlertAnalyticsEntity> alertStatistics;
+    private List<RecommendationAnalyticsEntity> recommendationStatistics;
 
-    public List<AlertAnalytics> getAlertStatistics() {
+    public List<AlertAnalyticsEntity> getAlertStatistics() {
         return alertStatistics;
     }
 
-    public void setAlertStatistics(List<AlertAnalytics> alertStatistics) {
+    public void setAlertStatistics(List<AlertAnalyticsEntity> alertStatistics) {
         this.alertStatistics = alertStatistics;
     }
 
-    public List<RecommendationAnalytics> getRecommendationStatistics() {
+    public List<RecommendationAnalyticsEntity> getRecommendationStatistics() {
         return recommendationStatistics;
     }
 
-    public void setRecommendationStatistics(List<RecommendationAnalytics> recommendationStatistics) {
+    public void setRecommendationStatistics(List<RecommendationAnalyticsEntity> recommendationStatistics) {
         this.recommendationStatistics = recommendationStatistics;
     }
     

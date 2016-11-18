@@ -25,7 +25,7 @@ public class DeviceAmphiroConfiguration {
 
     private int frameDuration;
 
-    public DeviceAmphiroConfiguration(eu.daiad.web.domain.application.DeviceAmphiroConfiguration c) {
+    public DeviceAmphiroConfiguration(eu.daiad.web.domain.application.DeviceAmphiroConfigurationEntity c) {
         this.deviceKey = c.getDevice().getKey();
         
         this.title = c.getTitle();

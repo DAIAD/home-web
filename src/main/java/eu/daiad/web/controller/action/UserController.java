@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.domain.application.AccountEntity;
-import eu.daiad.web.domain.application.DeviceMeter;
+import eu.daiad.web.domain.application.DeviceMeterEntity;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.admin.AccountWhiteListInfo;
 import eu.daiad.web.model.amphiro.AmphiroSessionCollection;
@@ -178,9 +178,9 @@ public class UserController extends BaseController {
 
                 account.setLocation(entity.getLocation());
 
-                for (eu.daiad.web.domain.application.Device d : entity.getDevices()) {
+                for (eu.daiad.web.domain.application.DeviceEntity d : entity.getDevices()) {
                     if (d.getType() == EnumDeviceType.METER) {
-                        account.setMeter(new DeviceMeterInfo((DeviceMeter) d));
+                        account.setMeter(new DeviceMeterInfo((DeviceMeterEntity) d));
                         break;
                     }
                 }

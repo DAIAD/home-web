@@ -17,11 +17,11 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.domain.application.AccountEntity;
-import eu.daiad.web.domain.application.Favourite;
-import eu.daiad.web.domain.application.FavouriteGroup;
-import eu.daiad.web.domain.application.Group;
-import eu.daiad.web.domain.application.GroupMember;
-import eu.daiad.web.domain.application.GroupSet;
+import eu.daiad.web.domain.application.FavouriteEntity;
+import eu.daiad.web.domain.application.FavouriteGroupEntity;
+import eu.daiad.web.domain.application.GroupEntity;
+import eu.daiad.web.domain.application.GroupMemberEntity;
+import eu.daiad.web.domain.application.GroupSetEntity;
 import eu.daiad.web.domain.application.UtilityEntity;
 import eu.daiad.web.model.admin.AccountActivity;
 import eu.daiad.web.model.error.GroupErrorCode;
@@ -52,14 +52,14 @@ public class JpaUserGroupRepository extends BaseRepository implements IUserGroup
 				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
-			TypedQuery<GroupSet> groupQuery = entityManager.createQuery(
-							"SELECT g FROM group_set g WHERE g.utility.id = :utility_id", GroupSet.class);
+			TypedQuery<GroupSetEntity> groupQuery = entityManager.createQuery(
+							"SELECT g FROM group_set g WHERE g.utility.id = :utility_id", GroupSetEntity.class);
 			groupQuery.setParameter("utility_id", user.getUtilityId());
 
-			List<GroupSet> groups = groupQuery.getResultList();
+			List<GroupSetEntity> groups = groupQuery.getResultList();
 			List<GroupInfo> groupsInfo = new ArrayList<GroupInfo>();
 
-			for (GroupSet group : groups) {
+			for (GroupSetEntity group : groups) {
 				GroupInfo groupInfo = new GroupInfo(group);
 				groupsInfo.add(groupInfo);
 			}
@@ -184,12 +184,12 @@ public class JpaUserGroupRepository extends BaseRepository implements IUserGroup
 				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
-			TypedQuery<eu.daiad.web.domain.application.Group> groupQuery = entityManager
+			TypedQuery<eu.daiad.web.domain.application.GroupEntity> groupQuery = entityManager
 							.createQuery("select g from group g where g.name = :groupName",
-											eu.daiad.web.domain.application.Group.class).setFirstResult(0)
+											eu.daiad.web.domain.application.GroupEntity.class).setFirstResult(0)
 							.setMaxResults(1);
 			groupQuery.setParameter("groupName", groupSetInfo.getName());
-			List<Group> groupEntries = groupQuery.getResultList();
+			List<GroupEntity> groupEntries = groupQuery.getResultList();
 
 			if (!groupEntries.isEmpty()) {
 				throw createApplicationException(GroupErrorCode.GROUP_EXISTS).set("groupName", groupSetInfo.getName());
@@ -218,7 +218,7 @@ public class JpaUserGroupRepository extends BaseRepository implements IUserGroup
 			accountQuery.setParameter("memberKeys", Arrays.asList(groupSetInfo.getMembers()));
 			List<AccountEntity> memberAccounts = accountQuery.getResultList();
 
-			GroupSet newGroupSet = new GroupSet();
+			GroupSetEntity newGroupSet = new GroupSetEntity();
 			newGroupSet.setUtility(utilityEntry);
 			newGroupSet.setName(groupSetInfo.getName());
 			newGroupSet.setOwner(adminAccount);
@@ -229,7 +229,7 @@ public class JpaUserGroupRepository extends BaseRepository implements IUserGroup
 			this.entityManager.flush();
 
 			for (AccountEntity memberAcccount : memberAccounts) {
-				GroupMember member = new GroupMember();
+				GroupMemberEntity member = new GroupMemberEntity();
 				member.setGroup(newGroupSet);
 				member.setAccount(memberAcccount);
 				member.setCreatetOn(new DateTime());
@@ -258,12 +258,12 @@ public class JpaUserGroupRepository extends BaseRepository implements IUserGroup
 
 			UtilityEntity adminUtility = utilityQuery.getSingleResult();
 
-			TypedQuery<Group> groupQuery = entityManager
-							.createQuery("SELECT g FROM group g WHERE g.key = :group_id", Group.class)
+			TypedQuery<GroupEntity> groupQuery = entityManager
+							.createQuery("SELECT g FROM group g WHERE g.key = :group_id", GroupEntity.class)
 							.setFirstResult(0).setMaxResults(1);
 			groupQuery.setParameter("group_id", group_id);
 
-			Group group = groupQuery.getSingleResult();
+			GroupEntity group = groupQuery.getSingleResult();
 
 			if (group.getUtility() != adminUtility) {
 				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
@@ -285,11 +285,11 @@ public class JpaUserGroupRepository extends BaseRepository implements IUserGroup
 				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
-			GroupSet group = null;
+			GroupSetEntity group = null;
 			// Check if group exists
 			try {
-				TypedQuery<GroupSet> groupQuery = entityManager
-								.createQuery("select g from group_set g where g.key = :group_id", GroupSet.class)
+				TypedQuery<GroupSetEntity> groupQuery = entityManager
+								.createQuery("select g from group_set g where g.key = :group_id", GroupSetEntity.class)
 								.setFirstResult(0).setMaxResults(1);
 				groupQuery.setParameter("group_id", group_id);
 				group = groupQuery.getSingleResult();
@@ -304,13 +304,13 @@ public class JpaUserGroupRepository extends BaseRepository implements IUserGroup
 
 					// check if this group is someone's favorite, in order to
 					// delete these favorites as well
-					TypedQuery<Favourite> favouriteQuery = entityManager.createQuery("select f from favourite f",
-									Favourite.class).setFirstResult(0);
+					TypedQuery<FavouriteEntity> favouriteQuery = entityManager.createQuery("select f from favourite f",
+									FavouriteEntity.class).setFirstResult(0);
 
-					List<Favourite> favourites = favouriteQuery.getResultList();
-					for (Favourite f : favourites) {
+					List<FavouriteEntity> favourites = favouriteQuery.getResultList();
+					for (FavouriteEntity f : favourites) {
 						if (f.getType().equals(EnumFavouriteType.GROUP)) {
-							FavouriteGroup fg = (FavouriteGroup) f;
+							FavouriteGroupEntity fg = (FavouriteGroupEntity) f;
 							if (fg.getGroup().getId() == group.getId()) {
 								this.entityManager.remove(f);
 							}
@@ -338,16 +338,16 @@ public class JpaUserGroupRepository extends BaseRepository implements IUserGroup
 				throw createApplicationException(SharedErrorCode.AUTHORIZATION);
 			}
 
-			TypedQuery<eu.daiad.web.domain.application.Group> userGroupQuery = entityManager
+			TypedQuery<eu.daiad.web.domain.application.GroupEntity> userGroupQuery = entityManager
 					.createQuery("SELECT g FROM group_member m JOIN m.group g JOIN m.account a WHERE a.key = :user_key",
-							eu.daiad.web.domain.application.Group.class)
+							eu.daiad.web.domain.application.GroupEntity.class)
 					.setFirstResult(0);
 			userGroupQuery.setParameter("user_key", user_id);
 
-			List<eu.daiad.web.domain.application.Group> groups = userGroupQuery.getResultList();
+			List<eu.daiad.web.domain.application.GroupEntity> groups = userGroupQuery.getResultList();
 			List<GroupInfo> groupsInfo = new ArrayList<GroupInfo>();
 
-			for (eu.daiad.web.domain.application.Group group : groups) {
+			for (eu.daiad.web.domain.application.GroupEntity group : groups) {
 				GroupInfo groupInfo = new GroupInfo(group);
 				groupsInfo.add(groupInfo);
 			}

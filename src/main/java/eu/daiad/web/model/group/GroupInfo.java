@@ -2,8 +2,8 @@ package eu.daiad.web.model.group;
 
 import java.util.UUID;
 
-import eu.daiad.web.domain.application.Group;
-import eu.daiad.web.domain.application.GroupSegment;
+import eu.daiad.web.domain.application.GroupEntity;
+import eu.daiad.web.domain.application.GroupSegmentEntity;
 
 public class GroupInfo {
 
@@ -17,11 +17,11 @@ public class GroupInfo {
 
     private String country;
 
-    public GroupInfo(Group group) {
+    public GroupInfo(GroupEntity group) {
         this.id = group.getKey();
         switch (group.getType()) {
             case SEGMENT:
-                this.name = ((GroupSegment) group).getCluster().getName() + ": " + group.getName();
+                this.name = ((GroupSegmentEntity) group).getCluster().getName() + ": " + group.getName();
                 break;
             default:
                 this.name = group.getName();

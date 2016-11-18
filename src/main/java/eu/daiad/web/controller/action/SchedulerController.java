@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
-import eu.daiad.web.domain.admin.ScheduledJobExecution;
+import eu.daiad.web.domain.admin.ScheduledJobExecutionEntity;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.scheduling.ExecutionMessageResponse;
 import eu.daiad.web.model.scheduling.ExecutionQuery;
@@ -104,7 +104,7 @@ public class SchedulerController extends BaseController {
 
             DateTime utcDateTime;
 
-            for (ScheduledJobExecution entity : result.getExecutions()) {
+            for (ScheduledJobExecutionEntity entity : result.getExecutions()) {
                 JobExecutionInfo e = new JobExecutionInfo();
 
                 if (entity.getStartedOn() != null) {

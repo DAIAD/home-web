@@ -11,7 +11,7 @@ import eu.daiad.web.model.group.EnumGroupType;
 
 @Entity(name = "group_community")
 @Table(schema = "public", name = "group_community")
-public class GroupCommunity extends Group {
+public class GroupCommunity extends GroupEntity {
 
 	@Basic()
 	private String description;

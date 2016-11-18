@@ -34,15 +34,15 @@ import com.vividsolutions.jts.geom.Point;
 
 import eu.daiad.web.domain.application.AccountActivityEntity;
 import eu.daiad.web.domain.application.AccountEntity;
-import eu.daiad.web.domain.application.AccountProfile;
-import eu.daiad.web.domain.application.AccountProfileHistoryEntry;
-import eu.daiad.web.domain.application.AccountRole;
+import eu.daiad.web.domain.application.AccountProfileEntity;
+import eu.daiad.web.domain.application.AccountProfileHistoryEntity;
+import eu.daiad.web.domain.application.AccountRoleEntity;
 import eu.daiad.web.domain.application.AccountUtilityEntity;
 import eu.daiad.web.domain.application.AccountWhiteListEntity;
 import eu.daiad.web.domain.application.HouseholdEntity;
 import eu.daiad.web.domain.application.HouseholdMemberEntity;
 import eu.daiad.web.domain.application.PasswordResetTokenEntity;
-import eu.daiad.web.domain.application.Role;
+import eu.daiad.web.domain.application.RoleEntity;
 import eu.daiad.web.domain.application.SurveyEntity;
 import eu.daiad.web.domain.application.UtilityEntity;
 import eu.daiad.web.model.EnumApplication;
@@ -110,12 +110,12 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
     private void initializeRoles() throws ApplicationException {
         try {
             for (EnumRole r : EnumRole.class.getEnumConstants()) {
-                TypedQuery<Role> roleQuery = entityManager.createQuery("select r from role r where r.name = :name", Role.class);
+                TypedQuery<RoleEntity> roleQuery = entityManager.createQuery("select r from role r where r.name = :name", RoleEntity.class);
                 roleQuery.setParameter("name", r.toString());
 
-                List<Role> roles = roleQuery.getResultList();
+                List<RoleEntity> roles = roleQuery.getResultList();
                 if (roles.size() == 0) {
-                    Role role = new Role();
+                    RoleEntity role = new RoleEntity();
 
                     String description = EnumRole.class.getField(r.name()).getAnnotation(EnumValueDescription.class).value();
                     role.setName(r.name());
@@ -165,13 +165,13 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
 
                     String roleQueryString = "select r from role r where r.name = :name";
 
-                    TypedQuery<Role> roleQuery = entityManager.createQuery(roleQueryString, Role.class);
+                    TypedQuery<RoleEntity> roleQuery = entityManager.createQuery(roleQueryString, RoleEntity.class);
                     roleQuery.setParameter("name", EnumRole.ROLE_UTILITY_ADMIN.name());
 
                     // Assign role
-                    Role role = roleQuery.getSingleResult();
+                    RoleEntity role = roleQuery.getSingleResult();
 
-                    AccountRole assignedRole = new AccountRole();
+                    AccountRoleEntity assignedRole = new AccountRoleEntity();
                     assignedRole.setRole(role);
                     assignedRole.setAssignedOn(account.getCreatedOn());
                     assignedRole.setAssignedBy(account);
@@ -191,7 +191,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                     entityManager.flush();
 
                     // Create profile
-                    AccountProfile profile = new AccountProfile();
+                    AccountProfileEntity profile = new AccountProfileEntity();
                     profile.setMobileMode(EnumMobileMode.INACTIVE.getValue());
                     profile.setWebMode(EnumWebMode.INACTIVE.getValue());
                     profile.setUtilityMode(EnumUtilityMode.ACTIVE.getValue());
@@ -201,7 +201,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                     entityManager.persist(profile);
 
                     // Create profile history entry
-                    AccountProfileHistoryEntry entry = new AccountProfileHistoryEntry();
+                    AccountProfileHistoryEntity entry = new AccountProfileHistoryEntity();
                     entry.setVersion(profile.getVersion());
                     entry.setUpdatedOn(account.getCreatedOn());
                     entry.setMobileMode(profile.getMobileMode());
@@ -367,14 +367,14 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             account.setUtility(utility);
 
             // Assign default ROLE_USER role to the new user
-            Role role = null;
-            TypedQuery<Role> roleQuery = entityManager.createQuery("select r from role r where r.name = :name",
-                            Role.class);
+            RoleEntity role = null;
+            TypedQuery<RoleEntity> roleQuery = entityManager.createQuery("select r from role r where r.name = :name",
+                            RoleEntity.class);
             roleQuery.setParameter("name", EnumRole.ROLE_USER.toString());
 
             role = roleQuery.getSingleResult();
 
-            AccountRole assignedRole = new AccountRole();
+            AccountRoleEntity assignedRole = new AccountRoleEntity();
             assignedRole.setRole(role);
             assignedRole.setAssignedOn(account.getCreatedOn());
 
@@ -393,7 +393,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             entityManager.flush();
 
             // Initialize user profile
-            AccountProfile profile = new AccountProfile();
+            AccountProfileEntity profile = new AccountProfileEntity();
             if (whiteListEntry != null) {
                 profile.setMobileMode(whiteListEntry.getDefaultMobileMode());
                 profile.setWebMode(whiteListEntry.getDefaultWebMode());
@@ -408,7 +408,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             entityManager.persist(profile);
 
             // Create historical record for the first profile update
-            AccountProfileHistoryEntry profileHistoryEntry = new AccountProfileHistoryEntry();
+            AccountProfileHistoryEntity profileHistoryEntry = new AccountProfileHistoryEntity();
             profileHistoryEntry.setVersion(profile.getVersion());
             profileHistoryEntry.setUpdatedOn(account.getCreatedOn());
             profileHistoryEntry.setMobileMode(profile.getMobileMode());
@@ -724,7 +724,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
      */
     private AuthenticatedUser accountEntityToUser(AccountEntity entity) {
         List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
-        for (AccountRole r : entity.getRoles()) {
+        for (AccountRoleEntity r : entity.getRoles()) {
             authorities.add(new SimpleGrantedAuthority(r.getRole().getName()));
         }
 
@@ -1249,7 +1249,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
 
             UserInfo userInfo = new UserInfo(account);
 
-            for (AccountProfileHistoryEntry history : account.getProfile().getHistory()) {
+            for (AccountProfileHistoryEntity history : account.getProfile().getHistory()) {
                 if (history.getVersion().equals(account.getProfile().getVersion())) {
                     UserInfo.ModeInfo modeInfo = new UserInfo.ModeInfo();
 

@@ -7,7 +7,7 @@ import org.joda.time.DateTime;
 
 import com.vividsolutions.jts.geom.Geometry;
 
-import eu.daiad.web.domain.application.DeviceAmphiroConfigurationDefault;
+import eu.daiad.web.domain.application.DeviceAmphiroDefaultConfigurationEntity;
 import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.device.Device;
@@ -23,7 +23,7 @@ public interface IDeviceRepository {
 
     AmphiroDevice createAmphiroDevice(UUID userKey, String name, String macAddress, String aesKey, List<KeyValuePair> properties) throws ApplicationException;
 
-    List<DeviceAmphiroConfigurationDefault> getAmphiroDefaultConfigurations() throws ApplicationException;
+    List<DeviceAmphiroDefaultConfigurationEntity> getAmphiroDefaultConfigurations() throws ApplicationException;
 
     UUID createMeterDevice(String username, String serial, List<KeyValuePair> properties, Geometry location) throws ApplicationException;
 

@@ -32,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.connector.RemoteFileAttributes;
 import eu.daiad.web.connector.SecureFileTransferConnector;
-import eu.daiad.web.domain.admin.Upload;
+import eu.daiad.web.domain.admin.UploadEntity;
 import eu.daiad.web.model.error.ActionErrorCode;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
@@ -127,15 +127,15 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
 
             for (RemoteFileAttributes f : files) {
                 // Check if a file with the same path, name and size has already been imported
-                TypedQuery<Upload> uploadQuery = entityManager.createQuery(sqlString, Upload.class).setFirstResult(0).setMaxResults(1);
+                TypedQuery<UploadEntity> uploadQuery = entityManager.createQuery(sqlString, UploadEntity.class).setFirstResult(0).setMaxResults(1);
 
                 uploadQuery.setParameter("remoteFolder", f.getRemoteFolder());
                 uploadQuery.setParameter("remoteFilename", f.getFilename());
                 uploadQuery.setParameter("fileSize", f.getSize());
 
-                List<Upload> uploads = uploadQuery.getResultList();
+                List<UploadEntity> uploads = uploadQuery.getResultList();
 
-                Upload existingUpload = null;
+                UploadEntity existingUpload = null;
                 if (uploads.size() != 0) {
                     existingUpload = uploads.get(0);
                 }
@@ -148,7 +148,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
                     }
 
                     // Create upload record
-                    Upload upload = new Upload();
+                    UploadEntity upload = new UploadEntity();
 
                     upload.setSource(f.getSource());
                     upload.setRemoteFolder(f.getRemoteFolder());
