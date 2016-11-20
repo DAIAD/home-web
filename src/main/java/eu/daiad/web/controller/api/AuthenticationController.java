@@ -3,6 +3,7 @@ package eu.daiad.web.controller.api;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -39,6 +40,7 @@ public class AuthenticationController extends BaseRestController {
      * Repository for accessing water IQ data.
      */
     @Autowired
+    @Qualifier("jpaWaterIqRepository")
     private IWaterIqRepository waterIqRepository;
 
     /**
@@ -55,7 +57,7 @@ public class AuthenticationController extends BaseRestController {
             Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE);
 
             // Get water IQ data
-            profile.setComparison(waterIqRepository.getWaterIqByUserId(user.getId()));
+            profile.setComparison(waterIqRepository.getWaterIqByUserKey(user.getKey()));
 
             return new AuthenticationResponse(getRuntime(), profile, user.roleToStringArray());
         } catch (Exception ex) {

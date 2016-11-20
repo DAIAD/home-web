@@ -9,6 +9,7 @@ import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -53,6 +54,7 @@ public class ProfileController extends BaseRestController {
      * Repository for accessing water IQ data.
      */
     @Autowired
+    @Qualifier("jpaWaterIqRepository")
     private IWaterIqRepository waterIqRepository;
 
     /**
@@ -70,7 +72,7 @@ public class ProfileController extends BaseRestController {
                 Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE);
 
                 // Get water IQ data
-                profile.setComparison(waterIqRepository.getWaterIqByUserId(user.getId()));
+                profile.setComparison(waterIqRepository.getWaterIqByUserKey(user.getKey()));
 
                 return new ProfileResponse(getRuntime(),
                                            profile,

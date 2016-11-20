@@ -103,18 +103,19 @@
  * @apiSuccess (Member)     {Number}     createdOn           Creation time stamp.
  * @apiSuccess (Member)     {Number}     updatedOn           Last update time stamp.
  *
- * @apiSuccess (Comparison) {Ojbect}     waterIq                Object of type <code>WaterIQ</code> with water IQ data.
- * @apiSuccess (Comparison) {Ojbect[]}   monthlyConsumtpion     Array of <code>MonthlyConsumption</code> objects.
+ * @apiSuccess (Comparison) {Object}     waterIq                Object of type <code>WaterIQ</code> with water IQ data.
+ * @apiSuccess (Comparison) {Object[]}   monthlyConsumtpion     Array of <code>MonthlyConsumption</code> objects with monthly consumption data for the last 6 months.
+ * @apiSuccess (Comparison) {Object[]}   dailyConsumtpion       Array of <code>DailyConsumption</code> objects with daily consumption data for the last month.
  *
  * @apiSuccess (WaterIQ)    {Object[]}   user                   Array of <code>WaterIQRanking</code> objects.
  * @apiSuccess (WaterIQ)    {Object}     similar                Similar users ranking data.
- * @apiSuccess (WaterIQ)    {Number}     similar.volume         User average water consumption.
+ * @apiSuccess (WaterIQ)    {Number}     similar.volume         User average monthly water consumption.
  * @apiSuccess (WaterIQ)    {String}     similar.value          Similar users ranking.
  * @apiSuccess (WaterIQ)    {Object}     nearest                Nearest users (neighbors) ranking data.
- * @apiSuccess (WaterIQ)    {Number}     nearest.volume         User average water consumption.
+ * @apiSuccess (WaterIQ)    {Number}     nearest.volume         User average monthly water consumption.
  * @apiSuccess (WaterIQ)    {String}     nearest.value          User group ranking.
  * @apiSuccess (WaterIQ)    {Object}     all                    All utility users ranking data.
- * @apiSuccess (WaterIQ)    {Number}     all.volume             User average water consumption.
+ * @apiSuccess (WaterIQ)    {Number}     all.volume             User average monthly water consumption.
  * @apiSuccess (WaterIQ)    {String}     all.value              Utility ranking.
  *
  * @apiSuccess (WaterIQRanking)    {Number}      volume         User water consumption.
@@ -131,6 +132,13 @@
  * @apiSuccess (MonthlyConsumption) {String}     from           Time interval start date formatted using the pattern <code>yyyyMMdd</code>.
  * @apiSuccess (MonthlyConsumption) {String}     to             Time interval end date formatted using the pattern <code>yyyyMMdd</code>.
  *
+ * @apiSuccess (DailyConsumption)   {Number}     user           User total water consumption.
+ * @apiSuccess (DailyConsumption)   {Number}     similar        Similar users total water consumption.
+ * @apiSuccess (DailyConsumption)   {Number}     nearest        Nearest users (neighbors) total water consumption.
+ * @apiSuccess (DailyConsumption)   {Number}     all            All utility users total water consumption.
+ * @apiSuccess (DailyConsumption)   {Number}     week           Week of year index.
+ * @apiSuccess (DailyConsumption)   {Number}     day            Day of month index.
+ * @apiSuccess (DailyConsumption)   {String}     date           Date formatted using the pattern <code>yyyyMMdd</code>.
  *
  * @apiSuccessExample {json} Response Example
  * HTTP/1.1 200 OK
@@ -246,6 +254,23 @@
  *         "similar": 195563,
  *         "nearest": 323395,
  *         "all": 508470
+ *       }],
+ *       "dailyConsumtpion":[{
+ *         "week": 39,
+ *         "day": 1,
+ *         "user": 147,
+ *         "similar": 3087,
+ *         "nearest": 9563,
+ *         "all": 17937,
+ *         "date": "20161001"
+ *       }, {
+ *         "week": 39,
+ *         "day": 2,
+ *         "user": 25,
+ *         "similar": 1737,
+ *         "nearest": 8801,
+ *         "all": 16190,
+ *         "date": "20161002"
  *       }]
  *     }
  *   },

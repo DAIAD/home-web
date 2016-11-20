@@ -1,5 +1,9 @@
 package eu.daiad.web.job.task;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -13,6 +17,7 @@ import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.StoppableTasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import eu.daiad.web.domain.application.AccountEntity;
@@ -23,6 +28,7 @@ import eu.daiad.web.model.error.SchedulerErrorCode;
 import eu.daiad.web.model.group.Cluster;
 import eu.daiad.web.model.group.Segment;
 import eu.daiad.web.model.profile.ComparisonRanking;
+import eu.daiad.web.model.query.DataPoint;
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
@@ -105,6 +111,7 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
      * Repository for updating water IQ data.
      */
     @Autowired
+    @Qualifier("jpaWaterIqRepository")
     private IWaterIqRepository waterIqRepository;
 
     /**
@@ -158,13 +165,15 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
             waterIqRepository.clean(365);
 
             for (UtilityInfo utility : utilityRepository.getUtilities()) {
-                // Water IQ data
-                UserWaterIqCollection waterIq = new UserWaterIqCollection(utility.getKey(), maxDistance);
+                // Collection of user comparison and ranking data
+                UserComparisonAndRankingCollection comparisons = new UserComparisonAndRankingCollection(maxDistance);
 
                 // Initialize context
                 ExecutionContext context = new ExecutionContext();
 
+                context.utilityKey = utility.getKey();
                 context.timezone = DateTimeZone.forID(utility.getTimezone());
+                context.clusterName = clusterName;
                 context.labels = names;
 
                 // Get utility counters. The job computes segments only
@@ -188,109 +197,19 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                         }
 
                         // Get time interval
-                        context.start = context.reference.withDayOfMonth(1).minusMonths(1);
-                        context.end = context.start.dayOfMonth().withMaximumValue();
+                        computeDateInterval(context);
 
-                        // Adjust start/end dates
-                        context.start = new DateTime(context.start.getYear(),
-                                                     context.start.getMonthOfYear(),
-                                                     context.start.getDayOfMonth(),
-                                                     0, 0, 0, context.timezone);
+                        // Get user ranking
+                        computeRanking(context);
 
-                        context.end = new DateTime(context.end.getYear(),
-                                                   context.end.getMonthOfYear(),
-                                                   context.end.getDayOfMonth(),
-                                                   23, 59, 59, context.timezone);
+                        // Compute user monthly water consumption range
+                        computeConsumptionRange(context, comparisons);
 
-                        // Build data query
-                        DataQuery query = DataQueryBuilder.create()
-                                                          .timezone(context.timezone)
-                                                          .absolute(context.start, context.end, EnumTimeAggregation.ALL)
-                                                          .utilityTop(utility.getName(), utility.getKey(), EnumMetric.SUM, (int) totalMeters)
-                                                          .meter()
-                                                          .build();
+                        // Create cluster
+                        createCluster(context, comparisons);
 
-                        DataQueryResponse result = dataService.execute(query);
-
-                        if (!result.getMeters().isEmpty()) {
-                            GroupDataSeries series = result.getMeters().get(0);
-
-                            double min = Double.MAX_VALUE;
-                            double max = 0.0;
-
-                            if (!series.getPoints().isEmpty()) {
-                                RankingDataPoint ranking = (RankingDataPoint) series.getPoints().get(0);
-
-                                // Compute minimum/maximum consumption and fetch user data
-                                for (UserDataPoint user : ranking.getUsers()) {
-                                    MeterUserDataPoint meter = (MeterUserDataPoint) user;
-
-                                    // Get survey data and compute consumption per household member
-                                    AccountEntity account = userRepository.getAccountByKey(meter.getKey());
-                                    SurveyEntity survey = userRepository.getSurveyByKey(meter.getKey());
-
-                                    int householdSize = 1;
-                                    double volume = meter.getVolume().get(EnumMetric.SUM);
-
-                                    if ((survey != null) && (survey.getHouseholdMemberTotal() > 0)) {
-                                        householdSize = survey.getHouseholdMemberTotal();
-                                    }
-                                    volume /= householdSize;
-
-                                    meter.getVolume().put(EnumMetric.SUM, volume);
-
-                                    // Adjust minimum/maximum consumption values
-                                    if (min > volume) {
-                                        min = volume;
-                                    }
-                                    if (max < volume) {
-                                        max = volume;
-                                    }
-
-                                    waterIq.addUser(meter.getKey(), householdSize, meter.getVolume().get(EnumMetric.SUM), account.getLocation());
-                                }
-
-                                if (min < max) {
-                                    // Create cluster and segments
-                                    Cluster cluster = new Cluster();
-
-                                    cluster.setName(clusterName);
-                                    cluster.setKey(UUID.randomUUID());
-                                    cluster.setSize(ranking.getUsers().size());
-                                    cluster.setUtilityKey(utility.getKey());
-
-                                    for (String name : names) {
-                                        Segment segment = new Segment();
-
-                                        segment.setKey(UUID.randomUUID());
-                                        segment.setName(name);
-                                        segment.setUtilityKey(utility.getKey());
-
-                                        cluster.getSegments().add(segment);
-                                    }
-
-                                    // Assign users to segments
-                                    double step = (max - min) / names.length;
-                                    for (UserDataPoint user : ranking.getUsers()) {
-                                        MeterUserDataPoint meter = (MeterUserDataPoint) user;
-
-                                        int index = (int) ((meter.getVolume().get(EnumMetric.SUM) - min) / step);
-                                        if (index == names.length) {
-                                            index -= 1;
-                                        }
-
-                                        cluster.getSegments().get(index).getMembers().add(meter.getKey());
-
-                                        waterIq.getUsers().get(meter.getKey()).getSelf().value = index;
-                                    }
-
-                                    groupRepository.createCluster(cluster);
-
-                                    // Update water IQ
-                                    updateWaterIq(context, waterIq);
-                                }
-                            }
-                        }
+                        // Compute comparisons and rankings for all users
+                        computeComparisonAndRanking(context, comparisons);
                     }
                 }
             }
@@ -309,12 +228,149 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
     }
 
     /**
+     * Computes the time interval.
+     *
+     * @param context the execution context.
+     */
+    private void computeDateInterval(ExecutionContext context) {
+        context.start = context.reference.withDayOfMonth(1).minusMonths(1);
+        context.end = context.start.dayOfMonth().withMaximumValue();
+
+        // Adjust start/end dates
+        context.start = new DateTime(context.start.getYear(),
+                                     context.start.getMonthOfYear(),
+                                     context.start.getDayOfMonth(),
+                                     0, 0, 0, context.timezone);
+
+        context.end = new DateTime(context.end.getYear(),
+                                   context.end.getMonthOfYear(),
+                                   context.end.getDayOfMonth(),
+                                   23, 59, 59, context.timezone);
+    }
+
+    /**
+     * Computes the ranking of users based on monthly consumption.
+     *
+     * @param context the execution context.
+     */
+    private void computeRanking(ExecutionContext context) {
+        DataQuery query = DataQueryBuilder.create()
+                                          .timezone(context.timezone)
+                                          .absolute(context.start, context.end, EnumTimeAggregation.ALL)
+                                          .utilityTop("Utility", context.utilityKey, EnumMetric.SUM, Integer.MAX_VALUE)
+                                          .meter()
+                                          .build();
+
+        DataQueryResponse result = dataService.execute(query);
+
+        if ((!result.getMeters().isEmpty()) &&
+            (!result.getMeters().get(0).getPoints().isEmpty())) {
+            context.ranking = (RankingDataPoint) result.getMeters().get(0).getPoints().get(0);
+        }
+    }
+
+    /**
+     * Computes the user monthly consumption range.
+     *
+     * @param context the execution context.
+     * @comparisons collection of user comparisons and rankings.
+     */
+    private void computeConsumptionRange(ExecutionContext context, UserComparisonAndRankingCollection comparisons) {
+        if(context.ranking == null) {
+            return;
+        }
+
+        double min = Double.MAX_VALUE;
+        double max = 0.0;
+
+        // Compute minimum/maximum consumption and fetch user data
+        for (UserDataPoint point : context.ranking.getUsers()) {
+            MeterUserDataPoint user = (MeterUserDataPoint) point;
+
+            // Get survey data and compute consumption per household member
+            SurveyEntity survey = userRepository.getSurveyByKey(user.getKey());
+
+            int householdSize = 1;
+            double volume = user.getVolume().get(EnumMetric.SUM);
+
+            if ((survey != null) && (survey.getHouseholdMemberTotal() > 0)) {
+                householdSize = survey.getHouseholdMemberTotal();
+            }
+            volume /= householdSize;
+
+            user.getVolume().put(EnumMetric.SUM, volume);
+
+            // Adjust minimum/maximum consumption values
+            if (min > volume) {
+                min = volume;
+            }
+            if (max < volume) {
+                max = volume;
+            }
+
+            AccountEntity account = userRepository.getAccountByKey(user.getKey());
+            comparisons.addUser(user.getKey(), householdSize, user.getVolume().get(EnumMetric.SUM), account.getLocation());
+        }
+
+        context.minConsumption = min;
+        context.maxConsumption = max;
+    }
+
+    /**
+     * Group users based on their monthly consumption
+     *
+     * @param context the execution context.
+     * @comparisons collection of user comparisons and rankings.
+     */
+    private void createCluster(ExecutionContext context, UserComparisonAndRankingCollection comparisons) {
+        if(context.ranking == null) {
+            return;
+        }
+
+        // Create cluster and segments
+        Cluster cluster = new Cluster();
+
+        cluster.setName(context.clusterName);
+        cluster.setKey(UUID.randomUUID());
+        cluster.setSize(context.ranking.getUsers().size());
+        cluster.setUtilityKey(context.utilityKey);
+
+        for (String name : context.labels) {
+            Segment segment = new Segment();
+
+            segment.setKey(UUID.randomUUID());
+            segment.setName(name);
+            segment.setUtilityKey(context.utilityKey);
+
+            cluster.getSegments().add(segment);
+        }
+
+        // Assign users to segments
+        double step = (context.maxConsumption - context.minConsumption) / context.labels.length;
+        for (UserDataPoint user : context.ranking.getUsers()) {
+            MeterUserDataPoint meter = (MeterUserDataPoint) user;
+
+            int index = (int) ((meter.getVolume().get(EnumMetric.SUM) - context.minConsumption) / step);
+            if (index == context.labels.length) {
+                index -= 1;
+            }
+
+            cluster.getSegments().get(index).getMembers().add(meter.getKey());
+
+            comparisons.getUserByKey(meter.getKey()).getSelf().value = index;
+        }
+
+        // Save cluster
+        groupRepository.createCluster(cluster);
+    }
+
+    /**
      * Creates or updates a new/existing water IQ
      *
      * @param context job execution data.
      * @param data water IQ data.
      */
-    private void updateWaterIq(ExecutionContext context, UserWaterIqCollection data) {
+    private void computeComparisonAndRanking(ExecutionContext context, UserComparisonAndRankingCollection data) {
         DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyyMMdd");
 
         String startAsText = context.start.toString(formatter);
@@ -322,44 +378,97 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
 
         ComparisonRanking.WaterIq all = convertWaterIq(context, data.getAll());
 
-        for(UserWaterIq user : data.getUsers().values()) {
+        for(UUID key : data.getUserKeys()) {
+            UserComparisonAndRanking user = data.getUserByKey(key);
 
-            // Build data query for last month consumption
-            DataQuery last1MonthQuery = DataQueryBuilder.create()
-                                                        .timezone(context.timezone)
-                                                        .absolute(context.start, context.end, EnumTimeAggregation.ALL)
-                                                        .user("self", user.getKey())
-                                                        .users("similar", user.getSimilarUsers())
-                                                        .users("nearest", user.getNearestUsers())
-                                                        .utility("utility", data.getUtilityKey())
-                                                        .sum()
-                                                        .meter()
-                                                        .build();
+            // Build data query for the last month total consumption
+            ComparisonRanking.MonthlyConsumtpion monthlyConsumtpion = new ComparisonRanking.MonthlyConsumtpion(context.start.getMonthOfYear());
 
-            DataQueryResponse result = dataService.execute(last1MonthQuery);
+            DataQuery lastMonthQuery = DataQueryBuilder.create()
+                                                       .timezone(context.timezone)
+                                                       .absolute(context.start, context.end, EnumTimeAggregation.ALL)
+                                                       .user("self", user.getKey())
+                                                       .users("similar", user.getSimilarUsers())
+                                                       .users("nearest", user.getNearestUsers())
+                                                       .utility("utility", context.utilityKey)
+                                                       .sum()
+                                                       .meter()
+                                                       .build();
 
-            Double self1Month = null, similar1Month = null, nearest1Month = null, utility1Month = null;
+            DataQueryResponse result = dataService.execute(lastMonthQuery);
+
             if (result.getSuccess()) {
                 for (GroupDataSeries series : result.getMeters()) {
                     switch (series.getLabel()) {
                         case "self":
                             if (!series.getPoints().isEmpty()) {
-                                self1Month = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM);
+                                monthlyConsumtpion.user = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM);
                             }
                             break;
                         case "similar":
                             if (!series.getPoints().isEmpty()) {
-                                similar1Month = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM);
+                                monthlyConsumtpion.similar = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM);
                             }
                             break;
                         case "nearest":
                             if (!series.getPoints().isEmpty()) {
-                                nearest1Month = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM);
+                                monthlyConsumtpion.nearest = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM);
                             }
                             break;
                         case "utility":
                             if (!series.getPoints().isEmpty()) {
-                                utility1Month = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM);
+                                monthlyConsumtpion.all = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM);
+                            }
+                            break;
+                    }
+                }
+            }
+
+            // Build data query for the last month total daily consumption
+            Map<Integer, ComparisonRanking.DailyConsumption> dailyConsumption = new HashMap<Integer, ComparisonRanking.DailyConsumption>();
+
+            DataQuery dailyQuery = DataQueryBuilder.create()
+                                                   .timezone(context.timezone)
+                                                   .absolute(context.start, context.end, EnumTimeAggregation.DAY)
+                                                   .user("self", user.getKey())
+                                                   .users("similar", user.getSimilarUsers())
+                                                   .users("nearest", user.getNearestUsers())
+                                                   .utility("utility", context.utilityKey)
+                                                   .sum()
+                                                   .meter()
+                                                   .build();
+
+            result = dataService.execute(dailyQuery);
+
+            if (result.getSuccess()) {
+                for (GroupDataSeries series : result.getMeters()) {
+                    switch (series.getLabel()) {
+                        case "self":
+                            for(DataPoint point : series.getPoints()) {
+                                MeterDataPoint meter = (MeterDataPoint) point;
+
+                                getDailyConsumption(context, dailyConsumption, meter).user = meter.getVolume().get(EnumMetric.SUM);
+                            }
+                            break;
+                        case "similar":
+                            for(DataPoint point : series.getPoints()) {
+                                MeterDataPoint meter = (MeterDataPoint) point;
+
+                                getDailyConsumption(context, dailyConsumption, meter).similar = meter.getVolume().get(EnumMetric.SUM);
+                            }
+                            break;
+                        case "nearest":
+                            for(DataPoint point : series.getPoints()) {
+                                MeterDataPoint meter = (MeterDataPoint) point;
+
+                                getDailyConsumption(context, dailyConsumption, meter).nearest = meter.getVolume().get(EnumMetric.SUM);
+                            }
+                            break;
+                        case "utility":
+                            for(DataPoint point : series.getPoints()) {
+                                MeterDataPoint meter = (MeterDataPoint) point;
+
+                                getDailyConsumption(context, dailyConsumption, meter).all = meter.getVolume().get(EnumMetric.SUM);
                             }
                             break;
                     }
@@ -373,8 +482,53 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                                      convertWaterIq(context, user.getSimilarWaterIq()),
                                      convertWaterIq(context, user.getNearestWaterIq()),
                                      all,
-                                     new ComparisonRanking.MonthlyConsumtpion(self1Month, similar1Month, nearest1Month, utility1Month));
+                                     monthlyConsumtpion,
+                                     toList(dailyConsumption.values()));
         }
+    }
+
+    /**
+     * Helper method for converting a collection of values to a list.
+     *
+     * @param values the collection of values.
+     * @return the new list.
+     */
+    private <T> List<T> toList(Collection<T> values) {
+        if(values == null) {
+            return null;
+        }
+        List<T> result = new ArrayList<T>();
+        for(T o : values) {
+            result.add(o);
+        }
+        return result;
+    }
+
+    /**
+     * Gets or creates a new daily consumption data point.
+     *
+     * @param context the execution context.
+     * @param dailyConsumption a map that holds an instance of {@link ComparisonRanking.DailyConsumption} for every day.
+     * @param point the data point to add.
+     * @return an existing or new {@link ComparisonRanking.DailyConsumption} object.
+     */
+    private ComparisonRanking.DailyConsumption getDailyConsumption(ExecutionContext context,
+                                                                   Map<Integer, ComparisonRanking.DailyConsumption> dailyConsumption,
+                                                                   MeterDataPoint point) {
+        DateTime localDateTime = new DateTime(point.getTimestamp(), context.timezone);
+
+        int year = localDateTime.getYear();
+        int month = localDateTime.getMonthOfYear();
+        int week =localDateTime.getWeekOfWeekyear();
+        int day = localDateTime.getDayOfMonth();
+
+        ComparisonRanking.DailyConsumption consumption = dailyConsumption.get(day);
+        if(consumption == null) {
+            consumption = new ComparisonRanking.DailyConsumption(year, month, week, day);
+            dailyConsumption.put(day, consumption);
+        }
+
+        return consumption;
     }
 
     /**
@@ -403,6 +557,11 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
     private static class ExecutionContext {
 
         /**
+         * Utility unique key.
+         */
+        UUID utilityKey;
+
+        /**
          * Reference date time for computing query time intervals.
          */
         DateTime reference;
@@ -423,9 +582,28 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
         DateTime end;
 
         /**
+         * The cluster name
+         */
+        String clusterName;
+
+        /**
          * Segment names used as waterIQ values.
          */
         String[] labels;
 
+        /**
+         * User ranking based on monthly consumption.
+         */
+        RankingDataPoint ranking = null;
+
+        /**
+         * Minimum user consumption.
+         */
+        double minConsumption = Double.MAX_VALUE;
+
+        /**
+         * Maximum user consumption
+         */
+        double maxConsumption = 0;
     }
 }

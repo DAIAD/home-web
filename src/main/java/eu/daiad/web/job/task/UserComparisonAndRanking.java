@@ -7,23 +7,49 @@ import java.util.UUID;
 import com.vividsolutions.jts.geom.Geometry;
 
 /**
- * Stores water IQ data for a single user.
+ * Stores data about comparisons and rankings for a single user.
  */
-class UserWaterIq {
+class UserComparisonAndRanking {
 
+    /**
+     * The user unique key.
+     */
     private UUID key;
 
+    /**
+     * Household size.
+     */
     private int householdSize;
 
+    /**
+     * User location as inferred by the assigned smart water meter.
+     */
     private Geometry location;
 
+    /**
+     * User's water IQ data.
+     */
     private WaterIq self = new WaterIq();
 
-    private List<UserWaterIq> similar = new ArrayList<UserWaterIq>();
+    /**
+     * Comparison and ranking data for users similar to this user.
+     */
+    private List<UserComparisonAndRanking> similar = new ArrayList<UserComparisonAndRanking>();
 
-    private List<UserWaterIq> nearest = new ArrayList<UserWaterIq>();
+    /**
+     * Comparison and ranking data for neighbors of this user.
+     */
+    private List<UserComparisonAndRanking> nearest = new ArrayList<UserComparisonAndRanking>();
 
-    public UserWaterIq(UUID key, int householdSize, double volume, Geometry location) {
+    /**
+     * Creates a new instance of {@link UserComparisonAndRanking}.
+     *
+     * @param key the user key.
+     * @param householdSize the household size.
+     * @param volume the user monthly water consumption.
+     * @param location the user location.
+     */
+    public UserComparisonAndRanking(UUID key, int householdSize, double volume, Geometry location) {
         this.key = key;
         this.householdSize = householdSize;
         this.location = location;
@@ -38,7 +64,7 @@ class UserWaterIq {
 
     public UUID[] getSimilarUsers() {
         List<UUID> keys = new ArrayList<UUID>();
-        for (UserWaterIq u : similar) {
+        for (UserComparisonAndRanking u : similar) {
             keys.add(u.getKey());
         }
         return keys.toArray(new UUID[] {});
@@ -46,7 +72,7 @@ class UserWaterIq {
 
     public UUID[] getNearestUsers() {
         List<UUID> keys = new ArrayList<UUID>();
-        for (UserWaterIq u : nearest) {
+        for (UserComparisonAndRanking u : nearest) {
             keys.add(u.getKey());
         }
         return keys.toArray(new UUID[] {});
@@ -54,10 +80,6 @@ class UserWaterIq {
 
     public int getHouseholdSize() {
         return householdSize;
-    }
-
-    public void setHouseholdSize(int householdSize) {
-        this.householdSize = householdSize;
     }
 
     public Geometry getLocation() {
@@ -68,19 +90,24 @@ class UserWaterIq {
         return self;
     }
 
-    public void addNearest(UserWaterIq user) {
+    public void addNearest(UserComparisonAndRanking user) {
         nearest.add(user);
     }
 
-    public void addSimilar(UserWaterIq user) {
+    public void addSimilar(UserComparisonAndRanking user) {
         similar.add(user);
     }
 
+    /**
+     * Computes the water IQ of similar users.
+     *
+     * @return the water IQ of similar users.
+     */
     public WaterIq getSimilarWaterIq() {
         double volume = 0;
         int value = 0;
 
-        for (UserWaterIq user : similar) {
+        for (UserComparisonAndRanking user : similar) {
             volume += user.getSelf().volume;
             value += user.getSelf().value;
         }
@@ -92,11 +119,16 @@ class UserWaterIq {
         return result;
     }
 
+    /**
+     * Computes the water IQ of neighbors.
+     *
+     * @return the water IQ of neighbors.
+     */
     public WaterIq getNearestWaterIq() {
         double volume = 0;
         int value = 0;
 
-        for (UserWaterIq user : nearest) {
+        for (UserComparisonAndRanking user : nearest) {
             volume += user.getSelf().volume;
             value += user.getSelf().value;
         }

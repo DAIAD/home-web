@@ -57,7 +57,8 @@ public class HBaseInitializer implements CommandLineRunner {
                                              "meter-measurements-by-time",
                                              "meter-measurements-by-user",
                                              "meter-measurements-aggregate-by-time",
-                                             "arduino-measurements" };
+                                             "arduino-measurements",
+                                             "comparison-ranking-daily"};
 
     /**
      * Default column family for all DAIAD HBase tables.
