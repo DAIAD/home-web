@@ -34,6 +34,7 @@ import eu.daiad.web.model.message.EnumDynamicRecommendationType;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.model.message.MessageResolutionStatus;
 import eu.daiad.web.model.message.MessageResolutionStatus.InsightA1Parameters;
+import eu.daiad.web.model.message.MessageResolutionStatus.InsightA2Parameters;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.BaseRepository;
@@ -109,7 +110,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
         //recommendReduceFlowWhenNotNeededAmphiro(account); //inactive, mobile only.
         
         insightA1(config, EnumDeviceType.AMPHIRO, messageStatus, account);
-        
+        insightA2(config, EnumDeviceType.AMPHIRO, messageStatus, account);
     }
 
     private void computeMeterMessagesForUser(
@@ -141,6 +142,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
         // alertTop10SaverSWM(config, aggregates, status, account); //inactive
         
         insightA1(config, EnumDeviceType.METER, messageStatus, account);
+        insightA2(config, EnumDeviceType.METER, messageStatus, account);
     }
 
     private AlertEntity getAlertByType(EnumAlertType type) 
@@ -918,33 +920,58 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     {
         InsightA1Parameters insight = status.getInsightA1(deviceType);
         if (insight == null)
-            return;
+            return; // no relevant insight for this account
         
         double percentChange = insight.getPercentChange();
-        
         DynamicRecommendationEntity recommendation = getDynamicRecommendationByType(
-                (percentChange > 0)? 
-                        EnumDynamicRecommendationType.INSIGHT_A1_DAYOFWEEK_CONSUMPTION_INCR:
-                        EnumDynamicRecommendationType.INSIGHT_A1_DAYOFWEEK_CONSUMPTION_DECR
+            (percentChange > 0)? 
+                 EnumDynamicRecommendationType.INSIGHT_A1_DAYOFWEEK_CONSUMPTION_INCR:
+                 EnumDynamicRecommendationType.INSIGHT_A1_DAYOFWEEK_CONSUMPTION_DECR
         );
         AccountDynamicRecommendationEntity accountRecommendation = 
-                createAccountDynamicRecommendation(account, recommendation, DateTime.now());
-
+            createAccountDynamicRecommendation(account, recommendation, DateTime.now());
+      
         setAccountDynamicRecommendationProperty(
-                accountRecommendation, "day_of_week", 
-                Integer.toString(insight.getDayOfWeek()));
+            accountRecommendation, "ref_date", insight.getRefDate().toString("YYYY-MM-dd"));
         setAccountDynamicRecommendationProperty(
-                accountRecommendation, "consumption",
-                String.format("%.1f", insight.getCurrentValue()));
+            accountRecommendation, "day_of_week", Integer.toString(insight.getDayOfWeek()));
         setAccountDynamicRecommendationProperty(
-                accountRecommendation, "average_consumption",
-                String.format("%.1f", insight.getAvgValue()));
+            accountRecommendation, "consumption", String.format("%.1f", insight.getCurrentValue()));
         setAccountDynamicRecommendationProperty(
-                accountRecommendation, "device_type",
-                insight.getDeviceType().name());
+            accountRecommendation, "average_consumption", String.format("%.1f", insight.getAvgValue()));
         setAccountDynamicRecommendationProperty(
-                accountRecommendation, "percent_change",
-                String.format("%d", (int) percentChange));
+            accountRecommendation, "device_type", insight.getDeviceType().name());
+        setAccountDynamicRecommendationProperty(
+            accountRecommendation, "percent_change", String.format("%d", (int) Math.abs(percentChange)));
+    }
+    
+    private void insightA2(
+            MessageCalculationConfiguration config,
+            EnumDeviceType deviceType, MessageResolutionStatus status, AccountEntity account)
+    {
+        InsightA2Parameters insight = status.getInsightA2(deviceType);
+        if (insight == null)
+            return; // no relevant insight for this account
+        
+        double percentChange = insight.getPercentChange();
+        DynamicRecommendationEntity recommendation = getDynamicRecommendationByType(
+            (percentChange > 0)? 
+                 EnumDynamicRecommendationType.INSIGHT_A2_DAILY_CONSUMPTION_INCR:
+                 EnumDynamicRecommendationType.INSIGHT_A2_DAILY_CONSUMPTION_DECR
+        );
+        AccountDynamicRecommendationEntity accountRecommendation = 
+            createAccountDynamicRecommendation(account, recommendation, DateTime.now());
+      
+        setAccountDynamicRecommendationProperty(
+            accountRecommendation, "ref_date", insight.getRefDate().toString("YYYY-MM-dd"));
+        setAccountDynamicRecommendationProperty(
+            accountRecommendation, "consumption", String.format("%.1f", insight.getCurrentValue()));
+        setAccountDynamicRecommendationProperty(
+            accountRecommendation, "average_consumption", String.format("%.1f", insight.getAvgValue()));
+        setAccountDynamicRecommendationProperty(
+            accountRecommendation, "device_type", insight.getDeviceType().name());
+        setAccountDynamicRecommendationProperty(
+            accountRecommendation, "percent_change", String.format("%d", (int) Math.abs(percentChange)));
     }
     
     //

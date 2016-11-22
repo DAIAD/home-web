@@ -3,6 +3,7 @@ package eu.daiad.web.model.message;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Map.Entry;
 
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -88,21 +89,20 @@ public class MessageResolutionStatus {
 
     private boolean amphiroInstalled;
 
-    public static class InsightA1Parameters
+    public static abstract class InsightBasicParameters
     {        
-        // chosen from DateTimeConstants
-        private final int dayOfWeek;
+        protected final DateTime refDate;
         
-        private final EnumDeviceType deviceType;
+        protected final EnumDeviceType deviceType;
         
-        private final double currentValue;
+        protected final double currentValue;
         
-        // The average of past values 
-        private final double avgValue;
+        // The average of past values (e.g. last P values on Mondays)
+        protected final double avgValue;
         
-        public int getDayOfWeek()
+        public DateTime getRefDate()
         {
-            return dayOfWeek;
+            return refDate;
         }
         
         public EnumDeviceType getDeviceType()
@@ -120,10 +120,10 @@ public class MessageResolutionStatus {
             return avgValue;
         }
 
-        public InsightA1Parameters(
-                int dayOfWeek, EnumDeviceType deviceType, double currentValue, double avgValue)
+        public InsightBasicParameters(
+                DateTime refDate, EnumDeviceType deviceType, double currentValue, double avgValue)
         {
-            this.dayOfWeek = dayOfWeek;
+            this.refDate = refDate;
             this.deviceType = deviceType;
             this.avgValue = avgValue;
             this.currentValue = currentValue;
@@ -135,9 +135,34 @@ public class MessageResolutionStatus {
         }
     }
     
+    public static class InsightA1Parameters extends InsightBasicParameters
+    {
+        public InsightA1Parameters(
+                DateTime refDate, EnumDeviceType deviceType, double currentValue, double avgValue)
+        {
+            super(refDate, deviceType, currentValue, avgValue);
+        }
+        
+        public int getDayOfWeek()
+        {
+            return refDate.getDayOfWeek();
+        }
+    }
+     
+    public static class InsightA2Parameters extends InsightBasicParameters
+    {
+        public InsightA2Parameters(
+                DateTime refDate, EnumDeviceType deviceType, double currentValue, double avgValue)
+        {
+            super(refDate, deviceType, currentValue, avgValue);
+        }
+    }
+    
     private final static int NumDeviceTypes = EnumDeviceType.values().length;
     
     private InsightA1Parameters[] insightA1 = new InsightA1Parameters[NumDeviceTypes];
+    
+    private InsightA2Parameters[] insightA2 = new InsightA2Parameters[NumDeviceTypes];
     
     //
     // ~ Getters/Setters
@@ -157,6 +182,16 @@ public class MessageResolutionStatus {
         insightA1[deviceType.ordinal()] = p;
     }
 
+    public InsightA2Parameters getInsightA2(EnumDeviceType deviceType)
+    {
+        return insightA2[deviceType.ordinal()];
+    }
+    
+    public void setInsightA2(EnumDeviceType deviceType, InsightA2Parameters p)
+    {
+        insightA2[deviceType.ordinal()] = p;
+    }
+    
     public boolean isMeterInstalled() {
 		return meterInstalled;
 	}

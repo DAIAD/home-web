@@ -14,8 +14,12 @@ public enum EnumDynamicRecommendationType {
     REDUCE_FLOW_WHEN_NOT_NEEDED(6),
     
     // Let insights begin at >= 1000 
+    
     INSIGHT_A1_DAYOFWEEK_CONSUMPTION_INCR(1000),
-    INSIGHT_A1_DAYOFWEEK_CONSUMPTION_DECR(1001);
+    INSIGHT_A1_DAYOFWEEK_CONSUMPTION_DECR(1001),
+    
+    INSIGHT_A2_DAILY_CONSUMPTION_INCR(1002),
+    INSIGHT_A2_DAILY_CONSUMPTION_DECR(1003);
     
     private final int value;
 
