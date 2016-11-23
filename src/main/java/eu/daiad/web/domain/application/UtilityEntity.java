@@ -8,6 +8,8 @@ import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -21,117 +23,167 @@ import org.apache.commons.net.util.Base64;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
+import eu.daiad.web.model.profile.EnumMobileMode;
+import eu.daiad.web.model.profile.EnumWebMode;
+
 @Entity(name = "utility")
 @Table(schema = "public", name = "utility")
 public class UtilityEntity {
 
-	@Id()
-	@Column(name = "id")
-	@SequenceGenerator(sequenceName = "utility_id_seq", name = "utility_id_seq", allocationSize = 1, initialValue = 1)
-	@GeneratedValue(generator = "utility_id_seq", strategy = GenerationType.SEQUENCE)
-	private int id;
+    @Id()
+    @Column(name = "id")
+    @SequenceGenerator(sequenceName = "utility_id_seq", name = "utility_id_seq", allocationSize = 1, initialValue = 1)
+    @GeneratedValue(generator = "utility_id_seq", strategy = GenerationType.SEQUENCE)
+    private int id;
 
-	@Column()
-	@Type(type = "pg-uuid")
-	private UUID key = UUID.randomUUID();
+    @Column()
+    @Type(type = "pg-uuid")
+    private UUID key = UUID.randomUUID();
 
-	@Basic
-	private String name;
+    @Basic
+    private String name;
 
-	@Basic
-	private String description;
+    @Basic
+    private String description;
 
-	@Column(name = "date_created")
-	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-	private DateTime createdOn = new DateTime();
+    @Column(name = "date_created")
+    @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+    private DateTime createdOn = new DateTime();
 
-	@Basic(fetch = FetchType.LAZY)
-	@Type(type = "org.hibernate.type.BinaryType")
-	private byte logo[];
+    @Basic(fetch = FetchType.LAZY)
+    @Type(type = "org.hibernate.type.BinaryType")
+    private byte logo[];
 
-	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
-	@JoinColumn(name = "utility_id")
-	private Set<AccountEntity> accounts = new HashSet<AccountEntity>();
+    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    @JoinColumn(name = "utility_id")
+    private Set<AccountEntity> accounts = new HashSet<AccountEntity>();
 
-	@Column(name = "default_admin_username", nullable = false, unique = true)
-	private String defaultAdministratorUsername;
+    @Column(name = "default_admin_username", nullable = false, unique = true)
+    private String defaultAdministratorUsername;
 
-	@Column(name = "locale", columnDefinition = "bpchar", length = 2)
-	private String locale;
+    @Column(name = "locale", columnDefinition = "bpchar", length = 2)
+    private String locale;
 
-	@Basic()
-	private String timezone;
+    @Basic()
+    private String timezone;
 
-	@Basic()
-	private String country;
+    @Basic()
+    private String country;
 
-	@Basic()
-	private String city;
+    @Basic()
+    private String city;
 
-	public int getId() {
-		return id;
-	}
+    @Column(name = "default_amphiro_mode")
+    private int defaultAmphiroB1Mode;
 
-	public String getName() {
-		return name;
-	}
+    @Column(name = "default_mobile_mode")
+    @Enumerated(EnumType.STRING)
+    private EnumMobileMode defaultMobileMode;
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    @Column(name = "default_web_mode")
+    @Enumerated(EnumType.STRING)
+    private EnumWebMode defaultWebMode;
 
-	public String getDescription() {
-		return description;
-	}
+    @Column(name = "default_social_mode")
+    private boolean defaultSocialEnabled;
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
+    public int getId() {
+        return id;
+    }
 
-	public Set<AccountEntity> getAccounts() {
-		return accounts;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public DateTime getCreatedOn() {
-		return createdOn;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public byte[] getLogo() {
-		return logo;
-	}
+    public String getDescription() {
+        return description;
+    }
 
-	public void setLogo(byte[] logo) {
-		this.logo = logo;
-	}
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-	public String logoToBase64() {
-		if (logo != null) {
-			return new String(Base64.encodeBase64(logo));
-		}
-		return "";
-	}
+    public Set<AccountEntity> getAccounts() {
+        return accounts;
+    }
 
-	public String getDefaultAdministratorUsername() {
-		return defaultAdministratorUsername;
-	}
+    public DateTime getCreatedOn() {
+        return createdOn;
+    }
 
-	public UUID getKey() {
-		return key;
-	}
+    public byte[] getLogo() {
+        return logo;
+    }
 
-	public String getLocale() {
-		return locale;
-	}
+    public void setLogo(byte[] logo) {
+        this.logo = logo;
+    }
 
-	public String getTimezone() {
-		return timezone;
-	}
+    public String logoToBase64() {
+        if (logo != null) {
+            return new String(Base64.encodeBase64(logo));
+        }
+        return "";
+    }
 
-	public String getCountry() {
-		return country;
-	}
+    public String getDefaultAdministratorUsername() {
+        return defaultAdministratorUsername;
+    }
 
-	public String getCity() {
-		return city;
-	}
+    public UUID getKey() {
+        return key;
+    }
+
+    public String getLocale() {
+        return locale;
+    }
+
+    public String getTimezone() {
+        return timezone;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public int getDefaultAmphiroB1Mode() {
+        return defaultAmphiroB1Mode;
+    }
+
+    public void setDefaultAmphiroB1Mode(int defaultAmphiroB1Mode) {
+        this.defaultAmphiroB1Mode = defaultAmphiroB1Mode;
+    }
+
+    public EnumMobileMode getDefaultMobileMode() {
+        return defaultMobileMode;
+    }
+
+    public void setDefaultMobileMode(EnumMobileMode defaultMobileMode) {
+        this.defaultMobileMode = defaultMobileMode;
+    }
+
+    public EnumWebMode getDefaultWebMode() {
+        return defaultWebMode;
+    }
+
+    public void setDefaultWebMode(EnumWebMode defaultWebMode) {
+        this.defaultWebMode = defaultWebMode;
+    }
+
+    public boolean isDefaultSocialEnabled() {
+        return defaultSocialEnabled;
+    }
+
+    public void setDefaultSocialEnabled(boolean defaultSocialEnabled) {
+        this.defaultSocialEnabled = defaultSocialEnabled;
+    }
+
 }

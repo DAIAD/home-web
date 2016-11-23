@@ -15,7 +15,6 @@ import javax.persistence.TypedQuery;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
-import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.security.core.Authentication;
@@ -25,9 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AccountProfileHistoryEntity;
-import eu.daiad.web.domain.application.DeviceAmphiroEntity;
 import eu.daiad.web.domain.application.DeviceAmphiroConfigurationEntity;
 import eu.daiad.web.domain.application.DeviceAmphiroDefaultConfigurationEntity;
+import eu.daiad.web.domain.application.DeviceAmphiroEntity;
 import eu.daiad.web.domain.application.HouseholdEntity;
 import eu.daiad.web.domain.application.HouseholdMemberEntity;
 import eu.daiad.web.domain.application.UtilityEntity;
@@ -172,8 +171,10 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             }
 
             // Initialize household
-            Household household = new Household(account.getHousehold());
-            profile.setHousehold(household);
+            if (account.getHousehold() != null) {
+                Household household = new Household(account.getHousehold());
+                profile.setHousehold(household);
+            }
 
             return profile;
         } catch (Exception ex) {
@@ -207,11 +208,12 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
         String queryString = "select    a " +
                              "from      account a join a.roles r " +
-                             "where     r.role.name = :userRole " +
+                             "where     a.utility.id in :utilities and r.role.name = :userRole " +
                              queryFilterPart +
                              "order by  a.lastname, a.username";
 
         userQuery = entityManager.createQuery(queryString, AccountEntity.class).setFirstResult(0);
+        userQuery.setParameter("utilities", user.getUtilities());
         userQuery.setParameter("userRole", RoleConstant.ROLE_USER);
 
         if (!StringUtils.isBlank(filters.getNameFilter())) {

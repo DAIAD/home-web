@@ -394,14 +394,24 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
 
             // Initialize user profile
             AccountProfileEntity profile = new AccountProfileEntity();
-            if (whiteListEntry != null) {
-                profile.setMobileMode(whiteListEntry.getDefaultMobileMode());
-                profile.setWebMode(whiteListEntry.getDefaultWebMode());
+
+            if (utility.getDefaultMobileMode() == EnumMobileMode.UNDEFINED) {
+                profile.setMobileMode(EnumMobileMode.INACTIVE.getValue());
             } else {
-                profile.setMobileMode(EnumMobileMode.ACTIVE.getValue());
-                profile.setWebMode(EnumWebMode.ACTIVE.getValue());
+                profile.setMobileMode(utility.getDefaultMobileMode().getValue());
             }
+
+            if (utility.getDefaultWebMode() == EnumWebMode.UNDEFINED) {
+                profile.setWebMode(EnumWebMode.INACTIVE.getValue());
+            } else {
+                profile.setWebMode(utility.getDefaultWebMode().getValue());
+            }
+
+            profile.setSocialEnabled(utility.isDefaultSocialEnabled());
+
+            // Always disable utility mode
             profile.setUtilityMode(EnumUtilityMode.INACTIVE.getValue());
+
             profile.setUpdatedOn(account.getCreatedOn());
 
             profile.setAccount(account);
@@ -414,6 +424,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             profileHistoryEntry.setMobileMode(profile.getMobileMode());
             profileHistoryEntry.setWebMode(profile.getWebMode());
             profileHistoryEntry.setUtilityMode(profile.getUtilityMode());
+            profileHistoryEntry.setSocialEnabled(profile.isSocialEnabled());
 
             profileHistoryEntry.setProfile(profile);
             entityManager.persist(profileHistoryEntry);
