@@ -1,0 +1,1 @@
+package eu.daiad.web.model.message.insights;

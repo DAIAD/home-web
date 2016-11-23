@@ -3,6 +3,7 @@ package eu.daiad.web.repository.application;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -31,9 +32,9 @@ import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.message.EnumAlertType;
 import eu.daiad.web.model.message.EnumDynamicRecommendationType;
+import eu.daiad.web.model.message.IMessageParameters;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.model.message.MessageResolutionStatus;
-import eu.daiad.web.model.message.MessageResolutionStatus.InsightA1Parameters;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.BaseRepository;
@@ -55,14 +56,11 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     }
 
     private void executeAccount(
-            MessageCalculationConfiguration config, ConsumptionStats aggregates,
+            MessageCalculationConfiguration config, ConsumptionStats stats,
             MessageResolutionStatus messageStatus, AccountEntity account) 
     {
-        computeAmphiroMessagesForUser(config, aggregates, messageStatus, account);
-        
-        computeMeterMessagesForUser(config, aggregates, messageStatus, account);
-        
-        computeStaticTipsForUser(config, messageStatus, account);
+        generateMessages(config, stats, messageStatus, account);    
+        generateStaticTips(config, messageStatus, account);
     }
 
     @Override
@@ -82,8 +80,37 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
 
         return lastCreatedOn;
     }
+    private void generateMessages(
+            MessageCalculationConfiguration config,
+            ConsumptionStats stats, MessageResolutionStatus messageStatus, AccountEntity account)
+    {
+        // Add messages common to all devices
+        
+        EnumDeviceType[] deviceTypes = new EnumDeviceType[] {
+                EnumDeviceType.METER, EnumDeviceType.AMPHIRO
+        };
+        
+        generateMessagesFor(config, deviceTypes, stats, messageStatus, account); 
+        
+        // Add AMPHIRO-only messages
+        
+        generateMessagesForAmphiro(config, stats, messageStatus, account);
+        
+        // Add METER-only messages
+        
+        generateMessagesForMeter(config, stats, messageStatus, account);
+        
+        return;
+    }
 
-    private void computeAmphiroMessagesForUser(
+    private void generateMessagesFor(
+            MessageCalculationConfiguration config, EnumDeviceType[] deviceTypes, 
+            ConsumptionStats stats, MessageResolutionStatus messageStatus, AccountEntity account)
+    {          
+        generateInsights(config, messageStatus, account);
+    }
+
+    private void generateMessagesForAmphiro(
             MessageCalculationConfiguration config,
             ConsumptionStats stats, MessageResolutionStatus messageStatus, AccountEntity account)
     {
@@ -107,12 +134,9 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
         recommendShowerHeadChangeAmphiro(config, stats, messageStatus, account);
         recommendShampooAmphiro(config, stats, messageStatus, account);
         //recommendReduceFlowWhenNotNeededAmphiro(account); //inactive, mobile only.
-        
-        insightA1(config, EnumDeviceType.AMPHIRO, messageStatus, account);
-        
     }
 
-    private void computeMeterMessagesForUser(
+    private void generateMessagesForMeter(
             MessageCalculationConfiguration config, ConsumptionStats stats, 
             MessageResolutionStatus messageStatus, AccountEntity account) 
     {
@@ -139,8 +163,6 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
         // alertLitresSavedSWM(config, status, account); //inactive prompt
         // alertTop25SaverSWM(config, aggregates, status, account); //inactive
         // alertTop10SaverSWM(config, aggregates, status, account); //inactive
-        
-        insightA1(config, EnumDeviceType.METER, messageStatus, account);
     }
 
     private AlertEntity getAlertByType(EnumAlertType type) 
@@ -235,7 +257,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     }
 
     // random static tip
-    private void computeStaticTipsForUser(
+    private void generateStaticTips(
             MessageCalculationConfiguration config, MessageResolutionStatus status, AccountEntity account) 
     {    
         if (status.isInitialStaticTips()) {
@@ -912,39 +934,22 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
         return resultsList.size() > 3;
     }      
 
-    private void insightA1(
+    private void generateInsights(
             MessageCalculationConfiguration config,
-            EnumDeviceType deviceType, MessageResolutionStatus status, AccountEntity account)
+            MessageResolutionStatus messageStatus, AccountEntity account)
     {
-        InsightA1Parameters insight = status.getInsightA1(deviceType);
-        if (insight == null)
-            return;
-        
-        double percentChange = insight.getPercentChange();
-        
-        DynamicRecommendationEntity recommendation = getDynamicRecommendationByType(
-                (percentChange > 0)? 
-                        EnumDynamicRecommendationType.INSIGHT_A1_DAYOFWEEK_CONSUMPTION_INCR:
-                        EnumDynamicRecommendationType.INSIGHT_A1_DAYOFWEEK_CONSUMPTION_DECR
-        );
-        AccountDynamicRecommendationEntity accountRecommendation = 
+        for (IMessageParameters m: messageStatus.getInsights()) {
+            DynamicRecommendationEntity recommendation = 
+                    getDynamicRecommendationByType(m.getType());
+            
+            AccountDynamicRecommendationEntity accountRecommendation = 
                 createAccountDynamicRecommendation(account, recommendation, DateTime.now());
-
-        setAccountDynamicRecommendationProperty(
-                accountRecommendation, "day_of_week", 
-                Integer.toString(insight.getDayOfWeek()));
-        setAccountDynamicRecommendationProperty(
-                accountRecommendation, "consumption",
-                String.format("%.1f", insight.getCurrentValue()));
-        setAccountDynamicRecommendationProperty(
-                accountRecommendation, "average_consumption",
-                String.format("%.1f", insight.getAvgValue()));
-        setAccountDynamicRecommendationProperty(
-                accountRecommendation, "device_type",
-                insight.getDeviceType().name());
-        setAccountDynamicRecommendationProperty(
-                accountRecommendation, "percent_change",
-                String.format("%d", (int) percentChange));
+            
+            for (Map.Entry<String, Object> p: m.asParameters().entrySet()) {
+                setAccountDynamicRecommendationProperty(
+                        accountRecommendation, p.getKey(), String.valueOf(p.getValue()));
+            }   
+        }
     }
     
     //

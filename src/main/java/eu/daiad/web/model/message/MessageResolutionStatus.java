@@ -1,8 +1,11 @@
 package eu.daiad.web.model.message;
 
 import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
 
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -87,57 +90,12 @@ public class MessageResolutionStatus {
     private boolean meterInstalled;
 
     private boolean amphiroInstalled;
-
-    public static class InsightA1Parameters
-    {        
-        // chosen from DateTimeConstants
-        private final int dayOfWeek;
-        
-        private final EnumDeviceType deviceType;
-        
-        private final double currentValue;
-        
-        // The average of past values 
-        private final double avgValue;
-        
-        public int getDayOfWeek()
-        {
-            return dayOfWeek;
-        }
-        
-        public EnumDeviceType getDeviceType()
-        {
-            return deviceType;
-        }
-
-        public double getCurrentValue()
-        {
-            return currentValue;
-        }
-
-        public double getAvgValue()
-        {
-            return avgValue;
-        }
-
-        public InsightA1Parameters(
-                int dayOfWeek, EnumDeviceType deviceType, double currentValue, double avgValue)
-        {
-            this.dayOfWeek = dayOfWeek;
-            this.deviceType = deviceType;
-            this.avgValue = avgValue;
-            this.currentValue = currentValue;
-        }
-        
-        public double getPercentChange()
-        {
-            return ((currentValue - avgValue) / avgValue) * 100.0;
-        }
-    }
-    
+           
     private final static int NumDeviceTypes = EnumDeviceType.values().length;
     
-    private InsightA1Parameters[] insightA1 = new InsightA1Parameters[NumDeviceTypes];
+    private final static int NumPartsOfDay = EnumPartOfDay.values().length;
+    
+    private List<IMessageParameters> insights = new ArrayList<>();
     
     //
     // ~ Getters/Setters
@@ -147,16 +105,22 @@ public class MessageResolutionStatus {
         return initialStaticTips;
     }
         
-    public InsightA1Parameters getInsightA1(EnumDeviceType deviceType)
+    public List<IMessageParameters> getInsights()
     {
-        return insightA1[deviceType.ordinal()];
+        return insights;
+    }
+        
+    public <P extends InsightBasicParameters> void addInsight(P p)
+    {
+        if (p != null) 
+            insights.add(p);
     }
     
-    public void setInsightA1(EnumDeviceType deviceType, InsightA1Parameters p)
+    public void clearInsights()
     {
-        insightA1[deviceType.ordinal()] = p;
+        insights.clear();
     }
-
+        
     public boolean isMeterInstalled() {
 		return meterInstalled;
 	}
