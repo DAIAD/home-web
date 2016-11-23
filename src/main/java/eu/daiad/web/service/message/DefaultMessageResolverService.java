@@ -19,8 +19,12 @@ import org.joda.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import eu.daiad.web.model.message.EnumPartOfDay;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.model.message.MessageResolutionStatus;
+import eu.daiad.web.model.message.insights.InsightA1Parameters;
+import eu.daiad.web.model.message.insights.InsightA2Parameters;
+import eu.daiad.web.model.message.insights.InsightA3Parameters;
 import eu.daiad.web.model.query.AmphiroDataPoint;
 import eu.daiad.web.model.query.DataPoint;
 import eu.daiad.web.model.query.DataQuery;
@@ -84,6 +88,10 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DateTimeZone tz = DateTimeZone.forID(utility.getTimezone());
         DateTime refDate = config.getRefDate().toDateTime(tz);
+
+        EnumDeviceType[] deviceTypes = new EnumDeviceType[] {
+                EnumDeviceType.AMPHIRO, EnumDeviceType.METER
+        };
         
         MessageResolutionStatus status = new MessageResolutionStatus();
 
@@ -185,26 +193,23 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         // Insight A.1
         
-        status.setInsightA1(
-                EnumDeviceType.METER,
-                this.computeInsightA1(config, EnumDeviceType.METER, accountKey, refDate));
-        
-        status.setInsightA1(
-                EnumDeviceType.AMPHIRO,
-                this.computeInsightA1(config, EnumDeviceType.AMPHIRO, accountKey, refDate));
+        for (EnumDeviceType deviceType: deviceTypes)
+            status.addInsight(computeInsightA1(deviceType, accountKey, refDate));
         
         // Insight A.2
         
-        status.setInsightA2(
-                EnumDeviceType.METER,
-                this.computeInsightA2(config, EnumDeviceType.METER, accountKey, refDate));
-        
-        status.setInsightA2(
-                EnumDeviceType.AMPHIRO,
-                this.computeInsightA2(config, EnumDeviceType.AMPHIRO, accountKey, refDate));
+        for (EnumDeviceType deviceType: deviceTypes)
+            status.addInsight(computeInsightA2(deviceType, accountKey, refDate));
         
         // Insight A.3
         
+        for (EnumDeviceType deviceType: deviceTypes)
+            for (EnumPartOfDay partOfDay: EnumPartOfDay.values())
+                status.addInsight(
+                    computeInsightA3(deviceType, accountKey, refDate, partOfDay)
+                );
+        
+       // Insight A.3
         
         return status;
     }
@@ -1458,8 +1463,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
         return maxLength;
     }
      
-    private MessageResolutionStatus.InsightA1Parameters computeInsightA1(
-            MessageCalculationConfiguration config, EnumDeviceType device, UUID accountKey, DateTime refDate)
+    private InsightA1Parameters computeInsightA1(
+            EnumDeviceType device, UUID accountKey, DateTime refDate)
     {
         final double K = 1.28;  // a threshold (in units of standard deviation) of significant change
         final int N = 12;       // number of past weeks to examine
@@ -1509,12 +1514,12 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         // Decide if significant   
         if (Math.abs(refValue - avgValue) >= K * sd)
-            return new MessageResolutionStatus.InsightA1Parameters(refDate, device, refValue, avgValue);
+            return new InsightA1Parameters(refDate, device, refValue, avgValue);
         return null;
     }
     
-    private MessageResolutionStatus.InsightA2Parameters computeInsightA2(
-            MessageCalculationConfiguration config, EnumDeviceType device, UUID accountKey, DateTime refDate)
+    private InsightA2Parameters computeInsightA2(
+            EnumDeviceType device, UUID accountKey, DateTime refDate)
     {
         final double K = 1.28;  // a threshold (in units of standard deviation) of significant change
         final int N = 30;       // number of past days to examine
@@ -1564,7 +1569,14 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         // Decide if significant
         if (Math.abs(refValue - avgValue) >= K * sd)
-            return new MessageResolutionStatus.InsightA2Parameters(refDate, device, refValue, avgValue);
+            return new InsightA2Parameters(refDate, device, refValue, avgValue);
+        return null;
+    }
+    
+    private InsightA3Parameters computeInsightA3(
+            EnumDeviceType device, UUID accountKey, DateTime refDate, EnumPartOfDay partOfDay)
+    {
+        // Todo
         return null;
     }
 }
