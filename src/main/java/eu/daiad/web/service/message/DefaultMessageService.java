@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.model.ConsumptionStats;
-import eu.daiad.web.model.message.MessageResolutionStatus;
+import eu.daiad.web.model.message.MessageResolutionPerAccountStatus;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IMessageManagementRepository;
@@ -49,7 +49,7 @@ public class DefaultMessageService implements IMessageService {
 	public void executeAll(MessageCalculationConfiguration config) 
 	{
 	    List<UtilityInfo> utilities = utilityRepository.getUtilities();	    
-	    for (UtilityInfo utility: utilities) {
+	    for (UtilityInfo utility: utilities.subList(0, 1)) { // Fixme
 			logger.info("About to generate messages for utility " + utility.getName() + "...");
 	        executeUtility(config, utility.getKey());
 		}
@@ -84,7 +84,7 @@ public class DefaultMessageService implements IMessageService {
 	private void executeAccount(
 	        MessageCalculationConfiguration config, UtilityInfo utility, ConsumptionStats stats, UUID accountKey) 
 	{
-		MessageResolutionStatus messageStatus = messageResolver.resolve(config, utility, stats, accountKey);
+		MessageResolutionPerAccountStatus messageStatus = messageResolver.resolve(config, utility, stats, accountKey);
 		messageManagementRepository.executeAccount(config, stats, messageStatus, accountKey);
 	}
 

@@ -1,10 +1,34 @@
 package eu.daiad.web.model.message;
 
-public class Alert extends Message {
+import org.joda.time.DateTime;
 
-	private int id;
+import eu.daiad.web.model.device.EnumDeviceType;
+import eu.daiad.web.model.message.DynamicRecommendation.Parameters;
 
-	private EnumAlertType alert;
+public class Alert extends Message 
+{
+    public interface Parameters extends Message.Parameters
+    {
+        public EnumAlertType getType();
+    }
+    
+    public abstract static class AbstractParameters extends Message.AbstractParameters implements Parameters
+    {
+        protected AbstractParameters(DateTime refDate, EnumDeviceType deviceType)
+        {
+            super(refDate, deviceType);
+        }
+
+        @Override
+        public EnumAlertType getType()
+        {
+            return EnumAlertType.UNDEFINED;
+        }
+    }
+    
+    private final int id;
+
+	private EnumAlertType alertType;
 
 	private int priority;
 
@@ -15,11 +39,13 @@ public class Alert extends Message {
 	private String imageLink;
 
 	private Long createdOn;
-    
-    private int receiversCount;
+	
+	private Long acknowledgedOn;
 
-	public Alert(EnumAlertType alert) {
-		this.alert = alert;
+	public Alert(EnumAlertType alertType, int id) 
+	{
+		this.alertType = alertType;
+		this.id = id;
 	}
 
 	@Override
@@ -67,24 +93,15 @@ public class Alert extends Message {
 		this.imageLink = imageLink;
 	}
 
-	public EnumAlertType getAlert() {
-		return alert;
+	public EnumAlertType getAlertType() {
+		return alertType;
+	}
+	
+	public Long getAcknowledgedOn() {
+	    return acknowledgedOn;
 	}
 
-	public int getId() {
-		return id;
+	public void setAcknowledgedOn(Long acknowledgedOn) {
+	    this.acknowledgedOn = acknowledgedOn;
 	}
-
-	public void setId(int id) {
-		this.id = id;
-	}
-
-    public int getReceiversCount() {
-        return receiversCount;
-    }
-
-    public void setReceiversCount(int receiversCount) {
-        this.receiversCount = receiversCount;
-    }
-
 }

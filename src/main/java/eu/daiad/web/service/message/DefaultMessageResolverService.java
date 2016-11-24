@@ -20,11 +20,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import eu.daiad.web.model.message.EnumPartOfDay;
+import eu.daiad.web.model.message.Insight;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
-import eu.daiad.web.model.message.MessageResolutionStatus;
-import eu.daiad.web.model.message.insights.InsightA1Parameters;
-import eu.daiad.web.model.message.insights.InsightA2Parameters;
-import eu.daiad.web.model.message.insights.InsightA3Parameters;
+import eu.daiad.web.model.message.MessageResolutionPerAccountStatus;
 import eu.daiad.web.model.query.AmphiroDataPoint;
 import eu.daiad.web.model.query.DataPoint;
 import eu.daiad.web.model.query.DataQuery;
@@ -81,8 +79,9 @@ public class DefaultMessageResolverService implements IMessageResolverService
     private static final Integer AMPHIRO_DURATION_THRESHOLD_IN_MINUTES = 30;
     
     @Override
-    public MessageResolutionStatus resolve(
-            MessageCalculationConfiguration config, UtilityInfo utility, ConsumptionStats stats, UUID accountKey) 
+    public MessageResolutionPerAccountStatus resolve(
+            MessageCalculationConfiguration config,
+            UtilityInfo utility, ConsumptionStats stats, UUID accountKey) 
     {      
         AuthenticatedUser account = this.userRepository.getUserByKey(accountKey);
         
@@ -93,7 +92,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 EnumDeviceType.AMPHIRO, EnumDeviceType.METER
         };
         
-        MessageResolutionStatus status = new MessageResolutionStatus();
+        MessageResolutionPerAccountStatus status = new MessageResolutionPerAccountStatus(accountKey);
 
         status.setMeterInstalled(
                 this.isMeterInstalledForUser(accountKey));
@@ -215,25 +214,17 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
         
     //random three initial static tips
-    private boolean initialStaticTipsForAccount(AuthenticatedUser user) {                        
-        boolean initialStaticTips = false;            
+    private boolean initialStaticTipsForAccount(AuthenticatedUser user) 
+    {  
         DateTime lastCreatedOn = messageManagementRepository.getLastDateOfAccountStaticRecommendation(user);
-
-        if(lastCreatedOn == null ){
-            initialStaticTips = true;
-        }
-        return initialStaticTips;
+        return (lastCreatedOn == null);
     }
         
     //random static tip
-    private boolean produceStaticTipForAccount(AuthenticatedUser user, int staticTipInterval) {                        
-        boolean produceStaticTip = false;            
+    private boolean produceStaticTipForAccount(AuthenticatedUser user, int staticTipInterval) 
+    {
         DateTime lastCreatedOn = messageManagementRepository.getLastDateOfAccountStaticRecommendation(user);
-
-        if(lastCreatedOn == null || lastCreatedOn.isBefore(DateTime.now().minusDays(staticTipInterval))){
-            produceStaticTip = true;
-        }
-        return produceStaticTip;
+        return (lastCreatedOn == null || lastCreatedOn.isBefore(DateTime.now().minusDays(staticTipInterval)));
     }
         
     // 1 alert - Check for water leaks!
@@ -365,30 +356,25 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .user("user", accountKey).sum();
         DataQuery query = dataQueryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
-        if(queryResponse.getMeters().isEmpty()){
+        if(queryResponse.getMeters().isEmpty())
             return null;
-        }
                 
         GroupDataSeries dataSeriesMeter = queryResponse.getMeters().get(0);
         ArrayList<DataPoint> dataPoints = dataSeriesMeter.getPoints();
-        if (dataPoints == null || dataPoints.isEmpty()) {
+        if (dataPoints == null || dataPoints.isEmpty())
             return null;
-        }
+
         DataPoint dataPoint = dataPoints.get(0);
         MeterDataPoint meterPoint = (MeterDataPoint) dataPoint;
         Double lastDaySum = meterPoint.getVolume().get(EnumMetric.SUM);
 
         double percentUsed = ((100 * lastDaySum) / config.getDailyBudget());
         if (percentUsed > 80) {
-            
             Double remainingLitres;
-            if(lastDaySum > config.getDailyBudget()){
+            if(lastDaySum > config.getDailyBudget())
                 remainingLitres = 0.0;
-            }
-            else{
+            else
                 remainingLitres = config.getDailyBudget() - lastDaySum;
-            }
-            
             return new SimpleEntry<>(lastDaySum.intValue(), remainingLitres.intValue());
         } else {
             return null;
@@ -1463,7 +1449,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         return maxLength;
     }
      
-    private InsightA1Parameters computeInsightA1(
+    private Insight.BasicParameters computeInsightA1(
             EnumDeviceType device, UUID accountKey, DateTime refDate)
     {
         final double K = 1.28;  // a threshold (in units of standard deviation) of significant change
@@ -1505,20 +1491,20 @@ public class DefaultMessageResolverService implements IMessageResolverService
         double[] pvalues = ArrayUtils.toPrimitive(values.toArray(new Double[0]));
         double avgValue = mean(pvalues); 
         double sd = Math.sqrt(populationVariance(pvalues, avgValue));
-       
+        double normValue = (refValue - avgValue) / sd; // normalized value
+        
         logger.debug(String.format(
                 "Insight A1 for account %s/%s: Consumption for same week day of last %d weeks since %s:\n\t" + 
                     "value=%.2f mean=%.2f stddevp=%.2f x*=%.2f", 
-                accountKey, device, N, refDate.toString("dd/MM/YYYY"), 
-                refValue, avgValue, sd, (refValue - avgValue)/sd));
+                accountKey, device, N, refDate.toString("dd/MM/YYYY"), refValue, avgValue, sd, normValue));
         
         // Decide if significant   
-        if (Math.abs(refValue - avgValue) >= K * sd)
-            return new InsightA1Parameters(refDate, device, refValue, avgValue);
+        if (Math.abs(normValue) > K)
+            return Insight.newA1Parameters(refDate, device, refValue, avgValue);
         return null;
     }
     
-    private InsightA2Parameters computeInsightA2(
+    private Insight.BasicParameters computeInsightA2(
             EnumDeviceType device, UUID accountKey, DateTime refDate)
     {
         final double K = 1.28;  // a threshold (in units of standard deviation) of significant change
@@ -1560,20 +1546,20 @@ public class DefaultMessageResolverService implements IMessageResolverService
         double[] pvalues = ArrayUtils.toPrimitive(values.toArray(new Double[0]));
         double avgValue = mean(pvalues); 
         double sd = Math.sqrt(populationVariance(pvalues, avgValue));
-       
+        double normValue = (refValue - avgValue) / sd; // normalized value
+        
         logger.debug(String.format(
                 "Insight A2 for account %s/%s: Consumption for last %d days since %s:\n\t" + 
                     "value=%.2f mean=%.2f stddevp=%.2f x*=%.2f", 
-                accountKey, device, N, refDate.toString("dd/MM/YYYY"), 
-                refValue, avgValue, sd, (refValue - avgValue)/sd));
+                accountKey, device, N, refDate.toString("dd/MM/YYYY"), refValue, avgValue, sd, normValue));
         
         // Decide if significant
-        if (Math.abs(refValue - avgValue) >= K * sd)
-            return new InsightA2Parameters(refDate, device, refValue, avgValue);
+        if (Math.abs(normValue) > K)
+            return Insight.newA2Parameters(refDate, device, refValue, avgValue);
         return null;
     }
     
-    private InsightA3Parameters computeInsightA3(
+    private Insight.BasicParameters computeInsightA3(
             EnumDeviceType device, UUID accountKey, DateTime refDate, EnumPartOfDay partOfDay)
     {
         // Todo

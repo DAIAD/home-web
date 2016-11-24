@@ -1,10 +1,7 @@
 package eu.daiad.web.model.message;
 
-import java.util.Map;
-
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
-import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 
 public class MessageCalculationConfiguration 

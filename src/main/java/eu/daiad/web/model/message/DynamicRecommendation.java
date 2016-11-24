@@ -1,10 +1,38 @@
 package eu.daiad.web.model.message;
 
-public class DynamicRecommendation extends Message {
+import java.util.Formattable;
+import java.util.HashMap;
+import java.util.Map;
 
-	private int id;
+import org.joda.time.DateTime;
 
-	private EnumDynamicRecommendationType recommendation;
+import eu.daiad.web.model.DateFormatter;
+import eu.daiad.web.model.device.EnumDeviceType;
+
+public class DynamicRecommendation extends Message 
+{
+    public interface Parameters extends Message.Parameters
+    {
+        public EnumDynamicRecommendationType getType();
+    }
+    
+    public abstract static class AbstractParameters extends Message.AbstractParameters implements Parameters
+    {
+        protected AbstractParameters(DateTime refDate, EnumDeviceType deviceType)
+        {
+            super(refDate, deviceType);
+        }
+
+        @Override
+        public EnumDynamicRecommendationType getType()
+        {
+            return EnumDynamicRecommendationType.UNDEFINED;
+        }
+    }
+    
+    private final int id;
+
+	private EnumDynamicRecommendationType recommendationType;
 
 	private int priority;
 
@@ -15,11 +43,13 @@ public class DynamicRecommendation extends Message {
 	private String imageLink;
 
 	private Long createdOn;
-    
-    private int receiversCount;
 
-	public DynamicRecommendation(EnumDynamicRecommendationType recommendation) {
-		this.recommendation = recommendation;
+    private Long acknowledgedOn;
+	
+	public DynamicRecommendation(EnumDynamicRecommendationType recommendationType, int id) 
+	{
+		this.recommendationType = recommendationType;
+		this.id = id;
 	}
 
 	@Override
@@ -67,24 +97,15 @@ public class DynamicRecommendation extends Message {
 		this.imageLink = imageLink;
 	}
 
-	public EnumDynamicRecommendationType getRecommendation() {
-		return recommendation;
+	public EnumDynamicRecommendationType getRecommendationType() {
+		return recommendationType;
 	}
-
-	public int getId() {
-		return id;
-	}
-
-	public void setId(int id) {
-		this.id = id;
-	}
-
-    public int getReceiversCount() {
-        return receiversCount;
+	
+    public Long getAcknowledgedOn() {
+        return acknowledgedOn;
     }
 
-    public void setReceiversCount(int receiversCount) {
-        this.receiversCount = receiversCount;
+    public void setAcknowledgedOn(Long acknowledgedOn) {
+        this.acknowledgedOn = acknowledgedOn;
     }
-
 }
