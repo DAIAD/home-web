@@ -16,7 +16,6 @@ import eu.daiad.web.model.ConsumptionStats;
 import eu.daiad.web.model.message.MessageResolutionPerAccountStatus;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IGroupRepository;
-import eu.daiad.web.repository.application.IMessageManagementRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IUtilityRepository;
 import eu.daiad.web.service.IConsumptionStatsService;
@@ -36,7 +35,7 @@ public class DefaultMessageService implements IMessageService {
 	IGroupRepository groupRepository;
 
 	@Autowired
-	IMessageManagementRepository messageManagementRepository;
+	IMessageManagementService messageManagementRepository;
 
 	@Autowired
 	@Qualifier("cachingConsumptionStatsService")

@@ -20,9 +20,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import eu.daiad.web.model.ComputedNumber;
 import eu.daiad.web.model.ConsumptionStats;
 import eu.daiad.web.model.utility.UtilityInfo;
-import eu.daiad.web.service.message.aggregates.ComputedNumber;
 
 @Repository
 @Transactional("applicationTransactionManager")

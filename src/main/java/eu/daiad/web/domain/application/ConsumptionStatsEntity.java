@@ -20,10 +20,10 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 import org.springframework.data.util.Pair;
 
+import eu.daiad.web.model.ComputedNumber;
 import eu.daiad.web.model.ConsumptionStats.EnumStatistic;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.query.EnumDataField;
-import eu.daiad.web.service.message.aggregates.ComputedNumber;
 
 @Entity(name = "consumption_stats")
 @Table(schema = "public", name = "consumption_stats",

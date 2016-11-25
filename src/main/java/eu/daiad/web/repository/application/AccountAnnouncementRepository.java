@@ -7,12 +7,15 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
+import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.domain.application.AccountAlertEntity;
 import eu.daiad.web.domain.application.AccountAnnouncementEntity;
+import eu.daiad.web.domain.application.AccountEntity;
+import eu.daiad.web.domain.application.AnnouncementEntity;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository 
@@ -106,4 +109,36 @@ public class AccountAnnouncementRepository extends BaseRepository
         return query.getResultList();
     }
 
+    @Override
+    public AccountAnnouncementEntity create(AccountAnnouncementEntity e)
+    {
+        e.setCreatedOn(DateTime.now());
+        entityManager.persist(e);
+        return e;
+    }
+
+    @Override
+    public AccountAnnouncementEntity createWith(AccountEntity account, int announcementType)
+    {
+        AnnouncementEntity announcement = 
+            entityManager.find(AnnouncementEntity.class, announcementType);
+        AccountAnnouncementEntity e = 
+            new AccountAnnouncementEntity(account, announcement);
+        return create(e);
+    }
+
+    @Override
+    public void delete(int id)
+    {
+        AccountAnnouncementEntity e = 
+            entityManager.find(AccountAnnouncementEntity.class, id);
+        if (e != null) 
+            delete(e);
+    }
+
+    @Override
+    public void delete(AccountAnnouncementEntity e)
+    {
+        entityManager.remove(e);
+    }
 }

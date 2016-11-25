@@ -40,11 +40,10 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IAccountStaticRecommendationRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
-import eu.daiad.web.repository.application.IMessageManagementRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IDataService;
-import eu.daiad.web.service.message.aggregates.ComputedNumber;
 import eu.daiad.web.domain.application.AccountStaticRecommendationEntity;
+import eu.daiad.web.model.ComputedNumber;
 import eu.daiad.web.model.ConsumptionStats;
 import eu.daiad.web.model.ConsumptionStats.EnumStatistic;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
@@ -73,10 +72,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     IUserRepository userRepository;
     
     @Autowired
-    IAccountStaticRecommendationRepository staticRecommendationRepository;
-    
-    @Autowired
-    IMessageManagementRepository messageManagementRepository;
+    IAccountStaticRecommendationRepository accountStaticRecommendationRepository;
         
     @Autowired 
     IDeviceRepository deviceRepository;      
@@ -86,10 +82,10 @@ public class DefaultMessageResolverService implements IMessageResolverService
     
     @Override
     public MessageResolutionPerAccountStatus resolve(
-            MessageCalculationConfiguration config,
-            UtilityInfo utility, ConsumptionStats stats, UUID accountKey) 
+        MessageCalculationConfiguration config, 
+        UtilityInfo utility, ConsumptionStats stats, UUID accountKey) 
     {      
-        AuthenticatedUser account = this.userRepository.getUserByKey(accountKey);
+        AuthenticatedUser account = userRepository.getUserByKey(accountKey);
         
         DateTimeZone tz = DateTimeZone.forID(utility.getTimezone());
         DateTime refDate = config.getRefDate().toDateTime(tz);
@@ -221,7 +217,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     
     private DateTime getLastDateOfStaticRecommendation(UUID accountKey) 
     {
-        AccountStaticRecommendationEntity e = staticRecommendationRepository
+        AccountStaticRecommendationEntity e = accountStaticRecommendationRepository
             .findLastForAccount(accountKey);
         return (e == null)? null : e.getCreatedOn();
     }
@@ -515,18 +511,17 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
 
     // 11 alert - Reached daily Water Budget {integer1}
-    public Entry<Boolean, Integer> alertReachedDailyBudgetSWM(MessageCalculationConfiguration config, UUID accountKey,
-                    DateTimeZone timezone) {
-
+    public Entry<Boolean, Integer> alertReachedDailyBudgetSWM(
+        MessageCalculationConfiguration config, UUID accountKey, DateTimeZone timezone) 
+    {
         DataQueryBuilder dataQueryBuilder = new DataQueryBuilder();
         dataQueryBuilder.timezone(timezone).sliding(-1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL).meter()
                         .user("user", accountKey).sum();
         DataQuery query = dataQueryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
 
-        if(queryResponse.getMeters().isEmpty()){
+        if(queryResponse.getMeters().isEmpty())
             return null;
-        }
                 
         GroupDataSeries dataSeriesMeter = queryResponse.getMeters().get(0);
         ArrayList<DataPoint> dataPoints = dataSeriesMeter.getPoints();
@@ -729,8 +724,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
     // TODO : Fix bug - returning false positive with 0 energy consumption
 
     // 17 alert - You are spending too much energy for showering {integer1} {currency}
-    public SimpleEntry<Boolean, Double> alertTooMuchEnergyAmphiro(ConsumptionStats aggregates,
-                    UUID accountKey, DateTimeZone timezone) 
+    public SimpleEntry<Boolean, Double> alertTooMuchEnergyAmphiro(
+        ConsumptionStats aggregates, UUID accountKey, DateTimeZone timezone) 
     {       
         boolean fireAlert = true;
         double monthlyShowerConsumption = 0;

@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
 
+import eu.daiad.web.model.ComputedNumber;
 import eu.daiad.web.model.ConsumptionStats;
 import eu.daiad.web.model.ConsumptionStats.EnumStatistic;
 import eu.daiad.web.model.query.AmphiroDataPoint;
@@ -29,8 +30,7 @@ import eu.daiad.web.model.query.MeterDataPoint;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IUserRepository;
-import eu.daiad.web.service.message.aggregates.ComputedNumber;
- 
+
 import static eu.daiad.web.model.device.EnumDeviceType.AMPHIRO;
 import static eu.daiad.web.model.device.EnumDeviceType.METER;
 import static eu.daiad.web.model.query.EnumDataField.VOLUME;

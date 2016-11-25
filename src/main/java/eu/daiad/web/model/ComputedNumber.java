@@ -1,4 +1,4 @@
-package eu.daiad.web.service.message.aggregates;
+package eu.daiad.web.model;
 
 import org.joda.time.DateTime;
 

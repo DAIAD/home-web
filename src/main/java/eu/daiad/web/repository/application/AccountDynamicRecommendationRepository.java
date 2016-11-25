@@ -1,18 +1,22 @@
 package eu.daiad.web.repository.application;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
+import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.repository.BaseRepository;
 import eu.daiad.web.domain.application.AccountDynamicRecommendationEntity;
+import eu.daiad.web.domain.application.AccountEntity;
+import eu.daiad.web.domain.application.DynamicRecommendationEntity;
 import eu.daiad.web.model.message.EnumDynamicRecommendationType;
 
 @Repository 
@@ -107,6 +111,40 @@ public class AccountDynamicRecommendationRepository extends BaseRepository
     public AccountDynamicRecommendationEntity findOne(int id)
     {
         return entityManager.find(AccountDynamicRecommendationEntity.class, id);
+    }
+
+    @Override
+    public AccountDynamicRecommendationEntity create(AccountDynamicRecommendationEntity e)
+    {
+        e.setCreatedOn(DateTime.now());
+        entityManager.persist(e);
+        return e;
+    }
+
+    @Override
+    public AccountDynamicRecommendationEntity createWith(
+        AccountEntity account, EnumDynamicRecommendationType recommendationType, Map<String, Object> p)
+    {
+        DynamicRecommendationEntity recommendation = 
+            entityManager.find(DynamicRecommendationEntity.class, recommendationType.getValue());
+        AccountDynamicRecommendationEntity e = 
+            new AccountDynamicRecommendationEntity(account, recommendation, p);
+        return create(e);
+    }
+
+    @Override
+    public void delete(int id)
+    {
+        AccountDynamicRecommendationEntity e = 
+            entityManager.find(AccountDynamicRecommendationEntity.class, id);
+        if (e != null)
+            delete(e);
+    }
+
+    @Override
+    public void delete(AccountDynamicRecommendationEntity e)
+    {
+        entityManager.remove(e);
     }
 
 }

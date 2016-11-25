@@ -41,7 +41,18 @@ public class AccountAnnouncementEntity {
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime acknowledgedOn;
 
-	public AccountEntity getAccount() {
+	public AccountAnnouncementEntity()
+	{
+	    // no-op
+	}
+	
+	public AccountAnnouncementEntity(AccountEntity account, AnnouncementEntity announcement)
+    {
+        this.account = account;
+        this.announcement = announcement;
+    }
+
+    public AccountEntity getAccount() {
 		return account;
 	}
 

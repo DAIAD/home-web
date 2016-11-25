@@ -8,11 +8,14 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
+import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AccountStaticRecommendationEntity;
+import eu.daiad.web.domain.application.StaticRecommendationEntity;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository 
@@ -125,5 +128,38 @@ public class AccountStaticRecommendationRepository extends BaseRepository
         }
         
         return e;
+    }
+
+    @Override
+    public AccountStaticRecommendationEntity create(AccountStaticRecommendationEntity e)
+    {
+        e.setCreatedOn(DateTime.now());
+        entityManager.persist(e);
+        return e;
+    }
+
+    @Override
+    public AccountStaticRecommendationEntity createWith(AccountEntity account, int recommendationType)
+    {
+        StaticRecommendationEntity recommendation = 
+            entityManager.find(StaticRecommendationEntity.class, recommendationType);
+        AccountStaticRecommendationEntity e = 
+            new AccountStaticRecommendationEntity(account, recommendation);
+        return create(e);
+    }
+
+    @Override
+    public void delete(int id)
+    {
+        AccountStaticRecommendationEntity e = 
+            entityManager.find(AccountStaticRecommendationEntity.class, id);
+        if (e != null) 
+            delete(e);
+    }
+
+    @Override
+    public void delete(AccountStaticRecommendationEntity e)
+    {
+        entityManager.remove(e);
     }
 }
