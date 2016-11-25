@@ -1,6 +1,7 @@
 package eu.daiad.web.domain.application;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -92,6 +93,14 @@ public class AccountAlertEntity {
 	public Set<AccountAlertPropertyEntity> getProperties() {
 		return properties;
 	}
+	
+	public void setProperties(Map<String, Object> props) {
+        this.properties.clear();
+        for (Map.Entry<String, Object> e: props.entrySet()) {
+           this.properties.add(
+               new AccountAlertPropertyEntity(this, e.getKey(), e.getValue().toString())); 
+        }
+    }
 
 	public DateTime getReceiveAcknowledgedOn() {
 		return receiveAcknowledgedOn;

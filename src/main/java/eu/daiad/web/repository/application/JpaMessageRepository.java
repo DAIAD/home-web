@@ -460,22 +460,13 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
     }
 
     @Override
-    public List<Message> getAdvisoryMessages(String locale) {
+    public List<Message> getAdvisoryMessages(String locale) 
+    {
         List<Message> messages = new ArrayList<>();
 
-        switch (locale) {
-            case "en":
-            case "es":
-                // Ignore
-                break;
-            default:
-                // Set default
-                locale = "en";
-        }
-
-        TypedQuery<eu.daiad.web.domain.application.StaticRecommendationEntity> accountAlertsQuery = entityManager
-                        .createQuery("select a from static_recommendation a where a.locale = :locale",
-                                        eu.daiad.web.domain.application.StaticRecommendationEntity.class);
+        TypedQuery<StaticRecommendationEntity> accountAlertsQuery = entityManager.createQuery(
+                "select a from static_recommendation a where a.locale = :locale",
+                StaticRecommendationEntity.class);
         accountAlertsQuery.setParameter("locale", locale);
 
         for (StaticRecommendationEntity staticRecommendation : accountAlertsQuery.getResultList()) {
@@ -501,7 +492,6 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 
             messages.add(message);
         }
-
         return messages;
     }
 
@@ -511,9 +501,8 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
                 .createQuery("select s from static_recommendation s where s.id = :id",
                     eu.daiad.web.domain.application.StaticRecommendationEntity.class);    
         advisoryMessage.setParameter("id", id);
-
         List<StaticRecommendationEntity> advisoryMessages = advisoryMessage.getResultList();
-            
+
         if(!advisoryMessages.isEmpty()){
             advisoryMessages.get(0).setActive(active);
         }

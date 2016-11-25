@@ -23,6 +23,7 @@ import eu.daiad.web.model.message.EnumPartOfDay;
 import eu.daiad.web.model.message.Insight;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.model.message.MessageResolutionPerAccountStatus;
+import eu.daiad.web.model.message.MessageResolutionStatus;
 import eu.daiad.web.model.query.AmphiroDataPoint;
 import eu.daiad.web.model.query.DataPoint;
 import eu.daiad.web.model.query.DataQuery;
@@ -37,11 +38,13 @@ import eu.daiad.web.model.query.GroupDataSeries;
 import eu.daiad.web.model.query.MeterDataPoint;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.utility.UtilityInfo;
+import eu.daiad.web.repository.application.IAccountStaticRecommendationRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IMessageManagementRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.aggregates.ComputedNumber;
+import eu.daiad.web.domain.application.AccountStaticRecommendationEntity;
 import eu.daiad.web.model.ConsumptionStats;
 import eu.daiad.web.model.ConsumptionStats.EnumStatistic;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
@@ -68,7 +71,10 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     @Autowired
     IUserRepository userRepository;
-        
+    
+    @Autowired
+    IAccountStaticRecommendationRepository staticRecommendationRepository;
+    
     @Autowired
     IMessageManagementRepository messageManagementRepository;
         
@@ -212,18 +218,25 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         return status;
     }
-        
+    
+    private DateTime getLastDateOfStaticRecommendation(UUID accountKey) 
+    {
+        AccountStaticRecommendationEntity e = staticRecommendationRepository
+            .findLastForAccount(accountKey);
+        return (e == null)? null : e.getCreatedOn();
+    }
+    
     //random three initial static tips
     private boolean initialStaticTipsForAccount(AuthenticatedUser user) 
     {  
-        DateTime lastCreatedOn = messageManagementRepository.getLastDateOfAccountStaticRecommendation(user);
+        DateTime lastCreatedOn = getLastDateOfStaticRecommendation(user.getKey());
         return (lastCreatedOn == null);
     }
         
     //random static tip
     private boolean produceStaticTipForAccount(AuthenticatedUser user, int staticTipInterval) 
     {
-        DateTime lastCreatedOn = messageManagementRepository.getLastDateOfAccountStaticRecommendation(user);
+        DateTime lastCreatedOn = getLastDateOfStaticRecommendation(user.getKey());
         return (lastCreatedOn == null || lastCreatedOn.isBefore(DateTime.now().minusDays(staticTipInterval)));
     }
         
@@ -1384,8 +1397,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
 
     // 6 recommendation - When showering, reduce the water flow when you do not need it {integer1} {integer2}
-    public SimpleEntry<Boolean, Integer> recommendReduceFlowWhenNotNeededAmphiro(ConsumptionStats stats,
-            UUID accountKey, DateTimeZone timezone) 
+    public SimpleEntry<Boolean, Integer> recommendReduceFlowWhenNotNeededAmphiro(
+            ConsumptionStats stats, UUID accountKey, DateTimeZone timezone) 
     {
         ComputedNumber monthlyAveragePerSession = stats.get(EnumStatistic.AVERAGE_MONTHLY_PER_SESSION, AMPHIRO, VOLUME);
         if (monthlyAveragePerSession == null || monthlyAveragePerSession.getValue() == null)
@@ -1449,7 +1462,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         return maxLength;
     }
      
-    private Insight.BasicParameters computeInsightA1(
+    private MessageResolutionStatus<Insight.BasicParameters> computeInsightA1(
             EnumDeviceType device, UUID accountKey, DateTime refDate)
     {
         final double K = 1.28;  // a threshold (in units of standard deviation) of significant change
@@ -1492,19 +1505,19 @@ public class DefaultMessageResolverService implements IMessageResolverService
         double avgValue = mean(pvalues); 
         double sd = Math.sqrt(populationVariance(pvalues, avgValue));
         double normValue = (refValue - avgValue) / sd; // normalized value
+        double score = Math.abs(normValue) / (2 * K);
         
         logger.debug(String.format(
                 "Insight A1 for account %s/%s: Consumption for same week day of last %d weeks since %s:\n\t" + 
                     "value=%.2f mean=%.2f stddevp=%.2f x*=%.2f", 
                 accountKey, device, N, refDate.toString("dd/MM/YYYY"), refValue, avgValue, sd, normValue));
         
-        // Decide if significant   
-        if (Math.abs(normValue) > K)
-            return Insight.newA1Parameters(refDate, device, refValue, avgValue);
-        return null;
+        return new MessageResolutionStatus<Insight.BasicParameters>(
+            Insight.newA1Parameters(refDate, device, refValue, avgValue), score
+        );
     }
     
-    private Insight.BasicParameters computeInsightA2(
+    private MessageResolutionStatus<Insight.BasicParameters> computeInsightA2(
             EnumDeviceType device, UUID accountKey, DateTime refDate)
     {
         final double K = 1.28;  // a threshold (in units of standard deviation) of significant change
@@ -1547,19 +1560,19 @@ public class DefaultMessageResolverService implements IMessageResolverService
         double avgValue = mean(pvalues); 
         double sd = Math.sqrt(populationVariance(pvalues, avgValue));
         double normValue = (refValue - avgValue) / sd; // normalized value
+        double score = Math.abs(normValue) / (2 * K);
         
         logger.debug(String.format(
                 "Insight A2 for account %s/%s: Consumption for last %d days since %s:\n\t" + 
                     "value=%.2f mean=%.2f stddevp=%.2f x*=%.2f", 
                 accountKey, device, N, refDate.toString("dd/MM/YYYY"), refValue, avgValue, sd, normValue));
         
-        // Decide if significant
-        if (Math.abs(normValue) > K)
-            return Insight.newA2Parameters(refDate, device, refValue, avgValue);
-        return null;
+        return new MessageResolutionStatus<Insight.BasicParameters>(
+            Insight.newA2Parameters(refDate, device, refValue, avgValue), score
+        );
     }
     
-    private Insight.BasicParameters computeInsightA3(
+    private MessageResolutionStatus<Insight.BasicParameters> computeInsightA3(
             EnumDeviceType device, UUID accountKey, DateTime refDate, EnumPartOfDay partOfDay)
     {
         // Todo

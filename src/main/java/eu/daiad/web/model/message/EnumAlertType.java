@@ -3,7 +3,8 @@ package eu.daiad.web.model.message;
 import java.util.HashMap;
 import java.util.Map;
 
-public enum EnumAlertType {
+public enum EnumAlertType 
+{
 	UNDEFINED(0),
 	WATER_LEAK(1),
 	SHOWER_ON(2),

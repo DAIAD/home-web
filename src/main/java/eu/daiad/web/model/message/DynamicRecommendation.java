@@ -1,7 +1,5 @@
 package eu.daiad.web.model.message;
 
-import java.util.Formattable;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.joda.time.DateTime;

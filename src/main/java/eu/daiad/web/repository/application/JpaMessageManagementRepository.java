@@ -14,6 +14,8 @@ import javax.persistence.TypedQuery;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.Interval;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,24 +37,38 @@ import eu.daiad.web.model.message.EnumAlertType;
 import eu.daiad.web.model.message.EnumDynamicRecommendationType;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.model.message.MessageResolutionPerAccountStatus;
+import eu.daiad.web.model.message.MessageResolutionStatus;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository()
 @Transactional("applicationTransactionManager")
-public class JpaMessageManagementRepository extends BaseRepository implements IMessageManagementRepository 
+public class JpaMessageManagementRepository extends BaseRepository 
+    implements IMessageManagementRepository 
 {
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
 
+    @Autowired
+    IUserRepository userRepository;
+    
+    @Autowired
+    IAccountAlertRepository alertRepository;
+    
+    @Autowired
+    IAccountDynamicRecommendationRepository dynamicRecommendationRepository;
+    
+    @Autowired
+    IAccountStaticRecommendationRepository staticRecommendationRepository;
+    
     @Override
     public void executeAccount(
             MessageCalculationConfiguration config, ConsumptionStats aggregates,
-            MessageResolutionPerAccountStatus messageStatus, UUID accountkey) 
+            MessageResolutionPerAccountStatus messageStatus, UUID accountKey) 
     {
-        AccountEntity account = getAccountByKey(accountkey);
-        this.executeAccount(config, aggregates, messageStatus, account);
+        AccountEntity account = userRepository.getAccountByKey(accountKey);
+        executeAccount(config, aggregates, messageStatus, account);
     }
 
     private void executeAccount(
@@ -63,23 +79,6 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
         generateStaticTips(config, messageStatus, account);
     }
 
-    @Override
-    public DateTime getLastDateOfAccountStaticRecommendation(AuthenticatedUser user) 
-    {
-        DateTime lastCreatedOn = null;
-        TypedQuery<AccountStaticRecommendationEntity> q = entityManager.createQuery(
-                "select a from account_static_recommendation a " + 
-                    "where a.account.id = :accountId order by a.createdOn desc",
-                eu.daiad.web.domain.application.AccountStaticRecommendationEntity.class);
-        q.setParameter("accountId", user.getId());
-
-        List<AccountStaticRecommendationEntity> accountStaticRecommendations = q.getResultList();
-        if (!accountStaticRecommendations.isEmpty()) {
-            lastCreatedOn = accountStaticRecommendations.get(0).getCreatedOn();
-        }
-
-        return lastCreatedOn;
-    }
     private void generateMessages(
             MessageCalculationConfiguration config,
             ConsumptionStats stats, MessageResolutionPerAccountStatus messageStatus, AccountEntity account)
@@ -165,97 +164,6 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
         // alertTop10SaverSWM(config, aggregates, status, account); //inactive
     }
 
-    private AlertEntity getAlertByType(EnumAlertType type) 
-    {
-        TypedQuery<eu.daiad.web.domain.application.AlertEntity> query = entityManager.createQuery(
-                    "select a from alert a where a.id = :id", 
-                    eu.daiad.web.domain.application.AlertEntity.class)
-                .setFirstResult(0)
-                .setMaxResults(1);
-
-        query.setParameter("id", type.getValue());
-        return query.getSingleResult();
-    }
-
-    private DynamicRecommendationEntity getDynamicRecommendationByType(EnumDynamicRecommendationType type) {
-        TypedQuery<eu.daiad.web.domain.application.DynamicRecommendationEntity> query = entityManager.createQuery(
-                    "select d from dynamic_recommendation d where d.id = :id",
-                    eu.daiad.web.domain.application.DynamicRecommendationEntity.class)
-                .setFirstResult(0)
-                .setMaxResults(1);
-
-        query.setParameter("id", type.getValue());
-        return query.getSingleResult();
-    }
-
-    private StaticRecommendationEntity getRandomStaticRecommendationForLocale(String accountLocale) {
-        String locale;
-        switch (accountLocale) {
-            case "en":
-                locale = accountLocale;
-                break;
-            case "es":
-                locale = accountLocale;
-                break;
-            default:
-                locale = "en";
-        }
-
-        TypedQuery<eu.daiad.web.domain.application.StaticRecommendationEntity> accountAlertsQuery = entityManager
-                        .createQuery("select a from static_recommendation a where a.locale = :locale and a.active = :active",
-                                        eu.daiad.web.domain.application.StaticRecommendationEntity.class);
-        accountAlertsQuery.setParameter("locale", locale);
-        accountAlertsQuery.setParameter("active", true);
-        List<StaticRecommendationEntity> staticRecommendations = accountAlertsQuery.getResultList();
-
-        if (staticRecommendations.isEmpty()) {
-            return null;
-        }
-
-        Collections.shuffle(staticRecommendations);
-
-        StaticRecommendationEntity singleRandomStaticRecommendation = staticRecommendations.get(0);
-
-        return singleRandomStaticRecommendation;
-    }
-
-    private List<StaticRecommendationEntity> getInitialRandomStaticRecommendationForLocale(String accountLocale) 
-    {
-        List<StaticRecommendationEntity> initialTips = new ArrayList<>();
-        String locale;
-        if (StringUtils.isBlank(accountLocale)) {
-            accountLocale = "";
-        }
-
-        switch (accountLocale) {
-            case "en":
-                locale = accountLocale;
-                break;
-            case "es":
-                locale = accountLocale;
-                break;
-            default:
-                locale = "en";
-        }
-
-        TypedQuery<eu.daiad.web.domain.application.StaticRecommendationEntity> accountAlertsQuery = entityManager
-                        .createQuery("select a from static_recommendation a where a.locale = :locale and a.active = :active",
-                                        eu.daiad.web.domain.application.StaticRecommendationEntity.class);
-        accountAlertsQuery.setParameter("locale", locale);
-        accountAlertsQuery.setParameter("active", true);
-        List<StaticRecommendationEntity> staticRecommendations = accountAlertsQuery.getResultList();
-
-        if (staticRecommendations.size() <= 3) {
-            initialTips = staticRecommendations;
-        } else {
-            Collections.shuffle(staticRecommendations);
-            for (int i = 0; i < 3; i++) {
-                initialTips.add(staticRecommendations.get(i));
-            }
-        }
-        return initialTips;
-    }
-
     // random static tip
     private void generateStaticTips(
             MessageCalculationConfiguration config, MessageResolutionPerAccountStatus status, AccountEntity account) 
@@ -279,7 +187,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     private void alertWaterLeakSWM(
             MessageCalculationConfiguration config, MessageResolutionPerAccountStatus status, AccountEntity account) 
     {
-        if(!isAlertProducedOverThreeTimesForUser(EnumAlertType.WATER_LEAK.getValue(), account)){      
+        if(countProducedAlerts(EnumAlertType.WATER_LEAK, account) < 3){      
             if(config.isOnDemandExecution()){
                 if (status.isAlertWaterLeakSWM()) {
                     createAccountAlert(account, getAlertByType(EnumAlertType.WATER_LEAK), DateTime.now());
@@ -455,7 +363,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
             MessageCalculationConfiguration config,
             ConsumptionStats aggregates, MessageResolutionPerAccountStatus status, AccountEntity account) 
     {    
-        if(isAlertAlreadyProducedThisWeekForUser(EnumAlertType.TOO_MUCH_WATER_SWM.getValue(), account)){
+        if(isAlertAlreadyProducedThisWeek(EnumAlertType.TOO_MUCH_WATER_SWM, account)){
             if(config.isOnDemandExecution()){
                 if (status.getAlertTooMuchWaterConsumptionSWM().getKey()) {
                     AccountAlertEntity alert = createAccountAlert(account, getAlertByType(EnumAlertType.TOO_MUCH_WATER_SWM),
@@ -481,7 +389,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
             MessageCalculationConfiguration config, 
             ConsumptionStats aggregates, MessageResolutionPerAccountStatus status, AccountEntity account) 
     {
-        if(isAlertAlreadyProducedThisWeekForUser(EnumAlertType.TOO_MUCH_WATER_AMPHIRO.getValue(), account)){
+        if(isAlertAlreadyProducedThisWeek(EnumAlertType.TOO_MUCH_WATER_AMPHIRO, account)){
             if(config.isOnDemandExecution()){
                 if (status.getAlertTooMuchWaterConsumptionAmphiro().getKey()) {
                     AccountAlertEntity alert = createAccountAlert(account, getAlertByType(EnumAlertType.TOO_MUCH_WATER_AMPHIRO),
@@ -507,7 +415,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
             MessageCalculationConfiguration config, 
             ConsumptionStats aggregates, MessageResolutionPerAccountStatus status, AccountEntity account) 
     {    
-        if(isAlertAlreadyProducedThisWeekForUser(EnumAlertType.TOO_MUCH_ENERGY.getValue(), account)){          
+        if(isAlertAlreadyProducedThisWeek(EnumAlertType.TOO_MUCH_ENERGY, account)){          
             if (config.isOnDemandExecution() || DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
                 if (status.getAlertTooMuchEnergyAmphiro().getKey()) {
                     AccountAlertEntity alert = createAccountAlert(
@@ -536,14 +444,14 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     private void alertReducedWaterUseSWM(
             MessageCalculationConfiguration config, MessageResolutionPerAccountStatus status, AccountEntity account) 
     {    
-        if (!isAlertAlreadyProducedForUser(EnumAlertType.REDUCED_WATER_USE.getValue(), account)) {
+        if (!isAlertAlreadyProduced(EnumAlertType.REDUCED_WATER_USE, account)) {
             if (config.isOnDemandExecution() || DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
                 if (status.getAlertReducedWaterUseSWM().getKey()) {
                     AccountAlertEntity alert = createAccountAlert(account, getAlertByType(EnumAlertType.REDUCED_WATER_USE),
-                                    DateTime.now());
+                        DateTime.now());
 
                     setAccountAlertProperty(alert, config.getIntKey1(), status.getAlertReducedWaterUseSWM().getValue()
-                                    .toString());
+                        .toString());
                 }
             }
         }
@@ -553,7 +461,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     private void alertImprovedShowerEfficiencyAmphiro(
             MessageCalculationConfiguration config, MessageResolutionPerAccountStatus status, AccountEntity account) 
     {    
-        if (!isAlertAlreadyProducedForUser(EnumAlertType.IMPROVED_SHOWER_EFFICIENCY.getValue(), account)) {
+        if (!isAlertAlreadyProduced(EnumAlertType.IMPROVED_SHOWER_EFFICIENCY, account)) {
             if (config.isOnDemandExecution() || DateTime.now().getDayOfWeek() == config.getComputeThisDayOfWeek()) {
                 if (status.getAlertImprovedShowerEfficiencyAmphiro().getKey()) {
                     AccountAlertEntity alert = createAccountAlert(account,
@@ -571,7 +479,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
             MessageCalculationConfiguration config, 
             ConsumptionStats aggregates, MessageResolutionPerAccountStatus status, AccountEntity account) 
     {
-        if(isAlertAlreadyProducedThisMonthForUser(EnumAlertType.WATER_EFFICIENCY_LEADER.getValue(), account)){          
+        if(isAlertAlreadyProducedThisMonth(EnumAlertType.WATER_EFFICIENCY_LEADER, account)){          
             if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
                 if (status.getAlertWaterEfficiencyLeaderSWM().getKey()) {
                     AccountAlertEntity alert = createAccountAlert(account, getAlertByType(EnumAlertType.WATER_EFFICIENCY_LEADER),
@@ -589,7 +497,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
             MessageCalculationConfiguration config, MessageResolutionPerAccountStatus status, AccountEntity account) 
     {
         // compute only if the message list is empty
-        if (!isAlertAlreadyProducedForUser(EnumAlertType.KEEP_UP_SAVING_WATER.getValue(), account)) {
+        if (!isAlertAlreadyProduced(EnumAlertType.KEEP_UP_SAVING_WATER, account)) {
             createAccountAlert(account, getAlertByType(EnumAlertType.KEEP_UP_SAVING_WATER), DateTime.now());
         }
     }
@@ -647,7 +555,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     private void recommendLessShowerTimeAmphiro(
             MessageCalculationConfiguration config, ConsumptionStats aggregates, MessageResolutionPerAccountStatus status, AccountEntity account) 
     {     
-        if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.LESS_SHOWER_TIME.getValue(), account)){         
+        if(isRecommendationAlreadyProducedThisMonth(EnumDynamicRecommendationType.LESS_SHOWER_TIME, account)){         
             if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
                 if (status.getRecommendShampooChangeAmphiro().getKey()) {
                     AccountDynamicRecommendationEntity recommendation = createAccountDynamicRecommendation(
@@ -671,12 +579,12 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
             MessageCalculationConfiguration config,
             ConsumptionStats aggregates, MessageResolutionPerAccountStatus status, AccountEntity account) 
     {
-        if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.LOWER_TEMPERATURE.getValue(), account)){         
+        if(isRecommendationAlreadyProducedThisMonth(EnumDynamicRecommendationType.LOWER_TEMPERATURE, account)){         
             if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
                 if (status.getRecommendLowerTemperatureAmphiro().getKey()) {
                     AccountDynamicRecommendationEntity recommendation = createAccountDynamicRecommendation(account,
-                                    getDynamicRecommendationByType(EnumDynamicRecommendationType.LOWER_TEMPERATURE),
-                                    DateTime.now());
+                        getDynamicRecommendationByType(EnumDynamicRecommendationType.LOWER_TEMPERATURE),
+                        DateTime.now());
                     Integer annualShowerConsumption = status.getRecommendLowerTemperatureAmphiro().getValue();
 
                     // formula: degrees * litres * kcal * kwh * kwh price
@@ -728,7 +636,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
             MessageCalculationConfiguration config,
             ConsumptionStats aggregates, MessageResolutionPerAccountStatus status, AccountEntity account) 
     {
-        if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.LOWER_FLOW.getValue(), account)){          
+        if(isRecommendationAlreadyProducedThisMonth(EnumDynamicRecommendationType.LOWER_FLOW, account)){          
             if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
                 if (status.getRecommendLowerFlowAmphiro().getKey()) {
                     AccountDynamicRecommendationEntity recommendation = createAccountDynamicRecommendation(
@@ -748,7 +656,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
     private void recommendShowerHeadChangeAmphiro(
             MessageCalculationConfiguration config, ConsumptionStats aggregates, MessageResolutionPerAccountStatus status, AccountEntity account) 
     {
-        if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.CHANGE_SHOWERHEAD.getValue(), account)){           
+        if(isRecommendationAlreadyProducedThisMonth(EnumDynamicRecommendationType.CHANGE_SHOWERHEAD, account)){           
             if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
                 if (status.getRecommendShowerHeadChangeAmphiro().getKey()) {
                     AccountDynamicRecommendationEntity recommendation = createAccountDynamicRecommendation(account,
@@ -763,13 +671,13 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
             }
         }
     }
-
+    
     // 5 recommendation - Have you considered changing your shampoo? {integer1} percent
     private void recommendShampooAmphiro(
             MessageCalculationConfiguration config,
             ConsumptionStats aggregates, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
-        if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.SHAMPOO_CHANGE.getValue(), account)){            
+        if(isRecommendationAlreadyProducedThisMonth(EnumDynamicRecommendationType.SHAMPOO_CHANGE, account)){            
             if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
                 if (status.getRecommendShampooChangeAmphiro().getKey()) {
                     AccountDynamicRecommendationEntity recommendation = createAccountDynamicRecommendation(account,
@@ -786,13 +694,14 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
             MessageCalculationConfiguration config, 
             ConsumptionStats aggregates, MessageResolutionPerAccountStatus status, AccountEntity account) 
     {
-        if(isRecommendationAlreadyProducedThisMonthForUser(EnumDynamicRecommendationType.REDUCE_FLOW_WHEN_NOT_NEEDED.getValue(), account)){          
+        if(isRecommendationAlreadyProducedThisMonth(EnumDynamicRecommendationType.REDUCE_FLOW_WHEN_NOT_NEEDED, account)){          
             if (config.isOnDemandExecution() || DateTime.now().getDayOfMonth() == config.getComputeThisDayOfMonth()) {
                 if (status.getRecommendReduceFlowWhenNotNeededAmphiro().getKey()) {
                     AccountDynamicRecommendationEntity recommendation = createAccountDynamicRecommendation(
-                                    account,
-                                    getDynamicRecommendationByType(EnumDynamicRecommendationType.REDUCE_FLOW_WHEN_NOT_NEEDED),
-                                    DateTime.now());
+                        account,
+                        getDynamicRecommendationByType(EnumDynamicRecommendationType.REDUCE_FLOW_WHEN_NOT_NEEDED),
+                        DateTime.now()
+                    );
                     Integer moreShowerWaterThanOthers = status.getRecommendReduceFlowWhenNotNeededAmphiro().getValue();
                     setAccountDynamicRecommendationProperty(
                             recommendation, config.getIntKey1(), moreShowerWaterThanOthers.toString());
@@ -803,159 +712,146 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
         }
     }
 
-    private List<Integer> getAllUtilities() {
-        List<Integer> groups = new ArrayList<>();
-        try {
-            TypedQuery<eu.daiad.web.domain.application.UtilityEntity> query = entityManager.createQuery(
-                            "select a from utility a", eu.daiad.web.domain.application.UtilityEntity.class);
-            List<eu.daiad.web.domain.application.UtilityEntity> result = query.getResultList();
-            for (eu.daiad.web.domain.application.UtilityEntity group : result) {
-                groups.add(group.getId());
-            }
-            return groups;
-        } catch (Exception ex) {
-            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
-        }
-    }
-
-    private List<AccountEntity> getUsersOfUtility(int utilityId) {
-        List<AccountEntity> userAccounts = new ArrayList<>();
-        try {
-            TypedQuery<eu.daiad.web.domain.application.AccountEntity> query = entityManager.createQuery(
-                            "select a from account a where a.utility.id = :id",
-                            eu.daiad.web.domain.application.AccountEntity.class);
-            query.setParameter("id", utilityId);
-
-            List<eu.daiad.web.domain.application.AccountEntity> result = query.getResultList();
-            for (eu.daiad.web.domain.application.AccountEntity account : result) {
-                for (AccountRoleEntity accountRole : account.getRoles()) {
-                    if (accountRole.getRole().getName().equals(EnumRole.ROLE_USER.toString())) {
-                        userAccounts.add(getAccountByUsername(account.getUsername()));
-                    }
-                }
-            }
-            return userAccounts;
-        } catch (Exception ex) {
-            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
-        }
-    }
-
-    private AccountEntity getAccountByKey(UUID key) {
-        TypedQuery<eu.daiad.web.domain.application.AccountEntity> query = entityManager.createQuery(
-                        "select a from account a where a.key = :key", 
-                        eu.daiad.web.domain.application.AccountEntity.class)
-                .setFirstResult(0).setMaxResults(1);
-
-        query.setParameter("key", key);
-        return query.getSingleResult();
-    }
-
-    private AccountEntity getAccountByUsername(String username) {
-        TypedQuery<eu.daiad.web.domain.application.AccountEntity> query = entityManager.createQuery(
-                        "select a from account a where a.username = :username",
-                        eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0).setMaxResults(1);
-
-        query.setParameter("username", username);
-        return query.getSingleResult();
-    }
-
-    private List<AccountAlertEntity> getAccountAlertsByUser(AccountEntity account) {
-        TypedQuery<eu.daiad.web.domain.application.AccountAlertEntity> query = entityManager.createQuery(
-                        "select a from account_alert a where a.account.id = :accountId",
-                        eu.daiad.web.domain.application.AccountAlertEntity.class);
-
-        query.setParameter("accountId", account.getId());
-        return query.getResultList();
-    }
-
-    private boolean isAlertAlreadyProducedForUser(int alertId, AccountEntity account) {
-        TypedQuery<eu.daiad.web.domain.application.AccountAlertEntity> query = entityManager.createQuery(
-                        "select a from account_alert a where a.account.id = :accountId and a.alert.id = :alertId",
-                        eu.daiad.web.domain.application.AccountAlertEntity.class).setFirstResult(0).setMaxResults(1);
-
-        query.setParameter("accountId", account.getId());
-        query.setParameter("alertId", alertId);
-
-        List<AccountAlertEntity> resultsList = query.getResultList();
-        return !resultsList.isEmpty();
-
-    }
-    
-    private boolean isAlertAlreadyProducedThisWeekForUser(int alertId, AccountEntity account) {
-        TypedQuery<eu.daiad.web.domain.application.AccountAlertEntity> query = entityManager.createQuery(
-                        "select a from account_alert a where a.account.id = :accountId and a.alert.id = :alertId and a.createdOn > :date",
-                        eu.daiad.web.domain.application.AccountAlertEntity.class).setFirstResult(0).setMaxResults(1);
-
-        query.setParameter("accountId", account.getId());
-        query.setParameter("alertId", alertId);
-        query.setParameter("date", DateTime.now().minusDays(7));
-
-        List<AccountAlertEntity> resultsList = query.getResultList();
-        return !resultsList.isEmpty();
-
-    }    
-    
-    private boolean isAlertAlreadyProducedThisMonthForUser(int alertId, AccountEntity account) {
-        TypedQuery<eu.daiad.web.domain.application.AccountAlertEntity> query = entityManager.createQuery(
-                        "select a from account_alert a where a.account.id = :accountId and a.alert.id = :alertId and a.createdOn > :date",
-                        eu.daiad.web.domain.application.AccountAlertEntity.class).setFirstResult(0).setMaxResults(1);
-
-        query.setParameter("accountId", account.getId());
-        query.setParameter("alertId", alertId);
-        query.setParameter("date", DateTime.now().minusMonths(1));
-
-        List<AccountAlertEntity> resultsList = query.getResultList();
-
-        return !resultsList.isEmpty();
-
-    } 
-    
-    private boolean isRecommendationAlreadyProducedThisMonthForUser(int recommendationId, AccountEntity account) {
-        TypedQuery<eu.daiad.web.domain.application.AccountDynamicRecommendationEntity> query = entityManager.createQuery(
-            "select a from account_dynamic_recommendation a where a.account.id = :accountId and a.recommendation.id = :recommendationId and a.createdOn > :date",
-            eu.daiad.web.domain.application.AccountDynamicRecommendationEntity.class).setFirstResult(0).setMaxResults(1);
-
-        query.setParameter("accountId", account.getId());
-        query.setParameter("recommendationId", recommendationId);
-        query.setParameter("date", DateTime.now().minusMonths(1));
-
-        List<AccountDynamicRecommendationEntity> resultsList = query.getResultList();
-        return !resultsList.isEmpty();
-    } 
-    
-    private boolean isAlertProducedOverThreeTimesForUser(int alertId, AccountEntity account) {
-        TypedQuery<eu.daiad.web.domain.application.AccountAlertEntity> query = entityManager.createQuery(
-                        "select a from account_alert a where a.account.id = :accountId and a.alert.id = :alertId",
-                        eu.daiad.web.domain.application.AccountAlertEntity.class).setFirstResult(0).setMaxResults(5);
-        query.setParameter("accountId", account.getId());
-        query.setParameter("alertId", alertId);
-
-        List<AccountAlertEntity> resultsList = query.getResultList();
-        return resultsList.size() > 3;
-    }      
-
     private void generateInsights(
             MessageCalculationConfiguration config,
             MessageResolutionPerAccountStatus messageStatus, AccountEntity account)
     {
-        for (DynamicRecommendation.Parameters m: messageStatus.getInsights()) {
+        for (MessageResolutionStatus<DynamicRecommendation.Parameters> m: messageStatus.getInsights()) {
+            DynamicRecommendation.Parameters p = m.getParameters();
             DynamicRecommendationEntity recommendation = 
-                    getDynamicRecommendationByType(m.getType());
+                getDynamicRecommendationByType(p.getType());
             
             AccountDynamicRecommendationEntity accountRecommendation = 
                 createAccountDynamicRecommendation(account, recommendation, DateTime.now());
             
-            for (Map.Entry<String, Object> p: m.getPairs().entrySet()) {
+            for (Map.Entry<String, Object> t: p.getPairs().entrySet()) {
                 setAccountDynamicRecommendationProperty(
-                        accountRecommendation, p.getKey(), String.valueOf(p.getValue()));
+                    accountRecommendation, t.getKey(), String.valueOf(t.getValue()));
             }   
         }
     }
     
     //
+    // ~ Helpers
+    //
+    
+    private boolean isAlertAlreadyProduced(EnumAlertType alertType, AccountEntity account) 
+    {
+        List<AccountAlertEntity> results = 
+            alertRepository.findByAccountAndType(account.getKey(), alertType);
+        return !results.isEmpty();
+    }
+    
+    private boolean isAlertAlreadyProducedThisWeek(EnumAlertType alertType, AccountEntity account) 
+    {
+        DateTime now = DateTime.now();
+        Interval interval = new Interval(now.minusWeeks(1), now);
+        List<AccountAlertEntity> results =
+            alertRepository.findByAccountAndType(account.getKey(), alertType, interval);
+        return !results.isEmpty();
+    }    
+    
+    private boolean isAlertAlreadyProducedThisMonth(EnumAlertType alertType, AccountEntity account) 
+    {
+        DateTime now = DateTime.now();
+        Interval interval = new Interval(now.minusMonths(1), now);
+        List<AccountAlertEntity> results =
+            alertRepository.findByAccountAndType(account.getKey(), alertType, interval);
+        return !results.isEmpty();
+    } 
+        
+    private int countProducedAlerts(EnumAlertType alertType, AccountEntity account) 
+    {
+        List<AccountAlertEntity> results = 
+            alertRepository.findByAccountAndType(account.getKey(), alertType);
+        return results.size();
+    }          
+    
+    private boolean isRecommendationAlreadyProducedThisMonth(
+        EnumDynamicRecommendationType recommendationType, AccountEntity account)
+    {
+        DateTime now = DateTime.now();
+        Interval interval = new Interval(now.minusMonths(1), now);
+        List<AccountDynamicRecommendationEntity> results =
+            dynamicRecommendationRepository.findByAccountAndType(
+                account.getKey(), recommendationType, interval);
+        return !results.isEmpty();
+    } 
+        
+    //
     // ~ Persist methods
     //
     
+    // Todo Move to StaticRecommendationRepository
+    private StaticRecommendationEntity getRandomStaticRecommendationForLocale(String locale) 
+    {
+        TypedQuery<eu.daiad.web.domain.application.StaticRecommendationEntity> accountAlertsQuery = entityManager
+                        .createQuery("select a from static_recommendation a where a.locale = :locale and a.active = :active",
+                                        eu.daiad.web.domain.application.StaticRecommendationEntity.class);
+        accountAlertsQuery.setParameter("locale", locale);
+        accountAlertsQuery.setParameter("active", true);
+        List<StaticRecommendationEntity> staticRecommendations = accountAlertsQuery.getResultList();
+
+        if (staticRecommendations.isEmpty()) {
+            return null;
+        }
+
+        Collections.shuffle(staticRecommendations);
+
+        StaticRecommendationEntity singleRandomStaticRecommendation = staticRecommendations.get(0);
+
+        return singleRandomStaticRecommendation;
+    }
+    
+    // Todo Move to StaticRecommendationRepository
+    private List<StaticRecommendationEntity> getInitialRandomStaticRecommendationForLocale(String locale) 
+    {
+        List<StaticRecommendationEntity> initialTips = new ArrayList<>();
+        TypedQuery<eu.daiad.web.domain.application.StaticRecommendationEntity> accountAlertsQuery = entityManager
+                        .createQuery("select a from static_recommendation a where a.locale = :locale and a.active = :active",
+                                        eu.daiad.web.domain.application.StaticRecommendationEntity.class);
+        accountAlertsQuery.setParameter("locale", locale);
+        accountAlertsQuery.setParameter("active", true);
+        List<StaticRecommendationEntity> staticRecommendations = accountAlertsQuery.getResultList();
+
+        if (staticRecommendations.size() <= 3) {
+            initialTips = staticRecommendations;
+        } else {
+            Collections.shuffle(staticRecommendations);
+            for (int i = 0; i < 3; i++) {
+                initialTips.add(staticRecommendations.get(i));
+            }
+        }
+        return initialTips;
+    }
+
+    
+    // Todo eliminate: create() method using enum
+    private AlertEntity getAlertByType(EnumAlertType type) 
+    {
+        TypedQuery<eu.daiad.web.domain.application.AlertEntity> query = entityManager.createQuery(
+                    "select a from alert a where a.id = :id", 
+                    eu.daiad.web.domain.application.AlertEntity.class)
+                .setFirstResult(0)
+                .setMaxResults(1);
+
+        query.setParameter("id", type.getValue());
+        return query.getSingleResult();
+    }
+    
+    // Todo eliminate: create() method using enum
+    private DynamicRecommendationEntity getDynamicRecommendationByType(EnumDynamicRecommendationType type) {
+        TypedQuery<eu.daiad.web.domain.application.DynamicRecommendationEntity> query = entityManager.createQuery(
+                    "select d from dynamic_recommendation d where d.id = :id",
+                    eu.daiad.web.domain.application.DynamicRecommendationEntity.class)
+                .setFirstResult(0)
+                .setMaxResults(1);
+
+        query.setParameter("id", type.getValue());
+        return query.getSingleResult();
+    }
+    
+    // Todo: Move to AccountAlertRepository
     private void setAccountAlertProperty(AccountAlertEntity alert, String key, String value) {
         AccountAlertPropertyEntity accountAlertProperty = new AccountAlertPropertyEntity();
 
@@ -966,6 +862,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
         this.entityManager.persist(accountAlertProperty);
     }
 
+    // Todo: Move to AccountDynamicRecommendationRepository
     private void setAccountDynamicRecommendationProperty(
             AccountDynamicRecommendationEntity recommendation, String key, String value) 
     {
@@ -978,6 +875,7 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
         this.entityManager.persist(accountDynamicRecommendationProperty);
     }
 
+    // Todo: Move to AccountAlertRepository
     private AccountAlertEntity createAccountAlert(AccountEntity account, AlertEntity alert, DateTime timestamp) 
     {
         AccountAlertEntity accountAlert = new AccountAlertEntity();
@@ -989,7 +887,8 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
         this.entityManager.persist(accountAlert);
         return accountAlert;
     }
-
+    
+    // Todo: Move to AccountDynamicRecommendationRepository
     private AccountDynamicRecommendationEntity createAccountDynamicRecommendation(
             AccountEntity account, DynamicRecommendationEntity recommendation, DateTime createdOn) 
     {
@@ -1002,7 +901,8 @@ public class JpaMessageManagementRepository extends BaseRepository implements IM
         this.entityManager.persist(accountDynamicRecommendation);
         return accountDynamicRecommendation;
     }
-
+    
+    // Todo: Move to AccountStaticRecommendationRepository
     private AccountStaticRecommendationEntity createAccountStaticRecommendation(
             AccountEntity account, StaticRecommendationEntity recommendation, DateTime createdOn) 
     {

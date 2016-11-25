@@ -1,6 +1,7 @@
 package eu.daiad.web.domain.application;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -39,7 +40,8 @@ public class AccountDynamicRecommendationEntity {
 
 	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
 	@JoinColumn(name = "account_dynamic_recommendation_id")
-	private Set<AccountDynamicRecommendationPropertyEntity> properties = new HashSet<AccountDynamicRecommendationPropertyEntity>();
+	private Set<AccountDynamicRecommendationPropertyEntity> properties = 
+	    new HashSet<AccountDynamicRecommendationPropertyEntity>();
 
 	@Column(name = "created_on")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
@@ -92,7 +94,15 @@ public class AccountDynamicRecommendationEntity {
 	public Set<AccountDynamicRecommendationPropertyEntity> getProperties() {
 		return properties;
 	}
-
+    
+	public void setProperties(Map<String, Object> props) {
+        this.properties.clear();
+        for (Map.Entry<String, Object> e: props.entrySet()) {
+           this.properties.add(
+               new AccountDynamicRecommendationPropertyEntity(this, e.getKey(), e.getValue().toString())); 
+        }
+    }
+	
 	public DateTime getReceiveAcknowledgedOn() {
 		return receiveAcknowledgedOn;
 	}

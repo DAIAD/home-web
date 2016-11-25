@@ -89,7 +89,7 @@ public class MessageResolutionPerAccountStatus
 
     private boolean amphiroInstalled;
     
-    private List<DynamicRecommendation.Parameters> insights = new ArrayList<>();
+    private List<MessageResolutionStatus<DynamicRecommendation.Parameters>> insights = new ArrayList<>();
     
     //
     // ~ Constructors
@@ -113,15 +113,19 @@ public class MessageResolutionPerAccountStatus
         return initialStaticTips;
     }
         
-    public List<DynamicRecommendation.Parameters> getInsights()
+    public List<MessageResolutionStatus<DynamicRecommendation.Parameters>> getInsights()
     {
         return insights;
     }
         
-    public <P extends Insight.BasicParameters> void addInsight(P p)
+    public <P extends Insight.BasicParameters> void addInsight(MessageResolutionStatus<P> p)
     {
-        if (p != null) 
-            insights.add(p);
+        if (p != null) { 
+            insights.add(
+                new MessageResolutionStatus<DynamicRecommendation.Parameters>(
+                        p.getParameters(), p.getScore())
+                );
+        }
     }
     
     public void clearInsights()

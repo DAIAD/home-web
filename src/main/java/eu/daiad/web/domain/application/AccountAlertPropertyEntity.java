@@ -31,7 +31,19 @@ public class AccountAlertPropertyEntity {
 
 	@Basic()
 	private String value;
-
+    
+	public AccountAlertPropertyEntity()
+	{
+	    // no-op
+	}
+	
+	public AccountAlertPropertyEntity(AccountAlertEntity alert, String key, String value)
+    {
+	    this.alert = alert;
+	    this.key = key;
+	    this.value = value;
+    }
+	
 	public AccountAlertEntity getAlert() {
 		return alert;
 	}
