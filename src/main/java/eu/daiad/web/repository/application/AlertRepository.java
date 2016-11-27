@@ -22,22 +22,8 @@ public class AlertRepository implements IAlertRepository
     EntityManager entityManager;
     
     @Override
-    public AlertTranslationEntity findOne(EnumAlertType alertType, Locale locale)
+    public AlertEntity findOne(EnumAlertType alertType)
     {
-        TypedQuery<AlertTranslationEntity> query = entityManager.createQuery(
-            "SELECT a FROM alert_translation a " +
-                "WHERE a.alert.id = :aid AND a.locale = :locale",
-            AlertTranslationEntity.class);
-        query.setParameter("aid", alertType.getValue());
-        query.setParameter("locale", locale.getLanguage());
-        
-        AlertTranslationEntity e;
-        try {
-            e = query.getSingleResult();
-        } catch (NoResultException x) {
-            // Note: or maybe retry with default locale
-            e = null;
-        }
-        return e;
+        return entityManager.find(AlertEntity.class, alertType.getValue());
     }
 }

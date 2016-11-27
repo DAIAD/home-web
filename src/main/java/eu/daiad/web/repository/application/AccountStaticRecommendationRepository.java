@@ -27,6 +27,14 @@ public class AccountStaticRecommendationRepository extends BaseRepository
     EntityManager entityManager;
     
     @Override
+    public Long countAll()
+    {
+        TypedQuery<Long> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_static_recommendation", Long.class);
+        return query.getSingleResult();
+    }
+    
+    @Override
     public AccountStaticRecommendationEntity findOne(int id)
     {
         return entityManager.find(AccountStaticRecommendationEntity.class, id);
@@ -43,6 +51,16 @@ public class AccountStaticRecommendationRepository extends BaseRepository
     }
 
     @Override
+    public Long countByAccount(UUID accountKey)
+    {
+        TypedQuery<Long> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_static_recommendation a WHERE a.account.key = :accountKey",
+            Long.class);
+        query.setParameter("accountKey", accountKey);
+        return query.getSingleResult();
+    }
+    
+    @Override
     public List<AccountStaticRecommendationEntity> findByAccount(UUID accountKey, Interval interval)
     {
         TypedQuery<AccountStaticRecommendationEntity> query = entityManager.createQuery(
@@ -57,6 +75,20 @@ public class AccountStaticRecommendationRepository extends BaseRepository
     }
 
     @Override
+    public Long countByAccount(UUID accountKey, Interval interval)
+    {
+        TypedQuery<Long> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_static_recommendation a WHERE " +
+                "a.account.key = :accountKey AND " +
+                "a.createdOn >= :start AND a.createdOn < :end",
+                Long.class);
+        query.setParameter("accountKey", accountKey);
+        query.setParameter("start", interval.getStart());
+        query.setParameter("end", interval.getEnd());
+        return query.getSingleResult();
+    }
+    
+    @Override
     public List<AccountStaticRecommendationEntity> findByType(int recommendationType)
     {
         TypedQuery<AccountStaticRecommendationEntity> query = entityManager.createQuery(
@@ -67,19 +99,43 @@ public class AccountStaticRecommendationRepository extends BaseRepository
     }
 
     @Override
+    public Long countByType(int recommendationType)
+    {
+        TypedQuery<Long> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_static_recommendation a WHERE a.recommendation.id = :rid",
+            Long.class);
+        query.setParameter("rid", recommendationType);
+        return query.getSingleResult();
+    }
+    
+    @Override
     public List<AccountStaticRecommendationEntity> findByType(int recommendationType, Interval interval)
     {
         TypedQuery<AccountStaticRecommendationEntity> query = entityManager.createQuery(
             "SELECT a FROM account_static_recommendation a WHERE " +
                 "a.recommendation.id = :rid AND " +
                 "a.createdOn >= :start AND a.createdOn < :end",
-                AccountStaticRecommendationEntity.class);
+            AccountStaticRecommendationEntity.class);
         query.setParameter("rid", recommendationType);
         query.setParameter("start", interval.getStart());
         query.setParameter("end", interval.getEnd());
         return query.getResultList();
     }
 
+    @Override
+    public Long countByType(int recommendationType, Interval interval)
+    {
+        TypedQuery<Long> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_static_recommendation a WHERE " +
+                "a.recommendation.id = :rid AND " +
+                "a.createdOn >= :start AND a.createdOn < :end",
+             Long.class);
+        query.setParameter("rid", recommendationType);
+        query.setParameter("start", interval.getStart());
+        query.setParameter("end", interval.getEnd());
+        return query.getSingleResult();
+    }
+    
     @Override
     public List<AccountStaticRecommendationEntity> findByAccountAndType(UUID accountKey, int recommendationType)
     {
@@ -92,6 +148,18 @@ public class AccountStaticRecommendationRepository extends BaseRepository
         return query.getResultList();
     }
 
+    @Override
+    public Long countByAccountAndType(UUID accountKey, int recommendationType)
+    {
+        TypedQuery<Long> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_static_recommendation a " +
+                "WHERE a.recommendation.id = :rid AND a.account.key = :accountKey",
+            Long.class);
+        query.setParameter("rid", recommendationType);
+        query.setParameter("accountKey", accountKey);
+        return query.getSingleResult();
+    }    
+    
     @Override
     public List<AccountStaticRecommendationEntity> findByAccountAndType(
         UUID accountKey, int recommendationType, Interval interval)
@@ -109,6 +177,22 @@ public class AccountStaticRecommendationRepository extends BaseRepository
         return query.getResultList();
     }
 
+    @Override
+    public Long countByAccountAndType(UUID accountKey, int recommendationType, Interval interval)
+    {
+        TypedQuery<Long> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_static_recommendation a WHERE " +
+                "a.recommendation.id = :rid AND " +
+                "a.account.key = :accountKey AND " +
+                "a.createdOn >= :start AND a.createdOn < :end",
+            Long.class);
+        query.setParameter("rid", recommendationType);
+        query.setParameter("accountKey", accountKey);
+        query.setParameter("start", interval.getStart());
+        query.setParameter("end", interval.getEnd());
+        return query.getSingleResult();
+    }
+    
     @Override
     public AccountStaticRecommendationEntity findLastForAccount(UUID accountKey)
     {
@@ -141,6 +225,10 @@ public class AccountStaticRecommendationRepository extends BaseRepository
     @Override
     public AccountStaticRecommendationEntity createWith(AccountEntity account, int recommendationType)
     {
+        // Ensure we have a persistent AccountEntity instance
+        if (!entityManager.contains(account)) 
+            account = entityManager.find(AccountEntity.class, account.getId());
+        
         StaticRecommendationEntity recommendation = 
             entityManager.find(StaticRecommendationEntity.class, recommendationType);
         AccountStaticRecommendationEntity e = 
@@ -148,6 +236,26 @@ public class AccountStaticRecommendationRepository extends BaseRepository
         return create(e);
     }
 
+    @Override
+    public AccountStaticRecommendationEntity createWith(UUID accountKey, int recommendationType)
+    {
+        TypedQuery<AccountEntity> query = entityManager.createQuery(
+            "SELECT a FROM account a WHERE a.key = :accountKey", AccountEntity.class);
+        query.setParameter("accountKey", accountKey);
+        
+        AccountEntity account;
+        try {
+            account = query.getSingleResult();
+        } catch (NoResultException x) {
+            account = null;
+        }
+        
+        if (account == null)
+            return null;
+        else
+            return createWith(account, recommendationType);
+    }
+    
     @Override
     public void delete(int id)
     {

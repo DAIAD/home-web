@@ -115,6 +115,6 @@ public class DataQueryResponse extends QueryResponse {
 
         int n = values.size();
         return (n > 0)?
-                mean(ArrayUtils.toPrimitive(values.toArray(new Double[n]))) : null;
+            mean(ArrayUtils.toPrimitive(values.toArray(new Double[n]))) : null;
     }
 }

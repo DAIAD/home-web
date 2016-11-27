@@ -6,6 +6,8 @@ import org.joda.time.DateTime;
 
 import eu.daiad.web.model.DateFormatter;
 import eu.daiad.web.model.device.EnumDeviceType;
+import eu.daiad.web.model.message.Alert.AbstractParameters;
+import eu.daiad.web.model.message.Alert.CommonParameters;
 
 public class DynamicRecommendation extends Message 
 {
@@ -25,6 +27,96 @@ public class DynamicRecommendation extends Message
         public EnumDynamicRecommendationType getType()
         {
             return EnumDynamicRecommendationType.UNDEFINED;
+        }
+    }
+    
+    public static class CommonParameters extends AbstractParameters
+    {
+        final EnumDynamicRecommendationType recommendationType;
+        
+        // Provide some common parameters
+        
+        Integer integer1;
+        
+        Integer integer2;
+        
+        Double currency1;
+        
+        Double currency2;
+        
+        public CommonParameters(
+            DateTime refDate, EnumDeviceType deviceType, EnumDynamicRecommendationType recommendationType)
+        {
+            super(refDate, deviceType);
+            this.recommendationType = recommendationType;   
+        }
+
+        public Integer getInteger1()
+        {
+            return integer1;
+        }
+
+        public CommonParameters setInteger1(Integer integer1)
+        {
+            this.integer1 = integer1;
+            return this;
+        }
+
+        public Integer getInteger2()
+        {
+            return integer2;
+        }
+
+        public CommonParameters setInteger2(Integer integer2)
+        {
+            this.integer2 = integer2;
+            return this;
+        }
+
+        public Double getCurrency1()
+        {
+            return currency1;
+        }
+
+        public CommonParameters setCurrency1(Double currency1)
+        {
+            this.currency1 = currency1;
+            return this;
+        }
+
+        public Double getCurrency2()
+        {
+            return currency2;
+        }
+
+        public CommonParameters setCurrency2(Double currency2)
+        {
+            this.currency2 = currency2;
+            return this;
+        }  
+        
+        @Override
+        public Map<String, Object> getPairs()
+        {
+            Map<String, Object> pairs = super.getPairs();
+            
+            if (integer1 != null)
+                pairs.put("integer1", integer1);
+            if (integer2 != null)
+                pairs.put("integer2", integer2);
+            
+            if (currency1 != null)
+                pairs.put("currency1", currency1);
+            if (currency2 != null)
+                pairs.put("currency2", currency2);
+            
+            return pairs;
+        }
+        
+        @Override
+        public EnumDynamicRecommendationType getType()
+        {
+            return recommendationType;
         }
     }
     

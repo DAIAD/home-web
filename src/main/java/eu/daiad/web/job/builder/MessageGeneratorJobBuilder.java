@@ -17,6 +17,7 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.service.message.IMessageService;
 
@@ -53,34 +54,31 @@ public class MessageGeneratorJobBuilder implements IJobBuilder {
                     config.setOnDemandExecution(true);
                     
 					config.setStaticTipInterval(
-					        Integer.parseInt((String) params.get("static.tip.interval")));
-
-					config.setEurosPerKwh(
-					        Double.parseDouble((String) params.get("euros.per.kwh")));
-					
-					config.setAverageGbpPerKwh(
-					        Double.parseDouble((String) params.get("average.gbp.per.kwh")));
-					
-					config.setEurosPerLiter(
-					        Double.parseDouble((String) params.get("euros.per.liter")));
+					    Integer.parseInt((String) params.get("static.tip.interval")));
 
 					config.setDailyBudget(
-					        Integer.parseInt((String) params.get("daily.budget")));
+					    EnumDeviceType.METER,    
+					    Integer.parseInt((String) params.get("daily.budget")));
 					
 					config.setWeeklyBudget(
-					        Integer.parseInt((String) params.get("weekly.budget")));
+					    EnumDeviceType.METER,    
+					    Integer.parseInt((String) params.get("weekly.budget")));
 					
 					config.setMonthlyBudget(
-					        Integer.parseInt((String) params.get("monthly.budget")));
+					    EnumDeviceType.METER,
+					    Integer.parseInt((String) params.get("monthly.budget")));
 
-					config.setDailyBudgetAmphiro(
-					        Integer.parseInt((String) params.get("daily.budget.amphiro")));
+					config.setDailyBudget(
+					    EnumDeviceType.AMPHIRO,
+					    Integer.parseInt((String) params.get("daily.budget.amphiro")));
 					
-					config.setWeeklyBudgetAmphiro(
-					        Integer.parseInt((String) params.get("weekly.budget.amphiro")));
+					config.setWeeklyBudget(
+					    EnumDeviceType.AMPHIRO,
+					    Integer.parseInt((String) params.get("weekly.budget.amphiro")));
 					
-					config.setMonthlyBudgetAmphiro(
-					        Integer.parseInt((String) params.get("monthly.budget.amphiro")));
+					config.setMonthlyBudget(
+					    EnumDeviceType.AMPHIRO,
+					    Integer.parseInt((String) params.get("monthly.budget.amphiro")));
 
 					// Generate messages for everything!
 					messageService.executeAll(config);

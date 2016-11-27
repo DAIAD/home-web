@@ -21,22 +21,8 @@ public class AnnouncementRepository implements IAnnouncementRepository
     EntityManager entityManager;
     
     @Override
-    public AnnouncementTranslationEntity findOne(int announcementId, Locale locale)
+    public AnnouncementEntity findOne(int announcementId)
     {
-        TypedQuery<AnnouncementTranslationEntity> query = entityManager.createQuery(
-            "SELECT a FROM announcement_translation a " +
-                "WHERE a.announcement.id = :aid AND a.locale = :locale",
-            AnnouncementTranslationEntity.class);
-        query.setParameter("aid", announcementId);
-        query.setParameter("locale", locale.getLanguage());
-        
-        AnnouncementTranslationEntity e;
-        try {
-            e = query.getSingleResult();
-        } catch (NoResultException x) {
-            // Note: or maybe retry with default locale
-            e = null;
-        }
-        return e;
+        return entityManager.find(AnnouncementEntity.class, announcementId);
     }
 }

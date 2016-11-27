@@ -12,21 +12,37 @@ public interface IAccountStaticRecommendationRepository
 {
     AccountStaticRecommendationEntity findOne(int id);
     
+    Long countAll();
+    
     AccountStaticRecommendationEntity findLastForAccount(UUID accountKey);
     
     List<AccountStaticRecommendationEntity> findByAccount(UUID accountKey);
     
+    Long countByAccount(UUID accountKey);
+    
     List<AccountStaticRecommendationEntity> findByAccount(UUID accountKey, Interval interval);
+    
+    Long countByAccount(UUID accountKey, Interval interval);
     
     List<AccountStaticRecommendationEntity> findByType(int recommendationType);
     
+    Long countByType(int recommendationType);
+    
     List<AccountStaticRecommendationEntity> findByType(int recommendationType, Interval interval);
+    
+    Long countByType(int recommendationType, Interval interval);
     
     List<AccountStaticRecommendationEntity> findByAccountAndType(UUID accountKey, int recommendationType);
     
+    Long countByAccountAndType(UUID accountKey, int recommendationType);
+    
     List<AccountStaticRecommendationEntity> findByAccountAndType(UUID accountKey, int recommendationType, Interval interval);
     
+    Long countByAccountAndType(UUID accountKey, int recommendationType, Interval interval);
+    
     AccountStaticRecommendationEntity create(AccountStaticRecommendationEntity e);
+    
+    AccountStaticRecommendationEntity createWith(UUID accountKey, int recommendationType);
     
     AccountStaticRecommendationEntity createWith(AccountEntity account, int recommendationType);
     

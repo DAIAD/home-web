@@ -1,84 +1,68 @@
 package eu.daiad.web.model.message;
 
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.UUID;
 
 public class MessageResolutionPerAccountStatus 
 {
 	private final UUID accountKey; 
     
-    private boolean alertWaterLeakSWM;
+    private IMessageResolutionStatus<Alert.Parameters> alertWaterLeakSWM;
 
-	private boolean alertShowerStillOnAmphiro;
+	private IMessageResolutionStatus<Alert.Parameters> alertShowerStillOnAmphiro;
 
-	private boolean alertWaterQualitySWM;
+	private IMessageResolutionStatus<Alert.Parameters> alertWaterQualitySWM;
 
-	private boolean alertHotTemperatureAmphiro;
+	private IMessageResolutionStatus<Alert.Parameters> alertHotTemperatureAmphiro;
 
-	// liters used, liters remaining
-	private SimpleEntry<Integer, Integer> alertNearDailyBudgetSWM;
+	private IMessageResolutionStatus<Alert.Parameters> alertNearDailyBudgetSWM;
 
-	// liters used, liters remaining
-	private SimpleEntry<Integer, Integer> alertNearWeeklyBudgetSWM;
+	private IMessageResolutionStatus<Alert.Parameters> alertNearWeeklyBudgetSWM;
 
-	// liters used, liters remaining
-	private SimpleEntry<Integer, Integer> alertNearDailyBudgetAmphiro;
+	private IMessageResolutionStatus<Alert.Parameters> alertNearDailyBudgetAmphiro;
 
-	// liters used, liters remaining
-	private SimpleEntry<Integer, Integer> alertNearWeeklyBudgetAmphiro;
+	private IMessageResolutionStatus<Alert.Parameters> alertNearWeeklyBudgetAmphiro;
 
-	// returns daily water budget
-	private Entry<Boolean, Integer> alertReachedDailyBudgetSWM;
+	private IMessageResolutionStatus<Alert.Parameters> alertReachedDailyBudgetSWM;
 
-	// returns daily shower budget
-	private Entry<Boolean, Integer> alertReachedDailyBudgetAmphiro;
+	private IMessageResolutionStatus<Alert.Parameters> alertReachedDailyBudgetAmphiro;
 
-	private boolean alertWaterChampionSWM;
+	private IMessageResolutionStatus<Alert.Parameters> alertWaterChampionSWM;
 
-	private boolean alertShowerChampionAmphiro;
+	private IMessageResolutionStatus<Alert.Parameters> alertShowerChampionAmphiro;
 
-	private SimpleEntry<Boolean, Double> alertTooMuchWaterConsumptionSWM;
+	private IMessageResolutionStatus<Alert.Parameters> alertTooMuchWaterConsumptionSWM;
 
-	private SimpleEntry<Boolean, Double> alertTooMuchWaterConsumptionAmphiro;
+	private IMessageResolutionStatus<Alert.Parameters> alertTooMuchWaterConsumptionAmphiro;
 
-	private SimpleEntry<Boolean, Double> alertTooMuchEnergyAmphiro;
+	private IMessageResolutionStatus<Alert.Parameters> alertTooMuchEnergyAmphiro;
+	
+	private IMessageResolutionStatus<Alert.Parameters> alertReducedWaterUseSWM;
 
-	// percent
-	private SimpleEntry<Boolean, Integer> alertReducedWaterUseSWM;
+	private IMessageResolutionStatus<Alert.Parameters> alertReducedWaterUseAmphiro;
 
-	// percent
-	private SimpleEntry<Boolean, Integer> alertImprovedShowerEfficiencyAmphiro;
+	private IMessageResolutionStatus<Alert.Parameters> alertWaterEfficiencyLeaderSWM;
 
-	private SimpleEntry<Boolean, Integer> alertWaterEfficiencyLeaderSWM;
+	private IMessageResolutionStatus<Alert.Parameters> alertPromptGoodJobMonthlySWM;
 
-	private boolean alertPromptGoodJobMonthlySWM;
+	private IMessageResolutionStatus<Alert.Parameters> alertLitresSavedSWM;
 
-	private SimpleEntry<Boolean, Integer> alertLitresSavedSWM;
+	private IMessageResolutionStatus<Alert.Parameters> alertTop25SaverWeeklySWM;
 
-	private boolean alertTop25SaverWeeklySWM;
+	private IMessageResolutionStatus<Alert.Parameters> alertTop10SaverWeeklySWM;
+	
+	private IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendLessShowerTimeAmphiro;
 
-	private boolean alertTop10SaverSWM;
+	private IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendLowerTemperatureAmphiro;
 
-	// liters above
-	private SimpleEntry<Boolean, Integer> recommendLessShowerTimeAmphiro;
+	private IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendLowerFlowAmphiro;
 
-	// annual shower consumption(or guess annual from 1 month)
-	private SimpleEntry<Boolean, Integer> recommendLowerTemperatureAmphiro;
+	private IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendShowerHeadChangeAmphiro;
 
-	// annual shower consumption (or guess annual from 1 month)
-	private SimpleEntry<Boolean, Integer> recommendLowerFlowAmphiro;
+	private IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendShampooChangeAmphiro;
 
-	// annual shower consumption (or guess annual from 1 month)
-	private SimpleEntry<Boolean, Integer> recommendShowerHeadChangeAmphiro;
-
-	// percent of usage above others
-	private SimpleEntry<Boolean, Integer> recommendShampooChangeAmphiro;
-
-	// liters more than average
-	private SimpleEntry<Boolean, Integer> recommendReduceFlowWhenNotNeededAmphiro;
+	private IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendReduceFlowWhenNotNeededAmphiro;
         
     private boolean initialStaticTips;
 
@@ -89,7 +73,7 @@ public class MessageResolutionPerAccountStatus
 
     private boolean amphiroInstalled;
     
-    private List<MessageResolutionStatus<DynamicRecommendation.Parameters>> insights = new ArrayList<>();
+    private List<IMessageResolutionStatus<DynamicRecommendation.Parameters>> insights = new ArrayList<>();
     
     //
     // ~ Constructors
@@ -113,7 +97,7 @@ public class MessageResolutionPerAccountStatus
         return initialStaticTips;
     }
         
-    public List<MessageResolutionStatus<DynamicRecommendation.Parameters>> getInsights()
+    public List<IMessageResolutionStatus<DynamicRecommendation.Parameters>> getInsights()
     {
         return insights;
     }
@@ -123,7 +107,8 @@ public class MessageResolutionPerAccountStatus
         if (p != null) { 
             insights.add(
                 new MessageResolutionStatus<DynamicRecommendation.Parameters>(
-                        p.getParameters(), p.getScore())
+                    p.getScore(),
+                    p.getParameters())
                 );
         }
     }
@@ -133,257 +118,345 @@ public class MessageResolutionPerAccountStatus
         insights.clear();
     }
         
-    public boolean isMeterInstalled() {
+    public boolean isMeterInstalled() 
+    {
 		return meterInstalled;
 	}
         
-        public boolean isAmphiroInstalled() {
+    public boolean isAmphiroInstalled() 
+    {
 		return amphiroInstalled;
 	}        
                 
-	public boolean isAlertWaterLeakSWM() {
-		return alertWaterLeakSWM;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertWaterLeakSWM()
+    {
+        return alertWaterLeakSWM;
+    }
 
-	public void setAlertWaterLeakSWM(boolean alertWaterLeakSWM) {
-		this.alertWaterLeakSWM = alertWaterLeakSWM;
-	}
+    public void setAlertWaterLeakSWM(IMessageResolutionStatus<Alert.Parameters> alertWaterLeakSWM)
+    {
+        this.alertWaterLeakSWM = alertWaterLeakSWM;
+    }
 
-	public boolean isAlertShowerStillOnAmphiro() {
-		return alertShowerStillOnAmphiro;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertShowerStillOnAmphiro()
+    {
+        return alertShowerStillOnAmphiro;
+    }
 
-	public void setAlertShowerStillOnAmphiro(boolean alertShowerStillOnAmphiro) {
-		this.alertShowerStillOnAmphiro = alertShowerStillOnAmphiro;
-	}
+    public void setAlertShowerStillOnAmphiro(
+        IMessageResolutionStatus<Alert.Parameters> alertShowerStillOnAmphiro)
+    {
+        this.alertShowerStillOnAmphiro = alertShowerStillOnAmphiro;
+    }
 
-	public boolean isAlertWaterQualitySWM() {
-		return alertWaterQualitySWM;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertWaterQualitySWM()
+    {
+        return alertWaterQualitySWM;
+    }
 
-	public void setAlertWaterQualitySWM(boolean alertWaterQualitySWM) {
-		this.alertWaterQualitySWM = alertWaterQualitySWM;
-	}
+    public void setAlertWaterQualitySWM(
+        IMessageResolutionStatus<Alert.Parameters> alertWaterQualitySWM)
+    {
+        this.alertWaterQualitySWM = alertWaterQualitySWM;
+    }
 
-	public boolean isAlertHotTemperatureAmphiro() {
-		return alertHotTemperatureAmphiro;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertHotTemperatureAmphiro()
+    {
+        return alertHotTemperatureAmphiro;
+    }
 
-	public void setAlertHotTemperatureAmphiro(boolean alertHotTemperatureAmphiro) {
-		this.alertHotTemperatureAmphiro = alertHotTemperatureAmphiro;
-	}
+    public void setAlertHotTemperatureAmphiro(
+        IMessageResolutionStatus<Alert.Parameters> alertHotTemperatureAmphiro)
+    {
+        this.alertHotTemperatureAmphiro = alertHotTemperatureAmphiro;
+    }
 
-	public SimpleEntry<Integer, Integer> getAlertNearDailyBudgetSWM() {
-		return alertNearDailyBudgetSWM;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertNearDailyBudgetSWM()
+    {
+        return alertNearDailyBudgetSWM;
+    }
 
-	public void setAlertNearDailyBudgetSWM(SimpleEntry<Integer, Integer> alertNearDailyBudgetSWM) {
-		this.alertNearDailyBudgetSWM = alertNearDailyBudgetSWM;
-	}
+    public void setAlertNearDailyBudgetSWM(
+        IMessageResolutionStatus<Alert.Parameters> alertNearDailyBudgetSWM)
+    {
+        this.alertNearDailyBudgetSWM = alertNearDailyBudgetSWM;
+    }
 
-	public SimpleEntry<Integer, Integer> getAlertNearWeeklyBudgetSWM() {
-		return alertNearWeeklyBudgetSWM;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertNearWeeklyBudgetSWM()
+    {
+        return alertNearWeeklyBudgetSWM;
+    }
 
-	public void setAlertNearWeeklyBudgetSWM(SimpleEntry<Integer, Integer> alertNearWeeklyBudgetSWM) {
-		this.alertNearWeeklyBudgetSWM = alertNearWeeklyBudgetSWM;
-	}
+    public void setAlertNearWeeklyBudgetSWM(
+        IMessageResolutionStatus<Alert.Parameters> alertNearWeeklyBudgetSWM)
+    {
+        this.alertNearWeeklyBudgetSWM = alertNearWeeklyBudgetSWM;
+    }
 
-	public SimpleEntry<Integer, Integer> getAlertNearDailyBudgetAmphiro() {
-		return alertNearDailyBudgetAmphiro;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertNearDailyBudgetAmphiro()
+    {
+        return alertNearDailyBudgetAmphiro;
+    }
 
-	public void setAlertNearDailyBudgetAmphiro(SimpleEntry<Integer, Integer> alertNearDailyBudgetAmphiro) {
-		this.alertNearDailyBudgetAmphiro = alertNearDailyBudgetAmphiro;
-	}
+    public void setAlertNearDailyBudgetAmphiro(
+        IMessageResolutionStatus<Alert.Parameters> alertNearDailyBudgetAmphiro)
+    {
+        this.alertNearDailyBudgetAmphiro = alertNearDailyBudgetAmphiro;
+    }
 
-	public SimpleEntry<Integer, Integer> getAlertNearWeeklyBudgetAmphiro() {
-		return alertNearWeeklyBudgetAmphiro;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertNearWeeklyBudgetAmphiro()
+    {
+        return alertNearWeeklyBudgetAmphiro;
+    }
 
-	public void setAlertNearWeeklyBudgetAmphiro(SimpleEntry<Integer, Integer> alertNearWeeklyBudgetAmphiro) {
-		this.alertNearWeeklyBudgetAmphiro = alertNearWeeklyBudgetAmphiro;
-	}
+    public void setAlertNearWeeklyBudgetAmphiro(
+        IMessageResolutionStatus<Alert.Parameters> alertNearWeeklyBudgetAmphiro)
+    {
+        this.alertNearWeeklyBudgetAmphiro = alertNearWeeklyBudgetAmphiro;
+    }
 
-	public Entry<Boolean, Integer> getAlertReachedDailyBudgetSWM() {
-		return alertReachedDailyBudgetSWM;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertReachedDailyBudgetSWM()
+    {
+        return alertReachedDailyBudgetSWM;
+    }
 
-	public void setAlertReachedDailyBudgetSWM(Entry<Boolean, Integer> alertReachedDailyBudgetSWM) {
-		this.alertReachedDailyBudgetSWM = alertReachedDailyBudgetSWM;
-	}
+    public void setAlertReachedDailyBudgetSWM(
+        IMessageResolutionStatus<Alert.Parameters> alertReachedDailyBudgetSWM)
+    {
+        this.alertReachedDailyBudgetSWM = alertReachedDailyBudgetSWM;
+    }
 
-	public Entry<Boolean, Integer> getAlertReachedDailyBudgetAmphiro() {
-		return alertReachedDailyBudgetAmphiro;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertReachedDailyBudgetAmphiro()
+    {
+        return alertReachedDailyBudgetAmphiro;
+    }
 
-	public void setAlertReachedDailyBudgetAmphiro(Entry<Boolean, Integer> alertReachedDailyBudgetAmphiro) {
-		this.alertReachedDailyBudgetAmphiro = alertReachedDailyBudgetAmphiro;
-	}
+    public void setAlertReachedDailyBudgetAmphiro(
+        IMessageResolutionStatus<Alert.Parameters> alertReachedDailyBudgetAmphiro)
+    {
+        this.alertReachedDailyBudgetAmphiro = alertReachedDailyBudgetAmphiro;
+    }
 
-	public boolean isAlertWaterChampionSWM() {
-		return alertWaterChampionSWM;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertWaterChampionSWM()
+    {
+        return alertWaterChampionSWM;
+    }
 
-	public void setAlertWaterChampionSWM(boolean alertWaterChampionSWM) {
-		this.alertWaterChampionSWM = alertWaterChampionSWM;
-	}
+    public void setAlertWaterChampionSWM(
+        IMessageResolutionStatus<Alert.Parameters> alertWaterChampionSWM)
+    {
+        this.alertWaterChampionSWM = alertWaterChampionSWM;
+    }
 
-	public boolean isAlertShowerChampionAmphiro() {
-		return alertShowerChampionAmphiro;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertShowerChampionAmphiro()
+    {
+        return alertShowerChampionAmphiro;
+    }
 
-	public void setAlertShowerChampionAmphiro(boolean alertShowerChampionAmphiro) {
-		this.alertShowerChampionAmphiro = alertShowerChampionAmphiro;
-	}
+    public void setAlertShowerChampionAmphiro(
+        IMessageResolutionStatus<Alert.Parameters> alertShowerChampionAmphiro)
+    {
+        this.alertShowerChampionAmphiro = alertShowerChampionAmphiro;
+    }
 
-	public SimpleEntry<Boolean, Double> getAlertTooMuchWaterConsumptionSWM() {
-		return alertTooMuchWaterConsumptionSWM;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertTooMuchWaterConsumptionSWM()
+    {
+        return alertTooMuchWaterConsumptionSWM;
+    }
 
-	public void setAlertTooMuchWaterConsumptionSWM(SimpleEntry<Boolean, Double> alertTooMuchWaterConsumptionSWM) {
-		this.alertTooMuchWaterConsumptionSWM = alertTooMuchWaterConsumptionSWM;
-	}
+    public void setAlertTooMuchWaterConsumptionSWM(
+        IMessageResolutionStatus<Alert.Parameters> alertTooMuchWaterConsumptionSWM)
+    {
+        this.alertTooMuchWaterConsumptionSWM = alertTooMuchWaterConsumptionSWM;
+    }
 
-	public SimpleEntry<Boolean, Double> getAlertTooMuchWaterConsumptionAmphiro() {
-		return alertTooMuchWaterConsumptionAmphiro;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertTooMuchWaterConsumptionAmphiro()
+    {
+        return alertTooMuchWaterConsumptionAmphiro;
+    }
 
-	public void setAlertTooMuchWaterConsumptionAmphiro(SimpleEntry<Boolean, Double> alertTooMuchWaterConsumptionAmphiro) {
-		this.alertTooMuchWaterConsumptionAmphiro = alertTooMuchWaterConsumptionAmphiro;
-	}
+    public void setAlertTooMuchWaterConsumptionAmphiro(
+        IMessageResolutionStatus<Alert.Parameters> alertTooMuchWaterConsumptionAmphiro)
+    {
+        this.alertTooMuchWaterConsumptionAmphiro = alertTooMuchWaterConsumptionAmphiro;
+    }
 
-	public SimpleEntry<Boolean, Double> getAlertTooMuchEnergyAmphiro() {
-		return alertTooMuchEnergyAmphiro;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertTooMuchEnergyAmphiro()
+    {
+        return alertTooMuchEnergyAmphiro;
+    }
 
-	public void setAlertTooMuchEnergyAmphiro(SimpleEntry<Boolean, Double> alertTooMuchEnergyAmphiro) {
-		this.alertTooMuchEnergyAmphiro = alertTooMuchEnergyAmphiro;
-	}
+    public void setAlertTooMuchEnergyAmphiro(
+        IMessageResolutionStatus<Alert.Parameters> alertTooMuchEnergyAmphiro)
+    {
+        this.alertTooMuchEnergyAmphiro = alertTooMuchEnergyAmphiro;
+    }
 
-	public SimpleEntry<Boolean, Integer> getAlertReducedWaterUseSWM() {
-		return alertReducedWaterUseSWM;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertReducedWaterUseSWM()
+    {
+        return alertReducedWaterUseSWM;
+    }
 
-	public void setAlertReducedWaterUseSWM(SimpleEntry<Boolean, Integer> alertReducedWaterUseSWM) {
-		this.alertReducedWaterUseSWM = alertReducedWaterUseSWM;
-	}
+    public void setAlertReducedWaterUseSWM(
+        IMessageResolutionStatus<Alert.Parameters> alertReducedWaterUseSWM)
+    {
+        this.alertReducedWaterUseSWM = alertReducedWaterUseSWM;
+    }
 
-	public SimpleEntry<Boolean, Integer> getAlertImprovedShowerEfficiencyAmphiro() {
-		return alertImprovedShowerEfficiencyAmphiro;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertReducedWaterUseAmphiro()
+    {
+        return alertReducedWaterUseAmphiro;
+    }
 
-	public void setAlertImprovedShowerEfficiencyAmphiro(
-					SimpleEntry<Boolean, Integer> alertImprovedShowerEfficiencyAmphiro) {
-		this.alertImprovedShowerEfficiencyAmphiro = alertImprovedShowerEfficiencyAmphiro;
-	}
+    public void setAlertReducedWaterUseAmphiro(
+        IMessageResolutionStatus<Alert.Parameters> alertReducedWaterUseAmphiro)
+    {
+        this.alertReducedWaterUseAmphiro = alertReducedWaterUseAmphiro;
+    }
 
-	public SimpleEntry<Boolean, Integer> getAlertWaterEfficiencyLeaderSWM() {
-		return alertWaterEfficiencyLeaderSWM;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertWaterEfficiencyLeaderSWM()
+    {
+        return alertWaterEfficiencyLeaderSWM;
+    }
 
-	public void setAlertWaterEfficiencyLeaderSWM(SimpleEntry<Boolean, Integer> alertWaterEfficiencyLeaderSWM) {
-		this.alertWaterEfficiencyLeaderSWM = alertWaterEfficiencyLeaderSWM;
-	}
+    public void setAlertWaterEfficiencyLeaderSWM(
+        IMessageResolutionStatus<Alert.Parameters> alertWaterEfficiencyLeaderSWM)
+    {
+        this.alertWaterEfficiencyLeaderSWM = alertWaterEfficiencyLeaderSWM;
+    }
 
-	public boolean isAlertPromptGoodJobMonthlySWM() {
-		return alertPromptGoodJobMonthlySWM;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertPromptGoodJobMonthlySWM()
+    {
+        return alertPromptGoodJobMonthlySWM;
+    }
 
-	public void setAlertPromptGoodJobMonthlySWM(boolean alertPromptGoodJobMonthlySWM) {
-		this.alertPromptGoodJobMonthlySWM = alertPromptGoodJobMonthlySWM;
-	}
+    public void setAlertPromptGoodJobMonthlySWM(
+        IMessageResolutionStatus<Alert.Parameters> alertPromptGoodJobMonthlySWM)
+    {
+        this.alertPromptGoodJobMonthlySWM = alertPromptGoodJobMonthlySWM;
+    }
 
-	public SimpleEntry<Boolean, Integer> getAlertLitresSavedSWM() {
-		return alertLitresSavedSWM;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertLitresSavedSWM()
+    {
+        return alertLitresSavedSWM;
+    }
 
-	public void setAlertLitresSavedSWM(SimpleEntry<Boolean, Integer> alertLitresSavedSWM) {
-		this.alertLitresSavedSWM = alertLitresSavedSWM;
-	}
+    public void setAlertLitresSavedSWM(
+        IMessageResolutionStatus<Alert.Parameters> alertLitresSavedSWM)
+    {
+        this.alertLitresSavedSWM = alertLitresSavedSWM;
+    }
 
-	public boolean isAlertTop25SaverWeeklySWM() {
-		return alertTop25SaverWeeklySWM;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertTop25SaverWeeklySWM()
+    {
+        return alertTop25SaverWeeklySWM;
+    }
 
-	public void setAlertTop25SaverWeeklySWM(boolean alertTop25SaverWeeklySWM) {
-		this.alertTop25SaverWeeklySWM = alertTop25SaverWeeklySWM;
-	}
+    public void setAlertTop25SaverWeeklySWM(
+        IMessageResolutionStatus<Alert.Parameters> alertTop25SaverWeeklySWM)
+    {
+        this.alertTop25SaverWeeklySWM = alertTop25SaverWeeklySWM;
+    }
 
-	public boolean isAlertTop10SaverSWM() {
-		return alertTop10SaverSWM;
-	}
-        
-    public boolean isStaticTipToBeProduced() {
-		return produceStaticTip;
-	}
+    public IMessageResolutionStatus<Alert.Parameters> getAlertTop10SaverWeeklySWM()
+    {
+        return alertTop10SaverWeeklySWM;
+    }
 
-	public void setAlertTop10SaverSWM(boolean alertTop10SaverSWM) {
-		this.alertTop10SaverSWM = alertTop10SaverSWM;
-	}
+    public boolean isStaticTipToBeProduced()
+    {
+        return produceStaticTip;
+    }
 
-	public SimpleEntry<Boolean, Integer> getRecommendLessShowerTimeAmphiro() {
-		return recommendLessShowerTimeAmphiro;
-	}
+    public void setAlertTop10SaverWeeklySWM(
+        IMessageResolutionStatus<Alert.Parameters> alertTop10SaverSWM)
+    {
+        this.alertTop10SaverWeeklySWM = alertTop10SaverSWM;
+    }
 
-	public void setRecommendLessShowerTimeAmphiro(SimpleEntry<Boolean, Integer> recommendLessShowerTimeAmphiro) {
-		this.recommendLessShowerTimeAmphiro = recommendLessShowerTimeAmphiro;
-	}
+    public IMessageResolutionStatus<DynamicRecommendation.Parameters> getRecommendLessShowerTimeAmphiro()
+    {
+        return recommendLessShowerTimeAmphiro;
+    }
 
-	public SimpleEntry<Boolean, Integer> getRecommendLowerTemperatureAmphiro() {
-		return recommendLowerTemperatureAmphiro;
-	}
+    public void setRecommendLessShowerTimeAmphiro(
+        IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendLessShowerTimeAmphiro)
+    {
+        this.recommendLessShowerTimeAmphiro = recommendLessShowerTimeAmphiro;
+    }
 
-	public void setRecommendLowerTemperatureAmphiro(SimpleEntry<Boolean, Integer> recommendLowerTemperatureAmphiro) {
-		this.recommendLowerTemperatureAmphiro = recommendLowerTemperatureAmphiro;
-	}
+    public IMessageResolutionStatus<DynamicRecommendation.Parameters> getRecommendLowerTemperatureAmphiro()
+    {
+        return recommendLowerTemperatureAmphiro;
+    }
 
-	public SimpleEntry<Boolean, Integer> getRecommendLowerFlowAmphiro() {
-		return recommendLowerFlowAmphiro;
-	}
+    public void setRecommendLowerTemperatureAmphiro(
+        IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendLowerTemperatureAmphiro)
+    {
+        this.recommendLowerTemperatureAmphiro = recommendLowerTemperatureAmphiro;
+    }
 
-	public void setRecommendLowerFlowAmphiro(SimpleEntry<Boolean, Integer> recommendLowerFlowAmphiro) {
-		this.recommendLowerFlowAmphiro = recommendLowerFlowAmphiro;
-	}
+    public IMessageResolutionStatus<DynamicRecommendation.Parameters> getRecommendLowerFlowAmphiro()
+    {
+        return recommendLowerFlowAmphiro;
+    }
 
-	public SimpleEntry<Boolean, Integer> getRecommendShowerHeadChangeAmphiro() {
-		return recommendShowerHeadChangeAmphiro;
-	}
+    public void setRecommendLowerFlowAmphiro(
+        IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendLowerFlowAmphiro)
+    {
+        this.recommendLowerFlowAmphiro = recommendLowerFlowAmphiro;
+    }
 
-	public void setRecommendShowerHeadChangeAmphiro(SimpleEntry<Boolean, Integer> recommendShowerHeadChangeAmphiro) {
-		this.recommendShowerHeadChangeAmphiro = recommendShowerHeadChangeAmphiro;
-	}
+    public IMessageResolutionStatus<DynamicRecommendation.Parameters> getRecommendShowerHeadChangeAmphiro()
+    {
+        return recommendShowerHeadChangeAmphiro;
+    }
 
-	public SimpleEntry<Boolean, Integer> getRecommendShampooChangeAmphiro() {
-		return recommendShampooChangeAmphiro;
-	}
+    public void setRecommendShowerHeadChangeAmphiro(
+        IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendShowerHeadChangeAmphiro)
+    {
+        this.recommendShowerHeadChangeAmphiro = recommendShowerHeadChangeAmphiro;
+    }
 
-	public void setRecommendShampooChangeAmphiro(SimpleEntry<Boolean, Integer> recommendShampooChangeAmphiro) {
-		this.recommendShampooChangeAmphiro = recommendShampooChangeAmphiro;
-	}
+    public IMessageResolutionStatus<DynamicRecommendation.Parameters> getRecommendShampooChangeAmphiro()
+    {
+        return recommendShampooChangeAmphiro;
+    }
 
-	public SimpleEntry<Boolean, Integer> getRecommendReduceFlowWhenNotNeededAmphiro() {
-		return recommendReduceFlowWhenNotNeededAmphiro;
-	}
+    public void setRecommendShampooChangeAmphiro(
+        IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendShampooChangeAmphiro)
+    {
+        this.recommendShampooChangeAmphiro = recommendShampooChangeAmphiro;
+    }
 
-	public void setRecommendReduceFlowWhenNotNeededAmphiro(
-	        SimpleEntry<Boolean, Integer> recommendReduceFlowWhenNotNeededAmphiro) {
-		this.recommendReduceFlowWhenNotNeededAmphiro = recommendReduceFlowWhenNotNeededAmphiro;
-	}
-        
-    public void setInitialStaticTips(boolean initialStaticTips){
+    public IMessageResolutionStatus<DynamicRecommendation.Parameters> getRecommendReduceFlowWhenNotNeededAmphiro()
+    {
+        return recommendReduceFlowWhenNotNeededAmphiro;
+    }
+
+    public void setRecommendReduceFlowWhenNotNeededAmphiro(
+        IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendReduceFlowWhenNotNeededAmphiro)
+    {
+        this.recommendReduceFlowWhenNotNeededAmphiro = recommendReduceFlowWhenNotNeededAmphiro;
+    }
+
+    public void setInitialStaticTips(boolean initialStaticTips)
+    {
         this.initialStaticTips = initialStaticTips;
     }
 
-    public void setStaticTip(boolean produceStaticTip){
-            this.produceStaticTip = produceStaticTip;
+    public void setStaticTip(boolean produceStaticTip)
+    {
+        this.produceStaticTip = produceStaticTip;
     }
 
-    public void setMeterInstalled(boolean meterInstalled){
-            this.meterInstalled = meterInstalled;
+    public void setMeterInstalled(boolean meterInstalled)
+    {
+        this.meterInstalled = meterInstalled;
     }
 
-    public void setAmphiroInstalled(boolean amphiroInstalled){
-            this.amphiroInstalled = amphiroInstalled;
-    }        
+    public void setAmphiroInstalled(boolean amphiroInstalled)
+    {
+        this.amphiroInstalled = amphiroInstalled;
+    }
 }

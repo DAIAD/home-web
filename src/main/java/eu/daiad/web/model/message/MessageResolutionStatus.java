@@ -1,6 +1,7 @@
 package eu.daiad.web.model.message;
 
 public class MessageResolutionStatus <P extends Message.Parameters>
+    implements IMessageResolutionStatus<P>
 {
     protected final double score; // in [0, 1]
     
@@ -8,7 +9,7 @@ public class MessageResolutionStatus <P extends Message.Parameters>
     
     public static final double THRESHOLD = 0.5;
     
-    public MessageResolutionStatus(P parameters, double score)
+    public MessageResolutionStatus(double score, P parameters)
     {
         this.parameters = parameters;
         
@@ -18,7 +19,17 @@ public class MessageResolutionStatus <P extends Message.Parameters>
     
     public MessageResolutionStatus(P parameters)
     {
-        this(parameters, 1.0);
+        this(1.0, parameters);
+    }
+    
+    public MessageResolutionStatus(boolean flag, P parameters)
+    {
+        this(flag? 0.0 : 1.0, parameters);
+    }
+    
+    public MessageResolutionStatus(boolean flag)
+    {
+        this(flag, null);
     }
 
     public double getScore()

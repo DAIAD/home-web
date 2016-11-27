@@ -8,5 +8,5 @@ import eu.daiad.web.model.message.EnumAlertType;
 
 public interface IAlertRepository
 {
-    AlertTranslationEntity findOne(EnumAlertType alertType, Locale locale);
+    AlertEntity findOne(EnumAlertType alertType);
 }

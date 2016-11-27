@@ -43,21 +43,23 @@ public class StaticRecommendationRepository implements IStaticRecommendationRepo
     }
 
     @Override
-    public StaticRecommendationEntity randOne(Locale locale)
+    public StaticRecommendationEntity randomOne(Locale locale)
     {
-        List<StaticRecommendationEntity> entities = rand(locale, 1);
+        List<StaticRecommendationEntity> entities = random(locale, 1);
         return entities.isEmpty()? null : entities.get(0);
     }
 
     @Override
-    public List<StaticRecommendationEntity> rand(Locale locale, int size)
+    public List<StaticRecommendationEntity> random(Locale locale, int size)
     {
         if (size < 1)
             throw new IllegalArgumentException("size must be a positive integer");
         
         TypedQuery<Integer> query = entityManager.createQuery(
             "SELECT r.id FROM static_recommendation r WHERE r.locale = :locale",
-            Integer.class);        
+            Integer.class);
+        query.setParameter("locale", locale.getLanguage());
+        
         List<Integer> rids = query.getResultList();
         Collections.shuffle(rids);
         

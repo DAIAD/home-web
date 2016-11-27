@@ -35,7 +35,7 @@ public class DefaultMessageService implements IMessageService {
 	IGroupRepository groupRepository;
 
 	@Autowired
-	IMessageManagementService messageManagementRepository;
+	IMessageManagementService messageManager;
 
 	@Autowired
 	@Qualifier("cachingConsumptionStatsService")
@@ -48,7 +48,7 @@ public class DefaultMessageService implements IMessageService {
 	public void executeAll(MessageCalculationConfiguration config) 
 	{
 	    List<UtilityInfo> utilities = utilityRepository.getUtilities();	    
-	    for (UtilityInfo utility: utilities.subList(0, 1)) { // Fixme
+	    for (UtilityInfo utility: utilities) {
 			logger.info("About to generate messages for utility " + utility.getName() + "...");
 	        executeUtility(config, utility.getKey());
 		}
@@ -57,7 +57,7 @@ public class DefaultMessageService implements IMessageService {
 	@Override
 	public void executeUtility(MessageCalculationConfiguration config, UUID utilityKey) 
 	{
-		UtilityInfo utility = this.utilityRepository.getUtilityByKey(utilityKey);
+		UtilityInfo utility = utilityRepository.getUtilityByKey(utilityKey);
 		ConsumptionStats stats = statsService.getStats(utility, config.getRefDate());
         executeUtility(config, utility, stats);
 	}
@@ -84,7 +84,7 @@ public class DefaultMessageService implements IMessageService {
 	        MessageCalculationConfiguration config, UtilityInfo utility, ConsumptionStats stats, UUID accountKey) 
 	{
 		MessageResolutionPerAccountStatus messageStatus = messageResolver.resolve(config, utility, stats, accountKey);
-		messageManagementRepository.executeAccount(config, stats, messageStatus, accountKey);
+		messageManager.executeAccount(config, stats, messageStatus, accountKey);
 	}
 
 }

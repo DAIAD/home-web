@@ -9,7 +9,7 @@ public interface IStaticRecommendationRepository
 {
     StaticRecommendationEntity findOne(int recommendationId, Locale locale);
     
-    StaticRecommendationEntity randOne(Locale locale);
+    StaticRecommendationEntity randomOne(Locale locale);
     
-    List<StaticRecommendationEntity> rand(Locale locale, int size);
+    List<StaticRecommendationEntity> random(Locale locale, int size);
 }

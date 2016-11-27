@@ -4,6 +4,8 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.LocalDateTime;
 
+import eu.daiad.web.model.device.EnumDeviceType;
+
 public class MessageCalculationConfiguration 
 {    
 	private LocalDateTime refDate;
@@ -17,17 +19,13 @@ public class MessageCalculationConfiguration
 	private String currencyKey2 = "currency2";
 	private String dayKey = "day";
 	
-	private double eurosPerKwh = 0.224;
-	private double averageGbpPerKwh = 0.15;
-	private double eurosPerLiter = 0.0024;
+	private Integer meterDailyBudget = 300;
+	private Integer meterWeeklyBudget = 2100;
+	private Integer meterMonthlyBudget = 9000;
 
-	private Integer dailyBudget = 300;
-	private Integer weeklyBudget = 2100;
-	private Integer monthlyBudget = 9000;
-
-	private Integer dailyBudgetAmphiro = 100;
-	private Integer weeklyBudgetAmphiro = 700;
-	private Integer monthlyBudgetAmphiro = 3000;
+	private Integer amphiroDailyBudget = 100;
+	private Integer amphiroWeeklyBudget = 700;
+	private Integer amphiroMonthlyBudget = 3000;
     
     private boolean onDemandExecution;
 
@@ -78,76 +76,100 @@ public class MessageCalculationConfiguration
 		this.staticTipInterval = staticTipInterval;
 	}
 
-	public double getEurosPerKwh() {
-		return eurosPerKwh;
-	}
-
-	public void setEurosPerKwh(double eurosPerKwh) {
-		this.eurosPerKwh = eurosPerKwh;
-	}
-
-	public double getAverageGbpPerKwh() {
-		return averageGbpPerKwh;
-	}
-
-	public void setAverageGbpPerKwh(double averageGbpPerKwh) {
-		this.averageGbpPerKwh = averageGbpPerKwh;
-	}
-
-	public double getEurosPerLiter() {
-		return eurosPerLiter;
-	}
-
-	public void setEurosPerLiter(double eurosPerLiter) {
-		this.eurosPerLiter = eurosPerLiter;
-	}
-
 	public Integer getDailyBudget() {
-		return dailyBudget;
+		return meterDailyBudget;
 	}
+	
+	public Integer getDailyBudget(EnumDeviceType deviceType) 
+	{
+        switch (deviceType) {
+        case AMPHIRO:
+            return amphiroDailyBudget;
+        case METER:
+        default:
+            return meterDailyBudget;
+        }
+    }
 
-	public void setDailyBudget(Integer dailyBudget) {
-		this.dailyBudget = dailyBudget;
+	public void setDailyBudget(int budget) {
+		this.meterDailyBudget = budget;
 	}
-
+	
+	public void setDailyBudget(EnumDeviceType deviceType, int budget) 
+	{
+	    switch (deviceType) {
+        case AMPHIRO:
+            this.amphiroDailyBudget = budget;
+            break;
+        case METER:
+        default:
+            this.meterDailyBudget = budget;
+            break;
+        } 
+    }
+	
 	public Integer getWeeklyBudget() {
-		return weeklyBudget;
+	    return meterWeeklyBudget;
 	}
 
-	public void setWeeklyBudget(Integer weeklyBudget) {
-		this.weeklyBudget = weeklyBudget;
+	public Integer getWeeklyBudget(EnumDeviceType deviceType) 
+	{
+	    switch (deviceType) {
+	    case AMPHIRO:
+	        return amphiroWeeklyBudget;
+	    case METER:
+	    default:
+	        return meterWeeklyBudget;
+	    }
 	}
 
+	public void setWeeklyBudget(int budget) {
+	    this.meterWeeklyBudget = budget;
+	}
+
+	public void setWeeklyBudget(EnumDeviceType deviceType, int budget) 
+	{
+	    switch (deviceType) {
+	    case AMPHIRO:
+	        this.amphiroWeeklyBudget = budget;
+	        break;
+	    case METER:
+	    default:
+	        this.meterWeeklyBudget = budget;
+	        break;
+	    } 
+	}
+	
 	public Integer getMonthlyBudget() {
-		return monthlyBudget;
+	    return meterMonthlyBudget;
 	}
 
-	public void setMonthlyBudget(Integer monthlyBudget) {
-		this.monthlyBudget = monthlyBudget;
+	public Integer getMonthlyBudget(EnumDeviceType deviceType) 
+	{
+	    switch (deviceType) {
+	    case AMPHIRO:
+	        return amphiroMonthlyBudget;
+	    case METER:
+	    default:
+	        return meterMonthlyBudget;
+	    }
 	}
 
-	public Integer getDailyBudgetAmphiro() {
-		return dailyBudgetAmphiro;
+	public void setMonthlyBudget(int budget) {
+	    this.meterMonthlyBudget = budget;
 	}
 
-	public void setDailyBudgetAmphiro(Integer dailyBudgetAmphiro) {
-		this.dailyBudgetAmphiro = dailyBudgetAmphiro;
-	}
-
-	public Integer getWeeklyBudgetAmphiro() {
-		return weeklyBudgetAmphiro;
-	}
-
-	public void setWeeklyBudgetAmphiro(Integer weeklyBudgetAmphiro) {
-		this.weeklyBudgetAmphiro = weeklyBudgetAmphiro;
-	}
-
-	public Integer getMonthlyBudgetAmphiro() {
-		return monthlyBudgetAmphiro;
-	}
-
-	public void setMonthlyBudgetAmphiro(Integer monthlyBudgetAmphiro) {
-		this.monthlyBudgetAmphiro = monthlyBudgetAmphiro;
+	public void setMonthlyBudget(EnumDeviceType deviceType, int budget) 
+	{
+	    switch (deviceType) {
+	    case AMPHIRO:
+	        this.amphiroMonthlyBudget = budget;
+	        break;
+	    case METER:
+	    default:
+	        this.meterMonthlyBudget = budget;
+	        break;
+	    } 
 	}
 
     public boolean isOnDemandExecution() {

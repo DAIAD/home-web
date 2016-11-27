@@ -10,6 +10,7 @@ import javax.persistence.TypedQuery;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import eu.daiad.web.domain.application.DynamicRecommendationEntity;
 import eu.daiad.web.domain.application.DynamicRecommendationTranslationEntity;
 import eu.daiad.web.model.message.EnumDynamicRecommendationType;
 
@@ -21,23 +22,8 @@ public class DynamicRecommendationRepository implements IDynamicRecommendationRe
     EntityManager entityManager;
     
     @Override
-    public DynamicRecommendationTranslationEntity findOne(
-        EnumDynamicRecommendationType recommendationType, Locale locale)
+    public DynamicRecommendationEntity findOne(EnumDynamicRecommendationType recommendationType)
     {
-        TypedQuery<DynamicRecommendationTranslationEntity> query = entityManager.createQuery(
-            "SELECT r FROM dynamic_recommendation r " +
-                "WHERE r.recommendation.id = :rid AND r.locale = :locale",
-            DynamicRecommendationTranslationEntity.class);
-        query.setParameter("rid", recommendationType.getValue());
-        query.setParameter("locale", locale.getLanguage());
-        
-        DynamicRecommendationTranslationEntity e;
-        try {
-            e = query.getSingleResult();
-        } catch (NoResultException x) {
-            // Note: or maybe retry with default locale
-            e = null;
-        }
-        return e;
+        return entityManager.find(DynamicRecommendationEntity.class, recommendationType.getValue());
     }
 }

@@ -7,5 +7,5 @@ import eu.daiad.web.domain.application.AnnouncementTranslationEntity;
 
 public interface IAnnouncementRepository
 {
-    AnnouncementTranslationEntity findOne(int announcementId, Locale locale);
+    AnnouncementEntity findOne(int announcementId);
 }

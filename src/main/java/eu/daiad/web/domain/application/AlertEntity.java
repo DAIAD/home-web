@@ -1,6 +1,7 @@
 package eu.daiad.web.domain.application;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import javax.persistence.Basic;
@@ -31,7 +32,7 @@ public class AlertEntity {
 
 	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
 	@JoinColumn(name = "alert_id")
-	private Set<AlertTranslationEntity> translations = new HashSet<AlertTranslationEntity>();
+	private Set<AlertTranslationEntity> translations = new HashSet<>();
 
 	public int getPriority() {
 		return priority;
@@ -49,8 +50,21 @@ public class AlertEntity {
 		return mode;
 	}
 
-	public Set<AlertTranslationEntity> getTranslations() {
+	public Set<AlertTranslationEntity> getTranslations() 
+	{
 		return translations;
 	}
 
+	public AlertTranslationEntity getTranslation(Locale locale) 
+	{
+	    AlertTranslationEntity result = null;
+	    String langCode = locale.getLanguage();
+	    for (AlertTranslationEntity t: translations) {
+	        if (t.getLocale().equals(langCode)) {
+	            result = t;
+	            break;
+	        }
+	    }
+	    return result;
+	}
 }

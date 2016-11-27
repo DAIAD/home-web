@@ -1,6 +1,7 @@
 package eu.daiad.web.domain.application;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import javax.persistence.Basic;
@@ -44,8 +45,21 @@ public class AnnouncementEntity {
         this.id = id;
     }
 
-	public Set<AnnouncementTranslationEntity> getTranslations() {
+	public Set<AnnouncementTranslationEntity> getTranslations() 
+	{
 		return translations;
 	}
 
+	public AnnouncementTranslationEntity getTranslation(Locale locale) 
+	{
+	    AnnouncementTranslationEntity result = null;
+	    String langCode = locale.getLanguage();
+	    for (AnnouncementTranslationEntity t: translations) {
+	        if (t.getLocale().equals(langCode)) {
+	            result = t;
+	            break;
+	        }
+	    }
+	    return result;
+	}
 }
