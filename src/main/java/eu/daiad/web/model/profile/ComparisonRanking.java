@@ -3,14 +3,12 @@ package eu.daiad.web.model.profile;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 /**
  * Represents water IQ data for a single user.
  */
 public class ComparisonRanking {
 
-    public WaterIqCollection waterIq = new WaterIqCollection();
+    public List<WaterIqWithTimestamp> waterIq = new ArrayList<WaterIqWithTimestamp>();
 
     public List<MonthlyConsumtpion> monthlyConsumtpion = new ArrayList<MonthlyConsumtpion>();
 
@@ -24,7 +22,15 @@ public class ComparisonRanking {
 
     }
 
-    public static class WaterIqWithTimestamp extends WaterIq {
+    public static class WaterIqWithTimestamp {
+
+        public WaterIq user = new WaterIq();
+
+        public WaterIq similar = new WaterIq();
+
+        public WaterIq nearest = new WaterIq();
+
+        public WaterIq all = new WaterIq();
 
         public long timestamp;
 
@@ -34,20 +40,10 @@ public class ComparisonRanking {
 
     }
 
-    public static class WaterIqCollection {
-
-        public List<WaterIqWithTimestamp> user = new ArrayList<WaterIqWithTimestamp>();
-
-        public WaterIq similar = new WaterIq();
-
-        public WaterIq nearest = new WaterIq();
-
-        public WaterIq all = new WaterIq();
-    }
-
     public static class MonthlyConsumtpion {
 
-        public MonthlyConsumtpion(int month) {
+        public MonthlyConsumtpion(int year, int month) {
+            this.year = year;
             this.month = month;
         }
 
@@ -57,6 +53,8 @@ public class ComparisonRanking {
             this.nearest = (nearest == null ? 0 : nearest);
             this.all = (all == null ? 0 : all);
         }
+
+        public int year;
 
         public int month;
 
@@ -99,10 +97,8 @@ public class ComparisonRanking {
             this.all = (all == null ? 0 : all);
         }
 
-        @JsonIgnore
         public int year;
 
-        @JsonIgnore
         public int month;
 
         public String getDate() {

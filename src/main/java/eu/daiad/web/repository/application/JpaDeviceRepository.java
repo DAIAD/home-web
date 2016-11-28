@@ -342,10 +342,10 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
             }
 
-            TypedQuery<DeviceEntity> query = entityManager.createQuery(
-                            "select d from device d "
-                                            + "where d.key = :device_key and d.account.utility.id = :utility_id",
-                            DeviceEntity.class).setFirstResult(0).setMaxResults(1);
+            String deviceQueryString = "select d from device d where d.key = :device_key and d.account.utility.id = :utility_id";
+
+            TypedQuery<DeviceEntity> query = entityManager.createQuery(deviceQueryString, DeviceEntity.class).setFirstResult(0).setMaxResults(1);
+
             query.setParameter("utility_id", user.getUtilityId());
             query.setParameter("device_key", deviceKey);
 

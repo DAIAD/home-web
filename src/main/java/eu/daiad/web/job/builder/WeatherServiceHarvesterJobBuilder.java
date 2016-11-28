@@ -48,6 +48,7 @@ public class WeatherServiceHarvesterJobBuilder implements IJobBuilder {
 
     private Step transferData() {
         return stepBuilderFactory.get("transferData").tasklet(new StoppableTasklet() {
+            @Override
             public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
                 try {
                     // Get all job parameters
@@ -75,8 +76,7 @@ public class WeatherServiceHarvesterJobBuilder implements IJobBuilder {
                             WeatherHarvesterResult result = weatherDataHarvester.harvest();
 
                             for (WeatherUtilityHarvestedData utilityData : result.getUtilities()) {
-                                weatherRepository.update(result.getServiceId(), utilityData.getUtilityId(), utilityData
-                                                .getCreatedOn(), utilityData.getData());
+                                weatherRepository.update(result.getServiceId(), utilityData.getUtilityId(), utilityData.getCreatedOn(), utilityData.getData());
                             }
                         }
                     }

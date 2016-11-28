@@ -98,7 +98,7 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
      * @param user water IQ data for a single user.
      * @param similar water IQ data for a group of similar users.
      * @param nearest water IQ data for the group of neighbors.
-     * @param nearest water IQ data for all users.
+     * @param all water IQ data for all users.
      * @param monthlyConsumtpion monthly consumption data.
      * @param dailyConsumption daily consumption data.
      */
@@ -122,7 +122,12 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
 
             byte[] userKeyHash = md.digest(userKey.toString().getBytes("UTF-8"));
 
+            int month = Integer.parseInt(from.substring(4, 6));
+
             for (DailyConsumption day : dailyConsumption) {
+                if (day.month != month) {
+                    continue;
+                }
                 Put p = new Put(createRowKey(userKeyHash, day.year, day.month, day.day));
 
                 byte[] column = Bytes.toBytes(EnumColumn.WEEK.getValue());
@@ -198,10 +203,12 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
      * Returns water IQ data for the user with the given key.
      *
      * @param key the user key.
+     * @param year reference year.
+     * @param month reference month.
      * @return water IQ data.
      */
     @Override
-    public ComparisonRanking getWaterIqByUserKey(UUID key) {
+    public ComparisonRanking getWaterIqByUserKey(UUID key, int year, int month) {
         throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
     }
 
@@ -211,7 +218,7 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
      * @param userKey the user key.
      * @param year the year.
      * @param month the month.
-     * @return a list of {@link ComparisonRanking.DailyConsumption}.
+     * @return a list of {@link DailyConsumption}.
      */
     @Override
     public List<DailyConsumption> getComparisonDailyConsumption(UUID userKey, int year, int month) {

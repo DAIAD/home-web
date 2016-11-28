@@ -71,9 +71,6 @@ public class AccountEntity {
     @OneToOne(mappedBy = "account")
     private HouseholdEntity household;
 
-    @OneToOne(mappedBy = "account", fetch = FetchType.LAZY)
-    private WaterIqEntity waterIq;
-
     @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id")
     private Set<WaterIqHistoryEntity> waterIqHistory = new HashSet<WaterIqHistoryEntity>();
@@ -381,14 +378,6 @@ public class AccountEntity {
 
     public void setHousehold(HouseholdEntity household) {
         this.household = household;
-    }
-
-    public WaterIqEntity getWaterIq() {
-        return waterIq;
-    }
-
-    public void setWaterIq(WaterIqEntity waterIq) {
-        this.waterIq = waterIq;
     }
 
     public Set<WaterIqHistoryEntity> getWaterIqHistory() {

@@ -195,7 +195,7 @@ public class UserService extends BaseService implements IUserService {
             throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
         }
 
-        if (authenticatedUser.getUtilityId() != user.getUtilityId()) {
+        if (!authenticatedUser.getUtilities().contains(user.getUtilityId())) {
             throw createApplicationException(SharedErrorCode.AUTHORIZATION);
         }
 
@@ -225,7 +225,7 @@ public class UserService extends BaseService implements IUserService {
             throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
         }
 
-        if (authenticatedUser.getUtilityId() != user.getUtilityId()) {
+        if (!authenticatedUser.getUtilities().contains(user.getUtilityId())) {
             throw createApplicationException(SharedErrorCode.AUTHORIZATION);
         }
 
