@@ -6,8 +6,6 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParametersIncrementer;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.StoppableTasklet;
 import org.springframework.batch.repeat.RepeatStatus;
@@ -18,23 +16,28 @@ import eu.daiad.web.connector.SftpProperties;
 import eu.daiad.web.model.loader.DataTransferConfiguration;
 import eu.daiad.web.service.IWaterMeterDataLoaderService;
 
+/**
+ * Job for downloading smart water meter data from a remote SFTP server and
+ * storing it to HBase.
+ */
 @Component
-public class WaterMeterDataSecureFileTransferJobBuilder implements IJobBuilder {
+public class WaterMeterDataSecureFileTransferJobBuilder extends BaseJobBuilder implements IJobBuilder {
 
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
 	private static final Log logger = LogFactory.getLog(WaterMeterDataSecureFileTransferJobBuilder.class);
 
-	@Autowired
-	private JobBuilderFactory jobBuilderFactory;
-
-	@Autowired
-	private StepBuilderFactory stepBuilderFactory;
-
+	/**
+	 * Service for downloading, parsing and importing smart water meter data to HBase.
+	 */
 	@Autowired
 	private IWaterMeterDataLoaderService loader;
 
 	private Step transferData() {
 		return stepBuilderFactory.get("transferData").tasklet(new StoppableTasklet() {
-			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
+			@Override
+            public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
 				try {
 					// Initialize configuration
 					DataTransferConfiguration config = new DataTransferConfiguration();

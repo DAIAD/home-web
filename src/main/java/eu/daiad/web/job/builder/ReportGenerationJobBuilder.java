@@ -17,8 +17,6 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParametersIncrementer;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.StoppableTasklet;
 import org.springframework.batch.repeat.RepeatStatus;
@@ -34,24 +32,12 @@ import eu.daiad.web.repository.application.IUtilityRepository;
  * Builder for creating a report generation job.
  */
 @Component
-public class ReportGenerationJobBuilder implements IJobBuilder {
+public class ReportGenerationJobBuilder extends BaseJobBuilder implements IJobBuilder {
 
     /**
      * Logger instance for writing events using the configured logging API.
      */
     private static final Log logger = LogFactory.getLog(ReportGenerationJobBuilder.class);
-
-    /**
-     * Job builder factory.
-     */
-    @Autowired
-    private JobBuilderFactory jobBuilderFactory;
-
-    /**
-     * Step builder factory.
-     */
-    @Autowired
-    private StepBuilderFactory stepBuilderFactory;
 
     /**
      * Repository for accessing utility data.

@@ -267,8 +267,7 @@ public class UserService extends BaseService implements IUserService {
         // Send email
         Message message = new Message();
 
-        message.setSubject(messageSource.getMessage("ResetPassword.Mail.Subject", null, "Password Reset",
-                        new Locale(user.getLocale())));
+        message.setSubject(messageSource.getMessage("ResetPassword.Mail.Subject", null, "Password Reset", new Locale(user.getLocale())));
 
         if (StringUtils.isBlank(user.getFullname())) {
             message.setRecipients(user.getUsername());

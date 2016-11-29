@@ -9,8 +9,6 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParametersIncrementer;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.StoppableTasklet;
 import org.springframework.batch.repeat.RepeatStatus;
@@ -20,22 +18,22 @@ import org.springframework.stereotype.Component;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.service.message.IMessageService;
 
+/**
+ * Job for generating messages for users based on their water consumption behavior.
+ */
 @Component
-public class MessageGeneratorJobBuilder implements IJobBuilder {
-    
+public class MessageGeneratorJobBuilder extends BaseJobBuilder implements IJobBuilder {
+
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
 	private static final Log logger = LogFactory.getLog(MessageGeneratorJobBuilder.class);
 
-	@Autowired
-	private JobBuilderFactory jobBuilderFactory;
-
-	@Autowired
-	private StepBuilderFactory stepBuilderFactory;
-
+    /**
+     * Service for creating application messages.
+     */
 	@Autowired
 	private IMessageService messageService;
-
-	public MessageGeneratorJobBuilder() {
-	}
 
 	private Step generateMessages() {
 		return stepBuilderFactory.get("generateMessages").tasklet(new StoppableTasklet() {
@@ -43,42 +41,42 @@ public class MessageGeneratorJobBuilder implements IJobBuilder {
 			public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
 				try {
 				    Map<String, Object> params = chunkContext.getStepContext().getJobParameters();
-				    
-				    LocalDateTime refDate = params.containsKey("ref-date")? 
+
+				    LocalDateTime refDate = params.containsKey("ref-date")?
 				            LocalDateTime.parse((String) params.get("ref-date")) :
 				            LocalDateTime.now().minusDays(1);
-				    
+
 					MessageCalculationConfiguration config = new MessageCalculationConfiguration(refDate);
 
                     config.setOnDemandExecution(true);
-                    
+
 					config.setStaticTipInterval(
 					        Integer.parseInt((String) params.get("static.tip.interval")));
 
 					config.setEurosPerKwh(
 					        Double.parseDouble((String) params.get("euros.per.kwh")));
-					
+
 					config.setAverageGbpPerKwh(
 					        Double.parseDouble((String) params.get("average.gbp.per.kwh")));
-					
+
 					config.setEurosPerLiter(
 					        Double.parseDouble((String) params.get("euros.per.liter")));
 
 					config.setDailyBudget(
 					        Integer.parseInt((String) params.get("daily.budget")));
-					
+
 					config.setWeeklyBudget(
 					        Integer.parseInt((String) params.get("weekly.budget")));
-					
+
 					config.setMonthlyBudget(
 					        Integer.parseInt((String) params.get("monthly.budget")));
 
 					config.setDailyBudgetAmphiro(
 					        Integer.parseInt((String) params.get("daily.budget.amphiro")));
-					
+
 					config.setWeeklyBudgetAmphiro(
 					        Integer.parseInt((String) params.get("weekly.budget.amphiro")));
-					
+
 					config.setMonthlyBudgetAmphiro(
 					        Integer.parseInt((String) params.get("monthly.budget.amphiro")));
 

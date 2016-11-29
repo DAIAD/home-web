@@ -10,13 +10,10 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParametersIncrementer;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.StoppableTasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import eu.daiad.web.domain.application.WeatherServiceEntity;
@@ -25,26 +22,22 @@ import eu.daiad.web.service.weather.IWeatherRepository;
 import eu.daiad.web.service.weather.WeatherHarvesterResult;
 import eu.daiad.web.service.weather.WeatherUtilityHarvestedData;
 
+/**
+ * Job for collecting weather data for one or more weather services.
+ */
 @Component
-public class WeatherServiceHarvesterJobBuilder implements IJobBuilder {
+public class WeatherServiceHarvesterJobBuilder extends BaseJobBuilder implements IJobBuilder {
 
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
     private static final Log logger = LogFactory.getLog(WeatherServiceHarvesterJobBuilder.class);
 
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    @Autowired
-    private JobBuilderFactory jobBuilderFactory;
-
-    @Autowired
-    private StepBuilderFactory stepBuilderFactory;
-
+    /**
+     * Repository for querying weather service meta data and storing weather data.
+     */
     @Autowired
     private IWeatherRepository weatherRepository;
-
-    public WeatherServiceHarvesterJobBuilder() {
-
-    }
 
     private Step transferData() {
         return stepBuilderFactory.get("transferData").tasklet(new StoppableTasklet() {

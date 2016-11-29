@@ -3,35 +3,21 @@ package eu.daiad.web.job.builder;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParametersIncrementer;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import eu.daiad.web.job.task.ConsumptionClusterTask;
 
+/**
+ * Helper builder class for initializing a job that clusters users based on their
+ * monthly consumption per household member and computes water IQ rankings.
+ */
 @Component
 public class ConsumptionClusterJobBuilder extends BaseJobBuilder implements IJobBuilder {
 
     /**
-     * Spring application context.
+     * Task that clusters users based on their consumption and computes water IQ status.
      */
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    /**
-     * Job builder factory.
-     */
-    @Autowired
-    private JobBuilderFactory jobBuilderFactory;
-
-    /**
-     * Step builder factory.
-     */
-    @Autowired
-    private StepBuilderFactory stepBuilderFactory;
-
     @Autowired
     private ConsumptionClusterTask consumptionClusterStep;
 

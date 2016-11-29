@@ -227,6 +227,9 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
 
         List<DailyConsumption> result = new ArrayList<DailyConsumption>();
 
+        int minYear = (month < 6 ? (year - 1) : year);
+        int minMonth = ((month - 5) > 0 ? (month - 5) : (month + 7));
+
         try {
             table = connection.getTable(HBASE_TABLE_COMPARISON_RANKING_DAILY);
 
@@ -239,7 +242,7 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
             Scan scan = new Scan();
             scan.setCaching(scanCacheSize);
             scan.addFamily(columnFamily);
-            scan.setStartRow(createRowKey(userKeyHash, year, month));
+            scan.setStartRow(createRowKey(userKeyHash, minYear, minMonth));
             scan.setStopRow(createRowKey(userKeyHash, year, month + 1));
 
            scanner = table.getScanner(scan);
@@ -249,9 +252,11 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
 
                 int timestamp = Bytes.toInt(Arrays.copyOfRange(r.getRow(), 16, 20));
 
-                int day = timestamp % 100;
+                int dateYear = timestamp / 10000;
+                int dateMonth = (timestamp / 100) % 100;
+                int dateDay = timestamp % 100;
 
-                ComparisonRanking.DailyConsumption dailyConsumption = new ComparisonRanking.DailyConsumption(year, month, day);
+                ComparisonRanking.DailyConsumption dailyConsumption = new ComparisonRanking.DailyConsumption(dateYear, dateMonth, dateDay);
 
                 for (Entry<byte[], byte[]> entry : map.entrySet()) {
                     String qualifier = Bytes.toString(entry.getKey());

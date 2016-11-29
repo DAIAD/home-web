@@ -141,7 +141,7 @@ public class JpaWaterIqRepository extends BaseRepository implements IWaterIqRepo
         }
 
         // Get daily consumption from HBase
-        result.dailyConsumtpion = hBaseWaterIqRepository.getComparisonDailyConsumption(key, entries.get(0).getYear(), entries.get(0).getMonth());
+        result.dailyConsumtpion = hBaseWaterIqRepository.getComparisonDailyConsumption(key, year, month);
 
         return result;
     }
