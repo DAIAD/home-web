@@ -17,9 +17,11 @@ import org.apache.commons.math3.stat.StatUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Interval;
 import org.joda.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.DynamicRecommendation;
@@ -1222,7 +1224,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
         final int N = 12;       // number of past weeks to examine
         final double F = 0.5;   // a threshold ratio of non-nulls for collected values
                 
-        // Build a common part of a data-service query    
+        // Build a common part of a data-service query
+        
         DataQueryResponse qr;
         DataQueryBuilder qb = new DataQueryBuilder()
             .timezone(refDate.getZone())
@@ -1234,18 +1237,19 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         qb.sliding(refDate, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL);
         qr = dataService.execute(qb.build());
-        Double refValue = qr.getSingleResult(deviceType, EnumDataField.VOLUME, EnumMetric.SUM);        
+        Double refValue = qr.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);        
         if (refValue == null)
             return null; // nothing to compare to
         
-        // Compute for previous N days for a given day-of-week   
+        // Compute for past N weeks for a given day-of-week   
+        
         DateTime start = refDate;
         List<Double> values = new ArrayList<>(N);
         for (int i = 0; i < N; i++) {
             start = start.minusWeeks(1);
             qb.sliding(start, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL);
             qr = dataService.execute(qb.build());
-            Double val = qr.getSingleResult(deviceType, EnumDataField.VOLUME, EnumMetric.SUM);
+            Double val = qr.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
             if (val != null)
                 values.add(val);
         }    
@@ -1262,8 +1266,9 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         logger.debug(String.format(
             "Insight A1 for account %s/%s: Consumption for same week day of last %d weeks since %s:\n\t" + 
-                "value=%.2f mean=%.2f stddevp=%.2f x*=%.2f", 
-             account.getKey(), deviceType, N, refDate.toString("dd/MM/YYYY"), refValue, avgValue, sd, normValue));
+                "value=%.2f mean=%.2f stddevp=%.2f x*=%.2f score=%.2f", 
+             account.getKey(), deviceType, N, refDate.toString("dd/MM/YYYY"), 
+             refValue, avgValue, sd, normValue, score));
         
         return new MessageResolutionStatus<Insight.BasicParameters>(
             score, 
@@ -1280,6 +1285,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         final double F = 0.6;   // a threshold ratio of non-nulls for collected values
         
         // Build a common part of a data-service query      
+        
         DataQueryResponse qr;
         DataQueryBuilder qb = new DataQueryBuilder()
             .timezone(refDate.getZone())
@@ -1287,14 +1293,15 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
             .sum();
         
-        // Compute for target day  
+        // Compute for target day
+        
         qb.sliding(refDate, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL);
         qr = dataService.execute(qb.build());
-        Double refValue = qr.getSingleResult(deviceType, EnumDataField.VOLUME, EnumMetric.SUM);
+        Double refValue = qr.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
         if (refValue == null)
             return null; // nothing to compare to
         
-        // Compute for previous N days
+        // Compute for past N days
         
         DateTime start = refDate;
         List<Double> values = new ArrayList<>(N);
@@ -1302,7 +1309,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             start = start.minusDays(1);
             qb.sliding(start, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL);
             qr = dataService.execute(qb.build());
-            Double val = qr.getSingleResult(deviceType, EnumDataField.VOLUME, EnumMetric.SUM);
+            Double val = qr.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
             if (val != null)
                 values.add(val);
         }   
@@ -1319,8 +1326,9 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         logger.debug(String.format(
             "Insight A2 for account %s/%s: Consumption for last %d days since %s:\n\t" + 
-                "value=%.2f mean=%.2f stddevp=%.2f x*=%.2f", 
-             account.getKey(), deviceType, N, refDate.toString("dd/MM/YYYY"), refValue, avgValue, sd, normValue));
+                "value=%.2f mean=%.2f stddevp=%.2f x*=%.2f score=%.2f", 
+             account.getKey(), deviceType, N, refDate.toString("dd/MM/YYYY"), 
+             refValue, avgValue, sd, normValue, score));
         
         return new MessageResolutionStatus<Insight.BasicParameters>(
             score,
@@ -1332,8 +1340,66 @@ public class DefaultMessageResolverService implements IMessageResolverService
         MessageCalculationConfiguration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType, EnumPartOfDay partOfDay)
     {
-        // Todo
-        return null;
+        final double PERCENTAGE_CHANGE_THRESHOLD = 40;
+        final double VOLUME_LOW_THRESHOLD = 15; // a lower threshold for volume (litres)
+        final int N = 30;       // number of past days to examine
+        final double F = 0.6;   // a threshold ratio of non-nulls for collected values
+         
+        // Build a common part of a data-service query      
+        DataQuery query;
+        DataQueryResponse queryResponse;
+        DataQueryBuilder queryBuilder = new DataQueryBuilder()
+            .timezone(refDate.getZone())
+            .user("user", account.getKey())  
+            .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
+            .sum();
+        
+        // Compute for part-of-day for target day
+        
+        Interval r = partOfDay.toInterval(refDate);
+        query = queryBuilder
+            .absolute(r.getStart(), r.getEnd(), EnumTimeAggregation.ALL)
+            .build();
+        queryResponse = dataService.execute(query);
+        Double refValue = queryResponse.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
+        if (refValue == null || refValue < VOLUME_LOW_THRESHOLD)
+            return null;
+                
+        // Compute for part-of-day for past N days
+        
+        DateTime start = refDate;
+        List<Double> values = new ArrayList<>(N);
+        for (int i = 0; i < N; i++) {
+            start = start.minusDays(1);
+            Interval r1 = partOfDay.toInterval(start);
+            query = queryBuilder
+                .absolute(r1.getStart(), r1.getEnd(), EnumTimeAggregation.ALL)
+                .build();
+            queryResponse = dataService.execute(query);
+            Double val = queryResponse.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
+            if (val != null)
+                values.add(val);
+        }   
+        if (values.size() < N * F)
+            return null; // too few values, the average is not reliable
+        
+        // Seems we have sufficient data for the past days
+        
+        double[] pvalues = ArrayUtils.toPrimitive(values.toArray(new Double[0]));
+        double avgValue = mean(pvalues); 
+        double percentDiff = 100.0 * (refValue - avgValue) / avgValue;
+        double score = Math.abs(percentDiff) / (2 * PERCENTAGE_CHANGE_THRESHOLD);
+        
+        logger.debug(String.format(
+            "Insight A3 for account %s/%s: Consumption at %s of last %d days since %s:\n\t" + 
+                "value=%.2f mean=%.2f score=%.2f", 
+             account.getKey(), deviceType, partOfDay, N, refDate.toString("dd/MM/YYYY"),
+             refValue, avgValue, score));
+        
+        return new MessageResolutionStatus<Insight.BasicParameters>(
+            score,
+            Insight.newA3Parameters(refDate, partOfDay, deviceType, refValue, avgValue)
+        );
     }
     
     //
