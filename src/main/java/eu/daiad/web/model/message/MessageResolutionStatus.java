@@ -24,7 +24,7 @@ public class MessageResolutionStatus <P extends Message.Parameters>
     
     public MessageResolutionStatus(boolean flag, P parameters)
     {
-        this(flag? 0.0 : 1.0, parameters);
+        this(flag? 1.0 : 0.0, parameters);
     }
     
     public MessageResolutionStatus(boolean flag)

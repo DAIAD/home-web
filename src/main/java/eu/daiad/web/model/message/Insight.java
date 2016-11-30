@@ -1,5 +1,6 @@
 package eu.daiad.web.model.message;
 
+import java.util.EnumMap;
 import java.util.Map;
 
 import org.joda.time.DateTime;
@@ -64,7 +65,7 @@ public class Insight extends DynamicRecommendation {
         }
     }
 
-    protected static class A1Parameters extends BasicParameters
+    public static class A1Parameters extends BasicParameters
     {
         public A1Parameters(
                 DateTime refDate, EnumDeviceType deviceType, double currentValue, double avgValue)
@@ -95,7 +96,7 @@ public class Insight extends DynamicRecommendation {
         }
     }
     
-    protected static class A2Parameters extends BasicParameters
+    public static class A2Parameters extends BasicParameters
     {
         public A2Parameters(
                 DateTime refDate, EnumDeviceType deviceType, double currentValue, double avgValue)
@@ -113,7 +114,7 @@ public class Insight extends DynamicRecommendation {
         }
     }
     
-    protected static class A3Parameters extends BasicParameters
+    public static class A3Parameters extends BasicParameters
     {
         protected final EnumPartOfDay partOfDay;
         
@@ -162,28 +163,92 @@ public class Insight extends DynamicRecommendation {
             return parameters;
         }
     }
+    
+    public static class A4Parameters extends BasicParameters
+    {
+        EnumMap<EnumPartOfDay, Double> partialValues;
+       
+        public A4Parameters(
+            DateTime refDate, EnumDeviceType deviceType, double currentValue)
+        {
+            // Note: 
+            // The current-value is the consumption for the whole day
+            // The average-value is not relevant here (equivalent with current-value)
+            super(refDate, deviceType, currentValue, currentValue);
+            partialValues = new EnumMap<>(EnumPartOfDay.class);
+        }
         
-    //
-    // ~ Factories providing several subclasses of parameters
-    //
-    
-    public static BasicParameters newA1Parameters(
-            DateTime refDate, EnumDeviceType deviceType, double currentValue, double avgValue)
-    {
-        return new A1Parameters(refDate, deviceType, currentValue, avgValue);
-    }
-    
-    public static BasicParameters newA2Parameters(
-            DateTime refDate, EnumDeviceType deviceType, double currentValue, double avgValue)
-    {
-        return new A2Parameters(refDate, deviceType, currentValue, avgValue);
-    }
-    
-    public static BasicParameters newA3Parameters(
-            DateTime refDate, EnumPartOfDay partOfDay, EnumDeviceType deviceType,
-            double currentValue, double avgValue)
-    {
-        return new A3Parameters(refDate, partOfDay, deviceType, currentValue, avgValue);
+        public Double getPart(EnumPartOfDay partOfDay)
+        {
+            return partialValues.get(partOfDay);
+        }
+        
+        public Double getPartAsPercentage(EnumPartOfDay partOfDay)
+        {
+            Double partialValue = partialValues.get(partOfDay);
+            if (partialValue == null)
+                return null;
+            return 100.0 * (partialValue / currentValue);
+        }
+        
+        public A4Parameters setPart(EnumPartOfDay partOfDay, double value)
+        {
+            this.partialValues.put(partOfDay, value);
+            return this;
+        }
+        
+        public A4Parameters setParts(Map<EnumPartOfDay, Double> partialValues)
+        {
+            this.partialValues.putAll(partialValues);
+            return this;
+        }
+        
+        @Override
+        public EnumDynamicRecommendationType getType()
+        {
+            EnumDynamicRecommendationType t = null;
+            
+            Double y1 = partialValues.get(EnumPartOfDay.MORNING); 
+            Double y2 = partialValues.get(EnumPartOfDay.AFTERNOON);
+            Double y3 = partialValues.get(EnumPartOfDay.NIGHT);
+            
+            if (y1 == null || y2 == null || y3 == null)
+                return EnumDynamicRecommendationType.UNDEFINED;
+            
+            if (y1 < y2) {
+                t = (y2 < y3)? 
+                    EnumDynamicRecommendationType.INSIGHT_A4_CONSUMPTION_MAINLY_IN_NIGHT:
+                    EnumDynamicRecommendationType.INSIGHT_A4_CONSUMPTION_MAINLY_IN_AFTERNOON;
+            } else {
+                // y2 <= y1
+                t = (y1 < y3)?
+                    EnumDynamicRecommendationType.INSIGHT_A4_CONSUMPTION_MAINLY_IN_NIGHT:
+                    EnumDynamicRecommendationType.INSIGHT_A4_CONSUMPTION_MAINLY_IN_MORNING;
+            }
+            
+            return t;
+        }
+        
+        @Override
+        public Map<String, Object> getPairs()
+        {
+            Map<String, Object> parameters = super.getPairs();
+            
+            Double p1 = getPartAsPercentage(EnumPartOfDay.MORNING); 
+            Double p2 = getPartAsPercentage(EnumPartOfDay.AFTERNOON);
+            Double p3 = getPartAsPercentage(EnumPartOfDay.NIGHT);
+            
+            if (p1 != null)
+                parameters.put("morning_percentage", new NumberFormatter(p1, ".#"));
+            
+            if (p2 != null)
+                parameters.put("afternoon_percentage", new NumberFormatter(p2, ".#"));
+            
+            if (p3 != null)
+                parameters.put("night_percentage", new NumberFormatter(p3, ".#"));
+            
+            return parameters;
+        }
     }
     
     //

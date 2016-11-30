@@ -1,11 +1,10 @@
 package eu.daiad.web.service.message;
 
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.UUID;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -19,6 +18,7 @@ import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.joda.time.LocalDateTime;
+import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -45,8 +45,6 @@ import eu.daiad.web.model.query.EnumTimeAggregation;
 import eu.daiad.web.model.query.EnumTimeUnit;
 import eu.daiad.web.model.query.GroupDataSeries;
 import eu.daiad.web.model.query.MeterDataPoint;
-import eu.daiad.web.model.security.AuthenticatedUser;
-import eu.daiad.web.model.user.UserInfo;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IAccountStaticRecommendationRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
@@ -209,12 +207,12 @@ public class DefaultMessageResolverService implements IMessageResolverService
         status.setStaticTip(
             produceStaticTipForAccount(account, config.getStaticTipInterval()));
         
-        // Insight A.1
+        // Insight A.1  
         
         for (EnumDeviceType deviceType: deviceTypes)
             status.addInsight(computeInsightA1(config, account, refDate, deviceType));
         
-        // Insight A.2
+        // Insight A.2  
         
         for (EnumDeviceType deviceType: deviceTypes)
             status.addInsight(computeInsightA2(config, account, refDate, deviceType));
@@ -227,7 +225,10 @@ public class DefaultMessageResolverService implements IMessageResolverService
                     computeInsightA3(config, account, refDate, deviceType, partOfDay)
                 );
         
-       // Insight A.3
+        // Insight A.4
+        
+        for (EnumDeviceType deviceType: deviceTypes)
+            status.addInsight(computeInsightA4(config, account, refDate, deviceType));
         
         return status;
     }
@@ -1272,7 +1273,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         return new MessageResolutionStatus<Insight.BasicParameters>(
             score, 
-            Insight.newA1Parameters(refDate, deviceType, refValue, avgValue)
+            new Insight.A1Parameters(refDate, deviceType, refValue, avgValue)
         );
     }
     
@@ -1332,7 +1333,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         return new MessageResolutionStatus<Insight.BasicParameters>(
             score,
-            Insight.newA2Parameters(refDate, deviceType, refValue, avgValue)
+            new Insight.A2Parameters(refDate, deviceType, refValue, avgValue)
         );
     }
     
@@ -1345,7 +1346,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         final int N = 30;       // number of past days to examine
         final double F = 0.6;   // a threshold ratio of non-nulls for collected values
          
-        // Build a common part of a data-service query      
+        // Build a common part of a data-service query
         DataQuery query;
         DataQueryResponse queryResponse;
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
@@ -1398,8 +1399,64 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         return new MessageResolutionStatus<Insight.BasicParameters>(
             score,
-            Insight.newA3Parameters(refDate, partOfDay, deviceType, refValue, avgValue)
+            new Insight.A3Parameters(refDate, partOfDay, deviceType, refValue, avgValue)
         );
+    }
+    
+    private MessageResolutionStatus<Insight.BasicParameters> computeInsightA4(
+        MessageCalculationConfiguration config,
+        AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
+    {
+        
+        // Build a common part of a data-service query
+        
+        DataQuery query;
+        DataQueryResponse queryResponse;
+        DataQueryBuilder queryBuilder = new DataQueryBuilder()
+            .timezone(refDate.getZone())
+            .user("user", account.getKey())  
+            .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
+            .sum();
+        
+        // Compute for every part-of-day for target day
+        
+        EnumMap<EnumPartOfDay, Double> parts = new EnumMap<>(EnumPartOfDay.class);
+        double sumOfParts = 0;
+        boolean missingPart = false;
+        for (EnumPartOfDay partOfDay: EnumPartOfDay.values()) {
+            Interval r = partOfDay.toInterval(refDate);
+            query = queryBuilder
+                .absolute(r.getStart(), r.getEnd(), EnumTimeAggregation.ALL)
+                .build();
+            queryResponse = dataService.execute(query);
+            
+            Double y = queryResponse.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
+            if (y == null) {
+                missingPart = true;
+                break;
+            }
+            
+            sumOfParts += y;
+            parts.put(partOfDay, y);
+        }
+        
+        if (missingPart)
+            return null;
+        
+        // We have sufficient data for all parts of target day       
+        
+        logger.debug(String.format(
+            "Insight A4 for account %s/%s: Consumption for %s is %.2f (l):\n\t" + 
+                "morning=%.2f%% afternoon=%.2f%% night=%.2f%%", 
+             account.getKey(), deviceType, refDate.toString("dd/MM/YYYY"), sumOfParts,
+             100 * parts.get(EnumPartOfDay.MORNING) / sumOfParts,
+             100 * parts.get(EnumPartOfDay.AFTERNOON) / sumOfParts,
+             100 * parts.get(EnumPartOfDay.NIGHT) / sumOfParts
+        ));
+        
+        Insight.BasicParameters parameters = new Insight.A4Parameters(refDate, deviceType, sumOfParts)
+            .setParts(parts);
+        return new MessageResolutionStatus<Insight.BasicParameters>(true, parameters);
     }
     
     //
@@ -1422,9 +1479,9 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 currLength++;
             else
                 currLength = 0;
-            if (currLength > maxLength) {
+            
+            if (currLength > maxLength)
                 maxLength = currLength;
-            }
         }
         return maxLength;
     }
