@@ -500,8 +500,7 @@ public class DataService extends BaseService implements IDataService {
                             filterUsers = ((UserPopulationFilter) filter).getUsers();
                             break;
                         case GROUP:
-                            filterUsers = groupRepository.getGroupMemberKeys(((GroupPopulationFilter) filter)
-                                            .getGroup());
+                            filterUsers = groupRepository.getGroupMemberKeys(((GroupPopulationFilter) filter).getGroup());
                             break;
                         case CLUSTER:
                             ClusterPopulationFilter clusterFilter = (ClusterPopulationFilter) filter;
@@ -510,8 +509,7 @@ public class DataService extends BaseService implements IDataService {
 
                             if (clusterFilter.getCluster() != null) {
                                 groups = groupRepository.getClusterByKeySegments(clusterFilter.getCluster());
-                            } else if ((clusterFilter.getClusterType() != null)
-                                            && (!clusterFilter.getClusterType().equals(EnumClusterType.UNDEFINED))) {
+                            } else if ((clusterFilter.getClusterType() != null) && (!clusterFilter.getClusterType().equals(EnumClusterType.UNDEFINED))) {
                                 groups = groupRepository.getClusterByTypeSegments(clusterFilter.getClusterType());
                             } else if (!StringUtils.isBlank(clusterFilter.getName())) {
                                 groups = groupRepository.getClusterByNameSegments(clusterFilter.getName());
@@ -529,8 +527,7 @@ public class DataService extends BaseService implements IDataService {
                             }
                             continue;
                         case UTILITY:
-                            filterUsers = groupRepository.getUtilityByKeyMemberKeys(((UtilityPopulationFilter) filter)
-                                            .getUtility());
+                            filterUsers = groupRepository.getUtilityByKeyMemberKeys(((UtilityPopulationFilter) filter).getUtility());
                             break;
                         default:
                             // Ignore
@@ -549,13 +546,10 @@ public class DataService extends BaseService implements IDataService {
                         for (UUID userKey : filterUsers) {
                             // Filter users based on the utility only when
                             // an authenticated user exists
-                            AuthenticatedUser user = (authenticatedUser == null ? userRepository.getUserByKey(userKey)
-                                            : userRepository.getUserByUtilityAndKey(authenticatedUser.getUtilityId(),
-                                                            userKey));
+                            AuthenticatedUser user = (authenticatedUser == null ? userRepository.getUserByKey(userKey): userRepository.getUserByUtilityAndKey(authenticatedUser.getUtilityId(), userKey));
 
                             if (user == null) {
-                                throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username",
-                                                userKey);
+                                throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", userKey);
                             }
 
                             // Decide if the user must be included in the group
@@ -564,8 +558,7 @@ public class DataService extends BaseService implements IDataService {
                             WaterMeterDevice userMeter = null;
 
                             // Fetch meter only if it is needed
-                            if ((query.getSource() == EnumMeasurementDataSource.BOTH)
-                                            || (query.getSource() == EnumMeasurementDataSource.METER)) {
+                            if ((query.getSource() == EnumMeasurementDataSource.BOTH) || (query.getSource() == EnumMeasurementDataSource.METER)) {
                                 userMeter = getUserWaterMeter(userKey);
                                 if (userMeter == null) {
                                     includeUser = false;
@@ -592,11 +585,9 @@ public class DataService extends BaseService implements IDataService {
                             if (includeUser) {
                                 expandedPopulationFilter.getUsers().add(userKey);
                                 expandedPopulationFilter.getLabels().add(user.getUsername());
-                                expandedPopulationFilter.getHashes().add(
-                                                md.digest(userKey.toString().getBytes("UTF-8")));
+                                expandedPopulationFilter.getHashes().add(md.digest(userKey.toString().getBytes("UTF-8")));
                                 if (userMeter != null) {
-                                    expandedPopulationFilter.getSerials().add(
-                                                    md.digest(userMeter.getSerial().getBytes("UTF-8")));
+                                    expandedPopulationFilter.getSerials().add(md.digest(userMeter.getSerial().getBytes("UTF-8")));
                                 } else {
                                     expandedPopulationFilter.getSerials().add(null);
                                 }
@@ -908,13 +899,10 @@ public class DataService extends BaseService implements IDataService {
                         for (UUID userKey : filterUsers) {
                             // Filter users based on the utility only when
                             // an authenticated user exists
-                            AuthenticatedUser user = (authenticatedUser == null ? userRepository.getUserByKey(userKey)
-                                            : userRepository.getUserByUtilityAndKey(authenticatedUser.getUtilityId(),
-                                                            userKey));
+                            AuthenticatedUser user = (authenticatedUser == null ? userRepository.getUserByKey(userKey) : userRepository.getUserByUtilityAndKey(authenticatedUser.getUtilityId(), userKey));
 
                             if (user == null) {
-                                throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username",
-                                                userKey);
+                                throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", userKey);
                             }
 
                             // Decide if the user must be included in the group
@@ -923,8 +911,7 @@ public class DataService extends BaseService implements IDataService {
                             WaterMeterDevice userMeter = null;
 
                             // Fetch meter only if it is needed
-                            if ((query.getSource() == EnumMeasurementDataSource.BOTH)
-                                            || (query.getSource() == EnumMeasurementDataSource.METER)) {
+                            if ((query.getSource() == EnumMeasurementDataSource.BOTH) || (query.getSource() == EnumMeasurementDataSource.METER)) {
                                 userMeter = getUserWaterMeter(userKey);
                                 if (userMeter == null) {
                                     includeUser = false;
@@ -951,11 +938,9 @@ public class DataService extends BaseService implements IDataService {
                             if (includeUser) {
                                 expandedPopulationFilter.getUsers().add(userKey);
                                 expandedPopulationFilter.getLabels().add(user.getUsername());
-                                expandedPopulationFilter.getHashes().add(
-                                                md.digest(userKey.toString().getBytes("UTF-8")));
+                                expandedPopulationFilter.getHashes().add(md.digest(userKey.toString().getBytes("UTF-8")));
                                 if (userMeter != null) {
-                                    expandedPopulationFilter.getSerials().add(
-                                                    md.digest(userMeter.getSerial().getBytes("UTF-8")));
+                                    expandedPopulationFilter.getSerials().add(md.digest(userMeter.getSerial().getBytes("UTF-8")));
                                 } else {
                                     expandedPopulationFilter.getSerials().add(null);
                                 }

@@ -151,7 +151,6 @@ module.exports = function(grunt) {
             'lodash',
             'es6-promise',
             'moment',
-            'moment-timezone',
             'numeral',
             'clone',
             'keymirror',
@@ -160,7 +159,6 @@ module.exports = function(grunt) {
             // required from vendor/react.js
             'react',
             'react-dom',
-            'react-addons-pure-render-mixin',
             'react-router',
             'react-datetime',
             'react-intl',
@@ -174,7 +172,6 @@ module.exports = function(grunt) {
             'react-router-bootstrap',
             'react-router-redux',
             'react-bootstrap-daterangepicker',
-            'react-bootstrap-datetimepicker',
             'react-scroll-up',
             'react-dropzone',
             'redux',
@@ -187,7 +184,6 @@ module.exports = function(grunt) {
             'leaflet',
             'leaflet.heat',
             'leaflet-draw',
-            'leaflet-choropleth',
             // globals
             'echarts',
           ],
@@ -208,7 +204,6 @@ module.exports = function(grunt) {
             'lodash',
             'es6-promise',
             'moment',
-            'moment-timezone',
             'numeral',
             'clone',
             'keymirror',
@@ -217,7 +212,6 @@ module.exports = function(grunt) {
             // required from vendor/react.js
             'react',
             'react-dom',
-            'react-addons-pure-render-mixin',
             'react-router',
             'react-datetime',
             'react-intl',
@@ -231,7 +225,6 @@ module.exports = function(grunt) {
             'react-router-bootstrap',
             'react-router-redux',
             'react-bootstrap-daterangepicker',
-            'react-bootstrap-datetimepicker',
             'react-scroll-up',
             'react-dropzone',
             'redux',
@@ -244,7 +237,6 @@ module.exports = function(grunt) {
             'leaflet',
             'leaflet.heat',
             'leaflet-draw',
-            'leaflet-choropleth',
             // globals
             'echarts',
           ],
@@ -270,7 +262,6 @@ module.exports = function(grunt) {
             'lodash:lodash',
             'es6-promise',
             'moment',
-            'moment-timezone',
             'numeral',
             'clone',
             'keymirror',
@@ -287,7 +278,6 @@ module.exports = function(grunt) {
           require: [
             'react',
             'react-dom',
-            'react-addons-pure-render-mixin',
             'react-router',
             'react-datetime',
             'react-intl',
@@ -301,7 +291,6 @@ module.exports = function(grunt) {
             'react-router-bootstrap',
             'react-router-redux',
             'react-bootstrap-daterangepicker',
-            'react-bootstrap-datetimepicker',
             'react-scroll-up',
             'react-dropzone',
             'redux',
@@ -319,8 +308,7 @@ module.exports = function(grunt) {
           require: [
             'leaflet',
             'leaflet.heat',
-            'leaflet-draw',
-            'leaflet-choropleth',
+            'leaflet-draw'
           ],
         },
         files: {
@@ -337,28 +325,6 @@ module.exports = function(grunt) {
           'src/main/resources/public/assets/js/build/vendor/jquery.js': [],
         },
       },
-    },
-    exorcise: {
-      utility: {
-        options: {
-          strict: false
-        },
-        files: {
-          'src/main/resources/public/assets/js/build/utility/bundle.js.map': [
-            'src/main/resources/public/assets/js/build/utility.js'
-          ]
-        }
-      },
-      home: {
-        options: {
-          strict: false
-        },
-        files: {
-          'src/main/resources/public/assets/js/build/home/bundle.js.map': [
-            'src/main/resources/public/assets/js/build/home.js'
-          ]
-        }
-      }
     },
     uglify: {
       options: {
@@ -461,18 +427,6 @@ module.exports = function(grunt) {
           filter: 'isFile'
         }, {
           expand: true,
-          cwd: 'node_modules/bootstrap/dist/',
-          src: ['**/*'],
-          dest: 'src/main/resources/public/assets/lib/bootstrap/',
-          filter: 'isFile'
-        }, {
-          expand: true,
-          cwd: 'node_modules/bootstrap-select/dist/',
-          src: ['**/*'],
-          dest: 'src/main/resources/public/assets/lib/bootstrap-select/',
-          filter: 'isFile'
-        }, {
-          expand: true,
           cwd: 'node_modules/leaflet/dist/',
           src: ['**/*'],
           dest: 'src/main/resources/public/assets/lib/leaflet/',
@@ -500,12 +454,6 @@ module.exports = function(grunt) {
           cwd: 'node_modules/react-bootstrap-daterangepicker/css/',
           src: ['**/*'],
           dest: 'src/main/resources/public/assets/lib/react-bootstrap-daterangepicker/',
-          filter: 'isFile'
-        }, {
-          expand: true,
-          cwd: 'node_modules/react-bootstrap-datetimepicker/css/',
-          src: ['**/*'],
-          dest: 'src/main/resources/public/assets/lib/react-bootstrap-datetimepicker/',
           filter: 'isFile'
         }, {
           expand: true,
@@ -611,7 +559,7 @@ module.exports = function(grunt) {
   grunt.registerTask('build', [
     'clean',
     'eslint:utility-build', 'eslint:home-build',
-    'browserify:home', 'browserify:utility', 'browserify:vendor-util', 'browserify:vendor-react', 'browserify:vendor-leaflet', 'browserify:vendor-jquery', 
+    'browserify:home', 'browserify:utility', 'browserify:vendor-util', 'browserify:vendor-react', 'browserify:vendor-leaflet', 'browserify:vendor-jquery',
     'uglify', 'concat',
     'docs',
     'sync:home', 'sync:utility', 'sync:home'
@@ -625,16 +573,16 @@ module.exports = function(grunt) {
     'sync:home', 'sync:utility', 'sync:debug',
     'watch'
   ]);
-  
+
   grunt.registerTask('develop-home-live', [
-    'clean:home', 'clean:vendor', 
-    'sync:home', 'sync:debug', 
+    'clean:home', 'clean:vendor',
+    'sync:home', 'sync:debug',
     'browserify:homeLive'
   ]);
 
   grunt.registerTask('develop-utility-live', [
-    'clean:utility', 'clean:vendor', 
-    'sync:utility', 'sync:debug', 
+    'clean:utility', 'clean:vendor',
+    'sync:utility', 'sync:debug',
     'browserify:vendor-util', 'browserify:vendor-react', 'browserify:vendor-leaflet', 'browserify:vendor-jquery',
     'browserify:utilityLive'
   ]);

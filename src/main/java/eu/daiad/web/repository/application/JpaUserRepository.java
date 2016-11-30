@@ -1217,8 +1217,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             }
 
             if (user != null) {
-                Query query = entityManager
-                                .createNativeQuery("select CAST(a.key as char varying) from account a where a.utility_id = :utility_id");
+                Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from account a where a.utility_id = :utility_id");
                 query.setParameter("utility_id", user.getUtilityId());
 
                 List<?> keys = query.getResultList();
@@ -1371,9 +1370,9 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                                          .setMaxResults(1);
         surveyQuery.setParameter("key", userKey);
 
-        List<SurveyEntity> surveys = surveyQuery.getResultList();
+        List<?> surveys = surveyQuery.getResultList();
         if (!surveys.isEmpty()) {
-            return surveys.get(0);
+            return (SurveyEntity) surveys.get(0);
         }
 
         return null;

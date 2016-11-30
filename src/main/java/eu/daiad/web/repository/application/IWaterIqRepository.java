@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import eu.daiad.web.model.profile.ComparisonRanking;
+import eu.daiad.web.model.profile.ComparisonRanking.DailyConsumption;
 
 public interface IWaterIqRepository {
 
@@ -23,7 +24,7 @@ public interface IWaterIqRepository {
      * @param user water IQ data for a single user.
      * @param similar water IQ data for a group of similar users.
      * @param nearest water IQ data for the group of neighbors.
-     * @param nearest water IQ data for all users.
+     * @param all water IQ data for all users.
      * @param monthlyConsumtpion monthly consumption data.
      * @param dailyConsumption daily consumption data.
      */
@@ -41,9 +42,11 @@ public interface IWaterIqRepository {
      * Returns water IQ data for the user with the given key.
      *
      * @param key the user key.
+     * @param year reference year.
+     * @param month reference month.
      * @return water IQ data.
      */
-    ComparisonRanking getWaterIqByUserKey(UUID key);
+    ComparisonRanking getWaterIqByUserKey(UUID key, int year, int month);
 
     /**
      * Returns the daily consumption for the given key for the selected year and month.
@@ -51,7 +54,7 @@ public interface IWaterIqRepository {
      * @param userKey the user key.
      * @param year the year.
      * @param month the month.
-     * @return a list of {@link ComparisonRanking.DailyConsumption}.
+     * @return a list of {@link DailyConsumption}.
      */
     List<ComparisonRanking.DailyConsumption> getComparisonDailyConsumption(UUID userKey, int year, int month);
 

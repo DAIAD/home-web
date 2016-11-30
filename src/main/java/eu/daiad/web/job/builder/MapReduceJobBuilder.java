@@ -7,25 +7,19 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParametersIncrementer;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.StoppableTasklet;
 import org.springframework.batch.repeat.RepeatStatus;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import eu.daiad.web.mapreduce.RunJar;
 import eu.daiad.web.model.error.SchedulerErrorCode;
 
+/**
+ * Helper builder class for initializing a MapReduce job.
+ */
 @Component
 public class MapReduceJobBuilder extends BaseJobBuilder implements IJobBuilder {
-
-    @Autowired
-    private JobBuilderFactory jobBuilderFactory;
-
-    @Autowired
-    private StepBuilderFactory stepBuilderFactory;
 
     private Step submitMapReduceJob() {
         return stepBuilderFactory.get("submitJob").tasklet(new StoppableTasklet() {

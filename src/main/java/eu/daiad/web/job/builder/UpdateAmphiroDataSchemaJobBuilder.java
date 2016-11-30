@@ -12,11 +12,7 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParametersIncrementer;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.scope.context.ChunkContext;
-import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.StoppableTasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,20 +53,9 @@ import eu.daiad.web.repository.application.IUtilityRepository;
  * to the table with the current schema version.
  */
 @Component
-public class UpdateAmphiroDataSchemaJobBuilder implements IJobBuilder {
+public class UpdateAmphiroDataSchemaJobBuilder extends BaseJobBuilder implements IJobBuilder {
+
     private static final Log logger = LogFactory.getLog(UpdateAmphiroDataSchemaJobBuilder.class);
-
-    /**
-     * Convenient factory for a {@link JobBuilder} for building jobs instances.
-     */
-    @Autowired
-    private JobBuilderFactory jobBuilderFactory;
-
-    /**
-     * Convenient factory for a {@link StepBuilder} for building job steps.
-     */
-    @Autowired
-    private StepBuilderFactory stepBuilderFactory;
 
     /**
      * Repository for accessing utility data.

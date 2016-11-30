@@ -98,7 +98,7 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
      * @param user water IQ data for a single user.
      * @param similar water IQ data for a group of similar users.
      * @param nearest water IQ data for the group of neighbors.
-     * @param nearest water IQ data for all users.
+     * @param all water IQ data for all users.
      * @param monthlyConsumtpion monthly consumption data.
      * @param dailyConsumption daily consumption data.
      */
@@ -122,7 +122,12 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
 
             byte[] userKeyHash = md.digest(userKey.toString().getBytes("UTF-8"));
 
+            int month = Integer.parseInt(from.substring(4, 6));
+
             for (DailyConsumption day : dailyConsumption) {
+                if (day.month != month) {
+                    continue;
+                }
                 Put p = new Put(createRowKey(userKeyHash, day.year, day.month, day.day));
 
                 byte[] column = Bytes.toBytes(EnumColumn.WEEK.getValue());
@@ -198,10 +203,12 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
      * Returns water IQ data for the user with the given key.
      *
      * @param key the user key.
+     * @param year reference year.
+     * @param month reference month.
      * @return water IQ data.
      */
     @Override
-    public ComparisonRanking getWaterIqByUserKey(UUID key) {
+    public ComparisonRanking getWaterIqByUserKey(UUID key, int year, int month) {
         throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
     }
 
@@ -211,7 +218,7 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
      * @param userKey the user key.
      * @param year the year.
      * @param month the month.
-     * @return a list of {@link ComparisonRanking.DailyConsumption}.
+     * @return a list of {@link DailyConsumption}.
      */
     @Override
     public List<DailyConsumption> getComparisonDailyConsumption(UUID userKey, int year, int month) {
@@ -219,6 +226,9 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
         ResultScanner scanner = null;
 
         List<DailyConsumption> result = new ArrayList<DailyConsumption>();
+
+        int minYear = (month < 6 ? (year - 1) : year);
+        int minMonth = ((month - 5) > 0 ? (month - 5) : (month + 7));
 
         try {
             table = connection.getTable(HBASE_TABLE_COMPARISON_RANKING_DAILY);
@@ -232,7 +242,7 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
             Scan scan = new Scan();
             scan.setCaching(scanCacheSize);
             scan.addFamily(columnFamily);
-            scan.setStartRow(createRowKey(userKeyHash, year, month));
+            scan.setStartRow(createRowKey(userKeyHash, minYear, minMonth));
             scan.setStopRow(createRowKey(userKeyHash, year, month + 1));
 
            scanner = table.getScanner(scan);
@@ -242,9 +252,11 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
 
                 int timestamp = Bytes.toInt(Arrays.copyOfRange(r.getRow(), 16, 20));
 
-                int day = timestamp % 100;
+                int dateYear = timestamp / 10000;
+                int dateMonth = (timestamp / 100) % 100;
+                int dateDay = timestamp % 100;
 
-                ComparisonRanking.DailyConsumption dailyConsumption = new ComparisonRanking.DailyConsumption(year, month, day);
+                ComparisonRanking.DailyConsumption dailyConsumption = new ComparisonRanking.DailyConsumption(dateYear, dateMonth, dateDay);
 
                 for (Entry<byte[], byte[]> entry : map.entrySet()) {
                     String qualifier = Bytes.toString(entry.getKey());

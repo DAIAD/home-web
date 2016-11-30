@@ -285,20 +285,20 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
 
         // Compute minimum/maximum consumption and fetch user data
         for (UserDataPoint point : context.ranking.getUsers()) {
-            MeterUserDataPoint user = (MeterUserDataPoint) point;
+            MeterUserDataPoint meter = (MeterUserDataPoint) point;
 
             // Get survey data and compute consumption per household member
-            SurveyEntity survey = userRepository.getSurveyByKey(user.getKey());
+            SurveyEntity survey = userRepository.getSurveyByKey(meter.getKey());
 
             int householdSize = 1;
-            double volume = user.getVolume().get(EnumMetric.SUM);
+            double volume = meter.getVolume().get(EnumMetric.SUM);
 
             if ((survey != null) && (survey.getHouseholdMemberTotal() > 0)) {
                 householdSize = survey.getHouseholdMemberTotal();
             }
             volume /= householdSize;
 
-            user.getVolume().put(EnumMetric.SUM, volume);
+            meter.getVolume().put(EnumMetric.SUM, volume);
 
             // Adjust minimum/maximum consumption values
             if (min > volume) {
@@ -308,8 +308,8 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                 max = volume;
             }
 
-            AccountEntity account = userRepository.getAccountByKey(user.getKey());
-            comparisons.addUser(user.getKey(), householdSize, user.getVolume().get(EnumMetric.SUM), account.getLocation());
+            AccountEntity account = userRepository.getAccountByKey(meter.getKey());
+            comparisons.addUser(meter.getKey(), householdSize, meter.getVolume().get(EnumMetric.SUM), account.getLocation());
         }
 
         context.minConsumption = min;
@@ -347,8 +347,8 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
 
         // Assign users to segments
         double step = (context.maxConsumption - context.minConsumption) / context.labels.length;
-        for (UserDataPoint user : context.ranking.getUsers()) {
-            MeterUserDataPoint meter = (MeterUserDataPoint) user;
+        for (UserDataPoint point : context.ranking.getUsers()) {
+            MeterUserDataPoint meter = (MeterUserDataPoint) point;
 
             int index = (int) ((meter.getVolume().get(EnumMetric.SUM) - context.minConsumption) / step);
             if (index == context.labels.length) {
@@ -382,7 +382,7 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
             UserComparisonAndRanking user = data.getUserByKey(key);
 
             // Build data query for the last month total consumption
-            ComparisonRanking.MonthlyConsumtpion monthlyConsumtpion = new ComparisonRanking.MonthlyConsumtpion(context.start.getMonthOfYear());
+            ComparisonRanking.MonthlyConsumtpion monthlyConsumtpion = new ComparisonRanking.MonthlyConsumtpion(context.start.getYear(), context.start.getMonthOfYear());
 
             DataQuery lastMonthQuery = DataQueryBuilder.create()
                                                        .timezone(context.timezone)
@@ -522,10 +522,12 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
         int week =localDateTime.getWeekOfWeekyear();
         int day = localDateTime.getDayOfMonth();
 
-        ComparisonRanking.DailyConsumption consumption = dailyConsumption.get(day);
-        if(consumption == null) {
+        int key = month * 100 + day;
+
+        ComparisonRanking.DailyConsumption consumption = dailyConsumption.get(key);
+        if (consumption == null) {
             consumption = new ComparisonRanking.DailyConsumption(year, month, week, day);
-            dailyConsumption.put(day, consumption);
+            dailyConsumption.put(key, consumption);
         }
 
         return consumption;

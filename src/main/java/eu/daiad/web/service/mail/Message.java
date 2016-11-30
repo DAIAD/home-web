@@ -14,6 +14,19 @@ public class Message {
 
     private Object model;
 
+    public Message() {
+
+    }
+
+    public Message(Object model) {
+        this.model = model;
+    }
+
+    public Message(String template, Object model) {
+        this.template = template;
+        this.model = model;
+    }
+
     public EmailAddress getSender() {
         return sender;
     }
@@ -23,7 +36,7 @@ public class Message {
     }
 
     public void setSender(String address, String name) {
-        this.sender = new EmailAddress(address, name);
+        sender = new EmailAddress(address, name);
     }
 
     public EmailAddress[] getRecipients() {
@@ -35,13 +48,13 @@ public class Message {
     }
 
     public void setRecipients(String address, String name) {
-        this.recipients = new EmailAddress[] { new EmailAddress(address, name) };
+        recipients = new EmailAddress[] { new EmailAddress(address, name) };
     }
 
     public void setRecipients(String address) {
-        this.recipients = new EmailAddress[] { new EmailAddress(address) };
+        recipients = new EmailAddress[] { new EmailAddress(address) };
     }
-    
+
     public String getSubject() {
         return Subject;
     }

@@ -90,6 +90,9 @@ public class AccountProfileEntity {
     @Basic()
     private Boolean garden;
 
+    @Column(name = "send_mail")
+    private boolean sendMailEnabled;
+
     public int getId() {
         return id;
     }
@@ -208,6 +211,14 @@ public class AccountProfileEntity {
 
     public void setGarden(Boolean garden) {
         this.garden = garden;
+    }
+
+    public boolean isSendMailEnabled() {
+        return sendMailEnabled;
+    }
+
+    public void setSendMailEnabled(boolean sendMailEnabled) {
+        this.sendMailEnabled = sendMailEnabled;
     }
 
 }

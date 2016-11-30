@@ -19,7 +19,7 @@ import eu.daiad.web.repository.application.IUserRepository;
  * Provides the entry points to the DAIAD web application.
  */
 @Controller
-public class HomeController {
+public class HomeController extends BaseController{
 
     /**
      * Google ReCAPTCHA site key.

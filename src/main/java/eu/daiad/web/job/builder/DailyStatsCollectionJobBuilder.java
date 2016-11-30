@@ -11,43 +11,51 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParametersIncrementer;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.StoppableTasklet;
 import org.springframework.batch.repeat.RepeatStatus;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import eu.daiad.web.domain.admin.DailyCounterEntity;
 import eu.daiad.web.domain.application.UtilityEntity;
 
+/**
+ * Helper builder class for initializing a job that computes daily statistics.
+ */
 @Component
-public class DailyStatsCollectionJobBuilder implements IJobBuilder {
+public class DailyStatsCollectionJobBuilder extends BaseJobBuilder implements IJobBuilder {
 
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
     private static final Log logger = LogFactory.getLog(DailyStatsCollectionJobBuilder.class);
 
+    /**
+     * User counter name.
+     */
     private final String COUNTER_USER = "user";
 
+    /**
+     * Smart water meter counter name.
+     */
     private final String COUNTER_METER = "meter";
 
+    /**
+     * Amphiro b1 counter name.
+     */
     private final String COUNTER_AMPHIRO = "amphiro";
 
-    @Autowired
-    private JobBuilderFactory jobBuilderFactory;
-
-    @Autowired
-    private StepBuilderFactory stepBuilderFactory;
-
+    /**
+     * Entity manager for the application database.
+     */
     @PersistenceContext(unitName = "default")
     private EntityManager entityManager;
 
+    /**
+     * Entity manager for the administration database.
+     */
     @PersistenceContext(unitName = "management")
     private EntityManager adminEntityManager;
-
-    public DailyStatsCollectionJobBuilder() {
-
-    }
 
     private Step computeStats() {
         return stepBuilderFactory.get("generateMessages").tasklet(new StoppableTasklet() {
@@ -80,7 +88,7 @@ public class DailyStatsCollectionJobBuilder implements IJobBuilder {
                         counter.setUtilityId(utility.getId());
 
                         adminEntityManager.persist(counter);
-                        
+
                         // Get meters
                         Long totalMeters;
 
@@ -100,7 +108,7 @@ public class DailyStatsCollectionJobBuilder implements IJobBuilder {
                         counter.setUtilityId(utility.getId());
 
                         adminEntityManager.persist(counter);
-                        
+
                         // Get Amphiro B1 devices
                         Long totalAmphiroDevices;
 

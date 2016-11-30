@@ -7,8 +7,6 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParametersIncrementer;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.StoppableTasklet;
 import org.springframework.batch.repeat.RepeatStatus;
@@ -23,27 +21,16 @@ import eu.daiad.web.service.etl.IDataExportService;
 import eu.daiad.web.service.etl.UtilityDataExportQuery;
 
 /**
- * Builder for creating a data export job.
+ * Helper builder class for initializing a job that exports amphiro b1 and smart
+ * water meter data for one or more utilities.
  */
 @Component
-public class DataExportJobBuilder implements IJobBuilder {
+public class DataExportJobBuilder extends BaseJobBuilder implements IJobBuilder {
 
     /**
      * Logger instance for writing events using the configured logging API.
      */
     private static final Log logger = LogFactory.getLog(DataExportJobBuilder.class);
-
-    /**
-     * Job builder factory.
-     */
-    @Autowired
-    private JobBuilderFactory jobBuilderFactory;
-
-    /**
-     * Step builder factory.
-     */
-    @Autowired
-    private StepBuilderFactory stepBuilderFactory;
 
     /**
      * Repository for accessing export file data.
