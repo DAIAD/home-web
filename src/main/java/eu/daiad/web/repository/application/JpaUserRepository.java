@@ -362,7 +362,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
 
             account.setLocked(false);
             account.setChangePasswordOnNextLogin(false);
-            account.setAllowPasswordReset(false);
+            account.setAllowPasswordReset(true);
 
             account.setUtility(utility);
 

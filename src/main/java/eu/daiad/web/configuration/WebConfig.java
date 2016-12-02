@@ -21,7 +21,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
 	/**
 	 * Override the default implementation {BasicErrorController}.
-	 * 
+	 *
 	 * @param errorAttributes provides access to error attributes which can be logged or presented to the user.
 	 * @param errorProperties configuration properties for web error handling.
 	 * @return the error controller.
@@ -34,7 +34,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
 	/**
 	 * Overrides the default {@link Jackson2ObjectMapperBuilder}.
-	 * 
+	 *
 	 * @return the new object
 	 */
 	@Bean
@@ -48,7 +48,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 	}
 
 	/**
-	 * Configure simple automated controllers. 
+	 * Configure simple automated controllers.
 	 */
 	@Override
 	public void addViewControllers(ViewControllerRegistry registry) {
@@ -57,4 +57,5 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 		registry.addViewController("/error/404").setViewName("error/404");
 		registry.addViewController("/error/500").setViewName("error/500");
 	}
+
 }
