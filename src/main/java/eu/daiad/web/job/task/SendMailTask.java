@@ -133,7 +133,7 @@ public class SendMailTask extends BaseTask implements StoppableTasklet {
                             mailService.send(message);
                             sentMail++;
                         }
-                    } catch (ApplicationException ex) {
+                    } catch (Exception ex) {
                         logger.info(String.format("Failed to send mail to account [%s]. Additional information: %s.",
                                                   s.getUsername(),
                                                   ex.getMessage()));
