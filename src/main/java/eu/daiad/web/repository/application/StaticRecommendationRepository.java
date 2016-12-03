@@ -63,7 +63,8 @@ public class StaticRecommendationRepository implements IStaticRecommendationRepo
         List<Integer> rids = query.getResultList();
         Collections.shuffle(rids);
         
-        List<StaticRecommendationEntity> results = new ArrayList<>();
+        size = Math.min(size, rids.size());
+        List<StaticRecommendationEntity> results = new ArrayList<>(size);
         for (Integer rid: rids.subList(0, size)) {
             results.add(entityManager.find(StaticRecommendationEntity.class, rid));
         }
