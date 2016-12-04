@@ -9,6 +9,8 @@ import java.util.Locale;
 import java.util.Map;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
@@ -28,11 +30,13 @@ import eu.daiad.web.domain.application.AccountDynamicRecommendationEntity;
 import eu.daiad.web.domain.application.AccountDynamicRecommendationPropertyEntity;
 import eu.daiad.web.domain.application.AccountStaticRecommendationEntity;
 import eu.daiad.web.domain.application.AlertAnalyticsEntity;
+import eu.daiad.web.domain.application.AlertEntity;
 import eu.daiad.web.domain.application.AlertTranslationEntity;
 import eu.daiad.web.domain.application.AnnouncementEntity;
 import eu.daiad.web.domain.application.AnnouncementChannel;
 import eu.daiad.web.domain.application.AnnouncementTranslationEntity;
 import eu.daiad.web.domain.application.ChannelEntity;
+import eu.daiad.web.domain.application.DynamicRecommendationEntity;
 import eu.daiad.web.domain.application.DynamicRecommendationTranslationEntity;
 import eu.daiad.web.domain.application.RecommendationAnalyticsEntity;
 import eu.daiad.web.domain.application.StaticRecommendationEntity;
@@ -40,6 +44,7 @@ import eu.daiad.web.domain.application.StaticRecommendationCategoryEntity;
 import eu.daiad.web.model.error.MessageErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.message.Alert;
+import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.model.message.AnnouncementRequest;
 import eu.daiad.web.model.message.DynamicRecommendation;
 import eu.daiad.web.model.message.EnumAlertType;
@@ -51,6 +56,7 @@ import eu.daiad.web.model.message.MessageRequest;
 import eu.daiad.web.model.message.MessageResult;
 import eu.daiad.web.model.message.MessageStatisticsQuery;
 import eu.daiad.web.model.message.ReceiverAccount;
+import eu.daiad.web.model.message.StaticRecommendation;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.BaseRepository;
 import java.sql.Date;
@@ -149,18 +155,18 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             result.setTotalAlerts(totalAlerts);
 
             // Build query
-            TypedQuery<eu.daiad.web.domain.application.AccountAlertEntity> accountAlertsQuery;
+            TypedQuery<AccountAlertEntity> accountAlertsQuery;
 
             if ((options.getAscending() != null) && (options.getAscending() == true)) {
                 // Ascending order
                 accountAlertsQuery = entityManager.createQuery("select a from account_alert a "
-                                + "where a.account.id = :accountId and a.id > :minMessageId order by a.id",
-                                eu.daiad.web.domain.application.AccountAlertEntity.class);
+                        + "where a.account.id = :accountId and a.id > :minMessageId order by a.id",
+                        AccountAlertEntity.class);
             } else {
                 // Descending order
                 accountAlertsQuery = entityManager.createQuery("select a from account_alert a "
-                                + "where a.account.id = :accountId and a.id > :minMessageId order by a.id desc",
-                                eu.daiad.web.domain.application.AccountAlertEntity.class);
+                        + "where a.account.id = :accountId and a.id > :minMessageId order by a.id desc",
+                        AccountAlertEntity.class);
             }
 
             if (options.getIndex() != null) {
@@ -173,7 +179,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             accountAlertsQuery.setParameter("accountId", user.getId());
             accountAlertsQuery.setParameter("minMessageId", options.getMinMessageId());
 
-            for (eu.daiad.web.domain.application.AccountAlertEntity accountAlert : accountAlertsQuery.getResultList()) {
+            for (AccountAlertEntity accountAlert : accountAlertsQuery.getResultList()) {
                 // Find translation by locale
                 AlertTranslationEntity alertTranslation = null;
 
@@ -205,10 +211,9 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
                                     new Locale(locale));
                     description = descriptionTemplate.format(formatParams);
                 }
-                eu.daiad.web.model.message.AccountAlert message = new eu.daiad.web.model.message.AccountAlert(
-                                EnumAlertType.fromInteger(accountAlert.getAlert().getId()));
-
-                message.setId(accountAlert.getId());
+                
+                EnumAlertType alertType = EnumAlertType.fromInteger(accountAlert.getAlert().getId());
+                Alert message = new Alert(alertType, accountAlert.getId());
                 message.setPriority(accountAlert.getAlert().getPriority());
                 message.setTitle(title);
                 message.setDescription(description);
@@ -241,7 +246,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             result.setTotalRecommendations(totalRecommendations);
 
             // Build query
-            TypedQuery<eu.daiad.web.domain.application.AccountDynamicRecommendationEntity> accountRecommendationQuery;
+            TypedQuery<AccountDynamicRecommendationEntity> accountRecommendationQuery;
 
             if ((options.getAscending() != null) && (options.getAscending() == true)) {
                 // Ascending order
@@ -267,8 +272,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             accountRecommendationQuery.setParameter("accountId", user.getId());
             accountRecommendationQuery.setParameter("minMessageId", options.getMinMessageId());
 
-            for (eu.daiad.web.domain.application.AccountDynamicRecommendationEntity accountRecommendation : accountRecommendationQuery
-                            .getResultList()) {
+            for (AccountDynamicRecommendationEntity accountRecommendation : accountRecommendationQuery.getResultList()) {
                 // Find translation by locale
                 DynamicRecommendationTranslationEntity recommendationTranslation = null;
 
@@ -279,10 +283,8 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
                         break;
                     }
                 }
-
-                if (recommendationTranslation == null) {
+                if (recommendationTranslation == null)
                     continue;
-                }
 
                 // Build localized strings using translation and properties
                 Map<String, String> formatParams = new HashMap<>();
@@ -298,12 +300,10 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
                 String description = descriptionTemplate.format(formatParams);
 
                 // Create recommendation
-                eu.daiad.web.model.message.AccountDynamicRecommendation message = 
-                        new eu.daiad.web.model.message.AccountDynamicRecommendation(
-                                EnumDynamicRecommendationType.fromInteger(
-                                        accountRecommendation.getRecommendation().getId()));
-
-                message.setId(accountRecommendation.getId());
+                EnumDynamicRecommendationType recommendationType = EnumDynamicRecommendationType
+                        .fromInteger(accountRecommendation.getRecommendation().getId());
+                DynamicRecommendation message = new DynamicRecommendation(
+                        recommendationType, accountRecommendation.getId());
                 message.setPriority(accountRecommendation.getRecommendation().getPriority());
                 message.setTitle(title);
                 message.setDescription(description);
@@ -312,7 +312,6 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
                 if (accountRecommendation.getAcknowledgedOn() != null) {
                     message.setAcknowledgedOn(accountRecommendation.getAcknowledgedOn().getMillis());
                 }
-
                 messages.add(message);
             }
         }
@@ -371,26 +370,20 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
                     }
 
                 }
-
-                if (announcementTranslation == null) {
+                if (announcementTranslation == null)
                     continue;
-                }
 
-                eu.daiad.web.model.message.AccountAnnouncement message = new eu.daiad.web.model.message.AccountAnnouncement();
-
+                Announcement message = new Announcement();
                 message.setId(accountAnnouncement.getId());
                 message.setPriority(accountAnnouncement.getAnnouncement().getPriority());
-
                 message.setTitle(announcementTranslation.getTitle());                              
                 if(announcementTranslation.getContent() != null){
                     message.setContent(announcementTranslation.getContent());
                 }
-                
                 message.setCreatedOn(accountAnnouncement.getCreatedOn().getMillis());
                 if (accountAnnouncement.getAcknowledgedOn() != null) {
                     message.setAcknowledgedOn(accountAnnouncement.getAcknowledgedOn().getMillis());
                 }
-
                 messages.add(message);
             }
         } 
@@ -415,18 +408,18 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             result.setTotalTips(totalTips);
 
             // Build query
-            TypedQuery<eu.daiad.web.domain.application.AccountStaticRecommendationEntity> accountTipQuery;
+            TypedQuery<AccountStaticRecommendationEntity> accountTipQuery;
 
             if ((options.getAscending() != null) && (options.getAscending() == true)) {
                 // Ascending order
                 accountTipQuery = entityManager.createQuery("select a from account_static_recommendation a "
                                 + "where a.account.id = :accountId and a.id > :minMessageId order by a.id",
-                                eu.daiad.web.domain.application.AccountStaticRecommendationEntity.class);
+                                AccountStaticRecommendationEntity.class);
             } else {
                 // Descending order
                 accountTipQuery = entityManager.createQuery("select a from account_static_recommendation a "
                                 + "where a.account.id = :accountId and a.id > :minMessageId order by a.id desc",
-                                eu.daiad.web.domain.application.AccountStaticRecommendationEntity.class);
+                                AccountStaticRecommendationEntity.class);
             }
 
             if (options.getIndex() != null) {
@@ -439,9 +432,8 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             accountTipQuery.setParameter("accountId", user.getId());
             accountTipQuery.setParameter("minMessageId", options.getMinMessageId());
 
-            for (eu.daiad.web.domain.application.AccountStaticRecommendationEntity tip : accountTipQuery.getResultList()) {
-                eu.daiad.web.model.message.AccountStaticRecommendation message = new eu.daiad.web.model.message.AccountStaticRecommendation();
-
+            for (AccountStaticRecommendationEntity tip : accountTipQuery.getResultList()) {
+                StaticRecommendation message = new StaticRecommendation();
                 message.setId(tip.getId());
                 message.setIndex(tip.getRecommendation().getIndex());
                 message.setTitle(tip.getRecommendation().getTitle());
@@ -464,27 +456,17 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
         }
 
         result.setMessages(messages);
-
         return result;
     }
 
     @Override
-    public List<Message> getAdvisoryMessages(String locale) {
+    public List<Message> getAdvisoryMessages(String locale) 
+    {
         List<Message> messages = new ArrayList<>();
 
-        switch (locale) {
-            case "en":
-            case "es":
-                // Ignore
-                break;
-            default:
-                // Set default
-                locale = "en";
-        }
-
-        TypedQuery<eu.daiad.web.domain.application.StaticRecommendationEntity> accountAlertsQuery = entityManager
-                        .createQuery("select a from static_recommendation a where a.locale = :locale",
-                                        eu.daiad.web.domain.application.StaticRecommendationEntity.class);
+        TypedQuery<StaticRecommendationEntity> accountAlertsQuery = entityManager.createQuery(
+                "select a from static_recommendation a where a.locale = :locale",
+                StaticRecommendationEntity.class);
         accountAlertsQuery.setParameter("locale", locale);
 
         for (StaticRecommendationEntity staticRecommendation : accountAlertsQuery.getResultList()) {
@@ -510,7 +492,6 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 
             messages.add(message);
         }
-
         return messages;
     }
 
@@ -520,9 +501,8 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
                 .createQuery("select s from static_recommendation s where s.id = :id",
                     eu.daiad.web.domain.application.StaticRecommendationEntity.class);    
         advisoryMessage.setParameter("id", id);
-
         List<StaticRecommendationEntity> advisoryMessages = advisoryMessage.getResultList();
-            
+
         if(!advisoryMessages.isEmpty()){
             advisoryMessages.get(0).setActive(active);
         }
@@ -834,65 +814,59 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
     }
 
     @Override
-    public Alert getAlert(int id, String locale) {
+    public Alert getAlert(int id, String locale) 
+    {            
+        TypedQuery<AlertTranslationEntity> query = entityManager.createQuery(
+                "select a from alert_translation a where a.locale = :locale and a.id = :id",
+                AlertTranslationEntity.class);
+        query.setParameter("locale", locale);
+        query.setParameter("id", id);
+
+        Alert alert = null;
+        AlertTranslationEntity translationEntity = null;
+        try {
+            translationEntity = query.getSingleResult();
+        } catch (NoResultException ex) {
+            translationEntity = null;
+            alert = new Alert(EnumAlertType.UNDEFINED, -1);
+        }
         
-        Alert alert = new Alert(EnumAlertType.UNDEFINED);
-        switch (locale) {
-            case "en":
-            case "es":
-                // Ignore
-                break;
-            default:
-                // Set default
-                locale = "en";
+        if (translationEntity != null) {
+            AlertEntity alertEntity = translationEntity.getAlert();
+            alert = new Alert(EnumAlertType.fromInteger(alertEntity.getId()), -1);
+            alert.setTitle(translationEntity.getTitle());
+            alert.setDescription(translationEntity.getDescription());
         }
-
-        TypedQuery<eu.daiad.web.domain.application.AlertTranslationEntity> accountAlertQuery = entityManager
-                        .createQuery("select a from alert_translation a where a.locale = :locale and a.id = :id",
-                                        eu.daiad.web.domain.application.AlertTranslationEntity.class);
-        accountAlertQuery.setParameter("locale", locale);
-        accountAlertQuery.setParameter("id", id);
-
-        List<AlertTranslationEntity> alerts = accountAlertQuery.getResultList();
-        if(accountAlertQuery.getResultList().size() == 1){
-            AlertTranslationEntity alertTranslation = alerts.get(0);
-            alert.setId(alertTranslation.getId());
-            alert.setTitle(alertTranslation.getTitle());
-            alert.setDescription(alertTranslation.getDescription());
-
-        }
-
+        
         return alert;
     }
     
     @Override
-    public DynamicRecommendation getRecommendation(int id, String locale) {
-        
-        DynamicRecommendation recommendation = new DynamicRecommendation(EnumDynamicRecommendationType.UNDEFINED);
-        switch (locale) {
-            case "en":
-            case "es":
-                // Ignore
-                break;
-            default:
-                // Set default
-                locale = "en";
+    public DynamicRecommendation getRecommendation(int id, String locale) 
+    {   
+        TypedQuery<DynamicRecommendationTranslationEntity> query = entityManager.createQuery(
+                "select a from dynamic_recommendation_translation a where a.locale = :locale and a.id = :id",
+                DynamicRecommendationTranslationEntity.class);
+        query.setParameter("locale", locale);
+        query.setParameter("id", id);
+
+        DynamicRecommendation recommendation = null;
+        DynamicRecommendationTranslationEntity translationEntity = null;
+        try {
+            translationEntity = query.getSingleResult();
+        } catch (NoResultException ex) {
+            translationEntity = null;
+            recommendation = new DynamicRecommendation(EnumDynamicRecommendationType.UNDEFINED, -1);
         }
 
-        TypedQuery<eu.daiad.web.domain.application.DynamicRecommendationTranslationEntity> accountRecommendationQuery = entityManager
-                        .createQuery("select a from dynamic_recommendation_translation a where a.locale = :locale and a.id = :id",
-                                        eu.daiad.web.domain.application.DynamicRecommendationTranslationEntity.class);
-        accountRecommendationQuery.setParameter("locale", locale);
-        accountRecommendationQuery.setParameter("id", id);
-
-        List<DynamicRecommendationTranslationEntity> recommendations = accountRecommendationQuery.getResultList();
-        if(accountRecommendationQuery.getResultList().size() == 1){
-            DynamicRecommendationTranslationEntity recommendationTranslation = recommendations.get(0);
-            recommendation.setId(recommendationTranslation.getId());
-            recommendation.setTitle(recommendationTranslation.getTitle());
-            recommendation.setDescription(recommendationTranslation.getDescription());
+        if (translationEntity != null) {
+            DynamicRecommendationEntity recommendationEntity = translationEntity.getRecommendation();
+            recommendation = new DynamicRecommendation(
+                    EnumDynamicRecommendationType.fromInteger(recommendationEntity.getId()), -1
+            );
+            recommendation.setTitle(translationEntity.getTitle());
+            recommendation.setDescription(translationEntity.getDescription());
         }
-
         return recommendation;
     }
     

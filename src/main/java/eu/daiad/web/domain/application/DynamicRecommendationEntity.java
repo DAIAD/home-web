@@ -1,6 +1,7 @@
 package eu.daiad.web.domain.application;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import javax.persistence.Basic;
@@ -31,7 +32,7 @@ public class DynamicRecommendationEntity {
 
 	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
 	@JoinColumn(name = "dynamic_recommendation_id")
-	private Set<DynamicRecommendationTranslationEntity> translations = new HashSet<DynamicRecommendationTranslationEntity>();
+	private Set<DynamicRecommendationTranslationEntity> translations = new HashSet<>();
 
 	public EnumMessageMode getMode() {
 		return mode;
@@ -53,7 +54,21 @@ public class DynamicRecommendationEntity {
 		return id;
 	}
 
-	public Set<DynamicRecommendationTranslationEntity> getTranslations() {
+	public Set<DynamicRecommendationTranslationEntity> getTranslations() 
+	{
 		return translations;
 	}
+	
+	public DynamicRecommendationTranslationEntity getTranslation(Locale locale) 
+	{
+	    DynamicRecommendationTranslationEntity result = null;
+	    String langCode = locale.getLanguage();
+	    for (DynamicRecommendationTranslationEntity t: translations) {
+            if (t.getLocale().equals(langCode)) {
+                result = t;
+                break;
+            }
+        }
+	    return result;
+    }
 }

@@ -44,7 +44,18 @@ public class AccountStaticRecommendationEntity {
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime receiveAcknowledgedOn;
 
-	public AccountEntity getAccount() {
+	public AccountStaticRecommendationEntity()
+	{
+	    // no-op
+	}
+	
+	public AccountStaticRecommendationEntity(AccountEntity account, StaticRecommendationEntity recommendation)
+    {
+       this.account = account;
+       this.recommendation = recommendation;
+    }
+
+    public AccountEntity getAccount() {
 		return account;
 	}
 

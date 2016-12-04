@@ -1315,9 +1315,8 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         TypedQuery<AccountEntity> query = entityManager.createQuery(accountQueryString, AccountEntity.class)
                                                        .setFirstResult(0)
                                                        .setMaxResults(1);
-
         query.setParameter("key", key);
-
+        
         return query.getSingleResult();
     }
 
@@ -1334,9 +1333,8 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         TypedQuery<AccountEntity> query = entityManager.createQuery(accountQueryString, AccountEntity.class)
                                                        .setFirstResult(0)
                                                        .setMaxResults(1);
-
         query.setParameter("username", username);
-
+        
         return query.getSingleResult();
     }
 

@@ -10,19 +10,20 @@ import javax.persistence.TypedQuery;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import eu.daiad.web.domain.application.AnnouncementEntity;
-import eu.daiad.web.domain.application.AnnouncementTranslationEntity;
+import eu.daiad.web.domain.application.DynamicRecommendationEntity;
+import eu.daiad.web.domain.application.DynamicRecommendationTranslationEntity;
+import eu.daiad.web.model.message.EnumDynamicRecommendationType;
 
 @Repository 
 @Transactional("applicationTransactionManager")
-public class AnnouncementRepository implements IAnnouncementRepository
+public class DynamicRecommendationRepository implements IDynamicRecommendationRepository
 {
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
     
     @Override
-    public AnnouncementEntity findOne(int announcementId)
+    public DynamicRecommendationEntity findOne(EnumDynamicRecommendationType recommendationType)
     {
-        return entityManager.find(AnnouncementEntity.class, announcementId);
+        return entityManager.find(DynamicRecommendationEntity.class, recommendationType.getValue());
     }
 }

@@ -10,19 +10,20 @@ import javax.persistence.TypedQuery;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import eu.daiad.web.domain.application.AnnouncementEntity;
-import eu.daiad.web.domain.application.AnnouncementTranslationEntity;
+import eu.daiad.web.domain.application.AlertEntity;
+import eu.daiad.web.domain.application.AlertTranslationEntity;
+import eu.daiad.web.model.message.EnumAlertType;
 
 @Repository 
 @Transactional("applicationTransactionManager")
-public class AnnouncementRepository implements IAnnouncementRepository
+public class AlertRepository implements IAlertRepository
 {
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
     
     @Override
-    public AnnouncementEntity findOne(int announcementId)
+    public AlertEntity findOne(EnumAlertType alertType)
     {
-        return entityManager.find(AnnouncementEntity.class, announcementId);
+        return entityManager.find(AlertEntity.class, alertType.getValue());
     }
 }

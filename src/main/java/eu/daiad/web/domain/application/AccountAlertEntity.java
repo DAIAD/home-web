@@ -1,6 +1,8 @@
 package eu.daiad.web.domain.application;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -37,7 +39,7 @@ public class AccountAlertEntity {
 	@JoinColumn(name = "alert_id", nullable = false)
 	private AlertEntity alert;
 
-	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
+	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER, orphanRemoval = true)
 	@JoinColumn(name = "account_alert_id")
 	private Set<AccountAlertPropertyEntity> properties = new HashSet<AccountAlertPropertyEntity>();
 
@@ -53,6 +55,29 @@ public class AccountAlertEntity {
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime receiveAcknowledgedOn;
 
+	public AccountAlertEntity()
+	{
+	    // no-op
+	}
+	
+	public AccountAlertEntity(AccountEntity account, AlertEntity alert, Map<String, Object> p)
+	{
+	    this.account = account;
+	    this.alert = alert;
+	    
+	    if (p != null) {
+	        for (Map.Entry<String, Object> e: p.entrySet()) {
+	            this.properties.add(
+	                new AccountAlertPropertyEntity(this, e.getKey(), e.getValue().toString())); 
+	        }
+	    }
+	}
+	
+	public AccountAlertEntity(AccountEntity account, AlertEntity alert)
+	{
+	    this(account, alert, null);
+	}
+	
 	public AccountEntity getAccount() {
 		return account;
 	}
@@ -92,7 +117,7 @@ public class AccountAlertEntity {
 	public Set<AccountAlertPropertyEntity> getProperties() {
 		return properties;
 	}
-
+	
 	public DateTime getReceiveAcknowledgedOn() {
 		return receiveAcknowledgedOn;
 	}

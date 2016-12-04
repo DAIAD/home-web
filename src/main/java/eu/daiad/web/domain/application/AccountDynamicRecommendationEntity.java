@@ -1,6 +1,8 @@
 package eu.daiad.web.domain.application;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -37,9 +39,10 @@ public class AccountDynamicRecommendationEntity {
 	@JoinColumn(name = "dynamic_recommendation_id", nullable = false)
 	private DynamicRecommendationEntity recommendation;
 
-	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
+	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER, orphanRemoval = true)
 	@JoinColumn(name = "account_dynamic_recommendation_id")
-	private Set<AccountDynamicRecommendationPropertyEntity> properties = new HashSet<AccountDynamicRecommendationPropertyEntity>();
+	private Set<AccountDynamicRecommendationPropertyEntity> properties = 
+	    new HashSet<AccountDynamicRecommendationPropertyEntity>();
 
 	@Column(name = "created_on")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
@@ -53,7 +56,32 @@ public class AccountDynamicRecommendationEntity {
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime receiveAcknowledgedOn;
 
-	public AccountEntity getAccount() {
+	public AccountDynamicRecommendationEntity()
+	{
+	    // no-op
+	}
+	
+	public AccountDynamicRecommendationEntity(
+        AccountEntity account, DynamicRecommendationEntity recommendation, Map<String, Object> p)
+    {
+	    this.account = account;
+        this.recommendation = recommendation;
+        
+        if (p != null) {
+            for (Map.Entry<String, Object> e: p.entrySet()) {
+                this.properties.add(
+                    new AccountDynamicRecommendationPropertyEntity(this, e.getKey(), e.getValue().toString())); 
+            }
+        }
+    }
+
+	public AccountDynamicRecommendationEntity(
+	    AccountEntity account, DynamicRecommendationEntity recommendation) 
+	{
+	    this(account, recommendation, null);
+	}
+	
+    public AccountEntity getAccount() {
 		return account;
 	}
 
@@ -92,7 +120,7 @@ public class AccountDynamicRecommendationEntity {
 	public Set<AccountDynamicRecommendationPropertyEntity> getProperties() {
 		return properties;
 	}
-
+    	
 	public DateTime getReceiveAcknowledgedOn() {
 		return receiveAcknowledgedOn;
 	}

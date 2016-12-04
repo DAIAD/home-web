@@ -32,6 +32,19 @@ public class AccountDynamicRecommendationPropertyEntity {
 	@Basic()
 	private String value;
 
+	public AccountDynamicRecommendationPropertyEntity()
+	{
+	    // no-op
+	}
+	
+	public AccountDynamicRecommendationPropertyEntity(
+	    AccountDynamicRecommendationEntity recommendation, String key, String value)
+	{
+	    this.recommendation = recommendation;
+	    this.key = key;
+	    this.value = value;
+	}
+
 	public AccountDynamicRecommendationEntity getRecommendation() {
 		return recommendation;
 	}
