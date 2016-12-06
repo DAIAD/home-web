@@ -1,4 +1,4 @@
-package eu.daiad.web.model.query;
+package eu.daiad.web.model;
 
 import java.io.IOException;
 import java.util.HashMap;

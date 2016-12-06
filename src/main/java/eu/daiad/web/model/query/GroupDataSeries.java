@@ -8,6 +8,8 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 
+import eu.daiad.web.model.EnumTimeAggregation;
+
 public class GroupDataSeries {
 
     private String label;

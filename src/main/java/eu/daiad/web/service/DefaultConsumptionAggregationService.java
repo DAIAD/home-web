@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 
 import eu.daiad.web.model.ComputedNumber;
 import eu.daiad.web.model.ConsumptionStats;
+import eu.daiad.web.model.EnumTimeAggregation;
+import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.ConsumptionStats.EnumStatistic;
 import eu.daiad.web.model.query.AmphiroDataPoint;
 import eu.daiad.web.model.query.DataPoint;
@@ -23,8 +25,6 @@ import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumMetric;
-import eu.daiad.web.model.query.EnumTimeAggregation;
-import eu.daiad.web.model.query.EnumTimeUnit;
 import eu.daiad.web.model.query.GroupDataSeries;
 import eu.daiad.web.model.query.MeterDataPoint;
 import eu.daiad.web.model.utility.UtilityInfo;

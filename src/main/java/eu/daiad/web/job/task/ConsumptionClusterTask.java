@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.SurveyEntity;
+import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.admin.Counter;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SchedulerErrorCode;
@@ -33,7 +34,6 @@ import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumMetric;
-import eu.daiad.web.model.query.EnumTimeAggregation;
 import eu.daiad.web.model.query.GroupDataSeries;
 import eu.daiad.web.model.query.MeterDataPoint;
 import eu.daiad.web.model.query.MeterUserDataPoint;
