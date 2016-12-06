@@ -73,6 +73,8 @@ public class ProfileController extends BaseRestController {
             if (user.hasRole(EnumRole.ROLE_USER)) {
                 Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE);
 
+                profileRepository.updateMobileVersion(user.getKey(), data.getVersion());
+
                 return new ProfileResponse(getRuntime(),
                                            profile,
                                            user.roleToStringArray());
@@ -83,7 +85,6 @@ public class ProfileController extends BaseRestController {
             } else {
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION);
             }
-
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
