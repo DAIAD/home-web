@@ -1,19 +1,19 @@
 package eu.daiad.web.model.query;
 
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 
 public class AmphiroDataPoint extends DataPoint {
 
-	private Map<EnumMetric, Double> volume = new HashMap<EnumMetric, Double>();
+	private Map<EnumMetric, Double> volume = new EnumMap<EnumMetric, Double>(EnumMetric.class);
 
-	private Map<EnumMetric, Double> duration = new HashMap<EnumMetric, Double>();
+	private Map<EnumMetric, Double> duration = new EnumMap<EnumMetric, Double>(EnumMetric.class);
 
-	private Map<EnumMetric, Double> temperature = new HashMap<EnumMetric, Double>();
+	private Map<EnumMetric, Double> temperature = new EnumMap<EnumMetric, Double>(EnumMetric.class);
 
-	private Map<EnumMetric, Double> energy = new HashMap<EnumMetric, Double>();
+	private Map<EnumMetric, Double> energy = new EnumMap<EnumMetric, Double>(EnumMetric.class);
 
-	private Map<EnumMetric, Double> flow = new HashMap<EnumMetric, Double>();
+	private Map<EnumMetric, Double> flow = new EnumMap<EnumMetric, Double>(EnumMetric.class);
 
 	public AmphiroDataPoint() {
 		this.type = EnumDataPointType.AMPHIRO;

@@ -1,11 +1,11 @@
 package eu.daiad.web.model.query;
 
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 
 public class MeterDataPoint extends DataPoint {
 
-	private Map<EnumMetric, Double> volume = new HashMap<EnumMetric, Double>();
+	private Map<EnumMetric, Double> volume = new EnumMap<EnumMetric, Double>(EnumMetric.class);
 
 	public MeterDataPoint() {
 		super();
