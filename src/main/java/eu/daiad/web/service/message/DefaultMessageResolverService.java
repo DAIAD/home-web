@@ -2,6 +2,7 @@ package eu.daiad.web.service.message;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -30,6 +31,7 @@ import eu.daiad.web.model.message.EnumDynamicRecommendationType;
 import eu.daiad.web.model.message.EnumPartOfDay;
 import eu.daiad.web.model.message.IMessageResolutionStatus;
 import eu.daiad.web.model.message.Insight;
+import eu.daiad.web.model.message.Insight.BasicParameters;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.model.message.MessageResolutionStatus;
 import eu.daiad.web.model.message.MessageResolutionPerAccountStatus;
@@ -105,9 +107,9 @@ public class DefaultMessageResolverService implements IMessageResolverService
         DateTimeZone tz = DateTimeZone.forID(utility.getTimezone());
         DateTime refDate = config.getRefDate().toDateTime(tz);
 
-        EnumDeviceType[] deviceTypes = new EnumDeviceType[] {
-                EnumDeviceType.AMPHIRO, EnumDeviceType.METER
-        };
+        EnumSet<EnumDeviceType> deviceTypes = EnumSet.of(
+            EnumDeviceType.AMPHIRO, EnumDeviceType.METER
+        );
         
         MessageResolutionPerAccountStatus status = new MessageResolutionPerAccountStatus(accountKey);
 
@@ -229,6 +231,18 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         for (EnumDeviceType deviceType: deviceTypes)
             status.addInsight(computeInsightA4(config, account, refDate, deviceType));
+        
+        // Insight B.1
+        
+        for (EnumDeviceType deviceType: deviceTypes)
+            for (EnumTimeUnit u: EnumSet.of(EnumTimeUnit.WEEK, EnumTimeUnit.MONTH))
+                status.addInsight(computeInsightB1(config, account, refDate, deviceType, u));
+        
+        // Insight B.2
+        
+        for (EnumDeviceType deviceType: deviceTypes)
+            for (EnumTimeUnit u: EnumSet.of(EnumTimeUnit.WEEK, EnumTimeUnit.MONTH))
+                status.addInsight(computeInsightB2(config, account, refDate, deviceType, u));
         
         return status;
     }
@@ -1287,8 +1301,9 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         // Build a common part of a data-service query      
         
-        DataQueryResponse qr;
-        DataQueryBuilder qb = new DataQueryBuilder()
+        DataQuery query;
+        DataQueryResponse queryResponse;
+        DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", account.getKey())  
             .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
@@ -1296,9 +1311,11 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         // Compute for target day
         
-        qb.sliding(refDate, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL);
-        qr = dataService.execute(qb.build());
-        Double refValue = qr.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
+        query = queryBuilder
+            .sliding(refDate, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+            .build();
+        queryResponse = dataService.execute(query);
+        Double refValue = queryResponse.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
         if (refValue == null)
             return null; // nothing to compare to
         
@@ -1308,9 +1325,11 @@ public class DefaultMessageResolverService implements IMessageResolverService
         List<Double> values = new ArrayList<>(N);
         for (int i = 0; i < N; i++) {
             start = start.minusDays(1);
-            qb.sliding(start, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL);
-            qr = dataService.execute(qb.build());
-            Double val = qr.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
+            query = queryBuilder
+                .sliding(start, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+                .build();
+            queryResponse = dataService.execute(query);
+            Double val = queryResponse.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
             if (val != null)
                 values.add(val);
         }   
@@ -1406,8 +1425,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     private MessageResolutionStatus<Insight.BasicParameters> computeInsightA4(
         MessageCalculationConfiguration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
-    {
-        
+    {    
         // Build a common part of a data-service query
         
         DataQuery query;
@@ -1457,6 +1475,137 @@ public class DefaultMessageResolverService implements IMessageResolverService
         Insight.BasicParameters parameters = new Insight.A4Parameters(refDate, deviceType, sumOfParts)
             .setParts(parts);
         return new MessageResolutionStatus<Insight.BasicParameters>(true, parameters);
+    }
+    
+    private MessageResolutionStatus<Insight.BasicParameters> computeInsightB1(
+        MessageCalculationConfiguration config, 
+        AccountEntity account, DateTime refDate, EnumDeviceType deviceType, EnumTimeUnit timeUnit)
+    {        
+        Assert.state(timeUnit == EnumTimeUnit.WEEK || timeUnit == EnumTimeUnit.MONTH);
+        
+        final double K = 1.28;  // a threshold (in units of standard deviation) of significant change
+        final double F = 0.6;   // a threshold ratio of non-nulls for collected values
+        
+        final DateTime targetDate = timeUnit.startOf(refDate);
+        final Period period = timeUnit.toPeriod();
+        
+        final Period P = Period.months(+3); // the whole period under examination
+        final int N = // number of unit-sized periods 
+            timeUnit.numberOfPieces(new Interval(targetDate.minus(P), targetDate));
+        
+        // Build a common part of a data-service query      
+        
+        DataQuery query;
+        DataQueryResponse queryResponse;
+        DataQueryBuilder queryBuilder = new DataQueryBuilder()
+            .timezone(refDate.getZone())
+            .user("user", account.getKey())  
+            .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
+            .sum();
+        
+        // Compute for target period
+        
+        query = queryBuilder
+            .sliding(targetDate, +1, timeUnit, EnumTimeAggregation.ALL)
+            .build();
+        queryResponse = dataService.execute(query);
+        Double targetValue = queryResponse.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
+        if (targetValue == null)
+            return null; // nothing to compare to
+        
+        // Compute for past N periods
+        
+        DateTime start = targetDate;
+        List<Double> values = new ArrayList<>(N);
+        for (int i = 0; i < N; i++) {
+            start = start.minus(period);
+            query = queryBuilder
+                .sliding(start, +1, timeUnit, EnumTimeAggregation.ALL)
+                .build();
+            queryResponse = dataService.execute(query);
+            Double val = queryResponse.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
+            if (val != null)
+                values.add(val);
+        }   
+        if (values.size() < N * F)
+            return null; // too few values, the average is not reliable
+        
+        // Seems we have sufficient data
+        
+        double[] pvalues = ArrayUtils.toPrimitive(values.toArray(new Double[0]));
+        double avgValue = mean(pvalues); 
+        double sd = Math.sqrt(populationVariance(pvalues, avgValue));
+        double normValue = (targetValue - avgValue) / sd; // normalized value
+        double score = Math.abs(normValue) / (2 * K);
+        
+        logger.debug(String.format(
+            "Insight B1 for account %s/%s: Consumption for period %s since %s:\n\t" + 
+                "value=%.2f mean=%.2f stddevp=%.2f x*=%.2f score=%.2f", 
+             account.getKey(), deviceType, period.multipliedBy(N), targetDate.toString("dd/MM/YYYY"), 
+             targetValue, avgValue, sd, normValue, score));
+        
+        return new MessageResolutionStatus<Insight.BasicParameters>(
+            score,
+            new Insight.B1Parameters(refDate, timeUnit, deviceType, targetValue, avgValue)
+        );
+    }
+
+    private MessageResolutionStatus<Insight.BasicParameters> computeInsightB2(
+        MessageCalculationConfiguration config,
+        AccountEntity account, DateTime refDate, EnumDeviceType deviceType, EnumTimeUnit timeUnit)
+    {
+        Assert.state(timeUnit == EnumTimeUnit.WEEK || timeUnit == EnumTimeUnit.MONTH);
+     
+        final double PERCENTAGE_CHANGE_THRESHOLD = 40;
+        
+        final DateTime targetDate = timeUnit.startOf(refDate);
+        final Period period = timeUnit.toPeriod();
+        
+        // Build a common part of a data-service query      
+        
+        DataQuery query;
+        DataQueryResponse queryResponse;
+        DataQueryBuilder queryBuilder = new DataQueryBuilder()
+            .timezone(refDate.getZone())
+            .user("user", account.getKey())  
+            .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
+            .sum();
+        
+        // Compute for target period
+        
+        query = queryBuilder
+            .sliding(targetDate, +1, timeUnit, EnumTimeAggregation.ALL)
+            .build();
+        queryResponse = dataService.execute(query);
+        Double targetValue = queryResponse.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
+        if (targetValue == null)
+            return null; // nothing to compare to
+        
+        // Compute for previous period
+        
+        query = queryBuilder
+            .sliding(targetDate.minus(period), +1, timeUnit, EnumTimeAggregation.ALL)
+            .build();
+        queryResponse = dataService.execute(query);
+        Double previousValue = queryResponse.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
+        if (previousValue == null)
+            return null; // nothing to compare to
+        
+        // Seems we have sufficient data
+        
+        double percentDiff = 100.0 * (targetValue - previousValue) / previousValue;
+        double score = Math.abs(percentDiff) / (2 * PERCENTAGE_CHANGE_THRESHOLD);
+        
+        logger.debug(String.format(
+            "Insight B2 for account %s/%s: Consumption for previous period %s since %s:\n\t" + 
+                "value=%.2f previous=%.2f change=%.2f%% score=%.2f", 
+             account.getKey(), deviceType, period, targetDate.toString("dd/MM/YYYY"), 
+             targetValue, previousValue, percentDiff, score));
+        
+        return new MessageResolutionStatus<Insight.BasicParameters>(
+            score,
+            new Insight.B2Parameters(refDate, timeUnit, deviceType, targetValue, previousValue)
+        );
     }
     
     //
