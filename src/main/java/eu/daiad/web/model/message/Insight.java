@@ -1,10 +1,12 @@
 package eu.daiad.web.model.message;
 
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.Map;
 
 import org.joda.time.DateTime;
 
+import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.NumberFormatter;
 import eu.daiad.web.model.device.EnumDeviceType;
 
@@ -247,6 +249,112 @@ public class Insight extends DynamicRecommendation {
             if (p3 != null)
                 parameters.put("night_percentage", new NumberFormatter(p3, ".#"));
             
+            return parameters;
+        }
+    }
+    
+    /**
+     * Note: This is very similar to A2, it only refers to different time units.
+     */
+    public static class B1Parameters extends BasicParameters
+    {
+        private final EnumTimeUnit timeUnit;
+        
+        public B1Parameters(
+            DateTime refDate, EnumTimeUnit timeUnit, EnumDeviceType deviceType,
+            double currentValue, double avgValue)
+        {
+            super(refDate, deviceType, currentValue, avgValue);
+            
+            if (timeUnit != EnumTimeUnit.WEEK && timeUnit != EnumTimeUnit.MONTH)
+                throw new IllegalArgumentException(
+                    "This insight (B.1) is only relevant to weekly/monthly consumption"
+                );
+            this.timeUnit = timeUnit;
+        }
+        
+        @Override
+        public EnumDynamicRecommendationType getType()
+        {
+            EnumDynamicRecommendationType t = super.getType();            
+            boolean increase = (avgValue < currentValue);
+            
+            switch (timeUnit) {
+            case WEEK:
+                t = increase?
+                    EnumDynamicRecommendationType.INSIGHT_B1_WEEKLY_CONSUMPTION_INCR:
+                    EnumDynamicRecommendationType.INSIGHT_B1_WEEKLY_CONSUMPTION_DECR;
+                break;
+            case MONTH:
+                t = increase?
+                    EnumDynamicRecommendationType.INSIGHT_B1_MONTHLY_CONSUMPTION_INCR:
+                    EnumDynamicRecommendationType.INSIGHT_B1_MONTHLY_CONSUMPTION_DECR;
+                break;
+            default:
+                // no-op
+            }
+            return t;
+        }
+        
+        @Override
+        public Map<String, Object> getPairs()
+        {
+            Map<String, Object> parameters = super.getPairs();
+            parameters.put("time_unit", timeUnit.name());
+            return parameters;
+        }
+    }
+    
+    public static class B2Parameters extends BasicParameters
+    {
+        private final double previousValue;
+        private final EnumTimeUnit timeUnit;
+        
+        public B2Parameters(
+            DateTime refDate, EnumTimeUnit timeUnit, EnumDeviceType deviceType, 
+            double currentValue, double previousValue)
+        {
+            super(refDate, deviceType, currentValue, currentValue);
+            
+            if (timeUnit != EnumTimeUnit.WEEK && timeUnit != EnumTimeUnit.MONTH)
+                throw new IllegalArgumentException(
+                    "This insight (B.2) is only relevant to weekly/monthly consumption"
+                );
+            this.timeUnit = timeUnit;
+            
+            this.previousValue = previousValue;
+        }
+        
+        @Override
+        public EnumDynamicRecommendationType getType()
+        {
+            EnumDynamicRecommendationType t = super.getType();
+            boolean increase = (previousValue < currentValue);
+            
+            switch (timeUnit) {
+            case WEEK:
+                t = increase?
+                    EnumDynamicRecommendationType.INSIGHT_B2_WEEKLY_PREV_CONSUMPTION_INCR:
+                    EnumDynamicRecommendationType.INSIGHT_B2_WEEKLY_PREV_CONSUMPTION_DECR;
+                break;
+            case MONTH:
+                t = increase?
+                    EnumDynamicRecommendationType.INSIGHT_B2_MONTHLY_PREV_CONSUMPTION_INCR:
+                    EnumDynamicRecommendationType.INSIGHT_B2_MONTHLY_PREV_CONSUMPTION_DECR;
+                break;
+            default:
+                // no-op
+            }
+            return t;
+        }
+        
+        @Override
+        public Map<String, Object> getPairs()
+        {
+            Map<String, Object> parameters = super.getPairs();
+            parameters.put("previous_value", Double.valueOf(previousValue));
+            parameters.put("previous_consumption", new NumberFormatter(previousValue, ".#"));
+            parameters.put("time_unit", timeUnit.name());
             return parameters;
         }
     }
