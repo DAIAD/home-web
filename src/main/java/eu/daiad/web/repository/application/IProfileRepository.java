@@ -34,7 +34,9 @@ public interface IProfileRepository {
     void deactivateProfile(ProfileDeactivateRequest userDeactId);
 
     void saveHousehold(UpdateHouseholdRequest updates);
-    
+
     List<ProfileHistoryEntry> getProfileHistoryByUserKey(UUID userKey);
+
+    void updateMobileVersion(UUID userKey, String version);
 
 }

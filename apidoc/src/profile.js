@@ -9,11 +9,13 @@
  *
  * @apiParam {String} username User name
  * @apiParam {String} password User password
+ * @apiParam {String} version  DAIAD@home mobile application version.
  *
  * @apiParamExample {json} Request Example
  * {
  *   username: "user@daiad.eu",
- *   password: "****"
+ *   password: "****",
+ *   version: "1.5.0"
  * }
  *
  * @apiSuccess (ProfileResponse) {Boolean}  success                 Returns <code>true</code> or <code>false</code> indicating success of the operation.

@@ -93,6 +93,9 @@ public class AccountProfileEntity {
     @Column(name = "send_mail")
     private boolean sendMailEnabled;
 
+    @Column(name = "mobile_app_version")
+    private String mobileApplicationVersion;
+
     public int getId() {
         return id;
     }
@@ -219,6 +222,14 @@ public class AccountProfileEntity {
 
     public void setSendMailEnabled(boolean sendMailEnabled) {
         this.sendMailEnabled = sendMailEnabled;
+    }
+
+    public String getMobileApplicationVersion() {
+        return mobileApplicationVersion;
+    }
+
+    public void setMobileApplicationVersion(String mobileApplicationVersion) {
+        this.mobileApplicationVersion = mobileApplicationVersion;
     }
 
 }

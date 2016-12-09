@@ -23,6 +23,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.domain.application.AccountEntity;
+import eu.daiad.web.domain.application.AccountProfileEntity;
 import eu.daiad.web.domain.application.AccountProfileHistoryEntity;
 import eu.daiad.web.domain.application.DeviceAmphiroConfigurationEntity;
 import eu.daiad.web.domain.application.DeviceAmphiroDefaultConfigurationEntity;
@@ -939,12 +940,14 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
         entityManager.persist(historyEntry);
     }
+
     @Override
     public List<ProfileHistoryEntry> getProfileHistoryByUserKey(UUID userKey) {
         String sqlString = "select a from account a where a.key = :userKey";
 
-        TypedQuery<AccountEntity> query = entityManager.createQuery(sqlString, AccountEntity.class).setFirstResult(0)
-                        .setMaxResults(1);
+        TypedQuery<AccountEntity> query = entityManager.createQuery(sqlString, AccountEntity.class)
+                                                       .setFirstResult(0)
+                                                       .setMaxResults(1);
         query.setParameter("userKey", userKey);
 
         AccountEntity account = query.getSingleResult();
@@ -982,6 +985,30 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
         });
 
         return entries;
+    }
+
+    /**
+     * Update the DAIAD@home mobile application version for the user with the given key.
+     *
+     * @param userKey the user key.
+     * @param version the application version.
+     */
+    @Override
+    public void updateMobileVersion(UUID userKey, String version) {
+        String sqlString = "select p from account_profile p where p.account.key = :userKey";
+
+        TypedQuery<AccountProfileEntity> query = entityManager.createQuery(sqlString, AccountProfileEntity.class)
+                                                              .setFirstResult(0)
+                                                              .setMaxResults(1);
+        query.setParameter("userKey", userKey);
+
+        AccountProfileEntity profile = query.getSingleResult();
+
+        if(StringUtils.isBlank(version)) {
+            profile.setMobileApplicationVersion("unknown");
+        } else {
+            profile.setMobileApplicationVersion(version);
+        }
     }
 
 }

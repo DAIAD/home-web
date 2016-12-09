@@ -47,6 +47,8 @@ public class AuthenticationController extends BaseRestController {
 
             Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE);
 
+            profileRepository.updateMobileVersion(user.getKey(), credentials.getVersion());
+
             return new AuthenticationResponse(getRuntime(), profile, user.roleToStringArray());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);

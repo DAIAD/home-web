@@ -2,29 +2,40 @@ package eu.daiad.web.model.security;
 
 public class Credentials {
 
-	private String username;
-	
-	private String password;
+    private String username;
 
-	public void setUsername(String value) {
-		this.username = value;
-	}
+    private String password;
 
-	public String getUsername() {
-		if(this.username == null) {
-			return "";
-		}
-		return this.username.trim();
-	}
-	
-	public void setPassword(String value) {
-		this.password = value;
-	}
+    private String version;
 
-	public String getPassword() {
-		if(this.password == null) {
-			return "";
-		}
-		return this.password;
-	}
+    public void setUsername(String value) {
+        username = value;
+    }
+
+    public String getUsername() {
+        if (username == null) {
+            return "";
+        }
+        return username.trim();
+    }
+
+    public void setPassword(String value) {
+        password = value;
+    }
+
+    public String getPassword() {
+        if (password == null) {
+            return "";
+        }
+        return password;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
 }
