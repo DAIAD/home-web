@@ -55,7 +55,11 @@ insert into dynamic_recommendation ("id", "mode", "priority") values
     (1106, 'BOTH', 5),
     (1107, 'BOTH', 5);
 
--- Todo Insight B.3
+-- Insight B.3
+
+insert into dynamic_recommendation ("id", "mode", "priority") values 
+    (1108, 'BOTH', 5),
+    (1109, 'BOTH', 5);
 
 --
 -- Template messages for dynamic recommendations
@@ -453,5 +457,32 @@ insert into dynamic_recommendation_translation (dynamic_recommendation_id, local
     '{consumption}lt vs. {previous_consumption}lt'
 );
 
--- Todo Insight B.3
+-- Insight B.3
 
+insert into dynamic_recommendation_translation (dynamic_recommendation_id, locale, title, description) values (
+    1108,
+    'en',
+    '{day_of_week} is your peak day',
+    '{consumption}lt vs. the average {average_consumption}lt'
+);
+
+insert into dynamic_recommendation_translation (dynamic_recommendation_id, locale, title, description) values (
+    1108,
+    'es',
+    '{day_of_week} is your peak day',
+    '{consumption}lt vs. the average {average_consumption}lt'
+);
+
+insert into dynamic_recommendation_translation (dynamic_recommendation_id, locale, title, description) values (
+    1109,
+    'en',
+    '{day_of_week} is your low day',
+    '{consumption}lt vs. the average {average_consumption}lt'
+);
+
+insert into dynamic_recommendation_translation (dynamic_recommendation_id, locale, title, description) values (
+    1109,
+    'es',
+    '{day_of_week} is your low day',
+    '{consumption}lt vs. the average {average_consumption}lt'
+);
