@@ -5,7 +5,11 @@ import java.util.EnumSet;
 import java.util.Map;
 
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeConstants;
+import org.springframework.util.Assert;
 
+import eu.daiad.web.model.EnumDayOfWeek;
+import eu.daiad.web.model.EnumPartOfDay;
 import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.NumberFormatter;
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -16,7 +20,11 @@ public class Insight extends DynamicRecommendation {
     // ~ Classes for parameters
     //
 
-    public abstract static class BasicParameters extends DynamicRecommendation.AbstractParameters
+    public interface Parameters extends DynamicRecommendation.Parameters 
+    {};
+    
+    protected abstract static class BasicParameters extends DynamicRecommendation.AbstractParameters
+        implements Parameters
     {
         // The reference value. Note that precise semantics 
         // are insight-specific (e.g. for A.1 is value on the reference date)
@@ -27,7 +35,7 @@ public class Insight extends DynamicRecommendation {
         protected final double avgValue;
 
         public BasicParameters(
-                DateTime refDate, EnumDeviceType deviceType, double currentValue, double avgValue)
+            DateTime refDate, EnumDeviceType deviceType, double currentValue, double avgValue)
         {
             super(refDate, deviceType);
             this.avgValue = avgValue;
@@ -70,14 +78,14 @@ public class Insight extends DynamicRecommendation {
     public static class A1Parameters extends BasicParameters
     {
         public A1Parameters(
-                DateTime refDate, EnumDeviceType deviceType, double currentValue, double avgValue)
+            DateTime refDate, EnumDeviceType deviceType, double currentValue, double avgValue)
         {
             super(refDate, deviceType, currentValue, avgValue);
         }
         
-        public int getDayOfWeek()
+        public EnumDayOfWeek getDayOfWeek()
         {
-            return refDate.getDayOfWeek();
+            return EnumDayOfWeek.valueOf(refDate.getDayOfWeek());
         }
 
         @Override
@@ -93,7 +101,7 @@ public class Insight extends DynamicRecommendation {
         public Map<String, Object> getPairs()
         {
             Map<String, Object> parameters = super.getPairs();
-            parameters.put("day_of_week", Integer.valueOf(getDayOfWeek()));
+            parameters.put("day_of_week", refDate.getDayOfWeek());
             return parameters;
         }
     }
@@ -101,7 +109,7 @@ public class Insight extends DynamicRecommendation {
     public static class A2Parameters extends BasicParameters
     {
         public A2Parameters(
-                DateTime refDate, EnumDeviceType deviceType, double currentValue, double avgValue)
+            DateTime refDate, EnumDeviceType deviceType, double currentValue, double avgValue)
         {
             super(refDate, deviceType, currentValue, avgValue);
         }
@@ -121,8 +129,8 @@ public class Insight extends DynamicRecommendation {
         protected final EnumPartOfDay partOfDay;
         
         public A3Parameters(
-                DateTime refDate, EnumPartOfDay partOfDay, EnumDeviceType deviceType,
-                double currentValue, double avgValue)
+            DateTime refDate, EnumPartOfDay partOfDay, EnumDeviceType deviceType,
+            double currentValue, double avgValue)
         {
             super(refDate, deviceType, currentValue, avgValue);
             this.partOfDay = partOfDay;
@@ -355,6 +363,47 @@ public class Insight extends DynamicRecommendation {
             parameters.put("previous_value", Double.valueOf(previousValue));
             parameters.put("previous_consumption", new NumberFormatter(previousValue, ".#"));
             parameters.put("time_unit", timeUnit.name());
+            return parameters;
+        }
+    }
+    
+    public static class B3Parameters extends BasicParameters
+    {        
+        private final EnumDayOfWeek dayOfWeek; 
+        
+        /**
+         * @param refDate
+         * @param deviceType
+         * @param currentValue The average consumption for the particular day-of-week
+         * @param avgValue The average consumption for all week days
+         * @param dayOfWeek The day of week for this consumption peak (high or low)
+         */
+        public B3Parameters(
+            DateTime refDate, EnumDeviceType deviceType, 
+            double currentValue, double avgValue, EnumDayOfWeek dayOfWeek)
+        {
+            super(refDate, deviceType, currentValue, avgValue);
+            this.dayOfWeek = dayOfWeek;
+        }
+        
+        public EnumDayOfWeek getDayOfWeek()
+        {
+            return dayOfWeek;
+        }
+        
+        @Override
+        public EnumDynamicRecommendationType getType()
+        {
+            return (currentValue < avgValue)?
+                EnumDynamicRecommendationType.INSIGHT_B3_DAYOFWEEK_CONSUMPTION_LOW:
+                EnumDynamicRecommendationType.INSIGHT_B3_DAYOFWEEK_CONSUMPTION_PEAK;
+        }
+        
+        @Override
+        public Map<String, Object> getPairs()
+        {
+            Map<String, Object> parameters = super.getPairs();
+            parameters.put("day_of_week", dayOfWeek.toInteger());
             return parameters;
         }
     }

@@ -1,4 +1,4 @@
-package eu.daiad.web.model.message;
+package eu.daiad.web.model;
 
 import org.joda.time.DateTime;
 import org.joda.time.Interval;

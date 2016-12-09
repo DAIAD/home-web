@@ -1,6 +1,8 @@
 package eu.daiad.web.service.message;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
@@ -14,24 +16,26 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.math3.stat.StatUtils;
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import org.apache.commons.math3.stat.descriptive.summary.Sum;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Instant;
 import org.joda.time.Interval;
 import org.joda.time.LocalDateTime;
 import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
+import org.springframework.data.util.Pair;
 
 import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.DynamicRecommendation;
 import eu.daiad.web.model.message.EnumAlertType;
 import eu.daiad.web.model.message.EnumDynamicRecommendationType;
-import eu.daiad.web.model.message.EnumPartOfDay;
 import eu.daiad.web.model.message.IMessageResolutionStatus;
 import eu.daiad.web.model.message.Insight;
-import eu.daiad.web.model.message.Insight.BasicParameters;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.model.message.MessageResolutionStatus;
 import eu.daiad.web.model.message.MessageResolutionPerAccountStatus;
@@ -56,9 +60,11 @@ import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AccountStaticRecommendationEntity;
 import eu.daiad.web.model.ComputedNumber;
 import eu.daiad.web.model.ConsumptionStats;
+import eu.daiad.web.model.EnumPartOfDay;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.ConsumptionStats.EnumStatistic;
+import eu.daiad.web.model.EnumDayOfWeek;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.error.DeviceErrorCode;
@@ -107,9 +113,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
         DateTimeZone tz = DateTimeZone.forID(utility.getTimezone());
         DateTime refDate = config.getRefDate().toDateTime(tz);
 
-        EnumSet<EnumDeviceType> deviceTypes = EnumSet.of(
-            EnumDeviceType.AMPHIRO, EnumDeviceType.METER
-        );
+        EnumSet<EnumDeviceType> deviceTypes = 
+            EnumSet.of(EnumDeviceType.AMPHIRO, EnumDeviceType.METER);
         
         MessageResolutionPerAccountStatus status = new MessageResolutionPerAccountStatus(accountKey);
 
@@ -244,6 +249,11 @@ public class DefaultMessageResolverService implements IMessageResolverService
             for (EnumTimeUnit u: EnumSet.of(EnumTimeUnit.WEEK, EnumTimeUnit.MONTH))
                 status.addInsight(computeInsightB2(config, account, refDate, deviceType, u));
         
+        // Insight B.3
+        
+        for (EnumDeviceType deviceType: deviceTypes)
+            status.addInsights(computeInsightB3(config, account, refDate, deviceType));
+        
         return status;
     }
     
@@ -283,7 +293,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             if (!s.getPoints().isEmpty()) {
                 boolean aboveThreshold = true;
                 for (DataPoint p: s.getPoints()) {
-                    if (((MeterDataPoint) p).getVolume().get(EnumMetric.SUM) < VOLUME_THRESHOLD_PER_HOUR) {
+                    if (p.field(VOLUME).get(EnumMetric.SUM) < VOLUME_THRESHOLD_PER_HOUR) {
                         aboveThreshold = false;
                         break;
                     }
@@ -321,9 +331,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         for (GroupDataSeries s: dataSeriesAmphiro) {
             if (!s.getPoints().isEmpty()) {
-                for (DataPoint point : s.getPoints()) {
-                    AmphiroDataPoint point1 = (AmphiroDataPoint) point;
-                    if (point1.getDuration().get(EnumMetric.MAX) > DURATION_THRESHOLD_IN_MINUTES) {
+                for (DataPoint p: s.getPoints()) {
+                    if (p.field(DURATION).get(EnumMetric.MAX) > DURATION_THRESHOLD_IN_MINUTES) {
                         fire = true;
                     }
                 }
@@ -354,7 +363,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         for (GroupDataSeries s : dataSeriesMeter) {
             if (!s.getPoints().isEmpty()) {
                 for (DataPoint p: s.getPoints()) {
-                    if (((MeterDataPoint) p).getVolume().get(EnumMetric.SUM) == 0) {
+                    if (p.field(VOLUME).get(EnumMetric.SUM) == 0) {
                         fire = true;
                     }
                 }
@@ -391,7 +400,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         for (GroupDataSeries s: dataSeriesAmphiro) {
             if (!s.getPoints().isEmpty()) {
                 for (DataPoint p: s.getPoints()) {
-                    if (((AmphiroDataPoint) p).getTemperature().get(EnumMetric.MAX) > TEMPERATURE_THRESHOLD) {
+                    if (p.field(TEMPERATURE).get(EnumMetric.MAX) > TEMPERATURE_THRESHOLD) {
                         fire = true;
                         break;
                     }
@@ -422,9 +431,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
-   
-        Double consumed  = queryResponse.getSingleResult(
-            deviceType, EnumDataField.VOLUME, EnumMetric.SUM); 
+        Double consumed  = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM); 
         if (consumed == null)
             return null;
         
@@ -462,9 +469,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
-
-        Double consumed  = queryResponse.getSingleResult(
-            deviceType, EnumDataField.VOLUME, EnumMetric.SUM);
+        Double consumed  = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
         if (consumed == null)
             return null;
         
@@ -501,9 +506,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
-
-        Double consumed  = queryResponse.getSingleResult(
-            deviceType, EnumDataField.VOLUME, EnumMetric.SUM);
+        Double consumed  = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
         if (consumed == null)
             return null;
         
@@ -547,11 +550,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         for (GroupDataSeries s: series) {
             List<Double> values = new ArrayList<>();
             for (DataPoint p: s.getPoints()) {
-                double dailyConsumption;
-                if (deviceType == EnumDeviceType.AMPHIRO) 
-                    dailyConsumption = ((AmphiroDataPoint) p).getVolume().get(EnumMetric.SUM);
-                else
-                    dailyConsumption = ((MeterDataPoint) p).getVolume().get(EnumMetric.SUM);
+                double dailyConsumption = p.field(VOLUME).get(EnumMetric.SUM);                
                 values.add(dailyConsumption);
                 if (dailyConsumption > dailyBudget) {
                     fire = false;
@@ -594,9 +593,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
-
-        Double consumed = queryResponse.getSingleResult(
-            deviceType, EnumDataField.VOLUME, EnumMetric.SUM);
+        Double consumed = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
         if (consumed == null)
             return null;
 
@@ -636,8 +633,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .average();
 
         DataQuery query = queryBuilder.build();
-        DataQueryResponse queryResponse = dataService.execute(query);
-        
+        DataQueryResponse queryResponse = dataService.execute(query);   
         List<GroupDataSeries> series = queryResponse.getDevices();
         if (series == null || series.isEmpty())
             return null;
@@ -649,9 +645,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 List<DataPoint> points = s.getPoints();
                 numPoints += points.size();
                 for (DataPoint p: points) {
-                    AmphiroDataPoint ap = (AmphiroDataPoint) p;
-                    monthlyConsumption += ap.getVolume().get(EnumMetric.SUM);
-                    if (ap.getTemperature().get(EnumMetric.AVERAGE) > HIGH_TEMPERATURE_THRESHOLD)
+                    monthlyConsumption += p.field(VOLUME).get(EnumMetric.SUM);
+                    if (p.field(TEMPERATURE).get(EnumMetric.AVERAGE) > HIGH_TEMPERATURE_THRESHOLD)
                         numPointsHigh++;
                 }
             }
@@ -692,7 +687,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .build();
         queryResponse = dataService.execute(query);
         
-        Double c0 = queryResponse.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
+        Double c0 = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
         if (c0 == null)
             return null;
         
@@ -700,7 +695,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(refDate, -7,  EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double c1 = queryResponse.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
+        Double c1 = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
         if (c1 == null)
             return null;
         
@@ -739,9 +734,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sum();
 
         DataQuery query = queryBuilder.build();
-        DataQueryResponse queryResponse = dataService.execute(query);
-        
-        Double consumed = queryResponse.getSingleResult(METER, VOLUME, EnumMetric.SUM);
+        DataQueryResponse queryResponse = dataService.execute(query);    
+        Double consumed = queryResponse.asNumber(METER, VOLUME, EnumMetric.SUM);
         if (consumed == null)
             return null;
         
@@ -781,7 +775,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(refDate, -30,  EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double c0 = queryResponse.getSingleResult(EnumDeviceType.METER, VOLUME, EnumMetric.SUM);
+        Double c0 = queryResponse.asNumber(EnumDeviceType.METER, VOLUME, EnumMetric.SUM);
         if (c0 == null)
             return null;
         
@@ -789,7 +783,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(refDate.minusDays(30), -30,  EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double c1 = queryResponse.getSingleResult(EnumDeviceType.METER, VOLUME, EnumMetric.SUM);
+        Double c1 = queryResponse.asNumber(EnumDeviceType.METER, VOLUME, EnumMetric.SUM);
         if (c1 == null)
             return null;
         
@@ -823,7 +817,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(refDate, -7,  EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double c0 = queryResponse.getSingleResult(EnumDeviceType.METER, VOLUME, EnumMetric.SUM);
+        Double c0 = queryResponse.asNumber(EnumDeviceType.METER, VOLUME, EnumMetric.SUM);
         if (c0 == null)
             return null;
         
@@ -831,7 +825,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(refDate.minusDays(7), -7,  EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double c1 = queryResponse.getSingleResult(EnumDeviceType.METER, VOLUME, EnumMetric.SUM);
+        Double c1 = queryResponse.asNumber(EnumDeviceType.METER, VOLUME, EnumMetric.SUM);
         if (c1 == null)
             return null;
 
@@ -864,7 +858,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
-        Double c0 = queryResponse.getSingleResult(EnumDeviceType.METER, VOLUME, EnumMetric.SUM);
+        Double c0 = queryResponse.asNumber(EnumDeviceType.METER, VOLUME, EnumMetric.SUM);
         if (c0 == null)
             return null;
         
@@ -895,7 +889,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
-        Double c0 = queryResponse.getSingleResult(EnumDeviceType.METER, VOLUME, EnumMetric.SUM);
+        Double c0 = queryResponse.asNumber(EnumDeviceType.METER, VOLUME, EnumMetric.SUM);
         if (c0 == null)
             return null;
         
@@ -939,13 +933,13 @@ public class DefaultMessageResolverService implements IMessageResolverService
         if (series == null || series.isEmpty())
             return null;
 
-        Double quarterlyUserConsumption = queryResponse.getSingleResult(
+        Double quarterlyUserConsumption = queryResponse.asNumber(
             EnumDeviceType.AMPHIRO, VOLUME, EnumMetric.SUM);
         if (quarterlyUserConsumption == null)
             return null;
         Double monthlyUserAverageConsumption = quarterlyUserConsumption / 3;
         
-        Double monthlyUserAverageDuration = queryResponse.getSingleResult(
+        Double monthlyUserAverageDuration = queryResponse.asNumber(
             EnumDeviceType.AMPHIRO, DURATION, EnumMetric.AVERAGE
         );
         if (monthlyUserAverageDuration == null)
@@ -995,13 +989,13 @@ public class DefaultMessageResolverService implements IMessageResolverService
         if (series == null || series.isEmpty())
             return null;
 
-        Double quarterlyUserConsumption = queryResponse.getSingleResult(
+        Double quarterlyUserConsumption = queryResponse.asNumber(
             EnumDeviceType.AMPHIRO, VOLUME, EnumMetric.SUM);
         if (quarterlyUserConsumption == null)
             return null;
         Double monthlyUserAverageConsumption = quarterlyUserConsumption / 3;
         
-        Double monthlyUserAverageTemperature = queryResponse.getSingleResult(
+        Double monthlyUserAverageTemperature = queryResponse.asNumber(
             EnumDeviceType.AMPHIRO, TEMPERATURE, EnumMetric.AVERAGE
         );
         if (monthlyUserAverageTemperature == null)
@@ -1056,14 +1050,14 @@ public class DefaultMessageResolverService implements IMessageResolverService
         if (series == null || series.isEmpty())
             return null;
 
-        Double monthlyUserAverageFlow = queryResponse.getSingleResult(
+        Double monthlyUserAverageFlow = queryResponse.asNumber(
             EnumDeviceType.AMPHIRO, FLOW, EnumMetric.AVERAGE);
         if (monthlyUserAverageFlow == null)
             return null;
         if (monthlyUserAverageFlow < monthlyAverageFlow.getValue())
             return null;
         
-        Double quarterUserConsumption = queryResponse.getSingleResult(
+        Double quarterUserConsumption = queryResponse.asNumber(
             EnumDeviceType.AMPHIRO, VOLUME, EnumMetric.SUM);
         if (quarterUserConsumption == null)
             return null;
@@ -1110,12 +1104,12 @@ public class DefaultMessageResolverService implements IMessageResolverService
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
         
-        Double monthlyUserAverageFlow = queryResponse.getSingleResult(
+        Double monthlyUserAverageFlow = queryResponse.asNumber(
             EnumDeviceType.AMPHIRO, FLOW, EnumMetric.AVERAGE);
         if (monthlyUserAverageFlow == null)
             return null;
         
-        Double quarterUserConsumption = queryResponse.getSingleResult(
+        Double quarterUserConsumption = queryResponse.asNumber(
             EnumDeviceType.AMPHIRO, VOLUME, EnumMetric.SUM);
         if (quarterUserConsumption == null)
             return null;
@@ -1156,7 +1150,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
         
-        Double quarterUserConsumption = queryResponse.getSingleResult(
+        Double quarterUserConsumption = queryResponse.asNumber(
             EnumDeviceType.AMPHIRO, VOLUME, EnumMetric.SUM);
         if (quarterUserConsumption == null)
             return null;
@@ -1196,7 +1190,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
         
-        Double monthlyUserAveragePerSession = queryResponse.getSingleResult(
+        Double monthlyUserAveragePerSession = queryResponse.asNumber(
             EnumDeviceType.AMPHIRO, VOLUME, EnumMetric.AVERAGE);
         if (monthlyUserAveragePerSession == null)
             return null;
@@ -1231,7 +1225,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         return !deviceRepository.getUserDevices(account.getKey(), query).isEmpty(); 
     }        
                      
-    private MessageResolutionStatus<Insight.BasicParameters> computeInsightA1(
+    private MessageResolutionStatus<Insight.Parameters> computeInsightA1(
         MessageCalculationConfiguration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {
@@ -1241,8 +1235,9 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 
         // Build a common part of a data-service query
         
-        DataQueryResponse qr;
-        DataQueryBuilder qb = new DataQueryBuilder()
+        DataQuery query;
+        DataQueryResponse queryResponse;
+        DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", account.getKey())  
             .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
@@ -1250,48 +1245,54 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         // Compute for target day
         
-        qb.sliding(refDate, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL);
-        qr = dataService.execute(qb.build());
-        Double refValue = qr.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);        
+        query = queryBuilder
+            .sliding(refDate, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+            .build();
+        queryResponse = dataService.execute(query);
+        Double refValue = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);        
         if (refValue == null)
             return null; // nothing to compare to
         
         // Compute for past N weeks for a given day-of-week   
         
         DateTime start = refDate;
-        List<Double> values = new ArrayList<>(N);
+        SummaryStatistics summary = new SummaryStatistics();
         for (int i = 0; i < N; i++) {
             start = start.minusWeeks(1);
-            qb.sliding(start, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL);
-            qr = dataService.execute(qb.build());
-            Double val = qr.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
+            query = queryBuilder
+                .sliding(start, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+                .build();
+            queryResponse = dataService.execute(query);
+            Double val = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
             if (val != null)
-                values.add(val);
+                summary.addValue(val);
         }    
-        if (values.size() < N * F)
-            return null; // too few values, the average is not reliable
+        if (summary.getN() < N * F)
+            return null; // too few values
         
         // Seems we have sufficient data for the past weeks
         
-        double[] pvalues = ArrayUtils.toPrimitive(values.toArray(new Double[0]));
-        double avgValue = mean(pvalues); 
-        double sd = Math.sqrt(populationVariance(pvalues, avgValue));
+        double avgValue = summary.getMean(); 
+        double sd = Math.sqrt(summary.getPopulationVariance());
         double normValue = (refValue - avgValue) / sd; // normalized value
         double score = Math.abs(normValue) / (2 * K);
         
         logger.debug(String.format(
             "Insight A1 for account %s/%s: Consumption for same week day of last %d weeks since %s:\n\t" + 
-                "value=%.2f mean=%.2f stddevp=%.2f x*=%.2f score=%.2f", 
+                "value=%.2f μ=%.2f σ=%.2f x*=%.2f score=%.2f", 
              account.getKey(), deviceType, N, refDate.toString("dd/MM/YYYY"), 
              refValue, avgValue, sd, normValue, score));
         
-        return new MessageResolutionStatus<Insight.BasicParameters>(
+        return new MessageResolutionStatus<Insight.Parameters>(
             score, 
             new Insight.A1Parameters(refDate, deviceType, refValue, avgValue)
         );
     }
     
-    private MessageResolutionStatus<Insight.BasicParameters> computeInsightA2(
+    /**
+     * Note: The logic for insight A.2 is same with B.1 (merge?) 
+     */
+    private MessageResolutionStatus<Insight.Parameters> computeInsightA2(
         MessageCalculationConfiguration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {
@@ -1315,48 +1316,47 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(refDate, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double refValue = queryResponse.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
+        Double refValue = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
         if (refValue == null)
             return null; // nothing to compare to
         
         // Compute for past N days
         
         DateTime start = refDate;
-        List<Double> values = new ArrayList<>(N);
+        SummaryStatistics summary = new SummaryStatistics();
         for (int i = 0; i < N; i++) {
             start = start.minusDays(1);
             query = queryBuilder
                 .sliding(start, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
                 .build();
             queryResponse = dataService.execute(query);
-            Double val = queryResponse.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
+            Double val = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
             if (val != null)
-                values.add(val);
+                summary.addValue(val);
         }   
-        if (values.size() < N * F)
-            return null; // too few values, the average is not reliable
+        if (summary.getN() < N * F)
+            return null; // too few values
         
         // Seems we have sufficient data for the past days
         
-        double[] pvalues = ArrayUtils.toPrimitive(values.toArray(new Double[0]));
-        double avgValue = mean(pvalues); 
-        double sd = Math.sqrt(populationVariance(pvalues, avgValue));
+        double avgValue = summary.getMean(); 
+        double sd = Math.sqrt(summary.getPopulationVariance());
         double normValue = (refValue - avgValue) / sd; // normalized value
         double score = Math.abs(normValue) / (2 * K);
         
         logger.debug(String.format(
             "Insight A2 for account %s/%s: Consumption for last %d days since %s:\n\t" + 
-                "value=%.2f mean=%.2f stddevp=%.2f x*=%.2f score=%.2f", 
+                "value=%.2f μ=%.2f σ=%.2f x*=%.2f score=%.2f", 
              account.getKey(), deviceType, N, refDate.toString("dd/MM/YYYY"), 
              refValue, avgValue, sd, normValue, score));
         
-        return new MessageResolutionStatus<Insight.BasicParameters>(
+        return new MessageResolutionStatus<Insight.Parameters>(
             score,
             new Insight.A2Parameters(refDate, deviceType, refValue, avgValue)
         );
     }
     
-    private MessageResolutionStatus<Insight.BasicParameters> computeInsightA3(
+    private MessageResolutionStatus<Insight.Parameters> computeInsightA3(
         MessageCalculationConfiguration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType, EnumPartOfDay partOfDay)
     {
@@ -1381,14 +1381,14 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .absolute(r.getStart(), r.getEnd(), EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double refValue = queryResponse.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
+        Double refValue = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
         if (refValue == null || refValue < VOLUME_LOW_THRESHOLD)
             return null;
                 
         // Compute for part-of-day for past N days
         
         DateTime start = refDate;
-        List<Double> values = new ArrayList<>(N);
+        SummaryStatistics summary = new SummaryStatistics();
         for (int i = 0; i < N; i++) {
             start = start.minusDays(1);
             Interval r1 = partOfDay.toInterval(start);
@@ -1396,33 +1396,32 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 .absolute(r1.getStart(), r1.getEnd(), EnumTimeAggregation.ALL)
                 .build();
             queryResponse = dataService.execute(query);
-            Double val = queryResponse.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
+            Double val = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
             if (val != null)
-                values.add(val);
+                summary.addValue(val);
         }   
-        if (values.size() < N * F)
-            return null; // too few values, the average is not reliable
+        if (summary.getN() < N * F)
+            return null; // too few values
         
         // Seems we have sufficient data for the past days
         
-        double[] pvalues = ArrayUtils.toPrimitive(values.toArray(new Double[0]));
-        double avgValue = mean(pvalues); 
+        double avgValue = summary.getMean();
         double percentDiff = 100.0 * (refValue - avgValue) / avgValue;
         double score = Math.abs(percentDiff) / (2 * PERCENTAGE_CHANGE_THRESHOLD);
         
         logger.debug(String.format(
             "Insight A3 for account %s/%s: Consumption at %s of last %d days since %s:\n\t" + 
-                "value=%.2f mean=%.2f score=%.2f", 
+                "value=%.2f μ=%.2f score=%.2f", 
              account.getKey(), deviceType, partOfDay, N, refDate.toString("dd/MM/YYYY"),
              refValue, avgValue, score));
         
-        return new MessageResolutionStatus<Insight.BasicParameters>(
+        return new MessageResolutionStatus<Insight.Parameters>(
             score,
             new Insight.A3Parameters(refDate, partOfDay, deviceType, refValue, avgValue)
         );
     }
     
-    private MessageResolutionStatus<Insight.BasicParameters> computeInsightA4(
+    private MessageResolutionStatus<Insight.Parameters> computeInsightA4(
         MessageCalculationConfiguration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {    
@@ -1447,13 +1446,11 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 .absolute(r.getStart(), r.getEnd(), EnumTimeAggregation.ALL)
                 .build();
             queryResponse = dataService.execute(query);
-            
-            Double y = queryResponse.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
+            Double y = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
             if (y == null) {
                 missingPart = true;
                 break;
-            }
-            
+            }          
             sumOfParts += y;
             parts.put(partOfDay, y);
         }
@@ -1472,12 +1469,12 @@ public class DefaultMessageResolverService implements IMessageResolverService
              100 * parts.get(EnumPartOfDay.NIGHT) / sumOfParts
         ));
         
-        Insight.BasicParameters parameters = new Insight.A4Parameters(refDate, deviceType, sumOfParts)
+        Insight.Parameters parameters = new Insight.A4Parameters(refDate, deviceType, sumOfParts)
             .setParts(parts);
-        return new MessageResolutionStatus<Insight.BasicParameters>(true, parameters);
+        return new MessageResolutionStatus<Insight.Parameters>(true, parameters);
     }
     
-    private MessageResolutionStatus<Insight.BasicParameters> computeInsightB1(
+    private MessageResolutionStatus<Insight.Parameters> computeInsightB1(
         MessageCalculationConfiguration config, 
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType, EnumTimeUnit timeUnit)
     {        
@@ -1485,13 +1482,11 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         final double K = 1.28;  // a threshold (in units of standard deviation) of significant change
         final double F = 0.6;   // a threshold ratio of non-nulls for collected values
-        
         final DateTime targetDate = timeUnit.startOf(refDate);
         final Period period = timeUnit.toPeriod();
-        
         final Period P = Period.months(+3); // the whole period under examination
         final int N = // number of unit-sized periods 
-            timeUnit.numberOfPieces(new Interval(targetDate.minus(P), targetDate));
+            timeUnit.numParts(new Interval(targetDate.minus(P), targetDate));
         
         // Build a common part of a data-service query      
         
@@ -1509,48 +1504,47 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(targetDate, +1, timeUnit, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double targetValue = queryResponse.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
+        Double targetValue = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
         if (targetValue == null)
             return null; // nothing to compare to
         
         // Compute for past N periods
         
         DateTime start = targetDate;
-        List<Double> values = new ArrayList<>(N);
+        SummaryStatistics summary = new SummaryStatistics();
         for (int i = 0; i < N; i++) {
             start = start.minus(period);
             query = queryBuilder
                 .sliding(start, +1, timeUnit, EnumTimeAggregation.ALL)
                 .build();
             queryResponse = dataService.execute(query);
-            Double val = queryResponse.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
+            Double val = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
             if (val != null)
-                values.add(val);
+                summary.addValue(val);
         }   
-        if (values.size() < N * F)
-            return null; // too few values, the average is not reliable
+        if (summary.getN() < N * F)
+            return null; // too few values
         
         // Seems we have sufficient data
         
-        double[] pvalues = ArrayUtils.toPrimitive(values.toArray(new Double[0]));
-        double avgValue = mean(pvalues); 
-        double sd = Math.sqrt(populationVariance(pvalues, avgValue));
+        double avgValue = summary.getMean(); 
+        double sd = Math.sqrt(summary.getPopulationVariance());
         double normValue = (targetValue - avgValue) / sd; // normalized value
         double score = Math.abs(normValue) / (2 * K);
         
         logger.debug(String.format(
             "Insight B1 for account %s/%s: Consumption for period %s since %s:\n\t" + 
-                "value=%.2f mean=%.2f stddevp=%.2f x*=%.2f score=%.2f", 
+                "value=%.2f μ=%.2f σ=%.2f x*=%.2f score=%.2f", 
              account.getKey(), deviceType, period.multipliedBy(N), targetDate.toString("dd/MM/YYYY"), 
              targetValue, avgValue, sd, normValue, score));
         
-        return new MessageResolutionStatus<Insight.BasicParameters>(
+        return new MessageResolutionStatus<Insight.Parameters>(
             score,
             new Insight.B1Parameters(refDate, timeUnit, deviceType, targetValue, avgValue)
         );
     }
 
-    private MessageResolutionStatus<Insight.BasicParameters> computeInsightB2(
+    private MessageResolutionStatus<Insight.Parameters> computeInsightB2(
         MessageCalculationConfiguration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType, EnumTimeUnit timeUnit)
     {
@@ -1577,7 +1571,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(targetDate, +1, timeUnit, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double targetValue = queryResponse.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
+        Double targetValue = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
         if (targetValue == null)
             return null; // nothing to compare to
         
@@ -1587,7 +1581,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(targetDate.minus(period), +1, timeUnit, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double previousValue = queryResponse.getSingleResult(deviceType, VOLUME, EnumMetric.SUM);
+        Double previousValue = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
         if (previousValue == null)
             return null; // nothing to compare to
         
@@ -1602,9 +1596,116 @@ public class DefaultMessageResolverService implements IMessageResolverService
              account.getKey(), deviceType, period, targetDate.toString("dd/MM/YYYY"), 
              targetValue, previousValue, percentDiff, score));
         
-        return new MessageResolutionStatus<Insight.BasicParameters>(
+        return new MessageResolutionStatus<Insight.Parameters>(
             score,
             new Insight.B2Parameters(refDate, timeUnit, deviceType, targetValue, previousValue)
+        );
+    }
+    
+    private List<MessageResolutionStatus<Insight.Parameters>> computeInsightB3(
+        MessageCalculationConfiguration config, 
+        AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
+    {   
+        final double F = 0.6;   // a threshold ratio of non-nulls for collected values
+        final DateTime targetDate = EnumTimeUnit.WEEK.startOf(refDate);        
+        final DateTimeZone tz = refDate.getZone();
+        final Period P = Period.months(+2); // the whole period under examination
+        final int N = // number of weeks into examined period 
+            EnumTimeUnit.WEEK.numParts(new Interval(targetDate.minus(P), targetDate));
+        
+        // Build a common part of a data-service query      
+        
+        DataQuery query;
+        DataQueryResponse queryResponse;
+        DataQueryBuilder queryBuilder = new DataQueryBuilder()
+            .timezone(tz)
+            .user("user", account.getKey())  
+            .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
+            .sum();
+             
+        // Initialize sums for each day of week, and sum for all days
+        
+        Map<EnumDayOfWeek, Sum> sumPerDay = new EnumMap<>(EnumDayOfWeek.class);
+        for (EnumDayOfWeek day: EnumDayOfWeek.values())
+            sumPerDay.put(day, new Sum());
+        Sum sum = new Sum();
+        
+        // Fetch data for N past weeks
+        
+        DateTime start = targetDate.plusWeeks(1);
+        for (int i = 0; i < N; i++) {
+            DateTime end = start;
+            start = start.minusWeeks(1);
+            // Execute query for current week
+            query = queryBuilder
+                .absolute(start, end, EnumTimeAggregation.DAY)
+                .build();
+            queryResponse = dataService.execute(query);
+            Iterable<Pair<Instant, Double>> points =
+                queryResponse.iterPoints(deviceType, VOLUME, EnumMetric.SUM);
+            // Update partial sums for each day of week
+            for (Pair<Instant, Double> p: points) {
+                DateTime t = p.getFirst().toDateTime(tz);
+                if (t.isBefore(start) || !t.isBefore(end))
+                    continue;
+                Double value = p.getSecond();
+                if (value == null)
+                    continue;
+                EnumDayOfWeek day = EnumDayOfWeek.valueOf(t.getDayOfWeek());
+                sumPerDay.get(day).increment(value);
+                sum.increment(value);
+            }
+        }
+        
+        // Do we have sufficient data for each day?
+        
+        boolean sufficient = true;
+        for (EnumDayOfWeek day: EnumDayOfWeek.values())
+            if (sumPerDay.get(day).getN() < N * F) {
+                sufficient = false;
+                break;
+            }
+        if (!sufficient)
+            return Collections.emptyList();
+        
+        // Compute average daily consumption per each day-of-week; Find peak days
+        
+        double minPerDay = Double.MAX_VALUE, maxPerDay = Double.MIN_VALUE;
+        EnumDayOfWeek dayMin = null, dayMax = null;
+        for (EnumDayOfWeek day: EnumDayOfWeek.values()) {
+            Sum sy = sumPerDay.get(day);
+            double y = sy.getResult() / sy.getN();
+            if (y < minPerDay) {
+                minPerDay = y;
+                dayMin = day;
+            }
+            if (y > maxPerDay) {
+                maxPerDay = y;
+                dayMax = day;
+            }
+        }
+        
+        // Compute average daily consumption for all days
+        
+        double avg = sum.getResult() / sum.getN();
+        
+        // Produce 2 insights, one for each peak (min, max)
+        
+        logger.debug(String.format(
+            "Insight B3 for account %s/%s: Consumption for period %s since %s:\n\t" + 
+                "minPerDay=%.2f dayMin=%s - maxPerDay=%.2f dayMax=%s - average=%.2f", 
+             account.getKey(), deviceType, P, targetDate.toString("dd/MM/YYYY"), 
+             minPerDay, dayMin, maxPerDay, dayMax, avg));
+        
+        return Arrays.asList(
+            new MessageResolutionStatus<Insight.Parameters>(
+                true, 
+                new Insight.B3Parameters(refDate, deviceType, minPerDay, avg, dayMin)
+            ),
+            new MessageResolutionStatus<Insight.Parameters>(
+                true, 
+                new Insight.B3Parameters(refDate, deviceType, maxPerDay, avg, dayMax)
+            )
         );
     }
     

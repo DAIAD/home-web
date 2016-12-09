@@ -1,5 +1,7 @@
 package eu.daiad.web.model.query;
 
+import java.util.Map;
+
 public class DataPoint {
 
 	public enum EnumDataPointType {
@@ -30,5 +32,9 @@ public class DataPoint {
 	public EnumDataPointType getType() {
 		return this.type;
 	}
-
+	
+	public Map<EnumMetric, Double> field(EnumDataField field)
+	{
+	    return null;
+	}
 }

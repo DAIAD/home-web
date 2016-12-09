@@ -1,17 +1,22 @@
 package eu.daiad.web.model.query;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Instant;
+import org.springframework.data.util.Pair;
+import org.springframework.util.Assert;
 
 import eu.daiad.web.model.EnumTimeAggregation;
 
-public class GroupDataSeries {
-
+public class GroupDataSeries 
+{
     private String label;
 
     private Long areaId;
@@ -438,4 +443,83 @@ public class GroupDataSeries {
         return areaId;
     }
 
+    /**
+     * A convenience iterator on pairs of (time, value) for a given field
+     */
+    private class PairIterator 
+        implements Iterator<Pair<Instant, Double>>, Iterable<Pair<Instant, Double>>
+    {
+        private final EnumDataField field;
+        private final EnumMetric metric;
+        private final int endIndex;
+        private int currIndex;
+        
+        public PairIterator(EnumDataField field, EnumMetric metric)
+        {
+            this.field = field;
+            this.metric = metric;
+                        
+            // Examine if this series is aware of the given field
+            currIndex = Integer.MAX_VALUE;
+            endIndex = points.size();
+            if (endIndex > 0) {
+                DataPoint p0 = points.get(0);
+                if (p0.field(field) != null)
+                    currIndex = 0; // prepare for iteration!
+            }
+        }
+                
+        @Override
+        public boolean hasNext()
+        {
+            return (currIndex < endIndex);
+        }
+
+        @Override
+        public Pair<Instant, Double> next()
+        {
+            DataPoint p = points.get(currIndex++);
+            
+            Instant t = new Instant(p.getTimestamp());
+            return Pair.of(t, p.field(field).get(metric)); 
+        }
+        
+        @Override
+        public void remove()
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Iterator<Pair<Instant, Double>> iterator()
+        {
+            return this;
+        }
+    }
+    
+    /**
+     * Get a single scalar result from this series
+     *
+     * This is a convenience method for the common case where only 1 data point is contained per
+     * device (e.g. when aggregation interval is same as the sliding interval).
+     */
+    public Double asNumber(EnumDataField field, EnumMetric metric)
+    {
+        if (points.isEmpty())
+            return null;
+        
+        Assert.state(points.size() == 1, "Expected a single data point");
+        DataPoint p0 = points.get(0);
+        
+        Map<EnumMetric, Double> m = p0.field(field);
+        return m != null? m.get(metric) : null;
+    }
+        
+    /**
+     * Get an iterable of (time, value) pairs from this series
+     */
+    public Iterable<Pair<Instant, Double>> iterPoints(EnumDataField field, EnumMetric metric)
+    {
+        return this.new PairIterator(field, metric); 
+    }
 }

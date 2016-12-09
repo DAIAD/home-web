@@ -102,7 +102,7 @@ public class MessageResolutionPerAccountStatus
         return insights;
     }
         
-    public <P extends Insight.BasicParameters> void addInsight(MessageResolutionStatus<P> p)
+    public <P extends Insight.Parameters> void addInsight(MessageResolutionStatus<P> p)
     {
         if (p != null) { 
             insights.add(
@@ -111,6 +111,12 @@ public class MessageResolutionPerAccountStatus
                     p.getParameters())
                 );
         }
+    }
+    
+    public <P extends Insight.Parameters> void addInsights(List<MessageResolutionStatus<P>> l)
+    {
+        for (MessageResolutionStatus<P> p: l)
+            addInsight(p);
     }
     
     public void clearInsights()

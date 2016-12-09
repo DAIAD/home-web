@@ -20,5 +20,10 @@ public class MeterDataPoint extends DataPoint {
 	public Map<EnumMetric, Double> getVolume() {
 		return volume;
 	}
-
+	
+	@Override
+	public Map<EnumMetric, Double> field(EnumDataField field)
+	{
+	    return volume;
+	}
 }
