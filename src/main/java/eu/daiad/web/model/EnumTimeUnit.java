@@ -31,7 +31,7 @@ public enum EnumTimeUnit
         }
 
         @Override
-        public int numberOfPieces(Interval interval)
+        public int numParts(Interval interval)
         {
             return interval.toPeriod(PeriodType.hours()).getHours();
         }
@@ -51,7 +51,7 @@ public enum EnumTimeUnit
         }
 
         @Override
-        public int numberOfPieces(Interval interval)
+        public int numParts(Interval interval)
         {
             return interval.toPeriod(PeriodType.days()).getDays();
         }
@@ -71,7 +71,7 @@ public enum EnumTimeUnit
         }
 
         @Override
-        public int numberOfPieces(Interval interval)
+        public int numParts(Interval interval)
         {
             return interval.toPeriod(PeriodType.weeks()).getWeeks();
         }
@@ -91,7 +91,7 @@ public enum EnumTimeUnit
         }
 
         @Override
-        public int numberOfPieces(Interval interval)
+        public int numParts(Interval interval)
         {
             return interval.toPeriod(PeriodType.months()).getMonths();
         }
@@ -111,7 +111,7 @@ public enum EnumTimeUnit
         }
 
         @Override
-        public int numberOfPieces(Interval interval)
+        public int numParts(Interval interval)
         {
             return interval.toPeriod(PeriodType.years()).getYears();
         }
@@ -154,7 +154,7 @@ public enum EnumTimeUnit
 	
 	public abstract DateTime startOf(DateTime t);
 	
-	public abstract int numberOfPieces(Interval interval);
+	public abstract int numParts(Interval interval);
 	
 	public static class Deserializer extends JsonDeserializer<EnumTimeUnit> {
 

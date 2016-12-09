@@ -48,7 +48,7 @@ public class DefaultMessageService implements IMessageService {
 	public void executeAll(MessageCalculationConfiguration config) 
 	{
 	    List<UtilityInfo> utilities = utilityRepository.getUtilities();	    
-	    for (UtilityInfo utility: utilities) {
+	    for (UtilityInfo utility: utilities.subList(0, 1)) { // Fixme
 			logger.info("About to generate messages for utility " + utility.getName() + "...");
 	        executeUtility(config, utility.getKey());
 		}

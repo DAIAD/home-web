@@ -44,4 +44,30 @@ public class AmphiroDataPoint extends DataPoint {
 		return volume;
 	}
 
+	@Override
+	public Map<EnumMetric, Double> field(EnumDataField field)
+	{	    
+	    Map<EnumMetric, Double> m = null;
+	    switch (field) {
+	    case VOLUME:
+	        m = volume;
+	        break;
+	    case DURATION:
+            m = duration;
+            break;
+        case ENERGY:
+            m = energy;
+            break;
+        case FLOW:
+            m = flow;
+            break;
+        case TEMPERATURE:
+            m = temperature;
+            break;
+        default:
+            m = volume;
+            break;
+        }
+	    return m;
+	}
 }
