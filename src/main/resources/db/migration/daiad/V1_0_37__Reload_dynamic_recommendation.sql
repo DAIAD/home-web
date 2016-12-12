@@ -61,6 +61,18 @@ insert into dynamic_recommendation ("id", "mode", "priority") values
     (1108, 'BOTH', 5),
     (1109, 'BOTH', 5);
 
+-- Insight B.4
+
+insert into dynamic_recommendation ("id", "mode", "priority") values 
+    (1110, 'BOTH', 5),
+    (1111, 'BOTH', 5);
+
+-- Insight B.5    
+
+insert into dynamic_recommendation ("id", "mode", "priority") values 
+    (1112, 'BOTH', 5),
+    (1113, 'BOTH', 5);    
+    
 --
 -- Template messages for dynamic recommendations
 --
@@ -485,4 +497,64 @@ insert into dynamic_recommendation_translation (dynamic_recommendation_id, local
     'es',
     '{day_of_week} is your low day',
     '{consumption}lt vs. the average {average_consumption}lt'
+);
+
+-- Insight B.4
+
+insert into dynamic_recommendation_translation (dynamic_recommendation_id, locale, title, description) values (
+    1110,
+    'en',
+    '{percent_change}% more water on weekends',
+    '{weekend_consumption}lt vs. {weekday_consumption}lt'
+);
+
+insert into dynamic_recommendation_translation (dynamic_recommendation_id, locale, title, description) values (
+    1110,
+    'es',
+    '{percent_change}% more water on weekends',
+    '{weekend_consumption}lt vs. {weekday_consumption}lt'
+);
+
+insert into dynamic_recommendation_translation (dynamic_recommendation_id, locale, title, description) values (
+    1111,
+    'en',
+    '{percent_change}% less water on weekends',
+    '{weekend_consumption}lt vs. {weekday_consumption}lt'
+);
+
+insert into dynamic_recommendation_translation (dynamic_recommendation_id, locale, title, description) values (
+    1111,
+    'es',
+    '{percent_change}% less water on weekends',
+    '{weekend_consumption}lt vs. {weekday_consumption}lt'
+);
+
+-- Insight B.5
+
+insert into dynamic_recommendation_translation (dynamic_recommendation_id, locale, title, description) values (
+    1112,
+    'en',
+    '{percent_change}% more than same month last year',
+    '{consumption}lt vs. {previous_consumption}lt'
+);
+
+insert into dynamic_recommendation_translation (dynamic_recommendation_id, locale, title, description) values (
+    1112,
+    'es',
+    '{percent_change}% more than same month last year',
+    '{consumption}lt vs. {previous_consumption}lt'
+);
+
+insert into dynamic_recommendation_translation (dynamic_recommendation_id, locale, title, description) values (
+    1113,
+    'en',
+    '{percent_change}% less than same month last year',
+    '{consumption}lt vs. {previous_consumption}lt'
+);
+
+insert into dynamic_recommendation_translation (dynamic_recommendation_id, locale, title, description) values (
+    1113,
+    'es',
+    '{percent_change}% less than same month last year',
+    '{consumption}lt vs. {previous_consumption}lt'
 );

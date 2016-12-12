@@ -5,24 +5,37 @@ import java.util.Map;
 
 public enum EnumDayOfWeek
 {
-    MONDAY(1),
-    TUESDAY(2),
-    WEDNESDAY(3),
-    THURSDAY(4),
-    FRIDAY(5),
-    SATURDAY(6),
-    SYNDAY(7);
+    MONDAY(1, Type.WEEKDAY),
+    TUESDAY(2, Type.WEEKDAY),
+    WEDNESDAY(3, Type.WEEKDAY),
+    THURSDAY(4, Type.WEEKDAY),
+    FRIDAY(5, Type.WEEKDAY),
+    SATURDAY(6, Type.WEEKEND),
+    SYNDAY(7, Type.WEEKEND);
     
-    int dayOfWeek;
+    public enum Type {
+        WEEKDAY,
+        WEEKEND;
+    }
     
-    private EnumDayOfWeek(int day)
+    private int dayOfWeek;
+    
+    private Type type;
+    
+    private EnumDayOfWeek(int day, Type type)
     {
         this.dayOfWeek = day;
+        this.type = type;
     }
     
     public int toInteger()
     {
         return dayOfWeek;
+    }
+    
+    public Type getType()
+    {
+        return type;
     }
     
     private static Map<Integer, EnumDayOfWeek> intToEnum = new HashMap<Integer, EnumDayOfWeek>();

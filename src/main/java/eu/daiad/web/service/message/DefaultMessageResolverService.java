@@ -254,6 +254,16 @@ public class DefaultMessageResolverService implements IMessageResolverService
         for (EnumDeviceType deviceType: deviceTypes)
             status.addInsights(computeInsightB3(config, account, refDate, deviceType));
         
+        // Insight B.4
+        
+        for (EnumDeviceType deviceType: deviceTypes)
+            status.addInsight(computeInsightB4(config, account, refDate, deviceType));
+        
+        // Insight B.5
+        
+        for (EnumDeviceType deviceType: deviceTypes)
+            status.addInsight(computeInsightB5(config, account, refDate, deviceType));
+        
         return status;
     }
     
@@ -1078,7 +1088,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
 
     // Recommendation #4 - Change your shower head and save {integer1} {integer2}
-    // Todo: This computation is identical to #3, maybe discard #4
+    // Todo: This computation is identical to Recommendation #3, maybe discard #4
     public IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendShowerHeadChangeAmphiro(
         MessageCalculationConfiguration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate) 
@@ -1278,9 +1288,9 @@ public class DefaultMessageResolverService implements IMessageResolverService
         double score = Math.abs(normValue) / (2 * K);
         
         logger.debug(String.format(
-            "Insight A1 for account %s/%s: Consumption for same week day of last %d weeks since %s:\n\t" + 
+            "Insight A1 for account %s/%s: Consumption for same week day of last %d weeks to %s:\n\t" + 
                 "value=%.2f μ=%.2f σ=%.2f x*=%.2f score=%.2f", 
-             account.getKey(), deviceType, N, refDate.toString("dd/MM/YYYY"), 
+             account.getKey(), deviceType, N, refDate.toString("EEE dd/MM/YYYY"), 
              refValue, avgValue, sd, normValue, score));
         
         return new MessageResolutionStatus<Insight.Parameters>(
@@ -1345,7 +1355,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         double score = Math.abs(normValue) / (2 * K);
         
         logger.debug(String.format(
-            "Insight A2 for account %s/%s: Consumption for last %d days since %s:\n\t" + 
+            "Insight A2 for account %s/%s: Consumption for last %d days to %s:\n\t" + 
                 "value=%.2f μ=%.2f σ=%.2f x*=%.2f score=%.2f", 
              account.getKey(), deviceType, N, refDate.toString("dd/MM/YYYY"), 
              refValue, avgValue, sd, normValue, score));
@@ -1387,6 +1397,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 
         // Compute for part-of-day for past N days
         
+        // Note: Querying for each partOfDay is not so efficient, maybe query for
+        // the whole day and keep separate sums 
         DateTime start = refDate;
         SummaryStatistics summary = new SummaryStatistics();
         for (int i = 0; i < N; i++) {
@@ -1410,7 +1422,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         double score = Math.abs(percentDiff) / (2 * PERCENTAGE_CHANGE_THRESHOLD);
         
         logger.debug(String.format(
-            "Insight A3 for account %s/%s: Consumption at %s of last %d days since %s:\n\t" + 
+            "Insight A3 for account %s/%s: Consumption at %s of last %d days to %s:\n\t" + 
                 "value=%.2f μ=%.2f score=%.2f", 
              account.getKey(), deviceType, partOfDay, N, refDate.toString("dd/MM/YYYY"),
              refValue, avgValue, score));
@@ -1461,7 +1473,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         // We have sufficient data for all parts of target day       
         
         logger.debug(String.format(
-            "Insight A4 for account %s/%s: Consumption for %s is %.2f (l):\n\t" + 
+            "Insight A4 for account %s/%s: Consumption for %s is %.2flt:\n\t" + 
                 "morning=%.2f%% afternoon=%.2f%% night=%.2f%%", 
              account.getKey(), deviceType, refDate.toString("dd/MM/YYYY"), sumOfParts,
              100 * parts.get(EnumPartOfDay.MORNING) / sumOfParts,
@@ -1484,7 +1496,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         final double F = 0.6;   // a threshold ratio of non-nulls for collected values
         final DateTime targetDate = timeUnit.startOf(refDate);
         final Period period = timeUnit.toPeriod();
-        final Period P = Period.months(+3); // the whole period under examination
+        final Period P = Period.months(+2); // the whole period under examination
         final int N = // number of unit-sized periods 
             timeUnit.numParts(new Interval(targetDate.minus(P), targetDate));
         
@@ -1533,7 +1545,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         double score = Math.abs(normValue) / (2 * K);
         
         logger.debug(String.format(
-            "Insight B1 for account %s/%s: Consumption for period %s since %s:\n\t" + 
+            "Insight B1 for account %s/%s: Consumption for period %s to %s:\n\t" + 
                 "value=%.2f μ=%.2f σ=%.2f x*=%.2f score=%.2f", 
              account.getKey(), deviceType, period.multipliedBy(N), targetDate.toString("dd/MM/YYYY"), 
              targetValue, avgValue, sd, normValue, score));
@@ -1591,7 +1603,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         double score = Math.abs(percentDiff) / (2 * PERCENTAGE_CHANGE_THRESHOLD);
         
         logger.debug(String.format(
-            "Insight B2 for account %s/%s: Consumption for previous period %s since %s:\n\t" + 
+            "Insight B2 for account %s/%s: Consumption for previous period %s of %s:\n\t" + 
                 "value=%.2f previous=%.2f change=%.2f%% score=%.2f", 
              account.getKey(), deviceType, period, targetDate.toString("dd/MM/YYYY"), 
              targetValue, previousValue, percentDiff, score));
@@ -1606,12 +1618,10 @@ public class DefaultMessageResolverService implements IMessageResolverService
         MessageCalculationConfiguration config, 
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {   
-        final double F = 0.6;   // a threshold ratio of non-nulls for collected values
+        final double F = 0.6; // a threshold ratio of non-nulls for collected values
         final DateTime targetDate = EnumTimeUnit.WEEK.startOf(refDate);        
         final DateTimeZone tz = refDate.getZone();
-        final Period P = Period.months(+2); // the whole period under examination
-        final int N = // number of weeks into examined period 
-            EnumTimeUnit.WEEK.numParts(new Interval(targetDate.minus(P), targetDate));
+        final int N = 8; // number of weeks to examine 
         
         // Build a common part of a data-service query      
         
@@ -1692,9 +1702,9 @@ public class DefaultMessageResolverService implements IMessageResolverService
         // Produce 2 insights, one for each peak (min, max)
         
         logger.debug(String.format(
-            "Insight B3 for account %s/%s: Consumption for period %s since %s:\n\t" + 
+            "Insight B3 for account %s/%s: Consumption for %d weeks to %s:\n\t" + 
                 "minPerDay=%.2f dayMin=%s - maxPerDay=%.2f dayMax=%s - average=%.2f", 
-             account.getKey(), deviceType, P, targetDate.toString("dd/MM/YYYY"), 
+             account.getKey(), deviceType, N, targetDate.plusWeeks(1).toString("dd/MM/YYYY"), 
              minPerDay, dayMin, maxPerDay, dayMax, avg));
         
         return Arrays.asList(
@@ -1706,6 +1716,135 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 true, 
                 new Insight.B3Parameters(refDate, deviceType, maxPerDay, avg, dayMax)
             )
+        );
+    }
+    
+    private MessageResolutionStatus<Insight.Parameters> computeInsightB4(
+        MessageCalculationConfiguration config, 
+        AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
+    {  
+        final double F = 0.6; // a threshold ratio of non-nulls for collected values
+        final DateTime targetDate = EnumTimeUnit.WEEK.startOf(refDate);        
+        final DateTimeZone tz = refDate.getZone();
+        final int N = 8; // number of weeks to examine
+        
+        // Build a common part of a data-service query      
+        
+        DataQuery query;
+        DataQueryResponse queryResponse;
+        DataQueryBuilder queryBuilder = new DataQueryBuilder()
+            .timezone(tz)
+            .user("user", account.getKey())  
+            .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
+            .sum();
+
+        // Initialize sums for working/weekend days
+        
+        Map<EnumDayOfWeek.Type, Sum> sumPerType = new EnumMap<>(EnumDayOfWeek.Type.class);
+        sumPerType.put(EnumDayOfWeek.Type.WEEKDAY, new Sum());
+        sumPerType.put(EnumDayOfWeek.Type.WEEKEND, new Sum());
+        
+        // Fetch data for N past weeks
+        
+        DateTime start = targetDate.plusWeeks(1);
+        for (int i = 0; i < N; i++) {
+            DateTime end = start;
+            start = start.minusWeeks(1);
+            // Execute query for current week
+            query = queryBuilder
+                .absolute(start, end, EnumTimeAggregation.DAY)
+                .build();
+            queryResponse = dataService.execute(query);
+            Iterable<Pair<Instant, Double>> points =
+                queryResponse.iterPoints(deviceType, VOLUME, EnumMetric.SUM);
+            // Update partial sums for each type (working/weekend day)
+            for (Pair<Instant, Double> p: points) {
+                DateTime t = p.getFirst().toDateTime(tz);
+                if (t.isBefore(start) || !t.isBefore(end))
+                    continue;
+                Double value = p.getSecond();
+                if (value == null)
+                    continue;
+                EnumDayOfWeek day = EnumDayOfWeek.valueOf(t.getDayOfWeek());
+                sumPerType.get(day.getType()).increment(value);
+            }
+        }
+        
+        // Do we have sufficient data?
+        
+        Sum weekdaySum = sumPerType.get(EnumDayOfWeek.Type.WEEKDAY);
+        Sum weekendSum = sumPerType.get(EnumDayOfWeek.Type.WEEKEND);
+        
+        final int N1 = (int) (N * F);
+        if (weekdaySum.getN() < 5 * N1 || weekendSum.getN() < 2 * N1)
+            return null;
+        
+        // Compute average for each type (working/weekend) day
+        
+        double weekdayAverage = weekdaySum.getResult() / weekdaySum.getN();
+        double weekendAverage = weekendSum.getResult() / weekendSum.getN();
+        
+        logger.debug(String.format(
+            "Insight B4 for account %s/%s: Consumption for %d weeks to %s:\n\t" + 
+                "weekday-avg=%.2f weekend-average=%.2f", 
+             account.getKey(), deviceType, N, targetDate.plusWeeks(1).toString("dd/MM/YYYY"), 
+             weekdayAverage, weekendAverage));
+        
+        return new MessageResolutionStatus<Insight.Parameters>(
+            true,
+            new Insight.B4Parameters(refDate, deviceType, weekdayAverage, weekendAverage)
+        );
+    }
+    
+    private MessageResolutionStatus<Insight.Parameters> computeInsightB5(
+        MessageCalculationConfiguration config, 
+        AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
+    {  
+        final DateTime targetDate = EnumTimeUnit.MONTH.startOf(refDate);        
+        final DateTimeZone tz = refDate.getZone();
+        
+        // Build a common part of a data-service query      
+        
+        DataQuery query;
+        DataQueryResponse queryResponse;
+        DataQueryBuilder queryBuilder = new DataQueryBuilder()
+            .timezone(tz)
+            .user("user", account.getKey())  
+            .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
+            .sum();
+        
+        // Compute for target month
+        
+        query = queryBuilder
+            .sliding(targetDate, +1, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+            .build();
+        queryResponse = dataService.execute(query);
+        Double targetValue = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
+        if (targetValue == null)
+            return null; // nothing to compare to
+        
+        // Compute for same month a year ago
+        
+        query = queryBuilder
+            .sliding(targetDate.minusYears(1), +1, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+            .build();
+        queryResponse = dataService.execute(query);
+        Double previousValue = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
+        if (previousValue == null)
+            return null; // nothing to compare to
+        
+        // Seems we have sufficient data
+        
+        logger.debug(String.format(
+            "Insight B5 for account %s/%s: Consumption for month %s compared to %s (a year ago):\n\t" + 
+                "value=%.2f previous=%.2f", 
+             account.getKey(), deviceType,
+             targetDate.toString("MM/YYYY"), targetDate.minusYears(1).toString("MM/YYYY"), 
+             targetValue, previousValue));
+        
+        return new MessageResolutionStatus<Insight.Parameters>(
+            true,
+            new Insight.B5Parameters(refDate, deviceType, targetValue, previousValue)
         );
     }
     
