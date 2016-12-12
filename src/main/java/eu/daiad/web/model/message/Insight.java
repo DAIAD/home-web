@@ -28,48 +28,55 @@ public class Insight extends DynamicRecommendation {
     {
         // The reference value. Note that precise semantics 
         // are insight-specific (e.g. for A.1 is value on the reference date)
-        protected final double currentValue;
+        protected final Double currentValue;
 
         // The average of past values. Note that precise semantics 
         // are insight-specific (e.g. for A.1 is last P values on a particular week day)
-        protected final double avgValue;
+        protected final Double avgValue;
 
         public BasicParameters(
-            DateTime refDate, EnumDeviceType deviceType, double currentValue, double avgValue)
+            DateTime refDate, EnumDeviceType deviceType, Double currentValue, Double avgValue)
         {
             super(refDate, deviceType);
             this.avgValue = avgValue;
             this.currentValue = currentValue;
         }
 
-        public double getCurrentValue()
+        public Double getCurrentValue()
         {
             return currentValue;
         }
 
-        public double getAvgValue()
+        public Double getAverageValue()
         {
             return avgValue;
         }
 
-        public double getPercentChange()
+        public Double getPercentChange()
         {
-            return ((currentValue - avgValue) / avgValue) * 100.0;
+            return (currentValue == null || avgValue == null)? 
+                null: ((currentValue - avgValue) / avgValue) * 100.0;
         }
 
         @Override
         public Map<String, Object> getPairs()
         {
             Map<String, Object> parameters = super.getPairs();
-
-            parameters.put("value", Double.valueOf(currentValue));
-            parameters.put("average_value", Double.valueOf(avgValue));
-
-            parameters.put("consumption", new NumberFormatter(currentValue, ".#"));
-            parameters.put("average_consumption", new NumberFormatter(avgValue, ".#"));
-
-            double percentChange = getPercentChange();
-            parameters.put("percent_change", Integer.valueOf((int) Math.abs(percentChange)));
+            
+            if (currentValue != null) {
+                parameters.put("value", currentValue);
+                parameters.put("consumption", new NumberFormatter(currentValue, ".#"));
+            }
+            
+            if (avgValue != null) {
+                parameters.put("average_value", avgValue);
+                parameters.put("average_consumption", new NumberFormatter(avgValue, ".#"));
+            }
+                
+            Double percentChange = getPercentChange();
+            if (percentChange != null)
+                parameters.put("percent_change", 
+                    Integer.valueOf((int) Math.abs(percentChange)));
 
             return parameters;
         }
@@ -183,8 +190,8 @@ public class Insight extends DynamicRecommendation {
         {
             // Note: 
             // The current-value is the consumption for the whole day
-            // The average-value is not relevant here (equivalent with current-value)
-            super(refDate, deviceType, currentValue, currentValue);
+            // The average-value is not relevant here
+            super(refDate, deviceType, currentValue, null);
             partialValues = new EnumMap<>(EnumPartOfDay.class);
         }
         
@@ -322,7 +329,7 @@ public class Insight extends DynamicRecommendation {
             DateTime refDate, EnumTimeUnit timeUnit, EnumDeviceType deviceType, 
             double currentValue, double previousValue)
         {
-            super(refDate, deviceType, currentValue, currentValue);
+            super(refDate, deviceType, currentValue, null);
             
             if (timeUnit != EnumTimeUnit.WEEK && timeUnit != EnumTimeUnit.MONTH)
                 throw new IllegalArgumentException(
@@ -331,6 +338,11 @@ public class Insight extends DynamicRecommendation {
             this.timeUnit = timeUnit;
             
             this.previousValue = previousValue;
+        }
+        
+        public Double getPercentChange()
+        {
+            return ((currentValue - previousValue) / previousValue) * 100.0;
         }
         
         @Override
@@ -360,9 +372,12 @@ public class Insight extends DynamicRecommendation {
         public Map<String, Object> getPairs()
         {
             Map<String, Object> parameters = super.getPairs();
+            
             parameters.put("previous_value", Double.valueOf(previousValue));
             parameters.put("previous_consumption", new NumberFormatter(previousValue, ".#"));
+            
             parameters.put("time_unit", timeUnit.name());
+            
             return parameters;
         }
     }
@@ -404,6 +419,83 @@ public class Insight extends DynamicRecommendation {
         {
             Map<String, Object> parameters = super.getPairs();
             parameters.put("day_of_week", dayOfWeek.toInteger());
+            return parameters;
+        }
+    }
+    
+    public static class B4Parameters extends BasicParameters
+    {
+        private final double weekdayValue;        
+        private final double weekendValue;
+        
+        public B4Parameters(
+            DateTime refDate, EnumDeviceType deviceType, double weekdayValue, double weekendValue)
+        {
+            super(refDate, deviceType, null, null);
+            this.weekdayValue = weekdayValue;
+            this.weekendValue = weekendValue;
+        }
+        
+        public Double getPercentChange()
+        {
+            return ((weekendValue - weekdayValue) / weekdayValue) * 100.0;
+        }
+        
+        @Override
+        public EnumDynamicRecommendationType getType()
+        {
+            return (weekdayValue < weekendValue)?
+                EnumDynamicRecommendationType.INSIGHT_B4_MORE_ON_WEEKEND:
+                EnumDynamicRecommendationType.INSIGHT_B4_LESS_ON_WEEKEND;    
+        }
+        
+        @Override
+        public Map<String, Object> getPairs()
+        {
+            Map<String, Object> parameters = super.getPairs();
+            
+            parameters.put("weekday_value", Double.valueOf(weekdayValue));
+            parameters.put("weekday_consumption", new NumberFormatter(weekdayValue, ".#"));
+            
+            parameters.put("weekend_value", Double.valueOf(weekendValue));
+            parameters.put("weekend_consumption", new NumberFormatter(weekendValue, ".#"));
+            
+            return parameters;
+        }
+    }
+    
+    public static class B5Parameters extends BasicParameters
+    {
+        private final double previousValue;
+        
+        public B5Parameters(
+            DateTime refDate, EnumDeviceType deviceType, double currentValue, double previousValue)
+        {
+            super(refDate, deviceType, currentValue, null);
+            this.previousValue = previousValue;
+        }
+        
+        public Double getPercentChange()
+        {
+            return ((currentValue - previousValue) / previousValue) * 100.0;
+        }
+        
+        @Override
+        public EnumDynamicRecommendationType getType()
+        {
+            return (previousValue < currentValue)?
+                EnumDynamicRecommendationType.INSIGHT_B5_MONTHLY_CONSUMPTION_INCR:
+                EnumDynamicRecommendationType.INSIGHT_B5_MONTHLY_CONSUMPTION_DECR;    
+        }
+        
+        @Override
+        public Map<String, Object> getPairs()
+        {
+            Map<String, Object> parameters = super.getPairs();
+            
+            parameters.put("previous_value", Double.valueOf(previousValue));
+            parameters.put("previous_consumption", new NumberFormatter(previousValue, ".#"));
+            
             return parameters;
         }
     }
