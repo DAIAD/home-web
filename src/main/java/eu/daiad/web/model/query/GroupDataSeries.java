@@ -442,46 +442,40 @@ public class GroupDataSeries
     public Long getAreaId() {
         return areaId;
     }
-
+    
     /**
-     * A convenience iterator on pairs of (time, value) for a given field
+     * A convenience iterator on points of (timestamp, value) for a given (field, metric).
+     * 
+     * This implementation is not thread-safe.
      */
-    private class PairIterator 
-        implements Iterator<Pair<Instant, Double>>, Iterable<Pair<Instant, Double>>
+    private class PointIterator implements Iterable<Point>, Iterator<Point>
     {
         private final EnumDataField field;
         private final EnumMetric metric;
-        private final int endIndex;
-        private int currIndex;
         
-        public PairIterator(EnumDataField field, EnumMetric metric)
+        private final int endIndex;
+        private int currIndex = Integer.MAX_VALUE;
+       
+        public PointIterator(EnumDataField field, EnumMetric metric)
         {
             this.field = field;
             this.metric = metric;
-                        
-            // Examine if this series is aware of the given field
-            currIndex = Integer.MAX_VALUE;
             endIndex = points.size();
-            if (endIndex > 0) {
-                DataPoint p0 = points.get(0);
-                if (p0.field(field) != null)
-                    currIndex = 0; // prepare for iteration!
-            }
-        }
-                
-        @Override
-        public boolean hasNext()
-        {
-            return (currIndex < endIndex);
         }
 
         @Override
-        public Pair<Instant, Double> next()
+        public Iterator<Point> iterator()
         {
-            DataPoint p = points.get(currIndex++);
-            
-            Instant t = new Instant(p.getTimestamp());
-            return Pair.of(t, p.field(field).get(metric)); 
+            // Examine if this series is aware of the given field
+            currIndex = Integer.MAX_VALUE;
+            if (endIndex > 0) {
+                DataPoint p0 = points.get(0);
+                if (p0.field(field) != null) {
+                    // Reset cursor and prepare for iteration
+                    currIndex = 0; 
+                }
+            }            
+            return this;
         }
         
         @Override
@@ -491,9 +485,18 @@ public class GroupDataSeries
         }
 
         @Override
-        public Iterator<Pair<Instant, Double>> iterator()
+        public boolean hasNext()
         {
-            return this;
+            return (currIndex < endIndex);
+        }
+
+        @Override
+        public Point next()
+        {
+            DataPoint p = points.get(currIndex);
+            currIndex++;
+            
+            return Point.of(p.getTimestamp(), p.field(field).get(metric)); 
         }
     }
     
@@ -503,7 +506,7 @@ public class GroupDataSeries
      * This is a convenience method for the common case where only 1 data point is contained per
      * device (e.g. when aggregation interval is same as the sliding interval).
      */
-    public Double asNumber(EnumDataField field, EnumMetric metric)
+    public Double toNumber(EnumDataField field, EnumMetric metric)
     {
         if (points.isEmpty())
             return null;
@@ -518,8 +521,8 @@ public class GroupDataSeries
     /**
      * Get an iterable of (time, value) pairs from this series
      */
-    public Iterable<Pair<Instant, Double>> iterPoints(EnumDataField field, EnumMetric metric)
+    public Iterable<Point> iterPoints(EnumDataField field, EnumMetric metric)
     {
-        return this.new PairIterator(field, metric); 
+        return this.new PointIterator(field, metric); 
     }
 }

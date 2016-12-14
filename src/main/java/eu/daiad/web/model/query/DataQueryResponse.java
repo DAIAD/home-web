@@ -59,14 +59,14 @@ public class DataQueryResponse extends QueryResponse {
      * data point is contained per device (e.g. when aggregation interval is same as the 
      * sliding interval).
      */
-    public Double asNumber(EnumDeviceType deviceType, EnumDataField field, EnumMetric metric)
+    public Double toNumber(EnumDeviceType deviceType, EnumDataField field, EnumMetric metric)
     {
         List<GroupDataSeries> series = getSeries(deviceType);
         if (series.isEmpty())
             return null;
         
         Assert.state(series.size() == 1, "Expected 1 series per device!");
-        return series.get(0).asNumber(field, metric);
+        return series.get(0).toNumber(field, metric);
     }
     
     /**
@@ -75,7 +75,7 @@ public class DataQueryResponse extends QueryResponse {
      * This is a convenience method for the common case when only 1 series (e.g a single population
      * filter) is contained per device. 
      */
-    public Iterable<Pair<Instant, Double>> iterPoints(EnumDeviceType deviceType, EnumDataField field, EnumMetric metric)
+    public Iterable<Point> iterPoints(EnumDeviceType deviceType, EnumDataField field, EnumMetric metric)
     {
         List<GroupDataSeries> series = getSeries(deviceType);
         if (series.isEmpty())
