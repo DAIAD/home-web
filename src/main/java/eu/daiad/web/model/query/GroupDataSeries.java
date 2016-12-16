@@ -15,7 +15,7 @@ import org.springframework.util.Assert;
 
 import eu.daiad.web.model.EnumTimeAggregation;
 
-public class GroupDataSeries 
+public class GroupDataSeries
 {
     private String label;
 
@@ -443,86 +443,106 @@ public class GroupDataSeries
         return areaId;
     }
     
+    public SeriesFacade newFacade()
+    {
+        return this.new Facade();
+    }
+    
+    private class Facade extends AbstractSeriesFacade
+    {
+        /**
+         * Get a single scalar result from this series
+         *
+         * This is a convenience method for the common case where only 1 data point is contained per
+         * device (e.g. when aggregation interval is same as the sliding interval).
+         */
+        @Override
+        public Double getValue(EnumDataField field, EnumMetric metric)
+        {
+            if (points.size() != 1)
+                return null;
+            
+            DataPoint p0 = points.get(0);
+            Map<EnumMetric, Double> m = p0.field(field);
+            return m != null? m.get(metric) : null;
+        }
+            
+        /**
+         * Get an iterable of (time, value) pairs from this series
+         */
+        @Override
+        public Iterable<Point> iterPoints(EnumDataField field, EnumMetric metric)
+        {
+            return GroupDataSeries.this.new PointIterator(field, metric);
+        }
+
+        @Override
+        public int size()
+        {
+            return points.size();
+        }
+
+        @Override
+        public boolean isEmpty()
+        {
+            return points.isEmpty();
+        }
+    }
+    
     /**
-     * A convenience iterator on points of (timestamp, value) for a given (field, metric).
-     * 
-     * This implementation is not thread-safe.
+     * An iterable on points of (timestamp, value) for a given (field, metric).
      */
-    private class PointIterator implements Iterable<Point>, Iterator<Point>
+    private class PointIterator implements Iterable<Point>
     {
         private final EnumDataField field;
         private final EnumMetric metric;
         
         private final int endIndex;
-        private int currIndex = Integer.MAX_VALUE;
        
         public PointIterator(EnumDataField field, EnumMetric metric)
         {
             this.field = field;
             this.metric = metric;
-            endIndex = points.size();
+            
+            // Set endIndex, examine if series contains the given field
+            int size = points.size();
+            if (size > 0) {
+                DataPoint p0 = points.get(0);
+                endIndex = (p0.field(field) != null)? size : 0;
+            } else { 
+                endIndex = 0; // empty iterable
+            }
         }
 
         @Override
         public Iterator<Point> iterator()
         {
-            // Examine if this series is aware of the given field
-            currIndex = Integer.MAX_VALUE;
-            if (endIndex > 0) {
-                DataPoint p0 = points.get(0);
-                if (p0.field(field) != null) {
-                    // Reset cursor and prepare for iteration
-                    currIndex = 0; 
-                }
-            }            
-            return this;
+            return new I();
         }
-        
-        @Override
-        public void remove()
+       
+        private class I implements Iterator<Point>
         {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean hasNext()
-        {
-            return (currIndex < endIndex);
-        }
-
-        @Override
-        public Point next()
-        {
-            DataPoint p = points.get(currIndex);
-            currIndex++;
+            private int currIndex = 0;
             
-            return Point.of(p.getTimestamp(), p.field(field).get(metric)); 
+            @Override
+            public void remove()
+            {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public boolean hasNext()
+            {
+                return (currIndex < endIndex);
+            }
+
+            @Override
+            public Point next()
+            {
+                DataPoint p = points.get(currIndex);
+                currIndex++;
+                return Point.of(p.getTimestamp(), p.field(field).get(metric)); 
+            }
         }
-    }
-    
-    /**
-     * Get a single scalar result from this series
-     *
-     * This is a convenience method for the common case where only 1 data point is contained per
-     * device (e.g. when aggregation interval is same as the sliding interval).
-     */
-    public Double toNumber(EnumDataField field, EnumMetric metric)
-    {
-        if (points.isEmpty())
-            return null;
-        
-        Assert.state(points.size() == 1, "Expected a single data point");
-        DataPoint p0 = points.get(0);
-        
-        Map<EnumMetric, Double> m = p0.field(field);
-        return m != null? m.get(metric) : null;
-    }
-        
-    /**
-     * Get an iterable of (time, value) pairs from this series
-     */
-    public Iterable<Point> iterPoints(EnumDataField field, EnumMetric metric)
-    {
-        return this.new PointIterator(field, metric); 
     }
 }
