@@ -1,5 +1,6 @@
 package eu.daiad.web.model.query;
 
+import org.apache.commons.collections4.Predicate;
 import org.apache.commons.math3.stat.descriptive.StorelessUnivariateStatistic;
 
 public abstract class AbstractSeriesFacade implements SeriesFacade
@@ -16,7 +17,7 @@ public abstract class AbstractSeriesFacade implements SeriesFacade
      * Note that this implementation clears any internal state on aggregator.
      */
     @Override
-    public Double aggregateValues(
+    public Double aggregate(
         EnumDataField field, EnumMetric metric, StorelessUnivariateStatistic aggregator)
     {
         aggregator.clear();
@@ -27,4 +28,13 @@ public abstract class AbstractSeriesFacade implements SeriesFacade
         return (n > 0)? aggregator.getResult() : null;
     }
 
+    @Override
+    public int count(EnumDataField field, EnumMetric metric, Predicate<Point> pred)
+    {
+        int n = 0;
+        for (Point p: iterPoints(field, metric))
+            if (pred.evaluate(p))
+                n++;
+        return n;
+    }
 }

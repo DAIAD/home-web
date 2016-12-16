@@ -1,5 +1,6 @@
 package eu.daiad.web.model.query;
 
+import org.apache.commons.collections4.Predicate;
 import org.apache.commons.math3.stat.descriptive.StorelessUnivariateStatistic;
 
 public interface SeriesFacade
@@ -27,11 +28,15 @@ public interface SeriesFacade
      * @return a number when this series contains a single point (i.e {@code size() == 1}}),
      *     or null otherwise.
      */
-    Double getValue(EnumDataField field, EnumMetric metric);
+    Double get(EnumDataField field, EnumMetric metric);
     
     /**
      * Aggregate values over points and produce a scalar result.
      */
-    Double aggregateValues(
-        EnumDataField field, EnumMetric metric, StorelessUnivariateStatistic aggregator);
+    Double aggregate(EnumDataField field, EnumMetric metric, StorelessUnivariateStatistic a);
+    
+    /**
+     * Count points satisfying a predicate
+     */
+    int count(EnumDataField field, EnumMetric metric, Predicate<Point> pred);
 }

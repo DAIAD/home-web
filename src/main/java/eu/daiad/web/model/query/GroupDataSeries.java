@@ -457,7 +457,7 @@ public class GroupDataSeries
          * device (e.g. when aggregation interval is same as the sliding interval).
          */
         @Override
-        public Double getValue(EnumDataField field, EnumMetric metric)
+        public Double get(EnumDataField field, EnumMetric metric)
         {
             if (points.size() != 1)
                 return null;
