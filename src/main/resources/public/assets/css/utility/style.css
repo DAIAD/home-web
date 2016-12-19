@@ -1,4 +1,4 @@
-@CHARSET "UTF-8";
+search-plusCHARSET "UTF-8";
 
 .clearfix:after {
     visibility: hidden;
@@ -76,6 +76,13 @@
     border-right: 1px solid rgba(127, 140, 141, 0.24);
 }
 
+.Select-menu-outer {
+  z-index: 1000;
+}
+
+.select-hide-arrow .Select-control { 
+  height: 100%;
+}
 .select-hide-arrow .Select-arrow {
   display: none;
 }
@@ -204,23 +211,23 @@ a .disabled{
 
 .preloader {
 	display: block;
-	position: absolute;
+	position: fixed;
 	top: 35vh;
 	left: 50vw;
 	width: 80px;
 	height: 80px;
-  z-index: 100;
+  z-index: 1000;
 	animation: counter-spin 0.8s linear infinite;
 }
 
 .preloader-inner {
 	display: block;
-	position: absolute;
+	position: fixed;
 	top: 35vh;
 	left: 50vw;
 	width: 80px;
 	height: 80px;
-  z-index: 100;
+  z-index: 1000;
 	animation: spin 0.8s linear infinite;
 }
 
@@ -799,6 +806,25 @@ div.measurement-value .delta > .sign {
 }      
 
 /* Map/Choropleth */
+.info {
+    padding: 6px 8px;
+    font: 14px/16px Arial, Helvetica, sans-serif;
+    background: white;
+    background: rgba(255,255,255,0.8);
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    border-radius: 5px;
+}
+.legend {
+    line-height: 18px;
+    color: #555;
+}
+.legend i {
+    width: 18px;
+    height: 18px;
+    float: left;
+    margin-right: 8px;
+    opacity: 0.7;
+}
 
 /* view-source:http://leafletjs.com/examples/choropleth-example.html */
 .map-choropleth-info {
@@ -839,15 +865,6 @@ div.measurement-value .delta > .sign {
   content: ":";
 }
 
-/* Leaflet */
-.leaflet-popup-content-wrapper {
-    border-radius: 0px;
-}
-
-.leaflet-top {
-	z-index: 0;
-}
-
 /* Widgets */
 
 .widget {
@@ -860,7 +877,7 @@ div.measurement-value .delta > .sign {
   display: flex;
   flex-direction: column;
   background: #FFF;
-  border: 1px #2D3580 solid;
+  border: 1px #cecece solid;
   overflow: hidden;
   width: 100%;
   height: 100%;
@@ -869,7 +886,8 @@ div.measurement-value .delta > .sign {
   flex-grow: 0;
   padding: 8px 5px 5px 8px;
   min-height: 37px;
-  border-bottom: 1px #2D3580 solid;
+  color: #847f7f;
+  //border-bottom: 1px #2D3580 solid;
 }
 .infobox-header h4 {
   margin: 0;
@@ -894,8 +912,8 @@ div.measurement-value .delta > .sign {
   flex-grow: 0;
   text-align: right;
   padding: 5px;
-  min-height: 37px;
-  border-top: 1px #2D3580 solid;
+  //min-height: 37px;
+  //border-top: 1px #2D3580 solid;
 }
 .infobox-x {
   font-weight: normal;
@@ -906,3 +924,32 @@ div.measurement-value .delta > .sign {
 }
 .infobox-error {
   font-size: 1.1em;
+}
+
+/* Modals */
+
+.confirmation-modal {
+  margin-top: 30vh;
+}
+
+.map-modal {
+  width: 90%;
+}
+.maximized-modal {
+  width: 90%;
+}
+.maximized-modal-half {
+  margin-top: 20vh;
+  width: 45%;
+}
+.maximized-modal .modal-body, .maximized-modal-half .modal-body {
+  padding: 0;
+}
+
+/* Date input */
+
+.date-input {
+  display: inline-block;
+  width: 60%;
+  margin-left: 20px;
+}
