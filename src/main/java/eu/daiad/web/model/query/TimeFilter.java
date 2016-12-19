@@ -4,6 +4,9 @@ import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import eu.daiad.web.model.EnumTimeAggregation;
+import eu.daiad.web.model.EnumTimeUnit;
+
 public class TimeFilter {
 
 	@JsonDeserialize(using = EnumTemporalFilterType.Deserializer.class)

@@ -1,10 +1,11 @@
-
 package eu.daiad.web.repository.application;
 
-/**
- *
- * @author nkarag
- */
-public interface IAnnouncementRepository {
-    public void broadcastAnnouncement(int channel);
+import java.util.Locale;
+
+import eu.daiad.web.domain.application.AnnouncementEntity;
+import eu.daiad.web.domain.application.AnnouncementTranslationEntity;
+
+public interface IAnnouncementRepository
+{
+    AnnouncementEntity findOne(int announcementId);
 }

@@ -43,8 +43,8 @@ import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.scheduling.support.PeriodicTrigger;
 import org.springframework.stereotype.Service;
 
-import eu.daiad.web.domain.admin.ScheduledJob;
-import eu.daiad.web.domain.admin.ScheduledJobExecution;
+import eu.daiad.web.domain.admin.ScheduledJobEntity;
+import eu.daiad.web.domain.admin.ScheduledJobExecutionEntity;
 import eu.daiad.web.job.builder.IJobBuilder;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SchedulerErrorCode;
@@ -143,7 +143,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
         }
     }
 
-    private JobInfo scheduledJobToJobInfo(ScheduledJob scheduledJob) {
+    private JobInfo scheduledJobToJobInfo(ScheduledJobEntity scheduledJob) {
         JobInfo info = new JobInfo();
 
         DateTime startLocalDateTime;
@@ -159,7 +159,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
 
         info.setEnabled(scheduledJob.isEnabled());
 
-        ScheduledJobExecution lastExecution = schedulerRepository.getLastExecution(scheduledJob.getName());
+        ScheduledJobExecutionEntity lastExecution = schedulerRepository.getLastExecution(scheduledJob.getName());
         if (lastExecution != null) {
             startLocalDateTime = lastExecution.getStartedOn().toDateTime(DateTimeZone.forID(serverTimeZone));
 
@@ -213,7 +213,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
 
         List<JobInfo> jobs = new ArrayList<JobInfo>();
 
-        for (ScheduledJob scheduledJob : schedulerRepository.getJobs()) {
+        for (ScheduledJobEntity scheduledJob : schedulerRepository.getJobs()) {
             jobs.add(scheduledJobToJobInfo(scheduledJob));
         }
 
@@ -224,7 +224,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
     public JobInfo getJob(long jobId) {
         JobInfo info = null;
 
-        ScheduledJob scheduledJob = schedulerRepository.getJobById(jobId);
+        ScheduledJobEntity scheduledJob = schedulerRepository.getJobById(jobId);
 
         if (scheduledJob != null) {
             info = scheduledJobToJobInfo(scheduledJob);
@@ -242,12 +242,12 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
     public List<JobExecutionInfo> getJobExecutions(long jobId, int startPosition, int maxResult) {
         List<JobExecutionInfo> result = new ArrayList<JobExecutionInfo>();
 
-        List<ScheduledJobExecution> executions = schedulerRepository
+        List<ScheduledJobExecutionEntity> executions = schedulerRepository
                         .getExecutions(jobId, startPosition, maxResult);
 
         DateTime utcDateTime;
 
-        for (ScheduledJobExecution execution : executions) {
+        for (ScheduledJobExecutionEntity execution : executions) {
             JobExecutionInfo info = new JobExecutionInfo();
 
             if (execution.getCompletedOn() != null) {
@@ -282,7 +282,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
     @Override
     public void enable(Long jobId) {
         try {
-            ScheduledJob scheduledJob = schedulerRepository.enable(jobId);
+            ScheduledJobEntity scheduledJob = schedulerRepository.enable(jobId);
 
             schedule(scheduledJob);
         } catch (Exception ex) {
@@ -325,12 +325,12 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
     private void updateScheduler() throws Exception {
         cleanupInterruptedJobs();
 
-        for (ScheduledJob scheduledJob : schedulerRepository.getJobs()) {
+        for (ScheduledJobEntity scheduledJob : schedulerRepository.getJobs()) {
             schedule(scheduledJob);
         }
     }
 
-    private void schedule(ScheduledJob scheduledJob) throws Exception {
+    private void schedule(ScheduledJobEntity scheduledJob) throws Exception {
         // Remove existing job
         long jobId = scheduledJob.getId();
 
@@ -352,7 +352,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
         if (scheduledJob.isEnabled()) {
             // Initialize job parameters
             JobParametersBuilder parameterBuilder = new JobParametersBuilder();
-            for (eu.daiad.web.domain.admin.ScheduledJobParameter parameter : scheduledJob.getParameters()) {
+            for (eu.daiad.web.domain.admin.ScheduledJobParameterEntity parameter : scheduledJob.getParameters()) {
                 parameterBuilder.addString(parameter.getName(), parameter.getValue());
             }
             JobParameters jobParameters = parameterBuilder.toJobParameters();
@@ -387,7 +387,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
 
     @Override
     public void launch(String jobName) throws ApplicationException {
-        ScheduledJob job = schedulerRepository.getJobByName(jobName);
+        ScheduledJobEntity job = schedulerRepository.getJobByName(jobName);
 
         this.launch(job.getId(), null);
     }
@@ -395,7 +395,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
 
     @Override
     public void launch(String jobName, Map<String, String> parameters) throws ApplicationException {
-        ScheduledJob job = schedulerRepository.getJobByName(jobName);
+        ScheduledJobEntity job = schedulerRepository.getJobByName(jobName);
 
         this.launch(job.getId(), parameters);
     }
@@ -408,7 +408,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
     @Override
     public void launch(long jobId, Map<String, String> parameters) throws ApplicationException {
         try {
-            ScheduledJob scheduledJob = schedulerRepository.getJobById(jobId);
+            ScheduledJobEntity scheduledJob = schedulerRepository.getJobById(jobId);
 
             for (JobExecution activeExecution : activeExecutions) {
                 if (activeExecution.getJobInstance().getJobName().equals(scheduledJob.getName())) {
@@ -430,7 +430,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
 
             // Initialize job parameters
             JobParametersBuilder parameterBuilder = new JobParametersBuilder();
-            for (eu.daiad.web.domain.admin.ScheduledJobParameter parameter : scheduledJob.getParameters()) {
+            for (eu.daiad.web.domain.admin.ScheduledJobParameterEntity parameter : scheduledJob.getParameters()) {
                 parameterBuilder.addString(parameter.getName(), parameter.getValue());
             }
             // Override parameters
@@ -526,9 +526,9 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
 
     private void cleanupInterruptedJobs() {
         try {
-            List<ScheduledJobExecution> executions = schedulerRepository.getExecutionByExitStatus(ExitStatus.UNKNOWN);
+            List<ScheduledJobExecutionEntity> executions = schedulerRepository.getExecutionByExitStatus(ExitStatus.UNKNOWN);
 
-            for (ScheduledJobExecution execution : executions) {
+            for (ScheduledJobExecutionEntity execution : executions) {
                 schedulerRepository.updateJobExecutionStatus(execution.getJobExecutionId(), BatchStatus.ABANDONED);
             }
         } catch (Exception e) {

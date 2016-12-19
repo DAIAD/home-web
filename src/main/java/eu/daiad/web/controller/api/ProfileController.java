@@ -9,6 +9,8 @@ import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -20,6 +22,7 @@ import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.model.profile.ComparisonRankingResponse;
 import eu.daiad.web.model.profile.NotifyProfileRequest;
 import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.profile.ProfileResponse;
@@ -53,6 +56,7 @@ public class ProfileController extends BaseRestController {
      * Repository for accessing water IQ data.
      */
     @Autowired
+    @Qualifier("jpaWaterIqRepository")
     private IWaterIqRepository waterIqRepository;
 
     /**
@@ -69,8 +73,7 @@ public class ProfileController extends BaseRestController {
             if (user.hasRole(EnumRole.ROLE_USER)) {
                 Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE);
 
-                // Get water IQ data
-                profile.setComparison(waterIqRepository.getWaterIqByUserId(user.getId()));
+                profileRepository.updateMobileVersion(user.getKey(), data.getVersion());
 
                 return new ProfileResponse(getRuntime(),
                                            profile,
@@ -79,6 +82,35 @@ public class ProfileController extends BaseRestController {
                 return new ProfileResponse(getRuntime(),
                                            profileRepository.getProfileByUsername(EnumApplication.UTILITY),
                                            user.roleToStringArray());
+            } else {
+                throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+            }
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            return new RestResponse(getError(ex));
+        }
+    }
+
+    /**
+     * Loads user profile data.
+     *
+     * @param data user credentials.
+     * @param year reference year.
+     * @param month reference month.
+     * @return the user profile.
+     */
+    @RequestMapping(value = "/api/v1/comparison/{year}/{month}", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    public RestResponse getComparisonRanking(@RequestBody Credentials data, @PathVariable int year, @PathVariable int month) {
+        try {
+            AuthenticatedUser user = authenticate(data);
+
+            if (user.hasRole(EnumRole.ROLE_USER)) {
+                ComparisonRankingResponse response = new ComparisonRankingResponse();
+
+                response.setComparison(waterIqRepository.getWaterIqByUserKey(user.getKey(), year, month));
+
+                return response;
             } else {
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION);
             }

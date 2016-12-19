@@ -5,8 +5,8 @@ import java.util.List;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 
-import eu.daiad.web.domain.admin.ScheduledJob;
-import eu.daiad.web.domain.admin.ScheduledJobExecution;
+import eu.daiad.web.domain.admin.ScheduledJobEntity;
+import eu.daiad.web.domain.admin.ScheduledJobExecutionEntity;
 import eu.daiad.web.model.scheduling.ExecutionQuery;
 import eu.daiad.web.model.scheduling.ExecutionQueryResult;
 
@@ -18,40 +18,40 @@ import eu.daiad.web.model.scheduling.ExecutionQueryResult;
 public interface ISchedulerRepository {
 
     /**
-     * Returns a list of all registered {@link ScheduledJob}.
+     * Returns a list of all registered {@link ScheduledJobEntity}.
      * 
      * @return the scheduled jobs.
      */
-    abstract List<ScheduledJob> getJobs();
+    abstract List<ScheduledJobEntity> getJobs();
 
     /**
-     * Returns a {@link ScheduledJob} based on its id.
+     * Returns a {@link ScheduledJobEntity} based on its id.
      * 
      * @param jobId the job id.
      * @return the job with the given id.
      */
-    abstract ScheduledJob getJobById(long jobId);
+    abstract ScheduledJobEntity getJobById(long jobId);
 
     /**
-     * Returns a {@link ScheduledJob} based on its name.
+     * Returns a {@link ScheduledJobEntity} based on its name.
      * 
      * @param jobName the job name.
      * @return the job with the given name.
      */
-    abstract ScheduledJob getJobByName(String jobName);
+    abstract ScheduledJobEntity getJobByName(String jobName);
 
     /**
-     * Returns a list of {@link ScheduledJobExecution} based on a job id.
+     * Returns a list of {@link ScheduledJobExecutionEntity} based on a job id.
      * 
      * @param jobId the job id.
      * @param startPosition the start index.
      * @param maxResult the number of returned objects.
      * @return the first {@code maxResult} jobs starting from {@code startPosition} index.
      */
-    abstract List<ScheduledJobExecution> getExecutions(long jobId, int startPosition, int maxResult);
+    abstract List<ScheduledJobExecutionEntity> getExecutions(long jobId, int startPosition, int maxResult);
     
     /**
-     * Returns a list of {@link ScheduledJobExecution} based on a job name.
+     * Returns a list of {@link ScheduledJobExecutionEntity} based on a job name.
      * 
      * @param jobName
      *            the job name.
@@ -62,7 +62,7 @@ public interface ISchedulerRepository {
      * @return the first {@code maxResult} jobs starting from
      *         {@code startPosition} index.
      */
-    abstract List<ScheduledJobExecution> getExecutions(String jobName, int startPosition, int maxResult);
+    abstract List<ScheduledJobExecutionEntity> getExecutions(String jobName, int startPosition, int maxResult);
 
     /**
      * Returns the message of an execution by its id.
@@ -73,15 +73,15 @@ public interface ISchedulerRepository {
     abstract String getExecutionMessage(long executionId);
 
     /**
-     * Returns a list of {@link ScheduledJobExecution} filtered by their exit code.
+     * Returns a list of {@link ScheduledJobExecutionEntity} filtered by their exit code.
      * 
      * @param exitStatus exit code for filtering the job executions.
      * @return the job executions.
      */
-    abstract List<ScheduledJobExecution> getExecutionByExitStatus(ExitStatus exitStatus);
+    abstract List<ScheduledJobExecutionEntity> getExecutionByExitStatus(ExitStatus exitStatus);
 
     /**
-     * Returns a list of {@link ScheduledJobExecution}, optionally filtered by a
+     * Returns a list of {@link ScheduledJobExecutionEntity}, optionally filtered by a
      * query.
      * 
      * @param query
@@ -91,22 +91,22 @@ public interface ISchedulerRepository {
     abstract ExecutionQueryResult getExecutions(ExecutionQuery query);
     
     /**
-     * Returns the last {@link ScheduledJobExecution} based on a job name.
+     * Returns the last {@link ScheduledJobExecutionEntity} based on a job name.
      * 
      * @param jobName
      *            the job name.
      * @return the last job execution.
      */
-    abstract ScheduledJobExecution getLastExecution(String jobName);
+    abstract ScheduledJobExecutionEntity getLastExecution(String jobName);
 
     /**
-     * Returns the last {@link ScheduledJobExecution} based on a job id.
+     * Returns the last {@link ScheduledJobExecutionEntity} based on a job id.
      * 
      * @param jobId
      *            the job id.
      * @return the last job execution.
      */
-    abstract ScheduledJobExecution getLastExecution(long jobId);
+    abstract ScheduledJobExecutionEntity getLastExecution(long jobId);
 
     /**
      * Enables a job execution based on job id.
@@ -114,7 +114,7 @@ public interface ISchedulerRepository {
      * @param jobId the job id.
      * @return the enabled job.
      */
-    abstract ScheduledJob enable(long jobId);
+    abstract ScheduledJobEntity enable(long jobId);
 
     /**
      * Disables a job execution based on job id.

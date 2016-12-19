@@ -16,7 +16,6 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.AuthenticationResponse;
 import eu.daiad.web.model.security.Credentials;
 import eu.daiad.web.repository.application.IProfileRepository;
-import eu.daiad.web.repository.application.IWaterIqRepository;
 
 /**
  * Provides actions for authenticating a user.
@@ -36,12 +35,6 @@ public class AuthenticationController extends BaseRestController {
     private IProfileRepository profileRepository;
 
     /**
-     * Repository for accessing water IQ data.
-     */
-    @Autowired
-    private IWaterIqRepository waterIqRepository;
-
-    /**
      * Authenticates a user.
      *
      * @param credentials the user credentials
@@ -54,8 +47,7 @@ public class AuthenticationController extends BaseRestController {
 
             Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE);
 
-            // Get water IQ data
-            profile.setComparison(waterIqRepository.getWaterIqByUserId(user.getId()));
+            profileRepository.updateMobileVersion(user.getKey(), credentials.getVersion());
 
             return new AuthenticationResponse(getRuntime(), profile, user.roleToStringArray());
         } catch (Exception ex) {

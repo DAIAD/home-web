@@ -68,20 +68,15 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 			// Set impersonating user
             if (impersonate) {
                 if (user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
-                    AuthenticatedUser impersonatedUser = (AuthenticatedUser) userService
-                                    .loadUserByUsername(username[1]);
+                    AuthenticatedUser impersonatedUser = (AuthenticatedUser) userService.loadUserByUsername(username[1]);
 
-                    if (user.getUtilityId() == impersonatedUser.getUtilityId()) {
+                    if (user.getUtilities().contains(impersonatedUser.getUtilityId())) {
                         user = impersonatedUser;
                     } else {
-                        throw new BadCredentialsException(String.format(
-                                        "Cannot impersonate user [%s] with user [%s] from different utilities.",
-                                        username[1], username[0]));
+                        throw new BadCredentialsException(String.format("Cannot impersonate user [%s] with user [%s] from different utilities.", username[1], username[0]));
                     }
                 } else {
-                    throw new BadCredentialsException(String.format(
-                                    "User [%s] does not have the permission for impersonating other users.",
-                                    username[0]));
+                    throw new BadCredentialsException(String.format("User [%s] does not have the permission for impersonating other users.", username[0]));
                 }
             }
 			// Check application

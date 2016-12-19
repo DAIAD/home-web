@@ -9,6 +9,8 @@ import java.util.Locale;
 import java.util.Map;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
@@ -21,25 +23,28 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ibm.icu.text.MessageFormat;
 import eu.daiad.web.domain.application.AccountEntity;
 
-import eu.daiad.web.domain.application.AccountAlert;
-import eu.daiad.web.domain.application.AccountAlertProperty;
-import eu.daiad.web.domain.application.AccountAnnouncement;
-import eu.daiad.web.domain.application.AccountDynamicRecommendation;
-import eu.daiad.web.domain.application.AccountDynamicRecommendationProperty;
-import eu.daiad.web.domain.application.AccountStaticRecommendation;
-import eu.daiad.web.domain.application.AlertAnalytics;
-import eu.daiad.web.domain.application.AlertTranslation;
-import eu.daiad.web.domain.application.Announcement;
+import eu.daiad.web.domain.application.AccountAlertEntity;
+import eu.daiad.web.domain.application.AccountAlertPropertyEntity;
+import eu.daiad.web.domain.application.AccountAnnouncementEntity;
+import eu.daiad.web.domain.application.AccountDynamicRecommendationEntity;
+import eu.daiad.web.domain.application.AccountDynamicRecommendationPropertyEntity;
+import eu.daiad.web.domain.application.AccountStaticRecommendationEntity;
+import eu.daiad.web.domain.application.AlertAnalyticsEntity;
+import eu.daiad.web.domain.application.AlertEntity;
+import eu.daiad.web.domain.application.AlertTranslationEntity;
+import eu.daiad.web.domain.application.AnnouncementEntity;
 import eu.daiad.web.domain.application.AnnouncementChannel;
-import eu.daiad.web.domain.application.AnnouncementTranslation;
-import eu.daiad.web.domain.application.Channel;
-import eu.daiad.web.domain.application.DynamicRecommendationTranslation;
-import eu.daiad.web.domain.application.RecommendationAnalytics;
-import eu.daiad.web.domain.application.StaticRecommendation;
-import eu.daiad.web.domain.application.StaticRecommendationCategory;
+import eu.daiad.web.domain.application.AnnouncementTranslationEntity;
+import eu.daiad.web.domain.application.ChannelEntity;
+import eu.daiad.web.domain.application.DynamicRecommendationEntity;
+import eu.daiad.web.domain.application.DynamicRecommendationTranslationEntity;
+import eu.daiad.web.domain.application.RecommendationAnalyticsEntity;
+import eu.daiad.web.domain.application.StaticRecommendationEntity;
+import eu.daiad.web.domain.application.StaticRecommendationCategoryEntity;
 import eu.daiad.web.model.error.MessageErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.message.Alert;
+import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.model.message.AnnouncementRequest;
 import eu.daiad.web.model.message.DynamicRecommendation;
 import eu.daiad.web.model.message.EnumAlertType;
@@ -51,6 +56,7 @@ import eu.daiad.web.model.message.MessageRequest;
 import eu.daiad.web.model.message.MessageResult;
 import eu.daiad.web.model.message.MessageStatisticsQuery;
 import eu.daiad.web.model.message.ReceiverAccount;
+import eu.daiad.web.model.message.StaticRecommendation;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.BaseRepository;
 import java.sql.Date;
@@ -149,18 +155,18 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             result.setTotalAlerts(totalAlerts);
 
             // Build query
-            TypedQuery<eu.daiad.web.domain.application.AccountAlert> accountAlertsQuery;
+            TypedQuery<AccountAlertEntity> accountAlertsQuery;
 
             if ((options.getAscending() != null) && (options.getAscending() == true)) {
                 // Ascending order
                 accountAlertsQuery = entityManager.createQuery("select a from account_alert a "
-                                + "where a.account.id = :accountId and a.id > :minMessageId order by a.id",
-                                eu.daiad.web.domain.application.AccountAlert.class);
+                        + "where a.account.id = :accountId and a.id > :minMessageId order by a.id",
+                        AccountAlertEntity.class);
             } else {
                 // Descending order
                 accountAlertsQuery = entityManager.createQuery("select a from account_alert a "
-                                + "where a.account.id = :accountId and a.id > :minMessageId order by a.id desc",
-                                eu.daiad.web.domain.application.AccountAlert.class);
+                        + "where a.account.id = :accountId and a.id > :minMessageId order by a.id desc",
+                        AccountAlertEntity.class);
             }
 
             if (options.getIndex() != null) {
@@ -173,11 +179,11 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             accountAlertsQuery.setParameter("accountId", user.getId());
             accountAlertsQuery.setParameter("minMessageId", options.getMinMessageId());
 
-            for (eu.daiad.web.domain.application.AccountAlert accountAlert : accountAlertsQuery.getResultList()) {
+            for (AccountAlertEntity accountAlert : accountAlertsQuery.getResultList()) {
                 // Find translation by locale
-                AlertTranslation alertTranslation = null;
+                AlertTranslationEntity alertTranslation = null;
 
-                for (AlertTranslation translation : accountAlert.getAlert().getTranslations()) {
+                for (AlertTranslationEntity translation : accountAlert.getAlert().getTranslations()) {
                     if (translation.getLocale().equals(locale)) {
                         alertTranslation = translation;
                         break;
@@ -189,7 +195,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 
                 // Build localized strings using translation and properties
                 Map<String, String> formatParams = new HashMap<>();
-                for (AccountAlertProperty p : accountAlert.getProperties()) {
+                for (AccountAlertPropertyEntity p : accountAlert.getProperties()) {
                     Map.Entry<String, String> p1 = preprocessFormatParameter(p.getKey(), p.getValue(), locale1);
                     formatParams.put(p1.getKey(), p1.getValue());
                 }
@@ -205,10 +211,9 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
                                     new Locale(locale));
                     description = descriptionTemplate.format(formatParams);
                 }
-                eu.daiad.web.model.message.AccountAlert message = new eu.daiad.web.model.message.AccountAlert(
-                                EnumAlertType.fromInteger(accountAlert.getAlert().getId()));
-
-                message.setId(accountAlert.getId());
+                
+                EnumAlertType alertType = EnumAlertType.fromInteger(accountAlert.getAlert().getId());
+                Alert message = new Alert(alertType, accountAlert.getId());
                 message.setPriority(accountAlert.getAlert().getPriority());
                 message.setTitle(title);
                 message.setDescription(description);
@@ -241,20 +246,20 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             result.setTotalRecommendations(totalRecommendations);
 
             // Build query
-            TypedQuery<eu.daiad.web.domain.application.AccountDynamicRecommendation> accountRecommendationQuery;
+            TypedQuery<AccountDynamicRecommendationEntity> accountRecommendationQuery;
 
             if ((options.getAscending() != null) && (options.getAscending() == true)) {
                 // Ascending order
                 accountRecommendationQuery = entityManager
                                 .createQuery("select a from account_dynamic_recommendation a "
                                                 + "where a.account.id = :accountId and a.id > :minMessageId order by a.id",
-                                                eu.daiad.web.domain.application.AccountDynamicRecommendation.class);
+                                                eu.daiad.web.domain.application.AccountDynamicRecommendationEntity.class);
             } else {
                 // Descending order
                 accountRecommendationQuery = entityManager
                                 .createQuery("select a from account_dynamic_recommendation a "
                                                 + "where a.account.id = :accountId and a.id > :minMessageId order by a.id desc",
-                                                eu.daiad.web.domain.application.AccountDynamicRecommendation.class);
+                                                eu.daiad.web.domain.application.AccountDynamicRecommendationEntity.class);
             }
 
             if (options.getIndex() != null) {
@@ -267,26 +272,23 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             accountRecommendationQuery.setParameter("accountId", user.getId());
             accountRecommendationQuery.setParameter("minMessageId", options.getMinMessageId());
 
-            for (eu.daiad.web.domain.application.AccountDynamicRecommendation accountRecommendation : accountRecommendationQuery
-                            .getResultList()) {
+            for (AccountDynamicRecommendationEntity accountRecommendation : accountRecommendationQuery.getResultList()) {
                 // Find translation by locale
-                DynamicRecommendationTranslation recommendationTranslation = null;
+                DynamicRecommendationTranslationEntity recommendationTranslation = null;
 
-                for (DynamicRecommendationTranslation translation : accountRecommendation.getRecommendation()
+                for (DynamicRecommendationTranslationEntity translation : accountRecommendation.getRecommendation()
                                 .getTranslations()) {
                     if (translation.getLocale().equals(locale)) {
                         recommendationTranslation = translation;
                         break;
                     }
                 }
-
-                if (recommendationTranslation == null) {
+                if (recommendationTranslation == null)
                     continue;
-                }
 
                 // Build localized strings using translation and properties
                 Map<String, String> formatParams = new HashMap<>();
-                for (AccountDynamicRecommendationProperty p : accountRecommendation.getProperties()) {
+                for (AccountDynamicRecommendationPropertyEntity p : accountRecommendation.getProperties()) {
                     Map.Entry<String, String> p1 = preprocessFormatParameter(p.getKey(), p.getValue(), locale1);
                     formatParams.put(p1.getKey(), p1.getValue());
                 }
@@ -298,12 +300,10 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
                 String description = descriptionTemplate.format(formatParams);
 
                 // Create recommendation
-                eu.daiad.web.model.message.AccountDynamicRecommendation message = 
-                        new eu.daiad.web.model.message.AccountDynamicRecommendation(
-                                EnumDynamicRecommendationType.fromInteger(
-                                        accountRecommendation.getRecommendation().getId()));
-
-                message.setId(accountRecommendation.getId());
+                EnumDynamicRecommendationType recommendationType = EnumDynamicRecommendationType
+                        .fromInteger(accountRecommendation.getRecommendation().getId());
+                DynamicRecommendation message = new DynamicRecommendation(
+                        recommendationType, accountRecommendation.getId());
                 message.setPriority(accountRecommendation.getRecommendation().getPriority());
                 message.setTitle(title);
                 message.setDescription(description);
@@ -312,7 +312,6 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
                 if (accountRecommendation.getAcknowledgedOn() != null) {
                     message.setAcknowledgedOn(accountRecommendation.getAcknowledgedOn().getMillis());
                 }
-
                 messages.add(message);
             }
         }
@@ -336,18 +335,18 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             result.setTotalAnnouncements(totalAnnouncements);
 
             // Build query
-            TypedQuery<eu.daiad.web.domain.application.AccountAnnouncement> accountAnnouncementsQuery;
+            TypedQuery<eu.daiad.web.domain.application.AccountAnnouncementEntity> accountAnnouncementsQuery;
 
             if ((options.getAscending() != null) && (options.getAscending() == true)) {
                 // Ascending order
                 accountAnnouncementsQuery = entityManager.createQuery("select a from account_announcement a "
                                 + "where a.account.id = :accountId and a.id > :minMessageId order by a.id",
-                                eu.daiad.web.domain.application.AccountAnnouncement.class);
+                                eu.daiad.web.domain.application.AccountAnnouncementEntity.class);
             } else {
                 // Descending order
                 accountAnnouncementsQuery = entityManager.createQuery("select a from account_announcement a "
                                 + "where a.account.id = :accountId and a.id > :minMessageId order by a.id desc",
-                                eu.daiad.web.domain.application.AccountAnnouncement.class);
+                                eu.daiad.web.domain.application.AccountAnnouncementEntity.class);
             }
 
             if (options.getIndex() != null) {
@@ -360,37 +359,31 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             accountAnnouncementsQuery.setParameter("accountId", user.getId());
             accountAnnouncementsQuery.setParameter("minMessageId", options.getMinMessageId());
 
-            for (eu.daiad.web.domain.application.AccountAnnouncement accountAnnouncement : accountAnnouncementsQuery.getResultList()) {
+            for (eu.daiad.web.domain.application.AccountAnnouncementEntity accountAnnouncement : accountAnnouncementsQuery.getResultList()) {
                 // Find translation by locale
-                AnnouncementTranslation announcementTranslation = null;
+                AnnouncementTranslationEntity announcementTranslation = null;
 
-                for (AnnouncementTranslation translation : accountAnnouncement.getAnnouncement().getTranslations()) {
+                for (AnnouncementTranslationEntity translation : accountAnnouncement.getAnnouncement().getTranslations()) {
                     if (translation.getLocale().equals(locale)) {
                         announcementTranslation = translation;
                         break;
                     }
 
                 }
-
-                if (announcementTranslation == null) {
+                if (announcementTranslation == null)
                     continue;
-                }
 
-                eu.daiad.web.model.message.AccountAnnouncement message = new eu.daiad.web.model.message.AccountAnnouncement();
-
+                Announcement message = new Announcement();
                 message.setId(accountAnnouncement.getId());
                 message.setPriority(accountAnnouncement.getAnnouncement().getPriority());
-
                 message.setTitle(announcementTranslation.getTitle());                              
                 if(announcementTranslation.getContent() != null){
                     message.setContent(announcementTranslation.getContent());
                 }
-                
                 message.setCreatedOn(accountAnnouncement.getCreatedOn().getMillis());
                 if (accountAnnouncement.getAcknowledgedOn() != null) {
                     message.setAcknowledgedOn(accountAnnouncement.getAcknowledgedOn().getMillis());
                 }
-
                 messages.add(message);
             }
         } 
@@ -415,18 +408,18 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             result.setTotalTips(totalTips);
 
             // Build query
-            TypedQuery<eu.daiad.web.domain.application.AccountStaticRecommendation> accountTipQuery;
+            TypedQuery<AccountStaticRecommendationEntity> accountTipQuery;
 
             if ((options.getAscending() != null) && (options.getAscending() == true)) {
                 // Ascending order
                 accountTipQuery = entityManager.createQuery("select a from account_static_recommendation a "
                                 + "where a.account.id = :accountId and a.id > :minMessageId order by a.id",
-                                eu.daiad.web.domain.application.AccountStaticRecommendation.class);
+                                AccountStaticRecommendationEntity.class);
             } else {
                 // Descending order
                 accountTipQuery = entityManager.createQuery("select a from account_static_recommendation a "
                                 + "where a.account.id = :accountId and a.id > :minMessageId order by a.id desc",
-                                eu.daiad.web.domain.application.AccountStaticRecommendation.class);
+                                AccountStaticRecommendationEntity.class);
             }
 
             if (options.getIndex() != null) {
@@ -439,9 +432,8 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             accountTipQuery.setParameter("accountId", user.getId());
             accountTipQuery.setParameter("minMessageId", options.getMinMessageId());
 
-            for (eu.daiad.web.domain.application.AccountStaticRecommendation tip : accountTipQuery.getResultList()) {
-                eu.daiad.web.model.message.AccountStaticRecommendation message = new eu.daiad.web.model.message.AccountStaticRecommendation();
-
+            for (AccountStaticRecommendationEntity tip : accountTipQuery.getResultList()) {
+                StaticRecommendation message = new StaticRecommendation();
                 message.setId(tip.getId());
                 message.setIndex(tip.getRecommendation().getIndex());
                 message.setTitle(tip.getRecommendation().getTitle());
@@ -464,30 +456,20 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
         }
 
         result.setMessages(messages);
-
         return result;
     }
 
     @Override
-    public List<Message> getAdvisoryMessages(String locale) {
+    public List<Message> getAdvisoryMessages(String locale) 
+    {
         List<Message> messages = new ArrayList<>();
 
-        switch (locale) {
-            case "en":
-            case "es":
-                // Ignore
-                break;
-            default:
-                // Set default
-                locale = "en";
-        }
-
-        TypedQuery<eu.daiad.web.domain.application.StaticRecommendation> accountAlertsQuery = entityManager
-                        .createQuery("select a from static_recommendation a where a.locale = :locale",
-                                        eu.daiad.web.domain.application.StaticRecommendation.class);
+        TypedQuery<StaticRecommendationEntity> accountAlertsQuery = entityManager.createQuery(
+                "select a from static_recommendation a where a.locale = :locale",
+                StaticRecommendationEntity.class);
         accountAlertsQuery.setParameter("locale", locale);
 
-        for (StaticRecommendation staticRecommendation : accountAlertsQuery.getResultList()) {
+        for (StaticRecommendationEntity staticRecommendation : accountAlertsQuery.getResultList()) {
             eu.daiad.web.model.message.StaticRecommendation message = new eu.daiad.web.model.message.StaticRecommendation();
 
             message.setId(staticRecommendation.getId());
@@ -510,19 +492,17 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 
             messages.add(message);
         }
-
         return messages;
     }
 
     @Override
     public void persistAdvisoryMessageActiveStatus(int id, boolean active){
-        TypedQuery<eu.daiad.web.domain.application.StaticRecommendation> advisoryMessage = entityManager
+        TypedQuery<eu.daiad.web.domain.application.StaticRecommendationEntity> advisoryMessage = entityManager
                 .createQuery("select s from static_recommendation s where s.id = :id",
-                    eu.daiad.web.domain.application.StaticRecommendation.class);    
+                    eu.daiad.web.domain.application.StaticRecommendationEntity.class);    
         advisoryMessage.setParameter("id", id);
+        List<StaticRecommendationEntity> advisoryMessages = advisoryMessage.getResultList();
 
-        List<StaticRecommendation> advisoryMessages = advisoryMessage.getResultList();
-            
         if(!advisoryMessages.isEmpty()){
             advisoryMessages.get(0).setActive(active);
         }
@@ -532,15 +512,15 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
     public void persistNewAdvisoryMessage(eu.daiad.web.model.message.StaticRecommendation staticRecommendation){
         AuthenticatedUser user = this.getCurrentAuthenticatedUser();
         
-        TypedQuery<StaticRecommendationCategory> staticRecommendationCategoryQuery = entityManager
+        TypedQuery<StaticRecommendationCategoryEntity> staticRecommendationCategoryQuery = entityManager
                         .createQuery("select c from static_recommendation_category c where c.id = :id",
-                                        StaticRecommendationCategory.class);
+                                        StaticRecommendationCategoryEntity.class);
 
         staticRecommendationCategoryQuery.setParameter("id", 7); //General Tips
 
-        List<StaticRecommendationCategory> staticRecommendationsCategoryList = staticRecommendationCategoryQuery.getResultList();    
+        List<StaticRecommendationCategoryEntity> staticRecommendationsCategoryList = staticRecommendationCategoryQuery.getResultList();    
         
-        StaticRecommendationCategory category = null;
+        StaticRecommendationCategoryEntity category = null;
         if(staticRecommendationsCategoryList.size() == 1){
             category = staticRecommendationsCategoryList.get(0);
         }
@@ -548,7 +528,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
         Integer maxIndex = entityManager.createQuery("select max(s.index) from static_recommendation s", Integer.class).getSingleResult();
         int nextIndex = maxIndex+1;
                
-        StaticRecommendation newStaticRecommendation = new StaticRecommendation();
+        StaticRecommendationEntity newStaticRecommendation = new StaticRecommendationEntity();
         newStaticRecommendation.setIndex(nextIndex);
         newStaticRecommendation.setActive(false);
         newStaticRecommendation.setLocale(user.getLocale());     
@@ -563,13 +543,13 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
     @Override
     public void updateAdvisoryMessage(eu.daiad.web.model.message.StaticRecommendation staticRecommendation){
 
-        TypedQuery<eu.daiad.web.domain.application.StaticRecommendation> staticRecommendationQuery = entityManager
+        TypedQuery<eu.daiad.web.domain.application.StaticRecommendationEntity> staticRecommendationQuery = entityManager
                         .createQuery("select s from static_recommendation s where s.id = :id",
-                                        eu.daiad.web.domain.application.StaticRecommendation.class);
+                                        eu.daiad.web.domain.application.StaticRecommendationEntity.class);
 
         staticRecommendationQuery.setParameter("id", staticRecommendation.getId());
 
-        List<StaticRecommendation> staticRecommendations = staticRecommendationQuery.getResultList();
+        List<StaticRecommendationEntity> staticRecommendations = staticRecommendationQuery.getResultList();
 
         if (staticRecommendations.size() == 1) {
             staticRecommendations.get(0).setTitle(staticRecommendation.getTitle());
@@ -581,17 +561,17 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
     @Override
     public void deleteAdvisoryMessage(eu.daiad.web.model.message.StaticRecommendation staticRecommendation){
 
-        TypedQuery<eu.daiad.web.domain.application.StaticRecommendation> staticRecommendationQuery = entityManager
+        TypedQuery<eu.daiad.web.domain.application.StaticRecommendationEntity> staticRecommendationQuery = entityManager
                         .createQuery("select s from static_recommendation s where s.id = :id",
-                                        eu.daiad.web.domain.application.StaticRecommendation.class).setFirstResult(0).setMaxResults(1);
+                                        eu.daiad.web.domain.application.StaticRecommendationEntity.class).setFirstResult(0).setMaxResults(1);
 
         staticRecommendationQuery.setParameter("id", staticRecommendation.getId());
 
-        List<StaticRecommendation> staticRecommendations = staticRecommendationQuery.getResultList();
+        List<StaticRecommendationEntity> staticRecommendations = staticRecommendationQuery.getResultList();
 
         if (staticRecommendations.size() == 1) {
             
-            StaticRecommendation toBeDeleted = staticRecommendations.get(0);
+            StaticRecommendationEntity toBeDeleted = staticRecommendations.get(0);
             this.entityManager.remove(toBeDeleted);    
 
         }                          
@@ -600,17 +580,17 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
     @Override
     public void deleteAnnouncement(eu.daiad.web.model.message.Announcement announcement){
 
-        TypedQuery<eu.daiad.web.domain.application.Announcement> announcementQuery = entityManager
+        TypedQuery<eu.daiad.web.domain.application.AnnouncementEntity> announcementQuery = entityManager
                         .createQuery("select a from announcement a where a.id = :id",
-                                        eu.daiad.web.domain.application.Announcement.class).setFirstResult(0).setMaxResults(1);
+                                        eu.daiad.web.domain.application.AnnouncementEntity.class).setFirstResult(0).setMaxResults(1);
 
         announcementQuery.setParameter("id", announcement.getId());
 
-        List<Announcement> announcements = announcementQuery.getResultList();
+        List<AnnouncementEntity> announcements = announcementQuery.getResultList();
 
         if (announcements.size() == 1) {
             
-            Announcement toBeDeleted = announcements.get(0);
+            AnnouncementEntity toBeDeleted = announcements.get(0);
             this.entityManager.remove(toBeDeleted);    
 
         }                          
@@ -630,12 +610,12 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
                 locale = "en";
         }
 
-        TypedQuery<eu.daiad.web.domain.application.AnnouncementTranslation> accountAnnouncementsQuery = entityManager
+        TypedQuery<eu.daiad.web.domain.application.AnnouncementTranslationEntity> accountAnnouncementsQuery = entityManager
                         .createQuery("select a from announcement_translation a where a.locale = :locale order by a.id desc",
-                                        eu.daiad.web.domain.application.AnnouncementTranslation.class);
+                                        eu.daiad.web.domain.application.AnnouncementTranslationEntity.class);
         accountAnnouncementsQuery.setParameter("locale", locale);
 
-        for (AnnouncementTranslation announcementTranslation : accountAnnouncementsQuery.getResultList()) {
+        for (AnnouncementTranslationEntity announcementTranslation : accountAnnouncementsQuery.getResultList()) {
             eu.daiad.web.model.message.AnnouncementTranslation message = new eu.daiad.web.model.message.AnnouncementTranslation();
 
             message.setId(announcementTranslation.getId());
@@ -665,15 +645,15 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
                 locale = "en";
         }
 
-        TypedQuery<eu.daiad.web.domain.application.AnnouncementTranslation> accountAnnouncementQuery = entityManager
+        TypedQuery<eu.daiad.web.domain.application.AnnouncementTranslationEntity> accountAnnouncementQuery = entityManager
                         .createQuery("select a from announcement_translation a where a.locale = :locale and a.id = :id",
-                                        eu.daiad.web.domain.application.AnnouncementTranslation.class);
+                                        eu.daiad.web.domain.application.AnnouncementTranslationEntity.class);
         accountAnnouncementQuery.setParameter("locale", locale);
         accountAnnouncementQuery.setParameter("id", id);
 
-        List<AnnouncementTranslation> announcements = accountAnnouncementQuery.getResultList();
+        List<AnnouncementTranslationEntity> announcements = accountAnnouncementQuery.getResultList();
         if(accountAnnouncementQuery.getResultList().size() == 1){
-            AnnouncementTranslation announcementTranslation = announcements.get(0);
+            AnnouncementTranslationEntity announcementTranslation = announcements.get(0);
             message.setId(announcementTranslation.getId());
             message.setTitle(announcementTranslation.getTitle());
             message.setContent(announcementTranslation.getContent());
@@ -690,13 +670,13 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
         
         List<ReceiverAccount> receivers = new ArrayList<>();
 
-        TypedQuery<eu.daiad.web.domain.application.AccountAnnouncement> accountAnnouncementQuery = entityManager
+        TypedQuery<eu.daiad.web.domain.application.AccountAnnouncementEntity> accountAnnouncementQuery = entityManager
                         .createQuery("select a from account_announcement a where a.announcement.id = :id",
-                                        eu.daiad.web.domain.application.AccountAnnouncement.class);
+                                        eu.daiad.web.domain.application.AccountAnnouncementEntity.class);
 
         accountAnnouncementQuery.setParameter("id", announcementId);
 
-        for (AccountAnnouncement accountAnnouncement : accountAnnouncementQuery.getResultList()) {
+        for (AccountAnnouncementEntity accountAnnouncement : accountAnnouncementQuery.getResultList()) {
             
             ReceiverAccount receiverAccount = new ReceiverAccount();
             receiverAccount.setAccountId(accountAnnouncement.getAccount().getId());
@@ -710,7 +690,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
     }
     
     @Override
-    public List<AlertAnalytics> getAlertStatistics(String locale, int utilityId, MessageStatisticsQuery query) {
+    public List<AlertAnalyticsEntity> getAlertStatistics(String locale, int utilityId, MessageStatisticsQuery query) {
 
         //TODO - align sql dates with joda datetimes
         Date slqDateStart = new Date(query.getTime().getStart());
@@ -730,19 +710,19 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             "where \n" +
             "(acc.utility_id=?1) and (aa.created_on >= ?2 and aa.created_on <= ?3 or aa.created_on is NULL)\n" +
             "group by\n" +
-            "at.alert_id,at.title,at.locale, at.description", AlertAnalytics.class);
+            "at.alert_id,at.title,at.locale, at.description", AlertAnalyticsEntity.class);
         
         nativeQuery.setParameter(1, utilityId);
         nativeQuery.setParameter(2, slqDateStart);
         nativeQuery.setParameter(3, slqDateEnd);
         
-        List<AlertAnalytics> alertAnalytics = nativeQuery.getResultList();
+        List<AlertAnalyticsEntity> alertAnalytics = nativeQuery.getResultList();
 
         return alertAnalytics;
     }    
 
     @Override
-    public List<RecommendationAnalytics> getRecommendationStatistics(String locale, int utilityId, MessageStatisticsQuery query) {
+    public List<RecommendationAnalyticsEntity> getRecommendationStatistics(String locale, int utilityId, MessageStatisticsQuery query) {
         
         Date slqDateStart = new Date(query.getTime().getStart());
         Date slqDateEnd = new Date(query.getTime().getEnd());
@@ -761,13 +741,13 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             "where \n" +
             "(acc.utility_id=?1) and (ar.created_on >= ?2 and ar.created_on <= ?3 or ar.created_on is NULL)\n" +
             "group by\n" +
-            "rt.dynamic_recommendation_id,rt.title,rt.locale, rt.description", RecommendationAnalytics.class);
+            "rt.dynamic_recommendation_id,rt.title,rt.locale, rt.description", RecommendationAnalyticsEntity.class);
 
         nativeQuery.setParameter(1, utilityId);
         nativeQuery.setParameter(2, slqDateStart);
         nativeQuery.setParameter(3, slqDateEnd);
         
-        List<RecommendationAnalytics> recommendationAnalytics = nativeQuery.getResultList();
+        List<RecommendationAnalyticsEntity> recommendationAnalytics = nativeQuery.getResultList();
 
         return recommendationAnalytics;
     }
@@ -781,16 +761,16 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
         
         List<ReceiverAccount> receivers = new ArrayList<>();
 
-        TypedQuery<eu.daiad.web.domain.application.AccountAlert> accountAlertQuery = entityManager
+        TypedQuery<eu.daiad.web.domain.application.AccountAlertEntity> accountAlertQuery = entityManager
                         .createQuery("select a from account_alert a where a.account.utility.id = :utilityId and a.alert.id = :id and a.createdOn > :startDate and a.createdOn < :endDate",
-                                        eu.daiad.web.domain.application.AccountAlert.class);
+                                        eu.daiad.web.domain.application.AccountAlertEntity.class);
 
         accountAlertQuery.setParameter("utilityId", utilityId);
         accountAlertQuery.setParameter("id", alertId);
         accountAlertQuery.setParameter("startDate", startDate);
         accountAlertQuery.setParameter("endDate", endDate);        
 
-        for (AccountAlert accountAlert : accountAlertQuery.getResultList()) {
+        for (AccountAlertEntity accountAlert : accountAlertQuery.getResultList()) {
             
             ReceiverAccount receiverAccount = new ReceiverAccount();
             receiverAccount.setAccountId(accountAlert.getAccount().getId());
@@ -811,16 +791,16 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
         
         List<ReceiverAccount> receivers = new ArrayList<>();
 
-        TypedQuery<eu.daiad.web.domain.application.AccountDynamicRecommendation> accountRecommendationQuery = entityManager
+        TypedQuery<eu.daiad.web.domain.application.AccountDynamicRecommendationEntity> accountRecommendationQuery = entityManager
                         .createQuery("select a from account_dynamic_recommendation a where a.account.utility.id = :utilityId and a.recommendation.id = :id and a.createdOn > :startDate and a.createdOn < :endDate",
-                                        eu.daiad.web.domain.application.AccountDynamicRecommendation.class);
+                                        eu.daiad.web.domain.application.AccountDynamicRecommendationEntity.class);
         
         accountRecommendationQuery.setParameter("utilityId", utilityId);
         accountRecommendationQuery.setParameter("id", recommendationId);
         accountRecommendationQuery.setParameter("startDate", startDate);
         accountRecommendationQuery.setParameter("endDate", endDate);        
 
-        for (AccountDynamicRecommendation accountRecommendation : accountRecommendationQuery.getResultList()) {
+        for (AccountDynamicRecommendationEntity accountRecommendation : accountRecommendationQuery.getResultList()) {
             
             ReceiverAccount receiverAccount = new ReceiverAccount();
             receiverAccount.setAccountId(accountRecommendation.getAccount().getId());
@@ -834,87 +814,81 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
     }
 
     @Override
-    public Alert getAlert(int id, String locale) {
+    public Alert getAlert(int id, String locale) 
+    {            
+        TypedQuery<AlertTranslationEntity> query = entityManager.createQuery(
+                "select a from alert_translation a where a.locale = :locale and a.id = :id",
+                AlertTranslationEntity.class);
+        query.setParameter("locale", locale);
+        query.setParameter("id", id);
+
+        Alert alert = null;
+        AlertTranslationEntity translationEntity = null;
+        try {
+            translationEntity = query.getSingleResult();
+        } catch (NoResultException ex) {
+            translationEntity = null;
+            alert = new Alert(EnumAlertType.UNDEFINED, -1);
+        }
         
-        Alert alert = new Alert(EnumAlertType.UNDEFINED);
-        switch (locale) {
-            case "en":
-            case "es":
-                // Ignore
-                break;
-            default:
-                // Set default
-                locale = "en";
+        if (translationEntity != null) {
+            AlertEntity alertEntity = translationEntity.getAlert();
+            alert = new Alert(EnumAlertType.fromInteger(alertEntity.getId()), -1);
+            alert.setTitle(translationEntity.getTitle());
+            alert.setDescription(translationEntity.getDescription());
         }
-
-        TypedQuery<eu.daiad.web.domain.application.AlertTranslation> accountAlertQuery = entityManager
-                        .createQuery("select a from alert_translation a where a.locale = :locale and a.id = :id",
-                                        eu.daiad.web.domain.application.AlertTranslation.class);
-        accountAlertQuery.setParameter("locale", locale);
-        accountAlertQuery.setParameter("id", id);
-
-        List<AlertTranslation> alerts = accountAlertQuery.getResultList();
-        if(accountAlertQuery.getResultList().size() == 1){
-            AlertTranslation alertTranslation = alerts.get(0);
-            alert.setId(alertTranslation.getId());
-            alert.setTitle(alertTranslation.getTitle());
-            alert.setDescription(alertTranslation.getDescription());
-
-        }
-
+        
         return alert;
     }
     
     @Override
-    public DynamicRecommendation getRecommendation(int id, String locale) {
-        
-        DynamicRecommendation recommendation = new DynamicRecommendation(EnumDynamicRecommendationType.UNDEFINED);
-        switch (locale) {
-            case "en":
-            case "es":
-                // Ignore
-                break;
-            default:
-                // Set default
-                locale = "en";
+    public DynamicRecommendation getRecommendation(int id, String locale) 
+    {   
+        TypedQuery<DynamicRecommendationTranslationEntity> query = entityManager.createQuery(
+                "select a from dynamic_recommendation_translation a where a.locale = :locale and a.id = :id",
+                DynamicRecommendationTranslationEntity.class);
+        query.setParameter("locale", locale);
+        query.setParameter("id", id);
+
+        DynamicRecommendation recommendation = null;
+        DynamicRecommendationTranslationEntity translationEntity = null;
+        try {
+            translationEntity = query.getSingleResult();
+        } catch (NoResultException ex) {
+            translationEntity = null;
+            recommendation = new DynamicRecommendation(EnumDynamicRecommendationType.UNDEFINED, -1);
         }
 
-        TypedQuery<eu.daiad.web.domain.application.DynamicRecommendationTranslation> accountRecommendationQuery = entityManager
-                        .createQuery("select a from dynamic_recommendation_translation a where a.locale = :locale and a.id = :id",
-                                        eu.daiad.web.domain.application.DynamicRecommendationTranslation.class);
-        accountRecommendationQuery.setParameter("locale", locale);
-        accountRecommendationQuery.setParameter("id", id);
-
-        List<DynamicRecommendationTranslation> recommendations = accountRecommendationQuery.getResultList();
-        if(accountRecommendationQuery.getResultList().size() == 1){
-            DynamicRecommendationTranslation recommendationTranslation = recommendations.get(0);
-            recommendation.setId(recommendationTranslation.getId());
-            recommendation.setTitle(recommendationTranslation.getTitle());
-            recommendation.setDescription(recommendationTranslation.getDescription());
+        if (translationEntity != null) {
+            DynamicRecommendationEntity recommendationEntity = translationEntity.getRecommendation();
+            recommendation = new DynamicRecommendation(
+                    EnumDynamicRecommendationType.fromInteger(recommendationEntity.getId()), -1
+            );
+            recommendation.setTitle(translationEntity.getTitle());
+            recommendation.setDescription(translationEntity.getDescription());
         }
-
         return recommendation;
     }
     
     @Override
     public void broadcastAnnouncement(AnnouncementRequest announcementRequest, String locale, String channel)
     { 
-        TypedQuery<eu.daiad.web.domain.application.Channel> channelQuery = entityManager.createQuery(
+        TypedQuery<eu.daiad.web.domain.application.ChannelEntity> channelQuery = entityManager.createQuery(
                 "select c from channel c where c.name = :name",
-                eu.daiad.web.domain.application.Channel.class)
+                eu.daiad.web.domain.application.ChannelEntity.class)
             .setFirstResult(0)
             .setMaxResults(1);
 
         channelQuery.setParameter("name", channel);
-        List<Channel> channels = channelQuery.getResultList();
+        List<ChannelEntity> channels = channelQuery.getResultList();
         
         int channelId = 1;
         if(channels.size() == 1){
-            Channel c = channels.get(0);
+            ChannelEntity c = channels.get(0);
             channelId = c.getId();
         }
 
-        AnnouncementTranslation announcementTranslation = new AnnouncementTranslation();
+        AnnouncementTranslationEntity announcementTranslation = new AnnouncementTranslationEntity();
         announcementTranslation.setTitle(announcementRequest.getAnnouncement().getTitle());
         announcementTranslation.setContent(announcementRequest.getAnnouncement().getContent());
         announcementTranslation.setLocale(locale);
@@ -923,7 +897,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
         this.entityManager.persist(announcementTranslation);
         this.entityManager.flush();
         
-        Announcement domainAnnouncement = new Announcement();
+        AnnouncementEntity domainAnnouncement = new AnnouncementEntity();
         domainAnnouncement.setId(announcementTranslation.getId());
         domainAnnouncement.setPriority(1);
         
@@ -940,7 +914,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 
     }
     
-    private void persistAccountAnnouncement(List<ReceiverAccount> receiverAccountList, Announcement domainAnnouncement) {
+    private void persistAccountAnnouncement(List<ReceiverAccount> receiverAccountList, AnnouncementEntity domainAnnouncement) {
         DateTime createdOn = DateTime.now();
 
         for(ReceiverAccount receiver : receiverAccountList){
@@ -957,7 +931,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             }
         
             if(receiverAccount != null){
-                AccountAnnouncement accountAnnouncement = new AccountAnnouncement();
+                AccountAnnouncementEntity accountAnnouncement = new AccountAnnouncementEntity();
                 accountAnnouncement.setAccount(receiverAccount); 
                 accountAnnouncement.setAnnouncement(domainAnnouncement);
                 accountAnnouncement.setCreatedOn(createdOn);
@@ -975,15 +949,15 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
     private void persistAlertAcknowledgement(int id, DateTime acknowledgedOn) {
         AuthenticatedUser user = this.getCurrentAuthenticatedUser();
 
-        TypedQuery<eu.daiad.web.domain.application.AccountAlert> accountAlertsQuery = entityManager
+        TypedQuery<eu.daiad.web.domain.application.AccountAlertEntity> accountAlertsQuery = entityManager
                         .createQuery("select a from account_alert a "
                                         + "where a.account.id = :accountId and a.id = :alertId and a.acknowledgedOn is null",
-                                        eu.daiad.web.domain.application.AccountAlert.class);
+                                        eu.daiad.web.domain.application.AccountAlertEntity.class);
 
         accountAlertsQuery.setParameter("accountId", user.getId());
         accountAlertsQuery.setParameter("alertId", id);
 
-        List<AccountAlert> alerts = accountAlertsQuery.getResultList();
+        List<AccountAlertEntity> alerts = accountAlertsQuery.getResultList();
 
         if (alerts.size() == 1) {
             alerts.get(0).setAcknowledgedOn(acknowledgedOn);
@@ -994,15 +968,15 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
     private void persistDynamicRecommendationAcknowledgement(int id, DateTime acknowledgedOn) {
         AuthenticatedUser user = this.getCurrentAuthenticatedUser();
 
-        TypedQuery<eu.daiad.web.domain.application.AccountDynamicRecommendation> accountDynamicRecommendationQuery = entityManager
+        TypedQuery<eu.daiad.web.domain.application.AccountDynamicRecommendationEntity> accountDynamicRecommendationQuery = entityManager
                         .createQuery("select a from account_dynamic_recommendation a "
                                         + "where a.account.id = :accountId and a.id = :dynamicRecommendationId and a.acknowledgedOn is null",
-                                        eu.daiad.web.domain.application.AccountDynamicRecommendation.class);
+                                        eu.daiad.web.domain.application.AccountDynamicRecommendationEntity.class);
 
         accountDynamicRecommendationQuery.setParameter("accountId", user.getId());
         accountDynamicRecommendationQuery.setParameter("dynamicRecommendationId", id);
 
-        List<AccountDynamicRecommendation> recommendations = accountDynamicRecommendationQuery.getResultList();
+        List<AccountDynamicRecommendationEntity> recommendations = accountDynamicRecommendationQuery.getResultList();
 
         if (recommendations.size() == 1) {
             recommendations.get(0).setAcknowledgedOn(acknowledgedOn);
@@ -1013,15 +987,15 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
     private void persistStaticRecommendationAcknowledgement(int id, DateTime acknowledgedOn) {
         AuthenticatedUser user = this.getCurrentAuthenticatedUser();
 
-        TypedQuery<eu.daiad.web.domain.application.AccountStaticRecommendation> accountStaticRecommendationQuery = entityManager
+        TypedQuery<eu.daiad.web.domain.application.AccountStaticRecommendationEntity> accountStaticRecommendationQuery = entityManager
                         .createQuery("select a from account_static_recommendation a "
                                                                                 + "where a.account.id = :accountId and a.id = :staticRecommendationId and a.acknowledgedOn is null",
-                                        eu.daiad.web.domain.application.AccountStaticRecommendation.class);
+                                        eu.daiad.web.domain.application.AccountStaticRecommendationEntity.class);
 
         accountStaticRecommendationQuery.setParameter("accountId", user.getId());
         accountStaticRecommendationQuery.setParameter("staticRecommendationId", id);
 
-        List<AccountStaticRecommendation> staticRecommendations = accountStaticRecommendationQuery.getResultList();
+        List<AccountStaticRecommendationEntity> staticRecommendations = accountStaticRecommendationQuery.getResultList();
 
         if (staticRecommendations.size() == 1) {
             staticRecommendations.get(0).setAcknowledgedOn(acknowledgedOn);
@@ -1032,15 +1006,15 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
     private void persistAnnouncementAcknowledgement(int id, DateTime acknowledgedOn) {
         AuthenticatedUser user = this.getCurrentAuthenticatedUser();
 
-        TypedQuery<eu.daiad.web.domain.application.AccountAnnouncement> accountAnnouncementQuery = entityManager
+        TypedQuery<eu.daiad.web.domain.application.AccountAnnouncementEntity> accountAnnouncementQuery = entityManager
                         .createQuery("select a from account_announcement a "
                                         + "where a.account.id = :accountId and a.id = :announcementId and a.acknowledgedOn is null",
-                                        eu.daiad.web.domain.application.AccountAnnouncement.class);
+                                        eu.daiad.web.domain.application.AccountAnnouncementEntity.class);
 
         accountAnnouncementQuery.setParameter("accountId", user.getId());
         accountAnnouncementQuery.setParameter("announcementId", id);
 
-        List<AccountAnnouncement> announcements = accountAnnouncementQuery.getResultList();
+        List<AccountAnnouncementEntity> announcements = accountAnnouncementQuery.getResultList();
 
         if (announcements.size() == 1) {
             announcements.get(0).setAcknowledgedOn(acknowledgedOn);

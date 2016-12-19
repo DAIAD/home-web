@@ -14,8 +14,6 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParametersIncrementer;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
@@ -24,23 +22,23 @@ import org.springframework.stereotype.Component;
 
 import eu.daiad.web.repository.application.HBaseConfigurationBuilder;
 
+/**
+ * Helper builder class for initializing a job that periodically checks the
+ * HBase cluster status.
+ */
 @Component
-public class HBaseStatusMonitorJobBuilder implements IJobBuilder {
+public class HBaseStatusMonitorJobBuilder extends BaseJobBuilder implements IJobBuilder {
 
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
 	private static final Log logger = LogFactory.getLog(HBaseStatusMonitorJobBuilder.class);
 
-	@Autowired
-	private JobBuilderFactory jobBuilderFactory;
-
-	@Autowired
-	private StepBuilderFactory stepBuilderFactory;
-
+	/**
+	 * Builder for initializing a HBase connection.
+	 */
 	@Autowired
 	private HBaseConfigurationBuilder configurationBuilder;
-
-	public HBaseStatusMonitorJobBuilder() {
-
-	}
 
 	private static class StatusTasklet implements Tasklet {
 
@@ -56,7 +54,7 @@ public class HBaseStatusMonitorJobBuilder implements IJobBuilder {
 			Admin admin = null;
 
 			try {
-				Configuration config = this.configurationBuilder.build();
+				Configuration config = configurationBuilder.build();
 
 				connection = ConnectionFactory.createConnection(config);
 
@@ -94,7 +92,7 @@ public class HBaseStatusMonitorJobBuilder implements IJobBuilder {
 	}
 
 	private Step getStatus() {
-		return stepBuilderFactory.get("getStatus").tasklet(new StatusTasklet(this.configurationBuilder)).build();
+		return stepBuilderFactory.get("getStatus").tasklet(new StatusTasklet(configurationBuilder)).build();
 	}
 
 	@Override

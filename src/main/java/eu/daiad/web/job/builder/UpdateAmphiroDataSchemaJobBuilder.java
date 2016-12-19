@@ -12,17 +12,14 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParametersIncrementer;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.scope.context.ChunkContext;
-import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.StoppableTasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.amphiro.AmphiroAbstractSession;
 import eu.daiad.web.model.amphiro.AmphiroMeasurement;
 import eu.daiad.web.model.amphiro.AmphiroMeasurementCollection;
@@ -56,20 +53,9 @@ import eu.daiad.web.repository.application.IUtilityRepository;
  * to the table with the current schema version.
  */
 @Component
-public class UpdateAmphiroDataSchemaJobBuilder implements IJobBuilder {
+public class UpdateAmphiroDataSchemaJobBuilder extends BaseJobBuilder implements IJobBuilder {
+
     private static final Log logger = LogFactory.getLog(UpdateAmphiroDataSchemaJobBuilder.class);
-
-    /**
-     * Convenient factory for a {@link JobBuilder} for building jobs instances.
-     */
-    @Autowired
-    private JobBuilderFactory jobBuilderFactory;
-
-    /**
-     * Convenient factory for a {@link StepBuilder} for building job steps.
-     */
-    @Autowired
-    private StepBuilderFactory stepBuilderFactory;
 
     /**
      * Repository for accessing utility data.
@@ -141,6 +127,10 @@ public class UpdateAmphiroDataSchemaJobBuilder implements IJobBuilder {
         session.setTemperature(data.getTemperature());
         session.setVolume(data.getVolume());
         session.setTimestamp(data.getTimestamp());
+
+        for(KeyValuePair kvp : data.getProperties()) {
+            session.addProperty(kvp.getKey(), kvp.getValue());
+        }
 
         sessions.add(session);
         request.setSessions(sessions);
@@ -302,9 +292,6 @@ public class UpdateAmphiroDataSchemaJobBuilder implements IJobBuilder {
                                                     if ((totalSessions % 1000) == 0) {
                                                         logger.info(String.format("V1 to V3: Inserted %d sessions ...", totalSessions));
                                                     }
-                                                    if ((totalMeasurements > 0) && ((totalMeasurements % 1000) == 0)) {
-                                                        logger.info(String.format("V1 to V3: Inserted %d measurements ...", totalMeasurements));
-                                                    }
                                                 }
                                             }
                                         }
@@ -424,9 +411,6 @@ public class UpdateAmphiroDataSchemaJobBuilder implements IJobBuilder {
                                                     if ((totalSessions % 1000) == 0) {
                                                         logger.info(String.format("V2 to V3: Inserted %d sessions ...", totalSessions));
                                                     }
-                                                    if ((totalMeasurements > 0) && ((totalMeasurements % 1000) == 0)) {
-                                                        logger.info(String.format("V2 to V3: Inserted %d measurements ...", totalMeasurements));
-                                                    }
                                                 }
                                             }
                                         }
@@ -475,6 +459,7 @@ public class UpdateAmphiroDataSchemaJobBuilder implements IJobBuilder {
         return jobBuilderFactory.get(name)
                                 .incrementer(incrementer)
                                 .start(transferDataSchema2())
+                                .next(transferDataSchema1())
                                 .build();
     }
 }

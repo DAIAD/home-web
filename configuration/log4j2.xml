@@ -55,6 +55,15 @@
             </Policies>
             <DefaultRolloverStrategy max="100" />
         </RollingFile>
+
+        <RollingFile name="SendMailFile" filename="${baseDir}/send-mail.log"
+            filepattern="${baseDir}/send-mail-%d{MM-dd-yyyy}-%i.log.gz">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss};%m%n" />
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="100" />
+        </RollingFile>
     </Appenders>
     <Loggers>
         <Logger name="AmphiroSessionLogger" level="INFO" additivity="false">
@@ -74,6 +83,11 @@
         <Logger name="AmphiroSessionIgnoreLogger" level="INFO"
             additivity="false">
             <AppenderRef ref="AmphiroSessionIgnoreFile" />
+        </Logger>
+
+        <Logger name="SendMailLogger" level="INFO"
+            additivity="false">
+            <AppenderRef ref="SendMailFile" />
         </Logger>
 
         <Logger name="org.hibernate.SQL" level="WARN"></Logger>

@@ -74,6 +74,12 @@ public class WaterIqHistoryEntity {
     @Column(name = "all_1m_consumption")
     private double allLast1MonthConsmution;
 
+    @Column(name = "interval_year")
+    private int year;
+
+    @Column(name = "interval_month")
+    private int month;
+
     public int getId() {
         return id;
     }
@@ -204,6 +210,22 @@ public class WaterIqHistoryEntity {
 
     public void setAllLast1MonthConsmution(double allLast1MonthConsmution) {
         this.allLast1MonthConsmution = allLast1MonthConsmution;
+    }
+
+    public int getYear() {
+        return year;
+    }
+
+    public void setYear(int year) {
+        this.year = year;
+    }
+
+    public int getMonth() {
+        return month;
+    }
+
+    public void setMonth(int month) {
+        this.month = month;
     }
 
 }

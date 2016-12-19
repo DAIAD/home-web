@@ -9,11 +9,13 @@
  *
  * @apiParam {String} username User name
  * @apiParam {String} password User password
+ * @apiParam {String} version  DAIAD@home mobile application version.
  *
  * @apiParamExample {json} Request Example
  * {
  *   username: "user@daiad.eu",
- *   password: "****"
+ *   password: "****",
+ *   version: "1.5.0"
  * }
  *
  * @apiSuccess (ProfileResponse) {Boolean}  success                 Returns <code>true</code> or <code>false</code> indicating success of the operation.
@@ -63,7 +65,6 @@
  * @apiSuccess (Profile)            {Object[]}   devices               Array of <code>DeviceRegistration</code> objects representing the Amphiro or Smart Water Meter devices registered to the authenticated user. Instances are implemented by classes <code>WaterMeterDeviceRegistration</code> and <code>AmphiroDeviceRegistration</code>.
  * @apiSuccess (Profile)            {Object}     utility               Utility information.
  * @apiSuccess (Profile)            {Object}     household             Household information.
- * @apiSuccess (Profile)            {Object}     comparison            Comparison and ranking data.
  *
  * @apiSuccess (DeviceRegistration) {String}     type                  Device type. Valid values are <code>METER</code> and <code>AMPHIRO</code>.
  * @apiSuccess (DeviceRegistration) {String}     deviceKey             Unique device id (UUID).
@@ -102,35 +103,6 @@
  * @apiSuccess (Member)     {String}     photo               Base64 encoded member image.
  * @apiSuccess (Member)     {Number}     createdOn           Creation time stamp.
  * @apiSuccess (Member)     {Number}     updatedOn           Last update time stamp.
- *
- * @apiSuccess (Comparison) {Ojbect}     waterIq                Object of type <code>WaterIQ</code> with water IQ data.
- * @apiSuccess (Comparison) {Ojbect[]}   monthlyConsumtpion     Array of <code>MonthlyConsumption</code> objects.
- *
- * @apiSuccess (WaterIQ)    {Object[]}   user                   Array of <code>WaterIQRanking</code> objects.
- * @apiSuccess (WaterIQ)    {Object}     similar                Similar users ranking data.
- * @apiSuccess (WaterIQ)    {Number}     similar.volume         User average water consumption.
- * @apiSuccess (WaterIQ)    {String}     similar.value          Similar users ranking.
- * @apiSuccess (WaterIQ)    {Object}     nearest                Nearest users (neighbors) ranking data.
- * @apiSuccess (WaterIQ)    {Number}     nearest.volume         User average water consumption.
- * @apiSuccess (WaterIQ)    {String}     nearest.value          User group ranking.
- * @apiSuccess (WaterIQ)    {Object}     all                    All utility users ranking data.
- * @apiSuccess (WaterIQ)    {Number}     all.volume             User average water consumption.
- * @apiSuccess (WaterIQ)    {String}     all.value              Utility ranking.
- *
- * @apiSuccess (WaterIQRanking)    {Number}      volume         User water consumption.
- * @apiSuccess (WaterIQRanking)    {String}      value          User ranking.
- * @apiSuccess (WaterIQRanking)    {Number}      timestamp      Date the ranking was computed.
- * @apiSuccess (WaterIQRanking)    {String}      from           Time interval start date formatted using the pattern <code>yyyyMMdd</code>.
- * @apiSuccess (WaterIQRanking)    {String}      to             Time interval end date formatted using the pattern <code>yyyyMMdd</code>.
- *
- * @apiSuccess (MonthlyConsumption) {Number}     user           User total water consumption.
- * @apiSuccess (MonthlyConsumption) {Number}     similar        Similar users total water consumption.
- * @apiSuccess (MonthlyConsumption) {Number}     nearest        Nearest users (neighbors) total water consumption.
- * @apiSuccess (MonthlyConsumption) {Number}     all            All utility users total water consumption.
- * @apiSuccess (MonthlyConsumption) {Number}     month          Month index from 1 to 12.
- * @apiSuccess (MonthlyConsumption) {String}     from           Time interval start date formatted using the pattern <code>yyyyMMdd</code>.
- * @apiSuccess (MonthlyConsumption) {String}     to             Time interval end date formatted using the pattern <code>yyyyMMdd</code>.
- *
  *
  * @apiSuccessExample {json} Response Example
  * HTTP/1.1 200 OK
@@ -208,46 +180,6 @@
  *       "totalMembers": 1,
  *       "maleMembers": 1
  *     },
- *     "comparison": {
- *       "waterIq": {
- *         "user": [{
- *           "volume": 0,
- *           "value": "A",
- *           "timestamp": 1479248441586,
- *           "from": "20161107",
- *           "to": "20161113"
- *         }],
- *         "similar": {
- *           "volume": 532.56,
- *           "value": "B"
- *         },
- *         "nearest": {
- *           "volume": 658.24,
- *           "value": "B"
- *         },
- *         "all": {
- *           "volume": 624.63,
- *           "value": "B"
- *         }
- *       },
- *       "monthlyConsumtpion": [{
- *         "month": 6,
- *         "from": "20160601",
- *         "to": "20160630",
- *         "user": 1188,
- *         "similar": 233700,
- *         "nearest": 364357,
- *         "all": 586977
- *       }, {
- *         "month": 9,
- *         "from": "20160901",
- *         "to": "20160930",
- *         "user": 195,
- *         "similar": 195563,
- *         "nearest": 323395,
- *         "all": 508470
- *       }]
- *     }
  *   },
  *   "success": true
  * }
@@ -463,3 +395,158 @@ function notifyProfile() { return; }
  *
  */
 function saveHousehold() { return; }
+
+/**
+ * @api {post} /v1/comparison/{year}/{month} Get comparisons
+ * @apiVersion 0.0.1
+ * @apiName GetComparison
+ * @apiGroup Profile
+ * @apiPermission ROLE_USER
+ *
+ * @apiDescription Loads comparison and ranking data for a single user starting from the selected year and month. The query returns data for the selected month and the previous 5 months depending on data availability.
+ *
+ * @apiParam {String} username User name
+ * @apiParam {String} password User password
+ *
+ * @apiParam (QueryString)  {String}       year  Reference year.
+ * @apiParam (QueryString)  {String}       month Reference month.
+ *
+ * @apiParamExample {json} Request Example
+ * POST /api/v1/comparison/2016/9
+ * {
+ *   username: "user@daiad.eu",
+ *   password: "****"
+ * }
+ *
+ * @apiSuccess (ComparisonResponse) {Boolean}  success          Returns <code>true</code> or <code>false</code> indicating success of the operation.
+ * @apiSuccess (ComparisonResponse) {Object[]} errors           Array of <code>Error</code>.
+ * @apiSuccess (ComparisonResponse) {Object}   comparison       Comparison and ranking data.
+ *
+ * @apiSuccess (Comparison) {Object[]}   waterIq                Array of <code>WaterIQ</code> objects.
+ * @apiSuccess (Comparison) {Object[]}   monthlyConsumtpion     Array of <code>MonthlyConsumption</code> objects with monthly consumption data for the last 6 months.
+ * @apiSuccess (Comparison) {Object[]}   dailyConsumtpion       Array of <code>DailyConsumption</code> objects with daily consumption data for the last month.
+ *
+ * @apiSuccess (WaterIQ)    {Object[]}   user                   Array of <code>WaterIQRanking</code> objects.
+ * @apiSuccess (WaterIQ)    {Object}     user                   User ranking data.
+ * @apiSuccess (WaterIQ)    {Number}     user.volume            User water consumption per household member.
+ * @apiSuccess (WaterIQ)    {String}     user.value             User ranking.
+ * @apiSuccess (WaterIQ)    {Object}     similar                Similar users ranking data.
+ * @apiSuccess (WaterIQ)    {Number}     similar.volume         User average monthly water consumption per household member.
+ * @apiSuccess (WaterIQ)    {String}     similar.value          Similar users ranking.
+ * @apiSuccess (WaterIQ)    {Object}     nearest                Nearest users (neighbors) ranking data.
+ * @apiSuccess (WaterIQ)    {Number}     nearest.volume         User average monthly water consumption per household member.
+ * @apiSuccess (WaterIQ)    {String}     nearest.value          User group ranking.
+ * @apiSuccess (WaterIQ)    {Object}     all                    All utility users ranking data.
+ * @apiSuccess (WaterIQ)    {Number}     all.volume             User average monthly water consumption per household member.
+ * @apiSuccess (WaterIQ)    {String}     all.value              Utility ranking.
+ * @apiSuccess (WaterIQ)    {Number}     timestamp              Date the ranking was computed.
+ * @apiSuccess (WaterIQ)    {String}     from                   Time interval start date formatted using the pattern <code>yyyyMMdd</code>.
+ * @apiSuccess (WaterIQ)    {String}     to                     Time interval end date formatted using the pattern <code>yyyyMMdd</code>.
+ *
+ * @apiSuccess (MonthlyConsumption) {Number}     user           User total water consumption.
+ * @apiSuccess (MonthlyConsumption) {Number}     similar        Similar users total water consumption.
+ * @apiSuccess (MonthlyConsumption) {Number}     nearest        Nearest users (neighbors) total water consumption.
+ * @apiSuccess (MonthlyConsumption) {Number}     all            All utility users total water consumption.
+ * @apiSuccess (MonthlyConsumption) {Number}     year           Year.
+ * @apiSuccess (MonthlyConsumption) {Number}     month          Month index from 1 to 12.
+ * @apiSuccess (MonthlyConsumption) {String}     from           Time interval start date formatted using the pattern <code>yyyyMMdd</code>.
+ * @apiSuccess (MonthlyConsumption) {String}     to             Time interval end date formatted using the pattern <code>yyyyMMdd</code>.
+ *
+ * @apiSuccess (DailyConsumption)   {Number}     user           User total water consumption.
+ * @apiSuccess (DailyConsumption)   {Number}     similar        Similar users total water consumption.
+ * @apiSuccess (DailyConsumption)   {Number}     nearest        Nearest users (neighbors) total water consumption.
+ * @apiSuccess (DailyConsumption)   {Number}     all            All utility users total water consumption.
+ * @apiSuccess (DailyConsumption)   {Number}     week           Week of year index.
+ * @apiSuccess (DailyConsumption)   {Number}     year           Year.
+ * @apiSuccess (DailyConsumption)   {Number}     month          Month index from 1 to 12.
+ * @apiSuccess (DailyConsumption)   {Number}     day            Day of month index from 1 to 31.
+ * @apiSuccess (DailyConsumption)   {String}     date           Date formatted using the pattern <code>yyyyMMdd</code>.
+ *
+ * @apiSuccessExample {json} Response Example
+ * HTTP/1.1 200 OK
+ * {
+ *   "errors": [],
+ *   "comparison": {
+ *     "waterIq": [{
+ *       "timestamp": 1479248441586,
+ *       "from": "20161107",
+ *       "to": "20161113"
+ *       "user": {
+ *         "volume": 0,
+ *         "value": "A",
+ *       },
+ *       "similar": {
+ *         "volume": 532.56,
+ *         "value": "B"
+ *       },
+ *       "nearest": {
+ *         "volume": 658.24,
+ *         "value": "B"
+ *       },
+ *       "all": {
+ *         "volume": 624.63,
+ *         "value": "B"
+ *       }
+ *     }],
+ *     "monthlyConsumtpion": [{
+ *       "year": 2016,
+ *       "month": 6,
+ *       "from": "20160601",
+ *       "to": "20160630",
+ *       "user": 1188,
+ *       "similar": 233700,
+ *       "nearest": 364357,
+ *       "all": 586977
+ *     }, {
+ *       "year": 2016,
+ *       "month": 9,
+ *       "from": "20160901",
+ *       "to": "20160930",
+ *       "user": 195,
+ *       "similar": 195563,
+ *       "nearest": 323395,
+ *       "all": 508470
+ *     }],
+ *     "dailyConsumtpion":[{
+ *       "year": 2016,
+ *       "month": 9,
+ *       "week": 39,
+ *       "day": 1,
+ *       "user": 147,
+ *       "similar": 3087,
+ *       "nearest": 9563,
+ *       "all": 17937,
+ *       "date": "20161001"
+ *     }, {
+ *       "year": 2016,
+ *       "month": 9,
+ *       "week": 39,
+ *       "day": 2,
+ *       "user": 25,
+ *       "similar": 1737,
+ *       "nearest": 8801,
+ *       "all": 16190,
+ *       "date": "20161002"
+ *     }]
+ *   },
+ *   "success": true
+ * }
+ *
+ * @apiError {Boolean} success Always <code>false</code>.
+ * @apiError {Object[]} errors Array of <code>Error</code> objects.
+ *
+ * @apiError (Error) {String} code          Unique error code.
+ * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
+ *
+ * @apiErrorExample Error Response Example
+ * HTTP/1.1 200 OK
+ * {
+ *   errors: [{
+ *     code: "UserErrorCode.USERNANE_NOT_FOUND",
+ *     description: "Account a9509da9-edf5-4838-acf4-8f1b73485d7a was not found."
+ *   }],
+ *   success: false
+ * }
+ *
+ */
+function getComparison() { return; }

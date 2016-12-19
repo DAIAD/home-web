@@ -51,7 +51,7 @@ public class AccountEntity {
 
     @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
     @JoinColumn(name = "account_id")
-    private Set<AccountRole> roles = new HashSet<AccountRole>();
+    private Set<AccountRoleEntity> roles = new HashSet<AccountRoleEntity>();
 
     @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
     @JoinColumn(name = "account_id")
@@ -59,20 +59,17 @@ public class AccountEntity {
 
     @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id")
-    private Set<Device> devices = new HashSet<Device>();
+    private Set<DeviceEntity> devices = new HashSet<DeviceEntity>();
 
     @OneToOne(mappedBy = "account")
     @JoinColumn(name = "account_id")
     private AccountWhiteListEntity whiteListEntry;
 
     @OneToOne(mappedBy = "account")
-    private AccountProfile profile;
+    private AccountProfileEntity profile;
 
     @OneToOne(mappedBy = "account")
     private HouseholdEntity household;
-
-    @OneToOne(mappedBy = "account", fetch = FetchType.LAZY)
-    private WaterIqEntity waterIq;
 
     @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id")
@@ -168,7 +165,7 @@ public class AccountEntity {
         this.utility = utility;
     }
 
-    public Set<Device> getDevices() {
+    public Set<DeviceEntity> getDevices() {
         return devices;
     }
 
@@ -275,7 +272,7 @@ public class AccountEntity {
         return key;
     }
 
-    public Set<AccountRole> getRoles() {
+    public Set<AccountRoleEntity> getRoles() {
         return roles;
     }
 
@@ -339,11 +336,11 @@ public class AccountEntity {
         this.locale = locale;
     }
 
-    public AccountProfile getProfile() {
+    public AccountProfileEntity getProfile() {
         return profile;
     }
 
-    public void setProfile(AccountProfile profile) {
+    public void setProfile(AccountProfileEntity profile) {
         this.profile = profile;
     }
 
@@ -381,14 +378,6 @@ public class AccountEntity {
 
     public void setHousehold(HouseholdEntity household) {
         this.household = household;
-    }
-
-    public WaterIqEntity getWaterIq() {
-        return waterIq;
-    }
-
-    public void setWaterIq(WaterIqEntity waterIq) {
-        this.waterIq = waterIq;
     }
 
     public Set<WaterIqHistoryEntity> getWaterIqHistory() {

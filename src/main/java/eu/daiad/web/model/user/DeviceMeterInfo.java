@@ -2,7 +2,7 @@ package eu.daiad.web.model.user;
 
 import java.util.UUID;
 
-import eu.daiad.web.domain.application.DeviceMeter;
+import eu.daiad.web.domain.application.DeviceMeterEntity;
 
 public class DeviceMeterInfo {
 
@@ -14,7 +14,7 @@ public class DeviceMeterInfo {
 
     }
 
-    public DeviceMeterInfo(DeviceMeter meter) {
+    public DeviceMeterInfo(DeviceMeterEntity meter) {
         this.key = meter.getKey();
         this.serial = meter.getSerial();
     }

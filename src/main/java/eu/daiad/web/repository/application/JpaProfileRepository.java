@@ -15,7 +15,6 @@ import javax.persistence.TypedQuery;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
-import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.security.core.Authentication;
@@ -24,10 +23,11 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.domain.application.AccountEntity;
-import eu.daiad.web.domain.application.AccountProfileHistoryEntry;
-import eu.daiad.web.domain.application.DeviceAmphiro;
-import eu.daiad.web.domain.application.DeviceAmphiroConfiguration;
-import eu.daiad.web.domain.application.DeviceAmphiroConfigurationDefault;
+import eu.daiad.web.domain.application.AccountProfileEntity;
+import eu.daiad.web.domain.application.AccountProfileHistoryEntity;
+import eu.daiad.web.domain.application.DeviceAmphiroConfigurationEntity;
+import eu.daiad.web.domain.application.DeviceAmphiroDefaultConfigurationEntity;
+import eu.daiad.web.domain.application.DeviceAmphiroEntity;
 import eu.daiad.web.domain.application.HouseholdEntity;
 import eu.daiad.web.domain.application.HouseholdMemberEntity;
 import eu.daiad.web.domain.application.UtilityEntity;
@@ -172,8 +172,10 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             }
 
             // Initialize household
-            Household household = new Household(account.getHousehold());
-            profile.setHousehold(household);
+            if (account.getHousehold() != null) {
+                Household household = new Household(account.getHousehold());
+                profile.setHousehold(household);
+            }
 
             return profile;
         } catch (Exception ex) {
@@ -207,11 +209,12 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
         String queryString = "select    a " +
                              "from      account a join a.roles r " +
-                             "where     r.role.name = :userRole " +
+                             "where     a.utility.id in :utilities and r.role.name = :userRole " +
                              queryFilterPart +
                              "order by  a.lastname, a.username";
 
         userQuery = entityManager.createQuery(queryString, AccountEntity.class).setFirstResult(0);
+        userQuery.setParameter("utilities", user.getUtilities());
         userQuery.setParameter("userRole", RoleConstant.ROLE_USER);
 
         if (!StringUtils.isBlank(filters.getNameFilter())) {
@@ -222,10 +225,10 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
         List<ProfileModes> profileModesList = new ArrayList<ProfileModes>();
 
         // List all DeviceAmphiroConfigurationDefault's in a simple HashMap
-        List<DeviceAmphiroConfigurationDefault> defaultConfigurations = deviceRepository.getAmphiroDefaultConfigurations();
+        List<DeviceAmphiroDefaultConfigurationEntity> defaultConfigurations = deviceRepository.getAmphiroDefaultConfigurations();
 
         HashMap<Integer, String> simplifiedDefaultConfs = new HashMap<Integer, String>();
-        for (DeviceAmphiroConfigurationDefault defaultConfiguration : defaultConfigurations) {
+        for (DeviceAmphiroDefaultConfigurationEntity defaultConfiguration : defaultConfigurations) {
             simplifiedDefaultConfs.put(defaultConfiguration.getId(), defaultConfiguration.getTitle());
         }
 
@@ -269,14 +272,14 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                 // amphiro devices ought to have the same configuration.
                 if (deviceConfigurations.get(0).getConfigurations().get(0).getTitle()
                                 .equals(simplifiedDefaultConfs
-                                                .get(DeviceAmphiroConfigurationDefault.CONFIG_ENABLED_METRIC))
+                                                .get(DeviceAmphiroDefaultConfigurationEntity.CONFIG_ENABLED_METRIC))
                                 || deviceConfigurations
                                                 .get(0)
                                                 .getConfigurations()
                                                 .get(0)
                                                 .getTitle()
                                                 .equals(simplifiedDefaultConfs
-                                                                .get(DeviceAmphiroConfigurationDefault.CONFIG_ENABLED_IMPERIAL))) {
+                                                                .get(DeviceAmphiroDefaultConfigurationEntity.CONFIG_ENABLED_IMPERIAL))) {
                     profileModes.setAmphiro(ProfileModes.AmphiroModeState.ON);
                 } else {
                     profileModes.setAmphiro(ProfileModes.AmphiroModeState.OFF);
@@ -344,12 +347,12 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             throw createApplicationException(SharedErrorCode.AUTHORIZATION);
         }
 
-        List<DeviceAmphiroConfigurationDefault> configurations = deviceRepository
+        List<DeviceAmphiroDefaultConfigurationEntity> configurations = deviceRepository
                         .getAmphiroDefaultConfigurations();
 
         // Organizing amphiro default configurations in a handy HashMap
-        HashMap<String, DeviceAmphiroConfigurationDefault> defaultconfigurations = new HashMap<String, DeviceAmphiroConfigurationDefault>();
-        for (DeviceAmphiroConfigurationDefault defconf : configurations) {
+        HashMap<String, DeviceAmphiroDefaultConfigurationEntity> defaultconfigurations = new HashMap<String, DeviceAmphiroDefaultConfigurationEntity>();
+        for (DeviceAmphiroDefaultConfigurationEntity defconf : configurations) {
             if (defconf.getTitle().equals("Enabled Configuration (Metric Units)")) {
                 defaultconfigurations.put("ON_Metric", defconf);
             } else if (defconf.getTitle().equals("Enabled Configuration (Imperial Units)")) {
@@ -372,7 +375,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                 switch (modeChange.getMode()) {
                     case "amphiro":
                         // Selecting the suitable default configuration
-                        DeviceAmphiroConfigurationDefault newDefaultConfiguration = null;
+                        DeviceAmphiroDefaultConfigurationEntity newDefaultConfiguration = null;
                         if (modeChange.getValue().equals("OFF")) {
                             newDefaultConfiguration = defaultconfigurations.get("OFF");
                         } else if (modeChange.getValue().equals("ON")) {
@@ -405,11 +408,11 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
                         // Get the current (active and inactive)
                         // configurations and set them as inactive
-                        Set<eu.daiad.web.domain.application.Device> devices = account.getDevices();
-                        for (eu.daiad.web.domain.application.Device device : devices) {
+                        Set<eu.daiad.web.domain.application.DeviceEntity> devices = account.getDevices();
+                        for (eu.daiad.web.domain.application.DeviceEntity device : devices) {
 
                             if (device.getType() == EnumDeviceType.AMPHIRO) {
-                                DeviceAmphiroConfiguration newConfiguration = new DeviceAmphiroConfiguration();
+                                DeviceAmphiroConfigurationEntity newConfiguration = new DeviceAmphiroConfigurationEntity();
 
                                 newConfiguration.setActive(true);
                                 newConfiguration.setCreatedOn(new DateTime());
@@ -430,8 +433,8 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                                 newConfiguration.setNumberOfFrames(newDefaultConfiguration.getNumberOfFrames());
                                 newConfiguration.setFrameDuration(newDefaultConfiguration.getFrameDuration());
 
-                                DeviceAmphiro deviceAmphiro = (DeviceAmphiro) device;
-                                for (DeviceAmphiroConfiguration currentConfiguration : deviceAmphiro
+                                DeviceAmphiroEntity deviceAmphiro = (DeviceAmphiroEntity) device;
+                                for (DeviceAmphiroConfigurationEntity currentConfiguration : deviceAmphiro
                                                 .getConfigurations()) {
                                     currentConfiguration.setActive(false);
                                 }
@@ -512,7 +515,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
         DateTime now = new DateTime();
         account.getProfile().setUpdatedOn(now);
 
-        AccountProfileHistoryEntry historyEntry = new AccountProfileHistoryEntry();
+        AccountProfileHistoryEntity historyEntry = new AccountProfileHistoryEntity();
         historyEntry.setProfile(account.getProfile());
         historyEntry.setUpdatedOn(now);
         historyEntry.setVersion(newVersion);
@@ -522,10 +525,10 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
         historyEntry.setSocialEnabled(false);
 
         // Deactivate with amphiro devices
-        List<DeviceAmphiroConfigurationDefault> configurations = deviceRepository.getAmphiroDefaultConfigurations();
+        List<DeviceAmphiroDefaultConfigurationEntity> configurations = deviceRepository.getAmphiroDefaultConfigurations();
 
-        DeviceAmphiroConfigurationDefault offConfiguration = null;
-        for (DeviceAmphiroConfigurationDefault defconf : configurations) {
+        DeviceAmphiroDefaultConfigurationEntity offConfiguration = null;
+        for (DeviceAmphiroDefaultConfigurationEntity defconf : configurations) {
             if (defconf.getTitle().equals("Off Configuration")) {
                 offConfiguration = defconf;
             }
@@ -537,12 +540,12 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
         // Get the current (active and inactive) configurations and set them
         // as inactive
-        Set<eu.daiad.web.domain.application.Device> devices = account.getDevices();
-        for (eu.daiad.web.domain.application.Device device : devices) {
+        Set<eu.daiad.web.domain.application.DeviceEntity> devices = account.getDevices();
+        for (eu.daiad.web.domain.application.DeviceEntity device : devices) {
 
             if (device.getType() == EnumDeviceType.AMPHIRO) {
 
-                DeviceAmphiroConfiguration newConfiguration = new DeviceAmphiroConfiguration();
+                DeviceAmphiroConfigurationEntity newConfiguration = new DeviceAmphiroConfigurationEntity();
 
                 newConfiguration.setActive(true);
                 newConfiguration.setCreatedOn(new DateTime());
@@ -563,8 +566,8 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                 newConfiguration.setNumberOfFrames(offConfiguration.getNumberOfFrames());
                 newConfiguration.setFrameDuration(offConfiguration.getFrameDuration());
 
-                DeviceAmphiro deviceAmphiro = (DeviceAmphiro) device;
-                for (DeviceAmphiroConfiguration currentConfiguration : deviceAmphiro.getConfigurations()) {
+                DeviceAmphiroEntity deviceAmphiro = (DeviceAmphiroEntity) device;
+                for (DeviceAmphiroConfigurationEntity currentConfiguration : deviceAmphiro.getConfigurations()) {
                     currentConfiguration.setActive(false);
                 }
                 deviceAmphiro.getConfigurations().add(newConfiguration);
@@ -633,7 +636,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
         List<AccountEntity> userAccounts = userQuery.getResultList();
         for (AccountEntity a : userAccounts) {
             int amphiroCount = 0;
-            for (eu.daiad.web.domain.application.Device d : a.getDevices()) {
+            for (eu.daiad.web.domain.application.DeviceEntity d : a.getDevices()) {
                 if (d.getType() == EnumDeviceType.AMPHIRO) {
                     amphiroCount++;
                 }
@@ -769,7 +772,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                     throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
                                     application);
                 case MOBILE:
-                    for (AccountProfileHistoryEntry h : account.getProfile().getHistory()) {
+                    for (AccountProfileHistoryEntity h : account.getProfile().getHistory()) {
                         if (h.getVersion().equals(version)) {
                             found = true;
 
@@ -884,7 +887,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
         DateTime now = new DateTime();
         account.getProfile().setUpdatedOn(now);
 
-        AccountProfileHistoryEntry historyEntry = new AccountProfileHistoryEntry();
+        AccountProfileHistoryEntity historyEntry = new AccountProfileHistoryEntity();
         historyEntry.setProfile(account.getProfile());
         historyEntry.setUpdatedOn(now);
         historyEntry.setVersion(newVersion);
@@ -905,7 +908,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
         DateTime now = new DateTime();
         account.getProfile().setUpdatedOn(now);
 
-        AccountProfileHistoryEntry historyEntry = new AccountProfileHistoryEntry();
+        AccountProfileHistoryEntity historyEntry = new AccountProfileHistoryEntity();
         historyEntry.setProfile(account.getProfile());
         historyEntry.setUpdatedOn(now);
         historyEntry.setVersion(newVersion);
@@ -926,7 +929,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
         DateTime now = new DateTime();
         account.getProfile().setUpdatedOn(now);
 
-        AccountProfileHistoryEntry historyEntry = new AccountProfileHistoryEntry();
+        AccountProfileHistoryEntity historyEntry = new AccountProfileHistoryEntity();
         historyEntry.setProfile(account.getProfile());
         historyEntry.setUpdatedOn(now);
         historyEntry.setVersion(newVersion);
@@ -937,19 +940,21 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
         entityManager.persist(historyEntry);
     }
+
     @Override
     public List<ProfileHistoryEntry> getProfileHistoryByUserKey(UUID userKey) {
         String sqlString = "select a from account a where a.key = :userKey";
 
-        TypedQuery<AccountEntity> query = entityManager.createQuery(sqlString, AccountEntity.class).setFirstResult(0)
-                        .setMaxResults(1);
+        TypedQuery<AccountEntity> query = entityManager.createQuery(sqlString, AccountEntity.class)
+                                                       .setFirstResult(0)
+                                                       .setMaxResults(1);
         query.setParameter("userKey", userKey);
 
         AccountEntity account = query.getSingleResult();
 
         List<ProfileHistoryEntry> entries = new ArrayList<ProfileHistoryEntry>();
 
-        for (AccountProfileHistoryEntry h : account.getProfile().getHistory()) {
+        for (AccountProfileHistoryEntity h : account.getProfile().getHistory()) {
             ProfileHistoryEntry entry = new ProfileHistoryEntry();
 
             entry.setAcknowledgedOn(h.getAcknowledgedOn());
@@ -980,6 +985,30 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
         });
 
         return entries;
+    }
+
+    /**
+     * Update the DAIAD@home mobile application version for the user with the given key.
+     *
+     * @param userKey the user key.
+     * @param version the application version.
+     */
+    @Override
+    public void updateMobileVersion(UUID userKey, String version) {
+        String sqlString = "select p from account_profile p where p.account.key = :userKey";
+
+        TypedQuery<AccountProfileEntity> query = entityManager.createQuery(sqlString, AccountProfileEntity.class)
+                                                              .setFirstResult(0)
+                                                              .setMaxResults(1);
+        query.setParameter("userKey", userKey);
+
+        AccountProfileEntity profile = query.getSingleResult();
+
+        if(StringUtils.isBlank(version)) {
+            profile.setMobileApplicationVersion("unknown");
+        } else {
+            profile.setMobileApplicationVersion(version);
+        }
     }
 
 }

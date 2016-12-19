@@ -1,10 +1,10 @@
 package eu.daiad.web.model.favourite;
 
-import eu.daiad.web.domain.application.FavouriteGroup;
+import eu.daiad.web.domain.application.FavouriteGroupEntity;
 
 import java.util.UUID;
 
-import eu.daiad.web.domain.application.Favourite;
+import eu.daiad.web.domain.application.FavouriteEntity;
 
 public class FavouriteGroupInfo extends FavouriteInfo {
 	
@@ -17,10 +17,10 @@ public class FavouriteGroupInfo extends FavouriteInfo {
 		super(groupKey);
 	}
 
-	public FavouriteGroupInfo(Favourite favourite) {
+	public FavouriteGroupInfo(FavouriteEntity favourite) {
 		super(favourite);
 		
-		FavouriteGroup favouriteGroup = (FavouriteGroup) favourite;
+		FavouriteGroupEntity favouriteGroup = (FavouriteGroupEntity) favourite;
 		this.groupName = favouriteGroup.getGroup().getName();
 		this.groupCreationDateMils = favouriteGroup.getGroup().getCreatedOn().getMillis();
 		this.size = favouriteGroup.getGroup().getSize();

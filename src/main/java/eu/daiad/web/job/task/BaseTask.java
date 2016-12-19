@@ -1,6 +1,7 @@
 package eu.daiad.web.job.task;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.MessageSource;
 
 import eu.daiad.web.model.error.ApplicationException;
@@ -13,10 +14,16 @@ import eu.daiad.web.model.error.SharedErrorCode;
 public abstract class BaseTask {
 
     /**
+     * Spring application context.
+     */
+    @Autowired
+    protected ApplicationContext applicationContext;
+
+    /**
      * Resolves application messages and supports internationalization.
      */
     @Autowired
-    private MessageSource messageSource;
+    protected MessageSource messageSource;
 
     /**
      * The step name.

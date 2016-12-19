@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.joda.time.DateTimeZone;
 
+import eu.daiad.web.model.EnumTimeAggregation;
+
 public class ExpandedDataQuery {
 
 	private DateTimeZone timezone;

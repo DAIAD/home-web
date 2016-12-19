@@ -53,6 +53,11 @@ import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportService {
 
     /**
+     * Session property name for mobile OS.
+     */
+    private static final String SESSION_PROPERTY_OS = "settings.os";
+
+    /**
      * Repository for accessing amphiro b1 readings.
      */
     @Autowired
@@ -304,6 +309,11 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
             row.add(Integer.toString(session.getMember().getIndex()));
         }
         row.add(Boolean.toString(session.isIgnored()));
+        if (session.getPropertyByKey(SESSION_PROPERTY_OS) == null) {
+            row.add("");
+        } else {
+            row.add(session.getPropertyByKey("settings.os"));
+        }
         if(error != null) {
             row.add(error);
         }
@@ -402,6 +412,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
         row.add("household member selection mode");
         row.add("household member index");
         row.add("ignore");
+        row.add("mobile os");
 
         allPrinter.printRecord(row);
         validPrinter.printRecord(row);

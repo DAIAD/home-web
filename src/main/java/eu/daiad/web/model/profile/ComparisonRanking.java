@@ -8,9 +8,11 @@ import java.util.List;
  */
 public class ComparisonRanking {
 
-    public WaterIqCollection waterIq = new WaterIqCollection();
+    public List<WaterIqWithTimestamp> waterIq = new ArrayList<WaterIqWithTimestamp>();
 
     public List<MonthlyConsumtpion> monthlyConsumtpion = new ArrayList<MonthlyConsumtpion>();
+
+    public List<DailyConsumption> dailyConsumtpion = new ArrayList<DailyConsumption>();
 
     public static class WaterIq {
 
@@ -20,7 +22,15 @@ public class ComparisonRanking {
 
     }
 
-    public static class WaterIqWithTimestamp extends WaterIq {
+    public static class WaterIqWithTimestamp {
+
+        public WaterIq user = new WaterIq();
+
+        public WaterIq similar = new WaterIq();
+
+        public WaterIq nearest = new WaterIq();
+
+        public WaterIq all = new WaterIq();
 
         public long timestamp;
 
@@ -30,21 +40,11 @@ public class ComparisonRanking {
 
     }
 
-    public static class WaterIqCollection {
-
-        public List<WaterIq> user = new ArrayList<WaterIq>();
-
-        public WaterIq similar = new WaterIq();
-
-        public WaterIq nearest = new WaterIq();
-
-        public WaterIq all = new WaterIq();
-    }
-
     public static class MonthlyConsumtpion {
 
-        public MonthlyConsumtpion() {
-
+        public MonthlyConsumtpion(int year, int month) {
+            this.year = year;
+            this.month = month;
         }
 
         public MonthlyConsumtpion(Double user, Double similar, Double nearest, Double all) {
@@ -54,11 +54,60 @@ public class ComparisonRanking {
             this.all = (all == null ? 0 : all);
         }
 
+        public int year;
+
         public int month;
 
         public String from;
 
         public String to;
+
+        public double user;
+
+        public double similar;
+
+        public double nearest;
+
+        public double all;
+    }
+
+    public static class DailyConsumption {
+
+        public DailyConsumption(int year, int month, int week, int day) {
+            this.year = year;
+            this.month = month;
+            this.week = week;
+            this.day = day;
+        }
+
+        public DailyConsumption(int year, int month, int day) {
+            this.year = year;
+            this.month = month;
+            this.day = day;
+        }
+
+        public DailyConsumption(int year, int month, int week, int day, Double user, Double similar, Double nearest, Double all) {
+            this.year = year;
+            this.month = month;
+            this.week = week;
+            this.day = day;
+            this.user = (user == null ? 0 : user);
+            this.similar = (similar == null ? 0 : similar);
+            this.nearest = (nearest == null ? 0 : nearest);
+            this.all = (all == null ? 0 : all);
+        }
+
+        public int year;
+
+        public int month;
+
+        public String getDate() {
+            return String.format("%d%02d%02d", year, month, day);
+        }
+
+        public int week;
+
+        public int day;
 
         public double user;
 

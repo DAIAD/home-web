@@ -20,12 +20,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.vividsolutions.jts.geom.Geometry;
 
+import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AccountWhiteListEntity;
-import eu.daiad.web.domain.application.DeviceAmphiro;
-import eu.daiad.web.domain.application.DeviceAmphiroConfiguration;
-import eu.daiad.web.domain.application.DeviceAmphiroConfigurationDefault;
-import eu.daiad.web.domain.application.DeviceMeter;
-import eu.daiad.web.domain.application.DeviceProperty;
+import eu.daiad.web.domain.application.DeviceAmphiroConfigurationEntity;
+import eu.daiad.web.domain.application.DeviceAmphiroDefaultConfigurationEntity;
+import eu.daiad.web.domain.application.DeviceAmphiroEntity;
+import eu.daiad.web.domain.application.DeviceAmphiroPermissionEntity;
+import eu.daiad.web.domain.application.DeviceEntity;
+import eu.daiad.web.domain.application.DeviceMeterEntity;
+import eu.daiad.web.domain.application.DevicePropertyEntity;
 import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.device.AmphiroDeviceUpdate;
@@ -63,15 +66,14 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
     @Override
     public AmphiroDevice createAmphiroDevice(UUID userKey, String name, String macAddress, String aesKey, List<KeyValuePair> properties) throws ApplicationException {
         try {
-            TypedQuery<eu.daiad.web.domain.application.AccountEntity> query = entityManager
-                            .createQuery("select a from account a where a.key = :key",
-                                            eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0)
-                            .setMaxResults(1);
+            TypedQuery<AccountEntity> query = entityManager.createQuery("select a from account a where a.key = :key", AccountEntity.class)
+                                                           .setFirstResult(0)
+                                                           .setMaxResults(1);
             query.setParameter("key", userKey);
 
-            eu.daiad.web.domain.application.AccountEntity account = query.getSingleResult();
+            AccountEntity account = query.getSingleResult();
 
-            eu.daiad.web.domain.application.DeviceAmphiro amphiro = new eu.daiad.web.domain.application.DeviceAmphiro();
+            DeviceAmphiroEntity amphiro = new DeviceAmphiroEntity();
             amphiro.setName(name);
             amphiro.setRegisteredOn(new DateTime());
             amphiro.setMacAddress(macAddress);
@@ -79,18 +81,19 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
 
             if (properties != null) {
                 for (KeyValuePair p : properties) {
-                    amphiro.getProperties().add(new DeviceProperty(p.getKey(), p.getValue()));
+                    amphiro.getProperties().add(new DevicePropertyEntity(p.getKey(), p.getValue()));
                 }
             }
 
-            TypedQuery<DeviceAmphiroConfigurationDefault> configQuery = entityManager.createQuery(
-                            "select c from device_amphiro_config_default c where c.id = :id",
-                            DeviceAmphiroConfigurationDefault.class).setFirstResult(0).setMaxResults(1);
-            configQuery.setParameter("id", DeviceAmphiroConfigurationDefault.CONFIG_DEFAULT);
+            String deviceQueryString = "select c from device_amphiro_config_default c where c.id = :id";
+            TypedQuery<DeviceAmphiroDefaultConfigurationEntity> configQuery = entityManager.createQuery(deviceQueryString, DeviceAmphiroDefaultConfigurationEntity.class)
+                                                                                           .setFirstResult(0)
+                                                                                           .setMaxResults(1);
+            configQuery.setParameter("id", account.getUtility().getDefaultAmphiroB1Mode());
 
-            DeviceAmphiroConfigurationDefault defaultConfiguration = configQuery.getSingleResult();
+            DeviceAmphiroDefaultConfigurationEntity defaultConfiguration = configQuery.getSingleResult();
 
-            DeviceAmphiroConfiguration configuration = new DeviceAmphiroConfiguration();
+            DeviceAmphiroConfigurationEntity configuration = new DeviceAmphiroConfigurationEntity();
             configuration.setActive(true);
             configuration.setBlock(defaultConfiguration.getBlock());
             configuration.setCreatedOn(new DateTime());
@@ -115,7 +118,7 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
 
             account.getDevices().add(amphiro);
 
-            this.entityManager.persist(account);
+            entityManager.persist(account);
 
             return (AmphiroDevice) getUserDeviceByKey(userKey, amphiro.getKey());
         } catch (Exception ex) {
@@ -123,12 +126,13 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
         }
     }
 
-    public List<DeviceAmphiroConfigurationDefault> getAmphiroDefaultConfigurations() throws ApplicationException {
-        List<DeviceAmphiroConfigurationDefault> configurations = null;
+    @Override
+    public List<DeviceAmphiroDefaultConfigurationEntity> getAmphiroDefaultConfigurations() throws ApplicationException {
+        List<DeviceAmphiroDefaultConfigurationEntity> configurations = null;
 
         try {
-            TypedQuery<DeviceAmphiroConfigurationDefault> configQuery = entityManager.createQuery(
-                            "select c from device_amphiro_config_default c", DeviceAmphiroConfigurationDefault.class)
+            TypedQuery<DeviceAmphiroDefaultConfigurationEntity> configQuery = entityManager.createQuery(
+                            "select c from device_amphiro_config_default c", DeviceAmphiroDefaultConfigurationEntity.class)
                             .setFirstResult(0);
 
             configurations = configQuery.getResultList();
@@ -145,17 +149,17 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
         UUID deviceKey = null;
 
         // Get user
-        TypedQuery<eu.daiad.web.domain.application.AccountEntity> accountQuery = entityManager.createQuery(
+        TypedQuery<AccountEntity> accountQuery = entityManager.createQuery(
                         "select a from account a where a.username = :username",
-                        eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0).setMaxResults(1);
+                        AccountEntity.class).setFirstResult(0).setMaxResults(1);
 
         accountQuery.setParameter("username", username);
 
-        List<eu.daiad.web.domain.application.AccountEntity> accounts = accountQuery.getResultList();
+        List<AccountEntity> accounts = accountQuery.getResultList();
 
         // If user exists add meter
         if (accounts.size() == 1) {
-            eu.daiad.web.domain.application.AccountEntity account = accounts.get(0);
+            AccountEntity account = accounts.get(0);
 
             // Check if a meter already exists
             DeviceRegistrationQuery meterQuery = new DeviceRegistrationQuery();
@@ -173,20 +177,20 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
             }
 
             // Create new device
-            eu.daiad.web.domain.application.DeviceMeter meter = new eu.daiad.web.domain.application.DeviceMeter();
+            DeviceMeterEntity meter = new DeviceMeterEntity();
             meter.setSerial(serial);
             meter.setLocation(location);
             meter.setRegisteredOn(new DateTime());
 
             if (properties != null) {
                 for (KeyValuePair p : properties) {
-                    meter.getProperties().add(new DeviceProperty(p.getKey(), p.getValue()));
+                    meter.getProperties().add(new DevicePropertyEntity(p.getKey(), p.getValue()));
                 }
             }
 
             account.getDevices().add(meter);
 
-            this.entityManager.persist(account);
+            entityManager.persist(account);
 
             deviceKey = meter.getKey();
         } else if (enforceWhiteListCheck) {
@@ -208,7 +212,7 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
                 if (entry.getLocation() == null) {
                     entry.setLocation(location);
                 }
-                this.entityManager.persist(entry);
+                entityManager.persist(entry);
             } else {
                 throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", username);
             }
@@ -230,14 +234,14 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
             throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
         }
 
-        TypedQuery<eu.daiad.web.domain.application.AccountEntity> accountQuery = entityManager.createQuery(
+        TypedQuery<AccountEntity> accountQuery = entityManager.createQuery(
                         "select a from account a where a.username = :username and a.utility.id = :utility_id",
-                        eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0).setMaxResults(1);
+                        AccountEntity.class).setFirstResult(0).setMaxResults(1);
 
         accountQuery.setParameter("username", username);
         accountQuery.setParameter("utility_id", user.getUtilityId());
 
-        List<eu.daiad.web.domain.application.AccountEntity> accounts = accountQuery.getResultList();
+        List<AccountEntity> accounts = accountQuery.getResultList();
 
         if (accounts.size() == 1) {
             // Update account location if not already set
@@ -246,18 +250,18 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
             }
 
             // Update device location
-            TypedQuery<eu.daiad.web.domain.application.DeviceMeter> query = entityManager.createQuery(
+            TypedQuery<DeviceMeterEntity> query = entityManager.createQuery(
                             "select d from device_meter d where d.serial = :serial and d.account.key = :userKey",
-                            eu.daiad.web.domain.application.DeviceMeter.class).setFirstResult(0).setMaxResults(1);
+                            DeviceMeterEntity.class).setFirstResult(0).setMaxResults(1);
             query.setParameter("serial", serial);
             query.setParameter("userKey", accounts.get(0).getKey());
 
-            List<eu.daiad.web.domain.application.DeviceMeter> result = query.getResultList();
+            List<DeviceMeterEntity> result = query.getResultList();
 
             if (result.size() == 1) {
                 result.get(0).setLocation(location);
 
-                this.entityManager.flush();
+                entityManager.flush();
             } else {
                 throw createApplicationException(DeviceErrorCode.METER_NOT_FOUND).set("serial", serial);
             }
@@ -270,26 +274,26 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
     @Override
     public Device getUserDeviceByKey(UUID userKey, UUID deviceKey) throws ApplicationException {
         try {
-            TypedQuery<eu.daiad.web.domain.application.Device> query = entityManager.createQuery(
+            TypedQuery<DeviceEntity> query = entityManager.createQuery(
                             "select d from device d where d.key = :device_key and d.account.key = :user_key",
-                            eu.daiad.web.domain.application.Device.class).setFirstResult(0).setMaxResults(1);
+                            DeviceEntity.class).setFirstResult(0).setMaxResults(1);
             query.setParameter("user_key", userKey);
             query.setParameter("device_key", deviceKey);
 
-            List<eu.daiad.web.domain.application.Device> result = query.getResultList();
+            List<DeviceEntity> result = query.getResultList();
 
             if (result.size() == 1) {
-                eu.daiad.web.domain.application.Device entity = result.get(0);
+                DeviceEntity entity = result.get(0);
 
                 switch (entity.getType()) {
                     case AMPHIRO:
-                        eu.daiad.web.domain.application.DeviceAmphiro amphiroEntity = (eu.daiad.web.domain.application.DeviceAmphiro) entity;
+                        DeviceAmphiroEntity amphiroEntity = (DeviceAmphiroEntity) entity;
 
                         AmphiroDevice amphiro = new AmphiroDevice(amphiroEntity.getId(), amphiroEntity.getKey(),
                                         amphiroEntity.getName(), amphiroEntity.getMacAddress(), amphiroEntity
                                                         .getAesKey(), entity.getRegisteredOn().getMillis());
 
-                        for (eu.daiad.web.domain.application.DeviceProperty p : amphiroEntity.getProperties()) {
+                        for (DevicePropertyEntity p : amphiroEntity.getProperties()) {
                             amphiro.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
                         }
 
@@ -303,13 +307,13 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
 
                         return amphiro;
                     case METER:
-                        eu.daiad.web.domain.application.DeviceMeter meterEntity = (eu.daiad.web.domain.application.DeviceMeter) entity;
+                        DeviceMeterEntity meterEntity = (DeviceMeterEntity) entity;
 
                         WaterMeterDevice meter = new WaterMeterDevice(meterEntity.getAccount().getId(), meterEntity
                                         .getKey(), meterEntity.getSerial(), meterEntity.getLocation(), entity
                                         .getRegisteredOn().getMillis());
 
-                        for (eu.daiad.web.domain.application.DeviceProperty p : meterEntity.getProperties()) {
+                        for (DevicePropertyEntity p : meterEntity.getProperties()) {
                             meter.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
                         }
 
@@ -338,27 +342,27 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
             }
 
-            TypedQuery<eu.daiad.web.domain.application.Device> query = entityManager.createQuery(
-                            "select d from device d "
-                                            + "where d.key = :device_key and d.account.utility.id = :utility_id",
-                            eu.daiad.web.domain.application.Device.class).setFirstResult(0).setMaxResults(1);
+            String deviceQueryString = "select d from device d where d.key = :device_key and d.account.utility.id = :utility_id";
+
+            TypedQuery<DeviceEntity> query = entityManager.createQuery(deviceQueryString, DeviceEntity.class).setFirstResult(0).setMaxResults(1);
+
             query.setParameter("utility_id", user.getUtilityId());
             query.setParameter("device_key", deviceKey);
 
-            List<eu.daiad.web.domain.application.Device> result = query.getResultList();
+            List<DeviceEntity> result = query.getResultList();
 
             if (result.size() == 1) {
-                eu.daiad.web.domain.application.Device entity = result.get(0);
+                DeviceEntity entity = result.get(0);
 
                 switch (entity.getType()) {
                     case AMPHIRO:
-                        eu.daiad.web.domain.application.DeviceAmphiro amphiroEntity = (eu.daiad.web.domain.application.DeviceAmphiro) entity;
+                        DeviceAmphiroEntity amphiroEntity = (DeviceAmphiroEntity) entity;
 
                         AmphiroDevice amphiro = new AmphiroDevice(amphiroEntity.getId(), amphiroEntity.getKey(),
                                         amphiroEntity.getName(), amphiroEntity.getMacAddress(), amphiroEntity
                                                         .getAesKey(), entity.getRegisteredOn().getMillis());
 
-                        for (eu.daiad.web.domain.application.DeviceProperty p : amphiroEntity.getProperties()) {
+                        for (DevicePropertyEntity p : amphiroEntity.getProperties()) {
                             amphiro.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
                         }
 
@@ -371,13 +375,13 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
 
                         return amphiro;
                     case METER:
-                        eu.daiad.web.domain.application.DeviceMeter meterEntity = (eu.daiad.web.domain.application.DeviceMeter) entity;
+                        DeviceMeterEntity meterEntity = (DeviceMeterEntity) entity;
 
                         WaterMeterDevice meter = new WaterMeterDevice(meterEntity.getAccount().getId(), meterEntity
                                         .getKey(), meterEntity.getSerial(), meterEntity.getLocation(), entity
                                         .getRegisteredOn().getMillis());
 
-                        for (eu.daiad.web.domain.application.DeviceProperty p : meterEntity.getProperties()) {
+                        for (DevicePropertyEntity p : meterEntity.getProperties()) {
                             meter.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
                         }
 
@@ -396,22 +400,22 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
 
     @Override
     public WaterMeterDevice getUserWaterMeterByKey(UUID userKey, UUID deviceKey) {
-        TypedQuery<DeviceMeter> meterQuery = entityManager.createQuery("select d from device_meter d "
-                        + "where d.key = :device_key and d.account.key = :user_key", DeviceMeter.class);
+        TypedQuery<DeviceMeterEntity> meterQuery = entityManager.createQuery("select d from device_meter d "
+                        + "where d.key = :device_key and d.account.key = :user_key", DeviceMeterEntity.class);
 
         meterQuery.setParameter("user_key", userKey);
         meterQuery.setParameter("device_key", deviceKey);
 
-        List<DeviceMeter> meters = meterQuery.getResultList();
+        List<DeviceMeterEntity> meters = meterQuery.getResultList();
 
         if (!meters.isEmpty()) {
-            DeviceMeter meterEntity = meters.get(0);
+            DeviceMeterEntity meterEntity = meters.get(0);
 
             WaterMeterDevice meter = new WaterMeterDevice(meterEntity.getAccount().getId(), meterEntity.getKey(),
                             meterEntity.getSerial(), meterEntity.getLocation(), meterEntity.getRegisteredOn()
                                             .getMillis());
 
-            for (eu.daiad.web.domain.application.DeviceProperty p : meterEntity.getProperties()) {
+            for (DevicePropertyEntity p : meterEntity.getProperties()) {
                 meter.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
             }
 
@@ -426,24 +430,24 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
         List<Device> devices = new ArrayList<Device>();
 
         try {
-            TypedQuery<eu.daiad.web.domain.application.Device> typedQuery = entityManager.createQuery(
+            TypedQuery<DeviceEntity> typedQuery = entityManager.createQuery(
                             "select d from device d where d.account.key = :user_key order by d.registeredOn",
-                            eu.daiad.web.domain.application.Device.class).setFirstResult(0);
+                            DeviceEntity.class).setFirstResult(0);
             typedQuery.setParameter("user_key", userKey);
 
-            List<eu.daiad.web.domain.application.Device> result = typedQuery.getResultList();
+            List<DeviceEntity> result = typedQuery.getResultList();
 
-            for (eu.daiad.web.domain.application.Device entity : result) {
+            for (DeviceEntity entity : result) {
                 switch (entity.getType()) {
                     case AMPHIRO:
                         if ((query.getType() == EnumDeviceType.UNDEFINED) || (query.getType() == entity.getType())) {
-                            eu.daiad.web.domain.application.DeviceAmphiro amphiroEntity = (eu.daiad.web.domain.application.DeviceAmphiro) entity;
+                            DeviceAmphiroEntity amphiroEntity = (DeviceAmphiroEntity) entity;
 
                             AmphiroDevice amphiro = new AmphiroDevice(amphiroEntity.getId(), amphiroEntity.getKey(),
                                             amphiroEntity.getName(), amphiroEntity.getMacAddress(), amphiroEntity
                                                             .getAesKey(), entity.getRegisteredOn().getMillis());
 
-                            for (eu.daiad.web.domain.application.DeviceProperty p : amphiroEntity.getProperties()) {
+                            for (DevicePropertyEntity p : amphiroEntity.getProperties()) {
                                 amphiro.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
                             }
 
@@ -454,7 +458,7 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
                                 }
                             }
 
-                            for (eu.daiad.web.domain.application.DeviceAmphiroConfiguration c : amphiroEntity.getConfigurations()) {
+                            for (DeviceAmphiroConfigurationEntity c : amphiroEntity.getConfigurations()) {
                                 if (c.isActive()) {
                                     amphiro.setConfiguration(new eu.daiad.web.model.device.DeviceAmphiroConfiguration(c));
                                     break;
@@ -466,13 +470,13 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
                         break;
                     case METER:
                         if ((query.getType() == EnumDeviceType.UNDEFINED) || (query.getType() == entity.getType())) {
-                            eu.daiad.web.domain.application.DeviceMeter meterEntity = (eu.daiad.web.domain.application.DeviceMeter) entity;
+                            DeviceMeterEntity meterEntity = (DeviceMeterEntity) entity;
 
                             WaterMeterDevice meter = new WaterMeterDevice(meterEntity.getAccount().getId(), meterEntity
                                             .getKey(), meterEntity.getSerial(), meterEntity.getLocation(), entity
                                             .getRegisteredOn().getMillis());
 
-                            for (eu.daiad.web.domain.application.DeviceProperty p : meterEntity.getProperties()) {
+                            for (DevicePropertyEntity p : meterEntity.getProperties()) {
                                 meter.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
                             }
 
@@ -494,21 +498,21 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
     @Override
     public Device getUserAmphiroDeviceByMacAddress(UUID userKey, String macAddress) throws ApplicationException {
         try {
-            TypedQuery<eu.daiad.web.domain.application.DeviceAmphiro> query = entityManager.createQuery(
+            TypedQuery<DeviceAmphiroEntity> query = entityManager.createQuery(
                             "select d from device_amphiro d where d.macAddress = :macAddress and d.account.key = :key",
-                            eu.daiad.web.domain.application.DeviceAmphiro.class).setFirstResult(0).setMaxResults(1);
+                            DeviceAmphiroEntity.class).setFirstResult(0).setMaxResults(1);
             query.setParameter("key", userKey);
             query.setParameter("macAddress", macAddress);
 
-            List<eu.daiad.web.domain.application.DeviceAmphiro> result = query.getResultList();
+            List<DeviceAmphiroEntity> result = query.getResultList();
 
             if (result.size() == 1) {
-                eu.daiad.web.domain.application.DeviceAmphiro entity = result.get(0);
+                DeviceAmphiroEntity entity = result.get(0);
 
                 AmphiroDevice amphiro = new AmphiroDevice(entity.getId(), entity.getKey(), entity.getName(),
                                 entity.getMacAddress(), entity.getAesKey(), entity.getRegisteredOn().getMillis());
 
-                for (eu.daiad.web.domain.application.DeviceProperty p : entity.getProperties()) {
+                for (DevicePropertyEntity p : entity.getProperties()) {
                     amphiro.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
                 }
 
@@ -531,21 +535,21 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
     @Override
     public Device getUserWaterMeterDeviceBySerial(UUID userKey, String serial) throws ApplicationException {
         try {
-            TypedQuery<eu.daiad.web.domain.application.DeviceMeter> query = entityManager.createQuery(
+            TypedQuery<DeviceMeterEntity> query = entityManager.createQuery(
                             "select d from device_meter d where d.serial = :serial and d.account.key = :userKey",
-                            eu.daiad.web.domain.application.DeviceMeter.class).setFirstResult(0).setMaxResults(1);
+                            DeviceMeterEntity.class).setFirstResult(0).setMaxResults(1);
             query.setParameter("serial", serial);
             query.setParameter("userKey", userKey);
 
-            List<eu.daiad.web.domain.application.DeviceMeter> result = query.getResultList();
+            List<DeviceMeterEntity> result = query.getResultList();
 
             if (result.size() == 1) {
-                eu.daiad.web.domain.application.DeviceMeter entity = result.get(0);
+                DeviceMeterEntity entity = result.get(0);
 
                 WaterMeterDevice meter = new WaterMeterDevice(entity.getAccount().getId(), entity.getKey(), entity
                                 .getSerial(), entity.getLocation(), entity.getRegisteredOn().getMillis());
 
-                for (eu.daiad.web.domain.application.DeviceProperty p : entity.getProperties()) {
+                for (DevicePropertyEntity p : entity.getProperties()) {
                     meter.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
                 }
 
@@ -562,20 +566,20 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
     @Override
     public Device getWaterMeterDeviceBySerial(String serial) {
         try {
-            TypedQuery<eu.daiad.web.domain.application.DeviceMeter> query = entityManager.createQuery(
+            TypedQuery<DeviceMeterEntity> query = entityManager.createQuery(
                             "select d from device_meter d where d.serial = :serial ",
-                            eu.daiad.web.domain.application.DeviceMeter.class).setFirstResult(0).setMaxResults(1);
+                            DeviceMeterEntity.class).setFirstResult(0).setMaxResults(1);
             query.setParameter("serial", serial);
 
-            List<eu.daiad.web.domain.application.DeviceMeter> result = query.getResultList();
+            List<DeviceMeterEntity> result = query.getResultList();
 
             if (result.size() == 1) {
-                eu.daiad.web.domain.application.DeviceMeter entity = result.get(0);
+                DeviceMeterEntity entity = result.get(0);
 
                 WaterMeterDevice meter = new WaterMeterDevice(entity.getAccount().getId(), entity.getKey(), entity
                                 .getSerial(), entity.getLocation(), entity.getRegisteredOn().getMillis());
 
-                for (eu.daiad.web.domain.application.DeviceProperty p : entity.getProperties()) {
+                for (DevicePropertyEntity p : entity.getProperties()) {
                     meter.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
                 }
 
@@ -594,71 +598,71 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
                     throws ApplicationException {
         try {
             // Get device
-            TypedQuery<eu.daiad.web.domain.application.DeviceAmphiro> deviceQuery = entityManager.createQuery(
+            TypedQuery<DeviceAmphiroEntity> deviceQuery = entityManager.createQuery(
                             "select d from device_amphiro d where d.key = :key",
-                            eu.daiad.web.domain.application.DeviceAmphiro.class).setFirstResult(0).setMaxResults(1);
+                            DeviceAmphiroEntity.class).setFirstResult(0).setMaxResults(1);
             deviceQuery.setParameter("key", deviceKey);
 
-            List<eu.daiad.web.domain.application.DeviceAmphiro> devices = deviceQuery.getResultList();
+            List<DeviceAmphiroEntity> devices = deviceQuery.getResultList();
 
             if (devices.size() != 1) {
                 throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
             }
 
             // Check owner
-            eu.daiad.web.domain.application.DeviceAmphiro device = devices.get(0);
+            DeviceAmphiroEntity device = devices.get(0);
 
             if (!device.getAccount().getKey().equals(ownerID)) {
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION);
             }
 
             // Get assignee
-            TypedQuery<eu.daiad.web.domain.application.AccountEntity> userQuery = entityManager.createQuery(
+            TypedQuery<AccountEntity> userQuery = entityManager.createQuery(
                             "select a from account a where a.username = :username and a.utility.id = :utility_id",
-                            eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0).setMaxResults(1);
+                            AccountEntity.class).setFirstResult(0).setMaxResults(1);
             userQuery.setParameter("username", assigneeUsername);
             userQuery.setParameter("utility_id", device.getAccount().getUtility().getId());
 
-            List<eu.daiad.web.domain.application.AccountEntity> users = userQuery.getResultList();
+            List<AccountEntity> users = userQuery.getResultList();
 
             if (users.size() == 0) {
                 throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", assigneeUsername);
             }
 
-            eu.daiad.web.domain.application.AccountEntity assignee = users.get(0);
+            AccountEntity assignee = users.get(0);
 
             if (assignee.getId() == device.getAccount().getId()) {
                 return;
             }
 
-            eu.daiad.web.domain.application.DeviceAmphiroPermission permission = null;
+            DeviceAmphiroPermissionEntity permission = null;
 
-            TypedQuery<eu.daiad.web.domain.application.DeviceAmphiroPermission> permissionQuery = entityManager
+            TypedQuery<DeviceAmphiroPermissionEntity> permissionQuery = entityManager
                             .createQuery("select p from device_amphiro_permission p where p.device.id = :deviceId and p.owner.id = :ownerId and p.assignee.id = :assigneeId",
-                                            eu.daiad.web.domain.application.DeviceAmphiroPermission.class)
+                                            DeviceAmphiroPermissionEntity.class)
                             .setFirstResult(0).setMaxResults(1);
             permissionQuery.setParameter("deviceId", device.getId());
             permissionQuery.setParameter("ownerId", device.getAccount().getId());
             permissionQuery.setParameter("assigneeId", assignee.getId());
 
-            List<eu.daiad.web.domain.application.DeviceAmphiroPermission> permissions = permissionQuery.getResultList();
+            List<DeviceAmphiroPermissionEntity> permissions = permissionQuery.getResultList();
             if (permissions.size() == 1) {
                 permission = permissions.get(0);
             }
 
             if (shared) {
                 if (permission == null) {
-                    permission = new eu.daiad.web.domain.application.DeviceAmphiroPermission();
+                    permission = new DeviceAmphiroPermissionEntity();
                     permission.setDevice(device);
                     permission.setOwner(device.getAccount());
                     permission.setAssignee(assignee);
                     permission.setAssignedOn(DateTime.now());
 
-                    this.entityManager.persist(permission);
+                    entityManager.persist(permission);
                 }
             } else {
                 if (permission != null) {
-                    this.entityManager.remove(permission);
+                    entityManager.remove(permission);
                 }
             }
 
@@ -672,19 +676,19 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
         List<DeviceConfigurationCollection> collections = new ArrayList<DeviceConfigurationCollection>();
         try {
             for (UUID deviceKey : deviceKeys) {
-                TypedQuery<eu.daiad.web.domain.application.DeviceAmphiro> deviceQuery = entityManager.createQuery(
+                TypedQuery<DeviceAmphiroEntity> deviceQuery = entityManager.createQuery(
                                 "select d from device_amphiro d where d.key = :deviceKey and d.account.key = :userKey",
-                                eu.daiad.web.domain.application.DeviceAmphiro.class).setFirstResult(0).setMaxResults(1);
+                                DeviceAmphiroEntity.class).setFirstResult(0).setMaxResults(1);
                 deviceQuery.setParameter("deviceKey", deviceKey);
                 deviceQuery.setParameter("userKey", userKey);
 
-                List<eu.daiad.web.domain.application.DeviceAmphiro> devices = deviceQuery.getResultList();
+                List<DeviceAmphiroEntity> devices = deviceQuery.getResultList();
 
                 if (devices.size() != 1) {
                     throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
                 }
 
-                DeviceAmphiro device = devices.get(0);
+                DeviceAmphiroEntity device = devices.get(0);
 
                 DeviceConfigurationCollection deviceConfigurationCollection = new DeviceConfigurationCollection();
                 deviceConfigurationCollection.setKey(device.getKey());
@@ -693,7 +697,7 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
                 deviceConfigurationCollection.setName(device.getName());
                 deviceConfigurationCollection.setRegisteredOn(device.getRegisteredOn().getMillis());
 
-                for (eu.daiad.web.domain.application.DeviceProperty p : device.getProperties()) {
+                for (DevicePropertyEntity p : device.getProperties()) {
                     deviceConfigurationCollection.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
                 }
 
@@ -704,7 +708,7 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
                     }
                 }
 
-                for (DeviceAmphiroConfiguration c : device.getConfigurations()) {
+                for (DeviceAmphiroConfigurationEntity c : device.getConfigurations()) {
                     if (c.isActive()) {
                         eu.daiad.web.model.device.DeviceAmphiroConfiguration configuration = new eu.daiad.web.model.device.DeviceAmphiroConfiguration(
                                         c);
@@ -729,21 +733,21 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
         try {
             boolean found = false;
 
-            TypedQuery<eu.daiad.web.domain.application.DeviceAmphiro> deviceQuery = entityManager.createQuery(
+            TypedQuery<DeviceAmphiroEntity> deviceQuery = entityManager.createQuery(
                             "select d from device_amphiro d where d.key = :deviceKey and d.account.key = :userKey",
-                            eu.daiad.web.domain.application.DeviceAmphiro.class).setFirstResult(0).setMaxResults(1);
+                            DeviceAmphiroEntity.class).setFirstResult(0).setMaxResults(1);
             deviceQuery.setParameter("deviceKey", deviceKey);
             deviceQuery.setParameter("userKey", userKey);
 
-            List<eu.daiad.web.domain.application.DeviceAmphiro> devices = deviceQuery.getResultList();
+            List<DeviceAmphiroEntity> devices = deviceQuery.getResultList();
 
             if (devices.size() != 1) {
                 throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
             }
 
-            eu.daiad.web.domain.application.DeviceAmphiro device = devices.get(0);
+            DeviceAmphiroEntity device = devices.get(0);
 
-            for (DeviceAmphiroConfiguration c : device.getConfigurations()) {
+            for (DeviceAmphiroConfigurationEntity c : device.getConfigurations()) {
                 if (c.getVersion().equals(version)) {
                     c.setAcknowledgedOn(new DateTime());
                     c.setEnabledOn(updatedOn);
@@ -764,24 +768,24 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
     @Override
     public void removeDevice(UUID deviceKey) {
         try {
-            TypedQuery<eu.daiad.web.domain.application.Device> deviceQuery = entityManager.createQuery(
+            TypedQuery<DeviceEntity> deviceQuery = entityManager.createQuery(
                             "select d from device d where d.key = :device_key",
-                            eu.daiad.web.domain.application.Device.class).setFirstResult(0).setMaxResults(1);
+                            DeviceEntity.class).setFirstResult(0).setMaxResults(1);
 
             deviceQuery.setParameter("device_key", deviceKey);
 
-            List<eu.daiad.web.domain.application.Device> result = deviceQuery.getResultList();
+            List<DeviceEntity> result = deviceQuery.getResultList();
 
             if (result.size() != 1) {
                 throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey);
             }
 
-            for (eu.daiad.web.domain.application.Device d : result) {
+            for (DeviceEntity d : result) {
                 switch (d.getType()) {
                     case AMPHIRO:
                     case METER:
                         d.getAccount().getDevices().remove(d);
-                        this.entityManager.remove(d);
+                        entityManager.remove(d);
                         break;
                     default:
                         throw createApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type", d.getType());
@@ -792,18 +796,19 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
         }
     }
 
+    @Override
     public void setLastDataUploadDate(UUID userKey, UUID deviceKey, DateTime when, boolean success) {
         try {
-            TypedQuery<eu.daiad.web.domain.application.Device> query = entityManager.createQuery(
+            TypedQuery<DeviceEntity> query = entityManager.createQuery(
                             "select d from device d where d.key = :device_key and d.account.key = :user_key",
-                            eu.daiad.web.domain.application.Device.class).setFirstResult(0).setMaxResults(1);
+                            DeviceEntity.class).setFirstResult(0).setMaxResults(1);
             query.setParameter("user_key", userKey);
             query.setParameter("device_key", deviceKey);
 
-            List<eu.daiad.web.domain.application.Device> result = query.getResultList();
+            List<DeviceEntity> result = query.getResultList();
 
             if (result.size() == 1) {
-                eu.daiad.web.domain.application.Device entity = result.get(0);
+                DeviceEntity entity = result.get(0);
 
                 if (success) {
                     // Compute aggregates
@@ -848,20 +853,20 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
                     AmphiroDeviceUpdate amphiroUpdate = (AmphiroDeviceUpdate) update;
 
                     // Get device
-                    TypedQuery<eu.daiad.web.domain.application.Device> query = entityManager.createQuery(
+                    TypedQuery<DeviceEntity> query = entityManager.createQuery(
                                     "select d from device d where d.key = :device_key and d.account.key = :user_key",
-                                    eu.daiad.web.domain.application.Device.class).setFirstResult(0).setMaxResults(1);
+                                    DeviceEntity.class).setFirstResult(0).setMaxResults(1);
                     query.setParameter("user_key", userKey);
                     query.setParameter("device_key", update.getKey());
 
-                    List<eu.daiad.web.domain.application.Device> result = query.getResultList();
+                    List<DeviceEntity> result = query.getResultList();
 
                     if (result.size() != 1) {
                         throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key",
                                         update.getKey().toString());
                     } else {
                         // Set new values
-                        eu.daiad.web.domain.application.DeviceAmphiro entity = (eu.daiad.web.domain.application.DeviceAmphiro) result
+                        DeviceAmphiroEntity entity = (DeviceAmphiroEntity) result
                                         .get(0);
 
                         entity.setName(amphiroUpdate.getName());
@@ -870,10 +875,10 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
                             KeyValuePair updateProperty = update.getProperty(key);
 
                             if (updateProperty != null) {
-                                DeviceProperty entityProperty = entity.getProperty(key);
+                                DevicePropertyEntity entityProperty = entity.getProperty(key);
 
                                 if (entityProperty == null) {
-                                    entity.getProperties().add(new DeviceProperty(key, updateProperty.getValue()));
+                                    entity.getProperties().add(new DevicePropertyEntity(key, updateProperty.getValue()));
                                 } else {
                                     entityProperty.setValue(updateProperty.getValue());
                                 }
@@ -895,15 +900,15 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
 
         String sqlString = "select d from device_amphiro d where d.key = :deviceKey";
 
-        TypedQuery<DeviceAmphiro> deviceQuery = entityManager.createQuery(sqlString, DeviceAmphiro.class)
+        TypedQuery<DeviceAmphiroEntity> deviceQuery = entityManager.createQuery(sqlString, DeviceAmphiroEntity.class)
                                                              .setFirstResult(0)
                                                              .setMaxResults(1);
 
         deviceQuery.setParameter("deviceKey", deviceKey);
 
-        DeviceAmphiro device = deviceQuery.getSingleResult();
+        DeviceAmphiroEntity device = deviceQuery.getSingleResult();
 
-        for (DeviceAmphiroConfiguration c : device.getConfigurations()) {
+        for (DeviceAmphiroConfigurationEntity c : device.getConfigurations()) {
             eu.daiad.web.model.device.DeviceAmphiroConfiguration configuration = new eu.daiad.web.model.device.DeviceAmphiroConfiguration(c);
 
             configurations.add(configuration);

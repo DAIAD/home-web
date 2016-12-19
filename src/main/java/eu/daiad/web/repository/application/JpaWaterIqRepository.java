@@ -8,21 +8,27 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
 import org.joda.time.DateTime;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.domain.application.AccountEntity;
-import eu.daiad.web.domain.application.WaterIqEntity;
 import eu.daiad.web.domain.application.WaterIqHistoryEntity;
+import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.profile.ComparisonRanking;
+import eu.daiad.web.model.profile.ComparisonRanking.DailyConsumption;
+import eu.daiad.web.repository.BaseRepository;
+
+//TODO : Move all data to HBase
 
 /**
- * Provides methods for updating and querying user Water IQ status.
- */
-@Repository
+* Provides methods for updating and querying user Water IQ status.
+*/
+@Repository("jpaWaterIqRepository")
 @Transactional("applicationTransactionManager")
-public class JpaWaterIqRepository implements IWaterIqRepository {
+public class JpaWaterIqRepository extends BaseRepository implements IWaterIqRepository {
 
     /**
      * Password reset token interval in hours.
@@ -35,6 +41,13 @@ public class JpaWaterIqRepository implements IWaterIqRepository {
      */
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
+
+    /**
+     * Repository for accessing water IQ data.
+     */
+    @Autowired
+    @Qualifier("hBaseWaterIqRepository")
+    private IWaterIqRepository hBaseWaterIqRepository;
 
     /**
      * Deletes stale water IQ data.
@@ -58,17 +71,31 @@ public class JpaWaterIqRepository implements IWaterIqRepository {
     }
 
     /**
-     * Returns water IQ data for the user with the given id.
+     * Returns water IQ data for the user with the given key.
      *
-     * @param userId the user id.
+     * @param key the user key.
+     * @param year reference year.
+     * @param month reference month.
      * @return water IQ data.
      */
     @Override
-    public ComparisonRanking getWaterIqByUserId(int userId) {
-        String waterIqQueryString = "select iq from water_iq_history iq where iq.account.id = :id order by iq.id desc";
+    public ComparisonRanking getWaterIqByUserKey(UUID key, int year, int month) {
+        String waterIqQueryString = "select     iq " +
+                                    "from       water_iq_history iq " +
+                                    "where      (iq.account.key = :key) and " +
+                                    "           ((iq.year < :maxYear) or (iq.year = :maxYear and iq.month <= :maxMonth)) and " +
+                                    "           ((iq.year > :minYear) or (iq.year = :minYear and iq.month >= :minMonth)) " +
+                                    "order by   iq.year desc, iq.month desc";
 
-        TypedQuery<WaterIqHistoryEntity> query = entityManager.createQuery(waterIqQueryString, WaterIqHistoryEntity.class);
-        query.setParameter("id", userId);
+        TypedQuery<WaterIqHistoryEntity> query = entityManager.createQuery(waterIqQueryString, WaterIqHistoryEntity.class)
+                                                              .setFirstResult(0)
+                                                              .setMaxResults(6);
+
+        query.setParameter("key", key);
+        query.setParameter("maxYear", year);
+        query.setParameter("maxMonth", month);
+        query.setParameter("minYear", (month < 6 ? (year - 1) : year));
+        query.setParameter("minMonth", ((month - 5) > 0 ? (month - 5) : (month + 7)));
 
         List<WaterIqHistoryEntity> entries = query.getResultList();
 
@@ -79,44 +106,58 @@ public class JpaWaterIqRepository implements IWaterIqRepository {
         // First entry is the current entry
         ComparisonRanking result = new ComparisonRanking();
 
-        result.waterIq.nearest.value = entries.get(0).getNearestUserValue();
-        result.waterIq.nearest.volume = entries.get(0).getNearestUserVolume();
-
-        result.waterIq.similar.value = entries.get(0).getSimilarUserValue();
-        result.waterIq.similar.volume= entries.get(0).getSimilarUserVolume();
-
-        result.waterIq.all.value = entries.get(0).getAllUserValue();
-        result.waterIq.all.volume = entries.get(0).getAllUserVolume();
-
         for (int i = 0, count = entries.size(); i < count; i++) {
             ComparisonRanking.WaterIqWithTimestamp waterIq = new ComparisonRanking.WaterIqWithTimestamp();
-            waterIq.value = entries.get(i).getUserValue();
-            waterIq.volume = entries.get(i).getUserVolume();
+
             waterIq.timestamp = entries.get(i).getCreatedOn().getMillis();
             waterIq.from = entries.get(i).getFrom();
             waterIq.to = entries.get(i).getTo();
 
-            result.waterIq.user.add(waterIq);
+            waterIq.user.value = entries.get(i).getUserValue();
+            waterIq.user.volume = entries.get(i).getUserVolume();
 
-            ComparisonRanking.MonthlyConsumtpion monthlyConsumtpion = new ComparisonRanking.MonthlyConsumtpion();
+
+            waterIq.nearest.value = entries.get(i).getNearestUserValue();
+            waterIq.nearest.volume = entries.get(i).getNearestUserVolume();
+
+            waterIq.similar.value = entries.get(i).getSimilarUserValue();
+            waterIq.similar.volume= entries.get(i).getSimilarUserVolume();
+
+            waterIq.all.value = entries.get(i).getAllUserValue();
+            waterIq.all.volume = entries.get(i).getAllUserVolume();
+
+            result.waterIq.add(waterIq);
+
+            ComparisonRanking.MonthlyConsumtpion monthlyConsumtpion = new ComparisonRanking.MonthlyConsumtpion(entries.get(i).getYear(), entries.get(i).getMonth());
             monthlyConsumtpion.user = entries.get(i).getUserLast1MonthConsmution();
             monthlyConsumtpion.similar = entries.get(i).getSimilarLast1MonthConsmution();
             monthlyConsumtpion.nearest = entries.get(i).getNearestLast1MonthConsmution();
             monthlyConsumtpion.all = entries.get(i).getAllLast1MonthConsmution();
-            monthlyConsumtpion.month = Integer.parseInt(entries.get(i).getFrom().substring(4, 6));
             monthlyConsumtpion.from = entries.get(i).getFrom();
             monthlyConsumtpion.to = entries.get(i).getTo();
 
             result.monthlyConsumtpion.add(monthlyConsumtpion);
 
         }
+
+        // Get daily consumption from HBase
+        result.dailyConsumtpion = hBaseWaterIqRepository.getComparisonDailyConsumption(key, year, month);
+
         return result;
     }
 
     /**
      * Update user Water IQ.
      *
-     * @param userKey
+     * @param userKey the user key.
+     * @param from time interval start date formatted using the pattern {@code yyyyMMdd}.
+     * @param to time interval end date formatted using the pattern {@code yyyyMMdd}.
+     * @param user water IQ data for a single user.
+     * @param similar water IQ data for a group of similar users.
+     * @param nearest water IQ data for the group of neighbors.
+     * @param all water IQ data for all users.
+     * @param monthlyConsumtpion monthly consumption data.
+     * @param dailyConsumption daily consumption data.
      */
     @Override
     public void update(UUID userKey,
@@ -126,59 +167,21 @@ public class JpaWaterIqRepository implements IWaterIqRepository {
                        ComparisonRanking.WaterIq similar,
                        ComparisonRanking.WaterIq nearest,
                        ComparisonRanking.WaterIq all,
-                       ComparisonRanking.MonthlyConsumtpion monthlyConsumtpion) {
+                       ComparisonRanking.MonthlyConsumtpion monthlyConsumtpion,
+                       List<ComparisonRanking.DailyConsumption> dailyConsumption) {
         DateTime updatedOn = new DateTime();
 
-        // Get existing record
-        WaterIqEntity waterIqEntity = null;
         boolean persist = false;
 
-        String accountQueryString = "select a from account a left join fetch a.waterIq iq left join fetch a.waterIqHistory iq_history where a.key = :key";
+        // Get existing record
+        String accountQueryString = "select a from account a left join fetch a.waterIqHistory iq_history where a.key = :key";
 
         TypedQuery<AccountEntity> query = entityManager.createQuery(accountQueryString, AccountEntity.class);
         query.setParameter("key", userKey);
 
         AccountEntity account = query.getSingleResult();
 
-        // Create record if not already exists
-        if(account.getWaterIq() == null) {
-            waterIqEntity = new WaterIqEntity();
-            waterIqEntity.setAccount(account);
-
-            persist = true;
-        } else {
-            waterIqEntity = account.getWaterIq();
-        }
-
-        waterIqEntity.setUpdatedOn(updatedOn);
-        waterIqEntity.setFrom(from);
-        waterIqEntity.setTo(to);
-        waterIqEntity.setUserValue(user.value);
-        waterIqEntity.setUserVolume(user.volume);
-        if (similar != null) {
-            waterIqEntity.setSimilarUserValue(similar.value);
-            waterIqEntity.setSimilarUserVolume(similar.volume);
-        }
-        if (nearest != null) {
-            waterIqEntity.setNearestUserValue(nearest.value);
-            waterIqEntity.setNearestUserVolume(nearest.volume);
-        }
-        if (all != null) {
-            waterIqEntity.setAllUserValue(all.value);
-            waterIqEntity.setAllUserVolume(all.volume);
-        }
-        waterIqEntity.setUserLast1MonthConsmution(monthlyConsumtpion.user);
-        waterIqEntity.setSimilarLast1MonthConsmution(monthlyConsumtpion.similar);
-        waterIqEntity.setNearestLast1MonthConsmution(monthlyConsumtpion.nearest);
-        waterIqEntity.setAllLast1MonthConsmution(monthlyConsumtpion.all);
-
-        if(persist) {
-            entityManager.persist(waterIqEntity);
-        }
-
-        entityManager.flush();
-
-        // Update history
+        // Create or update water IQ history
         WaterIqHistoryEntity waterIqHistoryEntity = null;
         persist = false;
 
@@ -199,6 +202,8 @@ public class JpaWaterIqRepository implements IWaterIqRepository {
         waterIqHistoryEntity.setCreatedOn(updatedOn);
         waterIqHistoryEntity.setFrom(from);
         waterIqHistoryEntity.setTo(to);
+        waterIqHistoryEntity.setYear(Integer.parseInt(from.substring(0, 4)));
+        waterIqHistoryEntity.setMonth(Integer.parseInt(from.substring(4, 6)));
         waterIqHistoryEntity.setUserValue(user.value);
         waterIqHistoryEntity.setUserVolume(user.volume);
         if (similar != null) {
@@ -222,5 +227,21 @@ public class JpaWaterIqRepository implements IWaterIqRepository {
         if(persist) {
             entityManager.persist(waterIqHistoryEntity);
         }
+
+        // Store daily consumption
+        hBaseWaterIqRepository.update(userKey, from, to, user, similar, nearest, all, monthlyConsumtpion, dailyConsumption);
+    }
+
+    /**
+     * Returns the daily consumption for the given key for the selected year and month.
+     *
+     * @param userKey the user key.
+     * @param year the year.
+     * @param month the month.
+     * @return a list of {@link DailyConsumption}.
+     */
+    @Override
+    public List<DailyConsumption> getComparisonDailyConsumption(UUID userKey, int year, int month) {
+        throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
     }
 }

@@ -10,7 +10,6 @@ import com.google.common.collect.ImmutableMap;
 
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.query.EnumDataField;
-import eu.daiad.web.service.message.aggregates.ComputedNumber;
 
 /**
  * A container for common statistics for a group (or an entire utility) of users
