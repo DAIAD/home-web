@@ -11,11 +11,10 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.iterators.FilterIterator;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.commons.math3.stat.descriptive.summary.Sum;
 import org.joda.time.DateTime;
@@ -28,7 +27,9 @@ import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
-import org.springframework.data.util.Pair;
+
+import org.apache.commons.collections4.Predicate;
+import org.apache.commons.collections4.FluentIterable;
 
 import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.DynamicRecommendation;
@@ -39,8 +40,6 @@ import eu.daiad.web.model.message.Insight;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.model.message.MessageResolutionStatus;
 import eu.daiad.web.model.message.MessageResolutionPerAccountStatus;
-import eu.daiad.web.model.query.AmphiroDataPoint;
-import eu.daiad.web.model.query.DataPoint;
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
@@ -48,7 +47,8 @@ import eu.daiad.web.model.query.EnumDataField;
 import eu.daiad.web.model.query.EnumMeasurementDataSource;
 import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.GroupDataSeries;
-import eu.daiad.web.model.query.MeterDataPoint;
+import eu.daiad.web.model.query.Point;
+import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IAccountStaticRecommendationRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
@@ -67,10 +67,6 @@ import eu.daiad.web.model.ConsumptionStats.EnumStatistic;
 import eu.daiad.web.model.EnumDayOfWeek;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.error.DeviceErrorCode;
-
-import static org.apache.commons.math3.stat.StatUtils.mean;
-import static org.apache.commons.math3.stat.StatUtils.populationVariance;
 
 import static eu.daiad.web.model.device.EnumDeviceType.AMPHIRO;
 import static eu.daiad.web.model.device.EnumDeviceType.METER;
@@ -84,6 +80,9 @@ import static eu.daiad.web.model.query.EnumDataField.ENERGY;
 public class DefaultMessageResolverService implements IMessageResolverService 
 {
     private static final Log logger = LogFactory.getLog(DefaultMessageResolverService.class);
+    
+    // Fixme: debug
+    private static final Log debug1Logger = LogFactory.getLog("debug1");
     
     @Autowired
     IDataService dataService;
@@ -285,9 +284,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
     private IMessageResolutionStatus<Alert.Parameters> alertWaterLeakSWM(
         AccountEntity account, DateTime refDate, ConsumptionStats stats) 
     {
-        final double VOLUME_THRESHOLD_PER_HOUR = 2.0; // lit
+        final double VOLUME_THRESHOLD_PER_HOUR = 2.0; // lt
         
-        boolean fire = false;
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .sliding(refDate, -48, EnumTimeUnit.HOUR, EnumTimeAggregation.HOUR)
@@ -297,27 +295,20 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
-        ArrayList<GroupDataSeries> series = queryResponse.getMeters();
-
-        for (GroupDataSeries s: series) {
-            if (!s.getPoints().isEmpty()) {
-                boolean aboveThreshold = true;
-                for (DataPoint p: s.getPoints()) {
-                    if (p.field(VOLUME).get(EnumMetric.SUM) < VOLUME_THRESHOLD_PER_HOUR) {
-                        aboveThreshold = false;
-                        break;
-                    }
-                }
-                if (aboveThreshold) {
-                    fire = true;
-                    break;
-                }
-            }
-        }
         
+        SeriesFacade series = queryResponse.getFacade(EnumDeviceType.METER);
+        if (series == null || series.isEmpty())
+            return null;
+        
+        FluentIterable<Point> points = FluentIterable
+            .of(series.iterPoints(VOLUME, EnumMetric.SUM));
+        
+        if (points.anyMatch(Point.belowValue(VOLUME_THRESHOLD_PER_HOUR)))
+            return null;
+
         Alert.Parameters parameters = new Alert.CommonParameters(
             refDate, EnumDeviceType.METER, EnumAlertType.WATER_LEAK);
-        return new MessageResolutionStatus<>(fire, parameters);
+        return new MessageResolutionStatus<>(true, parameters);
     }
 
     // Alert #2 - Shower still on!
@@ -325,8 +316,6 @@ public class DefaultMessageResolverService implements IMessageResolverService
         AccountEntity account, DateTime refDate, ConsumptionStats stats) 
     {   
         final int DURATION_THRESHOLD_IN_MINUTES = 30;
-        
-        boolean fire = false;
         
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
@@ -337,21 +326,20 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
-        ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
         
-        for (GroupDataSeries s: dataSeriesAmphiro) {
-            if (!s.getPoints().isEmpty()) {
-                for (DataPoint p: s.getPoints()) {
-                    if (p.field(DURATION).get(EnumMetric.MAX) > DURATION_THRESHOLD_IN_MINUTES) {
-                        fire = true;
-                    }
-                }
-            }
-        }
+        SeriesFacade series = queryResponse.getFacade(EnumDeviceType.AMPHIRO);
+        if (series == null || series.isEmpty())
+            return null;
+        
+        FluentIterable<Point> points = FluentIterable
+            .of(series.iterPoints(DURATION, EnumMetric.MAX));
+        
+        if (points.allMatch(Point.belowValue(DURATION_THRESHOLD_IN_MINUTES)))
+            return null;
         
         Alert.Parameters parameters = new Alert.CommonParameters(
             refDate, EnumDeviceType.AMPHIRO, EnumAlertType.SHOWER_ON);
-        return new MessageResolutionStatus<>(fire, parameters);
+        return new MessageResolutionStatus<>(true, parameters);
     }
 
     // Alert #5 - Water quality not assured!
@@ -365,28 +353,26 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .meter()
             .sum();
 
+        // Todo: Fire only when outside temperature is above a threshold
+        
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
-        ArrayList<GroupDataSeries> dataSeriesMeter = queryResponse.getMeters();
-     
-        boolean fire = false;
-        for (GroupDataSeries s : dataSeriesMeter) {
-            if (!s.getPoints().isEmpty()) {
-                for (DataPoint p: s.getPoints()) {
-                    if (p.field(VOLUME).get(EnumMetric.SUM) == 0) {
-                        fire = true;
-                    }
-                }
-            } else {
-                fire = true;
-            }
-            if (fire)
-                break;
+        
+        SeriesFacade series = queryResponse.getFacade(EnumDeviceType.METER);
+        
+        boolean fire = (series == null || series.isEmpty());
+        if (!fire) {
+            FluentIterable<Point> points = FluentIterable
+                .of(series.iterPoints(VOLUME, EnumMetric.SUM));
+            fire = !points.anyMatch(Point.notZero());
         }
+        
+        if (!fire)
+            return null;
         
         Alert.Parameters parameters = new Alert.CommonParameters(
             refDate, EnumDeviceType.METER, EnumAlertType.WATER_QUALITY);
-        return new MessageResolutionStatus<>(fire, parameters);
+        return new MessageResolutionStatus<>(true, parameters);
     }
 
     // Alert #6 - Water too hot!
@@ -404,25 +390,20 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
-        ArrayList<GroupDataSeries> dataSeriesAmphiro = queryResponse.getDevices();
-
-        boolean fire = false;
-        for (GroupDataSeries s: dataSeriesAmphiro) {
-            if (!s.getPoints().isEmpty()) {
-                for (DataPoint p: s.getPoints()) {
-                    if (p.field(TEMPERATURE).get(EnumMetric.MAX) > TEMPERATURE_THRESHOLD) {
-                        fire = true;
-                        break;
-                    }
-                }
-            }
-            if (fire)
-                break;
-        }
+        
+        SeriesFacade series = queryResponse.getFacade(EnumDeviceType.AMPHIRO);
+        if (series == null || series.isEmpty())
+            return null;
+        
+        FluentIterable<Point> points = FluentIterable
+            .of(series.iterPoints(TEMPERATURE, EnumMetric.MAX));
+        
+        if (points.allMatch(Point.belowValue(TEMPERATURE_THRESHOLD)))
+            return null;
         
         Alert.Parameters parameters = new Alert.CommonParameters(
             refDate, EnumDeviceType.AMPHIRO, EnumAlertType.HOT_TEMPERATURE);
-        return new MessageResolutionStatus<>(fire, parameters);
+        return new MessageResolutionStatus<>(true, parameters);
     }
 
     // Alert #7, #9 - Reached 80% of your daily water budget {integer1} {integer2}
@@ -441,13 +422,16 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
-        Double consumed  = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM); 
+        
+        SeriesFacade series = queryResponse.getFacade(deviceType);
+        
+        Double consumed  = (series != null)? 
+            series.get(VOLUME, EnumMetric.SUM) : null; 
         if (consumed == null)
             return null;
         
         int budget = config.getDailyBudget(deviceType);
         Double remaining = (consumed > budget)? 0.0 : (budget - consumed);
-        
         double percentUsed = 100 * (consumed / budget);
         
         Alert.Parameters parameters = new Alert.CommonParameters(
@@ -479,7 +463,10 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
-        Double consumed  = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
+        SeriesFacade series = queryResponse.getFacade(deviceType);
+        
+        Double consumed  = (series != null)? 
+            series.get(VOLUME, EnumMetric.SUM) : null;
         if (consumed == null)
             return null;
         
@@ -516,7 +503,10 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
-        Double consumed  = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
+        SeriesFacade series = queryResponse.getFacade(deviceType);
+        
+        Double consumed  = (series != null)? 
+            series.get(VOLUME, EnumMetric.SUM) : null;
         if (consumed == null)
             return null;
         
@@ -541,9 +531,12 @@ public class DefaultMessageResolverService implements IMessageResolverService
         MessageCalculationConfiguration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType) 
     {
+        final int MAX_NUM_CONSECUTIVE_ZEROS = 10; // to consider the user as absent
+        final double dailyBudget = config.getDailyBudget(deviceType);
+        
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
-            .sliding(-30, EnumTimeUnit.DAY, EnumTimeAggregation.DAY)
+            .sliding(refDate, -30, EnumTimeUnit.DAY, EnumTimeAggregation.DAY)
             .user("user", account.getKey())
             .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
             .sum();
@@ -551,26 +544,33 @@ public class DefaultMessageResolverService implements IMessageResolverService
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
         
-        List<GroupDataSeries> series = queryResponse.getSeries(deviceType);
-        if (series.isEmpty())
+        SeriesFacade series = queryResponse.getFacade(deviceType);
+        if (series == null || series.isEmpty())
             return null;
         
-        double dailyBudget = config.getDailyBudget(deviceType);      
+        FluentIterable<Point> points = FluentIterable
+            .of(series.iterPoints(VOLUME, EnumMetric.SUM));
+        
         boolean fire = true;
-        for (GroupDataSeries s: series) {
-            List<Double> values = new ArrayList<>();
-            for (DataPoint p: s.getPoints()) {
-                double dailyConsumption = p.field(VOLUME).get(EnumMetric.SUM);                
-                values.add(dailyConsumption);
+        int consecutiveZeros = 0;
+        for (Point p: points) {
+            double dailyConsumption = p.getValue();
+            if (dailyConsumption > 0) {
+                consecutiveZeros = 0;
                 if (dailyConsumption > dailyBudget) {
-                    fire = false;
+                    fire = false; // exceeded daily limit
                     break;
                 }
+            } else {
+                consecutiveZeros++;
+                if (consecutiveZeros > MAX_NUM_CONSECUTIVE_ZEROS) {
+                    fire = false; // the user is probably absent
+                    break;                    
+                }
             }
-            fire = fire && (countConsecutiveZeros(values) < 10);
-            if (!fire)
-                break;
         }
+        if (!fire)
+            return null;
         
         Alert.Parameters parameters = new Alert.CommonParameters(
             refDate, deviceType, 
@@ -578,7 +578,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 EnumAlertType.SHOWER_CHAMPION:
                 EnumAlertType.WATER_CHAMPION
         );
-        return new MessageResolutionStatus<>(fire, parameters);
+        return new MessageResolutionStatus<>(true, parameters);
     }
     
     // Alert #15, #16 - You are using too much water {integer1}
@@ -602,8 +602,11 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sum();
         
         DataQuery query = queryBuilder.build();
-        DataQueryResponse queryResponse = dataService.execute(query);
-        Double consumed = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
+        DataQueryResponse queryResponse = dataService.execute(query); 
+        SeriesFacade series = queryResponse.getFacade(deviceType);
+       
+        Double consumed = (series != null)?
+            series.get(VOLUME, EnumMetric.SUM) : null;
         if (consumed == null)
             return null;
 
@@ -632,8 +635,6 @@ public class DefaultMessageResolverService implements IMessageResolverService
         final double HIGH_TEMPERATURE_THRESHOLD = 45.0;
         final double HIGH_TEMPERATURE_RATIO_OF_POINTS = 0.8; 
         
-        Locale locale = Locale.forLanguageTag(account.getLocale());
-        
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .sliding(refDate, -30, EnumTimeUnit.DAY, EnumTimeAggregation.DAY)
@@ -643,27 +644,21 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .average();
 
         DataQuery query = queryBuilder.build();
-        DataQueryResponse queryResponse = dataService.execute(query);   
-        List<GroupDataSeries> series = queryResponse.getDevices();
+        DataQueryResponse queryResponse = dataService.execute(query);
+        
+        SeriesFacade series = queryResponse.getFacade(EnumDeviceType.AMPHIRO);
         if (series == null || series.isEmpty())
             return null;
         
-        double monthlyConsumption = 0;
-        int numPoints = 0, numPointsHigh = 0;
-        for (GroupDataSeries s: series) {
-            if (!s.getPoints().isEmpty()) {
-                List<DataPoint> points = s.getPoints();
-                numPoints += points.size();
-                for (DataPoint p: points) {
-                    monthlyConsumption += p.field(VOLUME).get(EnumMetric.SUM);
-                    if (p.field(TEMPERATURE).get(EnumMetric.AVERAGE) > HIGH_TEMPERATURE_THRESHOLD)
-                        numPointsHigh++;
-                }
-            }
-        }
-        
+        int numPoints = series.size(); 
+        int numPointsHigh = series.count(
+            TEMPERATURE, EnumMetric.AVERAGE, Point.aboveValue(HIGH_TEMPERATURE_THRESHOLD));
         double ratioHigh = ((double) numPointsHigh) / numPoints;
+        
+        double monthlyConsumption = series.aggregate(VOLUME, EnumMetric.SUM, new Sum());
+    
         if (ratioHigh > HIGH_TEMPERATURE_RATIO_OF_POINTS) {
+            Locale locale = Locale.forLanguageTag(account.getLocale());
             double pricePerKwh = priceData.getPricePerKwh(locale);
             Double annualSavings = 
                 energyCalculator.computeEnergyToRiseTemperature(2, 12 * monthlyConsumption) * pricePerKwh;
@@ -684,6 +679,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     {
         DataQuery query = null;
         DataQueryResponse queryResponse = null;
+        SeriesFacade series = null;
         
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
@@ -696,8 +692,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(registerDate, +7,  EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        
-        Double c0 = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
+        series = queryResponse.getFacade(deviceType);
+        Double c0 = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
         if (c0 == null)
             return null;
         
@@ -705,7 +701,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(refDate, -7,  EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double c1 = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
+        series = queryResponse.getFacade(deviceType);
+        Double c1 = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
         if (c1 == null)
             return null;
         
@@ -744,8 +741,9 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sum();
 
         DataQuery query = queryBuilder.build();
-        DataQueryResponse queryResponse = dataService.execute(query);    
-        Double consumed = queryResponse.asNumber(METER, VOLUME, EnumMetric.SUM);
+        DataQueryResponse queryResponse = dataService.execute(query);
+        SeriesFacade series = queryResponse.getFacade(EnumDeviceType.METER);
+        Double consumed = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
         if (consumed == null)
             return null;
         
@@ -774,6 +772,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query = null;
         DataQueryResponse queryResponse = null;
+        SeriesFacade series = null;
         
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
@@ -785,7 +784,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(refDate, -30,  EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double c0 = queryResponse.asNumber(EnumDeviceType.METER, VOLUME, EnumMetric.SUM);
+        series = queryResponse.getFacade(EnumDeviceType.METER);
+        Double c0 = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
         if (c0 == null)
             return null;
         
@@ -793,7 +793,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(refDate.minusDays(30), -30,  EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double c1 = queryResponse.asNumber(EnumDeviceType.METER, VOLUME, EnumMetric.SUM);
+        series = queryResponse.getFacade(EnumDeviceType.METER);
+        Double c1 = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
         if (c1 == null)
             return null;
         
@@ -803,8 +804,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
                     refDate, EnumDeviceType.METER, EnumAlertType.GOOD_JOB_MONTHLY)
                 .setInteger1(percentDiff.intValue());
             return new MessageResolutionStatus<>(true, parameters);
-        }
-        
+        }     
         return null;
     }
     
@@ -816,6 +816,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query = null;
         DataQueryResponse queryResponse = null;
+        SeriesFacade series = null;
         
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
@@ -827,7 +828,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(refDate, -7,  EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double c0 = queryResponse.asNumber(EnumDeviceType.METER, VOLUME, EnumMetric.SUM);
+        series = queryResponse.getFacade(EnumDeviceType.METER);
+        Double c0 = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
         if (c0 == null)
             return null;
         
@@ -835,7 +837,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(refDate.minusDays(7), -7,  EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double c1 = queryResponse.asNumber(EnumDeviceType.METER, VOLUME, EnumMetric.SUM);
+        series = queryResponse.getFacade(EnumDeviceType.METER);
+        Double c1 = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
         if (c1 == null)
             return null;
 
@@ -868,7 +871,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
-        Double c0 = queryResponse.asNumber(EnumDeviceType.METER, VOLUME, EnumMetric.SUM);
+        SeriesFacade series = queryResponse.getFacade(EnumDeviceType.METER);
+        Double c0 = (series != null)? series.get(VOLUME, EnumMetric.SUM): null;
         if (c0 == null)
             return null;
         
@@ -899,7 +903,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
-        Double c0 = queryResponse.asNumber(EnumDeviceType.METER, VOLUME, EnumMetric.SUM);
+        SeriesFacade series = queryResponse.getFacade(EnumDeviceType.METER);
+        Double c0 = (series != null)? series.get(VOLUME, EnumMetric.SUM): null;
         if (c0 == null)
             return null;
         
@@ -939,19 +944,16 @@ public class DefaultMessageResolverService implements IMessageResolverService
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
         
-        ArrayList<GroupDataSeries> series = queryResponse.getDevices();
+        SeriesFacade series = queryResponse.getFacade(EnumDeviceType.AMPHIRO);
         if (series == null || series.isEmpty())
             return null;
 
-        Double quarterlyUserConsumption = queryResponse.asNumber(
-            EnumDeviceType.AMPHIRO, VOLUME, EnumMetric.SUM);
+        Double quarterlyUserConsumption = series.get(VOLUME, EnumMetric.SUM);
         if (quarterlyUserConsumption == null)
             return null;
         Double monthlyUserAverageConsumption = quarterlyUserConsumption / 3;
         
-        Double monthlyUserAverageDuration = queryResponse.asNumber(
-            EnumDeviceType.AMPHIRO, DURATION, EnumMetric.AVERAGE
-        );
+        Double monthlyUserAverageDuration = series.get(DURATION, EnumMetric.AVERAGE);
         if (monthlyUserAverageDuration == null)
             return null;
         
@@ -995,19 +997,16 @@ public class DefaultMessageResolverService implements IMessageResolverService
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
         
-        ArrayList<GroupDataSeries> series = queryResponse.getDevices();
+        SeriesFacade series = queryResponse.getFacade(EnumDeviceType.AMPHIRO);
         if (series == null || series.isEmpty())
             return null;
-
-        Double quarterlyUserConsumption = queryResponse.asNumber(
-            EnumDeviceType.AMPHIRO, VOLUME, EnumMetric.SUM);
+        
+        Double quarterlyUserConsumption = series.get(VOLUME, EnumMetric.SUM);
         if (quarterlyUserConsumption == null)
             return null;
         Double monthlyUserAverageConsumption = quarterlyUserConsumption / 3;
         
-        Double monthlyUserAverageTemperature = queryResponse.asNumber(
-            EnumDeviceType.AMPHIRO, TEMPERATURE, EnumMetric.AVERAGE
-        );
+        Double monthlyUserAverageTemperature = series.get(TEMPERATURE, EnumMetric.AVERAGE);
         if (monthlyUserAverageTemperature == null)
             return null;
         
@@ -1056,19 +1055,17 @@ public class DefaultMessageResolverService implements IMessageResolverService
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
         
-        ArrayList<GroupDataSeries> series = queryResponse.getDevices();
+        SeriesFacade series = queryResponse.getFacade(EnumDeviceType.AMPHIRO);
         if (series == null || series.isEmpty())
             return null;
-
-        Double monthlyUserAverageFlow = queryResponse.asNumber(
-            EnumDeviceType.AMPHIRO, FLOW, EnumMetric.AVERAGE);
+        
+        Double monthlyUserAverageFlow = series.get(FLOW, EnumMetric.AVERAGE);
         if (monthlyUserAverageFlow == null)
             return null;
         if (monthlyUserAverageFlow < monthlyAverageFlow.getValue())
             return null;
         
-        Double quarterUserConsumption = queryResponse.asNumber(
-            EnumDeviceType.AMPHIRO, VOLUME, EnumMetric.SUM);
+        Double quarterUserConsumption = series.get(VOLUME, EnumMetric.SUM);
         if (quarterUserConsumption == null)
             return null;
         
@@ -1114,13 +1111,15 @@ public class DefaultMessageResolverService implements IMessageResolverService
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
         
-        Double monthlyUserAverageFlow = queryResponse.asNumber(
-            EnumDeviceType.AMPHIRO, FLOW, EnumMetric.AVERAGE);
+        SeriesFacade series = queryResponse.getFacade(EnumDeviceType.AMPHIRO);
+        if (series == null || series.isEmpty())
+            return null;
+        
+        Double monthlyUserAverageFlow = series.get(FLOW, EnumMetric.AVERAGE);
         if (monthlyUserAverageFlow == null)
             return null;
         
-        Double quarterUserConsumption = queryResponse.asNumber(
-            EnumDeviceType.AMPHIRO, VOLUME, EnumMetric.SUM);
+        Double quarterUserConsumption = series.get(VOLUME, EnumMetric.SUM);
         if (quarterUserConsumption == null)
             return null;
         
@@ -1135,7 +1134,6 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 .setInteger2(annualSavings.intValue());
             return new MessageResolutionStatus<>(true, parameters);
         }
-        
         return null;
     }
 
@@ -1160,8 +1158,11 @@ public class DefaultMessageResolverService implements IMessageResolverService
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
         
-        Double quarterUserConsumption = queryResponse.asNumber(
-            EnumDeviceType.AMPHIRO, VOLUME, EnumMetric.SUM);
+        SeriesFacade series = queryResponse.getFacade(EnumDeviceType.AMPHIRO);
+        if (series == null || series.isEmpty())
+            return null;
+        
+        Double quarterUserConsumption = series.get(VOLUME, EnumMetric.SUM);
         if (quarterUserConsumption == null)
             return null;
         double monthlyUserAverageConsumption = quarterUserConsumption / 3;
@@ -1175,8 +1176,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 )
                 .setInteger1(percentDiff.intValue());
             return new MessageResolutionStatus<>(true, parameters);
-        } 
-        
+        }      
         return null;
     }
 
@@ -1200,13 +1200,16 @@ public class DefaultMessageResolverService implements IMessageResolverService
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
         
-        Double monthlyUserAveragePerSession = queryResponse.asNumber(
-            EnumDeviceType.AMPHIRO, VOLUME, EnumMetric.AVERAGE);
+        SeriesFacade series = queryResponse.getFacade(EnumDeviceType.AMPHIRO);
+        if (series == null || series.isEmpty())
+            return null;
+        
+        Double monthlyUserAveragePerSession = series.get(VOLUME, EnumMetric.AVERAGE);
         if (monthlyUserAveragePerSession == null)
             return null;
         
-        // Todo - calculate the number of sessions per year when available
-        // Todo - add additional check for flow adjustments during the session when available
+        // Todo - Calculate the number of sessions per year when available
+        // Todo - Add additional check for flow adjustments during the session when available
         int numberOfSessionsPerYear = 100;
         if (monthlyUserAveragePerSession > monthlyAveragePerSession.getValue()) {
             // Compute liters more than average
@@ -1247,6 +1250,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query;
         DataQueryResponse queryResponse;
+        SeriesFacade series;
+        
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", account.getKey())  
@@ -1259,7 +1264,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(refDate, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double refValue = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);        
+        series = queryResponse.getFacade(deviceType);       
+        Double refValue = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;        
         if (refValue == null)
             return null; // nothing to compare to
         
@@ -1273,7 +1279,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 .sliding(start, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
                 .build();
             queryResponse = dataService.execute(query);
-            Double val = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
+            series = queryResponse.getFacade(deviceType);
+            Double val = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
             if (val != null)
                 summary.addValue(val);
         }    
@@ -1314,6 +1321,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query;
         DataQueryResponse queryResponse;
+        SeriesFacade series;
+        
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", account.getKey())  
@@ -1326,7 +1335,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(refDate, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double refValue = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
+        series = queryResponse.getFacade(deviceType);
+        Double refValue = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
         if (refValue == null)
             return null; // nothing to compare to
         
@@ -1340,7 +1350,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 .sliding(start, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
                 .build();
             queryResponse = dataService.execute(query);
-            Double val = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
+            series = queryResponse.getFacade(deviceType);
+            Double val = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
             if (val != null)
                 summary.addValue(val);
         }   
@@ -1376,8 +1387,11 @@ public class DefaultMessageResolverService implements IMessageResolverService
         final double F = 0.6;   // a threshold ratio of non-nulls for collected values
          
         // Build a common part of a data-service query
+        
         DataQuery query;
         DataQueryResponse queryResponse;
+        SeriesFacade series;
+        
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", account.getKey())  
@@ -1391,7 +1405,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .absolute(r.getStart(), r.getEnd(), EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double refValue = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
+        series = queryResponse.getFacade(deviceType);
+        Double refValue = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
         if (refValue == null || refValue < VOLUME_LOW_THRESHOLD)
             return null;
                 
@@ -1408,7 +1423,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 .absolute(r1.getStart(), r1.getEnd(), EnumTimeAggregation.ALL)
                 .build();
             queryResponse = dataService.execute(query);
-            Double val = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
+            series = queryResponse.getFacade(deviceType);
+            Double val = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
             if (val != null)
                 summary.addValue(val);
         }   
@@ -1441,6 +1457,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query;
         DataQueryResponse queryResponse;
+        SeriesFacade series;
+        
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", account.getKey())  
@@ -1458,7 +1476,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 .absolute(r.getStart(), r.getEnd(), EnumTimeAggregation.ALL)
                 .build();
             queryResponse = dataService.execute(query);
-            Double y = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
+            series = queryResponse.getFacade(deviceType);
+            Double y = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
             if (y == null) {
                 missingPart = true;
                 break;
@@ -1504,6 +1523,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query;
         DataQueryResponse queryResponse;
+        SeriesFacade series;
+        
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", account.getKey())  
@@ -1516,7 +1537,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(targetDate, +1, timeUnit, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double targetValue = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
+        series = queryResponse.getFacade(deviceType);
+        Double targetValue = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
         if (targetValue == null)
             return null; // nothing to compare to
         
@@ -1530,7 +1552,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 .sliding(start, +1, timeUnit, EnumTimeAggregation.ALL)
                 .build();
             queryResponse = dataService.execute(query);
-            Double val = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
+            series = queryResponse.getFacade(deviceType);
+            Double val = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
             if (val != null)
                 summary.addValue(val);
         }   
@@ -1571,6 +1594,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query;
         DataQueryResponse queryResponse;
+        SeriesFacade series;
+        
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", account.getKey())  
@@ -1583,7 +1608,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(targetDate, +1, timeUnit, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double targetValue = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
+        series = queryResponse.getFacade(deviceType);
+        Double targetValue = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
         if (targetValue == null)
             return null; // nothing to compare to
         
@@ -1593,7 +1619,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(targetDate.minus(period), +1, timeUnit, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double previousValue = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
+        series = queryResponse.getFacade(deviceType);
+        Double previousValue = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
         if (previousValue == null)
             return null; // nothing to compare to
         
@@ -1627,12 +1654,21 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query;
         DataQueryResponse queryResponse;
+        SeriesFacade series;
+        
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(tz)
             .user("user", account.getKey())  
             .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
             .sum();
              
+        // Fixme: Debug
+        boolean breakpointCondition = 
+            account.getKey().equals(UUID.fromString("03d450ed-4130-48b7-9cad-1d9e42bee9c3"));
+        if (breakpointCondition) {
+            System.err.println("This user\'s got a temper!!");
+        }
+        
         // Initialize sums for each day of week, and sum for all days
         
         Map<EnumDayOfWeek, Sum> sumPerDay = new EnumMap<>(EnumDayOfWeek.class);
@@ -1651,16 +1687,16 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 .absolute(start, end, EnumTimeAggregation.DAY)
                 .build();
             queryResponse = dataService.execute(query);
-            Iterable<Pair<Instant, Double>> points =
-                queryResponse.iterPoints(deviceType, VOLUME, EnumMetric.SUM);
+            series = queryResponse.getFacade(deviceType);
+            if (series == null)
+                continue;
+            FluentIterable<Point> points = FluentIterable
+                .of(series.iterPoints(VOLUME, EnumMetric.SUM))
+                .filter(Point.betweenTime(start, end));
             // Update partial sums for each day of week
-            for (Pair<Instant, Double> p: points) {
-                DateTime t = p.getFirst().toDateTime(tz);
-                if (t.isBefore(start) || !t.isBefore(end))
-                    continue;
-                Double value = p.getSecond();
-                if (value == null)
-                    continue;
+            for (Point p: points) {
+                DateTime t = p.getTimestamp().toDateTime(tz);
+                double value = p.getValue();
                 EnumDayOfWeek day = EnumDayOfWeek.valueOf(t.getDayOfWeek());
                 sumPerDay.get(day).increment(value);
                 sum.increment(value);
@@ -1732,6 +1768,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query;
         DataQueryResponse queryResponse;
+        SeriesFacade series;
+        
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(tz)
             .user("user", account.getKey())  
@@ -1755,16 +1793,16 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 .absolute(start, end, EnumTimeAggregation.DAY)
                 .build();
             queryResponse = dataService.execute(query);
-            Iterable<Pair<Instant, Double>> points =
-                queryResponse.iterPoints(deviceType, VOLUME, EnumMetric.SUM);
+            series = queryResponse.getFacade(deviceType);
+            if (series == null)
+                continue;
+            FluentIterable<Point> points = FluentIterable
+                .of(series.iterPoints(VOLUME, EnumMetric.SUM))
+                .filter(Point.betweenTime(start, end));
             // Update partial sums for each type (working/weekend day)
-            for (Pair<Instant, Double> p: points) {
-                DateTime t = p.getFirst().toDateTime(tz);
-                if (t.isBefore(start) || !t.isBefore(end))
-                    continue;
-                Double value = p.getSecond();
-                if (value == null)
-                    continue;
+            for (Point p: points) {
+                DateTime t = p.getTimestamp().toDateTime(tz);
+                double value = p.getValue();
                 EnumDayOfWeek day = EnumDayOfWeek.valueOf(t.getDayOfWeek());
                 sumPerType.get(day.getType()).increment(value);
             }
@@ -1786,7 +1824,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         logger.debug(String.format(
             "Insight B4 for account %s/%s: Consumption for %d weeks to %s:\n\t" + 
-                "weekday-avg=%.2f weekend-average=%.2f", 
+                "weekday-average=%.2f weekend-average=%.2f", 
              account.getKey(), deviceType, N, targetDate.plusWeeks(1).toString("dd/MM/YYYY"), 
              weekdayAverage, weekendAverage));
         
@@ -1807,6 +1845,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         DataQuery query;
         DataQueryResponse queryResponse;
+        SeriesFacade series;
+        
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(tz)
             .user("user", account.getKey())  
@@ -1819,7 +1859,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(targetDate, +1, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double targetValue = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
+        series = queryResponse.getFacade(deviceType);
+        Double targetValue = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
         if (targetValue == null)
             return null; // nothing to compare to
         
@@ -1829,7 +1870,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .sliding(targetDate.minusYears(1), +1, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
-        Double previousValue = queryResponse.asNumber(deviceType, VOLUME, EnumMetric.SUM);
+        series = queryResponse.getFacade(deviceType);
+        Double previousValue = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
         if (previousValue == null)
             return null; // nothing to compare to
         
@@ -1857,21 +1899,5 @@ public class DefaultMessageResolverService implements IMessageResolverService
         AccountStaticRecommendationEntity e = accountStaticRecommendationRepository
             .findLastForAccount(accountKey);
         return (e == null)? null : e.getCreatedOn();
-    }
-    
-    private int countConsecutiveZeros(List<Double> values) 
-    {
-        int maxLength = 0;
-        int currLength = 0;
-        for (Double value: values) {
-            if (value == 0)
-                currLength++;
-            else
-                currLength = 0;
-            
-            if (currLength > maxLength)
-                maxLength = currLength;
-        }
-        return maxLength;
     }
 }
