@@ -1,12 +1,12 @@
 package eu.daiad.web.service;
 
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.io.IOException;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -17,11 +17,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import com.ibm.icu.text.MessageFormat;
-import com.vividsolutions.jts.geom.Geometry;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.ibm.icu.text.MessageFormat;
+import com.vividsolutions.jts.geom.Geometry;
 
+import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AreaGroupMemberEntity;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
@@ -63,7 +64,6 @@ import eu.daiad.web.repository.application.ISpatialRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IWaterMeterForecastRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
-import eu.daiad.web.domain.application.AccountEntity;
 
 @Service
 public class DataService extends BaseService implements IDataService {
@@ -91,8 +91,8 @@ public class DataService extends BaseService implements IDataService {
 
     @Autowired
     IWaterMeterForecastRepository waterMeterForecastRepository;
-    
-    @Autowired    
+
+    @Autowired
     IFavouriteRepository favouriteRepository;
 
     protected String getMessage(ErrorCode error) {
@@ -500,8 +500,7 @@ public class DataService extends BaseService implements IDataService {
                             filterUsers = ((UserPopulationFilter) filter).getUsers();
                             break;
                         case GROUP:
-                            filterUsers = groupRepository.getGroupMemberKeys(((GroupPopulationFilter) filter)
-                                            .getGroup());
+                            filterUsers = groupRepository.getGroupMemberKeys(((GroupPopulationFilter) filter).getGroup());
                             break;
                         case CLUSTER:
                             ClusterPopulationFilter clusterFilter = (ClusterPopulationFilter) filter;
@@ -510,8 +509,7 @@ public class DataService extends BaseService implements IDataService {
 
                             if (clusterFilter.getCluster() != null) {
                                 groups = groupRepository.getClusterByKeySegments(clusterFilter.getCluster());
-                            } else if ((clusterFilter.getClusterType() != null)
-                                            && (!clusterFilter.getClusterType().equals(EnumClusterType.UNDEFINED))) {
+                            } else if ((clusterFilter.getClusterType() != null) && (!clusterFilter.getClusterType().equals(EnumClusterType.UNDEFINED))) {
                                 groups = groupRepository.getClusterByTypeSegments(clusterFilter.getClusterType());
                             } else if (!StringUtils.isBlank(clusterFilter.getName())) {
                                 groups = groupRepository.getClusterByNameSegments(clusterFilter.getName());
@@ -529,8 +527,7 @@ public class DataService extends BaseService implements IDataService {
                             }
                             continue;
                         case UTILITY:
-                            filterUsers = groupRepository.getUtilityByKeyMemberKeys(((UtilityPopulationFilter) filter)
-                                            .getUtility());
+                            filterUsers = groupRepository.getUtilityByKeyMemberKeys(((UtilityPopulationFilter) filter).getUtility());
                             break;
                         default:
                             // Ignore
@@ -549,13 +546,10 @@ public class DataService extends BaseService implements IDataService {
                         for (UUID userKey : filterUsers) {
                             // Filter users based on the utility only when
                             // an authenticated user exists
-                            AuthenticatedUser user = (authenticatedUser == null ? userRepository.getUserByKey(userKey)
-                                            : userRepository.getUserByUtilityAndKey(authenticatedUser.getUtilityId(),
-                                                            userKey));
+                            AuthenticatedUser user = (authenticatedUser == null ? userRepository.getUserByKey(userKey): userRepository.getUserByUtilityAndKey(authenticatedUser.getUtilityId(), userKey));
 
                             if (user == null) {
-                                throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username",
-                                                userKey);
+                                throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", userKey);
                             }
 
                             // Decide if the user must be included in the group
@@ -564,8 +558,7 @@ public class DataService extends BaseService implements IDataService {
                             WaterMeterDevice userMeter = null;
 
                             // Fetch meter only if it is needed
-                            if ((query.getSource() == EnumMeasurementDataSource.BOTH)
-                                            || (query.getSource() == EnumMeasurementDataSource.METER)) {
+                            if ((query.getSource() == EnumMeasurementDataSource.BOTH) || (query.getSource() == EnumMeasurementDataSource.METER)) {
                                 userMeter = getUserWaterMeter(userKey);
                                 if (userMeter == null) {
                                     includeUser = false;
@@ -580,7 +573,7 @@ public class DataService extends BaseService implements IDataService {
                                 }
 
                                 for (ConstraintSpatialFilter spatialConstraint : spatialConstraints) {
-                                    if (!this.filterUserWithConstraintSpatialFilter(userLocation, spatialConstraint)) {
+                                    if (!filterUserWithConstraintSpatialFilter(userLocation, spatialConstraint)) {
                                         includeUser = false;
                                         break;
                                     }
@@ -592,11 +585,9 @@ public class DataService extends BaseService implements IDataService {
                             if (includeUser) {
                                 expandedPopulationFilter.getUsers().add(userKey);
                                 expandedPopulationFilter.getLabels().add(user.getUsername());
-                                expandedPopulationFilter.getHashes().add(
-                                                md.digest(userKey.toString().getBytes("UTF-8")));
+                                expandedPopulationFilter.getHashes().add(md.digest(userKey.toString().getBytes("UTF-8")));
                                 if (userMeter != null) {
-                                    expandedPopulationFilter.getSerials().add(
-                                                    md.digest(userMeter.getSerial().getBytes("UTF-8")));
+                                    expandedPopulationFilter.getSerials().add(md.digest(userMeter.getSerial().getBytes("UTF-8")));
                                 } else {
                                     expandedPopulationFilter.getSerials().add(null);
                                 }
@@ -908,13 +899,10 @@ public class DataService extends BaseService implements IDataService {
                         for (UUID userKey : filterUsers) {
                             // Filter users based on the utility only when
                             // an authenticated user exists
-                            AuthenticatedUser user = (authenticatedUser == null ? userRepository.getUserByKey(userKey)
-                                            : userRepository.getUserByUtilityAndKey(authenticatedUser.getUtilityId(),
-                                                            userKey));
+                            AuthenticatedUser user = (authenticatedUser == null ? userRepository.getUserByKey(userKey) : userRepository.getUserByUtilityAndKey(authenticatedUser.getUtilityId(), userKey));
 
                             if (user == null) {
-                                throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username",
-                                                userKey);
+                                throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", userKey);
                             }
 
                             // Decide if the user must be included in the group
@@ -923,8 +911,7 @@ public class DataService extends BaseService implements IDataService {
                             WaterMeterDevice userMeter = null;
 
                             // Fetch meter only if it is needed
-                            if ((query.getSource() == EnumMeasurementDataSource.BOTH)
-                                            || (query.getSource() == EnumMeasurementDataSource.METER)) {
+                            if ((query.getSource() == EnumMeasurementDataSource.BOTH) || (query.getSource() == EnumMeasurementDataSource.METER)) {
                                 userMeter = getUserWaterMeter(userKey);
                                 if (userMeter == null) {
                                     includeUser = false;
@@ -939,7 +926,7 @@ public class DataService extends BaseService implements IDataService {
                                 }
 
                                 for (ConstraintSpatialFilter spatialConstraint : spatialConstraints) {
-                                    if (!this.filterUserWithConstraintSpatialFilter(userLocation, spatialConstraint)) {
+                                    if (!filterUserWithConstraintSpatialFilter(userLocation, spatialConstraint)) {
                                         includeUser = false;
                                         break;
                                     }
@@ -951,11 +938,9 @@ public class DataService extends BaseService implements IDataService {
                             if (includeUser) {
                                 expandedPopulationFilter.getUsers().add(userKey);
                                 expandedPopulationFilter.getLabels().add(user.getUsername());
-                                expandedPopulationFilter.getHashes().add(
-                                                md.digest(userKey.toString().getBytes("UTF-8")));
+                                expandedPopulationFilter.getHashes().add(md.digest(userKey.toString().getBytes("UTF-8")));
                                 if (userMeter != null) {
-                                    expandedPopulationFilter.getSerials().add(
-                                                    md.digest(userMeter.getSerial().getBytes("UTF-8")));
+                                    expandedPopulationFilter.getSerials().add(md.digest(userMeter.getSerial().getBytes("UTF-8")));
                                 } else {
                                     expandedPopulationFilter.getSerials().add(null);
                                 }
@@ -1112,42 +1097,48 @@ public class DataService extends BaseService implements IDataService {
             case INTERSECT:
                 return filter.getGeometry().intersects(userLocation);
             case DISTANCE:
-                return (filter.getGeometry().distance(userLocation) < filter.getDistance());
+                return (distance(filter.getGeometry(), userLocation) < filter.getDistance());
             default:
                 return false;
         }
+    }
+
+    private double distance(Geometry g1, Geometry g2) {
+        double distance = g1.distance(g2);
+
+        return distance * (Math.PI / 180) * 6378137;
     }
 
     @Override
     public void storeQuery(NamedDataQuery query, UUID key) {
         AccountEntity account = userRepository.getAccountByKey(key);
         favouriteRepository.insertFavouriteQuery(query, account);
-        
+
     }
-    
+
     @Override
     public void updateStoredQuery(NamedDataQuery query, UUID key) {
         AccountEntity account = userRepository.getAccountByKey(key);
         favouriteRepository.updateFavouriteQuery(query, account);
-        
-    }    
+
+    }
 
     @Override
     public void deleteStoredQuery(NamedDataQuery query, UUID key) {
         AccountEntity account = userRepository.getAccountByKey(key);
         favouriteRepository.deleteFavouriteQuery(query, account);
-        
-    }    
-    
+
+    }
+
     @Override
     public void storeQuery(NamedDataQuery query, String username) {
         AccountEntity account = userRepository.getAccountByUsername(username);
         favouriteRepository.insertFavouriteQuery(query, account);
 
     }
-    
+
     @Override
-    public List<NamedDataQuery> getQueriesForOwner(int accountId) 
+    public List<NamedDataQuery> getQueriesForOwner(int accountId)
             throws JsonMappingException, JsonParseException, IOException{
         List<NamedDataQuery> namedQueries = favouriteRepository.getFavouriteQueriesForOwner(accountId);
         return namedQueries;
@@ -1157,6 +1148,6 @@ public class DataService extends BaseService implements IDataService {
     public List<NamedDataQuery> getAllQueries() {
         List<NamedDataQuery> namedQueries = favouriteRepository.getAllFavouriteQueries();
         return namedQueries;
-    }    
+    }
 
 }

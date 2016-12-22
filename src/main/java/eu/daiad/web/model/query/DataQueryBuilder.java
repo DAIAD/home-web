@@ -6,6 +6,9 @@ import java.util.UUID;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import eu.daiad.web.model.EnumTimeAggregation;
+import eu.daiad.web.model.EnumTimeUnit;
+
 public class DataQueryBuilder {
 
     private DataQuery query;
@@ -190,7 +193,12 @@ public class DataQueryBuilder {
         this.query.setSource(EnumMeasurementDataSource.METER);
         return this;
     }
-
+    
+    public DataQueryBuilder source(EnumMeasurementDataSource s) {
+        this.query.setSource(s);
+        return this;
+    }
+    
     public DataQueryBuilder sum() {
         if (!this.metrics.contains(EnumMetric.SUM)) {
             this.metrics.add(EnumMetric.SUM);

@@ -65,6 +65,7 @@ public class RunJar {
 	}
 
 	public void run(Map<String, String> properties) throws Throwable {
+	    // Check properties
 		if (!properties.containsKey("mapreduce.job.name")) {
 			throw new Exception("Job name is not set.");
 		}
@@ -80,6 +81,7 @@ public class RunJar {
 
 		String mainClassName = null;
 
+		// Get JAR file
 		JarFile jarFile;
 		try {
 			jarFile = new JarFile(fileName);
@@ -87,6 +89,15 @@ public class RunJar {
 			throw new IOException("Error opening job jar: " + fileName).initCause(io);
 		}
 
+		// Get external libraries directory
+        File libDir = null;
+        if (properties.containsKey("mapreduce.job.lib.local")) {
+            libDir = new File(properties.get("mapreduce.job.lib.local"));
+            
+            ensureDirectory(libDir);
+        }
+        
+		// Select Main class
 		Manifest manifest = jarFile.getManifest();
 		if (manifest != null) {
 			mainClassName = manifest.getMainAttributes().getValue("Main-Class");
@@ -118,7 +129,7 @@ public class RunJar {
 
 		unJar(file, workDir);
 
-		ClassLoader loader = createClassLoader(file, workDir);
+		ClassLoader loader = createClassLoader(file, libDir, workDir);
 
 		Thread.currentThread().setContextClassLoader(loader);
 		Class<?> mainClass = Class.forName(mainClassName, true, loader);
@@ -148,32 +159,28 @@ public class RunJar {
 		}
 	}
 
-	private ClassLoader createClassLoader(File file, final File workDir) throws MalformedURLException, IOException {
+	private ClassLoader createClassLoader(File file, final File libDir, final File workDir) throws MalformedURLException, IOException {
 		List<URL> classPath = new ArrayList<URL>();
 		classPath.add(new File(workDir + "/").toURI().toURL());
 		classPath.add(file.toURI().toURL());
 		classPath.add(new File(workDir, "classes/").toURI().toURL());
 
-		transferJarsToWorlingDir(new File(workDir, "lib"));
+        if (libDir != null) {
+            transferJarsToWorkingDir(libDir, new File(workDir, "lib"));
 
-		File[] libs = new File(workDir, "lib").listFiles();
-		if (libs != null) {
-			for (int i = 0; i < libs.length; i++) {
-				classPath.add(libs[i].toURI().toURL());
-			}
-		}
+            File[] libs = new File(workDir, "lib").listFiles();
+            if (libs != null) {
+                for (int i = 0; i < libs.length; i++) {
+                    classPath.add(libs[i].toURI().toURL());
+                }
+            }
+        }
 
 		return new URLClassLoader(classPath.toArray(new URL[0]));
 	}
 
-	boolean useClientClassLoader() {
-		return false;
-	}
-
-	private void transferJarsToWorlingDir(File target) throws IOException {
+	private void transferJarsToWorkingDir(File source, File target) throws IOException {
 		try {
-			File source = new File("/home/daiad/Development/hbase-mapreduce/lib/");
-
 			FileUtils.copyDirectory(source, target);
 		} catch (IOException e) {
 			e.printStackTrace();

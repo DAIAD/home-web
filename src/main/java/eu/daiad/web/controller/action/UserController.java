@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.domain.application.AccountEntity;
-import eu.daiad.web.domain.application.DeviceMeter;
+import eu.daiad.web.domain.application.DeviceMeterEntity;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.admin.AccountWhiteListInfo;
 import eu.daiad.web.model.amphiro.AmphiroSessionCollection;
@@ -178,9 +178,9 @@ public class UserController extends BaseController {
 
                 account.setLocation(entity.getLocation());
 
-                for (eu.daiad.web.domain.application.Device d : entity.getDevices()) {
+                for (eu.daiad.web.domain.application.DeviceEntity d : entity.getDevices()) {
                     if (d.getType() == EnumDeviceType.METER) {
-                        account.setMeter(new DeviceMeterInfo((DeviceMeter) d));
+                        account.setMeter(new DeviceMeterInfo((DeviceMeterEntity) d));
                         break;
                     }
                 }
@@ -272,7 +272,7 @@ public class UserController extends BaseController {
         List<String> serials = new ArrayList<String>();
         List<UUID> deviceKeys = new ArrayList<UUID>();
 
-        for (Device d : this.deviceRepository.getUserDevices(userkey, deviceQuery)) {
+        for (Device d : deviceRepository.getUserDevices(userkey, deviceQuery)) {
             serials.add(((WaterMeterDevice) d).getSerial());
             deviceKeys.add(((WaterMeterDevice) d).getKey());
         }
@@ -422,12 +422,12 @@ public class UserController extends BaseController {
     public RestResponse resetPasswordCreateToken(@AuthenticationPrincipal AuthenticatedUser user,
                                                  @RequestBody PasswordResetTokenCreateRequest request) {
         try {
-            userService.resetPasswordCreateToken(request.getUsername(), true, request.getApplication());
+            userService.resetPasswordCreateToken(request.getUsername(), request.getApplication());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
             // Do not send detailed error information
-            return new RestResponse(this.getErrorUnknown());
+            return new RestResponse(getErrorUnknown());
         }
 
         return new RestResponse();

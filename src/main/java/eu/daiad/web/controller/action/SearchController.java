@@ -98,7 +98,7 @@ public class SearchController extends BaseController {
 
 				ArrayList<UUID> deviceKeys = new ArrayList<UUID>();
 
-				for (Device d : this.deviceRepository.getUserDevices(query.getUserKey(), deviceQuery)) {
+				for (Device d : deviceRepository.getUserDevices(query.getUserKey(), deviceQuery)) {
 					deviceKeys.add(d.getKey());
 				}
 
@@ -107,7 +107,7 @@ public class SearchController extends BaseController {
 				query.setDeviceKey(deviceKeys.toArray(deviceKeyArray));
 			}
 
-			String[] serials = this.checkMeterOwnership(query.getUserKey(), query.getDeviceKey());
+			String[] serials = checkMeterOwnership(query.getUserKey(), query.getDeviceKey());
 
 			WaterMeterStatusQueryResult result = waterMeterMeasurementRepository.getStatus(serials);
 
@@ -139,8 +139,7 @@ public class SearchController extends BaseController {
 	 */
 	@RequestMapping(value = "/action/meter/history", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	@Secured({ RoleConstant.ROLE_USER, RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-	public RestResponse searchWaterMeterMeasurements(@AuthenticationPrincipal AuthenticatedUser user,
-					@RequestBody WaterMeterMeasurementQuery query) {
+	public RestResponse searchWaterMeterMeasurements(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody WaterMeterMeasurementQuery query) {
 		RestResponse response = new RestResponse();
 
 		try {
@@ -152,11 +151,10 @@ public class SearchController extends BaseController {
 
 			// Check utility access
 			if (!user.getKey().equals(query.getUserKey())) {
-				AuthenticatedUser deviceOwner = userRepository.getUserByUtilityAndKey(user.getUtilityId(),
-								query.getUserKey());
-				if (deviceOwner == null) {
+				AuthenticatedUser deviceOwner = userRepository.getUserByKey(query.getUserKey());
+                if (!user.getUtilities().contains(deviceOwner.getUtilityId())) {
 					throw createApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
-									.set("owner", query.getUserKey());
+					                                                                      .set("owner", query.getUserKey());
 				}
 			}
 
@@ -166,7 +164,7 @@ public class SearchController extends BaseController {
 
 				ArrayList<UUID> deviceKeys = new ArrayList<UUID>();
 
-				for (Device d : this.deviceRepository.getUserDevices(query.getUserKey(), deviceQuery)) {
+				for (Device d : deviceRepository.getUserDevices(query.getUserKey(), deviceQuery)) {
 					deviceKeys.add(d.getKey());
 				}
 
@@ -175,7 +173,7 @@ public class SearchController extends BaseController {
 				query.setDeviceKey(deviceKeys.toArray(deviceKeyArray));
 			}
 
-			String[] serials = this.checkMeterOwnership(query.getUserKey(), query.getDeviceKey());
+			String[] serials = checkMeterOwnership(query.getUserKey(), query.getDeviceKey());
 
 			return waterMeterMeasurementRepository.searchMeasurements(serials, DateTimeZone.forID(user.getTimezone()),
 							query);
@@ -256,8 +254,8 @@ public class SearchController extends BaseController {
 
 			// Check utility access
 			if (!user.getKey().equals(query.getUserKey())) {
-				AuthenticatedUser deviceOwner = userRepository.getUserByUtilityAndKey(user.getUtilityId(), query.getUserKey());
-				if (deviceOwner == null) {
+				AuthenticatedUser deviceOwner = userRepository.getUserByKey(query.getUserKey());
+				if (!user.getUtilities().contains(deviceOwner.getUtilityId())) {
 					throw createApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey())
 									                                                      .set("owner", query.getUserKey());
 				}
@@ -269,7 +267,7 @@ public class SearchController extends BaseController {
 
 				ArrayList<UUID> deviceKeys = new ArrayList<UUID>();
 
-				for (Device d : this.deviceRepository.getUserDevices(query.getUserKey(), deviceQuery)) {
+				for (Device d : deviceRepository.getUserDevices(query.getUserKey(), deviceQuery)) {
 					deviceKeys.add(d.getKey());
 				}
 
@@ -321,7 +319,7 @@ public class SearchController extends BaseController {
 
 				ArrayList<UUID> deviceKeys = new ArrayList<UUID>();
 
-				for (Device d : this.deviceRepository.getUserDevices(query.getUserKey(), deviceQuery)) {
+				for (Device d : deviceRepository.getUserDevices(query.getUserKey(), deviceQuery)) {
 					deviceKeys.add(d.getKey());
 				}
 
@@ -417,7 +415,7 @@ public class SearchController extends BaseController {
 
 		if (devices != null) {
 			for (UUID deviceKey : devices) {
-				Device device = this.deviceRepository.getUserDeviceByKey(userKey, deviceKey);
+				Device device = deviceRepository.getUserDeviceByKey(userKey, deviceKey);
 
 				if (device == null) {
 					throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());
@@ -445,7 +443,7 @@ public class SearchController extends BaseController {
 
 		if (devices != null) {
 			for (UUID deviceKey : devices) {
-				Device device = this.deviceRepository.getUserDeviceByKey(userKey, deviceKey);
+				Device device = deviceRepository.getUserDeviceByKey(userKey, deviceKey);
 
 				if (device == null) {
 					throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", deviceKey.toString());

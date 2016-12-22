@@ -51,7 +51,7 @@ public class AccountEntity {
 
     @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
     @JoinColumn(name = "account_id")
-    private Set<AccountRole> roles = new HashSet<AccountRole>();
+    private Set<AccountRoleEntity> roles = new HashSet<AccountRoleEntity>();
 
     @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
     @JoinColumn(name = "account_id")
@@ -59,17 +59,21 @@ public class AccountEntity {
 
     @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id")
-    private Set<Device> devices = new HashSet<Device>();
+    private Set<DeviceEntity> devices = new HashSet<DeviceEntity>();
 
     @OneToOne(mappedBy = "account")
     @JoinColumn(name = "account_id")
     private AccountWhiteListEntity whiteListEntry;
 
     @OneToOne(mappedBy = "account")
-    private AccountProfile profile;
+    private AccountProfileEntity profile;
 
     @OneToOne(mappedBy = "account")
     private HouseholdEntity household;
+
+    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id")
+    private Set<WaterIqHistoryEntity> waterIqHistory = new HashSet<WaterIqHistoryEntity>();
 
     @Basic(fetch = FetchType.LAZY)
     @Type(type = "org.hibernate.type.BinaryType")
@@ -161,7 +165,7 @@ public class AccountEntity {
         this.utility = utility;
     }
 
-    public Set<Device> getDevices() {
+    public Set<DeviceEntity> getDevices() {
         return devices;
     }
 
@@ -268,7 +272,7 @@ public class AccountEntity {
         return key;
     }
 
-    public Set<AccountRole> getRoles() {
+    public Set<AccountRoleEntity> getRoles() {
         return roles;
     }
 
@@ -332,11 +336,11 @@ public class AccountEntity {
         this.locale = locale;
     }
 
-    public AccountProfile getProfile() {
+    public AccountProfileEntity getProfile() {
         return profile;
     }
 
-    public void setProfile(AccountProfile profile) {
+    public void setProfile(AccountProfileEntity profile) {
         this.profile = profile;
     }
 
@@ -376,9 +380,13 @@ public class AccountEntity {
         this.household = household;
     }
 
+    public Set<WaterIqHistoryEntity> getWaterIqHistory() {
+        return waterIqHistory;
+    }
+
     public String getFullname() {
-        String fullname = (StringUtils.isBlank(this.firstname) ? "" : this.firstname) + " "
-                        + (StringUtils.isBlank(this.lastname) ? "" : this.lastname);
+        String fullname = (StringUtils.isBlank(firstname) ? "" : firstname) + " "
+                        + (StringUtils.isBlank(lastname) ? "" : lastname);
 
         if (StringUtils.isBlank(fullname)) {
             return null;

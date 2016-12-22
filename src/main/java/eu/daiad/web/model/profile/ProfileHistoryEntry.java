@@ -49,6 +49,11 @@ public class ProfileHistoryEntry {
      */
     private EnumUtilityMode utilityMode;
 
+    /**
+     * Social features are enabled in DAIAD@home and DAIAD@web applications.
+     */
+    private boolean socialEnabled;
+
     public int getId() {
         return id;
     }
@@ -111,6 +116,14 @@ public class ProfileHistoryEntry {
 
     public void setUtilityMode(EnumUtilityMode utilityMode) {
         this.utilityMode = utilityMode;
+    }
+
+    public boolean isSocialEnabled() {
+        return socialEnabled;
+    }
+
+    public void setSocialEnabled(boolean socialEnabled) {
+        this.socialEnabled = socialEnabled;
     }
 
 }

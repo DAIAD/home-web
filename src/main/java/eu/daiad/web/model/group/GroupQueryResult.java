@@ -2,19 +2,19 @@ package eu.daiad.web.model.group;
 
 import java.util.List;
 
-import eu.daiad.web.domain.application.Group;
+import eu.daiad.web.domain.application.GroupEntity;
 
 public class GroupQueryResult {
 
-    private List<Group> groups;
+    private List<GroupEntity> groups;
 
     private int total;
 
-    public List<Group> getGroups() {
+    public List<GroupEntity> getGroups() {
         return groups;
     }
 
-    public void setGroups(List<Group> groups) {
+    public void setGroups(List<GroupEntity> groups) {
         this.groups = groups;
     }
 

@@ -14,7 +14,7 @@ import com.vividsolutions.jts.geom.Geometry;
 
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AreaGroupMemberEntity;
-import eu.daiad.web.domain.application.DeviceMeter;
+import eu.daiad.web.domain.application.DeviceMeterEntity;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository
@@ -44,14 +44,14 @@ public class JpaSpatialRepository extends BaseRepository implements ISpatialRepo
         }
 
         // Attempt to find user location from the meter
-        TypedQuery<DeviceMeter> meterQuery = entityManager.createQuery(
-                        "select d from device_meter d where d.account.key = :userKey", DeviceMeter.class).setFirstResult(0);
+        TypedQuery<DeviceMeterEntity> meterQuery = entityManager.createQuery(
+                        "select d from device_meter d where d.account.key = :userKey", DeviceMeterEntity.class).setFirstResult(0);
 
         meterQuery.setParameter("userKey", userKey);
 
-        List<DeviceMeter> meters = meterQuery.getResultList();
+        List<DeviceMeterEntity> meters = meterQuery.getResultList();
 
-        for (DeviceMeter meter : meters) {
+        for (DeviceMeterEntity meter : meters) {
             if (meter.getLocation() != null) {
                 return meter.getLocation();
             }

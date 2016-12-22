@@ -146,6 +146,7 @@ Additional information on how to configuring Log4j2 can be found at [Log4j2] (ht
 |daiad.password.reset.token.duration|Password reset token duration in hours|3|
 |daiad.captcha.google.key|The client site key for Google reCAPTCHA API||
 |daiad.amphiro.properties.*|Amphiro b1 default properties||
+|spring.messages.basename|Comma-separated list of basenames, each following the ResourceBundle convention|messages,mail-messages|
 
 # Application Profile Specific Settings
 

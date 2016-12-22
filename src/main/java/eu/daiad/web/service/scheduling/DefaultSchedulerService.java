@@ -43,9 +43,9 @@ import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.scheduling.support.PeriodicTrigger;
 import org.springframework.stereotype.Service;
 
-import eu.daiad.web.domain.admin.ScheduledJob;
-import eu.daiad.web.domain.admin.ScheduledJobExecution;
-import eu.daiad.web.jobs.IJobBuilder;
+import eu.daiad.web.domain.admin.ScheduledJobEntity;
+import eu.daiad.web.domain.admin.ScheduledJobExecutionEntity;
+import eu.daiad.web.job.builder.IJobBuilder;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SchedulerErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
@@ -99,7 +99,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
     @Override
     public void afterPropertiesSet() throws Exception {
         try {
-            this.updateScheduler();
+            updateScheduler();
         } catch (Exception ex) {
             logger.error("Failed to reload job metadata.", ex);
         }
@@ -108,7 +108,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
     @PreDestroy
     private void destroy() throws Exception {
         // Cancel scheduling
-        for (Entry<Long, JobSchedulingProperties> entry : this.scheduledJobs.entrySet()) {
+        for (Entry<Long, JobSchedulingProperties> entry : scheduledJobs.entrySet()) {
             ScheduledFuture<?> future = entry.getValue().getFuture();
             if ((!future.isCancelled()) && (!future.isDone())) {
                 entry.getValue().getFuture().cancel(false);
@@ -121,7 +121,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
         for (JobExecution jobExecution : activeExecutions) {
             try {
                 if (jobExecution.isRunning()) {
-                    this.stop(jobExecution.getId());
+                    stop(jobExecution.getId());
                 }
             } catch (Exception ex) {
                 if (firstException == null) {
@@ -143,7 +143,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
         }
     }
 
-    private JobInfo scheduledJobToJobInfo(ScheduledJob scheduledJob) {
+    private JobInfo scheduledJobToJobInfo(ScheduledJobEntity scheduledJob) {
         JobInfo info = new JobInfo();
 
         DateTime startLocalDateTime;
@@ -159,7 +159,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
 
         info.setEnabled(scheduledJob.isEnabled());
 
-        ScheduledJobExecution lastExecution = this.schedulerRepository.getLastExecution(scheduledJob.getName());
+        ScheduledJobExecutionEntity lastExecution = schedulerRepository.getLastExecution(scheduledJob.getName());
         if (lastExecution != null) {
             startLocalDateTime = lastExecution.getStartedOn().toDateTime(DateTimeZone.forID(serverTimeZone));
 
@@ -180,7 +180,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
             }
         }
 
-        JobSchedulingProperties entry = this.scheduledJobs.get(scheduledJob.getId());
+        JobSchedulingProperties entry = scheduledJobs.get(scheduledJob.getId());
         if (entry != null) {
             long delay = entry.getFuture().getDelay(TimeUnit.MILLISECONDS);
             DateTime nextExecution = DateTime.now();
@@ -210,11 +210,11 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
     @Override
     public List<JobInfo> getJobs() {
         removeInactiveExecutions();
-        
+
         List<JobInfo> jobs = new ArrayList<JobInfo>();
 
-        for (ScheduledJob scheduledJob : this.schedulerRepository.getJobs()) {
-            jobs.add(this.scheduledJobToJobInfo(scheduledJob));
+        for (ScheduledJobEntity scheduledJob : schedulerRepository.getJobs()) {
+            jobs.add(scheduledJobToJobInfo(scheduledJob));
         }
 
         return jobs;
@@ -224,10 +224,10 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
     public JobInfo getJob(long jobId) {
         JobInfo info = null;
 
-        ScheduledJob scheduledJob = this.schedulerRepository.getJobById(jobId);
+        ScheduledJobEntity scheduledJob = schedulerRepository.getJobById(jobId);
 
         if (scheduledJob != null) {
-            info = this.scheduledJobToJobInfo(scheduledJob);
+            info = scheduledJobToJobInfo(scheduledJob);
         }
 
         return info;
@@ -242,12 +242,12 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
     public List<JobExecutionInfo> getJobExecutions(long jobId, int startPosition, int maxResult) {
         List<JobExecutionInfo> result = new ArrayList<JobExecutionInfo>();
 
-        List<ScheduledJobExecution> executions = this.schedulerRepository
+        List<ScheduledJobExecutionEntity> executions = schedulerRepository
                         .getExecutions(jobId, startPosition, maxResult);
 
         DateTime utcDateTime;
 
-        for (ScheduledJobExecution execution : executions) {
+        for (ScheduledJobExecutionEntity execution : executions) {
             JobExecutionInfo info = new JobExecutionInfo();
 
             if (execution.getCompletedOn() != null) {
@@ -276,15 +276,15 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
 
     @Override
     public String getExecutionMessage(long executionId) {
-        return this.schedulerRepository.getExecutionMessage(executionId);
+        return schedulerRepository.getExecutionMessage(executionId);
     }
 
     @Override
     public void enable(Long jobId) {
         try {
-            ScheduledJob scheduledJob = this.schedulerRepository.enable(jobId);
+            ScheduledJobEntity scheduledJob = schedulerRepository.enable(jobId);
 
-            this.schedule(scheduledJob);
+            schedule(scheduledJob);
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }
@@ -293,11 +293,11 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
     @Override
     public void disable(Long jobId) {
         try {
-            this.schedulerRepository.disable(jobId);
+            schedulerRepository.disable(jobId);
 
             if (scheduledJobs.containsKey(jobId)) {
-                this.scheduledJobs.get(jobId).getFuture().cancel(false);
-                this.scheduledJobs.remove(jobId);
+                scheduledJobs.get(jobId).getFuture().cancel(false);
+                scheduledJobs.remove(jobId);
             }
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
@@ -306,7 +306,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
 
     @Override
     public void schedulePeriodicJob(long scheduledJobId, long period) {
-        this.schedulerRepository.schedulePeriodicJob(scheduledJobId, period);
+        schedulerRepository.schedulePeriodicJob(scheduledJobId, period);
     }
 
     @Override
@@ -314,7 +314,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
         try {
             CronSequenceGenerator cronSequenceGenerator = new CronSequenceGenerator(cronExpression);
 
-            this.schedulerRepository.scheduleCronJob(scheduledJobId, cronExpression);
+            schedulerRepository.scheduleCronJob(scheduledJobId, cronExpression);
 
             return cronSequenceGenerator.next(new Date());
         } catch (IllegalArgumentException ex) {
@@ -325,18 +325,18 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
     private void updateScheduler() throws Exception {
         cleanupInterruptedJobs();
 
-        for (ScheduledJob scheduledJob : this.schedulerRepository.getJobs()) {
-            this.schedule(scheduledJob);
+        for (ScheduledJobEntity scheduledJob : schedulerRepository.getJobs()) {
+            schedule(scheduledJob);
         }
     }
 
-    private void schedule(ScheduledJob scheduledJob) throws Exception {
+    private void schedule(ScheduledJobEntity scheduledJob) throws Exception {
         // Remove existing job
         long jobId = scheduledJob.getId();
 
         if (scheduledJobs.containsKey(jobId)) {
-            this.scheduledJobs.get(jobId).getFuture().cancel(false);
-            this.scheduledJobs.remove(jobId);
+            scheduledJobs.get(jobId).getFuture().cancel(false);
+            scheduledJobs.remove(jobId);
         }
 
         // Get job builder from the context
@@ -352,7 +352,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
         if (scheduledJob.isEnabled()) {
             // Initialize job parameters
             JobParametersBuilder parameterBuilder = new JobParametersBuilder();
-            for (eu.daiad.web.domain.admin.ScheduledJobParameter parameter : scheduledJob.getParameters()) {
+            for (eu.daiad.web.domain.admin.ScheduledJobParameterEntity parameter : scheduledJob.getParameters()) {
                 parameterBuilder.addString(parameter.getName(), parameter.getValue());
             }
             JobParameters jobParameters = parameterBuilder.toJobParameters();
@@ -366,18 +366,18 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
                 logger.info(String.format("Initializing job [%s] with periodic trigger [%d].", scheduledJob.getName(),
                                 scheduledJob.getPeriod()));
 
-                ScheduledFuture<?> future = taskScheduler.schedule(new RunnableJob(this.activeExecutions, jobLauncher,
+                ScheduledFuture<?> future = taskScheduler.schedule(new RunnableJob(activeExecutions, jobLauncher,
                                 batchJob, jobParameters), new PeriodicTrigger(scheduledJob.getPeriod() * 1000));
 
-                this.scheduledJobs.put(scheduledJob.getId(), new JobSchedulingProperties(scheduledJob.getId(), future));
+                scheduledJobs.put(scheduledJob.getId(), new JobSchedulingProperties(scheduledJob.getId(), future));
             } else if (!StringUtils.isBlank(scheduledJob.getCronExpression())) {
                 logger.info(String.format("Initializing job [%s] with CRON trigger expression [%s].", scheduledJob
                                 .getName(), scheduledJob.getCronExpression()));
 
-                ScheduledFuture<?> future = taskScheduler.schedule(new RunnableJob(this.activeExecutions, jobLauncher,
+                ScheduledFuture<?> future = taskScheduler.schedule(new RunnableJob(activeExecutions, jobLauncher,
                                 batchJob, jobParameters), new CronTrigger(scheduledJob.getCronExpression()));
 
-                this.scheduledJobs.put(scheduledJob.getId(), new JobSchedulingProperties(scheduledJob.getId(), future));
+                scheduledJobs.put(scheduledJob.getId(), new JobSchedulingProperties(scheduledJob.getId(), future));
             } else {
                 logger.error(String.format("Failed to scheduler job [%s]. No trigger options is set.", scheduledJob
                                 .getName()));
@@ -387,15 +387,28 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
 
     @Override
     public void launch(String jobName) throws ApplicationException {
-        ScheduledJob job = this.schedulerRepository.getJobByName(jobName);
+        ScheduledJobEntity job = schedulerRepository.getJobByName(jobName);
 
-        this.launch(job.getId());
+        this.launch(job.getId(), null);
+    }
+
+
+    @Override
+    public void launch(String jobName, Map<String, String> parameters) throws ApplicationException {
+        ScheduledJobEntity job = schedulerRepository.getJobByName(jobName);
+
+        this.launch(job.getId(), parameters);
     }
 
     @Override
     public void launch(long jobId) throws ApplicationException {
+        this.launch(jobId, null);
+    }
+
+    @Override
+    public void launch(long jobId, Map<String, String> parameters) throws ApplicationException {
         try {
-            ScheduledJob scheduledJob = this.schedulerRepository.getJobById(jobId);
+            ScheduledJobEntity scheduledJob = schedulerRepository.getJobById(jobId);
 
             for (JobExecution activeExecution : activeExecutions) {
                 if (activeExecution.getJobInstance().getJobName().equals(scheduledJob.getName())) {
@@ -417,12 +430,19 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
 
             // Initialize job parameters
             JobParametersBuilder parameterBuilder = new JobParametersBuilder();
-            for (eu.daiad.web.domain.admin.ScheduledJobParameter parameter : scheduledJob.getParameters()) {
+            for (eu.daiad.web.domain.admin.ScheduledJobParameterEntity parameter : scheduledJob.getParameters()) {
                 parameterBuilder.addString(parameter.getName(), parameter.getValue());
             }
-            JobParameters parameters = parameterBuilder.toJobParameters();
+            // Override parameters
+            if (parameters != null) {
+                for (Entry<String, String> entry : parameters.entrySet()) {
+                    parameterBuilder.addString(entry.getKey(), entry.getValue());
+                }
+            }
 
-            JobExecution jobExecution = jobLauncher.run(job, job.getJobParametersIncrementer().getNext(parameters));
+            JobParameters jobParameters = parameterBuilder.toJobParameters();
+
+            JobExecution jobExecution = jobLauncher.run(job, job.getJobParametersIncrementer().getNext(jobParameters));
 
             if (jobExecution.isRunning()) {
                 activeExecutions.add(jobExecution);
@@ -435,10 +455,10 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
     @Override
     public boolean stop(Long executionId) {
         try {
-            if (this.activeExecutions.contains(executionId)) {
-                this.activeExecutions.remove(executionId);
+            if (activeExecutions.contains(executionId)) {
+                activeExecutions.remove(executionId);
             }
-            return this.jobOperator.stop(executionId);
+            return jobOperator.stop(executionId);
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }
@@ -492,7 +512,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
         for (Iterator<JobExecution> iterator = activeExecutions.iterator(); iterator.hasNext();) {
             JobExecution jobExecution = iterator.next();
             try {
-                Set<Long> runningExecutions = this.jobOperator.getRunningExecutions(jobExecution.getJobInstance()
+                Set<Long> runningExecutions = jobOperator.getRunningExecutions(jobExecution.getJobInstance()
                                 .getJobName());
                 if (!runningExecutions.contains(jobExecution.getId())) {
                     iterator.remove();
@@ -506,9 +526,9 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
 
     private void cleanupInterruptedJobs() {
         try {
-            List<ScheduledJobExecution> executions = schedulerRepository.getExecutionByExitStatus(ExitStatus.UNKNOWN);
+            List<ScheduledJobExecutionEntity> executions = schedulerRepository.getExecutionByExitStatus(ExitStatus.UNKNOWN);
 
-            for (ScheduledJobExecution execution : executions) {
+            for (ScheduledJobExecutionEntity execution : executions) {
                 schedulerRepository.updateJobExecutionStatus(execution.getJobExecutionId(), BatchStatus.ABANDONED);
             }
         } catch (Exception e) {

@@ -2,87 +2,70 @@ package eu.daiad.web.model.message;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
-import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDateTime;
 
-public class MessageCalculationConfiguration {
+import eu.daiad.web.model.device.EnumDeviceType;
 
-	private int computeThisDayOfMonth = new DateTime().dayOfMonth().getMaximumValue();
-	private int computeThisDayOfWeek = DateTimeConstants.SUNDAY;
-
-	// send static tip every 7 days
+public class MessageCalculationConfiguration 
+{    
+	private LocalDateTime refDate;
+    
+    // send static tip every 7 days
 	private int staticTipInterval = DateTimeConstants.DAYS_PER_WEEK;
-
-	// compute aggregates every week
-	private int aggregateComputationInterval = DateTimeConstants.DAYS_PER_WEEK;
 
 	private String intKey1 = "integer1";
 	private String intKey2 = "integer2";
 	private String currencyKey1 = "currency1";
 	private String currencyKey2 = "currency2";
-	private double eurosPerKwh = 0.224;
-	private double averageGbpPerKwh = 0.15;
-	private double eurosPerLiter = 0.0024;
+	private String dayKey = "day";
+	
+	private Integer meterDailyBudget = 300;
+	private Integer meterWeeklyBudget = 2100;
+	private Integer meterMonthlyBudget = 9000;
 
-	private Integer dailyBudget = 300;
-	private Integer weeklyBudget = 2100;
-	private Integer monthlyBudget = 9000;
-
-	private Integer dailyBudgetAmphiro = 100;
-	private Integer weeklyBudgetAmphiro = 700;
-	private Integer monthlyBudgetAmphiro = 3000;
+	private Integer amphiroDailyBudget = 100;
+	private Integer amphiroWeeklyBudget = 700;
+	private Integer amphiroMonthlyBudget = 3000;
     
     private boolean onDemandExecution;
 
-	private Integer utilityId;
-
-	private DateTimeZone timezone;
-
+    public MessageCalculationConfiguration(LocalDateTime refDate)
+    {
+        this.refDate = refDate;
+    }
+    
+    public MessageCalculationConfiguration()
+    {
+        this.refDate = LocalDateTime.now();
+    }
+    
+    public LocalDateTime getRefDate()
+    {
+        return refDate;
+    }
+    
 	public int getComputeThisDayOfMonth() {
-		return computeThisDayOfMonth;
-	}
-
-	public void setComputeThisDayOfMonth(int computeThisDayOfMonth) {
-		this.computeThisDayOfMonth = computeThisDayOfMonth;
+		return new DateTime().dayOfMonth().getMaximumValue();
 	}
 
 	public int getComputeThisDayOfWeek() {
-		return computeThisDayOfWeek;
-	}
-
-	public void setComputeThisDayOfWeek(int computeThisDayOfWeek) {
-		this.computeThisDayOfWeek = computeThisDayOfWeek;
+		return DateTimeConstants.SUNDAY;
 	}
 
 	public String getIntKey1() {
 		return intKey1;
 	}
 
-	public void setIntKey1(String intKey1) {
-		this.intKey1 = intKey1;
-	}
-
 	public String getIntKey2() {
 		return intKey2;
-	}
-
-	public void setIntKey2(String intKey2) {
-		this.intKey2 = intKey2;
 	}
 
 	public String getCurrencyKey1() {
 		return currencyKey1;
 	}
 
-	public void setCurrencyKey1(String currencyKey1) {
-		this.currencyKey1 = currencyKey1;
-	}
-
 	public String getCurrencyKey2() {
 		return currencyKey2;
-	}
-
-	public void setCurrencyKey2(String currencyKey2) {
-		this.currencyKey2 = currencyKey2;
 	}
 
 	public int getStaticTipInterval() {
@@ -93,100 +76,100 @@ public class MessageCalculationConfiguration {
 		this.staticTipInterval = staticTipInterval;
 	}
 
-	public double getEurosPerKwh() {
-		return eurosPerKwh;
-	}
-
-	public void setEurosPerKwh(double eurosPerKwh) {
-		this.eurosPerKwh = eurosPerKwh;
-	}
-
-	public double getAverageGbpPerKwh() {
-		return averageGbpPerKwh;
-	}
-
-	public void setAverageGbpPerKwh(double averageGbpPerKwh) {
-		this.averageGbpPerKwh = averageGbpPerKwh;
-	}
-
-	public double getEurosPerLiter() {
-		return eurosPerLiter;
-	}
-
-	public void setEurosPerLiter(double eurosPerLiter) {
-		this.eurosPerLiter = eurosPerLiter;
-	}
-
-	public int getAggregateComputationInterval() {
-		return aggregateComputationInterval;
-	}
-
-	public void setAggregateComputationInterval(int aggregateComputationInterval) {
-		this.aggregateComputationInterval = aggregateComputationInterval;
-	}
-
 	public Integer getDailyBudget() {
-		return dailyBudget;
+		return meterDailyBudget;
 	}
+	
+	public Integer getDailyBudget(EnumDeviceType deviceType) 
+	{
+        switch (deviceType) {
+        case AMPHIRO:
+            return amphiroDailyBudget;
+        case METER:
+        default:
+            return meterDailyBudget;
+        }
+    }
 
-	public void setDailyBudget(Integer dailyBudget) {
-		this.dailyBudget = dailyBudget;
+	public void setDailyBudget(int budget) {
+		this.meterDailyBudget = budget;
 	}
-
+	
+	public void setDailyBudget(EnumDeviceType deviceType, int budget) 
+	{
+	    switch (deviceType) {
+        case AMPHIRO:
+            this.amphiroDailyBudget = budget;
+            break;
+        case METER:
+        default:
+            this.meterDailyBudget = budget;
+            break;
+        } 
+    }
+	
 	public Integer getWeeklyBudget() {
-		return weeklyBudget;
+	    return meterWeeklyBudget;
 	}
 
-	public void setWeeklyBudget(Integer weeklyBudget) {
-		this.weeklyBudget = weeklyBudget;
+	public Integer getWeeklyBudget(EnumDeviceType deviceType) 
+	{
+	    switch (deviceType) {
+	    case AMPHIRO:
+	        return amphiroWeeklyBudget;
+	    case METER:
+	    default:
+	        return meterWeeklyBudget;
+	    }
 	}
 
+	public void setWeeklyBudget(int budget) {
+	    this.meterWeeklyBudget = budget;
+	}
+
+	public void setWeeklyBudget(EnumDeviceType deviceType, int budget) 
+	{
+	    switch (deviceType) {
+	    case AMPHIRO:
+	        this.amphiroWeeklyBudget = budget;
+	        break;
+	    case METER:
+	    default:
+	        this.meterWeeklyBudget = budget;
+	        break;
+	    } 
+	}
+	
 	public Integer getMonthlyBudget() {
-		return monthlyBudget;
+	    return meterMonthlyBudget;
 	}
 
-	public void setMonthlyBudget(Integer monthlyBudget) {
-		this.monthlyBudget = monthlyBudget;
+	public Integer getMonthlyBudget(EnumDeviceType deviceType) 
+	{
+	    switch (deviceType) {
+	    case AMPHIRO:
+	        return amphiroMonthlyBudget;
+	    case METER:
+	    default:
+	        return meterMonthlyBudget;
+	    }
 	}
 
-	public Integer getDailyBudgetAmphiro() {
-		return dailyBudgetAmphiro;
+	public void setMonthlyBudget(int budget) {
+	    this.meterMonthlyBudget = budget;
 	}
 
-	public void setDailyBudgetAmphiro(Integer dailyBudgetAmphiro) {
-		this.dailyBudgetAmphiro = dailyBudgetAmphiro;
-	}
-
-	public Integer getWeeklyBudgetAmphiro() {
-		return weeklyBudgetAmphiro;
-	}
-
-	public void setWeeklyBudgetAmphiro(Integer weeklyBudgetAmphiro) {
-		this.weeklyBudgetAmphiro = weeklyBudgetAmphiro;
-	}
-
-	public Integer getMonthlyBudgetAmphiro() {
-		return monthlyBudgetAmphiro;
-	}
-
-	public void setMonthlyBudgetAmphiro(Integer monthlyBudgetAmphiro) {
-		this.monthlyBudgetAmphiro = monthlyBudgetAmphiro;
-	}
-
-	public Integer getUtilityId() {
-		return utilityId;
-	}
-
-	public void setUtilityId(Integer utilityId) {
-		this.utilityId = utilityId;
-	}
-
-	public DateTimeZone getTimezone() {
-		return timezone;
-	}
-
-	public void setTimezone(DateTimeZone timezone) {
-		this.timezone = timezone;
+	public void setMonthlyBudget(EnumDeviceType deviceType, int budget) 
+	{
+	    switch (deviceType) {
+	    case AMPHIRO:
+	        this.amphiroMonthlyBudget = budget;
+	        break;
+	    case METER:
+	    default:
+	        this.meterMonthlyBudget = budget;
+	        break;
+	    } 
 	}
 
     public boolean isOnDemandExecution() {
@@ -196,5 +179,4 @@ public class MessageCalculationConfiguration {
     public void setOnDemandExecution(boolean onDemandExecution) {
         this.onDemandExecution = onDemandExecution;
     }
-
 }

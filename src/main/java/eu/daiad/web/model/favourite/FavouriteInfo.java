@@ -2,9 +2,9 @@ package eu.daiad.web.model.favourite;
 
 import java.util.UUID;
 
-import eu.daiad.web.domain.application.Favourite;
-import eu.daiad.web.domain.application.FavouriteAccount;
-import eu.daiad.web.domain.application.FavouriteGroup;
+import eu.daiad.web.domain.application.FavouriteEntity;
+import eu.daiad.web.domain.application.FavouriteAccountEntity;
+import eu.daiad.web.domain.application.FavouriteGroupEntity;
 
 
 public class FavouriteInfo {
@@ -27,7 +27,7 @@ public class FavouriteInfo {
 		this.additionDateMils = -1;
 	}
 		
-	public FavouriteInfo (Favourite favourite) {
+	public FavouriteInfo (FavouriteEntity favourite) {
 		this.key = favourite.getKey();
 		this.name = favourite.getLabel();		
 		this.type = favourite.getType();
@@ -36,12 +36,12 @@ public class FavouriteInfo {
 		switch (favourite.getType()){
 		
 		case ACCOUNT :
-			FavouriteAccount accountFavourite = (FavouriteAccount) favourite;
+			FavouriteAccountEntity accountFavourite = (FavouriteAccountEntity) favourite;
 			this.refId = accountFavourite.getAccount().getKey();
 			break;
 			
 		case GROUP :
-			FavouriteGroup groupFavourite = (FavouriteGroup) favourite;
+			FavouriteGroupEntity groupFavourite = (FavouriteGroupEntity) favourite;
 			this.refId = groupFavourite.getGroup().getKey();
 			break;
 		

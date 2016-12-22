@@ -1,6 +1,7 @@
 package eu.daiad.web.model.amphiro;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -28,7 +29,7 @@ public class AmphiroSession extends AmphiroAbstractSession {
     @JsonIgnore
     private boolean ignored;
 
-    private ArrayList<KeyValuePair> properties;
+    private List<KeyValuePair> properties;
 
     public AmphiroSession() {
         properties = new ArrayList<KeyValuePair>();
@@ -50,11 +51,11 @@ public class AmphiroSession extends AmphiroAbstractSession {
         this.history = history;
     }
 
-    public ArrayList<KeyValuePair> getProperties() {
+    public List<KeyValuePair> getProperties() {
         return properties;
     }
 
-    public void setProperties(ArrayList<KeyValuePair> properties) {
+    public void setProperties(List<KeyValuePair> properties) {
         if (properties == null) {
             this.properties = new ArrayList<KeyValuePair>();
         } else {

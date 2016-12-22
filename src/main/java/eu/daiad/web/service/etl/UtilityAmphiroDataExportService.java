@@ -9,7 +9,9 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.csv.CSVFormat;
@@ -19,7 +21,10 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
+
+import com.ibm.icu.text.MessageFormat;
 
 import eu.daiad.web.domain.application.SurveyEntity;
 import eu.daiad.web.model.amphiro.AmphiroAbstractSession;
@@ -36,6 +41,8 @@ import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.ErrorCode;
+import eu.daiad.web.model.error.ExportErrorCode;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 
@@ -46,10 +53,86 @@ import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportService {
 
     /**
+     * Session property name for mobile OS.
+     */
+    private static final String SESSION_PROPERTY_OS = "settings.os";
+
+    /**
      * Repository for accessing amphiro b1 readings.
      */
     @Autowired
     private IAmphiroIndexOrderedRepository amphiroIndexOrderedRepository;
+
+    /**
+     * Resolves application messages and supports internationalization.
+     */
+    @Autowired
+    protected MessageSource messageSource;
+
+    /**
+     * Returns a localized message based on the error code.
+     *
+     * @param code the error code.
+     * @return the localized message.
+     */
+    protected String getMessage(String code) {
+        return messageSource.getMessage(code, null, code, null);
+    }
+
+    /**
+     * Creates a localized message based on the error code and formats the
+     * message using the given set of properties.
+     *
+     * @param code the error code.
+     * @param properties the properties for formatting the message.
+     * @return the localized message.
+     */
+    protected String getMessage(String code, Map<String, Object> properties) {
+        String message = messageSource.getMessage(code, null, code, null);
+
+        MessageFormat msgFmt = new MessageFormat(message);
+
+        return msgFmt.format(properties);
+    }
+
+    /**
+     * Returns a localized message based on an {@link ErrorCode}.
+     *
+     * @param error the error code.
+     * @return the localized message.
+     */
+    protected String getMessage(ErrorCode error) {
+        return getMessage(error.getMessageKey());
+    }
+
+    /**
+     *
+     * Returns a localized message based on an {@link ErrorCode}.
+     *
+     * @param error the error code.
+     * @param keyValuePairs the properties for formatting the message expressed as key value pairs.
+     * @return the localized message.
+     */
+    protected String getMessage(ErrorCode error, String... keyValuePairs) {
+        Map<String, Object> properties = new HashMap<String, Object>();
+
+        for (int i = 0, count = keyValuePairs.length; i < count; i += 2) {
+            properties.put(keyValuePairs[i], keyValuePairs[i + 1]);
+        }
+        return getMessage(error, properties);
+    }
+
+    /**
+     * Creates a localized message based on the {@link ErrorCode} and formats
+     * the message using the given set of properties.
+     *
+     * @param error the error code.
+     * @param properties the properties for formatting the message.
+     * @return the localized message.
+     */
+    protected String getMessage(ErrorCode error, Map<String, Object> properties) {
+        return getMessage(error.getMessageKey(), properties);
+    }
 
     /**
      * Exports amphiro data for a single utility to a file. Any exported data file is replaced.
@@ -114,7 +197,6 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
     private void exportUsers(UtilityDataExportQuery query, ExportResult result) throws IOException {
         long totalUsers = 0;
 
-        // Export data for every user
         String filename = createTemporaryFilename(query.getWorkingDirectory());
 
         CSVFormat format = CSVFormat.RFC4180.withDelimiter(DELIMITER);
@@ -159,14 +241,13 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
     /**
      * Export a single phase to a row.
      *
-     * @param type type of the phase to export.
      * @param row the row to append phase data.
      * @param phase the phase to export.
      * @param formatter formatter for date/time properties.
      */
-    private void createPhaseRowWithShowers(EnumPhase type, List<String> row, Phase phase, DateTimeFormatter formatter) {
+    private void createPhaseRowWithShowers(List<String> row, Phase phase, DateTimeFormatter formatter) {
         if(phase == null) {
-            row.add(type.toString());
+            row.add("");
             row.add("");
             row.add("");
         } else {
@@ -194,6 +275,20 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
      * @return a list of string tokens to be written to a CSV value.
      */
     private List<String> createAmphiroSessionRow(UUID userKey, UUID deviceKey, DateTimeFormatter formatter, AmphiroSession session) {
+        return this.createAmphiroSessionRow(userKey, deviceKey, formatter, session, null);
+    }
+
+    /**
+     * Creates a CSV row for an amphiro session.
+     *
+     * @param userKey the user key.
+     * @param deviceKey the device key.
+     * @param formatter the formatter for writing date values.
+     * @param session the session to serialize.
+     * @param error validation error.
+     * @return a list of string tokens to be written to a CSV value.
+     */
+    private List<String> createAmphiroSessionRow(UUID userKey, UUID deviceKey, DateTimeFormatter formatter, AmphiroSession session, String error) {
         List<String> row = new ArrayList<String>();
 
         row.add(userKey.toString());
@@ -214,6 +309,14 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
             row.add(Integer.toString(session.getMember().getIndex()));
         }
         row.add(Boolean.toString(session.isIgnored()));
+        if (session.getPropertyByKey(SESSION_PROPERTY_OS) == null) {
+            row.add("");
+        } else {
+            row.add(session.getPropertyByKey("settings.os"));
+        }
+        if(error != null) {
+            row.add(error);
+        }
 
         return row;
     }
@@ -293,13 +396,13 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                                                      new FileOutputStream(filterFilename, true),
                                                                           Charset.forName("UTF-8").newEncoder())), format);
 
-        // Write headers
+        // Write header for files "all", "valid" and "removed" showers
         List<String> row = new ArrayList<String>();
 
         row.add("user key");
         row.add("device key");
         row.add("session id");
-        row.add("local datetime");
+        row.add(query.getUtility().getName() + " local date time");
         row.add("volume");
         row.add("temperature");
         row.add("energy");
@@ -309,10 +412,23 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
         row.add("household member selection mode");
         row.add("household member index");
         row.add("ignore");
+        row.add("mobile os");
 
         allPrinter.printRecord(row);
         validPrinter.printRecord(row);
+
+        row.add("validation error");
         removedDataPrinter.printRecord(row);
+
+        // Write header for file "removed" shower indexes
+        row = new ArrayList<String>();
+
+        row.add("user key");
+        row.add("user name");
+        row.add("device key");
+        row.add("device name");
+
+        removedIndexPrinter.printRecord(row);
 
         // Process all users
         for (SurveyEntity survey : userRepository.getSurveyDataByUtilityId(query.getUtility().getId())) {
@@ -347,12 +463,13 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                 AmphiroSessionCollectionIndexIntervalQueryResult amphiroCollection = amphiroIndexOrderedRepository
                                 .getSessions(deviceNames.toArray(new String[] {}), DateTimeZone.forID(query.getTimezone()), sessionQuery);
 
-                // Process shower sessions for every device
+                // Process showers for every device
                 for (AmphiroSessionCollection device : amphiroCollection.getDevices()) {
                     int total = device.getSessions().size();
 
                     List<AmphiroAbstractSession> sessions = device.getSessions();
                     List<AmphiroSession> removedSessions = new ArrayList<AmphiroSession>();
+                    List<String> validationErrors = new ArrayList<String>();
 
                     // Remove sessions based on volume, duration and flow
                     for (int i = sessions.size() - 1; i >= 0; i--) {
@@ -373,6 +490,15 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                             sessions.remove(session);
                             // ... and add to the removed session collection
                             removedSessions.add(session);
+
+                            // Set error message
+                            if (session.getVolume() < 8) {
+                                validationErrors.add(getMessage(ExportErrorCode.VALIDATION_RULE_VOLUME_LESS, "volume", "8"));
+                            } else if (session.getDuration() < 60) {
+                                validationErrors.add(getMessage(ExportErrorCode.VALIDATION_RULE_DURATION_LESS, "duration", "60"));
+                            } else if (session.getFlow() < 3) {
+                                validationErrors.add(getMessage(ExportErrorCode.VALIDATION_RULE_FLOW_LESS, "flow", "3"));
+                            }
                         }
                     }
 
@@ -382,22 +508,30 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                     for (int i = sessions.size() - 1; i >= 0; i--) {
                         AmphiroSession session = (AmphiroSession) sessions.get(i);
 
-                        row = createAmphiroSessionRow(user.getKey(), device.getDeviceKey(), formatter, session);
-
                         if(session.getVolume() <= volumeThreshold) {
                             // Remove from valid session collection ...
                             sessions.remove(session);
                             // ... and add to the removed session collection
                             removedSessions.add(session);
+
+                            validationErrors.add(getMessage(ExportErrorCode.VALIDATION_RULE_VOLUME_PERCENTILE, "percent", "5"));
                         } else {
+                            row = createAmphiroSessionRow(user.getKey(), device.getDeviceKey(), formatter, session);
+
                             totalValidRows++;
                             validPrinter.printRecord(row);
                         }
                     }
 
                     // Export removed session
-                    for(AmphiroSession session : removedSessions) {
-                        row = createAmphiroSessionRow(user.getKey(), device.getDeviceKey(), formatter, session);
+                    for (int r = 0, count = removedSessions.size(); r < count; r++) {
+                        AmphiroSession session = removedSessions.get(r);
+
+                        row = createAmphiroSessionRow(user.getKey(),
+                                                      device.getDeviceKey(),
+                                                      formatter,
+                                                      session,
+                                                      validationErrors.get(r));
 
                         totalRemovedRows++;
                         removedDataPrinter.printRecord(row);
@@ -426,9 +560,13 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                             result.addMessage(user.getKey(),
                                               user.getUsername(),
                                               device.getDeviceKey(),
-                                              String.format("More than 30%% of shower sessions has been removed. Total [%d]. Removed [%d]",
-                                                            total,
-                                                            removedSessions.size()));
+                                              getMessage(ExportErrorCode.VALIDATION_RULE_TOO_MANY_RECORDS_REMOVED,
+                                                         "percent",
+                                                         "30",
+                                                         "total",
+                                                         Integer.toString(total),
+                                                         "removed",
+                                                         Integer.toString(removedSessions.size())));
                         }
                     }
                 }
@@ -485,7 +623,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
         row.add("device key");
         row.add("session id");
         row.add("measurement index");
-        row.add("local datetime");
+        row.add(query.getUtility().getName() + " local date time");
         row.add("volume");
         row.add("temperature");
         row.add("energy");
@@ -525,7 +663,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                 AmphiroSessionCollectionIndexIntervalQueryResult amphiroCollection = amphiroIndexOrderedRepository
                                 .getSessions(deviceNames.toArray(new String[] {}), DateTimeZone.forID(query.getTimezone()), userSessionQuery);
 
-                // Process shower sessions for every device and extract time series for real time ones.
+                // Process showers for every device and extract time series for real time ones.
                 for (AmphiroSessionCollection device : amphiroCollection.getDevices()) {
                     for (AmphiroAbstractSession session : device.getSessions()) {
                         AmphiroSession amphiroSession = (AmphiroSession) session;
@@ -808,7 +946,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                                     phase1.setMinSessionId(null);
                                 }
                             }
-                        } else {
+                        } else if (phase2b != null) {
                             // Mobile Off, Amphiro On: The phase 2b left limit is considered the most accurate.
                             if (phase2b.getMinSessionId() > phase2b.getMaxSessionId()) {
                                 phase2b.setMaxSessionId(phase2b.getMinSessionId());
@@ -838,13 +976,15 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                         row.add(device.getDeviceKey().toString());
                         row.add(device.getName());
 
-                        createPhaseRowWithShowers(EnumPhase.BASELINE,row, phase1, formatter);
+                        createPhaseRowWithShowers(row, phase1, formatter);
                         if(phase2a != null) {
-                            createPhaseRowWithShowers(phase2a.getPhase(), row, phase2a, formatter);
+                            createPhaseRowWithShowers(row, phase2a, formatter);
+                        } else if(phase2b != null) {
+                            createPhaseRowWithShowers(row, phase2b, formatter);
                         } else {
-                            createPhaseRowWithShowers(phase2b.getPhase(),row, phase2b, formatter);
+                            createPhaseRowWithShowers(row, null, formatter);
                         }
-                        createPhaseRowWithShowers(EnumPhase.MOBILE_ON_AMPHIRO_ON,row, phase3, formatter);
+                        createPhaseRowWithShowers(row, phase3, formatter);
 
                         totalRows++;
 
@@ -853,7 +993,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                         result.addMessage(user.getKey(),
                                           user.getUsername(),
                                           device.getDeviceKey(),
-                                          String.format("Failed to export phase sid timeline for user [%s]: %s",
+                                          String.format("Failed to export shower id phase timeline for user [%s]: %s",
                                                         user.getUsername(),
                                                         ex.getMessage()));
                     }
@@ -869,7 +1009,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
     }
 
     /**
-     * For a list of shower sessions, find the volume threshold for the given
+     * For a list of showers, find the volume threshold for the given
      * percentile based on volume.
      *
      * @param sessions the list of sessions.
@@ -933,7 +1073,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                     AmphiroSession as2 = (AmphiroSession) s2;
 
                     if (as1.getId() == as2.getId()) {
-                        throw new RuntimeException(String.format("Found duplicated session index [%d]",  as1.getId()));
+                        throw new RuntimeException(String.format("Found duplicate session index [%d]",  as1.getId()));
                     } else if (as1.getId() < as2.getId()) {
                         return -1;
                     } else {
@@ -1078,7 +1218,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                 }
             }
 
-            return null;
+            throw new RuntimeException(String.format("Cannot find previous id for shower id [%d]", id));
         }
 
         /**
@@ -1094,7 +1234,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                 }
             }
 
-            return null;
+            throw new RuntimeException(String.format("Cannot find next id for shower id [%d]", id));
         }
 
         /**

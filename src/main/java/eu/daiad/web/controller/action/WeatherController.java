@@ -53,7 +53,7 @@ public class WeatherController extends BaseController {
     /**
      * Returns the registered weather services.
      *
-     * @param credentials the user credentials.
+     * @param user the authenticated user.
      * @return the registered weather services.
      */
     @RequestMapping(value = "/action/weather/service", method = RequestMethod.GET, produces = "application/json")

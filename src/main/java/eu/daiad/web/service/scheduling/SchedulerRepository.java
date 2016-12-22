@@ -21,8 +21,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import eu.daiad.web.domain.admin.ScheduledJob;
-import eu.daiad.web.domain.admin.ScheduledJobExecution;
+import eu.daiad.web.domain.admin.ScheduledJobEntity;
+import eu.daiad.web.domain.admin.ScheduledJobExecutionEntity;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.scheduling.EnumExecutionExitCode;
 import eu.daiad.web.model.scheduling.ExecutionQuery;
@@ -44,10 +44,10 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
     private DataSource dataSource;
 
     @Override
-    public List<ScheduledJob> getJobs() {
+    public List<ScheduledJobEntity> getJobs() {
         try {
-            TypedQuery<ScheduledJob> query = entityManager.createQuery("select j from scheduled_job j order by name",
-                            ScheduledJob.class);
+            TypedQuery<ScheduledJobEntity> query = entityManager.createQuery("select j from scheduled_job j order by name",
+                            ScheduledJobEntity.class);
 
             return query.getResultList();
         } catch (Exception ex) {
@@ -56,14 +56,14 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
     }
 
     @Override
-    public ScheduledJob getJobById(long jobId) {
+    public ScheduledJobEntity getJobById(long jobId) {
         try {
-            TypedQuery<ScheduledJob> query = entityManager.createQuery("select j from scheduled_job j where j.id= :id",
-                            ScheduledJob.class);
+            TypedQuery<ScheduledJobEntity> query = entityManager.createQuery("select j from scheduled_job j where j.id= :id",
+                            ScheduledJobEntity.class);
 
             query.setParameter("id", jobId);
 
-            List<ScheduledJob> result = query.getResultList();
+            List<ScheduledJobEntity> result = query.getResultList();
 
             if (!result.isEmpty()) {
                 return result.get(0);
@@ -76,14 +76,14 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
     }
 
     @Override
-    public ScheduledJob getJobByName(String jobName) {
+    public ScheduledJobEntity getJobByName(String jobName) {
         try {
-            TypedQuery<ScheduledJob> query = entityManager.createQuery(
-                            "select j from scheduled_job j where j.name= :jobName", ScheduledJob.class);
+            TypedQuery<ScheduledJobEntity> query = entityManager.createQuery(
+                            "select j from scheduled_job j where j.name= :jobName", ScheduledJobEntity.class);
 
             query.setParameter("jobName", jobName);
 
-            List<ScheduledJob> result = query.getResultList();
+            List<ScheduledJobEntity> result = query.getResultList();
 
             if (!result.isEmpty()) {
                 return result.get(0);
@@ -96,11 +96,11 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
     }
 
     @Override
-    public List<ScheduledJobExecution> getExecutions(String jobName, int startPosition, int maxResult) {
-        TypedQuery<ScheduledJobExecution> query = entityManager
+    public List<ScheduledJobExecutionEntity> getExecutions(String jobName, int startPosition, int maxResult) {
+        TypedQuery<ScheduledJobExecutionEntity> query = entityManager
                         .createQuery("select e from scheduled_job_execution e "
                                         + "where e.jobName = :jobName order by e.jobInstanceId desc, e.jobExecutionId desc",
-                                        ScheduledJobExecution.class).setMaxResults(maxResult).setFirstResult(
+                                        ScheduledJobExecutionEntity.class).setMaxResults(maxResult).setFirstResult(
                                         startPosition);
 
         query.setParameter("jobName", jobName);
@@ -110,13 +110,13 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
 
     @Override
     public String getExecutionMessage(long executionId) {
-        TypedQuery<ScheduledJobExecution> query = entityManager.createQuery(
+        TypedQuery<ScheduledJobExecutionEntity> query = entityManager.createQuery(
                         "select e from scheduled_job_execution e where e.job_execution_id = :job_execution_id",
-                        ScheduledJobExecution.class).setMaxResults(1);
+                        ScheduledJobExecutionEntity.class).setMaxResults(1);
 
         query.setParameter("job_execution_id", executionId);
 
-        List<ScheduledJobExecution> executions = query.getResultList();
+        List<ScheduledJobExecutionEntity> executions = query.getResultList();
 
         if (executions.isEmpty()) {
             return null;
@@ -183,8 +183,8 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
             }
             command += " order by e.startedOn desc, e.jobExecutionId desc ";
 
-            TypedQuery<ScheduledJobExecution> entityQuery = entityManager.createQuery(command,
-                            ScheduledJobExecution.class);
+            TypedQuery<ScheduledJobExecutionEntity> entityQuery = entityManager.createQuery(command,
+                            ScheduledJobExecutionEntity.class);
 
             if (!StringUtils.isBlank(query.getJobName())) {
                 entityQuery.setParameter("jobName", query.getJobName());
@@ -212,12 +212,12 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
     }
 
     @Override
-    public List<ScheduledJobExecution> getExecutions(long jobId, int startPosition, int size) {
-        ScheduledJob job = this.getJobById(jobId);
+    public List<ScheduledJobExecutionEntity> getExecutions(long jobId, int startPosition, int size) {
+        ScheduledJobEntity job = this.getJobById(jobId);
 
-        TypedQuery<ScheduledJobExecution> query = entityManager.createQuery("select e from scheduled_job_execution e "
+        TypedQuery<ScheduledJobExecutionEntity> query = entityManager.createQuery("select e from scheduled_job_execution e "
                         + "where e.jobName = :jobName order by e.jobInstanceId desc, e.jobExecutionId desc",
-                        ScheduledJobExecution.class);
+                        ScheduledJobExecutionEntity.class);
 
         query.setParameter("jobName", job.getName());
 
@@ -225,15 +225,15 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
     }
 
     @Override
-    public ScheduledJobExecution getLastExecution(String jobName) {
-        TypedQuery<ScheduledJobExecution> query = entityManager
+    public ScheduledJobExecutionEntity getLastExecution(String jobName) {
+        TypedQuery<ScheduledJobExecutionEntity> query = entityManager
                         .createQuery("select e from scheduled_job_execution e "
                                         + "where e.jobName = :jobName order by e.jobInstanceId desc, e.jobExecutionId desc",
-                                        ScheduledJobExecution.class).setMaxResults(1).setFirstResult(0);
+                                        ScheduledJobExecutionEntity.class).setMaxResults(1).setFirstResult(0);
 
         query.setParameter("jobName", jobName);
 
-        List<ScheduledJobExecution> result = query.getResultList();
+        List<ScheduledJobExecutionEntity> result = query.getResultList();
 
         if (!result.isEmpty()) {
             return result.get(0);
@@ -243,17 +243,17 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
     }
 
     @Override
-    public ScheduledJobExecution getLastExecution(long jobId) {
-        ScheduledJob job = this.getJobById(jobId);
+    public ScheduledJobExecutionEntity getLastExecution(long jobId) {
+        ScheduledJobEntity job = this.getJobById(jobId);
 
-        TypedQuery<ScheduledJobExecution> query = entityManager
+        TypedQuery<ScheduledJobExecutionEntity> query = entityManager
                         .createQuery("select e from scheduled_job_execution e "
                                         + "where e.jobName = :jobName order by e.jobInstanceId desc, e.jobExecutionId desc",
-                                        ScheduledJobExecution.class).setMaxResults(1).setFirstResult(0);
+                                        ScheduledJobExecutionEntity.class).setMaxResults(1).setFirstResult(0);
 
         query.setParameter("jobName", job.getName());
 
-        List<ScheduledJobExecution> result = query.getResultList();
+        List<ScheduledJobExecutionEntity> result = query.getResultList();
 
         if (!result.isEmpty()) {
             return result.get(0);
@@ -262,14 +262,14 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
         return null;
     }
 
-    private ScheduledJob setScheduledJobEnabled(long scheduledJobId, boolean enabled) {
+    private ScheduledJobEntity setScheduledJobEnabled(long scheduledJobId, boolean enabled) {
         try {
-            TypedQuery<ScheduledJob> query = entityManager.createQuery(
-                            "select j from scheduled_job j where j.id = :id", ScheduledJob.class).setMaxResults(1);
+            TypedQuery<ScheduledJobEntity> query = entityManager.createQuery(
+                            "select j from scheduled_job j where j.id = :id", ScheduledJobEntity.class).setMaxResults(1);
 
             query.setParameter("id", scheduledJobId);
 
-            ScheduledJob job = query.getSingleResult();
+            ScheduledJobEntity job = query.getSingleResult();
             job.setEnabled(enabled);
 
             return job;
@@ -279,7 +279,7 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
     }
 
     @Override
-    public ScheduledJob enable(long scheduledJobId) {
+    public ScheduledJobEntity enable(long scheduledJobId) {
         return this.setScheduledJobEnabled(scheduledJobId, true);
     }
 
@@ -290,32 +290,32 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
 
     @Override
     public void schedulePeriodicJob(long scheduledJobId, long period) {
-        TypedQuery<ScheduledJob> query = entityManager.createQuery("select j from scheduled_job j where j.id = :id",
-                        ScheduledJob.class).setMaxResults(1);
+        TypedQuery<ScheduledJobEntity> query = entityManager.createQuery("select j from scheduled_job j where j.id = :id",
+                        ScheduledJobEntity.class).setMaxResults(1);
 
         query.setParameter("id", scheduledJobId);
 
-        ScheduledJob job = query.getSingleResult();
+        ScheduledJobEntity job = query.getSingleResult();
         job.setPeriod(period);
         job.setCronExpression(null);
     }
 
     @Override
     public void scheduleCronJob(long scheduledJobId, String cronExpression) {
-        TypedQuery<ScheduledJob> query = entityManager.createQuery("select j from scheduled_job j where j.id = :id",
-                        ScheduledJob.class).setMaxResults(1);
+        TypedQuery<ScheduledJobEntity> query = entityManager.createQuery("select j from scheduled_job j where j.id = :id",
+                        ScheduledJobEntity.class).setMaxResults(1);
 
         query.setParameter("id", scheduledJobId);
 
-        ScheduledJob job = query.getSingleResult();
+        ScheduledJobEntity job = query.getSingleResult();
         job.setPeriod(null);
         job.setCronExpression(cronExpression);
     }
 
     @Override
-    public List<ScheduledJobExecution> getExecutionByExitStatus(ExitStatus exitStatus) {
-        TypedQuery<ScheduledJobExecution> query = entityManager.createQuery("select e from scheduled_job_execution e "
-                        + "where e.exitCode = :exit_code", ScheduledJobExecution.class);
+    public List<ScheduledJobExecutionEntity> getExecutionByExitStatus(ExitStatus exitStatus) {
+        TypedQuery<ScheduledJobExecutionEntity> query = entityManager.createQuery("select e from scheduled_job_execution e "
+                        + "where e.exitCode = :exit_code", ScheduledJobExecutionEntity.class);
 
         query.setParameter("exit_code", EnumExecutionExitCode.fromExistStatus(exitStatus));
 

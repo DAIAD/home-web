@@ -1,21 +1,28 @@
-
 package eu.daiad.web.repository.application;
 
-import org.springframework.context.annotation.Scope;
+import java.util.Locale;
+
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
+
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- *
- * @author nkarag
- */
-@Repository
+import eu.daiad.web.domain.application.AnnouncementEntity;
+import eu.daiad.web.domain.application.AnnouncementTranslationEntity;
+
+@Repository 
 @Transactional("applicationTransactionManager")
-@Scope("prototype")
-public class AnnouncementRepository implements IAnnouncementRepository{
+public class AnnouncementRepository implements IAnnouncementRepository
+{
+    @PersistenceContext(unitName = "default")
+    EntityManager entityManager;
     
     @Override
-    public void broadcastAnnouncement(int channel){
-
+    public AnnouncementEntity findOne(int announcementId)
+    {
+        return entityManager.find(AnnouncementEntity.class, announcementId);
     }
 }

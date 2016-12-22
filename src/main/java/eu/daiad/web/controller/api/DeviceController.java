@@ -71,7 +71,7 @@ public class DeviceController extends BaseRestController {
     @RequestMapping(value = "/api/v1/device/register", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse registerAmphiro(@RequestBody DeviceRegistrationRequest data) {
         try {
-            AuthenticatedUser user = this.authenticate(data.getCredentials(), EnumRole.ROLE_USER);
+            AuthenticatedUser user = authenticate(data.getCredentials(), EnumRole.ROLE_USER);
 
             switch (data.getType()) {
                 case AMPHIRO:
@@ -142,15 +142,14 @@ public class DeviceController extends BaseRestController {
         UUID deviceKey = null;
 
         try {
-            AuthenticatedUser user = this.authenticate(data.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
+            AuthenticatedUser user = authenticate(data.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
             switch (data.getType()) {
                 case METER:
                     if (data instanceof WaterMeterDeviceRegistrationRequest) {
                         WaterMeterDeviceRegistrationRequest meterData = (WaterMeterDeviceRegistrationRequest) data;
 
-                        AuthenticatedUser owner = userRepository.getUserByUtilityAndKey(user.getUtilityId(),
-                                        meterData.getUserKey());
+                        AuthenticatedUser owner = userRepository.getUserByUtilityAndKey(user.getUtilityId(), meterData.getUserKey());
 
                         if (owner == null) {
                             throw createApplicationException(DeviceErrorCode.DEVICE_OWNER_NOT_FOUND).set("meter",
@@ -195,7 +194,7 @@ public class DeviceController extends BaseRestController {
     @RequestMapping(value = "/api/v1/device/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse list(@RequestBody DeviceRegistrationQuery query) {
         try {
-            AuthenticatedUser user = this.authenticate(query.getCredentials(), EnumRole.ROLE_USER);
+            AuthenticatedUser user = authenticate(query.getCredentials(), EnumRole.ROLE_USER);
 
             List<Device> devices = deviceRepository.getUserDevices(user.getKey(), query);
 
@@ -221,7 +220,7 @@ public class DeviceController extends BaseRestController {
         RestResponse response = new RestResponse();
 
         try {
-            AuthenticatedUser user = this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
+            AuthenticatedUser user = authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
             deviceRepository.shareDevice(user.getKey(), request.getAssignee(), request.getDevice(), request.isShared());
         } catch (Exception ex) {
@@ -242,7 +241,7 @@ public class DeviceController extends BaseRestController {
     @RequestMapping(value = "/api/v1/device/config", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse configuration(@RequestBody DeviceConfigurationRequest request) {
         try {
-            AuthenticatedUser user = this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
+            AuthenticatedUser user = authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
             DeviceConfigurationResponse configurationResponse = new DeviceConfigurationResponse();
 
@@ -281,7 +280,7 @@ public class DeviceController extends BaseRestController {
         RestResponse response = new RestResponse();
 
         try {
-            AuthenticatedUser user = this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
+            AuthenticatedUser user = authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
             deviceRepository.notifyConfiguration(user.getKey(), request.getDeviceKey(), request.getVersion(),
                             new DateTime(request.getUpdatedOn()));
@@ -305,9 +304,9 @@ public class DeviceController extends BaseRestController {
         RestResponse response = new RestResponse();
 
         try {
-            this.authenticate(request.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
+            authenticate(request.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
-            this.deviceRepository.removeDevice(request.getDeviceKey());
+            deviceRepository.removeDevice(request.getDeviceKey());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -328,7 +327,7 @@ public class DeviceController extends BaseRestController {
         RestResponse response = new RestResponse();
 
         try {
-            AuthenticatedUser user = this.authenticate(request.getCredentials(), EnumRole.ROLE_USER);
+            AuthenticatedUser user = authenticate(request.getCredentials(), EnumRole.ROLE_USER);
 
             deviceRepository.updateDevice(user.getKey(), request);
         } catch (Exception ex) {

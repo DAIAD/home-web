@@ -2,8 +2,8 @@ package eu.daiad.web.model.favourite;
 
 import java.util.UUID;
 
-import eu.daiad.web.domain.application.Favourite;
-import eu.daiad.web.domain.application.FavouriteAccount;
+import eu.daiad.web.domain.application.FavouriteEntity;
+import eu.daiad.web.domain.application.FavouriteAccountEntity;
 import eu.daiad.web.model.EnumGender;
 
 public class FavouriteAccountInfo extends FavouriteInfo {
@@ -20,10 +20,10 @@ public class FavouriteAccountInfo extends FavouriteInfo {
 		super(accountKey);
 	}
 
-	public FavouriteAccountInfo(Favourite favourite) {
+	public FavouriteAccountInfo(FavouriteEntity favourite) {
 		super(favourite);
 		
-		FavouriteAccount favouriteAccount = (FavouriteAccount) favourite;
+		FavouriteAccountEntity favouriteAccount = (FavouriteAccountEntity) favourite;
 		if (favouriteAccount.getAccount().getFirstname() != null || favouriteAccount.getAccount().getLastname() != null){
 			this.accountName = favouriteAccount.getAccount().getFirstname() + ' ' + favouriteAccount.getAccount().getLastname();
 		} else {

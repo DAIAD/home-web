@@ -25,11 +25,11 @@ import com.fasterxml.jackson.datatype.joda.JodaModule;
 
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.DataQueryEntity;
-import eu.daiad.web.domain.application.Favourite;
-import eu.daiad.web.domain.application.FavouriteAccount;
-import eu.daiad.web.domain.application.FavouriteGroup;
-import eu.daiad.web.domain.application.Group;
-import eu.daiad.web.domain.application.GroupSegment;
+import eu.daiad.web.domain.application.FavouriteEntity;
+import eu.daiad.web.domain.application.FavouriteAccountEntity;
+import eu.daiad.web.domain.application.FavouriteGroupEntity;
+import eu.daiad.web.domain.application.GroupEntity;
+import eu.daiad.web.domain.application.GroupSegmentEntity;
 import eu.daiad.web.model.error.FavouriteErrorCode;
 import eu.daiad.web.model.error.GroupErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
@@ -67,14 +67,14 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
             AccountEntity adminAccount = accountQuery.getSingleResult();
 
-            TypedQuery<Favourite> favouriteQuery = entityManager.createQuery(
-                            "SELECT f FROM favourite f WHERE f.owner = :owner", Favourite.class).setFirstResult(0);
+            TypedQuery<FavouriteEntity> favouriteQuery = entityManager.createQuery(
+                            "SELECT f FROM favourite f WHERE f.owner = :owner", FavouriteEntity.class).setFirstResult(0);
             favouriteQuery.setParameter("owner", adminAccount);
 
-            List<Favourite> favourites = favouriteQuery.getResultList();
+            List<FavouriteEntity> favourites = favouriteQuery.getResultList();
             List<FavouriteInfo> favouritesInfo = new ArrayList<FavouriteInfo>();
 
-            for (Favourite favourite : favourites) {
+            for (FavouriteEntity favourite : favourites) {
                 FavouriteInfo favouriteInfo = new FavouriteInfo(favourite);
                 favouritesInfo.add(favouriteInfo);
             }
@@ -101,15 +101,15 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
             AccountEntity adminAccount = adminAccountQuery.getSingleResult();
 
-            TypedQuery<Favourite> favouriteQuery = entityManager.createQuery(
-                            "SELECT f FROM favourite f WHERE f.owner = :owner", Favourite.class).setFirstResult(0);
+            TypedQuery<FavouriteEntity> favouriteQuery = entityManager.createQuery(
+                            "SELECT f FROM favourite f WHERE f.owner = :owner", FavouriteEntity.class).setFirstResult(0);
             favouriteQuery.setParameter("owner", adminAccount);
 
-            List<Favourite> favourites = favouriteQuery.getResultList();
+            List<FavouriteEntity> favourites = favouriteQuery.getResultList();
 
-            for (Favourite favourite : favourites) {
+            for (FavouriteEntity favourite : favourites) {
                 if (favourite.getType() == EnumFavouriteType.ACCOUNT) {
-                    FavouriteAccount favouriteAccount = (FavouriteAccount) favourite;
+                    FavouriteAccountEntity favouriteAccount = (FavouriteAccountEntity) favourite;
                     if (favouriteAccount.getAccount().getKey().equals(key)) {
                         favouriteAccountInfo = new FavouriteAccountInfo(favouriteAccount);
                     }
@@ -156,15 +156,15 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
             AccountEntity adminAccount = accountQuery.getSingleResult();
 
-            TypedQuery<Favourite> favouriteQuery = entityManager.createQuery(
-                            "SELECT f FROM favourite f WHERE f.owner = :owner", Favourite.class).setFirstResult(0);
+            TypedQuery<FavouriteEntity> favouriteQuery = entityManager.createQuery(
+                            "SELECT f FROM favourite f WHERE f.owner = :owner", FavouriteEntity.class).setFirstResult(0);
             favouriteQuery.setParameter("owner", adminAccount);
 
-            List<Favourite> favourites = favouriteQuery.getResultList();
+            List<FavouriteEntity> favourites = favouriteQuery.getResultList();
 
-            for (Favourite favourite : favourites) {
+            for (FavouriteEntity favourite : favourites) {
                 if (favourite.getType() == EnumFavouriteType.GROUP) {
-                    FavouriteGroup favouriteGroup = (FavouriteGroup) favourite;
+                    FavouriteGroupEntity favouriteGroup = (FavouriteGroupEntity) favourite;
                     if (favouriteGroup.getGroup().getKey().equals(group_id)) {
                         favouriteGroupInfo = new FavouriteGroupInfo(favouriteGroup);
                     }
@@ -176,12 +176,12 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             // in order to send a CandidateFavouriteGroupInfo Object
             if (favouriteGroupInfo == null) {
                 try {
-                    TypedQuery<Group> groupQuery = entityManager.createQuery(
-                                    "SELECT g FROM group g WHERE g.key = :key", Group.class).setFirstResult(0)
+                    TypedQuery<GroupEntity> groupQuery = entityManager.createQuery(
+                                    "SELECT g FROM group g WHERE g.key = :key", GroupEntity.class).setFirstResult(0)
                                     .setMaxResults(1);
                     groupQuery.setParameter("key", group_id);
 
-                    Group group = groupQuery.getSingleResult();
+                    GroupEntity group = groupQuery.getSingleResult();
 
                     return new CandidateFavouriteGroupInfo(group);
 
@@ -238,16 +238,16 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
                 }
 
                 // Checking if the account is already an admin's favourite
-                TypedQuery<Favourite> favouriteQuery = entityManager.createQuery(
-                                "SELECT f FROM favourite f WHERE f.owner = :owner", Favourite.class).setFirstResult(0);
+                TypedQuery<FavouriteEntity> favouriteQuery = entityManager.createQuery(
+                                "SELECT f FROM favourite f WHERE f.owner = :owner", FavouriteEntity.class).setFirstResult(0);
                 favouriteQuery.setParameter("owner", adminAccount);
 
-                List<Favourite> favourites = favouriteQuery.getResultList();
+                List<FavouriteEntity> favourites = favouriteQuery.getResultList();
 
-                FavouriteAccount selectedFavourite = null;
-                for (Favourite favourite : favourites) {
+                FavouriteAccountEntity selectedFavourite = null;
+                for (FavouriteEntity favourite : favourites) {
                     if (favourite.getType() == EnumFavouriteType.ACCOUNT) {
-                        FavouriteAccount favouriteAccount = (FavouriteAccount) favourite;
+                        FavouriteAccountEntity favouriteAccount = (FavouriteAccountEntity) favourite;
                         if (favouriteAccount.getAccount().getId() == account.getId()) {
                             selectedFavourite = favouriteAccount;
                         }
@@ -259,7 +259,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
                     selectedFavourite.setLabel(favouriteInfo.getLabel());
 
                 } else {
-                    selectedFavourite = new FavouriteAccount();
+                    selectedFavourite = new FavouriteAccountEntity();
                     selectedFavourite.setLabel(favouriteInfo.getLabel());
                     selectedFavourite.setOwner(adminAccount);
                     selectedFavourite.setCreatedOn(new DateTime());
@@ -269,10 +269,10 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
                 this.entityManager.persist(selectedFavourite);
             } else {
                 // checking if the Group exists at all
-                Group group = null;
+                GroupEntity group = null;
                 try {
-                    TypedQuery<Group> groupQuery = entityManager.createQuery(
-                                    "SELECT g FROM group g WHERE g.key = :key", Group.class).setFirstResult(0)
+                    TypedQuery<GroupEntity> groupQuery = entityManager.createQuery(
+                                    "SELECT g FROM group g WHERE g.key = :key", GroupEntity.class).setFirstResult(0)
                                     .setMaxResults(1);
                     groupQuery.setParameter("key", favouriteInfo.getKey());
 
@@ -289,16 +289,16 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
                 }
 
                 // Checking if the group is already an admin's favourite
-                TypedQuery<Favourite> favouriteQuery = entityManager.createQuery(
-                                "SELECT f FROM favourite f WHERE f.owner = :owner", Favourite.class).setFirstResult(0);
+                TypedQuery<FavouriteEntity> favouriteQuery = entityManager.createQuery(
+                                "SELECT f FROM favourite f WHERE f.owner = :owner", FavouriteEntity.class).setFirstResult(0);
                 favouriteQuery.setParameter("owner", adminAccount);
 
-                List<Favourite> favourites = favouriteQuery.getResultList();
+                List<FavouriteEntity> favourites = favouriteQuery.getResultList();
 
-                FavouriteGroup selectedFavourite = null;
-                for (Favourite favourite : favourites) {
+                FavouriteGroupEntity selectedFavourite = null;
+                for (FavouriteEntity favourite : favourites) {
                     if (favourite.getType() == EnumFavouriteType.GROUP) {
-                        FavouriteGroup favouriteGroup = (FavouriteGroup) favourite;
+                        FavouriteGroupEntity favouriteGroup = (FavouriteGroupEntity) favourite;
                         if (favouriteGroup.getGroup().getId() == group.getId()) {
                             selectedFavourite = favouriteGroup;
                         }
@@ -310,7 +310,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
                     selectedFavourite.setLabel(favouriteInfo.getLabel());
 
                 } else {
-                    selectedFavourite = new FavouriteGroup();
+                    selectedFavourite = new FavouriteGroupEntity();
                     selectedFavourite.setLabel(favouriteInfo.getLabel());
                     selectedFavourite.setOwner(adminAccount);
                     selectedFavourite.setCreatedOn(new DateTime());
@@ -336,11 +336,11 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION);
             }
 
-            Favourite favourite = null;
+            FavouriteEntity favourite = null;
             // Check if favourite exists
             try {
-                TypedQuery<Favourite> favouriteQuery = entityManager.createQuery(
-                                "select f from favourite f where f.key = :favourite_id", Favourite.class)
+                TypedQuery<FavouriteEntity> favouriteQuery = entityManager.createQuery(
+                                "select f from favourite f where f.key = :favourite_id", FavouriteEntity.class)
                                 .setFirstResult(0).setMaxResults(1);
                 favouriteQuery.setParameter("favourite_id", favourite_id);
                 favourite = favouriteQuery.getSingleResult();
@@ -388,7 +388,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
         eu.daiad.web.domain.application.AccountEntity account = query.getSingleResult();
 
-        eu.daiad.web.domain.application.FavouriteAccount favorite = new eu.daiad.web.domain.application.FavouriteAccount();
+        eu.daiad.web.domain.application.FavouriteAccountEntity favorite = new eu.daiad.web.domain.application.FavouriteAccountEntity();
         favorite.setAccount(account);
         favorite.setCreatedOn(new DateTime());
         favorite.setOwner(owner);
@@ -399,15 +399,15 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
     @Override
     public void deleteUserFavorite(UUID ownerKey, UUID userKey) {
-        TypedQuery<eu.daiad.web.domain.application.FavouriteAccount> query = entityManager.createQuery(
+        TypedQuery<eu.daiad.web.domain.application.FavouriteAccountEntity> query = entityManager.createQuery(
                         "SELECT f FROM favourite_account f "
                                         + "WHERE f.owner.key = :ownerKey and f.account.key = :userKey",
-                        eu.daiad.web.domain.application.FavouriteAccount.class).setFirstResult(0).setMaxResults(1);
+                        eu.daiad.web.domain.application.FavouriteAccountEntity.class).setFirstResult(0).setMaxResults(1);
 
         query.setParameter("ownerKey", ownerKey);
         query.setParameter("userKey", userKey);
 
-        List<FavouriteAccount> favorites = query.getResultList();
+        List<FavouriteAccountEntity> favorites = query.getResultList();
 
         if (!favorites.isEmpty()) {
             entityManager.remove(favorites.get(0));
@@ -416,10 +416,10 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
     @Override
     public boolean isUserFavorite(UUID ownerKey, UUID userKey) {
-        TypedQuery<eu.daiad.web.domain.application.FavouriteAccount> query = entityManager.createQuery(
+        TypedQuery<eu.daiad.web.domain.application.FavouriteAccountEntity> query = entityManager.createQuery(
                         "SELECT f FROM favourite_account f "
                                         + "WHERE f.owner.key = :ownerKey and f.account.key = :userKey",
-                        eu.daiad.web.domain.application.FavouriteAccount.class).setFirstResult(0).setMaxResults(1);
+                        eu.daiad.web.domain.application.FavouriteAccountEntity.class).setFirstResult(0).setMaxResults(1);
 
         query.setParameter("ownerKey", ownerKey);
         query.setParameter("userKey", userKey);
@@ -440,19 +440,19 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
         eu.daiad.web.domain.application.AccountEntity owner = accountQuery.getSingleResult();
 
-        TypedQuery<eu.daiad.web.domain.application.Group> groupQuery = entityManager.createQuery(
-                        "select g from group g where g.key = :key", eu.daiad.web.domain.application.Group.class);
+        TypedQuery<eu.daiad.web.domain.application.GroupEntity> groupQuery = entityManager.createQuery(
+                        "select g from group g where g.key = :key", eu.daiad.web.domain.application.GroupEntity.class);
 
         groupQuery.setParameter("key", groupKey);
 
-        eu.daiad.web.domain.application.Group group = groupQuery.getSingleResult();
+        eu.daiad.web.domain.application.GroupEntity group = groupQuery.getSingleResult();
 
-        eu.daiad.web.domain.application.FavouriteGroup favorite = new eu.daiad.web.domain.application.FavouriteGroup();
+        eu.daiad.web.domain.application.FavouriteGroupEntity favorite = new eu.daiad.web.domain.application.FavouriteGroupEntity();
         favorite.setGroup(group);
         favorite.setCreatedOn(new DateTime());
         favorite.setOwner(owner);
         if (group.getType() == EnumGroupType.SEGMENT) {
-            favorite.setLabel(((GroupSegment) group).getCluster().getName() + " - " + group.getName());
+            favorite.setLabel(((GroupSegmentEntity) group).getCluster().getName() + " - " + group.getName());
         } else {
             favorite.setLabel(group.getName());
         }
@@ -462,15 +462,15 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
     @Override
     public void deleteGroupFavorite(UUID ownerKey, UUID groupKey) {
-        TypedQuery<eu.daiad.web.domain.application.FavouriteGroup> query = entityManager.createQuery(
+        TypedQuery<eu.daiad.web.domain.application.FavouriteGroupEntity> query = entityManager.createQuery(
                         "SELECT f FROM favourite_group f "
                                         + "WHERE f.owner.key = :ownerKey and f.group.key = :groupKey",
-                        eu.daiad.web.domain.application.FavouriteGroup.class).setFirstResult(0).setMaxResults(1);
+                        eu.daiad.web.domain.application.FavouriteGroupEntity.class).setFirstResult(0).setMaxResults(1);
 
         query.setParameter("ownerKey", ownerKey);
         query.setParameter("groupKey", groupKey);
 
-        List<FavouriteGroup> favorites = query.getResultList();
+        List<FavouriteGroupEntity> favorites = query.getResultList();
 
         if (!favorites.isEmpty()) {
             entityManager.remove(favorites.get(0));
@@ -479,10 +479,10 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
     @Override
     public boolean isGroupFavorite(UUID ownerKey, UUID groupKey) {
-        TypedQuery<eu.daiad.web.domain.application.FavouriteGroup> query = entityManager.createQuery(
+        TypedQuery<eu.daiad.web.domain.application.FavouriteGroupEntity> query = entityManager.createQuery(
                         "SELECT f FROM favourite_group f "
                                         + "WHERE f.owner.key = :ownerKey and f.group.key = :groupKey",
-                        eu.daiad.web.domain.application.FavouriteGroup.class).setFirstResult(0).setMaxResults(1);
+                        eu.daiad.web.domain.application.FavouriteGroupEntity.class).setFirstResult(0).setMaxResults(1);
 
         query.setParameter("ownerKey", ownerKey);
         query.setParameter("groupKey", groupKey);

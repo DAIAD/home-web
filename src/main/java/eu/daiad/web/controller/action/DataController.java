@@ -391,9 +391,15 @@ public class DataController extends BaseController {
                     UserDataExportQuery exportQuery = new UserDataExportQuery();
 
                     // Get account for which data export is requested
-                    AuthenticatedUser exportedUser = userRepository.getUserByUtilityAndKey(user.getUtilityId(), data.getUserKey());
+                    AuthenticatedUser exportedUser = userRepository.getUserByKey(data.getUserKey());
+                    // User must exists
                     if(exportedUser == null) {
                         throw createApplicationException(UserErrorCode.USER_KEY_NOT_FOUND);
+                    }
+                    // The request authenticated user must have access to the user utility data
+                    if ((!user.getKey().equals(exportedUser.getKey())) &&
+                        (!user.getUtilities().contains(exportedUser.getUtilityId()))) {
+                        throw createApplicationException(SharedErrorCode.AUTHORIZATION);
                     }
 
                     exportQuery.setUserKey(exportedUser.getKey());
