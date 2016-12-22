@@ -19,12 +19,14 @@ import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.EnumQueryFavouriteType;
+import java.util.List;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
@@ -111,7 +113,7 @@ public class DataQueryEntity {
         return id;
     }
 
-    public DataQuery toDataQuery() throws JsonParseException, JsonMappingException, IOException {
+    public List<DataQuery> toDataQuery() throws JsonParseException, JsonMappingException, IOException {
         if (StringUtils.isBlank(this.query)) {
             return null;
         }
@@ -119,7 +121,9 @@ public class DataQueryEntity {
         Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
         builder.modules(new JodaModule(), new JtsModule());
         ObjectMapper objectMapper = builder.build();
-        return (objectMapper).readValue(query, DataQuery.class);
+        List<DataQuery> queries = objectMapper.readValue(query, new TypeReference<List<DataQuery>>(){});
+
+        return queries;
     }
 
     public String getTags() {

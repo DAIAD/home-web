@@ -12,6 +12,6 @@ public class StoreDataQueryRequest extends AuthenticatedRequest {
 
     public void setNamedQuery(NamedDataQuery namedQuery) {
         this.namedQuery = namedQuery;
-    }  
+    }
 
 }

@@ -63,6 +63,7 @@ import eu.daiad.web.service.IFileDataLoaderService;
 import eu.daiad.web.service.IWaterMeterDataLoaderService;
 import eu.daiad.web.service.etl.IDataExportService;
 import eu.daiad.web.service.etl.UserDataExportQuery;
+import java.util.List;
 
 /**
  * Provides methods for managing, querying and exporting data.
@@ -235,14 +236,15 @@ public class DataController extends BaseController {
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse storeQuery(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody StoreDataQueryRequest request) {
         try {
-            DataQuery query = request.getNamedQuery().getQuery();
 
-            if (query == null) {
+            List<DataQuery> queries = request.getNamedQuery().getQueries();
+
+            if (queries == null || queries.isEmpty()) {
                 return createResponse(QueryErrorCode.EMPTY_QUERY);
             }
 
-            if (StringUtils.isBlank(query.getTimezone())) {
-                query.setTimezone(user.getTimezone());
+            if (StringUtils.isBlank(queries.get(0).getTimezone())) {
+                queries.get(0).setTimezone(user.getTimezone());
             }
 
             dataService.storeQuery(request.getNamedQuery(), user.getKey());
@@ -270,11 +272,11 @@ public class DataController extends BaseController {
         try {
 
             // Set defaults if needed
-            DataQuery query = request.getNamedQuery().getQuery();
-            if (query != null) {
+            List<DataQuery> queries = request.getNamedQuery().getQueries();
+            if (queries != null && !queries.isEmpty()) {
                 // Initialize time zone
-                if (StringUtils.isBlank(query.getTimezone())) {
-                    request.getNamedQuery().getQuery().setTimezone(user.getTimezone());
+                if (StringUtils.isBlank(queries.get(0).getTimezone())) {
+                    queries.get(0).setTimezone(user.getTimezone());
                 }
             }
 
@@ -303,11 +305,11 @@ public class DataController extends BaseController {
         try {
 
             // Set defaults if needed
-            DataQuery query = request.getNamedQuery().getQuery();
-            if (query != null) {
+            List<DataQuery> queries = request.getNamedQuery().getQueries();
+            if (queries != null && !queries.isEmpty()) {
                 // Initialize time zone
-                if (StringUtils.isBlank(query.getTimezone())) {
-                    request.getNamedQuery().getQuery().setTimezone(user.getTimezone());
+                if (StringUtils.isBlank(queries.get(0).getTimezone())) {
+                    queries.get(0).setTimezone(user.getTimezone());
                 }
             }
 

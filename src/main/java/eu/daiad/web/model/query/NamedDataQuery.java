@@ -1,5 +1,6 @@
 package eu.daiad.web.model.query;
 
+import java.util.List;
 import org.joda.time.DateTime;
 
 public class NamedDataQuery {
@@ -28,7 +29,9 @@ public class NamedDataQuery {
 
     private DateTime createdOn;
     
-    private DataQuery query;
+    private String overlapValue;
+    
+    private List<DataQuery> queries;
 
     public EnumQueryFavouriteType getType() {
         return type;
@@ -53,15 +56,7 @@ public class NamedDataQuery {
     public void setTitle(String title) {
         this.title = title;
     }
-
-    public DataQuery getQuery() {
-        return query;
-    }
-
-    public void setQuery(DataQuery query) {
-        this.query = query;
-    }
-
+    
     public String getTags() {
         return tags;
     }
@@ -101,4 +96,21 @@ public class NamedDataQuery {
     public void setCreatedOn(DateTime createdOn) {
         this.createdOn = createdOn;
     }
+    
+    public String getOverlapValue() {
+        return overlapValue;
+    }
+
+    public void setOverlapValue(String overlapValue) {
+        this.overlapValue = overlapValue;
+    }
+    
+    public List<DataQuery> getQueries() {
+        return queries;
+    }
+
+    public void setQueries(List<DataQuery> queries) {
+        this.queries = queries;
+    }
+    
 }

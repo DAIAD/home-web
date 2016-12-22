@@ -492,7 +492,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
     @Override
     public void insertFavouriteQuery(NamedDataQuery namedDataQuery, AccountEntity account) {
-
+        
 
 
         try {
@@ -525,7 +525,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             dataQueryEntity.setReportName(namedDataQuery.getReportName());
             dataQueryEntity.setLevel(namedDataQuery.getLevel());
             dataQueryEntity.setField(namedDataQuery.getField());
-            dataQueryEntity.setQuery(objectMapper.writeValueAsString(namedDataQuery.getQuery()));
+            dataQueryEntity.setQuery(objectMapper.writeValueAsString(namedDataQuery.getQueries()));
             dataQueryEntity.setOwner(account);
             dataQueryEntity.setUpdatedOn(DateTime.now());
 
@@ -572,7 +572,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             DataQueryEntity dataQueryEntity = query.getSingleResult();
 
             dataQueryEntity.setName(finalTitle);
-            dataQueryEntity.setQuery(objectMapper.writeValueAsString(namedDataQuery.getQuery()));
+            dataQueryEntity.setQuery(objectMapper.writeValueAsString(namedDataQuery.getQueries()));
             dataQueryEntity.setTags(namedDataQuery.getTags());
             dataQueryEntity.setReportName(namedDataQuery.getReportName());
             dataQueryEntity.setLevel(namedDataQuery.getLevel());
@@ -627,7 +627,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             namedDataQuery.setReportName(queryEntity.getReportName());
             namedDataQuery.setLevel(queryEntity.getLevel());
             namedDataQuery.setField(queryEntity.getField());
-            namedDataQuery.setQuery(queryEntity.toDataQuery());
+            namedDataQuery.setQueries(queryEntity.toDataQuery());
             namedDataQuery.setCreatedOn(queryEntity.getUpdatedOn());
 
             namedDataQueries.add(namedDataQuery);
