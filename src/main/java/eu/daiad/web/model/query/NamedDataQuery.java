@@ -29,7 +29,7 @@ public class NamedDataQuery {
 
     private DateTime createdOn;
     
-    private String overlapValue;
+    private String overlap;
     
     private List<DataQuery> queries;
 
@@ -97,12 +97,12 @@ public class NamedDataQuery {
         this.createdOn = createdOn;
     }
     
-    public String getOverlapValue() {
-        return overlapValue;
+    public String getOverlap() {
+        return overlap;
     }
 
-    public void setOverlapValue(String overlapValue) {
-        this.overlapValue = overlapValue;
+    public void setOverlap(String overlap) {
+        this.overlap = overlap;
     }
     
     public List<DataQuery> getQueries() {

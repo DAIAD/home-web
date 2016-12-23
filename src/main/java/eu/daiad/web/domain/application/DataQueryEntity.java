@@ -63,6 +63,9 @@ public class DataQueryEntity {
     @Column(name = "field")
     private String field; 
     
+    @Column(name = "overlap")
+    private String overlap;     
+    
     @Enumerated(EnumType.STRING)
     private EnumQueryFavouriteType type;
 
@@ -157,4 +160,12 @@ public class DataQueryEntity {
     public void setField(String field) {
         this.field = field;
     }    
+
+    public String getOverlap() {
+        return overlap;
+    }
+
+    public void setOverlap(String overlap) {
+        this.overlap = overlap;
+    }
 }
