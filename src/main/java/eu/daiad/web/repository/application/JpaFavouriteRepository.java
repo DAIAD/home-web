@@ -12,16 +12,15 @@ import javax.persistence.TypedQuery;
 
 import org.joda.time.DateTime;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.joda.JodaModule;
 
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.DataQueryEntity;
@@ -50,7 +49,10 @@ import eu.daiad.web.repository.BaseRepository;
 @Repository
 @Transactional("applicationTransactionManager")
 public class JpaFavouriteRepository extends BaseRepository implements IFavouriteRepository {
-
+    
+    @Autowired
+    private Jackson2ObjectMapperBuilder jackson2ObjectMapperBuilder;
+    
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
 
@@ -492,14 +494,12 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
     @Override
     public void insertFavouriteQuery(NamedDataQuery namedDataQuery, AccountEntity account) {
-
+        
 
 
         try {
-            Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
-            // Add additional modules to JSON parser
-            builder.modules(new JodaModule(), new JtsModule());
-            ObjectMapper objectMapper = builder.build();
+
+            ObjectMapper objectMapper = jackson2ObjectMapperBuilder.build();
 
             TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> queryCheck = entityManager.createQuery(
                             "SELECT d FROM data_query d WHERE d.owner.id = :accountId and d.name = :name",
@@ -525,7 +525,8 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             dataQueryEntity.setReportName(namedDataQuery.getReportName());
             dataQueryEntity.setLevel(namedDataQuery.getLevel());
             dataQueryEntity.setField(namedDataQuery.getField());
-            dataQueryEntity.setQuery(objectMapper.writeValueAsString(namedDataQuery.getQuery()));
+            dataQueryEntity.setOverlap(namedDataQuery.getOverlap());
+            dataQueryEntity.setQuery(objectMapper.writeValueAsString(namedDataQuery.getQueries()));
             dataQueryEntity.setOwner(account);
             dataQueryEntity.setUpdatedOn(DateTime.now());
 
@@ -541,10 +542,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
         try {
 
-            Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
-            // Add additional modules to JSON parser
-            builder.modules(new JodaModule(), new JtsModule());
-            ObjectMapper objectMapper = builder.build();
+            ObjectMapper objectMapper = jackson2ObjectMapperBuilder.build();
 
             TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> queryCheck = entityManager.createQuery(
                             "SELECT d FROM data_query d WHERE d.owner.id = :accountId and d.name = :name",
@@ -572,11 +570,12 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             DataQueryEntity dataQueryEntity = query.getSingleResult();
 
             dataQueryEntity.setName(finalTitle);
-            dataQueryEntity.setQuery(objectMapper.writeValueAsString(namedDataQuery.getQuery()));
+            dataQueryEntity.setQuery(objectMapper.writeValueAsString(namedDataQuery.getQueries()));
             dataQueryEntity.setTags(namedDataQuery.getTags());
             dataQueryEntity.setReportName(namedDataQuery.getReportName());
             dataQueryEntity.setLevel(namedDataQuery.getLevel());
             dataQueryEntity.setField(namedDataQuery.getField());
+            dataQueryEntity.setOverlap(namedDataQuery.getOverlap());
 
             this.entityManager.persist(dataQueryEntity);
 
@@ -627,7 +626,8 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             namedDataQuery.setReportName(queryEntity.getReportName());
             namedDataQuery.setLevel(queryEntity.getLevel());
             namedDataQuery.setField(queryEntity.getField());
-            namedDataQuery.setQuery(queryEntity.toDataQuery());
+            namedDataQuery.setOverlap(queryEntity.getOverlap());
+            namedDataQuery.setQueries(queryEntity.toDataQuery());
             namedDataQuery.setCreatedOn(queryEntity.getUpdatedOn());
 
             namedDataQueries.add(namedDataQuery);
