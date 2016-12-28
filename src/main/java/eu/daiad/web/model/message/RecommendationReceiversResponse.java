@@ -6,7 +6,7 @@ import java.util.List;
 public class RecommendationReceiversResponse extends RestResponse{
     
     private List<ReceiverAccount> receivers;
-    private DynamicRecommendation recommendation;
+    private Recommendation recommendation;
 
     public List<ReceiverAccount> getReceivers() {
         return receivers;
@@ -16,11 +16,11 @@ public class RecommendationReceiversResponse extends RestResponse{
         this.receivers = receivers;
     }
 
-    public DynamicRecommendation getRecommendation() {
+    public Recommendation getRecommendation() {
         return recommendation;
     }
 
-    public void setRecommendation(DynamicRecommendation recommendation) {
+    public void setRecommendation(Recommendation recommendation) {
         this.recommendation = recommendation;
     }
 

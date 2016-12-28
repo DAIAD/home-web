@@ -9,11 +9,11 @@ import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.Alert.AbstractParameters;
 import eu.daiad.web.model.message.Alert.CommonParameters;
 
-public class DynamicRecommendation extends Message 
+public class Recommendation extends Message 
 {
     public interface Parameters extends Message.Parameters
     {
-        public EnumDynamicRecommendationType getType();
+        public EnumRecommendationTemplate getType();
     }
     
     public abstract static class AbstractParameters extends Message.AbstractParameters implements Parameters
@@ -22,17 +22,11 @@ public class DynamicRecommendation extends Message
         {
             super(refDate, deviceType);
         }
-
-        @Override
-        public EnumDynamicRecommendationType getType()
-        {
-            return EnumDynamicRecommendationType.UNDEFINED;
-        }
     }
     
     public static class CommonParameters extends AbstractParameters
     {
-        final EnumDynamicRecommendationType recommendationType;
+        final EnumRecommendationTemplate recommendationType;
         
         // Provide some common parameters
         
@@ -45,7 +39,7 @@ public class DynamicRecommendation extends Message
         Double currency2;
         
         public CommonParameters(
-            DateTime refDate, EnumDeviceType deviceType, EnumDynamicRecommendationType recommendationType)
+            DateTime refDate, EnumDeviceType deviceType, EnumRecommendationTemplate recommendationType)
         {
             super(refDate, deviceType);
             this.recommendationType = recommendationType;   
@@ -114,7 +108,7 @@ public class DynamicRecommendation extends Message
         }
         
         @Override
-        public EnumDynamicRecommendationType getType()
+        public EnumRecommendationTemplate getType()
         {
             return recommendationType;
         }
@@ -122,7 +116,7 @@ public class DynamicRecommendation extends Message
     
     private final int id;
 
-	private EnumDynamicRecommendationType recommendationType;
+	private EnumRecommendationTemplate template;
 
 	private int priority;
 
@@ -136,15 +130,15 @@ public class DynamicRecommendation extends Message
 
     private Long acknowledgedOn;
 	
-	public DynamicRecommendation(EnumDynamicRecommendationType recommendationType, int id) 
+	public Recommendation(EnumRecommendationTemplate template, int id) 
 	{
-		this.recommendationType = recommendationType;
+		this.template = template;
 		this.id = id;
 	}
 
 	@Override
 	public EnumMessageType getType() {
-		return EnumMessageType.RECOMMENDATION_DYNAMIC;
+		return EnumMessageType.RECOMMENDATION;
 	}
 
 	public int getPriority() {
@@ -187,8 +181,8 @@ public class DynamicRecommendation extends Message
 		this.imageLink = imageLink;
 	}
 
-	public EnumDynamicRecommendationType getRecommendationType() {
-		return recommendationType;
+	public EnumRecommendationTemplate getRecommendationType() {
+		return template;
 	}
 	
     public Long getAcknowledgedOn() {

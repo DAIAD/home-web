@@ -32,9 +32,9 @@ import org.apache.commons.collections4.Predicate;
 import org.apache.commons.collections4.FluentIterable;
 
 import eu.daiad.web.model.message.Alert;
-import eu.daiad.web.model.message.DynamicRecommendation;
+import eu.daiad.web.model.message.Recommendation;
 import eu.daiad.web.model.message.EnumAlertType;
-import eu.daiad.web.model.message.EnumDynamicRecommendationType;
+import eu.daiad.web.model.message.EnumRecommendationTemplate;
 import eu.daiad.web.model.message.IMessageResolutionStatus;
 import eu.daiad.web.model.message.Insight;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
@@ -919,7 +919,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
  
     // Recommendation #1 - Spend 1 less minute in the shower and save {integer1} {integer2}
-    public IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendLessShowerTimeAmphiro(
+    public IMessageResolutionStatus<Recommendation.Parameters> recommendLessShowerTimeAmphiro(
         MessageCalculationConfiguration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate) 
     {
@@ -964,9 +964,9 @@ public class DefaultMessageResolverService implements IMessageResolverService
         if (fire) {
             Double annualSavings = 
                 (monthlyUserAverageConsumption - monthlyAverageConsumption.getValue()) * 12;
-            DynamicRecommendation.Parameters parameters = new DynamicRecommendation.CommonParameters(
+            Recommendation.Parameters parameters = new Recommendation.CommonParameters(
                     refDate, EnumDeviceType.AMPHIRO, 
-                    EnumDynamicRecommendationType.LESS_SHOWER_TIME
+                    EnumRecommendationTemplate.LESS_SHOWER_TIME
                 )
                 .setInteger1(annualSavings.intValue())
                 .setInteger2(Double.valueOf(annualSavings * 2.0).intValue());
@@ -977,7 +977,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
     
     // Recommendation #2 - You could save {currency1} euros if you used a bit less hot water in the shower. {currency2}
-    public IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendLowerTemperatureAmphiro(
+    public IMessageResolutionStatus<Recommendation.Parameters> recommendLowerTemperatureAmphiro(
         MessageCalculationConfiguration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate) 
     {
@@ -1017,9 +1017,9 @@ public class DefaultMessageResolverService implements IMessageResolverService
             double pricePerKwh = priceData.getPricePerKwh(locale);
             Double annualSavings = 
                 energyCalculator.computeEnergyToRiseTemperature(2, annualUserAverageConsumption) * pricePerKwh;
-            DynamicRecommendation.Parameters parameters = new DynamicRecommendation.CommonParameters(
+            Recommendation.Parameters parameters = new Recommendation.CommonParameters(
                     refDate, EnumDeviceType.AMPHIRO, 
-                    EnumDynamicRecommendationType.LOWER_TEMPERATURE
+                    EnumRecommendationTemplate.LOWER_TEMPERATURE
                 )
                 .setCurrency1(annualSavings)
                 .setCurrency2(annualSavings);
@@ -1030,7 +1030,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
 
     // Recommendation #3 - Reduce the water flow in the shower and gain {integer1} {integer2}
-    public IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendLowerFlowAmphiro(
+    public IMessageResolutionStatus<Recommendation.Parameters> recommendLowerFlowAmphiro(
         MessageCalculationConfiguration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate)
     {
@@ -1073,8 +1073,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
         Double annualAverageConsumption = monthlyAverageConsumption.getValue() * 12;
         if (annualUserConsumption > annualAverageConsumption) {
             Double annualSavings = annualUserConsumption - annualAverageConsumption;
-            DynamicRecommendation.Parameters parameters = new DynamicRecommendation.CommonParameters(
-                    refDate, EnumDeviceType.AMPHIRO, EnumDynamicRecommendationType.LOWER_FLOW
+            Recommendation.Parameters parameters = new Recommendation.CommonParameters(
+                    refDate, EnumDeviceType.AMPHIRO, EnumRecommendationTemplate.LOWER_FLOW
                 )
                 .setInteger1(annualSavings.intValue())
                 .setInteger2(annualSavings.intValue());
@@ -1086,7 +1086,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     // Recommendation #4 - Change your shower head and save {integer1} {integer2}
     // Todo: This computation is identical to Recommendation #3, maybe discard #4
-    public IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendShowerHeadChangeAmphiro(
+    public IMessageResolutionStatus<Recommendation.Parameters> recommendShowerHeadChangeAmphiro(
         MessageCalculationConfiguration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate) 
     {
@@ -1127,8 +1127,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
         Double annualAverageConsumption = monthlyAverageConsumption.getValue() * 12;
         if (annualUserConsumption > annualAverageConsumption) {
             Double annualSavings = annualUserConsumption - annualAverageConsumption;
-            DynamicRecommendation.Parameters parameters = new DynamicRecommendation.CommonParameters(
-                    refDate, EnumDeviceType.AMPHIRO, EnumDynamicRecommendationType.CHANGE_SHOWERHEAD
+            Recommendation.Parameters parameters = new Recommendation.CommonParameters(
+                    refDate, EnumDeviceType.AMPHIRO, EnumRecommendationTemplate.CHANGE_SHOWERHEAD
                 )
                 .setInteger1(annualSavings.intValue())
                 .setInteger2(annualSavings.intValue());
@@ -1138,7 +1138,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
 
     // Recommendation #5 - Have you considered changing your shampoo? {integer1} percent
-    public IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendShampooChangeAmphiro(
+    public IMessageResolutionStatus<Recommendation.Parameters> recommendShampooChangeAmphiro(
         MessageCalculationConfiguration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate) 
     {
@@ -1171,8 +1171,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             // Compute percent of usage above others
             Double percentDiff = 100.0 * 
                 ((monthlyUserAverageConsumption / monthlyAverageConsumption.getValue()) - 1.0);
-            DynamicRecommendation.Parameters parameters = new DynamicRecommendation.CommonParameters(
-                    refDate, EnumDeviceType.AMPHIRO, EnumDynamicRecommendationType.SHAMPOO_CHANGE
+            Recommendation.Parameters parameters = new Recommendation.CommonParameters(
+                    refDate, EnumDeviceType.AMPHIRO, EnumRecommendationTemplate.CHANGE_SHAMPOO
                 )
                 .setInteger1(percentDiff.intValue());
             return new MessageResolutionStatus<>(true, parameters);
@@ -1181,7 +1181,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
 
     // Recommendation #6 - When showering, reduce the water flow when you do not need it {integer1} {integer2}
-    public IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendReduceFlowWhenNotNeededAmphiro(
+    public IMessageResolutionStatus<Recommendation.Parameters> recommendReduceFlowWhenNotNeededAmphiro(
         MessageCalculationConfiguration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate) 
     {
@@ -1215,8 +1215,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             // Compute liters more than average
             Double moreLitersThanOthersInYear = 
                 (monthlyUserAveragePerSession - monthlyAveragePerSession.getValue()) * numberOfSessionsPerYear;
-            DynamicRecommendation.Parameters parameters = new DynamicRecommendation.CommonParameters(
-                    refDate, EnumDeviceType.AMPHIRO, EnumDynamicRecommendationType.REDUCE_FLOW_WHEN_NOT_NEEDED
+            Recommendation.Parameters parameters = new Recommendation.CommonParameters(
+                    refDate, EnumDeviceType.AMPHIRO, EnumRecommendationTemplate.REDUCE_FLOW_WHEN_NOT_NEEDED
                 )
                 .setInteger1(moreLitersThanOthersInYear.intValue())
                 .setInteger2(moreLitersThanOthersInYear.intValue());

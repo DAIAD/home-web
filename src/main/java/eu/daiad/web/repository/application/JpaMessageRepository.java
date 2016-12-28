@@ -26,8 +26,8 @@ import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AccountAlertEntity;
 import eu.daiad.web.domain.application.AccountAlertPropertyEntity;
 import eu.daiad.web.domain.application.AccountAnnouncementEntity;
-import eu.daiad.web.domain.application.AccountDynamicRecommendationEntity;
-import eu.daiad.web.domain.application.AccountDynamicRecommendationPropertyEntity;
+import eu.daiad.web.domain.application.AccountRecommendationEntity;
+import eu.daiad.web.domain.application.AccountRecommendationParameterEntity;
 import eu.daiad.web.domain.application.AccountStaticRecommendationEntity;
 import eu.daiad.web.domain.application.AlertAnalyticsEntity;
 import eu.daiad.web.domain.application.AlertEntity;
@@ -36,8 +36,8 @@ import eu.daiad.web.domain.application.AnnouncementEntity;
 import eu.daiad.web.domain.application.AnnouncementChannel;
 import eu.daiad.web.domain.application.AnnouncementTranslationEntity;
 import eu.daiad.web.domain.application.ChannelEntity;
-import eu.daiad.web.domain.application.DynamicRecommendationEntity;
-import eu.daiad.web.domain.application.DynamicRecommendationTranslationEntity;
+import eu.daiad.web.domain.application.RecommendationTypeEntity;
+import eu.daiad.web.domain.application.RecommendationMessageEntity;
 import eu.daiad.web.domain.application.RecommendationAnalyticsEntity;
 import eu.daiad.web.domain.application.StaticRecommendationEntity;
 import eu.daiad.web.domain.application.StaticRecommendationCategoryEntity;
@@ -46,9 +46,9 @@ import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.model.message.AnnouncementRequest;
-import eu.daiad.web.model.message.DynamicRecommendation;
+import eu.daiad.web.model.message.Recommendation;
 import eu.daiad.web.model.message.EnumAlertType;
-import eu.daiad.web.model.message.EnumDynamicRecommendationType;
+import eu.daiad.web.model.message.EnumRecommendationTemplate;
 import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageAcknowledgement;
@@ -91,7 +91,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
                     case ALERT:
                         persistAlertAcknowledgement(message.getId(), new DateTime(message.getTimestamp()));
                         break;
-                    case RECOMMENDATION_DYNAMIC:
+                    case RECOMMENDATION:
                         persistDynamicRecommendationAcknowledgement(
                                 message.getId(), new DateTime(message.getTimestamp()));
                         break;
@@ -228,14 +228,14 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
         }
 
         // Get dynamic recommendations
-        options = this.getMessageDataPagingOptions(request, EnumMessageType.RECOMMENDATION_DYNAMIC);
+        options = this.getMessageDataPagingOptions(request, EnumMessageType.RECOMMENDATION);
 
         if (options != null) {
             // Get total count
             Integer totalRecommendations;
 
             TypedQuery<Number> countAccountAlertsQuery = entityManager
-                            .createQuery("select count(a.id) from account_dynamic_recommendation a "
+                            .createQuery("select count(a.id) from account_recommendation a "
                                             + "where a.account.id = :accountId and a.id > :minMessageId ", Number.class);
 
             countAccountAlertsQuery.setParameter("accountId", user.getId());
@@ -246,20 +246,20 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             result.setTotalRecommendations(totalRecommendations);
 
             // Build query
-            TypedQuery<AccountDynamicRecommendationEntity> accountRecommendationQuery;
+            TypedQuery<AccountRecommendationEntity> accountRecommendationQuery;
 
             if ((options.getAscending() != null) && (options.getAscending() == true)) {
                 // Ascending order
                 accountRecommendationQuery = entityManager
-                                .createQuery("select a from account_dynamic_recommendation a "
+                                .createQuery("select a from account_recommendation a "
                                                 + "where a.account.id = :accountId and a.id > :minMessageId order by a.id",
-                                                eu.daiad.web.domain.application.AccountDynamicRecommendationEntity.class);
+                                                eu.daiad.web.domain.application.AccountRecommendationEntity.class);
             } else {
                 // Descending order
                 accountRecommendationQuery = entityManager
-                                .createQuery("select a from account_dynamic_recommendation a "
+                                .createQuery("select a from account_recommendation a "
                                                 + "where a.account.id = :accountId and a.id > :minMessageId order by a.id desc",
-                                                eu.daiad.web.domain.application.AccountDynamicRecommendationEntity.class);
+                                                eu.daiad.web.domain.application.AccountRecommendationEntity.class);
             }
 
             if (options.getIndex() != null) {
@@ -272,23 +272,26 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
             accountRecommendationQuery.setParameter("accountId", user.getId());
             accountRecommendationQuery.setParameter("minMessageId", options.getMinMessageId());
 
-            for (AccountDynamicRecommendationEntity accountRecommendation : accountRecommendationQuery.getResultList()) {
+            for (AccountRecommendationEntity accountRecommendation : accountRecommendationQuery.getResultList()) {
                 // Find translation by locale
-                DynamicRecommendationTranslationEntity recommendationTranslation = null;
-
-                for (DynamicRecommendationTranslationEntity translation : accountRecommendation.getRecommendation()
-                                .getTranslations()) {
-                    if (translation.getLocale().equals(locale)) {
-                        recommendationTranslation = translation;
-                        break;
-                    }
-                }
+                RecommendationMessageEntity recommendationTranslation = null;
+                
+                // Fixme recommendation message
+                //for (RecommendationMessageEntity translation : recommendation.getTranslations()) {
+                //    if (translation.getLocale().equals(locale)) {
+                //        recommendationTranslation = translation;
+                //        break;
+                //    }
+                //}
                 if (recommendationTranslation == null)
                     continue;
-
+                
+                RecommendationTypeEntity recommendationType = entityManager
+                    .find(RecommendationTypeEntity.class, recommendationTranslation.getRecommendationType().name());
+                
                 // Build localized strings using translation and properties
                 Map<String, String> formatParams = new HashMap<>();
-                for (AccountDynamicRecommendationPropertyEntity p : accountRecommendation.getProperties()) {
+                for (AccountRecommendationParameterEntity p : accountRecommendation.getProperties()) {
                     Map.Entry<String, String> p1 = preprocessFormatParameter(p.getKey(), p.getValue(), locale1);
                     formatParams.put(p1.getKey(), p1.getValue());
                 }
@@ -300,11 +303,9 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
                 String description = descriptionTemplate.format(formatParams);
 
                 // Create recommendation
-                EnumDynamicRecommendationType recommendationType = EnumDynamicRecommendationType
-                        .fromInteger(accountRecommendation.getRecommendation().getId());
-                DynamicRecommendation message = new DynamicRecommendation(
-                        recommendationType, accountRecommendation.getId());
-                message.setPriority(accountRecommendation.getRecommendation().getPriority());
+                Recommendation message = new Recommendation(
+                    recommendationTranslation.getTemplate(), accountRecommendation.getId());
+                message.setPriority(recommendationType.getPriority());
                 message.setTitle(title);
                 message.setDescription(description);
                 message.setImageLink(recommendationTranslation.getImageLink());
@@ -728,20 +729,20 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
         Date slqDateEnd = new Date(query.getTime().getEnd());
         
         Query nativeQuery = entityManager.createNativeQuery("select\n" +
-            "rt.dynamic_recommendation_id as id,\n" +
+            "rt.recommendation_id as id,\n" +
             "rt.title as title,\n" +
             "rt.description as description,\n" +
             "rt.locale as locale,\n" +
             "count(distinct (ar.id)) as total\n" +
             "from\n" +
-            "public.dynamic_recommendation_translation rt \n" +
+            "public.recommendation_message rt \n" +
             "left join account acc on acc.locale = rt.locale\n" +
             "\n" +
-            "left join public.account_dynamic_recommendation ar on rt.dynamic_recommendation_id = ar.dynamic_recommendation_id and acc.id=ar.account_id\n" +
+            "left join public.account_recommendation ar on rt.recommendation_id = ar.recommendation_id and acc.id=ar.account_id\n" +
             "where \n" +
             "(acc.utility_id=?1) and (ar.created_on >= ?2 and ar.created_on <= ?3 or ar.created_on is NULL)\n" +
             "group by\n" +
-            "rt.dynamic_recommendation_id,rt.title,rt.locale, rt.description", RecommendationAnalyticsEntity.class);
+            "rt.recommendation_id,rt.title,rt.locale, rt.description", RecommendationAnalyticsEntity.class);
 
         nativeQuery.setParameter(1, utilityId);
         nativeQuery.setParameter(2, slqDateStart);
@@ -791,16 +792,16 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
         
         List<ReceiverAccount> receivers = new ArrayList<>();
 
-        TypedQuery<eu.daiad.web.domain.application.AccountDynamicRecommendationEntity> accountRecommendationQuery = entityManager
-                        .createQuery("select a from account_dynamic_recommendation a where a.account.utility.id = :utilityId and a.recommendation.id = :id and a.createdOn > :startDate and a.createdOn < :endDate",
-                                        eu.daiad.web.domain.application.AccountDynamicRecommendationEntity.class);
+        TypedQuery<eu.daiad.web.domain.application.AccountRecommendationEntity> accountRecommendationQuery = entityManager
+                        .createQuery("select a from account_recommendation a where a.account.utility.id = :utilityId and a.recommendation.id = :id and a.createdOn > :startDate and a.createdOn < :endDate",
+                                        eu.daiad.web.domain.application.AccountRecommendationEntity.class);
         
         accountRecommendationQuery.setParameter("utilityId", utilityId);
         accountRecommendationQuery.setParameter("id", recommendationId);
         accountRecommendationQuery.setParameter("startDate", startDate);
         accountRecommendationQuery.setParameter("endDate", endDate);        
 
-        for (AccountDynamicRecommendationEntity accountRecommendation : accountRecommendationQuery.getResultList()) {
+        for (AccountRecommendationEntity accountRecommendation : accountRecommendationQuery.getResultList()) {
             
             ReceiverAccount receiverAccount = new ReceiverAccount();
             receiverAccount.setAccountId(accountRecommendation.getAccount().getId());
@@ -842,28 +843,26 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
     }
     
     @Override
-    public DynamicRecommendation getRecommendation(int id, String locale) 
+    public Recommendation getRecommendation(int id, String locale) 
     {   
-        TypedQuery<DynamicRecommendationTranslationEntity> query = entityManager.createQuery(
-                "select a from dynamic_recommendation_translation a where a.locale = :locale and a.id = :id",
-                DynamicRecommendationTranslationEntity.class);
+        TypedQuery<RecommendationMessageEntity> query = entityManager.createQuery(
+            "SELECT r FROM recommendation_message r WHERE r.locale = :locale and r.id = :id",
+            RecommendationMessageEntity.class);
         query.setParameter("locale", locale);
         query.setParameter("id", id);
 
-        DynamicRecommendation recommendation = null;
-        DynamicRecommendationTranslationEntity translationEntity = null;
+        Recommendation recommendation = null;
+        RecommendationMessageEntity translationEntity = null;
         try {
             translationEntity = query.getSingleResult();
         } catch (NoResultException ex) {
             translationEntity = null;
-            recommendation = new DynamicRecommendation(EnumDynamicRecommendationType.UNDEFINED, -1);
+            recommendation = null;
         }
 
         if (translationEntity != null) {
-            DynamicRecommendationEntity recommendationEntity = translationEntity.getRecommendation();
-            recommendation = new DynamicRecommendation(
-                    EnumDynamicRecommendationType.fromInteger(recommendationEntity.getId()), -1
-            );
+            EnumRecommendationTemplate tpl = translationEntity.getTemplate();
+            recommendation = new Recommendation(tpl, -1);
             recommendation.setTitle(translationEntity.getTitle());
             recommendation.setDescription(translationEntity.getDescription());
         }
@@ -968,15 +967,15 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
     private void persistDynamicRecommendationAcknowledgement(int id, DateTime acknowledgedOn) {
         AuthenticatedUser user = this.getCurrentAuthenticatedUser();
 
-        TypedQuery<eu.daiad.web.domain.application.AccountDynamicRecommendationEntity> accountDynamicRecommendationQuery = entityManager
-                        .createQuery("select a from account_dynamic_recommendation a "
+        TypedQuery<eu.daiad.web.domain.application.AccountRecommendationEntity> accountDynamicRecommendationQuery = entityManager
+                        .createQuery("select a from account_recommendation a "
                                         + "where a.account.id = :accountId and a.id = :dynamicRecommendationId and a.acknowledgedOn is null",
-                                        eu.daiad.web.domain.application.AccountDynamicRecommendationEntity.class);
+                                        eu.daiad.web.domain.application.AccountRecommendationEntity.class);
 
         accountDynamicRecommendationQuery.setParameter("accountId", user.getId());
         accountDynamicRecommendationQuery.setParameter("dynamicRecommendationId", id);
 
-        List<AccountDynamicRecommendationEntity> recommendations = accountDynamicRecommendationQuery.getResultList();
+        List<AccountRecommendationEntity> recommendations = accountDynamicRecommendationQuery.getResultList();
 
         if (recommendations.size() == 1) {
             recommendations.get(0).setAcknowledgedOn(acknowledgedOn);

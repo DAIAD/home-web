@@ -52,17 +52,17 @@ public class MessageResolutionPerAccountStatus
 
 	private IMessageResolutionStatus<Alert.Parameters> alertTop10SaverWeeklySWM;
 	
-	private IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendLessShowerTimeAmphiro;
+	private IMessageResolutionStatus<Recommendation.Parameters> recommendLessShowerTimeAmphiro;
 
-	private IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendLowerTemperatureAmphiro;
+	private IMessageResolutionStatus<Recommendation.Parameters> recommendLowerTemperatureAmphiro;
 
-	private IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendLowerFlowAmphiro;
+	private IMessageResolutionStatus<Recommendation.Parameters> recommendLowerFlowAmphiro;
 
-	private IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendShowerHeadChangeAmphiro;
+	private IMessageResolutionStatus<Recommendation.Parameters> recommendShowerHeadChangeAmphiro;
 
-	private IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendShampooChangeAmphiro;
+	private IMessageResolutionStatus<Recommendation.Parameters> recommendShampooChangeAmphiro;
 
-	private IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendReduceFlowWhenNotNeededAmphiro;
+	private IMessageResolutionStatus<Recommendation.Parameters> recommendReduceFlowWhenNotNeededAmphiro;
         
     private boolean initialStaticTips;
 
@@ -73,7 +73,7 @@ public class MessageResolutionPerAccountStatus
 
     private boolean amphiroInstalled;
     
-    private List<IMessageResolutionStatus<DynamicRecommendation.Parameters>> insights = new ArrayList<>();
+    private List<IMessageResolutionStatus<Recommendation.Parameters>> insights = new ArrayList<>();
     
     //
     // ~ Constructors
@@ -97,7 +97,7 @@ public class MessageResolutionPerAccountStatus
         return initialStaticTips;
     }
         
-    public List<IMessageResolutionStatus<DynamicRecommendation.Parameters>> getInsights()
+    public List<IMessageResolutionStatus<Recommendation.Parameters>> getInsights()
     {
         return insights;
     }
@@ -106,7 +106,7 @@ public class MessageResolutionPerAccountStatus
     {
         if (p != null) { 
             insights.add(
-                new MessageResolutionStatus<DynamicRecommendation.Parameters>(
+                new MessageResolutionStatus<Recommendation.Parameters>(
                     p.getScore(),
                     p.getParameters())
                 );
@@ -380,68 +380,68 @@ public class MessageResolutionPerAccountStatus
         this.alertTop10SaverWeeklySWM = alertTop10SaverSWM;
     }
 
-    public IMessageResolutionStatus<DynamicRecommendation.Parameters> getRecommendLessShowerTimeAmphiro()
+    public IMessageResolutionStatus<Recommendation.Parameters> getRecommendLessShowerTimeAmphiro()
     {
         return recommendLessShowerTimeAmphiro;
     }
 
     public void setRecommendLessShowerTimeAmphiro(
-        IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendLessShowerTimeAmphiro)
+        IMessageResolutionStatus<Recommendation.Parameters> recommendLessShowerTimeAmphiro)
     {
         this.recommendLessShowerTimeAmphiro = recommendLessShowerTimeAmphiro;
     }
 
-    public IMessageResolutionStatus<DynamicRecommendation.Parameters> getRecommendLowerTemperatureAmphiro()
+    public IMessageResolutionStatus<Recommendation.Parameters> getRecommendLowerTemperatureAmphiro()
     {
         return recommendLowerTemperatureAmphiro;
     }
 
     public void setRecommendLowerTemperatureAmphiro(
-        IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendLowerTemperatureAmphiro)
+        IMessageResolutionStatus<Recommendation.Parameters> recommendLowerTemperatureAmphiro)
     {
         this.recommendLowerTemperatureAmphiro = recommendLowerTemperatureAmphiro;
     }
 
-    public IMessageResolutionStatus<DynamicRecommendation.Parameters> getRecommendLowerFlowAmphiro()
+    public IMessageResolutionStatus<Recommendation.Parameters> getRecommendLowerFlowAmphiro()
     {
         return recommendLowerFlowAmphiro;
     }
 
     public void setRecommendLowerFlowAmphiro(
-        IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendLowerFlowAmphiro)
+        IMessageResolutionStatus<Recommendation.Parameters> recommendLowerFlowAmphiro)
     {
         this.recommendLowerFlowAmphiro = recommendLowerFlowAmphiro;
     }
 
-    public IMessageResolutionStatus<DynamicRecommendation.Parameters> getRecommendShowerHeadChangeAmphiro()
+    public IMessageResolutionStatus<Recommendation.Parameters> getRecommendShowerHeadChangeAmphiro()
     {
         return recommendShowerHeadChangeAmphiro;
     }
 
     public void setRecommendShowerHeadChangeAmphiro(
-        IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendShowerHeadChangeAmphiro)
+        IMessageResolutionStatus<Recommendation.Parameters> recommendShowerHeadChangeAmphiro)
     {
         this.recommendShowerHeadChangeAmphiro = recommendShowerHeadChangeAmphiro;
     }
 
-    public IMessageResolutionStatus<DynamicRecommendation.Parameters> getRecommendShampooChangeAmphiro()
+    public IMessageResolutionStatus<Recommendation.Parameters> getRecommendShampooChangeAmphiro()
     {
         return recommendShampooChangeAmphiro;
     }
 
     public void setRecommendShampooChangeAmphiro(
-        IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendShampooChangeAmphiro)
+        IMessageResolutionStatus<Recommendation.Parameters> recommendShampooChangeAmphiro)
     {
         this.recommendShampooChangeAmphiro = recommendShampooChangeAmphiro;
     }
 
-    public IMessageResolutionStatus<DynamicRecommendation.Parameters> getRecommendReduceFlowWhenNotNeededAmphiro()
+    public IMessageResolutionStatus<Recommendation.Parameters> getRecommendReduceFlowWhenNotNeededAmphiro()
     {
         return recommendReduceFlowWhenNotNeededAmphiro;
     }
 
     public void setRecommendReduceFlowWhenNotNeededAmphiro(
-        IMessageResolutionStatus<DynamicRecommendation.Parameters> recommendReduceFlowWhenNotNeededAmphiro)
+        IMessageResolutionStatus<Recommendation.Parameters> recommendReduceFlowWhenNotNeededAmphiro)
     {
         this.recommendReduceFlowWhenNotNeededAmphiro = recommendReduceFlowWhenNotNeededAmphiro;
     }

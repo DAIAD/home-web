@@ -63,7 +63,7 @@ public class MessageController extends BaseRestController {
                     case RECOMMENDATION_STATIC:
                         messageResponse.getTips().add(message);
                         break;
-                    case RECOMMENDATION_DYNAMIC:
+                    case RECOMMENDATION:
                         messageResponse.getRecommendations().add(message);
                         break;
                     case ANNOUNCEMENT:

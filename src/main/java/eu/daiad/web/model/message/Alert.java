@@ -5,7 +5,7 @@ import java.util.Map;
 import org.joda.time.DateTime;
 
 import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.message.DynamicRecommendation.Parameters;
+import eu.daiad.web.model.message.Recommendation.Parameters;
 
 public class Alert extends Message 
 {

@@ -19,19 +19,20 @@ import org.springframework.util.Assert;
 
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AccountAlertEntity;
-import eu.daiad.web.domain.application.AccountDynamicRecommendationEntity;
+import eu.daiad.web.domain.application.AccountRecommendationEntity;
 import eu.daiad.web.domain.application.StaticRecommendationEntity;
 import eu.daiad.web.model.ConsumptionStats;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.Alert;
-import eu.daiad.web.model.message.DynamicRecommendation;
+import eu.daiad.web.model.message.Recommendation;
 import eu.daiad.web.model.message.EnumAlertType;
-import eu.daiad.web.model.message.EnumDynamicRecommendationType;
+import eu.daiad.web.model.message.EnumRecommendationTemplate;
+import eu.daiad.web.model.message.EnumRecommendationType;
 import eu.daiad.web.model.message.IMessageResolutionStatus;
 import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.model.message.MessageResolutionPerAccountStatus;
 import eu.daiad.web.repository.application.IAccountAlertRepository;
-import eu.daiad.web.repository.application.IAccountDynamicRecommendationRepository;
+import eu.daiad.web.repository.application.IAccountRecommendationRepository;
 import eu.daiad.web.repository.application.IAccountStaticRecommendationRepository;
 import eu.daiad.web.repository.application.IStaticRecommendationRepository;
 import eu.daiad.web.repository.application.IUserRepository;
@@ -50,7 +51,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     IAccountAlertRepository accountAlertRepository;
     
     @Autowired
-    IAccountDynamicRecommendationRepository accountDynamicRecommendationRepository;
+    IAccountRecommendationRepository accountDynamicRecommendationRepository;
     
     @Autowired
     IAccountStaticRecommendationRepository accountStaticRecommendationRepository;
@@ -506,14 +507,14 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void recommendLessShowerTimeAmphiro(
         MessageCalculationConfiguration config, MessageResolutionPerAccountStatus status, AccountEntity account) 
     {     
-        if (countRecommendationsByTypeThisMonth(account, EnumDynamicRecommendationType.LESS_SHOWER_TIME) < 1) {         
-            IMessageResolutionStatus<DynamicRecommendation.Parameters> r = status.getRecommendLessShowerTimeAmphiro();
+        if (countRecommendationsByTypeThisMonth(account, EnumRecommendationType.LESS_SHOWER_TIME) < 1) {         
+            IMessageResolutionStatus<Recommendation.Parameters> r = status.getRecommendLessShowerTimeAmphiro();
             if (r == null || !r.isSignificant())
                 return;
             
             int day = DateTime.now().getDayOfMonth();
             if (config.isOnDemandExecution() || day == config.getComputeThisDayOfMonth()) {
-                Assert.state(r.getParameters().getType() == EnumDynamicRecommendationType.LESS_SHOWER_TIME);
+                Assert.state(r.getParameters().getType() == EnumRecommendationTemplate.LESS_SHOWER_TIME);
                 accountDynamicRecommendationRepository.createWith(account, r.getParameters());
             }
         }
@@ -523,14 +524,14 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void recommendLowerTemperatureAmphiro(
         MessageCalculationConfiguration config, MessageResolutionPerAccountStatus status, AccountEntity account) 
     {
-        if (countRecommendationsByTypeThisMonth(account, EnumDynamicRecommendationType.LOWER_TEMPERATURE) < 1) {         
-            IMessageResolutionStatus<DynamicRecommendation.Parameters> r = status.getRecommendLowerTemperatureAmphiro();
+        if (countRecommendationsByTypeThisMonth(account, EnumRecommendationType.LOWER_TEMPERATURE) < 1) {         
+            IMessageResolutionStatus<Recommendation.Parameters> r = status.getRecommendLowerTemperatureAmphiro();
             if (r == null || !r.isSignificant())
                 return;
             
             int day = DateTime.now().getDayOfMonth();
             if (config.isOnDemandExecution() || day == config.getComputeThisDayOfMonth()) {
-                Assert.state(r.getParameters().getType() == EnumDynamicRecommendationType.LOWER_TEMPERATURE);
+                Assert.state(r.getParameters().getType() == EnumRecommendationTemplate.LOWER_TEMPERATURE);
                 accountDynamicRecommendationRepository.createWith(account, r.getParameters());
             }
         }
@@ -540,14 +541,14 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void recommendLowerFlowAmphiro(
         MessageCalculationConfiguration config, MessageResolutionPerAccountStatus status, AccountEntity account) 
     {
-        if (countRecommendationsByTypeThisMonth(account, EnumDynamicRecommendationType.LOWER_FLOW) < 1) {
-            IMessageResolutionStatus<DynamicRecommendation.Parameters> r = status.getRecommendLowerFlowAmphiro();
+        if (countRecommendationsByTypeThisMonth(account, EnumRecommendationType.LOWER_FLOW) < 1) {
+            IMessageResolutionStatus<Recommendation.Parameters> r = status.getRecommendLowerFlowAmphiro();
             if (r == null || !r.isSignificant())
                 return;
             
             int day = DateTime.now().getDayOfMonth();
             if (config.isOnDemandExecution() || day == config.getComputeThisDayOfMonth()) {
-                Assert.state(r.getParameters().getType() == EnumDynamicRecommendationType.LOWER_FLOW);
+                Assert.state(r.getParameters().getType() == EnumRecommendationTemplate.LOWER_FLOW);
                 accountDynamicRecommendationRepository.createWith(account, r.getParameters());
             }
         }
@@ -557,14 +558,14 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void recommendShowerHeadChangeAmphiro(
         MessageCalculationConfiguration config, MessageResolutionPerAccountStatus status, AccountEntity account) 
     {
-        if (countRecommendationsByTypeThisMonth(account, EnumDynamicRecommendationType.CHANGE_SHOWERHEAD) < 1) {
-            IMessageResolutionStatus<DynamicRecommendation.Parameters> r = status.getRecommendLowerFlowAmphiro();
+        if (countRecommendationsByTypeThisMonth(account, EnumRecommendationType.CHANGE_SHOWERHEAD) < 1) {
+            IMessageResolutionStatus<Recommendation.Parameters> r = status.getRecommendLowerFlowAmphiro();
             if (r == null || !r.isSignificant())
                 return;
             
             int day = DateTime.now().getDayOfMonth();
             if (config.isOnDemandExecution() || day == config.getComputeThisDayOfMonth()) {
-                Assert.state(r.getParameters().getType() == EnumDynamicRecommendationType.CHANGE_SHOWERHEAD);
+                Assert.state(r.getParameters().getType() == EnumRecommendationTemplate.CHANGE_SHOWERHEAD);
                 accountDynamicRecommendationRepository.createWith(account, r.getParameters());
             }
         }
@@ -574,14 +575,14 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void recommendShampooAmphiro(
         MessageCalculationConfiguration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
-        if (countRecommendationsByTypeThisMonth(account, EnumDynamicRecommendationType.SHAMPOO_CHANGE) < 1) {            
-            IMessageResolutionStatus<DynamicRecommendation.Parameters> r = status.getRecommendShampooChangeAmphiro();
+        if (countRecommendationsByTypeThisMonth(account, EnumRecommendationType.CHANGE_SHAMPOO) < 1) {            
+            IMessageResolutionStatus<Recommendation.Parameters> r = status.getRecommendShampooChangeAmphiro();
             if (r == null || !r.isSignificant())
                 return;
             
             int day = DateTime.now().getDayOfMonth();
             if (config.isOnDemandExecution() || day == config.getComputeThisDayOfMonth()) {
-                Assert.state(r.getParameters().getType() == EnumDynamicRecommendationType.SHAMPOO_CHANGE);
+                Assert.state(r.getParameters().getType() == EnumRecommendationTemplate.CHANGE_SHAMPOO);
                 accountDynamicRecommendationRepository.createWith(account, r.getParameters());
             }
         }
@@ -591,14 +592,14 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void recommendReduceFlowWhenNotNeededAmphiro(
         MessageCalculationConfiguration config, MessageResolutionPerAccountStatus status, AccountEntity account) 
     {
-        if (countRecommendationsByTypeThisMonth(account, EnumDynamicRecommendationType.REDUCE_FLOW_WHEN_NOT_NEEDED) < 1) {          
-            IMessageResolutionStatus<DynamicRecommendation.Parameters> r = status.getRecommendReduceFlowWhenNotNeededAmphiro();
+        if (countRecommendationsByTypeThisMonth(account, EnumRecommendationType.REDUCE_FLOW_WHEN_NOT_NEEDED) < 1) {          
+            IMessageResolutionStatus<Recommendation.Parameters> r = status.getRecommendReduceFlowWhenNotNeededAmphiro();
             if (r == null || !r.isSignificant())
                 return;
             
             int day = DateTime.now().getDayOfMonth();
             if (config.isOnDemandExecution() || day == config.getComputeThisDayOfMonth()) {
-                Assert.state(r.getParameters().getType() == EnumDynamicRecommendationType.REDUCE_FLOW_WHEN_NOT_NEEDED);
+                Assert.state(r.getParameters().getType() == EnumRecommendationTemplate.REDUCE_FLOW_WHEN_NOT_NEEDED);
                 accountDynamicRecommendationRepository.createWith(account, r.getParameters());
             }
         }
@@ -608,7 +609,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void generateInsights(
         MessageCalculationConfiguration config, MessageResolutionPerAccountStatus messageStatus, AccountEntity account)
     {
-        for (IMessageResolutionStatus<DynamicRecommendation.Parameters> r: messageStatus.getInsights()) {
+        for (IMessageResolutionStatus<Recommendation.Parameters> r: messageStatus.getInsights()) {
             if (r != null && r.isSignificant())
                 accountDynamicRecommendationRepository.createWith(account, r.getParameters());   
         }
@@ -643,7 +644,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     } 
            
     private long countRecommendationsByTypeThisMonth(
-        AccountEntity account, EnumDynamicRecommendationType recommendationType)
+        AccountEntity account, EnumRecommendationType recommendationType)
     {
         DateTimeZone tz = DateTimeZone.forID(account.getTimezone());
         DateTime now = DateTime.now(tz);

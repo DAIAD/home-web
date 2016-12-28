@@ -11,7 +11,7 @@ import eu.daiad.web.model.message.AnnouncementRequest;
 import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.model.message.ReceiverAccount;
 import eu.daiad.web.model.message.Alert;
-import eu.daiad.web.model.message.DynamicRecommendation;
+import eu.daiad.web.model.message.Recommendation;
 import eu.daiad.web.model.message.MessageStatisticsQuery;
 import eu.daiad.web.domain.application.AlertAnalyticsEntity;
 import eu.daiad.web.domain.application.RecommendationAnalyticsEntity;
@@ -52,6 +52,6 @@ public interface IMessageRepository {
     
     public Alert getAlert(int id, String locale);
     
-    public DynamicRecommendation getRecommendation(int id, String locale);
+    public Recommendation getRecommendation(int id, String locale);
 
 }

@@ -14,16 +14,16 @@ import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.NumberFormatter;
 import eu.daiad.web.model.device.EnumDeviceType;
 
-public class Insight extends DynamicRecommendation {
+public class Insight extends Recommendation {
 
     //
     // ~ Classes for parameters
     //
 
-    public interface Parameters extends DynamicRecommendation.Parameters 
+    public interface Parameters extends Recommendation.Parameters 
     {};
     
-    protected abstract static class BasicParameters extends DynamicRecommendation.AbstractParameters
+    protected abstract static class BasicParameters extends Recommendation.AbstractParameters
         implements Parameters
     {
         // The reference value. Note that precise semantics 
@@ -96,12 +96,12 @@ public class Insight extends DynamicRecommendation {
         }
 
         @Override
-        public EnumDynamicRecommendationType getType()
+        public EnumRecommendationTemplate getType()
         {
             if (avgValue <= currentValue)
-                return EnumDynamicRecommendationType.INSIGHT_A1_DAYOFWEEK_CONSUMPTION_INCR;
+                return EnumRecommendationTemplate.INSIGHT_A1_DAYOFWEEK_CONSUMPTION_INCR;
             else 
-                return EnumDynamicRecommendationType.INSIGHT_A1_DAYOFWEEK_CONSUMPTION_DECR;
+                return EnumRecommendationTemplate.INSIGHT_A1_DAYOFWEEK_CONSUMPTION_DECR;
         }
         
         @Override
@@ -122,12 +122,12 @@ public class Insight extends DynamicRecommendation {
         }
 
         @Override
-        public EnumDynamicRecommendationType getType()
+        public EnumRecommendationTemplate getType()
         {
             if (avgValue <= currentValue)
-                return EnumDynamicRecommendationType.INSIGHT_A2_DAILY_CONSUMPTION_INCR;
+                return EnumRecommendationTemplate.INSIGHT_A2_DAILY_CONSUMPTION_INCR;
             else 
-                return EnumDynamicRecommendationType.INSIGHT_A2_DAILY_CONSUMPTION_DECR;
+                return EnumRecommendationTemplate.INSIGHT_A2_DAILY_CONSUMPTION_DECR;
         }
     }
     
@@ -149,24 +149,24 @@ public class Insight extends DynamicRecommendation {
         }
 
         @Override
-        public EnumDynamicRecommendationType getType()
+        public EnumRecommendationTemplate getType()
         {
-            EnumDynamicRecommendationType t = null;
+            EnumRecommendationTemplate t = null;
             switch (partOfDay) {
             case MORNING:
                 t = (avgValue <= currentValue)?
-                        EnumDynamicRecommendationType.INSIGHT_A3_MORNING_CONSUMPTION_INCR:
-                        EnumDynamicRecommendationType.INSIGHT_A3_MORNING_CONSUMPTION_DECR;
+                        EnumRecommendationTemplate.INSIGHT_A3_MORNING_CONSUMPTION_INCR:
+                        EnumRecommendationTemplate.INSIGHT_A3_MORNING_CONSUMPTION_DECR;
                 break;
             case AFTERNOON:
                 t = (avgValue <= currentValue)?
-                        EnumDynamicRecommendationType.INSIGHT_A3_AFTERNOON_CONSUMPTION_INCR:
-                        EnumDynamicRecommendationType.INSIGHT_A3_AFTERNOON_CONSUMPTION_DECR;
+                        EnumRecommendationTemplate.INSIGHT_A3_AFTERNOON_CONSUMPTION_INCR:
+                        EnumRecommendationTemplate.INSIGHT_A3_AFTERNOON_CONSUMPTION_DECR;
                 break;
             case NIGHT:
                 t = (avgValue <= currentValue)?
-                        EnumDynamicRecommendationType.INSIGHT_A3_NIGHT_CONSUMPTION_INCR:
-                        EnumDynamicRecommendationType.INSIGHT_A3_NIGHT_CONSUMPTION_DECR;
+                        EnumRecommendationTemplate.INSIGHT_A3_NIGHT_CONSUMPTION_INCR:
+                        EnumRecommendationTemplate.INSIGHT_A3_NIGHT_CONSUMPTION_DECR;
                 break;
             }  
             return t;
@@ -221,26 +221,26 @@ public class Insight extends DynamicRecommendation {
         }
         
         @Override
-        public EnumDynamicRecommendationType getType()
+        public EnumRecommendationTemplate getType()
         {
-            EnumDynamicRecommendationType t = null;
+            EnumRecommendationTemplate t = null;
             
             Double y1 = partialValues.get(EnumPartOfDay.MORNING); 
             Double y2 = partialValues.get(EnumPartOfDay.AFTERNOON);
             Double y3 = partialValues.get(EnumPartOfDay.NIGHT);
             
             if (y1 == null || y2 == null || y3 == null)
-                return EnumDynamicRecommendationType.UNDEFINED;
+                return null;
             
             if (y1 < y2) {
                 t = (y2 < y3)? 
-                    EnumDynamicRecommendationType.INSIGHT_A4_CONSUMPTION_MAINLY_IN_NIGHT:
-                    EnumDynamicRecommendationType.INSIGHT_A4_CONSUMPTION_MAINLY_IN_AFTERNOON;
+                    EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_MAINLY_IN_NIGHT:
+                    EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_MAINLY_IN_AFTERNOON;
             } else {
                 // y2 <= y1
                 t = (y1 < y3)?
-                    EnumDynamicRecommendationType.INSIGHT_A4_CONSUMPTION_MAINLY_IN_NIGHT:
-                    EnumDynamicRecommendationType.INSIGHT_A4_CONSUMPTION_MAINLY_IN_MORNING;
+                    EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_MAINLY_IN_NIGHT:
+                    EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_MAINLY_IN_MORNING;
             }
             
             return t;
@@ -289,21 +289,21 @@ public class Insight extends DynamicRecommendation {
         }
         
         @Override
-        public EnumDynamicRecommendationType getType()
+        public EnumRecommendationTemplate getType()
         {
-            EnumDynamicRecommendationType t = super.getType();            
+            EnumRecommendationTemplate t = null;            
             boolean increase = (avgValue < currentValue);
             
             switch (timeUnit) {
             case WEEK:
                 t = increase?
-                    EnumDynamicRecommendationType.INSIGHT_B1_WEEKLY_CONSUMPTION_INCR:
-                    EnumDynamicRecommendationType.INSIGHT_B1_WEEKLY_CONSUMPTION_DECR;
+                    EnumRecommendationTemplate.INSIGHT_B1_WEEKLY_CONSUMPTION_INCR:
+                    EnumRecommendationTemplate.INSIGHT_B1_WEEKLY_CONSUMPTION_DECR;
                 break;
             case MONTH:
                 t = increase?
-                    EnumDynamicRecommendationType.INSIGHT_B1_MONTHLY_CONSUMPTION_INCR:
-                    EnumDynamicRecommendationType.INSIGHT_B1_MONTHLY_CONSUMPTION_DECR;
+                    EnumRecommendationTemplate.INSIGHT_B1_MONTHLY_CONSUMPTION_INCR:
+                    EnumRecommendationTemplate.INSIGHT_B1_MONTHLY_CONSUMPTION_DECR;
                 break;
             default:
                 // no-op
@@ -346,21 +346,21 @@ public class Insight extends DynamicRecommendation {
         }
         
         @Override
-        public EnumDynamicRecommendationType getType()
+        public EnumRecommendationTemplate getType()
         {
-            EnumDynamicRecommendationType t = super.getType();
+            EnumRecommendationTemplate t = null;
             boolean increase = (previousValue < currentValue);
             
             switch (timeUnit) {
             case WEEK:
                 t = increase?
-                    EnumDynamicRecommendationType.INSIGHT_B2_WEEKLY_PREV_CONSUMPTION_INCR:
-                    EnumDynamicRecommendationType.INSIGHT_B2_WEEKLY_PREV_CONSUMPTION_DECR;
+                    EnumRecommendationTemplate.INSIGHT_B2_WEEKLY_PREV_CONSUMPTION_INCR:
+                    EnumRecommendationTemplate.INSIGHT_B2_WEEKLY_PREV_CONSUMPTION_DECR;
                 break;
             case MONTH:
                 t = increase?
-                    EnumDynamicRecommendationType.INSIGHT_B2_MONTHLY_PREV_CONSUMPTION_INCR:
-                    EnumDynamicRecommendationType.INSIGHT_B2_MONTHLY_PREV_CONSUMPTION_DECR;
+                    EnumRecommendationTemplate.INSIGHT_B2_MONTHLY_PREV_CONSUMPTION_INCR:
+                    EnumRecommendationTemplate.INSIGHT_B2_MONTHLY_PREV_CONSUMPTION_DECR;
                 break;
             default:
                 // no-op
@@ -407,11 +407,11 @@ public class Insight extends DynamicRecommendation {
         }
         
         @Override
-        public EnumDynamicRecommendationType getType()
+        public EnumRecommendationTemplate getType()
         {
             return (currentValue < avgValue)?
-                EnumDynamicRecommendationType.INSIGHT_B3_DAYOFWEEK_CONSUMPTION_LOW:
-                EnumDynamicRecommendationType.INSIGHT_B3_DAYOFWEEK_CONSUMPTION_PEAK;
+                EnumRecommendationTemplate.INSIGHT_B3_DAYOFWEEK_CONSUMPTION_LOW:
+                EnumRecommendationTemplate.INSIGHT_B3_DAYOFWEEK_CONSUMPTION_PEAK;
         }
         
         @Override
@@ -442,11 +442,11 @@ public class Insight extends DynamicRecommendation {
         }
         
         @Override
-        public EnumDynamicRecommendationType getType()
+        public EnumRecommendationTemplate getType()
         {
             return (weekdayValue < weekendValue)?
-                EnumDynamicRecommendationType.INSIGHT_B4_MORE_ON_WEEKEND:
-                EnumDynamicRecommendationType.INSIGHT_B4_LESS_ON_WEEKEND;    
+                EnumRecommendationTemplate.INSIGHT_B4_MORE_ON_WEEKEND:
+                EnumRecommendationTemplate.INSIGHT_B4_LESS_ON_WEEKEND;    
         }
         
         @Override
@@ -481,11 +481,11 @@ public class Insight extends DynamicRecommendation {
         }
         
         @Override
-        public EnumDynamicRecommendationType getType()
+        public EnumRecommendationTemplate getType()
         {
             return (previousValue < currentValue)?
-                EnumDynamicRecommendationType.INSIGHT_B5_MONTHLY_CONSUMPTION_INCR:
-                EnumDynamicRecommendationType.INSIGHT_B5_MONTHLY_CONSUMPTION_DECR;    
+                EnumRecommendationTemplate.INSIGHT_B5_MONTHLY_CONSUMPTION_INCR:
+                EnumRecommendationTemplate.INSIGHT_B5_MONTHLY_CONSUMPTION_DECR;    
         }
         
         @Override
@@ -504,7 +504,7 @@ public class Insight extends DynamicRecommendation {
     // ~ Constructor
     //
     
-    public Insight(EnumDynamicRecommendationType recommendationType, int id)
+    public Insight(EnumRecommendationTemplate recommendationType, int id)
     {
         super(recommendationType, id);
     }

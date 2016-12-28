@@ -1,6 +1,5 @@
 package eu.daiad.web.domain.application;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -8,6 +7,8 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -21,28 +22,34 @@ import javax.persistence.Table;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-@Entity(name = "account_dynamic_recommendation")
-@Table(schema = "public", name = "account_dynamic_recommendation")
-public class AccountDynamicRecommendationEntity {
+import eu.daiad.web.model.message.EnumRecommendationTemplate;
+
+@Entity(name = "account_recommendation")
+@Table(schema = "public", name = "account_recommendation")
+public class AccountRecommendationEntity {
 
 	@Id()
 	@Column(name = "id")
-	@SequenceGenerator(sequenceName = "account_dynamic_recommendation_id_seq", name = "account_dynamic_recommendation_id_seq", allocationSize = 1, initialValue = 1)
-	@GeneratedValue(generator = "account_dynamic_recommendation_id_seq", strategy = GenerationType.SEQUENCE)
+	@SequenceGenerator(
+	    sequenceName = "account_recommendation_id_seq",
+	    name = "account_recommendation_id_seq",
+	    allocationSize = 1,
+	    initialValue = 1)
+	@GeneratedValue(generator = "account_recommendation_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
 
 	@ManyToOne(cascade = { CascadeType.ALL })
 	@JoinColumn(name = "account_id", nullable = false)
 	private AccountEntity account;
 
-	@ManyToOne(cascade = { CascadeType.ALL })
-	@JoinColumn(name = "dynamic_recommendation_id", nullable = false)
-	private DynamicRecommendationEntity recommendation;
+	@Enumerated(EnumType.STRING)
+	@Column(name = "template_name")
+	private EnumRecommendationTemplate template;
 
 	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER, orphanRemoval = true)
-	@JoinColumn(name = "account_dynamic_recommendation_id")
-	private Set<AccountDynamicRecommendationPropertyEntity> properties = 
-	    new HashSet<AccountDynamicRecommendationPropertyEntity>();
+	@JoinColumn(name = "account_recommendation_id")
+	private Set<AccountRecommendationParameterEntity> properties = 
+	    new HashSet<AccountRecommendationParameterEntity>();
 
 	@Column(name = "created_on")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
@@ -56,29 +63,31 @@ public class AccountDynamicRecommendationEntity {
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime receiveAcknowledgedOn;
 
-	public AccountDynamicRecommendationEntity()
+	public AccountRecommendationEntity()
 	{
 	    // no-op
 	}
 	
-	public AccountDynamicRecommendationEntity(
-        AccountEntity account, DynamicRecommendationEntity recommendation, Map<String, Object> p)
+	public AccountRecommendationEntity(
+        AccountEntity account, EnumRecommendationTemplate template, Map<String, Object> p)
     {
 	    this.account = account;
-        this.recommendation = recommendation;
+        this.template = template;
         
         if (p != null) {
             for (Map.Entry<String, Object> e: p.entrySet()) {
+                String key = e.getKey();
+                String value = e.getValue().toString();
                 this.properties.add(
-                    new AccountDynamicRecommendationPropertyEntity(this, e.getKey(), e.getValue().toString())); 
+                    new AccountRecommendationParameterEntity(this, key, value)); 
             }
         }
     }
 
-	public AccountDynamicRecommendationEntity(
-	    AccountEntity account, DynamicRecommendationEntity recommendation) 
+	public AccountRecommendationEntity(
+	    AccountEntity account, EnumRecommendationTemplate template) 
 	{
-	    this(account, recommendation, null);
+	    this(account, template, null);
 	}
 	
     public AccountEntity getAccount() {
@@ -89,12 +98,8 @@ public class AccountDynamicRecommendationEntity {
 		this.account = account;
 	}
 
-	public DynamicRecommendationEntity getRecommendation() {
-		return recommendation;
-	}
-
-	public void setRecommendation(DynamicRecommendationEntity recommendation) {
-		this.recommendation = recommendation;
+	public EnumRecommendationTemplate getTemplate() {
+		return template;
 	}
 
 	public DateTime getCreatedOn() {
@@ -117,7 +122,7 @@ public class AccountDynamicRecommendationEntity {
 		return id;
 	}
 
-	public Set<AccountDynamicRecommendationPropertyEntity> getProperties() {
+	public Set<AccountRecommendationParameterEntity> getProperties() {
 		return properties;
 	}
     	

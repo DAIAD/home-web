@@ -25,7 +25,7 @@ public class RecommendationAnalyticsEntity {
 	private long receiversCount;   
 
     public EnumMessageType getType() {
-        return EnumMessageType.RECOMMENDATION_DYNAMIC;
+        return EnumMessageType.RECOMMENDATION;
     }   
     
     public Integer getId() {

@@ -8,7 +8,11 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
 public enum EnumMessageType {
-	UNDEFINED(0), ALERT(1), RECOMMENDATION_STATIC(2), RECOMMENDATION_DYNAMIC(3), ANNOUNCEMENT(4);
+	UNDEFINED(0),
+	ALERT(1),
+	RECOMMENDATION_STATIC(2),
+	RECOMMENDATION(3),
+	ANNOUNCEMENT(4);
 
 	private final int value;
 

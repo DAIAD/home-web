@@ -4,27 +4,47 @@ import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
-@Entity(name = "dynamic_recommendation_translation")
-@Table(schema = "public", name = "dynamic_recommendation_translation")
-public class DynamicRecommendationTranslationEntity {
+import eu.daiad.web.model.message.EnumRecommendationTemplate;
+import eu.daiad.web.model.message.EnumRecommendationType;
+
+@Entity(name = "recommendation_message")
+@Table(
+    schema = "public",
+    name = "recommendation_message",
+    indexes = {
+        @Index(columnList = "template_name, locale", unique = true),
+    }
+)
+public class RecommendationMessageEntity {
 
 	@Id()
 	@Column(name = "id")
-	@SequenceGenerator(sequenceName = "dynamic_recommendation_translation_id_seq", name = "dynamic_recommendation_translation_id_seq", allocationSize = 1, initialValue = 1)
-	@GeneratedValue(generator = "dynamic_recommendation_translation_id_seq", strategy = GenerationType.SEQUENCE)
+	@SequenceGenerator(
+	    sequenceName = "recommendation_message_id_seq",
+	    name = "recommendation_message_id_seq",
+	    allocationSize = 1,
+	    initialValue = 1)
+	@GeneratedValue(generator = "recommendation_message_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
 
 	@ManyToOne(cascade = { CascadeType.ALL })
-	@JoinColumn(name = "dynamic_recommendation_id", nullable = false)
-	private DynamicRecommendationEntity recommendation;
+    @JoinColumn(name = "recommendation_id", nullable = false)
+    private RecommendationTypeEntity type;
+	
+	@Enumerated(EnumType.STRING)
+	@Column(name = "template_name")
+	private EnumRecommendationTemplate template;
 
 	@Column(name = "locale", columnDefinition = "bpchar", length = 2)
 	private String locale;
@@ -38,20 +58,16 @@ public class DynamicRecommendationTranslationEntity {
 	@Column(name = "image_link")
 	private String imageLink;
 
-	public DynamicRecommendationEntity getRecommendation() {
-		return recommendation;
+	public EnumRecommendationTemplate getTemplate() {
+		return template;
 	}
-
-	public void setRecommendation(DynamicRecommendationEntity recommendation) {
-		this.recommendation = recommendation;
-	}
-
+	
+	public EnumRecommendationType getRecommendationType() {
+        return template.getType();
+    }
+	
 	public String getLocale() {
 		return locale;
-	}
-
-	public void setLocale(String locale) {
-		this.locale = locale;
 	}
 
 	public String getTitle() {
