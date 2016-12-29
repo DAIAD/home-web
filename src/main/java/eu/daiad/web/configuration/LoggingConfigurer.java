@@ -26,6 +26,9 @@ import eu.daiad.web.logging.MappedDiagnosticContextKeys;
 @Component
 public class LoggingConfigurer implements InitializingBean {
 
+    @Value("${log4j2.logger.jdbc.enable:true}")
+    private Boolean enabled; 
+    
     /**
      * Name of Log4j2 JDBC logger.
      */
@@ -58,10 +61,14 @@ public class LoggingConfigurer implements InitializingBean {
     ApplicationContext applicationContext;
 
     /**
-     * Adds a {@link JdbcAppender} to the logging system configuration.
+     * If enabled, adds a {@link JdbcAppender} to the logging system configuration.
      */
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() throws Exception 
+    {
+        if (!enabled)
+            return;
+        
         ConnectionSource connectionSource = applicationContext.getBean(ConnectionSource.class);
 
         // Get Log4j2 configuration
