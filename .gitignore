@@ -36,6 +36,8 @@ src/main/resources/log4j.properties
 src/main/resources/log4j2.xml
 src/main/resources/config
 
+generated-sql/
+
 apidoc/docs
 jsdoc/
 
