@@ -33,9 +33,9 @@ public class UtilityDataExportQuery extends DataExportQuery {
     private String filename;
 
     /**
-     * Exports only the data for the registered users
+     * Selects exported data. When exporting amphiro data, this parameter is ignored.
      */
-    private boolean exportUserDataOnly;
+    private EnumExportMode mode;
 
     /**
      * Date format.
@@ -43,14 +43,22 @@ public class UtilityDataExportQuery extends DataExportQuery {
     private String dateFormat;
 
     /**
+     * True if the output file must be compressed. If more than one files are
+     * generated, the output is always compressed. When exporting amphiro data,
+     * this parameter is ignored.
+     */
+    private boolean comporessed;
+
+    /**
      * A short description of the exported data
      */
     private String description;
-    
+
     public UtilityDataExportQuery(UtilityInfo utility, String targetDirectory) {
         this.utility = utility;
         this.targetDirectory = targetDirectory;
-        this.dateFormat = "yyyy-MM-dd HH:mm:ss";
+        dateFormat = "yyyy-MM-dd HH:mm:ss";
+        comporessed = true;
     }
 
     public UtilityInfo getUtility() {
@@ -69,12 +77,12 @@ public class UtilityDataExportQuery extends DataExportQuery {
         return targetDirectory;
     }
 
-    public boolean isExportUserDataOnly() {
-        return exportUserDataOnly;
+    public EnumExportMode getMode() {
+        return mode;
     }
 
-    public void setExportUserDataOnly(boolean exportUserDataOnly) {
-        this.exportUserDataOnly = exportUserDataOnly;
+    public void setMode(EnumExportMode mode) {
+        this.mode = mode;
     }
 
     public String getWorkingDirectory() {
@@ -107,6 +115,20 @@ public class UtilityDataExportQuery extends DataExportQuery {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public boolean isComporessed() {
+        return comporessed;
+    }
+
+    public void setComporessed(boolean comporessed) {
+        this.comporessed = comporessed;
+    }
+
+    public enum EnumExportMode {
+        METER_UTILITY,
+        METER_TRIAL,
+        ALL_TRIAL;
     }
 
 }

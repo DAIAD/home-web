@@ -53,11 +53,6 @@ import eu.daiad.web.service.IDataService;
 public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet {
 
     /**
-     * Name of the step that computes the clusters
-     */
-    private final String TASK_CLUSTER_CREATION = "createClusterSegments";
-
-    /**
      * Parameter name for the unique cluster name.
      */
     private final String PARAMETER_CLUSTER_NAME = "cluster.name";
@@ -120,42 +115,31 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
     @Autowired
     private IDataService dataService;
 
-
-    /**
-     * The step name.
-     *
-     * @return the step name.
-     */
-    @Override
-    public  String getName() {
-        return TASK_CLUSTER_CREATION;
-    }
-
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
         try {
-            Map<String, Object> jobParameters = chunkContext.getStepContext().getJobParameters();
+            Map<String, String> parameters = getStepParameters(chunkContext.getStepContext());
 
             // Get cluster name
-            String clusterName = (String) jobParameters.get(PARAMETER_CLUSTER_NAME);
+            String clusterName = (String) parameters.get(PARAMETER_CLUSTER_NAME);
 
             // Get segment names
-            String[] names = StringUtils.split((String) jobParameters.get(PARAMETER_SEGMENT_NAMES), ";");
+            String[] names = StringUtils.split((String) parameters.get(PARAMETER_SEGMENT_NAMES), ";");
 
             if ((names == null) || (names.length == 0)) {
                 // The number of segment names must match the number of segments
                 throw createApplicationException(SchedulerErrorCode.SCHEDULER_INVALID_PARAMETER)
                         .set("parameter", PARAMETER_SEGMENT_NAMES)
-                        .set("value", (String) jobParameters.get(PARAMETER_SEGMENT_NAMES));
+                        .set("value", (String) parameters.get(PARAMETER_SEGMENT_NAMES));
             }
 
             // Get max distance of neighbors
-            float maxDistance = Float.parseFloat((String) jobParameters.get(PARAMETER_NEAREST_DISTANCE));
+            float maxDistance = Float.parseFloat((String) parameters.get(PARAMETER_NEAREST_DISTANCE));
             if (maxDistance <= 0) {
                 // Max distance must be a positive value
                 throw createApplicationException(SchedulerErrorCode.SCHEDULER_INVALID_PARAMETER)
                         .set("parameter", PARAMETER_NEAREST_DISTANCE)
-                        .set("value", (String) jobParameters.get(PARAMETER_NEAREST_DISTANCE));
+                        .set("value", (String) parameters.get(PARAMETER_NEAREST_DISTANCE));
             }
 
             // Delete the existing cluster and its segments and members
@@ -189,8 +173,8 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                         // Get current date and time that will be used as a
                         // reference point in time for computing all other dates
                         // required by the step execution
-                        if (jobParameters.get(PARAMETER_REF_TIMESTAMP) != null) {
-                            context.reference = new DateTime(Long.parseLong((String) jobParameters.get(PARAMETER_REF_TIMESTAMP)),
+                        if (parameters.get(PARAMETER_REF_TIMESTAMP) != null) {
+                            context.reference = new DateTime(Long.parseLong((String) parameters.get(PARAMETER_REF_TIMESTAMP)),
                                                              context.timezone);
                         } else {
                             context.reference = new DateTime(context.timezone);
@@ -216,8 +200,8 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
         } catch (ApplicationException ex) {
             throw ex;
         } catch (Throwable t) {
-            throw wrapApplicationException(t, SchedulerErrorCode.SCHEDULER_JOB_STEP_FAIL)
-                    .set("step", TASK_CLUSTER_CREATION);
+            throw wrapApplicationException(t, SchedulerErrorCode.SCHEDULER_JOB_STEP_FAILED)
+                    .set("step", chunkContext.getStepContext().getStepName());
         }
         return RepeatStatus.FINISHED;
     }

@@ -8,9 +8,14 @@ import eu.daiad.web.model.spatial.ReferenceSystem;
 public class ImportWaterMeterFileConfiguration {
 
     /**
-     * The filename from where to read data.
+     * The path of the input file.
      */
-	private String filename;
+	private String path;
+
+	/**
+	 * Initial file name.
+	 */
+	private String initialFilename;
 
 	/**
 	 * Source spatial reference system.
@@ -47,12 +52,17 @@ public class ImportWaterMeterFileConfiguration {
 	 */
 	private boolean firstRowHeader = false;
 
-	public ImportWaterMeterFileConfiguration(String filename) {
-		this.filename = filename;
+	public ImportWaterMeterFileConfiguration(String path, String initialFilename) {
+		this.path = path;
+		this.initialFilename = initialFilename;
 	}
 
-	public String getFilename() {
-		return filename;
+	public String getPath() {
+		return path;
+	}
+
+	public String getInitialFilename() {
+	    return initialFilename;
 	}
 
 	public int getUsernameCellIndex() {

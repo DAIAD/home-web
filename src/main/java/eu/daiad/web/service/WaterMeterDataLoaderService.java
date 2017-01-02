@@ -1,8 +1,10 @@
 package eu.daiad.web.service;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.rmi.server.ExportException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,6 +24,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
@@ -115,7 +119,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
             }
 
             // Enumerate files from the remote folder
-            ArrayList<RemoteFileAttributes> files = this.sftConnector.ls(config.getSftpProperties(), config
+            ArrayList<RemoteFileAttributes> files = sftConnector.ls(config.getSftpProperties(), config
                             .getRemoteFolder());
 
             String sqlString = "select      u " +
@@ -164,14 +168,14 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
 
                     // Download file to the local folder
                     upload.setUploadStartedOn(new DateTime());
-                    this.sftConnector.get(config.getSftpProperties(), config.getRemoteFolder(), f.getFilename(), target);
+                    sftConnector.get(config.getSftpProperties(), config.getRemoteFolder(), f.getFilename(), target);
 
                     upload.setUploadCompletedOn(new DateTime());
 
                     // Process data and import records to HBASE
                     upload.setProcessingStartedOn(new DateTime());
 
-                    FileProcessingStatus status = this.parse(target, config.getTimezone(), EnumUploadFileType.METER_DATA);
+                    FileProcessingStatus status = parse(target, config.getTimezone(), EnumUploadFileType.METER_DATA, null);
 
                     upload.setTotalRows(status.getTotalRows());
                     upload.setProccessedRows(status.getProcessedRows());
@@ -180,8 +184,8 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
 
                     upload.setProcessingCompletedOn(new DateTime());
 
-                    this.entityManager.persist(upload);
-                    this.entityManager.flush();
+                    entityManager.persist(upload);
+                    entityManager.flush();
                 }
             }
         } catch (Exception ex) {
@@ -194,23 +198,28 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
      *
      * @param filename the file name.
      * @param timezone the time stamp time zone.
-     * @param type of data being uploaded
+     * @param type of data being uploaded.
+     * @param hdfsPath HDFS path if the file is located on HDFS.
      * @return statistics about the process execution.
      * @throws IOException in case an I/O exception occurs.
      *
      * @throws ApplicationException if the file or the time zone is not found.
      */
     @Override
-    public FileProcessingStatus parse(String filename, String timezone, EnumUploadFileType type) throws ApplicationException, IOException {
+    public FileProcessingStatus parse(String filename, String timezone, EnumUploadFileType type, String hdfsPath) throws ApplicationException, IOException {
         switch (type) {
             case METER_DATA:
+                // HDFS is not supported
+                if (!StringUtils.isBlank(hdfsPath)) {
+                    throw createApplicationException(SharedErrorCode.FILESYSTEM_NOT_SUPPORTED).set("filesystem", "hdfs");
+                }
                 FileProcessingStatus status = parseMeterData(filename, timezone);
 
                 renameFile(filename, timezone, status.getMinTimestamp(), status.getMaxTimestamp());
 
                 return status;
             case METER_DATA_FORECAST:
-                return parseMeterForecastData(filename, timezone);
+                return parseMeterForecastData(filename, timezone, hdfsPath);
             default:
                 throw createApplicationException(ActionErrorCode.FILE_TYPE_NOT_SUPPORTED).set("type", type);
         }
@@ -373,7 +382,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
             status.setTotalRows(lineIndex);
 
             // Update and import row data
-            importDataToHBase(status, rows);
+            importMeterDataToHBase(status, rows);
 
         } catch (FileNotFoundException fileEx) {
             logger.error(String.format("File [%s] was not found.", filename), fileEx);
@@ -392,7 +401,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
      * @param status statistics about the process execution.
      * @param rows the data to import.
      */
-    private void importDataToHBase(FileProcessingStatus status, List<MeterDataRow> rows) {
+    private void importMeterDataToHBase(FileProcessingStatus status, List<MeterDataRow> rows) {
         if(rows.isEmpty()) {
             return;
         }
@@ -426,7 +435,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
             // Set difference for the first row for every unique serial number
             if ((i == 0) || (!rows.get(i).serial.equals(rows.get(i - 1).serial))) {
                 if (rows.get(i).difference == null) {
-                    WaterMeterStatusQueryResult meterStatus = this.waterMeterMeasurementRepository.getStatus(new String[] { rows.get(i).serial }, rows.get(i).timestamp - 1);
+                    WaterMeterStatusQueryResult meterStatus = waterMeterMeasurementRepository.getStatus(new String[] { rows.get(i).serial }, rows.get(i).timestamp - 1);
 
                     if ((meterStatus == null) || (meterStatus.getDevices().size() == 0)) {
                         rows.get(i).difference = 0f;
@@ -477,113 +486,170 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
 
         data.add(row.timestamp, row.volume, row.difference);
 
-        this.waterMeterMeasurementRepository.store(row.serial, data);
+        waterMeterMeasurementRepository.store(row.serial, data);
 
         status.processRow();
     }
 
-    private FileProcessingStatus parseMeterForecastData(String filename, String timezone)
-                    throws ApplicationException {
-        File file = new File(filename);
-        if (!file.exists()) {
-            throw createApplicationException(SharedErrorCode.RESOURCE_DOES_NOT_EXIST).set("resource", filename);
-        }
-
-        Scanner scan = null;
-
+    private FileProcessingStatus parseMeterForecastData(String filename, String timezone, String hdfsPath) throws ApplicationException {
+        // Initialize status
         FileProcessingStatus status = new FileProcessingStatus();
 
-        // C11DE516148_2014-06-30-01 1.9244444
-        String line = "";
-
-        // Set time zone
-        Set<String> zones = DateTimeZone.getAvailableIDs();
-        if ((StringUtils.isBlank(timezone)) || (!zones.contains(timezone))) {
-            throw createApplicationException(SharedErrorCode.TIMEZONE_NOT_FOUND).set("timezone", timezone);
-        }
-
-        DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd-HH").withZone(DateTimeZone.forID(timezone));
-
         try {
-            // Count rows
-            scan = new Scanner(new File(filename));
+            if (StringUtils.isBlank(hdfsPath)) {
+                // Local file
+                File file = new File(filename);
+                if (!file.exists()) {
+                    throw createApplicationException(SharedErrorCode.RESOURCE_DOES_NOT_EXIST).set("resource", filename);
+                }
+
+            } else {
+                FileSystem hdfsFileSystem = getHdfsFilesystem(hdfsPath);
+
+                if (!hdfsFileSystem.exists(new org.apache.hadoop.fs.Path(filename))) {
+                    throw createApplicationException(SharedErrorCode.RESOURCE_DOES_NOT_EXIST).set("resource", filename);
+                }
+
+            }
+
+            // Set time zone
+            Set<String> zones = DateTimeZone.getAvailableIDs();
+            if ((StringUtils.isBlank(timezone)) || (!zones.contains(timezone))) {
+                throw createApplicationException(SharedErrorCode.TIMEZONE_NOT_FOUND).set("timezone", timezone);
+            }
+
+            DateTimeFormatter formatter = DateTimeFormat.forPattern(dateFormatPattern).withZone(DateTimeZone.forID(timezone));
+
+            // I14FA065940;25/06/2016 08:00:00;4.26
+            String line = "";
 
             int index = 0;
-            while (scan.hasNextLine()) {
-                index++;
-                scan.nextLine();
-            }
-            scan.close();
-            scan = null;
 
-            status.setTotalRows(index);
+            if (StringUtils.isBlank(hdfsPath)) {
+                // Parse local file
+                try (Scanner scan = new Scanner(new File(filename))) {
+                    while (scan.hasNextLine()) {
+                        line = scan.nextLine();
 
-            // Process rows
-            scan = new Scanner(new File(filename));
+                        if(StringUtils.isBlank(line)) {
+                            continue;
+                        }
+                        index++;
 
-            index = 0;
-            while (scan.hasNextLine()) {
-                index++;
-                line = scan.nextLine();
+                        parseForecastingDataLine(index, line, formatter, filename, status);
+                    }
 
-                float difference;
-
-                String[] parts = StringUtils.split(line, "_");
-                if (parts.length != 2) {
-                    status.skipRow();
-                    continue;
+                    status.setTotalRows(index);
                 }
-                String[] values = StringUtils.split(parts[1], " ");
-                if (values.length != 2) {
-                    status.skipRow();
-                    continue;
+            } else {
+                // Parse HDFS file
+                FileSystem hdfsFileSystem = getHdfsFilesystem(hdfsPath);
+
+                try (BufferedReader reader = new BufferedReader(
+                                                new InputStreamReader(hdfsFileSystem.open(new org.apache.hadoop.fs.Path(filename))))) {
+                    line = reader.readLine();
+                    while (line != null) {
+                        line = reader.readLine();
+
+                        if(StringUtils.isBlank(line)) {
+                            continue;
+                        }
+                        index++;
+
+                        parseForecastingDataLine(index, line, formatter, filename, status);
+                    }
                 }
-
-                String serial = parts[0];
-
-                DateTime timestamp;
-                try {
-                    timestamp = formatter.parseDateTime(values[0]);
-                } catch (Exception ex) {
-                    logger.error(String.format("Failed to parse timestamp [%s] in line [%d] from file [%s].",
-                                    values[0], index, filename), ex);
-                    status.skipRow();
-                    continue;
-                }
-
-                try {
-                    difference = Float.parseFloat(values[1]);
-                } catch (Exception ex) {
-                    logger.error(String.format("Failed to parse difference [%s] in line [%d] from file [%s].",
-                                    values[1], index, filename), ex);
-                    status.skipRow();
-                    continue;
-                }
-
-                WaterMeterForecastCollection data = new WaterMeterForecastCollection();
-                ArrayList<WaterMeterForecast> measurements = new ArrayList<WaterMeterForecast>();
-                WaterMeterForecast measurement = new WaterMeterForecast();
-
-                measurement.setTimestamp(timestamp.getMillis());
-                measurement.setDifference(difference);
-
-                measurements.add(measurement);
-
-                data.setMeasurements(measurements);
-
-                this.waterMeterForecastRepository.store(serial, data);
-
-                status.processRow();
             }
         } catch (FileNotFoundException fileEx) {
-            logger.error(String.format("File [%s] was not found.", filename), fileEx);
-        } finally {
-            if (scan != null) {
-                scan.close();
-            }
+            throw wrapApplicationException(fileEx, SharedErrorCode.RESOURCE_DOES_NOT_EXIST).set("resource", filename);
+        } catch (ApplicationException appEx) {
+            throw appEx;
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }
 
         return status;
+    }
+
+
+    /**
+     * Parses a line with meter forecasting data and imports results to HBase.
+     *
+     * @param index the current line index.
+     * @param line the line data.
+     * @param formatter date time formatter for parsing dates.
+     * @param filename the input filename.
+     * @param status the process status.
+     */
+    private void parseForecastingDataLine(int index, String line, DateTimeFormatter formatter, String filename, FileProcessingStatus status) {
+        float difference;
+
+        String[] tokens = StringUtils.split(line, ";");
+        if (tokens.length != 3) {
+            status.skipRow();
+            return;
+        }
+
+        String serial = tokens[0];
+
+        DateTime timestamp;
+        try {
+            timestamp = formatter.parseDateTime(tokens[1]);
+        } catch (Exception ex) {
+            logger.error(String.format("Failed to parse timestamp [%s] in line [%d] from file [%s].",
+                                        tokens[1], index, filename), ex);
+            status.skipRow();
+            return;
+        }
+
+        try {
+            difference = Float.parseFloat(tokens[2]);
+        } catch (Exception ex) {
+            logger.error(String.format("Failed to parse difference [%s] in line [%d] from file [%s].",
+                                       tokens[2], index, filename), ex);
+            status.skipRow();
+            return;
+        }
+
+        importForecastingDataToHBase(serial, timestamp, difference);
+
+        status.processRow();
+    }
+
+    /**
+     * Imports a row with meter forecasting data to HBase.
+     *
+     * @param serial meter serial number.
+     * @param timestamp date and time of the meter reading.
+     * @param difference water consumption since the last reading.
+     */
+    private void importForecastingDataToHBase(String serial, DateTime timestamp, float difference) {
+        WaterMeterForecastCollection data = new WaterMeterForecastCollection();
+        ArrayList<WaterMeterForecast> measurements = new ArrayList<WaterMeterForecast>();
+        WaterMeterForecast measurement = new WaterMeterForecast();
+
+        measurement.setTimestamp(timestamp.getMillis());
+        measurement.setDifference(difference);
+
+        measurements.add(measurement);
+
+        data.setMeasurements(measurements);
+
+        waterMeterForecastRepository.store(serial, data);
+    }
+
+    /**
+     * Gets HDFS file system.
+     *
+     * @param hdfsPath HDFS path.
+     * @return a configured file system.
+     * @throws IOException if an I/O exception occurs.
+     */
+    private FileSystem getHdfsFilesystem(String hdfsPath) throws IOException {
+        Configuration conf = new Configuration();
+        conf.set("fs.defaultFS", hdfsPath);
+
+        return FileSystem.get(conf);
     }
 
     private static class MeterDataRow {

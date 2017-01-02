@@ -18,8 +18,8 @@ public abstract class BaseWeatherDataHarvester implements IWeatherDataHarvester 
     protected IWeatherRepository weatherRepository;
 
     @Override
-    public void initialize(int serviceId, Map<String, String> properties) {
-        this.service = weatherRepository.getServiceById(serviceId);
+    public void initialize(int serviceId, Map<String, String> parameters) {
+        service = weatherRepository.getServiceById(serviceId);
     }
 
     @Override

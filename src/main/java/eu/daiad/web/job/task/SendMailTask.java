@@ -37,11 +37,6 @@ public class SendMailTask extends BaseTask implements StoppableTasklet {
     private static final Log logger = LogFactory.getLog(SendMailTask.class);
 
     /**
-     * Name of the step.
-     */
-    private final String TASK_SEND_MAIL = "sendMail";
-
-    /**
      * Parameter name for the utilities identifiers. The value is a comma separated list of numbers.
      */
     private final String PARAMETER_UTILITY = "utility.id";
@@ -73,16 +68,6 @@ public class SendMailTask extends BaseTask implements StoppableTasklet {
      */
     @Autowired
     private IUserRepository userRepository;
-
-    /**
-     * The step name.
-     *
-     * @return the step name.
-     */
-    @Override
-    public  String getName() {
-        return TASK_SEND_MAIL;
-    }
 
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
@@ -151,7 +136,8 @@ public class SendMailTask extends BaseTask implements StoppableTasklet {
         } catch (ApplicationException ex) {
             throw ex;
         } catch (Throwable t) {
-            throw wrapApplicationException(t, SchedulerErrorCode.SCHEDULER_JOB_STEP_FAIL).set("step", TASK_SEND_MAIL);
+            throw wrapApplicationException(t, SchedulerErrorCode.SCHEDULER_JOB_STEP_FAILED)
+                    .set("step", chunkContext.getStepContext().getStepName());
         }
         return RepeatStatus.FINISHED;
     }

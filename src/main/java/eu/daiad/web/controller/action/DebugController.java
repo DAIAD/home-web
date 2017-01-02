@@ -50,7 +50,7 @@ import eu.daiad.web.model.user.Account;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IUserRepository;
-import eu.daiad.web.service.IFileDataLoaderService;
+import eu.daiad.web.service.IDataImportService;
 
 /**
  * Provides helper methods for developers.
@@ -79,7 +79,7 @@ public class DebugController extends BaseController {
      * Service for importing data from uploaded files to PostgreSQL and HBase.
      */
     @Autowired
-    private IFileDataLoaderService fileDataLoaderService;
+    private IDataImportService fileDataLoaderService;
 
     /**
      * Repository for accessing user data.

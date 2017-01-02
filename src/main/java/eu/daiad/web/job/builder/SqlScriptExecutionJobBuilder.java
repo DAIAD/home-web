@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import eu.daiad.web.job.task.ConsumptionClusterTask;
 import eu.daiad.web.job.task.SqlScriptExecutionTasklet;
 
 /**
@@ -18,6 +17,11 @@ import eu.daiad.web.job.task.SqlScriptExecutionTasklet;
  */
 @Component
 public class SqlScriptExecutionJobBuilder extends BaseJobBuilder implements IJobBuilder {
+
+    /**
+     * Job submission step name.
+     */
+    private static final String STEP_SCRIPT_EXECUTION = "execute-script";
 
     /**
      * A (;) delimited list of SQL script paths.
@@ -31,12 +35,6 @@ public class SqlScriptExecutionJobBuilder extends BaseJobBuilder implements IJob
     @Qualifier("applicationDataSource")
     private DataSource dataSource;
 
-    /**
-     * Task that clusters users based on their consumption and computes water IQ status.
-     */
-    @Autowired
-    private ConsumptionClusterTask consumptionClusterStep;
-
     private Step executeScripts() {
         SqlScriptExecutionTasklet sqlScriptExecutionTasklet = new SqlScriptExecutionTasklet();
 
@@ -44,7 +42,7 @@ public class SqlScriptExecutionJobBuilder extends BaseJobBuilder implements IJob
         sqlScriptExecutionTasklet.setDataSource(dataSource);
         sqlScriptExecutionTasklet.setLocationParameter(PARAMETER_LOCATIONS);
 
-        return stepBuilderFactory.get("executeScripts").tasklet(sqlScriptExecutionTasklet).build();
+        return stepBuilderFactory.get(STEP_SCRIPT_EXECUTION).tasklet(sqlScriptExecutionTasklet).build();
     }
 
     @Override

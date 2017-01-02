@@ -3,6 +3,7 @@ package eu.daiad.web.controller.action;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -58,12 +59,11 @@ import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.model.spatial.ReferenceSystem;
 import eu.daiad.web.repository.application.IExportRepository;
 import eu.daiad.web.repository.application.IUserRepository;
+import eu.daiad.web.service.IDataImportService;
 import eu.daiad.web.service.IDataService;
-import eu.daiad.web.service.IFileDataLoaderService;
 import eu.daiad.web.service.IWaterMeterDataLoaderService;
 import eu.daiad.web.service.etl.IDataExportService;
 import eu.daiad.web.service.etl.UserDataExportQuery;
-import java.util.List;
 
 /**
  * Provides methods for managing, querying and exporting data.
@@ -103,7 +103,7 @@ public class DataController extends BaseController {
      * Service for importing data.
      */
     @Autowired
-    private IFileDataLoaderService fileDataLoaderService;
+    private IDataImportService fileDataLoaderService;
 
     /**
      * Service for importing smart water meter data.
@@ -151,7 +151,7 @@ public class DataController extends BaseController {
                         for (MultipartFile file : request.getFiles()) {
                             String filename = createTemporaryFilename(file.getBytes());
 
-                            ImportWaterMeterFileConfiguration configuration = new ImportWaterMeterFileConfiguration(filename);
+                            ImportWaterMeterFileConfiguration configuration = new ImportWaterMeterFileConfiguration(filename, file.getOriginalFilename());
 
                             configuration.setSourceReferenceSystem(new ReferenceSystem(request.getSrid()));
                             configuration.setFirstRowHeader(request.isFirstRowHeader());
@@ -166,7 +166,7 @@ public class DataController extends BaseController {
                         for (MultipartFile file : request.getFiles()) {
                             String filename = createTemporaryFilename(file.getBytes());
 
-                            waterMeterDataLoaderService.parse(filename, request.getTimezone(), EnumUploadFileType.METER_DATA);
+                            waterMeterDataLoaderService.parse(filename, request.getTimezone(), EnumUploadFileType.METER_DATA, null);
                         }
                         break;
                     case METER_DATA_FORECAST:
@@ -176,7 +176,7 @@ public class DataController extends BaseController {
                         for (MultipartFile file : request.getFiles()) {
                             String filename = createTemporaryFilename(file.getBytes());
 
-                            waterMeterDataLoaderService.parse(filename, request.getTimezone(), EnumUploadFileType.METER_DATA_FORECAST);
+                            waterMeterDataLoaderService.parse(filename, request.getTimezone(), EnumUploadFileType.METER_DATA_FORECAST, null);
                         }
                         break;
                     default:
