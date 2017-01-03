@@ -733,6 +733,7 @@ public class JpaMessageRepository extends BaseRepository
         Date slqDateStart = new Date(query.getTime().getStart());
         Date slqDateEnd = new Date(query.getTime().getEnd());
         
+        // Todo rewrite query
         Query nativeQuery = entityManager.createNativeQuery("select\n" +
             "rt.recommendation_id as id,\n" +
             "rt.title as title,\n" +

@@ -1,11 +1,13 @@
 
-DROP SEQUENCE public.account_dynamic_recommendation_property_id_seq;
+DROP VIEW recommendation_analytics;
+
+DROP SEQUENCE public.account_dynamic_recommendation_property_id_seq CASCADE;
 DROP TABLE public.account_dynamic_recommendation_property;
 
-DROP SEQUENCE public.account_dynamic_recommendation_id_seq;
+DROP SEQUENCE public.account_dynamic_recommendation_id_seq CASCADE;
 DROP TABLE public.account_dynamic_recommendation;
 
-DROP SEQUENCE public.dynamic_recommendation_translation_id_seq;
+DROP SEQUENCE public.dynamic_recommendation_translation_id_seq CASCADE;
 DROP TABLE public.dynamic_recommendation_translation;
 
 DROP TABLE public.dynamic_recommendation;
@@ -110,6 +112,17 @@ CREATE TABLE public.account_recommendation_parameter
         ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
+--
+-- View recommendation_analytics
+--
 
-
+CREATE VIEW recommendation_analytics AS 
+SELECT 
+    rt.name AS "type",
+    count(1) AS "count"
+FROM 
+    account_recommendation ar 
+    LEFT JOIN recommendation_template t ON (ar.recommendation_template = t.value)
+    LEFT JOIN recommendation_type rt ON (rt.value = t."type")
+GROUP BY rt.name 
 

@@ -337,13 +337,16 @@ public class MessageController extends BaseController {
                 }
             }
 
-            MessageStatisticsResponse messageStatisticsResponse = new MessageStatisticsResponse();
-            messageStatisticsResponse.setAlertStatistics(this.messageRepository
-                    .getAlertStatistics(user.getLocale(), user.getUtilityId(), query));
-            messageStatisticsResponse.setRecommendationStatistics(this.messageRepository
-                    .getRecommendationStatistics(user.getLocale(), user.getUtilityId(), query));
-
-            return messageStatisticsResponse;
+            int utilityId = user.getUtilityId();
+            String localeName = user.getLocale();
+            
+            MessageStatisticsResponse response = new MessageStatisticsResponse();
+            response.setAlertStatistics(
+                messageRepository.getAlertStatistics(localeName, utilityId, query));
+            response.setRecommendationStatistics(
+                messageRepository.getRecommendationStatistics(localeName, utilityId, query));
+            
+            return response;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
