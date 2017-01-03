@@ -14,42 +14,41 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
 
 import eu.daiad.web.model.message.EnumRecommendationTemplate;
-import eu.daiad.web.model.message.EnumRecommendationType;
 
-@Entity(name = "recommendation_message")
+@Entity(name = "recommendation_template_translation")
 @Table(
     schema = "public",
-    name = "recommendation_message",
+    name = "recommendation_template_translation",
     indexes = {
-        @Index(columnList = "template_name, locale", unique = true),
+        @Index(columnList = "template, locale", unique = true),
     }
 )
-public class RecommendationMessageEntity {
-
+public class RecommendationTemplateTranslationEntity 
+{
 	@Id()
 	@Column(name = "id")
 	@SequenceGenerator(
-	    sequenceName = "recommendation_message_id_seq",
-	    name = "recommendation_message_id_seq",
+	    sequenceName = "recommendation_template_translation_id_seq",
+	    name = "recommendation_template_translation_id_seq",
 	    allocationSize = 1,
 	    initialValue = 1)
-	@GeneratedValue(generator = "recommendation_message_id_seq", strategy = GenerationType.SEQUENCE)
+	@GeneratedValue(generator = "recommendation_template_translation_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
 
 	@ManyToOne(cascade = { CascadeType.ALL })
-    @JoinColumn(name = "recommendation_id", nullable = false)
-    private RecommendationTypeEntity type;
-	
-	@Enumerated(EnumType.STRING)
-	@Column(name = "template_name")
-	private EnumRecommendationTemplate template;
+    @JoinColumn(name = "template", nullable = false)
+	@NotNull
+    private RecommendationTemplateEntity template;
 
-	@Column(name = "locale", columnDefinition = "bpchar", length = 2)
+	@Column(name = "locale", columnDefinition = "bpchar", length = 2, nullable = false)
+	@NotNull
 	private String locale;
 
 	@Basic()
+	@NotNull
 	private String title;
 
 	@Basic()
@@ -58,12 +57,12 @@ public class RecommendationMessageEntity {
 	@Column(name = "image_link")
 	private String imageLink;
 
-	public EnumRecommendationTemplate getTemplate() {
+	public RecommendationTemplateEntity getTemplate() {
 		return template;
 	}
 	
-	public EnumRecommendationType getRecommendationType() {
-        return template.getType();
+	public EnumRecommendationTemplate getEnumeratedTemplate() {
+        return template.getTemplate();
     }
 	
 	public String getLocale() {

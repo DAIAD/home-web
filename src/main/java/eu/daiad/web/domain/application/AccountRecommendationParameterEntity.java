@@ -37,9 +37,7 @@ public class AccountRecommendationParameterEntity {
 	private String value;
 
 	public AccountRecommendationParameterEntity()
-	{
-	    // no-op
-	}
+	{}
 	
 	public AccountRecommendationParameterEntity(
 	    AccountRecommendationEntity recommendation, String key, String value)

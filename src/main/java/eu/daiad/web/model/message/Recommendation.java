@@ -6,8 +6,6 @@ import org.joda.time.DateTime;
 
 import eu.daiad.web.model.DateFormatter;
 import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.message.Alert.AbstractParameters;
-import eu.daiad.web.model.message.Alert.CommonParameters;
 
 public class Recommendation extends Message 
 {
@@ -113,10 +111,12 @@ public class Recommendation extends Message
             return recommendationType;
         }
     }
-    
-    private final int id;
 
-	private EnumRecommendationTemplate template;
+    private final int id;
+    
+    private final EnumRecommendationType recommendationType;
+    
+	private final EnumRecommendationTemplate recommendationTemplate;
 
 	private int priority;
 
@@ -130,10 +130,20 @@ public class Recommendation extends Message
 
     private Long acknowledgedOn;
 	
-	public Recommendation(EnumRecommendationTemplate template, int id) 
+	public Recommendation(int id, EnumRecommendationTemplate template) 
 	{
-		this.template = template;
 		this.id = id;
+	    this.recommendationTemplate = template;
+		this.recommendationType = template.getType();
+		this.priority = recommendationType.getPriority();
+	}
+	
+	public Recommendation(int id, EnumRecommendationType type) 
+	{
+	    this.id = id;
+	    this.recommendationTemplate = null;
+	    this.recommendationType = type;
+	    this.priority = recommendationType.getPriority();
 	}
 
 	@Override
@@ -143,10 +153,6 @@ public class Recommendation extends Message
 
 	public int getPriority() {
 		return priority;
-	}
-
-	public void setPriority(int priority) {
-		this.priority = priority;
 	}
 
 	public String getTitle() {
@@ -181,9 +187,13 @@ public class Recommendation extends Message
 		this.imageLink = imageLink;
 	}
 
-	public EnumRecommendationTemplate getRecommendationType() {
-		return template;
+	public EnumRecommendationTemplate getRecommendationTemplate() {
+		return recommendationTemplate;
 	}
+	
+	public EnumRecommendationType getRecommendationType() {
+        return recommendationType;
+    }
 	
     public Long getAcknowledgedOn() {
         return acknowledgedOn;

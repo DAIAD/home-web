@@ -8,7 +8,6 @@ import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.EnumRecommendationType;
 
 @Entity(name = "recommendation_type")
@@ -16,26 +15,14 @@ import eu.daiad.web.model.message.EnumRecommendationType;
 public class RecommendationTypeEntity 
 {
 	@Id()
-	private int id;
+	private int value;
 	
 	@Enumerated(EnumType.STRING)
-	@Column(name = "name")
+	@Column(name = "name", unique = true, nullable = false)
 	private EnumRecommendationType type;
-
-	@Enumerated(EnumType.STRING)
-	@Column(name = "device", nullable = true)
-	private EnumDeviceType deviceType;
 
 	@Basic()
 	private int priority;
-
-	public EnumDeviceType getDeviceType() {
-		return deviceType;
-	}
-
-	public void setDeviceType(EnumDeviceType deviceType) {
-		this.deviceType = deviceType;
-	}
 
 	public int getPriority() {
 		return priority;
@@ -49,7 +36,22 @@ public class RecommendationTypeEntity
 		return type;
 	}
 	
-	public int getId() {
-	    return id;
+	public EnumRecommendationType asEnum() {
+        return type;
+    }
+	
+	public int getValue() {
+	    return value;
+	}
+	
+	public RecommendationTypeEntity()
+	{
+	}
+	
+	public RecommendationTypeEntity(EnumRecommendationType type)
+	{
+	    this.type = type;
+	    this.value = type.getValue();
+	    this.priority = type.getPriority();
 	}
 }

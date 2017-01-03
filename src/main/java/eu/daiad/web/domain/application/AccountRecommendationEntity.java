@@ -18,6 +18,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
@@ -38,19 +39,21 @@ public class AccountRecommendationEntity {
 	@GeneratedValue(generator = "account_recommendation_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
 
-	@ManyToOne(cascade = { CascadeType.ALL })
+	@ManyToOne()
 	@JoinColumn(name = "account_id", nullable = false)
+	@NotNull
 	private AccountEntity account;
-
-	@Enumerated(EnumType.STRING)
-	@Column(name = "template_name")
-	private EnumRecommendationTemplate template;
 
 	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER, orphanRemoval = true)
 	@JoinColumn(name = "account_recommendation_id")
 	private Set<AccountRecommendationParameterEntity> properties = 
 	    new HashSet<AccountRecommendationParameterEntity>();
 
+	@ManyToOne()
+	@JoinColumn(name = "recommendation_template", nullable = false)
+	@NotNull
+	private RecommendationTemplateEntity recommendationTemplate;
+	
 	@Column(name = "created_on")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime createdOn;
@@ -64,15 +67,13 @@ public class AccountRecommendationEntity {
 	private DateTime receiveAcknowledgedOn;
 
 	public AccountRecommendationEntity()
-	{
-	    // no-op
-	}
+	{}
 	
 	public AccountRecommendationEntity(
-        AccountEntity account, EnumRecommendationTemplate template, Map<String, Object> p)
+        AccountEntity account, RecommendationTemplateEntity recommendationTemplate, Map<String, Object> p)
     {
 	    this.account = account;
-        this.template = template;
+        this.recommendationTemplate = recommendationTemplate;
         
         if (p != null) {
             for (Map.Entry<String, Object> e: p.entrySet()) {
@@ -85,7 +86,7 @@ public class AccountRecommendationEntity {
     }
 
 	public AccountRecommendationEntity(
-	    AccountEntity account, EnumRecommendationTemplate template) 
+	    AccountEntity account, RecommendationTemplateEntity template) 
 	{
 	    this(account, template, null);
 	}
@@ -98,10 +99,10 @@ public class AccountRecommendationEntity {
 		this.account = account;
 	}
 
-	public EnumRecommendationTemplate getTemplate() {
-		return template;
+	public RecommendationTemplateEntity getTemplate() {
+		return recommendationTemplate;
 	}
-
+	
 	public DateTime getCreatedOn() {
 		return createdOn;
 	}

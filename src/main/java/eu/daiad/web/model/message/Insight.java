@@ -504,8 +504,13 @@ public class Insight extends Recommendation {
     // ~ Constructor
     //
     
-    public Insight(EnumRecommendationTemplate recommendationType, int id)
+    public Insight(EnumRecommendationTemplate recommendationTemplate, int id)
     {
-        super(recommendationType, id);
+        super(id, recommendationTemplate);
+    }
+    
+    public Insight(EnumRecommendationType recommendationType, int id)
+    {
+        super(id, recommendationType);
     }
 }

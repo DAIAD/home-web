@@ -15,6 +15,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
 import org.joda.time.DateTime;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
@@ -37,8 +38,9 @@ import eu.daiad.web.domain.application.AnnouncementChannel;
 import eu.daiad.web.domain.application.AnnouncementTranslationEntity;
 import eu.daiad.web.domain.application.ChannelEntity;
 import eu.daiad.web.domain.application.RecommendationTypeEntity;
-import eu.daiad.web.domain.application.RecommendationMessageEntity;
+import eu.daiad.web.domain.application.RecommendationTemplateTranslationEntity;
 import eu.daiad.web.domain.application.RecommendationAnalyticsEntity;
+import eu.daiad.web.domain.application.RecommendationTemplateEntity;
 import eu.daiad.web.domain.application.StaticRecommendationEntity;
 import eu.daiad.web.domain.application.StaticRecommendationCategoryEntity;
 import eu.daiad.web.model.error.MessageErrorCode;
@@ -49,6 +51,7 @@ import eu.daiad.web.model.message.AnnouncementRequest;
 import eu.daiad.web.model.message.Recommendation;
 import eu.daiad.web.model.message.EnumAlertType;
 import eu.daiad.web.model.message.EnumRecommendationTemplate;
+import eu.daiad.web.model.message.EnumRecommendationType;
 import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageAcknowledgement;
@@ -64,11 +67,15 @@ import javax.persistence.Query;
 
 @Repository
 @Transactional("applicationTransactionManager")
-public class JpaMessageRepository extends BaseRepository implements IMessageRepository 
+public class JpaMessageRepository extends BaseRepository 
+    implements IMessageRepository 
 {
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
 
+    @Autowired
+    IRecommendationTemplateTranslationRepository recommendationTranslationRepository;
+    
     private final String currencyKey1 = "currency1";
     private final String currencyKey2 = "currency2";
     private final String dayKey = "day_of_week"; 
@@ -130,7 +137,9 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 
         AuthenticatedUser user = this.getCurrentAuthenticatedUser();
 
-        String locale = resolveLocale(user.getLocale());
+        String localeName = resolveLocale(user.getLocale());
+        Locale locale = Locale.forLanguageTag(localeName);
+        
         Locale locale1 = resolveCurrency(user.getCountry());
 
         List<Message> messages = new ArrayList<>();
@@ -184,7 +193,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
                 AlertTranslationEntity alertTranslation = null;
 
                 for (AlertTranslationEntity translation : accountAlert.getAlert().getTranslations()) {
-                    if (translation.getLocale().equals(locale)) {
+                    if (translation.getLocale().equals(localeName)) {
                         alertTranslation = translation;
                         break;
                     }
@@ -208,7 +217,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 
                 if (alertTranslation.getDescription() != null) {
                     MessageFormat descriptionTemplate = new MessageFormat(alertTranslation.getDescription(),
-                                    new Locale(locale));
+                                    new Locale(localeName));
                     description = descriptionTemplate.format(formatParams);
                 }
                 
@@ -274,20 +283,14 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
 
             for (AccountRecommendationEntity accountRecommendation : accountRecommendationQuery.getResultList()) {
                 // Find translation by locale
-                RecommendationMessageEntity recommendationTranslation = null;
                 
-                // Fixme recommendation message
-                //for (RecommendationMessageEntity translation : recommendation.getTranslations()) {
-                //    if (translation.getLocale().equals(locale)) {
-                //        recommendationTranslation = translation;
-                //        break;
-                //    }
-                //}
+                RecommendationTemplateEntity templateEntity = accountRecommendation.getTemplate();
+                RecommendationTypeEntity recommendationType = templateEntity.getType();
+                
+                RecommendationTemplateTranslationEntity recommendationTranslation = 
+                    recommendationTranslationRepository.findByTemplate(templateEntity.getTemplate(), locale);
                 if (recommendationTranslation == null)
                     continue;
-                
-                RecommendationTypeEntity recommendationType = entityManager
-                    .find(RecommendationTypeEntity.class, recommendationTranslation.getRecommendationType().name());
                 
                 // Build localized strings using translation and properties
                 Map<String, String> formatParams = new HashMap<>();
@@ -296,16 +299,18 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
                     formatParams.put(p1.getKey(), p1.getValue());
                 }
 
-                MessageFormat titleTemplate = new MessageFormat(recommendationTranslation.getTitle(), locale1);
+                MessageFormat titleTemplate = 
+                    new MessageFormat(recommendationTranslation.getTitle(), locale1);
                 String title = titleTemplate.format(formatParams);
 
-                MessageFormat descriptionTemplate = new MessageFormat(recommendationTranslation.getDescription());
+                MessageFormat descriptionTemplate =
+                    new MessageFormat(recommendationTranslation.getDescription());
                 String description = descriptionTemplate.format(formatParams);
 
                 // Create recommendation
-                Recommendation message = new Recommendation(
-                    recommendationTranslation.getTemplate(), accountRecommendation.getId());
-                message.setPriority(recommendationType.getPriority());
+                
+                Recommendation message = 
+                    new Recommendation(accountRecommendation.getId(), templateEntity.getTemplate());
                 message.setTitle(title);
                 message.setDescription(description);
                 message.setImageLink(recommendationTranslation.getImageLink());
@@ -365,7 +370,7 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
                 AnnouncementTranslationEntity announcementTranslation = null;
 
                 for (AnnouncementTranslationEntity translation : accountAnnouncement.getAnnouncement().getTranslations()) {
-                    if (translation.getLocale().equals(locale)) {
+                    if (translation.getLocale().equals(localeName)) {
                         announcementTranslation = translation;
                         break;
                     }
@@ -843,30 +848,10 @@ public class JpaMessageRepository extends BaseRepository implements IMessageRepo
     }
     
     @Override
-    public Recommendation getRecommendation(int id, String locale) 
+    public Recommendation getRecommendation(int recommendationType, String locale) 
     {   
-        TypedQuery<RecommendationMessageEntity> query = entityManager.createQuery(
-            "SELECT r FROM recommendation_message r WHERE r.locale = :locale and r.id = :id",
-            RecommendationMessageEntity.class);
-        query.setParameter("locale", locale);
-        query.setParameter("id", id);
-
-        Recommendation recommendation = null;
-        RecommendationMessageEntity translationEntity = null;
-        try {
-            translationEntity = query.getSingleResult();
-        } catch (NoResultException ex) {
-            translationEntity = null;
-            recommendation = null;
-        }
-
-        if (translationEntity != null) {
-            EnumRecommendationTemplate tpl = translationEntity.getTemplate();
-            recommendation = new Recommendation(tpl, -1);
-            recommendation.setTitle(translationEntity.getTitle());
-            recommendation.setDescription(translationEntity.getDescription());
-        }
-        return recommendation;
+        EnumRecommendationType t = EnumRecommendationType.valueOf(recommendationType);
+        return new Recommendation(-1, t);
     }
     
     @Override
