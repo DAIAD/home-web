@@ -1,3 +1,15 @@
+
+DROP SEQUENCE public.account_dynamic_recommendation_property_id_seq;
+DROP TABLE public.account_dynamic_recommendation_property;
+
+DROP SEQUENCE public.account_dynamic_recommendation_id_seq;
+DROP TABLE public.account_dynamic_recommendation;
+
+DROP SEQUENCE public.dynamic_recommendation_translation_id_seq;
+DROP TABLE public.dynamic_recommendation_translation;
+
+DROP TABLE public.dynamic_recommendation;
+
 --
 -- Table public.public.recommendation_type
 --
