@@ -51,10 +51,10 @@ public interface IAccountRecommendationRepository
     AccountRecommendationEntity create(AccountRecommendationEntity e);
     
     AccountRecommendationEntity createWith(
-        UUID accountKey,  Recommendation.Parameters parameters);
+        UUID accountKey,  Recommendation.ParameterizedTemplate parameterizedTemplate);
     
     AccountRecommendationEntity createWith(
-        AccountEntity account, Recommendation.Parameters parameters);
+        AccountEntity account, Recommendation.ParameterizedTemplate parameterizedTemplate);
     
     void delete(int id);
     

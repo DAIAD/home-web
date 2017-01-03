@@ -20,7 +20,7 @@ import eu.daiad.web.domain.application.RecommendationTemplateEntity;
 import eu.daiad.web.domain.application.RecommendationTemplateTranslationEntity;
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.RecommendationTypeEntity;
-import eu.daiad.web.model.message.Recommendation.Parameters;
+import eu.daiad.web.model.message.Recommendation.ParameterizedTemplate;
 import eu.daiad.web.model.message.EnumRecommendationTemplate;
 import eu.daiad.web.model.message.EnumRecommendationType;
 
@@ -228,7 +228,7 @@ public class AccountRecommendationRepository extends BaseRepository
     }
 
     @Override
-    public AccountRecommendationEntity createWith(UUID accountKey, Parameters parameters)
+    public AccountRecommendationEntity createWith(UUID accountKey, ParameterizedTemplate parameters)
     {
         TypedQuery<AccountEntity> query = entityManager.createQuery(
             "SELECT a FROM account a WHERE a.key = :accountKey", AccountEntity.class);
@@ -249,9 +249,9 @@ public class AccountRecommendationRepository extends BaseRepository
     
     @Override
     public AccountRecommendationEntity createWith(
-        AccountEntity account, Parameters parameters)
+        AccountEntity account, ParameterizedTemplate parameterizedTemplate)
     {
-        return createWith(account, parameters.getType(), parameters.getPairs());
+        return createWith(account, parameterizedTemplate.getTemplate(), parameterizedTemplate.getParameters());
     }
     
     @Override

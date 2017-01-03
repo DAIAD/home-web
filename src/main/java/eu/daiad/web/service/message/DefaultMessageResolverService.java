@@ -281,7 +281,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
         
     // Alert #1 - Check for water leaks!
-    private IMessageResolutionStatus<Alert.Parameters> alertWaterLeakSWM(
+    private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterLeakSWM(
         AccountEntity account, DateTime refDate, ConsumptionStats stats) 
     {
         final double VOLUME_THRESHOLD_PER_HOUR = 2.0; // lt
@@ -306,13 +306,13 @@ public class DefaultMessageResolverService implements IMessageResolverService
         if (points.anyMatch(Point.belowValue(VOLUME_THRESHOLD_PER_HOUR)))
             return null;
 
-        Alert.Parameters parameters = new Alert.CommonParameters(
+        Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
             refDate, EnumDeviceType.METER, EnumAlertType.WATER_LEAK);
         return new MessageResolutionStatus<>(true, parameters);
     }
 
     // Alert #2 - Shower still on!
-    public MessageResolutionStatus<Alert.Parameters> alertShowerStillOnAmphiro(
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> alertShowerStillOnAmphiro(
         AccountEntity account, DateTime refDate, ConsumptionStats stats) 
     {   
         final int DURATION_THRESHOLD_IN_MINUTES = 30;
@@ -337,13 +337,13 @@ public class DefaultMessageResolverService implements IMessageResolverService
         if (points.allMatch(Point.belowValue(DURATION_THRESHOLD_IN_MINUTES)))
             return null;
         
-        Alert.Parameters parameters = new Alert.CommonParameters(
+        Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
             refDate, EnumDeviceType.AMPHIRO, EnumAlertType.SHOWER_ON);
         return new MessageResolutionStatus<>(true, parameters);
     }
 
     // Alert #5 - Water quality not assured!
-    public IMessageResolutionStatus<Alert.Parameters> alertWaterQualitySWM(
+    public IMessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterQualitySWM(
         AccountEntity account, DateTime refDate, ConsumptionStats stats) 
     {        
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
@@ -370,13 +370,13 @@ public class DefaultMessageResolverService implements IMessageResolverService
         if (!fire)
             return null;
         
-        Alert.Parameters parameters = new Alert.CommonParameters(
+        Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
             refDate, EnumDeviceType.METER, EnumAlertType.WATER_QUALITY);
         return new MessageResolutionStatus<>(true, parameters);
     }
 
     // Alert #6 - Water too hot!
-    public IMessageResolutionStatus<Alert.Parameters> alertHotTemperatureAmphiro(
+    public IMessageResolutionStatus<Alert.ParameterizedTemplate> alertHotTemperatureAmphiro(
         AccountEntity account, DateTime refDate, ConsumptionStats stats) 
     {
         final double TEMPERATURE_THRESHOLD = 45.0;
@@ -401,13 +401,13 @@ public class DefaultMessageResolverService implements IMessageResolverService
         if (points.allMatch(Point.belowValue(TEMPERATURE_THRESHOLD)))
             return null;
         
-        Alert.Parameters parameters = new Alert.CommonParameters(
+        Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
             refDate, EnumDeviceType.AMPHIRO, EnumAlertType.HOT_TEMPERATURE);
         return new MessageResolutionStatus<>(true, parameters);
     }
 
     // Alert #7, #9 - Reached 80% of your daily water budget {integer1} {integer2}
-    public IMessageResolutionStatus<Alert.Parameters> alertNearDailyBudget(
+    public IMessageResolutionStatus<Alert.ParameterizedTemplate> alertNearDailyBudget(
         MessageCalculationConfiguration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType) 
     {
@@ -434,7 +434,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         Double remaining = (consumed > budget)? 0.0 : (budget - consumed);
         double percentUsed = 100 * (consumed / budget);
         
-        Alert.Parameters parameters = new Alert.CommonParameters(
+        Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
                 refDate, deviceType, 
                 (deviceType == EnumDeviceType.AMPHIRO?
                     EnumAlertType.NEAR_DAILY_SHOWER_BUDGET:
@@ -443,12 +443,12 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .setInteger1(consumed.intValue())
             .setInteger2(remaining.intValue());
         
-        return new MessageResolutionStatus<Alert.Parameters>(
+        return new MessageResolutionStatus<Alert.ParameterizedTemplate>(
             percentUsed > BUDGET_NEAR_PERCENTAGE_THRESHOLD, parameters);
     }
     
     // Alert #8, #10 - Reached 80% of your weekly water budget {integer1} {integer2}
-    public IMessageResolutionStatus<Alert.Parameters> alertNearWeeklyBudget(
+    public IMessageResolutionStatus<Alert.ParameterizedTemplate> alertNearWeeklyBudget(
         MessageCalculationConfiguration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType) 
     {
@@ -474,7 +474,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         Double remaining = (consumed > budget)? 0.0 : (budget - consumed);     
         double percentUsed = 100 * (consumed / budget);
         
-        Alert.Parameters parameters = new Alert.CommonParameters(
+        Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
                 refDate, deviceType, 
                 (deviceType == EnumDeviceType.AMPHIRO?
                     EnumAlertType.NEAR_WEEKLY_SHOWER_BUDGET:
@@ -483,12 +483,12 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .setInteger1(consumed.intValue())
             .setInteger2(remaining.intValue());
         
-        return new MessageResolutionStatus<Alert.Parameters>(
+        return new MessageResolutionStatus<Alert.ParameterizedTemplate>(
             percentUsed > BUDGET_NEAR_PERCENTAGE_THRESHOLD, parameters);
     }
 
     // Alert #11, #12 - Reached daily Water Budget {integer1}
-    public IMessageResolutionStatus<Alert.Parameters> alertReachedDailyBudget(
+    public IMessageResolutionStatus<Alert.ParameterizedTemplate> alertReachedDailyBudget(
         MessageCalculationConfiguration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType) 
     {
@@ -513,7 +513,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         int budget = config.getDailyBudget(deviceType);     
         double percentUsed = 100 * (consumed / budget);
         
-        Alert.Parameters parameters = new Alert.CommonParameters(
+        Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
                 refDate, deviceType, 
                 (deviceType == EnumDeviceType.AMPHIRO?
                     EnumAlertType.REACHED_DAILY_SHOWER_BUDGET:
@@ -522,12 +522,12 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .setInteger1(Integer.valueOf(budget))
             .setInteger2(consumed.intValue());
         
-        return new MessageResolutionStatus<Alert.Parameters>(
+        return new MessageResolutionStatus<Alert.ParameterizedTemplate>(
             percentUsed > BUDGET_PERCENTAGE_THRESHOLD, parameters);
     }
     
     // Alert #13, #14 - You are a real water champion!
-    public IMessageResolutionStatus<Alert.Parameters> alertWaterChampion(
+    public IMessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterChampion(
         MessageCalculationConfiguration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType) 
     {
@@ -572,7 +572,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         if (!fire)
             return null;
         
-        Alert.Parameters parameters = new Alert.CommonParameters(
+        Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
             refDate, deviceType, 
             (deviceType == EnumDeviceType.AMPHIRO)? 
                 EnumAlertType.SHOWER_CHAMPION:
@@ -582,7 +582,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
     
     // Alert #15, #16 - You are using too much water {integer1}
-    public IMessageResolutionStatus<Alert.Parameters> alertTooMuchWaterConsumption(
+    public IMessageResolutionStatus<Alert.ParameterizedTemplate> alertTooMuchWaterConsumption(
         MessageCalculationConfiguration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate, EnumDeviceType deviceType) 
     {  
@@ -613,7 +613,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         if (consumed > HIGH_CONSUMPTION_RATIO * weeklyAverage.getValue()) {
             // Get a rough estimate for annual savings if average behavior is adopted
             Double annualSavings = (consumed - weeklyAverage.getValue()) * WEEKS_PER_YEAR;
-            Alert.Parameters parameters = new Alert.CommonParameters(
+            Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
                     refDate, deviceType, 
                     (deviceType == EnumDeviceType.AMPHIRO)?
                         EnumAlertType.TOO_MUCH_WATER_AMPHIRO: 
@@ -628,7 +628,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
 
     // Alert #17 - You are spending too much energy for showering {integer1} {currency}
-    public IMessageResolutionStatus<Alert.Parameters> alertTooMuchEnergyAmphiro(
+    public IMessageResolutionStatus<Alert.ParameterizedTemplate> alertTooMuchEnergyAmphiro(
         MessageCalculationConfiguration config, 
         ConsumptionStats stats, AccountEntity account, DateTime refDate) 
     {       
@@ -662,7 +662,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             double pricePerKwh = priceData.getPricePerKwh(locale);
             Double annualSavings = 
                 energyCalculator.computeEnergyToRiseTemperature(2, 12 * monthlyConsumption) * pricePerKwh;
-            Alert.Parameters parameters = new Alert.CommonParameters(
+            Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
                     refDate, EnumDeviceType.AMPHIRO, EnumAlertType.TOO_MUCH_ENERGY
                 )
                 .setCurrency1(annualSavings);
@@ -673,7 +673,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
     
     // Alert #18, #19 - You have greatly reduced your water use {integer1} percent
-    public IMessageResolutionStatus<Alert.Parameters> alertReducedWaterUse(
+    public IMessageResolutionStatus<Alert.ParameterizedTemplate> alertReducedWaterUse(
         MessageCalculationConfiguration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {
@@ -708,7 +708,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         Double percentDiff = 100 * ((c0 - c1) / c0);
         if (percentDiff > 10 && percentDiff < 60) {
-            Alert.Parameters parameters = new Alert.CommonParameters(
+            Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
                 refDate, deviceType, 
                 (deviceType == EnumDeviceType.AMPHIRO)?
                     EnumAlertType.REDUCED_WATER_USE_IN_SHOWER:
@@ -721,7 +721,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
     
     // Alert #20 - Congratulations! You are a water efficiency leader {integer1} litres
-    public IMessageResolutionStatus<Alert.Parameters> alertWaterEfficiencyLeaderSWM(
+    public IMessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterEfficiencyLeaderSWM(
         MessageCalculationConfiguration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate) 
     {
@@ -749,7 +749,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         if (consumed < Math.min(monthlyThreshold.getValue(), monthlyAverage.getValue())) {
             int annualSavings = (int) (monthlyAverage.getValue() - consumed) * 12;
-            Alert.Parameters parameters = new Alert.CommonParameters(
+            Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
                     refDate, EnumDeviceType.METER, EnumAlertType.WATER_EFFICIENCY_LEADER
                 )
                 .setInteger1(annualSavings);
@@ -762,7 +762,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     // Alert #21 - noop
     
     // Alert #22 - You are doing a great job!
-    public IMessageResolutionStatus<Alert.Parameters> alertPromptGoodJobMonthlySWM(
+    public IMessageResolutionStatus<Alert.ParameterizedTemplate> alertPromptGoodJobMonthlySWM(
         MessageCalculationConfiguration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate) 
     {
@@ -800,7 +800,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         
         Double percentDiff = 100 * ((c1 - c0) / c1);
         if (percentDiff > 25 || (percentDiff > 6 && c0 < monthlyAverage.getValue())) {
-            Alert.Parameters parameters = new Alert.CommonParameters(
+            Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
                     refDate, EnumDeviceType.METER, EnumAlertType.GOOD_JOB_MONTHLY)
                 .setInteger1(percentDiff.intValue());
             return new MessageResolutionStatus<>(true, parameters);
@@ -809,7 +809,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
     
     // Alert #23 - You have already saved {integer1} litres of water!
-    public IMessageResolutionStatus<Alert.Parameters> alertLitresSavedSWM(
+    public IMessageResolutionStatus<Alert.ParameterizedTemplate> alertLitresSavedSWM(
         MessageCalculationConfiguration config, AccountEntity account, DateTime refDate) 
     {
         final double VOLUME_WEEKLY_DIFF_THRESHOLD = 100; 
@@ -844,7 +844,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
         Double diff = c1 - c0;
         if (diff > VOLUME_WEEKLY_DIFF_THRESHOLD) {
-            Alert.Parameters parameters = new Alert.CommonParameters(
+            Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
                 refDate, EnumDeviceType.METER, EnumAlertType.LITERS_ALREADY_SAVED)
             .setInteger1(diff.intValue());
             return new MessageResolutionStatus<>(true, parameters);
@@ -854,7 +854,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
     
     // Alert #24 - Congratulations! You are one of the top 25% savers in your region.
-    public IMessageResolutionStatus<Alert.Parameters> alertTop25SaverWeeklySWM(
+    public IMessageResolutionStatus<Alert.ParameterizedTemplate> alertTop25SaverWeeklySWM(
         MessageCalculationConfiguration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate) 
     {
@@ -877,7 +877,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             return null;
         
         if (c0 < weeklyThreshold.getValue()) {
-            Alert.Parameters parameters = new Alert.CommonParameters(
+            Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
                 refDate, EnumDeviceType.METER, EnumAlertType.TOP_25_PERCENT_OF_SAVERS
             );
             return new MessageResolutionStatus<>(true, parameters);
@@ -886,7 +886,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
 
     // Alert #25 - Congratulations! You are among the top 10% group of savers in your region.
-    public IMessageResolutionStatus<Alert.Parameters> alertTop10SaverWeeklySWM(
+    public IMessageResolutionStatus<Alert.ParameterizedTemplate> alertTop10SaverWeeklySWM(
         MessageCalculationConfiguration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate) 
     {
@@ -909,7 +909,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             return null;
         
         if (c0 < weeklyThreshold.getValue()) {
-            Alert.Parameters parameters = new Alert.CommonParameters(
+            Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
                 refDate, EnumDeviceType.METER, EnumAlertType.TOP_10_PERCENT_OF_SAVERS
             );
             return new MessageResolutionStatus<>(true, parameters);
@@ -919,7 +919,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
  
     // Recommendation #1 - Spend 1 less minute in the shower and save {integer1} {integer2}
-    public IMessageResolutionStatus<Recommendation.Parameters> recommendLessShowerTimeAmphiro(
+    public IMessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendLessShowerTimeAmphiro(
         MessageCalculationConfiguration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate) 
     {
@@ -964,7 +964,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         if (fire) {
             Double annualSavings = 
                 (monthlyUserAverageConsumption - monthlyAverageConsumption.getValue()) * 12;
-            Recommendation.Parameters parameters = new Recommendation.CommonParameters(
+            Recommendation.ParameterizedTemplate parameters = new Recommendation.SimpleParameterizedTemplate(
                     refDate, EnumDeviceType.AMPHIRO, 
                     EnumRecommendationTemplate.LESS_SHOWER_TIME
                 )
@@ -977,7 +977,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
     
     // Recommendation #2 - You could save {currency1} euros if you used a bit less hot water in the shower. {currency2}
-    public IMessageResolutionStatus<Recommendation.Parameters> recommendLowerTemperatureAmphiro(
+    public IMessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendLowerTemperatureAmphiro(
         MessageCalculationConfiguration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate) 
     {
@@ -1017,7 +1017,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             double pricePerKwh = priceData.getPricePerKwh(locale);
             Double annualSavings = 
                 energyCalculator.computeEnergyToRiseTemperature(2, annualUserAverageConsumption) * pricePerKwh;
-            Recommendation.Parameters parameters = new Recommendation.CommonParameters(
+            Recommendation.ParameterizedTemplate parameters = new Recommendation.SimpleParameterizedTemplate(
                     refDate, EnumDeviceType.AMPHIRO, 
                     EnumRecommendationTemplate.LOWER_TEMPERATURE
                 )
@@ -1030,7 +1030,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
 
     // Recommendation #3 - Reduce the water flow in the shower and gain {integer1} {integer2}
-    public IMessageResolutionStatus<Recommendation.Parameters> recommendLowerFlowAmphiro(
+    public IMessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendLowerFlowAmphiro(
         MessageCalculationConfiguration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate)
     {
@@ -1073,7 +1073,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         Double annualAverageConsumption = monthlyAverageConsumption.getValue() * 12;
         if (annualUserConsumption > annualAverageConsumption) {
             Double annualSavings = annualUserConsumption - annualAverageConsumption;
-            Recommendation.Parameters parameters = new Recommendation.CommonParameters(
+            Recommendation.ParameterizedTemplate parameters = new Recommendation.SimpleParameterizedTemplate(
                     refDate, EnumDeviceType.AMPHIRO, EnumRecommendationTemplate.LOWER_FLOW
                 )
                 .setInteger1(annualSavings.intValue())
@@ -1086,7 +1086,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     // Recommendation #4 - Change your shower head and save {integer1} {integer2}
     // Todo: This computation is identical to Recommendation #3, maybe discard #4
-    public IMessageResolutionStatus<Recommendation.Parameters> recommendShowerHeadChangeAmphiro(
+    public IMessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendShowerHeadChangeAmphiro(
         MessageCalculationConfiguration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate) 
     {
@@ -1127,7 +1127,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         Double annualAverageConsumption = monthlyAverageConsumption.getValue() * 12;
         if (annualUserConsumption > annualAverageConsumption) {
             Double annualSavings = annualUserConsumption - annualAverageConsumption;
-            Recommendation.Parameters parameters = new Recommendation.CommonParameters(
+            Recommendation.ParameterizedTemplate parameters = new Recommendation.SimpleParameterizedTemplate(
                     refDate, EnumDeviceType.AMPHIRO, EnumRecommendationTemplate.CHANGE_SHOWERHEAD
                 )
                 .setInteger1(annualSavings.intValue())
@@ -1138,7 +1138,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
 
     // Recommendation #5 - Have you considered changing your shampoo? {integer1} percent
-    public IMessageResolutionStatus<Recommendation.Parameters> recommendShampooChangeAmphiro(
+    public IMessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendShampooChangeAmphiro(
         MessageCalculationConfiguration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate) 
     {
@@ -1171,7 +1171,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             // Compute percent of usage above others
             Double percentDiff = 100.0 * 
                 ((monthlyUserAverageConsumption / monthlyAverageConsumption.getValue()) - 1.0);
-            Recommendation.Parameters parameters = new Recommendation.CommonParameters(
+            Recommendation.ParameterizedTemplate parameters = new Recommendation.SimpleParameterizedTemplate(
                     refDate, EnumDeviceType.AMPHIRO, EnumRecommendationTemplate.CHANGE_SHAMPOO
                 )
                 .setInteger1(percentDiff.intValue());
@@ -1181,7 +1181,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
 
     // Recommendation #6 - When showering, reduce the water flow when you do not need it {integer1} {integer2}
-    public IMessageResolutionStatus<Recommendation.Parameters> recommendReduceFlowWhenNotNeededAmphiro(
+    public IMessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendReduceFlowWhenNotNeededAmphiro(
         MessageCalculationConfiguration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate) 
     {
@@ -1215,7 +1215,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             // Compute liters more than average
             Double moreLitersThanOthersInYear = 
                 (monthlyUserAveragePerSession - monthlyAveragePerSession.getValue()) * numberOfSessionsPerYear;
-            Recommendation.Parameters parameters = new Recommendation.CommonParameters(
+            Recommendation.ParameterizedTemplate parameters = new Recommendation.SimpleParameterizedTemplate(
                     refDate, EnumDeviceType.AMPHIRO, EnumRecommendationTemplate.REDUCE_FLOW_WHEN_NOT_NEEDED
                 )
                 .setInteger1(moreLitersThanOthersInYear.intValue())
@@ -1238,7 +1238,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         return !deviceRepository.getUserDevices(account.getKey(), query).isEmpty(); 
     }        
                      
-    private MessageResolutionStatus<Insight.Parameters> computeInsightA1(
+    private MessageResolutionStatus<Insight.ParameterizedTemplate> computeInsightA1(
         MessageCalculationConfiguration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {
@@ -1300,7 +1300,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
              account.getKey(), deviceType, N, refDate.toString("EEE dd/MM/YYYY"), 
              refValue, avgValue, sd, normValue, score));
         
-        return new MessageResolutionStatus<Insight.Parameters>(
+        return new MessageResolutionStatus<Insight.ParameterizedTemplate>(
             score, 
             new Insight.A1Parameters(refDate, deviceType, refValue, avgValue)
         );
@@ -1309,7 +1309,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     /**
      * Note: The logic for insight A.2 is same with B.1 (merge?) 
      */
-    private MessageResolutionStatus<Insight.Parameters> computeInsightA2(
+    private MessageResolutionStatus<Insight.ParameterizedTemplate> computeInsightA2(
         MessageCalculationConfiguration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {
@@ -1371,13 +1371,13 @@ public class DefaultMessageResolverService implements IMessageResolverService
              account.getKey(), deviceType, N, refDate.toString("dd/MM/YYYY"), 
              refValue, avgValue, sd, normValue, score));
         
-        return new MessageResolutionStatus<Insight.Parameters>(
+        return new MessageResolutionStatus<Insight.ParameterizedTemplate>(
             score,
             new Insight.A2Parameters(refDate, deviceType, refValue, avgValue)
         );
     }
     
-    private MessageResolutionStatus<Insight.Parameters> computeInsightA3(
+    private MessageResolutionStatus<Insight.ParameterizedTemplate> computeInsightA3(
         MessageCalculationConfiguration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType, EnumPartOfDay partOfDay)
     {
@@ -1443,13 +1443,13 @@ public class DefaultMessageResolverService implements IMessageResolverService
              account.getKey(), deviceType, partOfDay, N, refDate.toString("dd/MM/YYYY"),
              refValue, avgValue, score));
         
-        return new MessageResolutionStatus<Insight.Parameters>(
+        return new MessageResolutionStatus<Insight.ParameterizedTemplate>(
             score,
             new Insight.A3Parameters(refDate, partOfDay, deviceType, refValue, avgValue)
         );
     }
     
-    private MessageResolutionStatus<Insight.Parameters> computeInsightA4(
+    private MessageResolutionStatus<Insight.ParameterizedTemplate> computeInsightA4(
         MessageCalculationConfiguration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {    
@@ -1500,12 +1500,12 @@ public class DefaultMessageResolverService implements IMessageResolverService
              100 * parts.get(EnumPartOfDay.NIGHT) / sumOfParts
         ));
         
-        Insight.Parameters parameters = new Insight.A4Parameters(refDate, deviceType, sumOfParts)
+        Insight.ParameterizedTemplate parameters = new Insight.A4Parameters(refDate, deviceType, sumOfParts)
             .setParts(parts);
-        return new MessageResolutionStatus<Insight.Parameters>(true, parameters);
+        return new MessageResolutionStatus<Insight.ParameterizedTemplate>(true, parameters);
     }
     
-    private MessageResolutionStatus<Insight.Parameters> computeInsightB1(
+    private MessageResolutionStatus<Insight.ParameterizedTemplate> computeInsightB1(
         MessageCalculationConfiguration config, 
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType, EnumTimeUnit timeUnit)
     {        
@@ -1573,13 +1573,13 @@ public class DefaultMessageResolverService implements IMessageResolverService
              account.getKey(), deviceType, period.multipliedBy(N), targetDate.toString("dd/MM/YYYY"), 
              targetValue, avgValue, sd, normValue, score));
         
-        return new MessageResolutionStatus<Insight.Parameters>(
+        return new MessageResolutionStatus<Insight.ParameterizedTemplate>(
             score,
             new Insight.B1Parameters(refDate, timeUnit, deviceType, targetValue, avgValue)
         );
     }
 
-    private MessageResolutionStatus<Insight.Parameters> computeInsightB2(
+    private MessageResolutionStatus<Insight.ParameterizedTemplate> computeInsightB2(
         MessageCalculationConfiguration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType, EnumTimeUnit timeUnit)
     {
@@ -1635,13 +1635,13 @@ public class DefaultMessageResolverService implements IMessageResolverService
              account.getKey(), deviceType, period, targetDate.toString("dd/MM/YYYY"), 
              targetValue, previousValue, percentDiff, score));
         
-        return new MessageResolutionStatus<Insight.Parameters>(
+        return new MessageResolutionStatus<Insight.ParameterizedTemplate>(
             score,
             new Insight.B2Parameters(refDate, timeUnit, deviceType, targetValue, previousValue)
         );
     }
     
-    private List<MessageResolutionStatus<Insight.Parameters>> computeInsightB3(
+    private List<MessageResolutionStatus<Insight.ParameterizedTemplate>> computeInsightB3(
         MessageCalculationConfiguration config, 
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {   
@@ -1744,18 +1744,18 @@ public class DefaultMessageResolverService implements IMessageResolverService
              minPerDay, dayMin, maxPerDay, dayMax, avg));
         
         return Arrays.asList(
-            new MessageResolutionStatus<Insight.Parameters>(
+            new MessageResolutionStatus<Insight.ParameterizedTemplate>(
                 true, 
                 new Insight.B3Parameters(refDate, deviceType, minPerDay, avg, dayMin)
             ),
-            new MessageResolutionStatus<Insight.Parameters>(
+            new MessageResolutionStatus<Insight.ParameterizedTemplate>(
                 true, 
                 new Insight.B3Parameters(refDate, deviceType, maxPerDay, avg, dayMax)
             )
         );
     }
     
-    private MessageResolutionStatus<Insight.Parameters> computeInsightB4(
+    private MessageResolutionStatus<Insight.ParameterizedTemplate> computeInsightB4(
         MessageCalculationConfiguration config, 
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {  
@@ -1828,13 +1828,13 @@ public class DefaultMessageResolverService implements IMessageResolverService
              account.getKey(), deviceType, N, targetDate.plusWeeks(1).toString("dd/MM/YYYY"), 
              weekdayAverage, weekendAverage));
         
-        return new MessageResolutionStatus<Insight.Parameters>(
+        return new MessageResolutionStatus<Insight.ParameterizedTemplate>(
             true,
             new Insight.B4Parameters(refDate, deviceType, weekdayAverage, weekendAverage)
         );
     }
     
-    private MessageResolutionStatus<Insight.Parameters> computeInsightB5(
+    private MessageResolutionStatus<Insight.ParameterizedTemplate> computeInsightB5(
         MessageCalculationConfiguration config, 
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {  
@@ -1884,7 +1884,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
              targetDate.toString("MM/YYYY"), targetDate.minusYears(1).toString("MM/YYYY"), 
              targetValue, previousValue));
         
-        return new MessageResolutionStatus<Insight.Parameters>(
+        return new MessageResolutionStatus<Insight.ParameterizedTemplate>(
             true,
             new Insight.B5Parameters(refDate, deviceType, targetValue, previousValue)
         );

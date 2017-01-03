@@ -20,11 +20,11 @@ public class Insight extends Recommendation {
     // ~ Classes for parameters
     //
 
-    public interface Parameters extends Recommendation.Parameters 
+    public interface ParameterizedTemplate extends Recommendation.ParameterizedTemplate 
     {};
     
-    protected abstract static class BasicParameters extends Recommendation.AbstractParameters
-        implements Parameters
+    protected abstract static class BasicParameters extends Recommendation.AbstractParameterizedTemplate
+        implements ParameterizedTemplate
     {
         // The reference value. Note that precise semantics 
         // are insight-specific (e.g. for A.1 is value on the reference date)
@@ -59,9 +59,9 @@ public class Insight extends Recommendation {
         }
 
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
-            Map<String, Object> parameters = super.getPairs();
+            Map<String, Object> parameters = super.getParameters();
             
             if (currentValue != null) {
                 parameters.put("value", currentValue);
@@ -96,7 +96,7 @@ public class Insight extends Recommendation {
         }
 
         @Override
-        public EnumRecommendationTemplate getType()
+        public EnumRecommendationTemplate getTemplate()
         {
             if (avgValue <= currentValue)
                 return EnumRecommendationTemplate.INSIGHT_A1_DAYOFWEEK_CONSUMPTION_INCR;
@@ -105,9 +105,9 @@ public class Insight extends Recommendation {
         }
         
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
-            Map<String, Object> parameters = super.getPairs();
+            Map<String, Object> parameters = super.getParameters();
             parameters.put("day_of_week", refDate.getDayOfWeek());
             return parameters;
         }
@@ -122,7 +122,7 @@ public class Insight extends Recommendation {
         }
 
         @Override
-        public EnumRecommendationTemplate getType()
+        public EnumRecommendationTemplate getTemplate()
         {
             if (avgValue <= currentValue)
                 return EnumRecommendationTemplate.INSIGHT_A2_DAILY_CONSUMPTION_INCR;
@@ -149,7 +149,7 @@ public class Insight extends Recommendation {
         }
 
         @Override
-        public EnumRecommendationTemplate getType()
+        public EnumRecommendationTemplate getTemplate()
         {
             EnumRecommendationTemplate t = null;
             switch (partOfDay) {
@@ -173,9 +173,9 @@ public class Insight extends Recommendation {
         }
         
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
-            Map<String, Object> parameters = super.getPairs();  
+            Map<String, Object> parameters = super.getParameters();  
             parameters.put("part_of_day", partOfDay);
             return parameters;
         }
@@ -221,7 +221,7 @@ public class Insight extends Recommendation {
         }
         
         @Override
-        public EnumRecommendationTemplate getType()
+        public EnumRecommendationTemplate getTemplate()
         {
             EnumRecommendationTemplate t = null;
             
@@ -247,9 +247,9 @@ public class Insight extends Recommendation {
         }
         
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
-            Map<String, Object> parameters = super.getPairs();
+            Map<String, Object> parameters = super.getParameters();
             
             Double p1 = getPartAsPercentage(EnumPartOfDay.MORNING); 
             Double p2 = getPartAsPercentage(EnumPartOfDay.AFTERNOON);
@@ -289,7 +289,7 @@ public class Insight extends Recommendation {
         }
         
         @Override
-        public EnumRecommendationTemplate getType()
+        public EnumRecommendationTemplate getTemplate()
         {
             EnumRecommendationTemplate t = null;            
             boolean increase = (avgValue < currentValue);
@@ -312,9 +312,9 @@ public class Insight extends Recommendation {
         }
         
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
-            Map<String, Object> parameters = super.getPairs();
+            Map<String, Object> parameters = super.getParameters();
             parameters.put("time_unit", timeUnit.name());
             return parameters;
         }
@@ -346,7 +346,7 @@ public class Insight extends Recommendation {
         }
         
         @Override
-        public EnumRecommendationTemplate getType()
+        public EnumRecommendationTemplate getTemplate()
         {
             EnumRecommendationTemplate t = null;
             boolean increase = (previousValue < currentValue);
@@ -369,9 +369,9 @@ public class Insight extends Recommendation {
         }
         
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
-            Map<String, Object> parameters = super.getPairs();
+            Map<String, Object> parameters = super.getParameters();
             
             parameters.put("previous_value", Double.valueOf(previousValue));
             parameters.put("previous_consumption", new NumberFormatter(previousValue, ".#"));
@@ -407,7 +407,7 @@ public class Insight extends Recommendation {
         }
         
         @Override
-        public EnumRecommendationTemplate getType()
+        public EnumRecommendationTemplate getTemplate()
         {
             return (currentValue < avgValue)?
                 EnumRecommendationTemplate.INSIGHT_B3_DAYOFWEEK_CONSUMPTION_LOW:
@@ -415,9 +415,9 @@ public class Insight extends Recommendation {
         }
         
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
-            Map<String, Object> parameters = super.getPairs();
+            Map<String, Object> parameters = super.getParameters();
             parameters.put("day_of_week", dayOfWeek.toInteger());
             return parameters;
         }
@@ -442,7 +442,7 @@ public class Insight extends Recommendation {
         }
         
         @Override
-        public EnumRecommendationTemplate getType()
+        public EnumRecommendationTemplate getTemplate()
         {
             return (weekdayValue < weekendValue)?
                 EnumRecommendationTemplate.INSIGHT_B4_MORE_ON_WEEKEND:
@@ -450,9 +450,9 @@ public class Insight extends Recommendation {
         }
         
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
-            Map<String, Object> parameters = super.getPairs();
+            Map<String, Object> parameters = super.getParameters();
             
             parameters.put("weekday_value", Double.valueOf(weekdayValue));
             parameters.put("weekday_consumption", new NumberFormatter(weekdayValue, ".#"));
@@ -481,7 +481,7 @@ public class Insight extends Recommendation {
         }
         
         @Override
-        public EnumRecommendationTemplate getType()
+        public EnumRecommendationTemplate getTemplate()
         {
             return (previousValue < currentValue)?
                 EnumRecommendationTemplate.INSIGHT_B5_MONTHLY_CONSUMPTION_INCR:
@@ -489,9 +489,9 @@ public class Insight extends Recommendation {
         }
         
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
-            Map<String, Object> parameters = super.getPairs();
+            Map<String, Object> parameters = super.getParameters();
             
             parameters.put("previous_value", Double.valueOf(previousValue));
             parameters.put("previous_consumption", new NumberFormatter(previousValue, ".#"));

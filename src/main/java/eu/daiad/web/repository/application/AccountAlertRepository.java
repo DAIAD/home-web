@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import eu.daiad.web.domain.application.AccountAlertEntity;
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AlertEntity;
-import eu.daiad.web.model.message.Alert.Parameters;
+import eu.daiad.web.model.message.Alert.ParameterizedTemplate;
 import eu.daiad.web.model.message.EnumAlertType;
 import eu.daiad.web.repository.BaseRepository;
 
@@ -214,13 +214,13 @@ public class AccountAlertRepository extends BaseRepository
     }
 
     @Override
-    public AccountAlertEntity createWith(AccountEntity account, Parameters parameters)
+    public AccountAlertEntity createWith(AccountEntity account, ParameterizedTemplate parameters)
     {
-        return createWith(account, parameters.getType(), parameters.getPairs());
+        return createWith(account, parameters.getType(), parameters.getParameters());
     }
     
     @Override
-    public AccountAlertEntity createWith(UUID accountKey, Parameters parameters)
+    public AccountAlertEntity createWith(UUID accountKey, ParameterizedTemplate parameters)
     {
         TypedQuery<AccountEntity> query = entityManager.createQuery(
             "SELECT a FROM account a WHERE a.key = :accountKey", AccountEntity.class);

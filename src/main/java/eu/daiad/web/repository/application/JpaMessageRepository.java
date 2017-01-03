@@ -925,10 +925,8 @@ public class JpaMessageRepository extends BaseRepository
         }
     }    
     
-    
-    // TODO : When sending an acknowledgement for an alert of a specific type,
-    // an older (not acknowledged) alert of the same type may appear in the next
-    // get messages call
+    // TODO : When sending an acknowledgement for an alert of a specific type, an older (not acknowledged)
+    // alert of the same type may appear in the next get messages call
 
     private void persistAlertAcknowledgement(int id, DateTime acknowledgedOn) {
         AuthenticatedUser user = this.getCurrentAuthenticatedUser();
