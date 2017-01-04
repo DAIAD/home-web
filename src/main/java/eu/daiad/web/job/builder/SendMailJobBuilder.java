@@ -15,6 +15,11 @@ import eu.daiad.web.job.task.SendMailTask;
 public class SendMailJobBuilder extends BaseJobBuilder implements IJobBuilder {
 
     /**
+     * Send mail task name.
+     */
+    private final String TASK_SEND_MAIL = "send-mail";
+
+    /**
      * Task for sending mails.
      */
     @Autowired
@@ -26,7 +31,7 @@ public class SendMailJobBuilder extends BaseJobBuilder implements IJobBuilder {
      * @return the new step.
      */
     private Step createClusterSegments() {
-        return stepBuilderFactory.get(sendMailTask.getName()).tasklet(sendMailTask).build();
+        return stepBuilderFactory.get(TASK_SEND_MAIL).tasklet(sendMailTask).build();
     }
 
     /**
@@ -40,6 +45,8 @@ public class SendMailJobBuilder extends BaseJobBuilder implements IJobBuilder {
      */
     @Override
     public Job build(String name, JobParametersIncrementer incrementer) throws Exception {
-        return jobBuilderFactory.get(name).incrementer(incrementer).start(createClusterSegments()).build();
+        return jobBuilderFactory.get(name)
+                                .incrementer(incrementer)
+                                .start(createClusterSegments()).build();
     }
 }

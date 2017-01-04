@@ -56,7 +56,7 @@ import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 
 @Service
-public class FileDataLoaderService extends BaseService implements IFileDataLoaderService {
+public class FileDataLoaderService extends BaseService implements IDataImportService {
 
     private static final Log logger = LogFactory.getLog(FileDataLoaderService.class);
 
@@ -80,11 +80,11 @@ public class FileDataLoaderService extends BaseService implements IFileDataLoade
 
     @Override
     public void importWaterMeter(ImportWaterMeterFileConfiguration configuration) throws ApplicationException {
-        File input = new File(configuration.getFilename());
+        File input = new File(configuration.getPath());
 
         if (!input.exists()) {
             throw createApplicationException(SharedErrorCode.RESOURCE_DOES_NOT_EXIST).set("resource",
-                            configuration.getFilename());
+                            configuration.getPath());
         }
 
         XSSFWorkbook book = null;
@@ -95,7 +95,7 @@ public class FileDataLoaderService extends BaseService implements IFileDataLoade
         GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), configuration
                         .getSourceReferenceSystem().getSrid());
 
-        if (allowedFilenames.matcher(input.getName()).matches()) {
+        if (allowedFilenames.matcher(configuration.getInitialFilename()).matches()) {
             try {
                 fis = new FileInputStream(input);
                 book = new XSSFWorkbook(fis);
@@ -137,7 +137,7 @@ public class FileDataLoaderService extends BaseService implements IFileDataLoade
                             }
                         }
 
-                        this.registerMeter(input.getName(), username, serial, location);
+                        registerMeter(input.getName(), username, serial, location);
                     }
                 }
             } catch (ApplicationException ex) {
@@ -164,16 +164,16 @@ public class FileDataLoaderService extends BaseService implements IFileDataLoade
     private void registerMeter(String filename, String username, String serial, Geometry location) {
         try {
             // Check if meter is already associated with the user
-            Device device = this.deviceRepository.getWaterMeterDeviceBySerial(serial);
+            Device device = deviceRepository.getWaterMeterDeviceBySerial(serial);
             if (device == null) {
                 ArrayList<KeyValuePair> properties = new ArrayList<KeyValuePair>();
                 properties.add(new KeyValuePair("import.file", filename));
                 properties.add(new KeyValuePair("import.date", (new DateTime(DateTimeZone.UTC).toString())));
 
-                this.deviceRepository.createMeterDevice(username, serial, properties, location);
+                deviceRepository.createMeterDevice(username, serial, properties, location);
             } else if (location != null) {
                 // Update device location
-                this.deviceRepository.updateMeterLocation(username, serial, location);
+                deviceRepository.updateMeterLocation(username, serial, location);
             }
         } catch (ApplicationException ex) {
             throw ex;
@@ -201,15 +201,12 @@ public class FileDataLoaderService extends BaseService implements IFileDataLoade
     }
 
     @Override
-    public void importRandomAmphiroSessions(int utilityId, String filename, String timezone)
-                    throws ApplicationException {
-
+    public void importRandomAmphiroSessions(int utilityId, String filename, String timezone) throws ApplicationException {
         this.importRandomAmphiroSessions(utilityId, filename, DateTimeZone.forID(timezone));
     }
 
     @Override
-    public void importRandomAmphiroSessions(int utilityId, String filename, DateTimeZone timezone)
-                    throws ApplicationException {
+    public void importRandomAmphiroSessions(int utilityId, String filename, DateTimeZone timezone) throws ApplicationException {
         if (!ArrayUtils.contains(environment.getActiveProfiles(), "development")) {
             return;
         }
@@ -251,9 +248,9 @@ public class FileDataLoaderService extends BaseService implements IFileDataLoade
                 return;
             }
 
-            this.generateTimeOrderedSessions(utilityId, samples, timezone);
+            generateTimeOrderedSessions(utilityId, samples, timezone);
 
-            this.generateIndexOrderedSessions(utilityId, samples, timezone);
+            generateIndexOrderedSessions(utilityId, samples, timezone);
         } catch (ApplicationException ex) {
             // Ignore
         } catch (Exception ex) {
@@ -344,7 +341,7 @@ public class FileDataLoaderService extends BaseService implements IFileDataLoade
 
         for (UUID userKey : groupRepository.getUtilityByIdMemberKeys(utilityId)) {
             AuthenticatedUser user = userRepository.getUserByKey(userKey);
-            
+
             sessionQuery.setUserKey(userKey);
 
             for (Device device : deviceRepository.getUserDevices(userKey, deviceQuery)) {

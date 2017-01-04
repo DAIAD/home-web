@@ -24,6 +24,7 @@ import org.thymeleaf.util.StringUtils;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.ErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.service.scheduling.Constants;
 
 /**
  * Task for executing SQL scripts/
@@ -98,7 +99,7 @@ public class SqlScriptExecutionTasklet implements StoppableTasklet {
     }
 
 	private void setLocations(StepContext stepContext) {
-		String locationParameterValue = (String) stepContext.getJobParameters().get(locationParameter);
+		String locationParameterValue = (String) stepContext.getJobParameters().get(stepContext.getStepName() + Constants.PARAMETER_NAME_DELIMITER + locationParameter);
 
 		String[] locations = StringUtils.split(locationParameterValue, ";");
 

@@ -140,6 +140,9 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             profile.setUnit(account.getProfile().getUnit());
             profile.setGarden(account.getProfile().getGarden());
 
+            profile.setSendMailEnabled(account.getProfile().isSendMailEnabled());
+            profile.setSendMessageEnabled(account.getProfile().isSendMessageEnabled());
+
             profile.setUtility(new UtilityInfo(account.getUtility()));
 
             // Initialize devices

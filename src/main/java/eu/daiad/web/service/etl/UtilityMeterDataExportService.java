@@ -45,6 +45,7 @@ import eu.daiad.web.model.meter.WaterMeterMeasurementQuery;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQueryResult;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
+import eu.daiad.web.service.etl.UtilityDataExportQuery.EnumExportMode;
 
 /**
  * Service that provides methods for exporting smart water meter data for a
@@ -116,88 +117,98 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
 
             // Create new file names
             String dataFilename = createTemporaryFilename(query.getWorkingDirectory());
-            String userFilename = createTemporaryFilename(query.getWorkingDirectory());
 
-            if (query.isExportUserDataOnly()) {
-                // Prepare user printer
-                CSVFormat format = CSVFormat.RFC4180.withDelimiter(DELIMITER);
+            switch (query.getMode()) {
+                case METER_UTILITY:
+                    totalRows = exportAllMeterData(dataFilename,
+                                                   query.getTimezone(),
+                                                   query.getStartTimstamp(),
+                                                   query.getEndTimestamp(),
+                                                   query.getDateFormat());
+                    break;
+                default:
+                    // User rows
+                    List<List<String>> userRows = new ArrayList<List<String>>();
 
-                CSVPrinter userPrinter = new CSVPrinter(
-                                            new BufferedWriter(
-                                                new OutputStreamWriter(
-                                                    new FileOutputStream(userFilename, true),
-                                                    Charset.forName("UTF-8").newEncoder())), format);
+                    // Export data for every trial user
+                    List<UUID> userKeys = userRepository.getUserKeysForUtility(query.getUtility().getKey());
 
-                ArrayList<String> row = new ArrayList<String>();
+                    for (UUID userKey : userKeys) {
+                        long totalUserRows = 0;
 
-                row.add("user key");
-                row.add("user name");
-                row.add("meter id");
+                        // Get user
+                        AuthenticatedUser user = userRepository.getUserByKey(userKey);
 
-                userPrinter.printRecord(row);
+                        // Get meter
+                        DeviceRegistrationQuery deviceQuery = new DeviceRegistrationQuery(EnumDeviceType.METER);
 
-                // Export data for every trial user
-                List<UUID> userKeys = userRepository.getUserKeysForUtility(query.getUtility().getKey());
+                        for (Device device : deviceRepository.getUserDevices(userKey, deviceQuery)) {
+                            // Get data
+                            WaterMeterDevice meterDevice = (WaterMeterDevice) device;
 
-                for (UUID userKey : userKeys) {
-                    long totalUserRows = 0;
+                            WaterMeterMeasurementQuery meterQuery = new WaterMeterMeasurementQuery();
+                            meterQuery.setDeviceKey(new UUID[] { meterDevice.getKey() });
+                            meterQuery.setUserKey(userKey);
+                            meterQuery.setGranularity(TemporalConstants.NONE);
 
-                    // Get user
-                    AuthenticatedUser user = userRepository.getUserByKey(userKey);
+                            WaterMeterMeasurementQueryResult result = waterMeterMeasurementRepository.searchMeasurements(
+                                new String[] { meterDevice.getSerial() },
+                                DateTimeZone.forID(query.getTimezone()),
+                                meterQuery);
 
-                    // Get meter
-                    DeviceRegistrationQuery deviceQuery = new DeviceRegistrationQuery(EnumDeviceType.METER);
+                            // Export data
+                            for (WaterMeterDataSeries series : result.getSeries()) {
+                                totalUserRows = exportUtilityUserMeterData(dataFilename, query.getTimezone(), series);
+                            }
 
-                    for (Device device : deviceRepository.getUserDevices(userKey, deviceQuery)) {
-                        // Get data
-                        WaterMeterDevice meterDevice = (WaterMeterDevice) device;
+                            // Export user only if at least one measurement is found
+                            if (totalUserRows > 0) {
+                                List<String> row = new ArrayList<String>();
 
-                        WaterMeterMeasurementQuery meterQuery = new WaterMeterMeasurementQuery();
-                        meterQuery.setDeviceKey(new UUID[] { meterDevice.getKey() });
-                        meterQuery.setUserKey(userKey);
-                        meterQuery.setGranularity(TemporalConstants.NONE);
+                                row.add(user.getKey().toString());
+                                row.add(user.getUsername());
+                                row.add(meterDevice.getSerial());
 
-                        WaterMeterMeasurementQueryResult result = this.waterMeterMeasurementRepository.searchMeasurements(
-                            new String[] { meterDevice.getSerial() },
-                            DateTimeZone.forID(query.getTimezone()),
-                            meterQuery);
+                                userRows.add(row);
 
-                        // Export data
-                        for (WaterMeterDataSeries series : result.getSeries()) {
-                            totalUserRows = exportUtilityUserMeterData(dataFilename, query.getTimezone(), series);
-                        }
-
-                        // Export user only if at least one measurement is found
-                        if (totalUserRows > 0) {
-                            row = new ArrayList<String>();
-
-                            row.add(user.getKey().toString());
-                            row.add(user.getUsername());
-                            row.add(meterDevice.getSerial());
-
-                            userPrinter.printRecord(row);
-
-                            totalUsers++;
-                            totalRows += totalUserRows;
+                                totalUsers++;
+                                totalRows += totalUserRows;
+                            }
                         }
                     }
-                }
 
-                userPrinter.flush();
-                userPrinter.close();
+                    // Export user and phases only if all trial users have been requested
+                    if ((query.getMode() == EnumExportMode.ALL_TRIAL) && (totalUsers > 0)) {
+                        String userFilename = createTemporaryFilename(query.getWorkingDirectory());
 
-                exportResult.getFiles().add(new FileLabelPair( new File(userFilename), "user.csv", totalUsers));
+                        CSVFormat format = CSVFormat.RFC4180.withDelimiter(DELIMITER);
 
-                // Export phases only if users with at least one measurement exist
-                if (totalUsers > 0) {
-                    exportPhaseTimestamps(query, exportResult);
-                }
-            } else {
-                totalRows = exportAllMeterData(dataFilename,
-                                               query.getTimezone(),
-                                               query.getStartTimstamp(),
-                                               query.getEndTimestamp(),
-                                               query.getDateFormat());
+                        CSVPrinter userPrinter = new CSVPrinter(
+                                        new BufferedWriter(
+                                            new OutputStreamWriter(
+                                                new FileOutputStream(userFilename, true),
+                                                Charset.forName("UTF-8").newEncoder())), format);
+
+                        List<String> row = new ArrayList<String>();
+
+                        row.add("user key");
+                        row.add("user name");
+                        row.add("meter id");
+
+                        userPrinter.printRecord(row);
+
+                        for (List<String> r : userRows) {
+                            userPrinter.printRecord(r);
+                        }
+
+                        userPrinter.flush();
+                        userPrinter.close();
+
+                        exportResult.getFiles().add(new FileLabelPair(new File(userFilename), "user.csv", totalUsers));
+
+                        exportPhaseTimestamps(query, exportResult);
+                    }
+                    break;
             }
 
             exportResult.getFiles().add(new FileLabelPair( new File(dataFilename), "data.csv", totalRows));
@@ -291,7 +302,7 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
         }
 
         try {
-            table = connection.getTable(this.meterTableMeasurementByMeter);
+            table = connection.getTable(meterTableMeasurementByMeter);
             byte[] columnFamily = Bytes.toBytes(columnFamilyName);
 
             Scan scan = new Scan();
@@ -339,6 +350,9 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
                         volume = null;
                         difference = null;
                         counter++;
+                        if(counter % 1000 == 0) {
+                            printer.flush();
+                        }
                     }
                 }
             }

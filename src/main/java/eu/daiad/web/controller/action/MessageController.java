@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.daiad.web.controller.BaseController;
+import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.message.AlertReceiversResponse;
 import eu.daiad.web.model.message.Announcement;
@@ -32,9 +33,11 @@ import eu.daiad.web.model.message.MultiTypeMessageResponse;
 import eu.daiad.web.model.message.RecommendationReceiversResponse;
 import eu.daiad.web.model.message.SingleTypeMessageResponse;
 import eu.daiad.web.model.message.StaticRecommendation;
+import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.repository.application.IMessageRepository;
+import eu.daiad.web.repository.application.IProfileRepository;
 
 /**
  * Provides actions for loading messages and saving acknowledgments.
@@ -54,6 +57,12 @@ public class MessageController extends BaseController {
     private static final String DEFAULT_CHANNEL = "web";
 
     /**
+     * Repository for accessing profile data.
+     */
+    @Autowired
+    private IProfileRepository profileRepository;
+
+    /**
      * Repository for accessing messages.
      */
     @Autowired
@@ -67,11 +76,16 @@ public class MessageController extends BaseController {
      */
     @RequestMapping(value = "/action/message", method = RequestMethod.POST, produces = "application/json")
     @Secured(RoleConstant.ROLE_USER)
-    public RestResponse getMessages(@RequestBody MessageRequest request) {
+    public RestResponse getMessages(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody MessageRequest request) {
         try {
             MultiTypeMessageResponse messageResponse = new MultiTypeMessageResponse();
 
-            MessageResult result = this.messageRepository.getMessages(request);
+            Profile profile = profileRepository.getProfileByUsername(EnumApplication.HOME);
+            if(!profile.isSendMessageEnabled()) {
+                return messageResponse;
+            }
+
+            MessageResult result = messageRepository.getMessages(request);
 
             messageResponse.setTotalAlerts(result.getTotalAlerts());
             messageResponse.setTotalAnnouncements(result.getTotalAnnouncements());
@@ -117,7 +131,7 @@ public class MessageController extends BaseController {
         RestResponse response = new RestResponse();
 
         try {
-            this.messageRepository.setMessageAcknowledgement(request.getMessages());
+            messageRepository.setMessageAcknowledgement(request.getMessages());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -140,7 +154,7 @@ public class MessageController extends BaseController {
             SingleTypeMessageResponse messages = new SingleTypeMessageResponse();
 
             messages.setType(EnumMessageType.RECOMMENDATION_STATIC);
-            messages.setMessages(this.messageRepository.getAdvisoryMessages(locale));
+            messages.setMessages(messageRepository.getAdvisoryMessages(locale));
 
             return messages;
         } catch (Exception ex) {
@@ -162,7 +176,7 @@ public class MessageController extends BaseController {
         RestResponse response = new RestResponse();
         try {
             for(StaticRecommendation st : request){
-                this.messageRepository.persistAdvisoryMessageActiveStatus(st.getId(), st.isActive());
+                messageRepository.persistAdvisoryMessageActiveStatus(st.getId(), st.isActive());
             }
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -185,10 +199,10 @@ public class MessageController extends BaseController {
 
         try {
             if(request.getId() == 0 || request.getIndex() == 0){
-                this.messageRepository.persistNewAdvisoryMessage(request);
+                messageRepository.persistNewAdvisoryMessage(request);
             }
             else{
-                this.messageRepository.updateAdvisoryMessage(request);
+                messageRepository.updateAdvisoryMessage(request);
             }
         } catch (Exception ex) {
                 logger.error(ex.getMessage(), ex);
@@ -210,7 +224,7 @@ public class MessageController extends BaseController {
         RestResponse response = new RestResponse();
 
         try {
-            this.messageRepository.deleteAdvisoryMessage(request);
+            messageRepository.deleteAdvisoryMessage(request);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -233,7 +247,7 @@ public class MessageController extends BaseController {
         RestResponse response = new RestResponse();
 
         try {
-            this.messageRepository.broadcastAnnouncement(request, user.getLocale(), DEFAULT_CHANNEL);
+            messageRepository.broadcastAnnouncement(request, user.getLocale(), DEFAULT_CHANNEL);
         } catch (Exception ex) {
                 logger.error(ex.getMessage(), ex);
 
@@ -255,7 +269,7 @@ public class MessageController extends BaseController {
             SingleTypeMessageResponse messages = new SingleTypeMessageResponse();
 
             messages.setType(EnumMessageType.ANNOUNCEMENT);
-            messages.setMessages(this.messageRepository.getAnnouncements(user.getLocale()));
+            messages.setMessages(messageRepository.getAnnouncements(user.getLocale()));
 
             return messages;
         } catch (Exception ex) {
@@ -278,7 +292,7 @@ public class MessageController extends BaseController {
         RestResponse response = new RestResponse();
 
         try {
-            this.messageRepository.deleteAnnouncement(request);
+            messageRepository.deleteAnnouncement(request);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -304,8 +318,8 @@ public class MessageController extends BaseController {
             int intId = Integer.parseInt(id);
             String locale = user.getLocale();
 
-            announcementDetailsResponse.setAnnouncement(this.messageRepository.getAnnouncement(intId, locale));
-            announcementDetailsResponse.setReceivers(this.messageRepository.getAnnouncementReceivers(intId));
+            announcementDetailsResponse.setAnnouncement(messageRepository.getAnnouncement(intId, locale));
+            announcementDetailsResponse.setReceivers(messageRepository.getAnnouncementReceivers(intId));
 
             return announcementDetailsResponse;
         } catch (Exception ex) {
@@ -345,7 +359,7 @@ public class MessageController extends BaseController {
                 messageRepository.getAlertStatistics(localeName, utilityId, query));
             response.setRecommendationStatistics(
                 messageRepository.getRecommendationStatistics(localeName, utilityId, query));
-            
+
             return response;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -380,8 +394,8 @@ public class MessageController extends BaseController {
             }
 
             AlertReceiversResponse alertReceiversResponse = new AlertReceiversResponse();
-            alertReceiversResponse.setAlert(this.messageRepository.getAlert(intId, user.getLocale()));
-            alertReceiversResponse.setReceivers(this.messageRepository
+            alertReceiversResponse.setAlert(messageRepository.getAlert(intId, user.getLocale()));
+            alertReceiversResponse.setReceivers(messageRepository
                     .getAlertReceivers(intId, user.getUtilityId(), query));
 
             return alertReceiversResponse;
@@ -420,9 +434,9 @@ public class MessageController extends BaseController {
             }
 
             RecommendationReceiversResponse recommendationReceiversResponse = new RecommendationReceiversResponse();
-            recommendationReceiversResponse.setRecommendation(this.messageRepository
+            recommendationReceiversResponse.setRecommendation(messageRepository
                     .getRecommendation(intId, user.getLocale()));
-            recommendationReceiversResponse.setReceivers(this.messageRepository
+            recommendationReceiversResponse.setReceivers(messageRepository
                     .getRecommendationReceivers(intId, user.getUtilityId(), query));
 
             return recommendationReceiversResponse;

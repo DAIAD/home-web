@@ -33,21 +33,21 @@ public class SchedulerConfig implements SchedulingConfigurer {
 
 	/**
 	 * Registers {@link Executor} bean.
-	 * 
+	 *
 	 * @return the bean.
 	 */
 	@Bean(destroyMethod = "shutdown")
 	public Executor executor() {
 		ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-		scheduler.setPoolSize(this.poolSize);
-		scheduler.setThreadNamePrefix(this.threadNamePrefix);
+		scheduler.setPoolSize(poolSize);
+		scheduler.setThreadNamePrefix(threadNamePrefix);
 		scheduler.setRemoveOnCancelPolicy(true);
 		return scheduler;
 	}
 
 	/**
 	 * Registers {@link TaskExecutor} bean.
-	 * 
+	 *
 	 * @return the bean.
 	 */
 	@Bean
@@ -57,7 +57,7 @@ public class SchedulerConfig implements SchedulingConfigurer {
 
 	/**
 	 * Registers {@link ThreadPoolTaskScheduler} bean.
-	 *  
+	 *
 	 * @return the bean.
 	 */
 	@Bean

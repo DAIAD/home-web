@@ -21,7 +21,8 @@ public enum SharedErrorCode implements ErrorCode {
 	TIMEZONE_NOT_FOUND,
 	LOCALE_NOT_SUPPORTED,
 	DIR_CREATION_FAILED,
-	INVALID_SRID;
+	INVALID_SRID,
+	FILESYSTEM_NOT_SUPPORTED;
 
 	@Override
 	public String getMessageKey() {

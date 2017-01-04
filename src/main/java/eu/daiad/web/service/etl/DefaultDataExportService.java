@@ -77,7 +77,7 @@ public class DefaultDataExportService extends BaseService implements IDataExport
             ExportResult result = userDataExportService.export(query);
 
             // Create archive
-            File zipFile = new File(FilenameUtils.concat(this.workingDirectory, token + ".zip"));
+            File zipFile = new File(FilenameUtils.concat(workingDirectory, token + ".zip"));
 
             compressFiles(result.getFiles(), zipFile);
 
@@ -104,20 +104,6 @@ public class DefaultDataExportService extends BaseService implements IDataExport
         ExportResult result = null;
 
         try {
-            String zipFilename = buildFilename(query.getTargetDirectory(), query.getFilename(), "zip");
-            File zipFile = new File(zipFilename);
-
-            // Create new export record
-            ExportFileEntity export = new ExportFileEntity();
-
-            export.setFilename(FilenameUtils.getName(zipFilename));
-            export.setPath(FilenameUtils.getFullPath(zipFilename));
-            export.setCreatedOn(new DateTime());
-            export.setStartedOn(export.getCreatedOn());
-            export.setUtilityId(query.getUtility().getId());
-            export.setUtilityName(query.getUtility().getName());
-            export.setDescription(query.getDescription());
-
             switch (query.getSource()) {
                 case AMPHIRO:
                     result = utilityAmphiroDataExportService.export(query);
@@ -132,25 +118,59 @@ public class DefaultDataExportService extends BaseService implements IDataExport
 
             // Compress files and update export record
             if (!result.isEmpty()) {
-                // Compress files
-                compressFiles(result.getFiles(), zipFile);
+                // Optionally rename or compress file(s)
+                if ((query.isComporessed()) || (result.getFiles().size() > 1)) {
+                    // Always compress files if output consists of more than one
+                    // files.
+                    String zipFilename = buildZipFilename(query.getTargetDirectory(), query.getFilename(), "zip");
+                    File zipFile = new File(zipFilename);
 
-                // Delete all unused files
-                for (FileLabelPair file : result.getFiles()) {
-                    if(file.getFile().exists()) {
-                        FileUtils.deleteQuietly(file.getFile());
+                    compressFiles(result.getFiles(), zipFile);
+
+                    // Delete all unused files
+                    for (FileLabelPair file : result.getFiles()) {
+                        if (file.getFile().exists()) {
+                            FileUtils.deleteQuietly(file.getFile());
+                        }
                     }
+
+                    // Log export
+                    saveExport(query, result, zipFile);
+                } else {
+                    // Rename/Move output
+                    FileUtils.moveFile(result.getFiles().get(0).getFile(),
+                                       new File(FilenameUtils.concat(query.getTargetDirectory(), query.getFilename())));
                 }
-
-                export.setSize(zipFile.length());
-                export.setCompletedOn(new DateTime());
-                export.setTotalRows(result.getTotalRows());
-
-                exportRepository.create(export);
             }
         } catch (Exception ex) {
             throw wrapApplicationException(ex);
         }
+    }
+
+    /**
+     * Log exported file to database.
+     *
+     * @param query data export query.
+     * @param result the export result.
+     * @param zipFile the new archive.
+     */
+    private void saveExport(UtilityDataExportQuery query, ExportResult result, File zipFile) {
+        // Create new export record
+        ExportFileEntity export = new ExportFileEntity();
+
+        export.setFilename(FilenameUtils.getName(zipFile.getPath()));
+        export.setPath(FilenameUtils.getFullPath(zipFile.getPath()));
+        export.setCreatedOn(new DateTime());
+        export.setStartedOn(export.getCreatedOn());
+        export.setUtilityId(query.getUtility().getId());
+        export.setUtilityName(query.getUtility().getName());
+        export.setDescription(query.getDescription());
+
+        export.setSize(zipFile.length());
+        export.setCompletedOn(new DateTime());
+        export.setTotalRows(result.getTotalRows());
+
+        exportRepository.create(export);
     }
 
     /**
@@ -161,7 +181,7 @@ public class DefaultDataExportService extends BaseService implements IDataExport
      * @param extension filename extension.
      * @return the filename.
      */
-    private String buildFilename(String targetDirectory, String filename, String extension) {
+    private String buildZipFilename(String targetDirectory, String filename, String extension) {
         if(StringUtils.isBlank(filename)) {
             filename = "export";
         } else {

@@ -31,6 +31,11 @@ public class DailyStatsCollectionJobBuilder extends BaseJobBuilder implements IJ
     private static final Log logger = LogFactory.getLog(DailyStatsCollectionJobBuilder.class);
 
     /**
+     * Name of the step that computes daily statistics.
+     */
+    private final String TASK_COMPUTE_STATISTICS = "compute-daily-statistics";
+
+    /**
      * User counter name.
      */
     private final String COUNTER_USER = "user";
@@ -58,7 +63,7 @@ public class DailyStatsCollectionJobBuilder extends BaseJobBuilder implements IJ
     private EntityManager adminEntityManager;
 
     private Step computeStats() {
-        return stepBuilderFactory.get("generateMessages").tasklet(new StoppableTasklet() {
+        return stepBuilderFactory.get(TASK_COMPUTE_STATISTICS).tasklet(new StoppableTasklet() {
             @Override
             public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
                 try {

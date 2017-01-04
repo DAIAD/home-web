@@ -55,7 +55,20 @@ import eu.daiad.web.repository.application.IUtilityRepository;
 @Component
 public class UpdateAmphiroDataSchemaJobBuilder extends BaseJobBuilder implements IJobBuilder {
 
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
     private static final Log logger = LogFactory.getLog(UpdateAmphiroDataSchemaJobBuilder.class);
+
+    /**
+     * Import data from schema v1 tables.
+     */
+    private static final String STEP_IMPORT_DATA_V1 = "update-schema-v1";
+
+    /**
+     * Import data from schema v2 tables.
+     */
+    private static final String STEP_IMPORT_DATA_V2 = "update-schema-v2";
 
     /**
      * Repository for accessing utility data.
@@ -214,7 +227,7 @@ public class UpdateAmphiroDataSchemaJobBuilder extends BaseJobBuilder implements
      * @return the data transfer step.
      */
     private Step transferDataSchema1() {
-        return stepBuilderFactory.get("transferDataSchema1").tasklet(new StoppableTasklet() {
+        return stepBuilderFactory.get(STEP_IMPORT_DATA_V1).tasklet(new StoppableTasklet() {
             @Override
             public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
                 long totalUtilities = 0;
@@ -334,7 +347,7 @@ public class UpdateAmphiroDataSchemaJobBuilder extends BaseJobBuilder implements
      * @return the data transfer step.
      */
     private Step transferDataSchema2() {
-        return stepBuilderFactory.get("transferDataSchema2").tasklet(new StoppableTasklet() {
+        return stepBuilderFactory.get(STEP_IMPORT_DATA_V2).tasklet(new StoppableTasklet() {
             @Override
             public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
                 long totalUtilities = 0;

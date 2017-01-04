@@ -12,63 +12,79 @@ import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+import eu.daiad.web.service.scheduling.Constants;
+
 @Entity(name = "scheduled_job_parameter")
 @Table(schema = "public", name = "scheduled_job_parameter")
 public class ScheduledJobParameterEntity {
 
-	@Id()
-	@Column(name = "id")
-	@SequenceGenerator(sequenceName = "scheduled_job_parameter_id_seq", name = "scheduled_job_parameter_id_seq", allocationSize = 1, initialValue = 1)
-	@GeneratedValue(generator = "scheduled_job_parameter_id_seq", strategy = GenerationType.SEQUENCE)
-	private long id;
+    @Id()
+    @Column(name = "id")
+    @SequenceGenerator(sequenceName = "scheduled_job_parameter_id_seq", name = "scheduled_job_parameter_id_seq", allocationSize = 1, initialValue = 1)
+    @GeneratedValue(generator = "scheduled_job_parameter_id_seq", strategy = GenerationType.SEQUENCE)
+    private long id;
 
-	@ManyToOne(cascade = { CascadeType.ALL })
-	@JoinColumn(name = "scheduled_job_id", nullable = false)
-	private ScheduledJobEntity scheduledJob;
+    @ManyToOne(cascade = { CascadeType.ALL })
+    @JoinColumn(name = "scheduled_job_id", nullable = false)
+    private ScheduledJobEntity scheduledJob;
 
-	@Basic
-	private String name;
+    @Basic
+    private String step;
 
-	@Basic
-	private String value;
+    @Basic
+    private String name;
 
-	@Basic
-	private boolean hidden;
+    @Basic
+    private String value;
 
-	public String getName() {
-		return name;
-	}
+    @Basic
+    private boolean hidden;
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public String getValue() {
-		return value;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public void setValue(String value) {
-		this.value = value;
-	}
+    public String getValue() {
+        return value;
+    }
 
-	public ScheduledJobEntity getScheduledJob() {
-		return scheduledJob;
-	}
+    public void setValue(String value) {
+        this.value = value;
+    }
 
-	public void setScheduledJob(ScheduledJobEntity scheduledJob) {
-		this.scheduledJob = scheduledJob;
-	}
+    public ScheduledJobEntity getScheduledJob() {
+        return scheduledJob;
+    }
 
-	public long getId() {
-		return id;
-	}
+    public void setScheduledJob(ScheduledJobEntity scheduledJob) {
+        this.scheduledJob = scheduledJob;
+    }
 
-	public boolean isHidden() {
-		return hidden;
-	}
+    public long getId() {
+        return id;
+    }
 
-	public void setHidden(boolean hidden) {
-		this.hidden = hidden;
-	}
+    public boolean isHidden() {
+        return hidden;
+    }
 
+    public void setHidden(boolean hidden) {
+        this.hidden = hidden;
+    }
+
+    public String getStep() {
+        return step;
+    }
+
+    public void setStep(String step) {
+        this.step = step;
+    }
+
+    public String getQualifiedName() {
+        return (step + Constants.PARAMETER_NAME_DELIMITER + name);
+    }
 }
