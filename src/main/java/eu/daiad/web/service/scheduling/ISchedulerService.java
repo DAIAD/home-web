@@ -10,6 +10,9 @@ import eu.daiad.web.model.scheduling.ExecutionQueryResult;
 import eu.daiad.web.model.scheduling.JobExecutionInfo;
 import eu.daiad.web.model.scheduling.JobInfo;
 
+/**
+ * Provides methods for querying, scheduling and launching jobs.
+ */
 public interface ISchedulerService {
 
 	/**

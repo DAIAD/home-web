@@ -478,6 +478,12 @@ module.exports = function(grunt) {
           cwd: 'node_modules/font-awesome/',
           src: ['css/*', 'fonts/*'],
           dest: 'src/main/resources/public/assets/lib/font-awesome/'
+        },
+        {
+          expand: true,
+          cwd: 'node_modules/rc-switch/assets/',
+          src: ['*'],
+          dest: 'src/main/resources/public/assets/lib/rc-switch/'
         }]
       },
       home: {

@@ -227,7 +227,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
         MessageCalculationConfiguration config, MessageResolutionPerAccountStatus status, AccountEntity account) 
     {
         IMessageResolutionStatus<Alert.Parameters> r = status.getAlertHotTemperatureAmphiro();
-        if (r != null & r.isSignificant()) {
+        if (r != null && r.isSignificant()) {
             Assert.state(r.getParameters().getType() == EnumAlertType.HOT_TEMPERATURE);
             accountAlertRepository.createWith(account, r.getParameters());
         }

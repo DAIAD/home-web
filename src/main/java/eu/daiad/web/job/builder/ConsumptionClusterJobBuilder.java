@@ -16,6 +16,11 @@ import eu.daiad.web.job.task.ConsumptionClusterTask;
 public class ConsumptionClusterJobBuilder extends BaseJobBuilder implements IJobBuilder {
 
     /**
+     * Name of the step that computes the clusters
+     */
+    private final String TASK_CLUSTER_CREATION = "create-cluster";
+
+    /**
      * Task that clusters users based on their consumption and computes water IQ status.
      */
     @Autowired
@@ -27,7 +32,7 @@ public class ConsumptionClusterJobBuilder extends BaseJobBuilder implements IJob
      * @return the new step.
      */
     private Step createClusterSegments() {
-        return stepBuilderFactory.get(consumptionClusterStep.getName()).tasklet(consumptionClusterStep).build();
+        return stepBuilderFactory.get(TASK_CLUSTER_CREATION).tasklet(consumptionClusterStep).build();
     }
 
     /**

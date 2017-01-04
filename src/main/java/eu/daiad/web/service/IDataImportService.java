@@ -5,7 +5,7 @@ import org.joda.time.DateTimeZone;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.loader.ImportWaterMeterFileConfiguration;
 
-public interface IFileDataLoaderService {
+public interface IDataImportService {
 
 	/**
 	 * Assigns smart water meters to user accounts based on the given configuration.

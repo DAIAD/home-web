@@ -3,6 +3,7 @@ package eu.daiad.web.controller.action;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -58,8 +59,8 @@ import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.model.spatial.ReferenceSystem;
 import eu.daiad.web.repository.application.IExportRepository;
 import eu.daiad.web.repository.application.IUserRepository;
+import eu.daiad.web.service.IDataImportService;
 import eu.daiad.web.service.IDataService;
-import eu.daiad.web.service.IFileDataLoaderService;
 import eu.daiad.web.service.IWaterMeterDataLoaderService;
 import eu.daiad.web.service.etl.IDataExportService;
 import eu.daiad.web.service.etl.UserDataExportQuery;
@@ -102,7 +103,7 @@ public class DataController extends BaseController {
      * Service for importing data.
      */
     @Autowired
-    private IFileDataLoaderService fileDataLoaderService;
+    private IDataImportService fileDataLoaderService;
 
     /**
      * Service for importing smart water meter data.
@@ -150,7 +151,7 @@ public class DataController extends BaseController {
                         for (MultipartFile file : request.getFiles()) {
                             String filename = createTemporaryFilename(file.getBytes());
 
-                            ImportWaterMeterFileConfiguration configuration = new ImportWaterMeterFileConfiguration(filename);
+                            ImportWaterMeterFileConfiguration configuration = new ImportWaterMeterFileConfiguration(filename, file.getOriginalFilename());
 
                             configuration.setSourceReferenceSystem(new ReferenceSystem(request.getSrid()));
                             configuration.setFirstRowHeader(request.isFirstRowHeader());
@@ -165,7 +166,7 @@ public class DataController extends BaseController {
                         for (MultipartFile file : request.getFiles()) {
                             String filename = createTemporaryFilename(file.getBytes());
 
-                            waterMeterDataLoaderService.parse(filename, request.getTimezone(), EnumUploadFileType.METER_DATA);
+                            waterMeterDataLoaderService.parse(filename, request.getTimezone(), EnumUploadFileType.METER_DATA, null);
                         }
                         break;
                     case METER_DATA_FORECAST:
@@ -175,7 +176,7 @@ public class DataController extends BaseController {
                         for (MultipartFile file : request.getFiles()) {
                             String filename = createTemporaryFilename(file.getBytes());
 
-                            waterMeterDataLoaderService.parse(filename, request.getTimezone(), EnumUploadFileType.METER_DATA_FORECAST);
+                            waterMeterDataLoaderService.parse(filename, request.getTimezone(), EnumUploadFileType.METER_DATA_FORECAST, null);
                         }
                         break;
                     default:
@@ -235,14 +236,15 @@ public class DataController extends BaseController {
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse storeQuery(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody StoreDataQueryRequest request) {
         try {
-            DataQuery query = request.getNamedQuery().getQuery();
 
-            if (query == null) {
+            List<DataQuery> queries = request.getNamedQuery().getQueries();
+
+            if (queries == null || queries.isEmpty()) {
                 return createResponse(QueryErrorCode.EMPTY_QUERY);
             }
 
-            if (StringUtils.isBlank(query.getTimezone())) {
-                query.setTimezone(user.getTimezone());
+            if (StringUtils.isBlank(queries.get(0).getTimezone())) {
+                queries.get(0).setTimezone(user.getTimezone());
             }
 
             dataService.storeQuery(request.getNamedQuery(), user.getKey());
@@ -270,11 +272,11 @@ public class DataController extends BaseController {
         try {
 
             // Set defaults if needed
-            DataQuery query = request.getNamedQuery().getQuery();
-            if (query != null) {
+            List<DataQuery> queries = request.getNamedQuery().getQueries();
+            if (queries != null && !queries.isEmpty()) {
                 // Initialize time zone
-                if (StringUtils.isBlank(query.getTimezone())) {
-                    request.getNamedQuery().getQuery().setTimezone(user.getTimezone());
+                if (StringUtils.isBlank(queries.get(0).getTimezone())) {
+                    queries.get(0).setTimezone(user.getTimezone());
                 }
             }
 
@@ -303,11 +305,11 @@ public class DataController extends BaseController {
         try {
 
             // Set defaults if needed
-            DataQuery query = request.getNamedQuery().getQuery();
-            if (query != null) {
+            List<DataQuery> queries = request.getNamedQuery().getQueries();
+            if (queries != null && !queries.isEmpty()) {
                 // Initialize time zone
-                if (StringUtils.isBlank(query.getTimezone())) {
-                    request.getNamedQuery().getQuery().setTimezone(user.getTimezone());
+                if (StringUtils.isBlank(queries.get(0).getTimezone())) {
+                    queries.get(0).setTimezone(user.getTimezone());
                 }
             }
 

@@ -45,6 +45,7 @@ import org.springframework.stereotype.Service;
 
 import eu.daiad.web.domain.admin.ScheduledJobEntity;
 import eu.daiad.web.domain.admin.ScheduledJobExecutionEntity;
+import eu.daiad.web.domain.admin.ScheduledJobParameterEntity;
 import eu.daiad.web.job.builder.IJobBuilder;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SchedulerErrorCode;
@@ -57,44 +58,83 @@ import eu.daiad.web.model.scheduling.JobInfoScheduleCron;
 import eu.daiad.web.model.scheduling.JobInfoSchedulePeriodic;
 import eu.daiad.web.service.BaseService;
 
-// https://github.com/spring-projects/spring-batch-admin/blob/master/spring-batch-admin-manager/src/main/java/org/springframework/batch/admin/service/SimpleJobService.java;
+// https://github.com/spring-projects/spring-batch-admin/blob/master/spring-batch-admin-manager/src/main/java/org/springframework/batch/admin/service/SimpleJobService.java
 
+/**
+ * Default implementation of {@link ISchedulerService} that provides methods for querying, scheduling and launching jobs.
+ */
 @Service
 public class DefaultSchedulerService extends BaseService implements ISchedulerService, InitializingBean {
 
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
     private static final Log logger = LogFactory.getLog(DefaultSchedulerService.class);
 
+    /**
+     * Default shutdown timeout to wait for jobs to stop before stopping the
+     * scheduler.
+     */
     private static final int DEFAULT_SHUTDOWN_TIMEOUT = 60 * 1000;
 
+    /**
+     * Application server time zone.
+     */
     @Value("${daiad.batch.server-time-zone:Europe/Athens}")
     private String serverTimeZone;
 
+    /**
+     * Spring application context.
+     */
     @Autowired
     private ApplicationContext ctx;
 
+    /**
+     * Provides a unique set of job parameters for starting a job.
+     */
     @Autowired
     private JobParametersIncrementer jobParametersIncrementer;
 
+    /**
+     * Job registry.
+     */
     @Autowired
     private JobRegistry jobRegistry;
 
+    /**
+     * Interface for launching jobs.
+     */
     @Autowired
     private JobLauncher jobLauncher;
 
+    /**
+     * Interface for managing jobs.
+     */
     @Autowired
     private JobOperator jobOperator;
 
+    /**
+     * Interface for scheduling job execution.
+     */
     @Autowired
     private ThreadPoolTaskScheduler taskScheduler;
 
+    /**
+     * Repository for accessing job metadata and parameters.
+     */
     @Autowired
     private ISchedulerRepository schedulerRepository;
 
+    /**
+     * A map for storing information for all scheduled jobs.
+     */
     private Map<Long, JobSchedulingProperties> scheduledJobs = new HashMap<Long, JobSchedulingProperties>();
 
+    /**
+     * A collection of all running jobs. The service periodically checks all
+     * active executions and removes completed jobs from this collection.
+     */
     private Collection<JobExecution> activeExecutions = Collections.synchronizedList(new ArrayList<JobExecution>());
-
-    private int shutdownTimeout = DEFAULT_SHUTDOWN_TIMEOUT;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -105,6 +145,12 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
         }
     }
 
+    /**
+     * Cancels all scheduled jobs and waits for {@code DEFAULT_SHUTDOWN_TIMEOUT}
+     * milliseconds for any running jobs to stop.
+     *
+     * @throws Exception if job stop operation has failed.
+     */
     @PreDestroy
     private void destroy() throws Exception {
         // Cancel scheduling
@@ -131,9 +177,10 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
         }
 
         int count = 0;
-        int maxCount = (shutdownTimeout + 1000) / 1000;
+        int maxCount = (DEFAULT_SHUTDOWN_TIMEOUT + 1000) / 1000;
         while (!activeExecutions.isEmpty() && ++count < maxCount) {
             logger.error("Waiting for " + activeExecutions.size() + " active executions to complete");
+
             removeInactiveExecutions();
             Thread.sleep(1000L);
         }
@@ -143,6 +190,13 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
         }
     }
 
+    /**
+     * Converts an instance of {@link ScheduledJobEntity} to a new instance of
+     * {@link JobInfo}.
+     *
+     * @param scheduledJob the entity to convert.
+     * @return the new {@link JobInfo} object.
+     */
     private JobInfo scheduledJobToJobInfo(ScheduledJobEntity scheduledJob) {
         JobInfo info = new JobInfo();
 
@@ -322,6 +376,13 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
         }
     }
 
+    /**
+     * Sets the status to {@link BatchStatus#ABANDONED} for all pending jobs
+     * with exist status {@link ExitStatus#UNKNOWN} and schedules all registered
+     * jobs.
+     *
+     * @throws Exception if an exception occurs when updating job status.
+     */
     private void updateScheduler() throws Exception {
         cleanupInterruptedJobs();
 
@@ -330,6 +391,12 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
         }
     }
 
+    /**
+     * Schedules a job.
+     *
+     * @param scheduledJob the job to schedule.
+     * @throws Exception if job scheduling fails.
+     */
     private void schedule(ScheduledJobEntity scheduledJob) throws Exception {
         // Remove existing job
         long jobId = scheduledJob.getId();
@@ -345,42 +412,45 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
         Job batchJob = jobBuilder.build(scheduledJob.getName(), jobParametersIncrementer);
 
         // Register job thus making it accessible to JobOperator
-        if (!jobRegistry.getJobNames().contains(scheduledJob.getName())) {
-            jobRegistry.register(new ReferenceJobFactory(batchJob));
+        if (jobRegistry.getJobNames().contains(scheduledJob.getName())) {
+            jobRegistry.unregister(scheduledJob.getName());
         }
+        jobRegistry.register(new ReferenceJobFactory(batchJob));
 
         if (scheduledJob.isEnabled()) {
             // Initialize job parameters
-            JobParametersBuilder parameterBuilder = new JobParametersBuilder();
-            for (eu.daiad.web.domain.admin.ScheduledJobParameterEntity parameter : scheduledJob.getParameters()) {
-                parameterBuilder.addString(parameter.getName(), parameter.getValue());
-            }
-            JobParameters jobParameters = parameterBuilder.toJobParameters();
+            JobParameters jobParameters = initializeJobParameters(scheduledJob, null);
 
             // Start job execution
             if ((scheduledJob.getPeriod() != null) && (!StringUtils.isBlank(scheduledJob.getCronExpression()))) {
-                logger.error(String.format(
-                                "Failed to scheduler job [%s]. Both trigger options are set to [%d] and [%s].",
-                                scheduledJob.getName(), scheduledJob.getPeriod(), scheduledJob.getCronExpression()));
+                logger.error(String.format("Failed to scheduler job [%s]. Both trigger options are set to [%d] and [%s].",
+                                           scheduledJob.getName(),
+                                           scheduledJob.getPeriod(),
+                                           scheduledJob.getCronExpression()));
             } else if (scheduledJob.getPeriod() != null) {
-                logger.info(String.format("Initializing job [%s] with periodic trigger [%d].", scheduledJob.getName(),
-                                scheduledJob.getPeriod()));
+                logger.info(String.format("Initializing job [%s] with periodic trigger [%d].",
+                                          scheduledJob.getName(),
+                                          scheduledJob.getPeriod()));
 
-                ScheduledFuture<?> future = taskScheduler.schedule(new RunnableJob(activeExecutions, jobLauncher,
-                                batchJob, jobParameters), new PeriodicTrigger(scheduledJob.getPeriod() * 1000));
+                ScheduledFuture<?> future = taskScheduler.schedule(
+                    new RunnableJob(activeExecutions, jobLauncher, batchJob, jobParameters),
+                    new PeriodicTrigger(scheduledJob.getPeriod() * 1000)
+                );
 
                 scheduledJobs.put(scheduledJob.getId(), new JobSchedulingProperties(scheduledJob.getId(), future));
             } else if (!StringUtils.isBlank(scheduledJob.getCronExpression())) {
-                logger.info(String.format("Initializing job [%s] with CRON trigger expression [%s].", scheduledJob
-                                .getName(), scheduledJob.getCronExpression()));
+                logger.info(String.format("Initializing job [%s] with CRON trigger expression [%s].",
+                                          scheduledJob.getName(),
+                                          scheduledJob.getCronExpression()));
 
-                ScheduledFuture<?> future = taskScheduler.schedule(new RunnableJob(activeExecutions, jobLauncher,
-                                batchJob, jobParameters), new CronTrigger(scheduledJob.getCronExpression()));
+                ScheduledFuture<?> future = taskScheduler.schedule(
+                    new RunnableJob(activeExecutions, jobLauncher, batchJob, jobParameters),
+                    new CronTrigger(scheduledJob.getCronExpression())
+                );
 
                 scheduledJobs.put(scheduledJob.getId(), new JobSchedulingProperties(scheduledJob.getId(), future));
             } else {
-                logger.error(String.format("Failed to scheduler job [%s]. No trigger options is set.", scheduledJob
-                                .getName()));
+                logger.error(String.format("Failed to scheduler job [%s]. No trigger options is set.", scheduledJob.getName()));
             }
         }
     }
@@ -391,7 +461,6 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
 
         this.launch(job.getId(), null);
     }
-
 
     @Override
     public void launch(String jobName, Map<String, String> parameters) throws ApplicationException {
@@ -408,12 +477,13 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
     @Override
     public void launch(long jobId, Map<String, String> parameters) throws ApplicationException {
         try {
+            refreshActiveExecutions();
+
             ScheduledJobEntity scheduledJob = schedulerRepository.getJobById(jobId);
 
             for (JobExecution activeExecution : activeExecutions) {
                 if (activeExecution.getJobInstance().getJobName().equals(scheduledJob.getName())) {
-                    logger.info(String.format("Launching job [%s] failed. Job is already running.", scheduledJob
-                                    .getName()));
+                    logger.info(String.format("Launching job [%s] failed. Job is already running.", scheduledJob.getName()));
                     return;
                 }
             }
@@ -429,18 +499,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
             }
 
             // Initialize job parameters
-            JobParametersBuilder parameterBuilder = new JobParametersBuilder();
-            for (eu.daiad.web.domain.admin.ScheduledJobParameterEntity parameter : scheduledJob.getParameters()) {
-                parameterBuilder.addString(parameter.getName(), parameter.getValue());
-            }
-            // Override parameters
-            if (parameters != null) {
-                for (Entry<String, String> entry : parameters.entrySet()) {
-                    parameterBuilder.addString(entry.getKey(), entry.getValue());
-                }
-            }
-
-            JobParameters jobParameters = parameterBuilder.toJobParameters();
+            JobParameters jobParameters = initializeJobParameters(scheduledJob, parameters);
 
             JobExecution jobExecution = jobLauncher.run(job, job.getJobParametersIncrementer().getNext(jobParameters));
 
@@ -448,7 +507,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
                 activeExecutions.add(jobExecution);
             }
         } catch (Exception ex) {
-            throw wrapApplicationException(ex, SchedulerErrorCode.SCHEDULER_JOB_LAUNCH_FAIL).set("job", jobId);
+            throw wrapApplicationException(ex, SchedulerErrorCode.SCHEDULER_JOB_LAUNCH_FAILED).set("job", jobId);
         }
     }
 
@@ -464,18 +523,40 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
         }
     }
 
+    /**
+     * Implements logic for initializing the execution of a scheduled job.
+     */
     private static class RunnableJob implements Runnable {
 
+        /**
+         * Interface for launching a job.
+         */
         private final JobLauncher jobLauncher;
 
+        /**
+         * The job to launch.
+         */
         private final Job job;
 
+        /**
+         * The job parameters.
+         */
         private final JobParameters parameters;
 
+        /**
+         * A collection of all running jobs.
+         */
         private final Collection<JobExecution> activeExecutions;
 
-        RunnableJob(Collection<JobExecution> activeExecutions, JobLauncher jobLauncher, Job job,
-                        JobParameters parameters) {
+        /**
+         * Creates a new instance of {@link RunnableJob}.
+         *
+         * @param activeExecutions a collection of all running jobs.
+         * @param jobLauncher a simple interface for managing jobs.
+         * @param job the job to launch.
+         * @param parameters the job parameters.
+         */
+        public RunnableJob(Collection<JobExecution> activeExecutions, JobLauncher jobLauncher, Job job, JobParameters parameters) {
             this.activeExecutions = activeExecutions;
             this.jobLauncher = jobLauncher;
             this.job = job;
@@ -507,13 +588,19 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
 
     }
 
+    /**
+     * Removes completed job from {@link DefaultSchedulerService#activeExecutions}.
+     */
     @Scheduled(fixedDelay = 60000)
     public void removeInactiveExecutions() {
+        refreshActiveExecutions();
+    }
+
+    private void refreshActiveExecutions() {
         for (Iterator<JobExecution> iterator = activeExecutions.iterator(); iterator.hasNext();) {
             JobExecution jobExecution = iterator.next();
             try {
-                Set<Long> runningExecutions = jobOperator.getRunningExecutions(jobExecution.getJobInstance()
-                                .getJobName());
+                Set<Long> runningExecutions = jobOperator.getRunningExecutions(jobExecution.getJobInstance().getJobName());
                 if (!runningExecutions.contains(jobExecution.getId())) {
                     iterator.remove();
                 }
@@ -521,9 +608,11 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
                 logger.error("Unexpected exception loading running executions", e);
             }
         }
-
     }
 
+    /**
+     * Sets job status to {@link BatchStatus#ABANDONED} for all jobs with exit status equal to {@link ExitStatus#UNKNOWN}.
+     */
     private void cleanupInterruptedJobs() {
         try {
             List<ScheduledJobExecutionEntity> executions = schedulerRepository.getExecutionByExitStatus(ExitStatus.UNKNOWN);
@@ -534,6 +623,31 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
         } catch (Exception e) {
             logger.error("Failed to update abandoned job executions.", e);
         }
+    }
+
+    /**
+     * Initializes job parameters.
+     *
+     * @param job the job entity.
+     * @param parameters any external parameters for overriding the values in the
+     *                   database.
+     * @return a valid {@link JobParameters} object.
+     */
+    private JobParameters initializeJobParameters(ScheduledJobEntity job, Map<String, String> parameters) {
+        JobParametersBuilder parameterBuilder = new JobParametersBuilder();
+
+        for (ScheduledJobParameterEntity parameter : job.getParameters()) {
+            parameterBuilder.addString(parameter.getQualifiedName(), parameter.getValue());
+        }
+
+        // Override parameters
+        if (parameters != null) {
+            for (Entry<String, String> entry : parameters.entrySet()) {
+                parameterBuilder.addString(entry.getKey(), entry.getValue());
+            }
+        }
+
+        return parameterBuilder.toJobParameters();
     }
 
 }

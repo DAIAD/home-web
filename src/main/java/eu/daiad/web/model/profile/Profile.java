@@ -54,6 +54,10 @@ public class Profile {
 
     private boolean social;
 
+    private boolean sendMailEnabled;
+
+    private boolean sendMessageEnabled;
+
     private int mode = 0;
 
     private String configuration;
@@ -274,4 +278,21 @@ public class Profile {
     public void setSocial(boolean social) {
         this.social = social;
     }
+
+    public boolean isSendMailEnabled() {
+        return sendMailEnabled;
+    }
+
+    public void setSendMailEnabled(boolean sendMailEnabled) {
+        this.sendMailEnabled = sendMailEnabled;
+    }
+
+    public boolean isSendMessageEnabled() {
+        return sendMessageEnabled;
+    }
+
+    public void setSendMessageEnabled(boolean sendMessageEnabled) {
+        this.sendMessageEnabled = sendMessageEnabled;
+    }
+
 }

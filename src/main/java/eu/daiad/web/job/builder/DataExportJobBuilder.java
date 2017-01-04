@@ -1,5 +1,7 @@
 package eu.daiad.web.job.builder;
 
+import java.util.Map;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -19,6 +21,8 @@ import eu.daiad.web.repository.application.IUtilityRepository;
 import eu.daiad.web.service.etl.EnumDataSource;
 import eu.daiad.web.service.etl.IDataExportService;
 import eu.daiad.web.service.etl.UtilityDataExportQuery;
+import eu.daiad.web.service.etl.UtilityDataExportQuery.EnumExportMode;
+import eu.daiad.web.service.scheduling.Constants;
 
 /**
  * Helper builder class for initializing a job that exports amphiro b1 and smart
@@ -31,6 +35,16 @@ public class DataExportJobBuilder extends BaseJobBuilder implements IJobBuilder 
      * Logger instance for writing events using the configured logging API.
      */
     private static final Log logger = LogFactory.getLog(DataExportJobBuilder.class);
+
+    /**
+     * Name of the step that deletes stale data files.
+     */
+    private static final String STEP_CLEAN = "clean";
+
+    /**
+     * Data export step name.
+     */
+    private static final String STEP_EXPORT = "export";
 
     /**
      * Repository for accessing export file data.
@@ -56,13 +70,15 @@ public class DataExportJobBuilder extends BaseJobBuilder implements IJobBuilder 
      * @return the step.
      */
     private Step cleanExpiredDataFiles() {
-        return stepBuilderFactory.get("clean").tasklet(new StoppableTasklet() {
+        return stepBuilderFactory.get(STEP_CLEAN).tasklet(new StoppableTasklet() {
             @Override
             public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
                 try {
-                    String[] utilityId = StringUtils.split((String) chunkContext.getStepContext().getJobParameters().get("utility.id"), ',');
+                    Map<String, Object> parameters = chunkContext.getStepContext().getJobParameters();
 
-                    String days = (String) chunkContext.getStepContext().getJobParameters().get("expire.interval");
+                    String[] utilityId = StringUtils.split((String) parameters.get(STEP_CLEAN + Constants.PARAMETER_NAME_DELIMITER + "utility.id"), ',');
+
+                    String days = (String) parameters.get(STEP_CLEAN + Constants.PARAMETER_NAME_DELIMITER + "expire.interval");
 
                     for (int index = 0, count = utilityId.length; index < count; index++) {
                         exportRepository.deleteExpiredExportFiles(Integer.parseInt(utilityId[index]), Integer.parseInt(days));
@@ -88,19 +104,21 @@ public class DataExportJobBuilder extends BaseJobBuilder implements IJobBuilder 
      * @return the step.
      */
     private Step exportData() {
-        return stepBuilderFactory.get("export").tasklet(new StoppableTasklet() {
+        return stepBuilderFactory.get(STEP_EXPORT).tasklet(new StoppableTasklet() {
             @Override
             public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
                 try {
-                    String[] utilityId = StringUtils.split((String) chunkContext.getStepContext().getJobParameters().get("utility.id"), ',');
+                    Map<String, Object> parameters = chunkContext.getStepContext().getJobParameters();
 
-                    String workingDirectory = (String) chunkContext.getStepContext().getJobParameters().get("working.directory");
+                    String[] utilityId = StringUtils.split((String) parameters.get(STEP_EXPORT + Constants.PARAMETER_NAME_DELIMITER + "utility.id"), ',');
 
-                    String outputDirectory = (String) chunkContext.getStepContext().getJobParameters().get("output.directory");
+                    String workingDirectory = (String) parameters.get(STEP_EXPORT + Constants.PARAMETER_NAME_DELIMITER + "working.directory");
 
-                    String dateFormat = (String) chunkContext.getStepContext().getJobParameters().get("format.date");
+                    String outputDirectory = (String) parameters.get(STEP_EXPORT + Constants.PARAMETER_NAME_DELIMITER + "output.directory");
 
-                    int defaultUtilityId = Integer.parseInt((String) chunkContext.getStepContext().getJobParameters().get("meter.default.utility"));
+                    String dateFormat = (String) parameters.get(STEP_EXPORT + Constants.PARAMETER_NAME_DELIMITER + "format.date");
+
+                    int defaultUtilityId = Integer.parseInt((String) parameters.get(STEP_EXPORT + Constants.PARAMETER_NAME_DELIMITER + "meter.default.utility"));
 
                     // Export data for every utility
                     for (int index = 0, count = utilityId.length; index < count; index++) {
@@ -113,7 +131,7 @@ public class DataExportJobBuilder extends BaseJobBuilder implements IJobBuilder 
 
                         // Export meter data for trial users only
                         query.setFilename(String.format("meter-%s-trial",utility.getName()).toLowerCase());
-                        query.setExportUserDataOnly(true);
+                        query.setMode(EnumExportMode.ALL_TRIAL);
                         query.setDescription(String.format("Meter data for all trial users in [%s].", utility.getName()));
                         query.setSource(EnumDataSource.METER);
                         exportService.export(query);
@@ -121,7 +139,7 @@ public class DataExportJobBuilder extends BaseJobBuilder implements IJobBuilder 
                         // Export meter data for all users if this is the default utility
                         if (utility.getId() == defaultUtilityId) {
                             query.setFilename(String.format("meter-%s-all", utility.getName()).toLowerCase());
-                            query.setExportUserDataOnly(false);
+                            query.setMode(EnumExportMode.METER_UTILITY);
                             query.setDescription(String.format("Meter data for all users in [%s].", utility.getName()));
                             query.setSource(EnumDataSource.METER);
                             exportService.export(query);
@@ -129,7 +147,6 @@ public class DataExportJobBuilder extends BaseJobBuilder implements IJobBuilder 
 
                         // Export amphiro data for trial users
                         query.setFilename(String.format("amphiro-%s-trial",utility.getName()).toLowerCase());
-                        query.setExportUserDataOnly(false);
                         query.setDescription(String.format("Amphiro b1 data for trial users in [%s].", utility.getName()));
                         query.setSource(EnumDataSource.AMPHIRO);
                         exportService.export(query);
