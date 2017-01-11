@@ -98,6 +98,9 @@ public class AccountProfileEntity {
 
     @Column(name = "mobile_app_version")
     private String mobileApplicationVersion;
+    
+//    @Column(name = "layout")
+//    private String layout;
 
     public int getId() {
         return id;
@@ -242,5 +245,13 @@ public class AccountProfileEntity {
     public void setSendMessageEnabled(boolean sendMessageEnabled) {
         this.sendMessageEnabled = sendMessageEnabled;
     }
+
+//    public String getLayout() {
+//        return layout;
+//    }
+//
+//    public void setLayout(String layout) {
+//        this.layout = layout;
+//    }
 
 }

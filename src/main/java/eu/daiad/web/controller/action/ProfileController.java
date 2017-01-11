@@ -29,6 +29,7 @@ import eu.daiad.web.model.profile.ProfileModesResponse;
 import eu.daiad.web.model.profile.ProfileModesSubmitChangesRequest;
 import eu.daiad.web.model.profile.ProfileResponse;
 import eu.daiad.web.model.profile.UpdateHouseholdRequest;
+import eu.daiad.web.model.profile.UpdateLayoutRequest;
 import eu.daiad.web.model.profile.UpdateProfileRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
@@ -238,5 +239,37 @@ public class ProfileController extends BaseController {
 
         return response;
     }
+    
+    /**
+     * Updates user's profile layout on dashboard
+     *
+     * @param user the authenticated user
+     * @param request the layout to store
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/action/layout/save", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @Secured({ RoleConstant.ROLE_USER, RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse saveLayoutProfile(@AuthenticationPrincipal AuthenticatedUser user,
+                                    @RequestBody UpdateLayoutRequest request) {
+        
+        RestResponse response = new RestResponse();
+        try {
+
+            if (user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
+
+                profileRepository.saveProfileLayout(request);
+            } else if(user.hasRole(EnumRole.ROLE_USER)){
+
+                //profileRepository.saveProfileLayout(request);
+            }
+
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }    
 
 }

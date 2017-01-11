@@ -46,6 +46,7 @@ import eu.daiad.web.model.profile.EnumUtilityMode;
 import eu.daiad.web.model.profile.EnumWebMode;
 import eu.daiad.web.model.profile.Household;
 import eu.daiad.web.model.profile.HouseholdMember;
+import eu.daiad.web.model.profile.LayoutComponent;
 import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.profile.ProfileDeactivateRequest;
 import eu.daiad.web.model.profile.ProfileHistoryEntry;
@@ -56,6 +57,7 @@ import eu.daiad.web.model.profile.ProfileModesFilterOptions;
 import eu.daiad.web.model.profile.ProfileModesRequest;
 import eu.daiad.web.model.profile.ProfileModesSubmitChangesRequest;
 import eu.daiad.web.model.profile.UpdateHouseholdRequest;
+import eu.daiad.web.model.profile.UpdateLayoutRequest;
 import eu.daiad.web.model.profile.UpdateProfileRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
@@ -1013,5 +1015,29 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             profile.setMobileApplicationVersion(version);
         }
     }
+    
+    @Override
+    public void saveProfileLayout(UpdateLayoutRequest updatedLayout) throws ApplicationException {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        AuthenticatedUser user = null;
 
+        if (auth.getPrincipal() instanceof AuthenticatedUser) {
+            user = (AuthenticatedUser) auth.getPrincipal();
+        } else {
+            throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+        }
+
+        TypedQuery<AccountEntity> query = entityManager.createQuery("select a from account a where a.key = :key",
+                        AccountEntity.class).setFirstResult(0).setMaxResults(1);
+        query.setParameter("key", user.getKey());
+
+        AccountEntity account = query.getSingleResult();
+
+        System.out.println("setting updated layout...");
+        for(LayoutComponent l : updatedLayout.getLayouts()){
+            System.out.println("h: " + l.getH());
+        }
+//        account.getProfile().setLayout(updatedLayout.getLayout());
+
+    }
 }
