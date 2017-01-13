@@ -1,5 +1,8 @@
 package eu.daiad.web.repository.application;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -64,6 +67,11 @@ import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.BaseRepository;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 @Repository()
 @Transactional("applicationTransactionManager")
@@ -77,7 +85,10 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
     @Autowired
     Environment environment;
-
+    
+    @Autowired
+    private Jackson2ObjectMapperBuilder jackson2ObjectMapperBuilder;
+    
     @Override
     public Profile getProfileByUsername(EnumApplication application) throws ApplicationException {
         try {
@@ -1033,11 +1044,46 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
         AccountEntity account = query.getSingleResult();
 
-        System.out.println("setting updated layout...");
-        for(LayoutComponent l : updatedLayout.getLayouts()){
-            System.out.println("h: " + l.getH());
+        ObjectMapper objectMapper = jackson2ObjectMapperBuilder.build();
+        try {
+            String layoutsString = objectMapper.writeValueAsString(updatedLayout.getLayouts());
+            account.getProfile().setLayouts(layoutsString);
+        } catch (JsonProcessingException ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.INVALID_PARSED_OBJECT);
         }
-//        account.getProfile().setLayout(updatedLayout.getLayout());
-
     }
+    
+    @Override
+    public List<LayoutComponent> loadProfileLayout() throws ApplicationException {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        AuthenticatedUser user = null;
+
+        if (auth.getPrincipal() instanceof AuthenticatedUser) {
+            user = (AuthenticatedUser) auth.getPrincipal();
+        } else {
+            throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
+        }
+
+        TypedQuery<AccountEntity> query = entityManager.createQuery("select a from account a where a.key = :key",
+                        AccountEntity.class).setFirstResult(0).setMaxResults(1);
+        query.setParameter("key", user.getKey());
+
+        AccountEntity account = query.getSingleResult();
+        ObjectMapper objectMapper = jackson2ObjectMapperBuilder.build();
+        String layoutsString = account.getProfile().getLayouts();
+
+        if (StringUtils.isBlank(layoutsString)){
+            return new ArrayList<>();
+        }
+        
+        LayoutComponent[] layoutArray;
+        try {
+            layoutArray = objectMapper.readValue(layoutsString, LayoutComponent[].class);
+        } catch (IOException ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.INVALID_PARSED_OBJECT);
+        }
+        List<LayoutComponent> layouts = Arrays.asList(layoutArray);
+
+        return layouts;
+    }    
 }

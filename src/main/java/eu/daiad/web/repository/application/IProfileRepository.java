@@ -7,6 +7,7 @@ import org.joda.time.DateTime;
 
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.profile.LayoutComponent;
 import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.profile.ProfileDeactivateRequest;
 import eu.daiad.web.model.profile.ProfileHistoryEntry;
@@ -41,5 +42,7 @@ public interface IProfileRepository {
     void updateMobileVersion(UUID userKey, String version);
     
     void saveProfileLayout(UpdateLayoutRequest updates);
+    
+    public List<LayoutComponent> loadProfileLayout();
 
 }

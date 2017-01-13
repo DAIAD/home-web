@@ -2,7 +2,7 @@ package eu.daiad.web.model.profile;
 
 public class LayoutComponent {
     
-    private int id;
+    private int i;
     
     private int x;
     
@@ -26,12 +26,12 @@ public class LayoutComponent {
     
     private boolean statik;
 
-    public int getId() {
-        return id;
+    public int getI() {
+        return i;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public void setI(int i) {
+        this.i = i;
     }
 
     public int getX() {
