@@ -34,7 +34,13 @@
     "spaced-comment": "off",
     "quote-props": "off",
     "indent": "warn",
-    "react/jsx-indent": "warn"
+    "react/jsx-indent": "warn",
+    "max-len": "warn",
+    "react/prefer-stateless-function": "warn",
+    "react/no-find-dom-node": "warn",
+    "react/no-multi-comp": "warn",
+    "prefer-rest-params": "warn",
+    "prefer-template": "warn"
   },
   "globals": {
     "properties": true,
