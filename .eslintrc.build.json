@@ -22,7 +22,8 @@
     "react/prop-types" : "off",
     "react/no-find-dom-node" : "off",
     "no-console": ["warn", { "allow": ["assert", "warn", "error"]}],
-    "no-unused-vars": ["warn", {"args": "none"}]
+    "no-unused-vars": ["warn", {"args": "none"}],
+    "react/display-name": "warn"
   },
   "globals": {
     "properties": true,
