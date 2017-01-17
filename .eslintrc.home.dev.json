@@ -1,0 +1,49 @@
+{
+  "parser": "babel-eslint",
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "script",
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "experimentalObjectRestSpread": true
+  },
+  "env": {
+    "es6": true,
+    "browser": true,
+    "node": true
+  },
+  "plugins" : ["eslint-plugin-react"],
+  "extends": [
+    "airbnb"
+  ],
+  "rules": {
+    "react/prop-types" : "off",
+    "react/prefer-es6-class": "off",
+    "react/jsx-filename-extension": "off",
+    "jsx-a11y/no-static-element-interactions": "off",
+    "no-console": "off",
+    "no-unused-vars": "warn",
+    "no-trailing-spaces": "off",
+    "no-underscore-dangle": "off",
+    "func-names": "off",
+    "no-confusing-arrow": "off",
+    "comma-dangle": "off",
+    "object-shorthand": "off",
+    "no-tabs": "off",
+    "spaced-comment": "off",
+    "quote-props": "off",
+    "indent": "warn",
+    "react/jsx-indent": "warn",
+    "max-len": "warn",
+    "react/prefer-stateless-function": "warn",
+    "react/no-find-dom-node": "warn",
+    "react/no-multi-comp": "warn",
+    "prefer-rest-params": "warn",
+    "prefer-template": "warn"
+  },
+  "globals": {
+    "properties": true,
+    "_": true
+  }
+}
