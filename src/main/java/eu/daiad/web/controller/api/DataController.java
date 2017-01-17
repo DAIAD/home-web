@@ -1,6 +1,7 @@
 package eu.daiad.web.controller.api;
 
-import com.google.gson.Gson;
+import java.util.List;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -38,7 +39,6 @@ import eu.daiad.web.repository.application.IAmphiroTimeOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 import eu.daiad.web.service.IDataService;
-import java.util.List;
 
 /**
  * Provides actions for storing Amphiro B1 data to the server and querying

@@ -371,14 +371,11 @@ public class DataService extends BaseService implements IDataService {
                     if (filter.getRanking().getMetric().equals(EnumMetric.UNDEFINED)) {
                         response.add(this.getError(QueryErrorCode.RANKING_INVALID_METRIC));
                     }
-                    if ((query.getSource().equals(EnumMeasurementDataSource.METER))
-                                    || (query.getSource().equals(EnumMeasurementDataSource.BOTH))) {
-                        if (!filter.getRanking().getMetric().equals(EnumMetric.SUM)) {
-                            response.add(this.getError(QueryErrorCode.RANKING_INVALID_METRIC));
-                        }
-                        if (!filter.getRanking().getField().equals(EnumDataField.VOLUME)) {
-                            response.add(this.getError(QueryErrorCode.RANKING_INVALID_FIELD));
-                        }
+                    if (!filter.getRanking().getMetric().equals(EnumMetric.SUM)) {
+                        response.add(this.getError(QueryErrorCode.RANKING_INVALID_METRIC));
+                    }
+                    if (!filter.getRanking().getField().equals(EnumDataField.VOLUME)) {
+                        response.add(this.getError(QueryErrorCode.RANKING_INVALID_FIELD));
                     }
                 }
             }
@@ -618,8 +615,7 @@ public class DataService extends BaseService implements IDataService {
                         if (population.getRanking() == null) {
                             expandedPopulationFilter = new ExpandedPopulationFilter(population.getLabel());
                         } else {
-                            expandedPopulationFilter = new ExpandedPopulationFilter(population.getLabel(), population
-                                            .getRanking());
+                            expandedPopulationFilter = new ExpandedPopulationFilter(population.getLabel(), population.getRanking());
                         }
 
                         expandedPopulationFilter.setAreaId(areaCounter);
@@ -653,24 +649,24 @@ public class DataService extends BaseService implements IDataService {
                 case SLIDING:
                     switch (query.getTime().getDurationTimeUnit()) {
                         case HOUR:
-                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusHours(query.getTime()
-                                            .getDuration()).getMillis());
+                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusHours(
+                                           query.getTime().getDuration()).getMillis());
                             break;
                         case DAY:
-                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusDays(query.getTime()
-                                            .getDuration()).getMillis());
+                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusDays(
+                                           query.getTime().getDuration()).getMillis());
                             break;
                         case WEEK:
-                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusWeeks(query.getTime()
-                                            .getDuration()).getMillis());
+                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusWeeks(
+                                           query.getTime().getDuration()).getMillis());
                             break;
                         case MONTH:
-                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusMonths(query.getTime()
-                                            .getDuration()).getMillis());
+                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusMonths(
+                                           query.getTime().getDuration()).getMillis());
                             break;
                         case YEAR:
-                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusYears(query.getTime()
-                                            .getDuration()).getMillis());
+                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusYears(
+                                           query.getTime().getDuration()).getMillis());
                             break;
                         default:
                             return response;
@@ -850,8 +846,7 @@ public class DataService extends BaseService implements IDataService {
                             filterUsers = ((UserPopulationFilter) filter).getUsers();
                             break;
                         case GROUP:
-                            filterUsers = groupRepository.getGroupMemberKeys(((GroupPopulationFilter) filter)
-                                            .getGroup());
+                            filterUsers = groupRepository.getGroupMemberKeys(((GroupPopulationFilter) filter).getGroup());
                             break;
                         case CLUSTER:
                             ClusterPopulationFilter clusterFilter = (ClusterPopulationFilter) filter;
@@ -860,8 +855,7 @@ public class DataService extends BaseService implements IDataService {
 
                             if (clusterFilter.getCluster() != null) {
                                 groups = groupRepository.getClusterByKeySegments(clusterFilter.getCluster());
-                            } else if ((clusterFilter.getClusterType() != null)
-                                            && (!clusterFilter.getClusterType().equals(EnumClusterType.UNDEFINED))) {
+                            } else if ((clusterFilter.getClusterType() != null) && (!clusterFilter.getClusterType().equals(EnumClusterType.UNDEFINED))) {
                                 groups = groupRepository.getClusterByTypeSegments(clusterFilter.getClusterType());
                             } else if (!StringUtils.isBlank(clusterFilter.getName())) {
                                 groups = groupRepository.getClusterByNameSegments(clusterFilter.getName());
@@ -879,8 +873,7 @@ public class DataService extends BaseService implements IDataService {
                             }
                             continue;
                         case UTILITY:
-                            filterUsers = groupRepository.getUtilityByKeyMemberKeys(((UtilityPopulationFilter) filter)
-                                            .getUtility());
+                            filterUsers = groupRepository.getUtilityByKeyMemberKeys(((UtilityPopulationFilter) filter).getUtility());
                             break;
                         default:
                             // Ignore
@@ -910,12 +903,10 @@ public class DataService extends BaseService implements IDataService {
                             Geometry userLocation = null;
                             WaterMeterDevice userMeter = null;
 
-                            // Fetch meter only if it is needed
-                            if ((query.getSource() == EnumMeasurementDataSource.BOTH) || (query.getSource() == EnumMeasurementDataSource.METER)) {
-                                userMeter = getUserWaterMeter(userKey);
-                                if (userMeter == null) {
-                                    includeUser = false;
-                                }
+                            // Fetch meters
+                            userMeter = getUserWaterMeter(userKey);
+                            if (userMeter == null) {
+                                includeUser = false;
                             }
 
                             // Filter only if not already rejected
@@ -971,8 +962,7 @@ public class DataService extends BaseService implements IDataService {
                         if (population.getRanking() == null) {
                             expandedPopulationFilter = new ExpandedPopulationFilter(population.getLabel());
                         } else {
-                            expandedPopulationFilter = new ExpandedPopulationFilter(population.getLabel(), population
-                                            .getRanking());
+                            expandedPopulationFilter = new ExpandedPopulationFilter(population.getLabel(), population.getRanking());
                         }
 
                         expandedPopulationFilter.setAreaId(areaCounter);
@@ -1006,24 +996,24 @@ public class DataService extends BaseService implements IDataService {
                 case SLIDING:
                     switch (query.getTime().getDurationTimeUnit()) {
                         case HOUR:
-                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusHours(query.getTime()
-                                            .getDuration()).getMillis());
+                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusHours(
+                                           query.getTime().getDuration()).getMillis());
                             break;
                         case DAY:
-                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusDays(query.getTime()
-                                            .getDuration()).getMillis());
+                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusDays(
+                                           query.getTime().getDuration()).getMillis());
                             break;
                         case WEEK:
-                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusWeeks(query.getTime()
-                                            .getDuration()).getMillis());
+                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusWeeks(
+                                           query.getTime().getDuration()).getMillis());
                             break;
                         case MONTH:
-                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusMonths(query.getTime()
-                                            .getDuration()).getMillis());
+                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusMonths(
+                                           query.getTime().getDuration()).getMillis());
                             break;
                         case YEAR:
-                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusYears(query.getTime()
-                                            .getDuration()).getMillis());
+                            endDateTime = (new DateTime(startDateTime, DateTimeZone.UTC).plusYears(
+                                           query.getTime().getDuration()).getMillis());
                             break;
                         default:
                             return response;
