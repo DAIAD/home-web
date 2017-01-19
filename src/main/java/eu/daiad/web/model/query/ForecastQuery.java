@@ -16,6 +16,7 @@ public class ForecastQuery {
 
     private ArrayList<SpatialFilter> spatial = new ArrayList<SpatialFilter>();
 
+    @JsonIgnore
     private EnumMetric[] metrics = { EnumMetric.SUM, EnumMetric.COUNT };
 
     public TimeFilter getTime() {
