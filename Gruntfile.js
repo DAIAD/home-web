@@ -84,7 +84,7 @@ module.exports = function(grunt) {
           'src/main/resources/public/assets/js/src/home/**/*.js'
         ],
         options: {
-          configFile: '.eslintrc.dev.json'
+          configFile: '.eslintrc.home.dev.json'
         }
       }
     },
@@ -115,7 +115,7 @@ module.exports = function(grunt) {
             ["livereactload"]
           ],
           transform: [
-            [{passthrough: 'warnings', configFile: '.eslintrc.dev.json'}, "eslintify"],
+            [{passthrough: 'warnings', configFile: '.eslintrc.home.dev.json'}, "eslintify"],
             ["babelify"],
             ["envify"],
             ["browserify-shim"]
@@ -123,7 +123,7 @@ module.exports = function(grunt) {
         },
         files: {
           'target/classes/public/assets/js/build/home/bundle.js': [
-            'src/main/resources/public/assets/js/src/home/main.js'
+            'src/main/resources/public/assets/js/src/home/index.js'
           ]
         }
       },
@@ -250,7 +250,7 @@ module.exports = function(grunt) {
       home: {
         files: {
           'src/main/resources/public/assets/js/build/home/bundle.js': [
-            'src/main/resources/public/assets/js/src/home/main.js'
+            'src/main/resources/public/assets/js/src/home/index.js'
           ]
         }
       },
