@@ -22,23 +22,19 @@ import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.SharedErrorCode;
-import eu.daiad.web.model.profile.LayoutComponent;
 import eu.daiad.web.model.profile.ProfileDeactivateRequest;
-import eu.daiad.web.model.profile.ProfileLayoutResponse;
 import eu.daiad.web.model.profile.ProfileModesFilterOptionsResponse;
 import eu.daiad.web.model.profile.ProfileModesRequest;
 import eu.daiad.web.model.profile.ProfileModesResponse;
 import eu.daiad.web.model.profile.ProfileModesSubmitChangesRequest;
 import eu.daiad.web.model.profile.ProfileResponse;
 import eu.daiad.web.model.profile.UpdateHouseholdRequest;
-import eu.daiad.web.model.profile.UpdateLayoutRequest;
 import eu.daiad.web.model.profile.UpdateProfileRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.repository.application.IProfileRepository;
 import eu.daiad.web.util.ValidationUtils;
-import java.util.List;
 
 /**
  * Provides methods for managing user profile.
@@ -242,66 +238,5 @@ public class ProfileController extends BaseController {
 
         return response;
     }
-    
-    /**
-     * Updates user's profile layout on dashboard
-     *
-     * @param user the authenticated user
-     * @param request the layout to store
-     * @return the controller's response.
-     */
-    @RequestMapping(value = "/action/layout/save", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-    @Secured({ RoleConstant.ROLE_USER, RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse saveLayoutProfile(@AuthenticationPrincipal AuthenticatedUser user,
-                                    @RequestBody UpdateLayoutRequest request) {
-        
-        RestResponse response = new RestResponse();
-        try {
 
-            if (user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
-                profileRepository.saveProfileLayout(request);
-            } else if(user.hasRole(EnumRole.ROLE_USER)){
-
-                //profileRepository.saveProfileLayout(request);
-            }
-
-        } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-
-            response.add(this.getError(ex));
-        }
-
-        return response;
-    }
-    
-    /**
-     * Returns user's profile dashboard layout
-     *
-     * @param user the authenticated user
-     * @return the controller's response.
-     */
-    @RequestMapping(value = "/action/layout/load", method = RequestMethod.GET, produces = "application/json")
-    @Secured({ RoleConstant.ROLE_USER, RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse loadLayoutProfile(@AuthenticationPrincipal AuthenticatedUser user) {
-        
-        RestResponse response = new RestResponse();
-        try {
-
-            if (user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
-                List<LayoutComponent> layouts = profileRepository.loadProfileLayout();
-                return new ProfileLayoutResponse(layouts);
-                
-            } else if(user.hasRole(EnumRole.ROLE_USER)){
-
-                //profileRepository.loadProfileLayout();
-            }
-
-        } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-
-            response.add(this.getError(ex));
-        }
-
-        return response;
-    }
 }
