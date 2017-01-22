@@ -49,4 +49,11 @@ public class PagingOptions
     {
         this.ascending = ascending;
     }
+
+    @Override
+    public String toString()
+    {
+        return String.format("PagingOptions(offset=%d, limit=%d, ascending=%s)",
+            offset, limit, ascending? "T" : "F");
+    }
 }

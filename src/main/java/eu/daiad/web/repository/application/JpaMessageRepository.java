@@ -324,7 +324,7 @@ public class JpaMessageRepository extends BaseRepository
             TypedQuery<AccountStaticRecommendationEntity> tipsQuery = entityManager.createQuery(
                 "SELECT r FROM account_static_recommendation r " +
                     "WHERE r.account.id = :accountId and r.id > :minMessageId " +
-                    "ORDER BY a.id " + (pagination.isAscending()? "ASC" : "DESC"),
+                    "ORDER BY r.id " + (pagination.isAscending()? "ASC" : "DESC"),
                 AccountStaticRecommendationEntity.class);
 
             tipsQuery.setFirstResult(pagination.getOffset());
@@ -332,13 +332,13 @@ public class JpaMessageRepository extends BaseRepository
             tipsQuery.setParameter("accountId", user.getId());
             tipsQuery.setParameter("minMessageId", minMessageId);
 
-            for (AccountStaticRecommendationEntity tip : tipsQuery.getResultList()) {
+            for (AccountStaticRecommendationEntity tip: tipsQuery.getResultList()) {
                 StaticRecommendation message = new StaticRecommendation();
                 message.setId(tip.getId());
                 message.setIndex(tip.getRecommendation().getIndex());
                 message.setTitle(tip.getRecommendation().getTitle());
                 message.setDescription(tip.getRecommendation().getDescription());
-                message.setImageEncoded(tip.getRecommendation().getImage());
+                //message.setImageEncoded(tip.getRecommendation().getImage());
                 message.setImageMimeType(tip.getRecommendation().getImageMimeType());
                 message.setImageLink(tip.getRecommendation().getImageLink());
                 message.setPrompt(tip.getRecommendation().getPrompt());
