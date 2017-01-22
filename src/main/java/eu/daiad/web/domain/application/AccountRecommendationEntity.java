@@ -24,9 +24,9 @@ import org.joda.time.DateTime;
 
 @Entity(name = "account_recommendation")
 @Table(schema = "public", name = "account_recommendation")
-public class AccountRecommendationEntity {
-
-	@Id()
+public class AccountRecommendationEntity
+{
+    @Id()
 	@Column(name = "id")
 	@SequenceGenerator(
 	    sequenceName = "account_recommendation_id_seq",
@@ -63,8 +63,7 @@ public class AccountRecommendationEntity {
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime receiveAcknowledgedOn;
 
-	public AccountRecommendationEntity()
-	{}
+	public AccountRecommendationEntity() {}
 
 	public AccountRecommendationEntity(
         AccountEntity account, RecommendationTemplateEntity recommendationTemplate, Map<String, Object> parameters)

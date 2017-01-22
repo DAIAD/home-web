@@ -16,12 +16,12 @@ import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.StaticRecommendationEntity;
 import eu.daiad.web.model.ConsumptionStats;
 import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.message.MessageResolutionPerAccountStatus;
 import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.EnumAlertType;
 import eu.daiad.web.model.message.EnumRecommendationTemplate;
 import eu.daiad.web.model.message.EnumRecommendationType;
 import eu.daiad.web.model.message.IMessageResolutionStatus;
+import eu.daiad.web.model.message.MessageResolutionPerAccountStatus;
 import eu.daiad.web.model.message.Recommendation;
 import eu.daiad.web.repository.application.IAccountAlertRepository;
 import eu.daiad.web.repository.application.IAccountRecommendationRepository;
@@ -551,7 +551,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countRecommendationsByTypeThisMonth(account, EnumRecommendationType.CHANGE_SHOWERHEAD) < 1) {
-            IMessageResolutionStatus<Recommendation.ParameterizedTemplate> r = status.getRecommendLowerFlowAmphiro();
+            IMessageResolutionStatus<Recommendation.ParameterizedTemplate> r = status.getRecommendShowerHeadChangeAmphiro();
             if (r == null || !r.isSignificant())
                 return;
 

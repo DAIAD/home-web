@@ -1,6 +1,7 @@
 package eu.daiad.web.job.task;
 
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -39,8 +40,8 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
             Map<String, String> parameters = getStepParameters(chunkContext.getStepContext());
 
             LocalDateTime refDate = parameters.containsKey(EnumParameter.REFERENCE_DATETIME.getValue())?
-                    LocalDateTime.parse(parameters.get(EnumParameter.REFERENCE_DATETIME.getValue())) :
-                    LocalDateTime.now().minusDays(1);
+                LocalDateTime.parse(parameters.get(EnumParameter.REFERENCE_DATETIME.getValue())) :
+                LocalDateTime.now().minusDays(1);
 
             IMessageGeneratorService.Configuration config = new IMessageGeneratorService.Configuration(refDate);
 
@@ -73,8 +74,14 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
                 EnumDeviceType.AMPHIRO,
                 Integer.parseInt(parameters.get(EnumParameter.AMPHIRO_MONTHLY_BUDGET.getValue())));
 
-            // Generate messages for everything!
-            messageService.executeAll(config);
+            // Generate messages
+
+            String utilityKey = parameters.get(EnumParameter.UTILITY_KEY.getValue());
+            if (utilityKey != null) {
+                messageService.executeUtility(config, UUID.fromString(utilityKey));
+            } else {
+                messageService.executeAll(config);
+            }
         } catch (Exception ex) {
             logger.fatal("Failed to complete message calculation process.", ex);
             throw ex;
@@ -126,7 +133,11 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
         /**
          * Amphiro b1 monthly budget.
          */
-        AMPHIRO_MONTHLY_BUDGET("monthly.budget.amphiro");
+        AMPHIRO_MONTHLY_BUDGET("monthly.budget.amphiro"),
+        /**
+         * Generate messages for a certain utility only
+         */
+        UTILITY_KEY("utility-key");
 
         private final String value;
 

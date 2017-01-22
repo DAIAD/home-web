@@ -1,6 +1,7 @@
 package eu.daiad.web.controller.action;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -30,7 +31,7 @@ import eu.daiad.web.model.message.MessageStatisticsQuery;
 import eu.daiad.web.model.message.MessageStatisticsRequest;
 import eu.daiad.web.model.message.MessageStatisticsResponse;
 import eu.daiad.web.model.message.MultiTypeMessageResponse;
-import eu.daiad.web.model.message.Recommendation;
+import eu.daiad.web.model.message.ReceiverAccount;
 import eu.daiad.web.model.message.RecommendationReceiversResponse;
 import eu.daiad.web.model.message.RecommendationStatisticsRequest;
 import eu.daiad.web.model.message.SingleTypeMessageResponse;
@@ -320,27 +321,26 @@ public class MessageController extends BaseController {
         try {
             MessageStatisticsQuery query = request.getQuery();
 
-            // Set defaults if needed
             if (query != null) {
-                // Initialize time zone
                 if (StringUtils.isBlank(query.getTimezone())) {
                     query.setTimezone(user.getTimezone());
                 }
             }
 
             int utilityId = user.getUtilityId();
-            String localeName = user.getLocale();
+            UUID utilityKey = user.getUtilityKey();
 
             MessageStatisticsResponse response = new MessageStatisticsResponse();
+
             response.setAlertStatistics(
-                messageRepository.getAlertStatistics(localeName, utilityId, query));
-            response.setRecommendationStatistics(
-                messageRepository.getRecommendationStatistics(localeName, utilityId, query));
+                messageRepository.getAlertStatistics(utilityId, query));
+
+            response.setRecommendationStats(
+                messageRepository.getRecommendationStatistics(utilityKey, query));
 
             return response;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
-
             return new RestResponse(getError(ex));
         }
     }
@@ -362,11 +362,11 @@ public class MessageController extends BaseController {
         @PathVariable String id, @RequestBody MessageStatisticsRequest request) {
         try {
             int intId = Integer.parseInt(id);
+            UUID utilityKey = user.getUtilityKey();
 
             MessageStatisticsQuery query = request.getQuery();
-            // Set defaults if needed
+
             if (query != null) {
-                // Initialize time zone
                 if (StringUtils.isBlank(query.getTimezone())) {
                     query.setTimezone(user.getTimezone());
                 }
@@ -401,18 +401,16 @@ public class MessageController extends BaseController {
         try {
             MessageStatisticsQuery query = request.getQuery();
             EnumRecommendationType recommendationType = request.getType();
+            UUID utilityKey = user.getUtilityKey();
 
             if (query != null) {
                 if (StringUtils.isBlank(query.getTimezone()))
                     query.setTimezone(user.getTimezone());
             }
 
-            RecommendationReceiversResponse response = new RecommendationReceiversResponse();
-            response.setRecommendation(new Recommendation(-1, recommendationType));
-            response.setReceivers(
-                messageRepository.getRecommendationReceivers(recommendationType, user.getUtilityKey(), query)
-            );
-            return response;
+            List<ReceiverAccount> receivers =
+                messageRepository.getRecommendationReceivers(recommendationType, utilityKey, query);
+            return new RecommendationReceiversResponse(recommendationType, receivers);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
             return new RestResponse(getError(ex));

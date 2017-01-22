@@ -2,6 +2,7 @@ package eu.daiad.web.repository.application;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 import org.joda.time.DateTime;
@@ -41,6 +42,10 @@ public interface IAccountRecommendationRepository
 
     Long countByType(EnumRecommendationType recommendationType, UUID utilityKey, Interval interval);
 
+    Map<EnumRecommendationType, Long> countByType(UUID utilityKey);
+
+    Map<EnumRecommendationType, Long> countByType(UUID utilityKey, Interval interval);
+
     List<AccountRecommendationEntity> findByAccountAndType(UUID accountKey, EnumRecommendationType recommendationType);
 
     List<AccountRecommendationEntity> findByAccountAndType(UUID accountKey, EnumRecommendationType recommendationType, Interval interval);
@@ -51,7 +56,7 @@ public interface IAccountRecommendationRepository
 
     AccountRecommendationEntity create(AccountRecommendationEntity e);
 
-    AccountRecommendationEntity createWith(UUID accountKey,  Recommendation.ParameterizedTemplate parameterizedTemplate);
+    AccountRecommendationEntity createWith(UUID accountKey, Recommendation.ParameterizedTemplate parameterizedTemplate);
 
     AccountRecommendationEntity createWith(AccountEntity account, Recommendation.ParameterizedTemplate parameterizedTemplate);
 

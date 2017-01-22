@@ -16,7 +16,10 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
+import org.joda.time.Interval;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,7 +40,6 @@ import eu.daiad.web.domain.application.AlertTranslationEntity;
 import eu.daiad.web.domain.application.AnnouncementChannel;
 import eu.daiad.web.domain.application.AnnouncementEntity;
 import eu.daiad.web.domain.application.AnnouncementTranslationEntity;
-import eu.daiad.web.domain.application.RecommendationAnalyticsEntity;
 import eu.daiad.web.domain.application.StaticRecommendationCategoryEntity;
 import eu.daiad.web.domain.application.StaticRecommendationEntity;
 import eu.daiad.web.model.PagingOptions;
@@ -57,7 +59,9 @@ import eu.daiad.web.model.message.MessageResult;
 import eu.daiad.web.model.message.MessageStatisticsQuery;
 import eu.daiad.web.model.message.ReceiverAccount;
 import eu.daiad.web.model.message.Recommendation;
+import eu.daiad.web.model.message.RecommendationStatistics;
 import eu.daiad.web.model.message.StaticRecommendation;
+import eu.daiad.web.model.query.PopulationFilter;
 import eu.daiad.web.model.query.TimeFilter;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.BaseRepository;
@@ -67,6 +71,8 @@ import eu.daiad.web.repository.BaseRepository;
 public class JpaMessageRepository extends BaseRepository
     implements IMessageRepository
 {
+    private static final Log logger = LogFactory.getLog(JpaMessageRepository.class);
+
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
 
@@ -548,7 +554,8 @@ public class JpaMessageRepository extends BaseRepository
     }
 
     @Override
-    public List<AlertAnalyticsEntity> getAlertStatistics(String locale, int utilityId, MessageStatisticsQuery query)
+    // Todo: Refactor as getRecommendationStatistics
+    public List<AlertAnalyticsEntity> getAlertStatistics(int utilityId, MessageStatisticsQuery query)
     {
         //TODO - align sql dates with joda datetimes
         Date slqDateStart = new Date(query.getTime().getStart());
@@ -580,35 +587,17 @@ public class JpaMessageRepository extends BaseRepository
     }
 
     @Override
-    public List<RecommendationAnalyticsEntity> getRecommendationStatistics(String locale, int utilityId, MessageStatisticsQuery query) {
+    public RecommendationStatistics getRecommendationStatistics(UUID utilityKey, MessageStatisticsQuery query)
+    {
+        TimeFilter tf = query.getTime();
+        Interval interval = (tf == null)? null : tf.asInterval();
 
-        Date slqDateStart = new Date(query.getTime().getStart());
-        Date slqDateEnd = new Date(query.getTime().getEnd());
+        ArrayList<PopulationFilter> pf = query.getPopulation();
+        if (pf != null && !pf.isEmpty())
+            logger.warn("recommendation statistics: The population filter is ignored");
 
-        // Todo rewrite query
-        Query nativeQuery = entityManager.createNativeQuery("select\n" +
-            "rt.recommendation_id as id,\n" +
-            "rt.title as title,\n" +
-            "rt.description as description,\n" +
-            "rt.locale as locale,\n" +
-            "count(distinct (ar.id)) as total\n" +
-            "from\n" +
-            "public.recommendation_message rt \n" +
-            "left join account acc on acc.locale = rt.locale\n" +
-            "\n" +
-            "left join public.account_recommendation ar on rt.recommendation_id = ar.recommendation_id and acc.id=ar.account_id\n" +
-            "where \n" +
-            "(acc.utility_id=?1) and (ar.created_on >= ?2 and ar.created_on <= ?3 or ar.created_on is NULL)\n" +
-            "group by\n" +
-            "rt.recommendation_id,rt.title,rt.locale, rt.description", RecommendationAnalyticsEntity.class);
-
-        nativeQuery.setParameter(1, utilityId);
-        nativeQuery.setParameter(2, slqDateStart);
-        nativeQuery.setParameter(3, slqDateEnd);
-
-        List<RecommendationAnalyticsEntity> recommendationAnalytics = nativeQuery.getResultList();
-
-        return recommendationAnalytics;
+        return new RecommendationStatistics()
+            .setCountByType(accountRecommendationRepository.countByType(utilityKey, interval));
     }
 
     @Override

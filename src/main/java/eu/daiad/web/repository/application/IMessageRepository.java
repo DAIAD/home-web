@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.UUID;
 
 import eu.daiad.web.domain.application.AlertAnalyticsEntity;
-import eu.daiad.web.domain.application.RecommendationAnalyticsEntity;
 import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.model.message.AnnouncementRequest;
@@ -15,6 +14,7 @@ import eu.daiad.web.model.message.MessageRequest;
 import eu.daiad.web.model.message.MessageResult;
 import eu.daiad.web.model.message.MessageStatisticsQuery;
 import eu.daiad.web.model.message.ReceiverAccount;
+import eu.daiad.web.model.message.RecommendationStatistics;
 import eu.daiad.web.model.message.StaticRecommendation;
 import eu.daiad.web.model.security.AuthenticatedUser;
 
@@ -44,9 +44,9 @@ public interface IMessageRepository {
 
     public List<ReceiverAccount> getAnnouncementReceivers(int id);
 
-    public List<AlertAnalyticsEntity> getAlertStatistics(String locale, int utilityId, MessageStatisticsQuery query);
+    public List<AlertAnalyticsEntity> getAlertStatistics(int utilityId, MessageStatisticsQuery query);
 
-    public List<RecommendationAnalyticsEntity> getRecommendationStatistics(String locale, int utilityId, MessageStatisticsQuery query);
+    public RecommendationStatistics getRecommendationStatistics(UUID utilityKey, MessageStatisticsQuery query);
 
     public List<ReceiverAccount> getAlertReceivers(int alertId, int utilityId, MessageStatisticsQuery query);
 
