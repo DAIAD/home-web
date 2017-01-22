@@ -1,5 +1,6 @@
 package eu.daiad.web.domain.application;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -7,8 +8,6 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -22,8 +21,6 @@ import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
-
-import eu.daiad.web.model.message.EnumRecommendationTemplate;
 
 @Entity(name = "account_recommendation")
 @Table(schema = "public", name = "account_recommendation")
@@ -46,14 +43,14 @@ public class AccountRecommendationEntity {
 
 	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER, orphanRemoval = true)
 	@JoinColumn(name = "account_recommendation_id")
-	private Set<AccountRecommendationParameterEntity> properties = 
-	    new HashSet<AccountRecommendationParameterEntity>();
+	private Set<AccountRecommendationParameterEntity> parameters =
+	    new HashSet<>();
 
 	@ManyToOne()
 	@JoinColumn(name = "recommendation_template", nullable = false)
 	@NotNull
 	private RecommendationTemplateEntity recommendationTemplate;
-	
+
 	@Column(name = "created_on")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime createdOn;
@@ -68,29 +65,28 @@ public class AccountRecommendationEntity {
 
 	public AccountRecommendationEntity()
 	{}
-	
+
 	public AccountRecommendationEntity(
-        AccountEntity account, RecommendationTemplateEntity recommendationTemplate, Map<String, Object> p)
+        AccountEntity account, RecommendationTemplateEntity recommendationTemplate, Map<String, Object> parameters)
     {
 	    this.account = account;
         this.recommendationTemplate = recommendationTemplate;
-        
-        if (p != null) {
-            for (Map.Entry<String, Object> e: p.entrySet()) {
+
+        if (parameters != null) {
+            for (Map.Entry<String, Object> e: parameters.entrySet()) {
                 String key = e.getKey();
                 String value = e.getValue().toString();
-                this.properties.add(
-                    new AccountRecommendationParameterEntity(this, key, value)); 
+                this.parameters.add(
+                    new AccountRecommendationParameterEntity(this, key, value));
             }
         }
     }
 
-	public AccountRecommendationEntity(
-	    AccountEntity account, RecommendationTemplateEntity template) 
+	public AccountRecommendationEntity(AccountEntity account, RecommendationTemplateEntity template)
 	{
 	    this(account, template, null);
 	}
-	
+
     public AccountEntity getAccount() {
 		return account;
 	}
@@ -102,7 +98,7 @@ public class AccountRecommendationEntity {
 	public RecommendationTemplateEntity getTemplate() {
 		return recommendationTemplate;
 	}
-	
+
 	public DateTime getCreatedOn() {
 		return createdOn;
 	}
@@ -123,10 +119,18 @@ public class AccountRecommendationEntity {
 		return id;
 	}
 
-	public Set<AccountRecommendationParameterEntity> getProperties() {
-		return properties;
+	public Set<AccountRecommendationParameterEntity> getParameters() {
+		return parameters;
 	}
-    	
+
+	public Map<String, Object> getParametersAsMap()
+	{
+        Map<String, Object> p = new HashMap<>();
+        for (AccountRecommendationParameterEntity pe: parameters)
+            p.put(pe.getKey(), pe.getValue());
+        return p;
+    }
+
 	public DateTime getReceiveAcknowledgedOn() {
 		return receiveAcknowledgedOn;
 	}

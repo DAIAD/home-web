@@ -14,8 +14,7 @@ import org.springframework.stereotype.Component;
 
 import eu.daiad.web.job.builder.MessageGeneratorJobBuilder;
 import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.message.MessageCalculationConfiguration;
-import eu.daiad.web.service.message.IMessageService;
+import eu.daiad.web.service.message.IMessageGeneratorService;
 
 /**
  * Task for generating reports
@@ -32,7 +31,7 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
      * Service for creating application messages.
      */
     @Autowired
-    private IMessageService messageService;
+    private IMessageGeneratorService messageService;
 
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
@@ -43,11 +42,11 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
                     LocalDateTime.parse(parameters.get(EnumParameter.REFERENCE_DATETIME.getValue())) :
                     LocalDateTime.now().minusDays(1);
 
-            MessageCalculationConfiguration config = new MessageCalculationConfiguration(refDate);
+            IMessageGeneratorService.Configuration config = new IMessageGeneratorService.Configuration(refDate);
 
             config.setOnDemandExecution(true);
 
-            config.setStaticTipInterval(
+            config.setTipInterval(
                 Integer.parseInt(parameters.get(EnumParameter.STATIC_TIP_INTERVAL.getValue())));
 
             config.setDailyBudget(

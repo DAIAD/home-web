@@ -6,8 +6,8 @@ import eu.daiad.web.domain.application.AlertAnalyticsEntity;
 import eu.daiad.web.domain.application.RecommendationAnalyticsEntity;
 import eu.daiad.web.model.RestResponse;
 
-public class MessageStatisticsResponse extends RestResponse{
-    
+public class MessageStatisticsResponse extends RestResponse
+{
     private List<AlertAnalyticsEntity> alertStatistics;
     private List<RecommendationAnalyticsEntity> recommendationStatistics;
 
@@ -26,5 +26,5 @@ public class MessageStatisticsResponse extends RestResponse{
     public void setRecommendationStatistics(List<RecommendationAnalyticsEntity> recommendationStatistics) {
         this.recommendationStatistics = recommendationStatistics;
     }
-    
+
 }
