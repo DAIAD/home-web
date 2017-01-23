@@ -14,17 +14,17 @@ import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.NumberFormatter;
 import eu.daiad.web.model.device.EnumDeviceType;
 
-public class Insight extends DynamicRecommendation {
+public class Insight extends Recommendation {
 
     //
     // ~ Classes for parameters
     //
 
-    public interface Parameters extends DynamicRecommendation.Parameters 
+    public interface ParameterizedTemplate extends Recommendation.ParameterizedTemplate 
     {};
     
-    protected abstract static class BasicParameters extends DynamicRecommendation.AbstractParameters
-        implements Parameters
+    protected abstract static class BasicParameters extends Recommendation.AbstractParameterizedTemplate
+        implements ParameterizedTemplate
     {
         // The reference value. Note that precise semantics 
         // are insight-specific (e.g. for A.1 is value on the reference date)
@@ -59,9 +59,9 @@ public class Insight extends DynamicRecommendation {
         }
 
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
-            Map<String, Object> parameters = super.getPairs();
+            Map<String, Object> parameters = super.getParameters();
             
             if (currentValue != null) {
                 parameters.put("value", currentValue);
@@ -96,18 +96,18 @@ public class Insight extends DynamicRecommendation {
         }
 
         @Override
-        public EnumDynamicRecommendationType getType()
+        public EnumRecommendationTemplate getTemplate()
         {
             if (avgValue <= currentValue)
-                return EnumDynamicRecommendationType.INSIGHT_A1_DAYOFWEEK_CONSUMPTION_INCR;
+                return EnumRecommendationTemplate.INSIGHT_A1_DAYOFWEEK_CONSUMPTION_INCR;
             else 
-                return EnumDynamicRecommendationType.INSIGHT_A1_DAYOFWEEK_CONSUMPTION_DECR;
+                return EnumRecommendationTemplate.INSIGHT_A1_DAYOFWEEK_CONSUMPTION_DECR;
         }
         
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
-            Map<String, Object> parameters = super.getPairs();
+            Map<String, Object> parameters = super.getParameters();
             parameters.put("day_of_week", refDate.getDayOfWeek());
             return parameters;
         }
@@ -122,12 +122,12 @@ public class Insight extends DynamicRecommendation {
         }
 
         @Override
-        public EnumDynamicRecommendationType getType()
+        public EnumRecommendationTemplate getTemplate()
         {
             if (avgValue <= currentValue)
-                return EnumDynamicRecommendationType.INSIGHT_A2_DAILY_CONSUMPTION_INCR;
+                return EnumRecommendationTemplate.INSIGHT_A2_DAILY_CONSUMPTION_INCR;
             else 
-                return EnumDynamicRecommendationType.INSIGHT_A2_DAILY_CONSUMPTION_DECR;
+                return EnumRecommendationTemplate.INSIGHT_A2_DAILY_CONSUMPTION_DECR;
         }
     }
     
@@ -149,33 +149,33 @@ public class Insight extends DynamicRecommendation {
         }
 
         @Override
-        public EnumDynamicRecommendationType getType()
+        public EnumRecommendationTemplate getTemplate()
         {
-            EnumDynamicRecommendationType t = null;
+            EnumRecommendationTemplate t = null;
             switch (partOfDay) {
             case MORNING:
                 t = (avgValue <= currentValue)?
-                        EnumDynamicRecommendationType.INSIGHT_A3_MORNING_CONSUMPTION_INCR:
-                        EnumDynamicRecommendationType.INSIGHT_A3_MORNING_CONSUMPTION_DECR;
+                        EnumRecommendationTemplate.INSIGHT_A3_MORNING_CONSUMPTION_INCR:
+                        EnumRecommendationTemplate.INSIGHT_A3_MORNING_CONSUMPTION_DECR;
                 break;
             case AFTERNOON:
                 t = (avgValue <= currentValue)?
-                        EnumDynamicRecommendationType.INSIGHT_A3_AFTERNOON_CONSUMPTION_INCR:
-                        EnumDynamicRecommendationType.INSIGHT_A3_AFTERNOON_CONSUMPTION_DECR;
+                        EnumRecommendationTemplate.INSIGHT_A3_AFTERNOON_CONSUMPTION_INCR:
+                        EnumRecommendationTemplate.INSIGHT_A3_AFTERNOON_CONSUMPTION_DECR;
                 break;
             case NIGHT:
                 t = (avgValue <= currentValue)?
-                        EnumDynamicRecommendationType.INSIGHT_A3_NIGHT_CONSUMPTION_INCR:
-                        EnumDynamicRecommendationType.INSIGHT_A3_NIGHT_CONSUMPTION_DECR;
+                        EnumRecommendationTemplate.INSIGHT_A3_NIGHT_CONSUMPTION_INCR:
+                        EnumRecommendationTemplate.INSIGHT_A3_NIGHT_CONSUMPTION_DECR;
                 break;
             }  
             return t;
         }
         
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
-            Map<String, Object> parameters = super.getPairs();  
+            Map<String, Object> parameters = super.getParameters();  
             parameters.put("part_of_day", partOfDay);
             return parameters;
         }
@@ -221,35 +221,35 @@ public class Insight extends DynamicRecommendation {
         }
         
         @Override
-        public EnumDynamicRecommendationType getType()
+        public EnumRecommendationTemplate getTemplate()
         {
-            EnumDynamicRecommendationType t = null;
+            EnumRecommendationTemplate t = null;
             
             Double y1 = partialValues.get(EnumPartOfDay.MORNING); 
             Double y2 = partialValues.get(EnumPartOfDay.AFTERNOON);
             Double y3 = partialValues.get(EnumPartOfDay.NIGHT);
             
             if (y1 == null || y2 == null || y3 == null)
-                return EnumDynamicRecommendationType.UNDEFINED;
+                return null;
             
             if (y1 < y2) {
                 t = (y2 < y3)? 
-                    EnumDynamicRecommendationType.INSIGHT_A4_CONSUMPTION_MAINLY_IN_NIGHT:
-                    EnumDynamicRecommendationType.INSIGHT_A4_CONSUMPTION_MAINLY_IN_AFTERNOON;
+                    EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_MAINLY_IN_NIGHT:
+                    EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_MAINLY_IN_AFTERNOON;
             } else {
                 // y2 <= y1
                 t = (y1 < y3)?
-                    EnumDynamicRecommendationType.INSIGHT_A4_CONSUMPTION_MAINLY_IN_NIGHT:
-                    EnumDynamicRecommendationType.INSIGHT_A4_CONSUMPTION_MAINLY_IN_MORNING;
+                    EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_MAINLY_IN_NIGHT:
+                    EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_MAINLY_IN_MORNING;
             }
             
             return t;
         }
         
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
-            Map<String, Object> parameters = super.getPairs();
+            Map<String, Object> parameters = super.getParameters();
             
             Double p1 = getPartAsPercentage(EnumPartOfDay.MORNING); 
             Double p2 = getPartAsPercentage(EnumPartOfDay.AFTERNOON);
@@ -289,21 +289,21 @@ public class Insight extends DynamicRecommendation {
         }
         
         @Override
-        public EnumDynamicRecommendationType getType()
+        public EnumRecommendationTemplate getTemplate()
         {
-            EnumDynamicRecommendationType t = super.getType();            
+            EnumRecommendationTemplate t = null;            
             boolean increase = (avgValue < currentValue);
             
             switch (timeUnit) {
             case WEEK:
                 t = increase?
-                    EnumDynamicRecommendationType.INSIGHT_B1_WEEKLY_CONSUMPTION_INCR:
-                    EnumDynamicRecommendationType.INSIGHT_B1_WEEKLY_CONSUMPTION_DECR;
+                    EnumRecommendationTemplate.INSIGHT_B1_WEEKLY_CONSUMPTION_INCR:
+                    EnumRecommendationTemplate.INSIGHT_B1_WEEKLY_CONSUMPTION_DECR;
                 break;
             case MONTH:
                 t = increase?
-                    EnumDynamicRecommendationType.INSIGHT_B1_MONTHLY_CONSUMPTION_INCR:
-                    EnumDynamicRecommendationType.INSIGHT_B1_MONTHLY_CONSUMPTION_DECR;
+                    EnumRecommendationTemplate.INSIGHT_B1_MONTHLY_CONSUMPTION_INCR:
+                    EnumRecommendationTemplate.INSIGHT_B1_MONTHLY_CONSUMPTION_DECR;
                 break;
             default:
                 // no-op
@@ -312,9 +312,9 @@ public class Insight extends DynamicRecommendation {
         }
         
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
-            Map<String, Object> parameters = super.getPairs();
+            Map<String, Object> parameters = super.getParameters();
             parameters.put("time_unit", timeUnit.name());
             return parameters;
         }
@@ -346,21 +346,21 @@ public class Insight extends DynamicRecommendation {
         }
         
         @Override
-        public EnumDynamicRecommendationType getType()
+        public EnumRecommendationTemplate getTemplate()
         {
-            EnumDynamicRecommendationType t = super.getType();
+            EnumRecommendationTemplate t = null;
             boolean increase = (previousValue < currentValue);
             
             switch (timeUnit) {
             case WEEK:
                 t = increase?
-                    EnumDynamicRecommendationType.INSIGHT_B2_WEEKLY_PREV_CONSUMPTION_INCR:
-                    EnumDynamicRecommendationType.INSIGHT_B2_WEEKLY_PREV_CONSUMPTION_DECR;
+                    EnumRecommendationTemplate.INSIGHT_B2_WEEKLY_PREV_CONSUMPTION_INCR:
+                    EnumRecommendationTemplate.INSIGHT_B2_WEEKLY_PREV_CONSUMPTION_DECR;
                 break;
             case MONTH:
                 t = increase?
-                    EnumDynamicRecommendationType.INSIGHT_B2_MONTHLY_PREV_CONSUMPTION_INCR:
-                    EnumDynamicRecommendationType.INSIGHT_B2_MONTHLY_PREV_CONSUMPTION_DECR;
+                    EnumRecommendationTemplate.INSIGHT_B2_MONTHLY_PREV_CONSUMPTION_INCR:
+                    EnumRecommendationTemplate.INSIGHT_B2_MONTHLY_PREV_CONSUMPTION_DECR;
                 break;
             default:
                 // no-op
@@ -369,9 +369,9 @@ public class Insight extends DynamicRecommendation {
         }
         
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
-            Map<String, Object> parameters = super.getPairs();
+            Map<String, Object> parameters = super.getParameters();
             
             parameters.put("previous_value", Double.valueOf(previousValue));
             parameters.put("previous_consumption", new NumberFormatter(previousValue, ".#"));
@@ -407,17 +407,17 @@ public class Insight extends DynamicRecommendation {
         }
         
         @Override
-        public EnumDynamicRecommendationType getType()
+        public EnumRecommendationTemplate getTemplate()
         {
             return (currentValue < avgValue)?
-                EnumDynamicRecommendationType.INSIGHT_B3_DAYOFWEEK_CONSUMPTION_LOW:
-                EnumDynamicRecommendationType.INSIGHT_B3_DAYOFWEEK_CONSUMPTION_PEAK;
+                EnumRecommendationTemplate.INSIGHT_B3_DAYOFWEEK_CONSUMPTION_LOW:
+                EnumRecommendationTemplate.INSIGHT_B3_DAYOFWEEK_CONSUMPTION_PEAK;
         }
         
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
-            Map<String, Object> parameters = super.getPairs();
+            Map<String, Object> parameters = super.getParameters();
             parameters.put("day_of_week", dayOfWeek.toInteger());
             return parameters;
         }
@@ -442,17 +442,17 @@ public class Insight extends DynamicRecommendation {
         }
         
         @Override
-        public EnumDynamicRecommendationType getType()
+        public EnumRecommendationTemplate getTemplate()
         {
             return (weekdayValue < weekendValue)?
-                EnumDynamicRecommendationType.INSIGHT_B4_MORE_ON_WEEKEND:
-                EnumDynamicRecommendationType.INSIGHT_B4_LESS_ON_WEEKEND;    
+                EnumRecommendationTemplate.INSIGHT_B4_MORE_ON_WEEKEND:
+                EnumRecommendationTemplate.INSIGHT_B4_LESS_ON_WEEKEND;    
         }
         
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
-            Map<String, Object> parameters = super.getPairs();
+            Map<String, Object> parameters = super.getParameters();
             
             parameters.put("weekday_value", Double.valueOf(weekdayValue));
             parameters.put("weekday_consumption", new NumberFormatter(weekdayValue, ".#"));
@@ -481,17 +481,17 @@ public class Insight extends DynamicRecommendation {
         }
         
         @Override
-        public EnumDynamicRecommendationType getType()
+        public EnumRecommendationTemplate getTemplate()
         {
             return (previousValue < currentValue)?
-                EnumDynamicRecommendationType.INSIGHT_B5_MONTHLY_CONSUMPTION_INCR:
-                EnumDynamicRecommendationType.INSIGHT_B5_MONTHLY_CONSUMPTION_DECR;    
+                EnumRecommendationTemplate.INSIGHT_B5_MONTHLY_CONSUMPTION_INCR:
+                EnumRecommendationTemplate.INSIGHT_B5_MONTHLY_CONSUMPTION_DECR;    
         }
         
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
-            Map<String, Object> parameters = super.getPairs();
+            Map<String, Object> parameters = super.getParameters();
             
             parameters.put("previous_value", Double.valueOf(previousValue));
             parameters.put("previous_consumption", new NumberFormatter(previousValue, ".#"));
@@ -504,8 +504,13 @@ public class Insight extends DynamicRecommendation {
     // ~ Constructor
     //
     
-    public Insight(EnumDynamicRecommendationType recommendationType, int id)
+    public Insight(EnumRecommendationTemplate recommendationTemplate, int id)
     {
-        super(recommendationType, id);
+        super(id, recommendationTemplate);
+    }
+    
+    public Insight(EnumRecommendationType recommendationType, int id)
+    {
+        super(id, recommendationType);
     }
 }

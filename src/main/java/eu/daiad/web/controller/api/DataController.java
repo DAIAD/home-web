@@ -1,6 +1,7 @@
 package eu.daiad.web.controller.api;
 
-import com.google.gson.Gson;
+import java.util.List;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -24,6 +25,7 @@ import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
 import eu.daiad.web.model.error.DeviceErrorCode;
+import eu.daiad.web.model.error.QueryErrorCode;
 import eu.daiad.web.model.meter.WaterMeterMeasurementCollection;
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryCollectionResponse;
@@ -38,7 +40,6 @@ import eu.daiad.web.repository.application.IAmphiroTimeOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 import eu.daiad.web.service.IDataService;
-import java.util.List;
 
 /**
  * Provides actions for storing Amphiro B1 data to the server and querying
@@ -99,15 +100,16 @@ public class DataController extends BaseRestController {
     @RequestMapping(value = "/api/v1/data/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse query(@RequestBody DataQueryRequest data) {
         try {
-            AuthenticatedUser user = authenticate(data.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
+            AuthenticatedUser user = authenticate(data.getCredentials(),
+                                                  EnumRole.ROLE_USER, EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
-            // Set defaults if needed
             DataQuery query = data.getQuery();
-            if (query != null) {
-                // Initialize time zone
-                if (StringUtils.isBlank(query.getTimezone())) {
-                    query.setTimezone(user.getTimezone());
-                }
+            if (query == null) {
+                return createResponse(QueryErrorCode.EMPTY_QUERY);
+            }
+
+            if(StringUtils.isBlank(query.getTimezone())) {
+                query.setTimezone(user.getTimezone());
             }
 
             return dataService.execute(query);
@@ -183,15 +185,16 @@ public class DataController extends BaseRestController {
     @RequestMapping(value = "/api/v1/data/meter/forecast", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse forecast(@RequestBody ForecastQueryRequest data) {
         try {
-            AuthenticatedUser user = authenticate(data.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
+            AuthenticatedUser user = authenticate(data.getCredentials(),
+                                                  EnumRole.ROLE_USER, EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
-            // Set defaults if needed
             ForecastQuery query = data.getQuery();
-            if (query != null) {
-                // Initialize time zone
-                if (StringUtils.isBlank(query.getTimezone())) {
-                    query.setTimezone(user.getTimezone());
-                }
+            if (query == null) {
+                return createResponse(QueryErrorCode.EMPTY_QUERY);
+            }
+
+            if (StringUtils.isBlank(query.getTimezone())) {
+                query.setTimezone(user.getTimezone());
             }
 
             return dataService.execute(query);

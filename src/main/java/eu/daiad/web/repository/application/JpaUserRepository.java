@@ -412,6 +412,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             // Always disable utility mode
             profile.setUtilityMode(EnumUtilityMode.INACTIVE.getValue());
 
+            profile.setSendMessageEnabled(true);
             profile.setUpdatedOn(account.getCreatedOn());
 
             profile.setAccount(account);
@@ -1316,7 +1317,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                                                        .setFirstResult(0)
                                                        .setMaxResults(1);
         query.setParameter("key", key);
-        
+
         return query.getSingleResult();
     }
 
@@ -1334,7 +1335,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
                                                        .setFirstResult(0)
                                                        .setMaxResults(1);
         query.setParameter("username", username);
-        
+
         return query.getSingleResult();
     }
 

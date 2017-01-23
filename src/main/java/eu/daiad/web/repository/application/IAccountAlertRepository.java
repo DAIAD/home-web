@@ -43,9 +43,9 @@ public interface IAccountAlertRepository
     
     AccountAlertEntity create(AccountAlertEntity e);
     
-    AccountAlertEntity createWith(UUID accountKey, Alert.Parameters parameters);
+    AccountAlertEntity createWith(UUID accountKey, Alert.ParameterizedTemplate parameters);
     
-    AccountAlertEntity createWith(AccountEntity account, Alert.Parameters parameters);
+    AccountAlertEntity createWith(AccountEntity account, Alert.ParameterizedTemplate parameters);
     
     void delete(int id);
     

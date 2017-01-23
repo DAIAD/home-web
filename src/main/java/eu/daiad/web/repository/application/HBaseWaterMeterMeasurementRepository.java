@@ -649,9 +649,15 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
 
                                         int index = inArray(filter.getSerials(), serialHash);
                                         if (index >= 0) {
-                                            series.addMeterRankingDataPoint(query.getGranularity(), filter.getUsers()
-                                                            .get(index), filter.getLabels().get(index), timestamp,
-                                                            difference, volume, query.getMetrics(), query.getTimezone());
+                                            series.addMeterRankingDataPoint(
+                                                query.getGranularity(),
+                                                filter.getUsers().get(index),
+                                                filter.getLabels().get(index),
+                                                timestamp,
+                                                difference,
+                                                volume,
+                                                query.getMetrics(),
+                                                query.getTimezone());
 
                                         }
 
@@ -694,8 +700,7 @@ public class HBaseWaterMeterMeasurementRepository extends AbstractHBaseRepositor
                 ArrayList<DataPoint> points = new ArrayList<DataPoint>();
 
                 for (DataPoint point : series.getPoints()) {
-                    points.add(((RankingDataPoint) point).aggregate(query.getMetrics(),
-                                    DataPoint.EnumDataPointType.METER));
+                    points.add(((RankingDataPoint) point).aggregate(query.getMetrics(), DataPoint.EnumDataPointType.METER));
                 }
 
                 series.setPoints(points);

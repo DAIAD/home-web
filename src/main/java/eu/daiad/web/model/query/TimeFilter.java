@@ -1,6 +1,7 @@
 package eu.daiad.web.model.query;
 
 import org.joda.time.DateTime;
+import org.joda.time.Interval;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
@@ -142,10 +143,40 @@ public class TimeFilter {
 		return durationTimeUnit;
 	}
 
+	public Interval asInterval()
+	{
+	    if (end == null) {
+	        DateTime t1 = new DateTime(start);
+	        DateTime t2 = t1;
+	        switch (durationTimeUnit) {
+	        case HOUR:
+	            t2 = t2.plusHours(duration);
+	            break;
+	        case DAY:
+	            t2 = t2.plusDays(duration);
+	            break;
+	        case WEEK:
+	            t2 = t2.plusWeeks(duration);
+	            break;
+	        case MONTH:
+	            t2 = t2.plusMonths(duration);
+	            break;
+	        case YEAR:
+	            t2 = t2.plusYears(duration);
+	            break;
+	        default:
+	            break;
+	        }
+	        return new Interval(t1, t2);
+	    } else
+	        return new Interval(start, end);
+	}
+
 	@Override
 	public String toString() {
-		return "TimeFilter [type=" + type + ", granularity =" + granularity  + ", start=" + start + ", end=" + end
-						+ ", duration=" + duration + ", durationTimeUnit=" + durationTimeUnit + "]";
+		return
+		    "TimeFilter [type=" + type + ", granularity =" + granularity  + ", start=" + start + ", end=" + end
+		        + ", duration=" + duration + ", durationTimeUnit=" + durationTimeUnit + "]";
 	}
 
 }

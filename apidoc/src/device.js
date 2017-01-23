@@ -23,7 +23,7 @@
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****",
  *   },
  *   "type":"AMPHIRO",
@@ -117,7 +117,7 @@ function registerAmphiro() { return; }
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****",
  *   },
  *   "type":"METER",
@@ -179,7 +179,7 @@ function registerMeter() { return; }
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****",
  *   },
  *   "type":"METER"
@@ -275,7 +275,7 @@ function deviceQuery() { return; }
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****",
  *   },
  *   "deviceKey": [ "aeea36cc-cefb-47db-ac0f-8c5dbc95b0f9" ]
@@ -374,7 +374,7 @@ function deviceConfig() { return; }
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****",
  *   },
  *   "deviceKey": "4b6bb490-1c03-4c9d-b5d0-1dbb758bf71a",
@@ -482,11 +482,11 @@ function registerRest() { return; }
  * @apiParam (DeviceUpdateRequest)             {Object}     credentials                 User credentials
  * @apiParam (DeviceUpdateRequest)             {String}     credentials.username        User name.
  * @apiParam (DeviceUpdateRequest)             {String}     credentials.password        Password.
- * @apiParam (DeviceUpdateRequest)             {String}     updates                     Array of objects that derive from type <code>DeviceUpdate</code>. 
+ * @apiParam (DeviceUpdateRequest)             {Ojbect[]}   updates                     Array of objects that derive from type <code>DeviceUpdate</code>. 
  *
  * @apiParam (DeviceUpdate)                    {String}     type                        Sets the type of the object. Valid values are <code>METER</code> and <code>AMPHIRO</code>. Current version supports only <code>AMPHIRO</code>.
  * @apiParam (DeviceUpdate)                    {String}     key                         Unique device key (UUID).
- * @apiParam (DeviceUpdate)                    {String}     properties                  Array of <code>KeyValuePair</code> objects representing device properties.
+ * @apiParam (DeviceUpdate)                    {Ojbect[]}   properties                  Array of <code>KeyValuePair</code> objects representing device properties.
  *
  * @apiParam (KeyValuePair)                    {String}     key                         Key.
  * @apiParam (KeyValuePair)                    {String}     value                       Value.
@@ -497,7 +497,7 @@ function registerRest() { return; }
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****",
  *   },
  *   "updates": [{
