@@ -299,6 +299,10 @@ ul {
   padding-left: 30px;
 }
 
+label { 
+  margin-right: 10px;
+}
+
 .pull-left{
 	float: left;
 }
@@ -320,7 +324,7 @@ ul {
 	display: block;
 	position: fixed;
 	top: 35vh;
-	left: 50vw;
+  left: 50vw;
 	width: 80px;
 	height: 80px;
   z-index: 100;
@@ -331,7 +335,7 @@ ul {
 	display: block;
 	position: fixed;
 	top: 35vh;
-	left: 50vw;
+  left: 50vw;
 	width: 80px;
 	height: 80px;
   z-index: 100;
@@ -349,7 +353,7 @@ ul {
 	display: block;
 	position: fixed;
 	top: 35vh;
-	left: 50vw;
+  left: 50vw;
 	width: 80px;
 	height: 80px;
   z-index: 100;
@@ -359,8 +363,9 @@ ul {
 
 .error-display {
   position: fixed;
-  margin-left: 30%;
   margin-top: 40vh;
+  left: 50%;
+  transform: translateX(-50%);
   background: rgba(0,0,0,0.8);
   color: #fff;
   padding:50px;
@@ -806,12 +811,10 @@ div[class^="section."]{
 
 /* Override Bootstrap styles */
 
-label { 
-  margin-right: 10px;
-}
 .col-sm-1 {
   width: 10%;
 }
+
 .nav-tabs { 
   border-bottom: none;
 }
@@ -884,6 +887,27 @@ label {
   font-size: initial;
 }
 
+.panel > .panel-heading {
+  padding: 0;
+}
+
+.panel > .panel-heading > .panel-title {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.panel > .panel-heading > .panel-title > a {
+  padding: 10px 15px;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.panel [aria-hidden="true"].collapsing {
+  filter: blur(4px);
+}
+
 .has-feedback label~.form-control-feedback{
 	top: 30px;
 }
@@ -952,11 +976,14 @@ div[class^="section.login"]{
   margin: 20px auto;
 }
 .form-login button {
-  margin-top: 10px;
   width: 100%;
 }
 .form-login input {
   text-align: center;
+}
+
+.form-login h3 {
+  margin-bottom: 20px;
 }
 
 .form-login-container .login-errors {
@@ -966,6 +993,11 @@ div[class^="section.login"]{
 .form-login-container .login-errors img {
   margin-right: 10px;
 }
+
+.link-reset {
+  margin-top: 20px;
+}
+
 /* Dashboard */
 
 .dashboard { 
