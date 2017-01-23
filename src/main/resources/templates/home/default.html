@@ -32,11 +32,20 @@
   
 	<div id="app"></div>
 
+  <script th:if="${@environment.getActiveProfiles()[0] == 'production'}" 
+    src="/assets/js/build/vendor/react.min.js"></script>
+  <script th:if="${@environment.getActiveProfiles()[0] == 'development'}" 
+    src="/assets/js/build/vendor/react.js"></script>
+
+  <script th:if="${@environment.getActiveProfiles()[0] == 'production'}"
+		src="/assets/lib/echarts/echarts.min.js"></script>
+  <script th:if="${@environment.getActiveProfiles()[0] == 'development'}"
+		src="/assets/lib/echarts/echarts.js"></script>
+
 	<script th:if="${@environment.getActiveProfiles()[0] == 'production'}"
 		src="/assets/js/build/home/bundle.min.js"></script>
-	<script th:if="${@environment.getActiveProfiles()[0] == 'development'}"
-		src="/assets/lib/echarts/echarts.min.js"></script>
-	<script th:if="${@environment.getActiveProfiles()[0] == 'development'}"
+  <script th:if="${@environment.getActiveProfiles()[0] == 'development'}"
 		src="/assets/js/build/home/bundle.js"></script>
+
 </body>
 </html>
