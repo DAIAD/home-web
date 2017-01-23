@@ -392,6 +392,7 @@ public class AccountRecommendationRepository extends BaseRepository
         if (r != null && r.getAcknowledgedOn() == null) {
             r.setAcknowledgedOn(acknowledged);
             r.setReceiveAcknowledgedOn(new DateTime());
+            return true;
         }
         return false;
     }
@@ -404,25 +405,32 @@ public class AccountRecommendationRepository extends BaseRepository
         if (r == null)
             return null;
 
+        // Find a proper translated template
+
         EnumRecommendationTemplate template = r.getTemplate().asEnum();
-        RecommendationTemplateTranslationEntity translationEntity =
-            translationRepository.findByTemplate(template, locale);
-        if (translationEntity == null)
+
+        RecommendationTemplateTranslationEntity translation = null;
+        translation = translationRepository.findByTemplate(template, locale);
+        if (translation == null)
+            translation = translationRepository.findByTemplate(template);
+        if (translation == null)
             return null;
+
+        // Format
 
         // Todo: Some parameters need pre-processing (currencies, dates)
         Map<String, Object> parameters = r.getParametersAsMap();
 
-        MessageFormat titleTemplate = new MessageFormat(translationEntity.getTitle(), locale);
-        String title = titleTemplate.format(parameters);
+        String title = (new MessageFormat(translation.getTitle(), locale))
+            .format(parameters);
 
-        MessageFormat descriptionTemplate = new MessageFormat(translationEntity.getDescription(), locale);
-        String description = descriptionTemplate.format(parameters);
+        String description = (new MessageFormat(translation.getDescription(), locale))
+            .format(parameters);
 
         Recommendation message = new Recommendation(r.getId(), template);
         message.setTitle(title);
         message.setDescription(description);
-        message.setImageLink(translationEntity.getImageLink());
+        message.setImageLink(translation.getImageLink());
         message.setCreatedOn(r.getCreatedOn().getMillis());
         if (r.getAcknowledgedOn() != null)
             message.setAcknowledgedOn(r.getAcknowledgedOn().getMillis());

@@ -598,7 +598,7 @@ INSERT INTO public.recommendation_template_translation
     (
         recommendation_template_from_name('INSIGHT_B4_MORE_ON_WEEKEND'),
         'en',
-        '{percent_diff}% more water on weekends',
+        '{percent_change}% more water on weekends',
         '{weekend_consumption}lt vs. {weekday_consumption}lt'
     );
 
@@ -608,7 +608,7 @@ INSERT INTO public.recommendation_template_translation
     (
         recommendation_template_from_name('INSIGHT_B4_MORE_ON_WEEKEND'),
         'es',
-        '{percent_diff}% more water on weekends',
+        '{percent_change}% more water on weekends',
         '{weekend_consumption}lt vs. {weekday_consumption}lt'
     );
 
@@ -618,7 +618,7 @@ INSERT INTO public.recommendation_template_translation
     (
         recommendation_template_from_name('INSIGHT_B4_LESS_ON_WEEKEND'),
         'en',
-        '{percent_diff}% less water on weekends',
+        '{percent_change}% less water on weekends',
         '{weekend_consumption}lt vs. {weekday_consumption}lt'
     );
 
@@ -628,7 +628,7 @@ INSERT INTO public.recommendation_template_translation
     (
         recommendation_template_from_name('INSIGHT_B4_LESS_ON_WEEKEND'),
         'es',
-        '{percent_diff}% less water on weekends',
+        '{percent_change}% less water on weekends',
         '{weekend_consumption}lt vs. {weekday_consumption}lt'
     );
 

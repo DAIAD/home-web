@@ -4,16 +4,17 @@ import java.util.Map;
 
 import org.joda.time.DateTime;
 
+import eu.daiad.web.model.NumberFormatter;
 import eu.daiad.web.model.device.EnumDeviceType;
 
-public class Recommendation extends Message 
+public class Recommendation extends Message
 {
     public interface ParameterizedTemplate extends Message.Parameters
     {
         public EnumRecommendationTemplate getTemplate();
     }
-    
-    public abstract static class AbstractParameterizedTemplate extends Message.AbstractParameters 
+
+    public abstract static class AbstractParameterizedTemplate extends Message.AbstractParameters
         implements ParameterizedTemplate
     {
         protected AbstractParameterizedTemplate(DateTime refDate, EnumDeviceType deviceType)
@@ -21,26 +22,26 @@ public class Recommendation extends Message
             super(refDate, deviceType);
         }
     }
-    
+
     public static class SimpleParameterizedTemplate extends AbstractParameterizedTemplate
     {
         final EnumRecommendationTemplate recommendationTemplate;
-        
+
         // Provide some common parameters
-        
+
         Integer integer1;
-        
+
         Integer integer2;
-        
+
         Double currency1;
-        
+
         Double currency2;
-        
+
         public SimpleParameterizedTemplate(
             DateTime refDate, EnumDeviceType deviceType, EnumRecommendationTemplate recommendationTemplate)
         {
             super(refDate, deviceType);
-            this.recommendationTemplate = recommendationTemplate;   
+            this.recommendationTemplate = recommendationTemplate;
         }
 
         public Integer getInteger1()
@@ -85,26 +86,26 @@ public class Recommendation extends Message
         {
             this.currency2 = currency2;
             return this;
-        }  
-        
+        }
+
         @Override
         public Map<String, Object> getParameters()
         {
             Map<String, Object> pairs = super.getParameters();
-            
+
             if (integer1 != null)
                 pairs.put("integer1", integer1);
             if (integer2 != null)
                 pairs.put("integer2", integer2);
-            
+
             if (currency1 != null)
-                pairs.put("currency1", currency1);
+                pairs.put("currency1", new NumberFormatter(currency1, ".#"));
             if (currency2 != null)
-                pairs.put("currency2", currency2);
-            
+                pairs.put("currency2", new NumberFormatter(currency2, ".#"));
+
             return pairs;
         }
-        
+
         @Override
         public EnumRecommendationTemplate getTemplate()
         {
@@ -113,9 +114,9 @@ public class Recommendation extends Message
     }
 
     private final int id;
-    
+
     private final EnumRecommendationType recommendationType;
-    
+
 	private final EnumRecommendationTemplate recommendationTemplate;
 
 	private int priority;
@@ -129,16 +130,16 @@ public class Recommendation extends Message
 	private Long createdOn;
 
     private Long acknowledgedOn;
-	
-	public Recommendation(int id, EnumRecommendationTemplate template) 
+
+	public Recommendation(int id, EnumRecommendationTemplate template)
 	{
 		this.id = id;
 	    this.recommendationTemplate = template;
 		this.recommendationType = template.getType();
 		this.priority = recommendationType.getPriority();
 	}
-	
-	public Recommendation(int id, EnumRecommendationType type) 
+
+	public Recommendation(int id, EnumRecommendationType type)
 	{
 	    this.id = id;
 	    this.recommendationTemplate = null;
@@ -190,11 +191,11 @@ public class Recommendation extends Message
 	public EnumRecommendationTemplate getRecommendationTemplate() {
 		return recommendationTemplate;
 	}
-	
+
 	public EnumRecommendationType getRecommendationType() {
         return recommendationType;
     }
-	
+
     public Long getAcknowledgedOn() {
         return acknowledgedOn;
     }
