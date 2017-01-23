@@ -39,12 +39,12 @@ import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.message.MessageResolutionPerAccountStatus;
 import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.EnumAlertType;
 import eu.daiad.web.model.message.EnumRecommendationTemplate;
 import eu.daiad.web.model.message.IMessageResolutionStatus;
 import eu.daiad.web.model.message.Insight;
+import eu.daiad.web.model.message.MessageResolutionPerAccountStatus;
 import eu.daiad.web.model.message.MessageResolutionStatus;
 import eu.daiad.web.model.message.Recommendation;
 import eu.daiad.web.model.query.DataQuery;
@@ -67,9 +67,6 @@ import eu.daiad.web.service.IPriceDataService;
 public class DefaultMessageResolverService implements IMessageResolverService
 {
     private static final Log logger = LogFactory.getLog(DefaultMessageResolverService.class);
-
-    // Fixme: debug
-    private static final Log debug1Logger = LogFactory.getLog("debug1");
 
     @Autowired
     IDataService dataService;
@@ -1648,13 +1645,6 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .user("user", account.getKey())
             .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
             .sum();
-
-        // Fixme: Debug
-        boolean breakpointCondition =
-            account.getKey().equals(UUID.fromString("03d450ed-4130-48b7-9cad-1d9e42bee9c3"));
-        if (breakpointCondition) {
-            System.err.println("This user\'s got a temper!!");
-        }
 
         // Initialize sums for each day of week, and sum for all days
 
