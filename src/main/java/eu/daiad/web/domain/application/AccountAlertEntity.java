@@ -1,6 +1,6 @@
 package eu.daiad.web.domain.application;
 
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -17,31 +17,38 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
 @Entity(name = "account_alert")
 @Table(schema = "public", name = "account_alert")
-public class AccountAlertEntity {
-
+public class AccountAlertEntity
+{
 	@Id()
 	@Column(name = "id")
-	@SequenceGenerator(sequenceName = "account_alert_id_seq", name = "account_alert_id_seq", allocationSize = 1, initialValue = 1)
+	@SequenceGenerator(
+	    sequenceName = "account_alert_id_seq",
+	    name = "account_alert_id_seq",
+	    allocationSize = 1,
+	    initialValue = 1)
 	@GeneratedValue(generator = "account_alert_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
 
 	@ManyToOne(cascade = { CascadeType.ALL })
 	@JoinColumn(name = "account_id", nullable = false)
+	@NotNull
 	private AccountEntity account;
-
-	@ManyToOne(cascade = { CascadeType.ALL })
-	@JoinColumn(name = "alert_id", nullable = false)
-	private AlertEntity alert;
 
 	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER, orphanRemoval = true)
 	@JoinColumn(name = "account_alert_id")
-	private Set<AccountAlertPropertyEntity> properties = new HashSet<AccountAlertPropertyEntity>();
+	private Set<AccountAlertParameterEntity> parameters = new HashSet<>();
+
+	@ManyToOne(cascade = { CascadeType.ALL })
+    @JoinColumn(name = "alert_template", nullable = false)
+	@NotNull
+    private AlertTemplateEntity alertTemplate;
 
 	@Column(name = "created_on")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
@@ -55,54 +62,55 @@ public class AccountAlertEntity {
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime receiveAcknowledgedOn;
 
-	public AccountAlertEntity()
-	{
-	    // no-op
-	}
-	
-	public AccountAlertEntity(AccountEntity account, AlertEntity alert, Map<String, Object> p)
+	public AccountAlertEntity() {}
+
+	public AccountAlertEntity(
+	    AccountEntity account, AlertTemplateEntity templateEntity, Map<String, Object> parameters)
 	{
 	    this.account = account;
-	    this.alert = alert;
-	    
-	    if (p != null) {
-	        for (Map.Entry<String, Object> e: p.entrySet()) {
-	            this.properties.add(
-	                new AccountAlertPropertyEntity(this, e.getKey(), e.getValue().toString())); 
+	    this.alertTemplate = templateEntity;
+
+	    if (parameters != null) {
+	        for (Map.Entry<String, Object> e: parameters.entrySet()) {
+	            String key = e.getKey();
+	            String value = e.getValue().toString();
+	            this.parameters.add(new AccountAlertParameterEntity(this, key, value));
 	        }
 	    }
 	}
-	
-	public AccountAlertEntity(AccountEntity account, AlertEntity alert)
+
+	public AccountAlertEntity(AccountEntity account, AlertTemplateEntity templateEntity)
 	{
-	    this(account, alert, null);
+	    this(account, templateEntity, null);
 	}
-	
-	public AccountEntity getAccount() {
+
+	public AccountEntity getAccount()
+	{
 		return account;
 	}
 
-	public void setAccount(AccountEntity account) {
+	public void setAccount(AccountEntity account)
+	{
 		this.account = account;
 	}
 
-	public AlertEntity getAlert() {
-		return alert;
+	public AlertTemplateEntity getTemplate()
+	{
+		return alertTemplate;
 	}
 
-	public void setAlert(AlertEntity alert) {
-		this.alert = alert;
-	}
-
-	public DateTime getCreatedOn() {
+	public DateTime getCreatedOn()
+	{
 		return createdOn;
 	}
 
-	public void setCreatedOn(DateTime createdOn) {
+	public void setCreatedOn(DateTime createdOn)
+	{
 		this.createdOn = createdOn;
 	}
 
-	public DateTime getAcknowledgedOn() {
+	public DateTime getAcknowledgedOn()
+	{
 		return acknowledgedOn;
 	}
 
@@ -114,15 +122,26 @@ public class AccountAlertEntity {
 		return id;
 	}
 
-	public Set<AccountAlertPropertyEntity> getProperties() {
-		return properties;
+	public Set<AccountAlertParameterEntity> getParameters()
+	{
+	    return parameters;
 	}
-	
-	public DateTime getReceiveAcknowledgedOn() {
+
+	public Map<String, Object> getParametersAsMap()
+	{
+	    Map<String, Object> p = new HashMap<>();
+	    for (AccountAlertParameterEntity pe: parameters)
+	        p.put(pe.getKey(), pe.getValue());
+	    return p;
+	}
+
+	public DateTime getReceiveAcknowledgedOn()
+	{
 		return receiveAcknowledgedOn;
 	}
 
-	public void setReceiveAcknowledgedOn(DateTime receiveAcknowledgedOn) {
+	public void setReceiveAcknowledgedOn(DateTime receiveAcknowledgedOn)
+	{
 		this.receiveAcknowledgedOn = receiveAcknowledgedOn;
 	}
 

@@ -4,48 +4,44 @@ import java.util.Map;
 
 import org.joda.time.DateTime;
 
+import eu.daiad.web.model.NumberFormatter;
 import eu.daiad.web.model.device.EnumDeviceType;
 
-public class Alert extends Message 
+public class Alert extends Message
 {
     public interface ParameterizedTemplate extends Message.Parameters
     {
-        public EnumAlertType getType();
+        public EnumAlertTemplate getTemplate();
     }
-    
-    public abstract static class AbstractParameterizedTemplate extends Message.AbstractParameters 
+
+    public abstract static class AbstractParameterizedTemplate extends Message.AbstractParameters
         implements ParameterizedTemplate
     {
         protected AbstractParameterizedTemplate(DateTime refDate, EnumDeviceType deviceType)
         {
             super(refDate, deviceType);
         }
-
-        @Override
-        public EnumAlertType getType()
-        {
-            return EnumAlertType.UNDEFINED;
-        }
     }
-    
+
     public static class SimpleParameterizedTemplate extends AbstractParameterizedTemplate
     {
-        final EnumAlertType alertType;
-        
+        final EnumAlertTemplate alertTemplate;
+
         // Provide some common parameters
-        
+
         Integer integer1;
-        
+
         Integer integer2;
-        
+
         Double currency1;
-        
+
         Double currency2;
-        
-        public SimpleParameterizedTemplate(DateTime refDate, EnumDeviceType deviceType, EnumAlertType alertType)
+
+        public SimpleParameterizedTemplate(
+            DateTime refDate, EnumDeviceType deviceType, EnumAlertTemplate template)
         {
             super(refDate, deviceType);
-            this.alertType = alertType;   
+            this.alertTemplate = template;
         }
 
         public Integer getInteger1()
@@ -90,36 +86,38 @@ public class Alert extends Message
         {
             this.currency2 = currency2;
             return this;
-        }  
-        
+        }
+
         @Override
         public Map<String, Object> getParameters()
         {
             Map<String, Object> pairs = super.getParameters();
-            
+
             if (integer1 != null)
                 pairs.put("integer1", integer1);
             if (integer2 != null)
                 pairs.put("integer2", integer2);
-            
+
             if (currency1 != null)
-                pairs.put("currency1", currency1);
+                pairs.put("currency1", new NumberFormatter(currency1, ".#"));
             if (currency2 != null)
-                pairs.put("currency2", currency2);
-            
+                pairs.put("currency2", new NumberFormatter(currency2, ".#"));
+
             return pairs;
         }
-        
+
         @Override
-        public EnumAlertType getType()
+        public EnumAlertTemplate getTemplate()
         {
-            return alertType;
+            return alertTemplate;
         }
     }
-    
+
     private final int id;
 
-	private EnumAlertType alertType;
+	private final EnumAlertType alertType;
+
+    private final EnumAlertTemplate alertTemplate;
 
 	private int priority;
 
@@ -127,17 +125,27 @@ public class Alert extends Message
 
 	private String description;
 
-	private String imageLink;
+	private String link;
 
 	private Long createdOn;
-	
+
 	private Long acknowledgedOn;
 
-	public Alert(EnumAlertType alertType, int id) 
-	{
-		this.alertType = alertType;
-		this.id = id;
-	}
+	public Alert(int id, EnumAlertTemplate template)
+    {
+        this.id = id;
+        this.alertTemplate = template;
+        this.alertType = template.getType();
+        this.priority = alertType.getPriority();
+    }
+
+    public Alert(int id, EnumAlertType type)
+    {
+        this.id = id;
+        this.alertTemplate = null;
+        this.alertType = type;
+        this.priority = alertType.getPriority();
+    }
 
 	@Override
 	public EnumMessageType getType() {
@@ -176,18 +184,18 @@ public class Alert extends Message
 		this.createdOn = createdOn;
 	}
 
-	public String getImageLink() {
-		return imageLink;
+	public String getLink() {
+		return link;
 	}
 
-	public void setImageLink(String imageLink) {
-		this.imageLink = imageLink;
+	public void setLink(String link) {
+		this.link = link;
 	}
 
 	public EnumAlertType getAlertType() {
 		return alertType;
 	}
-	
+
 	public Long getAcknowledgedOn() {
 	    return acknowledgedOn;
 	}

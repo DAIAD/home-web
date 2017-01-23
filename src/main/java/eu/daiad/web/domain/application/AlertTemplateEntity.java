@@ -11,17 +11,17 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
-import eu.daiad.web.model.message.EnumRecommendationTemplate;
+import eu.daiad.web.model.message.EnumAlertTemplate;
 
-@Entity(name = "recommendation_template")
+@Entity(name = "alert_template")
 @Table(
     schema = "public",
-    name = "recommendation_template",
+    name = "alert_template",
     indexes = {
         @Index(columnList = "name", unique = true),
     }
 )
-public class RecommendationTemplateEntity
+public class AlertTemplateEntity
 {
     @Id()
     private int value;
@@ -29,24 +29,24 @@ public class RecommendationTemplateEntity
     @Enumerated(EnumType.STRING)
     @Column(name = "name", nullable = false, unique = true)
     @NotNull
-    private EnumRecommendationTemplate template;
+    private EnumAlertTemplate template;
 
     @ManyToOne()
     @JoinColumn(name = "type", nullable = false)
     @NotNull
-    private RecommendationTypeEntity type = null;
+    private AlertTypeEntity type = null;
 
-    public EnumRecommendationTemplate getTemplate()
+    public EnumAlertTemplate getTemplate()
     {
         return template;
     }
 
-    public EnumRecommendationTemplate asEnum()
+    public EnumAlertTemplate asEnum()
     {
         return template;
     }
 
-    public RecommendationTypeEntity getType()
+    public AlertTypeEntity getType()
     {
         return type;
     }
@@ -56,15 +56,15 @@ public class RecommendationTemplateEntity
         return value;
     }
 
-    public void setType(RecommendationTypeEntity type)
+    public void setType(AlertTypeEntity type)
     {
         this.type = type;
     }
 
-    public RecommendationTemplateEntity()
+    public AlertTemplateEntity()
     {}
 
-    public RecommendationTemplateEntity(EnumRecommendationTemplate template)
+    public AlertTemplateEntity(EnumAlertTemplate template)
     {
         this.template = template;
         this.value = template.getValue();

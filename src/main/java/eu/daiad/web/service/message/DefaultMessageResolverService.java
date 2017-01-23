@@ -40,7 +40,7 @@ import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.Alert;
-import eu.daiad.web.model.message.EnumAlertType;
+import eu.daiad.web.model.message.EnumAlertTemplate;
 import eu.daiad.web.model.message.EnumRecommendationTemplate;
 import eu.daiad.web.model.message.IMessageResolutionStatus;
 import eu.daiad.web.model.message.Insight;
@@ -291,7 +291,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             return null;
 
         Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
-            refDate, EnumDeviceType.METER, EnumAlertType.WATER_LEAK);
+            refDate, EnumDeviceType.METER, EnumAlertTemplate.WATER_LEAK);
         return new MessageResolutionStatus<>(true, parameters);
     }
 
@@ -322,7 +322,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             return null;
 
         Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
-            refDate, EnumDeviceType.AMPHIRO, EnumAlertType.SHOWER_ON);
+            refDate, EnumDeviceType.AMPHIRO, EnumAlertTemplate.SHOWER_ON);
         return new MessageResolutionStatus<>(true, parameters);
     }
 
@@ -355,7 +355,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             return null;
 
         Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
-            refDate, EnumDeviceType.METER, EnumAlertType.WATER_QUALITY);
+            refDate, EnumDeviceType.METER, EnumAlertTemplate.WATER_QUALITY);
         return new MessageResolutionStatus<>(true, parameters);
     }
 
@@ -386,7 +386,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             return null;
 
         Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
-            refDate, EnumDeviceType.AMPHIRO, EnumAlertType.HOT_TEMPERATURE);
+            refDate, EnumDeviceType.AMPHIRO, EnumAlertTemplate.HIGH_TEMPERATURE);
         return new MessageResolutionStatus<>(true, parameters);
     }
 
@@ -421,8 +421,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
                 refDate, deviceType,
                 (deviceType == EnumDeviceType.AMPHIRO?
-                    EnumAlertType.NEAR_DAILY_SHOWER_BUDGET:
-                    EnumAlertType.NEAR_DAILY_WATER_BUDGET)
+                    EnumAlertTemplate.NEAR_DAILY_SHOWER_BUDGET : EnumAlertTemplate.NEAR_DAILY_WATER_BUDGET)
             )
             .setInteger1(consumed.intValue())
             .setInteger2(remaining.intValue());
@@ -461,8 +460,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
                 refDate, deviceType,
                 (deviceType == EnumDeviceType.AMPHIRO?
-                    EnumAlertType.NEAR_WEEKLY_SHOWER_BUDGET:
-                    EnumAlertType.NEAR_WEEKLY_WATER_BUDGET)
+                    EnumAlertTemplate.NEAR_WEEKLY_SHOWER_BUDGET: EnumAlertTemplate.NEAR_WEEKLY_WATER_BUDGET)
             )
             .setInteger1(consumed.intValue())
             .setInteger2(remaining.intValue());
@@ -500,8 +498,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
                 refDate, deviceType,
                 (deviceType == EnumDeviceType.AMPHIRO?
-                    EnumAlertType.REACHED_DAILY_SHOWER_BUDGET:
-                    EnumAlertType.REACHED_DAILY_WATER_BUDGET)
+                    EnumAlertTemplate.REACHED_DAILY_SHOWER_BUDGET: EnumAlertTemplate.REACHED_DAILY_WATER_BUDGET)
             )
             .setInteger1(Integer.valueOf(budget))
             .setInteger2(consumed.intValue());
@@ -559,8 +556,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
             refDate, deviceType,
             (deviceType == EnumDeviceType.AMPHIRO)?
-                EnumAlertType.SHOWER_CHAMPION:
-                EnumAlertType.WATER_CHAMPION
+                EnumAlertTemplate.SHOWER_CHAMPION : EnumAlertTemplate.WATER_CHAMPION
         );
         return new MessageResolutionStatus<>(true, parameters);
     }
@@ -600,8 +596,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
                     refDate, deviceType,
                     (deviceType == EnumDeviceType.AMPHIRO)?
-                        EnumAlertType.TOO_MUCH_WATER_AMPHIRO:
-                        EnumAlertType.TOO_MUCH_WATER_METER
+                        EnumAlertTemplate.TOO_MUCH_WATER_SHOWER: EnumAlertTemplate.TOO_MUCH_WATER_METER
                 )
                 .setInteger1(annualSavings.intValue())
                 .setInteger2(consumed.intValue());
@@ -647,7 +642,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             Double annualSavings =
                 energyCalculator.computeEnergyToRiseTemperature(2, 12 * monthlyConsumption) * pricePerKwh;
             Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
-                    refDate, EnumDeviceType.AMPHIRO, EnumAlertType.TOO_MUCH_ENERGY
+                    refDate, EnumDeviceType.AMPHIRO, EnumAlertTemplate.TOO_MUCH_ENERGY
                 )
                 .setCurrency1(annualSavings);
             return new MessageResolutionStatus<>(true, parameters);
@@ -695,8 +690,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
                 refDate, deviceType,
                 (deviceType == EnumDeviceType.AMPHIRO)?
-                    EnumAlertType.REDUCED_WATER_USE_IN_SHOWER:
-                    EnumAlertType.REDUCED_WATER_USE)
+                    EnumAlertTemplate.REDUCED_WATER_USE_SHOWER: EnumAlertTemplate.REDUCED_WATER_USE_METER)
                 .setInteger1(percentDiff.intValue());
             return new MessageResolutionStatus<>(true, parameters);
         }
@@ -734,7 +728,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         if (consumed < Math.min(monthlyThreshold.getValue(), monthlyAverage.getValue())) {
             int annualSavings = (int) (monthlyAverage.getValue() - consumed) * 12;
             Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
-                    refDate, EnumDeviceType.METER, EnumAlertType.WATER_EFFICIENCY_LEADER
+                    refDate, EnumDeviceType.METER, EnumAlertTemplate.WATER_EFFICIENCY_LEADER
                 )
                 .setInteger1(annualSavings);
             return new MessageResolutionStatus<>(true, parameters);
@@ -785,7 +779,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         Double percentDiff = 100 * ((c1 - c0) / c1);
         if (percentDiff > 25 || (percentDiff > 6 && c0 < monthlyAverage.getValue())) {
             Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
-                    refDate, EnumDeviceType.METER, EnumAlertType.GOOD_JOB_MONTHLY)
+                    refDate, EnumDeviceType.METER, EnumAlertTemplate.GOOD_JOB_MONTHLY)
                 .setInteger1(percentDiff.intValue());
             return new MessageResolutionStatus<>(true, parameters);
         }
@@ -829,7 +823,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         Double diff = c1 - c0;
         if (diff > VOLUME_WEEKLY_DIFF_THRESHOLD) {
             Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
-                refDate, EnumDeviceType.METER, EnumAlertType.LITERS_ALREADY_SAVED)
+                refDate, EnumDeviceType.METER, EnumAlertTemplate.LITERS_ALREADY_SAVED)
             .setInteger1(diff.intValue());
             return new MessageResolutionStatus<>(true, parameters);
         }
@@ -862,7 +856,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
         if (c0 < weeklyThreshold.getValue()) {
             Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
-                refDate, EnumDeviceType.METER, EnumAlertType.TOP_25_PERCENT_OF_SAVERS
+                refDate, EnumDeviceType.METER, EnumAlertTemplate.TOP_25_PERCENT_OF_SAVERS
             );
             return new MessageResolutionStatus<>(true, parameters);
         }
@@ -894,7 +888,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
         if (c0 < weeklyThreshold.getValue()) {
             Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
-                refDate, EnumDeviceType.METER, EnumAlertType.TOP_10_PERCENT_OF_SAVERS
+                refDate, EnumDeviceType.METER, EnumAlertTemplate.TOP_10_PERCENT_OF_SAVERS
             );
             return new MessageResolutionStatus<>(true, parameters);
         }

@@ -55,47 +55,27 @@ public class AccountRecommendationRepository extends BaseRepository
     @Override
     public List<AccountRecommendationEntity> findByAccount(UUID accountKey)
     {
-        TypedQuery<AccountRecommendationEntity> query = entityManager.createQuery(
-            "SELECT a FROM account_recommendation a WHERE a.account.key = :accountKey",
-            AccountRecommendationEntity.class);
-        query.setParameter("accountKey", accountKey);
-        return query.getResultList();
+        return findByAccount(accountKey, (Interval) null);
     }
 
     @Override
     public Long countByAccount(UUID accountKey)
     {
-        TypedQuery<Long> query = entityManager.createQuery(
-            "SELECT count(a.id) FROM account_recommendation a WHERE a.account.key = :accountKey",
-            Long.class);
-        query.setParameter("accountKey", accountKey);
-        return query.getSingleResult();
+        return countByAccount(accountKey, (Interval) null);
     }
 
     @Override
     public List<AccountRecommendationEntity> findByAccountAndType(
         UUID accountKey, EnumRecommendationType recommendationType)
     {
-        TypedQuery<AccountRecommendationEntity> query = entityManager.createQuery(
-            "SELECT a FROM account_recommendation a " +
-                "WHERE a.recommendationTemplate.type.value = :rtype AND a.account.key = :accountKey",
-            AccountRecommendationEntity.class);
-        query.setParameter("rtype", recommendationType.getValue());
-        query.setParameter("accountKey", accountKey);
-        return query.getResultList();
+        return findByAccountAndType(accountKey, recommendationType, (Interval) null);
     }
 
     @Override
     public Long countByAccountAndType(
         UUID accountKey, EnumRecommendationType recommendationType)
     {
-        TypedQuery<Long> query = entityManager.createQuery(
-            "SELECT count(a.id) FROM account_recommendation a " +
-                "WHERE a.recommendationTemplate.type.value = :rtype AND a.account.key = :accountKey",
-            Long.class);
-        query.setParameter("rtype", recommendationType.getValue());
-        query.setParameter("accountKey", accountKey);
-        return query.getSingleResult();
+        return countByAccountAndType(accountKey, recommendationType, (Interval) null);
     }
 
     @Override
@@ -103,12 +83,16 @@ public class AccountRecommendationRepository extends BaseRepository
     {
         TypedQuery<AccountRecommendationEntity> query = entityManager.createQuery(
             "SELECT a FROM account_recommendation a WHERE " +
-                "a.account.key = :accountKey AND " +
-                "a.createdOn >= :start AND a.createdOn < :end",
+                "a.account.key = :accountKey" +
+                ((interval != null)? " AND a.createdOn >= :start AND a.createdOn < :end" : ""),
             AccountRecommendationEntity.class);
+
         query.setParameter("accountKey", accountKey);
-        query.setParameter("start", interval.getStart());
-        query.setParameter("end", interval.getEnd());
+        if (interval != null) {
+            query.setParameter("start", interval.getStart());
+            query.setParameter("end", interval.getEnd());
+        }
+
         return query.getResultList();
     }
 
@@ -117,12 +101,16 @@ public class AccountRecommendationRepository extends BaseRepository
     {
         TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(a.id) FROM account_recommendation a WHERE " +
-                "a.account.key = :accountKey AND " +
-                "a.createdOn >= :start AND a.createdOn < :end",
+                "a.account.key = :accountKey" +
+                ((interval != null)? " AND a.createdOn >= :start AND a.createdOn < :end" : ""),
             Long.class);
+
         query.setParameter("accountKey", accountKey);
-        query.setParameter("start", interval.getStart());
-        query.setParameter("end", interval.getEnd());
+        if (interval != null) {
+            query.setParameter("start", interval.getStart());
+            query.setParameter("end", interval.getEnd());
+        }
+
         return query.getSingleResult();
     }
 
@@ -166,8 +154,7 @@ public class AccountRecommendationRepository extends BaseRepository
     }
 
     @Override
-    public List<AccountRecommendationEntity> findByType(
-        EnumRecommendationType recommendationType, UUID utilityKey)
+    public List<AccountRecommendationEntity> findByType(EnumRecommendationType recommendationType, UUID utilityKey)
     {
         return findByType(recommendationType, utilityKey, null);
     }
@@ -195,8 +182,7 @@ public class AccountRecommendationRepository extends BaseRepository
     }
 
     @Override
-    public Long countByType(
-        EnumRecommendationType recommendationType, UUID utilityKey)
+    public Long countByType(EnumRecommendationType recommendationType, UUID utilityKey)
     {
         return countByType(recommendationType, utilityKey, null);
     }
@@ -262,14 +248,18 @@ public class AccountRecommendationRepository extends BaseRepository
     {
         TypedQuery<AccountRecommendationEntity> query = entityManager.createQuery(
             "SELECT a FROM account_recommendation a WHERE " +
-                "a.recommendationTemplate.type.value = :rtype AND " +
-                "a.account.key = :accountKey AND " +
-                "a.createdOn >= :start AND a.createdOn < :end",
+                "a.recommendationTemplate.type.value = :rtype" +
+                " AND a.account.key = :accountKey" +
+                ((interval != null)? " AND a.createdOn >= :start AND a.createdOn < :end" : ""),
             AccountRecommendationEntity.class);
+
         query.setParameter("rtype", recommendationType.getValue());
         query.setParameter("accountKey", accountKey);
-        query.setParameter("start", interval.getStart());
-        query.setParameter("end", interval.getEnd());
+        if (interval != null) {
+            query.setParameter("start", interval.getStart());
+            query.setParameter("end", interval.getEnd());
+        }
+
         return query.getResultList();
     }
 
@@ -278,15 +268,19 @@ public class AccountRecommendationRepository extends BaseRepository
         UUID accountKey, EnumRecommendationType recommendationType, Interval interval)
     {
         TypedQuery<Long> query = entityManager.createQuery(
-            "SELECT count(a) FROM account_recommendation a WHERE " +
-                "a.recommendationTemplate.type.value = :rtype AND " +
-                "a.account.key = :accountKey AND " +
-                "a.createdOn >= :start AND a.createdOn < :end",
+            "SELECT count(a.id) FROM account_recommendation a WHERE " +
+                "a.recommendationTemplate.type.value = :rtype" +
+                " AND a.account.key = :accountKey" +
+                ((interval != null)? " AND a.createdOn >= :start AND a.createdOn < :end" : ""),
             Long.class);
+
         query.setParameter("rtype", recommendationType.getValue());
         query.setParameter("accountKey", accountKey);
-        query.setParameter("start", interval.getStart());
-        query.setParameter("end", interval.getEnd());
+        if (interval != null) {
+            query.setParameter("start", interval.getStart());
+            query.setParameter("end", interval.getEnd());
+        }
+
         return query.getSingleResult();
     }
 

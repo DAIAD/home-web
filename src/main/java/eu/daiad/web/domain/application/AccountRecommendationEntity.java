@@ -43,8 +43,7 @@ public class AccountRecommendationEntity
 
 	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER, orphanRemoval = true)
 	@JoinColumn(name = "account_recommendation_id")
-	private Set<AccountRecommendationParameterEntity> parameters =
-	    new HashSet<>();
+	private Set<AccountRecommendationParameterEntity> parameters = new HashSet<>();
 
 	@ManyToOne()
 	@JoinColumn(name = "recommendation_template", nullable = false)
@@ -66,17 +65,16 @@ public class AccountRecommendationEntity
 	public AccountRecommendationEntity() {}
 
 	public AccountRecommendationEntity(
-        AccountEntity account, RecommendationTemplateEntity recommendationTemplate, Map<String, Object> parameters)
+        AccountEntity account, RecommendationTemplateEntity templateEntity, Map<String, Object> parameters)
     {
 	    this.account = account;
-        this.recommendationTemplate = recommendationTemplate;
+        this.recommendationTemplate = templateEntity;
 
         if (parameters != null) {
             for (Map.Entry<String, Object> e: parameters.entrySet()) {
                 String key = e.getKey();
                 String value = e.getValue().toString();
-                this.parameters.add(
-                    new AccountRecommendationParameterEntity(this, key, value));
+                this.parameters.add(new AccountRecommendationParameterEntity(this, key, value));
             }
         }
     }
@@ -86,19 +84,23 @@ public class AccountRecommendationEntity
 	    this(account, template, null);
 	}
 
-    public AccountEntity getAccount() {
+    public AccountEntity getAccount()
+    {
 		return account;
 	}
 
-	public void setAccount(AccountEntity account) {
+	public void setAccount(AccountEntity account)
+	{
 		this.account = account;
 	}
 
-	public RecommendationTemplateEntity getTemplate() {
+	public RecommendationTemplateEntity getTemplate()
+	{
 		return recommendationTemplate;
 	}
 
-	public DateTime getCreatedOn() {
+	public DateTime getCreatedOn()
+	{
 		return createdOn;
 	}
 
@@ -106,11 +108,13 @@ public class AccountRecommendationEntity
 		this.createdOn = createdOn;
 	}
 
-	public DateTime getAcknowledgedOn() {
+	public DateTime getAcknowledgedOn()
+	{
 		return acknowledgedOn;
 	}
 
-	public void setAcknowledgedOn(DateTime acknowledgedOn) {
+	public void setAcknowledgedOn(DateTime acknowledgedOn)
+	{
 		this.acknowledgedOn = acknowledgedOn;
 	}
 
@@ -118,7 +122,8 @@ public class AccountRecommendationEntity
 		return id;
 	}
 
-	public Set<AccountRecommendationParameterEntity> getParameters() {
+	public Set<AccountRecommendationParameterEntity> getParameters()
+	{
 		return parameters;
 	}
 
@@ -130,12 +135,13 @@ public class AccountRecommendationEntity
         return p;
     }
 
-	public DateTime getReceiveAcknowledgedOn() {
+	public DateTime getReceiveAcknowledgedOn()
+	{
 		return receiveAcknowledgedOn;
 	}
 
-	public void setReceiveAcknowledgedOn(DateTime receiveAcknowledgedOn) {
+	public void setReceiveAcknowledgedOn(DateTime receiveAcknowledgedOn)
+	{
 		this.receiveAcknowledgedOn = receiveAcknowledgedOn;
 	}
-
 }

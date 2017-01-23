@@ -1,19 +1,15 @@
 package eu.daiad.web.repository.application;
 
-import java.sql.Date;
 import java.text.NumberFormat;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
 import org.apache.commons.logging.Log;
@@ -26,17 +22,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ibm.icu.text.MessageFormat;
-
 import eu.daiad.web.domain.application.AccountAlertEntity;
-import eu.daiad.web.domain.application.AccountAlertPropertyEntity;
 import eu.daiad.web.domain.application.AccountAnnouncementEntity;
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AccountRecommendationEntity;
 import eu.daiad.web.domain.application.AccountStaticRecommendationEntity;
-import eu.daiad.web.domain.application.AlertAnalyticsEntity;
-import eu.daiad.web.domain.application.AlertEntity;
-import eu.daiad.web.domain.application.AlertTranslationEntity;
 import eu.daiad.web.domain.application.AnnouncementChannel;
 import eu.daiad.web.domain.application.AnnouncementEntity;
 import eu.daiad.web.domain.application.AnnouncementTranslationEntity;
@@ -46,6 +36,7 @@ import eu.daiad.web.model.PagingOptions;
 import eu.daiad.web.model.error.MessageErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.message.Alert;
+import eu.daiad.web.model.message.AlertStatistics;
 import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.model.message.AnnouncementRequest;
 import eu.daiad.web.model.message.AnnouncementTranslation;
@@ -79,6 +70,9 @@ public class JpaMessageRepository extends BaseRepository
     @Autowired
     IAccountRecommendationRepository accountRecommendationRepository;
 
+    @Autowired
+    IAccountAlertRepository accountAlertRepository;
+
     @Deprecated
     // Fixme Move this to controller
     private AuthenticatedUser getCurrentAuthenticatedUser() {
@@ -100,7 +94,7 @@ public class JpaMessageRepository extends BaseRepository
             DateTime acknowledged = new DateTime(message.getTimestamp());
             switch (message.getType()) {
             case ALERT:
-                persistAlertAcknowledgement(messageId, acknowledged);
+                accountAlertRepository.acknowledge(accountKey, messageId, acknowledged);
                 break;
             case RECOMMENDATION:
                 accountRecommendationRepository.acknowledge(accountKey, messageId, acknowledged);
@@ -142,7 +136,7 @@ public class JpaMessageRepository extends BaseRepository
         MessageRequest.Options options = null;
 
         //
-        // Get alerts
+        // Alerts
         //
 
         options = this.getMessageOptions(request, EnumMessageType.ALERT);
@@ -150,78 +144,20 @@ public class JpaMessageRepository extends BaseRepository
             int minMessageId = options.getMinMessageId();
             PagingOptions pagination = options.getPagination();
 
-            // Get total count; Todo Move to AccountAlertRepository
-            TypedQuery<Number> countAlertsQuery = entityManager.createQuery(
-                "SELECT count(a.id) from account_alert a "
-                    + "WHERE a.account.id = :accountId and a.id > :minMessageId ",
-                 Number.class);
-            countAlertsQuery.setParameter("accountId", user.getId());
-            countAlertsQuery.setParameter("minMessageId", minMessageId);
-            int totalAlerts = countAlertsQuery.getSingleResult().intValue();
+            long n = accountAlertRepository.countByAccount(userKey, minMessageId);
+            result.setTotalAlerts((int) n);
 
-            result.setTotalAlerts(totalAlerts);
-
-            // Build query; Todo Move to AccountAlertRepository
-            TypedQuery<AccountAlertEntity> alertsQuery = entityManager.createQuery(
-                "SELECT a FROM account_alert a " +
-                    "WHERE a.account.id = :accountId and a.id > :minMessageId " +
-                    "ORDER BY a.id " + (pagination.isAscending()? "ASC" : "DESC"),
-                AccountAlertEntity.class);
-
-            alertsQuery.setFirstResult(pagination.getOffset());
-            alertsQuery.setMaxResults(pagination.getLimit());
-            alertsQuery.setParameter("accountId", user.getId());
-            alertsQuery.setParameter("minMessageId", minMessageId);
-
-            for (AccountAlertEntity alert: alertsQuery.getResultList()) {
-                // Find translation by locale
-                AlertTranslationEntity alertTranslation = null;
-                for (AlertTranslationEntity translation : alert.getAlert().getTranslations()) {
-                    if (translation.getLocale().equals(localeName)) {
-                        alertTranslation = translation;
-                        break;
-                    }
-                }
-                if (alertTranslation == null) {
-                    continue;
-                }
-
-                // Build localized strings using translation and properties
-
-                Map<String, String> formatParams = new HashMap<>();
-                for (AccountAlertPropertyEntity p : alert.getProperties()) {
-                    Map.Entry<String, String> p1 = preprocessFormatParameter(p.getKey(), p.getValue(), locale);
-                    formatParams.put(p1.getKey(), p1.getValue());
-                }
-
-                MessageFormat titleTemplate = new MessageFormat(alertTranslation.getTitle(), locale);
-                String title = titleTemplate.format(formatParams);
-
-                String description = null;
-                if (alertTranslation.getDescription() != null) {
-                    MessageFormat descriptionTemplate = new MessageFormat(alertTranslation.getDescription(), locale);
-                    description = descriptionTemplate.format(formatParams);
-                }
-
-                // Create message
-
-                EnumAlertType alertType = EnumAlertType.fromInteger(alert.getAlert().getId());
-                Alert message = new Alert(alertType, alert.getId());
-                message.setPriority(alert.getAlert().getPriority());
-                message.setTitle(title);
-                message.setDescription(description);
-                message.setImageLink(alertTranslation.getImageLink());
-                message.setCreatedOn(alert.getCreatedOn().getMillis());
-                if (alert.getAcknowledgedOn() != null) {
-                    message.setAcknowledgedOn(alert.getAcknowledgedOn().getMillis());
-                }
-
-                messages.add(message);
+            List<AccountAlertEntity> alerts =
+                accountAlertRepository.findByAccount(userKey, minMessageId, pagination);
+            for (AccountAlertEntity r: alerts) {
+                Alert message = accountAlertRepository.formatMessage(r, locale);
+                if (message != null)
+                    messages.add(message);
             }
         }
 
         //
-        // Get recommendations
+        // Recommendations
         //
 
         options = this.getMessageOptions(request, EnumMessageType.RECOMMENDATION);
@@ -242,7 +178,7 @@ public class JpaMessageRepository extends BaseRepository
         }
 
         //
-        // Get Announcements
+        // Announcements
         //
 
         options = this.getMessageOptions(request, EnumMessageType.ANNOUNCEMENT);
@@ -302,7 +238,7 @@ public class JpaMessageRepository extends BaseRepository
         }
 
         //
-        // Get tips (static recommendations)
+        // Tips (static recommendations)
         //
 
         options = this.getMessageOptions(request, EnumMessageType.RECOMMENDATION_STATIC);
@@ -554,43 +490,22 @@ public class JpaMessageRepository extends BaseRepository
     }
 
     @Override
-    // Todo: Refactor as getRecommendationStatistics
-    public List<AlertAnalyticsEntity> getAlertStatistics(int utilityId, MessageStatisticsQuery query)
+    public AlertStatistics getAlertStatistics(UUID utilityKey, MessageStatisticsQuery query)
     {
-        //TODO - align sql dates with joda datetimes
-        Date slqDateStart = new Date(query.getTime().getStart());
-        Date slqDateEnd = new Date(query.getTime().getEnd());
+        Interval interval = (query.getTime() == null)? null : query.getTime().asInterval();
 
-        Query nativeQuery = entityManager.createNativeQuery("select\n" +
-            "at.alert_id as id,\n" +
-            "at.title as title,\n" +
-            "at.description as description,\n" +
-            "at.locale as locale,\n" +
-            "count(distinct (aa.id)) as total\n" +
-            "from\n" +
-            "public.alert_translation at \n" +
-            "left join account acc on acc.locale = at.locale\n" +
-            "\n" +
-            "left join public.account_alert aa on at.alert_id = aa.alert_id and acc.id=aa.account_id\n" +
-            "where \n" +
-            "(acc.utility_id=?1) and (aa.created_on >= ?2 and aa.created_on <= ?3 or aa.created_on is NULL)\n" +
-            "group by\n" +
-            "at.alert_id,at.title,at.locale, at.description", AlertAnalyticsEntity.class);
+        ArrayList<PopulationFilter> pf = query.getPopulation();
+        if (pf != null && !pf.isEmpty())
+            logger.warn("alert statistics: The population filter is ignored");
 
-        nativeQuery.setParameter(1, utilityId);
-        nativeQuery.setParameter(2, slqDateStart);
-        nativeQuery.setParameter(3, slqDateEnd);
-
-        List<AlertAnalyticsEntity> alertAnalytics = nativeQuery.getResultList();
-
-        return alertAnalytics;
+        return new AlertStatistics()
+            .setCountByType(accountAlertRepository.countByType(utilityKey, interval));
     }
 
     @Override
     public RecommendationStatistics getRecommendationStatistics(UUID utilityKey, MessageStatisticsQuery query)
     {
-        TimeFilter tf = query.getTime();
-        Interval interval = (tf == null)? null : tf.asInterval();
+        Interval interval = (query.getTime() == null)? null : query.getTime().asInterval();
 
         ArrayList<PopulationFilter> pf = query.getPopulation();
         if (pf != null && !pf.isEmpty())
@@ -601,31 +516,21 @@ public class JpaMessageRepository extends BaseRepository
     }
 
     @Override
-    public List<ReceiverAccount> getAlertReceivers(int alertId, int utilityId, MessageStatisticsQuery query)
+    public List<ReceiverAccount> getAlertReceivers(
+        EnumAlertType type, UUID utilityKey, MessageStatisticsQuery query)
     {
-        // Todo: Replace query with repo.findByType
-
-        DateTime startDate = new DateTime(query.getTime().getStart());
-        DateTime endDate = new DateTime(query.getTime().getEnd());
-
-        TypedQuery<AccountAlertEntity> accountAlertQuery = entityManager.createQuery(
-            "SELECT a FROM account_alert a " +
-                "WHERE a.account.utility.id = :utilityId and a.alert.id = :id and a.createdOn > :startDate and a.createdOn < :endDate",
-            AccountAlertEntity.class);
-
-        accountAlertQuery.setParameter("utilityId", utilityId);
-        accountAlertQuery.setParameter("id", alertId);
-        accountAlertQuery.setParameter("startDate", startDate);
-        accountAlertQuery.setParameter("endDate", endDate);
+        TimeFilter tf = query.getTime();
+        List<AccountAlertEntity> alerts = accountAlertRepository.findByType(
+            type, utilityKey, (tf == null)? null : tf.asInterval());
 
         List<ReceiverAccount> receivers = new ArrayList<>();
-        for (AccountAlertEntity accountAlert : accountAlertQuery.getResultList()) {
-            ReceiverAccount receiverAccount = new ReceiverAccount();
-            receiverAccount.setAccountId(accountAlert.getAccount().getId());
-            receiverAccount.setUsername(accountAlert.getAccount().getUsername());
-            receiverAccount.setAcknowledgedOn(accountAlert.getAcknowledgedOn());
-            receivers.add(receiverAccount);
-
+        for (AccountAlertEntity alert: alerts) {
+            AccountEntity accountEntity = alert.getAccount();
+            ReceiverAccount account = new ReceiverAccount();
+            account.setAccountId(accountEntity.getId());
+            account.setUsername(accountEntity.getUsername());
+            account.setAcknowledgedOn(alert.getAcknowledgedOn());
+            receivers.add(account);
         }
         return receivers;
     }
@@ -648,34 +553,6 @@ public class JpaMessageRepository extends BaseRepository
             receivers.add(account);
         }
         return receivers;
-    }
-
-    @Override
-    public Alert getAlert(int id, String locale)
-    {
-        TypedQuery<AlertTranslationEntity> query = entityManager.createQuery(
-            "select a from alert_translation a where a.locale = :locale and a.id = :id",
-            AlertTranslationEntity.class);
-        query.setParameter("locale", locale);
-        query.setParameter("id", id);
-
-        Alert alert = null;
-        AlertTranslationEntity translationEntity = null;
-        try {
-            translationEntity = query.getSingleResult();
-        } catch (NoResultException ex) {
-            translationEntity = null;
-            alert = new Alert(EnumAlertType.UNDEFINED, -1);
-        }
-
-        if (translationEntity != null) {
-            AlertEntity alertEntity = translationEntity.getAlert();
-            alert = new Alert(EnumAlertType.fromInteger(alertEntity.getId()), -1);
-            alert.setTitle(translationEntity.getTitle());
-            alert.setDescription(translationEntity.getDescription());
-        }
-
-        return alert;
     }
 
     @Override
@@ -723,27 +600,6 @@ public class JpaMessageRepository extends BaseRepository
                 e.setCreatedOn(createdOn);
                 entityManager.persist(e);
             }
-        }
-    }
-
-    // Todo : When sending an acknowledgement for an alert of a specific type, an older (not acknowledged)
-    // alert of the same type may appear in the next get messages call
-    // Todo: Move to AccountAlertRepository
-    private void persistAlertAcknowledgement(int id, DateTime acknowledgedOn)
-    {
-        AuthenticatedUser user = this.getCurrentAuthenticatedUser();
-
-        TypedQuery<AccountAlertEntity> accountAlertsQuery = entityManager.createQuery(
-            "select a from account_alert a "
-                + "where a.account.id = :accountId and a.id = :alertId and a.acknowledgedOn is null",
-            AccountAlertEntity.class);
-        accountAlertsQuery.setParameter("accountId", user.getId());
-        accountAlertsQuery.setParameter("alertId", id);
-
-        List<AccountAlertEntity> alerts = accountAlertsQuery.getResultList();
-        if (alerts.size() == 1) {
-            alerts.get(0).setAcknowledgedOn(acknowledgedOn);
-            alerts.get(0).setReceiveAcknowledgedOn(DateTime.now());
         }
     }
 
