@@ -40,7 +40,7 @@ public class DeviceController extends BaseRestController {
      * @return the controller's response.
      */
     @RequestMapping(value = "/action/device/update", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-    @Secured({ "ROLE_RUSER" })
+    @Secured({ "ROLE_USER" })
     public RestResponse update(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody DeviceUpdateRequest request) {
         try {
             deviceRepository.updateDevice(user.getKey(), request);

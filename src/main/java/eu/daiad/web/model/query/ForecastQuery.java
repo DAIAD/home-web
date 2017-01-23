@@ -26,10 +26,6 @@ public class ForecastQuery {
         this.time = time;
     }
 
-    public EnumMeasurementDataSource getSource() {
-        return EnumMeasurementDataSource.METER;
-    }
-
     public EnumMetric[] getMetrics() {
         return metrics;
     }

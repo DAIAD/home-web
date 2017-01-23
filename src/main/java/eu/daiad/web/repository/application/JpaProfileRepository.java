@@ -821,13 +821,16 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
         // Initialize household
         HouseholdEntity householdEntity = account.getHousehold();
+        DateTime updatedOn = DateTime.now();
 
         if (householdEntity == null) {
             householdEntity = new HouseholdEntity();
             householdEntity.setAccount(account);
-            householdEntity.setCreatedOn(account.getCreatedOn());
-            householdEntity.setUpdatedOn(account.getCreatedOn());
+            householdEntity.setCreatedOn(updatedOn);
+            householdEntity.setUpdatedOn(updatedOn);
             entityManager.persist(householdEntity);
+        } else {
+            householdEntity.setUpdatedOn(updatedOn);
         }
 
         // Sort members
@@ -854,14 +857,14 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                 householdMemberEntity = new HouseholdMemberEntity();
 
                 householdMemberEntity.setIndex(member.getIndex());
-                householdMemberEntity.setCreatedOn(DateTime.now());
-                householdMemberEntity.setUpdatedOn(householdMemberEntity.getCreatedOn());
+                householdMemberEntity.setCreatedOn(updatedOn);
+                householdMemberEntity.setUpdatedOn(updatedOn);
 
                 householdMemberEntity.setHousehold(householdEntity);
 
                 entityManager.persist(householdMemberEntity);
             } else {
-                householdMemberEntity.setUpdatedOn(DateTime.now());
+                householdMemberEntity.setUpdatedOn(updatedOn);
             }
 
             /*
