@@ -15,7 +15,7 @@
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****",
  *   },
  *   "deviceKey": [
@@ -92,7 +92,7 @@ function meterStatus() { return; }
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****",
  *   },
  *   "deviceKey": [
@@ -194,7 +194,7 @@ function meterMeasurements() { return; }
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****",
  *   },
  *   "deviceKey": [
@@ -300,7 +300,7 @@ function amphiroMesurementsByTime() { return; }
 * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****",
  *   },
  *   "deviceKey": [
@@ -389,7 +389,7 @@ function amphiroMesurementsByIndex() { return; }
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****",
  *   },
  *   "deviceKey": [
@@ -507,7 +507,7 @@ function amphiroSessionsByTime() { return; }
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****",
  *   },
  *   "deviceKey": [
@@ -614,7 +614,7 @@ function amphiroSessionsByIndex() { return; }
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****",
  *   },
  *   "deviceKey": "114e7af3-39af-4a44-ac57-41779689ec39",
@@ -713,7 +713,7 @@ function amphiroSingleSessionByTime() { return; }
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****",
  *   },
  *   "deviceKey": "114e7af3-39af-4a44-ac57-41779689ec39",

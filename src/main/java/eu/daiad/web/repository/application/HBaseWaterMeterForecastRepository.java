@@ -364,8 +364,7 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
                 ArrayList<DataPoint> points = new ArrayList<DataPoint>();
 
                 for (DataPoint point : series.getPoints()) {
-                    points.add(((RankingDataPoint) point).aggregate(query.getMetrics(),
-                                    DataPoint.EnumDataPointType.METER));
+                    points.add(((RankingDataPoint) point).aggregate(query.getMetrics(), DataPoint.EnumDataPointType.METER));
                 }
 
                 series.setPoints(points);

@@ -204,11 +204,10 @@ public class DataController extends BaseController {
      */
     @RequestMapping(value = "/action/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @ResponseBody
-    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    @Secured({ RoleConstant.ROLE_USER, RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse query(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody DataQueryRequest data) {
         try {
             DataQuery query = data.getQuery();
-
             if (query == null) {
                 return createResponse(QueryErrorCode.EMPTY_QUERY);
             }
@@ -353,11 +352,10 @@ public class DataController extends BaseController {
      */
     @RequestMapping(value = "/action/data/meter/forecast", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @ResponseBody
-    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    @Secured({ RoleConstant.ROLE_USER, RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse forecast(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody ForecastQueryRequest data) {
         try {
             ForecastQuery query = data.getQuery();
-
             if (query == null) {
                 return createResponse(QueryErrorCode.EMPTY_QUERY);
             }
