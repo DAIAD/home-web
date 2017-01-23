@@ -25,7 +25,7 @@
  * @apiParamExample {json} Request Example (White List Filtering)
  * {
  *   "account" : {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****"
  *   }
  * }
@@ -33,7 +33,7 @@
  * @apiParamExample {json} Request Example
  * {
  *   "account" : {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****",
  *     "firstname":"George",
  *     "lastname":"Papadopoulos",
@@ -94,7 +94,7 @@ function registerUser() { return; }
  * @apiParamExample {json} Request Example
  * {
  *   "credentials" : {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****"
  *   },
  *   "password":"****"
@@ -121,7 +121,7 @@ function registerUser() { return; }
  * {
  *   errors: [{
  *     code: "UserErrorCode.USERNANE_NOT_FOUND",
- *     description: "Account demo@daiad.eu was not found."
+ *     description: "Account user@daiad.eu was not found."
  *   }],
  *   success: false
  * }
@@ -146,7 +146,7 @@ function changePassword() { return; }
  *
  * @apiParamExample {json} Request Example
  * {
- *   "username":"george.papadopoulos@daiad.eu",
+ *   "username":"user@daiad.eu",
  *   "application":"MOBILE"
  * }
  *
@@ -250,7 +250,7 @@ function passwordResetTokenRedeem() { return; }
  * @apiParamExample {json} Request Example
  * {
  *   "account" : {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****"
  *   },
  *   "username":"user@daiad.eu",
@@ -307,7 +307,7 @@ function grantRole() { return; }
  * @apiParamExample {json} Request Example
  * {
  *   "account" : {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****"
  *   },
  *   "username":"user@daiad.eu",

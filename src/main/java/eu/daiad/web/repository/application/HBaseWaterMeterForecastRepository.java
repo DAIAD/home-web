@@ -1,5 +1,6 @@
 package eu.daiad.web.repository.application;
 
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -88,7 +89,7 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
             for (int i = 0; i < data.getMeasurements().size(); i++) {
                 WaterMeterForecast m = data.getMeasurements().get(i);
 
-                if (m.getDifference() <= 0) {
+                if (m.getDifference() < 0) {
                     continue;
                 }
 
@@ -115,6 +116,9 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
 
                 byte[] column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("d")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.getDifference()));
+
+                column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("s")));
+                p.addColumn(columnFamily, column, serial.getBytes(StandardCharsets.UTF_8));
 
                 table.put(p);
             }
@@ -149,9 +153,10 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
             for (int i = 0; i < data.getMeasurements().size(); i++) {
                 WaterMeterForecast m = data.getMeasurements().get(i);
 
-                if (m.getDifference() <= 0) {
+                if (m.getDifference() < 0) {
                     continue;
                 }
+
                 short partition = (short) (m.getTimestamp() % timePartitions);
                 byte[] partitionBytes = Bytes.toBytes(partition);
 
@@ -181,6 +186,9 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
 
                 byte[] column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("d")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.getDifference()));
+
+                column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("s")));
+                p.addColumn(columnFamily, column, serial.getBytes(StandardCharsets.UTF_8));
 
                 table.put(p);
             }
@@ -292,8 +300,6 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
                     long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 2, 10));
                     byte[] serialHash = Arrays.copyOfRange(r.getRow(), 10, 26);
 
-                    float difference = 0;
-
                     for (Entry<byte[], byte[]> entry : map.entrySet()) {
                         int offset = Bytes.toInt(Arrays.copyOfRange(entry.getKey(), 0, 4));
                         long timestamp = ((Long.MAX_VALUE / 1000) - (timeBucket + (long) offset)) * 1000L;
@@ -304,26 +310,28 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
 
                             String columnQualifier = Bytes.toString(slice);
                             if (columnQualifier.equals("d")) {
-                                difference = Bytes.toFloat(entry.getValue());
-                            }
+                                float difference = Bytes.toFloat(entry.getValue());
 
-                            if (difference > 0) {
                                 int filterIndex = 0;
                                 for (ExpandedPopulationFilter filter : query.getGroups()) {
                                     GroupDataSeries series = result.get(filterIndex);
 
                                     int index = inArray(filter.getSerials(), serialHash);
                                     if (index >= 0) {
-                                        series.addMeterRankingDataPoint(query.getGranularity(), filter.getUsers().get(
-                                                        index), filter.getLabels().get(index), timestamp, difference,
-                                                        0, query.getMetrics(), query.getTimezone());
-
+                                        series.addMeterRankingDataPoint(
+                                            query.getGranularity(),
+                                            filter.getUsers().get(index),
+                                            filter.getLabels().get(index),
+                                            timestamp,
+                                            difference,
+                                            0,
+                                            query.getMetrics(),
+                                            query.getTimezone());
                                     }
 
                                     filterIndex++;
                                 }
                             }
-                            difference = 0;
                         }
                     }
                 }
@@ -356,8 +364,7 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
                 ArrayList<DataPoint> points = new ArrayList<DataPoint>();
 
                 for (DataPoint point : series.getPoints()) {
-                    points.add(((RankingDataPoint) point).aggregate(query.getMetrics(),
-                                    DataPoint.EnumDataPointType.METER));
+                    points.add(((RankingDataPoint) point).aggregate(query.getMetrics(), DataPoint.EnumDataPointType.METER));
                 }
 
                 series.setPoints(points);

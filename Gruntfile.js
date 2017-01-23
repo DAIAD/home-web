@@ -119,7 +119,34 @@ module.exports = function(grunt) {
             ["babelify"],
             ["envify"],
             ["browserify-shim"]
-          ]
+          ],
+          external: [
+              // required from vendor/util.js
+              // required from vendor/react.js
+              'react',
+              'react-dom',
+              'react-router',
+              'react-datetime',
+              'react-intl',
+              'react-intl/locale-data/de',
+              'react-intl/locale-data/el',
+              'react-intl/locale-data/en',
+              'react-intl/locale-data/es',
+              'react-grid-layout',
+              'react-select',
+              'react-bootstrap',
+              'react-router-bootstrap',
+              'react-router-redux',
+              'react-bootstrap-daterangepicker',
+              'react-scroll-up',
+              'react-dropzone',
+              'redux',
+              'react-redux',
+              'redux-thunk',
+              'redux-logger',
+              // globals
+              'echarts',
+            ]
         },
         files: {
           'target/classes/public/assets/js/build/home/bundle.js': [
@@ -184,6 +211,7 @@ module.exports = function(grunt) {
             'leaflet',
             'leaflet.heat',
             'leaflet-draw',
+            'chroma-js',
             // globals
             'echarts',
           ],
@@ -237,6 +265,7 @@ module.exports = function(grunt) {
             'leaflet',
             'leaflet.heat',
             'leaflet-draw',
+            'chroma-js',
             // globals
             'echarts',
           ],
@@ -252,6 +281,35 @@ module.exports = function(grunt) {
           'src/main/resources/public/assets/js/build/home/bundle.js': [
             'src/main/resources/public/assets/js/src/home/index.js'
           ]
+        },
+        options: {
+          external: [
+              // required from vendor/util.js
+              // required from vendor/react.js
+              'react',
+              'react-dom',
+              'react-router',
+              'react-datetime',
+              'react-intl',
+              'react-intl/locale-data/de',
+              'react-intl/locale-data/el',
+              'react-intl/locale-data/en',
+              'react-intl/locale-data/es',
+              'react-grid-layout',
+              'react-select',
+              'react-bootstrap',
+              'react-router-bootstrap',
+              'react-router-redux',
+              'react-bootstrap-daterangepicker',
+              'react-scroll-up',
+              'react-dropzone',
+              'redux',
+              'react-redux',
+              'redux-thunk',
+              'redux-logger',
+              // globals
+              'echarts',
+            ],
         }
       },
       'vendor-util': {
@@ -308,7 +366,8 @@ module.exports = function(grunt) {
           require: [
             'leaflet',
             'leaflet.heat',
-            'leaflet-draw'
+            'leaflet-draw',
+            'chroma-js',
           ],
         },
         files: {

@@ -1,6 +1,6 @@
 package eu.daiad.web.domain.application;
 
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -17,32 +17,39 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-@Entity(name = "account_dynamic_recommendation")
-@Table(schema = "public", name = "account_dynamic_recommendation")
-public class AccountDynamicRecommendationEntity {
-
-	@Id()
+@Entity(name = "account_recommendation")
+@Table(schema = "public", name = "account_recommendation")
+public class AccountRecommendationEntity
+{
+    @Id()
 	@Column(name = "id")
-	@SequenceGenerator(sequenceName = "account_dynamic_recommendation_id_seq", name = "account_dynamic_recommendation_id_seq", allocationSize = 1, initialValue = 1)
-	@GeneratedValue(generator = "account_dynamic_recommendation_id_seq", strategy = GenerationType.SEQUENCE)
+	@SequenceGenerator(
+	    sequenceName = "account_recommendation_id_seq",
+	    name = "account_recommendation_id_seq",
+	    allocationSize = 1,
+	    initialValue = 1)
+	@GeneratedValue(generator = "account_recommendation_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
 
-	@ManyToOne(cascade = { CascadeType.ALL })
+	@ManyToOne()
 	@JoinColumn(name = "account_id", nullable = false)
+	@NotNull
 	private AccountEntity account;
 
-	@ManyToOne(cascade = { CascadeType.ALL })
-	@JoinColumn(name = "dynamic_recommendation_id", nullable = false)
-	private DynamicRecommendationEntity recommendation;
-
 	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER, orphanRemoval = true)
-	@JoinColumn(name = "account_dynamic_recommendation_id")
-	private Set<AccountDynamicRecommendationPropertyEntity> properties = 
-	    new HashSet<AccountDynamicRecommendationPropertyEntity>();
+	@JoinColumn(name = "account_recommendation_id")
+	private Set<AccountRecommendationParameterEntity> parameters =
+	    new HashSet<>();
+
+	@ManyToOne()
+	@JoinColumn(name = "recommendation_template", nullable = false)
+	@NotNull
+	private RecommendationTemplateEntity recommendationTemplate;
 
 	@Column(name = "created_on")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
@@ -56,31 +63,29 @@ public class AccountDynamicRecommendationEntity {
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime receiveAcknowledgedOn;
 
-	public AccountDynamicRecommendationEntity()
-	{
-	    // no-op
-	}
-	
-	public AccountDynamicRecommendationEntity(
-        AccountEntity account, DynamicRecommendationEntity recommendation, Map<String, Object> p)
+	public AccountRecommendationEntity() {}
+
+	public AccountRecommendationEntity(
+        AccountEntity account, RecommendationTemplateEntity recommendationTemplate, Map<String, Object> parameters)
     {
 	    this.account = account;
-        this.recommendation = recommendation;
-        
-        if (p != null) {
-            for (Map.Entry<String, Object> e: p.entrySet()) {
-                this.properties.add(
-                    new AccountDynamicRecommendationPropertyEntity(this, e.getKey(), e.getValue().toString())); 
+        this.recommendationTemplate = recommendationTemplate;
+
+        if (parameters != null) {
+            for (Map.Entry<String, Object> e: parameters.entrySet()) {
+                String key = e.getKey();
+                String value = e.getValue().toString();
+                this.parameters.add(
+                    new AccountRecommendationParameterEntity(this, key, value));
             }
         }
     }
 
-	public AccountDynamicRecommendationEntity(
-	    AccountEntity account, DynamicRecommendationEntity recommendation) 
+	public AccountRecommendationEntity(AccountEntity account, RecommendationTemplateEntity template)
 	{
-	    this(account, recommendation, null);
+	    this(account, template, null);
 	}
-	
+
     public AccountEntity getAccount() {
 		return account;
 	}
@@ -89,12 +94,8 @@ public class AccountDynamicRecommendationEntity {
 		this.account = account;
 	}
 
-	public DynamicRecommendationEntity getRecommendation() {
-		return recommendation;
-	}
-
-	public void setRecommendation(DynamicRecommendationEntity recommendation) {
-		this.recommendation = recommendation;
+	public RecommendationTemplateEntity getTemplate() {
+		return recommendationTemplate;
 	}
 
 	public DateTime getCreatedOn() {
@@ -117,10 +118,18 @@ public class AccountDynamicRecommendationEntity {
 		return id;
 	}
 
-	public Set<AccountDynamicRecommendationPropertyEntity> getProperties() {
-		return properties;
+	public Set<AccountRecommendationParameterEntity> getParameters() {
+		return parameters;
 	}
-    	
+
+	public Map<String, Object> getParametersAsMap()
+	{
+        Map<String, Object> p = new HashMap<>();
+        for (AccountRecommendationParameterEntity pe: parameters)
+            p.put(pe.getKey(), pe.getValue());
+        return p;
+    }
+
 	public DateTime getReceiveAcknowledgedOn() {
 		return receiveAcknowledgedOn;
 	}

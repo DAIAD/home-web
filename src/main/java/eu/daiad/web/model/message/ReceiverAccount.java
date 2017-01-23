@@ -6,7 +6,6 @@ public class ReceiverAccount{
 
     private int accountId;
     private String username;
-    private String lastName;
     private DateTime acknowledgedOn;
 
     public int getAccountId() {
@@ -23,14 +22,6 @@ public class ReceiverAccount{
 
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
     }
 
     public DateTime getAcknowledgedOn() {

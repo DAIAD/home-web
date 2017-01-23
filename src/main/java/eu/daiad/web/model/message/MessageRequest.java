@@ -3,79 +3,60 @@ package eu.daiad.web.model.message;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import eu.daiad.web.model.AuthenticatedRequest;
+import eu.daiad.web.model.PagingOptions;
 
-public class MessageRequest extends AuthenticatedRequest {
+public class MessageRequest extends AuthenticatedRequest
+{
+    public static class Options
+    {
+        public static final int DEFAULT_PAGE_SIZE = 20;
 
-	private DataPagingOptions[] pagination;
+        @JsonDeserialize(using = EnumMessageType.Deserializer.class)
+        private EnumMessageType type;
 
-	public DataPagingOptions[] getPagination() {
-		return pagination;
+        private int minMessageId = -1;
+
+        private PagingOptions pagination = new PagingOptions(DEFAULT_PAGE_SIZE);
+
+        public EnumMessageType getType() {
+            return type;
+        }
+
+        public void setType(EnumMessageType type) {
+            this.type = type;
+        }
+
+        public PagingOptions getPagination() {
+            return pagination;
+        }
+
+        public void setPagination(PagingOptions pagination)
+        {
+            this.pagination = new PagingOptions(
+                (pagination.getLimit() > 0)? pagination.getLimit() : DEFAULT_PAGE_SIZE,
+                pagination.getOffset(),
+                pagination.isAscending());
+        }
+
+        public int getMinMessageId()
+        {
+            return minMessageId;
+        }
+
+        public void setMinMessageId(int minMessageId)
+        {
+            this.minMessageId = minMessageId;
+        }
+    }
+
+    private Options[] messages;
+
+	public Options[] getMessages() {
+		return messages;
 	}
 
-	public void setPagination(DataPagingOptions[] pagination) {
-		this.pagination = pagination;
+	public void setMessages(Options[] messages)
+	{
+		this.messages = (messages == null)? (new Options[0]) : messages;
 	}
-
-	public static class DataPagingOptions {
-
-		@JsonDeserialize(using = EnumMessageType.Deserializer.class)
-		private EnumMessageType type;
-
-		private Integer minMessageId;
-
-		private Integer index;
-
-		private Integer size;
-
-		private Boolean ascending;
-
-		public EnumMessageType getType() {
-			return type;
-		}
-
-		public void setType(EnumMessageType type) {
-			this.type = type;
-		}
-
-		public Integer getIndex() {
-			return index;
-		}
-
-		public void setIndex(Integer index) {
-			this.index = index;
-		}
-
-		public Integer getSize() {
-			return size;
-		}
-
-		public void setSize(Integer size) {
-			this.size = size;
-		}
-
-		public Integer getMinMessageId() {
-			if (this.minMessageId == null) {
-				return -1;
-			}
-			
-			return minMessageId;
-		}
-
-		public void setMinMessageId(Integer minMessageId) {
-			this.minMessageId = minMessageId;
-		}
-
-		public void setAscending(Boolean ascending) {
-			this.ascending = ascending;
-		}
-
-		public Boolean getAscending() {
-			if (this.ascending == null) {
-				return true;
-			}
-			
-			return ascending;
-		}
-	}
-
 }

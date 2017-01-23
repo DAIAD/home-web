@@ -14,6 +14,7 @@ import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.device.DeviceUpdateRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.repository.application.IDeviceRepository;
 
 /**
@@ -40,7 +41,7 @@ public class DeviceController extends BaseRestController {
      * @return the controller's response.
      */
     @RequestMapping(value = "/action/device/update", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-    @Secured({ "ROLE_RUSER" })
+    @Secured({ RoleConstant.ROLE_USER })
     public RestResponse update(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody DeviceUpdateRequest request) {
         try {
             deviceRepository.updateDevice(user.getKey(), request);

@@ -8,12 +8,12 @@ public class RankingDataPoint extends DataPoint {
 	private ArrayList<UserDataPoint> users = new ArrayList<UserDataPoint>();
 
 	public RankingDataPoint() {
-		this.type = EnumDataPointType.RANKING;
+		type = EnumDataPointType.RANKING;
 	}
 
 	public RankingDataPoint(long timestamp) {
 		super(timestamp);
-		this.type = EnumDataPointType.RANKING;
+		type = EnumDataPointType.RANKING;
 	}
 
 	public ArrayList<UserDataPoint> getUsers() {
@@ -23,8 +23,7 @@ public class RankingDataPoint extends DataPoint {
 	public DataPoint aggregate(List<EnumMetric> metrics, DataPoint.EnumDataPointType type) {
 		switch (type) {
 			case METER:
-				MeterDataPoint p = (this.getTimestamp() == null ? new MeterDataPoint() : new MeterDataPoint(
-								this.getTimestamp()));
+				MeterDataPoint p = (getTimestamp() == null ? new MeterDataPoint() : new MeterDataPoint(getTimestamp()));
 
 				for (EnumMetric m : metrics) {
 					if (m == EnumMetric.MIN) {
@@ -37,13 +36,13 @@ public class RankingDataPoint extends DataPoint {
 				double diff;
 				boolean average = false;
 
-				for (UserDataPoint user : this.users) {
+				for (UserDataPoint user : users) {
 					MeterUserDataPoint meterUser = (MeterUserDataPoint) user;
 
 					for (EnumMetric m : metrics) {
 						switch (m) {
 							case COUNT:
-								p.getVolume().put(m, (double) this.users.size());
+								p.getVolume().put(m, (double) users.size());
 								break;
 							case SUM:
 								p.getVolume().put(m, p.getVolume().get(m) + meterUser.getVolume().get(m));
@@ -72,10 +71,10 @@ public class RankingDataPoint extends DataPoint {
 					}
 				}
 				if (average) {
-					if (this.users.size() == 0) {
+					if (users.size() == 0) {
 						p.getVolume().put(EnumMetric.AVERAGE, 0.0);
 					} else {
-						p.getVolume().put(EnumMetric.AVERAGE, p.getVolume().get(EnumMetric.SUM) / this.users.size());
+						p.getVolume().put(EnumMetric.AVERAGE, p.getVolume().get(EnumMetric.SUM) / users.size());
 					}
 				}
 				return p;
