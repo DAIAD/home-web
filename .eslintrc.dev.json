@@ -21,8 +21,10 @@
   "rules": {
     "react/prop-types" : "off",
     "react/no-find-dom-node" : "off",
+    "react/display-name": "off",
     "no-console": "off",
-    "no-unused-vars": "off"
+    "no-unused-vars": ["warn", {"args": "none"}],
+    "no-redeclare": ["warn"]
   },
   "globals": {
     "properties": true,
