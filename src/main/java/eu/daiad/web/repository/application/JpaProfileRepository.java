@@ -77,7 +77,11 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
     Environment environment;
 
     @Override
-    public Profile getProfileByUsername(EnumApplication application) throws ApplicationException {
+    public Profile getProfileByUsername(EnumApplication application) throws ApplicationException
+    {
+        // Fixme not a proper place to query security context (should be at controller).
+        // Also, related to this, the name of this method disagrees with signature.
+
         try {
             // Check user permissions
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -146,7 +150,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             profile.setUtility(new UtilityInfo(account.getUtility()));
 
             // Initialize devices
-            ArrayList<DeviceRegistration> registrations = new ArrayList<DeviceRegistration>();
+            ArrayList<DeviceRegistration> registrations = new ArrayList<>();
             for (Iterator<Device> d = devices.iterator(); d.hasNext();) {
                 registrations.add(d.next().toDeviceRegistration());
             }
@@ -225,12 +229,12 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
         }
 
         List<AccountEntity> accounts = userQuery.getResultList();
-        List<ProfileModes> profileModesList = new ArrayList<ProfileModes>();
+        List<ProfileModes> profileModesList = new ArrayList<>();
 
         // List all DeviceAmphiroConfigurationDefault's in a simple HashMap
         List<DeviceAmphiroDefaultConfigurationEntity> defaultConfigurations = deviceRepository.getAmphiroDefaultConfigurations();
 
-        HashMap<Integer, String> simplifiedDefaultConfs = new HashMap<Integer, String>();
+        HashMap<Integer, String> simplifiedDefaultConfs = new HashMap<>();
         for (DeviceAmphiroDefaultConfigurationEntity defaultConfiguration : defaultConfigurations) {
             simplifiedDefaultConfs.put(defaultConfiguration.getId(), defaultConfiguration.getTitle());
         }
@@ -260,7 +264,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
             // Amphiro b1 flag
             List<Device> devices = deviceRepository.getUserDevices(account.getKey(), new DeviceRegistrationQuery());
-            List<UUID> deviceKeyList = new ArrayList<UUID>();
+            List<UUID> deviceKeyList = new ArrayList<>();
             for (Device device : devices) {
                 if (device.getType() == EnumDeviceType.AMPHIRO) {
                     deviceKeyList.add(device.getKey());
@@ -354,7 +358,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                         .getAmphiroDefaultConfigurations();
 
         // Organizing amphiro default configurations in a handy HashMap
-        HashMap<String, DeviceAmphiroDefaultConfigurationEntity> defaultconfigurations = new HashMap<String, DeviceAmphiroDefaultConfigurationEntity>();
+        HashMap<String, DeviceAmphiroDefaultConfigurationEntity> defaultconfigurations = new HashMap<>();
         for (DeviceAmphiroDefaultConfigurationEntity defconf : configurations) {
             if (defconf.getTitle().equals("Enabled Configuration (Metric Units)")) {
                 defaultconfigurations.put("ON_Metric", defconf);
@@ -958,7 +962,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
         AccountEntity account = query.getSingleResult();
 
-        List<ProfileHistoryEntry> entries = new ArrayList<ProfileHistoryEntry>();
+        List<ProfileHistoryEntry> entries = new ArrayList<>();
 
         for (AccountProfileHistoryEntity h : account.getProfile().getHistory()) {
             ProfileHistoryEntry entry = new ProfileHistoryEntry();

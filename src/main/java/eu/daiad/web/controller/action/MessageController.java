@@ -1,6 +1,7 @@
 package eu.daiad.web.controller.action;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -22,15 +23,17 @@ import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.model.message.AnnouncementDetailsResponse;
 import eu.daiad.web.model.message.AnnouncementRequest;
 import eu.daiad.web.model.message.EnumMessageType;
-import eu.daiad.web.model.message.Message;
+import eu.daiad.web.model.message.EnumRecommendationType;
 import eu.daiad.web.model.message.MessageAcknowledgementRequest;
 import eu.daiad.web.model.message.MessageRequest;
 import eu.daiad.web.model.message.MessageResult;
 import eu.daiad.web.model.message.MessageStatisticsQuery;
-import eu.daiad.web.model.message.MessageStatisticsQueryRequest;
+import eu.daiad.web.model.message.MessageStatisticsRequest;
 import eu.daiad.web.model.message.MessageStatisticsResponse;
 import eu.daiad.web.model.message.MultiTypeMessageResponse;
+import eu.daiad.web.model.message.ReceiverAccount;
 import eu.daiad.web.model.message.RecommendationReceiversResponse;
+import eu.daiad.web.model.message.RecommendationStatisticsRequest;
 import eu.daiad.web.model.message.SingleTypeMessageResponse;
 import eu.daiad.web.model.message.StaticRecommendation;
 import eu.daiad.web.model.profile.Profile;
@@ -76,45 +79,19 @@ public class MessageController extends BaseController {
      */
     @RequestMapping(value = "/action/message", method = RequestMethod.POST, produces = "application/json")
     @Secured(RoleConstant.ROLE_USER)
-    public RestResponse getMessages(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody MessageRequest request) {
+    public RestResponse getMessages(
+        @AuthenticationPrincipal AuthenticatedUser user, @RequestBody MessageRequest request)
+    {
         try {
-            MultiTypeMessageResponse messageResponse = new MultiTypeMessageResponse();
-
             Profile profile = profileRepository.getProfileByUsername(EnumApplication.HOME);
             if(!profile.isSendMessageEnabled()) {
-                return messageResponse;
+                return new MultiTypeMessageResponse();
+            } else {
+                MessageResult result = messageRepository.getMessages(user, request);
+                return new MultiTypeMessageResponse(result);
             }
-
-            MessageResult result = messageRepository.getMessages(request);
-
-            messageResponse.setTotalAlerts(result.getTotalAlerts());
-            messageResponse.setTotalAnnouncements(result.getTotalAnnouncements());
-            messageResponse.setTotalRecommendations(result.getTotalRecommendations());
-            messageResponse.setTotalTips(result.getTotalTips());
-
-            for (Message message : result.getMessages()) {
-                switch (message.getType()) {
-                    case ALERT:
-                        messageResponse.getAlerts().add(message);
-                        break;
-                    case RECOMMENDATION_STATIC:
-                        messageResponse.getTips().add(message);
-                        break;
-                    case RECOMMENDATION_DYNAMIC:
-                        messageResponse.getRecommendations().add(message);
-                        break;
-                    case ANNOUNCEMENT:
-                        messageResponse.getAnnouncements().add(message);
-                        break;
-                    default:
-                        // Ignore
-                }
-            }
-
-            return messageResponse;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
-
             return new RestResponse(getError(ex));
         }
     }
@@ -127,14 +104,14 @@ public class MessageController extends BaseController {
      */
     @RequestMapping(value = "/action/message/acknowledge", method = RequestMethod.POST, produces = "application/json")
     @Secured(RoleConstant.ROLE_USER)
-    public RestResponse acknowledgeMessage(@RequestBody MessageAcknowledgementRequest request) {
+    public RestResponse acknowledgeMessage(
+        @AuthenticationPrincipal AuthenticatedUser user, @RequestBody MessageAcknowledgementRequest request)
+    {
         RestResponse response = new RestResponse();
-
         try {
-            messageRepository.setMessageAcknowledgement(request.getMessages());
+            messageRepository.setMessageAcknowledgement(user, request.getMessages());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
-
             response.add(this.getError(ex));
         }
         return response;
@@ -149,13 +126,13 @@ public class MessageController extends BaseController {
      */
     @RequestMapping(value = "/action/recommendation/static/{locale}", method = RequestMethod.GET, produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse getRecommendations(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable String locale) {
+    public RestResponse getRecommendations(
+        @AuthenticationPrincipal AuthenticatedUser user, @PathVariable String locale)
+    {
         try {
             SingleTypeMessageResponse messages = new SingleTypeMessageResponse();
-
             messages.setType(EnumMessageType.RECOMMENDATION_STATIC);
-            messages.setMessages(messageRepository.getAdvisoryMessages(locale));
-
+            messages.setMessages(messageRepository.getTips(locale));
             return messages;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -175,7 +152,7 @@ public class MessageController extends BaseController {
     public RestResponse setStaticTipsActivityStatusChange(@RequestBody List<StaticRecommendation> request) {
         RestResponse response = new RestResponse();
         try {
-            for(StaticRecommendation st : request){
+            for (StaticRecommendation st : request){
                 messageRepository.persistAdvisoryMessageActiveStatus(st.getId(), st.isActive());
             }
         } catch (Exception ex) {
@@ -338,29 +315,32 @@ public class MessageController extends BaseController {
      */
     @RequestMapping(value = "/action/recommendation/dynamic/statistics", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse getMessageStatistics(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody MessageStatisticsQueryRequest request) {
+    public RestResponse getMessageStatistics(
+        @AuthenticationPrincipal AuthenticatedUser user, @RequestBody MessageStatisticsRequest request)
+    {
         try {
-
             MessageStatisticsQuery query = request.getQuery();
 
-            // Set defaults if needed
             if (query != null) {
-                // Initialize time zone
                 if (StringUtils.isBlank(query.getTimezone())) {
                     query.setTimezone(user.getTimezone());
                 }
             }
 
-            MessageStatisticsResponse messageStatisticsResponse = new MessageStatisticsResponse();
-            messageStatisticsResponse.setAlertStatistics(messageRepository
-                    .getAlertStatistics(user.getLocale(), user.getUtilityId(), query));
-            messageStatisticsResponse.setRecommendationStatistics(messageRepository
-                    .getRecommendationStatistics(user.getLocale(), user.getUtilityId(), query));
+            int utilityId = user.getUtilityId();
+            UUID utilityKey = user.getUtilityKey();
 
-            return messageStatisticsResponse;
+            MessageStatisticsResponse response = new MessageStatisticsResponse();
+
+            response.setAlertStatistics(
+                messageRepository.getAlertStatistics(utilityId, query));
+
+            response.setRecommendationStats(
+                messageRepository.getRecommendationStatistics(utilityKey, query));
+
+            return response;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
-
             return new RestResponse(getError(ex));
         }
     }
@@ -372,19 +352,21 @@ public class MessageController extends BaseController {
      * @param id the alert id
      * @param request the request
      * @return the alert details, including receivers.
+     *
+     * Todo Change endpoint to /action/alerts/receivers, supply {type, subtype} with request body
      */
     @RequestMapping(value = "/action/recommendation/dynamic/alert/receivers/{id}", method = RequestMethod.POST, produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse getAlertReceivers(@AuthenticationPrincipal AuthenticatedUser user,
-                                          @PathVariable String id,
-                                          @RequestBody MessageStatisticsQueryRequest request) {
+    public RestResponse getAlertReceivers(
+        @AuthenticationPrincipal AuthenticatedUser user,
+        @PathVariable String id, @RequestBody MessageStatisticsRequest request) {
         try {
             int intId = Integer.parseInt(id);
+            UUID utilityKey = user.getUtilityKey();
 
             MessageStatisticsQuery query = request.getQuery();
-            // Set defaults if needed
+
             if (query != null) {
-                // Initialize time zone
                 if (StringUtils.isBlank(query.getTimezone())) {
                     query.setTimezone(user.getTimezone());
                 }
@@ -407,39 +389,30 @@ public class MessageController extends BaseController {
      * Get recommendation details and receivers.
      *
      * @param user the user
-     * @param id the recommendation id
+     * @param type the recommendation type
      * @param request the request
      * @return the announcement details.
      */
-    @RequestMapping(value = "/action/recommendation/dynamic/recommendation/receivers/{id}", method = RequestMethod.POST, produces = "application/json")
+    @RequestMapping(value = "/action/recommendation/dynamic/recommendation/receivers", method = RequestMethod.POST, produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse getRecommendationReceivers(@AuthenticationPrincipal AuthenticatedUser user,
-                                                   @PathVariable String id,
-                                                   @RequestBody MessageStatisticsQueryRequest request) {
-
+    public RestResponse getRecommendationReceivers(
+        @AuthenticationPrincipal AuthenticatedUser user, @RequestBody RecommendationStatisticsRequest request)
+    {
         try {
-            int intId = Integer.parseInt(id);
-
             MessageStatisticsQuery query = request.getQuery();
+            EnumRecommendationType recommendationType = request.getType();
+            UUID utilityKey = user.getUtilityKey();
 
-            // Set defaults if needed
             if (query != null) {
-                // Initialize time zone
-                if (StringUtils.isBlank(query.getTimezone())) {
+                if (StringUtils.isBlank(query.getTimezone()))
                     query.setTimezone(user.getTimezone());
-                }
             }
 
-            RecommendationReceiversResponse recommendationReceiversResponse = new RecommendationReceiversResponse();
-            recommendationReceiversResponse.setRecommendation(messageRepository
-                    .getRecommendation(intId, user.getLocale()));
-            recommendationReceiversResponse.setReceivers(messageRepository
-                    .getRecommendationReceivers(intId, user.getUtilityId(), query));
-
-            return recommendationReceiversResponse;
+            List<ReceiverAccount> receivers =
+                messageRepository.getRecommendationReceivers(recommendationType, utilityKey, query);
+            return new RecommendationReceiversResponse(recommendationType, receivers);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
-
             return new RestResponse(getError(ex));
         }
     }

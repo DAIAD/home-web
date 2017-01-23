@@ -2,16 +2,16 @@ package eu.daiad.web.service.message;
 
 import java.util.UUID;
 
-import eu.daiad.web.model.message.MessageCalculationConfiguration;
 import eu.daiad.web.model.ConsumptionStats;
 import eu.daiad.web.model.message.MessageResolutionPerAccountStatus;
 import eu.daiad.web.model.utility.UtilityInfo;
+import eu.daiad.web.service.message.IMessageGeneratorService.Configuration;
 
 public interface IMessageResolverService {
 
 	/**
 	 * Decides which messages i.e. alerts, recommendations and tips will be generated for a single user.
-	 * 
+	 *
 	 * @param config The message generation job configuration options
 	 * @param utility
 	 * @param stats A set of aggregates values used for comparing user consumption against the average
@@ -20,6 +20,6 @@ public interface IMessageResolverService {
 	 * @return information about which messages should be created.
 	 */
 	public MessageResolutionPerAccountStatus resolve(
-	        MessageCalculationConfiguration config, UtilityInfo utility, ConsumptionStats stats, UUID accountKey);
+	    Configuration config, UtilityInfo utilityInfo, ConsumptionStats stats, UUID accountKey);
 
 }

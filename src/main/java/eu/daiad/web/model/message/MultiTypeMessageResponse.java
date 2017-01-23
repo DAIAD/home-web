@@ -5,8 +5,8 @@ import java.util.List;
 
 import eu.daiad.web.model.RestResponse;
 
-public class MultiTypeMessageResponse extends RestResponse {
-
+public class MultiTypeMessageResponse extends RestResponse
+{
 	private List<Message> alerts = new ArrayList<>();
 
 	private int totalAlerts = 0;
@@ -23,68 +23,65 @@ public class MultiTypeMessageResponse extends RestResponse {
 
 	private int totalAnnouncements = 0;
 
-	public List<Message> getAlerts() {
-		return alerts;
+	public MultiTypeMessageResponse() {}
+
+	public MultiTypeMessageResponse(MessageResult r)
+	{
+	    totalAlerts = r.getTotalAlerts();
+	    totalRecommendations = r.getTotalRecommendations();
+	    totalTips = r.getTotalTips();
+	    totalAnnouncements = r.getTotalAnnouncements();
+
+	    for (Message message: r.getMessages()) {
+	        switch (message.getType()) {
+	        case ALERT:
+	            alerts.add(message);
+	            break;
+	        case ANNOUNCEMENT:
+	            announcements.add(message);
+	            break;
+	        case RECOMMENDATION:
+	            recommendations.add(message);
+	            break;
+	        case RECOMMENDATION_STATIC:
+	            tips.add(message);
+	            break;
+	        default:
+	            // ignore
+	            break;
+	        }
+	    }
 	}
 
-	public void setAlerts(List<Message> alerts) {
-		this.alerts = alerts;
+	public List<Message> getAlerts() {
+		return alerts;
 	}
 
 	public List<Message> getRecommendations() {
 		return recommendations;
 	}
 
-	public void setRecommendations(List<Message> recommendations) {
-		this.recommendations = recommendations;
-	}
-
 	public List<Message> getTips() {
 		return tips;
-	}
-
-	public void setTips(List<Message> tips) {
-		this.tips = tips;
 	}
 
 	public List<Message> getAnnouncements() {
 		return announcements;
 	}
 
-	public void setAnnouncements(List<Message> announcements) {
-		this.announcements = announcements;
-	}
-
 	public int getTotalAlerts() {
 		return totalAlerts;
-	}
-
-	public void setTotalAlerts(int totalAlerts) {
-		this.totalAlerts = totalAlerts;
 	}
 
 	public int getTotalRecommendations() {
 		return totalRecommendations;
 	}
 
-	public void setTotalRecommendations(int totalRecommendations) {
-		this.totalRecommendations = totalRecommendations;
-	}
-
 	public int getTotalTips() {
 		return totalTips;
-	}
-
-	public void setTotalTips(int totalTips) {
-		this.totalTips = totalTips;
 	}
 
 	public int getTotalAnnouncements() {
 		return totalAnnouncements;
 	}
-
-	public void setTotalAnnouncements(int totalAnnouncements) {
-		this.totalAnnouncements = totalAnnouncements;
-	}
-
 }

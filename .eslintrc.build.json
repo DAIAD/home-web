@@ -21,9 +21,9 @@
   "rules": {
     "react/prop-types" : "off",
     "react/no-find-dom-node" : "off",
+    "react/display-name": "off",
     "no-console": ["warn", { "allow": ["assert", "warn", "error"]}],
-    "no-unused-vars": ["warn", {"args": "none"}],
-    "react/display-name": "warn"
+    "no-unused-vars": ["warn", {"args": "none"}]
   },
   "globals": {
     "properties": true,

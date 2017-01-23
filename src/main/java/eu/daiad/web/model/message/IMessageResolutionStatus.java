@@ -6,5 +6,5 @@ public interface IMessageResolutionStatus <P extends Message.Parameters>
     
     public double getScore();
     
-    public P getParameters();
+    public P getMessage();
 }
