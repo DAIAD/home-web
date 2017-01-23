@@ -1,4 +1,6 @@
 
+TRUNCATE TABLE public.recommendation_template_translation;
+
 --
 -- Load public.recommendation_template_translation
 -- 
