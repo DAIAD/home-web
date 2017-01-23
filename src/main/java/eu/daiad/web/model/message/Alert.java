@@ -5,19 +5,18 @@ import java.util.Map;
 import org.joda.time.DateTime;
 
 import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.message.DynamicRecommendation.Parameters;
 
 public class Alert extends Message 
 {
-    public interface Parameters extends Message.Parameters
+    public interface ParameterizedTemplate extends Message.Parameters
     {
         public EnumAlertType getType();
     }
     
-    public abstract static class AbstractParameters extends Message.AbstractParameters 
-        implements Parameters
+    public abstract static class AbstractParameterizedTemplate extends Message.AbstractParameters 
+        implements ParameterizedTemplate
     {
-        protected AbstractParameters(DateTime refDate, EnumDeviceType deviceType)
+        protected AbstractParameterizedTemplate(DateTime refDate, EnumDeviceType deviceType)
         {
             super(refDate, deviceType);
         }
@@ -29,7 +28,7 @@ public class Alert extends Message
         }
     }
     
-    public static class CommonParameters extends AbstractParameters
+    public static class SimpleParameterizedTemplate extends AbstractParameterizedTemplate
     {
         final EnumAlertType alertType;
         
@@ -43,7 +42,7 @@ public class Alert extends Message
         
         Double currency2;
         
-        public CommonParameters(DateTime refDate, EnumDeviceType deviceType, EnumAlertType alertType)
+        public SimpleParameterizedTemplate(DateTime refDate, EnumDeviceType deviceType, EnumAlertType alertType)
         {
             super(refDate, deviceType);
             this.alertType = alertType;   
@@ -54,7 +53,7 @@ public class Alert extends Message
             return integer1;
         }
 
-        public CommonParameters setInteger1(Integer integer1)
+        public SimpleParameterizedTemplate setInteger1(Integer integer1)
         {
             this.integer1 = integer1;
             return this;
@@ -65,7 +64,7 @@ public class Alert extends Message
             return integer2;
         }
 
-        public CommonParameters setInteger2(Integer integer2)
+        public SimpleParameterizedTemplate setInteger2(Integer integer2)
         {
             this.integer2 = integer2;
             return this;
@@ -76,7 +75,7 @@ public class Alert extends Message
             return currency1;
         }
 
-        public CommonParameters setCurrency1(Double currency1)
+        public SimpleParameterizedTemplate setCurrency1(Double currency1)
         {
             this.currency1 = currency1;
             return this;
@@ -87,16 +86,16 @@ public class Alert extends Message
             return currency2;
         }
 
-        public CommonParameters setCurrency2(Double currency2)
+        public SimpleParameterizedTemplate setCurrency2(Double currency2)
         {
             this.currency2 = currency2;
             return this;
         }  
         
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
-            Map<String, Object> pairs = super.getPairs();
+            Map<String, Object> pairs = super.getParameters();
             
             if (integer1 != null)
                 pairs.put("integer1", integer1);

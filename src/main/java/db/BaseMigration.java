@@ -1,4 +1,4 @@
-package db.migration;
+package db;
 
 import java.util.Properties;
 

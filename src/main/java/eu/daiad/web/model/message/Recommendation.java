@@ -4,51 +4,44 @@ import java.util.Map;
 
 import org.joda.time.DateTime;
 
-import eu.daiad.web.model.DateFormatter;
+import eu.daiad.web.model.NumberFormatter;
 import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.message.Alert.AbstractParameters;
-import eu.daiad.web.model.message.Alert.CommonParameters;
 
-public class DynamicRecommendation extends Message 
+public class Recommendation extends Message
 {
-    public interface Parameters extends Message.Parameters
+    public interface ParameterizedTemplate extends Message.Parameters
     {
-        public EnumDynamicRecommendationType getType();
+        public EnumRecommendationTemplate getTemplate();
     }
-    
-    public abstract static class AbstractParameters extends Message.AbstractParameters implements Parameters
-    {
-        protected AbstractParameters(DateTime refDate, EnumDeviceType deviceType)
-        {
-            super(refDate, deviceType);
-        }
 
-        @Override
-        public EnumDynamicRecommendationType getType()
-        {
-            return EnumDynamicRecommendationType.UNDEFINED;
-        }
-    }
-    
-    public static class CommonParameters extends AbstractParameters
+    public abstract static class AbstractParameterizedTemplate extends Message.AbstractParameters
+        implements ParameterizedTemplate
     {
-        final EnumDynamicRecommendationType recommendationType;
-        
-        // Provide some common parameters
-        
-        Integer integer1;
-        
-        Integer integer2;
-        
-        Double currency1;
-        
-        Double currency2;
-        
-        public CommonParameters(
-            DateTime refDate, EnumDeviceType deviceType, EnumDynamicRecommendationType recommendationType)
+        protected AbstractParameterizedTemplate(DateTime refDate, EnumDeviceType deviceType)
         {
             super(refDate, deviceType);
-            this.recommendationType = recommendationType;   
+        }
+    }
+
+    public static class SimpleParameterizedTemplate extends AbstractParameterizedTemplate
+    {
+        final EnumRecommendationTemplate recommendationTemplate;
+
+        // Provide some common parameters
+
+        Integer integer1;
+
+        Integer integer2;
+
+        Double currency1;
+
+        Double currency2;
+
+        public SimpleParameterizedTemplate(
+            DateTime refDate, EnumDeviceType deviceType, EnumRecommendationTemplate recommendationTemplate)
+        {
+            super(refDate, deviceType);
+            this.recommendationTemplate = recommendationTemplate;
         }
 
         public Integer getInteger1()
@@ -56,7 +49,7 @@ public class DynamicRecommendation extends Message
             return integer1;
         }
 
-        public CommonParameters setInteger1(Integer integer1)
+        public SimpleParameterizedTemplate setInteger1(Integer integer1)
         {
             this.integer1 = integer1;
             return this;
@@ -67,7 +60,7 @@ public class DynamicRecommendation extends Message
             return integer2;
         }
 
-        public CommonParameters setInteger2(Integer integer2)
+        public SimpleParameterizedTemplate setInteger2(Integer integer2)
         {
             this.integer2 = integer2;
             return this;
@@ -78,7 +71,7 @@ public class DynamicRecommendation extends Message
             return currency1;
         }
 
-        public CommonParameters setCurrency1(Double currency1)
+        public SimpleParameterizedTemplate setCurrency1(Double currency1)
         {
             this.currency1 = currency1;
             return this;
@@ -89,40 +82,42 @@ public class DynamicRecommendation extends Message
             return currency2;
         }
 
-        public CommonParameters setCurrency2(Double currency2)
+        public SimpleParameterizedTemplate setCurrency2(Double currency2)
         {
             this.currency2 = currency2;
             return this;
-        }  
-        
+        }
+
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
-            Map<String, Object> pairs = super.getPairs();
-            
+            Map<String, Object> pairs = super.getParameters();
+
             if (integer1 != null)
                 pairs.put("integer1", integer1);
             if (integer2 != null)
                 pairs.put("integer2", integer2);
-            
+
             if (currency1 != null)
-                pairs.put("currency1", currency1);
+                pairs.put("currency1", new NumberFormatter(currency1, ".#"));
             if (currency2 != null)
-                pairs.put("currency2", currency2);
-            
+                pairs.put("currency2", new NumberFormatter(currency2, ".#"));
+
             return pairs;
         }
-        
+
         @Override
-        public EnumDynamicRecommendationType getType()
+        public EnumRecommendationTemplate getTemplate()
         {
-            return recommendationType;
+            return recommendationTemplate;
         }
     }
-    
+
     private final int id;
 
-	private EnumDynamicRecommendationType recommendationType;
+    private final EnumRecommendationType recommendationType;
+
+	private final EnumRecommendationTemplate recommendationTemplate;
 
 	private int priority;
 
@@ -135,24 +130,30 @@ public class DynamicRecommendation extends Message
 	private Long createdOn;
 
     private Long acknowledgedOn;
-	
-	public DynamicRecommendation(EnumDynamicRecommendationType recommendationType, int id) 
+
+	public Recommendation(int id, EnumRecommendationTemplate template)
 	{
-		this.recommendationType = recommendationType;
 		this.id = id;
+	    this.recommendationTemplate = template;
+		this.recommendationType = template.getType();
+		this.priority = recommendationType.getPriority();
+	}
+
+	public Recommendation(int id, EnumRecommendationType type)
+	{
+	    this.id = id;
+	    this.recommendationTemplate = null;
+	    this.recommendationType = type;
+	    this.priority = recommendationType.getPriority();
 	}
 
 	@Override
 	public EnumMessageType getType() {
-		return EnumMessageType.RECOMMENDATION_DYNAMIC;
+		return EnumMessageType.RECOMMENDATION;
 	}
 
 	public int getPriority() {
 		return priority;
-	}
-
-	public void setPriority(int priority) {
-		this.priority = priority;
 	}
 
 	public String getTitle() {
@@ -187,10 +188,14 @@ public class DynamicRecommendation extends Message
 		this.imageLink = imageLink;
 	}
 
-	public EnumDynamicRecommendationType getRecommendationType() {
-		return recommendationType;
+	public EnumRecommendationTemplate getRecommendationTemplate() {
+		return recommendationTemplate;
 	}
-	
+
+	public EnumRecommendationType getRecommendationType() {
+        return recommendationType;
+    }
+
     public Long getAcknowledgedOn() {
         return acknowledgedOn;
     }

@@ -115,10 +115,10 @@
  *     "key": "4e0a0f34-06ad-4c49-a935-89eceea56f27",
  *     "version": "fd13abbe-1c1b-4571-b030-702fb5dcdc9a",
  *     "application": "MOBILE",
- *     "username": "george.papadopoulos@daiad.eu",
+ *     "username": "user@daiad.eu",
  *     "firstname": "George",
  *     "lastname": "Papadopoulos",
- *     "email": "george.papadopoulos@daiad.eu",
+ *     "email": "user@daiad.eu",
  *     "photo": null,
  *     "locale": "el",
  *     "timezone": "Europe/Athens",
@@ -237,7 +237,7 @@ function loadProfile() { return; }
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****",
  *   },
  *   "configuration": "{\"property1\":1,\"property2\":\"value2\"}"}",
@@ -294,7 +294,7 @@ function saveProfile() { return; }
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****",
  *   },
  *   "updatedOn": 1457365253000,
@@ -354,7 +354,7 @@ function notifyProfile() { return; }
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
- *     "username":"george.papadopoulos@daiad.eu",
+ *     "username":"user@daiad.eu",
  *     "password":"****",
  *   },
  *   "members": [{

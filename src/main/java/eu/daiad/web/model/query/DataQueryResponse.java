@@ -1,15 +1,9 @@
 package eu.daiad.web.model.query;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import org.joda.time.DateTimeZone;
-import org.joda.time.Instant;
-import org.springframework.data.util.Pair;
-import org.springframework.util.Assert;
 
 import eu.daiad.web.model.device.EnumDeviceType;
 
@@ -51,20 +45,20 @@ public class DataQueryResponse extends QueryResponse {
     public void setMeters(ArrayList<GroupDataSeries> meters) {
         this.meters = meters;
     }
-    
+
     public SeriesFacade getFacade(EnumDeviceType deviceType, int seriesIndex)
     {
         List<GroupDataSeries> series = getSeries(deviceType);
         GroupDataSeries sx = (seriesIndex < series.size())? series.get(seriesIndex) : null;
         return (sx != null)? sx.newFacade() : null;
     }
-    
+
     public SeriesFacade getFacade(EnumDeviceType deviceType, String label)
     {
         List<GroupDataSeries> series = getSeries(deviceType);
         if (series.isEmpty())
             return null;
-        
+
         GroupDataSeries sx = null;
         for (GroupDataSeries s: series)
             if (s.getLabel().equalsIgnoreCase(label)) {
@@ -73,7 +67,7 @@ public class DataQueryResponse extends QueryResponse {
             }
         return (sx != null)? sx.newFacade() : null;
     }
-    
+
     public SeriesFacade getFacade(EnumDeviceType deviceType)
     {
         return getFacade(deviceType, 0);
