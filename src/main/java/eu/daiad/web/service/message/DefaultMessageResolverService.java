@@ -21,6 +21,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.commons.math3.stat.descriptive.summary.Sum;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.joda.time.Period;
@@ -75,7 +76,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     IUserRepository userRepository;
 
     @Autowired
-    IAccountStaticRecommendationRepository accountStaticRecommendationRepository;
+    IAccountStaticRecommendationRepository accountTipRepository;
 
     @Autowired
     IDeviceRepository deviceRepository;
@@ -85,6 +86,21 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     @Autowired
     IEnergyCalculator energyCalculator;
+
+    public static final double VOLUME_DAILY_THRESHOLD = 7.0;
+
+    public static final double VOLUME_WEEKLY_THRESHOLD =
+        DateTimeConstants.DAYS_PER_WEEK * VOLUME_DAILY_THRESHOLD;
+
+    public static final double VOLUME_MONTHLY_THRESHOLD = // approx 30.5 days/month
+        30.5 * VOLUME_DAILY_THRESHOLD;
+
+    public static Map<EnumTimeUnit, Double> volumeThreshold = new EnumMap<>(EnumTimeUnit.class);
+    static {
+        volumeThreshold.put(EnumTimeUnit.DAY, VOLUME_DAILY_THRESHOLD);
+        volumeThreshold.put(EnumTimeUnit.WEEK, VOLUME_WEEKLY_THRESHOLD);
+        volumeThreshold.put(EnumTimeUnit.MONTH, VOLUME_MONTHLY_THRESHOLD);
+    }
 
     @Override
     public MessageResolutionPerAccountStatus resolve(
@@ -1243,8 +1259,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .build();
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
-        Double refValue = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
-        if (refValue == null)
+        Double targetValue = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
+        if (targetValue == null || targetValue < VOLUME_DAILY_THRESHOLD)
             return null; // nothing to compare to
 
         // Compute for past N weeks for a given day-of-week
@@ -1268,19 +1284,22 @@ public class DefaultMessageResolverService implements IMessageResolverService
         // Seems we have sufficient data for the past weeks
 
         double avgValue = summary.getMean();
+        if (avgValue < VOLUME_DAILY_THRESHOLD)
+            return null; // not reliable; consumption is too low
+
         double sd = Math.sqrt(summary.getPopulationVariance());
-        double normValue = (refValue - avgValue) / sd; // normalized value
-        double score = Math.abs(normValue) / (2 * K);
+        double normValue = (sd > 0)? ((targetValue - avgValue) / sd) : Double.POSITIVE_INFINITY;
+        double score = (sd > 0)? (Math.abs(normValue) / (2 * K)) : Double.POSITIVE_INFINITY;
 
         logger.debug(String.format(
-            "Insight A1 for account %s/%s: Consumption for same week day of last %d weeks to %s:\n\t" +
+            "Insight A1 for account %s/%s: Consumption for same week day of last %d weeks to %s:%n  " +
                 "value=%.2f μ=%.2f σ=%.2f x*=%.2f score=%.2f",
              account.getKey(), deviceType, N, refDate.toString("EEE dd/MM/YYYY"),
-             refValue, avgValue, sd, normValue, score));
+             targetValue, avgValue, sd, normValue, score));
 
         return new MessageResolutionStatus<Insight.ParameterizedTemplate>(
             score,
-            new Insight.A1Parameters(refDate, deviceType, refValue, avgValue)
+            new Insight.A1Parameters(refDate, deviceType, targetValue, avgValue)
         );
     }
 
@@ -1314,8 +1333,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .build();
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
-        Double refValue = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
-        if (refValue == null)
+        Double targetValue = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
+        if (targetValue == null || targetValue < VOLUME_DAILY_THRESHOLD)
             return null; // nothing to compare to
 
         // Compute for past N days
@@ -1339,19 +1358,22 @@ public class DefaultMessageResolverService implements IMessageResolverService
         // Seems we have sufficient data for the past days
 
         double avgValue = summary.getMean();
+        if (avgValue < VOLUME_DAILY_THRESHOLD)
+            return null; // not reliable; consumption is too low
+
         double sd = Math.sqrt(summary.getPopulationVariance());
-        double normValue = (refValue - avgValue) / sd; // normalized value
-        double score = Math.abs(normValue) / (2 * K);
+        double normValue = (sd > 0)? ((targetValue - avgValue) / sd) : Double.POSITIVE_INFINITY;
+        double score = (sd > 0)? (Math.abs(normValue) / (2 * K)) : Double.POSITIVE_INFINITY;
 
         logger.debug(String.format(
-            "Insight A2 for account %s/%s: Consumption for last %d days to %s:\n\t" +
+            "Insight A2 for account %s/%s: Consumption for last %d days to %s:%n  " +
                 "value=%.2f μ=%.2f σ=%.2f x*=%.2f score=%.2f",
              account.getKey(), deviceType, N, refDate.toString("dd/MM/YYYY"),
-             refValue, avgValue, sd, normValue, score));
+             targetValue, avgValue, sd, normValue, score));
 
         return new MessageResolutionStatus<Insight.ParameterizedTemplate>(
             score,
-            new Insight.A2Parameters(refDate, deviceType, refValue, avgValue)
+            new Insight.A2Parameters(refDate, deviceType, targetValue, avgValue)
         );
     }
 
@@ -1360,9 +1382,9 @@ public class DefaultMessageResolverService implements IMessageResolverService
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType, EnumPartOfDay partOfDay)
     {
         final double PERCENTAGE_CHANGE_THRESHOLD = 40;
-        final double VOLUME_LOW_THRESHOLD = 15; // a lower threshold for volume (litres)
         final int N = 30;       // number of past days to examine
         final double F = 0.6;   // a threshold ratio of non-nulls for collected values
+        final double threshold = VOLUME_DAILY_THRESHOLD * partOfDay.asFractionOfDay();
 
         // Build a common part of a data-service query
 
@@ -1384,9 +1406,9 @@ public class DefaultMessageResolverService implements IMessageResolverService
             .build();
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
-        Double refValue = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
-        if (refValue == null || refValue < VOLUME_LOW_THRESHOLD)
-            return null;
+        Double targetValue = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
+        if (targetValue == null || targetValue < threshold)
+            return null; // nothing to compare to
 
         // Compute for part-of-day for past N days
 
@@ -1412,18 +1434,21 @@ public class DefaultMessageResolverService implements IMessageResolverService
         // Seems we have sufficient data for the past days
 
         double avgValue = summary.getMean();
-        double percentDiff = 100.0 * (refValue - avgValue) / avgValue;
+        if (avgValue < threshold)
+            return null; // not reliable; consumption is too low
+
+        double percentDiff = 100.0 * (targetValue - avgValue) / avgValue;
         double score = Math.abs(percentDiff) / (2 * PERCENTAGE_CHANGE_THRESHOLD);
 
         logger.debug(String.format(
-            "Insight A3 for account %s/%s: Consumption at %s of last %d days to %s:\n\t" +
+            "Insight A3 for account %s/%s: Consumption at %s of last %d days to %s:%n  " +
                 "value=%.2f μ=%.2f score=%.2f",
              account.getKey(), deviceType, partOfDay, N, refDate.toString("dd/MM/YYYY"),
-             refValue, avgValue, score));
+             targetValue, avgValue, score));
 
         return new MessageResolutionStatus<Insight.ParameterizedTemplate>(
             score,
-            new Insight.A3Parameters(refDate, partOfDay, deviceType, refValue, avgValue)
+            new Insight.A3Parameters(refDate, partOfDay, deviceType, targetValue, avgValue)
         );
     }
 
@@ -1467,10 +1492,13 @@ public class DefaultMessageResolverService implements IMessageResolverService
         if (missingPart)
             return null;
 
+        if (sumOfParts < VOLUME_DAILY_THRESHOLD)
+            return null; // not reliable; overall consumption is too low
+
         // We have sufficient data for all parts of target day
 
         logger.debug(String.format(
-            "Insight A4 for account %s/%s: Consumption for %s is %.2flt:\n\t" +
+            "Insight A4 for account %s/%s: Consumption for %s is %.2flt:%n  " +
                 "morning=%.2f%% afternoon=%.2f%% night=%.2f%%",
              account.getKey(), deviceType, refDate.toString("dd/MM/YYYY"), sumOfParts,
              100 * parts.get(EnumPartOfDay.MORNING) / sumOfParts,
@@ -1496,6 +1524,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         final Period P = Period.months(+2); // the whole period under examination
         final int N = // number of unit-sized periods
             timeUnit.numParts(new Interval(targetDate.minus(P), targetDate));
+        final double threshold = volumeThreshold.get(timeUnit);
 
         // Build a common part of a data-service query
 
@@ -1517,7 +1546,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
         Double targetValue = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
-        if (targetValue == null)
+        if (targetValue == null || targetValue < threshold)
             return null; // nothing to compare to
 
         // Compute for past N periods
@@ -1541,12 +1570,15 @@ public class DefaultMessageResolverService implements IMessageResolverService
         // Seems we have sufficient data
 
         double avgValue = summary.getMean();
+        if (avgValue < threshold)
+            return null; // not reliable; consumption is too low
+
         double sd = Math.sqrt(summary.getPopulationVariance());
-        double normValue = (targetValue - avgValue) / sd; // normalized value
-        double score = Math.abs(normValue) / (2 * K);
+        double normValue = (sd > 0)? ((targetValue - avgValue) / sd) : Double.POSITIVE_INFINITY;
+        double score = (sd > 0)? (Math.abs(normValue) / (2 * K)) : Double.POSITIVE_INFINITY;
 
         logger.debug(String.format(
-            "Insight B1 for account %s/%s: Consumption for period %s to %s:\n\t" +
+            "Insight B1 for account %s/%s: Consumption for period %s to %s:%n  " +
                 "value=%.2f μ=%.2f σ=%.2f x*=%.2f score=%.2f",
              account.getKey(), deviceType, period.multipliedBy(N), targetDate.toString("dd/MM/YYYY"),
              targetValue, avgValue, sd, normValue, score));
@@ -1564,9 +1596,9 @@ public class DefaultMessageResolverService implements IMessageResolverService
         Assert.state(timeUnit == EnumTimeUnit.WEEK || timeUnit == EnumTimeUnit.MONTH);
 
         final double PERCENTAGE_CHANGE_THRESHOLD = 40;
-
         final DateTime targetDate = timeUnit.startOf(refDate);
         final Period period = timeUnit.toPeriod();
+        final double threshold = volumeThreshold.get(timeUnit);
 
         // Build a common part of a data-service query
 
@@ -1588,7 +1620,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
         Double targetValue = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
-        if (targetValue == null)
+        if (targetValue == null || targetValue < threshold)
             return null; // nothing to compare to
 
         // Compute for previous period
@@ -1599,7 +1631,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
         Double previousValue = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
-        if (previousValue == null)
+        if (previousValue == null || previousValue < threshold)
             return null; // nothing to compare to
 
         // Seems we have sufficient data
@@ -1608,7 +1640,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         double score = Math.abs(percentDiff) / (2 * PERCENTAGE_CHANGE_THRESHOLD);
 
         logger.debug(String.format(
-            "Insight B2 for account %s/%s: Consumption for previous period %s of %s:\n\t" +
+            "Insight B2 for account %s/%s: Consumption for previous period %s of %s:%n  " +
                 "value=%.2f previous=%.2f change=%.2f%% score=%.2f",
              account.getKey(), deviceType, period, targetDate.toString("dd/MM/YYYY"),
              targetValue, previousValue, percentDiff, score));
@@ -1687,20 +1719,23 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
         // Compute average daily consumption per each day-of-week; Find peak days
 
-        double minPerDay = Double.MAX_VALUE, maxPerDay = Double.MIN_VALUE;
+        double minOfDay = Double.POSITIVE_INFINITY, maxOfDay = Double.NEGATIVE_INFINITY;
         EnumDayOfWeek dayMin = null, dayMax = null;
         for (EnumDayOfWeek day: EnumDayOfWeek.values()) {
             Sum sy = sumPerDay.get(day);
             double y = sy.getResult() / sy.getN();
-            if (y < minPerDay) {
-                minPerDay = y;
+            if (y < minOfDay) {
+                minOfDay = y;
                 dayMin = day;
             }
-            if (y > maxPerDay) {
-                maxPerDay = y;
+            if (y > maxOfDay) {
+                maxOfDay = y;
                 dayMax = day;
             }
         }
+
+        if (maxOfDay < VOLUME_DAILY_THRESHOLD)
+            return Collections.emptyList(); // not reliable; overall consumption is too low
 
         // Compute average daily consumption for all days
 
@@ -1709,19 +1744,19 @@ public class DefaultMessageResolverService implements IMessageResolverService
         // Produce 2 insights, one for each peak (min, max)
 
         logger.debug(String.format(
-            "Insight B3 for account %s/%s: Consumption for %d weeks to %s:\n\t" +
-                "minPerDay=%.2f dayMin=%s - maxPerDay=%.2f dayMax=%s - average=%.2f",
+            "Insight B3 for account %s/%s: Consumption for %d weeks to %s:%n  " +
+                "min=%.2f dayMin=%s - max=%.2f dayMax=%s - average=%.2f",
              account.getKey(), deviceType, N, targetDate.plusWeeks(1).toString("dd/MM/YYYY"),
-             minPerDay, dayMin, maxPerDay, dayMax, avg));
+             minOfDay, dayMin, maxOfDay, dayMax, avg));
 
         return Arrays.asList(
             new MessageResolutionStatus<Insight.ParameterizedTemplate>(
                 true,
-                new Insight.B3Parameters(refDate, deviceType, minPerDay, avg, dayMin)
+                new Insight.B3Parameters(refDate, deviceType, minOfDay, avg, dayMin)
             ),
             new MessageResolutionStatus<Insight.ParameterizedTemplate>(
                 true,
-                new Insight.B3Parameters(refDate, deviceType, maxPerDay, avg, dayMax)
+                new Insight.B3Parameters(refDate, deviceType, maxOfDay, avg, dayMax)
             )
         );
     }
@@ -1793,8 +1828,11 @@ public class DefaultMessageResolverService implements IMessageResolverService
         double weekdayAverage = weekdaySum.getResult() / weekdaySum.getN();
         double weekendAverage = weekendSum.getResult() / weekendSum.getN();
 
+        if (weekdayAverage < VOLUME_DAILY_THRESHOLD && weekendAverage < VOLUME_DAILY_THRESHOLD)
+            return null; // not reliable; both parts have too low consumption
+
         logger.debug(String.format(
-            "Insight B4 for account %s/%s: Consumption for %d weeks to %s:\n\t" +
+            "Insight B4 for account %s/%s: Consumption for %d weeks to %s:%n  " +
                 "weekday-average=%.2f weekend-average=%.2f",
              account.getKey(), deviceType, N, targetDate.plusWeeks(1).toString("dd/MM/YYYY"),
              weekdayAverage, weekendAverage));
@@ -1811,6 +1849,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
     {
         final DateTime targetDate = EnumTimeUnit.MONTH.startOf(refDate);
         final DateTimeZone tz = refDate.getZone();
+        final double threshold = // approx 30.5 days per month
+            30.5 * VOLUME_DAILY_THRESHOLD;
 
         // Build a common part of a data-service query
 
@@ -1832,7 +1872,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
         Double targetValue = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
-        if (targetValue == null)
+        if (targetValue == null || targetValue < threshold)
             return null; // nothing to compare to
 
         // Compute for same month a year ago
@@ -1843,13 +1883,13 @@ public class DefaultMessageResolverService implements IMessageResolverService
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
         Double previousValue = (series != null)? series.get(VOLUME, EnumMetric.SUM) : null;
-        if (previousValue == null)
+        if (previousValue == null || previousValue < threshold)
             return null; // nothing to compare to
 
         // Seems we have sufficient data
 
         logger.debug(String.format(
-            "Insight B5 for account %s/%s: Consumption for month %s compared to %s (a year ago):\n\t" +
+            "Insight B5 for account %s/%s: Consumption for month %s compared to %s (a year ago):%n  " +
                 "value=%.2f previous=%.2f",
              account.getKey(), deviceType,
              targetDate.toString("MM/YYYY"), targetDate.minusYears(1).toString("MM/YYYY"),
@@ -1867,8 +1907,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     private DateTime getDateOfLastStaticRecommendation(UUID accountKey)
     {
-        AccountStaticRecommendationEntity e = accountStaticRecommendationRepository
-            .findLastForAccount(accountKey);
+        AccountStaticRecommendationEntity e = accountTipRepository.findLastForAccount(accountKey);
         return (e == null)? null : e.getCreatedOn();
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.model.ConsumptionStats;
 import eu.daiad.web.model.message.MessageResolutionPerAccountStatus;
 import eu.daiad.web.model.utility.UtilityInfo;
@@ -18,7 +19,8 @@ import eu.daiad.web.repository.application.IUtilityRepository;
 import eu.daiad.web.service.IConsumptionStatsService;
 
 @Service
-public class DefaultMessageGeneratorService implements IMessageGeneratorService
+public class DefaultMessageGeneratorService
+    implements IMessageGeneratorService
 {
     private static final Log logger = LogFactory.getLog(DefaultMessageGeneratorService.class);
 
@@ -69,14 +71,18 @@ public class DefaultMessageGeneratorService implements IMessageGeneratorService
 	}
 
 	@Override
-	public void executeAccount(Configuration config, UUID utilityKey, UUID accountKey)
+	public void executeAccount(Configuration config, UUID accountKey)
 	{
-		UtilityInfo utility = utilityRepository.getUtilityByKey(utilityKey);
-		ConsumptionStats stats = statsService.getStats(utility, null);
-		executeAccount(config, utility, stats, accountKey);
+	    AccountEntity accountEntity = userRepository.getAccountByKey(accountKey);
+	    UUID utilityKey = accountEntity.getUtility().getKey();
+
+	    UtilityInfo utilityInfo = utilityRepository.getUtilityByKey(utilityKey);
+		ConsumptionStats stats = statsService.getStats(utilityInfo, config.getRefDate());
+		executeAccount(config, utilityInfo, stats, accountKey);
 	}
 
-	private void executeAccount(Configuration config, UtilityInfo utility, ConsumptionStats stats, UUID accountKey)
+	private void executeAccount(
+	    Configuration config, UtilityInfo utility, ConsumptionStats stats, UUID accountKey)
 	{
 		MessageResolutionPerAccountStatus messageStatus = messageResolver.resolve(config, utility, stats, accountKey);
 		messageManager.executeAccount(config, stats, messageStatus, accountKey);
