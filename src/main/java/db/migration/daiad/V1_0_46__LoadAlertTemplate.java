@@ -7,20 +7,20 @@ import org.apache.commons.collections4.Transformer;
 import org.apache.commons.lang.StringUtils;
 import org.flywaydb.core.api.migration.MigrationChecksumProvider;
 
-import db.initialization.LoadRecommendationTemplate;
+import db.initialization.LoadAlertTemplate;
 import eu.daiad.web.model.EnumToNameTransformer;
-import eu.daiad.web.model.message.EnumRecommendationTemplate;
+import eu.daiad.web.model.message.EnumAlertTemplate;
 
-public class V1_0_42__LoadRecommendationTemplate extends LoadRecommendationTemplate
+public class V1_0_46__LoadAlertTemplate extends LoadAlertTemplate
     implements MigrationChecksumProvider
 {
-    private static final Transformer<EnumRecommendationTemplate, String> TRANSFORM_TO_NAME =
+    private static final Transformer<EnumAlertTemplate, String> TRANSFORM_TO_NAME =
         new EnumToNameTransformer<>();
 
     @Override
     public Integer getChecksum()
     {
-        String[] names = FluentIterable.of(EnumRecommendationTemplate.values())
+        String[] names = FluentIterable.of(EnumAlertTemplate.values())
             .transform(TRANSFORM_TO_NAME)
             .toArray(String.class);
 

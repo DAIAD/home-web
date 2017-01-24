@@ -39,10 +39,9 @@ public class AccountRecommendationParameterEntity {
 	public AccountRecommendationParameterEntity()
 	{}
 	
-	public AccountRecommendationParameterEntity(
-	    AccountRecommendationEntity recommendation, String key, String value)
+	public AccountRecommendationParameterEntity(AccountRecommendationEntity r, String key, String value)
 	{
-	    this.recommendation = recommendation;
+	    this.recommendation = r;
 	    this.key = key;
 	    this.value = value;
 	}

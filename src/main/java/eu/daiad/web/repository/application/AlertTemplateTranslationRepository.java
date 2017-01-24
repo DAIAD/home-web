@@ -10,30 +10,29 @@ import javax.persistence.TypedQuery;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import eu.daiad.web.domain.application.RecommendationTemplateTranslationEntity;
-import eu.daiad.web.model.message.EnumRecommendationTemplate;
+import eu.daiad.web.domain.application.AlertTemplateTranslationEntity;
+import eu.daiad.web.model.message.EnumAlertTemplate;
 
 @Repository
 @Transactional("applicationTransactionManager")
-public class RecommendationTemplateTranslationRepository
-    implements IRecommendationTemplateTranslationRepository
+public class AlertTemplateTranslationRepository
+    implements IAlertTemplateTranslationRepository
 {
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
 
     @Override
-    public RecommendationTemplateTranslationEntity findByTemplate(
-        EnumRecommendationTemplate template, Locale locale)
+    public AlertTemplateTranslationEntity findByTemplate(EnumAlertTemplate template, Locale locale)
     {
-        TypedQuery<RecommendationTemplateTranslationEntity> q = entityManager.createQuery(
-            "SELECT t FROM recommendation_template_translation t WHERE " +
+        TypedQuery<AlertTemplateTranslationEntity> q = entityManager.createQuery(
+            "SELECT t FROM alert_template_translation t WHERE " +
                 "t.locale = :lang AND t.template.value = :template",
-            RecommendationTemplateTranslationEntity.class);
+            AlertTemplateTranslationEntity.class);
 
         q.setParameter("lang", locale.getLanguage());
         q.setParameter("template", template.getValue());
 
-        RecommendationTemplateTranslationEntity result;
+        AlertTemplateTranslationEntity result;
         try {
             result = q.getSingleResult();
         } catch (NoResultException x) {
@@ -44,8 +43,7 @@ public class RecommendationTemplateTranslationRepository
     }
 
     @Override
-    public RecommendationTemplateTranslationEntity findByTemplate(
-        EnumRecommendationTemplate template)
+    public AlertTemplateTranslationEntity findByTemplate(EnumAlertTemplate template)
     {
         return findByTemplate(template, Locale.getDefault());
     }

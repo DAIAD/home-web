@@ -19,9 +19,11 @@ import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.message.AlertReceiversResponse;
+import eu.daiad.web.model.message.AlertStatisticsRequest;
 import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.model.message.AnnouncementDetailsResponse;
 import eu.daiad.web.model.message.AnnouncementRequest;
+import eu.daiad.web.model.message.EnumAlertType;
 import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.EnumRecommendationType;
 import eu.daiad.web.model.message.MessageAcknowledgementRequest;
@@ -333,7 +335,7 @@ public class MessageController extends BaseController {
             MessageStatisticsResponse response = new MessageStatisticsResponse();
 
             response.setAlertStatistics(
-                messageRepository.getAlertStatistics(utilityId, query));
+                messageRepository.getAlertStatistics(utilityKey, query));
 
             response.setRecommendationStats(
                 messageRepository.getRecommendationStatistics(utilityKey, query));
@@ -349,38 +351,29 @@ public class MessageController extends BaseController {
      * Get alert details receivers.
      *
      * @param user the user
-     * @param id the alert id
      * @param request the request
      * @return the alert details, including receivers.
-     *
-     * Todo Change endpoint to /action/alerts/receivers, supply {type, subtype} with request body
      */
-    @RequestMapping(value = "/action/recommendation/dynamic/alert/receivers/{id}", method = RequestMethod.POST, produces = "application/json")
+    @RequestMapping(value = "/action/recommendation/dynamic/alert/receivers", method = RequestMethod.POST, produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse getAlertReceivers(
-        @AuthenticationPrincipal AuthenticatedUser user,
-        @PathVariable String id, @RequestBody MessageStatisticsRequest request) {
+        @AuthenticationPrincipal AuthenticatedUser user, @RequestBody AlertStatisticsRequest request)
+    {
         try {
-            int intId = Integer.parseInt(id);
+            EnumAlertType alertType = request.getType();
             UUID utilityKey = user.getUtilityKey();
 
             MessageStatisticsQuery query = request.getQuery();
-
             if (query != null) {
-                if (StringUtils.isBlank(query.getTimezone())) {
+                if (StringUtils.isBlank(query.getTimezone()))
                     query.setTimezone(user.getTimezone());
-                }
             }
 
-            AlertReceiversResponse alertReceiversResponse = new AlertReceiversResponse();
-            alertReceiversResponse.setAlert(messageRepository.getAlert(intId, user.getLocale()));
-            alertReceiversResponse.setReceivers(messageRepository
-                    .getAlertReceivers(intId, user.getUtilityId(), query));
-
-            return alertReceiversResponse;
+            List<ReceiverAccount> receivers =
+                messageRepository.getAlertReceivers(alertType, utilityKey, query);
+            return new AlertReceiversResponse(alertType, receivers);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
-
             return new RestResponse(getError(ex));
         }
     }
@@ -389,7 +382,6 @@ public class MessageController extends BaseController {
      * Get recommendation details and receivers.
      *
      * @param user the user
-     * @param type the recommendation type
      * @param request the request
      * @return the announcement details.
      */
@@ -399,10 +391,10 @@ public class MessageController extends BaseController {
         @AuthenticationPrincipal AuthenticatedUser user, @RequestBody RecommendationStatisticsRequest request)
     {
         try {
-            MessageStatisticsQuery query = request.getQuery();
             EnumRecommendationType recommendationType = request.getType();
             UUID utilityKey = user.getUtilityKey();
 
+            MessageStatisticsQuery query = request.getQuery();
             if (query != null) {
                 if (StringUtils.isBlank(query.getTimezone()))
                     query.setTimezone(user.getTimezone());

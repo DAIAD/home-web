@@ -76,8 +76,12 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
 
             // Generate messages
 
+            String accountKey = parameters.get(EnumParameter.ACCOUNT_KEY.getValue());
             String utilityKey = parameters.get(EnumParameter.UTILITY_KEY.getValue());
-            if (utilityKey != null) {
+
+            if (accountKey != null) {
+                messageService.executeAccount(config, UUID.fromString(accountKey));
+            } else if (utilityKey != null) {
                 messageService.executeUtility(config, UUID.fromString(utilityKey));
             } else {
                 messageService.executeAll(config);
@@ -137,7 +141,11 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
         /**
          * Generate messages for a certain utility only
          */
-        UTILITY_KEY("utility-key");
+        UTILITY_KEY("utility-key"),
+        /**
+         * Generate messages for a certain account only
+         */
+        ACCOUNT_KEY("account-key");
 
         private final String value;
 

@@ -17,6 +17,7 @@ import eu.daiad.web.domain.application.StaticRecommendationEntity;
 import eu.daiad.web.model.ConsumptionStats;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.Alert;
+import eu.daiad.web.model.message.EnumAlertTemplate;
 import eu.daiad.web.model.message.EnumAlertType;
 import eu.daiad.web.model.message.EnumRecommendationTemplate;
 import eu.daiad.web.model.message.EnumRecommendationType;
@@ -183,7 +184,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
         int day = DateTime.now().getDayOfWeek();
         if (config.isOnDemandExecution() || day == config.getComputeThisDayOfWeek()) {
-            Assert.state(r.getMessage().getType() == EnumAlertType.WATER_LEAK);
+            Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.WATER_LEAK);
             accountAlertRepository.createWith(account, r.getMessage());
         }
     }
@@ -194,7 +195,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     {
         IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertShowerStillOnAmphiro();
         if (r != null && r.isSignificant()) {
-            Assert.state(r.getMessage().getType() == EnumAlertType.SHOWER_ON);
+            Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.SHOWER_ON);
             accountAlertRepository.createWith(account, r.getMessage());
         }
     }
@@ -210,7 +211,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     {
         IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertWaterQualitySWM();
         if (r != null && r.isSignificant()) {
-            Assert.state(r.getMessage().getType() == EnumAlertType.WATER_QUALITY);
+            Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.WATER_QUALITY);
             accountAlertRepository.createWith(account, r.getMessage());
         }
     }
@@ -221,7 +222,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     {
         IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertHotTemperatureAmphiro();
         if (r != null && r.isSignificant()) {
-            Assert.state(r.getMessage().getType() == EnumAlertType.HOT_TEMPERATURE);
+            Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.HIGH_TEMPERATURE);
             accountAlertRepository.createWith(account, r.getMessage());
         }
     }
@@ -232,7 +233,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     {
         IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertNearDailyBudgetSWM();
         if (r != null && r.isSignificant()) {
-            Assert.state(r.getMessage().getType() == EnumAlertType.NEAR_DAILY_WATER_BUDGET);
+            Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.NEAR_DAILY_WATER_BUDGET);
             accountAlertRepository.createWith(account, r.getMessage());
         }
     }
@@ -243,7 +244,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     {
         IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertNearWeeklyBudgetSWM();
         if (r != null && r.isSignificant()) {
-            Assert.state(r.getMessage().getType() == EnumAlertType.NEAR_WEEKLY_WATER_BUDGET);
+            Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.NEAR_WEEKLY_WATER_BUDGET);
             accountAlertRepository.createWith(account, r.getMessage());
         }
     }
@@ -254,7 +255,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     {
         IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertNearDailyBudgetAmphiro();
         if (r != null && r.isSignificant()) {
-            Assert.state(r.getMessage().getType() == EnumAlertType.NEAR_DAILY_SHOWER_BUDGET);
+            Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.NEAR_DAILY_SHOWER_BUDGET);
             accountAlertRepository.createWith(account, r.getMessage());
         }
     }
@@ -268,7 +269,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
         IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertNearWeeklyBudgetAmphiro();
         if (r != null && r.isSignificant()) {
-            Assert.state(r.getMessage().getType() == EnumAlertType.NEAR_WEEKLY_SHOWER_BUDGET);
+            Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.NEAR_WEEKLY_SHOWER_BUDGET);
             accountAlertRepository.createWith(account, r.getMessage());
         }
     }
@@ -279,7 +280,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     {
         IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertReachedDailyBudgetSWM();
         if (r != null && r.isSignificant()) {
-            Assert.state(r.getMessage().getType() == EnumAlertType.REACHED_DAILY_WATER_BUDGET);
+            Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.REACHED_DAILY_WATER_BUDGET);
             accountAlertRepository.createWith(account, r.getMessage());
         }
     }
@@ -290,7 +291,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     {
         IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertReachedDailyBudgetAmphiro();
         if (r != null && r.isSignificant()) {
-            Assert.state(r.getMessage().getType() == EnumAlertType.REACHED_DAILY_SHOWER_BUDGET);
+            Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.REACHED_DAILY_SHOWER_BUDGET);
             accountAlertRepository.createWith(account, r.getMessage());
         }
     }
@@ -303,7 +304,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
         if (r != null && r.isSignificant()) {
             int day = DateTime.now().getDayOfMonth();
             if (config.isOnDemandExecution() || day == config.getComputeThisDayOfMonth()) {
-                Assert.state(r.getMessage().getType() == EnumAlertType.WATER_CHAMPION);
+                Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.WATER_CHAMPION);
                 accountAlertRepository.createWith(account, r.getMessage());
             }
         }
@@ -317,7 +318,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
         if (r != null && r.isSignificant()) {
             int day = DateTime.now().getDayOfMonth();
             if (config.isOnDemandExecution() || day == config.getComputeThisDayOfMonth()) {
-                Assert.state(r.getMessage().getType() == EnumAlertType.SHOWER_CHAMPION);
+                Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.SHOWER_CHAMPION);
                 accountAlertRepository.createWith(account, r.getMessage());
             }
         }
@@ -327,13 +328,13 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void alertTooMuchWaterConsumptionSWM(
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
-        if (countAlertsByTypeThisWeek(account, EnumAlertType.TOO_MUCH_WATER_METER) < 1) {
+        if (countAlertsByTypeThisWeek(account, EnumAlertType.TOO_MUCH_WATER) < 1) {
             IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertTooMuchWaterConsumptionSWM();
             if (r == null || !r.isSignificant())
                 return;
             int day = DateTime.now().getDayOfWeek();
             if (config.isOnDemandExecution() || day == config.getComputeThisDayOfWeek()) {
-                Assert.state(r.getMessage().getType() == EnumAlertType.TOO_MUCH_WATER_METER);
+                Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.TOO_MUCH_WATER_METER);
                 accountAlertRepository.createWith(account, r.getMessage());
             }
         }
@@ -343,13 +344,13 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void alertTooMuchWaterConsumptionAmphiro(
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
-        if (countAlertsByTypeThisWeek(account, EnumAlertType.TOO_MUCH_WATER_AMPHIRO) < 1) {
+        if (countAlertsByTypeThisWeek(account, EnumAlertType.TOO_MUCH_WATER) < 1) {
             IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertTooMuchWaterConsumptionAmphiro();
             if (r == null || !r.isSignificant())
                 return;
             int day = DateTime.now().getDayOfWeek();
             if (config.isOnDemandExecution() || day == config.getComputeThisDayOfWeek()) {
-                Assert.state(r.getMessage().getType() == EnumAlertType.TOO_MUCH_WATER_AMPHIRO);
+                Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.TOO_MUCH_WATER_SHOWER);
                 accountAlertRepository.createWith(account, r.getMessage());
             }
         }
@@ -366,7 +367,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
             int day = DateTime.now().getDayOfWeek();
             if (config.isOnDemandExecution() || day == config.getComputeThisDayOfWeek()) {
-                Assert.state(r.getMessage().getType() == EnumAlertType.TOO_MUCH_ENERGY);
+                Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.TOO_MUCH_ENERGY);
                 accountAlertRepository.createWith(account, r.getMessage());
             }
         }
@@ -383,7 +384,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
             int day = DateTime.now().getDayOfWeek();
             if (config.isOnDemandExecution() || day == config.getComputeThisDayOfWeek()) {
-                Assert.state(r.getMessage().getType() == EnumAlertType.REDUCED_WATER_USE);
+                Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.REDUCED_WATER_USE_METER);
                 accountAlertRepository.createWith(account, r.getMessage());
             }
         }
@@ -393,14 +394,14 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void alertImprovedShowerEfficiencyAmphiro(
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
-        if (countAlertsByType(account, EnumAlertType.REDUCED_WATER_USE_IN_SHOWER) < 1) {
+        if (countAlertsByType(account, EnumAlertType.REDUCED_WATER_USE) < 1) {
             IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertReducedWaterUseAmphiro();
             if (r == null || !r.isSignificant())
                 return;
 
             int day = DateTime.now().getDayOfWeek();
             if (config.isOnDemandExecution() || day == config.getComputeThisDayOfWeek()) {
-                Assert.state(r.getMessage().getType() == EnumAlertType.REDUCED_WATER_USE_IN_SHOWER);
+                Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.REDUCED_WATER_USE_SHOWER);
                 accountAlertRepository.createWith(account, r.getMessage());
             }
         }
@@ -417,7 +418,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
             int day = DateTime.now().getDayOfMonth();
             if (config.isOnDemandExecution() || day == config.getComputeThisDayOfMonth()) {
-                Assert.state(r.getMessage().getType() == EnumAlertType.WATER_EFFICIENCY_LEADER);
+                Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.WATER_EFFICIENCY_LEADER);
                 accountAlertRepository.createWith(account, r.getMessage());
             }
         }
@@ -429,7 +430,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     {
         if (countAlertsByType(account, EnumAlertType.KEEP_UP_SAVING_WATER) < 1) {
             Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
-                DateTime.now(), EnumDeviceType.METER, EnumAlertType.KEEP_UP_SAVING_WATER);
+                DateTime.now(), EnumDeviceType.METER, EnumAlertTemplate.KEEP_UP_SAVING_WATER);
             accountAlertRepository.createWith(account, parameters);
         }
     }
@@ -444,7 +445,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
         int day = DateTime.now().getDayOfMonth();
         if (config.isOnDemandExecution() || day == config.getComputeThisDayOfMonth()) {
-            Assert.state(r.getMessage().getType() == EnumAlertType.GOOD_JOB_MONTHLY);
+            Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.GOOD_JOB_MONTHLY);
             accountAlertRepository.createWith(account, r.getMessage());
         }
     }
@@ -459,7 +460,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
         int day = DateTime.now().getDayOfWeek();
         if (config.isOnDemandExecution() || day == config.getComputeThisDayOfWeek()) {
-            Assert.state(r.getMessage().getType() == EnumAlertType.LITERS_ALREADY_SAVED);
+            Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.LITERS_ALREADY_SAVED);
             accountAlertRepository.createWith(account, r.getMessage());
         }
     }
@@ -475,7 +476,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
         int day = DateTime.now().getDayOfWeek();
         if (config.isOnDemandExecution() || day == config.getComputeThisDayOfWeek()) {
-            Assert.state(r.getMessage().getType() == EnumAlertType.TOP_25_PERCENT_OF_SAVERS);
+            Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.TOP_25_PERCENT_OF_SAVERS);
             accountAlertRepository.createWith(account, r.getMessage());
         }
     }
@@ -490,7 +491,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
         int day = DateTime.now().getDayOfWeek();
         if (config.isOnDemandExecution() || day == config.getComputeThisDayOfWeek()) {
-            Assert.state(r.getMessage().getType() == EnumAlertType.TOP_10_PERCENT_OF_SAVERS);
+            Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.TOP_10_PERCENT_OF_SAVERS);
             accountAlertRepository.createWith(account, r.getMessage());
         }
     }

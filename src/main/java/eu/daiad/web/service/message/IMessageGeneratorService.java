@@ -32,7 +32,7 @@ public interface IMessageGeneratorService {
 	 *
 	 * @param config the configuration options
 	 */
-	public abstract void executeAccount(Configuration config, UUID utilityKey, UUID accountKey);
+	public abstract void executeAccount(Configuration config, UUID accountKey);
 
 	//
 	// Configuration class
@@ -44,13 +44,6 @@ public interface IMessageGeneratorService {
 
 	    // send static tip every 7 days
 	    private int tipInterval = DateTimeConstants.DAYS_PER_WEEK;
-
-	    // Todo: Eliminate those keys; each template introduces own parameters
-	    //private String intKey1 = "integer1";
-	    //private String intKey2 = "integer2";
-	    //private String currencyKey1 = "currency1";
-	    //private String currencyKey2 = "currency2";
-	    //private String dayKey = "day";
 
 	    private Integer meterDailyBudget = 300;
 	    private Integer meterWeeklyBudget = 2100;

@@ -3,10 +3,10 @@ package eu.daiad.web.repository.application;
 import java.util.List;
 import java.util.UUID;
 
-import eu.daiad.web.domain.application.AlertAnalyticsEntity;
-import eu.daiad.web.model.message.Alert;
+import eu.daiad.web.model.message.AlertStatistics;
 import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.model.message.AnnouncementRequest;
+import eu.daiad.web.model.message.EnumAlertType;
 import eu.daiad.web.model.message.EnumRecommendationType;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageAcknowledgement;
@@ -44,13 +44,12 @@ public interface IMessageRepository {
 
     public List<ReceiverAccount> getAnnouncementReceivers(int id);
 
-    public List<AlertAnalyticsEntity> getAlertStatistics(int utilityId, MessageStatisticsQuery query);
+    public AlertStatistics getAlertStatistics(UUID utilityKey, MessageStatisticsQuery query);
 
     public RecommendationStatistics getRecommendationStatistics(UUID utilityKey, MessageStatisticsQuery query);
 
-    public List<ReceiverAccount> getAlertReceivers(int alertId, int utilityId, MessageStatisticsQuery query);
+    public List<ReceiverAccount> getAlertReceivers(EnumAlertType type, UUID utilityKey, MessageStatisticsQuery query);
 
     public List<ReceiverAccount> getRecommendationReceivers(EnumRecommendationType type, UUID utilityKey, MessageStatisticsQuery query);
 
-    public Alert getAlert(int id, String locale);
 }
