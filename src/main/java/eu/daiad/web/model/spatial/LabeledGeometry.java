@@ -1,4 +1,4 @@
-package eu.daiad.web.model.query;
+package eu.daiad.web.model.spatial;
 
 import com.vividsolutions.jts.geom.Geometry;
 
