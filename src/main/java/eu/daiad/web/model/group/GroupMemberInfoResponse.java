@@ -4,19 +4,20 @@ import java.util.List;
 
 import eu.daiad.web.model.RestResponse;
 
-public class GroupMemberInfoResponse extends RestResponse{
-	
-	private List <GroupMemberInfo> groupMembersInfo;
+public class GroupMemberInfoResponse extends RestResponse {
 
-	public GroupMemberInfoResponse(List <GroupMemberInfo> groupMembersInfo) {
-		this.groupMembersInfo = groupMembersInfo;
-	}
+    private List<GroupMemberInfo> members;
 
-	public GroupMemberInfoResponse(String code, String description) {
-		super(code, description);
-	}
+    public GroupMemberInfoResponse(List<GroupMemberInfo> members) {
+        this.members = members;
+    }
 
-	public List <GroupMemberInfo> getGroupMembersInfo() {
-		return groupMembersInfo;
-	}
+    public GroupMemberInfoResponse(String code, String description) {
+        super(code, description);
+    }
+
+    public List<GroupMemberInfo> getMembers() {
+        return members;
+    }
+
 }

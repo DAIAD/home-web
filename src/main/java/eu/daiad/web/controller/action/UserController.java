@@ -54,7 +54,7 @@ import eu.daiad.web.model.user.UserQueryResult;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IFavouriteRepository;
-import eu.daiad.web.repository.application.IUserGroupRepository;
+import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 import eu.daiad.web.service.IUserService;
@@ -89,6 +89,12 @@ public class UserController extends BaseController {
     private IUserRepository userRepository;
 
     /**
+     * Repository for accessing user data.
+     */
+    @Autowired
+    private IGroupRepository groupRepository;
+
+    /**
      * Repository for accessing device data.
      */
     @Autowired
@@ -105,12 +111,6 @@ public class UserController extends BaseController {
      */
     @Autowired
     private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
-
-    /**
-     * Repository for accessing user defined group data.
-     */
-    @Autowired
-    private IUserGroupRepository userGroupRepository;
 
     /**
      * Repository for accessing favourite data.
@@ -238,7 +238,7 @@ public class UserController extends BaseController {
             UserInfoResponse response = new UserInfoResponse();
 
             response.setUser(userRepository.getUserInfoByKey(key));
-            response.setGroups(userGroupRepository.getGroupsByMember(key));
+            response.setGroups(groupRepository.getMemberGroups(key));
             response.setFavorite(favouriteRepository.isUserFavorite(user.getKey(), response.getUser().getId()));
 
             List<Device> amphiroDevices = getAmphiroDevices(key);
@@ -419,8 +419,7 @@ public class UserController extends BaseController {
      * @return the controller's response.
      */
     @RequestMapping(value = "/action/user/password/reset/token/create", method = RequestMethod.POST, produces = "application/json")
-    public RestResponse resetPasswordCreateToken(@AuthenticationPrincipal AuthenticatedUser user,
-                                                 @RequestBody PasswordResetTokenCreateRequest request) {
+    public RestResponse resetPasswordCreateToken(@RequestBody PasswordResetTokenCreateRequest request) {
         try {
             userService.resetPasswordCreateToken(request.getUsername(), request.getApplication());
         } catch (Exception ex) {

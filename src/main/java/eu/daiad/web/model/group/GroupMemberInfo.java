@@ -5,25 +5,25 @@ import java.util.UUID;
 import eu.daiad.web.domain.application.AccountEntity;
 
 public class GroupMemberInfo {
-	
+
 	private UUID id;
-	
+
 	private String name;
-	
+
 	private String email;
-	
-	private long registrationDateMils;
-	
+
+	private long createdOn;
+
 	public GroupMemberInfo(AccountEntity account){
-		this.id = account.getKey();
+		id = account.getKey();
 		if (account.getFirstname() != null || account.getLastname() != null){
-			this.name = account.getFirstname() + " " + account.getLastname();
+			name = account.getFirstname() + " " + account.getLastname();
 		} else {
-			this.name = account.getEmail();
+			name = account.getEmail();
 		}
-		
-		this.email = account.getEmail();
-		this.registrationDateMils = account.getCreatedOn().getMillis();
+
+		email = account.getEmail();
+		createdOn = account.getCreatedOn().getMillis();
 	}
 
 	public UUID getId() {
@@ -38,9 +38,8 @@ public class GroupMemberInfo {
 		return email;
 	}
 
-	public long getRegistrationDateMils() {
-		return registrationDateMils;
-	}
-	
-	
+    public long getCreatedOn() {
+        return createdOn;
+    }
+
 }

@@ -6,6 +6,7 @@ import java.util.Map;
 import org.joda.time.DateTimeZone;
 
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.spatial.LabeledGeometry;
 
 public abstract class QueryResponse extends RestResponse {
 

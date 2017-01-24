@@ -43,8 +43,10 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 		return messageSource.getMessage(code, null, code, null);
 	}
 
-	public void handle(HttpServletRequest request, HttpServletResponse response,
-					AccessDeniedException accessDeniedException) throws IOException, ServletException {
+	@Override
+    public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
+	    logger.error(accessDeniedException);
+
 		if (!response.isCommitted()) {
 			if (errorPage != null) {
 				if (AjaxUtils.isAjaxRequest(request)) {
@@ -62,7 +64,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
 						String messageKey = SharedErrorCode.AUTHENTICATION.getMessageKey();
 
-						RestResponse r = new RestResponse(messageKey, this.getMessage(messageKey));
+						RestResponse r = new RestResponse(messageKey, getMessage(messageKey));
 
 						response.getWriter().print(mapper.writeValueAsString(r));
 					}
