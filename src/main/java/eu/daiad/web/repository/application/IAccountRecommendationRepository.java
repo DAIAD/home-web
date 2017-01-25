@@ -18,7 +18,7 @@ public interface IAccountRecommendationRepository
 {
     AccountRecommendationEntity findOne(int id);
 
-    Long countAll();
+    int countAll();
 
     List<AccountRecommendationEntity> findByAccount(UUID accountKey);
 
@@ -28,19 +28,19 @@ public interface IAccountRecommendationRepository
 
     List<AccountRecommendationEntity> findByAccount(UUID accountKey, int minId, PagingOptions pagination);
 
-    Long countByAccount(UUID accountKey);
+    int countByAccount(UUID accountKey);
 
-    Long countByAccount(UUID accountKey, Interval interval);
+    int countByAccount(UUID accountKey, Interval interval);
 
-    Long countByAccount(UUID accountKey, int minId);
+    int countByAccount(UUID accountKey, int minId);
 
     List<AccountRecommendationEntity> findByType(EnumRecommendationType recommendationType, UUID utilityKey);
 
     List<AccountRecommendationEntity> findByType(EnumRecommendationType recommendationType, UUID utilityKey, Interval interval);
 
-    Long countByType(EnumRecommendationType recommendationType, UUID utilityKey);
+    int countByType(EnumRecommendationType recommendationType, UUID utilityKey);
 
-    Long countByType(EnumRecommendationType recommendationType, UUID utilityKey, Interval interval);
+    int countByType(EnumRecommendationType recommendationType, UUID utilityKey, Interval interval);
 
     Map<EnumRecommendationType, Long> countByType(UUID utilityKey);
 
@@ -50,9 +50,9 @@ public interface IAccountRecommendationRepository
 
     List<AccountRecommendationEntity> findByAccountAndType(UUID accountKey, EnumRecommendationType recommendationType, Interval interval);
 
-    Long countByAccountAndType(UUID accountKey, EnumRecommendationType recommendationType);
+    int countByAccountAndType(UUID accountKey, EnumRecommendationType recommendationType);
 
-    Long countByAccountAndType(UUID accountKey, EnumRecommendationType recommendationType, Interval interval);
+    int countByAccountAndType(UUID accountKey, EnumRecommendationType recommendationType, Interval interval);
 
     AccountRecommendationEntity create(AccountRecommendationEntity e);
 

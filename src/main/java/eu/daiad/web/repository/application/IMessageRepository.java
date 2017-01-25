@@ -22,7 +22,7 @@ public interface IMessageRepository {
 
 	public abstract MessageResult getMessages(AuthenticatedUser user, MessageRequest request);
 
-	public abstract void setMessageAcknowledgement(AuthenticatedUser user, List<MessageAcknowledgement> messages);
+	public abstract void acknowledgeMessages(AuthenticatedUser user, List<MessageAcknowledgement> messages);
 
 	public List<Message> getTips(String locale);
 

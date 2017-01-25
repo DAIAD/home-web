@@ -1,21 +1,7 @@
 package eu.daiad.web.model.message;
 
-import org.joda.time.DateTime;
-
-import eu.daiad.web.model.device.EnumDeviceType;
-
-public class StaticRecommendation extends Message 
+public class StaticRecommendation extends Message
 {
-    public interface Parameters extends Message.Parameters {}
-    
-    public abstract static class AbstractParameters extends Message.AbstractParameters implements Parameters
-    {
-        protected AbstractParameters(DateTime refDate, EnumDeviceType deviceType)
-        {
-            super(refDate, deviceType);
-        }
-    }
-    
 	private int id;
 
 	private int index;
@@ -43,7 +29,7 @@ public class StaticRecommendation extends Message
 	private boolean active;
 
 	private Long acknowledgedOn;
-	
+
 	@Override
 	public EnumMessageType getType() {
 		return EnumMessageType.RECOMMENDATION_STATIC;

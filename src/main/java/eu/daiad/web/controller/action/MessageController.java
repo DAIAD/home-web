@@ -46,7 +46,6 @@ import eu.daiad.web.repository.application.IProfileRepository;
 
 /**
  * Provides actions for loading messages and saving acknowledgments.
- *
  */
 @RestController
 public class MessageController extends BaseController {
@@ -111,7 +110,7 @@ public class MessageController extends BaseController {
     {
         RestResponse response = new RestResponse();
         try {
-            messageRepository.setMessageAcknowledgement(user, request.getMessages());
+            messageRepository.acknowledgeMessages(user, request.getMessages());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
             response.add(this.getError(ex));
@@ -199,16 +198,15 @@ public class MessageController extends BaseController {
      */
     @RequestMapping(value = "/action/recommendation/static/delete", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse deleteStaticRecommendation(@RequestBody StaticRecommendation request) {
+    public RestResponse deleteStaticRecommendation(@RequestBody StaticRecommendation request)
+    {
         RestResponse response = new RestResponse();
 
         try {
             messageRepository.deleteAdvisoryMessage(request);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
-
             response.add(this.getError(ex));
-
         }
         return response;
     }
@@ -222,7 +220,9 @@ public class MessageController extends BaseController {
      */
     @RequestMapping(value = "/action/announcement/broadcast", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse broadCastAnnouncement(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody AnnouncementRequest request) {
+    public RestResponse broadCastAnnouncement(
+        @AuthenticationPrincipal AuthenticatedUser user, @RequestBody AnnouncementRequest request)
+    {
         RestResponse response = new RestResponse();
 
         try {
@@ -329,9 +329,7 @@ public class MessageController extends BaseController {
                 }
             }
 
-            int utilityId = user.getUtilityId();
             UUID utilityKey = user.getUtilityKey();
-
             MessageStatisticsResponse response = new MessageStatisticsResponse();
 
             response.setAlertStatistics(

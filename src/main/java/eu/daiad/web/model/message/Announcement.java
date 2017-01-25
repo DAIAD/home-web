@@ -1,22 +1,7 @@
 package eu.daiad.web.model.message;
 
-import org.joda.time.DateTime;
-
-import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.message.StaticRecommendation.Parameters;
-
-public class Announcement extends Message 
+public class Announcement extends Message
 {
-    public interface Parameters extends Message.Parameters {}
-    
-    public abstract static class AbstractParameters extends Message.AbstractParameters implements Parameters
-    {
-        protected AbstractParameters(DateTime refDate, EnumDeviceType deviceType)
-        {
-            super(refDate, deviceType);
-        }
-    }
-    
 	private int id;
 
 	private int priority;
@@ -28,11 +13,16 @@ public class Announcement extends Message
 	private String link;
 
 	private Long createdOn;
-    
-    private Long dispatchedOn;
 
     private Long acknowledgedOn;
-    
+
+    public Announcement() {}
+
+    public Announcement(int id)
+    {
+        this.id = id;
+    }
+
 	@Override
 	public EnumMessageType getType() {
 		return EnumMessageType.ANNOUNCEMENT;
@@ -86,14 +76,6 @@ public class Announcement extends Message
 		this.id = id;
 	}
 
-    public Long getDispatchedOn() {
-        return dispatchedOn;
-    }
-
-    public void setDispatchedOn(Long dispatchedOn) {
-        this.dispatchedOn = dispatchedOn;
-    }
-        
     public Long getAcknowledgedOn() {
         return acknowledgedOn;
     }

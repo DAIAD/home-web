@@ -1,10 +1,11 @@
 package eu.daiad.web.model.message;
 
-import eu.daiad.web.model.AuthenticatedRequest;
 import java.util.List;
 
-public class AnnouncementRequest extends AuthenticatedRequest{
+import eu.daiad.web.model.AuthenticatedRequest;
 
+public class AnnouncementRequest extends AuthenticatedRequest
+{
     private Announcement announcement;
 
     private List<ReceiverAccount> receiverAccountList;
