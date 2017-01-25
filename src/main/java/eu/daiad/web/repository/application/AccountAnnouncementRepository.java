@@ -13,6 +13,7 @@ import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import eu.daiad.web.domain.application.AccountAnnouncementEntity;
 import eu.daiad.web.domain.application.AccountEntity;
@@ -203,18 +204,35 @@ public class AccountAnnouncementRepository extends BaseRepository
         return e;
     }
 
+
     @Override
-    public AccountAnnouncementEntity createWith(AccountEntity account, int announcementId)
+    public AccountAnnouncementEntity createWith(AccountEntity account, AnnouncementEntity announcement)
     {
-        // Ensure we have a persistent AccountEntity instance
+        Assert.state(account != null && announcement != null);
+
+        // Ensure we have a persistent entities
+
         if (!entityManager.contains(account))
             account = entityManager.find(AccountEntity.class, account.getId());
+        if (!entityManager.contains(announcement))
+            announcement = entityManager.find(AnnouncementEntity.class, announcement.getId());
 
-        AnnouncementEntity announcement =
-            entityManager.find(AnnouncementEntity.class, announcementId);
+        // Create
+
         AccountAnnouncementEntity e =
             new AccountAnnouncementEntity(account, announcement);
         return create(e);
+    }
+
+    @Override
+    public AccountAnnouncementEntity createWith(AccountEntity account, int announcementId)
+    {
+        AnnouncementEntity announcement =
+            entityManager.find(AnnouncementEntity.class, announcementId);
+        if (announcement == null)
+            return null;
+
+        return createWith(account, announcement);
     }
 
     @Override
@@ -230,11 +248,15 @@ public class AccountAnnouncementRepository extends BaseRepository
         } catch (NoResultException x) {
             account = null;
         }
-
         if (account == null)
             return null;
-        else
-            return createWith(account, announcementId);
+
+        AnnouncementEntity announcement =
+            entityManager.find(AnnouncementEntity.class, announcementId);
+        if (announcement == null)
+            return null;
+
+        return createWith(account, announcement);
     }
 
     @Override

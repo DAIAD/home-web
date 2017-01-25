@@ -1,7 +1,7 @@
 package eu.daiad.web.repository.application;
 
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import eu.daiad.web.domain.application.AnnouncementEntity;
 import eu.daiad.web.model.message.Message;
@@ -10,11 +10,13 @@ public interface IAnnouncementRepository
 {
     AnnouncementEntity findOne(int id);
 
+    List<AnnouncementEntity> list();
+
     AnnouncementEntity create(AnnouncementEntity e);
 
-    AnnouncementEntity createWith(Set<String> channelNames, Map<String, Message> translationByLanguage);
+    AnnouncementEntity createWith(List<String> channelNames, Map<String, Message> translationByLanguage);
 
-    AnnouncementEntity createWith(Set<String> channelNames, Map<String, Message> translationByLanguage, int priority);
+    AnnouncementEntity createWith(List<String> channelNames, Map<String, Message> translationByLanguage, int priority);
 
     void delete(int id);
 

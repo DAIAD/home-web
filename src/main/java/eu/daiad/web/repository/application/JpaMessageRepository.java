@@ -3,6 +3,7 @@ package eu.daiad.web.repository.application;
 import java.text.NumberFormat;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -29,7 +30,6 @@ import eu.daiad.web.domain.application.AccountRecommendationEntity;
 import eu.daiad.web.domain.application.AccountStaticRecommendationEntity;
 import eu.daiad.web.domain.application.AnnouncementEntity;
 import eu.daiad.web.domain.application.AnnouncementTranslationEntity;
-import eu.daiad.web.domain.application.ChannelEntity;
 import eu.daiad.web.domain.application.StaticRecommendationCategoryEntity;
 import eu.daiad.web.domain.application.StaticRecommendationEntity;
 import eu.daiad.web.model.PagingOptions;
@@ -67,6 +67,9 @@ public class JpaMessageRepository extends BaseRepository
     EntityManager entityManager;
 
     @Autowired
+    IUserRepository userRepository;
+
+    @Autowired
     IAccountRecommendationRepository accountRecommendationRepository;
 
     @Autowired
@@ -74,6 +77,9 @@ public class JpaMessageRepository extends BaseRepository
 
     @Autowired
     IAccountAnnouncementRepository accountAnnouncementRepository;
+
+    @Autowired
+    IAnnouncementRepository announcementRepository;
 
     @Autowired
     IAccountStaticRecommendationRepository accountTipRepository;
@@ -343,81 +349,54 @@ public class JpaMessageRepository extends BaseRepository
     }
 
     @Override
-    public void deleteAnnouncement(eu.daiad.web.model.message.Announcement announcement)
+    public void deleteAnnouncement(Announcement announcement)
     {
-        TypedQuery<eu.daiad.web.domain.application.AnnouncementEntity> announcementQuery = entityManager
-                        .createQuery("select a from announcement a where a.id = :id",
-                                        eu.daiad.web.domain.application.AnnouncementEntity.class).setFirstResult(0).setMaxResults(1);
-        announcementQuery.setParameter("id", announcement.getId());
-
-        List<AnnouncementEntity> announcements = announcementQuery.getResultList();
-
-        if (announcements.size() == 1) {
-            AnnouncementEntity toBeDeleted = announcements.get(0);
-            this.entityManager.remove(toBeDeleted);
-        }
+        announcementRepository.delete(announcement.getId());
     }
 
     @Override
     public List<Message> getAnnouncements(String lang)
     {
-        // Note:
-        // In contrast to its name, this method fetches announcement translations. The IDs
-        // correspond to translation entities (not to referenced announcement).
-
         List<Message> messages = new ArrayList<>();
-
-        TypedQuery<AnnouncementTranslationEntity> query = entityManager.createQuery(
-            "SELECT a FROM announcement_translation a WHERE a.locale = :lang ORDER BY a.id DESC",
-            AnnouncementTranslationEntity.class);
-        query.setParameter("lang", lang);
-
-        for (AnnouncementTranslationEntity translationEntity: query.getResultList()) {
-            Announcement message = new Announcement(translationEntity.getId());
-            message.setTitle(translationEntity.getTitle());
-            message.setContent(translationEntity.getContent());
-            messages.add(message);
+        for (AnnouncementEntity announcementEntity: announcementRepository.list()) {
+            AnnouncementTranslationEntity translationEntity = announcementEntity.getTranslation(lang);
+            if (translationEntity != null) {
+                Announcement message = new Announcement(announcementEntity.getId());
+                message.setTitle(translationEntity.getTitle());
+                message.setContent(translationEntity.getContent());
+                messages.add(message);
+            }
         }
         return messages;
     }
 
     @Override
-    public Announcement getAnnouncement(int id, String locale)
+    public Announcement getAnnouncement(int id, String lang)
     {
-        Announcement message = null;
+        AnnouncementEntity announcementEntity = announcementRepository.findOne(id);
+        if (announcementEntity == null)
+            return null;
 
-        TypedQuery<AnnouncementTranslationEntity> accountAnnouncementQuery = entityManager.createQuery(
-            "select a from announcement_translation a where a.locale = :locale and a.id = :id",
-            AnnouncementTranslationEntity.class);
-        accountAnnouncementQuery.setParameter("locale", locale);
-        accountAnnouncementQuery.setParameter("id", id);
+        AnnouncementTranslationEntity translationEntity = announcementEntity.getTranslation(lang);
+        if (translationEntity == null)
+            return null;
 
-        List<AnnouncementTranslationEntity> announcements = accountAnnouncementQuery.getResultList();
-        if(accountAnnouncementQuery.getResultList().size() == 1){
-            AnnouncementTranslationEntity announcementTranslation = announcements.get(0);
-            message = new Announcement(announcementTranslation.getId());
-            message.setTitle(announcementTranslation.getTitle());
-            message.setContent(announcementTranslation.getContent());
-        }
+        Announcement message = new Announcement(announcementEntity.getId());
+        message.setTitle(translationEntity.getTitle());
+        message.setContent(translationEntity.getContent());
         return message;
     }
 
     @Override
-    public List<ReceiverAccount> getAnnouncementReceivers(int announcementId)
+    public List<ReceiverAccount> getAnnouncementReceivers(int id)
     {
         List<ReceiverAccount> receivers = new ArrayList<>();
-
-        TypedQuery<AccountAnnouncementEntity> accountAnnouncementQuery = entityManager.createQuery(
-            "SELECT a FROM account_announcement a WHERE a.announcement.id = :id",
-            AccountAnnouncementEntity.class);
-        accountAnnouncementQuery.setParameter("id", announcementId);
-
-        for (AccountAnnouncementEntity accountAnnouncement : accountAnnouncementQuery.getResultList()) {
-            AccountEntity accountEntity = accountAnnouncement.getAccount();
-            ReceiverAccount receiverAccount =
+        for (AccountAnnouncementEntity aa: accountAnnouncementRepository.findByAnnouncement(id)) {
+            AccountEntity accountEntity = aa.getAccount();
+            ReceiverAccount receiver =
                 new ReceiverAccount(accountEntity.getId(), accountEntity.getUsername());
-            receiverAccount.setAcknowledgedOn(accountAnnouncement.getAcknowledgedOn());
-            receivers.add(receiverAccount);
+            receiver.setAcknowledgedOn(aa.getAcknowledgedOn());
+            receivers.add(receiver);
         }
         return receivers;
     }
@@ -487,30 +466,32 @@ public class JpaMessageRepository extends BaseRepository
     }
 
     // Todo Move to AccountAnnouncementRepository
+    /**
+     * Create a new announcement and link it to receiver accounts.
+     *
+     * Note: This method creates an announcement with a single translation directed to a single channel.
+     */
     @Override
     public void broadcastAnnouncement(AnnouncementRequest request, String lang, String channelName)
     {
         Locale locale = Locale.forLanguageTag(lang);
         Announcement announcement = request.getAnnouncement();
 
-        TypedQuery<ChannelEntity> channelQuery =
-            entityManager.createQuery("FROM channel c WHERE c.name = :name", ChannelEntity.class);
-        channelQuery.setParameter("name", channelName);
-        ChannelEntity channel = channelQuery.getSingleResult();
+        // 1. Create announcement
 
-        AnnouncementEntity announcementEntity = new AnnouncementEntity();
-        announcementEntity.addChannel(channel);
-        announcementEntity.addTranslation(locale, announcement.getTitle(), announcement.getContent());
-        entityManager.persist(announcementEntity);
+        AnnouncementEntity announcementEntity = announcementRepository.createWith(
+            Collections.singletonList(channelName),
+            Collections.singletonMap(lang, (Message) announcement));
 
-        DateTime created = DateTime.now();
-        for (ReceiverAccount receiver : request.getReceiverAccountList()) {
+        // 2. Link announcement with receiver accounts
+
+        for (ReceiverAccount receiver: request.getReceiverAccountList()) {
             AccountEntity accountEntity =
-                entityManager.find(AccountEntity.class, receiver.getAccountId());
-            AccountAnnouncementEntity accountAnnouncementEntity =
-                new AccountAnnouncementEntity(accountEntity, announcementEntity);
-            accountAnnouncementEntity.setCreatedOn(created);
-            entityManager.persist(accountAnnouncementEntity);
+                userRepository.findOne(receiver.getAccountId());
+            if (accountEntity == null)
+                accountEntity = userRepository.getAccountByUsername(receiver.getUsername());
+            if (accountEntity != null)
+                accountAnnouncementRepository.createWith(accountEntity, announcementEntity);
         }
     }
 

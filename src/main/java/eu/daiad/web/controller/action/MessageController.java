@@ -265,7 +265,8 @@ public class MessageController extends BaseController {
      */
     @RequestMapping(value = "/action/announcement/delete", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse deleteAnnouncement(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody Announcement request)
+    public RestResponse deleteAnnouncement(
+        @AuthenticationPrincipal AuthenticatedUser user, @RequestBody Announcement request)
     {
         RestResponse response = new RestResponse();
         try {

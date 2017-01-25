@@ -9,6 +9,7 @@ import org.joda.time.Interval;
 
 import eu.daiad.web.domain.application.AccountAnnouncementEntity;
 import eu.daiad.web.domain.application.AccountEntity;
+import eu.daiad.web.domain.application.AnnouncementEntity;
 import eu.daiad.web.model.PagingOptions;
 import eu.daiad.web.model.message.Announcement;
 
@@ -47,6 +48,8 @@ public interface IAccountAnnouncementRepository
     AccountAnnouncementEntity createWith(UUID accountKey, int announcementId);
 
     AccountAnnouncementEntity createWith(AccountEntity account, int announcementId);
+
+    AccountAnnouncementEntity createWith(AccountEntity account, AnnouncementEntity announcement);
 
     boolean acknowledge(int id, DateTime acknowledged);
 

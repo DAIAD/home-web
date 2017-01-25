@@ -1,8 +1,8 @@
 package eu.daiad.web.repository.application;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -32,6 +32,14 @@ public class AnnouncementRepository
     }
 
     @Override
+    public List<AnnouncementEntity> list()
+    {
+        TypedQuery<AnnouncementEntity> query =
+            entityManager.createQuery("FROM announcement a", AnnouncementEntity.class);
+        return query.getResultList();
+    }
+
+    @Override
     public AnnouncementEntity create(AnnouncementEntity e)
     {
         entityManager.persist(e);
@@ -40,14 +48,14 @@ public class AnnouncementRepository
 
     @Override
     public AnnouncementEntity createWith(
-        Set<String> channelNames, Map<String, Message> translationByLanguage)
+        List<String> channelNames, Map<String, Message> translationByLanguage)
     {
         return createWith(channelNames, translationByLanguage, DEFAULT_PRIORITY);
     }
 
     @Override
     public AnnouncementEntity createWith(
-        Set<String> channelNames, Map<String, Message> translationByLanguage, int priority)
+        List<String> channelNames, Map<String, Message> translationByLanguage, int priority)
     {
         AnnouncementEntity a = new AnnouncementEntity(priority);
 
