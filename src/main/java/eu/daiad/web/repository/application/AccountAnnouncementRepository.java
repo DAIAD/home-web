@@ -294,9 +294,9 @@ public class AccountAnnouncementRepository extends BaseRepository
         message.setPriority(announcement.getPriority());
         message.setTitle(translation.getTitle());
         message.setContent(translation.getContent());
-        message.setCreatedOn(r.getCreatedOn().getMillis());
+        message.setCreatedOn(r.getCreatedOn());
         if (r.getAcknowledgedOn() != null)
-            message.setAcknowledgedOn(r.getAcknowledgedOn().getMillis());
+            message.setAcknowledgedOn(r.getAcknowledgedOn());
 
         return message;
     }

@@ -113,27 +113,19 @@ public class Alert extends Message
         }
     }
 
-    private final int id;
+    protected int priority;
 
 	private final EnumAlertType alertType;
 
     private final EnumAlertTemplate alertTemplate;
 
-	private int priority;
-
-	private String title;
-
 	private String description;
 
 	private String link;
 
-	private Long createdOn;
-
-	private Long acknowledgedOn;
-
 	public Alert(int id, EnumAlertTemplate template)
     {
-        this.id = id;
+        super(id);
         this.alertTemplate = template;
         this.alertType = template.getType();
         this.priority = alertType.getPriority();
@@ -141,7 +133,7 @@ public class Alert extends Message
 
     public Alert(int id, EnumAlertType type)
     {
-        this.id = id;
+        super(id);
         this.alertTemplate = null;
         this.alertType = type;
         this.priority = alertType.getPriority();
@@ -152,21 +144,15 @@ public class Alert extends Message
 		return EnumMessageType.ALERT;
 	}
 
-	public int getPriority() {
-		return priority;
-	}
+	public int getPriority()
+    {
+        return priority;
+    }
 
-	public void setPriority(int priority) {
-		this.priority = priority;
-	}
-
-	public String getTitle() {
-		return title;
-	}
-
-	public void setTitle(String title) {
-		this.title = title;
-	}
+    public void setPriority(int priority)
+    {
+        this.priority = priority;
+    }
 
 	public String getDescription() {
 		return description;
@@ -174,14 +160,6 @@ public class Alert extends Message
 
 	public void setDescription(String description) {
 		this.description = description;
-	}
-
-	public Long getCreatedOn() {
-		return createdOn;
-	}
-
-	public void setCreatedOn(Long createdOn) {
-		this.createdOn = createdOn;
 	}
 
 	public String getLink() {
@@ -196,11 +174,13 @@ public class Alert extends Message
 		return alertType;
 	}
 
-	public Long getAcknowledgedOn() {
-	    return acknowledgedOn;
-	}
+	public EnumAlertTemplate getAlertTemplate() {
+        return alertTemplate;
+    }
 
-	public void setAcknowledgedOn(Long acknowledgedOn) {
-	    this.acknowledgedOn = acknowledgedOn;
-	}
+    @Override
+    public String getBody()
+    {
+        return title;
+    }
 }

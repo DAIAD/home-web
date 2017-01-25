@@ -1,12 +1,10 @@
 package eu.daiad.web.model.message;
 
+import org.joda.time.DateTime;
+
 public class StaticRecommendation extends Message
 {
-	private int id;
-
 	private int index;
-
-	private String title;
 
 	private String description;
 
@@ -22,13 +20,14 @@ public class StaticRecommendation extends Message
 
 	private String source;
 
-	private Long createdOn;
-
 	private Long modifiedOn;
 
 	private boolean active;
 
-	private Long acknowledgedOn;
+	public StaticRecommendation(int id)
+	{
+	    super(id);
+	}
 
 	@Override
 	public EnumMessageType getType() {
@@ -41,14 +40,6 @@ public class StaticRecommendation extends Message
 
 	public void setIndex(int index) {
 		this.index = index;
-	}
-
-	public String getTitle() {
-		return title;
-	}
-
-	public void setTitle(String title) {
-		this.title = title;
 	}
 
 	public String getDescription() {
@@ -91,21 +82,14 @@ public class StaticRecommendation extends Message
 		this.source = source;
 	}
 
-	public Long getCreatedOn() {
-		return createdOn;
-	}
-
-	public void setCreatedOn(Long createdOn) {
-		this.createdOn = createdOn;
-	}
-
 	public Long getModifiedOn() {
 		return modifiedOn;
 	}
 
-	public void setModifiedOn(Long modifiedOn) {
-		this.modifiedOn = modifiedOn;
-	}
+	public void setModifiedOn(DateTime modified)
+	{
+        this.modifiedOn = modified.getMillis();
+    }
 
 	public boolean isActive() {
 		return active;
@@ -113,14 +97,6 @@ public class StaticRecommendation extends Message
 
 	public void setActive(boolean active) {
 		this.active = active;
-	}
-
-	public int getId() {
-		return id;
-	}
-
-	public void setId(int id) {
-		this.id = id;
 	}
 
 	public String getExternalLink() {
@@ -139,11 +115,9 @@ public class StaticRecommendation extends Message
 		this.imageMimeType = imageMimeType;
 	}
 
-	public Long getAcknowledgedOn() {
-	    return acknowledgedOn;
-	}
-
-	public void setAcknowledgedOn(Long acknowledgedOn) {
-	    this.acknowledgedOn = acknowledgedOn;
-	}
+    @Override
+    public String getBody()
+    {
+        return description;
+    }
 }

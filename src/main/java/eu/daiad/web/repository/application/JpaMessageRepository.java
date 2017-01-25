@@ -39,7 +39,6 @@ import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.AlertStatistics;
 import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.model.message.AnnouncementRequest;
-import eu.daiad.web.model.message.AnnouncementTranslation;
 import eu.daiad.web.model.message.EnumAlertType;
 import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.EnumRecommendationType;
@@ -132,8 +131,8 @@ public class JpaMessageRepository extends BaseRepository
     {
         MessageResult result = new MessageResult();
 
-        String localeName = user.getLocale();
-        Locale locale = Locale.forLanguageTag(localeName);
+        String lang = user.getLocale();
+        Locale locale = Locale.forLanguageTag(lang);
 
         UUID userKey = user.getKey();
 
@@ -235,8 +234,7 @@ public class JpaMessageRepository extends BaseRepository
             tipsQuery.setParameter("minMessageId", minMessageId);
 
             for (AccountStaticRecommendationEntity tip: tipsQuery.getResultList()) {
-                StaticRecommendation message = new StaticRecommendation();
-                message.setId(tip.getId());
+                StaticRecommendation message = new StaticRecommendation(tip.getId());
                 message.setIndex(tip.getRecommendation().getIndex());
                 message.setTitle(tip.getRecommendation().getTitle());
                 message.setDescription(tip.getRecommendation().getDescription());
@@ -246,12 +244,12 @@ public class JpaMessageRepository extends BaseRepository
                 message.setPrompt(tip.getRecommendation().getPrompt());
                 message.setExternalLink(tip.getRecommendation().getExternalLink());
                 message.setSource(tip.getRecommendation().getSource());
-                message.setCreatedOn(tip.getCreatedOn().getMillis());
+                message.setCreatedOn(tip.getCreatedOn());
                 if (tip.getRecommendation().getModifiedOn() != null) {
-                    message.setModifiedOn(tip.getRecommendation().getModifiedOn().getMillis());
+                    message.setModifiedOn(tip.getRecommendation().getModifiedOn());
                 }
                 if (tip.getAcknowledgedOn() != null) {
-                    message.setAcknowledgedOn(tip.getAcknowledgedOn().getMillis());
+                    message.setAcknowledgedOn(tip.getAcknowledgedOn());
                 }
                 messages.add(message);
             }
@@ -270,107 +268,78 @@ public class JpaMessageRepository extends BaseRepository
         tipsQuery.setParameter("locale", locale);
 
         List<Message> messages = new ArrayList<>();
-        for (StaticRecommendationEntity staticRecommendation : tipsQuery.getResultList()) {
-            StaticRecommendation message = new StaticRecommendation();
-            message.setId(staticRecommendation.getId());
-            message.setIndex(staticRecommendation.getIndex());
-            message.setTitle(staticRecommendation.getTitle());
-            message.setDescription(staticRecommendation.getDescription());
+        for (StaticRecommendationEntity tipEntity : tipsQuery.getResultList()) {
+            StaticRecommendation message = new StaticRecommendation(tipEntity.getId());
+            message.setIndex(tipEntity.getIndex());
+            message.setTitle(tipEntity.getTitle());
+            message.setDescription(tipEntity.getDescription());
             //message.setImageEncoded(staticRecommendation.getImage());
-            message.setImageMimeType(staticRecommendation.getImageMimeType());
-            message.setImageLink(staticRecommendation.getImageLink());
-            message.setPrompt(staticRecommendation.getPrompt());
-            message.setExternalLink(staticRecommendation.getExternalLink());
-            message.setSource(staticRecommendation.getSource());
-            if (staticRecommendation.getCreatedOn() != null)
-                message.setCreatedOn(staticRecommendation.getCreatedOn().getMillis());
-            if (staticRecommendation.getModifiedOn() != null)
-                message.setModifiedOn(staticRecommendation.getModifiedOn().getMillis());
-            message.setActive(staticRecommendation.isActive());
+            message.setImageMimeType(tipEntity.getImageMimeType());
+            message.setImageLink(tipEntity.getImageLink());
+            message.setPrompt(tipEntity.getPrompt());
+            message.setExternalLink(tipEntity.getExternalLink());
+            message.setSource(tipEntity.getSource());
+            if (tipEntity.getCreatedOn() != null)
+                message.setCreatedOn(tipEntity.getCreatedOn());
+            if (tipEntity.getModifiedOn() != null)
+                message.setModifiedOn(tipEntity.getModifiedOn());
+            message.setActive(tipEntity.isActive());
             messages.add(message);
         }
         return messages;
     }
 
     @Override
-    public void persistAdvisoryMessageActiveStatus(int id, boolean active)
+    public void persistTipActiveStatus(int id, boolean active)
     {
-        TypedQuery<StaticRecommendationEntity> advisoryMessage = entityManager.createQuery(
-            "select s from static_recommendation s where s.id = :id",
-            StaticRecommendationEntity.class);
-        advisoryMessage.setParameter("id", id);
-        List<StaticRecommendationEntity> advisoryMessages = advisoryMessage.getResultList();
-        if(!advisoryMessages.isEmpty()){
-            advisoryMessages.get(0).setActive(active);
+        StaticRecommendationEntity tipEntity = entityManager.find(StaticRecommendationEntity.class, id);
+        if (tipEntity != null) {
+            tipEntity.setActive(active);
         }
     }
 
     @Override
-    public void persistNewAdvisoryMessage(eu.daiad.web.model.message.StaticRecommendation staticRecommendation)
+    public void createTip(StaticRecommendation tip, String lang)
     {
-        AuthenticatedUser user = this.getCurrentAuthenticatedUser();
+        TypedQuery<StaticRecommendationCategoryEntity> categoryQuery = entityManager.createQuery(
+            "select c from static_recommendation_category c where c.id = :id",
+            StaticRecommendationCategoryEntity.class);
+        categoryQuery.setParameter("id", 7); //General Tips
+        StaticRecommendationCategoryEntity category = categoryQuery.getSingleResult();
 
-        TypedQuery<StaticRecommendationCategoryEntity> staticRecommendationCategoryQuery = entityManager
-                        .createQuery("select c from static_recommendation_category c where c.id = :id",
-                                        StaticRecommendationCategoryEntity.class);
-
-        staticRecommendationCategoryQuery.setParameter("id", 7); //General Tips
-
-        List<StaticRecommendationCategoryEntity> staticRecommendationsCategoryList = staticRecommendationCategoryQuery.getResultList();
-
-        StaticRecommendationCategoryEntity category = null;
-        if(staticRecommendationsCategoryList.size() == 1){
-            category = staticRecommendationsCategoryList.get(0);
-        }
-
+        // Todo: use a @GeneratedValue instead
         Integer maxIndex = entityManager.createQuery("select max(s.index) from static_recommendation s", Integer.class).getSingleResult();
         int nextIndex = maxIndex+1;
 
-        StaticRecommendationEntity newStaticRecommendation = new StaticRecommendationEntity();
-        newStaticRecommendation.setIndex(nextIndex);
-        newStaticRecommendation.setActive(false);
-        newStaticRecommendation.setLocale(user.getLocale());
-        newStaticRecommendation.setCategory(category);
-        newStaticRecommendation.setTitle(staticRecommendation.getTitle());
-        newStaticRecommendation.setDescription(staticRecommendation.getDescription());
-        newStaticRecommendation.setCreatedOn(DateTime.now());
+        StaticRecommendationEntity tipEntity = new StaticRecommendationEntity();
+        tipEntity.setIndex(nextIndex);
+        tipEntity.setActive(false);
+        tipEntity.setLocale(lang);
+        tipEntity.setCategory(category);
+        tipEntity.setTitle(tip.getTitle());
+        tipEntity.setDescription(tip.getDescription());
+        tipEntity.setCreatedOn(DateTime.now());
 
-        this.entityManager.persist(newStaticRecommendation);
+        this.entityManager.persist(tipEntity);
     }
 
     @Override
-    public void updateAdvisoryMessage(eu.daiad.web.model.message.StaticRecommendation staticRecommendation){
-
-        TypedQuery<eu.daiad.web.domain.application.StaticRecommendationEntity> staticRecommendationQuery = entityManager
-                        .createQuery("select s from static_recommendation s where s.id = :id",
-                                        eu.daiad.web.domain.application.StaticRecommendationEntity.class);
-
-        staticRecommendationQuery.setParameter("id", staticRecommendation.getId());
-
-        List<StaticRecommendationEntity> staticRecommendations = staticRecommendationQuery.getResultList();
-
-        if (staticRecommendations.size() == 1) {
-            staticRecommendations.get(0).setTitle(staticRecommendation.getTitle());
-            staticRecommendations.get(0).setDescription(staticRecommendation.getDescription());
-            staticRecommendations.get(0).setModifiedOn(DateTime.now());
-        }
-    }
-
-    @Override
-    public void deleteAdvisoryMessage(eu.daiad.web.model.message.StaticRecommendation staticRecommendation)
+    public void updateTip(StaticRecommendation tip)
     {
-        TypedQuery<eu.daiad.web.domain.application.StaticRecommendationEntity> staticRecommendationQuery = entityManager
-                        .createQuery("select s from static_recommendation s where s.id = :id",
-                                        eu.daiad.web.domain.application.StaticRecommendationEntity.class).setFirstResult(0).setMaxResults(1);
-
-        staticRecommendationQuery.setParameter("id", staticRecommendation.getId());
-
-        List<StaticRecommendationEntity> staticRecommendations = staticRecommendationQuery.getResultList();
-
-        if (staticRecommendations.size() == 1) {
-            StaticRecommendationEntity toBeDeleted = staticRecommendations.get(0);
-            this.entityManager.remove(toBeDeleted);
+        StaticRecommendationEntity tipEntity = entityManager.find(StaticRecommendationEntity.class, tip.getId());
+        if (tipEntity != null) {
+            tipEntity.setTitle(tip.getTitle());
+            tipEntity.setDescription(tip.getDescription());
+            tipEntity.setModifiedOn(DateTime.now());
         }
+    }
+
+    @Override
+    public void deleteTip(StaticRecommendation tip)
+    {
+        StaticRecommendationEntity tipEntity = entityManager.find(StaticRecommendationEntity.class, tip.getId());
+        if (tipEntity != null)
+            entityManager.remove(tipEntity);
     }
 
     @Override
@@ -390,20 +359,23 @@ public class JpaMessageRepository extends BaseRepository
     }
 
     @Override
-    public List<Message> getAnnouncements(String locale)
+    public List<Message> getAnnouncements(String lang)
     {
+        // Note:
+        // In contrast to its name, this method fetches announcement translations. The IDs
+        // correspond to translation entities (not to referenced announcement).
+
         List<Message> messages = new ArrayList<>();
 
-        TypedQuery<AnnouncementTranslationEntity> accountAnnouncementsQuery = entityManager.createQuery(
-            "select a from announcement_translation a where a.locale = :locale order by a.id desc",
+        TypedQuery<AnnouncementTranslationEntity> query = entityManager.createQuery(
+            "SELECT a FROM announcement_translation a WHERE a.locale = :lang ORDER BY a.id DESC",
             AnnouncementTranslationEntity.class);
-        accountAnnouncementsQuery.setParameter("locale", locale);
+        query.setParameter("lang", lang);
 
-        for (AnnouncementTranslationEntity announcementTranslation : accountAnnouncementsQuery.getResultList()) {
-            AnnouncementTranslation message = new AnnouncementTranslation();
-            message.setId(announcementTranslation.getId());
-            message.setTitle(announcementTranslation.getTitle());
-            message.setContent(announcementTranslation.getContent());
+        for (AnnouncementTranslationEntity translationEntity: query.getResultList()) {
+            Announcement message = new Announcement(translationEntity.getId());
+            message.setTitle(translationEntity.getTitle());
+            message.setContent(translationEntity.getContent());
             messages.add(message);
         }
         return messages;
@@ -412,7 +384,7 @@ public class JpaMessageRepository extends BaseRepository
     @Override
     public Announcement getAnnouncement(int id, String locale)
     {
-        Announcement message = new Announcement();
+        Announcement message = null;
 
         TypedQuery<AnnouncementTranslationEntity> accountAnnouncementQuery = entityManager.createQuery(
             "select a from announcement_translation a where a.locale = :locale and a.id = :id",
@@ -423,7 +395,7 @@ public class JpaMessageRepository extends BaseRepository
         List<AnnouncementTranslationEntity> announcements = accountAnnouncementQuery.getResultList();
         if(accountAnnouncementQuery.getResultList().size() == 1){
             AnnouncementTranslationEntity announcementTranslation = announcements.get(0);
-            message.setId(announcementTranslation.getId());
+            message = new Announcement(announcementTranslation.getId());
             message.setTitle(announcementTranslation.getTitle());
             message.setContent(announcementTranslation.getContent());
         }

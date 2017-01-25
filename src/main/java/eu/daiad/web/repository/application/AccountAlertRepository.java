@@ -407,9 +407,9 @@ public class AccountAlertRepository extends BaseRepository
         message.setTitle(title);
         message.setDescription(description);
         message.setLink(translation.getLink());
-        message.setCreatedOn(r.getCreatedOn().getMillis());
+        message.setCreatedOn(r.getCreatedOn());
         if (r.getAcknowledgedOn() != null)
-            message.setAcknowledgedOn(r.getAcknowledgedOn().getMillis());
+            message.setAcknowledgedOn(r.getAcknowledgedOn());
 
         return message;
     }

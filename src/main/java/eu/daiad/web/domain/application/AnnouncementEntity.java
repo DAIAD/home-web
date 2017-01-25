@@ -95,8 +95,7 @@ public class AnnouncementEntity
         if (directsTo(channel.getName()))
             return false; // already exists
 
-        channels.add(new AnnouncementChannelEntity(this, channel));
-        return true;
+        return channels.add(new AnnouncementChannelEntity(this, channel));
     }
 
     public boolean removeChannel(ChannelEntity channel)
@@ -110,10 +109,8 @@ public class AnnouncementEntity
                 break;
             }
 
-        if (r != null) {
-            channels.remove(r);
-            return true;
-        }
+        if (r != null)
+            return channels.remove(r);
         return false;
     }
 
@@ -122,9 +119,8 @@ public class AnnouncementEntity
         if (getTranslation(locale) != null)
             return false; // already exists
 
-        translations.add(
+        return translations.add(
             new AnnouncementTranslationEntity(this, locale, title, content));
-        return true;
 	}
 
     public boolean removeTranslation(Locale locale)
@@ -138,10 +134,8 @@ public class AnnouncementEntity
                 break;
             }
 
-        if (r != null) {
-            translations.remove(r);
-            return true;
-        }
+        if (r != null)
+            return translations.remove(r);
         return false;
 	}
 
