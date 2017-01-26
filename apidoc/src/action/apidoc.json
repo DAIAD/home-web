@@ -1,0 +1,18 @@
+{
+  "name": "DAIAD Action API Interface",
+  "title": "DAIAD Action API Interface",
+  "description": "",
+  "url": "https://app.dev.daiad.eu/",
+  "header": {
+    "title": "Introduction",
+    "filename": "./header.md"
+  },
+  "order": [
+    "Login",
+    "Logout"
+  ],
+  "template": {
+    "withCompare": false,
+    "withGenerator": false
+  }
+}

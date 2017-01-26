@@ -11,6 +11,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -33,6 +34,9 @@ import eu.daiad.web.util.AjaxUtils;
 public class RESTAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
 	private final Log logger = LogFactory.getLog(this.getClass());
+
+    @Autowired
+    private Jackson2ObjectMapperBuilder objectMapperBuilder;
 
 	@Autowired
 	private IProfileRepository profileRepository;
@@ -68,8 +72,7 @@ public class RESTAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuc
 	                profile,
 	                user.roleToStringArray());
 
-				CsrfToken sessionToken = (CsrfToken) request.getSession().getAttribute(
-								CsrfConstants.DEFAULT_CSRF_TOKEN_ATTR_NAME);
+				CsrfToken sessionToken = (CsrfToken) request.getSession().getAttribute(CsrfConstants.DEFAULT_CSRF_TOKEN_ATTR_NAME);
 				CsrfToken requestToken = (CsrfToken) request.getAttribute(CsrfConstants.REQUEST_ATTRIBUTE_NAME);
 
 				CsrfToken token = (sessionToken == null ? requestToken : sessionToken);
@@ -84,7 +87,7 @@ public class RESTAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuc
 				response.setHeader("Cache-Control", "no-cache");
 				response.setStatus(HttpStatus.OK.value());
 
-				ObjectMapper mapper = new ObjectMapper();
+				ObjectMapper mapper = objectMapperBuilder.build();
 				response.getWriter().print(mapper.writeValueAsString(authenticationResponse));
 			} catch (Exception ex) {
 				logger.error(ex);

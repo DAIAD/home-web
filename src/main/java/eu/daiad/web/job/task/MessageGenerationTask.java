@@ -1,8 +1,10 @@
 package eu.daiad.web.job.task;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.LocalDateTime;
@@ -15,6 +17,8 @@ import org.springframework.stereotype.Component;
 
 import eu.daiad.web.job.builder.MessageGeneratorJobBuilder;
 import eu.daiad.web.model.device.EnumDeviceType;
+import eu.daiad.web.model.utility.UtilityInfo;
+import eu.daiad.web.repository.application.IUtilityRepository;
 import eu.daiad.web.service.message.IMessageGeneratorService;
 
 /**
@@ -27,6 +31,12 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
      * Logger instance for writing events using the configured logging API.
      */
     private static final Log logger = LogFactory.getLog(MessageGeneratorJobBuilder.class);
+
+    /**
+     * Repository for accessing utility data.
+     */
+    @Autowired
+    private IUtilityRepository utilityRepository;
 
     /**
      * Service for creating application messages.
@@ -75,16 +85,30 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
                 Integer.parseInt(parameters.get(EnumParameter.AMPHIRO_MONTHLY_BUDGET.getValue())));
 
             // Generate messages
+            String accountKeys = parameters.get(EnumParameter.RUN_FOR_ACCOUNT.getValue());
+            String utilityKeys = parameters.get(EnumParameter.RUN_FOR_UTILITY.getValue());
 
-            String accountKey = parameters.get(EnumParameter.ACCOUNT_KEY.getValue());
-            String utilityKey = parameters.get(EnumParameter.UTILITY_KEY.getValue());
 
-            if (accountKey != null) {
-                messageService.executeAccount(config, UUID.fromString(accountKey));
-            } else if (utilityKey != null) {
-                messageService.executeUtility(config, UUID.fromString(utilityKey));
-            } else {
-                messageService.executeAll(config);
+            if (!StringUtils.isBlank(accountKeys)) {
+                for(String key : StringUtils.split(accountKeys, ",")) {
+                    messageService.executeAccount(config, UUID.fromString(key));
+                }
+            }
+
+            if (StringUtils.isBlank(utilityKeys)) {
+                utilityKeys = "";
+
+                List<UtilityInfo> utilities = utilityRepository.getUtilities();
+                for (int i = 0, count = utilities.size(); i < count; i++) {
+                    if(utilities.get(i).isMessageGenerationEnabled()) {
+                        utilityKeys += ((utilityKeys.length() == 0 ? "" : ",") + utilities.get(i).getKey().toString());
+                    }
+                }
+            }
+            if (!StringUtils.isBlank(utilityKeys)) {
+                for(String key : StringUtils.split(utilityKeys, ",")) {
+                    messageService.executeUtility(config, UUID.fromString(key));
+                }
             }
         } catch (Exception ex) {
             logger.fatal("Failed to complete message calculation process.", ex);
@@ -109,7 +133,7 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
         /**
          * Reference date time
          */
-        REFERENCE_DATETIME("ref-date"),
+        REFERENCE_DATETIME("reference.datetime"),
         /**
          * Static tip generation interval in days.
          */
@@ -139,13 +163,13 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
          */
         AMPHIRO_MONTHLY_BUDGET("monthly.budget.amphiro"),
         /**
-         * Generate messages for a certain utility only
+         * A comma-separated list of utility keys. Generates messages for a certain utilities only.
          */
-        UTILITY_KEY("utility-key"),
+        RUN_FOR_UTILITY("execute.for.utility"),
         /**
-         * Generate messages for a certain account only
+         * A comma-separated list of account keys. Generates messages for a certain accounts only.
          */
-        ACCOUNT_KEY("account-key");
+        RUN_FOR_ACCOUNT("execute.for.account");
 
         private final String value;
 
