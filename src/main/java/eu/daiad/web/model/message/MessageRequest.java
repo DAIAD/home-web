@@ -1,5 +1,7 @@
 package eu.daiad.web.model.message;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import eu.daiad.web.model.AuthenticatedRequest;
@@ -49,14 +51,24 @@ public class MessageRequest extends AuthenticatedRequest
         }
     }
 
+    @JsonIgnore
     private Options[] messages;
 
-	public Options[] getMessages() {
-		return messages;
-	}
+    @JsonProperty("messages")
+    public Options[] getMessages() {
+        return messages;
+    }
 
-	public void setMessages(Options[] messages)
-	{
-		this.messages = (messages == null)? (new Options[0]) : messages;
-	}
+    @JsonProperty("messages")
+    public void setMessages(Options[] messages)
+    {
+        this.messages = (messages == null)? (new Options[0]) : messages;
+    }
+
+    // Note: Support for API backwards compatibility
+    @JsonProperty("pagination")
+    public void setPagination(Options[] messages)
+    {
+        this.messages = (messages == null)? (new Options[0]) : messages;
+    }
 }

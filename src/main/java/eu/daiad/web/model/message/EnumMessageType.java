@@ -1,6 +1,8 @@
 package eu.daiad.web.model.message;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -8,37 +10,48 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
 public enum EnumMessageType {
-	UNDEFINED(0),
-	ALERT(1),
-	RECOMMENDATION_STATIC(2),
-	RECOMMENDATION(3),
-	ANNOUNCEMENT(4);
+    UNDEFINED(0),
+    ALERT(1),
+    RECOMMENDATION_STATIC(2),
+    RECOMMENDATION(3),
+    ANNOUNCEMENT(4);
 
-	private final int value;
+    private final int value;
 
-	private EnumMessageType(int value) {
-		this.value = value;
-	}
+    private EnumMessageType(int value) {
+        this.value = value;
+    }
 
-	public int getValue() {
-		return this.value;
-	}
+    public int getValue() {
+        return this.value;
+    }
 
-	public static EnumMessageType fromString(String value) {
-		for (EnumMessageType item : EnumMessageType.values()) {
-			if (item.name().equalsIgnoreCase(value)) {
-				return item;
-			}
-		}
-		return EnumMessageType.UNDEFINED;
-	}
+    public static EnumMessageType fromString(String value) {
+        for (EnumMessageType item : EnumMessageType.values()) {
+            if (item.name().equalsIgnoreCase(value)) {
+                return item;
+            }
+        }
+        return EnumMessageType.UNDEFINED;
+    }
 
-	public static class Deserializer extends JsonDeserializer<EnumMessageType> {
+    public static class Deserializer extends JsonDeserializer<EnumMessageType>
+    {
+        // Note: This is to provide backwards compatibility with API clients
+        public static final Map<String, String> aliases = new HashMap<>();
+        static {
+            aliases.put("RECOMMENDATION_DYNAMIC", "RECOMMENDATION");
+        }
 
-		@Override
-		public EnumMessageType deserialize(JsonParser parser, DeserializationContext context) throws IOException,
-						JsonProcessingException {
-			return EnumMessageType.fromString(parser.getValueAsString());
-		}
-	}
+        @Override
+        public EnumMessageType deserialize(
+            JsonParser parser, DeserializationContext context)
+                throws IOException, JsonProcessingException
+        {
+            String s = parser.getValueAsString();
+            if (aliases.containsKey(s))
+                s = aliases.get(s);
+            return EnumMessageType.fromString(s);
+        }
+    }
 }
