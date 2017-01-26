@@ -8,7 +8,7 @@ public class AnnouncementRequest extends AuthenticatedRequest
 {
     private Announcement announcement;
 
-    private List<ReceiverAccount> receiverAccountList;
+    private List<ReceiverAccount> receivers;
 
     public Announcement getAnnouncement() {
         return announcement;
@@ -18,12 +18,12 @@ public class AnnouncementRequest extends AuthenticatedRequest
         this.announcement = announcement;
     }
 
-    public List<ReceiverAccount> getReceiverAccountList() {
-        return receiverAccountList;
+    public List<ReceiverAccount> getReceivers() {
+        return receivers;
     }
 
-    public void setReceiverAccountList(List<ReceiverAccount> receiverAccountList) {
-        this.receiverAccountList = receiverAccountList;
+    public void setReceivers(List<ReceiverAccount> receivers) {
+        this.receivers = receivers;
     }
 
 }

@@ -57,9 +57,9 @@ public interface IAccountAnnouncementRepository
 
     boolean acknowledge(UUID accountKey, int id, DateTime acknowledged);
 
-    Announcement formatMessage(int id, Locale locale);
+    Announcement newMessage(int id, Locale locale);
 
-    Announcement formatMessage(AccountAnnouncementEntity r, Locale locale);
+    Announcement newMessage(AccountAnnouncementEntity r, Locale locale);
 
     void delete(int id);
 

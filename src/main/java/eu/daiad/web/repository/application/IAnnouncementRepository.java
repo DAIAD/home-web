@@ -1,9 +1,11 @@
 package eu.daiad.web.repository.application;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import eu.daiad.web.domain.application.AnnouncementEntity;
+import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.model.message.Message;
 
 public interface IAnnouncementRepository
@@ -21,4 +23,8 @@ public interface IAnnouncementRepository
     void delete(int id);
 
     void delete(AnnouncementEntity e);
+
+    Announcement newMessage(int id, Locale locale);
+
+    Announcement newMessage(AnnouncementEntity a, Locale locale);
 }

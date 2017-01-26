@@ -6,20 +6,20 @@ public class RecommendationByTypeRecord
 {
     private final EnumRecommendationType type;
 
-    private final long count;
+    private final int count;
 
-    public RecommendationByTypeRecord(EnumRecommendationType type, long count)
+    public RecommendationByTypeRecord(EnumRecommendationType type, Long count)
     {
         this.type = type;
-        this.count = count;
+        this.count = count.intValue();
     }
 
-    public RecommendationByTypeRecord(String type, long count)
+    public RecommendationByTypeRecord(String type, Long count)
     {
         this(EnumRecommendationType.valueOf(type), count);
     }
 
-    public RecommendationByTypeRecord(int code, long count)
+    public RecommendationByTypeRecord(int code, Long count)
     {
         this(EnumRecommendationType.valueOf(code), count);
     }
@@ -29,7 +29,7 @@ public class RecommendationByTypeRecord
         return type;
     }
 
-    public long getCount()
+    public int getCount()
     {
         return count;
     }

@@ -42,9 +42,9 @@ public interface IAccountAlertRepository
 
     int countByType(EnumAlertType alertType, UUID utilityKey, Interval interval);
 
-    Map<EnumAlertType, Long> countByType(UUID utilityKey);
+    Map<EnumAlertType, Integer> countByType(UUID utilityKey);
 
-    Map<EnumAlertType, Long> countByType(UUID utilityKey, Interval interval);
+    Map<EnumAlertType, Integer> countByType(UUID utilityKey, Interval interval);
 
     List<AccountAlertEntity> findByAccountAndType(UUID accountKey, EnumAlertType alertType);
 

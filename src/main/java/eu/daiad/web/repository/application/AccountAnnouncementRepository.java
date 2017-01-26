@@ -61,9 +61,9 @@ public class AccountAnnouncementRepository extends BaseRepository
     @Override
     public int countAll()
     {
-        TypedQuery<Integer> query = entityManager.createQuery(
-            "SELECT count(a.id) FROM account_announcement", Integer.class);
-        return query.getSingleResult();
+        TypedQuery<Long> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_announcement", Long.class);
+        return query.getSingleResult().intValue();
     }
 
     @Override
@@ -124,11 +124,11 @@ public class AccountAnnouncementRepository extends BaseRepository
     @Override
     public int countByAccount(UUID accountKey, Interval interval)
     {
-        TypedQuery<Integer> query = entityManager.createQuery(
+        TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(a.id) FROM account_announcement a WHERE " +
                 "a.account.key = :accountKey" +
                 ((interval != null)? " AND a.createdOn >= :start AND a.createdOn < :end" : ""),
-             Integer.class);
+             Long.class);
 
         query.setParameter("accountKey", accountKey);
         if (interval != null) {
@@ -141,10 +141,10 @@ public class AccountAnnouncementRepository extends BaseRepository
     @Override
     public int countByAccount(UUID accountKey, int minId)
     {
-        TypedQuery<Integer> query = entityManager.createQuery(
+        TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(a.id) FROM account_announcement a " +
                 "WHERE a.account.key = :accountKey AND a.id > :minId ",
-            Integer.class);
+            Long.class);
         query.setParameter("accountKey", accountKey);
         query.setParameter("minId", minId);
         return query.getSingleResult().intValue();
@@ -182,11 +182,11 @@ public class AccountAnnouncementRepository extends BaseRepository
     @Override
     public int countByAnnouncement(int announcementId, Interval interval)
     {
-        TypedQuery<Integer> query = entityManager.createQuery(
+        TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(a.id) FROM account_announcement a WHERE " +
                 "a.announcement.id = :aid" +
                 ((interval != null)? " AND a.createdOn >= :start AND a.createdOn < :end" : ""),
-            Integer.class);
+            Long.class);
 
         query.setParameter("aid", announcementId);
         if (interval != null) {
@@ -292,16 +292,16 @@ public class AccountAnnouncementRepository extends BaseRepository
     }
 
     @Override
-    public Announcement formatMessage(int id, Locale locale)
+    public Announcement newMessage(int id, Locale locale)
     {
         AccountAnnouncementEntity r = findOne(id);
         if (r != null)
-            return formatMessage(r, locale);
+            return newMessage(r, locale);
         return null;
     }
 
     @Override
-    public Announcement formatMessage(AccountAnnouncementEntity r, Locale locale)
+    public Announcement newMessage(AccountAnnouncementEntity r, Locale locale)
     {
         AnnouncementEntity announcement = r.getAnnouncement();
 

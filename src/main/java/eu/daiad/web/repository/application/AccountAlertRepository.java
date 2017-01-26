@@ -52,8 +52,8 @@ public class AccountAlertRepository extends BaseRepository
     @Override
     public int countAll()
     {
-        TypedQuery<Integer> query = entityManager.createQuery(
-            "SELECT count(a.id) FROM account_alert a", Integer.class);
+        TypedQuery<Long> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_alert a", Long.class);
         return query.getSingleResult().intValue();
     }
 
@@ -104,11 +104,11 @@ public class AccountAlertRepository extends BaseRepository
     @Override
     public int countByAccount(UUID accountKey, Interval interval)
     {
-        TypedQuery<Integer> query = entityManager.createQuery(
+        TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(a.id) FROM account_alert a WHERE " +
                 "a.account.key = :accountKey" +
                 ((interval != null)? " AND a.createdOn >= :start AND a.createdOn < :end" : ""),
-            Integer.class);
+            Long.class);
 
         query.setParameter("accountKey", accountKey);
         if (interval != null) {
@@ -149,10 +149,10 @@ public class AccountAlertRepository extends BaseRepository
     @Override
     public int countByAccount(UUID accountKey, int minId)
     {
-        TypedQuery<Integer> query = entityManager.createQuery(
+        TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(r.id) FROM account_alert r " +
                 "WHERE r.account.key = :accountKey AND r.id > :minId ",
-            Integer.class);
+            Long.class);
         query.setParameter("accountKey", accountKey);
         query.setParameter("minId", minId);
         return query.getSingleResult().intValue();
@@ -196,12 +196,12 @@ public class AccountAlertRepository extends BaseRepository
     public int countByType(
         EnumAlertType alertType, UUID utilityKey, Interval interval)
     {
-        TypedQuery<Integer> query = entityManager.createQuery(
+        TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(a.id) FROM account_alert a WHERE " +
                 "a.account.utility.key = :utilityKey " +
                 "AND a.alertTemplate.type.value = :rtype " +
                 ((interval != null)? "AND a.createdOn >= :start AND a.createdOn < :end " : ""),
-            Integer.class);
+            Long.class);
 
         query.setParameter("utilityKey", utilityKey);
         query.setParameter("rtype", alertType.getValue());
@@ -215,15 +215,15 @@ public class AccountAlertRepository extends BaseRepository
     }
 
     @Override
-    public Map<EnumAlertType, Long> countByType(UUID utilityKey)
+    public Map<EnumAlertType, Integer> countByType(UUID utilityKey)
     {
         return countByType(utilityKey, null);
     }
 
     @Override
-    public Map<EnumAlertType, Long> countByType(UUID utilityKey, Interval interval)
+    public Map<EnumAlertType, Integer> countByType(UUID utilityKey, Interval interval)
     {
-        Map<EnumAlertType, Long> r = new EnumMap<>(EnumAlertType.class);
+        Map<EnumAlertType, Integer> r = new EnumMap<>(EnumAlertType.class);
 
         TypedQuery<AlertByTypeRecord> query = entityManager.createQuery(
             "SELECT new eu.daiad.web.domain.application.AlertByTypeRecord(" +
@@ -272,12 +272,12 @@ public class AccountAlertRepository extends BaseRepository
     public int countByAccountAndType(
         UUID accountKey, EnumAlertType alertType, Interval interval)
     {
-        TypedQuery<Integer> query = entityManager.createQuery(
+        TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(a.id) FROM account_alert a WHERE " +
                 "a.alertTemplate.type.value = :rtype" +
                 " AND a.account.key = :accountKey" +
                 ((interval != null)? " AND a.createdOn >= :start AND a.createdOn < :end" : ""),
-            Integer.class);
+            Long.class);
 
         query.setParameter("rtype", alertType.getValue());
         query.setParameter("accountKey", accountKey);

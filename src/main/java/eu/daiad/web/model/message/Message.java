@@ -55,6 +55,8 @@ public abstract class Message
 
 	public abstract EnumMessageType getType();
 
+	public static final int INVALID_ID = -1;
+
 	private final int id;
 
 	protected String title;

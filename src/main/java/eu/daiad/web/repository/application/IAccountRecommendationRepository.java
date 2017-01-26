@@ -42,9 +42,9 @@ public interface IAccountRecommendationRepository
 
     int countByType(EnumRecommendationType recommendationType, UUID utilityKey, Interval interval);
 
-    Map<EnumRecommendationType, Long> countByType(UUID utilityKey);
+    Map<EnumRecommendationType, Integer> countByType(UUID utilityKey);
 
-    Map<EnumRecommendationType, Long> countByType(UUID utilityKey, Interval interval);
+    Map<EnumRecommendationType, Integer> countByType(UUID utilityKey, Interval interval);
 
     List<AccountRecommendationEntity> findByAccountAndType(UUID accountKey, EnumRecommendationType recommendationType);
 

@@ -47,9 +47,9 @@ public class AccountRecommendationRepository extends BaseRepository
     @Override
     public int countAll()
     {
-        TypedQuery<Integer> query = entityManager.createQuery(
-            "SELECT count(a.id) FROM account_recommendation a", Integer.class);
-        return query.getSingleResult();
+        TypedQuery<Long> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_recommendation a", Long.class);
+        return query.getSingleResult().intValue();
     }
 
     @Override
@@ -99,11 +99,11 @@ public class AccountRecommendationRepository extends BaseRepository
     @Override
     public int countByAccount(UUID accountKey, Interval interval)
     {
-        TypedQuery<Integer> query = entityManager.createQuery(
+        TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(a.id) FROM account_recommendation a WHERE " +
                 "a.account.key = :accountKey" +
                 ((interval != null)? " AND a.createdOn >= :start AND a.createdOn < :end" : ""),
-            Integer.class);
+            Long.class);
 
         query.setParameter("accountKey", accountKey);
         if (interval != null) {
@@ -144,10 +144,10 @@ public class AccountRecommendationRepository extends BaseRepository
     @Override
     public int countByAccount(UUID accountKey, int minId)
     {
-        TypedQuery<Integer> query = entityManager.createQuery(
+        TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(r.id) FROM account_recommendation r " +
                 "WHERE r.account.key = :accountKey AND r.id > :minId ",
-            Integer.class);
+            Long.class);
         query.setParameter("accountKey", accountKey);
         query.setParameter("minId", minId);
         return query.getSingleResult().intValue();
@@ -191,12 +191,12 @@ public class AccountRecommendationRepository extends BaseRepository
     public int countByType(
         EnumRecommendationType recommendationType, UUID utilityKey, Interval interval)
     {
-        TypedQuery<Integer> query = entityManager.createQuery(
+        TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(a.id) FROM account_recommendation a WHERE " +
                 "a.account.utility.key = :utilityKey " +
                 "AND a.recommendationTemplate.type.value = :rtype " +
                 ((interval != null)? "AND a.createdOn >= :start AND a.createdOn < :end " : ""),
-            Integer.class);
+            Long.class);
 
         query.setParameter("utilityKey", utilityKey);
         query.setParameter("rtype", recommendationType.getValue());
@@ -210,15 +210,15 @@ public class AccountRecommendationRepository extends BaseRepository
     }
 
     @Override
-    public Map<EnumRecommendationType, Long> countByType(UUID utilityKey)
+    public Map<EnumRecommendationType, Integer> countByType(UUID utilityKey)
     {
         return countByType(utilityKey, null);
     }
 
     @Override
-    public Map<EnumRecommendationType, Long> countByType(UUID utilityKey, Interval interval)
+    public Map<EnumRecommendationType, Integer> countByType(UUID utilityKey, Interval interval)
     {
-        Map<EnumRecommendationType, Long> r = new EnumMap<>(EnumRecommendationType.class);
+        Map<EnumRecommendationType, Integer> r = new EnumMap<>(EnumRecommendationType.class);
 
         TypedQuery<RecommendationByTypeRecord> query = entityManager.createQuery(
             "SELECT new eu.daiad.web.domain.application.RecommendationByTypeRecord(" +
@@ -267,12 +267,12 @@ public class AccountRecommendationRepository extends BaseRepository
     public int countByAccountAndType(
         UUID accountKey, EnumRecommendationType recommendationType, Interval interval)
     {
-        TypedQuery<Integer> query = entityManager.createQuery(
+        TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(a.id) FROM account_recommendation a WHERE " +
                 "a.recommendationTemplate.type.value = :rtype" +
                 " AND a.account.key = :accountKey" +
                 ((interval != null)? " AND a.createdOn >= :start AND a.createdOn < :end" : ""),
-            Integer.class);
+            Long.class);
 
         query.setParameter("rtype", recommendationType.getValue());
         query.setParameter("accountKey", accountKey);

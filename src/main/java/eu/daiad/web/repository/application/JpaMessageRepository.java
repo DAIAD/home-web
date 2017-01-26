@@ -29,7 +29,6 @@ import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AccountRecommendationEntity;
 import eu.daiad.web.domain.application.AccountStaticRecommendationEntity;
 import eu.daiad.web.domain.application.AnnouncementEntity;
-import eu.daiad.web.domain.application.AnnouncementTranslationEntity;
 import eu.daiad.web.domain.application.StaticRecommendationCategoryEntity;
 import eu.daiad.web.domain.application.StaticRecommendationEntity;
 import eu.daiad.web.model.PagingOptions;
@@ -202,7 +201,7 @@ public class JpaMessageRepository extends BaseRepository
             List<AccountAnnouncementEntity> announcements =
                 accountAnnouncementRepository.findByAccount(userKey, minMessageId, pagination);
             for (AccountAnnouncementEntity a: announcements) {
-                Announcement message = accountAnnouncementRepository.formatMessage(a, locale);
+                Announcement message = accountAnnouncementRepository.newMessage(a, locale);
                 if (message != null)
                     messages.add(message);
             }
@@ -349,23 +348,20 @@ public class JpaMessageRepository extends BaseRepository
     }
 
     @Override
-    public void deleteAnnouncement(Announcement announcement)
+    public void deleteAnnouncement(int announcementId)
     {
-        announcementRepository.delete(announcement.getId());
+        announcementRepository.delete(announcementId);
     }
 
     @Override
     public List<Message> getAnnouncements(String lang)
     {
+        Locale locale = Locale.forLanguageTag(lang);
         List<Message> messages = new ArrayList<>();
-        for (AnnouncementEntity announcementEntity: announcementRepository.list()) {
-            AnnouncementTranslationEntity translationEntity = announcementEntity.getTranslation(lang);
-            if (translationEntity != null) {
-                Announcement message = new Announcement(announcementEntity.getId());
-                message.setTitle(translationEntity.getTitle());
-                message.setContent(translationEntity.getContent());
+        for (AnnouncementEntity a: announcementRepository.list()) {
+            Announcement message = announcementRepository.newMessage(a, locale);
+            if (message != null)
                 messages.add(message);
-            }
         }
         return messages;
     }
@@ -373,18 +369,7 @@ public class JpaMessageRepository extends BaseRepository
     @Override
     public Announcement getAnnouncement(int id, String lang)
     {
-        AnnouncementEntity announcementEntity = announcementRepository.findOne(id);
-        if (announcementEntity == null)
-            return null;
-
-        AnnouncementTranslationEntity translationEntity = announcementEntity.getTranslation(lang);
-        if (translationEntity == null)
-            return null;
-
-        Announcement message = new Announcement(announcementEntity.getId());
-        message.setTitle(translationEntity.getTitle());
-        message.setContent(translationEntity.getContent());
-        return message;
+        return announcementRepository.newMessage(id, Locale.forLanguageTag(lang));
     }
 
     @Override
@@ -465,7 +450,6 @@ public class JpaMessageRepository extends BaseRepository
         return receivers;
     }
 
-    // Todo Move to AccountAnnouncementRepository
     /**
      * Create a new announcement and link it to receiver accounts.
      *
@@ -485,7 +469,7 @@ public class JpaMessageRepository extends BaseRepository
 
         // 2. Link announcement with receiver accounts
 
-        for (ReceiverAccount receiver: request.getReceiverAccountList()) {
+        for (ReceiverAccount receiver: request.getReceivers()) {
             AccountEntity accountEntity =
                 userRepository.findOne(receiver.getAccountId());
             if (accountEntity == null)

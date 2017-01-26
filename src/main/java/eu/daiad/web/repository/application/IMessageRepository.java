@@ -38,7 +38,7 @@ public interface IMessageRepository {
 
     public void broadcastAnnouncement(AnnouncementRequest announcementRequest, String lang, String channel);
 
-    public void deleteAnnouncement(Announcement announcement);
+    public void deleteAnnouncement(int id);
 
     public Announcement getAnnouncement(int id, String lang);
 

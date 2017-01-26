@@ -12,7 +12,9 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.domain.application.AnnouncementEntity;
+import eu.daiad.web.domain.application.AnnouncementTranslationEntity;
 import eu.daiad.web.domain.application.ChannelEntity;
+import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.model.message.Message;
 
 @Repository
@@ -40,10 +42,10 @@ public class AnnouncementRepository
     }
 
     @Override
-    public AnnouncementEntity create(AnnouncementEntity e)
+    public AnnouncementEntity create(AnnouncementEntity a)
     {
-        entityManager.persist(e);
-        return e;
+        entityManager.persist(a);
+        return a;
     }
 
     @Override
@@ -72,7 +74,7 @@ public class AnnouncementRepository
             a.addTranslation(locale, message.getTitle(), message.getBody());
         }
 
-        return a;
+        return create(a);
     }
 
     @Override
@@ -90,5 +92,31 @@ public class AnnouncementRepository
             e = findOne(e.getId());
         if (e != null)
             entityManager.remove(e);
+    }
+
+    @Override
+    public Announcement newMessage(int id, Locale locale)
+    {
+        AnnouncementEntity a = findOne(id);
+        if (a != null)
+            return newMessage(a, locale);
+        return null;
+    }
+
+    @Override
+    public Announcement newMessage(AnnouncementEntity a, Locale locale)
+    {
+        AnnouncementTranslationEntity translation = null;
+        translation = a.getTranslation(locale);
+        if (translation == null)
+            translation = a.getTranslation(Locale.getDefault());
+        if (translation == null)
+            return null;
+
+        Announcement message = new Announcement(a.getId());
+        message.setPriority(a.getPriority());
+        message.setTitle(translation.getTitle());
+        message.setContent(translation.getContent());
+        return message;
     }
 }

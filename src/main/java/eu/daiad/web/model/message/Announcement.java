@@ -8,6 +8,11 @@ public class Announcement extends Message
 
 	private String link;
 
+	public Announcement()
+	{
+	    super(INVALID_ID);
+	}
+
     public Announcement(int id)
     {
         super(id);

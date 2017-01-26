@@ -18,7 +18,7 @@
  * @apiParam                            {String}   credentials.password   User password
  * @apiParam                            {Object[]} pagination             Array of <code>DataPagingOptions</code> objects. Each data paging options object contains information about fetching data for a specific type of messages. If more than one option objects are found for a single message type, the first overrides the others.
  *
- * @apiParam (DataPagingOptions)   {Number}   type                   Message type. Valid values are <code>ALERT</code>, <code>RECOMMENDATION_STATIC</code>, <code>RECOMMENDATION_DYNAMIC</code> and <code>ANNOUNCEMENT</code>. This parameter is not case sensitive.
+ * @apiParam (DataPagingOptions)   {Number}   type                   Message type. Valid values are <code>ALERT</code>, <code>RECOMMENDATION_STATIC</code>, <code>RECOMMENDATION</code> and <code>ANNOUNCEMENT</code>. This parameter is not case sensitive.
  * @apiParam (DataPagingOptions)   {Number}   [index]                Data paging starts from this index. If not set, data paging starts from the first record.
  * @apiParam (DataPagingOptions)   {Number}   [size]                 Number of records to return. If not set, all records are returned.
  * @apiParam (DataPagingOptions)   {Boolean}  [ascending]            <code>true</code> for ascending sorting; Otherwise <code>false</code>. Sorting is performed on the message id field. Sorting on message id field is similar to sorting over creation date. Default value is <code>true</code>.
@@ -52,7 +52,7 @@
  * @apiSuccess {Number}   totalAnnouncements       Total number of announcements.
  *
  *
- * @apiSuccess (Message) {String} type             Message type. Valid values are <code>ALERT</code>, <code>RECOMMENDATION_STATIC</code>, <code>RECOMMENDATION_DYNAMIC</code> and <code>ANNOUNCEMENT</code>.
+ * @apiSuccess (Message) {String} type             Message type. Valid values are <code>ALERT</code>, <code>RECOMMENDATION_STATIC</code>, <code>RECOMMENDATION</code> and <code>ANNOUNCEMENT</code>.
  *
  * @apiSuccess (Alert extends Message) {Number} id        Message unique id.
  * @apiSuccess (Alert extends Message) {String} alert     Alert type. Valid values are:
@@ -195,7 +195,7 @@ function message() { return; }
  * @apiParam                            {String}   credentials.password   User password
  * @apiParam                            {Object[]} messages               Array of <code>MessageAcknowledgement</code>.
  *
- * @apiParam (MessageAcknowledgement)   {Number}   type                   Message type. Valid values are <code>ALERT</code>, <code>RECOMMENDATION_STATIC</code>, <code>RECOMMENDATION_DYNAMIC</code> and <code>ANNOUNCEMENT</code>. This parameter is not case sensitive.
+ * @apiParam (MessageAcknowledgement)   {Number}   type                   Message type. Valid values are <code>ALERT</code>, <code>RECOMMENDATION_STATIC</code>, <code>RECOMMENDATION</code> and <code>ANNOUNCEMENT</code>. This parameter is not case sensitive.
  * @apiParam (MessageAcknowledgement)   {Number}   id                     Unique message id. This id is unique per message type.
  * @apiParam (MessageAcknowledgement)   {Number}   timestamp              Time stamp the message was read by the user i.e. the time stamp at the mobile device.
  *
