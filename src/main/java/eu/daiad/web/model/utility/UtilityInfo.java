@@ -6,55 +6,61 @@ import eu.daiad.web.domain.application.UtilityEntity;
 
 public class UtilityInfo {
 
-	private int id;
-	private UUID key;
-	private String name;
-	private String country;
-	private String timezone;
-	private String locale;
-	private String city;
+    private int id;
+    private UUID key;
+    private String name;
+    private String country;
+    private String timezone;
+    private String locale;
+    private String city;
+    private boolean messageGenerationEnabled;
 
-	public UtilityInfo(UtilityEntity utility) {
+    public UtilityInfo(UtilityEntity utility) {
 
-		this.id = utility.getId();
-		this.key = utility.getKey();
-		this.name = utility.getName();
-		this.country = utility.getCountry();
-		this.timezone = utility.getTimezone();
-		this.locale = utility.getLocale();
-		this.city = utility.getCity();
-	}
+        id = utility.getId();
+        key = utility.getKey();
+        name = utility.getName();
+        country = utility.getCountry();
+        timezone = utility.getTimezone();
+        locale = utility.getLocale();
+        city = utility.getCity();
+        messageGenerationEnabled = utility.isMessageGenerationEnabled();
+    }
 
-	public int getId() {
-		return id;
-	}
+    public int getId() {
+        return id;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public String getCountry() {
-		return country;
-	}
+    public String getCountry() {
+        return country;
+    }
 
-	public String getTimezone() {
-		return timezone;
-	}
+    public String getTimezone() {
+        return timezone;
+    }
 
-	public String getLocale() {
-		return locale;
-	}
+    public String getLocale() {
+        return locale;
+    }
 
-	public String getCity() {
-		return city;
-	}
+    public String getCity() {
+        return city;
+    }
 
-	public UUID getKey() {
-		return key;
-	}
+    public UUID getKey() {
+        return key;
+    }
 
-	public void setKey(UUID key) {
-		this.key = key;
-	}
+    public void setKey(UUID key) {
+        this.key = key;
+    }
+
+    public boolean isMessageGenerationEnabled() {
+        return messageGenerationEnabled;
+    }
 
 }

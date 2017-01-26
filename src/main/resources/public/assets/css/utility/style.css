@@ -80,6 +80,18 @@
   display: none;
 }
 
+.Select-placeholder, :not(.Select--multi) > .Select-control .Select-value {
+    color: #000;
+}
+
+.is-disabled > .Select-control .Select-value-label {
+    color: #aaa !important;
+}
+
+.Select, .Select div, .Select input, .Select span {
+    outline: none;
+}
+
 /* Bread crumb */
 
 ul.breadcrumbs-list {

@@ -1,13 +1,15 @@
 package eu.daiad.web.model.message;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import eu.daiad.web.model.query.PopulationFilter;
-import eu.daiad.web.model.query.TimeFilter;
 import java.util.ArrayList;
 
-public class MessageStatisticsQuery {
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+import eu.daiad.web.model.query.PopulationFilter;
+import eu.daiad.web.model.query.TimeFilter;
+
+public class MessageStatisticsQuery
+{
     @JsonIgnore
     private String timezone;
 
@@ -36,5 +38,5 @@ public class MessageStatisticsQuery {
     public void setTime(TimeFilter time) {
         this.time = time;
     }
-    
+
 }

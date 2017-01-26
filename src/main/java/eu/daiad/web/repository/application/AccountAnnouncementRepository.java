@@ -13,20 +13,19 @@ import org.joda.time.Interval;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import eu.daiad.web.domain.application.AccountAlertEntity;
 import eu.daiad.web.domain.application.AccountAnnouncementEntity;
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AnnouncementEntity;
 import eu.daiad.web.repository.BaseRepository;
 
-@Repository 
+@Repository
 @Transactional("applicationTransactionManager")
 public class AccountAnnouncementRepository extends BaseRepository
     implements IAccountAnnouncementRepository
 {
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
-    
+
     @Override
     public AccountAnnouncementEntity findOne(int id)
     {
@@ -40,7 +39,7 @@ public class AccountAnnouncementRepository extends BaseRepository
             "SELECT count(a.id) FROM account_announcement", Long.class);
         return query.getSingleResult();
     }
-    
+
     @Override
     public List<AccountAnnouncementEntity> findByAccount(UUID accountKey)
     {
@@ -60,7 +59,7 @@ public class AccountAnnouncementRepository extends BaseRepository
         query.setParameter("accountKey", accountKey);
         return query.getSingleResult();
     }
-    
+
     @Override
     public List<AccountAnnouncementEntity> findByAccount(UUID accountKey, Interval interval)
     {
@@ -74,7 +73,7 @@ public class AccountAnnouncementRepository extends BaseRepository
         query.setParameter("end", interval.getEnd());
         return query.getResultList();
     }
-    
+
     @Override
     public Long countByAccount(UUID accountKey, Interval interval)
     {
@@ -108,7 +107,7 @@ public class AccountAnnouncementRepository extends BaseRepository
         query.setParameter("aid", announcementType);
         return query.getSingleResult();
     }
-    
+
     @Override
     public List<AccountAnnouncementEntity> findByType(int announcementType, Interval interval)
     {
@@ -136,7 +135,7 @@ public class AccountAnnouncementRepository extends BaseRepository
         query.setParameter("end", interval.getEnd());
         return query.getSingleResult();
     }
-    
+
     @Override
     public List<AccountAnnouncementEntity> findByAccountAndType(UUID accountKey, int announcementType)
     {
@@ -160,7 +159,7 @@ public class AccountAnnouncementRepository extends BaseRepository
         query.setParameter("accountKey", accountKey);
         return query.getSingleResult();
     }
-    
+
     @Override
     public List<AccountAnnouncementEntity> findByAccountAndType(
         UUID accountKey, int announcementType, Interval interval)
@@ -193,7 +192,7 @@ public class AccountAnnouncementRepository extends BaseRepository
         query.setParameter("end", interval.getEnd());
         return query.getSingleResult();
     }
-    
+
     @Override
     public AccountAnnouncementEntity create(AccountAnnouncementEntity e)
     {
@@ -206,12 +205,12 @@ public class AccountAnnouncementRepository extends BaseRepository
     public AccountAnnouncementEntity createWith(AccountEntity account, int announcementType)
     {
         // Ensure we have a persistent AccountEntity instance
-        if (!entityManager.contains(account)) 
+        if (!entityManager.contains(account))
             account = entityManager.find(AccountEntity.class, account.getId());
-        
-        AnnouncementEntity announcement = 
+
+        AnnouncementEntity announcement =
             entityManager.find(AnnouncementEntity.class, announcementType);
-        AccountAnnouncementEntity e = 
+        AccountAnnouncementEntity e =
             new AccountAnnouncementEntity(account, announcement);
         return create(e);
     }
@@ -222,26 +221,26 @@ public class AccountAnnouncementRepository extends BaseRepository
         TypedQuery<AccountEntity> query = entityManager.createQuery(
             "SELECT a FROM account a WHERE a.key = :accountKey", AccountEntity.class);
         query.setParameter("accountKey", accountKey);
-        
+
         AccountEntity account;
         try {
             account = query.getSingleResult();
         } catch (NoResultException x) {
             account = null;
         }
-        
+
         if (account == null)
             return null;
         else
             return createWith(account, announcementType);
     }
-    
+
     @Override
     public void delete(int id)
     {
-        AccountAnnouncementEntity e = 
+        AccountAnnouncementEntity e =
             entityManager.find(AccountAnnouncementEntity.class, id);
-        if (e != null) 
+        if (e != null)
             delete(e);
     }
 

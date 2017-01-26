@@ -16,7 +16,7 @@ public abstract class Message {
         
         public DateTime getRefDate();
         
-        public Map<String, Object> getPairs();
+        public Map<String, Object> getParameters();
     }
     
     public abstract static class AbstractParameters implements Parameters
@@ -44,7 +44,7 @@ public abstract class Message {
         }
         
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
             Map<String, Object> p = new HashMap<String, Object>();
             p.put("ref_date", new DateFormatter(refDate));

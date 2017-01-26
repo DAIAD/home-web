@@ -18,18 +18,18 @@ public class GroupInfo {
     private String country;
 
     public GroupInfo(GroupEntity group) {
-        this.id = group.getKey();
+        id = group.getKey();
         switch (group.getType()) {
             case SEGMENT:
-                this.name = ((GroupSegmentEntity) group).getCluster().getName() + ": " + group.getName();
+                name = ((GroupSegmentEntity) group).getCluster().getName() + ": " + group.getName();
                 break;
             default:
-                this.name = group.getName();
+                name = group.getName();
                 break;
         }
-        this.numberOfMembers = group.getMembers().size();
-        this.creationDateMils = group.getCreatedOn().getMillis();
-        this.country = group.getUtility().getCountry();
+        numberOfMembers = group.getSize();
+        creationDateMils = group.getCreatedOn().getMillis();
+        country = group.getUtility().getCountry();
     }
 
     public UUID getId() {

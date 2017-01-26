@@ -1,7 +1,10 @@
 package eu.daiad.web.job.task;
 
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.LocalDateTime;
@@ -14,8 +17,9 @@ import org.springframework.stereotype.Component;
 
 import eu.daiad.web.job.builder.MessageGeneratorJobBuilder;
 import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.message.MessageCalculationConfiguration;
-import eu.daiad.web.service.message.IMessageService;
+import eu.daiad.web.model.utility.UtilityInfo;
+import eu.daiad.web.repository.application.IUtilityRepository;
+import eu.daiad.web.service.message.IMessageGeneratorService;
 
 /**
  * Task for generating reports
@@ -29,10 +33,16 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
     private static final Log logger = LogFactory.getLog(MessageGeneratorJobBuilder.class);
 
     /**
+     * Repository for accessing utility data.
+     */
+    @Autowired
+    private IUtilityRepository utilityRepository;
+
+    /**
      * Service for creating application messages.
      */
     @Autowired
-    private IMessageService messageService;
+    private IMessageGeneratorService messageService;
 
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
@@ -40,14 +50,14 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
             Map<String, String> parameters = getStepParameters(chunkContext.getStepContext());
 
             LocalDateTime refDate = parameters.containsKey(EnumParameter.REFERENCE_DATETIME.getValue())?
-                    LocalDateTime.parse(parameters.get(EnumParameter.REFERENCE_DATETIME.getValue())) :
-                    LocalDateTime.now().minusDays(1);
+                LocalDateTime.parse(parameters.get(EnumParameter.REFERENCE_DATETIME.getValue())) :
+                LocalDateTime.now().minusDays(1);
 
-            MessageCalculationConfiguration config = new MessageCalculationConfiguration(refDate);
+            IMessageGeneratorService.Configuration config = new IMessageGeneratorService.Configuration(refDate);
 
             config.setOnDemandExecution(true);
 
-            config.setStaticTipInterval(
+            config.setTipInterval(
                 Integer.parseInt(parameters.get(EnumParameter.STATIC_TIP_INTERVAL.getValue())));
 
             config.setDailyBudget(
@@ -74,8 +84,32 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
                 EnumDeviceType.AMPHIRO,
                 Integer.parseInt(parameters.get(EnumParameter.AMPHIRO_MONTHLY_BUDGET.getValue())));
 
-            // Generate messages for everything!
-            messageService.executeAll(config);
+            // Generate messages
+            String accountKeys = parameters.get(EnumParameter.RUN_FOR_ACCOUNT.getValue());
+            String utilityKeys = parameters.get(EnumParameter.RUN_FOR_UTILITY.getValue());
+
+
+            if (!StringUtils.isBlank(accountKeys)) {
+                for(String key : StringUtils.split(accountKeys, ",")) {
+                    messageService.executeAccount(config, UUID.fromString(key));
+                }
+            }
+
+            if (StringUtils.isBlank(utilityKeys)) {
+                utilityKeys = "";
+
+                List<UtilityInfo> utilities = utilityRepository.getUtilities();
+                for (int i = 0, count = utilities.size(); i < count; i++) {
+                    if(utilities.get(i).isMessageGenerationEnabled()) {
+                        utilityKeys += ((utilityKeys.length() == 0 ? "" : ",") + utilities.get(i).getKey().toString());
+                    }
+                }
+            }
+            if (!StringUtils.isBlank(utilityKeys)) {
+                for(String key : StringUtils.split(utilityKeys, ",")) {
+                    messageService.executeUtility(config, UUID.fromString(key));
+                }
+            }
         } catch (Exception ex) {
             logger.fatal("Failed to complete message calculation process.", ex);
             throw ex;
@@ -99,7 +133,7 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
         /**
          * Reference date time
          */
-        REFERENCE_DATETIME("ref-date"),
+        REFERENCE_DATETIME("reference.datetime"),
         /**
          * Static tip generation interval in days.
          */
@@ -127,7 +161,15 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
         /**
          * Amphiro b1 monthly budget.
          */
-        AMPHIRO_MONTHLY_BUDGET("monthly.budget.amphiro");
+        AMPHIRO_MONTHLY_BUDGET("monthly.budget.amphiro"),
+        /**
+         * A comma-separated list of utility keys. Generates messages for a certain utilities only.
+         */
+        RUN_FOR_UTILITY("execute.for.utility"),
+        /**
+         * A comma-separated list of account keys. Generates messages for a certain accounts only.
+         */
+        RUN_FOR_ACCOUNT("execute.for.account");
 
         private final String value;
 

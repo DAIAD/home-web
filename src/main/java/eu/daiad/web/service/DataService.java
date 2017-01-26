@@ -28,9 +28,11 @@ import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
+import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.Error;
 import eu.daiad.web.model.error.ErrorCode;
 import eu.daiad.web.model.error.QueryErrorCode;
+import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
 import eu.daiad.web.model.query.AreaSpatialFilter;
 import eu.daiad.web.model.query.ClusterPopulationFilter;
@@ -49,13 +51,14 @@ import eu.daiad.web.model.query.ForecastQuery;
 import eu.daiad.web.model.query.ForecastQueryResponse;
 import eu.daiad.web.model.query.GroupPopulationFilter;
 import eu.daiad.web.model.query.GroupSpatialFilter;
-import eu.daiad.web.model.query.LabeledGeometry;
 import eu.daiad.web.model.query.NamedDataQuery;
 import eu.daiad.web.model.query.PopulationFilter;
 import eu.daiad.web.model.query.SpatialFilter;
 import eu.daiad.web.model.query.UserPopulationFilter;
 import eu.daiad.web.model.query.UtilityPopulationFilter;
 import eu.daiad.web.model.security.AuthenticatedUser;
+import eu.daiad.web.model.security.EnumRole;
+import eu.daiad.web.model.spatial.LabeledGeometry;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IFavouriteRepository;
@@ -468,8 +471,7 @@ public class DataService extends BaseService implements IDataService {
                     case GROUP:
                         GroupSpatialFilter groupSpatialFilter = (GroupSpatialFilter) spatialFilter;
 
-                        for (AreaGroupMemberEntity areaEntity : spatialRepository
-                                        .getAreasByAreaGroupKey(groupSpatialFilter.getGroup())) {
+                        for (AreaGroupMemberEntity areaEntity : spatialRepository.getAreasByAreaGroupKey(groupSpatialFilter.getGroup())) {
                             areas.add(new LabeledGeometry(areaEntity.getTitle(), areaEntity.getGeometry()));
                         }
                         break;
@@ -514,12 +516,9 @@ public class DataService extends BaseService implements IDataService {
 
                             for (eu.daiad.web.model.group.Group group : groups) {
                                 if (clusterFilter.getRanking() == null) {
-                                    query.getPopulation().add(
-                                                    new GroupPopulationFilter(group.getName(), group.getKey()));
+                                    query.getPopulation().add(new GroupPopulationFilter(group.getName(), group.getKey()));
                                 } else {
-                                    query.getPopulation().add(
-                                                    new GroupPopulationFilter(group.getName(), group.getKey(),
-                                                                    clusterFilter.getRanking()));
+                                    query.getPopulation().add(new GroupPopulationFilter(group.getName(), group.getKey(), clusterFilter.getRanking()));
                                 }
                             }
                             continue;
@@ -541,13 +540,7 @@ public class DataService extends BaseService implements IDataService {
 
                     if (filterUsers.size() > 0) {
                         for (UUID userKey : filterUsers) {
-                            // Filter users based on the utility only when
-                            // an authenticated user exists
-                            AuthenticatedUser user = (authenticatedUser == null ? userRepository.getUserByKey(userKey): userRepository.getUserByUtilityAndKey(authenticatedUser.getUtilityId(), userKey));
-
-                            if (user == null) {
-                                throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", userKey);
-                            }
+                            AuthenticatedUser user = authorizeUser(authenticatedUser, userKey);
 
                             // Decide if the user must be included in the group
                             boolean includeUser = true;
@@ -890,13 +883,7 @@ public class DataService extends BaseService implements IDataService {
 
                     if (filterUsers.size() > 0) {
                         for (UUID userKey : filterUsers) {
-                            // Filter users based on the utility only when
-                            // an authenticated user exists
-                            AuthenticatedUser user = (authenticatedUser == null ? userRepository.getUserByKey(userKey) : userRepository.getUserByUtilityAndKey(authenticatedUser.getUtilityId(), userKey));
-
-                            if (user == null) {
-                                throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", userKey);
-                            }
+                            AuthenticatedUser user = authorizeUser(authenticatedUser, userKey);
 
                             // Decide if the user must be included in the group
                             boolean includeUser = true;
@@ -1140,4 +1127,32 @@ public class DataService extends BaseService implements IDataService {
         return namedQueries;
     }
 
+    /**
+     * Searches for a user and checks if the query executor has permissions to access the selected user.
+     *
+     * @param executor the user who executes the query.
+     * @param key the user key to check.
+     * @return user information for the given {@code key}.
+     * @throws ApplicationException when a user does not exists or the executor has not the required permissions.
+     */
+    private AuthenticatedUser authorizeUser(AuthenticatedUser executor, UUID key) throws ApplicationException {
+        if ((executor != null) &&
+            (!executor.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) &&
+            (!executor.getKey().equals(key))) {
+            throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+        }
+
+        AuthenticatedUser user = userRepository.getUserByKey(key);
+
+        if (user == null) {
+            throw createApplicationException(UserErrorCode.USERNANE_NOT_FOUND).set("username", key);
+        }
+
+        // Filter users based on the utility only when an authenticated user exists
+        if ((executor != null) && (!executor.getUtilities().contains(user.getUtilityId()))) {
+            throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+        }
+
+        return user;
+    }
 }

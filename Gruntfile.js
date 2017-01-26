@@ -31,9 +31,18 @@ module.exports = function(grunt) {
       },
     },
     apidoc: {
-      utility: {
-        src: "apidoc/src",
-        dest: "apidoc/docs",
+      'utility-api': {
+        src: "apidoc/src/api",
+        dest: "apidoc/docs/api",
+        template: "apidoc/template",
+        options: {
+          debug: false,
+          includeFilters: [".*\\.js$"]
+        }
+      },
+      'utility-action': {
+        src: "apidoc/src/action",
+        dest: "apidoc/docs/action",
         template: "apidoc/template",
         options: {
           debug: false,
@@ -119,7 +128,34 @@ module.exports = function(grunt) {
             ["babelify"],
             ["envify"],
             ["browserify-shim"]
-          ]
+          ],
+          external: [
+              // required from vendor/util.js
+              // required from vendor/react.js
+              'react',
+              'react-dom',
+              'react-router',
+              'react-datetime',
+              'react-intl',
+              'react-intl/locale-data/de',
+              'react-intl/locale-data/el',
+              'react-intl/locale-data/en',
+              'react-intl/locale-data/es',
+              'react-grid-layout',
+              'react-select',
+              'react-bootstrap',
+              'react-router-bootstrap',
+              'react-router-redux',
+              'react-bootstrap-daterangepicker',
+              'react-scroll-up',
+              'react-dropzone',
+              'redux',
+              'react-redux',
+              'redux-thunk',
+              'redux-logger',
+              // globals
+              'echarts',
+            ]
         },
         files: {
           'target/classes/public/assets/js/build/home/bundle.js': [
@@ -252,6 +288,35 @@ module.exports = function(grunt) {
           'src/main/resources/public/assets/js/build/home/bundle.js': [
             'src/main/resources/public/assets/js/src/home/index.js'
           ]
+        },
+        options: {
+          external: [
+              // required from vendor/util.js
+              // required from vendor/react.js
+              'react',
+              'react-dom',
+              'react-router',
+              'react-datetime',
+              'react-intl',
+              'react-intl/locale-data/de',
+              'react-intl/locale-data/el',
+              'react-intl/locale-data/en',
+              'react-intl/locale-data/es',
+              'react-grid-layout',
+              'react-select',
+              'react-bootstrap',
+              'react-router-bootstrap',
+              'react-router-redux',
+              'react-bootstrap-daterangepicker',
+              'react-scroll-up',
+              'react-dropzone',
+              'redux',
+              'react-redux',
+              'redux-thunk',
+              'redux-logger',
+              // globals
+              'echarts',
+            ],
         }
       },
       'vendor-util': {
@@ -471,7 +536,7 @@ module.exports = function(grunt) {
           expand: true,
           cwd: 'apidoc/docs/',
           src: ['**/*'],
-          dest: 'src/main/resources/public/docs/api/',
+          dest: 'src/main/resources/public/docs/',
           filter: 'isFile'
         }, {
           expand: true,
@@ -593,6 +658,6 @@ module.exports = function(grunt) {
     'browserify:utilityLive'
   ]);
 
-  grunt.registerTask('docs', ['apidoc:utility', 'jsdoc:home']);
+  grunt.registerTask('docs', ['apidoc:utility-api', 'apidoc:utility-action', 'jsdoc:home']);
 
 };

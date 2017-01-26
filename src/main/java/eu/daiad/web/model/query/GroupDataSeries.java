@@ -9,9 +9,6 @@ import java.util.UUID;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
-import org.joda.time.Instant;
-import org.springframework.data.util.Pair;
-import org.springframework.util.Assert;
 
 import eu.daiad.web.model.EnumTimeAggregation;
 
@@ -52,7 +49,7 @@ public class GroupDataSeries
                     }
                 }
 
-                this.points.add(mp);
+                points.add(mp);
 
                 return mp;
             case AMPHIRO:
@@ -74,7 +71,7 @@ public class GroupDataSeries
                     }
                 }
 
-                this.points.add(ap);
+                points.add(ap);
 
                 return ap;
             default:
@@ -116,17 +113,17 @@ public class GroupDataSeries
         DataPoint p = null;
 
         if (granularity == EnumTimeAggregation.ALL) {
-            if (this.points.size() == 0) {
+            if (points.size() == 0) {
                 p = createDataPoint(metrics, type, null);
             } else {
-                p = this.points.get(0);
+                p = points.get(0);
             }
         } else {
             timestamp = date.getMillis();
 
-            for (int i = 0, count = this.points.size(); i < count; i++) {
-                if (timestamp == this.points.get(i).getTimestamp()) {
-                    p = this.points.get(i);
+            for (int i = 0, count = points.size(); i < count; i++) {
+                if (timestamp == points.get(i).getTimestamp()) {
+                    p = points.get(i);
 
                     break;
                 }
@@ -141,7 +138,7 @@ public class GroupDataSeries
 
     public void addAmhiroDataPoint(EnumTimeAggregation granularity, long timestamp, double volume, double energy,
                     double duration, double temperature, double flow, List<EnumMetric> metrics, DateTimeZone timezone) {
-        AmphiroDataPoint point = (AmphiroDataPoint) this.getDataPoint(granularity, timestamp, metrics,
+        AmphiroDataPoint point = (AmphiroDataPoint) getDataPoint(granularity, timestamp, metrics,
                         DataPoint.EnumDataPointType.AMPHIRO, timezone);
 
         boolean avg = false;
@@ -221,7 +218,7 @@ public class GroupDataSeries
 
     public void addMeterRankingDataPoint(EnumTimeAggregation granularity, UUID key, String label, long timestamp,
                     double difference, double volume, List<EnumMetric> metrics, DateTimeZone timezone) {
-        MeterUserDataPoint point = (MeterUserDataPoint) this.getUserDataPoint(granularity, key, label, timestamp,
+        MeterUserDataPoint point = (MeterUserDataPoint) getUserDataPoint(granularity, key, label, timestamp,
                         metrics, DataPoint.EnumDataPointType.METER, timezone);
 
         for (EnumMetric m : metrics) {
@@ -251,7 +248,7 @@ public class GroupDataSeries
     public void addAmphiroRankingDataPoint(EnumTimeAggregation granularity, UUID key, String label, long timestamp,
                     double volume, double energy, double duration, double temperature, double flow,
                     List<EnumMetric> metrics, DateTimeZone timezone) {
-        AmphiroUserDataPoint point = (AmphiroUserDataPoint) this.getUserDataPoint(granularity, key, label, timestamp,
+        AmphiroUserDataPoint point = (AmphiroUserDataPoint) getUserDataPoint(granularity, key, label, timestamp,
                         metrics, DataPoint.EnumDataPointType.AMPHIRO, timezone);
 
         boolean avg = false;
@@ -359,22 +356,22 @@ public class GroupDataSeries
         }
 
         if (granularity == EnumTimeAggregation.ALL) {
-            if (this.points.size() == 0) {
-                this.points.add(new RankingDataPoint());
+            if (points.size() == 0) {
+                points.add(new RankingDataPoint());
             }
 
-            return (RankingDataPoint) this.points.get(0);
+            return (RankingDataPoint) points.get(0);
         } else {
             timestamp = date.getMillis();
 
-            for (int i = 0, count = this.points.size(); i < count; i++) {
-                if (timestamp == this.points.get(i).getTimestamp()) {
-                    return (RankingDataPoint) this.points.get(i);
+            for (int i = 0, count = points.size(); i < count; i++) {
+                if (timestamp == points.get(i).getTimestamp()) {
+                    return (RankingDataPoint) points.get(i);
                 }
             }
 
             RankingDataPoint point = new RankingDataPoint(timestamp);
-            this.points.add(point);
+            points.add(point);
 
             return point;
         }
@@ -382,7 +379,7 @@ public class GroupDataSeries
 
     private UserDataPoint getUserDataPoint(EnumTimeAggregation granularity, UUID key, String label, long timestamp,
                     List<EnumMetric> metrics, DataPoint.EnumDataPointType type, DateTimeZone timezone) {
-        RankingDataPoint ranking = this.getRankingDataPoint(granularity, timestamp, timezone);
+        RankingDataPoint ranking = getRankingDataPoint(granularity, timestamp, timezone);
 
         for (UserDataPoint point : ranking.getUsers()) {
             if (point.getKey().equals(key)) {
@@ -442,12 +439,12 @@ public class GroupDataSeries
     public Long getAreaId() {
         return areaId;
     }
-    
+
     public SeriesFacade newFacade()
     {
         return this.new Facade();
     }
-    
+
     private class Facade extends AbstractSeriesFacade
     {
         /**
@@ -461,12 +458,12 @@ public class GroupDataSeries
         {
             if (points.size() != 1)
                 return null;
-            
+
             DataPoint p0 = points.get(0);
             Map<EnumMetric, Double> m = p0.field(field);
             return m != null? m.get(metric) : null;
         }
-            
+
         /**
          * Get an iterable of (time, value) pairs from this series
          */
@@ -488,7 +485,7 @@ public class GroupDataSeries
             return points.isEmpty();
         }
     }
-    
+
     /**
      * An iterable on points of (timestamp, value) for a given (field, metric).
      */
@@ -496,20 +493,20 @@ public class GroupDataSeries
     {
         private final EnumDataField field;
         private final EnumMetric metric;
-        
+
         private final int endIndex;
-       
+
         public PointIterator(EnumDataField field, EnumMetric metric)
         {
             this.field = field;
             this.metric = metric;
-            
+
             // Set endIndex, examine if series contains the given field
             int size = points.size();
             if (size > 0) {
                 DataPoint p0 = points.get(0);
                 endIndex = (p0.field(field) != null)? size : 0;
-            } else { 
+            } else {
                 endIndex = 0; // empty iterable
             }
         }
@@ -519,11 +516,11 @@ public class GroupDataSeries
         {
             return new I();
         }
-       
+
         private class I implements Iterator<Point>
         {
             private int currIndex = 0;
-            
+
             @Override
             public void remove()
             {
@@ -541,7 +538,7 @@ public class GroupDataSeries
             {
                 DataPoint p = points.get(currIndex);
                 currIndex++;
-                return Point.of(p.getTimestamp(), p.field(field).get(metric)); 
+                return Point.of(p.getTimestamp(), p.field(field).get(metric));
             }
         }
     }

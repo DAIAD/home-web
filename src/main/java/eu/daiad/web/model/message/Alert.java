@@ -4,49 +4,44 @@ import java.util.Map;
 
 import org.joda.time.DateTime;
 
+import eu.daiad.web.model.NumberFormatter;
 import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.message.DynamicRecommendation.Parameters;
 
-public class Alert extends Message 
+public class Alert extends Message
 {
-    public interface Parameters extends Message.Parameters
+    public interface ParameterizedTemplate extends Message.Parameters
     {
-        public EnumAlertType getType();
+        public EnumAlertTemplate getTemplate();
     }
-    
-    public abstract static class AbstractParameters extends Message.AbstractParameters 
-        implements Parameters
-    {
-        protected AbstractParameters(DateTime refDate, EnumDeviceType deviceType)
-        {
-            super(refDate, deviceType);
-        }
 
-        @Override
-        public EnumAlertType getType()
-        {
-            return EnumAlertType.UNDEFINED;
-        }
-    }
-    
-    public static class CommonParameters extends AbstractParameters
+    public abstract static class AbstractParameterizedTemplate extends Message.AbstractParameters
+        implements ParameterizedTemplate
     {
-        final EnumAlertType alertType;
-        
-        // Provide some common parameters
-        
-        Integer integer1;
-        
-        Integer integer2;
-        
-        Double currency1;
-        
-        Double currency2;
-        
-        public CommonParameters(DateTime refDate, EnumDeviceType deviceType, EnumAlertType alertType)
+        protected AbstractParameterizedTemplate(DateTime refDate, EnumDeviceType deviceType)
         {
             super(refDate, deviceType);
-            this.alertType = alertType;   
+        }
+    }
+
+    public static class SimpleParameterizedTemplate extends AbstractParameterizedTemplate
+    {
+        final EnumAlertTemplate alertTemplate;
+
+        // Provide some common parameters
+
+        Integer integer1;
+
+        Integer integer2;
+
+        Double currency1;
+
+        Double currency2;
+
+        public SimpleParameterizedTemplate(
+            DateTime refDate, EnumDeviceType deviceType, EnumAlertTemplate template)
+        {
+            super(refDate, deviceType);
+            this.alertTemplate = template;
         }
 
         public Integer getInteger1()
@@ -54,7 +49,7 @@ public class Alert extends Message
             return integer1;
         }
 
-        public CommonParameters setInteger1(Integer integer1)
+        public SimpleParameterizedTemplate setInteger1(Integer integer1)
         {
             this.integer1 = integer1;
             return this;
@@ -65,7 +60,7 @@ public class Alert extends Message
             return integer2;
         }
 
-        public CommonParameters setInteger2(Integer integer2)
+        public SimpleParameterizedTemplate setInteger2(Integer integer2)
         {
             this.integer2 = integer2;
             return this;
@@ -76,7 +71,7 @@ public class Alert extends Message
             return currency1;
         }
 
-        public CommonParameters setCurrency1(Double currency1)
+        public SimpleParameterizedTemplate setCurrency1(Double currency1)
         {
             this.currency1 = currency1;
             return this;
@@ -87,40 +82,42 @@ public class Alert extends Message
             return currency2;
         }
 
-        public CommonParameters setCurrency2(Double currency2)
+        public SimpleParameterizedTemplate setCurrency2(Double currency2)
         {
             this.currency2 = currency2;
             return this;
-        }  
-        
+        }
+
         @Override
-        public Map<String, Object> getPairs()
+        public Map<String, Object> getParameters()
         {
-            Map<String, Object> pairs = super.getPairs();
-            
+            Map<String, Object> pairs = super.getParameters();
+
             if (integer1 != null)
                 pairs.put("integer1", integer1);
             if (integer2 != null)
                 pairs.put("integer2", integer2);
-            
+
             if (currency1 != null)
-                pairs.put("currency1", currency1);
+                pairs.put("currency1", new NumberFormatter(currency1, ".#"));
             if (currency2 != null)
-                pairs.put("currency2", currency2);
-            
+                pairs.put("currency2", new NumberFormatter(currency2, ".#"));
+
             return pairs;
         }
-        
+
         @Override
-        public EnumAlertType getType()
+        public EnumAlertTemplate getTemplate()
         {
-            return alertType;
+            return alertTemplate;
         }
     }
-    
+
     private final int id;
 
-	private EnumAlertType alertType;
+	private final EnumAlertType alertType;
+
+    private final EnumAlertTemplate alertTemplate;
 
 	private int priority;
 
@@ -128,17 +125,27 @@ public class Alert extends Message
 
 	private String description;
 
-	private String imageLink;
+	private String link;
 
 	private Long createdOn;
-	
+
 	private Long acknowledgedOn;
 
-	public Alert(EnumAlertType alertType, int id) 
-	{
-		this.alertType = alertType;
-		this.id = id;
-	}
+	public Alert(int id, EnumAlertTemplate template)
+    {
+        this.id = id;
+        this.alertTemplate = template;
+        this.alertType = template.getType();
+        this.priority = alertType.getPriority();
+    }
+
+    public Alert(int id, EnumAlertType type)
+    {
+        this.id = id;
+        this.alertTemplate = null;
+        this.alertType = type;
+        this.priority = alertType.getPriority();
+    }
 
 	@Override
 	public EnumMessageType getType() {
@@ -177,18 +184,18 @@ public class Alert extends Message
 		this.createdOn = createdOn;
 	}
 
-	public String getImageLink() {
-		return imageLink;
+	public String getLink() {
+		return link;
 	}
 
-	public void setImageLink(String imageLink) {
-		this.imageLink = imageLink;
+	public void setLink(String link) {
+		this.link = link;
 	}
 
 	public EnumAlertType getAlertType() {
 		return alertType;
 	}
-	
+
 	public Long getAcknowledgedOn() {
 	    return acknowledgedOn;
 	}

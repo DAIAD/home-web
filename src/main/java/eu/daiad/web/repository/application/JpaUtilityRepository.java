@@ -15,8 +15,10 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.domain.admin.DailyCounterEntity;
+import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.UtilityEntity;
 import eu.daiad.web.model.admin.Counter;
+import eu.daiad.web.model.group.GroupMemberInfo;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.BaseRepository;
 
@@ -70,6 +72,22 @@ public class JpaUtilityRepository extends BaseRepository implements IUtilityRepo
         utilityQuery.setParameter("key", key);
 
         return new UtilityInfo(utilityQuery.getSingleResult());
+    }
+
+    @Override
+    public List<GroupMemberInfo> getUtilityMemberInfo(UUID key) {
+        String memberQueryString = "SELECT a FROM account a WHERE a.utility.key = :key";
+
+        TypedQuery<AccountEntity> memberQuery = entityManager.createQuery(memberQueryString, AccountEntity.class)
+                                                             .setFirstResult(0);
+        memberQuery.setParameter("key", key);
+
+        List<GroupMemberInfo> members = new ArrayList<GroupMemberInfo>();
+        for (AccountEntity account : memberQuery.getResultList()) {
+            members.add(new GroupMemberInfo(account));
+        }
+
+        return members;
     }
 
     @Override

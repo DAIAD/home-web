@@ -35,11 +35,21 @@ import eu.daiad.web.security.RESTLogoutSuccessHandler;
 @Order(SecurityProperties.ACCESS_OVERRIDE_ORDER)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    private static final String[] AUTHORIZED_PATHS = { "/", "/login", "/logout", "/error/**", "/password/reset/**",
-                    "/action/user/password/reset/token/redeem", "/home/**", "/utility/**", "/assets/**", "/api/**" };
+    private static final String[] AUTHORIZED_PATHS = {
+        "/",
+        "/login",
+        "/logout",
+        "/error/**",
+        "/password/reset/**",
+        "/action/user/password/reset/token/create",
+        "/action/user/password/reset/token/redeem",
+        "/home/**",
+        "/utility/**",
+        "/assets/**",
+        "/api/**" };
 
     private static final String DOCUMENTATION_PATH = "/docs/**";
-    
+
     @Bean
     protected ErrorProperties errorProperties() {
         return new ErrorProperties();
@@ -101,12 +111,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             @Override
             public boolean matches(HttpServletRequest request) {
                 // No CSRF due to allowedMethod
-                if (allowedMethods.matcher(request.getMethod()).matches())
+                if (allowedMethods.matcher(request.getMethod()).matches()) {
                     return false;
+                }
 
                 // No CSRF due to API call
-                if (apiMatcher.matches(request))
+                if (apiMatcher.matches(request)) {
                     return false;
+                }
 
                 // Apply CSRF for everything else that is not an API call or
                 // the request method does not match allowedMethod pattern
