@@ -31,9 +31,18 @@ module.exports = function(grunt) {
       },
     },
     apidoc: {
-      utility: {
-        src: "apidoc/src",
-        dest: "apidoc/docs",
+      'utility-api': {
+        src: "apidoc/src/api",
+        dest: "apidoc/docs/api",
+        template: "apidoc/template",
+        options: {
+          debug: false,
+          includeFilters: [".*\\.js$"]
+        }
+      },
+      'utility-action': {
+        src: "apidoc/src/action",
+        dest: "apidoc/docs/action",
         template: "apidoc/template",
         options: {
           debug: false,
@@ -527,7 +536,7 @@ module.exports = function(grunt) {
           expand: true,
           cwd: 'apidoc/docs/',
           src: ['**/*'],
-          dest: 'src/main/resources/public/docs/api/',
+          dest: 'src/main/resources/public/docs/',
           filter: 'isFile'
         }, {
           expand: true,
@@ -649,6 +658,6 @@ module.exports = function(grunt) {
     'browserify:utilityLive'
   ]);
 
-  grunt.registerTask('docs', ['apidoc:utility', 'jsdoc:home']);
+  grunt.registerTask('docs', ['apidoc:utility-api', 'apidoc:utility-action', 'jsdoc:home']);
 
 };
