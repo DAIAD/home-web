@@ -26,6 +26,7 @@ import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.admin.AccountWhiteListEntry;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.CaptchaErrorCode;
 import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.error.ErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
@@ -70,6 +71,9 @@ public class UserService extends BaseService implements IUserService {
 
     @Autowired
     private IMailService mailService;
+
+    @Autowired
+    private IGoogleReCaptchaService googleReCaptchaService;
 
     @Override
     @Transactional("applicationTransactionManager")
@@ -308,6 +312,15 @@ public class UserService extends BaseService implements IUserService {
         }
 
         userRepository.resetPassword(token, pin, password);
+    }
+
+    @Override
+    public void resetPasswordRedeemToken(String remoteAddress, String captchaResponse, UUID token, String pin, String password) throws ApplicationException {
+        if (!googleReCaptchaService.validate(remoteAddress, captchaResponse)) {
+            throw createApplicationException(CaptchaErrorCode.CAPTCHA_VERIFICATION_ERROR);
+        }
+
+        this.resetPasswordRedeemToken(token, pin, password);
     }
 
 }

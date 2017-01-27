@@ -6,6 +6,12 @@ import eu.daiad.web.model.error.ErrorCode;
 
 public interface IPasswordValidator {
 
-    abstract List<ErrorCode> validate(String password);
+    /**
+     * Validates a password.
+     *
+     * @param password the password to validate.
+     * @return a list of {@link ErrorCode} objects.
+     */
+    List<ErrorCode> validate(String password);
 
 }

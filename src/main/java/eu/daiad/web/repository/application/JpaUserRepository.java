@@ -634,8 +634,8 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             throw createApplicationException(UserErrorCode.PASSWORD_RESET_TOKEN_EXPIRED);
         }
 
-        if ((passwordResetTokenEntity.getApplication() == EnumApplication.MOBILE)
-                        && (!passwordResetTokenEntity.getPin().equals(pin))) {
+        if ((passwordResetTokenEntity.getApplication() == EnumApplication.MOBILE) &&
+            (!passwordResetTokenEntity.getPin().equals(pin))) {
             throw createApplicationException(UserErrorCode.PASSWORD_RESET_PIN_MISMATCH);
         }
 

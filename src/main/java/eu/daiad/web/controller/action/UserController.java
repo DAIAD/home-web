@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -439,9 +441,14 @@ public class UserController extends BaseController {
      * @return the controller's response.
      */
     @RequestMapping(value = "/action/user/password/reset/token/redeem", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-    public RestResponse resetPasswordRedeemToken(@RequestBody PasswordResetTokenRedeemRequest request) {
+    public RestResponse resetPasswordRedeemToken(HttpServletRequest httpRequest, @RequestBody PasswordResetTokenRedeemRequest request) {
         try {
-            userService.resetPasswordRedeemToken(request.getToken(), request.getPin(), request.getPassword());
+            String remoteAddress = httpRequest.getHeader("X-FORWARDED-FOR");
+            if (StringUtils.isBlank(remoteAddress)) {
+                remoteAddress = httpRequest.getRemoteAddr();
+            }
+
+            userService.resetPasswordRedeemToken(remoteAddress, request.getCaptcha(), request.getToken(), request.getPin(), request.getPassword());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
