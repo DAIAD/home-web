@@ -998,6 +998,10 @@ div[class^="section.login"]{
   margin-top: 20px;
 }
 
+.form-captcha > div > div {
+  border: 1px #2D3580 solid;
+}
+
 /* Dashboard */
 
 .dashboard { 
