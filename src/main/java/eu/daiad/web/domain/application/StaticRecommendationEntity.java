@@ -17,11 +17,15 @@ import org.joda.time.DateTime;
 
 @Entity(name = "static_recommendation")
 @Table(schema = "public", name = "static_recommendation")
-public class StaticRecommendationEntity {
-
+public class StaticRecommendationEntity
+{
     @Id()
     @Column(name = "id")
-    @SequenceGenerator(sequenceName = "static_recommendation_id_seq", name = "static_recommendation_id_seq", allocationSize = 1, initialValue = 1)
+    @SequenceGenerator(
+        sequenceName = "static_recommendation_id_seq",
+        name = "static_recommendation_id_seq",
+        allocationSize = 1,
+        initialValue = 1)
     @GeneratedValue(generator = "static_recommendation_id_seq", strategy = GenerationType.SEQUENCE)
     private int id;
 

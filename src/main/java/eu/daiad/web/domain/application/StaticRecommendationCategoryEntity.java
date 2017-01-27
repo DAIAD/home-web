@@ -15,8 +15,8 @@ import javax.persistence.Table;
 
 @Entity(name = "static_recommendation_category")
 @Table(schema = "public", name = "static_recommendation_category")
-public class StaticRecommendationCategoryEntity {
-
+public class StaticRecommendationCategoryEntity
+{
 	@Id()
 	@Column(name = "id")
 	private int id;
@@ -26,7 +26,7 @@ public class StaticRecommendationCategoryEntity {
 
 	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
 	@JoinColumn(name = "category_id")
-	private Set<StaticRecommendationEntity> properties = new HashSet<StaticRecommendationEntity>();
+	private Set<StaticRecommendationEntity> properties = new HashSet<>();
 
 	public int getId() {
 		return id;

@@ -1,7 +1,6 @@
 package eu.daiad.web.domain.application;
 
 import javax.persistence.Basic;
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -14,8 +13,8 @@ import javax.persistence.Table;
 
 @Entity(name = "account_recommendation_parameter")
 @Table(schema = "public", name = "account_recommendation_parameter")
-public class AccountRecommendationParameterEntity {
-
+public class AccountRecommendationParameterEntity
+{
 	@Id()
 	@Column(name = "id")
 	@SequenceGenerator(
@@ -26,7 +25,7 @@ public class AccountRecommendationParameterEntity {
 	@GeneratedValue(generator = "account_recommendation_parameter_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
 
-	@ManyToOne(cascade = { CascadeType.ALL })
+	@ManyToOne()
 	@JoinColumn(name = "account_recommendation_id", nullable = false)
 	private AccountRecommendationEntity recommendation;
 
@@ -38,7 +37,7 @@ public class AccountRecommendationParameterEntity {
 
 	public AccountRecommendationParameterEntity()
 	{}
-	
+
 	public AccountRecommendationParameterEntity(AccountRecommendationEntity r, String key, String value)
 	{
 	    this.recommendation = r;

@@ -16,8 +16,8 @@ import org.joda.time.DateTime;
 
 @Entity(name = "account_static_recommendation")
 @Table(schema = "public", name = "account_static_recommendation")
-public class AccountStaticRecommendationEntity {
-
+public class AccountStaticRecommendationEntity
+{
 	@Id()
 	@Column(name = "id")
 	@SequenceGenerator(sequenceName = "account_static_recommendation_id_seq", name = "account_static_recommendation_id_seq", allocationSize = 1, initialValue = 1)
@@ -44,11 +44,8 @@ public class AccountStaticRecommendationEntity {
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime receiveAcknowledgedOn;
 
-	public AccountStaticRecommendationEntity()
-	{
-	    // no-op
-	}
-	
+	public AccountStaticRecommendationEntity() {}
+
 	public AccountStaticRecommendationEntity(AccountEntity account, StaticRecommendationEntity recommendation)
     {
        this.account = account;

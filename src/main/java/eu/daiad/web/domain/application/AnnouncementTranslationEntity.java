@@ -3,9 +3,9 @@ package eu.daiad.web.domain.application;
 import java.util.Locale;
 
 import javax.persistence.Basic;
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -31,7 +31,7 @@ public class AnnouncementTranslationEntity {
 	@GeneratedValue(generator = "announcement_translation_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
 
-	@ManyToOne(cascade = { CascadeType.ALL })
+	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "announcement_id", nullable = false)
 	@NotNull
 	@NaturalId

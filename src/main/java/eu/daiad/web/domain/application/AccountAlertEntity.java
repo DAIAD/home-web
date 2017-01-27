@@ -36,7 +36,7 @@ public class AccountAlertEntity
 	@GeneratedValue(generator = "account_alert_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
 
-	@ManyToOne(cascade = { CascadeType.ALL })
+	@ManyToOne()
 	@JoinColumn(name = "account_id", nullable = false)
 	@NotNull
 	private AccountEntity account;
@@ -45,7 +45,7 @@ public class AccountAlertEntity
 	@JoinColumn(name = "account_alert_id")
 	private Set<AccountAlertParameterEntity> parameters = new HashSet<>();
 
-	@ManyToOne(cascade = { CascadeType.ALL })
+	@ManyToOne()
     @JoinColumn(name = "alert_template", nullable = false)
 	@NotNull
     private AlertTemplateEntity alertTemplate;
