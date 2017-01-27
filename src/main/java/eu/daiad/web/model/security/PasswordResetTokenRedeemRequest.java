@@ -10,6 +10,8 @@ public class PasswordResetTokenRedeemRequest {
 
     private String password;
 
+    private String captcha;
+
     public UUID getToken() {
         return token;
     }
@@ -32,6 +34,14 @@ public class PasswordResetTokenRedeemRequest {
 
     public void setPin(String pin) {
         this.pin = pin;
+    }
+
+    public String getCaptcha() {
+        return captcha;
+    }
+
+    public void setCaptcha(String captcha) {
+        this.captcha = captcha;
     }
 
 }

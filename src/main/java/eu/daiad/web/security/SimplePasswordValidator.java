@@ -14,12 +14,18 @@ public class SimplePasswordValidator implements IPasswordValidator {
 
     private static int MINIMUM_LENGTH = 8;
 
+    /**
+     * Validates a password.
+     *
+     * @param password the password to validate.
+     * @return a list of {@link ErrorCode} objects.
+     */
     @Override
     public List<ErrorCode> validate(String password) {
         List<ErrorCode> errors = new ArrayList<ErrorCode>();
 
         if ((StringUtils.isBlank(password)) || (password.length() < MINIMUM_LENGTH)) {
-            errors.add(PasswordErrorCode.INVALID_LENGTH);
+            errors.add(PasswordErrorCode.WEAK_PASSWORD);
         }
 
         return errors;

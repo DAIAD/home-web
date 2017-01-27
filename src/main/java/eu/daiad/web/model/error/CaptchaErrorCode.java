@@ -1,7 +1,8 @@
 package eu.daiad.web.model.error;
 
-public enum PasswordErrorCode implements ErrorCode {
-    WEAK_PASSWORD;
+public enum CaptchaErrorCode implements ErrorCode {
+    CAPTCHA_SERVICE_ERROR,
+    CAPTCHA_VERIFICATION_ERROR;
 
     @Override
     public String getMessageKey() {
