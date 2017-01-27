@@ -303,16 +303,8 @@ public class DataController extends BaseController {
 
         try {
 
-            // Set defaults if needed
-            List<DataQuery> queries = request.getNamedQuery().getQueries();
-            if (queries != null && !queries.isEmpty()) {
-                // Initialize time zone
-                if (StringUtils.isBlank(queries.get(0).getTimezone())) {
-                    queries.get(0).setTimezone(user.getTimezone());
-                }
-            }
-
             dataService.deleteStoredQuery(request.getNamedQuery(), user.getKey());
+            
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -322,6 +314,32 @@ public class DataController extends BaseController {
         return response;
     }
 
+    /**
+     * Pin query to dashboard.
+     *
+     * @param user the user
+     * @param request the requested query to pin.
+     * @return the result of the operation.
+     */
+    @RequestMapping(value = "/action/data/query/pin", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse pinQuery(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody StoreDataQueryRequest request) {
+        RestResponse response = new RestResponse();
+
+        try {
+            System.out.println("PINING SUCCESS, id:" + request.getNamedQuery().getId());
+            
+            dataService.pinStoredQuery(request.getNamedQuery().getId(), user.getKey());
+            
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
+    
     /**
      * Loads all saved data queries.
      *

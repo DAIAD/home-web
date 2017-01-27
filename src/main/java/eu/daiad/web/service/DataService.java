@@ -1113,7 +1113,14 @@ public class DataService extends BaseService implements IDataService {
         favouriteRepository.insertFavouriteQuery(query, account);
 
     }
+    
+    @Override
+    public void pinStoredQuery(long id, UUID key) {
+        AccountEntity account = userRepository.getAccountByKey(key);
+        favouriteRepository.pinFavouriteQuery(id, account);
 
+    }
+    
     @Override
     public List<NamedDataQuery> getQueriesForOwner(int accountId)
             throws JsonMappingException, JsonParseException, IOException{

@@ -41,6 +41,8 @@ public interface IFavouriteRepository {
     abstract List<NamedDataQuery> getFavouriteQueriesForOwner(int accountId)
             throws JsonMappingException, JsonParseException, IOException;
 
+    abstract void pinFavouriteQuery(long id, AccountEntity account);
+    
     abstract List<NamedDataQuery> getAllFavouriteQueries();
 
 }
