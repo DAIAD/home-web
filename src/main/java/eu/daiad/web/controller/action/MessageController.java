@@ -36,7 +36,7 @@ import eu.daiad.web.model.message.ReceiverAccount;
 import eu.daiad.web.model.message.RecommendationReceiversResponse;
 import eu.daiad.web.model.message.RecommendationStatisticsRequest;
 import eu.daiad.web.model.message.SingleTypeMessageResponse;
-import eu.daiad.web.model.message.StaticRecommendation;
+import eu.daiad.web.model.message.Tip;
 import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.RoleConstant;
@@ -131,7 +131,7 @@ public class MessageController extends BaseController {
     {
         try {
             SingleTypeMessageResponse messages = new SingleTypeMessageResponse();
-            messages.setType(EnumMessageType.RECOMMENDATION_STATIC);
+            messages.setType(EnumMessageType.TIP);
             messages.setMessages(messageRepository.getTips(locale));
             return messages;
         } catch (Exception ex) {
@@ -148,12 +148,12 @@ public class MessageController extends BaseController {
      */
     @RequestMapping(value = "/action/tip/status/save/", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse setStaticTipsActivityStatusChange(@RequestBody List<StaticRecommendation> request)
+    public RestResponse setTipsActivityStatus(@RequestBody List<Tip> request)
     {
         RestResponse response = new RestResponse();
         try {
-            for (StaticRecommendation st : request){
-                messageRepository.persistTipActiveStatus(st.getId(), st.isActive());
+            for (Tip tip: request){
+                messageRepository.persistTipActiveStatus(tip.getId(), tip.isActive());
             }
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -170,11 +170,11 @@ public class MessageController extends BaseController {
      */
     @RequestMapping(value = "/action/tip/save", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse insertStaticRecommendation(
-        @AuthenticationPrincipal AuthenticatedUser user, @RequestBody StaticRecommendation request)
+    public RestResponse saveTip(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody Tip request)
     {
         RestResponse response = new RestResponse();
         try {
+            // Todo : implement as messageService.saveTip
             if (request.getId() == 0 || request.getIndex() == 0) {
                 messageRepository.createTip(request, user.getLocale());
             }
@@ -196,7 +196,7 @@ public class MessageController extends BaseController {
      */
     @RequestMapping(value = "/action/tip/delete", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse deleteStaticRecommendation(@RequestBody StaticRecommendation request)
+    public RestResponse deleteTip(@RequestBody Tip request)
     {
         RestResponse response = new RestResponse();
         try {

@@ -11,35 +11,45 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
+import org.hibernate.annotations.NaturalId;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-@Entity(name = "static_recommendation")
-@Table(schema = "public", name = "static_recommendation")
-public class StaticRecommendationEntity
+@Entity(name = "tip")
+@Table(schema = "public", name = "tip")
+public class TipEntity
 {
     @Id()
     @Column(name = "id")
     @SequenceGenerator(
-        sequenceName = "static_recommendation_id_seq",
-        name = "static_recommendation_id_seq",
+        sequenceName = "tip_id_seq",
+        name = "tip_id_seq",
         allocationSize = 1,
         initialValue = 1)
-    @GeneratedValue(generator = "static_recommendation_id_seq", strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(generator = "tip_id_seq", strategy = GenerationType.SEQUENCE)
     private int id;
 
     @Basic()
+    @NotNull
+    @Min(1)
+    @NaturalId
     private int index;
+
+    @Column(name = "locale", columnDefinition = "bpchar", length = 2)
+    @NotNull
+    @NaturalId
+    private String locale;
 
     @ManyToOne()
     @JoinColumn(name = "category_id", nullable = false)
-    private StaticRecommendationCategoryEntity category;
-
-    @Column(name = "locale", columnDefinition = "bpchar", length = 2)
-    private String locale;
+    @NotNull
+    private TipCategoryEntity category;
 
     @Basic()
+    @NotNull
     private String title;
 
     @Basic()
@@ -74,7 +84,7 @@ public class StaticRecommendationEntity
     private DateTime modifiedOn;
 
     @Column(name = "active")
-    private boolean active;
+    private boolean active = true;
 
     public int getId() {
         return id;
@@ -92,11 +102,11 @@ public class StaticRecommendationEntity
         this.index = index;
     }
 
-    public StaticRecommendationCategoryEntity getCategory() {
+    public TipCategoryEntity getCategory() {
         return category;
     }
 
-    public void setCategory(StaticRecommendationCategoryEntity category) {
+    public void setCategory(TipCategoryEntity category) {
         this.category = category;
     }
 

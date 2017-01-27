@@ -13,9 +13,9 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
-@Entity(name = "static_recommendation_category")
-@Table(schema = "public", name = "static_recommendation_category")
-public class StaticRecommendationCategoryEntity
+@Entity(name = "tip_category")
+@Table(schema = "public", name = "tip_category")
+public class TipCategoryEntity
 {
 	@Id()
 	@Column(name = "id")
@@ -24,9 +24,9 @@ public class StaticRecommendationCategoryEntity
 	@Basic()
 	private String title;
 
-	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
-	@JoinColumn(name = "category_id")
-	private Set<StaticRecommendationEntity> properties = new HashSet<>();
+	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY, orphanRemoval = true)
+	@JoinColumn(name = "category")
+	private Set<TipEntity> tips = new HashSet<>();
 
 	public int getId() {
 		return id;
@@ -36,12 +36,8 @@ public class StaticRecommendationCategoryEntity
 		this.id = id;
 	}
 
-	public Set<StaticRecommendationEntity> getProperties() {
-		return properties;
-	}
-
-	public void setProperties(Set<StaticRecommendationEntity> properties) {
-		this.properties = properties;
+	public Set<TipEntity> getTips() {
+		return tips;
 	}
 
 	public String getTitle() {

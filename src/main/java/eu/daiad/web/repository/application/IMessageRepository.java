@@ -15,7 +15,7 @@ import eu.daiad.web.model.message.MessageResult;
 import eu.daiad.web.model.message.MessageStatisticsQuery;
 import eu.daiad.web.model.message.ReceiverAccount;
 import eu.daiad.web.model.message.RecommendationStatistics;
-import eu.daiad.web.model.message.StaticRecommendation;
+import eu.daiad.web.model.message.Tip;
 import eu.daiad.web.model.security.AuthenticatedUser;
 
 public interface IMessageRepository {
@@ -28,11 +28,11 @@ public interface IMessageRepository {
 
     public void persistTipActiveStatus(int id, boolean active);
 
-    public void createTip(StaticRecommendation tip, String lang);
+    public void createTip(Tip tip, String lang);
 
-    public void updateTip(StaticRecommendation tip);
+    public void updateTip(Tip tip);
 
-    public void deleteTip(StaticRecommendation tip);
+    public void deleteTip(Tip tip);
 
     public List<Message> getAnnouncements(String locale);
 

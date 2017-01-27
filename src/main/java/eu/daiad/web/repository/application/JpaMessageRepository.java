@@ -27,10 +27,10 @@ import eu.daiad.web.domain.application.AccountAlertEntity;
 import eu.daiad.web.domain.application.AccountAnnouncementEntity;
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AccountRecommendationEntity;
-import eu.daiad.web.domain.application.AccountStaticRecommendationEntity;
+import eu.daiad.web.domain.application.AccountTipEntity;
 import eu.daiad.web.domain.application.AnnouncementEntity;
-import eu.daiad.web.domain.application.StaticRecommendationCategoryEntity;
-import eu.daiad.web.domain.application.StaticRecommendationEntity;
+import eu.daiad.web.domain.application.TipCategoryEntity;
+import eu.daiad.web.domain.application.TipEntity;
 import eu.daiad.web.model.PagingOptions;
 import eu.daiad.web.model.error.MessageErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
@@ -49,7 +49,7 @@ import eu.daiad.web.model.message.MessageStatisticsQuery;
 import eu.daiad.web.model.message.ReceiverAccount;
 import eu.daiad.web.model.message.Recommendation;
 import eu.daiad.web.model.message.RecommendationStatistics;
-import eu.daiad.web.model.message.StaticRecommendation;
+import eu.daiad.web.model.message.Tip;
 import eu.daiad.web.model.query.PopulationFilter;
 import eu.daiad.web.model.query.TimeFilter;
 import eu.daiad.web.model.security.AuthenticatedUser;
@@ -81,7 +81,10 @@ public class JpaMessageRepository extends BaseRepository
     IAnnouncementRepository announcementRepository;
 
     @Autowired
-    IAccountStaticRecommendationRepository accountTipRepository;
+    ITipRepository tipRepository;
+
+    @Autowired
+    IAccountTipRepository accountTipRepository;
 
     @Deprecated
     // Fixme Move this to controller
@@ -108,7 +111,7 @@ public class JpaMessageRepository extends BaseRepository
             case RECOMMENDATION:
                 accountRecommendationRepository.acknowledge(accountKey, messageId, acknowledged);
                 break;
-            case RECOMMENDATION_STATIC:
+            case TIP:
                 persistStaticRecommendationAcknowledgement(messageId, acknowledged);
                 break;
             case ANNOUNCEMENT:
@@ -211,7 +214,7 @@ public class JpaMessageRepository extends BaseRepository
         // Tips (static recommendations)
         //
 
-        options = this.getMessageOptions(request, EnumMessageType.RECOMMENDATION_STATIC);
+        options = this.getMessageOptions(request, EnumMessageType.TIP);
         if (options != null) {
             int minMessageId = options.getMinMessageId();
             PagingOptions pagination = options.getPagination();
@@ -227,31 +230,31 @@ public class JpaMessageRepository extends BaseRepository
             result.setTotalTips(totalTips);
 
             // Build query; Todo Move to AccountStaticRecommendationQuery
-            TypedQuery<AccountStaticRecommendationEntity> tipsQuery = entityManager.createQuery(
+            TypedQuery<AccountTipEntity> tipsQuery = entityManager.createQuery(
                 "SELECT r FROM account_static_recommendation r " +
                     "WHERE r.account.id = :accountId and r.id > :minMessageId " +
                     "ORDER BY r.id " + (pagination.isAscending()? "ASC" : "DESC"),
-                AccountStaticRecommendationEntity.class);
+                AccountTipEntity.class);
 
             tipsQuery.setFirstResult(pagination.getOffset());
             tipsQuery.setMaxResults(pagination.getLimit());
             tipsQuery.setParameter("accountId", user.getId());
             tipsQuery.setParameter("minMessageId", minMessageId);
 
-            for (AccountStaticRecommendationEntity tip: tipsQuery.getResultList()) {
-                StaticRecommendation message = new StaticRecommendation(tip.getId());
-                message.setIndex(tip.getRecommendation().getIndex());
-                message.setTitle(tip.getRecommendation().getTitle());
-                message.setDescription(tip.getRecommendation().getDescription());
+            for (AccountTipEntity tip: tipsQuery.getResultList()) {
+                Tip message = new Tip(tip.getId());
+                message.setIndex(tip.getTip().getIndex());
+                message.setTitle(tip.getTip().getTitle());
+                message.setDescription(tip.getTip().getDescription());
                 //message.setImageEncoded(tip.getRecommendation().getImage());
-                message.setImageMimeType(tip.getRecommendation().getImageMimeType());
-                message.setImageLink(tip.getRecommendation().getImageLink());
-                message.setPrompt(tip.getRecommendation().getPrompt());
-                message.setExternalLink(tip.getRecommendation().getExternalLink());
-                message.setSource(tip.getRecommendation().getSource());
+                message.setImageMimeType(tip.getTip().getImageMimeType());
+                message.setImageLink(tip.getTip().getImageLink());
+                message.setPrompt(tip.getTip().getPrompt());
+                message.setExternalLink(tip.getTip().getExternalLink());
+                message.setSource(tip.getTip().getSource());
                 message.setCreatedOn(tip.getCreatedOn());
-                if (tip.getRecommendation().getModifiedOn() != null) {
-                    message.setModifiedOn(tip.getRecommendation().getModifiedOn());
+                if (tip.getTip().getModifiedOn() != null) {
+                    message.setModifiedOn(tip.getTip().getModifiedOn());
                 }
                 if (tip.getAcknowledgedOn() != null) {
                     message.setAcknowledgedOn(tip.getAcknowledgedOn());
@@ -265,31 +268,14 @@ public class JpaMessageRepository extends BaseRepository
     }
 
     @Override
-    public List<Message> getTips(String locale)
+    public List<Message> getTips(String lang)
     {
-        TypedQuery<StaticRecommendationEntity> tipsQuery = entityManager.createQuery(
-            "SELECT a FROM static_recommendation a where a.locale = :locale",
-            StaticRecommendationEntity.class);
-        tipsQuery.setParameter("locale", locale);
-
+        Locale locale = Locale.forLanguageTag(lang);
         List<Message> messages = new ArrayList<>();
-        for (StaticRecommendationEntity tipEntity : tipsQuery.getResultList()) {
-            StaticRecommendation message = new StaticRecommendation(tipEntity.getId());
-            message.setIndex(tipEntity.getIndex());
-            message.setTitle(tipEntity.getTitle());
-            message.setDescription(tipEntity.getDescription());
-            //message.setImageEncoded(staticRecommendation.getImage());
-            message.setImageMimeType(tipEntity.getImageMimeType());
-            message.setImageLink(tipEntity.getImageLink());
-            message.setPrompt(tipEntity.getPrompt());
-            message.setExternalLink(tipEntity.getExternalLink());
-            message.setSource(tipEntity.getSource());
-            if (tipEntity.getCreatedOn() != null)
-                message.setCreatedOn(tipEntity.getCreatedOn());
-            if (tipEntity.getModifiedOn() != null)
-                message.setModifiedOn(tipEntity.getModifiedOn());
-            message.setActive(tipEntity.isActive());
-            messages.add(message);
+        for (TipEntity r: tipRepository.findByLocale(locale)) {
+            Tip message = tipRepository.newMessage(r);
+            if (message != null)
+                messages.add(message);
         }
         return messages;
     }
@@ -297,26 +283,24 @@ public class JpaMessageRepository extends BaseRepository
     @Override
     public void persistTipActiveStatus(int id, boolean active)
     {
-        StaticRecommendationEntity tipEntity = entityManager.find(StaticRecommendationEntity.class, id);
-        if (tipEntity != null) {
-            tipEntity.setActive(active);
-        }
+        tipRepository.setActive(id, active);
     }
 
     @Override
-    public void createTip(StaticRecommendation tip, String lang)
+    public void createTip(Tip tip, String lang)
     {
-        TypedQuery<StaticRecommendationCategoryEntity> categoryQuery = entityManager.createQuery(
+        TypedQuery<TipCategoryEntity> categoryQuery = entityManager.createQuery(
             "select c from static_recommendation_category c where c.id = :id",
-            StaticRecommendationCategoryEntity.class);
+            TipCategoryEntity.class);
         categoryQuery.setParameter("id", 7); //General Tips
-        StaticRecommendationCategoryEntity category = categoryQuery.getSingleResult();
+        TipCategoryEntity category = categoryQuery.getSingleResult();
 
         // Todo: use a @GeneratedValue instead
-        Integer maxIndex = entityManager.createQuery("select max(s.index) from static_recommendation s", Integer.class).getSingleResult();
+        Integer maxIndex = entityManager.createQuery(
+            "select max(s.index) from static_recommendation s", Integer.class).getSingleResult();
         int nextIndex = maxIndex+1;
 
-        StaticRecommendationEntity tipEntity = new StaticRecommendationEntity();
+        TipEntity tipEntity = new TipEntity();
         tipEntity.setIndex(nextIndex);
         tipEntity.setActive(false);
         tipEntity.setLocale(lang);
@@ -329,9 +313,9 @@ public class JpaMessageRepository extends BaseRepository
     }
 
     @Override
-    public void updateTip(StaticRecommendation tip)
+    public void updateTip(Tip tip)
     {
-        StaticRecommendationEntity tipEntity = entityManager.find(StaticRecommendationEntity.class, tip.getId());
+        TipEntity tipEntity = entityManager.find(TipEntity.class, tip.getId());
         if (tipEntity != null) {
             tipEntity.setTitle(tip.getTitle());
             tipEntity.setDescription(tip.getDescription());
@@ -340,9 +324,9 @@ public class JpaMessageRepository extends BaseRepository
     }
 
     @Override
-    public void deleteTip(StaticRecommendation tip)
+    public void deleteTip(Tip tip)
     {
-        StaticRecommendationEntity tipEntity = entityManager.find(StaticRecommendationEntity.class, tip.getId());
+        TipEntity tipEntity = entityManager.find(TipEntity.class, tip.getId());
         if (tipEntity != null)
             entityManager.remove(tipEntity);
     }
@@ -484,15 +468,15 @@ public class JpaMessageRepository extends BaseRepository
     {
         AuthenticatedUser user = this.getCurrentAuthenticatedUser();
 
-        TypedQuery<AccountStaticRecommendationEntity> accountStaticRecommendationQuery = entityManager.createQuery(
+        TypedQuery<AccountTipEntity> accountStaticRecommendationQuery = entityManager.createQuery(
             "select a from account_static_recommendation a "
                 + "where a.account.id = :accountId and a.id = :staticRecommendationId and a.acknowledgedOn is null",
-            AccountStaticRecommendationEntity.class);
+            AccountTipEntity.class);
 
         accountStaticRecommendationQuery.setParameter("accountId", user.getId());
         accountStaticRecommendationQuery.setParameter("staticRecommendationId", id);
 
-        List<AccountStaticRecommendationEntity> staticRecommendations = accountStaticRecommendationQuery.getResultList();
+        List<AccountTipEntity> staticRecommendations = accountStaticRecommendationQuery.getResultList();
         if (staticRecommendations.size() == 1) {
             staticRecommendations.get(0).setAcknowledgedOn(acknowledgedOn);
             staticRecommendations.get(0).setReceiveAcknowledgedOn(DateTime.now());

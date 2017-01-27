@@ -30,7 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import eu.daiad.web.domain.application.AccountEntity;
-import eu.daiad.web.domain.application.AccountStaticRecommendationEntity;
+import eu.daiad.web.domain.application.AccountTipEntity;
 import eu.daiad.web.model.ComputedNumber;
 import eu.daiad.web.model.ConsumptionStats;
 import eu.daiad.web.model.ConsumptionStats.EnumStatistic;
@@ -57,7 +57,7 @@ import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.Point;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.model.utility.UtilityInfo;
-import eu.daiad.web.repository.application.IAccountStaticRecommendationRepository;
+import eu.daiad.web.repository.application.IAccountTipRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IDataService;
@@ -76,7 +76,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     IUserRepository userRepository;
 
     @Autowired
-    IAccountStaticRecommendationRepository accountTipRepository;
+    IAccountTipRepository accountTipRepository;
 
     @Autowired
     IDeviceRepository deviceRepository;
@@ -269,14 +269,14 @@ public class DefaultMessageResolverService implements IMessageResolverService
     // Static tips - initial 3 static tips
     private boolean initialStaticTipsForAccount(AccountEntity account)
     {
-        DateTime lastCreatedOn = getDateOfLastStaticRecommendation(account.getKey());
+        DateTime lastCreatedOn = getDateOfLastTip(account.getKey());
         return (lastCreatedOn == null);
     }
 
     // Static tip
     private boolean produceStaticTipForAccount(AccountEntity account, int staticTipInterval)
     {
-        DateTime lastCreatedOn = getDateOfLastStaticRecommendation(account.getKey());
+        DateTime lastCreatedOn = getDateOfLastTip(account.getKey());
         return (lastCreatedOn == null || lastCreatedOn.isBefore(DateTime.now().minusDays(staticTipInterval)));
     }
 
@@ -1905,9 +1905,9 @@ public class DefaultMessageResolverService implements IMessageResolverService
     // ~ Helpers
     //
 
-    private DateTime getDateOfLastStaticRecommendation(UUID accountKey)
+    private DateTime getDateOfLastTip(UUID accountKey)
     {
-        AccountStaticRecommendationEntity e = accountTipRepository.findLastForAccount(accountKey);
+        AccountTipEntity e = accountTipRepository.findLastForAccount(accountKey);
         return (e == null)? null : e.getCreatedOn();
     }
 }

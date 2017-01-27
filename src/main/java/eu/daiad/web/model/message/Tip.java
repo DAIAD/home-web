@@ -2,11 +2,13 @@ package eu.daiad.web.model.message;
 
 import org.joda.time.DateTime;
 
-public class StaticRecommendation extends Message
+public class Tip extends Message
 {
 	private int index;
 
-	private String description;
+	private String locale;
+
+    private String description;
 
 	private byte imageEncoded[];
 
@@ -24,14 +26,14 @@ public class StaticRecommendation extends Message
 
 	private boolean active;
 
-	public StaticRecommendation(int id)
+	public Tip(int id)
 	{
 	    super(id);
 	}
 
 	@Override
 	public EnumMessageType getType() {
-		return EnumMessageType.RECOMMENDATION_STATIC;
+		return EnumMessageType.TIP;
 	}
 
 	public int getIndex() {
@@ -40,6 +42,16 @@ public class StaticRecommendation extends Message
 
 	public void setIndex(int index) {
 		this.index = index;
+	}
+
+	public String getLocale()
+	{
+	    return locale;
+	}
+
+	public void setLocale(String locale)
+	{
+	    this.locale = locale;
 	}
 
 	public String getDescription() {

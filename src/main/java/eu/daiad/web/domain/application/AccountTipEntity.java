@@ -1,6 +1,5 @@
 package eu.daiad.web.domain.application;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -14,23 +13,28 @@ import javax.persistence.Table;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-@Entity(name = "account_static_recommendation")
-@Table(schema = "public", name = "account_static_recommendation")
-public class AccountStaticRecommendationEntity
+@Entity(name = "account_tip")
+@Table(schema = "public", name = "account_tip")
+public class AccountTipEntity
 {
 	@Id()
 	@Column(name = "id")
-	@SequenceGenerator(sequenceName = "account_static_recommendation_id_seq", name = "account_static_recommendation_id_seq", allocationSize = 1, initialValue = 1)
-	@GeneratedValue(generator = "account_static_recommendation_id_seq", strategy = GenerationType.SEQUENCE)
+	@SequenceGenerator(
+	    sequenceName = "account_tip_id_seq",
+	    name = "account_tip_id_seq",
+	    allocationSize = 1,
+	    initialValue = 1
+	)
+	@GeneratedValue(generator = "account_tip_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
 
-	@ManyToOne(cascade = { CascadeType.ALL })
+	@ManyToOne()
 	@JoinColumn(name = "account_id", nullable = false)
 	private AccountEntity account;
 
-	@ManyToOne(cascade = { CascadeType.ALL })
-	@JoinColumn(name = "static_recommendation_id", nullable = false)
-	private StaticRecommendationEntity recommendation;
+	@ManyToOne()
+	@JoinColumn(name = "tip_id", nullable = false)
+	private TipEntity tip;
 
 	@Column(name = "created_on")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
@@ -44,12 +48,12 @@ public class AccountStaticRecommendationEntity
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime receiveAcknowledgedOn;
 
-	public AccountStaticRecommendationEntity() {}
+	public AccountTipEntity() {}
 
-	public AccountStaticRecommendationEntity(AccountEntity account, StaticRecommendationEntity recommendation)
+	public AccountTipEntity(AccountEntity account, TipEntity tip)
     {
        this.account = account;
-       this.recommendation = recommendation;
+       this.tip = tip;
     }
 
     public AccountEntity getAccount() {
@@ -60,12 +64,12 @@ public class AccountStaticRecommendationEntity
 		this.account = account;
 	}
 
-	public StaticRecommendationEntity getRecommendation() {
-		return recommendation;
+	public TipEntity getTip() {
+		return tip;
 	}
 
-	public void setRecommendation(StaticRecommendationEntity recommendation) {
-		this.recommendation = recommendation;
+	public void setTip(TipEntity tip) {
+		this.tip = tip;
 	}
 
 	public DateTime getCreatedOn() {
