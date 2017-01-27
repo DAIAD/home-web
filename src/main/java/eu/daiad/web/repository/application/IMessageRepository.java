@@ -22,25 +22,25 @@ public interface IMessageRepository {
 
 	public abstract MessageResult getMessages(AuthenticatedUser user, MessageRequest request);
 
-	public abstract void setMessageAcknowledgement(AuthenticatedUser user, List<MessageAcknowledgement> messages);
+	public abstract void acknowledgeMessages(AuthenticatedUser user, List<MessageAcknowledgement> messages);
 
-	public List<Message> getTips(String locale);
+	public List<Message> getTips(String lang);
 
-    public void persistAdvisoryMessageActiveStatus(int id, boolean active);
+    public void persistTipActiveStatus(int id, boolean active);
 
-    public void persistNewAdvisoryMessage(StaticRecommendation staticRecommendation);
+    public void createTip(StaticRecommendation tip, String lang);
 
-    public void updateAdvisoryMessage(StaticRecommendation staticRecommendation);
+    public void updateTip(StaticRecommendation tip);
 
-    public void deleteAdvisoryMessage(StaticRecommendation staticRecommendation);
+    public void deleteTip(StaticRecommendation tip);
 
     public List<Message> getAnnouncements(String locale);
 
-    public void broadcastAnnouncement(AnnouncementRequest announcementRequest, String locale, String channel);
+    public void broadcastAnnouncement(AnnouncementRequest announcementRequest, String lang, String channel);
 
-    public void deleteAnnouncement(Announcement announcement);
+    public void deleteAnnouncement(int id);
 
-    public Announcement getAnnouncement(int id, String locale);
+    public Announcement getAnnouncement(int id, String lang);
 
     public List<ReceiverAccount> getAnnouncementReceivers(int id);
 

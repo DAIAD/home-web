@@ -68,6 +68,8 @@ public interface IUserRepository {
 
     AccountEntity getAccountByUsername(String username);
 
+    AccountEntity findOne(int id);
+
     List<SurveyEntity> getSurveyDataByUtilityId(int utilityId);
 
     SurveyEntity getSurveyByKey(UUID userKey);

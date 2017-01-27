@@ -113,27 +113,20 @@ public class Recommendation extends Message
         }
     }
 
-    private final int id;
+
+    protected int priority;
 
     private final EnumRecommendationType recommendationType;
 
 	private final EnumRecommendationTemplate recommendationTemplate;
 
-	private int priority;
-
-	private String title;
-
 	private String description;
 
 	private String imageLink;
 
-	private Long createdOn;
-
-    private Long acknowledgedOn;
-
 	public Recommendation(int id, EnumRecommendationTemplate template)
 	{
-		this.id = id;
+		super(id);
 	    this.recommendationTemplate = template;
 		this.recommendationType = template.getType();
 		this.priority = recommendationType.getPriority();
@@ -141,7 +134,7 @@ public class Recommendation extends Message
 
 	public Recommendation(int id, EnumRecommendationType type)
 	{
-	    this.id = id;
+	    super(id);
 	    this.recommendationTemplate = null;
 	    this.recommendationType = type;
 	    this.priority = recommendationType.getPriority();
@@ -152,17 +145,15 @@ public class Recommendation extends Message
 		return EnumMessageType.RECOMMENDATION;
 	}
 
-	public int getPriority() {
-		return priority;
-	}
+	public int getPriority()
+    {
+        return priority;
+    }
 
-	public String getTitle() {
-		return title;
-	}
-
-	public void setTitle(String title) {
-		this.title = title;
-	}
+    public void setPriority(int priority)
+    {
+        this.priority = priority;
+    }
 
 	public String getDescription() {
 		return description;
@@ -170,14 +161,6 @@ public class Recommendation extends Message
 
 	public void setDescription(String description) {
 		this.description = description;
-	}
-
-	public Long getCreatedOn() {
-		return createdOn;
-	}
-
-	public void setCreatedOn(Long createdOn) {
-		this.createdOn = createdOn;
 	}
 
 	public String getImageLink() {
@@ -196,11 +179,9 @@ public class Recommendation extends Message
         return recommendationType;
     }
 
-    public Long getAcknowledgedOn() {
-        return acknowledgedOn;
-    }
-
-    public void setAcknowledgedOn(Long acknowledgedOn) {
-        this.acknowledgedOn = acknowledgedOn;
+	@Override
+    public String getBody()
+    {
+        return title;
     }
 }

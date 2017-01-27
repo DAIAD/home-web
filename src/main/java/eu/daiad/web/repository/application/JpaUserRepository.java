@@ -71,8 +71,8 @@ import eu.daiad.web.repository.BaseRepository;
  */
 @Repository
 @Transactional("applicationTransactionManager")
-public class JpaUserRepository extends BaseRepository implements IUserRepository {
-
+public class JpaUserRepository extends BaseRepository implements IUserRepository
+{
     /**
      * Logger instance for writing events using the configured logging API.
      */
@@ -634,8 +634,8 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             throw createApplicationException(UserErrorCode.PASSWORD_RESET_TOKEN_EXPIRED);
         }
 
-        if ((passwordResetTokenEntity.getApplication() == EnumApplication.MOBILE)
-                        && (!passwordResetTokenEntity.getPin().equals(pin))) {
+        if ((passwordResetTokenEntity.getApplication() == EnumApplication.MOBILE) &&
+            (!passwordResetTokenEntity.getPin().equals(pin))) {
             throw createApplicationException(UserErrorCode.PASSWORD_RESET_PIN_MISMATCH);
         }
 
@@ -735,7 +735,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
      * @return a new instance of {@link AuthenticatedUser}.
      */
     private AuthenticatedUser accountEntityToUser(AccountEntity entity) {
-        List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
+        List<GrantedAuthority> authorities = new ArrayList<>();
         for (AccountRoleEntity r : entity.getRoles()) {
             authorities.add(new SimpleGrantedAuthority(r.getRole().getName()));
         }
@@ -891,7 +891,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             return this.getAccountActivity(user.getUtilities());
         }
 
-        return new ArrayList<AccountActivity>();
+        return new ArrayList<>();
     }
 
     /**
@@ -907,7 +907,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
 
         query.setParameter("utilities", utilities);
 
-        ArrayList<AccountActivity> results = new ArrayList<AccountActivity>();
+        ArrayList<AccountActivity> results = new ArrayList<>();
 
         for (AccountActivityEntity a : query.getResultList()) {
             AccountActivity account = new AccountActivity();
@@ -950,7 +950,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
      */
     @Override
     public List<UserInfo> filterUserByPrefix(String prefix) {
-        List<UserInfo> accounts = new ArrayList<UserInfo>();
+        List<UserInfo> accounts = new ArrayList<>();
 
         String accountQueryString = "select a from account a " +
                                     "where (lower(a.firstname) like lower(:prefix) or lower(a.lastname) like lower(:prefix)) and " +
@@ -989,7 +989,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         String command = "";
 
         // Resolve filters
-        List<String> filters = new ArrayList<String>();
+        List<String> filters = new ArrayList<>();
 
         filters.add("(a.utility.id = :utility_id)");
 
@@ -1029,7 +1029,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
 
         countQuery.setParameter("utility_id", getCurrentUtilityId());
 
-        totalUsers = ((Number) countQuery.getSingleResult()).intValue();
+        totalUsers = countQuery.getSingleResult().intValue();
 
         result.setTotal(totalUsers);
 
@@ -1135,7 +1135,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
      */
     @Override
     public List<UUID> getUserKeysForGroup(UUID groupKey) {
-        ArrayList<UUID> result = new ArrayList<UUID>();
+        ArrayList<UUID> result = new ArrayList<>();
         try {
             Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from \"group\" g "
                             + "inner join group_member gm on g.id = gm.group_id "
@@ -1161,7 +1161,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
      */
     @Override
     public List<UUID> getUserKeysForUtility(UUID utilityKey) {
-        ArrayList<UUID> result = new ArrayList<UUID>();
+        ArrayList<UUID> result = new ArrayList<>();
         try {
             Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from utility u "
                             + "inner join account a on u.id = a.utility_id where u.key = CAST(? as uuid)");
@@ -1186,7 +1186,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
      */
     @Override
     public List<UUID> getUserKeysForUtility(int utilityId) {
-        ArrayList<UUID> result = new ArrayList<UUID>();
+        ArrayList<UUID> result = new ArrayList<>();
 
         Query query = entityManager.createNativeQuery("select CAST(a.key as char varying) from utility u "
                         + "inner join account a on u.id = a.utility_id where u.id = :utilityId");
@@ -1207,7 +1207,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
      */
     @Override
     public List<UUID> getUserKeysForUtility() {
-        ArrayList<UUID> result = new ArrayList<UUID>();
+        ArrayList<UUID> result = new ArrayList<>();
 
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -1379,4 +1379,9 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         return null;
     }
 
+    @Override
+    public AccountEntity findOne(int id)
+    {
+        return entityManager.find(AccountEntity.class, id);
+    }
 }

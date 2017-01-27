@@ -1,5 +1,7 @@
 package eu.daiad.web.domain.application;
 
+import java.util.Locale;
+
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -11,8 +13,9 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import org.hibernate.annotations.Type;
-import org.joda.time.DateTime;
+import javax.validation.constraints.NotNull;
+
+import org.hibernate.annotations.NaturalId;
 
 @Entity(name = "announcement_translation")
 @Table(schema = "public", name = "announcement_translation")
@@ -20,18 +23,27 @@ public class AnnouncementTranslationEntity {
 
 	@Id()
 	@Column(name = "id")
-	@SequenceGenerator(sequenceName = "announcement_translation_id_seq", name = "announcement_translation_id_seq", allocationSize = 1, initialValue = 1)
+	@SequenceGenerator(
+	    sequenceName = "announcement_translation_id_seq",
+	    name = "announcement_translation_id_seq",
+	    allocationSize = 1,
+	    initialValue = 1)
 	@GeneratedValue(generator = "announcement_translation_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
 
 	@ManyToOne(cascade = { CascadeType.ALL })
 	@JoinColumn(name = "announcement_id", nullable = false)
+	@NotNull
+	@NaturalId
 	private AnnouncementEntity announcement;
 
 	@Column(name = "locale", columnDefinition = "bpchar", length = 2)
+	@NotNull
+	@NaturalId
 	private String locale;
 
 	@Basic()
+	@NotNull
 	private String title;
 
 	@Basic()
@@ -40,9 +52,20 @@ public class AnnouncementTranslationEntity {
 	@Column(name = "link")
 	private String link;
 
-    @Column(name = "dispatched_on")
-    @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-    private DateTime dispatchedOn;
+	public AnnouncementTranslationEntity() {}
+
+	public AnnouncementTranslationEntity(AnnouncementEntity a, Locale locale, String title, String content)
+	{
+	    this.announcement = a;
+	    this.locale = locale.getLanguage();
+	    this.title = title;
+	    this.content = content;
+	}
+
+	public AnnouncementTranslationEntity(AnnouncementEntity a, Locale locale)
+    {
+	    this(a, locale, null, null);
+    }
 
     public String getLink() {
         return link;
@@ -51,7 +74,7 @@ public class AnnouncementTranslationEntity {
     public void setLink(String link) {
         this.link = link;
     }
-    
+
 	public AnnouncementEntity getAnnouncement() {
 		return announcement;
 	}
@@ -87,13 +110,4 @@ public class AnnouncementTranslationEntity {
 	public int getId() {
 		return id;
 	}
-
-    public DateTime getDispatchedOn() {
-        return dispatchedOn;
-    }
-
-    public void setDispatchedOn(DateTime dispatchedOn) {
-        this.dispatchedOn = dispatchedOn;
-    }
-
 }

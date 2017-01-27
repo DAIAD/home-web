@@ -16,7 +16,7 @@ public interface IUserService {
 	 * @return the new user key.
 	 * @throws ApplicationException if the user already exists.
 	 */
-	abstract UUID createUser(UserRegistrationRequest request) throws ApplicationException;
+	UUID createUser(UserRegistrationRequest request) throws ApplicationException;
 
 	/**
 	 * Changes a user password.
@@ -25,7 +25,7 @@ public interface IUserService {
 	 * @param password the new password.
 	 * @throws ApplicationException if the user does not exist.
 	 */
-	abstract void changePassword(String username, String password) throws ApplicationException;
+	void changePassword(String username, String password) throws ApplicationException;
 
 	/**
      * Grants a role to a user
@@ -34,7 +34,7 @@ public interface IUserService {
      * @param role the role to grant or revoke.
      * @throws ApplicationException if the user or the role does not exist.
      */
-    abstract void grantRole(String username, EnumRole role) throws ApplicationException;
+    void grantRole(String username, EnumRole role) throws ApplicationException;
 
 	/**
 	 * Revokes a role from a user.
@@ -43,7 +43,7 @@ public interface IUserService {
 	 * @param role the role to grant or revoke.
 	 * @throws ApplicationException if the user or the role does not exist.
 	 */
-	abstract void revokeRole(String username, EnumRole role) throws ApplicationException;
+	void revokeRole(String username, EnumRole role) throws ApplicationException;
 
 	/**
 	 * Requests a token for reseting a user's password.
@@ -54,7 +54,7 @@ public interface IUserService {
 	 *
 	 * @throws ApplicationException if no user is found.
 	 */
-	abstract UUID resetPasswordCreateToken(String username, EnumApplication application) throws ApplicationException;
+	UUID resetPasswordCreateToken(String username, EnumApplication application) throws ApplicationException;
 
 	/**
      * Resets a user's password given a valid reset password token.
@@ -65,6 +65,19 @@ public interface IUserService {
      *
      * @throws ApplicationException if token does not exists or it is expired.
      */
-    abstract void resetPasswordRedeemToken(UUID token, String pin, String password) throws ApplicationException;
+    void resetPasswordRedeemToken(UUID token, String pin, String password) throws ApplicationException;
+
+    /**
+     * Resets a user's password given a valid reset password token.
+     *
+     * @param remoteAddress the client remote IP address.
+     * @param captchaResponse the Google ReCAPTCAH response.
+     * @param token the token created by @{link IUserService#resetPasswordCreateToken} call.
+     * @param pin the PIN associated to the specified password reset token.
+     * @param password the new password.
+     *
+     * @throws ApplicationException if token does not exists or it is expired.
+     */
+    void resetPasswordRedeemToken(String remoteAddress, String captchaResponse, UUID token, String pin, String password) throws ApplicationException;
 
 }

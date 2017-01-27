@@ -1,51 +1,67 @@
 package eu.daiad.web.repository.application;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
+import org.joda.time.DateTime;
 import org.joda.time.Interval;
 
 import eu.daiad.web.domain.application.AccountAnnouncementEntity;
 import eu.daiad.web.domain.application.AccountEntity;
-import eu.daiad.web.domain.application.AccountStaticRecommendationEntity;
+import eu.daiad.web.domain.application.AnnouncementEntity;
+import eu.daiad.web.model.PagingOptions;
+import eu.daiad.web.model.message.Announcement;
 
 public interface IAccountAnnouncementRepository
 {
     AccountAnnouncementEntity findOne(int id);
-    
-    Long countAll();
-    
+
+    AccountAnnouncementEntity findOne(UUID accountKey, int announcementId);
+
+    int countAll();
+
     List<AccountAnnouncementEntity> findByAccount(UUID accountKey);
-    
-    Long countByAccount(UUID accountKey);
-    
+
     List<AccountAnnouncementEntity> findByAccount(UUID accountKey, Interval interval);
-    
-    Long countByAccount(UUID accountKey, Interval interval);
-    
-    List<AccountAnnouncementEntity> findByType(int announcementType);
-    
-    Long countByType(int announcementType);
-    
-    List<AccountAnnouncementEntity> findByType(int announcementType, Interval interval);
-    
-    Long countByType(int announcementType, Interval interval);
-    
-    List<AccountAnnouncementEntity> findByAccountAndType(UUID accountKey, int announcementType);
-    
-    Long countByAccountAndType(UUID accountKey, int announcementType);
-    
-    List<AccountAnnouncementEntity> findByAccountAndType(UUID accountKey, int announcementType, Interval interval);
-    
-    Long countByAccountAndType(UUID accountKey, int announcementType, Interval interval);
-    
+
+    List<AccountAnnouncementEntity> findByAccount(UUID accountKey, int minId);
+
+    List<AccountAnnouncementEntity> findByAccount(UUID accountKey, int minId, PagingOptions pagination);
+
+    int countByAccount(UUID accountKey, Interval interval);
+
+    int countByAccount(UUID accountKey);
+
+    int countByAccount(UUID accountKey, int minId);
+
+    List<AccountAnnouncementEntity> findByAnnouncement(int announcementId);
+
+    List<AccountAnnouncementEntity> findByAnnouncement(int announcementId, Interval interval);
+
+    int countByAnnouncement(int announcementId);
+
+    int countByAnnouncement(int announcementId, Interval interval);
+
     AccountAnnouncementEntity create(AccountAnnouncementEntity e);
-    
-    AccountAnnouncementEntity createWith(UUID accountKey, int announcementType);
-    
-    AccountAnnouncementEntity createWith(AccountEntity account, int announcementType);
-    
+
+    AccountAnnouncementEntity createWith(UUID accountKey, int announcementId);
+
+    AccountAnnouncementEntity createWith(AccountEntity account, int announcementId);
+
+    AccountAnnouncementEntity createWith(AccountEntity account, AnnouncementEntity announcement);
+
+    boolean acknowledge(int id, DateTime acknowledged);
+
+    boolean acknowledge(AccountAnnouncementEntity r, DateTime acknowledged);
+
+    boolean acknowledge(UUID accountKey, int id, DateTime acknowledged);
+
+    Announcement newMessage(int id, Locale locale);
+
+    Announcement newMessage(AccountAnnouncementEntity r, Locale locale);
+
     void delete(int id);
-    
+
     void delete(AccountAnnouncementEntity e);
 }

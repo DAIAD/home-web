@@ -17,9 +17,9 @@ import eu.daiad.web.model.message.EnumAlertType;
 public interface IAccountAlertRepository
 {
     AccountAlertEntity findOne(int id);
-    
-    Long countAll();
-    
+
+    int countAll();
+
     List<AccountAlertEntity> findByAccount(UUID accountKey);
 
     List<AccountAlertEntity> findByAccount(UUID accountKey, Interval interval);
@@ -28,31 +28,31 @@ public interface IAccountAlertRepository
 
     List<AccountAlertEntity> findByAccount(UUID accountKey, int minId, PagingOptions pagination);
 
-    Long countByAccount(UUID accountKey);
+    int countByAccount(UUID accountKey);
 
-    Long countByAccount(UUID accountKey, Interval interval);
+    int countByAccount(UUID accountKey, Interval interval);
 
-    Long countByAccount(UUID accountKey, int minId);
+    int countByAccount(UUID accountKey, int minId);
 
     List<AccountAlertEntity> findByType(EnumAlertType alertType, UUID utilityKey);
 
     List<AccountAlertEntity> findByType(EnumAlertType alertType, UUID utilityKey, Interval interval);
 
-    Long countByType(EnumAlertType alertType, UUID utilityKey);
+    int countByType(EnumAlertType alertType, UUID utilityKey);
 
-    Long countByType(EnumAlertType alertType, UUID utilityKey, Interval interval);
+    int countByType(EnumAlertType alertType, UUID utilityKey, Interval interval);
 
-    Map<EnumAlertType, Long> countByType(UUID utilityKey);
+    Map<EnumAlertType, Integer> countByType(UUID utilityKey);
 
-    Map<EnumAlertType, Long> countByType(UUID utilityKey, Interval interval);
+    Map<EnumAlertType, Integer> countByType(UUID utilityKey, Interval interval);
 
     List<AccountAlertEntity> findByAccountAndType(UUID accountKey, EnumAlertType alertType);
 
     List<AccountAlertEntity> findByAccountAndType(UUID accountKey, EnumAlertType alertType, Interval interval);
 
-    Long countByAccountAndType(UUID accountKey, EnumAlertType alertType);
+    int countByAccountAndType(UUID accountKey, EnumAlertType alertType);
 
-    Long countByAccountAndType(UUID accountKey, EnumAlertType alertType, Interval interval);
+    int countByAccountAndType(UUID accountKey, EnumAlertType alertType, Interval interval);
 
     AccountAlertEntity create(AccountAlertEntity e);
 
@@ -69,8 +69,8 @@ public interface IAccountAlertRepository
     Alert formatMessage(int id, Locale locale);
 
     Alert formatMessage(AccountAlertEntity r, Locale locale);
-    
+
     void delete(int id);
-    
+
     void delete(AccountAlertEntity e);
 }

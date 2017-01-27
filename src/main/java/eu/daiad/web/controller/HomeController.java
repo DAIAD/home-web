@@ -24,7 +24,7 @@ public class HomeController extends BaseController{
     /**
      * Google ReCAPTCHA site key.
      */
-    @Value("${daiad.captcha.google.key}")
+    @Value("${daiad.captcha.google.site-key}")
     private String googleReCAPTCHASiteKey;
 
     /**
@@ -121,7 +121,7 @@ public class HomeController extends BaseController{
         model.addAttribute("googleReCAPTCHASiteKey", googleReCAPTCHASiteKey);
         model.addAttribute("locale", token.getLocale());
 
-        return "utility/default";
+        return "home/default";
     }
 
 }

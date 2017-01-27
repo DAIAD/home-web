@@ -158,8 +158,7 @@ public abstract class BaseController {
      * @return the localized error.
      */
     protected Error getErrorUnknown() {
-        return new Error(SharedErrorCode.UNKNOWN.getMessageKey(),
-                        getMessage(SharedErrorCode.UNKNOWN.getMessageKey()));
+        return new Error(SharedErrorCode.UNKNOWN.getMessageKey(), getMessage(SharedErrorCode.UNKNOWN.getMessageKey()));
     }
 
     /**
