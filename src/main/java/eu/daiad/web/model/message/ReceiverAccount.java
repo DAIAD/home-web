@@ -2,11 +2,25 @@ package eu.daiad.web.model.message;
 
 import org.joda.time.DateTime;
 
-public class ReceiverAccount{
+public class ReceiverAccount
+{
+    private int accountId = -1;
 
-    private int accountId;
     private String username;
+
+    /**
+     * This datestamp is meaningful only when this receiver is related with
+     * a particular message.
+     */
     private DateTime acknowledgedOn;
+
+    public ReceiverAccount() {}
+
+    public ReceiverAccount(int accountId, String username)
+    {
+        this.accountId = accountId;
+        this.username = username;
+    }
 
     public int getAccountId() {
         return accountId;

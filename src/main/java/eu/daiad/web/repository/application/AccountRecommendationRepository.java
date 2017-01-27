@@ -45,11 +45,11 @@ public class AccountRecommendationRepository extends BaseRepository
     IRecommendationTemplateTranslationRepository translationRepository;
 
     @Override
-    public Long countAll()
+    public int countAll()
     {
         TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(a.id) FROM account_recommendation a", Long.class);
-        return query.getSingleResult();
+        return query.getSingleResult().intValue();
     }
 
     @Override
@@ -59,7 +59,7 @@ public class AccountRecommendationRepository extends BaseRepository
     }
 
     @Override
-    public Long countByAccount(UUID accountKey)
+    public int countByAccount(UUID accountKey)
     {
         return countByAccount(accountKey, (Interval) null);
     }
@@ -72,7 +72,7 @@ public class AccountRecommendationRepository extends BaseRepository
     }
 
     @Override
-    public Long countByAccountAndType(
+    public int countByAccountAndType(
         UUID accountKey, EnumRecommendationType recommendationType)
     {
         return countByAccountAndType(accountKey, recommendationType, (Interval) null);
@@ -97,7 +97,7 @@ public class AccountRecommendationRepository extends BaseRepository
     }
 
     @Override
-    public Long countByAccount(UUID accountKey, Interval interval)
+    public int countByAccount(UUID accountKey, Interval interval)
     {
         TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(a.id) FROM account_recommendation a WHERE " +
@@ -111,7 +111,7 @@ public class AccountRecommendationRepository extends BaseRepository
             query.setParameter("end", interval.getEnd());
         }
 
-        return query.getSingleResult();
+        return query.getSingleResult().intValue();
     }
 
     @Override
@@ -125,7 +125,7 @@ public class AccountRecommendationRepository extends BaseRepository
     {
         TypedQuery<AccountRecommendationEntity> query = entityManager.createQuery(
             "SELECT r FROM account_recommendation r " +
-                "WHERE r.account.key = :accountKey and r.id > :minId " +
+                "WHERE r.account.key = :accountKey AND r.id > :minId " +
                 "ORDER BY r.id " + (pagination.isAscending()? "ASC" : "DESC"),
             AccountRecommendationEntity.class);
 
@@ -142,15 +142,15 @@ public class AccountRecommendationRepository extends BaseRepository
     }
 
     @Override
-    public Long countByAccount(UUID accountKey, int minId)
+    public int countByAccount(UUID accountKey, int minId)
     {
         TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(r.id) FROM account_recommendation r " +
-                "WHERE r.account.key = :accountKey and r.id > :minId ",
+                "WHERE r.account.key = :accountKey AND r.id > :minId ",
             Long.class);
         query.setParameter("accountKey", accountKey);
         query.setParameter("minId", minId);
-        return query.getSingleResult().longValue();
+        return query.getSingleResult().intValue();
     }
 
     @Override
@@ -182,13 +182,13 @@ public class AccountRecommendationRepository extends BaseRepository
     }
 
     @Override
-    public Long countByType(EnumRecommendationType recommendationType, UUID utilityKey)
+    public int countByType(EnumRecommendationType recommendationType, UUID utilityKey)
     {
         return countByType(recommendationType, utilityKey, null);
     }
 
     @Override
-    public Long countByType(
+    public int countByType(
         EnumRecommendationType recommendationType, UUID utilityKey, Interval interval)
     {
         TypedQuery<Long> query = entityManager.createQuery(
@@ -206,19 +206,19 @@ public class AccountRecommendationRepository extends BaseRepository
             query.setParameter("end", interval.getEnd());
         }
 
-        return query.getSingleResult();
+        return query.getSingleResult().intValue();
     }
 
     @Override
-    public Map<EnumRecommendationType, Long> countByType(UUID utilityKey)
+    public Map<EnumRecommendationType, Integer> countByType(UUID utilityKey)
     {
         return countByType(utilityKey, null);
     }
 
     @Override
-    public Map<EnumRecommendationType, Long> countByType(UUID utilityKey, Interval interval)
+    public Map<EnumRecommendationType, Integer> countByType(UUID utilityKey, Interval interval)
     {
-        Map<EnumRecommendationType, Long> r = new EnumMap<>(EnumRecommendationType.class);
+        Map<EnumRecommendationType, Integer> r = new EnumMap<>(EnumRecommendationType.class);
 
         TypedQuery<RecommendationByTypeRecord> query = entityManager.createQuery(
             "SELECT new eu.daiad.web.domain.application.RecommendationByTypeRecord(" +
@@ -264,7 +264,7 @@ public class AccountRecommendationRepository extends BaseRepository
     }
 
     @Override
-    public Long countByAccountAndType(
+    public int countByAccountAndType(
         UUID accountKey, EnumRecommendationType recommendationType, Interval interval)
     {
         TypedQuery<Long> query = entityManager.createQuery(
@@ -281,7 +281,7 @@ public class AccountRecommendationRepository extends BaseRepository
             query.setParameter("end", interval.getEnd());
         }
 
-        return query.getSingleResult();
+        return query.getSingleResult().intValue();
     }
 
     @Override
@@ -425,9 +425,9 @@ public class AccountRecommendationRepository extends BaseRepository
         message.setTitle(title);
         message.setDescription(description);
         message.setImageLink(translation.getImageLink());
-        message.setCreatedOn(r.getCreatedOn().getMillis());
+        message.setCreatedOn(r.getCreatedOn());
         if (r.getAcknowledgedOn() != null)
-            message.setAcknowledgedOn(r.getAcknowledgedOn().getMillis());
+            message.setAcknowledgedOn(r.getAcknowledgedOn());
 
         return message;
     }

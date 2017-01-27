@@ -81,7 +81,7 @@ public class MessageController extends BaseRestController {
 
         try {
             AuthenticatedUser user = authenticate(request.getCredentials(), EnumRole.ROLE_USER);
-            messageRepository.setMessageAcknowledgement(user, request.getMessages());
+            messageRepository.acknowledgeMessages(user, request.getMessages());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
             response.add(this.getError(ex));

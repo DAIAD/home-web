@@ -1,6 +1,7 @@
 package eu.daiad.web.repository.application;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import javax.persistence.EntityManager;
@@ -12,10 +13,14 @@ import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import eu.daiad.web.domain.application.AccountAnnouncementEntity;
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AnnouncementEntity;
+import eu.daiad.web.domain.application.AnnouncementTranslationEntity;
+import eu.daiad.web.model.PagingOptions;
+import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository
@@ -23,6 +28,8 @@ import eu.daiad.web.repository.BaseRepository;
 public class AccountAnnouncementRepository extends BaseRepository
     implements IAccountAnnouncementRepository
 {
+    public static final int DEFAULT_LIMIT = 50;
+
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
 
@@ -33,31 +40,36 @@ public class AccountAnnouncementRepository extends BaseRepository
     }
 
     @Override
-    public Long countAll()
+    public AccountAnnouncementEntity findOne(UUID accountKey, int announcementId)
+    {
+        TypedQuery<AccountAnnouncementEntity> query = entityManager.createQuery(
+            "SELECT a FROM account_announcement a WHERE " +
+                "a.announcement.id = :aid AND a.account.key = :accountKey",
+            AccountAnnouncementEntity.class);
+        query.setParameter("aid", announcementId);
+        query.setParameter("accountKey", accountKey);
+
+        AccountAnnouncementEntity r = null;
+        try {
+            r = query.getSingleResult();
+        } catch (NoResultException x) {
+            r = null;
+        }
+        return r;
+    }
+
+    @Override
+    public int countAll()
     {
         TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(a.id) FROM account_announcement", Long.class);
-        return query.getSingleResult();
+        return query.getSingleResult().intValue();
     }
 
     @Override
     public List<AccountAnnouncementEntity> findByAccount(UUID accountKey)
     {
-        TypedQuery<AccountAnnouncementEntity> query = entityManager.createQuery(
-            "SELECT a FROM account_announcement a WHERE a.account.key = :accountKey",
-            AccountAnnouncementEntity.class);
-        query.setParameter("accountKey", accountKey);
-        return query.getResultList();
-    }
-
-    @Override
-    public Long countByAccount(UUID accountKey)
-    {
-        TypedQuery<Long> query = entityManager.createQuery(
-            "SELECT count(a.id) FROM account_announcement a WHERE a.account.key = :accountKey",
-            Long.class);
-        query.setParameter("accountKey", accountKey);
-        return query.getSingleResult();
+        return findByAccount(accountKey, null);
     }
 
     @Override
@@ -65,132 +77,123 @@ public class AccountAnnouncementRepository extends BaseRepository
     {
         TypedQuery<AccountAnnouncementEntity> query = entityManager.createQuery(
             "SELECT a FROM account_announcement a WHERE " +
-                "a.account.key = :accountKey AND " +
-                "a.createdOn >= :start AND a.createdOn < :end",
+                "a.account.key = :accountKey" +
+                ((interval != null)? " AND a.createdOn >= :start AND a.createdOn < :end" : ""),
              AccountAnnouncementEntity.class);
+
         query.setParameter("accountKey", accountKey);
-        query.setParameter("start", interval.getStart());
-        query.setParameter("end", interval.getEnd());
+        if (interval != null) {
+            query.setParameter("start", interval.getStart());
+            query.setParameter("end", interval.getEnd());
+        }
         return query.getResultList();
     }
 
     @Override
-    public Long countByAccount(UUID accountKey, Interval interval)
+    public List<AccountAnnouncementEntity> findByAccount(UUID accountKey, int minId)
+    {
+        return findByAccount(accountKey, minId, new PagingOptions(DEFAULT_LIMIT));
+    }
+
+    @Override
+    public List<AccountAnnouncementEntity> findByAccount(UUID accountKey, int minId, PagingOptions pagination)
+    {
+        TypedQuery<AccountAnnouncementEntity> query = entityManager.createQuery(
+            "SELECT a FROM account_announcement a " +
+                "WHERE a.account.key = :accountKey AND a.id > :minId " +
+                "ORDER BY a.id " + (pagination.isAscending()? "ASC" : "DESC"),
+            AccountAnnouncementEntity.class);
+
+        query.setParameter("accountKey", accountKey);
+        query.setParameter("minId", minId);
+
+        int offset = pagination.getOffset();
+        if (offset > 0)
+            query.setFirstResult(offset);
+        query.setMaxResults(pagination.getLimit());
+
+        return query.getResultList();
+    }
+
+    @Override
+    public int countByAccount(UUID accountKey)
+    {
+        return countByAccount(accountKey, (Interval) null);
+    }
+
+    @Override
+    public int countByAccount(UUID accountKey, Interval interval)
     {
         TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(a.id) FROM account_announcement a WHERE " +
-                "a.account.key = :accountKey AND " +
-                "a.createdOn >= :start AND a.createdOn < :end",
+                "a.account.key = :accountKey" +
+                ((interval != null)? " AND a.createdOn >= :start AND a.createdOn < :end" : ""),
              Long.class);
+
         query.setParameter("accountKey", accountKey);
-        query.setParameter("start", interval.getStart());
-        query.setParameter("end", interval.getEnd());
-        return query.getSingleResult();
+        if (interval != null) {
+            query.setParameter("start", interval.getStart());
+            query.setParameter("end", interval.getEnd());
+        }
+        return query.getSingleResult().intValue();
     }
 
     @Override
-    public List<AccountAnnouncementEntity> findByType(int announcementType)
-    {
-        TypedQuery<AccountAnnouncementEntity> query = entityManager.createQuery(
-            "SELECT a FROM account_announcement a WHERE a.announcement.id = :aid",
-            AccountAnnouncementEntity.class);
-        query.setParameter("aid", announcementType);
-        return query.getResultList();
-    }
-
-    @Override
-    public Long countByType(int announcementType)
+    public int countByAccount(UUID accountKey, int minId)
     {
         TypedQuery<Long> query = entityManager.createQuery(
-            "SELECT count(a.id) FROM account_announcement a WHERE a.announcement.id = :aid",
+            "SELECT count(a.id) FROM account_announcement a " +
+                "WHERE a.account.key = :accountKey AND a.id > :minId ",
             Long.class);
-        query.setParameter("aid", announcementType);
-        return query.getSingleResult();
+        query.setParameter("accountKey", accountKey);
+        query.setParameter("minId", minId);
+        return query.getSingleResult().intValue();
     }
 
     @Override
-    public List<AccountAnnouncementEntity> findByType(int announcementType, Interval interval)
+    public List<AccountAnnouncementEntity> findByAnnouncement(int announcementId)
     {
-        TypedQuery<AccountAnnouncementEntity> query = entityManager.createQuery(
-            "SELECT a FROM account_announcement a WHERE " +
-                "a.announcement.id = :aid AND " +
-                "a.createdOn >= :start AND a.createdOn < :end",
-            AccountAnnouncementEntity.class);
-        query.setParameter("aid", announcementType);
-        query.setParameter("start", interval.getStart());
-        query.setParameter("end", interval.getEnd());
-        return query.getResultList();
+        return findByAnnouncement(announcementId, null);
     }
 
     @Override
-    public Long countByType(int announcementType, Interval interval)
-    {
-        TypedQuery<Long> query = entityManager.createQuery(
-            "SELECT count(a.id) FROM account_announcement a WHERE " +
-                "a.announcement.id = :aid AND " +
-                "a.createdOn >= :start AND a.createdOn < :end",
-            Long.class);
-        query.setParameter("aid", announcementType);
-        query.setParameter("start", interval.getStart());
-        query.setParameter("end", interval.getEnd());
-        return query.getSingleResult();
-    }
-
-    @Override
-    public List<AccountAnnouncementEntity> findByAccountAndType(UUID accountKey, int announcementType)
+    public List<AccountAnnouncementEntity> findByAnnouncement(int announcementId, Interval interval)
     {
         TypedQuery<AccountAnnouncementEntity> query = entityManager.createQuery(
             "SELECT a FROM account_announcement a WHERE " +
-                "a.announcement.id = :aid AND a.account.key = :accountKey",
+                "a.announcement.id = :aid" +
+                ((interval != null)? " AND a.createdOn >= :start AND a.createdOn < :end" : ""),
             AccountAnnouncementEntity.class);
-        query.setParameter("aid", announcementType);
-        query.setParameter("accountKey", accountKey);
+
+        query.setParameter("aid", announcementId);
+        if (interval != null) {
+            query.setParameter("start", interval.getStart());
+            query.setParameter("end", interval.getEnd());
+        }
         return query.getResultList();
     }
 
     @Override
-    public Long countByAccountAndType(UUID accountKey, int announcementType)
+    public int countByAnnouncement(int announcementId)
     {
-        TypedQuery<Long> query = entityManager.createQuery(
-            "SELECT count(a.id) FROM account_announcement a WHERE " +
-                "a.announcement.id = :aid AND a.account.key = :accountKey",
-            Long.class);
-        query.setParameter("aid", announcementType);
-        query.setParameter("accountKey", accountKey);
-        return query.getSingleResult();
+        return countByAnnouncement(announcementId, null);
     }
 
     @Override
-    public List<AccountAnnouncementEntity> findByAccountAndType(
-        UUID accountKey, int announcementType, Interval interval)
-    {
-        TypedQuery<AccountAnnouncementEntity> query = entityManager.createQuery(
-            "SELECT a FROM account_announcement a WHERE " +
-                "a.announcement.id = :aid AND " +
-                "a.account.key = :accountKey AND " +
-                "a.createdOn >= :start AND a.createdOn < :end",
-            AccountAnnouncementEntity.class);
-        query.setParameter("aid", announcementType);
-        query.setParameter("accountKey", accountKey);
-        query.setParameter("start", interval.getStart());
-        query.setParameter("end", interval.getEnd());
-        return query.getResultList();
-    }
-
-    @Override
-    public Long countByAccountAndType(UUID accountKey, int announcementType, Interval interval)
+    public int countByAnnouncement(int announcementId, Interval interval)
     {
         TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(a.id) FROM account_announcement a WHERE " +
-                "a.announcement.id = :aid AND " +
-                "a.account.key = :accountKey AND " +
-                "a.createdOn >= :start AND a.createdOn < :end",
+                "a.announcement.id = :aid" +
+                ((interval != null)? " AND a.createdOn >= :start AND a.createdOn < :end" : ""),
             Long.class);
-        query.setParameter("aid", announcementType);
-        query.setParameter("accountKey", accountKey);
-        query.setParameter("start", interval.getStart());
-        query.setParameter("end", interval.getEnd());
-        return query.getSingleResult();
+
+        query.setParameter("aid", announcementId);
+        if (interval != null) {
+            query.setParameter("start", interval.getStart());
+            query.setParameter("end", interval.getEnd());
+        }
+        return query.getSingleResult().intValue();
     }
 
     @Override
@@ -201,22 +204,39 @@ public class AccountAnnouncementRepository extends BaseRepository
         return e;
     }
 
+
     @Override
-    public AccountAnnouncementEntity createWith(AccountEntity account, int announcementType)
+    public AccountAnnouncementEntity createWith(AccountEntity account, AnnouncementEntity announcement)
     {
-        // Ensure we have a persistent AccountEntity instance
+        Assert.state(account != null && announcement != null);
+
+        // Ensure we have a persistent entities
+
         if (!entityManager.contains(account))
             account = entityManager.find(AccountEntity.class, account.getId());
+        if (!entityManager.contains(announcement))
+            announcement = entityManager.find(AnnouncementEntity.class, announcement.getId());
 
-        AnnouncementEntity announcement =
-            entityManager.find(AnnouncementEntity.class, announcementType);
+        // Create
+
         AccountAnnouncementEntity e =
             new AccountAnnouncementEntity(account, announcement);
         return create(e);
     }
 
     @Override
-    public AccountAnnouncementEntity createWith(UUID accountKey, int announcementType)
+    public AccountAnnouncementEntity createWith(AccountEntity account, int announcementId)
+    {
+        AnnouncementEntity announcement =
+            entityManager.find(AnnouncementEntity.class, announcementId);
+        if (announcement == null)
+            return null;
+
+        return createWith(account, announcement);
+    }
+
+    @Override
+    public AccountAnnouncementEntity createWith(UUID accountKey, int announcementId)
     {
         TypedQuery<AccountEntity> query = entityManager.createQuery(
             "SELECT a FROM account a WHERE a.key = :accountKey", AccountEntity.class);
@@ -228,11 +248,79 @@ public class AccountAnnouncementRepository extends BaseRepository
         } catch (NoResultException x) {
             account = null;
         }
-
         if (account == null)
             return null;
-        else
-            return createWith(account, announcementType);
+
+        AnnouncementEntity announcement =
+            entityManager.find(AnnouncementEntity.class, announcementId);
+        if (announcement == null)
+            return null;
+
+        return createWith(account, announcement);
+    }
+
+    @Override
+    public boolean acknowledge(int id, DateTime acknowledged)
+    {
+        AccountAnnouncementEntity r = findOne(id);
+        if (r != null)
+            return acknowledge(r, acknowledged);
+        return false;
+    }
+
+    @Override
+    public boolean acknowledge(UUID accountKey, int id, DateTime acknowledged)
+    {
+        AccountAnnouncementEntity r = findOne(id);
+        // Perform action only if message exists and is owned by account
+        if (r != null && r.getAccount().getKey().equals(accountKey))
+            return acknowledge(r, acknowledged);
+        return false;
+    }
+
+    @Override
+    public boolean acknowledge(AccountAnnouncementEntity r, DateTime acknowledged)
+    {
+        if (!entityManager.contains(r))
+            r = findOne(r.getId());
+
+        if (r != null && r.getAcknowledgedOn() == null) {
+            r.setAcknowledgedOn(acknowledged);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public Announcement newMessage(int id, Locale locale)
+    {
+        AccountAnnouncementEntity r = findOne(id);
+        if (r != null)
+            return newMessage(r, locale);
+        return null;
+    }
+
+    @Override
+    public Announcement newMessage(AccountAnnouncementEntity r, Locale locale)
+    {
+        AnnouncementEntity announcement = r.getAnnouncement();
+
+        AnnouncementTranslationEntity translation = null;
+        translation = announcement.getTranslation(locale);
+        if (translation == null)
+            translation = announcement.getTranslation(Locale.getDefault());
+        if (translation == null)
+            return null;
+
+        Announcement message = new Announcement(r.getId());
+        message.setPriority(announcement.getPriority());
+        message.setTitle(translation.getTitle());
+        message.setContent(translation.getContent());
+        message.setCreatedOn(r.getCreatedOn());
+        if (r.getAcknowledgedOn() != null)
+            message.setAcknowledgedOn(r.getAcknowledgedOn());
+
+        return message;
     }
 
     @Override

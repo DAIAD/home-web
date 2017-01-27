@@ -3,6 +3,7 @@ package eu.daiad.web.repository.application;
 import java.text.NumberFormat;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -27,9 +28,7 @@ import eu.daiad.web.domain.application.AccountAnnouncementEntity;
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AccountRecommendationEntity;
 import eu.daiad.web.domain.application.AccountStaticRecommendationEntity;
-import eu.daiad.web.domain.application.AnnouncementChannel;
 import eu.daiad.web.domain.application.AnnouncementEntity;
-import eu.daiad.web.domain.application.AnnouncementTranslationEntity;
 import eu.daiad.web.domain.application.StaticRecommendationCategoryEntity;
 import eu.daiad.web.domain.application.StaticRecommendationEntity;
 import eu.daiad.web.model.PagingOptions;
@@ -39,7 +38,6 @@ import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.AlertStatistics;
 import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.model.message.AnnouncementRequest;
-import eu.daiad.web.model.message.AnnouncementTranslation;
 import eu.daiad.web.model.message.EnumAlertType;
 import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.EnumRecommendationType;
@@ -68,16 +66,27 @@ public class JpaMessageRepository extends BaseRepository
     EntityManager entityManager;
 
     @Autowired
+    IUserRepository userRepository;
+
+    @Autowired
     IAccountRecommendationRepository accountRecommendationRepository;
 
     @Autowired
     IAccountAlertRepository accountAlertRepository;
 
+    @Autowired
+    IAccountAnnouncementRepository accountAnnouncementRepository;
+
+    @Autowired
+    IAnnouncementRepository announcementRepository;
+
+    @Autowired
+    IAccountStaticRecommendationRepository accountTipRepository;
+
     @Deprecated
     // Fixme Move this to controller
     private AuthenticatedUser getCurrentAuthenticatedUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
         if (auth.getPrincipal() instanceof AuthenticatedUser) {
             return (AuthenticatedUser) auth.getPrincipal();
         } else {
@@ -86,7 +95,7 @@ public class JpaMessageRepository extends BaseRepository
     }
 
     @Override
-    public void setMessageAcknowledgement(AuthenticatedUser user, List<MessageAcknowledgement> messages)
+    public void acknowledgeMessages(AuthenticatedUser user, List<MessageAcknowledgement> messages)
     {
         UUID accountKey = user.getKey();
         for (MessageAcknowledgement message: messages) {
@@ -103,7 +112,7 @@ public class JpaMessageRepository extends BaseRepository
                 persistStaticRecommendationAcknowledgement(messageId, acknowledged);
                 break;
             case ANNOUNCEMENT:
-                persistAnnouncementAcknowledgement(messageId, acknowledged);
+                accountAnnouncementRepository.acknowledge(accountKey, messageId, acknowledged);
                 break;
             default:
                 throw createApplicationException(MessageErrorCode.MESSAGE_TYPE_NOT_SUPPORTED)
@@ -127,8 +136,8 @@ public class JpaMessageRepository extends BaseRepository
     {
         MessageResult result = new MessageResult();
 
-        String localeName = user.getLocale();
-        Locale locale = Locale.forLanguageTag(localeName);
+        String lang = user.getLocale();
+        Locale locale = Locale.forLanguageTag(lang);
 
         UUID userKey = user.getKey();
 
@@ -144,8 +153,8 @@ public class JpaMessageRepository extends BaseRepository
             int minMessageId = options.getMinMessageId();
             PagingOptions pagination = options.getPagination();
 
-            long n = accountAlertRepository.countByAccount(userKey, minMessageId);
-            result.setTotalAlerts((int) n);
+            result.setTotalAlerts(
+                accountAlertRepository.countByAccount(userKey, minMessageId));
 
             List<AccountAlertEntity> alerts =
                 accountAlertRepository.findByAccount(userKey, minMessageId, pagination);
@@ -165,8 +174,8 @@ public class JpaMessageRepository extends BaseRepository
             int minMessageId = options.getMinMessageId();
             PagingOptions pagination = options.getPagination();
 
-            long n = accountRecommendationRepository.countByAccount(userKey, minMessageId);
-            result.setTotalRecommendations((int) n);
+            result.setTotalRecommendations(
+                accountRecommendationRepository.countByAccount(userKey, minMessageId));
 
             List<AccountRecommendationEntity> recommendations =
                 accountRecommendationRepository.findByAccount(userKey, minMessageId, pagination);
@@ -186,54 +195,15 @@ public class JpaMessageRepository extends BaseRepository
             int minMessageId = options.getMinMessageId();
             PagingOptions pagination = options.getPagination();
 
-            // Get total count; Todo move to AccountAnnouncementRepository
-            TypedQuery<Number> countAnnouncementsQuery = entityManager.createQuery(
-                "SELECT count(a.id) from account_announcement a "
-                    + "WHERE a.account.id = :accountId and a.id > :minMessageId ",
-                Number.class);
+            result.setTotalAnnouncements(
+                accountAnnouncementRepository.countByAccount(userKey, minMessageId));
 
-            countAnnouncementsQuery.setParameter("accountId", user.getId());
-            countAnnouncementsQuery.setParameter("minMessageId", minMessageId);
-            int totalAnnouncements = countAnnouncementsQuery.getSingleResult().intValue();
-            result.setTotalAnnouncements(totalAnnouncements);
-
-            // Build query; Todo move to AccountAnnouncementRepository
-            TypedQuery<AccountAnnouncementEntity> announcementsQuery = entityManager.createQuery(
-                "SELECT a FROM account_announcement a " +
-                    "WHERE a.account.id = :accountId and a.id > :minMessageId " +
-                    "ORDER BY a.id " + (pagination.isAscending()? "ASC" : "DESC"),
-                AccountAnnouncementEntity.class);
-
-            announcementsQuery.setFirstResult(pagination.getOffset());
-            announcementsQuery.setMaxResults(pagination.getLimit());
-            announcementsQuery.setParameter("accountId", user.getId());
-            announcementsQuery.setParameter("minMessageId", minMessageId);
-
-            for (AccountAnnouncementEntity announcement: announcementsQuery.getResultList()) {
-                // Find translation by locale
-                AnnouncementTranslationEntity announcementTranslation = null;
-                for (AnnouncementTranslationEntity translation: announcement.getAnnouncement().getTranslations()) {
-                    if (translation.getLocale().equals(localeName)) {
-                        announcementTranslation = translation;
-                        break;
-                    }
-
-                }
-                if (announcementTranslation == null)
-                    continue;
-
-                Announcement message = new Announcement();
-                message.setId(announcement.getId());
-                message.setPriority(announcement.getAnnouncement().getPriority());
-                message.setTitle(announcementTranslation.getTitle());
-                if(announcementTranslation.getContent() != null){
-                    message.setContent(announcementTranslation.getContent());
-                }
-                message.setCreatedOn(announcement.getCreatedOn().getMillis());
-                if (announcement.getAcknowledgedOn() != null) {
-                    message.setAcknowledgedOn(announcement.getAcknowledgedOn().getMillis());
-                }
-                messages.add(message);
+            List<AccountAnnouncementEntity> announcements =
+                accountAnnouncementRepository.findByAccount(userKey, minMessageId, pagination);
+            for (AccountAnnouncementEntity a: announcements) {
+                Announcement message = accountAnnouncementRepository.newMessage(a, locale);
+                if (message != null)
+                    messages.add(message);
             }
         }
 
@@ -269,8 +239,7 @@ public class JpaMessageRepository extends BaseRepository
             tipsQuery.setParameter("minMessageId", minMessageId);
 
             for (AccountStaticRecommendationEntity tip: tipsQuery.getResultList()) {
-                StaticRecommendation message = new StaticRecommendation();
-                message.setId(tip.getId());
+                StaticRecommendation message = new StaticRecommendation(tip.getId());
                 message.setIndex(tip.getRecommendation().getIndex());
                 message.setTitle(tip.getRecommendation().getTitle());
                 message.setDescription(tip.getRecommendation().getDescription());
@@ -280,12 +249,12 @@ public class JpaMessageRepository extends BaseRepository
                 message.setPrompt(tip.getRecommendation().getPrompt());
                 message.setExternalLink(tip.getRecommendation().getExternalLink());
                 message.setSource(tip.getRecommendation().getSource());
-                message.setCreatedOn(tip.getCreatedOn().getMillis());
+                message.setCreatedOn(tip.getCreatedOn());
                 if (tip.getRecommendation().getModifiedOn() != null) {
-                    message.setModifiedOn(tip.getRecommendation().getModifiedOn().getMillis());
+                    message.setModifiedOn(tip.getRecommendation().getModifiedOn());
                 }
                 if (tip.getAcknowledgedOn() != null) {
-                    message.setAcknowledgedOn(tip.getAcknowledgedOn().getMillis());
+                    message.setAcknowledgedOn(tip.getAcknowledgedOn());
                 }
                 messages.add(message);
             }
@@ -304,187 +273,115 @@ public class JpaMessageRepository extends BaseRepository
         tipsQuery.setParameter("locale", locale);
 
         List<Message> messages = new ArrayList<>();
-        for (StaticRecommendationEntity staticRecommendation : tipsQuery.getResultList()) {
-            StaticRecommendation message = new StaticRecommendation();
-            message.setId(staticRecommendation.getId());
-            message.setIndex(staticRecommendation.getIndex());
-            message.setTitle(staticRecommendation.getTitle());
-            message.setDescription(staticRecommendation.getDescription());
+        for (StaticRecommendationEntity tipEntity : tipsQuery.getResultList()) {
+            StaticRecommendation message = new StaticRecommendation(tipEntity.getId());
+            message.setIndex(tipEntity.getIndex());
+            message.setTitle(tipEntity.getTitle());
+            message.setDescription(tipEntity.getDescription());
             //message.setImageEncoded(staticRecommendation.getImage());
-            message.setImageMimeType(staticRecommendation.getImageMimeType());
-            message.setImageLink(staticRecommendation.getImageLink());
-            message.setPrompt(staticRecommendation.getPrompt());
-            message.setExternalLink(staticRecommendation.getExternalLink());
-            message.setSource(staticRecommendation.getSource());
-            if (staticRecommendation.getCreatedOn() != null)
-                message.setCreatedOn(staticRecommendation.getCreatedOn().getMillis());
-            if (staticRecommendation.getModifiedOn() != null)
-                message.setModifiedOn(staticRecommendation.getModifiedOn().getMillis());
-            message.setActive(staticRecommendation.isActive());
+            message.setImageMimeType(tipEntity.getImageMimeType());
+            message.setImageLink(tipEntity.getImageLink());
+            message.setPrompt(tipEntity.getPrompt());
+            message.setExternalLink(tipEntity.getExternalLink());
+            message.setSource(tipEntity.getSource());
+            if (tipEntity.getCreatedOn() != null)
+                message.setCreatedOn(tipEntity.getCreatedOn());
+            if (tipEntity.getModifiedOn() != null)
+                message.setModifiedOn(tipEntity.getModifiedOn());
+            message.setActive(tipEntity.isActive());
             messages.add(message);
         }
         return messages;
     }
 
     @Override
-    public void persistAdvisoryMessageActiveStatus(int id, boolean active)
+    public void persistTipActiveStatus(int id, boolean active)
     {
-        TypedQuery<StaticRecommendationEntity> advisoryMessage = entityManager.createQuery(
-            "select s from static_recommendation s where s.id = :id",
-            StaticRecommendationEntity.class);
-        advisoryMessage.setParameter("id", id);
-        List<StaticRecommendationEntity> advisoryMessages = advisoryMessage.getResultList();
-        if(!advisoryMessages.isEmpty()){
-            advisoryMessages.get(0).setActive(active);
+        StaticRecommendationEntity tipEntity = entityManager.find(StaticRecommendationEntity.class, id);
+        if (tipEntity != null) {
+            tipEntity.setActive(active);
         }
     }
 
     @Override
-    public void persistNewAdvisoryMessage(eu.daiad.web.model.message.StaticRecommendation staticRecommendation)
+    public void createTip(StaticRecommendation tip, String lang)
     {
-        AuthenticatedUser user = this.getCurrentAuthenticatedUser();
+        TypedQuery<StaticRecommendationCategoryEntity> categoryQuery = entityManager.createQuery(
+            "select c from static_recommendation_category c where c.id = :id",
+            StaticRecommendationCategoryEntity.class);
+        categoryQuery.setParameter("id", 7); //General Tips
+        StaticRecommendationCategoryEntity category = categoryQuery.getSingleResult();
 
-        TypedQuery<StaticRecommendationCategoryEntity> staticRecommendationCategoryQuery = entityManager
-                        .createQuery("select c from static_recommendation_category c where c.id = :id",
-                                        StaticRecommendationCategoryEntity.class);
-
-        staticRecommendationCategoryQuery.setParameter("id", 7); //General Tips
-
-        List<StaticRecommendationCategoryEntity> staticRecommendationsCategoryList = staticRecommendationCategoryQuery.getResultList();
-
-        StaticRecommendationCategoryEntity category = null;
-        if(staticRecommendationsCategoryList.size() == 1){
-            category = staticRecommendationsCategoryList.get(0);
-        }
-
+        // Todo: use a @GeneratedValue instead
         Integer maxIndex = entityManager.createQuery("select max(s.index) from static_recommendation s", Integer.class).getSingleResult();
         int nextIndex = maxIndex+1;
 
-        StaticRecommendationEntity newStaticRecommendation = new StaticRecommendationEntity();
-        newStaticRecommendation.setIndex(nextIndex);
-        newStaticRecommendation.setActive(false);
-        newStaticRecommendation.setLocale(user.getLocale());
-        newStaticRecommendation.setCategory(category);
-        newStaticRecommendation.setTitle(staticRecommendation.getTitle());
-        newStaticRecommendation.setDescription(staticRecommendation.getDescription());
-        newStaticRecommendation.setCreatedOn(DateTime.now());
+        StaticRecommendationEntity tipEntity = new StaticRecommendationEntity();
+        tipEntity.setIndex(nextIndex);
+        tipEntity.setActive(false);
+        tipEntity.setLocale(lang);
+        tipEntity.setCategory(category);
+        tipEntity.setTitle(tip.getTitle());
+        tipEntity.setDescription(tip.getDescription());
+        tipEntity.setCreatedOn(DateTime.now());
 
-        this.entityManager.persist(newStaticRecommendation);
+        this.entityManager.persist(tipEntity);
     }
 
     @Override
-    public void updateAdvisoryMessage(eu.daiad.web.model.message.StaticRecommendation staticRecommendation){
-
-        TypedQuery<eu.daiad.web.domain.application.StaticRecommendationEntity> staticRecommendationQuery = entityManager
-                        .createQuery("select s from static_recommendation s where s.id = :id",
-                                        eu.daiad.web.domain.application.StaticRecommendationEntity.class);
-
-        staticRecommendationQuery.setParameter("id", staticRecommendation.getId());
-
-        List<StaticRecommendationEntity> staticRecommendations = staticRecommendationQuery.getResultList();
-
-        if (staticRecommendations.size() == 1) {
-            staticRecommendations.get(0).setTitle(staticRecommendation.getTitle());
-            staticRecommendations.get(0).setDescription(staticRecommendation.getDescription());
-            staticRecommendations.get(0).setModifiedOn(DateTime.now());
+    public void updateTip(StaticRecommendation tip)
+    {
+        StaticRecommendationEntity tipEntity = entityManager.find(StaticRecommendationEntity.class, tip.getId());
+        if (tipEntity != null) {
+            tipEntity.setTitle(tip.getTitle());
+            tipEntity.setDescription(tip.getDescription());
+            tipEntity.setModifiedOn(DateTime.now());
         }
     }
 
     @Override
-    public void deleteAdvisoryMessage(eu.daiad.web.model.message.StaticRecommendation staticRecommendation)
+    public void deleteTip(StaticRecommendation tip)
     {
-        TypedQuery<eu.daiad.web.domain.application.StaticRecommendationEntity> staticRecommendationQuery = entityManager
-                        .createQuery("select s from static_recommendation s where s.id = :id",
-                                        eu.daiad.web.domain.application.StaticRecommendationEntity.class).setFirstResult(0).setMaxResults(1);
-
-        staticRecommendationQuery.setParameter("id", staticRecommendation.getId());
-
-        List<StaticRecommendationEntity> staticRecommendations = staticRecommendationQuery.getResultList();
-
-        if (staticRecommendations.size() == 1) {
-            StaticRecommendationEntity toBeDeleted = staticRecommendations.get(0);
-            this.entityManager.remove(toBeDeleted);
-        }
+        StaticRecommendationEntity tipEntity = entityManager.find(StaticRecommendationEntity.class, tip.getId());
+        if (tipEntity != null)
+            entityManager.remove(tipEntity);
     }
 
     @Override
-    public void deleteAnnouncement(eu.daiad.web.model.message.Announcement announcement)
+    public void deleteAnnouncement(int announcementId)
     {
-        TypedQuery<eu.daiad.web.domain.application.AnnouncementEntity> announcementQuery = entityManager
-                        .createQuery("select a from announcement a where a.id = :id",
-                                        eu.daiad.web.domain.application.AnnouncementEntity.class).setFirstResult(0).setMaxResults(1);
-        announcementQuery.setParameter("id", announcement.getId());
-
-        List<AnnouncementEntity> announcements = announcementQuery.getResultList();
-
-        if (announcements.size() == 1) {
-            AnnouncementEntity toBeDeleted = announcements.get(0);
-            this.entityManager.remove(toBeDeleted);
-        }
+        announcementRepository.delete(announcementId);
     }
 
     @Override
-    public List<Message> getAnnouncements(String locale)
+    public List<Message> getAnnouncements(String lang)
     {
+        Locale locale = Locale.forLanguageTag(lang);
         List<Message> messages = new ArrayList<>();
-
-        TypedQuery<AnnouncementTranslationEntity> accountAnnouncementsQuery = entityManager.createQuery(
-            "select a from announcement_translation a where a.locale = :locale order by a.id desc",
-            AnnouncementTranslationEntity.class);
-        accountAnnouncementsQuery.setParameter("locale", locale);
-
-        for (AnnouncementTranslationEntity announcementTranslation : accountAnnouncementsQuery.getResultList()) {
-            AnnouncementTranslation message = new AnnouncementTranslation();
-            message.setId(announcementTranslation.getId());
-            message.setTitle(announcementTranslation.getTitle());
-            message.setContent(announcementTranslation.getContent());
-            if(announcementTranslation.getDispatchedOn() != null )
-               message.setDispatchedOn(announcementTranslation.getDispatchedOn().getMillis());
-            messages.add(message);
+        for (AnnouncementEntity a: announcementRepository.list()) {
+            Announcement message = announcementRepository.newMessage(a, locale);
+            if (message != null)
+                messages.add(message);
         }
         return messages;
     }
 
     @Override
-    public Announcement getAnnouncement(int id, String locale)
+    public Announcement getAnnouncement(int id, String lang)
     {
-        Announcement message = new Announcement();
-
-        TypedQuery<AnnouncementTranslationEntity> accountAnnouncementQuery = entityManager.createQuery(
-            "select a from announcement_translation a where a.locale = :locale and a.id = :id",
-            AnnouncementTranslationEntity.class);
-        accountAnnouncementQuery.setParameter("locale", locale);
-        accountAnnouncementQuery.setParameter("id", id);
-
-        List<AnnouncementTranslationEntity> announcements = accountAnnouncementQuery.getResultList();
-        if(accountAnnouncementQuery.getResultList().size() == 1){
-            AnnouncementTranslationEntity announcementTranslation = announcements.get(0);
-            message.setId(announcementTranslation.getId());
-            message.setTitle(announcementTranslation.getTitle());
-            message.setContent(announcementTranslation.getContent());
-            if(announcementTranslation.getDispatchedOn() != null ){
-               message.setDispatchedOn(announcementTranslation.getDispatchedOn().getMillis());
-            }
-        }
-        return message;
+        return announcementRepository.newMessage(id, Locale.forLanguageTag(lang));
     }
 
     @Override
-    public List<ReceiverAccount> getAnnouncementReceivers(int announcementId)
+    public List<ReceiverAccount> getAnnouncementReceivers(int id)
     {
         List<ReceiverAccount> receivers = new ArrayList<>();
-
-        TypedQuery<AccountAnnouncementEntity> accountAnnouncementQuery = entityManager.createQuery(
-            "SELECT a FROM account_announcement a WHERE a.announcement.id = :id",
-            AccountAnnouncementEntity.class);
-        accountAnnouncementQuery.setParameter("id", announcementId);
-
-        for (AccountAnnouncementEntity accountAnnouncement : accountAnnouncementQuery.getResultList()) {
-            ReceiverAccount receiverAccount = new ReceiverAccount();
-            receiverAccount.setAccountId(accountAnnouncement.getAccount().getId());
-            receiverAccount.setUsername(accountAnnouncement.getAccount().getUsername());
-            receiverAccount.setAcknowledgedOn(accountAnnouncement.getAcknowledgedOn());
-            receivers.add(receiverAccount);
+        for (AccountAnnouncementEntity aa: accountAnnouncementRepository.findByAnnouncement(id)) {
+            AccountEntity accountEntity = aa.getAccount();
+            ReceiverAccount receiver =
+                new ReceiverAccount(accountEntity.getId(), accountEntity.getUsername());
+            receiver.setAcknowledgedOn(aa.getAcknowledgedOn());
+            receivers.add(receiver);
         }
         return receivers;
     }
@@ -526,9 +423,8 @@ public class JpaMessageRepository extends BaseRepository
         List<ReceiverAccount> receivers = new ArrayList<>();
         for (AccountAlertEntity alert: alerts) {
             AccountEntity accountEntity = alert.getAccount();
-            ReceiverAccount account = new ReceiverAccount();
-            account.setAccountId(accountEntity.getId());
-            account.setUsername(accountEntity.getUsername());
+            ReceiverAccount account =
+                new ReceiverAccount(accountEntity.getId(), accountEntity.getUsername());
             account.setAcknowledgedOn(alert.getAcknowledgedOn());
             receivers.add(account);
         }
@@ -546,60 +442,40 @@ public class JpaMessageRepository extends BaseRepository
         List<ReceiverAccount> receivers = new ArrayList<>();
         for (AccountRecommendationEntity recommendation: recommendations) {
             AccountEntity accountEntity = recommendation.getAccount();
-            ReceiverAccount account = new ReceiverAccount();
-            account.setAccountId(accountEntity.getId());
-            account.setUsername(accountEntity.getUsername());
+            ReceiverAccount account =
+                new ReceiverAccount(accountEntity.getId(), accountEntity.getUsername());
             account.setAcknowledgedOn(recommendation.getAcknowledgedOn());
             receivers.add(account);
         }
         return receivers;
     }
 
+    /**
+     * Create a new announcement and link it to receiver accounts.
+     *
+     * Note: This method creates an announcement with a single translation directed to a single channel.
+     */
     @Override
-    public void broadcastAnnouncement(AnnouncementRequest announcementRequest, String locale, String channel)
+    public void broadcastAnnouncement(AnnouncementRequest request, String lang, String channelName)
     {
-        TypedQuery<Integer> channelQuery = entityManager.createQuery(
-            "SELECT c.id FROM channel c WHERE c.name = :name", Integer.class);
-        channelQuery.setParameter("name", channel);
-        int channelId = channelQuery.getSingleResult();
+        Locale locale = Locale.forLanguageTag(lang);
+        Announcement announcement = request.getAnnouncement();
 
-        AnnouncementTranslationEntity announcementTranslation = new AnnouncementTranslationEntity();
-        announcementTranslation.setTitle(announcementRequest.getAnnouncement().getTitle());
-        announcementTranslation.setContent(announcementRequest.getAnnouncement().getContent());
-        announcementTranslation.setLocale(locale);
-        announcementTranslation.setDispatchedOn(DateTime.now());
+        // 1. Create announcement
 
-        this.entityManager.persist(announcementTranslation);
+        AnnouncementEntity announcementEntity = announcementRepository.createWith(
+            Collections.singletonList(channelName),
+            Collections.singletonMap(lang, (Message) announcement));
 
-        AnnouncementEntity domainAnnouncement = new AnnouncementEntity();
-        domainAnnouncement.setId(announcementTranslation.getId());
-        domainAnnouncement.setPriority(1);
+        // 2. Link announcement with receiver accounts
 
-        announcementTranslation.setAnnouncement(domainAnnouncement);
-
-        AnnouncementChannel announcementChannel = new AnnouncementChannel();
-        announcementChannel.setAnnouncementId(domainAnnouncement.getId());
-        announcementChannel.setChannelId(channelId);
-
-        this.entityManager.persist(domainAnnouncement);
-        this.entityManager.persist(announcementChannel);
-
-        persistAccountAnnouncement(announcementRequest.getReceiverAccountList(), domainAnnouncement);
-    }
-
-    // Todo: Move to AccountAnnouncementRepository
-    private void persistAccountAnnouncement(List<ReceiverAccount> receiverAccountList, AnnouncementEntity announcementEntity)
-    {
-        DateTime createdOn = DateTime.now();
-        for (ReceiverAccount receiver : receiverAccountList) {
-            AccountEntity account = entityManager.find(AccountEntity.class, receiver.getAccountId());
-            if (account != null) {
-                AccountAnnouncementEntity e = new AccountAnnouncementEntity();
-                e.setAccount(account);
-                e.setAnnouncement(announcementEntity);
-                e.setCreatedOn(createdOn);
-                entityManager.persist(e);
-            }
+        for (ReceiverAccount receiver: request.getReceivers()) {
+            AccountEntity accountEntity =
+                userRepository.findOne(receiver.getAccountId());
+            if (accountEntity == null)
+                accountEntity = userRepository.getAccountByUsername(receiver.getUsername());
+            if (accountEntity != null)
+                accountAnnouncementRepository.createWith(accountEntity, announcementEntity);
         }
     }
 
@@ -620,26 +496,6 @@ public class JpaMessageRepository extends BaseRepository
         if (staticRecommendations.size() == 1) {
             staticRecommendations.get(0).setAcknowledgedOn(acknowledgedOn);
             staticRecommendations.get(0).setReceiveAcknowledgedOn(DateTime.now());
-        }
-    }
-
-    // Todo: Move to AccountAnnouncementRepository
-    private void persistAnnouncementAcknowledgement(int id, DateTime acknowledgedOn)
-    {
-        AuthenticatedUser user = this.getCurrentAuthenticatedUser();
-
-        TypedQuery<AccountAnnouncementEntity> accountAnnouncementQuery = entityManager.createQuery(
-            "select a from account_announcement a " +
-                "where a.account.id = :accountId and a.id = :announcementId and a.acknowledgedOn is null",
-            AccountAnnouncementEntity.class);
-
-        accountAnnouncementQuery.setParameter("accountId", user.getId());
-        accountAnnouncementQuery.setParameter("announcementId", id);
-
-        List<AccountAnnouncementEntity> announcements = accountAnnouncementQuery.getResultList();
-
-        if (announcements.size() == 1) {
-            announcements.get(0).setAcknowledgedOn(acknowledgedOn);
         }
     }
 
