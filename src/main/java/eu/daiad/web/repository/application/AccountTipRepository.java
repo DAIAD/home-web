@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AccountTipEntity;
 import eu.daiad.web.domain.application.TipEntity;
+import eu.daiad.web.model.PagingOptions;
 import eu.daiad.web.model.message.Tip;
 import eu.daiad.web.repository.BaseRepository;
 
@@ -24,6 +25,8 @@ import eu.daiad.web.repository.BaseRepository;
 public class AccountTipRepository extends BaseRepository
     implements IAccountTipRepository
 {
+    public static final int DEFAULT_LIMIT = 20;
+
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
 
@@ -84,6 +87,45 @@ public class AccountTipRepository extends BaseRepository
             query.setParameter("start", interval.getStart());
             query.setParameter("end", interval.getEnd());
         }
+        return query.getSingleResult().intValue();
+    }
+
+    @Override
+    public List<AccountTipEntity> findByAccount(UUID accountKey, int minId)
+    {
+        return findByAccount(accountKey, minId, new PagingOptions(DEFAULT_LIMIT));
+    }
+
+    @Override
+    public List<AccountTipEntity> findByAccount(UUID accountKey, int minId, PagingOptions pagination)
+    {
+        TypedQuery<AccountTipEntity> query = entityManager.createQuery(
+            "SELECT r FROM account_tip r " +
+                "WHERE r.account.key = :accountKey AND r.id > :minId " +
+                "ORDER BY r.id " + (pagination.isAscending()? "ASC" : "DESC"),
+                AccountTipEntity.class);
+
+        query.setParameter("accountKey", accountKey);
+        query.setParameter("minId", minId);
+
+        int offset = pagination.getOffset();
+        if (offset > 0)
+            query.setFirstResult(offset);
+
+        query.setMaxResults(pagination.getLimit());
+
+        return query.getResultList();
+    }
+
+    @Override
+    public int countByAccount(UUID accountKey, int minId)
+    {
+        TypedQuery<Long> query = entityManager.createQuery(
+            "SELECT count(r.id) FROM account_tip r " +
+                "WHERE r.account.key = :accountKey AND r.id > :minId",
+            Long.class);
+        query.setParameter("accountKey", accountKey);
+        query.setParameter("minId", minId);
         return query.getSingleResult().intValue();
     }
 
@@ -241,6 +283,38 @@ public class AccountTipRepository extends BaseRepository
             return null;
         else
             return createWith(account, tipId);
+    }
+
+    @Override
+    public boolean acknowledge(int id, DateTime acknowledged)
+    {
+        AccountTipEntity r = findOne(id);
+        if (r != null)
+            return acknowledge(r, acknowledged);
+        return false;
+    }
+
+    @Override
+    public boolean acknowledge(UUID accountKey, int id, DateTime acknowledged)
+    {
+        AccountTipEntity r = findOne(id);
+        // Perform action only if message exists and is owned by account
+        if (r != null && r.getAccount().getKey().equals(accountKey))
+            return acknowledge(r, acknowledged);
+        return false;
+    }
+
+    @Override
+    public boolean acknowledge(AccountTipEntity r, DateTime acknowledged)
+    {
+        if (!entityManager.contains(r))
+            r = findOne(r.getId());
+
+        if (r != null && r.getAcknowledgedOn() == null) {
+            r.setAcknowledgedOn(acknowledged);
+            return true;
+        }
+        return false;
     }
 
     @Override

@@ -1,4 +1,4 @@
-package eu.daiad.web.repository.application;
+package eu.daiad.web.service.message;
 
 import java.text.NumberFormat;
 import java.util.AbstractMap.SimpleEntry;
@@ -9,19 +9,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.TypedQuery;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 import eu.daiad.web.domain.application.AccountAlertEntity;
 import eu.daiad.web.domain.application.AccountAnnouncementEntity;
@@ -29,11 +23,8 @@ import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AccountRecommendationEntity;
 import eu.daiad.web.domain.application.AccountTipEntity;
 import eu.daiad.web.domain.application.AnnouncementEntity;
-import eu.daiad.web.domain.application.TipCategoryEntity;
 import eu.daiad.web.domain.application.TipEntity;
 import eu.daiad.web.model.PagingOptions;
-import eu.daiad.web.model.error.MessageErrorCode;
-import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.AlertStatistics;
 import eu.daiad.web.model.message.Announcement;
@@ -53,17 +44,19 @@ import eu.daiad.web.model.message.Tip;
 import eu.daiad.web.model.query.PopulationFilter;
 import eu.daiad.web.model.query.TimeFilter;
 import eu.daiad.web.model.security.AuthenticatedUser;
-import eu.daiad.web.repository.BaseRepository;
+import eu.daiad.web.repository.application.IAccountAlertRepository;
+import eu.daiad.web.repository.application.IAccountAnnouncementRepository;
+import eu.daiad.web.repository.application.IAccountRecommendationRepository;
+import eu.daiad.web.repository.application.IAccountTipRepository;
+import eu.daiad.web.repository.application.IAnnouncementRepository;
+import eu.daiad.web.repository.application.ITipRepository;
+import eu.daiad.web.repository.application.IUserRepository;
 
-@Repository
-@Transactional("applicationTransactionManager")
-public class JpaMessageRepository extends BaseRepository
-    implements IMessageRepository
+@Service
+public class DefaultMessageService
+    implements IMessageService
 {
-    private static final Log logger = LogFactory.getLog(JpaMessageRepository.class);
-
-    @PersistenceContext(unitName = "default")
-    EntityManager entityManager;
+    private static final Log logger = LogFactory.getLog(DefaultMessageService.class);
 
     @Autowired
     IUserRepository userRepository;
@@ -86,43 +79,30 @@ public class JpaMessageRepository extends BaseRepository
     @Autowired
     IAccountTipRepository accountTipRepository;
 
-    @Deprecated
-    // Fixme Move this to controller
-    private AuthenticatedUser getCurrentAuthenticatedUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth.getPrincipal() instanceof AuthenticatedUser) {
-            return (AuthenticatedUser) auth.getPrincipal();
-        } else {
-            throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
-        }
-    }
-
     @Override
     public void acknowledgeMessages(AuthenticatedUser user, List<MessageAcknowledgement> messages)
     {
         UUID accountKey = user.getKey();
         for (MessageAcknowledgement message: messages) {
-            int messageId = message.getId();
             DateTime acknowledged = new DateTime(message.getTimestamp());
             switch (message.getType()) {
             case ALERT:
-                accountAlertRepository.acknowledge(accountKey, messageId, acknowledged);
+                accountAlertRepository.acknowledge(accountKey, message.getId(), acknowledged);
                 break;
             case RECOMMENDATION:
-                accountRecommendationRepository.acknowledge(accountKey, messageId, acknowledged);
+                accountRecommendationRepository.acknowledge(accountKey, message.getId(), acknowledged);
                 break;
             case TIP:
-                persistStaticRecommendationAcknowledgement(messageId, acknowledged);
+                accountTipRepository.acknowledge(accountKey, message.getId(), acknowledged);
                 break;
             case ANNOUNCEMENT:
-                accountAnnouncementRepository.acknowledge(accountKey, messageId, acknowledged);
+                accountAnnouncementRepository.acknowledge(accountKey, message.getId(), acknowledged);
                 break;
             default:
-                throw createApplicationException(MessageErrorCode.MESSAGE_TYPE_NOT_SUPPORTED)
-                    .set("type.", message.getType());
+                // Ignore unknown message types
+                break;
             }
         }
-
     }
 
     private MessageRequest.Options getMessageOptions(MessageRequest request, EnumMessageType type)
@@ -141,7 +121,6 @@ public class JpaMessageRepository extends BaseRepository
 
         String lang = user.getLocale();
         Locale locale = Locale.forLanguageTag(lang);
-
         UUID userKey = user.getKey();
 
         List<Message> messages = new ArrayList<>();
@@ -219,47 +198,13 @@ public class JpaMessageRepository extends BaseRepository
             int minMessageId = options.getMinMessageId();
             PagingOptions pagination = options.getPagination();
 
-            // Get total count; Todo Move to AccountStaticRecommendationQuery
-            TypedQuery<Number> countTipsQuery = entityManager.createQuery(
-                "SELECT count(a.id) from account_static_recommendation a " +
-                    "WHERE a.account.id = :accountId and a.id > :minMessageId ",
-                 Number.class);
-            countTipsQuery.setParameter("accountId", user.getId());
-            countTipsQuery.setParameter("minMessageId", minMessageId);
-            int totalTips = countTipsQuery.getSingleResult().intValue();
-            result.setTotalTips(totalTips);
+            result.setTotalTips(
+                accountTipRepository.countByAccount(userKey, minMessageId));
 
-            // Build query; Todo Move to AccountStaticRecommendationQuery
-            TypedQuery<AccountTipEntity> tipsQuery = entityManager.createQuery(
-                "SELECT r FROM account_static_recommendation r " +
-                    "WHERE r.account.id = :accountId and r.id > :minMessageId " +
-                    "ORDER BY r.id " + (pagination.isAscending()? "ASC" : "DESC"),
-                AccountTipEntity.class);
-
-            tipsQuery.setFirstResult(pagination.getOffset());
-            tipsQuery.setMaxResults(pagination.getLimit());
-            tipsQuery.setParameter("accountId", user.getId());
-            tipsQuery.setParameter("minMessageId", minMessageId);
-
-            for (AccountTipEntity tip: tipsQuery.getResultList()) {
-                Tip message = new Tip(tip.getId());
-                message.setIndex(tip.getTip().getIndex());
-                message.setTitle(tip.getTip().getTitle());
-                message.setDescription(tip.getTip().getDescription());
-                //message.setImageEncoded(tip.getRecommendation().getImage());
-                message.setImageMimeType(tip.getTip().getImageMimeType());
-                message.setImageLink(tip.getTip().getImageLink());
-                message.setPrompt(tip.getTip().getPrompt());
-                message.setExternalLink(tip.getTip().getExternalLink());
-                message.setSource(tip.getTip().getSource());
-                message.setCreatedOn(tip.getCreatedOn());
-                if (tip.getTip().getModifiedOn() != null) {
-                    message.setModifiedOn(tip.getTip().getModifiedOn());
-                }
-                if (tip.getAcknowledgedOn() != null) {
-                    message.setAcknowledgedOn(tip.getAcknowledgedOn());
-                }
-                messages.add(message);
+            for (AccountTipEntity r: accountTipRepository.findByAccount(userKey, minMessageId, pagination)) {
+                Tip message = accountTipRepository.newMessage(r);
+                if (message != null)
+                    messages.add(message);
             }
         }
 
@@ -281,54 +226,21 @@ public class JpaMessageRepository extends BaseRepository
     }
 
     @Override
-    public void persistTipActiveStatus(int id, boolean active)
+    public void setTipActiveStatus(int id, boolean active)
     {
         tipRepository.setActive(id, active);
     }
 
     @Override
-    public void createTip(Tip tip, String lang)
+    public void saveTip(Tip tip)
     {
-        TypedQuery<TipCategoryEntity> categoryQuery = entityManager.createQuery(
-            "select c from static_recommendation_category c where c.id = :id",
-            TipCategoryEntity.class);
-        categoryQuery.setParameter("id", 7); //General Tips
-        TipCategoryEntity category = categoryQuery.getSingleResult();
-
-        // Todo: use a @GeneratedValue instead
-        Integer maxIndex = entityManager.createQuery(
-            "select max(s.index) from static_recommendation s", Integer.class).getSingleResult();
-        int nextIndex = maxIndex+1;
-
-        TipEntity tipEntity = new TipEntity();
-        tipEntity.setIndex(nextIndex);
-        tipEntity.setActive(false);
-        tipEntity.setLocale(lang);
-        tipEntity.setCategory(category);
-        tipEntity.setTitle(tip.getTitle());
-        tipEntity.setDescription(tip.getDescription());
-        tipEntity.setCreatedOn(DateTime.now());
-
-        this.entityManager.persist(tipEntity);
+        tipRepository.saveFrom(tip);
     }
 
     @Override
-    public void updateTip(Tip tip)
+    public void deleteTip(int tipId)
     {
-        TipEntity tipEntity = entityManager.find(TipEntity.class, tip.getId());
-        if (tipEntity != null) {
-            tipEntity.setTitle(tip.getTitle());
-            tipEntity.setDescription(tip.getDescription());
-            tipEntity.setModifiedOn(DateTime.now());
-        }
-    }
-
-    @Override
-    public void deleteTip(Tip tip)
-    {
-        TipEntity tipEntity = entityManager.find(TipEntity.class, tip.getId());
-        if (tipEntity != null)
-            entityManager.remove(tipEntity);
+        tipRepository.delete(tipId);
     }
 
     @Override
@@ -440,10 +352,12 @@ public class JpaMessageRepository extends BaseRepository
      * Note: This method creates an announcement with a single translation directed to a single channel.
      */
     @Override
-    public void broadcastAnnouncement(AnnouncementRequest request, String lang, String channelName)
+    public void broadcastAnnouncement(AnnouncementRequest request, String channelName)
     {
-        Locale locale = Locale.forLanguageTag(lang);
         Announcement announcement = request.getAnnouncement();
+
+        String lang = announcement.getLocale();
+        Assert.state(lang != null && !lang.isEmpty());
 
         // 1. Create announcement
 
@@ -460,26 +374,6 @@ public class JpaMessageRepository extends BaseRepository
                 accountEntity = userRepository.getAccountByUsername(receiver.getUsername());
             if (accountEntity != null)
                 accountAnnouncementRepository.createWith(accountEntity, announcementEntity);
-        }
-    }
-
-    // Todo: Move to AccountStaticRecommendationRepository
-    private void persistStaticRecommendationAcknowledgement(int id, DateTime acknowledgedOn)
-    {
-        AuthenticatedUser user = this.getCurrentAuthenticatedUser();
-
-        TypedQuery<AccountTipEntity> accountStaticRecommendationQuery = entityManager.createQuery(
-            "select a from account_static_recommendation a "
-                + "where a.account.id = :accountId and a.id = :staticRecommendationId and a.acknowledgedOn is null",
-            AccountTipEntity.class);
-
-        accountStaticRecommendationQuery.setParameter("accountId", user.getId());
-        accountStaticRecommendationQuery.setParameter("staticRecommendationId", id);
-
-        List<AccountTipEntity> staticRecommendations = accountStaticRecommendationQuery.getResultList();
-        if (staticRecommendations.size() == 1) {
-            staticRecommendations.get(0).setAcknowledgedOn(acknowledgedOn);
-            staticRecommendations.get(0).setReceiveAcknowledgedOn(DateTime.now());
         }
     }
 

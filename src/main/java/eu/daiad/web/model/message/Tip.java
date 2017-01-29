@@ -2,15 +2,18 @@ package eu.daiad.web.model.message;
 
 import org.joda.time.DateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class Tip extends Message
 {
-	private int index;
-
-	private String locale;
+	private int index = -1;
 
     private String description;
 
-	private byte imageEncoded[];
+    private String categoryName;
+
+    @JsonIgnore
+    private byte imageEncoded[];
 
 	private String imageMimeType;
 
@@ -25,6 +28,11 @@ public class Tip extends Message
 	private Long modifiedOn;
 
 	private boolean active;
+
+	public Tip()
+    {
+        super();
+    }
 
 	public Tip(int id)
 	{
@@ -44,16 +52,6 @@ public class Tip extends Message
 		this.index = index;
 	}
 
-	public String getLocale()
-	{
-	    return locale;
-	}
-
-	public void setLocale(String locale)
-	{
-	    this.locale = locale;
-	}
-
 	public String getDescription() {
 		return description;
 	}
@@ -66,6 +64,7 @@ public class Tip extends Message
 		return imageEncoded;
 	}
 
+    @JsonIgnore
 	public void setImageEncoded(byte[] imageEncoded) {
 		this.imageEncoded = imageEncoded;
 	}
@@ -98,6 +97,12 @@ public class Tip extends Message
 		return modifiedOn;
 	}
 
+	public void setModifiedOn(long modified)
+    {
+        this.modifiedOn = modified;
+    }
+
+	@JsonIgnore
 	public void setModifiedOn(DateTime modified)
 	{
         this.modifiedOn = modified.getMillis();
@@ -125,6 +130,16 @@ public class Tip extends Message
 
 	public void setImageMimeType(String imageMimeType) {
 		this.imageMimeType = imageMimeType;
+	}
+
+	public String getCategoryName()
+	{
+	    return categoryName;
+	}
+
+	public void setCategoryName(String categoryName)
+	{
+	    this.categoryName = categoryName;
 	}
 
     @Override

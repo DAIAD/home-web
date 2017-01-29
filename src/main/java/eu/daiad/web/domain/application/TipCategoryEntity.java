@@ -12,6 +12,9 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
+
+import org.hibernate.annotations.NaturalId;
 
 @Entity(name = "tip_category")
 @Table(schema = "public", name = "tip_category")
@@ -22,10 +25,16 @@ public class TipCategoryEntity
 	private int id;
 
 	@Basic()
-	private String title;
+	@Column(nullable = false)
+	@NotNull
+	@NaturalId
+	private String name;
 
-	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY, orphanRemoval = true)
-	@JoinColumn(name = "category")
+	@Basic()
+    private String title;
+
+    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY, orphanRemoval = true)
+	@JoinColumn(name = "category_id")
 	private Set<TipEntity> tips = new HashSet<>();
 
 	public int getId() {
@@ -48,4 +57,13 @@ public class TipCategoryEntity
 		this.title = title;
 	}
 
+	public String getName()
+    {
+        return name;
+    }
+
+    public void setName(String name)
+    {
+        this.name = name;
+    }
 }

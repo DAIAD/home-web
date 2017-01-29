@@ -13,7 +13,9 @@ import javax.persistence.TypedQuery;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
+import eu.daiad.web.domain.application.TipCategoryEntity;
 import eu.daiad.web.domain.application.TipEntity;
 import eu.daiad.web.model.message.Tip;
 
@@ -22,6 +24,8 @@ import eu.daiad.web.model.message.Tip;
 public class TipRepository
     implements ITipRepository
 {
+    public static final String DEFAULT_CATEGORY_NAME = "general-tips";
+
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
 
@@ -123,9 +127,26 @@ public class TipRepository
 
     private int maxIndex()
     {
-        TypedQuery<Long> q =
-            entityManager.createQuery("SELECT MAX(r.index) FROM tip r", Long.class);
+        TypedQuery<Integer> q =
+            entityManager.createQuery("SELECT MAX(r.index) FROM tip r", Integer.class);
         return q.getSingleResult().intValue();
+    }
+
+    private TipCategoryEntity getCategoryByName(String name)
+    {
+        TypedQuery<TipCategoryEntity> q = entityManager.createQuery(
+            "SELECT c FROM tip_category c WHERE c.name = :name",
+            TipCategoryEntity.class);
+        q.setParameter("name", name);
+
+        TipCategoryEntity category = null;
+        try {
+            category = q.getSingleResult();
+        } catch (NoResultException x) {
+            category = null;
+        }
+
+        return category;
     }
 
     @Override
@@ -148,12 +169,17 @@ public class TipRepository
             r.setIndex(index);
         } else {
             // Obtain the next available index
+            // Note: This is not a completely safe way to obtain a unique index!
             r.setIndex(maxIndex() + 1);
         }
         r.setLocale(tip.getLocale());
 
+        TipCategoryEntity category = getCategoryByName(
+            (tip.getCategoryName() != null)? tip.getCategoryName() : DEFAULT_CATEGORY_NAME);
+        r.setCategory(category);
+
         r.setTitle(tip.getTitle());
-        r.setDescription(r.getDescription());
+        r.setDescription(tip.getDescription());
         //r.setImageEncoded(tip.getImage());
         r.setImageMimeType(tip.getImageMimeType());
         r.setImageLink(tip.getImageLink());
@@ -172,36 +198,55 @@ public class TipRepository
     {
         DateTime now = DateTime.now();
 
-        TipEntity r1 = new TipEntity();
-        r1.setId(r.getId());
+        int rid = r.getId();
+        Assert.state(rid > 0);
+
+        if (!entityManager.contains(r))
+            r = findOne(rid);
 
         // Set update-able fields and merge
         // Note: The pair (index, locale) is not meant to be updated
 
-        r1.setTitle(tip.getTitle());
-        r1.setDescription(tip.getDescription());
-        //r1.setImageEncoded(tip.getImage());
-        r1.setImageMimeType(tip.getImageMimeType());
-        r1.setImageLink(tip.getImageLink());
-        r1.setPrompt(tip.getPrompt());
-        r1.setExternalLink(tip.getExternalLink());
-        r1.setSource(tip.getSource());
-        r1.setActive(tip.isActive());
-        r1.setModifiedOn(now);
+        if (tip.getCategoryName() != null) {
+            r.setCategory(getCategoryByName(tip.getCategoryName()));
+        }
+        r.setTitle(tip.getTitle());
+        r.setDescription(tip.getDescription());
+        //r.setImageEncoded(tip.getImage());
+        r.setImageMimeType(tip.getImageMimeType());
+        r.setImageLink(tip.getImageLink());
+        r.setPrompt(tip.getPrompt());
+        r.setExternalLink(tip.getExternalLink());
+        r.setSource(tip.getSource());
+        r.setActive(tip.isActive());
+        r.setModifiedOn(now);
 
-        return entityManager.merge(r1);
+        return r;
     }
 
     @Override
     public TipEntity saveFrom(Tip tip)
     {
+        // Decide if this is an UPDATE/INSERT
+
         int id = tip.getId();
         if (id > 0) {
-            // Todo
+            // Find tip entity by id and update
+            TipEntity r = findOne(id);
+            return updateFrom(r, tip);
         }
 
+        int index = tip.getIndex();
+        String lang = tip.getLocale();
+        if (index > 0 && lang != null && !lang.isEmpty()) {
+            // Find tip by (index, locale) and update
+            TipEntity r = findOne(index, Locale.forLanguageTag(lang));
+            return (r != null)? updateFrom(r, tip): null;
+        }
 
-        return null;
+        // This is not an update, so create a new entity
+
+        return createFrom(tip);
     }
 
     @Override
@@ -223,12 +268,15 @@ public class TipRepository
     {
         TipEntity r = findOne(id);
         if (r != null)
-            setActive(r, active);
+            r.setActive(active);
     }
 
     @Override
     public void setActive(TipEntity r, boolean active)
     {
-        r.setActive(active);
+        if (!entityManager.contains(r))
+            r = findOne(r.getId());
+        if (r != null)
+            r.setActive(active);
     }
 }
