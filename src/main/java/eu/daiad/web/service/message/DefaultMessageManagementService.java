@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import eu.daiad.web.domain.application.AccountEntity;
-import eu.daiad.web.domain.application.StaticRecommendationEntity;
+import eu.daiad.web.domain.application.TipEntity;
 import eu.daiad.web.model.ConsumptionStats;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.Alert;
@@ -26,8 +26,8 @@ import eu.daiad.web.model.message.MessageResolutionPerAccountStatus;
 import eu.daiad.web.model.message.Recommendation;
 import eu.daiad.web.repository.application.IAccountAlertRepository;
 import eu.daiad.web.repository.application.IAccountRecommendationRepository;
-import eu.daiad.web.repository.application.IAccountStaticRecommendationRepository;
-import eu.daiad.web.repository.application.IStaticRecommendationRepository;
+import eu.daiad.web.repository.application.IAccountTipRepository;
+import eu.daiad.web.repository.application.ITipRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IPriceDataService;
 
@@ -38,7 +38,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     IUserRepository userRepository;
 
     @Autowired
-    IStaticRecommendationRepository tipRepository;
+    ITipRepository tipRepository;
 
     @Autowired
     IAccountAlertRepository accountAlertRepository;
@@ -47,7 +47,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     IAccountRecommendationRepository accountRecommendationRepository;
 
     @Autowired
-    IAccountStaticRecommendationRepository accountStaticRecommendationRepository;
+    IAccountTipRepository accountTipRepository;
 
     @Autowired
     IPriceDataService priceData;
@@ -159,14 +159,14 @@ public class DefaultMessageManagementService implements IMessageManagementServic
         Locale locale = Locale.forLanguageTag(account.getLocale());
         DateTime now = DateTime.now();
         if (status.isInitialStaticTips()) {
-            List<StaticRecommendationEntity> randomTips = tipRepository.random(locale, 3);
-            for (StaticRecommendationEntity r: randomTips)
-                accountStaticRecommendationRepository.createWith(account, r.getId());
+            List<TipEntity> randomTips = tipRepository.random(locale, 3);
+            for (TipEntity r: randomTips)
+                accountTipRepository.createWith(account, r.getId());
         } else if (config.isOnDemandExecution() || now.getDayOfWeek() == config.getComputeThisDayOfWeek()) {
             if (status.isStaticTipToBeProduced()) {
-                StaticRecommendationEntity r = tipRepository.randomOne(locale);
+                TipEntity r = tipRepository.randomOne(locale);
                 if (r != null)
-                    accountStaticRecommendationRepository.createWith(account, r.getId());
+                    accountTipRepository.createWith(account, r.getId());
             }
         }
     }

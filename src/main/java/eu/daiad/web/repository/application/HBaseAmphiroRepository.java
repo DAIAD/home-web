@@ -1912,7 +1912,7 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
                 maxTotalSessions = query.getLength();
                 break;
             default:
-               return data;
+                return data;
         }
 
         Table table = null;
@@ -2092,16 +2092,19 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
 
         switch (query.getType()) {
             case ABSOLUTE:
+                if ((query.getStartIndex() == null) || (query.getEndIndex() == null)) {
+                    return data;
+                }
                 startIndex = query.getEndIndex();
                 endIndex = query.getStartIndex();
                 break;
             case SLIDING:
-                if (query.getStartIndex() == null) {
-                    startIndex = query.getLength();
-                    endIndex = 0;
-                } else {
-                    startIndex = query.getStartIndex() + query.getLength() -1;
-                    endIndex = query.getStartIndex();
+                if (query.getLength() == null) {
+                    return data;
+                }
+                if (query.getStartIndex() != null) {
+                    startIndex = query.getStartIndex();
+                    endIndex = query.getStartIndex() - query.getLength() + 1;
                 }
                 maxTotalSessions = query.getLength();
                 break;

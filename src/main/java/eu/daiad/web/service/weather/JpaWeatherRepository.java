@@ -237,10 +237,13 @@ public class JpaWeatherRepository extends BaseRepository implements IWeatherRepo
 
         DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyyMMdd");
 
+        String weatherQueryString = "select h " +
+                                    "from   weather_data_hour h " +
+                                    "where  h.datetime >= :from and h.datetime <= :to and h.day.service.id = :serviceId and " +
+                                    "       h.day.utility.id = :utilityId " +
+                                    "order by h.datetime";
         TypedQuery<WeatherHourlyDataEntity> hourQuery = entityManager
-                        .createQuery("select h from weather_data_hour h "
-                                        + "where h.datetime >= :from and h.datetime <= :to and h.day.service.id = :serviceId and h.day.utility.id = :utilityId",
-                                        WeatherHourlyDataEntity.class);
+                        .createQuery(weatherQueryString, WeatherHourlyDataEntity.class);
 
         hourQuery.setParameter("from", from.toString(formatter) + "00");
         hourQuery.setParameter("to", to.toString(formatter) + "24");
@@ -270,10 +273,11 @@ public class JpaWeatherRepository extends BaseRepository implements IWeatherRepo
 
         DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyyMMdd");
 
-        TypedQuery<WeatherDailyDataEntity> dayQuery = entityManager
-                        .createQuery("select d from weather_data_day d "
-                                        + "where d.date >= :from and d.date <= :to and d.service.id = :serviceId and d.utility.id = :utilityId",
-                                        WeatherDailyDataEntity.class);
+        String weatherQueryString = "select d " +
+                                    "from   weather_data_day d " +
+                                    "where  d.date >= :from and d.date <= :to and d.service.id = :serviceId and d.utility.id = :utilityId " +
+                                    "order by d.date";
+        TypedQuery<WeatherDailyDataEntity> dayQuery = entityManager.createQuery(weatherQueryString, WeatherDailyDataEntity.class);
 
         dayQuery.setParameter("from", from.toString(formatter));
         dayQuery.setParameter("to", to.toString(formatter));

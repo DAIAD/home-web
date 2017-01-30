@@ -12,21 +12,30 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
 
-@Entity(name = "static_recommendation_category")
-@Table(schema = "public", name = "static_recommendation_category")
-public class StaticRecommendationCategoryEntity {
+import org.hibernate.annotations.NaturalId;
 
+@Entity(name = "tip_category")
+@Table(schema = "public", name = "tip_category")
+public class TipCategoryEntity
+{
 	@Id()
 	@Column(name = "id")
 	private int id;
 
 	@Basic()
-	private String title;
+	@Column(nullable = false)
+	@NotNull
+	@NaturalId
+	private String name;
 
-	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+	@Basic()
+    private String title;
+
+    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY, orphanRemoval = true)
 	@JoinColumn(name = "category_id")
-	private Set<StaticRecommendationEntity> properties = new HashSet<StaticRecommendationEntity>();
+	private Set<TipEntity> tips = new HashSet<>();
 
 	public int getId() {
 		return id;
@@ -36,12 +45,8 @@ public class StaticRecommendationCategoryEntity {
 		this.id = id;
 	}
 
-	public Set<StaticRecommendationEntity> getProperties() {
-		return properties;
-	}
-
-	public void setProperties(Set<StaticRecommendationEntity> properties) {
-		this.properties = properties;
+	public Set<TipEntity> getTips() {
+		return tips;
 	}
 
 	public String getTitle() {
@@ -52,4 +57,13 @@ public class StaticRecommendationCategoryEntity {
 		this.title = title;
 	}
 
+	public String getName()
+    {
+        return name;
+    }
+
+    public void setName(String name)
+    {
+        this.name = name;
+    }
 }

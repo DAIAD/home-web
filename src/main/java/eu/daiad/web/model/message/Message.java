@@ -5,6 +5,8 @@ import java.util.Map;
 
 import org.joda.time.DateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import eu.daiad.web.model.DateFormatter;
 import eu.daiad.web.model.device.EnumDeviceType;
 
@@ -59,11 +61,20 @@ public abstract class Message
 
 	private final int id;
 
+	protected String locale;
+
 	protected String title;
 
+	@JsonIgnore
 	protected Long acknowledgedOn;
 
+	@JsonIgnore
 	protected Long createdOn;
+
+	protected Message()
+	{
+	    this.id = INVALID_ID;
+	}
 
 	protected Message(int id)
 	{
@@ -74,6 +85,16 @@ public abstract class Message
 	{
 	    return id;
 	}
+
+	public String getLocale()
+    {
+        return locale;
+    }
+
+    public void setLocale(String locale)
+    {
+        this.locale = locale;
+    }
 
 	public String getTitle()
 	{
@@ -90,6 +111,12 @@ public abstract class Message
         return createdOn;
     }
 
+    public void setCreatedOn(long created)
+    {
+        this.createdOn = created;
+    }
+
+    @JsonIgnore
     public void setCreatedOn(DateTime created)
     {
         this.createdOn = created.getMillis();
@@ -100,6 +127,12 @@ public abstract class Message
         return acknowledgedOn;
     }
 
+    public void setAcknowledgedOn(long acknowledged)
+    {
+        this.acknowledgedOn = acknowledged;
+    }
+
+    @JsonIgnore
     public void setAcknowledgedOn(DateTime acknowledged)
     {
         this.acknowledgedOn = acknowledged.getMillis();

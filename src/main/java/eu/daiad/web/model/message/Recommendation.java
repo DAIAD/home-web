@@ -113,7 +113,6 @@ public class Recommendation extends Message
         }
     }
 
-
     protected int priority;
 
     private final EnumRecommendationType recommendationType;
