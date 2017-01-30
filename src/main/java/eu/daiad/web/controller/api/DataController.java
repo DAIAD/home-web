@@ -185,8 +185,7 @@ public class DataController extends BaseRestController {
     @RequestMapping(value = "/api/v1/data/meter/forecast", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse forecast(@RequestBody ForecastQueryRequest data) {
         try {
-            AuthenticatedUser user = authenticate(data.getCredentials(),
-                                                  EnumRole.ROLE_USER, EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
+            AuthenticatedUser user = authenticate(data.getCredentials(), EnumRole.ROLE_USER, EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
             ForecastQuery query = data.getQuery();
             if (query == null) {
