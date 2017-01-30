@@ -1,7 +1,6 @@
 package eu.daiad.web.domain.application;
 
 import javax.persistence.Basic;
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -36,7 +35,7 @@ public class AlertTemplateTranslationEntity
 	@GeneratedValue(generator = "alert_template_translation_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
 
-	@ManyToOne(cascade = { CascadeType.ALL })
+	@ManyToOne()
     @JoinColumn(name = "template", nullable = false)
 	@NotNull
     private AlertTemplateEntity template;

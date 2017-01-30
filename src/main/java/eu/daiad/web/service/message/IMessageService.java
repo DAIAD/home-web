@@ -1,4 +1,4 @@
-package eu.daiad.web.repository.application;
+package eu.daiad.web.service.message;
 
 import java.util.List;
 import java.util.UUID;
@@ -15,28 +15,26 @@ import eu.daiad.web.model.message.MessageResult;
 import eu.daiad.web.model.message.MessageStatisticsQuery;
 import eu.daiad.web.model.message.ReceiverAccount;
 import eu.daiad.web.model.message.RecommendationStatistics;
-import eu.daiad.web.model.message.StaticRecommendation;
+import eu.daiad.web.model.message.Tip;
 import eu.daiad.web.model.security.AuthenticatedUser;
 
-public interface IMessageRepository {
-
+public interface IMessageService
+{
 	public abstract MessageResult getMessages(AuthenticatedUser user, MessageRequest request);
 
 	public abstract void acknowledgeMessages(AuthenticatedUser user, List<MessageAcknowledgement> messages);
 
 	public List<Message> getTips(String lang);
 
-    public void persistTipActiveStatus(int id, boolean active);
+    public void setTipActiveStatus(int id, boolean active);
 
-    public void createTip(StaticRecommendation tip, String lang);
+    public void saveTip(Tip tip);
 
-    public void updateTip(StaticRecommendation tip);
-
-    public void deleteTip(StaticRecommendation tip);
+    public void deleteTip(int id);
 
     public List<Message> getAnnouncements(String locale);
 
-    public void broadcastAnnouncement(AnnouncementRequest announcementRequest, String lang, String channel);
+    public void broadcastAnnouncement(AnnouncementRequest announcementRequest, String channel);
 
     public void deleteAnnouncement(int id);
 

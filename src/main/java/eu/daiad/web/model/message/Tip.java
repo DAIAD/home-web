@@ -2,13 +2,18 @@ package eu.daiad.web.model.message;
 
 import org.joda.time.DateTime;
 
-public class StaticRecommendation extends Message
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+public class Tip extends Message
 {
-	private int index;
+	private int index = -1;
 
-	private String description;
+    private String description;
 
-	private byte imageEncoded[];
+    private String categoryName;
+
+    @JsonIgnore
+    private byte imageEncoded[];
 
 	private String imageMimeType;
 
@@ -24,14 +29,19 @@ public class StaticRecommendation extends Message
 
 	private boolean active;
 
-	public StaticRecommendation(int id)
+	public Tip()
+    {
+        super();
+    }
+
+	public Tip(int id)
 	{
 	    super(id);
 	}
 
 	@Override
 	public EnumMessageType getType() {
-		return EnumMessageType.RECOMMENDATION_STATIC;
+		return EnumMessageType.TIP;
 	}
 
 	public int getIndex() {
@@ -54,6 +64,7 @@ public class StaticRecommendation extends Message
 		return imageEncoded;
 	}
 
+    @JsonIgnore
 	public void setImageEncoded(byte[] imageEncoded) {
 		this.imageEncoded = imageEncoded;
 	}
@@ -86,6 +97,12 @@ public class StaticRecommendation extends Message
 		return modifiedOn;
 	}
 
+	public void setModifiedOn(long modified)
+    {
+        this.modifiedOn = modified;
+    }
+
+	@JsonIgnore
 	public void setModifiedOn(DateTime modified)
 	{
         this.modifiedOn = modified.getMillis();
@@ -113,6 +130,16 @@ public class StaticRecommendation extends Message
 
 	public void setImageMimeType(String imageMimeType) {
 		this.imageMimeType = imageMimeType;
+	}
+
+	public String getCategoryName()
+	{
+	    return categoryName;
+	}
+
+	public void setCategoryName(String categoryName)
+	{
+	    this.categoryName = categoryName;
 	}
 
     @Override

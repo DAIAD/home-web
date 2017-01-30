@@ -10,7 +10,7 @@ public class Announcement extends Message
 
 	public Announcement()
 	{
-	    super(INVALID_ID);
+	    super();
 	}
 
     public Announcement(int id)

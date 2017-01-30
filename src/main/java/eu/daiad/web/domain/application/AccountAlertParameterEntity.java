@@ -1,7 +1,6 @@
 package eu.daiad.web.domain.application;
 
 import javax.persistence.Basic;
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -26,7 +25,7 @@ public class AccountAlertParameterEntity {
 	@GeneratedValue(generator = "account_alert_parameter_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
 
-	@ManyToOne(cascade = { CascadeType.ALL })
+	@ManyToOne()
 	@JoinColumn(name = "account_alert_id", nullable = false)
 	private AccountAlertEntity alert;
 
@@ -38,7 +37,7 @@ public class AccountAlertParameterEntity {
 
 	public AccountAlertParameterEntity()
 	{}
-	
+
 	public AccountAlertParameterEntity(AccountAlertEntity alert, String key, String value)
 	{
 	    this.alert = alert;

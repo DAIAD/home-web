@@ -1,9 +1,9 @@
 package eu.daiad.web.domain.application;
 
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -31,13 +31,13 @@ public class AccountAnnouncementEntity
 	@GeneratedValue(generator = "account_announcement_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
 
-	@ManyToOne(cascade = { CascadeType.ALL })
+	@ManyToOne()
 	@JoinColumn(name = "account_id", nullable = false)
 	@NotNull
 	@NaturalId
 	private AccountEntity account;
 
-	@ManyToOne(cascade = { CascadeType.ALL })
+	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "announcement_id", nullable = false)
 	@NotNull
 	@NaturalId

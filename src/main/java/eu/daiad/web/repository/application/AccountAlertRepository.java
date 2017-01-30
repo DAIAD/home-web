@@ -404,6 +404,7 @@ public class AccountAlertRepository extends BaseRepository
             .format(parameters);
 
         Alert message = new Alert(r.getId(), template);
+        message.setLocale(locale.getLanguage());
         message.setTitle(title);
         message.setDescription(description);
         message.setLink(translation.getLink());

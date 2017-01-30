@@ -108,13 +108,16 @@ public class AnnouncementRepository
     {
         AnnouncementTranslationEntity translation = null;
         translation = a.getTranslation(locale);
-        if (translation == null)
-            translation = a.getTranslation(Locale.getDefault());
+        if (translation == null) {
+            locale = Locale.getDefault();
+            translation = a.getTranslation(locale);
+        }
         if (translation == null)
             return null;
 
         Announcement message = new Announcement(a.getId());
         message.setPriority(a.getPriority());
+        message.setLocale(locale.getLanguage());
         message.setTitle(translation.getTitle());
         message.setContent(translation.getContent());
         return message;

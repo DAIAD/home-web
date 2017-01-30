@@ -3,6 +3,7 @@ package eu.daiad.web.domain.application;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -28,13 +29,13 @@ public class AnnouncementChannelEntity
     @GeneratedValue(generator = "announcement_channel_id_seq", strategy = GenerationType.SEQUENCE)
     private int id;
 
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "announcement_id", nullable = false)
 	@NotNull
 	@NaturalId
 	private AnnouncementEntity announcement;
 
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "channel_id", nullable = false)
     @NotNull
     @NaturalId

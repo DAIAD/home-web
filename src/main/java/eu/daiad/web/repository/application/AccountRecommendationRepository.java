@@ -422,6 +422,7 @@ public class AccountRecommendationRepository extends BaseRepository
             .format(parameters);
 
         Recommendation message = new Recommendation(r.getId(), template);
+        message.setLocale(locale.getLanguage());
         message.setTitle(title);
         message.setDescription(description);
         message.setImageLink(translation.getImageLink());
