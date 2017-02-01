@@ -3,9 +3,12 @@ package eu.daiad.web.model.message;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.validation.constraints.NotNull;
+
 import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import eu.daiad.web.model.DateFormatter;
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -23,35 +26,67 @@ public abstract class Message
 
     public abstract static class AbstractParameters implements Parameters
     {
-        protected final DateTime refDate;
+        @NotNull
+        protected DateTime refDate;
 
-        protected final EnumDeviceType deviceType;
+        @NotNull
+        protected EnumDeviceType deviceType;
 
+        @JsonIgnore
+        public void setRefDate(DateTime refDate)
+        {
+            this.refDate = refDate;
+        }
+
+        @JsonProperty("refDate")
+        public void setRefDate(long refDate)
+        {
+            this.refDate = new DateTime(refDate);
+        }
+        
+        public void setDeviceType(EnumDeviceType deviceType)
+        {
+            this.deviceType = deviceType;
+        }
+
+        protected AbstractParameters() {}
+        
         protected AbstractParameters(DateTime refDate, EnumDeviceType deviceType)
         {
             this.refDate = refDate;
             this.deviceType = deviceType;
         }
 
+        @JsonIgnore
         @Override
         public DateTime getRefDate()
         {
             return refDate;
         }
-
+        
+        @JsonProperty("refDate")
+        public long getRefDateAsInstant()
+        {
+            return refDate.getMillis();
+        }
+        
         @Override
         public EnumDeviceType getDeviceType()
         {
             return deviceType;
         }
 
+        @JsonIgnore
         @Override
         public Map<String, Object> getParameters()
         {
-            Map<String, Object> p = new HashMap<>();
-            p.put("ref_date", new DateFormatter(refDate));
-            p.put("device_type", deviceType);
-            return p;
+            Map<String, Object> parameters = new HashMap<>();
+            
+            parameters.put("ref_date", refDate.toDate());
+            
+            parameters.put("device_type", deviceType);
+            
+            return parameters;
         }
     }
 

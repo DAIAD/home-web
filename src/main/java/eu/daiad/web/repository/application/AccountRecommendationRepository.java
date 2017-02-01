@@ -1,5 +1,6 @@
 package eu.daiad.web.repository.application;
 
+import java.io.IOException;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
@@ -11,6 +12,8 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +33,7 @@ import eu.daiad.web.model.message.EnumRecommendationType;
 import eu.daiad.web.model.message.Recommendation;
 import eu.daiad.web.model.message.Recommendation.ParameterizedTemplate;
 import eu.daiad.web.repository.BaseRepository;
+import eu.daiad.web.service.ICurrencyRateService;
 
 @Repository
 @Transactional("applicationTransactionManager")
@@ -38,12 +42,17 @@ public class AccountRecommendationRepository extends BaseRepository
 {
     public static final int DEFAULT_LIMIT = 50;
 
+    private static final Log logger = LogFactory.getLog(AccountRecommendationRepository.class);
+    
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
 
     @Autowired
     IRecommendationTemplateTranslationRepository translationRepository;
 
+    @Autowired
+    ICurrencyRateService currencyRateService;
+    
     @Override
     public int countAll()
     {
@@ -298,22 +307,6 @@ public class AccountRecommendationRepository extends BaseRepository
         return e;
     }
 
-    public AccountRecommendationEntity createWith(
-        AccountEntity account, EnumRecommendationTemplate template, Map<String, Object> p)
-    {
-        // Ensure we have a persistent AccountEntity instance
-        if (!entityManager.contains(account))
-            account = entityManager.find(AccountEntity.class, account.getId());
-
-        // Find entity mapping to target template
-        RecommendationTemplateEntity templateEntity =
-            entityManager.find(RecommendationTemplateEntity.class, template.getValue());
-
-        AccountRecommendationEntity e =
-            new AccountRecommendationEntity(account, templateEntity, p);
-        return create(e);
-    }
-
     @Override
     public AccountRecommendationEntity createWith(UUID accountKey, ParameterizedTemplate parameters)
     {
@@ -338,7 +331,21 @@ public class AccountRecommendationRepository extends BaseRepository
     public AccountRecommendationEntity createWith(
         AccountEntity account, ParameterizedTemplate parameterizedTemplate)
     {
-        return createWith(account, parameterizedTemplate.getTemplate(), parameterizedTemplate.getParameters());
+        // Ensure we have a persistent AccountEntity instance
+        if (!entityManager.contains(account))
+            account = entityManager.find(AccountEntity.class, account.getId());
+
+        // Find entity mapping to target template
+        
+        EnumRecommendationTemplate template = parameterizedTemplate.getTemplate();
+        RecommendationTemplateEntity templateEntity =
+            entityManager.find(RecommendationTemplateEntity.class, template.getValue());
+        
+        // Create
+        
+        AccountRecommendationEntity r = 
+            new AccountRecommendationEntity(account, templateEntity, parameterizedTemplate);
+        return create(r);
     }
 
     @Override
@@ -410,17 +417,36 @@ public class AccountRecommendationRepository extends BaseRepository
         if (translation == null)
             return null;
 
+        // Retrieve generation-time parameters: rebuild a parameterized template
+
+        ParameterizedTemplate parameterizedTemplate = null; 
+        try {
+            parameterizedTemplate = r.getParameters().toParameterizedTemplate();
+        } catch (ClassCastException | ClassNotFoundException | IOException ex) {
+            logger.error(String.format(
+                "Failed to re-build parameterized template for recommendation#%d: %s",
+                r.getId(), ex.getMessage()));
+            parameterizedTemplate = null;
+        }
+        if (parameterizedTemplate == null)
+            return null;
+        
+        // Make underlying parameters aware of target locale
+        
+        parameterizedTemplate = parameterizedTemplate.withLocale(locale, currencyRateService);
+
         // Format
-
-        // Todo: Some parameters need pre-processing (currencies, dates)
-        Map<String, Object> parameters = r.getParametersAsMap();
-
+        
+        Map<String, Object> parameters = parameterizedTemplate.getParameters();
+        
         String title = (new MessageFormat(translation.getTitle(), locale))
             .format(parameters);
 
         String description = (new MessageFormat(translation.getDescription(), locale))
             .format(parameters);
 
+        // Build a DTO object with formatted messages
+        
         Recommendation message = new Recommendation(r.getId(), template);
         message.setLocale(locale.getLanguage());
         message.setTitle(title);

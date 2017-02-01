@@ -376,35 +376,4 @@ public class DefaultMessageService
                 accountAnnouncementRepository.createWith(accountEntity, announcementEntity);
         }
     }
-
-    @Deprecated
-    private Map.Entry<String, String> preprocessFormatParameter(String key, String value, Locale locale)
-    {
-        final String currencyKey1 = "currency1";
-        final String currencyKey2 = "currency2";
-        final String dayKey = "day_of_week";
-
-        String key1 = key, value1 = value;
-        // Transform (key, value) pair to (key1, value1)
-        switch (key) {
-            // Todo: replace with ICU message formatting directives (e.g. {x,number,currency})
-            case currencyKey1:
-            case currencyKey2: {
-                NumberFormat numberFormatter = NumberFormat.getCurrencyInstance(locale);
-                numberFormatter.setMaximumFractionDigits(1);
-                float money = Float.parseFloat(value);
-                value1 = numberFormatter.format(money);
-                break;
-            }
-            // Todo: replace with message formatting directives (e.g. {x,date,EEEE})
-            case dayKey: {
-                int dayOfWeek = Integer.parseInt(value);
-                value1 = (new DateTime()).withDayOfWeek(dayOfWeek).toString("EEEE");
-            }
-            default:
-                // no-op
-                break;
-        }
-        return new SimpleEntry<>(key1, value1);
-    }
 }

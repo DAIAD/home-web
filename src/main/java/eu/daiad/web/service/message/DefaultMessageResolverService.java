@@ -958,12 +958,11 @@ public class DefaultMessageResolverService implements IMessageResolverService
         if (fire) {
             Double annualSavings =
                 (monthlyUserAverageConsumption - monthlyAverageConsumption.getValue()) * 12;
-            Recommendation.ParameterizedTemplate parameters = new Recommendation.SimpleParameterizedTemplate(
-                    refDate, EnumDeviceType.AMPHIRO,
-                    EnumRecommendationTemplate.LESS_SHOWER_TIME
-                )
-                .setInteger1(annualSavings.intValue())
-                .setInteger2(Double.valueOf(annualSavings * 2.0).intValue());
+            Recommendation.ParameterizedTemplate parameters = 
+                new Recommendation.SimpleParameterizedTemplate(
+                    refDate, EnumDeviceType.AMPHIRO, EnumRecommendationTemplate.LESS_SHOWER_TIME)
+                .withInteger1(annualSavings.intValue())
+                .withInteger2(Double.valueOf(annualSavings * 2.0).intValue());
             return new MessageResolutionStatus<>(true, parameters);
         }
 
@@ -1015,8 +1014,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
                     refDate, EnumDeviceType.AMPHIRO,
                     EnumRecommendationTemplate.LOWER_TEMPERATURE
                 )
-                .setCurrency1(annualSavings)
-                .setCurrency2(annualSavings);
+                .withMoney1(annualSavings)
+                .withMoney2(annualSavings);
             return new MessageResolutionStatus<>(true, parameters);
         }
 
@@ -1070,8 +1069,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             Recommendation.ParameterizedTemplate parameters = new Recommendation.SimpleParameterizedTemplate(
                     refDate, EnumDeviceType.AMPHIRO, EnumRecommendationTemplate.LOWER_FLOW
                 )
-                .setInteger1(annualSavings.intValue())
-                .setInteger2(annualSavings.intValue());
+                .withInteger1(annualSavings.intValue())
+                .withInteger2(annualSavings.intValue());
             return new MessageResolutionStatus<>(true, parameters);
         }
 
@@ -1124,8 +1123,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             Recommendation.ParameterizedTemplate parameters = new Recommendation.SimpleParameterizedTemplate(
                     refDate, EnumDeviceType.AMPHIRO, EnumRecommendationTemplate.CHANGE_SHOWERHEAD
                 )
-                .setInteger1(annualSavings.intValue())
-                .setInteger2(annualSavings.intValue());
+                .withInteger1(annualSavings.intValue())
+                .withInteger2(annualSavings.intValue());
             return new MessageResolutionStatus<>(true, parameters);
         }
         return null;
@@ -1168,7 +1167,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             Recommendation.ParameterizedTemplate parameters = new Recommendation.SimpleParameterizedTemplate(
                     refDate, EnumDeviceType.AMPHIRO, EnumRecommendationTemplate.CHANGE_SHAMPOO
                 )
-                .setInteger1(percentDiff.intValue());
+                .withInteger1(percentDiff.intValue());
             return new MessageResolutionStatus<>(true, parameters);
         }
         return null;
@@ -1212,8 +1211,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
             Recommendation.ParameterizedTemplate parameters = new Recommendation.SimpleParameterizedTemplate(
                     refDate, EnumDeviceType.AMPHIRO, EnumRecommendationTemplate.REDUCE_FLOW_WHEN_NOT_NEEDED
                 )
-                .setInteger1(moreLitersThanOthersInYear.intValue())
-                .setInteger2(moreLitersThanOthersInYear.intValue());
+                .withInteger1(moreLitersThanOthersInYear.intValue())
+                .withInteger2(moreLitersThanOthersInYear.intValue());
             return new MessageResolutionStatus<>(true, parameters);
         }
 
@@ -1507,7 +1506,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         ));
 
         Insight.ParameterizedTemplate parameters = new Insight.A4Parameters(refDate, deviceType, sumOfParts)
-            .setParts(parts);
+            .withParts(parts);
         return new MessageResolutionStatus<>(true, parameters);
     }
 
