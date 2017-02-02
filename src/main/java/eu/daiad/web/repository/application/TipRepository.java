@@ -109,7 +109,7 @@ public class TipRepository
         message.setLocale(r.getLocale());
         message.setTitle(r.getTitle());
         message.setDescription(r.getDescription());
-        //message.setImageEncoded(r.getImage());
+        message.setImageEncoded(r.getImage());
         message.setImageMimeType(r.getImageMimeType());
         message.setImageLink(r.getImageLink());
         message.setPrompt(r.getPrompt());
@@ -132,7 +132,7 @@ public class TipRepository
         return q.getSingleResult().intValue();
     }
 
-    private TipCategoryEntity getCategoryByName(String name)
+    private TipCategoryEntity findCategoryByName(String name)
     {
         TypedQuery<TipCategoryEntity> q = entityManager.createQuery(
             "SELECT c FROM tip_category c WHERE c.name = :name",
@@ -174,13 +174,13 @@ public class TipRepository
         }
         r.setLocale(tip.getLocale());
 
-        TipCategoryEntity category = getCategoryByName(
+        TipCategoryEntity category = findCategoryByName(
             (tip.getCategoryName() != null)? tip.getCategoryName() : DEFAULT_CATEGORY_NAME);
         r.setCategory(category);
 
         r.setTitle(tip.getTitle());
         r.setDescription(tip.getDescription());
-        //r.setImageEncoded(tip.getImage());
+        r.setImage(tip.getImageEncoded());
         r.setImageMimeType(tip.getImageMimeType());
         r.setImageLink(tip.getImageLink());
         r.setPrompt(tip.getPrompt());
@@ -208,11 +208,11 @@ public class TipRepository
         // Note: The pair (index, locale) is not meant to be updated
 
         if (tip.getCategoryName() != null) {
-            r.setCategory(getCategoryByName(tip.getCategoryName()));
+            r.setCategory(findCategoryByName(tip.getCategoryName()));
         }
         r.setTitle(tip.getTitle());
         r.setDescription(tip.getDescription());
-        //r.setImageEncoded(tip.getImage());
+        r.setImage(tip.getImageEncoded());
         r.setImageMimeType(tip.getImageMimeType());
         r.setImageLink(tip.getImageLink());
         r.setPrompt(tip.getPrompt());

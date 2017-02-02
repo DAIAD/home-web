@@ -238,11 +238,20 @@ public class Recommendation extends Message
 	    this.priority = recommendationType.getPriority();
 	}
 
+	@JsonIgnore
 	@Override
-	public EnumMessageType getType() {
+	public EnumMessageType getType() 
+	{
 		return EnumMessageType.RECOMMENDATION;
 	}
 
+	// Todo: replace with getType (only for API compatibility reasons) 
+    @JsonProperty("type")
+    public String getTypeAsLegacyName() 
+    {
+        return "RECOMMENDATION_DYNAMIC";
+    }
+	
 	public int getPriority()
     {
         return priority;

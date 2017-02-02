@@ -38,7 +38,7 @@ public enum EnumMessageType
 
     public static class Deserializer extends JsonDeserializer<EnumMessageType>
     {
-        // Note: This is to provide backwards compatibility with API clients
+        // Todo: remove; only to provide backwards compatibility with API clients
         public static final Map<String, String> aliases = new HashMap<>();
         static {
             aliases.put("RECOMMENDATION_DYNAMIC", "RECOMMENDATION");
