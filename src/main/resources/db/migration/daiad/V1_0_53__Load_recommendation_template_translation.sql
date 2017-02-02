@@ -220,6 +220,7 @@ INSERT INTO public.recommendation_template_translation
         recommendation_template_from_name('INSIGHT_A3_MORNING_CONSUMPTION_INCR'),
         'en',
         '{percent_change}% increase in morning consumption',
+        '{consumption,number,.#}lt vs. the average {average_consumption,number,.#}lt'
     );
 
 INSERT INTO public.recommendation_template_translation 
