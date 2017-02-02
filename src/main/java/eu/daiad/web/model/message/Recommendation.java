@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.util.Locale;
 import java.util.Map;
 
+import javax.validation.constraints.NotNull;
+
 import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -40,7 +42,7 @@ public class Recommendation extends Message
     public static class SimpleParameterizedTemplate extends Message.AbstractParameters
         implements ParameterizedTemplate
     {
-        @JsonIgnore
+        @NotNull
         EnumRecommendationTemplate recommendationTemplate;
 
         // Provide some common parameters
@@ -180,7 +182,13 @@ public class Recommendation extends Message
             return pairs;
         }
 
-        @JsonIgnore
+        @JsonProperty("template")
+        public void setTemplate(EnumRecommendationTemplate template)
+        {
+            recommendationTemplate = template;
+        }
+        
+        @JsonProperty("template")
         @Override
         public EnumRecommendationTemplate getTemplate()
         {
@@ -194,13 +202,11 @@ public class Recommendation extends Message
             
             BigDecimal rate = currencyRate.getRate(Locale.getDefault(), target);
             
-            if (money1 != null) {
+            if (money1 != null)
                 money1 = money1.multiply(rate);
-            }
             
-            if (money2 != null) {
+            if (money2 != null)
                 money2 = money2.multiply(rate);
-            }
             
             return this;
         }

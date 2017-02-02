@@ -57,6 +57,8 @@ public class AccountAlertParametersEntity
     @NotNull
     private String jsonData;
     
+    public AccountAlertParametersEntity() {}
+    
     public AccountAlertParametersEntity(
         AccountAlertEntity alert, ParameterizedTemplate parameterizedTemplate) 
         throws JsonProcessingException 

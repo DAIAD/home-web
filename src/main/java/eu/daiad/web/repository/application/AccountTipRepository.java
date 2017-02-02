@@ -363,8 +363,10 @@ public class AccountTipRepository extends BaseRepository
             message.setModifiedOn(tipEntity.getModifiedOn());
         message.setActive(tipEntity.isActive());
 
-        message.setCreatedOn(a.getCreatedOn());
-        message.setAcknowledgedOn(a.getAcknowledgedOn());
+        if (a.getCreatedOn() != null)
+            message.setCreatedOn(a.getCreatedOn());
+        if (a.getAcknowledgedOn() != null)
+            message.setAcknowledgedOn(a.getAcknowledgedOn());
 
         return message;
     }

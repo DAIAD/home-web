@@ -1,14 +1,23 @@
 package eu.daiad.web.service.message;
 
+import java.util.Set;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+
+import javax.validation.Validator;
+import javax.validation.ConstraintViolation;
+
+import org.apache.commons.collections4.FluentIterable;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -21,7 +30,7 @@ import eu.daiad.web.model.message.EnumAlertTemplate;
 import eu.daiad.web.model.message.EnumAlertType;
 import eu.daiad.web.model.message.EnumRecommendationTemplate;
 import eu.daiad.web.model.message.EnumRecommendationType;
-import eu.daiad.web.model.message.IMessageResolutionStatus;
+import eu.daiad.web.model.message.MessageResolutionStatus;
 import eu.daiad.web.model.message.MessageResolutionPerAccountStatus;
 import eu.daiad.web.model.message.Recommendation;
 import eu.daiad.web.repository.application.IAccountAlertRepository;
@@ -34,6 +43,8 @@ import eu.daiad.web.service.IPriceDataService;
 @Service
 public class DefaultMessageManagementService implements IMessageManagementService
 {
+    private static final Log logger = LogFactory.getLog(DefaultMessageManagementService.class);
+    
     @Autowired
     IUserRepository userRepository;
 
@@ -52,6 +63,10 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     @Autowired
     IPriceDataService priceData;
 
+    @Autowired 
+    @Qualifier("defaultBeanValidator") 
+    private Validator validator;
+    
     @Override
     public void executeAccount(
         IMessageGeneratorService.Configuration config,
@@ -75,9 +90,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     {
         // Add messages common to all devices
 
-        EnumDeviceType[] deviceTypes = new EnumDeviceType[] {
-                EnumDeviceType.METER, EnumDeviceType.AMPHIRO
-        };
+        EnumDeviceType[] deviceTypes = new EnumDeviceType[] { EnumDeviceType.METER, EnumDeviceType.AMPHIRO };
 
         generateMessagesFor(config, deviceTypes, stats, messageStatus, account);
 
@@ -175,7 +188,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void alertWaterLeakSWM(
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertWaterLeakSWM();
+        MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertWaterLeakSWM();
         if (r == null || !r.isSignificant())
             return;
 
@@ -193,7 +206,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void alertShowerStillOnAmphiro(
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertShowerStillOnAmphiro();
+        MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertShowerStillOnAmphiro();
         if (r != null && r.isSignificant()) {
             Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.SHOWER_ON);
             accountAlertRepository.createWith(account, r.getMessage());
@@ -209,7 +222,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void alertWaterQualitySWM(
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertWaterQualitySWM();
+        MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertWaterQualitySWM();
         if (r != null && r.isSignificant()) {
             Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.WATER_QUALITY);
             accountAlertRepository.createWith(account, r.getMessage());
@@ -220,7 +233,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void alertHotTemperatureAmphiro(
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertHotTemperatureAmphiro();
+        MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertHotTemperatureAmphiro();
         if (r != null && r.isSignificant()) {
             Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.HIGH_TEMPERATURE);
             accountAlertRepository.createWith(account, r.getMessage());
@@ -231,7 +244,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void alertNearDailyBudgetSWM(
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertNearDailyBudgetSWM();
+        MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertNearDailyBudgetSWM();
         if (r != null && r.isSignificant()) {
             Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.NEAR_DAILY_WATER_BUDGET);
             accountAlertRepository.createWith(account, r.getMessage());
@@ -242,7 +255,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void alertNearWeeklyBudgetSWM(
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertNearWeeklyBudgetSWM();
+        MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertNearWeeklyBudgetSWM();
         if (r != null && r.isSignificant()) {
             Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.NEAR_WEEKLY_WATER_BUDGET);
             accountAlertRepository.createWith(account, r.getMessage());
@@ -253,7 +266,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void alertNearDailyBudgetAmphiro(
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertNearDailyBudgetAmphiro();
+        MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertNearDailyBudgetAmphiro();
         if (r != null && r.isSignificant()) {
             Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.NEAR_DAILY_SHOWER_BUDGET);
             accountAlertRepository.createWith(account, r.getMessage());
@@ -267,7 +280,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
         if (DateTime.now().getDayOfWeek() != config.getComputeThisDayOfWeek())
             return;
 
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertNearWeeklyBudgetAmphiro();
+        MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertNearWeeklyBudgetAmphiro();
         if (r != null && r.isSignificant()) {
             Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.NEAR_WEEKLY_SHOWER_BUDGET);
             accountAlertRepository.createWith(account, r.getMessage());
@@ -278,7 +291,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void alertReachedDailyBudgetSWM(
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertReachedDailyBudgetSWM();
+        MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertReachedDailyBudgetSWM();
         if (r != null && r.isSignificant()) {
             Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.REACHED_DAILY_WATER_BUDGET);
             accountAlertRepository.createWith(account, r.getMessage());
@@ -289,7 +302,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void alertReachedDailyBudgetAmphiro(
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertReachedDailyBudgetAmphiro();
+        MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertReachedDailyBudgetAmphiro();
         if (r != null && r.isSignificant()) {
             Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.REACHED_DAILY_SHOWER_BUDGET);
             accountAlertRepository.createWith(account, r.getMessage());
@@ -300,7 +313,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void alertWaterChampionSWM(
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertWaterChampionSWM();
+        MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertWaterChampionSWM();
         if (r != null && r.isSignificant()) {
             int day = DateTime.now().getDayOfMonth();
             if (config.isOnDemandExecution() || day == config.getComputeThisDayOfMonth()) {
@@ -314,7 +327,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void alertShowerChampionAmphiro(
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertShowerChampionAmphiro();
+        MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertShowerChampionAmphiro();
         if (r != null && r.isSignificant()) {
             int day = DateTime.now().getDayOfMonth();
             if (config.isOnDemandExecution() || day == config.getComputeThisDayOfMonth()) {
@@ -329,7 +342,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countAlertsByTypeThisWeek(account, EnumAlertType.TOO_MUCH_WATER) < 1) {
-            IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertTooMuchWaterConsumptionSWM();
+            MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertTooMuchWaterConsumptionSWM();
             if (r == null || !r.isSignificant())
                 return;
             int day = DateTime.now().getDayOfWeek();
@@ -345,7 +358,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countAlertsByTypeThisWeek(account, EnumAlertType.TOO_MUCH_WATER) < 1) {
-            IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertTooMuchWaterConsumptionAmphiro();
+            MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertTooMuchWaterConsumptionAmphiro();
             if (r == null || !r.isSignificant())
                 return;
             int day = DateTime.now().getDayOfWeek();
@@ -361,7 +374,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countAlertsByTypeThisWeek(account, EnumAlertType.TOO_MUCH_ENERGY) < 1) {
-            IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertTooMuchEnergyAmphiro();
+            MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertTooMuchEnergyAmphiro();
             if (r == null || !r.isSignificant())
                 return;
 
@@ -378,7 +391,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countAlertsByType(account, EnumAlertType.REDUCED_WATER_USE) < 1) {
-            IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertReducedWaterUseSWM();
+            MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertReducedWaterUseSWM();
             if (r == null || !r.isSignificant())
                 return;
 
@@ -395,7 +408,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countAlertsByType(account, EnumAlertType.REDUCED_WATER_USE) < 1) {
-            IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertReducedWaterUseAmphiro();
+            MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertReducedWaterUseAmphiro();
             if (r == null || !r.isSignificant())
                 return;
 
@@ -412,7 +425,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countAlertsByType(account, EnumAlertType.WATER_EFFICIENCY_LEADER) < 1) {
-            IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertWaterEfficiencyLeaderSWM();
+            MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertWaterEfficiencyLeaderSWM();
             if (r == null || !r.isSignificant())
                 return;
 
@@ -439,7 +452,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void alertPromptGoodJobMonthlySWM(
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertPromptGoodJobMonthlySWM();
+        MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertPromptGoodJobMonthlySWM();
         if (r == null || !r.isSignificant())
             return;
 
@@ -454,7 +467,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void alertLitresSavedSWM(
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertLitresSavedSWM();
+        MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertLitresSavedSWM();
         if (r == null || !r.isSignificant())
             return;
 
@@ -470,7 +483,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
         IMessageGeneratorService.Configuration config,
         MessageResolutionPerAccountStatus status, AccountEntity account)
     {
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertTop25SaverWeeklySWM();
+        MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertTop25SaverWeeklySWM();
         if (r == null || !r.isSignificant())
             return;
 
@@ -485,7 +498,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void alertTop10SaverSWM(
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertTop10SaverWeeklySWM();
+        MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertTop10SaverWeeklySWM();
         if (r == null || !r.isSignificant())
             return;
 
@@ -501,7 +514,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countRecommendationsByTypeThisMonth(account, EnumRecommendationType.LESS_SHOWER_TIME) < 1) {
-            IMessageResolutionStatus<Recommendation.ParameterizedTemplate> r = status.getRecommendLessShowerTimeAmphiro();
+            MessageResolutionStatus<Recommendation.ParameterizedTemplate> r = status.getRecommendLessShowerTimeAmphiro();
             if (r == null || !r.isSignificant())
                 return;
 
@@ -518,7 +531,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countRecommendationsByTypeThisMonth(account, EnumRecommendationType.LOWER_TEMPERATURE) < 1) {
-            IMessageResolutionStatus<Recommendation.ParameterizedTemplate> r = status.getRecommendLowerTemperatureAmphiro();
+            MessageResolutionStatus<Recommendation.ParameterizedTemplate> r = status.getRecommendLowerTemperatureAmphiro();
             if (r == null || !r.isSignificant())
                 return;
 
@@ -535,7 +548,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countRecommendationsByTypeThisMonth(account, EnumRecommendationType.LOWER_FLOW) < 1) {
-            IMessageResolutionStatus<Recommendation.ParameterizedTemplate> r = status.getRecommendLowerFlowAmphiro();
+            MessageResolutionStatus<Recommendation.ParameterizedTemplate> r = status.getRecommendLowerFlowAmphiro();
             if (r == null || !r.isSignificant())
                 return;
 
@@ -552,7 +565,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countRecommendationsByTypeThisMonth(account, EnumRecommendationType.CHANGE_SHOWERHEAD) < 1) {
-            IMessageResolutionStatus<Recommendation.ParameterizedTemplate> r = status.getRecommendShowerHeadChangeAmphiro();
+            MessageResolutionStatus<Recommendation.ParameterizedTemplate> r = status.getRecommendShowerHeadChangeAmphiro();
             if (r == null || !r.isSignificant())
                 return;
 
@@ -569,7 +582,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countRecommendationsByTypeThisMonth(account, EnumRecommendationType.CHANGE_SHAMPOO) < 1) {
-            IMessageResolutionStatus<Recommendation.ParameterizedTemplate> r = status.getRecommendShampooChangeAmphiro();
+            MessageResolutionStatus<Recommendation.ParameterizedTemplate> r = status.getRecommendShampooChangeAmphiro();
             if (r == null || !r.isSignificant())
                 return;
 
@@ -586,7 +599,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countRecommendationsByTypeThisMonth(account, EnumRecommendationType.REDUCE_FLOW_WHEN_NOT_NEEDED) < 1) {
-            IMessageResolutionStatus<Recommendation.ParameterizedTemplate> r = status.getRecommendReduceFlowWhenNotNeededAmphiro();
+            MessageResolutionStatus<Recommendation.ParameterizedTemplate> r = status.getRecommendReduceFlowWhenNotNeededAmphiro();
             if (r == null || !r.isSignificant())
                 return;
 
@@ -602,9 +615,29 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     private void generateInsights(
         IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus messageStatus, AccountEntity account)
     {
-        for (IMessageResolutionStatus<Recommendation.ParameterizedTemplate> r: messageStatus.getInsights()) {
-            if (r != null && r.isSignificant())
-                accountRecommendationRepository.createWith(account, r.getMessage());
+        for (MessageResolutionStatus<? extends Recommendation.ParameterizedTemplate> r: messageStatus.getInsights()) {
+            // Check if message is significant
+            
+            if (!r.isSignificant())
+                continue;
+            
+            Recommendation.ParameterizedTemplate parameterizedTemplate = r.getMessage();
+            
+            // Validate parameterized template
+            
+            Set<ConstraintViolation<Recommendation.ParameterizedTemplate>> violatedConstraints = 
+                validator.validate(parameterizedTemplate);
+            if (!violatedConstraints.isEmpty()) {
+                for (ConstraintViolation<Recommendation.ParameterizedTemplate> c: violatedConstraints) {
+                    logger.info(String.format(
+                        "Failed validation check for parameterized template %s: at %s: %s", 
+                        parameterizedTemplate, c.getPropertyPath(), c.getMessage()));
+                }
+                continue;
+            }
+            
+            // Seems ok: push to repository
+            accountRecommendationRepository.createWith(account, parameterizedTemplate);
         }
     }
 
