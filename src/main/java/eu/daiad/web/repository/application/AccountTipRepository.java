@@ -112,7 +112,7 @@ public class AccountTipRepository extends BaseRepository
         if (offset > 0)
             query.setFirstResult(offset);
 
-        query.setMaxResults(pagination.getLimit());
+        query.setMaxResults(pagination.getSize());
 
         return query.getResultList();
     }

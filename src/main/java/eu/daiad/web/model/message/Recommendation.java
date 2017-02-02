@@ -36,7 +36,7 @@ public class Recommendation extends Message
     }
     
     /**
-     * A simple and logic-less implementation for {@link ParameterizedTemplate} using positional
+     * A simple and logic-less implementation for {@link ParameterizedTemplate} using anonymous
      * parameters. 
      */
     public static class SimpleParameterizedTemplate extends Message.AbstractParameters

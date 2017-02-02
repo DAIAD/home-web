@@ -2,32 +2,32 @@ package eu.daiad.web.model;
 
 public class PagingOptions
 {
-    private int limit = -1;
+    private int size = -1;
     private int offset = 0;
     private boolean ascending = true;
 
     public PagingOptions(int limit, int offset, boolean ascending)
     {
-        this.limit = limit;
+        this.size = limit;
         this.offset = offset;
         this.ascending = ascending;
     }
 
     public PagingOptions(int limit)
     {
-        this.limit = limit;
+        this.size = limit;
     }
 
     public PagingOptions() {}
 
-    public int getLimit()
+    public int getSize()
     {
-        return limit;
+        return size;
     }
 
-    public void setLimit(int limit)
+    public void setSize(int limit)
     {
-        this.limit = limit;
+        this.size = limit;
     }
 
     public int getOffset()
@@ -53,7 +53,7 @@ public class PagingOptions
     @Override
     public String toString()
     {
-        return String.format("PagingOptions(offset=%d, limit=%d, ascending=%s)",
-            offset, limit, ascending? "T" : "F");
+        return String.format("PagingOptions(size=%d, offset=%d, ascending=%s)",
+            offset, size, ascending? "T" : "F");
     }
 }

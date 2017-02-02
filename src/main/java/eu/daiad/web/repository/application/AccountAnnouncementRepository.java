@@ -113,7 +113,7 @@ public class AccountAnnouncementRepository extends BaseRepository
         int offset = pagination.getOffset();
         if (offset > 0)
             query.setFirstResult(offset);
-        query.setMaxResults(pagination.getLimit());
+        query.setMaxResults(pagination.getSize());
 
         return query.getResultList();
     }

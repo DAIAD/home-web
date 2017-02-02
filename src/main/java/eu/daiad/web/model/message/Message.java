@@ -100,10 +100,8 @@ public abstract class Message
 
 	protected String title;
 
-	@JsonIgnore
 	protected Long acknowledgedOn;
 
-	@JsonIgnore
 	protected Long createdOn;
 
 	protected Message()
@@ -115,37 +113,44 @@ public abstract class Message
 	{
 	    this.id = id;
 	}
-
+	
+	@JsonProperty("id")
 	public int getId()
 	{
 	    return id;
 	}
-
+	
+	@JsonProperty("locale")
 	public String getLocale()
     {
         return locale;
     }
-
+	
+	@JsonProperty("locale")
     public void setLocale(String locale)
     {
         this.locale = locale;
     }
 
+    @JsonProperty("title")
 	public String getTitle()
 	{
         return title;
     }
-
+	
+	@JsonProperty("title")
     public void setTitle(String title)
     {
         this.title = title;
     }
-
+    
+    @JsonProperty("createdOn")
     public Long getCreatedOn()
     {
         return createdOn;
     }
 
+    @JsonProperty("createdOn")
     public void setCreatedOn(long created)
     {
         this.createdOn = created;
@@ -157,11 +162,13 @@ public abstract class Message
         this.createdOn = created.getMillis();
     }
 
+    @JsonProperty("acknowledgedOn")
     public Long getAcknowledgedOn()
     {
         return acknowledgedOn;
     }
-
+    
+    @JsonProperty("acknowledgedOn")
     public void setAcknowledgedOn(long acknowledged)
     {
         this.acknowledgedOn = acknowledged;
