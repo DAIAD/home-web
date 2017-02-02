@@ -1,5 +1,6 @@
 package eu.daiad.web.repository.application;
 
+import java.io.IOException;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
@@ -10,6 +11,9 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
@@ -26,9 +30,11 @@ import eu.daiad.web.domain.application.AlertTemplateEntity;
 import eu.daiad.web.domain.application.AlertTemplateTranslationEntity;
 import eu.daiad.web.model.PagingOptions;
 import eu.daiad.web.model.message.Alert;
+import eu.daiad.web.model.message.Alert.ParameterizedTemplate;
 import eu.daiad.web.model.message.EnumAlertTemplate;
 import eu.daiad.web.model.message.EnumAlertType;
 import eu.daiad.web.repository.BaseRepository;
+import eu.daiad.web.service.ICurrencyRateService;
 
 @Repository
 @Transactional("applicationTransactionManager")
@@ -37,12 +43,17 @@ public class AccountAlertRepository extends BaseRepository
 {
     public static final int DEFAULT_LIMIT = 50;
 
+    private static final Log logger = LogFactory.getLog(AccountAlertRepository.class);
+    
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
 
     @Autowired
     IAlertTemplateTranslationRepository translationRepository;
 
+    @Autowired
+    ICurrencyRateService currencyRateService;
+    
     @Override
     public AccountAlertEntity findOne(int id)
     {
@@ -297,22 +308,6 @@ public class AccountAlertRepository extends BaseRepository
         return e;
     }
 
-    public AccountAlertEntity createWith(
-        AccountEntity account, EnumAlertTemplate template, Map<String, Object> p)
-    {
-        // Ensure we have a persistent AccountEntity instance
-        if (!entityManager.contains(account))
-            account = entityManager.find(AccountEntity.class, account.getId());
-
-        // Find entity mapping to target template
-        AlertTemplateEntity templateEntity =
-            entityManager.find(AlertTemplateEntity.class, template.getValue());
-
-        AccountAlertEntity e =
-            new AccountAlertEntity(account, templateEntity, p);
-        return create(e);
-    }
-
     @Override
     public AccountAlertEntity createWith(UUID accountKey, Alert.ParameterizedTemplate parameters)
     {
@@ -337,7 +332,21 @@ public class AccountAlertRepository extends BaseRepository
     public AccountAlertEntity createWith(
         AccountEntity account, Alert.ParameterizedTemplate parameterizedTemplate)
     {
-        return createWith(account, parameterizedTemplate.getTemplate(), parameterizedTemplate.getParameters());
+        // Ensure we have a persistent AccountEntity instance
+        if (!entityManager.contains(account))
+            account = entityManager.find(AccountEntity.class, account.getId());
+        
+        // Find entity mapping to target template
+        
+        EnumAlertTemplate template = parameterizedTemplate.getTemplate();
+        AlertTemplateEntity templateEntity =
+            entityManager.find(AlertTemplateEntity.class, template.getValue());
+        
+        // Create
+        
+        AccountAlertEntity r = 
+            new AccountAlertEntity(account, templateEntity, parameterizedTemplate);
+        return create(r);
     }
 
     @Override
@@ -392,17 +401,36 @@ public class AccountAlertRepository extends BaseRepository
         if (translation == null)
             return null;
 
+        // Retrieve generation-time parameters (as a parameterized template)
+
+        ParameterizedTemplate parameterizedTemplate = null; 
+        try {
+            parameterizedTemplate = r.getParameters().toParameterizedTemplate();
+        } catch (ClassCastException | ClassNotFoundException | IOException ex) {
+            logger.error(String.format(
+                "Failed to retrieve parameterized template for alert#%d: %s",
+                r.getId(), ex.getMessage()));
+            parameterizedTemplate = null;
+        }
+        if (parameterizedTemplate == null)
+            return null;
+        
+        // Make underlying parameters aware of target locale
+        
+        parameterizedTemplate = parameterizedTemplate.withLocale(locale, currencyRateService);
+        
         // Format
-
-        // Todo: Some parameters need pre-processing (currencies, dates)
-        Map<String, Object> parameters = r.getParametersAsMap();
-
+        
+        Map<String, Object> parameters = parameterizedTemplate.getParameters();
+        
         String title = (new MessageFormat(translation.getTitle(), locale))
             .format(parameters);
 
         String description = (new MessageFormat(translation.getDescription(), locale))
             .format(parameters);
-
+        
+        // Build a DTO object with formatted messages
+        
         Alert message = new Alert(r.getId(), template);
         message.setLocale(locale.getLanguage());
         message.setTitle(title);

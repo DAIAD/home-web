@@ -18,34 +18,34 @@ import javax.validation.constraints.NotNull;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import eu.daiad.web.model.message.Recommendation.ParameterizedTemplate;
+import eu.daiad.web.model.message.Alert.ParameterizedTemplate;
 
-@Entity(name = "account_recommendation_parameters")
-@Table(schema = "public", name = "account_recommendation_parameters")
-public class AccountRecommendationParametersEntity
+@Entity(name = "account_alert_parameters")
+@Table(schema = "public", name = "account_alert_parameters")
+public class AccountAlertParametersEntity
 {
     private static final ObjectMapper serializer = new ObjectMapper();
     
     @Id
     @Column(name = "id")
     @SequenceGenerator(
-        sequenceName = "account_recommendation_parameters_id_seq",
-        name = "account_recommendation_parameters_id_seq",
+        sequenceName = "account_alert_parameters_id_seq",
+        name = "account_alert_parameters_id_seq",
         allocationSize = 1,
         initialValue = 1)
-    @GeneratedValue(generator = "account_recommendation_parameters_id_seq")
+    @GeneratedValue(generator = "account_alert_parameters_id_seq")
     private int id;
     
     @OneToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(
-        name = "account_recommendation_id",
-        foreignKey = @ForeignKey(name = "fk_account_recommendation_parameters"),
+        name = "account_alert_id",
+        foreignKey = @ForeignKey(name = "fk_account_alert_parameters"),
         nullable = false,
         unique = true,
         updatable = false
     )
     @NotNull
-    private AccountRecommendationEntity recommendation;
+    private AccountAlertEntity alert;
     
     @Basic()
     @Column(name = "class_name", nullable = false)
@@ -57,20 +57,17 @@ public class AccountRecommendationParametersEntity
     @NotNull
     private String jsonData;
     
-    public AccountRecommendationParametersEntity() {}
-    
-    public AccountRecommendationParametersEntity(
-        AccountRecommendationEntity recommendation, ParameterizedTemplate parameterizedTemplate) 
+    public AccountAlertParametersEntity(
+        AccountAlertEntity alert, ParameterizedTemplate parameterizedTemplate) 
         throws JsonProcessingException 
     {
-        this.recommendation = recommendation;
+        this.alert = alert;
         
         // Serialize parameterized template
         
         this.className = parameterizedTemplate.getClass().getName();
         this.jsonData = serializer.writeValueAsString(parameterizedTemplate);
     }
-
     public int getId()
     {
         return id;
@@ -81,9 +78,9 @@ public class AccountRecommendationParametersEntity
         return jsonData;
     }
     
-    public AccountRecommendationEntity getRecommendation()
+    public AccountAlertEntity getAlert()
     {
-        return recommendation;
+        return alert;
     }
     
     public ParameterizedTemplate toParameterizedTemplate() 

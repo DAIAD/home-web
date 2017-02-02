@@ -28,7 +28,7 @@ public class Recommendation extends Message
          * @param target The target locale
          * @param currencyRate A service providing currency-rate information in case a
          *    parameter represents a money amounts (and must be converted) 
-         * @return
+         * @return a localized {@link ParameterizedTemplate}
          */
         public ParameterizedTemplate withLocale(Locale target, ICurrencyRateService currencyRate);
     }

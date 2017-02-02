@@ -417,14 +417,14 @@ public class AccountRecommendationRepository extends BaseRepository
         if (translation == null)
             return null;
 
-        // Retrieve generation-time parameters: rebuild a parameterized template
+        // Retrieve generation-time parameters (as a parameterized template)
 
         ParameterizedTemplate parameterizedTemplate = null; 
         try {
             parameterizedTemplate = r.getParameters().toParameterizedTemplate();
         } catch (ClassCastException | ClassNotFoundException | IOException ex) {
             logger.error(String.format(
-                "Failed to re-build parameterized template for recommendation#%d: %s",
+                "Failed to retrieve parameterized template for recommendation#%d: %s",
                 r.getId(), ex.getMessage()));
             parameterizedTemplate = null;
         }

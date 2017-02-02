@@ -439,8 +439,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 (deviceType == EnumDeviceType.AMPHIRO?
                     EnumAlertTemplate.NEAR_DAILY_SHOWER_BUDGET : EnumAlertTemplate.NEAR_DAILY_WATER_BUDGET)
             )
-            .setInteger1(consumed.intValue())
-            .setInteger2(remaining.intValue());
+            .withInteger1(consumed.intValue())
+            .withInteger2(remaining.intValue());
 
         return new MessageResolutionStatus<>(
             percentUsed > BUDGET_NEAR_PERCENTAGE_THRESHOLD, parameters);
@@ -478,8 +478,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 (deviceType == EnumDeviceType.AMPHIRO?
                     EnumAlertTemplate.NEAR_WEEKLY_SHOWER_BUDGET: EnumAlertTemplate.NEAR_WEEKLY_WATER_BUDGET)
             )
-            .setInteger1(consumed.intValue())
-            .setInteger2(remaining.intValue());
+            .withInteger1(consumed.intValue())
+            .withInteger2(remaining.intValue());
 
         return new MessageResolutionStatus<>(
             percentUsed > BUDGET_NEAR_PERCENTAGE_THRESHOLD, parameters);
@@ -516,8 +516,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 (deviceType == EnumDeviceType.AMPHIRO?
                     EnumAlertTemplate.REACHED_DAILY_SHOWER_BUDGET: EnumAlertTemplate.REACHED_DAILY_WATER_BUDGET)
             )
-            .setInteger1(Integer.valueOf(budget))
-            .setInteger2(consumed.intValue());
+            .withInteger1(Integer.valueOf(budget))
+            .withInteger2(consumed.intValue());
 
         return new MessageResolutionStatus<>(
             percentUsed > BUDGET_PERCENTAGE_THRESHOLD, parameters);
@@ -614,8 +614,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
                     (deviceType == EnumDeviceType.AMPHIRO)?
                         EnumAlertTemplate.TOO_MUCH_WATER_SHOWER: EnumAlertTemplate.TOO_MUCH_WATER_METER
                 )
-                .setInteger1(annualSavings.intValue())
-                .setInteger2(consumed.intValue());
+                .withInteger1(annualSavings.intValue())
+                .withInteger2(consumed.intValue());
             return new MessageResolutionStatus<>(true, parameters);
         }
 
@@ -660,7 +660,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
                     refDate, EnumDeviceType.AMPHIRO, EnumAlertTemplate.TOO_MUCH_ENERGY
                 )
-                .setCurrency1(annualSavings);
+                .withMoney1(annualSavings);
             return new MessageResolutionStatus<>(true, parameters);
         }
 
@@ -707,7 +707,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
                 refDate, deviceType,
                 (deviceType == EnumDeviceType.AMPHIRO)?
                     EnumAlertTemplate.REDUCED_WATER_USE_SHOWER: EnumAlertTemplate.REDUCED_WATER_USE_METER)
-                .setInteger1(percentDiff.intValue());
+                .withInteger1(percentDiff.intValue());
             return new MessageResolutionStatus<>(true, parameters);
         }
 
@@ -746,7 +746,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
                     refDate, EnumDeviceType.METER, EnumAlertTemplate.WATER_EFFICIENCY_LEADER
                 )
-                .setInteger1(annualSavings);
+                .withInteger1(annualSavings);
             return new MessageResolutionStatus<>(true, parameters);
         }
 
@@ -796,7 +796,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         if (percentDiff > 25 || (percentDiff > 6 && c0 < monthlyAverage.getValue())) {
             Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
                     refDate, EnumDeviceType.METER, EnumAlertTemplate.GOOD_JOB_MONTHLY)
-                .setInteger1(percentDiff.intValue());
+                .withInteger1(percentDiff.intValue());
             return new MessageResolutionStatus<>(true, parameters);
         }
         return null;
@@ -840,7 +840,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         if (diff > VOLUME_WEEKLY_DIFF_THRESHOLD) {
             Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
                 refDate, EnumDeviceType.METER, EnumAlertTemplate.LITERS_ALREADY_SAVED)
-            .setInteger1(diff.intValue());
+            .withInteger1(diff.intValue());
             return new MessageResolutionStatus<>(true, parameters);
         }
 
