@@ -112,7 +112,7 @@ public class AccountTipRepository extends BaseRepository
         if (offset > 0)
             query.setFirstResult(offset);
 
-        query.setMaxResults(pagination.getLimit());
+        query.setMaxResults(pagination.getSize());
 
         return query.getResultList();
     }
@@ -352,7 +352,7 @@ public class AccountTipRepository extends BaseRepository
         message.setLocale(tipEntity.getLocale());
         message.setTitle(tipEntity.getTitle());
         message.setDescription(tipEntity.getDescription());
-        //message.setImageEncoded(tipEntity.getImage());
+        message.setImageEncoded(tipEntity.getImage());
         message.setImageMimeType(tipEntity.getImageMimeType());
         message.setImageLink(tipEntity.getImageLink());
         message.setPrompt(tipEntity.getPrompt());
@@ -363,8 +363,10 @@ public class AccountTipRepository extends BaseRepository
             message.setModifiedOn(tipEntity.getModifiedOn());
         message.setActive(tipEntity.isActive());
 
-        message.setCreatedOn(a.getCreatedOn());
-        message.setAcknowledgedOn(a.getAcknowledgedOn());
+        if (a.getCreatedOn() != null)
+            message.setCreatedOn(a.getCreatedOn());
+        if (a.getAcknowledgedOn() != null)
+            message.setAcknowledgedOn(a.getAcknowledgedOn());
 
         return message;
     }

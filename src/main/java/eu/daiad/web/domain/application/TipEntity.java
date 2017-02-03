@@ -17,6 +17,7 @@ import javax.validation.constraints.NotNull;
 import org.hibernate.annotations.NaturalId;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
+import org.springframework.security.crypto.codec.Base64;
 
 @Entity(name = "tip")
 @Table(schema = "public", name = "tip")
@@ -58,7 +59,7 @@ public class TipEntity
     @Basic(fetch = FetchType.LAZY)
     @Column(name = "image_binary")
     @Type(type = "org.hibernate.type.BinaryType")
-    private byte image[];
+    private byte[] image;
 
     @Column(name = "image_mime_type")
     private String imageMimeType;
@@ -134,12 +135,23 @@ public class TipEntity
         this.description = description;
     }
 
-    public byte[] getImage() {
+    public byte[] getImage() 
+    {
         return image;
     }
 
-    public void setImage(byte[] image) {
+    public void setImage(byte[] image) 
+    {
         this.image = image;
+    }
+    
+    public void setImage(String imageEncoded) 
+    {
+        // Assume that image is base64 encoded
+        if (imageEncoded != null && !imageEncoded.isEmpty())
+            this.image = Base64.decode(imageEncoded.getBytes());
+        else
+            this.image = null;
     }
 
     public String getImageLink() {

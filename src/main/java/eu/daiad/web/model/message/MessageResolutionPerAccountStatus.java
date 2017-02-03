@@ -8,61 +8,61 @@ public class MessageResolutionPerAccountStatus
 {
 	private final UUID accountKey; 
     
-    private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterLeakSWM;
+    private MessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterLeakSWM;
 
-	private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertShowerStillOnAmphiro;
+	private MessageResolutionStatus<Alert.ParameterizedTemplate> alertShowerStillOnAmphiro;
 
-	private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterQualitySWM;
+	private MessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterQualitySWM;
 
-	private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertHotTemperatureAmphiro;
+	private MessageResolutionStatus<Alert.ParameterizedTemplate> alertHotTemperatureAmphiro;
 
-	private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertNearDailyBudgetSWM;
+	private MessageResolutionStatus<Alert.ParameterizedTemplate> alertNearDailyBudgetSWM;
 
-	private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertNearWeeklyBudgetSWM;
+	private MessageResolutionStatus<Alert.ParameterizedTemplate> alertNearWeeklyBudgetSWM;
 
-	private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertNearDailyBudgetAmphiro;
+	private MessageResolutionStatus<Alert.ParameterizedTemplate> alertNearDailyBudgetAmphiro;
 
-	private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertNearWeeklyBudgetAmphiro;
+	private MessageResolutionStatus<Alert.ParameterizedTemplate> alertNearWeeklyBudgetAmphiro;
 
-	private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertReachedDailyBudgetSWM;
+	private MessageResolutionStatus<Alert.ParameterizedTemplate> alertReachedDailyBudgetSWM;
 
-	private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertReachedDailyBudgetAmphiro;
+	private MessageResolutionStatus<Alert.ParameterizedTemplate> alertReachedDailyBudgetAmphiro;
 
-	private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterChampionSWM;
+	private MessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterChampionSWM;
 
-	private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertShowerChampionAmphiro;
+	private MessageResolutionStatus<Alert.ParameterizedTemplate> alertShowerChampionAmphiro;
 
-	private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertTooMuchWaterConsumptionSWM;
+	private MessageResolutionStatus<Alert.ParameterizedTemplate> alertTooMuchWaterConsumptionSWM;
 
-	private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertTooMuchWaterConsumptionAmphiro;
+	private MessageResolutionStatus<Alert.ParameterizedTemplate> alertTooMuchWaterConsumptionAmphiro;
 
-	private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertTooMuchEnergyAmphiro;
+	private MessageResolutionStatus<Alert.ParameterizedTemplate> alertTooMuchEnergyAmphiro;
 	
-	private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertReducedWaterUseSWM;
+	private MessageResolutionStatus<Alert.ParameterizedTemplate> alertReducedWaterUseSWM;
 
-	private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertReducedWaterUseAmphiro;
+	private MessageResolutionStatus<Alert.ParameterizedTemplate> alertReducedWaterUseAmphiro;
 
-	private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterEfficiencyLeaderSWM;
+	private MessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterEfficiencyLeaderSWM;
 
-	private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertPromptGoodJobMonthlySWM;
+	private MessageResolutionStatus<Alert.ParameterizedTemplate> alertPromptGoodJobMonthlySWM;
 
-	private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertLitresSavedSWM;
+	private MessageResolutionStatus<Alert.ParameterizedTemplate> alertLitresSavedSWM;
 
-	private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertTop25SaverWeeklySWM;
+	private MessageResolutionStatus<Alert.ParameterizedTemplate> alertTop25SaverWeeklySWM;
 
-	private IMessageResolutionStatus<Alert.ParameterizedTemplate> alertTop10SaverWeeklySWM;
+	private MessageResolutionStatus<Alert.ParameterizedTemplate> alertTop10SaverWeeklySWM;
 	
-	private IMessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendLessShowerTimeAmphiro;
+	private MessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendLessShowerTimeAmphiro;
 
-	private IMessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendLowerTemperatureAmphiro;
+	private MessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendLowerTemperatureAmphiro;
 
-	private IMessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendLowerFlowAmphiro;
+	private MessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendLowerFlowAmphiro;
 
-	private IMessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendShowerHeadChangeAmphiro;
+	private MessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendShowerHeadChangeAmphiro;
 
-	private IMessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendShampooChangeAmphiro;
+	private MessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendShampooChangeAmphiro;
 
-	private IMessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendReduceFlowWhenNotNeededAmphiro;
+	private MessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendReduceFlowWhenNotNeededAmphiro;
         
     private boolean initialStaticTips;
 
@@ -73,7 +73,7 @@ public class MessageResolutionPerAccountStatus
 
     private boolean amphiroInstalled;
     
-    private List<IMessageResolutionStatus<Recommendation.ParameterizedTemplate>> insights = new ArrayList<>();
+    private List<MessageResolutionStatus<? extends Recommendation.ParameterizedTemplate>> insights = new ArrayList<>();
     
     //
     // ~ Constructors
@@ -97,26 +97,20 @@ public class MessageResolutionPerAccountStatus
         return initialStaticTips;
     }
         
-    public List<IMessageResolutionStatus<Recommendation.ParameterizedTemplate>> getInsights()
+    public List<MessageResolutionStatus<? extends Recommendation.ParameterizedTemplate>> getInsights()
     {
         return insights;
     }
         
-    public <P extends Insight.ParameterizedTemplate> void addInsight(MessageResolutionStatus<P> p)
+    public <P extends Insight.ParameterizedTemplate> void addInsight(SimpleMessageResolutionStatus<P> p)
     {
-        if (p != null) { 
-            insights.add(
-                new MessageResolutionStatus<Recommendation.ParameterizedTemplate>(
-                    p.getScore(),
-                    p.getMessage())
-                );
-        }
+        if (p != null)
+            insights.add(p);
     }
     
-    public <P extends Insight.ParameterizedTemplate> void addInsights(List<MessageResolutionStatus<P>> l)
+    public <P extends Insight.ParameterizedTemplate> void addInsights(List<SimpleMessageResolutionStatus<P>> l)
     {
-        for (MessageResolutionStatus<P> p: l)
-            addInsight(p);
+        insights.addAll(l);
     }
     
     public void clearInsights()
@@ -134,237 +128,237 @@ public class MessageResolutionPerAccountStatus
 		return amphiroInstalled;
 	}        
                 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertWaterLeakSWM()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertWaterLeakSWM()
     {
         return alertWaterLeakSWM;
     }
 
-    public void setAlertWaterLeakSWM(IMessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterLeakSWM)
+    public void setAlertWaterLeakSWM(MessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterLeakSWM)
     {
         this.alertWaterLeakSWM = alertWaterLeakSWM;
     }
 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertShowerStillOnAmphiro()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertShowerStillOnAmphiro()
     {
         return alertShowerStillOnAmphiro;
     }
 
     public void setAlertShowerStillOnAmphiro(
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> alertShowerStillOnAmphiro)
+        MessageResolutionStatus<Alert.ParameterizedTemplate> alertShowerStillOnAmphiro)
     {
         this.alertShowerStillOnAmphiro = alertShowerStillOnAmphiro;
     }
 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertWaterQualitySWM()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertWaterQualitySWM()
     {
         return alertWaterQualitySWM;
     }
 
     public void setAlertWaterQualitySWM(
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterQualitySWM)
+        MessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterQualitySWM)
     {
         this.alertWaterQualitySWM = alertWaterQualitySWM;
     }
 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertHotTemperatureAmphiro()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertHotTemperatureAmphiro()
     {
         return alertHotTemperatureAmphiro;
     }
 
     public void setAlertHotTemperatureAmphiro(
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> alertHotTemperatureAmphiro)
+        MessageResolutionStatus<Alert.ParameterizedTemplate> alertHotTemperatureAmphiro)
     {
         this.alertHotTemperatureAmphiro = alertHotTemperatureAmphiro;
     }
 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertNearDailyBudgetSWM()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertNearDailyBudgetSWM()
     {
         return alertNearDailyBudgetSWM;
     }
 
     public void setAlertNearDailyBudgetSWM(
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> alertNearDailyBudgetSWM)
+        MessageResolutionStatus<Alert.ParameterizedTemplate> alertNearDailyBudgetSWM)
     {
         this.alertNearDailyBudgetSWM = alertNearDailyBudgetSWM;
     }
 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertNearWeeklyBudgetSWM()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertNearWeeklyBudgetSWM()
     {
         return alertNearWeeklyBudgetSWM;
     }
 
     public void setAlertNearWeeklyBudgetSWM(
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> alertNearWeeklyBudgetSWM)
+        MessageResolutionStatus<Alert.ParameterizedTemplate> alertNearWeeklyBudgetSWM)
     {
         this.alertNearWeeklyBudgetSWM = alertNearWeeklyBudgetSWM;
     }
 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertNearDailyBudgetAmphiro()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertNearDailyBudgetAmphiro()
     {
         return alertNearDailyBudgetAmphiro;
     }
 
     public void setAlertNearDailyBudgetAmphiro(
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> alertNearDailyBudgetAmphiro)
+        MessageResolutionStatus<Alert.ParameterizedTemplate> alertNearDailyBudgetAmphiro)
     {
         this.alertNearDailyBudgetAmphiro = alertNearDailyBudgetAmphiro;
     }
 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertNearWeeklyBudgetAmphiro()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertNearWeeklyBudgetAmphiro()
     {
         return alertNearWeeklyBudgetAmphiro;
     }
 
     public void setAlertNearWeeklyBudgetAmphiro(
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> alertNearWeeklyBudgetAmphiro)
+        MessageResolutionStatus<Alert.ParameterizedTemplate> alertNearWeeklyBudgetAmphiro)
     {
         this.alertNearWeeklyBudgetAmphiro = alertNearWeeklyBudgetAmphiro;
     }
 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertReachedDailyBudgetSWM()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertReachedDailyBudgetSWM()
     {
         return alertReachedDailyBudgetSWM;
     }
 
     public void setAlertReachedDailyBudgetSWM(
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> alertReachedDailyBudgetSWM)
+        MessageResolutionStatus<Alert.ParameterizedTemplate> alertReachedDailyBudgetSWM)
     {
         this.alertReachedDailyBudgetSWM = alertReachedDailyBudgetSWM;
     }
 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertReachedDailyBudgetAmphiro()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertReachedDailyBudgetAmphiro()
     {
         return alertReachedDailyBudgetAmphiro;
     }
 
     public void setAlertReachedDailyBudgetAmphiro(
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> alertReachedDailyBudgetAmphiro)
+        MessageResolutionStatus<Alert.ParameterizedTemplate> alertReachedDailyBudgetAmphiro)
     {
         this.alertReachedDailyBudgetAmphiro = alertReachedDailyBudgetAmphiro;
     }
 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertWaterChampionSWM()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertWaterChampionSWM()
     {
         return alertWaterChampionSWM;
     }
 
     public void setAlertWaterChampionSWM(
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterChampionSWM)
+        MessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterChampionSWM)
     {
         this.alertWaterChampionSWM = alertWaterChampionSWM;
     }
 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertShowerChampionAmphiro()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertShowerChampionAmphiro()
     {
         return alertShowerChampionAmphiro;
     }
 
     public void setAlertShowerChampionAmphiro(
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> alertShowerChampionAmphiro)
+        MessageResolutionStatus<Alert.ParameterizedTemplate> alertShowerChampionAmphiro)
     {
         this.alertShowerChampionAmphiro = alertShowerChampionAmphiro;
     }
 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertTooMuchWaterConsumptionSWM()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertTooMuchWaterConsumptionSWM()
     {
         return alertTooMuchWaterConsumptionSWM;
     }
 
     public void setAlertTooMuchWaterConsumptionSWM(
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> alertTooMuchWaterConsumptionSWM)
+        MessageResolutionStatus<Alert.ParameterizedTemplate> alertTooMuchWaterConsumptionSWM)
     {
         this.alertTooMuchWaterConsumptionSWM = alertTooMuchWaterConsumptionSWM;
     }
 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertTooMuchWaterConsumptionAmphiro()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertTooMuchWaterConsumptionAmphiro()
     {
         return alertTooMuchWaterConsumptionAmphiro;
     }
 
     public void setAlertTooMuchWaterConsumptionAmphiro(
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> alertTooMuchWaterConsumptionAmphiro)
+        MessageResolutionStatus<Alert.ParameterizedTemplate> alertTooMuchWaterConsumptionAmphiro)
     {
         this.alertTooMuchWaterConsumptionAmphiro = alertTooMuchWaterConsumptionAmphiro;
     }
 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertTooMuchEnergyAmphiro()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertTooMuchEnergyAmphiro()
     {
         return alertTooMuchEnergyAmphiro;
     }
 
     public void setAlertTooMuchEnergyAmphiro(
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> alertTooMuchEnergyAmphiro)
+        MessageResolutionStatus<Alert.ParameterizedTemplate> alertTooMuchEnergyAmphiro)
     {
         this.alertTooMuchEnergyAmphiro = alertTooMuchEnergyAmphiro;
     }
 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertReducedWaterUseSWM()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertReducedWaterUseSWM()
     {
         return alertReducedWaterUseSWM;
     }
 
     public void setAlertReducedWaterUseSWM(
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> alertReducedWaterUseSWM)
+        MessageResolutionStatus<Alert.ParameterizedTemplate> alertReducedWaterUseSWM)
     {
         this.alertReducedWaterUseSWM = alertReducedWaterUseSWM;
     }
 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertReducedWaterUseAmphiro()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertReducedWaterUseAmphiro()
     {
         return alertReducedWaterUseAmphiro;
     }
 
     public void setAlertReducedWaterUseAmphiro(
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> alertReducedWaterUseAmphiro)
+        MessageResolutionStatus<Alert.ParameterizedTemplate> alertReducedWaterUseAmphiro)
     {
         this.alertReducedWaterUseAmphiro = alertReducedWaterUseAmphiro;
     }
 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertWaterEfficiencyLeaderSWM()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertWaterEfficiencyLeaderSWM()
     {
         return alertWaterEfficiencyLeaderSWM;
     }
 
     public void setAlertWaterEfficiencyLeaderSWM(
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterEfficiencyLeaderSWM)
+        MessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterEfficiencyLeaderSWM)
     {
         this.alertWaterEfficiencyLeaderSWM = alertWaterEfficiencyLeaderSWM;
     }
 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertPromptGoodJobMonthlySWM()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertPromptGoodJobMonthlySWM()
     {
         return alertPromptGoodJobMonthlySWM;
     }
 
     public void setAlertPromptGoodJobMonthlySWM(
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> alertPromptGoodJobMonthlySWM)
+        MessageResolutionStatus<Alert.ParameterizedTemplate> alertPromptGoodJobMonthlySWM)
     {
         this.alertPromptGoodJobMonthlySWM = alertPromptGoodJobMonthlySWM;
     }
 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertLitresSavedSWM()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertLitresSavedSWM()
     {
         return alertLitresSavedSWM;
     }
 
     public void setAlertLitresSavedSWM(
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> alertLitresSavedSWM)
+        MessageResolutionStatus<Alert.ParameterizedTemplate> alertLitresSavedSWM)
     {
         this.alertLitresSavedSWM = alertLitresSavedSWM;
     }
 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertTop25SaverWeeklySWM()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertTop25SaverWeeklySWM()
     {
         return alertTop25SaverWeeklySWM;
     }
 
     public void setAlertTop25SaverWeeklySWM(
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> alertTop25SaverWeeklySWM)
+        MessageResolutionStatus<Alert.ParameterizedTemplate> alertTop25SaverWeeklySWM)
     {
         this.alertTop25SaverWeeklySWM = alertTop25SaverWeeklySWM;
     }
 
-    public IMessageResolutionStatus<Alert.ParameterizedTemplate> getAlertTop10SaverWeeklySWM()
+    public MessageResolutionStatus<Alert.ParameterizedTemplate> getAlertTop10SaverWeeklySWM()
     {
         return alertTop10SaverWeeklySWM;
     }
@@ -375,73 +369,73 @@ public class MessageResolutionPerAccountStatus
     }
 
     public void setAlertTop10SaverWeeklySWM(
-        IMessageResolutionStatus<Alert.ParameterizedTemplate> alertTop10SaverSWM)
+        MessageResolutionStatus<Alert.ParameterizedTemplate> alertTop10SaverSWM)
     {
         this.alertTop10SaverWeeklySWM = alertTop10SaverSWM;
     }
 
-    public IMessageResolutionStatus<Recommendation.ParameterizedTemplate> getRecommendLessShowerTimeAmphiro()
+    public MessageResolutionStatus<Recommendation.ParameterizedTemplate> getRecommendLessShowerTimeAmphiro()
     {
         return recommendLessShowerTimeAmphiro;
     }
 
     public void setRecommendLessShowerTimeAmphiro(
-        IMessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendLessShowerTimeAmphiro)
+        MessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendLessShowerTimeAmphiro)
     {
         this.recommendLessShowerTimeAmphiro = recommendLessShowerTimeAmphiro;
     }
 
-    public IMessageResolutionStatus<Recommendation.ParameterizedTemplate> getRecommendLowerTemperatureAmphiro()
+    public MessageResolutionStatus<Recommendation.ParameterizedTemplate> getRecommendLowerTemperatureAmphiro()
     {
         return recommendLowerTemperatureAmphiro;
     }
 
     public void setRecommendLowerTemperatureAmphiro(
-        IMessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendLowerTemperatureAmphiro)
+        MessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendLowerTemperatureAmphiro)
     {
         this.recommendLowerTemperatureAmphiro = recommendLowerTemperatureAmphiro;
     }
 
-    public IMessageResolutionStatus<Recommendation.ParameterizedTemplate> getRecommendLowerFlowAmphiro()
+    public MessageResolutionStatus<Recommendation.ParameterizedTemplate> getRecommendLowerFlowAmphiro()
     {
         return recommendLowerFlowAmphiro;
     }
 
     public void setRecommendLowerFlowAmphiro(
-        IMessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendLowerFlowAmphiro)
+        MessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendLowerFlowAmphiro)
     {
         this.recommendLowerFlowAmphiro = recommendLowerFlowAmphiro;
     }
 
-    public IMessageResolutionStatus<Recommendation.ParameterizedTemplate> getRecommendShowerHeadChangeAmphiro()
+    public MessageResolutionStatus<Recommendation.ParameterizedTemplate> getRecommendShowerHeadChangeAmphiro()
     {
         return recommendShowerHeadChangeAmphiro;
     }
 
     public void setRecommendShowerHeadChangeAmphiro(
-        IMessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendShowerHeadChangeAmphiro)
+        MessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendShowerHeadChangeAmphiro)
     {
         this.recommendShowerHeadChangeAmphiro = recommendShowerHeadChangeAmphiro;
     }
 
-    public IMessageResolutionStatus<Recommendation.ParameterizedTemplate> getRecommendShampooChangeAmphiro()
+    public MessageResolutionStatus<Recommendation.ParameterizedTemplate> getRecommendShampooChangeAmphiro()
     {
         return recommendShampooChangeAmphiro;
     }
 
     public void setRecommendShampooChangeAmphiro(
-        IMessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendShampooChangeAmphiro)
+        MessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendShampooChangeAmphiro)
     {
         this.recommendShampooChangeAmphiro = recommendShampooChangeAmphiro;
     }
 
-    public IMessageResolutionStatus<Recommendation.ParameterizedTemplate> getRecommendReduceFlowWhenNotNeededAmphiro()
+    public MessageResolutionStatus<Recommendation.ParameterizedTemplate> getRecommendReduceFlowWhenNotNeededAmphiro()
     {
         return recommendReduceFlowWhenNotNeededAmphiro;
     }
 
     public void setRecommendReduceFlowWhenNotNeededAmphiro(
-        IMessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendReduceFlowWhenNotNeededAmphiro)
+        MessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendReduceFlowWhenNotNeededAmphiro)
     {
         this.recommendReduceFlowWhenNotNeededAmphiro = recommendReduceFlowWhenNotNeededAmphiro;
     }

@@ -1,146 +1,171 @@
 package eu.daiad.web.model.message;
 
+import java.nio.charset.Charset;
+
 import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import org.springframework.security.crypto.codec.Base64;
 
 public class Tip extends Message
-{
-	private int index = -1;
+{    
+    private int index = -1;
 
     private String description;
 
     private String categoryName;
 
     @JsonIgnore
-    private byte imageEncoded[];
+    private String imageEncoded;
 
-	private String imageMimeType;
+    private String imageMimeType;
 
-	private String imageLink;
+    private String imageLink;
 
-	private String prompt;
+    private String prompt;
 
-	private String externalLink;
+    private String externalLink;
 
-	private String source;
+    private String source;
 
-	private Long modifiedOn;
+    private Long modifiedOn;
 
-	private boolean active;
+    private boolean active;
 
-	public Tip()
+    public Tip()
     {
         super();
     }
 
-	public Tip(int id)
-	{
-	    super(id);
-	}
-
-	@Override
-	public EnumMessageType getType() {
-		return EnumMessageType.TIP;
-	}
-
-	public int getIndex() {
-		return index;
-	}
-
-	public void setIndex(int index) {
-		this.index = index;
-	}
-
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
-	public byte[] getImageEncoded() {
-		return imageEncoded;
-	}
+    public Tip(int id)
+    {
+        super(id);
+    }
 
     @JsonIgnore
-	public void setImageEncoded(byte[] imageEncoded) {
-		this.imageEncoded = imageEncoded;
-	}
+    @Override
+    public EnumMessageType getType() 
+    {
+        return EnumMessageType.TIP;
+    }
+    
+    // Todo: replace with getType (only for API compatibility reasons) 
+    @JsonProperty("type")
+    public String getTypeAsLegacyName() 
+    {
+        return "RECOMMENDATION_STATIC";
+    }
 
-	public String getImageLink() {
-		return imageLink;
-	}
+    public int getIndex() {
+        return index;
+    }
 
-	public void setImageLink(String imageLink) {
-		this.imageLink = imageLink;
-	}
+    public void setIndex(int index) {
+        this.index = index;
+    }
 
-	public String getPrompt() {
-		return prompt;
-	}
+    public String getDescription() {
+        return description;
+    }
 
-	public void setPrompt(String prompt) {
-		this.prompt = prompt;
-	}
+    public void setDescription(String description) {
+        this.description = description;
+    }
+    
+    @JsonProperty("imageEncoded")
+    public String getImageEncoded() 
+    {
+        return imageEncoded;
+    }
 
-	public String getSource() {
-		return source;
-	}
+    @JsonProperty("imageEncoded")
+    public void setImageEncoded(String imageEncoded) 
+    {
+        this.imageEncoded = imageEncoded;
+    }
+    
+    @JsonIgnore
+    public void setImageEncoded(byte[] imageData) 
+    {
+        this.imageEncoded = new String(Base64.encode(imageData), Charset.forName("ISO-8859-1"));
+    }
 
-	public void setSource(String source) {
-		this.source = source;
-	}
+    public String getImageLink() {
+        return imageLink;
+    }
 
-	public Long getModifiedOn() {
-		return modifiedOn;
-	}
+    public void setImageLink(String imageLink) {
+        this.imageLink = imageLink;
+    }
 
-	public void setModifiedOn(long modified)
+    public String getPrompt() {
+        return prompt;
+    }
+
+    public void setPrompt(String prompt) {
+        this.prompt = prompt;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+    
+    @JsonProperty("modifiedOn")
+    public Long getModifiedOn() {
+        return modifiedOn;
+    }
+
+    @JsonProperty("modifiedOn")
+    public void setModifiedOn(long modified)
     {
         this.modifiedOn = modified;
     }
 
-	@JsonIgnore
-	public void setModifiedOn(DateTime modified)
-	{
+    @JsonIgnore
+    public void setModifiedOn(DateTime modified)
+    {
         this.modifiedOn = modified.getMillis();
     }
 
-	public boolean isActive() {
-		return active;
-	}
+    public boolean isActive() {
+        return active;
+    }
 
-	public void setActive(boolean active) {
-		this.active = active;
-	}
+    public void setActive(boolean active) {
+        this.active = active;
+    }
 
-	public String getExternalLink() {
-		return externalLink;
-	}
+    public String getExternalLink() {
+        return externalLink;
+    }
 
-	public void setExternalLink(String externalLink) {
-		this.externalLink = externalLink;
-	}
+    public void setExternalLink(String externalLink) {
+        this.externalLink = externalLink;
+    }
 
-	public String getImageMimeType() {
-		return imageMimeType;
-	}
+    public String getImageMimeType() {
+        return imageMimeType;
+    }
 
-	public void setImageMimeType(String imageMimeType) {
-		this.imageMimeType = imageMimeType;
-	}
+    public void setImageMimeType(String imageMimeType) {
+        this.imageMimeType = imageMimeType;
+    }
 
-	public String getCategoryName()
-	{
-	    return categoryName;
-	}
+    public String getCategoryName()
+    {
+        return categoryName;
+    }
 
-	public void setCategoryName(String categoryName)
-	{
-	    this.categoryName = categoryName;
-	}
+    public void setCategoryName(String categoryName)
+    {
+        this.categoryName = categoryName;
+    }
 
     @Override
     public String getBody()

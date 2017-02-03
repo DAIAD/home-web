@@ -35,7 +35,7 @@ public class MessageRequest extends AuthenticatedRequest
         public void setPagination(PagingOptions pagination)
         {
             this.pagination = new PagingOptions(
-                (pagination.getLimit() > 0)? pagination.getLimit() : DEFAULT_PAGE_SIZE,
+                (pagination.getSize() > 0)? pagination.getSize() : DEFAULT_PAGE_SIZE,
                 pagination.getOffset(),
                 pagination.isAscending());
         }
