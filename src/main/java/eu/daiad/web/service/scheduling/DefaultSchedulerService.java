@@ -212,6 +212,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
         info.setDescription(scheduledJob.getDescription());
 
         info.setEnabled(scheduledJob.isEnabled());
+        info.setVisible(scheduledJob.isVisible());
 
         ScheduledJobExecutionEntity lastExecution = schedulerRepository.getLastExecution(scheduledJob.getName());
         if (lastExecution != null) {

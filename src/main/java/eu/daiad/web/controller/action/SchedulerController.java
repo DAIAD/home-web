@@ -26,6 +26,7 @@ import eu.daiad.web.model.scheduling.ExecutionQueryResponse;
 import eu.daiad.web.model.scheduling.ExecutionQueryResult;
 import eu.daiad.web.model.scheduling.JobCollectionResponse;
 import eu.daiad.web.model.scheduling.JobExecutionInfo;
+import eu.daiad.web.model.scheduling.JobInfo;
 import eu.daiad.web.model.scheduling.JobResponse;
 import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.service.scheduling.ISchedulerService;
@@ -62,7 +63,17 @@ public class SchedulerController extends BaseController {
     @Secured({ RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse getJobs() {
         try {
-            return new JobCollectionResponse(this.schedulerService.getJobs());
+            List<JobInfo> allJobs = schedulerService.getJobs();
+
+            // Hide selected jobs from the UI
+            List<JobInfo> visibleJobs = new ArrayList<JobInfo>();
+            for(JobInfo job : allJobs) {
+                if(job.isVisible()) {
+                    visibleJobs.add(job);
+                }
+            }
+
+            return new JobCollectionResponse(visibleJobs);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -148,8 +159,8 @@ public class SchedulerController extends BaseController {
         try {
             JobResponse controllerResponse = new JobResponse();
 
-            controllerResponse.setJob(this.schedulerService.getJob(jobId));
-            controllerResponse.setExecutions(this.schedulerService.getJobExecutions(jobId, startPosition, maxResult));
+            controllerResponse.setJob(schedulerService.getJob(jobId));
+            controllerResponse.setExecutions(schedulerService.getJobExecutions(jobId, startPosition, maxResult));
 
             return controllerResponse;
         } catch (Exception ex) {
@@ -169,7 +180,7 @@ public class SchedulerController extends BaseController {
     @Secured({ RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse enableJob(@PathVariable long jobId) {
         try {
-            this.schedulerService.enable(jobId);
+            schedulerService.enable(jobId);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -189,7 +200,7 @@ public class SchedulerController extends BaseController {
     @Secured({ RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse disableJob(@PathVariable long jobId) {
         try {
-            this.schedulerService.disable(jobId);
+            schedulerService.disable(jobId);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -209,7 +220,7 @@ public class SchedulerController extends BaseController {
     @Secured({ RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse launchJob(@PathVariable long jobId) {
         try {
-            this.schedulerService.launch(jobId);
+            schedulerService.launch(jobId);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -231,7 +242,7 @@ public class SchedulerController extends BaseController {
         try {
             ExecutionMessageResponse response = new ExecutionMessageResponse();
 
-            response.setMessage(this.schedulerService.getExecutionMessage(executionId));
+            response.setMessage(schedulerService.getExecutionMessage(executionId));
 
             return response;
         } catch (Exception ex) {
@@ -252,7 +263,7 @@ public class SchedulerController extends BaseController {
     @Secured({ RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse stopExecution(long executionId) {
         try {
-            this.schedulerService.stop(executionId);
+            schedulerService.stop(executionId);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 

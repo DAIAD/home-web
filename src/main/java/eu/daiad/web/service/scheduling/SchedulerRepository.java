@@ -46,8 +46,9 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
     @Override
     public List<ScheduledJobEntity> getJobs() {
         try {
-            TypedQuery<ScheduledJobEntity> query = entityManager.createQuery("select j from scheduled_job j order by name",
-                            ScheduledJobEntity.class);
+            String jobQueryString = "select j from scheduled_job j order by name";
+
+            TypedQuery<ScheduledJobEntity> query = entityManager.createQuery(jobQueryString, ScheduledJobEntity.class);
 
             return query.getResultList();
         } catch (Exception ex) {
@@ -213,7 +214,7 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
 
     @Override
     public List<ScheduledJobExecutionEntity> getExecutions(long jobId, int startPosition, int size) {
-        ScheduledJobEntity job = this.getJobById(jobId);
+        ScheduledJobEntity job = getJobById(jobId);
 
         TypedQuery<ScheduledJobExecutionEntity> query = entityManager.createQuery("select e from scheduled_job_execution e "
                         + "where e.jobName = :jobName order by e.jobInstanceId desc, e.jobExecutionId desc",
@@ -244,7 +245,7 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
 
     @Override
     public ScheduledJobExecutionEntity getLastExecution(long jobId) {
-        ScheduledJobEntity job = this.getJobById(jobId);
+        ScheduledJobEntity job = getJobById(jobId);
 
         TypedQuery<ScheduledJobExecutionEntity> query = entityManager
                         .createQuery("select e from scheduled_job_execution e "
@@ -280,12 +281,12 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
 
     @Override
     public ScheduledJobEntity enable(long scheduledJobId) {
-        return this.setScheduledJobEnabled(scheduledJobId, true);
+        return setScheduledJobEnabled(scheduledJobId, true);
     }
 
     @Override
     public void disable(long scheduledJobId) {
-        this.setScheduledJobEnabled(scheduledJobId, false);
+        setScheduledJobEnabled(scheduledJobId, false);
     }
 
     @Override
@@ -334,7 +335,7 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
                         new Date(System.currentTimeMillis()), jobExecutionId };
 
         int[] types = new int[] { Types.TIMESTAMP, Types.VARCHAR, Types.TIMESTAMP, Types.BIGINT };
-        
+
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
 
         return jdbcTemplate.update(command, parameters, types);
