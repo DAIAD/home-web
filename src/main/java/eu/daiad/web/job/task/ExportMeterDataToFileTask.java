@@ -2,6 +2,7 @@ package eu.daiad.web.job.task;
 
 import java.util.Map;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
@@ -52,6 +53,7 @@ public class ExportMeterDataToFileTask extends BaseTask implements StoppableTask
         if (StringUtils.isBlank(workingDirectory)) {
             workingDirectory = createWokringDirectory(chunkContext.getStepContext().getJobName() + "-");
 
+            // Override input parameter
             parameters.put(EnumInParameter.WORKING_DIRECTORY.getValue(), workingDirectory);
         }
 
@@ -65,23 +67,28 @@ public class ExportMeterDataToFileTask extends BaseTask implements StoppableTask
      * @param parameters step parameters.
      */
     private void exportParametersToContext(ChunkContext chunkContext, Map<String, String> parameters) {
+        // Export working directory
         String key = chunkContext.getStepContext().getStepName() +
                      Constants.PARAMETER_NAME_DELIMITER +
-                     EnumOutParameter.WORKING_DIRECTORY.getValue();
-
-        chunkContext.getStepContext()
-                    .getStepExecution()
-                    .getExecutionContext()
-                    .put(key, parameters.get(EnumInParameter.WORKING_DIRECTORY.getValue()));
-
-        key = chunkContext.getStepContext().getStepName() +
-              Constants.PARAMETER_NAME_DELIMITER +
-              EnumOutParameter.UTILITY_ID.getValue();
+                     EnumOutParameter.UTILITY_ID.getValue();
 
         chunkContext.getStepContext()
                     .getStepExecution()
                     .getExecutionContext()
                     .put(key, parameters.get(EnumInParameter.UTILITY_ID.getValue()));
+
+        // Export output filename
+        key = chunkContext.getStepContext().getStepName() +
+              Constants.PARAMETER_NAME_DELIMITER +
+              EnumOutParameter.OUTPUT_FILENAME.getValue();
+
+        String filename = FilenameUtils.concat(parameters.get(EnumInParameter.WORKING_DIRECTORY.getValue()),
+                                               parameters.get(EnumInParameter.OUTPUT_FILENAME.getValue()));
+
+        chunkContext.getStepContext()
+                    .getStepExecution()
+                    .getExecutionContext()
+                    .put(key, filename);
     }
 
     @Override
@@ -168,9 +175,9 @@ public class ExportMeterDataToFileTask extends BaseTask implements StoppableTask
          */
         UTILITY_ID("utility.id"),
         /**
-         * Working directory
+         * Export file name
          */
-        WORKING_DIRECTORY("working.directory");
+        OUTPUT_FILENAME("output.filename");
 
 
         private final String value;
