@@ -9,7 +9,18 @@
   },
   "order": [
     "Login",
-    "Logout"
+    "Logout",
+    "ProfileLoad",
+    "ProfileSave",
+    "HouseholdSave",
+    "GetComparison",
+    "Deactivate",
+    "DataQuery",
+    "ForecastQuery",
+    "MeterStatus",
+    "MeterMeasurements",
+    "Sessions",
+    "Session"
   ],
   "template": {
     "withCompare": false,

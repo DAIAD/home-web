@@ -1,22 +1,56 @@
 /**
- * @api {post} /v1/profile/load Load profile
+ * @api {post} action/profile/deactivate Deactivate account
+ * @apiVersion 0.0.1
+ * @apiName Deactivate 
+ * @apiGroup Profile
+ * @apiPermission ROLE_UTILITY_ADMIN, ROLE_SYSTEM_ADMIN
+ *
+ * @apiDescription Deactivates the profile of a user and sets the configuration of any registered amphiro devices to <code>Off</code>.
+ *
+ * @apiParam {Object}     userkey           User unique key (UUID).
+ *
+ * @apiParamExample {json} Request Example
+ * {
+ *   "userkey": "aeea36cc-cefb-47db-ac0f-8c5dbc95b0f9"
+ * }
+ *
+ * @apiSuccess {Boolean}  success           Returns <code>true</code> or <code>false</code> indicating success of the operation.
+ * @apiSuccess {Object[]} errors            Array of <code>Error</code> objects.
+ *
+ * @apiSuccessExample {json} Response Example
+ * HTTP/1.1 200 OK
+ * {
+ *   "errors": [],
+ *   "success": true
+ * }
+ *
+ * @apiError {Boolean} success Always <code>false</code>.
+ * @apiError {Object[]} errors Array of <code>Error</code> objects.
+ *
+ * @apiError (Error) {String} code          Unique error code.
+ * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
+ *
+ * @apiErrorExample Error Response Example
+ * HTTP/1.1 200 OK
+ * {
+ *   errors: [{
+ *     code: "UserErrorCode.USER_NOT_FOUND",
+ *     description: "Account a9509da9-edf5-4838-acf4-8f1b73485d7a was not found."
+ *   }],
+ *   success: false
+ * }
+ *
+ */
+function deactivateProfile() { return; }
+
+/**
+ * @api {get} action/profile/load Load profile
  * @apiVersion 0.0.1
  * @apiName ProfileLoad
  * @apiGroup Profile
  * @apiPermission ROLE_USER
  *
  * @apiDescription Loads user profile as an instance of <code>ProfileResponse</code> with information about the system runtime, application configuration and user devices.
- *
- * @apiParam {String} username User name
- * @apiParam {String} password User password
- * @apiParam {String} version  DAIAD@home mobile application version.
- *
- * @apiParamExample {json} Request Example
- * {
- *   username: "user@daiad.eu",
- *   password: "****",
- *   version: "1.5.0"
- * }
  *
  * @apiSuccess (ProfileResponse) {Boolean}  success                 Returns <code>true</code> or <code>false</code> indicating success of the operation.
  * @apiSuccess (ProfileResponse) {Object[]} errors                  Array of <code>Error</code>.
@@ -52,27 +86,27 @@
  * <br/>2: <code>INACTIVE</code>
  * <br/>3: <code>LEARNING</code>
  * <br/>4: <code>BLOCK</code>
- * @apiSuccess (Profile)   {Boolean}    social                <code>true</code> if social features are enabled; Otherwise <code>false</code>.
- * @apiSuccess (Profile)   {String}     unit                  Measurement unit system. Valid values are:
+ * @apiSuccess (Profile)   {Boolean}    social    <code>true</code> if social features are enabled; Otherwise <code>false</code>.
+ * @apiSuccess (Profile)   {String}     unit      Measurement unit system. Valid values are:
  * <br/><br/><code>UNDEFINED</code>: Measurement unit system is not set.
  * <br/><code>METRIC</code>: Metric system
  * <br/><code>IMPERIAL</code>:  Imperial system
  * @apiSuccess (Profile)   {Boolean}    garden                <code>true</code> if the household has a garden; Otherwise <code>false</code>. The value may not be initialized. <code>null</code> may be returned.
- * @apiSuccess (Profile)            {Number}     dailyMeterBudget      Daily smart water meter water consumption budget.
- * @apiSuccess (Profile)            {Number}     dailyMeterBudget      Daily smart water meter water consumption budget.
- * @apiSuccess (Profile)            {Number}     dailyAmphiroBudget    Daily Amphiro B1 water consumption budget.
- * @apiSuccess (Profile)            {String}     configuration         Application configuration serialized as a JSON object.
- * @apiSuccess (Profile)            {Object[]}   devices               Array of <code>DeviceRegistration</code> objects representing the Amphiro or Smart Water Meter devices registered to the authenticated user. Instances are implemented by classes <code>WaterMeterDeviceRegistration</code> and <code>AmphiroDeviceRegistration</code>.
+ * @apiSuccess (Profile)   {Number}     dailyMeterBudget      Daily smart water meter water consumption budget.
+ * @apiSuccess (Profile)   {Number}     dailyMeterBudget      Daily smart water meter water consumption budget.
+ * @apiSuccess (Profile)   {Number}     dailyAmphiroBudget    Daily Amphiro B1 water consumption budget.
+ * @apiSuccess (Profile)   {String}     configuration         Application configuration serialized as a JSON object.
+ * @apiSuccess (Profile)   {Object[]}   devices               Array of <code>DeviceRegistration</code> objects representing the Amphiro or Smart Water Meter devices registered to the authenticated user. Instances are implemented by classes <code>WaterMeterDeviceRegistration</code> and <code>AmphiroDeviceRegistration</code>.
  * @apiSuccess (Profile)            {Object}     utility               Utility information.
  * @apiSuccess (Profile)            {Object}     household             Household information.
  *
- * @apiSuccess (DeviceRegistration) {String}     type                  Device type. Valid values are <code>METER</code> and <code>AMPHIRO</code>.
- * @apiSuccess (DeviceRegistration) {String}     deviceKey             Unique device id (UUID).
- * @apiSuccess (DeviceRegistration) {Object[]}   properties            Array of <code>KeyValuePair</code> objects. representing device properties.
- * @apiSuccess (DeviceRegistration) {Number}     registeredOn          Device registration time stamp.
+ * @apiSuccess (DeviceRegistration) {String}     type         Device type. Valid values are <code>METER</code> and <code>AMPHIRO</code>.
+ * @apiSuccess (DeviceRegistration) {String}     deviceKey    Unique device id (UUID).
+ * @apiSuccess (DeviceRegistration) {Object[]}   properties   Array of <code>KeyValuePair</code> objects. representing device properties.
+ * @apiSuccess (DeviceRegistration) {Number}     registeredOn Device registration time stamp.
  *
- * @apiSuccess (KeyValuePair) {String}           key               Key.
- * @apiSuccess (KeyValuePair) {String}           value             Value.
+ * @apiSuccess (KeyValuePair) {String}           key          Key.
+ * @apiSuccess (KeyValuePair) {String}           value        Value.
  *
  * @apiSuccess (WaterMeterDeviceRegistration extends DeviceRegistration) {String}     serial     Smart Water Meter unique serial Id.
  *
@@ -204,17 +238,14 @@
 function getProfile() { return; }
 
 /**
- * @api {post} /v1/profile/save Save profile
+ * @api {post} action/profile/save Save profile
  * @apiVersion 0.0.1
  * @apiName ProfileSave
  * @apiGroup Profile
- * @apiPermission ROLE_USER
+ * @apiPermission ROLE_USER, ROLE_UTILITY_ADMIN, ROLE_SYSTEM_ADMIN
  *
- * @apiDescription Saves profile information. This operation allows users to update their profile. Among other fields such as daily meter water consumption budget, the operation supports persistence of arbitrary client state data. For the latter, the operation is schema agnostic and expects a simple string. By convention this string is a serialized JSON object. The saved profile is loaded by <code>/api/v1/profile/load</code> operation in property <code>profile</code>.<code>configuration</code>. When API endpoint is used, profile is always assumed to be referring the <code>MOBILE</code> application. Updating <code>HOME</code> or <code>UTILITY</code> profile configuration requires using the corresponding action endpoint.
+ * @apiDescription Saves profile information. This operation allows users to update their profile. Among other fields such as daily meter water consumption budget, the operation supports persistence of arbitrary client state data. For the latter, the operation is schema agnostic and expects a simple string.<br/><br/>By convention this string is a serialized JSON object. The saved profile is loaded by <code>/action/profile/load</code> operation in property <code>profile</code>.<code>configuration</code>.</br><br/>If the user has the <code>ROLE_USER</code> role, the operation updates the <code>HOME</code> profile configuration. If the user has either <code>ROLE_UTILITY_ADMIN</code> or <code>ROLE_SYSTEM_ADMIN</code> role, the <code>UTILITY</code> profile configuration is updated.
  *
- * @apiParam (UpdateProfileRequest) {Object}     credentials                 User credentials
- * @apiParam (UpdateProfileRequest) {String}     credentials.username        User name.
- * @apiParam (UpdateProfileRequest) {String}     credentials.password        Password.
  * @apiParam (UpdateProfileRequest) {String}     configuration               Client state expressed as a JSON serialized object.
  * @apiParam (UpdateProfileRequest) {Number}     dailyMeterBudget            Daily smart water meter water consumption budget.
  * @apiParam (UpdateProfileRequest) {Number}     dailyAmphiroBudget          Daily Amphiro B1 water consumption budget.
@@ -236,13 +267,14 @@ function getProfile() { return; }
  *
  * @apiParamExample {json} Request Example
  * {
- *   "credentials": {
- *     "username":"user@daiad.eu",
- *     "password":"****",
- *   },
  *   "configuration": "{\"property1\":1,\"property2\":\"value2\"}"}",
  *   "dailyMeterBudget": 300,
  *   "dailyAmphiroBudget": 80,
+ *   "address": "Home address",
+ *   "birthdate": 223737728000,
+ *   "country": "Greece",
+ *   "zip": "50054",
+ *   "photo": null,
  *   "unit": "IMPERIAL",
  *   "garden": false
  * }
@@ -277,71 +309,14 @@ function getProfile() { return; }
 function saveProfile() { return; }
 
 /**
- * @api {post} /v1/profile/notify Notify mode update
- * @apiVersion 0.0.1
- * @apiName ProfileNotify
- * @apiGroup Profile
- * @apiPermission ROLE_USER
- *
- * @apiDescription Notifies server that an application profile has been applied. This operation is called by the mobile application when application mode has been updated.
- *
- * @apiParam {Object}     credentials                 User credentials
- * @apiParam {String}     credentials.username        User name.
- * @apiParam {String}     credentials.password        Password.
- * @apiParam {String}     updatedOn                   Date time stamp of the configuration update.
- * @apiParam {String}     version                     Configuration unique version (UUID).
- *
- * @apiParamExample {json} Request Example
- * {
- *   "credentials": {
- *     "username":"user@daiad.eu",
- *     "password":"****",
- *   },
- *   "updatedOn": 1457365253000,
- *   "version": "aeea36cc-cefb-47db-ac0f-8c5dbc95b0f9",
- * }
- *
- * @apiSuccess {Boolean}  success             Returns <code>true</code> or <code>false</code> indicating success of the operation.
- * @apiSuccess {Object[]} errors              Array of <code>Error</code>
- *
- * @apiSuccessExample {json} Response Example
- * HTTP/1.1 200 OK
- * {
- *   "errors": [],
- *   "success": true
- * }
- *
- * @apiError {Boolean} success Always <code>false</code>.
- * @apiError {Object[]} errors Array of <code>Error</code> objects.
- *
- * @apiError (Error) {String} code          Unique error code.
- * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
- *
- * @apiErrorExample Error Response Example
- * HTTP/1.1 200 OK
- * {
- *   errors: [{
- *     code: "UserErrorCode.USER_NOT_FOUND",
- *     description: "Account a9509da9-edf5-4838-acf4-8f1b73485d7a was not found."
- *   }],
- *   success: false
- * }
- *
- */
-function notifyProfile() { return; }
-
-/**
- * @api {post} /v1/household Save household
+ * @api {post} action/household Save household
  * @apiVersion 0.0.1
  * @apiName HouseholdSave
  * @apiGroup Profile
  * @apiPermission ROLE_USER
  *
- * @apiDescription Updates household member information. If an index is missing a new member is created. Existing indexes result in updating the existing members. Any indexes that exist in the database but are not included in the request, are deleted.
+ * @apiDescription Updates household member information. If an index is missing a new member is created. Existing indexes result in updating the existing members. For any members whose indexes exist in the database but are not included in the request are automatically set as inactive.
  *
- * @apiParam (UpdateHouseholdRequest) {Object}     credentials                 User credentials
- * @apiParam (UpdateHouseholdRequest) {String}     credentials.username        User name.
- * @apiParam (UpdateHouseholdRequest) {String}     credentials.password        Password.
  * @apiParam (UpdateHouseholdRequest) {Object[]}   members                     Array of <code>Member</code> objects.
  *
  * @apiParam (Member)     {Number}     index               Unique index.
@@ -353,10 +328,6 @@ function notifyProfile() { return; }
  *
  * @apiParamExample {json} Request Example
  * {
- *   "credentials": {
- *     "username":"user@daiad.eu",
- *     "password":"****",
- *   },
  *   "members": [{
  *     "index": 14,
  *     "active": true,
@@ -397,7 +368,7 @@ function notifyProfile() { return; }
 function saveHousehold() { return; }
 
 /**
- * @api {post} /v1/comparison/{year}/{month} Get comparisons
+ * @api {get} action/comparison/{year}/{month} Get comparisons
  * @apiVersion 0.0.1
  * @apiName GetComparison
  * @apiGroup Profile
@@ -405,18 +376,11 @@ function saveHousehold() { return; }
  *
  * @apiDescription Loads comparison and ranking data for a single user starting from the selected year and month. The query returns data for the selected month and the previous 5 months depending on data availability.
  *
- * @apiParam {String} username User name
- * @apiParam {String} password User password
- *
- * @apiParam (QueryString)  {String}       year  Reference year.
- * @apiParam (QueryString)  {String}       month Reference month.
+ * @apiParam (QueryString Parameters)  {String}       year  Reference year.
+ * @apiParam (QueryString Parameters)  {String}       month Reference month.
  *
  * @apiParamExample {json} Request Example
- * POST /api/v1/comparison/2016/9
- * {
- *   username: "user@daiad.eu",
- *   password: "****"
- * }
+ * GET /action/comparison/2016/9
  *
  * @apiSuccess (ComparisonResponse) {Boolean}  success          Returns <code>true</code> or <code>false</code> indicating success of the operation.
  * @apiSuccess (ComparisonResponse) {Object[]} errors           Array of <code>Error</code>.
