@@ -352,7 +352,7 @@ public class AccountTipRepository extends BaseRepository
         message.setLocale(tipEntity.getLocale());
         message.setTitle(tipEntity.getTitle());
         message.setDescription(tipEntity.getDescription());
-        message.setImageEncoded(tipEntity.getImage());
+        message.setImage(tipEntity.getImage());
         message.setImageMimeType(tipEntity.getImageMimeType());
         message.setImageLink(tipEntity.getImageLink());
         message.setPrompt(tipEntity.getPrompt());

@@ -109,7 +109,7 @@ public class TipRepository
         message.setLocale(r.getLocale());
         message.setTitle(r.getTitle());
         message.setDescription(r.getDescription());
-        message.setImageEncoded(r.getImage());
+        message.setImage(r.getImage());
         message.setImageMimeType(r.getImageMimeType());
         message.setImageLink(r.getImageLink());
         message.setPrompt(r.getPrompt());
@@ -180,7 +180,7 @@ public class TipRepository
 
         r.setTitle(tip.getTitle());
         r.setDescription(tip.getDescription());
-        r.setImage(tip.getImageEncoded());
+        r.setImage(tip.getImage());
         r.setImageMimeType(tip.getImageMimeType());
         r.setImageLink(tip.getImageLink());
         r.setPrompt(tip.getPrompt());
@@ -212,7 +212,7 @@ public class TipRepository
         }
         r.setTitle(tip.getTitle());
         r.setDescription(tip.getDescription());
-        r.setImage(tip.getImageEncoded());
+        r.setImage(tip.getImage());
         r.setImageMimeType(tip.getImageMimeType());
         r.setImageLink(tip.getImageLink());
         r.setPrompt(tip.getPrompt());
