@@ -48,8 +48,7 @@ public enum EnumUnit {
     public static class Deserializer extends JsonDeserializer<EnumUnit> {
 
         @Override
-        public EnumUnit deserialize(JsonParser parser, DeserializationContext context) throws IOException,
-                        JsonProcessingException {
+        public EnumUnit deserialize(JsonParser parser, DeserializationContext context) throws IOException, JsonProcessingException {
             return EnumUnit.fromString(parser.getValueAsString());
         }
     }

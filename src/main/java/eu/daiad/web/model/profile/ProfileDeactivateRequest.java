@@ -3,15 +3,15 @@ package eu.daiad.web.model.profile;
 import java.util.UUID;
 
 public class ProfileDeactivateRequest {
-	
-	private UUID userDeactId;
 
-	public UUID getUserDeactId() {
-		return userDeactId;
-	}
+    private UUID userkey;
 
-	public void setUserDeactId(UUID userDeactId) {
-		this.userDeactId = userDeactId;
-	}
+    public UUID getUserkey() {
+        return userkey;
+    }
+
+    public void setUserkey(UUID userkey) {
+        this.userkey = userkey;
+    }
 
 }
