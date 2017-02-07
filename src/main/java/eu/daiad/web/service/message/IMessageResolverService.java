@@ -5,7 +5,6 @@ import java.util.UUID;
 import eu.daiad.web.model.ConsumptionStats;
 import eu.daiad.web.model.message.MessageResolutionPerAccountStatus;
 import eu.daiad.web.model.utility.UtilityInfo;
-import eu.daiad.web.service.message.IMessageGeneratorService.Configuration;
 
 public interface IMessageResolverService {
 

@@ -20,6 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+
+import eu.daiad.web.domain.application.ConsumptionStatsEntity;
+import eu.daiad.web.domain.application.GroupEntity;
+import eu.daiad.web.domain.application.UtilityEntity;
 import eu.daiad.web.model.ComputedNumber;
 import eu.daiad.web.model.ConsumptionStats;
 import eu.daiad.web.model.utility.UtilityInfo;
@@ -33,15 +37,15 @@ public class ConsumptionStatsRepository implements IConsumptionStatsRepository
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
     
-    private eu.daiad.web.domain.application.UtilityEntity getUtility(UUID key)
+    private UtilityEntity getUtility(UUID key)
     {
-        TypedQuery<eu.daiad.web.domain.application.UtilityEntity> query = entityManager.createQuery(
+        TypedQuery<UtilityEntity> query = entityManager.createQuery(
                 "SELECT u FROM utility u WHERE u.key = :key",
                 eu.daiad.web.domain.application.UtilityEntity.class
         );
         query.setParameter("key", key);
         
-        eu.daiad.web.domain.application.UtilityEntity u;
+        UtilityEntity u;
         try {
             u = query.getSingleResult();
         } catch (NoResultException e) {
@@ -50,15 +54,13 @@ public class ConsumptionStatsRepository implements IConsumptionStatsRepository
         return u;
     }
     
-    private eu.daiad.web.domain.application.GroupEntity getGroup(UUID key)
+    private GroupEntity getGroup(UUID key)
     {
-        TypedQuery<eu.daiad.web.domain.application.GroupEntity> query = entityManager.createQuery(
-                "SELECT g FROM group g WHERE g.key = :key",
-                eu.daiad.web.domain.application.GroupEntity.class
-        );
+        TypedQuery<GroupEntity> query = entityManager.createQuery(
+            "SELECT g FROM group g WHERE g.key = :key", GroupEntity.class);
         query.setParameter("key", key);
         
-        eu.daiad.web.domain.application.GroupEntity g;
+        GroupEntity g;
         try {
             g = query.getSingleResult();
         } catch (NoResultException e) {
@@ -68,9 +70,7 @@ public class ConsumptionStatsRepository implements IConsumptionStatsRepository
     }
     
     private List<eu.daiad.web.domain.application.ConsumptionStatsEntity> findByGroupAndDate(
-            eu.daiad.web.domain.application.UtilityEntity utility, 
-            eu.daiad.web.domain.application.GroupEntity group,
-            LocalDateTime refDate)
+        UtilityEntity utility, GroupEntity group, LocalDateTime refDate)
     { 
         DateTimeZone tz = DateTimeZone.forID(utility.getTimezone());    
         DateTime refdate0 = refDate.toDateTime(tz).minusHours(12);
@@ -85,8 +85,8 @@ public class ConsumptionStatsRepository implements IConsumptionStatsRepository
                 ((group == null)? "s.group is NULL" : "s.group.key = :groupKey")
         ;
         
-        TypedQuery<eu.daiad.web.domain.application.ConsumptionStatsEntity> query = entityManager.createQuery(
-                hqlString, eu.daiad.web.domain.application.ConsumptionStatsEntity.class);
+        TypedQuery<ConsumptionStatsEntity> query = entityManager.createQuery(
+                hqlString, ConsumptionStatsEntity.class);
         
         query.setParameter("utilityKey", utility.getKey());
         query.setParameter("refdate0", refdate0);
@@ -100,17 +100,17 @@ public class ConsumptionStatsRepository implements IConsumptionStatsRepository
     @Override
     public ConsumptionStats get(UUID utilityKey, UUID groupKey, LocalDateTime refDate)
     {
-        logger.info("Fetching stats for utility " + utilityKey + " at " + refDate + " ...");
+        logger.info("Fetching stats for utility " + utilityKey + " at " + refDate);
         
         eu.daiad.web.domain.application.UtilityEntity utility = getUtility(utilityKey);
         if (utility == null) {
             throw new IllegalArgumentException("No such utility: " + utilityKey);
         }
         
-        eu.daiad.web.domain.application.GroupEntity group = groupKey == null? null : getGroup(groupKey);
+        GroupEntity group = groupKey == null? null : getGroup(groupKey);
         
         ConsumptionStats stats = null;
-        for (eu.daiad.web.domain.application.ConsumptionStatsEntity e: findByGroupAndDate(utility, group, refDate)) {
+        for (ConsumptionStatsEntity e: findByGroupAndDate(utility, group, refDate)) {
             if (stats == null)
                 stats = new ConsumptionStats();
             stats.set(e.getStatistic(), e.getDevice(), e.getField(), e.getValue());
@@ -122,20 +122,19 @@ public class ConsumptionStatsRepository implements IConsumptionStatsRepository
     @Override
     public void save(UUID utilityKey, UUID groupKey, LocalDateTime refDate, ConsumptionStats stats)
     {
-        logger.info("Saving stats for utility " + utilityKey + " at " + refDate + " ...");
+        logger.info("Saving stats for utility " + utilityKey + " at " + refDate);
         
-        eu.daiad.web.domain.application.UtilityEntity utility = getUtility(utilityKey);
+        UtilityEntity utility = getUtility(utilityKey);
         if (utility == null) {
             throw new IllegalArgumentException("No such utility: " + utilityKey);
         }
         
-        eu.daiad.web.domain.application.GroupEntity group = groupKey == null? null : getGroup(groupKey);
+        GroupEntity group = groupKey == null? null : getGroup(groupKey);
         
         // Prepare a set of (initially detached) entities
-        ArrayList<eu.daiad.web.domain.application.ConsumptionStatsEntity> entities = new ArrayList<>(16);
+        ArrayList<ConsumptionStatsEntity> entities = new ArrayList<>(16);
         for (ConsumptionStats.Key key: stats) {
-            eu.daiad.web.domain.application.ConsumptionStatsEntity e = 
-                    new eu.daiad.web.domain.application.ConsumptionStatsEntity(utility, group, refDate);
+            ConsumptionStatsEntity e = new ConsumptionStatsEntity(utility, group, refDate);
             ComputedNumber val = stats.get(key);
             if (val == null)
                 continue;
@@ -147,14 +146,14 @@ public class ConsumptionStatsRepository implements IConsumptionStatsRepository
         }
         
         // Delete any existing entities on the same target (utility, group, ref-date)
-        for (eu.daiad.web.domain.application.ConsumptionStatsEntity e: findByGroupAndDate(utility, group, refDate))
+        for (ConsumptionStatsEntity e: findByGroupAndDate(utility, group, refDate))
             entityManager.remove(e);
         
         // Make previous delete visible in present transaction (otherwise unique constraints are violated)
         entityManager.flush();
         
         // Persist (insert) newly created entities
-        for (eu.daiad.web.domain.application.ConsumptionStatsEntity e: entities)
+        for (ConsumptionStatsEntity e: entities)
             entityManager.persist(e);
         
         return;

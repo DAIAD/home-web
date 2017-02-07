@@ -69,7 +69,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     
     @Override
     public void executeAccount(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         ConsumptionStats stats, MessageResolutionPerAccountStatus messageStatus, UUID accountKey)
     {
         AccountEntity account = userRepository.getAccountByKey(accountKey);
@@ -77,7 +77,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     }
 
     private void executeAccount(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         ConsumptionStats stats, MessageResolutionPerAccountStatus messageStatus, AccountEntity account)
     {
         generateMessages(config, stats, messageStatus, account);
@@ -85,7 +85,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     }
 
     private void generateMessages(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         ConsumptionStats stats, MessageResolutionPerAccountStatus messageStatus, AccountEntity account)
     {
         // Add messages common to all devices
@@ -106,14 +106,14 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     }
 
     private void generateMessagesFor(
-        IMessageGeneratorService.Configuration config, EnumDeviceType[] deviceTypes,
+        Configuration config, EnumDeviceType[] deviceTypes,
         ConsumptionStats stats, MessageResolutionPerAccountStatus messageStatus, AccountEntity account)
     {
         generateInsights(config, messageStatus, account);
     }
 
     private void generateMessagesForAmphiro(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         ConsumptionStats stats, MessageResolutionPerAccountStatus messageStatus, AccountEntity account)
     {
         if (!messageStatus.isAmphiroInstalled()) {
@@ -139,7 +139,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     }
 
     private void generateMessagesForMeter(
-        IMessageGeneratorService.Configuration config, ConsumptionStats stats,
+        Configuration config, ConsumptionStats stats,
         MessageResolutionPerAccountStatus messageStatus, AccountEntity account)
     {
         if (!messageStatus.isMeterInstalled()) {
@@ -167,7 +167,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Static tips
     private void generateTips(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         Locale locale = Locale.forLanguageTag(account.getLocale());
         DateTime now = DateTime.now();
@@ -186,7 +186,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #1 - Check for water leaks!
     private void alertWaterLeakSWM(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertWaterLeakSWM();
         if (r == null || !r.isSignificant())
@@ -204,7 +204,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #2 - Shower still on!
     private void alertShowerStillOnAmphiro(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertShowerStillOnAmphiro();
         if (r != null && r.isSignificant()) {
@@ -220,7 +220,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     // Alert #5 - water quality not assured!
     // Todo : This alert is appears repeatedly if user has not used any water
     private void alertWaterQualitySWM(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertWaterQualitySWM();
         if (r != null && r.isSignificant()) {
@@ -231,7 +231,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #6 - Water too hot!
     private void alertHotTemperatureAmphiro(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertHotTemperatureAmphiro();
         if (r != null && r.isSignificant()) {
@@ -242,7 +242,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #7 - reached 80% of your daily water budget {integer1} {integer2}
     private void alertNearDailyBudgetSWM(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertNearDailyBudgetSWM();
         if (r != null && r.isSignificant()) {
@@ -253,7 +253,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #8 - reached 80% of your daily water budget {integer1} {integer2}
     private void alertNearWeeklyBudgetSWM(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertNearWeeklyBudgetSWM();
         if (r != null && r.isSignificant()) {
@@ -264,7 +264,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #9 - reached 80% of your daily shower budget {integer1} {integer2}
     private void alertNearDailyBudgetAmphiro(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertNearDailyBudgetAmphiro();
         if (r != null && r.isSignificant()) {
@@ -275,7 +275,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #10 - reached 80% of your weekly shower budget {integer1} {integer2}
     private void alertNearWeeklyBudgetAmphiro(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (DateTime.now().getDayOfWeek() != config.getComputeThisDayOfWeek())
             return;
@@ -289,7 +289,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #11 - reached daily Water Budget {integer1}
     private void alertReachedDailyBudgetSWM(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertReachedDailyBudgetSWM();
         if (r != null && r.isSignificant()) {
@@ -300,7 +300,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #12 - Reached daily Shower Budget {integer1}
     private void alertReachedDailyBudgetAmphiro(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertReachedDailyBudgetAmphiro();
         if (r != null && r.isSignificant()) {
@@ -311,7 +311,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #13 - You are a real water champion!
     private void alertWaterChampionSWM(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertWaterChampionSWM();
         if (r != null && r.isSignificant()) {
@@ -325,7 +325,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #14 - You are a real shower champion!
     private void alertShowerChampionAmphiro(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertShowerChampionAmphiro();
         if (r != null && r.isSignificant()) {
@@ -339,7 +339,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #15 - You are using too much water {integer1}
     private void alertTooMuchWaterConsumptionSWM(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countAlertsByTypeThisWeek(account, EnumAlertType.TOO_MUCH_WATER) < 1) {
             MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertTooMuchWaterConsumptionSWM();
@@ -355,7 +355,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #16 - You are using too much water in the shower {integer1}
     private void alertTooMuchWaterConsumptionAmphiro(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countAlertsByTypeThisWeek(account, EnumAlertType.TOO_MUCH_WATER) < 1) {
             MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertTooMuchWaterConsumptionAmphiro();
@@ -371,7 +371,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #17 - You are spending too much energy for showering {integer1} {currency}
     private void alertTooMuchEnergyAmphiro(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countAlertsByTypeThisWeek(account, EnumAlertType.TOO_MUCH_ENERGY) < 1) {
             MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertTooMuchEnergyAmphiro();
@@ -388,7 +388,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #18 - well done! You have greatly reduced your water use {integer1} percent
     private void alertReducedWaterUseSWM(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countAlertsByType(account, EnumAlertType.REDUCED_WATER_USE) < 1) {
             MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertReducedWaterUseSWM();
@@ -405,7 +405,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #19 - well done! You have greatly improved your shower efficiency {integer1} percent
     private void alertImprovedShowerEfficiencyAmphiro(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countAlertsByType(account, EnumAlertType.REDUCED_WATER_USE) < 1) {
             MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertReducedWaterUseAmphiro();
@@ -422,7 +422,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #20 - you are a water efficiency leader {integer1} litres
     private void alertWaterEfficiencyLeaderSWM(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countAlertsByType(account, EnumAlertType.WATER_EFFICIENCY_LEADER) < 1) {
             MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertWaterEfficiencyLeaderSWM();
@@ -439,7 +439,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #21 - Keep up saving water!
     private void alertKeepUpSavingWaterSWM(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countAlertsByType(account, EnumAlertType.KEEP_UP_SAVING_WATER) < 1) {
             Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
@@ -450,7 +450,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #22 - You are doing a great job!
     private void alertPromptGoodJobMonthlySWM(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertPromptGoodJobMonthlySWM();
         if (r == null || !r.isSignificant())
@@ -465,7 +465,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #23 - You have already saved {integer1} litres of water!
     private void alertLitresSavedSWM(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertLitresSavedSWM();
         if (r == null || !r.isSignificant())
@@ -480,7 +480,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #24 - You are one of the top 25% savers in your region.
     private void alertTop25SaverSWM(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertTop25SaverWeeklySWM();
@@ -496,7 +496,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Alert #25 - You are among the top 10% of savers in your region.
     private void alertTop10SaverSWM(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertTop10SaverWeeklySWM();
         if (r == null || !r.isSignificant())
@@ -511,7 +511,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Recommendation #1 - Spend 1 less minute in the shower and save {integer1} {integer2}
     private void recommendLessShowerTimeAmphiro(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countRecommendationsByTypeThisMonth(account, EnumRecommendationType.LESS_SHOWER_TIME) < 1) {
             MessageResolutionStatus<Recommendation.ParameterizedTemplate> r = status.getRecommendLessShowerTimeAmphiro();
@@ -528,7 +528,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Recommendation #2 - You could save {currency1} if you used a bit less hot water in the shower. {currency2}
     private void recommendLowerTemperatureAmphiro(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countRecommendationsByTypeThisMonth(account, EnumRecommendationType.LOWER_TEMPERATURE) < 1) {
             MessageResolutionStatus<Recommendation.ParameterizedTemplate> r = status.getRecommendLowerTemperatureAmphiro();
@@ -545,7 +545,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Recommendation #3 - Reduce the water flow in the shower and gain {integer1} {integer2}
     private void recommendLowerFlowAmphiro(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countRecommendationsByTypeThisMonth(account, EnumRecommendationType.LOWER_FLOW) < 1) {
             MessageResolutionStatus<Recommendation.ParameterizedTemplate> r = status.getRecommendLowerFlowAmphiro();
@@ -562,7 +562,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Recommendation #4 - Change your shower head and save {integer1} {integer2}
     private void recommendShowerHeadChangeAmphiro(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countRecommendationsByTypeThisMonth(account, EnumRecommendationType.CHANGE_SHOWERHEAD) < 1) {
             MessageResolutionStatus<Recommendation.ParameterizedTemplate> r = status.getRecommendShowerHeadChangeAmphiro();
@@ -579,7 +579,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Recommendation #5 - Have you considered changing your shampoo? {integer1} percent
     private void recommendShampooAmphiro(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countRecommendationsByTypeThisMonth(account, EnumRecommendationType.CHANGE_SHAMPOO) < 1) {
             MessageResolutionStatus<Recommendation.ParameterizedTemplate> r = status.getRecommendShampooChangeAmphiro();
@@ -596,7 +596,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Recommendation #6 - When showering, reduce the water flow when you dont need it {integer1} {integer2}
     private void recommendReduceFlowWhenNotNeededAmphiro(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
         if (countRecommendationsByTypeThisMonth(account, EnumRecommendationType.REDUCE_FLOW_WHEN_NOT_NEEDED) < 1) {
             MessageResolutionStatus<Recommendation.ParameterizedTemplate> r = status.getRecommendReduceFlowWhenNotNeededAmphiro();
@@ -613,7 +613,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
 
     // Insights
     private void generateInsights(
-        IMessageGeneratorService.Configuration config, MessageResolutionPerAccountStatus messageStatus, AccountEntity account)
+        Configuration config, MessageResolutionPerAccountStatus messageStatus, AccountEntity account)
     {
         for (MessageResolutionStatus<? extends Recommendation.ParameterizedTemplate> r: messageStatus.getInsights()) {
             // Check if message is significant

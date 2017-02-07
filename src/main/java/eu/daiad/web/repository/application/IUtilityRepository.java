@@ -18,6 +18,8 @@ public interface IUtilityRepository {
 
     List<GroupMemberInfo> getUtilityMemberInfo(UUID key);
 
+    List<UUID> getUtilityMembers(UUID utilityKey);
+    
     Map<String, Counter> getCounters(int id);
 
 }

@@ -87,6 +87,8 @@ public class DefaultMessageResolverService implements IMessageResolverService
     @Autowired
     IEnergyCalculator energyCalculator;
 
+    // Todo Move volume threshold values to Configuration class 
+    
     public static final double VOLUME_DAILY_THRESHOLD = 7.0;
 
     public static final double VOLUME_WEEKLY_THRESHOLD =
@@ -104,7 +106,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     @Override
     public MessageResolutionPerAccountStatus resolve(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         UtilityInfo utility, ConsumptionStats stats, UUID accountKey)
     {
         AccountEntity account = userRepository.getAccountByKey(accountKey);
@@ -408,7 +410,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     // Alert #7, #9 - Reached 80% of your daily water budget {integer1} {integer2}
     public MessageResolutionStatus<Alert.ParameterizedTemplate> alertNearDailyBudget(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {
         final int BUDGET_NEAR_PERCENTAGE_THRESHOLD = 80;
@@ -430,7 +432,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         if (consumed == null)
             return null;
 
-        int budget = config.getDailyBudget(deviceType);
+        int budget = config.getBudget(deviceType, EnumTimeUnit.DAY);
         Double remaining = (consumed > budget)? 0.0 : (budget - consumed);
         double percentUsed = 100 * (consumed / budget);
 
@@ -448,7 +450,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     // Alert #8, #10 - Reached 80% of your weekly water budget {integer1} {integer2}
     public MessageResolutionStatus<Alert.ParameterizedTemplate> alertNearWeeklyBudget(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {
         final int BUDGET_NEAR_PERCENTAGE_THRESHOLD = 80;
@@ -469,7 +471,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         if (consumed == null)
             return null;
 
-        int budget = config.getWeeklyBudget(deviceType);
+        int budget = config.getBudget(deviceType, EnumTimeUnit.WEEK);
         Double remaining = (consumed > budget)? 0.0 : (budget - consumed);
         double percentUsed = 100 * (consumed / budget);
 
@@ -487,7 +489,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     // Alert #11, #12 - Reached daily Water Budget {integer1}
     public MessageResolutionStatus<Alert.ParameterizedTemplate> alertReachedDailyBudget(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {
         final int BUDGET_PERCENTAGE_THRESHOLD = 120;
@@ -508,7 +510,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
         if (consumed == null)
             return null;
 
-        int budget = config.getDailyBudget(deviceType);
+        int budget = config.getBudget(deviceType, EnumTimeUnit.DAY);
         double percentUsed = 100 * (consumed / budget);
 
         Alert.ParameterizedTemplate parameters = new Alert.SimpleParameterizedTemplate(
@@ -525,11 +527,11 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     // Alert #13, #14 - You are a real water champion!
     public MessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterChampion(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {
         final int MAX_NUM_CONSECUTIVE_ZEROS = 10; // to consider the user as absent
-        final double dailyBudget = config.getDailyBudget(deviceType);
+        final double dailyBudget = config.getBudget(deviceType, EnumTimeUnit.DAY);
 
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
@@ -579,7 +581,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     // Alert #15, #16 - You are using too much water {integer1}
     public MessageResolutionStatus<Alert.ParameterizedTemplate> alertTooMuchWaterConsumption(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {
         final double HIGH_CONSUMPTION_RATIO = 2.0; // in terms of average consumption
@@ -624,7 +626,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     // Alert #17 - You are spending too much energy for showering {integer1} {currency}
     public MessageResolutionStatus<Alert.ParameterizedTemplate> alertTooMuchEnergyAmphiro(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate)
     {
         final double HIGH_TEMPERATURE_THRESHOLD = 45.0;
@@ -669,7 +671,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     // Alert #18, #19 - You have greatly reduced your water use {integer1} percent
     public MessageResolutionStatus<Alert.ParameterizedTemplate> alertReducedWaterUse(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {
         DataQuery query = null;
@@ -716,7 +718,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     // Alert #20 - Congratulations! You are a water efficiency leader {integer1} litres
     public MessageResolutionStatus<Alert.ParameterizedTemplate> alertWaterEfficiencyLeaderSWM(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate)
     {
         ComputedNumber monthlyAverage = stats.get(EnumStatistic.AVERAGE_MONTHLY, METER, VOLUME);
@@ -757,7 +759,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     // Alert #22 - You are doing a great job!
     public MessageResolutionStatus<Alert.ParameterizedTemplate> alertPromptGoodJobMonthlySWM(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate)
     {
         ComputedNumber monthlyAverage = stats.get(EnumStatistic.AVERAGE_WEEKLY, METER, VOLUME);
@@ -804,7 +806,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     // Alert #23 - You have already saved {integer1} litres of water!
     public MessageResolutionStatus<Alert.ParameterizedTemplate> alertLitresSavedSWM(
-        IMessageGeneratorService.Configuration config, AccountEntity account, DateTime refDate)
+        Configuration config, AccountEntity account, DateTime refDate)
     {
         final double VOLUME_WEEKLY_DIFF_THRESHOLD = 100;
 
@@ -849,7 +851,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     // Alert #24 - Congratulations! You are one of the top 25% savers in your region.
     public MessageResolutionStatus<Alert.ParameterizedTemplate> alertTop25SaverWeeklySWM(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate)
     {
         ComputedNumber weeklyThreshold = stats.get(EnumStatistic.THRESHOLD_BOTTOM_25P_WEEKLY, METER, VOLUME);
@@ -881,7 +883,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     // Alert #25 - Congratulations! You are among the top 10% group of savers in your region.
     public MessageResolutionStatus<Alert.ParameterizedTemplate> alertTop10SaverWeeklySWM(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate)
     {
         ComputedNumber weeklyThreshold = stats.get(EnumStatistic.THRESHOLD_BOTTOM_10P_WEEKLY, METER, VOLUME);
@@ -914,7 +916,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     // Recommendation #1 - Spend 1 less minute in the shower and save {integer1} {integer2}
     public MessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendLessShowerTimeAmphiro(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate)
     {
         ComputedNumber monthlyAverageDuration = stats.get(
@@ -971,7 +973,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     // Recommendation #2 - You could save {currency1} euros if you used a bit less hot water in the shower. {currency2}
     public MessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendLowerTemperatureAmphiro(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate)
     {
         ComputedNumber monthlyAverageTemperature = stats.get(
@@ -1024,7 +1026,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     // Recommendation #3 - Reduce the water flow in the shower and gain {integer1} {integer2}
     public MessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendLowerFlowAmphiro(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate)
     {
         ComputedNumber monthlyAverageFlow = stats.get(
@@ -1080,7 +1082,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     // Recommendation #4 - Change your shower head and save {integer1} {integer2}
     // Todo: This computation is identical to Recommendation #3, maybe discard #4
     public MessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendShowerHeadChangeAmphiro(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate)
     {
         ComputedNumber monthlyAverageFlow = stats.get(
@@ -1132,7 +1134,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     // Recommendation #5 - Have you considered changing your shampoo? {integer1} percent
     public MessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendShampooChangeAmphiro(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate)
     {
         ComputedNumber monthlyAverageConsumption = stats.get(
@@ -1175,7 +1177,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     // Recommendation #6 - When showering, reduce the water flow when you do not need it {integer1} {integer2}
     public MessageResolutionStatus<Recommendation.ParameterizedTemplate> recommendReduceFlowWhenNotNeededAmphiro(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         ConsumptionStats stats, AccountEntity account, DateTime refDate)
     {
         ComputedNumber monthlyAveragePerSession = stats.get(
@@ -1232,7 +1234,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
 
     private SimpleMessageResolutionStatus<Insight.ParameterizedTemplate> computeInsightA1(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {
         final double K = 1.28;  // a threshold (in units of standard deviation) of significant change
@@ -1306,7 +1308,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
      * Note: The logic for insight A.2 is same with B.1 (merge?)
      */
     private SimpleMessageResolutionStatus<Insight.ParameterizedTemplate> computeInsightA2(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {
         final double K = 1.28;  // a threshold (in units of standard deviation) of significant change
@@ -1377,7 +1379,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
 
     private SimpleMessageResolutionStatus<Insight.ParameterizedTemplate> computeInsightA3(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType, EnumPartOfDay partOfDay)
     {
         final double PERCENTAGE_CHANGE_THRESHOLD = 40;
@@ -1452,7 +1454,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
 
     private SimpleMessageResolutionStatus<Insight.ParameterizedTemplate> computeInsightA4(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {
         // Build a common part of a data-service query
@@ -1511,7 +1513,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
 
     private SimpleMessageResolutionStatus<Insight.ParameterizedTemplate> computeInsightB1(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType, EnumTimeUnit timeUnit)
     {
         Assert.state(timeUnit == EnumTimeUnit.WEEK || timeUnit == EnumTimeUnit.MONTH);
@@ -1589,7 +1591,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
 
     private SimpleMessageResolutionStatus<Insight.ParameterizedTemplate> computeInsightB2(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType, EnumTimeUnit timeUnit)
     {
         Assert.state(timeUnit == EnumTimeUnit.WEEK || timeUnit == EnumTimeUnit.MONTH);
@@ -1651,7 +1653,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
 
     private List<SimpleMessageResolutionStatus<Insight.ParameterizedTemplate>> computeInsightB3(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {
         final double F = 0.6; // a threshold ratio of non-nulls for collected values
@@ -1761,7 +1763,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
 
     private SimpleMessageResolutionStatus<Insight.ParameterizedTemplate> computeInsightB4(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {
         final double F = 0.6; // a threshold ratio of non-nulls for collected values
@@ -1843,7 +1845,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
 
     private SimpleMessageResolutionStatus<Insight.ParameterizedTemplate> computeInsightB5(
-        IMessageGeneratorService.Configuration config,
+        Configuration config,
         AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {
         final DateTime targetDate = EnumTimeUnit.MONTH.startOf(refDate);

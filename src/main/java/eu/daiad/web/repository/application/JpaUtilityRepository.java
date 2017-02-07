@@ -89,7 +89,19 @@ public class JpaUtilityRepository extends BaseRepository implements IUtilityRepo
 
         return members;
     }
-
+    
+    @Override
+    public List<UUID> getUtilityMembers(UUID utilityKey)
+    {
+        TypedQuery<UUID> q = entityManager.createQuery(
+            "SELECT a.key FROM account a WHERE a.utility.key = :utilityKey", 
+            UUID.class);
+        
+        q.setParameter("utilityKey", utilityKey);
+        return q.getResultList();
+    }
+    
+    
     @Override
     public Map<String, Counter> getCounters(int utilityId) {
         Map<String, Counter> counters = new HashMap<String, Counter>();
