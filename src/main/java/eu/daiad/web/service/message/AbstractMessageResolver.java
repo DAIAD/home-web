@@ -17,21 +17,18 @@ public abstract class AbstractMessageResolver <P extends Message.Parameters>
     
     protected Configuration config;
     
+    protected UtilityInfo utility;
+    
     protected ConsumptionStats stats;
     
     @Override
-    public void setup(Configuration config, UtilityInfo utility, ConsumptionStats stats)
+    public void setup(Configuration config, IGeneratorContext context)
     {
         Assert.state(config != null);
         this.config = config;
    
-        LocalDateTime refDate = config.getRefDate();
-        Assert.state(refDate != null, "Expected a reference date");
-        DateTimeZone tz = DateTimeZone.forID(utility.getTimezone());
-        this.refDate = refDate.toDateTime(tz);
-        
-        Assert.state(stats != null);
-        this.stats = stats;
+        this.refDate = context.getRefDate();
+        this.stats = context.getStats();
     }
     
     @Override

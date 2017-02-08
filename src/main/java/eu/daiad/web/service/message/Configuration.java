@@ -43,8 +43,6 @@ public class Configuration
     public static final double VOLUME_AMPHIRO_MONTHLY_THRESHOLD =
         30.5 * VOLUME_AMPHIRO_DAILY_THRESHOLD;
     
-    
-    private LocalDateTime refDate;
 
     private int tipInterval = DateTimeConstants.DAYS_PER_WEEK; // every week
 
@@ -56,10 +54,8 @@ public class Configuration
 
     private boolean onDemandExecution = true;
 
-    public Configuration(LocalDateTime refDate)
-    {
-        this.refDate = refDate;
-        
+    public Configuration()
+    {   
         Map<EnumTimeUnit, Integer> budget = null;
         
         budget = new EnumMap<EnumTimeUnit, Integer>(EnumTimeUnit.class);
@@ -89,11 +85,6 @@ public class Configuration
         volumeThresholds.put(AMPHIRO, threshold);
     }
     
-    public LocalDateTime getRefDate()
-    {
-        return refDate;
-    }
-
     // Fixme: Not part of global configuration
     public int getComputeThisDayOfMonth() {
         return new DateTime().dayOfMonth().getMaximumValue();

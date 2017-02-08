@@ -16,11 +16,8 @@ public interface IMessageResolver <P extends Message.Parameters>
     /**
      * Setup message resolution context.
      * This will be invoked before any account-specific resolution takes place.
-     *
-     * @param config Global message-related configuration
-     * @param stats All available pre-computed utility-wide statistics 
      */
-    public void setup(Configuration config, UtilityInfo utilityInfo, ConsumptionStats stats);
+    public void setup(Configuration config, IGeneratorContext generatorContext);
 
     /**
      * The opposite of setup, provided only for cleanup purposes. This will be invoked 

@@ -10,9 +10,12 @@ import org.joda.time.Interval;
 
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AccountRecommendationEntity;
+import eu.daiad.web.domain.application.RecommendationResolverExecutionEntity;
 import eu.daiad.web.model.PagingOptions;
+import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.EnumRecommendationType;
 import eu.daiad.web.model.message.Recommendation;
+import eu.daiad.web.model.message.Recommendation.ParameterizedTemplate;
 
 public interface IAccountRecommendationRepository
 {
@@ -20,6 +23,7 @@ public interface IAccountRecommendationRepository
 
     int countAll();
 
+    
     List<AccountRecommendationEntity> findByAccount(UUID accountKey);
 
     List<AccountRecommendationEntity> findByAccount(UUID accountKey, Interval interval);
@@ -34,6 +38,7 @@ public interface IAccountRecommendationRepository
 
     int countByAccount(UUID accountKey, int minId);
 
+    
     List<AccountRecommendationEntity> findByType(EnumRecommendationType recommendationType, UUID utilityKey);
 
     List<AccountRecommendationEntity> findByType(EnumRecommendationType recommendationType, UUID utilityKey, Interval interval);
@@ -46,6 +51,7 @@ public interface IAccountRecommendationRepository
 
     Map<EnumRecommendationType, Integer> countByType(UUID utilityKey, Interval interval);
 
+    
     List<AccountRecommendationEntity> findByAccountAndType(UUID accountKey, EnumRecommendationType recommendationType);
 
     List<AccountRecommendationEntity> findByAccountAndType(UUID accountKey, EnumRecommendationType recommendationType, Interval interval);
@@ -54,22 +60,51 @@ public interface IAccountRecommendationRepository
 
     int countByAccountAndType(UUID accountKey, EnumRecommendationType recommendationType, Interval interval);
 
+    
+    List<AccountRecommendationEntity> findByExecution(int executionId);
+    
+    List<AccountRecommendationEntity> findByExecution(List<Integer> executionIds);
+    
+    List<AccountRecommendationEntity> findByAccountAndExecution(UUID accountKey, int executionId);
+    
+    List<AccountRecommendationEntity> findByAccountAndExecution(UUID accountKey, List<Integer> executionIds);
+    
+    int countByExecution(int executionId);
+    
+    int countByExecution(List<Integer> executionIds);
+    
+    int countByAccountAndExecution(UUID accountKey, int executionId);
+    
+    int countByAccountAndExecution(UUID accountKey, List<Integer> executionIds);
+    
+    
     AccountRecommendationEntity create(AccountRecommendationEntity e);
 
-    AccountRecommendationEntity createWith(UUID accountKey, Recommendation.ParameterizedTemplate parameterizedTemplate);
+    AccountRecommendationEntity createWith(
+        UUID accountKey,
+        ParameterizedTemplate parameterizedTemplate,
+        RecommendationResolverExecutionEntity resolverExecution,
+        EnumDeviceType deviceType);
 
-    AccountRecommendationEntity createWith(AccountEntity account, Recommendation.ParameterizedTemplate parameterizedTemplate);
+    AccountRecommendationEntity createWith(
+        AccountEntity account,
+        ParameterizedTemplate parameterizedTemplate,
+        RecommendationResolverExecutionEntity resolverExecution,
+        EnumDeviceType deviceType);
 
+    
     boolean acknowledge(int id, DateTime acknowledged);
 
     boolean acknowledge(AccountRecommendationEntity r, DateTime acknowledged);
 
     boolean acknowledge(UUID accountKey, int id, DateTime acknowledged);
 
+    
     Recommendation formatMessage(int id, Locale locale);
 
     Recommendation formatMessage(AccountRecommendationEntity r, Locale locale);
 
+    
     void delete(int id);
 
     void delete(AccountRecommendationEntity e);

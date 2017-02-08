@@ -10,8 +10,11 @@ import org.joda.time.Interval;
 
 import eu.daiad.web.domain.application.AccountAlertEntity;
 import eu.daiad.web.domain.application.AccountEntity;
+import eu.daiad.web.domain.application.AlertResolverExecutionEntity;
 import eu.daiad.web.model.PagingOptions;
+import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.Alert;
+import eu.daiad.web.model.message.Alert.ParameterizedTemplate;
 import eu.daiad.web.model.message.EnumAlertType;
 
 public interface IAccountAlertRepository
@@ -20,6 +23,7 @@ public interface IAccountAlertRepository
 
     int countAll();
 
+    
     List<AccountAlertEntity> findByAccount(UUID accountKey);
 
     List<AccountAlertEntity> findByAccount(UUID accountKey, Interval interval);
@@ -34,6 +38,7 @@ public interface IAccountAlertRepository
 
     int countByAccount(UUID accountKey, int minId);
 
+    
     List<AccountAlertEntity> findByType(EnumAlertType alertType, UUID utilityKey);
 
     List<AccountAlertEntity> findByType(EnumAlertType alertType, UUID utilityKey, Interval interval);
@@ -46,6 +51,7 @@ public interface IAccountAlertRepository
 
     Map<EnumAlertType, Integer> countByType(UUID utilityKey, Interval interval);
 
+    
     List<AccountAlertEntity> findByAccountAndType(UUID accountKey, EnumAlertType alertType);
 
     List<AccountAlertEntity> findByAccountAndType(UUID accountKey, EnumAlertType alertType, Interval interval);
@@ -54,22 +60,51 @@ public interface IAccountAlertRepository
 
     int countByAccountAndType(UUID accountKey, EnumAlertType alertType, Interval interval);
 
+    
+    List<AccountAlertEntity> findByExecution(int executionId);
+    
+    List<AccountAlertEntity> findByExecution(List<Integer> executionIds);
+    
+    List<AccountAlertEntity> findByAccountAndExecution(UUID accountKey, int executionId);
+    
+    List<AccountAlertEntity> findByAccountAndExecution(UUID accountKey, List<Integer> executionIds);
+    
+    int countByExecution(int executionId);
+    
+    int countByExecution(List<Integer> executionIds);
+    
+    int countByAccountAndExecution(UUID accountKey, int executionId);
+    
+    int countByAccountAndExecution(UUID accountKey, List<Integer> executionIds);
+    
+    
     AccountAlertEntity create(AccountAlertEntity e);
 
-    AccountAlertEntity createWith(UUID accountKey, Alert.ParameterizedTemplate parameterizedTemplate);
+    AccountAlertEntity createWith(
+        UUID accountKey,
+        ParameterizedTemplate parameterizedTemplate,
+        AlertResolverExecutionEntity resolverExecution,
+        EnumDeviceType deviceType);
 
-    AccountAlertEntity createWith(AccountEntity account, Alert.ParameterizedTemplate parameterizedTemplate);
+    AccountAlertEntity createWith(
+        AccountEntity account,
+        ParameterizedTemplate parameterizedTemplate,
+        AlertResolverExecutionEntity resolverExecution,
+        EnumDeviceType deviceType);
 
+    
     boolean acknowledge(int id, DateTime acknowledged);
 
     boolean acknowledge(AccountAlertEntity r, DateTime acknowledged);
 
     boolean acknowledge(UUID accountKey, int id, DateTime acknowledged);
 
+    
     Alert formatMessage(int id, Locale locale);
 
     Alert formatMessage(AccountAlertEntity r, Locale locale);
 
+    
     void delete(int id);
 
     void delete(AccountAlertEntity e);

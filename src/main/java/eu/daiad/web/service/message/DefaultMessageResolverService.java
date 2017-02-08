@@ -112,8 +112,9 @@ public class DefaultMessageResolverService implements IMessageResolverService
         AccountEntity account = userRepository.getAccountByKey(accountKey);
 
         DateTimeZone tz = DateTimeZone.forID(utility.getTimezone());
-        DateTime refDate = config.getRefDate().toDateTime(tz);
-
+        // Fixme DateTime refDate = config.getRefDate().toDateTime(tz);
+        DateTime refDate = DateTime.now().minusDays(1);
+        
         EnumSet<EnumDeviceType> deviceTypes =
             EnumSet.of(EnumDeviceType.AMPHIRO, EnumDeviceType.METER);
 

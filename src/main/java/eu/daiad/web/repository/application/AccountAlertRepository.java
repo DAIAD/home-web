@@ -26,9 +26,11 @@ import com.ibm.icu.text.MessageFormat;
 import eu.daiad.web.domain.application.AccountAlertEntity;
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AlertByTypeRecord;
+import eu.daiad.web.domain.application.AlertResolverExecutionEntity;
 import eu.daiad.web.domain.application.AlertTemplateEntity;
 import eu.daiad.web.domain.application.AlertTemplateTranslationEntity;
 import eu.daiad.web.model.PagingOptions;
+import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.Alert.ParameterizedTemplate;
 import eu.daiad.web.model.message.EnumAlertTemplate;
@@ -50,7 +52,7 @@ public class AccountAlertRepository extends BaseRepository
 
     @Autowired
     IAlertTemplateTranslationRepository translationRepository;
-
+    
     @Autowired
     ICurrencyRateService currencyRateService;
     
@@ -301,6 +303,94 @@ public class AccountAlertRepository extends BaseRepository
     }
 
     @Override
+    public List<AccountAlertEntity> findByExecution(int rid)
+    {
+        TypedQuery<AccountAlertEntity> query = entityManager.createQuery(
+            "SELECT a FROM account_alert a WHERE a.resolver_execution.id = :rid",
+            AccountAlertEntity.class);
+        query.setParameter("rid", rid);
+        return query.getResultList();
+    }
+
+    @Override
+    public List<AccountAlertEntity> findByExecution(List<Integer> rids)
+    {
+        TypedQuery<AccountAlertEntity> query = entityManager.createQuery(
+            "SELECT a FROM account_alert a WHERE a.resolver_execution.id IN (:rids)",
+            AccountAlertEntity.class);
+        query.setParameter("rids", rids);
+        return query.getResultList();
+    }
+
+    @Override
+    public List<AccountAlertEntity> findByAccountAndExecution(UUID accountKey, int rid)
+    { 
+        TypedQuery<AccountAlertEntity> query = entityManager.createQuery(
+            "SELECT a FROM account_alert a " +
+                "WHERE a.resolver_execution.id = :rid AND a.account.key = :accountKey",
+            AccountAlertEntity.class);
+        query.setParameter("rid", rid);
+        query.setParameter("accountKey", accountKey);
+        return query.getResultList();
+    }
+
+    @Override
+    public List<AccountAlertEntity> findByAccountAndExecution(UUID accountKey, List<Integer> rids)
+    {
+        TypedQuery<AccountAlertEntity> query = entityManager.createQuery(
+            "SELECT a FROM account_alert a " +
+                "WHERE a.resolver_execution.id IN (:rids) AND a.account.key = :accountKey",
+            AccountAlertEntity.class);
+        query.setParameter("rids", rids);
+        query.setParameter("accountKey", accountKey);
+        return query.getResultList();
+    }
+
+    @Override
+    public int countByExecution(int rid)
+    {
+        TypedQuery<Integer> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_alert a WHERE a.resolver_execution.id = :rid",
+            Integer.class);
+        query.setParameter("rid", rid);
+        return query.getSingleResult().intValue();
+    }
+
+    @Override
+    public int countByExecution(List<Integer> rids)
+    {
+        TypedQuery<Integer> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_alert a WHERE a.resolver_execution.id IN (:rids)",
+            Integer.class);
+        query.setParameter("rids", rids);
+        return query.getSingleResult().intValue();
+    }
+
+    @Override
+    public int countByAccountAndExecution(UUID accountKey, int rid)
+    {
+        TypedQuery<Integer> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_alert a " +
+                "WHERE a.resolver_execution.id = :rid AND a.account.key = :accountKey",
+            Integer.class);
+        query.setParameter("rid", rid);
+        query.setParameter("accountKey", accountKey);
+        return query.getSingleResult().intValue();
+    }
+
+    @Override
+    public int countByAccountAndExecution(UUID accountKey, List<Integer> rids)
+    {
+        TypedQuery<Integer> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_alert a " +
+                "WHERE a.resolver_execution.id IN (:rids) AND a.account.key = :accountKey",
+            Integer.class);
+        query.setParameter("rids", rids);
+        query.setParameter("accountKey", accountKey);
+        return query.getSingleResult().intValue();
+    }
+    
+    @Override
     public AccountAlertEntity create(AccountAlertEntity e)
     {
         e.setCreatedOn(DateTime.now());
@@ -309,7 +399,11 @@ public class AccountAlertRepository extends BaseRepository
     }
 
     @Override
-    public AccountAlertEntity createWith(UUID accountKey, Alert.ParameterizedTemplate parameters)
+    public AccountAlertEntity createWith(
+        UUID accountKey,
+        ParameterizedTemplate parameterizedTemplate,
+        AlertResolverExecutionEntity resolverExecution,
+        EnumDeviceType deviceType)
     {
         TypedQuery<AccountEntity> query = entityManager.createQuery(
             "SELECT a FROM account a WHERE a.key = :accountKey", AccountEntity.class);
@@ -324,13 +418,16 @@ public class AccountAlertRepository extends BaseRepository
 
         if (account == null)
             return null;
-        else
-            return createWith(account, parameters);
+
+        return createWith(account, parameterizedTemplate, resolverExecution, deviceType);
     }
 
     @Override
     public AccountAlertEntity createWith(
-        AccountEntity account, Alert.ParameterizedTemplate parameterizedTemplate)
+        AccountEntity account, 
+        ParameterizedTemplate parameterizedTemplate,
+        AlertResolverExecutionEntity resolverExecution,
+        EnumDeviceType deviceType)
     {
         // Ensure we have a persistent AccountEntity instance
         if (!entityManager.contains(account))
@@ -344,8 +441,13 @@ public class AccountAlertRepository extends BaseRepository
         
         // Create
         
-        AccountAlertEntity r = 
-            new AccountAlertEntity(account, templateEntity, parameterizedTemplate);
+        AccountAlertEntity r = new AccountAlertEntity();
+        r.setAccount(account);
+        r.setTemplate(templateEntity);
+        r.setParameters(parameterizedTemplate);
+        r.setDeviceType(deviceType);
+        r.setResolverExecution(resolverExecution);
+        
         return create(r);
     }
 

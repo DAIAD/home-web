@@ -1,6 +1,9 @@
 package eu.daiad.web.service.message;
 
 import java.util.UUID;
+
+import org.joda.time.LocalDateTime;
+
 import java.util.List;
 
 public interface IMessageGeneratorService 
@@ -11,7 +14,7 @@ public interface IMessageGeneratorService
      * @param config the configuration options
      * @param utilityKey
      */
-    public abstract void executeUtility(Configuration config, UUID utilityKey);
+    public void executeUtility(LocalDateTime refDate, Configuration config, UUID utilityKey);
 
     /**
      * Generates messages for a list of users.
@@ -19,6 +22,6 @@ public interface IMessageGeneratorService
      * @param config the configuration options
      * @param accountKeys
      */
-    public abstract void executeAccounts(Configuration config, List<UUID> accountKeys);
+    public void executeAccounts(LocalDateTime refDate, Configuration config, List<UUID> accountKeys);
 
 }

@@ -65,7 +65,7 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
                 LocalDateTime.now().minusDays(1);
            
             eu.daiad.web.service.message.Configuration config = 
-                    new eu.daiad.web.service.message.Configuration(refDate);
+                    new eu.daiad.web.service.message.Configuration();
             config.setOnDemandExecution(true);
 
             String tipInterval = parameters.get(EnumParameter.STATIC_TIP_INTERVAL);
@@ -107,7 +107,7 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
                 List<UUID> keys = new ArrayList<>();
                 for(String k: StringUtils.split(accountKeys, ","))
                     keys.add(UUID.fromString(k.trim()));
-                messageGeneratorService.executeAccounts(config, keys);
+                messageGeneratorService.executeAccounts(refDate, config, keys);
             }
 
             if (StringUtils.isBlank(utilityKeys)) {
@@ -122,7 +122,7 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
             
             if (!StringUtils.isBlank(utilityKeys) && !utilityKeys.equals("-")) {
                 for(String key : StringUtils.split(utilityKeys, ",")) {
-                    messageGeneratorService.executeUtility(config, UUID.fromString(key));
+                    messageGeneratorService.executeUtility(refDate, config, UUID.fromString(key));
                 }
             }
         } catch (Exception ex) {

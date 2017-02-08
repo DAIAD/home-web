@@ -1,5 +1,6 @@
 package eu.daiad.web.domain.application;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -8,6 +9,8 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -25,6 +28,7 @@ import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.Recommendation.ParameterizedTemplate;
 
 @Entity(name = "account_recommendation")
@@ -72,28 +76,17 @@ public class AccountRecommendationEntity
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime receiveAcknowledgedOn;
 
-	public AccountRecommendationEntity() {}
-
-	public AccountRecommendationEntity(
-        AccountEntity account, RecommendationTemplateEntity templateEntity, ParameterizedTemplate parameterizedTemplate)
-        throws IllegalArgumentException
-    {
-	    this.account = account;
-        this.recommendationTemplate = templateEntity;
-	    
-        if (parameterizedTemplate != null) {
-            try {
-                parameters = new AccountRecommendationParametersEntity(this, parameterizedTemplate);
-            } catch (JsonProcessingException ex) {
-                throw new IllegalArgumentException("Failed to create parameters entity", ex);
-            }
-        }
-    }
+	@Column(name = "device_type", nullable = false)
+	@Enumerated(EnumType.STRING)
+	@NotNull
+	private EnumDeviceType deviceType;
 	
-	public AccountRecommendationEntity(AccountEntity account, RecommendationTemplateEntity template)
-	{
-	    this(account, template, (ParameterizedTemplate) null);
-	}
+	@ManyToOne()
+    @JoinColumn(name = "resolver_execution", nullable = false)
+    @NotNull
+    private RecommendationResolverExecutionEntity resolverExecution;
+	
+	public AccountRecommendationEntity() {}
 
     public AccountEntity getAccount()
     {
@@ -103,11 +96,6 @@ public class AccountRecommendationEntity
 	public void setAccount(AccountEntity account)
 	{
 		this.account = account;
-	}
-
-	public RecommendationTemplateEntity getTemplate()
-	{
-		return recommendationTemplate;
 	}
 
 	public DateTime getCreatedOn()
@@ -135,11 +123,6 @@ public class AccountRecommendationEntity
 		return id;
 	}
 
-	public AccountRecommendationParametersEntity getParameters()
-    {
-        return parameters;
-    }
-
 	public DateTime getReceiveAcknowledgedOn()
 	{
 		return receiveAcknowledgedOn;
@@ -149,4 +132,62 @@ public class AccountRecommendationEntity
 	{
 		this.receiveAcknowledgedOn = receiveAcknowledgedOn;
 	}
+
+    public EnumDeviceType getDeviceType()
+    {
+        return deviceType;
+    }
+
+    public void setDeviceType(EnumDeviceType deviceType)
+    {
+        this.deviceType = deviceType;
+    }
+
+    public RecommendationResolverExecutionEntity getResolverExecution()
+    {
+        return resolverExecution;
+    }
+
+    public DateTime getRefDate()
+    {
+        return resolverExecution.getRefDate();
+    }
+    
+    public String getResolverName()
+    {
+        return resolverExecution.getResolverName();
+    }
+    
+    public void setResolverExecution(RecommendationResolverExecutionEntity resolverExecution)
+    {
+        this.resolverExecution = resolverExecution;
+    }
+
+    public RecommendationTemplateEntity getTemplate()
+    {
+        return recommendationTemplate;
+    }
+    
+    public void setTemplate(RecommendationTemplateEntity recommendationTemplate)
+    {
+        this.recommendationTemplate = recommendationTemplate;
+    }
+
+    public AccountRecommendationParametersEntity getParameters()
+    {
+        return parameters;
+    }
+    
+    public void setParameters(ParameterizedTemplate parameterizedTemplate)
+    {
+        if (parameterizedTemplate == null) {
+            parameters = null;
+        } else {
+            try {
+                parameters = new AccountRecommendationParametersEntity(this, parameterizedTemplate);
+            } catch (IOException ex) {
+                throw new IllegalArgumentException("Failed to create parameters entity", ex);
+            }
+        }
+    }
 }
