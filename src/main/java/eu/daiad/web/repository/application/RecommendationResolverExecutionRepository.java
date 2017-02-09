@@ -41,9 +41,9 @@ public class RecommendationResolverExecutionRepository extends BaseRepository
     {
         TypedQuery<RecommendationResolverExecutionEntity> q = entityManager.createQuery(
             "SELECT a FROM recommendation_resolver_execution a " +
-                "WHERE a.resolver_name = :name AND a.finished IS NOT NULL" +
-                    ((interval != null)? " AND a.ref_date >= :start AND a.ref_date < :end " : "") +
-                "ORDER BY a.ref_date DESC",
+                "WHERE a.resolverName = :name AND a.finished IS NOT NULL" +
+                    ((interval != null)? " AND a.refDate >= :start AND a.refDate < :end " : "") +
+                "ORDER BY a.refDate DESC",
              RecommendationResolverExecutionEntity.class);
         
         q.setParameter("name", resolverName);
@@ -66,8 +66,8 @@ public class RecommendationResolverExecutionRepository extends BaseRepository
     {
         TypedQuery<Integer> q = entityManager.createQuery(
             "SELECT a.id FROM recommendation_resolver_execution a " +
-                "WHERE a.resolver_name = :name AND a.finished IS NOT NULL" +
-                ((interval != null)? " AND a.ref_date >= :start AND a.ref_date < :end" : ""),
+                "WHERE a.resolverName = :name AND a.finished IS NOT NULL" +
+                ((interval != null)? " AND a.refDate >= :start AND a.refDate < :end" : ""),
              Integer.class);
         
         q.setParameter("name", resolverName);

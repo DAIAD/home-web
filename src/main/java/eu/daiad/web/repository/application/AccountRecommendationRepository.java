@@ -19,6 +19,7 @@ import org.joda.time.Interval;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import com.ibm.icu.text.MessageFormat;
 
@@ -311,89 +312,93 @@ public class AccountRecommendationRepository extends BaseRepository
     }
 
     @Override
-    public List<AccountRecommendationEntity> findByExecution(int rid)
+    public List<AccountRecommendationEntity> findByExecution(int xid)
     {        
         TypedQuery<AccountRecommendationEntity> query = entityManager.createQuery(
-            "SELECT a FROM account_recommendation a WHERE a.resolver_execution.id = :rid",
+            "SELECT a FROM account_recommendation a WHERE a.resolverExecution.id = :xid",
             AccountRecommendationEntity.class);
-        query.setParameter("rid", rid);
+        query.setParameter("xid", xid);
         return query.getResultList();
     }
 
     @Override
-    public List<AccountRecommendationEntity> findByExecution(List<Integer> rids)
+    public List<AccountRecommendationEntity> findByExecution(List<Integer> xids)
     {
+        Assert.state(xids != null && !xids.isEmpty(), "Expected a non-empty list");
         TypedQuery<AccountRecommendationEntity> query = entityManager.createQuery(
-            "SELECT a FROM account_recommendation a WHERE a.resolver_execution.id IN (:rids)",
+            "SELECT a FROM account_recommendation a WHERE a.resolverExecution.id IN (:xids)",
             AccountRecommendationEntity.class);
-        query.setParameter("rids", rids);
+        query.setParameter("xids", xids);
         return query.getResultList();
     }
 
     @Override
-    public List<AccountRecommendationEntity> findByAccountAndExecution(UUID accountKey, int rid)
+    public List<AccountRecommendationEntity> findByAccountAndExecution(UUID accountKey, int xid)
     {        
         TypedQuery<AccountRecommendationEntity> query = entityManager.createQuery(
             "SELECT a FROM account_recommendation a " +
-                "WHERE a.resolver_execution.id = :rid AND a.account.key = :accountKey",
+                "WHERE a.resolverExecution.id = :xid AND a.account.key = :accountKey",
             AccountRecommendationEntity.class);
-        query.setParameter("rid", rid);
+        query.setParameter("xid", xid);
         query.setParameter("accountKey", accountKey);
         return query.getResultList();
     }
 
     @Override
-    public List<AccountRecommendationEntity> findByAccountAndExecution(UUID accountKey, List<Integer> rids)
+    public List<AccountRecommendationEntity> findByAccountAndExecution(UUID accountKey, List<Integer> xids)
     {
+        Assert.state(xids != null && !xids.isEmpty(), "Expected a non-empty list");
         TypedQuery<AccountRecommendationEntity> query = entityManager.createQuery(
             "SELECT a FROM account_recommendation a " +
-                "WHERE a.resolver_execution.id IN (:rids) AND a.account.key = :accountKey",
+                "WHERE a.resolverExecution.id IN (:xids) AND a.account.key = :accountKey",
             AccountRecommendationEntity.class);
-        query.setParameter("rids", rids);
+        query.setParameter("xids", xids);
         query.setParameter("accountKey", accountKey);
         return query.getResultList();
     }
 
     @Override
-    public int countByExecution(int rid)
+    public int countByExecution(int xid)
     {        
-        TypedQuery<Integer> query = entityManager.createQuery(
-            "SELECT count(a.id) FROM account_recommendation a WHERE a.resolver_execution.id = :rid",
-            Integer.class);
-        query.setParameter("rid", rid);
+        TypedQuery<Long> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_recommendation a WHERE a.resolverExecution.id = :xid",
+            Long.class);
+        query.setParameter("xid", xid);
         return query.getSingleResult().intValue();
     }
 
     @Override
-    public int countByExecution(List<Integer> rids)
+    public int countByExecution(List<Integer> xids)
     {
-        TypedQuery<Integer> query = entityManager.createQuery(
-            "SELECT count(a.id) FROM account_recommendation a WHERE a.resolver_execution.id IN (:rids)",
-            Integer.class);
-        query.setParameter("rids", rids);
+        Assert.state(xids != null && !xids.isEmpty(), "Expected a non-empty list");
+        TypedQuery<Long> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_recommendation a WHERE a.resolverExecution.id IN (:xids)",
+            Long.class);
+        query.setParameter("xids", xids);
         return query.getSingleResult().intValue();
     }
 
     @Override
-    public int countByAccountAndExecution(UUID accountKey, int rid)
+    public int countByAccountAndExecution(UUID accountKey, int xid)
     {
-        TypedQuery<Integer> query = entityManager.createQuery(
+        TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(a.id) FROM account_recommendation a " +
-                "WHERE a.resolver_execution.id = :rid AND a.account.key = :accountKey",
-            Integer.class);
-        query.setParameter("rid", rid);
+                "WHERE a.resolverExecution.id = :xid AND a.account.key = :accountKey",
+             Long.class);
+        query.setParameter("xid", xid);
         query.setParameter("accountKey", accountKey);
         return query.getSingleResult().intValue();
     }
 
     @Override
-    public int countByAccountAndExecution(UUID accountKey, List<Integer> rids)
+    public int countByAccountAndExecution(UUID accountKey, List<Integer> xids)
     {
-        TypedQuery<Integer> query = entityManager.createQuery(
+        Assert.state(xids != null && !xids.isEmpty(), "Expected a non-empty list");
+        TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(a.id) FROM account_recommendation a " +
-                "WHERE a.resolver_execution.id IN (:rids) AND a.account.key = :accountKey",
-            Integer.class);
-        query.setParameter("rids", rids);
+                "WHERE a.resolverExecution.id IN (:xids) AND a.account.key = :accountKey",
+            Long.class);
+        query.setParameter("xids", xids);
         query.setParameter("accountKey", accountKey);
         return query.getSingleResult().intValue();
     }

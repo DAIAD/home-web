@@ -323,21 +323,24 @@ public class DefaultMessageGeneratorService
             String resolverName, MessageGenerator resolverAnnotation, UUID accountKey)
         {
             List<Integer> xids;
-            int count;
             
             // Check for a sliding window of 1 week
             
             xids = resolverExecutionRepository.findIdByName(resolverName, refPastWeek);
-            count = accountAlertRepository.countByAccountAndExecution(accountKey, xids);
-            if (count > resolverAnnotation.maxPerWeek())
-                return true;
+            if (!xids.isEmpty()) {
+                int count = accountAlertRepository.countByAccountAndExecution(accountKey, xids);
+                if (count > resolverAnnotation.maxPerWeek())
+                    return true;
+            }
             
             // Check for a sliding window of 1 month
             
             xids = resolverExecutionRepository.findIdByName(resolverName, refPastMonth);
-            count = accountAlertRepository.countByAccountAndExecution(accountKey, xids);
-            if (count > resolverAnnotation.maxPerMonth())
-                return true;
+            if (!xids.isEmpty()) {
+                int count = accountAlertRepository.countByAccountAndExecution(accountKey, xids);
+                if (count > resolverAnnotation.maxPerMonth())
+                    return true;
+            }
             
             return false;
         }

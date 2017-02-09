@@ -41,9 +41,9 @@ public class AlertResolverExecutionRepository extends BaseRepository
     {
         TypedQuery<AlertResolverExecutionEntity> q = entityManager.createQuery(
             "SELECT a FROM alert_resolver_execution a " +
-                "WHERE a.resolver_name = :name AND a.finished IS NOT NULL" +
-                    ((interval != null)? " AND a.ref_date >= :start AND a.ref_date <= :end" : "") + " " +
-                "ORDER BY a.ref_date DESC",
+                "WHERE a.resolverName = :name AND a.finished IS NOT NULL" +
+                    ((interval != null)? " AND a.refDate >= :start AND a.refDate <= :end" : "") + " " +
+                "ORDER BY a.refDate DESC",
             AlertResolverExecutionEntity.class);
         
         q.setParameter("name", resolverName);
@@ -66,8 +66,8 @@ public class AlertResolverExecutionRepository extends BaseRepository
     {
         TypedQuery<Integer> q = entityManager.createQuery(
             "SELECT a.id FROM alert_resolver_execution a " +
-                "WHERE a.resolver_name = :name AND a.finished IS NOT NULL" +
-                    ((interval != null)? " AND a.ref_date >= :start AND a.ref_date <= :end" : ""),
+                "WHERE a.resolverName = :name AND a.finished IS NOT NULL" +
+                    ((interval != null)? " AND a.refDate >= :start AND a.refDate <= :end" : ""),
             Integer.class);
         
         q.setParameter("name", resolverName);
