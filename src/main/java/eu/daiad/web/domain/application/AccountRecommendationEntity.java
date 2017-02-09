@@ -29,6 +29,7 @@ import org.joda.time.DateTime;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import eu.daiad.web.model.device.EnumDeviceType;
+import eu.daiad.web.model.message.Recommendation;
 import eu.daiad.web.model.message.Recommendation.ParameterizedTemplate;
 
 @Entity(name = "account_recommendation")
@@ -176,6 +177,12 @@ public class AccountRecommendationEntity
     public AccountRecommendationParametersEntity getParameters()
     {
         return parameters;
+    }
+    
+    public ParameterizedTemplate getParameterizedTemplate() 
+        throws ClassNotFoundException, ClassCastException, IOException
+    {
+        return (parameters == null)? null : parameters.toParameterizedTemplate();
     }
     
     public void setParameters(ParameterizedTemplate parameterizedTemplate)

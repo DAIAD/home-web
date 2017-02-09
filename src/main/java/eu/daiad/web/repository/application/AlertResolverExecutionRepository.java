@@ -40,10 +40,10 @@ public class AlertResolverExecutionRepository extends BaseRepository
     public List<AlertResolverExecutionEntity> findByName(String resolverName, Interval interval)
     {
         TypedQuery<AlertResolverExecutionEntity> q = entityManager.createQuery(
-            "SELECT a FROM alert_resolver_execution a WHERE " +
-                "a.resolver_name = :name" +
-                " AND a.finished IS NOT NULL " +
-                ((interval != null)? " AND a.ref_date >= :start AND a.ref_date < :end" : ""),
+            "SELECT a FROM alert_resolver_execution a " +
+                "WHERE a.resolver_name = :name AND a.finished IS NOT NULL" +
+                    ((interval != null)? " AND a.ref_date >= :start AND a.ref_date <= :end" : "") + " " +
+                "ORDER BY a.ref_date DESC",
             AlertResolverExecutionEntity.class);
         
         q.setParameter("name", resolverName);
@@ -56,23 +56,6 @@ public class AlertResolverExecutionRepository extends BaseRepository
     }
 
     @Override
-    public AlertResolverExecutionEntity findLastByName(String resolverName)
-    {
-        TypedQuery<AlertResolverExecutionEntity> q = entityManager.createQuery(
-            "SELECT a FROM alert_resolver_execution a " +
-                "WHERE a.resolver_name = :name AND a.finished IS NOT NULL " +
-                "ORDER BY a.ref_date DESC",
-            AlertResolverExecutionEntity.class);
-        
-        q.setMaxResults(1);
-        q.setFirstResult(0);
-        
-        q.setParameter("name", resolverName);
-        
-        return q.getSingleResult();
-    }
-
-    @Override
     public List<Integer> findIdByName(String resolverName)
     {
         return findIdByName(resolverName, (Interval) null);
@@ -82,10 +65,9 @@ public class AlertResolverExecutionRepository extends BaseRepository
     public List<Integer> findIdByName(String resolverName, Interval interval)
     {
         TypedQuery<Integer> q = entityManager.createQuery(
-            "SELECT a.id FROM alert_resolver_execution a WHERE " +
-                "a.resolver_name = :name" +
-                " AND a.finished IS NOT NULL " +
-                ((interval != null)? " AND a.ref_date >= :start AND a.ref_date < :end" : ""),
+            "SELECT a.id FROM alert_resolver_execution a " +
+                "WHERE a.resolver_name = :name AND a.finished IS NOT NULL" +
+                    ((interval != null)? " AND a.ref_date >= :start AND a.ref_date <= :end" : ""),
             Integer.class);
         
         q.setParameter("name", resolverName);

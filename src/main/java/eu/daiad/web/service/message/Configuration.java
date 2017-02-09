@@ -89,7 +89,8 @@ public class Configuration
     public int getComputeThisDayOfMonth() {
         return new DateTime().dayOfMonth().getMaximumValue();
     }
-
+    
+    // Fixme: Not part of global configuration
     public int getComputeThisDayOfWeek() {
         return DateTimeConstants.SUNDAY;
     }

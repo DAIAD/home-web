@@ -532,30 +532,27 @@ public class AccountRecommendationRepository extends BaseRepository
 
         ParameterizedTemplate parameterizedTemplate = null; 
         try {
-            parameterizedTemplate = r.getParameters().toParameterizedTemplate();
+            parameterizedTemplate = r.getParameterizedTemplate();
         } catch (ClassCastException | ClassNotFoundException | IOException ex) {
             logger.error(String.format(
                 "Failed to retrieve parameterized template for recommendation#%d: %s",
                 r.getId(), ex.getMessage()));
             parameterizedTemplate = null;
         }
-        if (parameterizedTemplate == null)
-            return null;
         
-        // Make underlying parameters aware of target locale
-        
-        parameterizedTemplate = parameterizedTemplate.withLocale(locale, currencyRateService);
-
         // Format
         
-        Map<String, Object> parameters = parameterizedTemplate.getParameters();
+        String title = translation.getTitle(); 
+        String description = translation.getDescription();
+        if (parameterizedTemplate != null) {
+            // Make underlying parameters aware of target locale    
+            parameterizedTemplate = parameterizedTemplate.withLocale(locale, currencyRateService);
+            // Format messages (interpolate parameters)
+            Map<String, Object> parameters = parameterizedTemplate.getParameters();
+            title = (new MessageFormat(title, locale)).format(parameters);
+            description = (new MessageFormat(description, locale)).format(parameters);
+        }
         
-        String title = (new MessageFormat(translation.getTitle(), locale))
-            .format(parameters);
-
-        String description = (new MessageFormat(translation.getDescription(), locale))
-            .format(parameters);
-
         // Build a DTO object with formatted messages
         
         Recommendation message = new Recommendation(r.getId(), template);

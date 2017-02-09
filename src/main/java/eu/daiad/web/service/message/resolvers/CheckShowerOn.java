@@ -1,7 +1,9 @@
 package eu.daiad.web.service.message.resolvers;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.collections4.FluentIterable;
@@ -10,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import eu.daiad.web.annotate.message.GenerateMessages;
+import eu.daiad.web.annotate.message.MessageGenerator;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -30,12 +32,14 @@ import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractAlertResolver;
 
-@GenerateMessages()
+@MessageGenerator()
 @Component
 @Scope("prototype")
 public class CheckShowerOn extends AbstractAlertResolver
-{
+{ 
     public static final int DURATION_THRESHOLD_IN_MINUTES = 30;
+ 
+    private static final Set<EnumDeviceType> supportedDevices = EnumSet.of(EnumDeviceType.AMPHIRO);
     
     @Autowired
     IDataService dataService;
@@ -74,9 +78,8 @@ public class CheckShowerOn extends AbstractAlertResolver
     }
 
     @Override
-    public boolean supports(EnumDeviceType deviceType)
+    public Set<EnumDeviceType> getSupportedDevices()
     {
-        return (deviceType == EnumDeviceType.AMPHIRO);
+        return Collections.unmodifiableSet(supportedDevices);
     }
-    
 }

@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
@@ -24,7 +25,9 @@ import eu.daiad.web.repository.BaseRepository;
 
 @Repository
 @Transactional("applicationTransactionManager")
-public class JpaUtilityRepository extends BaseRepository implements IUtilityRepository {
+public class JpaUtilityRepository extends BaseRepository 
+    implements IUtilityRepository 
+{
 
     private final String COUNTER_USER = "user";
 
@@ -91,16 +94,22 @@ public class JpaUtilityRepository extends BaseRepository implements IUtilityRepo
     }
     
     @Override
-    public List<UUID> getUtilityMembers(UUID utilityKey)
+    public List<UUID> getMembers(UUID utilityKey)
     {
         TypedQuery<UUID> q = entityManager.createQuery(
-            "SELECT a.key FROM account a WHERE a.utility.key = :utilityKey", 
-            UUID.class);
-        
+            "SELECT a.key FROM account a WHERE a.utility.key = :utilityKey", UUID.class);
         q.setParameter("utilityKey", utilityKey);
         return q.getResultList();
     }
     
+    @Override
+    public List<UUID> getMembers(int id)
+    {
+        TypedQuery<UUID> q = entityManager.createQuery(
+            "SELECT a.key FROM account a WHERE a.utility.id = :id", UUID.class);
+        q.setParameter("id", id);
+        return q.getResultList();
+    }
     
     @Override
     public Map<String, Counter> getCounters(int utilityId) {
@@ -152,5 +161,28 @@ public class JpaUtilityRepository extends BaseRepository implements IUtilityRepo
 
             counters.put(name, counter);
         }
+    }
+
+    @Override
+    public UtilityEntity findOne(int id)
+    {
+        return entityManager.find(UtilityEntity.class, id);
+    }
+
+    @Override
+    public UtilityEntity findOne(UUID key)
+    {
+        TypedQuery<UtilityEntity> q = entityManager.createQuery(
+            "FROM utility u WHERE u.key = :key", UtilityEntity.class);
+        q.setParameter("key", key);
+        
+        UtilityEntity r;
+        try {
+            r = q.getSingleResult();
+        } catch (NoResultException x) {
+            r = null;
+        }
+        
+        return r;
     }
 }

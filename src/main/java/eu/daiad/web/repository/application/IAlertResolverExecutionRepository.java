@@ -20,9 +20,7 @@ public interface IAlertResolverExecutionRepository
     List<Integer> findIdByName(String resolverName);
     
     List<Integer> findIdByName(String resolverName, Interval interval);
-    
-    AlertResolverExecutionEntity findLastByName(String resolverName);
-    
+        
     AlertResolverExecutionEntity create(AlertResolverExecutionEntity r);
     
     AlertResolverExecutionEntity createWith(DateTime refDate, String resolverName, UtilityEntity target, DateTime started);

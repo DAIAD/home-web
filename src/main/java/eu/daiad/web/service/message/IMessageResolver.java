@@ -2,6 +2,7 @@ package eu.daiad.web.service.message;
 
 import java.util.UUID;
 import java.util.List;
+import java.util.Set;
 
 import org.joda.time.DateTime;
 
@@ -26,12 +27,11 @@ public interface IMessageResolver <P extends Message.Parameters>
     public void teardown();
 
     /**
-     * Does this resolver support a given device type?
+     * Provide the set of device types this resolver can support
      * 
-     * @param deviceType
      * @return
      */
-    public boolean supports(EnumDeviceType deviceType);
+    public Set<EnumDeviceType> getSupportedDevices();
 
     /**
      * Examine a particular account and generate messages.

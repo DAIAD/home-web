@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import eu.daiad.web.model.device.EnumDeviceType;
+import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.Alert.ParameterizedTemplate;
 
 @Entity(name = "account_alert")
@@ -177,6 +178,12 @@ public class AccountAlertEntity
         return parameters;
     }
 
+    public ParameterizedTemplate getParameterizedTemplate() 
+        throws ClassNotFoundException, ClassCastException, IOException
+    {
+        return (parameters == null)? null : parameters.toParameterizedTemplate();
+    }
+    
     public void setParameters(ParameterizedTemplate parameterizedTemplate)
     {
         if (parameterizedTemplate == null) {

@@ -40,10 +40,11 @@ public class RecommendationResolverExecutionRepository extends BaseRepository
     public List<RecommendationResolverExecutionEntity> findByName(String resolverName, Interval interval)
     {
         TypedQuery<RecommendationResolverExecutionEntity> q = entityManager.createQuery(
-            "SELECT a FROM recommendation_resolver_execution a WHERE " +
-                "a.resolver_name = :name" +
-                ((interval != null)? " AND a.ref_date >= :start AND a.ref_date < :end" : ""),
-                RecommendationResolverExecutionEntity.class);
+            "SELECT a FROM recommendation_resolver_execution a " +
+                "WHERE a.resolver_name = :name AND a.finished IS NOT NULL" +
+                    ((interval != null)? " AND a.ref_date >= :start AND a.ref_date < :end " : "") +
+                "ORDER BY a.ref_date DESC",
+             RecommendationResolverExecutionEntity.class);
         
         q.setParameter("name", resolverName);
         if (interval != null) {
@@ -52,23 +53,6 @@ public class RecommendationResolverExecutionRepository extends BaseRepository
         }
         
         return q.getResultList();
-    }
-
-    @Override
-    public RecommendationResolverExecutionEntity findLastByName(String resolverName)
-    {
-        TypedQuery<RecommendationResolverExecutionEntity> q = entityManager.createQuery(
-            "SELECT a FROM recommendation_resolver_execution a " +
-                "WHERE a.resolver_name = :name AND a.finished IS NOT NULL " +
-                "ORDER BY a.ref_date DESC",
-            RecommendationResolverExecutionEntity.class);
-        
-        q.setMaxResults(1);
-        q.setFirstResult(0);
-        
-        q.setParameter("name", resolverName);
-        
-        return q.getSingleResult();
     }
 
     @Override
@@ -81,10 +65,10 @@ public class RecommendationResolverExecutionRepository extends BaseRepository
     public List<Integer> findIdByName(String resolverName, Interval interval)
     {
         TypedQuery<Integer> q = entityManager.createQuery(
-            "SELECT a.id FROM recommendation_resolver_execution a WHERE " +
-                "a.resolver_name = :name" +
+            "SELECT a.id FROM recommendation_resolver_execution a " +
+                "WHERE a.resolver_name = :name AND a.finished IS NOT NULL" +
                 ((interval != null)? " AND a.ref_date >= :start AND a.ref_date < :end" : ""),
-                Integer.class);
+             Integer.class);
         
         q.setParameter("name", resolverName);
         if (interval != null) {

@@ -6,6 +6,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
@@ -16,7 +17,13 @@ import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
 @Entity(name = "recommendation_resolver_execution")
-@Table(schema = "public", name = "recommendation_resolver_execution")
+@Table(
+    schema = "public", 
+    name = "recommendation_resolver_execution",
+    indexes = {
+        @Index(columnList = "ref_date")
+    }
+)
 public class RecommendationResolverExecutionEntity
 {
     @Id()

@@ -21,8 +21,6 @@ public interface IRecommendationResolverExecutionRepository
     
     List<Integer> findIdByName(String resolverName, Interval interval);
     
-    RecommendationResolverExecutionEntity findLastByName(String resolverName);
-    
     RecommendationResolverExecutionEntity create(RecommendationResolverExecutionEntity r);
     
     RecommendationResolverExecutionEntity createWith(DateTime refDate, String resolverName, UtilityEntity target, DateTime started);
