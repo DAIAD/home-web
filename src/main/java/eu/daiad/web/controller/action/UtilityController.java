@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.ApplicationException;
-import eu.daiad.web.model.group.GroupMemberInfoResponse;
+import eu.daiad.web.model.group.GroupMemberCollectionResponse;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.model.utility.UtilityInfo;
@@ -74,7 +74,7 @@ public class UtilityController extends BaseController {
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse getUtilityMemberInfo(@AuthenticationPrincipal AuthenticatedUser user) {
         try{
-            return new GroupMemberInfoResponse(utilityRepository.getUtilityMemberInfo(user.getUtilityKey()));
+            return new GroupMemberCollectionResponse(utilityRepository.getUtilityMembers(user.getUtilityKey()));
         } catch (ApplicationException ex) {
             logger.error(ex.getMessage(), ex);
 

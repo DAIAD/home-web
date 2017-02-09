@@ -8,14 +8,14 @@ public class PagingOptions
 
     public PagingOptions(int limit, int offset, boolean ascending)
     {
-        this.size = limit;
+        size = limit;
         this.offset = offset;
         this.ascending = ascending;
     }
 
     public PagingOptions(int limit)
     {
-        this.size = limit;
+        size = limit;
     }
 
     public PagingOptions() {}
@@ -27,7 +27,7 @@ public class PagingOptions
 
     public void setSize(int limit)
     {
-        this.size = limit;
+        size = limit;
     }
 
     public int getOffset()
@@ -53,7 +53,6 @@ public class PagingOptions
     @Override
     public String toString()
     {
-        return String.format("PagingOptions(size=%d, offset=%d, ascending=%s)",
-            offset, size, ascending? "T" : "F");
+        return String.format("PagingOptions(size=%d, offset=%d, ascending=%s)", offset, size, ascending? "T" : "F");
     }
 }

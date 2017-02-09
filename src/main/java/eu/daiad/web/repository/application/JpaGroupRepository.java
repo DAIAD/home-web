@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.UUID;
 
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
@@ -22,19 +21,18 @@ import org.springframework.transaction.annotation.Transactional;
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.ClusterEntity;
 import eu.daiad.web.domain.application.FavouriteGroupEntity;
-import eu.daiad.web.domain.application.GroupCommunity;
+import eu.daiad.web.domain.application.GroupCommonsEntity;
 import eu.daiad.web.domain.application.GroupEntity;
 import eu.daiad.web.domain.application.GroupMemberEntity;
 import eu.daiad.web.domain.application.GroupSegmentEntity;
 import eu.daiad.web.domain.application.GroupSetEntity;
 import eu.daiad.web.domain.application.UtilityEntity;
 import eu.daiad.web.model.error.SharedErrorCode;
-import eu.daiad.web.model.group.Account;
 import eu.daiad.web.model.group.Cluster;
-import eu.daiad.web.model.group.Community;
+import eu.daiad.web.model.group.Commons;
 import eu.daiad.web.model.group.Group;
 import eu.daiad.web.model.group.GroupInfo;
-import eu.daiad.web.model.group.GroupMemberInfo;
+import eu.daiad.web.model.group.GroupMember;
 import eu.daiad.web.model.group.Segment;
 import eu.daiad.web.model.group.Set;
 import eu.daiad.web.model.group.Utility;
@@ -54,20 +52,21 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
 
 
     @Override
-    public Group getByKey(UUID key)
-    {
-        TypedQuery<GroupEntity> query = entityManager.createQuery("SELECT g FROM Group g WHERE g.key = :key", GroupEntity.class);
-        query.setParameter("key", key);
-        query.setMaxResults(1);
+    public Group getByKey(UUID key) {
+        return this.getByKey(key, true);
+    }
 
-        GroupEntity g;
-        try {
-            g = query.getSingleResult();
-        } catch (NoResultException e) {
-            g = null;
-        }
+    @Override
+    public Group getByKey(UUID key, boolean includeMembers) {
+        String groupQueryString = "SELECT g FROM group g WHERE g.key = :key";
 
-        return (g == null)? null : groupEntityToGroupObject(g);
+        TypedQuery<GroupEntity> query = entityManager.createQuery(groupQueryString, GroupEntity.class)
+                                                     .setParameter("key", key)
+                                                     .setMaxResults(1);
+
+        List<GroupEntity> groups = query.getResultList();
+
+        return (groups.isEmpty() ? null : groupEntityToGroupObject(groups.get(0)));
     }
 
     @Override
@@ -271,6 +270,7 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
 
             segmentEntity.setCluster(clusterEntity);
             segmentEntity.setCreatedOn(now);
+            segmentEntity.setUpdatedOn(now);
             segmentEntity.setName(segment.getName());
             segmentEntity.setSize(segment.getMembers().size());
             segmentEntity.setUtility(utility);
@@ -338,6 +338,7 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
         GroupSetEntity groupEntity = new GroupSetEntity();
 
         groupEntity.setCreatedOn(now);
+        groupEntity.setUpdatedOn(now);
         groupEntity.setName(name);
         groupEntity.setOwner(owner);
         groupEntity.setSize(members.length);
@@ -444,66 +445,19 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
     }
 
     @Override
-    public List<Group> getCommunities() {
-        TypedQuery<GroupCommunity> query = entityManager.createQuery(
-                        "select g from group_community g ", GroupCommunity.class);
+    public List<GroupMember> getGroupMembers(UUID groupKey) {
+        String memberQueryString = "select m.account from group_member m where m.group.key = :groupKey";
 
-        List<Group> groups = new ArrayList<Group>();
-
-        for (GroupCommunity entity : query.getResultList()) {
-            groups.add(groupEntityToGroupObject(entity));
-        }
-
-        return groups;
-    }
-
-    @Override
-    public List<Account> getGroupMembers(UUID groupKey) {
-        List<Account> accounts = new ArrayList<Account>();
-
-        TypedQuery<AccountEntity> query = entityManager.createQuery(
-                        "select m.account from group_member m where m.group.key = :groupKey",
-                        AccountEntity.class);
-
+        TypedQuery<AccountEntity> query = entityManager.createQuery(memberQueryString, AccountEntity.class);
         query.setParameter("groupKey", groupKey);
 
-        for (AccountEntity entity : query.getResultList()) {
-            Account account = new Account();
-
-            account.setKey(entity.getKey());
-            account.setLocation(entity.getLocation());
-            account.setUsername(entity.getUsername());
-            account.setFullName(entity.getFullname());
-
-            accounts.add(account);
-        }
-
-        return accounts;
-    }
-
-    @Override
-    public List<GroupMemberInfo> getGroupMemberInfo(UUID groupKey) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
-
-        if (!user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
-            throw createApplicationException(SharedErrorCode.AUTHORIZATION);
-        }
-
-        String memberQueryString = "SELECT m.account FROM group_member m WHERE m.group.key = :groupKey";
-
-        TypedQuery<AccountEntity> groupMemberQuery = entityManager.createQuery(memberQueryString, AccountEntity.class)
-                                                                  .setFirstResult(0);
-        groupMemberQuery.setParameter("groupKey", groupKey);
-
-        List<GroupMemberInfo> members = new ArrayList<GroupMemberInfo>();
-        for (AccountEntity account : groupMemberQuery.getResultList()) {
-            members.add(new GroupMemberInfo(account));
+        List<GroupMember> members = new ArrayList<GroupMember>();
+        for (AccountEntity account : query.getResultList()) {
+            members.add(new GroupMember(account));
         }
 
         return members;
     }
-
 
     @Override
     public List<UUID> getGroupMemberKeys(UUID groupKey) {
@@ -569,7 +523,8 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
         for (GroupSegmentEntity group : groups) {
             Segment segment = new Segment();
 
-            segment.setCreatedOn(group.getCreatedOn().getMillis());
+            segment.setCreatedOn(group.getCreatedOn());
+            segment.setUpdatedOn(group.getUpdatedOn());
             segment.setGeometry(group.getGeometry());
             segment.setKey(group.getKey());
             segment.setName(group.getName());
@@ -588,7 +543,8 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
         for (UtilityEntity entity : entities) {
             Utility utility = new Utility();
 
-            utility.setCreatedOn(entity.getCreatedOn().getMillis());
+            utility.setCreatedOn(entity.getCreatedOn());
+            utility.setUpdatedOn(entity.getCreatedOn());
             utility.setKey(entity.getKey());
             utility.setName(entity.getName());
             utility.setUtilityKey(entity.getKey());
@@ -605,7 +561,8 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
         for (ClusterEntity entity : entities) {
             Cluster cluster = new Cluster();
 
-            cluster.setCreatedOn(entity.getCreatedOn().getMillis());
+            cluster.setCreatedOn(entity.getCreatedOn());
+            cluster.setUpdatedOn(entity.getCreatedOn());
             cluster.setKey(entity.getKey());
             cluster.setName(entity.getName());
             cluster.setUtilityKey(entity.getUtility().getKey());
@@ -613,7 +570,8 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
             for (GroupSegmentEntity groupSegment : ((ClusterEntity) entity).getGroups()) {
                 Segment segment = new Segment();
 
-                segment.setCreatedOn(groupSegment.getCreatedOn().getMillis());
+                segment.setCreatedOn(groupSegment.getCreatedOn());
+                segment.setUpdatedOn(groupSegment.getUpdatedOn());
                 segment.setGeometry(groupSegment.getGeometry());
                 segment.setKey(groupSegment.getKey());
                 segment.setName(groupSegment.getName());
@@ -644,7 +602,8 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
             case SEGMENT:
                 Segment segment = new Segment();
 
-                segment.setCreatedOn(entity.getCreatedOn().getMillis());
+                segment.setCreatedOn(entity.getCreatedOn());
+                segment.setUpdatedOn(entity.getUpdatedOn());
                 segment.setGeometry(entity.getGeometry());
                 segment.setKey(entity.getKey());
                 segment.setName(entity.getName());
@@ -657,7 +616,8 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
             case SET:
                 Set set = new Set();
 
-                set.setCreatedOn(entity.getCreatedOn().getMillis());
+                set.setCreatedOn(entity.getCreatedOn());
+                set.setUpdatedOn(entity.getUpdatedOn());
                 set.setGeometry(entity.getGeometry());
                 set.setKey(entity.getKey());
                 set.setName(entity.getName());
@@ -666,16 +626,17 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
 
                 return set;
             case COMMONS:
-                Community community = new Community();
+                Commons community = new Commons();
 
-                community.setCreatedOn(entity.getCreatedOn().getMillis());
+                community.setCreatedOn(entity.getCreatedOn());
+                community.setUpdatedOn(entity.getUpdatedOn());
                 community.setGeometry(entity.getGeometry());
                 community.setKey(entity.getKey());
                 community.setName(entity.getName());
                 community.setSize(entity.getSize());
                 community.setUtilityKey(entity.getUtility().getKey());
 
-                GroupCommunity communityEntity = (GroupCommunity) entity;
+                GroupCommonsEntity communityEntity = (GroupCommonsEntity) entity;
 
                 community.setDescription(communityEntity.getDescription());
                 community.setImage(communityEntity.getImage());

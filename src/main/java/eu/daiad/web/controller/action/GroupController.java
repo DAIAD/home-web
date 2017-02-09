@@ -21,10 +21,9 @@ import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.group.EnumGroupType;
 import eu.daiad.web.model.group.Group;
+import eu.daiad.web.model.group.GroupInfoCollectionResponse;
 import eu.daiad.web.model.group.GroupInfoResponse;
-import eu.daiad.web.model.group.GroupListInfoResponse;
-import eu.daiad.web.model.group.GroupMemberInfo;
-import eu.daiad.web.model.group.GroupMemberInfoResponse;
+import eu.daiad.web.model.group.GroupMemberCollectionResponse;
 import eu.daiad.web.model.group.GroupQueryRequest;
 import eu.daiad.web.model.group.GroupQueryResponse;
 import eu.daiad.web.model.group.GroupSetCreateRequest;
@@ -121,7 +120,7 @@ public class GroupController extends BaseController {
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse getGroupsInfo(@AuthenticationPrincipal AuthenticatedUser user) {
         try {
-            return new GroupListInfoResponse(groupRepository.getUtilityGroupInfo(user.getUtilityKey()));
+            return new GroupInfoCollectionResponse(groupRepository.getUtilityGroupInfo(user.getUtilityKey()));
         } catch (ApplicationException ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -185,7 +184,7 @@ public class GroupController extends BaseController {
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse getGroupMembers(@PathVariable UUID key) {
         try{
-            return new GroupMemberInfoResponse(groupRepository.getGroupMemberInfo(key));
+            return new GroupMemberCollectionResponse(groupRepository.getGroupMembers(key));
         } catch (ApplicationException ex) {
             logger.error(ex.getMessage(), ex);
 
