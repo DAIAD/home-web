@@ -20,7 +20,14 @@
     "MeterStatus",
     "MeterMeasurements",
     "Sessions",
-    "Session"
+    "Session",
+    "CommonsCreate",
+    "CommonsUpdate",
+    "CommonsDelete",
+    "CommonsGet",
+    "CommonsJoin",
+    "CommonsLeave",
+    "CommonsSearch"
   ],
   "template": {
     "withCompare": false,
