@@ -43,6 +43,8 @@ public interface IFavouriteRepository {
 
     abstract void pinFavouriteQuery(long id, AccountEntity account);
     
+    abstract void unpinFavouriteQuery(long id, AccountEntity account);    
+    
     abstract List<NamedDataQuery> getAllFavouriteQueries();
 
 }

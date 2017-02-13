@@ -506,6 +506,27 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }
     }
+
+    @Override
+    public void unpinFavouriteQuery(long id, AccountEntity account) {
+
+        try {
+            TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> query = entityManager.createQuery(
+                            "SELECT d FROM data_query d WHERE d.owner.id = :accountId and d.id = :id",
+                            eu.daiad.web.domain.application.DataQueryEntity.class).setFirstResult(0).setMaxResults(1);
+
+            query.setParameter("id", id);
+            query.setParameter("accountId", account.getId());
+
+            DataQueryEntity dataQueryEntity = query.getSingleResult();
+            dataQueryEntity.setPinned(false);
+            
+            entityManager.persist(dataQueryEntity);
+
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        }
+    }
     
     @Override
     public List<NamedDataQuery> getFavouriteQueriesForOwner(int accountId)

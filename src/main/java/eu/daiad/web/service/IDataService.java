@@ -65,12 +65,20 @@ public interface IDataService {
     abstract void deleteStoredQuery(NamedDataQuery query, UUID key);   
 
     /**
-     * Pins a data query to dashboard.
+     * Pin data query to dashboard.
      * 
      * @param id the query id
      * @param key the user's UUID key
      */
     abstract void pinStoredQuery(long id, UUID key); 
+
+    /**
+     * Unpin a data query from dashboard.
+     * 
+     * @param id the query id
+     * @param key the user's UUID key
+     */
+    abstract void unpinStoredQuery(long id, UUID key); 
     
     /**
      * Loads user's saved queries.

@@ -327,9 +327,34 @@ public class DataController extends BaseController {
         RestResponse response = new RestResponse();
 
         try {
-            System.out.println("PINING SUCCESS, id:" + request.getNamedQuery().getId());
             
             dataService.pinStoredQuery(request.getNamedQuery().getId(), user.getKey());
+            
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
+
+    /**
+     * Unpin query from dashboard.
+     *
+     * @param user the user
+     * @param request the requested query to unpin.
+     * @return the result of the operation.
+     */
+    @RequestMapping(value = "/action/data/query/unpin", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse unpinQuery(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody StoreDataQueryRequest request) {
+        
+        RestResponse response = new RestResponse();
+
+        try {
+            
+            dataService.unpinStoredQuery(request.getNamedQuery().getId(), user.getKey());
             
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);

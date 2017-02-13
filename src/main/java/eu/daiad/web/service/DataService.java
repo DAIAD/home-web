@@ -1120,6 +1120,13 @@ public class DataService extends BaseService implements IDataService {
         favouriteRepository.pinFavouriteQuery(id, account);
 
     }
+
+    @Override
+    public void unpinStoredQuery(long id, UUID key) {
+        AccountEntity account = userRepository.getAccountByKey(key);
+        favouriteRepository.unpinFavouriteQuery(id, account);
+
+    }
     
     @Override
     public List<NamedDataQuery> getQueriesForOwner(int accountId)
