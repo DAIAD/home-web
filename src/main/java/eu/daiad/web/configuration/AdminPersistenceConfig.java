@@ -1,7 +1,5 @@
 package eu.daiad.web.configuration;
 
-import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -20,7 +18,6 @@ import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
@@ -29,14 +26,14 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
- * 
+ *
  * Provides configuration for the DAIAD manager database by declaring a set of beans. Moreover, it
  * configures the database migration process.
  *
  */
 @Configuration
 @EnableJpaRepositories(
-    basePackages = { "eu.daiad.web.repository.admin" }, 
+    basePackages = { "eu.daiad.web.repository.admin" },
     entityManagerFactoryRef = "managementEntityManagerFactory",
     transactionManagerRef = "managementTransactionManager"
 )
@@ -45,7 +42,7 @@ public class AdminPersistenceConfig {
 
     @Value("${flyway.enabled:true}")
     private Boolean flywayEnabled;
-    
+
 	@Value("${daiad.manager.flyway.locations}")
 	private String flywayLocations;
 
@@ -54,27 +51,27 @@ public class AdminPersistenceConfig {
 
 	@Value("${daiad.manager.flyway.baseline-description}")
 	private String baselineDescription;
-	
+
     private Map<String, Object> jpaProps = new HashMap<>();
-    
+
     @Autowired
     private void readJpaProperties(Environment env, PropertiesReader propertyReader)
     {
         Properties p = null;
-        
-        String profile = env.getActiveProfiles()[0];      
+
+        String profile = env.getActiveProfiles()[0];
         String path1 = String.format("classpath:config/datasource-management-%s.properties", profile);
         p = propertyReader.read(path1);
-        
+
         if (p == null)
             p = propertyReader.read("classpath:config/datasource-management.properties");
-        
+
         if (p != null && !p.isEmpty()) {
             for (Object k: p.keySet())
                 jpaProps.put(k.toString(), p.get(k));
         }
     }
-	
+
 	@Bean(name = "managementDataSource")
 	@ConfigurationProperties(prefix = "datasource.management")
 	public DataSource managementDataSource() {
@@ -83,7 +80,7 @@ public class AdminPersistenceConfig {
 
 	@Bean(name = "managementEntityManagerFactory")
 	@DependsOn("managementFlyway")
-	public LocalContainerEntityManagerFactoryBean managementEntityManagerFactory(EntityManagerFactoryBuilder builder) 
+	public LocalContainerEntityManagerFactoryBean managementEntityManagerFactory(EntityManagerFactoryBuilder builder)
 	{
 	    return builder
 		    .dataSource(managementDataSource())
@@ -95,7 +92,7 @@ public class AdminPersistenceConfig {
 
 	@Bean(name = "managementEntityManager")
 	public EntityManager managementEntityManager(
-		@Qualifier("managementEntityManagerFactory") EntityManagerFactory factory) 
+		@Qualifier("managementEntityManagerFactory") EntityManagerFactory factory)
 	{
 		return factory.createEntityManager();
 	}
@@ -109,24 +106,24 @@ public class AdminPersistenceConfig {
 
 	/**
 	 * Configures the data migration process.
-	 * 
-	 * @return the object that implements the database migration process 
+	 *
+	 * @return the object that implements the database migration process
 	 */
 	@Bean(name = "managementFlyway")
-	Flyway flyway() 
+	Flyway flyway()
 	{
 		Flyway flyway = new Flyway();
 
 		flyway.setBaselineOnMigrate(true);
-		flyway.setBaselineDescription(this.baselineDescription);
-		flyway.setBaselineVersionAsString(this.baselineVersion);
+		flyway.setBaselineDescription(baselineDescription);
+		flyway.setBaselineVersionAsString(baselineVersion);
 
-		flyway.setLocations(this.flywayLocations);
+		flyway.setLocations(flywayLocations);
 		flyway.setDataSource(managementDataSource());
 
         if (flywayEnabled)
             flyway.migrate();
-		
+
 		return flyway;
 	}
 }

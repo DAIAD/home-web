@@ -15,6 +15,7 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.UUID;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -595,6 +596,30 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
         System.arraycopy(deviceKeyHash, 0, rowKey, userKeyHash.length, deviceKeyHash.length);
 
         System.arraycopy(sessionIdBytes, 0, rowKey, (userKeyHash.length + deviceKeyHash.length), sessionIdBytes.length);
+
+        return rowKey;
+    }
+
+    /**
+     * Creates a HBase row key for an amphiro b1 session.
+     *
+     * @param userKey the user key.
+     * @param deviceKey the device key.
+     * @return a valid HBase key.
+     * @throws UnsupportedEncodingException if the encoding is not supported.
+     * @throws NoSuchAlgorithmException if the hashing algorithm is not supported.
+     */
+    private byte[] getUserDeviceKey(UUID userKey, UUID deviceKey) throws UnsupportedEncodingException, NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance("MD5");
+
+        byte[] userKeyHash = md.digest(userKey.toString().getBytes("UTF-8"));
+        byte[] deviceKeyHash = md.digest(deviceKey.toString().getBytes("UTF-8"));
+
+        byte[] rowKey = new byte[userKeyHash.length + deviceKeyHash.length];
+
+        System.arraycopy(userKeyHash, 0, rowKey, 0, userKeyHash.length);
+
+        System.arraycopy(deviceKeyHash, 0, rowKey, userKeyHash.length, deviceKeyHash.length);
 
         return rowKey;
     }
@@ -1912,7 +1937,7 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
                 maxTotalSessions = query.getLength();
                 break;
             default:
-               return data;
+                return data;
         }
 
         Table table = null;
@@ -2086,27 +2111,34 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
                                                                         AmphiroSessionCollectionIndexIntervalQuery query) {
         AmphiroSessionCollectionIndexIntervalQueryResult data = new AmphiroSessionCollectionIndexIntervalQueryResult();
 
-        long startIndex = Long.MAX_VALUE;
-        long endIndex = 0L;
-        int maxTotalSessions = Integer.MAX_VALUE;
+        long skipSessions = 0;
+        long takeSessions = Integer.MAX_VALUE;
 
         switch (query.getType()) {
             case ABSOLUTE:
-                startIndex = query.getEndIndex();
-                endIndex = query.getStartIndex();
+                if ((query.getStartIndex() == null) || (query.getEndIndex() == null)) {
+                    return data;
+                }
+                if(query.getStartIndex() > query.getEndIndex()) {
+                    return data;
+                }
+                skipSessions = query.getStartIndex();
+                takeSessions = query.getEndIndex() - query.getStartIndex() + 1;
                 break;
             case SLIDING:
-                if (query.getStartIndex() == null) {
-                    startIndex = query.getLength();
-                    endIndex = 0;
-                } else {
-                    startIndex = query.getStartIndex() + query.getLength() -1;
-                    endIndex = query.getStartIndex();
+                if (query.getLength() == null) {
+                    return data;
                 }
-                maxTotalSessions = query.getLength();
+                if (query.getStartIndex() != null) {
+                    skipSessions = query.getStartIndex();
+                }
+                takeSessions = query.getLength();
                 break;
             default:
                 return data;
+        }
+        if (takeSessions <= 0) {
+            return data;
         }
 
         Table table = null;
@@ -2119,26 +2151,28 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
             UUID deviceKeys[] = query.getDeviceKey();
 
             for (int deviceIndex = 0; deviceIndex < deviceKeys.length; deviceIndex++) {
-                int totalSessions = 0;
+                long index = 0;
 
                 AmphiroSessionCollection collection = new AmphiroSessionCollection(deviceKeys[deviceIndex], names[deviceIndex]);
 
                 data.getDevices().add(collection);
 
-                if (endIndex > startIndex) {
-                    continue;
-                }
-
                 ArrayList<AmphiroSession> sessions = new ArrayList<AmphiroSession>();
 
                 Scan scan = new Scan();
                 scan.addFamily(columnFamily);
-                scan.setStartRow(getSessionKey(query.getUserKey(), deviceKeys[deviceIndex], startIndex));
-                scan.setStopRow(calculateTheClosestNextRowKeyForPrefix(getSessionKey(query.getUserKey(), deviceKeys[deviceIndex], endIndex)));
-
+                scan.setStartRow(getUserDeviceKey(query.getUserKey(), deviceKeys[deviceIndex]));
+                scan.setStopRow(calculateTheClosestNextRowKeyForPrefix(getUserDeviceKey(query.getUserKey(), deviceKeys[deviceIndex])));
                 scanner = table.getScanner(scan);
 
                 for (Result r = scanner.next(); r != null; r = scanner.next()) {
+                    if(index < skipSessions) {
+                        index++;
+                        continue;
+                    }
+                    if (index >= (skipSessions + takeSessions)) {
+                        break;
+                    }
                     NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
 
                     AmphiroSession historical = new AmphiroSession();
@@ -2221,7 +2255,7 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
                         }
                     }
 
-                    if (totalSessions < maxTotalSessions) {
+                    if (index < (skipSessions + takeSessions)) {
                         if (realtime.getTimestamp() != null) {
                             if (member.getIndex() != null) {
                                 if (member.getTimestamp() == null) {
@@ -2237,8 +2271,10 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
                                 realtime.setFlow(historical.getFlow());
                                 realtime.setTemperature(historical.getTemperature());
                             }
-                            sessions.add(realtime);
-                            totalSessions++;
+                            if (filterMember(realtime.getMember(), query.getMembers())) {
+                                sessions.add(realtime);
+                                index++;
+                            }
                         } else if (historical.getTimestamp() != null) {
                             if (member.getIndex() != null) {
                                 if (member.getTimestamp() == null) {
@@ -2246,8 +2282,10 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
                                 }
                                 historical.setMember(member);
                             }
-                            sessions.add(historical);
-                            totalSessions++;
+                            if (filterMember(historical.getMember(), query.getMembers())) {
+                                sessions.add(historical);
+                                index++;
+                            }
                         }
                     }
                 }
@@ -2292,6 +2330,24 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
                 logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
+    }
+
+    /**
+     * Checks if the index of the given member belongs to the specified array.
+     *
+     * @param member member to search.
+     * @param indexes
+     * @return
+     */
+    private boolean filterMember(AmphiroSession.Member member, int[] indexes) {
+        if ((indexes == null) || (indexes.length == 0)) {
+            return true;
+        }
+        if (member == null) {
+            return false;
+        }
+
+        return ArrayUtils.contains(indexes, member.getIndex());
     }
 
     /**

@@ -22,7 +22,7 @@ import eu.daiad.web.service.scheduling.Constants;
 @Component
 public class CommandLineTask extends BaseTask implements StoppableTasklet {
 
-    private static final int DEFAULT_TIMEOUT = 10000;
+    private static final int DEFAULT_TIMEOUT = 60000;
 
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
@@ -34,7 +34,7 @@ public class CommandLineTask extends BaseTask implements StoppableTasklet {
             Integer timeout = DEFAULT_TIMEOUT;
             if(!StringUtils.isBlank(parameters.get(CommandLineTask.EnumInParameter.TIMEOUT.getValue()))) {
                 timeout = Integer.parseInt(parameters.get(CommandLineTask.EnumInParameter.TIMEOUT.getValue()));
-                if(timeout < 1) {
+                if(timeout < DEFAULT_TIMEOUT) {
                     timeout = DEFAULT_TIMEOUT;
                 }
             }
@@ -114,7 +114,6 @@ public class CommandLineTask extends BaseTask implements StoppableTasklet {
          * Environment variables.
          */
         ENVIRONMENT_VARS("environment.vars");
-
 
         private final String value;
 

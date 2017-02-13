@@ -19,7 +19,7 @@ public enum EnumGender {
 	}
 
 	public int getValue() {
-		return this.value;
+		return value;
 	}
 
 	private static final Map<Integer, EnumGender> intToTypeMap = new HashMap<Integer, EnumGender>();
@@ -48,8 +48,7 @@ public enum EnumGender {
 	public static class Deserializer extends JsonDeserializer<EnumGender> {
 
 		@Override
-		public EnumGender deserialize(JsonParser parser, DeserializationContext context) throws IOException,
-						JsonProcessingException {
+		public EnumGender deserialize(JsonParser parser, DeserializationContext context) throws IOException, JsonProcessingException {
 			return EnumGender.fromString(parser.getValueAsString());
 		}
 	}

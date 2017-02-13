@@ -15,12 +15,18 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import eu.daiad.web.model.message.Alert.ParameterizedTemplate;
 
 @Entity(name = "account_alert")
 @Table(schema = "public", name = "account_alert")
@@ -36,16 +42,21 @@ public class AccountAlertEntity
 	@GeneratedValue(generator = "account_alert_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
 
-	@ManyToOne(cascade = { CascadeType.ALL })
+	@ManyToOne()
 	@JoinColumn(name = "account_id", nullable = false)
 	@NotNull
 	private AccountEntity account;
 
-	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER, orphanRemoval = true)
-	@JoinColumn(name = "account_alert_id")
-	private Set<AccountAlertParameterEntity> parameters = new HashSet<>();
+	@OneToOne(
+        mappedBy = "alert",
+        cascade = CascadeType.ALL,
+        fetch = FetchType.LAZY,
+        orphanRemoval = true
+    )
+    @JoinColumn(name = "account_alert_id")
+    private AccountAlertParametersEntity parameters;
 
-	@ManyToOne(cascade = { CascadeType.ALL })
+	@ManyToOne()
     @JoinColumn(name = "alert_template", nullable = false)
 	@NotNull
     private AlertTemplateEntity alertTemplate;
@@ -65,25 +76,26 @@ public class AccountAlertEntity
 	public AccountAlertEntity() {}
 
 	public AccountAlertEntity(
-	    AccountEntity account, AlertTemplateEntity templateEntity, Map<String, Object> parameters)
-	{
-	    this.account = account;
-	    this.alertTemplate = templateEntity;
-
-	    if (parameters != null) {
-	        for (Map.Entry<String, Object> e: parameters.entrySet()) {
-	            String key = e.getKey();
-	            String value = e.getValue().toString();
-	            this.parameters.add(new AccountAlertParameterEntity(this, key, value));
-	        }
-	    }
-	}
-
-	public AccountAlertEntity(AccountEntity account, AlertTemplateEntity templateEntity)
-	{
-	    this(account, templateEntity, null);
-	}
-
+        AccountEntity account, AlertTemplateEntity templateEntity, ParameterizedTemplate parameterizedTemplate)
+        throws IllegalArgumentException
+    {
+        this.account = account;
+        this.alertTemplate = templateEntity;
+        
+        if (parameterizedTemplate != null) {
+            try {
+                parameters = new AccountAlertParametersEntity(this, parameterizedTemplate);
+            } catch (JsonProcessingException ex) {
+                throw new IllegalArgumentException("Failed to create parameters entity", ex);
+            }
+        }
+    }
+    
+    public AccountAlertEntity(AccountEntity account, AlertTemplateEntity template)
+    {
+        this(account, template, (ParameterizedTemplate) null);
+    }
+	
 	public AccountEntity getAccount()
 	{
 		return account;
@@ -122,17 +134,9 @@ public class AccountAlertEntity
 		return id;
 	}
 
-	public Set<AccountAlertParameterEntity> getParameters()
+	public AccountAlertParametersEntity getParameters()
 	{
 	    return parameters;
-	}
-
-	public Map<String, Object> getParametersAsMap()
-	{
-	    Map<String, Object> p = new HashMap<>();
-	    for (AccountAlertParameterEntity pe: parameters)
-	        p.put(pe.getKey(), pe.getValue());
-	    return p;
 	}
 
 	public DateTime getReceiveAcknowledgedOn()

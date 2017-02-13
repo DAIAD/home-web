@@ -998,6 +998,10 @@ div[class^="section.login"]{
   margin-top: 20px;
 }
 
+.form-captcha > div > div {
+  border: 1px #2D3580 solid;
+}
+
 /* Dashboard */
 
 .dashboard { 
@@ -1021,7 +1025,7 @@ div[class^="section.login"]{
   
 }
 
-.infobox {
+.widget {
   display: flex;
   flex-direction: column;
   background: #FFF;
@@ -1030,76 +1034,76 @@ div[class^="section.login"]{
   width: 100%;
   height: 100%;
 }
-.infobox-header {
+.widget-header {
   flex-grow: 0;
   padding: 8px 5px 5px 8px;
   min-height: 37px;
   border-bottom: 1px #9fa1a2 solid;
 }
-.infobox-header h4 {
+.widget-header h4 {
   margin: 0;
 }
-.infobox-header span, .infobox-header div, .infobox-header a {
+.widget-header span, .widget-header div, .widget-header a {
   display: inline-block;
   font-size: 0.95em;
 }
 
-.infobox-body {
+.widget-body {
   flex-grow: 1;
   flex-shrink: 1;
 }
-.infobox-body span {
+.widget-body span {
   font-size: 1.02em;
 }
-.infobox-body p {
+.widget-body p {
   margin: 0;
 }
-.infobox-footer {
+.widget-footer {
   flex-grow: 0;
   text-align: center;
   padding: 5px;
   min-height: 37px;
   border-top: 1px #9fa1a2 solid;
 }
-.infobox-x {
+.widget-x {
   font-weight: normal;
   color: lightgrey;
 }
-.infobox-x:hover {
+.widget-x:hover {
   color: lightgrey;
 }
-.infobox-error {
+.widget-error {
   font-size: 1.1em;
 }
 
-.add-infobox-modal .modal-body {
+.add-widget-modal .modal-body {
   padding: 0;
 }
-.add-infobox-modal .modal-content {
+.add-widget-modal .modal-content {
   background:#E8F5FD;
 }
-.add-infobox {
+.add-widget {
   display: flex;
   flex-direction: row;
 }
-.add-infobox-left {
+.add-widget-left {
   flex-grow: 1;
   padding: 20px 0;
   background: #fff;
 }
-.add-infobox-right {
+.add-widget-right {
   flex-grow: 0;
   flex-basis: 200px;
   padding: 20px 0;
 }
-.add-infobox-modal p {
+.add-widget-modal p {
   padding: 15px;
 }
 
-.add-infobox-types {
+.add-widget-types {
   list-style: none;
 }
-.add-infobox-types > li > a {
+.add-widget-types > li > a {
   width: 190px;
   float: left;
   padding: 50px 30px;
@@ -1107,12 +1111,12 @@ div[class^="section.login"]{
   border: 1px #2D3580 solid;
   overflow: hidden;
 }
-.add-infobox-types > li > a:hover {
+.add-widget-types > li > a:hover {
   background: #D0EAFA;
   //background: #2D3580;
   //color: #fff;
 }
-.add-infobox-types > li > a.selected {
+.add-widget-types > li > a.selected {
   background: #D0EAFA;
 }
 .dashboard-device-info {
@@ -1283,7 +1287,7 @@ input[name="amphiro-devices"] {
 }
 
 .shower-chart-area {
-  padding: 20px;
+  padding-bottom: 20px;
 }
 
 .shower-info .headline {

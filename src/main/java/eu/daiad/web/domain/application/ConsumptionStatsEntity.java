@@ -1,6 +1,5 @@
 package eu.daiad.web.domain.application;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -35,10 +34,14 @@ public class ConsumptionStatsEntity
 {
     @Id()
     @Column(name = "id")
-    @SequenceGenerator(sequenceName = "consumption_stats_id_seq", name = "consumption_stats_id_seq", allocationSize = 1, initialValue = 1)
+    @SequenceGenerator(
+        sequenceName = "consumption_stats_id_seq",
+        name = "consumption_stats_id_seq",
+        allocationSize = 1,
+        initialValue = 1)
     @GeneratedValue(generator = "consumption_stats_id_seq", strategy = GenerationType.SEQUENCE)
     private long id;
-    
+
     @ManyToOne
     @JoinColumn(name = "`group`", nullable = true)
     private GroupEntity group;
@@ -46,39 +49,39 @@ public class ConsumptionStatsEntity
     @ManyToOne
     @JoinColumn(name = "utility", nullable = false)
     private UtilityEntity utility;
-    
+
     @Column(name = "ref_date", nullable = false)
     @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
     private DateTime refDate;
-    
+
     @Column(name = "statistic", nullable = false)
     @Enumerated(EnumType.STRING)
     private EnumStatistic statistic = EnumStatistic.AVERAGE_WEEKLY;
-    
+
     @Column(name = "field",  nullable = false)
     @Enumerated(EnumType.STRING)
     private EnumDataField field = EnumDataField.VOLUME;
-    
+
     @Column(name = "device",  nullable = false)
     @Enumerated(EnumType.STRING)
     private EnumDeviceType device = EnumDeviceType.METER;
-    
+
     @Column(name = "value",  nullable = false)
     private double value;
-    
+
     @Column(name = "computed_at")
     @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
     private DateTime computedAt;
 
     protected ConsumptionStatsEntity() {}
-    
-    public ConsumptionStatsEntity(UtilityEntity utility, GroupEntity group, DateTime refDate) 
+
+    public ConsumptionStatsEntity(UtilityEntity utility, GroupEntity group, DateTime refDate)
     {
         this.utility = utility;
         this.group = group;
         this.refDate = refDate;
     }
-    
+
     public ConsumptionStatsEntity(UtilityEntity utility, GroupEntity group, LocalDateTime refDate)
     {
         DateTimeZone tz = DateTimeZone.forID(utility.getTimezone());
@@ -86,7 +89,7 @@ public class ConsumptionStatsEntity
         this.group = group;
         this.refDate = refDate.toDateTime(tz);
     }
-    
+
     public Pair<UtilityEntity, GroupEntity> getPopulationGroup()
     {
         return Pair.<UtilityEntity, GroupEntity>of(utility, group);
@@ -106,43 +109,44 @@ public class ConsumptionStatsEntity
     {
         this.statistic = statistic;
     }
-    
+
     public EnumDataField getField()
     {
         return field;
     }
-    
+
     public void setField(EnumDataField field)
     {
         this.field = field;
     }
-    
+
     public EnumDeviceType getDevice()
     {
         return device;
     }
-    
+
     public void setDevice(EnumDeviceType device)
     {
         this.device = device;
     }
-    
+
     public ComputedNumber getValue()
     {
         return new ComputedNumber(value, computedAt);
     }
-    
+
     public void setValue(ComputedNumber n)
     {
         this.value = n.getValue();
         this.computedAt = n.getTimestamp();
     }
-    
+
     @Override
     public String toString()
     {
         return String.format(
-                "<ConsumptionStats ref-date=%s utility=%s device=%s stat=%s>", 
-                refDate.toDate(), utility.getKey(), device.name(), statistic.name());
+            "ConsumptionStats(ref-date=%s utility=%s device=%s stat=%s)",
+            refDate.toDate(), utility.getKey(), device.name(), statistic.name()
+        );
     }
 }

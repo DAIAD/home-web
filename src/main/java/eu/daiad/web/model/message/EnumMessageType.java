@@ -9,10 +9,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
-public enum EnumMessageType {
+public enum EnumMessageType
+{
     UNDEFINED(0),
     ALERT(1),
-    RECOMMENDATION_STATIC(2),
+    TIP(2),
     RECOMMENDATION(3),
     ANNOUNCEMENT(4);
 
@@ -37,10 +38,11 @@ public enum EnumMessageType {
 
     public static class Deserializer extends JsonDeserializer<EnumMessageType>
     {
-        // Note: This is to provide backwards compatibility with API clients
+        // Todo: remove; only to provide backwards compatibility with API clients
         public static final Map<String, String> aliases = new HashMap<>();
         static {
             aliases.put("RECOMMENDATION_DYNAMIC", "RECOMMENDATION");
+            aliases.put("RECOMMENDATION_STATIC", "TIP");
         }
 
         @Override

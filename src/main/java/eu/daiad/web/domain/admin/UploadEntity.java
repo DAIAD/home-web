@@ -38,19 +38,19 @@ public class UploadEntity {
     private String localFilename;
 
     @Column(name = "file_size")
-    private long size;
+    private Long size;
 
     @Column(name = "row_count")
-    long totalRows = 0;
+    private Long totalRows = 0L;
 
     @Column(name = "row_processed")
-    long proccessedRows = 0;
+    private Long proccessedRows = 0L;
 
     @Column(name = "row_skipped")
-    long skippedRows = 0;
+    private Long skippedRows = 0L;
 
     @Column(name = "row_negative_difference")
-    long negativeDifferenceRows = 0;
+    private Long negativeDifferenceRows = 0L;
 
     @Column(name = "date_modified")
     @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
@@ -104,11 +104,11 @@ public class UploadEntity {
         this.localFilename = localFilename;
     }
 
-    public long getSize() {
+    public Long getSize() {
         return size;
     }
 
-    public void setSize(long size) {
+    public void setSize(Long size) {
         this.size = size;
     }
 
@@ -164,35 +164,35 @@ public class UploadEntity {
         this.source = source;
     }
 
-    public long getProccessedRows() {
+    public Long getProccessedRows() {
         return proccessedRows;
     }
 
-    public void setProccessedRows(long proccessedRows) {
+    public void setProccessedRows(Long proccessedRows) {
         this.proccessedRows = proccessedRows;
     }
 
-    public long getSkippedRows() {
+    public Long getSkippedRows() {
         return skippedRows;
     }
 
-    public void setSkippedRows(long skippedRows) {
+    public void setSkippedRows(Long skippedRows) {
         this.skippedRows = skippedRows;
     }
 
-    public long getTotalRows() {
+    public Long getTotalRows() {
         return totalRows;
     }
 
-    public void setTotalRows(long totalRows) {
+    public void setTotalRows(Long totalRows) {
         this.totalRows = totalRows;
     }
 
-    public long getNegativeDifferenceRows() {
+    public Long getNegativeDifferenceRows() {
         return negativeDifferenceRows;
     }
 
-    public void setNegativeDifferenceRows(long negativeDifferenceRows) {
+    public void setNegativeDifferenceRows(Long negativeDifferenceRows) {
         this.negativeDifferenceRows = negativeDifferenceRows;
     }
 

@@ -33,6 +33,8 @@ public class JobInfo {
 
     private boolean running;
 
+    private boolean visible;
+
     public long getId() {
         return id;
     }
@@ -143,6 +145,14 @@ public class JobInfo {
 
     public void setRunning(boolean running) {
         this.running = running;
+    }
+
+    public boolean isVisible() {
+        return visible;
+    }
+
+    public void setVisible(boolean visible) {
+        this.visible = visible;
     }
 
 }

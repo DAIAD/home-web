@@ -3,16 +3,17 @@ package eu.daiad.web.repository.application;
 import java.util.List;
 import java.util.UUID;
 
-import eu.daiad.web.model.group.Account;
 import eu.daiad.web.model.group.Cluster;
 import eu.daiad.web.model.group.Group;
 import eu.daiad.web.model.group.GroupInfo;
-import eu.daiad.web.model.group.GroupMemberInfo;
+import eu.daiad.web.model.group.GroupMember;
 import eu.daiad.web.model.query.EnumClusterType;
 
 public interface IGroupRepository {
 
     Group getByKey(UUID key);
+
+    Group getByKey(UUID key, boolean includeMembers);
 
     GroupInfo getGroupInfoByKey(UUID key);
 
@@ -38,11 +39,7 @@ public interface IGroupRepository {
 
     List<Group> getSets();
 
-    List<Group> getCommunities();
-
-    List<Account> getGroupMembers(UUID groupKey);
-
-    List<GroupMemberInfo> getGroupMemberInfo(UUID groupKey);
+    List<GroupMember> getGroupMembers(UUID groupKey);
 
     List<GroupInfo> getMemberGroups(UUID userKey);
 

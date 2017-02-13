@@ -9,6 +9,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
@@ -26,6 +28,7 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Period;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,11 +123,23 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
 
             switch (query.getMode()) {
                 case METER_UTILITY:
-                    totalRows = exportAllMeterData(dataFilename,
-                                                   query.getTimezone(),
-                                                   query.getStartTimstamp(),
-                                                   query.getEndTimestamp(),
-                                                   query.getDateFormat());
+                    // Export daily data
+                    String dailyDataFilename = createTemporaryFilename(query.getWorkingDirectory());
+
+                    totalRows = exportAllMeterDailyData(dailyDataFilename,
+                                                        query.getTimezone(),
+                                                        query.getStartTimstamp(),
+                                                        query.getEndTimestamp(),
+                                                        query.getDateFormat());
+
+                    exportResult.getFiles().add(new FileLabelPair( new File(dailyDataFilename), "daily-data.csv", totalRows));
+
+                    // Export all data
+                    totalRows += exportAllMeterData(dataFilename,
+                                                    query.getTimezone(),
+                                                    query.getStartTimstamp(),
+                                                    query.getEndTimestamp(),
+                                                    query.getDateFormat());
                     break;
                 default:
                     // User rows
@@ -264,9 +279,8 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
         return counter;
     }
 
-
     /**
-     * Exports data the smart water meter of a single user of a utility.
+     * Exports data for all smart water meters of a utility.
      *
      * @param filename the name of the file where the exported data is saved.
      * @param timezone the time zone for formatting the dates.
@@ -379,6 +393,128 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
         return counter;
     }
 
+
+    /**
+     * Exports daily data for all smart water meters of a utility.
+     *
+     * @param filename the name of the file where the exported data is saved.
+     * @param timezone the time zone for formatting the dates.
+     * @param startDateTime the time interval date time.
+     * @param endDateTime the time interval date time.
+     * @param dateFormat date format pattern.
+     * @return the number of rows written.
+     * @throws IOException in case an I/O exception occurs.
+     */
+    private long exportAllMeterDailyData(String filename, String timezone, Long startTimestamp, Long endTimestamp, String dateFormat) throws IOException {
+        long counter = 0;
+
+        DateTimeZone dtz = DateTimeZone.forID(timezone);
+
+        CSVFormat format = CSVFormat.RFC4180.withDelimiter(DELIMITER);
+
+        CSVPrinter printer = new CSVPrinter(
+                                new BufferedWriter(
+                                    new OutputStreamWriter(
+                                        new FileOutputStream(filename, true),
+                                        Charset.forName("UTF-8").newEncoder())), format);
+        MeterRowCollection.printHeader(printer);
+
+        // Execute full table scan on HBASE table
+        Table table = null;
+        ResultScanner scanner = null;
+
+        if (startTimestamp == null) {
+            startTimestamp = new DateTime(0L, DateTimeZone.UTC).getMillis();
+        }
+        if (endTimestamp == null) {
+            endTimestamp = new DateTime(DateTimeZone.UTC).getMillis();
+        }
+
+        try {
+            table = connection.getTable(meterTableMeasurementByMeter);
+            byte[] columnFamily = Bytes.toBytes(columnFamilyName);
+
+            Scan scan = new Scan();
+            scan.addFamily(columnFamily);
+
+            scanner = table.getScanner(scan);
+
+            MeterRowCollection rows = null;
+            for (Result r = scanner.next(); r != null; r = scanner.next()) {
+                NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
+
+                long timeBucket = Bytes.toLong(Arrays.copyOfRange(r.getRow(), 16, 24));
+
+                Float volume = null, difference = null;
+                long timestamp = 0;
+                String serial = "";
+
+                for (Entry<byte[], byte[]> entry : map.entrySet()) {
+                    short offset = Bytes.toShort(Arrays.copyOfRange(entry.getKey(), 0, 2));
+                    timestamp = ((Long.MAX_VALUE / 1000L) - (timeBucket + (long) offset)) * 1000L;
+
+                    if ((startTimestamp <= timestamp) && (timestamp <= endTimestamp)) {
+                        int length = (int) Arrays.copyOfRange(entry.getKey(), 2, 3)[0];
+                        byte[] slice = Arrays.copyOfRange(entry.getKey(), 3, 3 + length);
+
+                        String columnQualifier = Bytes.toString(slice);
+                        if (columnQualifier.equals("v")) {
+                            volume = Bytes.toFloat(entry.getValue());
+                        }
+                        if (columnQualifier.equals("d")) {
+                            difference = Bytes.toFloat(entry.getValue());
+                        }
+                        if (columnQualifier.equals("s")) {
+                            serial = new String(entry.getValue(), StandardCharsets.UTF_8);
+                        }
+                    }
+
+                    if ((volume != null) && (difference != null) && (!StringUtils.isBlank(serial))) {
+                        if(rows == null) {
+                            rows = new MeterRowCollection(serial, dtz);
+                            rows.serial = serial;
+                        } else if (!rows.serial.equals(serial)) {
+                            // Export rows for the current serial
+                            rows.printSerial(printer, dateFormat);
+
+                            rows = new MeterRowCollection(serial, dtz);
+                            rows.serial = serial;
+                        }
+                        rows.add(new DateTime(timestamp, dtz), volume);
+
+                        volume = null;
+                        difference = null;
+                        counter++;
+                    }
+                }
+            }
+            // Print last serial
+            if (rows != null) {
+                rows.printSerial(printer, dateFormat);
+            }
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        } finally {
+            try {
+                if (scanner != null) {
+                    scanner.close();
+                    scanner = null;
+                }
+                if (table != null) {
+                    table.close();
+                    table = null;
+                }
+            } catch (Exception ex) {
+                logger.error("Failed to release resources.", ex);
+            }
+        }
+
+        printer.flush();
+        printer.close();
+
+        return counter;
+    }
+
     /**
      * Creates a list of String arguments.
      *
@@ -397,5 +533,218 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
         row.add(Float.toString(difference));
 
         return row;
+    }
+
+    private static class Interval {
+
+        public DateTime start;
+
+        public DateTime end;
+
+        public MeterRow beforeStart;
+
+        public MeterRow afterStart;
+
+        public MeterRow beforeEnd;
+
+        public MeterRow afterEnd;
+
+        public short hours = 0;
+
+        public boolean isValid() {
+            return ((beforeStart != null) && (afterStart != null) && (beforeEnd != null) && (afterEnd != null));
+        }
+
+        public Interval next() {
+            Interval interval = new Interval();
+            interval.start = end;
+            interval.end = end.plusDays(1);
+
+            interval.beforeStart = beforeEnd;
+            interval.afterStart = afterEnd;
+
+            if(isValid()) {
+                interval.hours = 1;
+            }
+
+            return interval;
+        }
+
+        public Float getVolume() {
+            if(!isValid()) {
+                return null;
+            }
+
+            return afterEnd.getVolume() - afterStart.getVolume();
+        }
+    }
+
+    private static class MeterRowCollection {
+
+        private String serial;
+
+        private DateTimeZone timezone;
+
+        private List<MeterRow> items = new ArrayList<MeterRow>();
+
+        public MeterRowCollection(String serial, DateTimeZone timezone) {
+            this.serial = serial;
+            this.timezone = timezone;
+        }
+
+        public void add(DateTime date, float volume) {
+            items.add(new MeterRow(date, volume));
+        }
+
+        public static void printHeader(CSVPrinter printer) throws IOException {
+            List<String> row = new ArrayList<String>();
+
+            row.add("Serial");
+            row.add("Date");
+            row.add("First record");
+            row.add("Last record");
+            row.add("# of records in day");
+            row.add("Volume");
+
+            printer.printRecord(row);
+        }
+
+        public void printSerial(CSVPrinter printer, String dateFormat) throws IOException {
+            DateTimeFormatter formatter = DateTimeFormat.forPattern(dateFormat).withZone(timezone);
+
+            List<Interval> intervals = extractIntervals(3, 3);
+            if(!intervals.isEmpty()) {
+                for(Interval interval : intervals) {
+                    List<String> row = new ArrayList<String>();
+
+                    row.add(serial);
+                    row.add(interval.start.toString(formatter));
+                    row.add(interval.afterStart.date.toString(formatter));
+                    row.add(interval.afterEnd.date.toString(formatter));
+                    row.add(Short.toString(interval.hours));
+                    row.add(Float.toString(interval.getVolume()));
+
+                    printer.printRecord(row);
+                }
+            }
+        }
+
+        private List<Interval> extractIntervals(int hour, int offset) {
+            List<Interval> intervals = new ArrayList<Interval>();
+
+            if (items.isEmpty()) {
+                return intervals;
+            }
+
+            Collections.sort(items, new Comparator<MeterRow>() {
+                @Override
+                public int compare(MeterRow o1, MeterRow o2) {
+                    if (o1.getDate().getMillis() <= o2.getDate().getMillis()) {
+                        return -1;
+                    } else {
+                        return 1;
+                    }
+                }
+            });
+
+            // Initialize first interval
+            Interval current = new Interval();
+            current.start = items.get(0).getDate().hourOfDay().setCopy(hour);
+            current.start = current.start.minuteOfHour().setCopy(0);
+            current.start = current.start.secondOfMinute().setCopy(0);
+            current.end = current.start.plusDays(1);
+
+            int index = 0, count = items.size();
+            while(index < count) {
+                MeterRow row = items.get(index);
+
+                if (row.isBefore(current.start)) {
+                    current.beforeStart = row;
+                } else if (row.isAfter(current.start)) {
+                    if(current.afterStart == null) {
+                        current.afterStart = row;
+                    }
+                } else {
+                    current.beforeStart = current.afterStart = row;
+                }
+
+                // Check that the right interval instant is not set before the left interval instant
+                if ((current.beforeStart == null) && (current.afterStart != null)) {
+                    current = current.next();
+                    continue;
+                }
+
+                if (row.isBefore(current.end)) {
+                    current.beforeEnd = row;
+                } else if (row.isAfter(current.end)) {
+                    if(current.afterEnd == null) {
+                        current.afterEnd = row;
+                    }
+                } else {
+                    current.beforeEnd = current.afterEnd = row;
+                }
+
+                // Check that the right interval instant is not set before the left interval instant
+                if ((current.beforeEnd == null) && (current.afterEnd != null)) {
+                    current = current.next();
+                    continue;
+                }
+
+                // Only count hours in the interval
+                if ((current.afterStart != null) && (current.afterEnd == null)) {
+                    current.hours++;
+                }
+                if(current.isValid()) {
+                    // Enforce offset
+                    Period p1 = new Period(current.beforeStart.getDate(), current.start);
+                    Period p2 = new Period(current.start, current.afterStart.getDate());
+                    Period p3 = new Period(current.beforeEnd.getDate(), current.end);
+                    Period p4 = new Period(current.end, current.afterEnd.getDate());
+
+                    // Ignore intervals without accurate start and end instants.
+                    if ((p1.getHours() < offset) &&
+                        (p2.getHours() < offset) &&
+                        (p3.getHours() < offset) &&
+                        (p4.getHours() < offset)) {
+                        intervals.add(current);
+                    }
+
+                    current = current.next();
+                }
+
+                index++;
+            }
+
+            return intervals;
+        }
+    }
+
+    private static class MeterRow {
+
+        private DateTime date;
+
+        private float volume;
+
+        public MeterRow(DateTime date, float volume) {
+            this.date = date;
+            this.volume = volume;
+        }
+
+        public boolean isAfter(DateTime instant) {
+            return date.isAfter(instant);
+        }
+
+        public boolean isBefore(DateTime instant) {
+            return date.isBefore(instant);
+        }
+
+        public DateTime getDate() {
+            return date;
+        }
+
+        public float getVolume() {
+            return volume;
+        }
+
     }
 }

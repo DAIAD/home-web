@@ -4,14 +4,14 @@
  * @apiName MeterStatus
  * @apiGroup Search
  * @apiPermission ROLE_USER
- * 
+ *
  * @apiDescription Loads the most recent status of one or more meter devices.
  *
  * @apiParam (DeviceRegistrationRequest) {Object}     credentials                 User credentials
  * @apiParam (DeviceRegistrationRequest) {String}     credentials.username        User name.
  * @apiParam (DeviceRegistrationRequest) {String}     credentials.password        Password.
  * @apiParam (DeviceRegistrationRequest) {String[]}   deviceKey                   Array of unique identifiers (UUID) for authenticated user meter devices.
- * 
+ *
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
@@ -22,11 +22,11 @@
  *     "114e7af3-39af-4a44-ac57-41779689ec39"
  *   ]
  * }
- * 
+ *
  * @apiSuccess (WaterMeterStatusQueryResult) {Boolean}  success             Returns <code>true</code> or <code>false</code> indicating success of the operation.
  * @apiSuccess (WaterMeterStatusQueryResult) {Object[]} errors              Array of <code>Error</code>.
  * @apiSuccess (WaterMeterStatusQueryResult) {Object[]} devices             Array of <code>WaterMeterStatus</code>.
- * 
+ *
  * @apiSuccess (WaterMeterStatus) {String} deviceKey          Device unique key (UUID).
  * @apiSuccess (WaterMeterStatus) {String} serial             Meter unique serial number.
  * @apiSuccess (WaterMeterStatus) {Number} timestamp          Last reading time stamp.
@@ -46,13 +46,13 @@
  *   }],
  *   "success": true
  * }
- * 
+ *
  * @apiError {Boolean} success Always <code>false</code>.
  * @apiError {Object[]} errors Array of <code>Error</code> objects.
- * 
+ *
  * @apiError (Error) {String} code          Unique error code.
  * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
- * 
+ *
  * @apiErrorExample Error Response Example
  * HTTP/1.1 200 OK
  * {
@@ -62,7 +62,7 @@
  *   }],
  *   success: false
  * }
- * 
+ *
  */
 function meterStatus() { return; }
 
@@ -72,7 +72,7 @@ function meterStatus() { return; }
  * @apiName MeterMeasurements
  * @apiGroup Search
  * @apiPermission ROLE_USER
- * 
+ *
  * @apiDescription Loads measurements for one or more meter devices.
  *
  * @apiParam (WaterMeterMeasurementQuery) {Object}     credentials                 User credentials
@@ -88,7 +88,7 @@ function meterStatus() { return; }
  * 5: <code>YEAR</code><br/>
  * @apiParam (WaterMeterMeasurementQuery) {Number}     startDate                   Time interval start time stamp.
  * @apiParam (WaterMeterMeasurementQuery) {Number}     endDate                     Time interval end time stamp.
- * 
+ *
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
@@ -102,23 +102,23 @@ function meterStatus() { return; }
  *   "startDate":1460926800000,
  *   "endDate":1461531599000
  * }
- * 
+ *
  * @apiSuccess (WaterMeterMeasurementQueryResult) {Boolean}  success            Returns <code>true</code> or <code>false</code> indicating success of the operation.
  * @apiSuccess (WaterMeterMeasurementQueryResult) {Object[]} errors             Array of <code>Error</code>.
  * @apiSuccess (WaterMeterMeasurementQueryResult) {Object[]} series             Array of <code>WaterMeterDataSeries</code>.
- * 
+ *
  * @apiSuccess (WaterMeterDataSeries) {String}               deviceKey          Device unique key (UUID).
  * @apiSuccess (WaterMeterDataSeries) {String}               serial             Meter unique serial number.
  * @apiSuccess (WaterMeterDataSeries) {Object}               reference          Reference data point. That is an instance of <code>WaterMeterDataPoint</code> with the most recent data point to the start of the query interval. This property has been used for computing meter variations but now is obsolete since the response always returns the variation in property <code>difference</code> of <code>WaterMeterDataPoint</code>.
  * @apiSuccess (WaterMeterDataSeries) {OBject[]}             values             Array of <code>WaterMeterDataPoint</code>.
  * @apiSuccess (WaterMeterDataSeries) {Number}               minTimestamp       Minimum time stamp for returned data points.
  * @apiSuccess (WaterMeterDataSeries) {Number}               maxTimestamp       Maximum time stamp for returned data points.
- * 
+ *
  * @apiSuccess (WaterMeterDataPoint)  {Number}               timestamp          Data point timestamp.
  * @apiSuccess (WaterMeterDataPoint)  {Number}               volume             Volume.
  * @apiSuccess (WaterMeterDataPoint)  {Number}               difference         Difference from previous reading.
  * @apiSuccess (WaterMeterDataPoint)  {Number}               week               Week of year for the current data point.
- * 
+ *
  * @apiSuccessExample {json} Response Example
  * HTTP/1.1 200 OK
  * {
@@ -148,13 +148,13 @@ function meterStatus() { return; }
  *   }],
  *   "success": true
  * }
- * 
+ *
  * @apiError {Boolean} success Always <code>false</code>.
  * @apiError {Object[]} errors Array of <code>Error</code> objects.
- * 
+ *
  * @apiError (Error) {String} code          Unique error code.
  * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
- * 
+ *
  * @apiErrorExample Error Response Example
  * HTTP/1.1 200 OK
  * {
@@ -164,7 +164,7 @@ function meterStatus() { return; }
  *   }],
  *   success: false
  * }
- * 
+ *
  */
 function meterMeasurements() { return; }
 
@@ -174,7 +174,7 @@ function meterMeasurements() { return; }
  * @apiName AmphiroMeasurementByTime
  * @apiGroup Search
  * @apiPermission ROLE_USER
- * 
+ *
  * @apiDescription Loads measurements for one or more Amphiro devices. <b><span class="note">Amphiro session ordering is time based.</span></b>
  *
  * @apiParam (AmphiroMeasurementTimeIntervalQuery) {Object}     credentials                 User credentials
@@ -190,7 +190,7 @@ function meterMeasurements() { return; }
  * 5: <code>YEAR</code><br/>
  * @apiParam (AmphiroMeasurementTimeIntervalQuery) {Number}     startDate                   Time interval start time stamp.
  * @apiParam (AmphiroMeasurementTimeIntervalQuery) {Number}     endDate                     Time interval end time stamp.
- * 
+ *
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
@@ -204,25 +204,25 @@ function meterMeasurements() { return; }
  *   "startDate":1460926800000,
  *   "endDate":1461531599000
  * }
- * 
+ *
  * @apiSuccess (AmphiroMeasurementTimeIntervalQueryResult) {Boolean}  success            Returns <code>true</code> or <code>false</code> indicating success of the operation.
  * @apiSuccess (AmphiroMeasurementTimeIntervalQueryResult) {Object[]} errors             Array of <code>Error</code>.
  * @apiSuccess (AmphiroMeasurementTimeIntervalQueryResult) {Object[]} series             Array of <code>AmphiroDataSeries</code>.
- * 
+ *
  * @apiSuccess (AmphiroDataSeries) {String}               deviceKey          Device unique key (UUID).
  * @apiSuccess (AmphiroDataSeries) {Object[]}             points           Array of <code>AmphiroAbstractDataPoint</code>. if <code>granularity</code> is <code>NONE</code>, instances of <code>AmphiroDataPoint</code> are returned; Otherwise instances of <code>AmphiroAggregatedDataPoint</code> are returned.
- * 
+ *
  * @apiSuccess (AmphiroAbstractDataPoint)  {Number}               timestamp          Data point timestamp.
  * @apiSuccess (AmphiroAbstractDataPoint)  {Number}               volume             Volume difference.
  * @apiSuccess (AmphiroAbstractDataPoint)  {Number}               energy             Energy difference.
  * @apiSuccess (AmphiroAbstractDataPoint)  {Number}               temperature        Temperature.
- * 
+ *
  * @apiSuccess (AmphiroDataPoint extends AmphiroAbstractDataPoint)           {Number}               sessionId          Unique per Amphiro device session Id to which this measurement belongs to.
  * @apiSuccess (AmphiroDataPoint extends AmphiroAbstractDataPoint)           {Number}               index              Index in measurement series for the current session.
  * @apiSuccess (AmphiroDataPoint extends AmphiroAbstractDataPoint)           {Boolean}              history            Always <code>false</code> since historical sessions have no measurements.
- * 
+ *
  * @apiSuccess (AmphiroAggregatedDataPoint extends AmphiroAbstractDataPoint) {Number}               count              Total number of aggregated data points.
- * 
+ *
  * @apiSuccessExample {json} Response Example (no aggregation)
  * HTTP/1.1 200 OK
  * {
@@ -241,7 +241,7 @@ function meterMeasurements() { return; }
  *   }],
  *   "success": true
  * }
- * 
+ *
  * @apiSuccessExample {json} Response Example (with aggregation)
  * HTTP/1.1 200 OK
  * {
@@ -258,13 +258,13 @@ function meterMeasurements() { return; }
  *   }],
  *   "success": true
  * }
- * 
+ *
  * @apiError {Boolean}  success Always <code>false</code>.
  * @apiError {Object[]} errors Array of <code>Error</code> objects.
- * 
+ *
  * @apiError (Error) {String} code          Unique error code.
  * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
- * 
+ *
  * @apiErrorExample Error Response Example
  * HTTP/1.1 200 OK
  * {
@@ -274,7 +274,7 @@ function meterMeasurements() { return; }
  *   }],
  *   success: false
  * }
- * 
+ *
  */
 function amphiroMesurementsByTime() { return; }
 
@@ -284,19 +284,18 @@ function amphiroMesurementsByTime() { return; }
  * @apiName AmphiroMeasurementByIndex
  * @apiGroup Search
  * @apiPermission ROLE_USER
- * 
+ *
  * @apiDescription Loads measurements for one or more Amphiro devices. <b><span class="note">Amphiro session ordering is index based.</span></b>
  *
  * @apiParam (AmphiroMeasurementIndexIntervalQuery) {Object}     credentials                 User credentials
  * @apiParam (AmphiroMeasurementIndexIntervalQuery) {String}     credentials.username        User name.
- * @apiParam (AmphiroMeasurementIndexIntervalQuery) {String}     credentials.password        Password.
  * @apiParam (AmphiroMeasurementIndexIntervalQuery) {String}     credentials.password        Password.
  * @apiParam (AmphiroMeasurementIndexIntervalQuery) {String}     type                        Query type. Valid values are <code>ABSOLUTE</code> and <code>SLIDING</code>.<br/><code>ABSOLUTE</code> queries return specific intervals of sessions.<br/><code>SLIDING</code> queries return the <code>length</code> most recent sessions.
  * @apiParam (AmphiroMeasurementIndexIntervalQuery) {String[]}   deviceKey                   Array of unique identifiers (UUID) for authenticated user Amphiro devices.
  * @apiParam (AmphiroMeasurementIndexIntervalQuery) {Number}     startIndex                  Session start index for <code>ABSOLUTE</code> queries.
  * @apiParam (AmphiroMeasurementIndexIntervalQuery) {Number}     endIndex                    Session end index for <code>ABSOLUTE</code> queries.
  * @apiParam (AmphiroMeasurementIndexIntervalQuery) {Number}     length                      Result size for <code>SLIDING</code>.
- * 
+ *
 * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
@@ -309,14 +308,14 @@ function amphiroMesurementsByTime() { return; }
  *   "type": "SLIDING",
  *   "length":1
  * }
- * 
+ *
  * @apiSuccess (WaterMeterMeasurementQueryResult) {Boolean}  success            Returns <code>true</code> or <code>false</code> indicating success of the operation.
  * @apiSuccess (WaterMeterMeasurementQueryResult) {Object[]} errors             Array of <code>Error</code>.
  * @apiSuccess (WaterMeterMeasurementQueryResult) {Object[]} series             Array of <code>AmphiroDataSeries</code>.
- * 
+ *
  * @apiSuccess (AmphiroDataSeries)                {String}   deviceKey          Device unique key (UUID).
  * @apiSuccess (AmphiroDataSeries)                {Object[]} points             Array of <code>AmphiroDataPoint</code>.
- * 
+ *
  * @apiSuccess (AmphiroDataPoint)                 {Number}               timestamp          Data point timestamp.
  * @apiSuccess (AmphiroDataPoint)                 {Number}               volume             Volume difference.
  * @apiSuccess (AmphiroDataPoint)                 {Number}               energy             Energy difference.
@@ -324,7 +323,7 @@ function amphiroMesurementsByTime() { return; }
  * @apiSuccess (AmphiroDataPoint)                 {Number}               sessionId          Unique per Amphiro device session Id to which this measurement belongs to.
  * @apiSuccess (AmphiroDataPoint)                 {Number}               index              Index in measurement series for the current session.
  * @apiSuccess (AmphiroDataPoint)                 {Boolean}              history            Always <code>false</code> since historical sessions have no measurements.
- * 
+ *
  * @apiSuccessExample {json} Response Example
  * HTTP/1.1 200 OK
  * {
@@ -343,13 +342,13 @@ function amphiroMesurementsByTime() { return; }
  *   }],
  *   "success": true
  * }
- * 
+ *
  * @apiError {Boolean}  success Always <code>false</code>.
  * @apiError {Object[]} errors Array of <code>Error</code> objects.
- * 
+ *
  * @apiError (Error) {String} code          Unique error code.
  * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
- * 
+ *
  * @apiErrorExample Error Response Example
  * HTTP/1.1 200 OK
  * {
@@ -359,7 +358,7 @@ function amphiroMesurementsByTime() { return; }
  *   }],
  *   success: false
  * }
- * 
+ *
  */
 function amphiroMesurementsByIndex() { return; }
 
@@ -369,7 +368,7 @@ function amphiroMesurementsByIndex() { return; }
  * @apiName AmphiroSessionByTime
  * @apiGroup Search
  * @apiPermission ROLE_USER
- * 
+ *
  * @apiDescription Loads sessions for one or more Amphiro devices. <b><span class="note">Amphiro session ordering is time based.</span></b>
  *
  * @apiParam (AmphiroSessionCollectionTimeIntervalQuery) {Object}     credentials                 User credentials
@@ -385,7 +384,7 @@ function amphiroMesurementsByIndex() { return; }
  * 5: <code>YEAR</code><br/>
  * @apiParam (AmphiroSessionCollectionTimeIntervalQuery) {Number}     startDate                   Time interval start time stamp.
  * @apiParam (AmphiroSessionCollectionTimeIntervalQuery) {Number}     endDate                     Time interval end time stamp.
- * 
+ *
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
@@ -399,32 +398,32 @@ function amphiroMesurementsByIndex() { return; }
  *   "startDate":1460926800000,
  *   "endDate":1461531599000
  * }
- * 
+ *
  * @apiSuccess (AmphiroSessionCollectionTimeIntervalQueryResult) {Boolean}  success            Returns <code>true</code> or <code>false</code> indicating success of the operation.
  * @apiSuccess (AmphiroSessionCollectionTimeIntervalQueryResult) {Object[]} errors             Array of <code>Error</code>.
  * @apiSuccess (AmphiroSessionCollectionTimeIntervalQueryResult) {Object[]} devices            Array of <code>AmphiroSessionCollection</code>.
- * 
+ *
  * @apiSuccess (AmphiroSessionCollection) {String}               deviceKey          Device unique key (UUID).
  * @apiSuccess (AmphiroSessionCollection) {String}               name               Device user friendly name.
  * @apiSuccess (AmphiroSessionCollection) {Object[]}             sessions           Array of <code>AmphiroAbstractSession</code>. if <code>granularity</code> is <code>NONE</code>, instances of <code>AmphiroSession</code> are returned; Otherwise instances of <code>AmphiroAggregatedSession</code> are returned.
- * 
+ *
  * @apiSuccess (AmphiroAbstractSession)  {Number}               timestamp          Session time stamp.
  * @apiSuccess (AmphiroAbstractSession)  {Number}               duration           Duration.
  * @apiSuccess (AmphiroAbstractSession)  {Number}               volume             Total volume.
  * @apiSuccess (AmphiroAbstractSession)  {Number}               energy             Total energy.
  * @apiSuccess (AmphiroAbstractSession)  {Number}               temperature        Average temperature.
  * @apiSuccess (AmphiroAbstractSession)  {Number}               flow               Average flow.
- * 
+ *
  * @apiSuccess (AmphiroSession extends AmphiroAbstractSession)           {Number}    id           Session unique per device id.
  * @apiSuccess (AmphiroSession extends AmphiroAbstractSession)           {Boolean}   history      <code>true</code> if this is a historical session; Otherwise <code>false</code>.
  * @apiSuccess (AmphiroSession extends AmphiroAbstractSession)           {Ojbect[]}  properties   Array of <code>KeyValuePair</code>.
- * 
+ *
  * @apiParam (KeyValuePair) {String}           key                         Key.
  * @apiParam (KeyValuePair) {String}           value                       Value.
- * 
- * 
+ *
+ *
  * @apiSuccess (AmphiroAggregatedSession extends AmphiroAbstractSession) {Number}    count        Total number of aggregated sessions.
- * 
+ *
  * @apiSuccessExample {json} Response Example (no aggregation)
  * HTTP/1.1 200 OK
  * {
@@ -446,7 +445,7 @@ function amphiroMesurementsByIndex() { return; }
  *   }],
  *   "success": true
  * }
- * 
+ *
  * @apiSuccessExample {json} Response Example (with aggregation)
  * HTTP/1.1 200 OK
  * {
@@ -466,13 +465,13 @@ function amphiroMesurementsByIndex() { return; }
  *   }],
  *   "success": true
  * }
- * 
+ *
  * @apiError {Boolean}  success Always <code>false</code>.
  * @apiError {Object[]} errors Array of <code>Error</code> objects.
- * 
+ *
  * @apiError (Error) {String} code          Unique error code.
  * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
- * 
+ *
  * @apiErrorExample Error Response Example
  * HTTP/1.1 200 OK
  * {
@@ -482,7 +481,7 @@ function amphiroMesurementsByIndex() { return; }
  *   }],
  *   success: false
  * }
- * 
+ *
  */
 function amphiroSessionsByTime() { return; }
 
@@ -492,7 +491,7 @@ function amphiroSessionsByTime() { return; }
  * @apiName AmphiroSessionByIndex
  * @apiGroup Search
  * @apiPermission ROLE_USER
- * 
+ *
  * @apiDescription Loads sessions for one or more Amphiro devices. <b><span class="note">Amphiro session ordering is index based.</span></b>
  *
  * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {Object}     credentials                 User credentials
@@ -500,10 +499,10 @@ function amphiroSessionsByTime() { return; }
  * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {String}     credentials.password        Password.
  * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {String}     type                        Query type. Valid values are <code>ABSOLUTE</code> and <code>SLIDING</code>.<br/><code>ABSOLUTE</code> queries return specific intervals of sessions.<br/><code>SLIDING</code> queries return the <code>length</code> most recent sessions.
  * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {String[]}   deviceKey                   Array of unique identifiers (UUID) for authenticated user Amphiro devices.
- * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {Number}     startIndex                  Session start index for <code>ABSOLUTE</code> queries.
+ * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {Number}     startIndex                  Session start index for <code>ABSOLUTE</code> queries or offset index for <code>SLIDING</code> ones. For <code>SLIDING</code> queries, if <code>startIndex</code> is not set, the most recent <code>length</code> sessions are returned.
  * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {Number}     endIndex                    Session end index for <code>ABSOLUTE</code> queries.
  * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {Number}     length                      Result size for <code>SLIDING</code>.
- * 
+ *
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
@@ -517,15 +516,15 @@ function amphiroSessionsByTime() { return; }
  *   "startIndex":1,
  *   "endIndex":1
  * }
- * 
+ *
  * @apiSuccess (AmphiroSessionCollectionIndexIntervalQueryResult) {Boolean}  success            Returns <code>true</code> or <code>false</code> indicating success of the operation.
  * @apiSuccess (AmphiroSessionCollectionIndexIntervalQueryResult) {Object[]} errors             Array of <code>Error</code>.
  * @apiSuccess (AmphiroSessionCollectionIndexIntervalQueryResult) {Object[]} devices            Array of <code>AmphiroSessionCollection</code>.
- * 
+ *
  * @apiSuccess (AmphiroSessionCollection) {String}               deviceKey          Device unique key (UUID).
  * @apiSuccess (AmphiroSessionCollection) {String}               name               Device user friendly name.
  * @apiSuccess (AmphiroSessionCollection) {Object[]}             sessions           Array of <code>AmphiroSession</code>.
- * 
+ *
  * @apiSuccess (AmphiroSession)  {Number}               id                 Session unique per device id.
  * @apiSuccess (AmphiroSession)  {Boolean}              history            <code>true</code> if this is a historical session; Otherwise <code>false</code>.
  * @apiSuccess (AmphiroSession)  {Number}               timestamp          Session time stamp.
@@ -536,7 +535,7 @@ function amphiroSessionsByTime() { return; }
  * @apiSuccess (AmphiroSession)  {Number}               flow               Average flow.
  * @apiSuccess (AmphiroSession)  {Ojbect[]}             properties         Array of <code>KeyValuePair</code>.
  * @apiSuccess (AmphiroSession)  {Object}               [member]           Household member.
- * 
+ *
  * @apiSuccess (KeyValuePair)    {String}               key                Key.
  * @apiSuccess (KeyValuePair)    {String}               value              Value.
  *
@@ -546,8 +545,8 @@ function amphiroSessionsByTime() { return; }
  * </br><code>SYSTEM</code> : Computed using an analysis algorithm.
  * </br><code>MANUAL</code> : Set by the user explicitly.
  * @apiSuccess (Member)          {Number}               timestamp          Most recent member assignment time stamp.
- * 
- * 
+ *
+ *
  * @apiSuccessExample {json} Response Example
  * HTTP/1.1 200 OK
  * {
@@ -574,13 +573,13 @@ function amphiroSessionsByTime() { return; }
  *   }],
  *   "success": true
  * }
- * 
+ *
  * @apiError {Boolean}  success Always <code>false</code>.
  * @apiError {Object[]} errors Array of <code>Error</code> objects.
- * 
+ *
  * @apiError (Error) {String} code          Unique error code.
  * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
- * 
+ *
  * @apiErrorExample Error Response Example
  * HTTP/1.1 200 OK
  * {
@@ -590,7 +589,7 @@ function amphiroSessionsByTime() { return; }
  *   }],
  *   success: false
  * }
- * 
+ *
  */
 function amphiroSessionsByIndex() { return; }
 
@@ -600,7 +599,7 @@ function amphiroSessionsByIndex() { return; }
  * @apiName AmphiroSingleSessionByTime
  * @apiGroup Search
  * @apiPermission ROLE_USER
- * 
+ *
  * @apiDescription Get a single Amphiro session. A time interval is required for searching for the session. During the query execution, all sessions in the given interval will be scanned until a session with id equal to <code>sessionId</code> is found. The execution performance of this method get worse the longer the time interval becomes.
  *
  * @apiParam (AmphiroSessionTimeIntervalQuery) {Object}     credentials                 User credentials
@@ -610,7 +609,7 @@ function amphiroSessionsByIndex() { return; }
  * @apiParam (AmphiroSessionTimeIntervalQuery) {Number}     sessionId                   Session unique per device id.
  * @apiParam (AmphiroSessionTimeIntervalQuery) {Number}     startDate                   Time interval start time stamp.
  * @apiParam (AmphiroSessionTimeIntervalQuery) {Number}     endDate                     Time interval end time stamp.
- * 
+ *
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
@@ -622,11 +621,11 @@ function amphiroSessionsByIndex() { return; }
  *   "startDate":1460926800000,
  *   "endDate":1461531599000
  * }
- * 
+ *
  * @apiSuccess (AmphiroSessionTimeIntervalQueryResult) {Boolean}  success            Returns <code>true</code> or <code>false</code> indicating success of the operation.
  * @apiSuccess (AmphiroSessionTimeIntervalQueryResult) {Object[]} errors             Array of <code>Error</code>.
  * @apiSuccess (AmphiroSessionTimeIntervalQueryResult) {Object[]} session            Session object of type <code>AmphiroSessionDetails</code>.
- * 
+ *
  * @apiSuccess (AmphiroSessionDetails)    {Number}      id           Session unique per device id.
  * @apiSuccess (AmphiroSessionDetails)    {Boolean}     history      <code>true</code> if this is a historical session; Otherwise <code>false</code>.
  * @apiSuccess (AmphiroSessionDetails)    {Number}      timestamp    Session time stamp.
@@ -637,10 +636,10 @@ function amphiroSessionsByIndex() { return; }
  * @apiSuccess (AmphiroSessionDetails)    {Number}      flow         Average flow.
  * @apiSuccess (AmphiroSessionDetails)    {Ojbect[]}    properties   Array of <code>KeyValuePair</code>.
  * @apiSuccess (AmphiroSessionDetails)    {Object[]}    measurements Array of <code>AmphiroMeasurement</code>.
- * 
+ *
  * @apiSuccess (KeyValuePair)             {String}      key                Key.
  * @apiSuccess (KeyValuePair)             {String}      value              Value.
- * 
+ *
  * @apiSuccess (AmphiroMeasurement)       {Number}      sessionId          Session unique per device id.
  * @apiSuccess (AmphiroMeasurement)       {Number}      index              Measurement index in session.
  * @apiSuccess (AmphiroMeasurement)       {Boolean}     history            Always <code>false</code> since historical sessions have no measurements.
@@ -648,7 +647,7 @@ function amphiroSessionsByIndex() { return; }
  * @apiSuccess (AmphiroMeasurement)       {Number}      volume             Volume difference.
  * @apiSuccess (AmphiroMeasurement)       {Number}      energy             Energy difference.
  * @apiSuccess (AmphiroMeasurement)       {Number}      temperature        Current temperature.
- * 
+ *
  * @apiSuccessExample {json} Response Example
  * HTTP/1.1 200 OK
  * {
@@ -675,13 +674,13 @@ function amphiroSessionsByIndex() { return; }
  *   },
  *   "success": true
  * }
- * 
+ *
  * @apiError {Boolean}  success Always <code>false</code>.
  * @apiError {Object[]} errors Array of <code>Error</code> objects.
- * 
+ *
  * @apiError (Error) {String} code          Unique error code.
  * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
- * 
+ *
  * @apiErrorExample Error Response Example
  * HTTP/1.1 200 OK
  * {
@@ -691,7 +690,7 @@ function amphiroSessionsByIndex() { return; }
  *   }],
  *   success: false
  * }
- * 
+ *
  */
 function amphiroSingleSessionByTime() { return; }
 
@@ -701,7 +700,7 @@ function amphiroSingleSessionByTime() { return; }
  * @apiName AmphiroSingleSessionByIndex
  * @apiGroup Search
  * @apiPermission ROLE_USER
- * 
+ *
  * @apiDescription Get a single Amphiro session.
  *
  * @apiParam (AmphiroSessionIndexIntervalQuery) {Object}     credentials                 User credentials
@@ -709,7 +708,7 @@ function amphiroSingleSessionByTime() { return; }
  * @apiParam (AmphiroSessionIndexIntervalQuery) {String}     credentials.password        Password.
  * @apiParam (AmphiroSessionIndexIntervalQuery) {String}     deviceKey                      Device unique id (UUID).
  * @apiParam (AmphiroSessionIndexIntervalQuery) {Number}     sessionId                      Session unique per device id.
- * 
+ *
  * @apiParamExample {json} Request Example
  * {
  *   "credentials": {
@@ -719,11 +718,11 @@ function amphiroSingleSessionByTime() { return; }
  *   "deviceKey": "114e7af3-39af-4a44-ac57-41779689ec39",
  *   "sessionId": 2
  * }
- * 
+ *
  * @apiSuccess (AmphiroSessionIndexIntervalQueryResult) {Boolean}  success            Returns <code>true</code> or <code>false</code> indicating success of the operation.
  * @apiSuccess (AmphiroSessionIndexIntervalQueryResult) {Object[]} errors             Array of <code>Error</code>.
  * @apiSuccess (AmphiroSessionIndexIntervalQueryResult) {Object[]} session            Session object of type <code>AmphiroSessionDetails</code>.
- * 
+ *
  * @apiSuccess (AmphiroSessionDetails)    {Number}      id           Session unique per device id.
  * @apiSuccess (AmphiroSessionDetails)    {Boolean}     history      <code>true</code> if this is a historical session; Otherwise <code>false</code>.
  * @apiSuccess (AmphiroSessionDetails)    {Number}      timestamp    Session time stamp.
@@ -735,7 +734,7 @@ function amphiroSingleSessionByTime() { return; }
  * @apiSuccess (AmphiroSessionDetails)    {Ojbect[]}    properties   Array of <code>KeyValuePair</code>.
  * @apiSuccess (AmphiroSessionDetails)    {Object[]}    measurements Array of <code>AmphiroMeasurement</code>.
  * @apiSuccess (AmphiroSessionDetails)    {Object}      [member]     Household member.
- * 
+ *
  * @apiSuccess (KeyValuePair)             {String}      key                Key.
  * @apiSuccess (KeyValuePair)             {String}      value              Value.
  *
@@ -745,7 +744,7 @@ function amphiroSingleSessionByTime() { return; }
  * </br><code>SYSTEM</code> : Computed using an analysis algorithm.
  * </br><code>MANUAL</code> : Set by the user explicitly.
  * @apiSuccess (Member)          {Number}               timestamp          Most recent member assignment time stamp.
- * 
+ *
  * @apiSuccess (AmphiroMeasurement)       {Number}      sessionId          Session unique per device id.
  * @apiSuccess (AmphiroMeasurement)       {Number}      index              Measurement index in session.
  * @apiSuccess (AmphiroMeasurement)       {Boolean}     history            Always <code>false</code> since historical sessions have no measurements.
@@ -753,7 +752,7 @@ function amphiroSingleSessionByTime() { return; }
  * @apiSuccess (AmphiroMeasurement)       {Number}      volume             Volume difference.
  * @apiSuccess (AmphiroMeasurement)       {Number}      energy             Energy difference.
  * @apiSuccess (AmphiroMeasurement)       {Number}      temperature        Current temperature.
- * 
+ *
  * @apiSuccessExample {json} Response Example
  * HTTP/1.1 200 OK
  * {
@@ -785,13 +784,13 @@ function amphiroSingleSessionByTime() { return; }
  *   },
  *   "success": true
  * }
- * 
+ *
  * @apiError {Boolean}  success Always <code>false</code>.
  * @apiError {Object[]} errors Array of <code>Error</code> objects.
- * 
+ *
  * @apiError (Error) {String} code          Unique error code.
  * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
- * 
+ *
  * @apiErrorExample Error Response Example
  * HTTP/1.1 200 OK
  * {
@@ -801,6 +800,6 @@ function amphiroSingleSessionByTime() { return; }
  *   }],
  *   success: false
  * }
- * 
+ *
  */
 function amphiroSingleSessionByIndex() { return; }

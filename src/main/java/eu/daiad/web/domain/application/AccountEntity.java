@@ -45,21 +45,21 @@ public class AccountEntity {
     @Column(name = "row_version")
     private long rowVersion;
 
-    @ManyToOne(cascade = { CascadeType.ALL })
+    @ManyToOne()
     @JoinColumn(name = "utility_id", nullable = false)
     private UtilityEntity utility;
 
     @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
     @JoinColumn(name = "account_id")
-    private Set<AccountRoleEntity> roles = new HashSet<AccountRoleEntity>();
+    private Set<AccountRoleEntity> roles = new HashSet<>();
 
     @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
     @JoinColumn(name = "account_id")
-    private Set<AccountUtilityEntity> utilities = new HashSet<AccountUtilityEntity>();
+    private Set<AccountUtilityEntity> utilities = new HashSet<>();
 
     @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id")
-    private Set<DeviceEntity> devices = new HashSet<DeviceEntity>();
+    private Set<DeviceEntity> devices = new HashSet<>();
 
     @OneToOne(mappedBy = "account")
     @JoinColumn(name = "account_id")
@@ -73,7 +73,7 @@ public class AccountEntity {
 
     @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id")
-    private Set<WaterIqHistoryEntity> waterIqHistory = new HashSet<WaterIqHistoryEntity>();
+    private Set<WaterIqHistoryEntity> waterIqHistory = new HashSet<>();
 
     @Basic(fetch = FetchType.LAZY)
     @Type(type = "org.hibernate.type.BinaryType")

@@ -97,7 +97,6 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
 
             if (StringUtils.isBlank(utilityKeys)) {
                 utilityKeys = "";
-
                 List<UtilityInfo> utilities = utilityRepository.getUtilities();
                 for (int i = 0, count = utilities.size(); i < count; i++) {
                     if(utilities.get(i).isMessageGenerationEnabled()) {
@@ -105,7 +104,7 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
                     }
                 }
             }
-            if (!StringUtils.isBlank(utilityKeys)) {
+            if (!StringUtils.isBlank(utilityKeys) && !utilityKeys.equals("-")) {
                 for(String key : StringUtils.split(utilityKeys, ",")) {
                     messageService.executeUtility(config, UUID.fromString(key));
                 }

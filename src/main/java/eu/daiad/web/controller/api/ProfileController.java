@@ -93,7 +93,7 @@ public class ProfileController extends BaseRestController {
     }
 
     /**
-     * Loads user profile data.
+     * Loads comparison and ranking data for a user.
      *
      * @param data user credentials.
      * @param year reference year.

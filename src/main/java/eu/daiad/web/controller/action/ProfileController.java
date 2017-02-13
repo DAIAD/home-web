@@ -8,8 +8,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -22,6 +24,7 @@ import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.model.profile.ComparisonRankingResponse;
 import eu.daiad.web.model.profile.ProfileDeactivateRequest;
 import eu.daiad.web.model.profile.ProfileModesFilterOptionsResponse;
 import eu.daiad.web.model.profile.ProfileModesRequest;
@@ -34,6 +37,7 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.repository.application.IProfileRepository;
+import eu.daiad.web.repository.application.IWaterIqRepository;
 import eu.daiad.web.util.ValidationUtils;
 
 /**
@@ -52,6 +56,13 @@ public class ProfileController extends BaseController {
      */
     @Autowired
     private IProfileRepository profileRepository;
+
+    /**
+     * Repository for accessing water IQ data.
+     */
+    @Autowired
+    @Qualifier("jpaWaterIqRepository")
+    private IWaterIqRepository waterIqRepository;
 
     /**
      * Loads user profile data.
@@ -237,6 +248,29 @@ public class ProfileController extends BaseController {
         }
 
         return response;
+    }
+
+    /**
+     * Loads comparison and ranking data for a user.
+     *
+     * @param year reference year.
+     * @param month reference month.
+     * @return the user profile.
+     */
+    @RequestMapping(value = "/action/comparison/{year}/{month}", method = RequestMethod.GET, consumes = "application/json", produces = "application/json")
+    @Secured({ RoleConstant.ROLE_USER })
+    public RestResponse getComparisonRanking(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable int year, @PathVariable int month) {
+        try {
+            ComparisonRankingResponse response = new ComparisonRankingResponse();
+
+            response.setComparison(waterIqRepository.getWaterIqByUserKey(user.getKey(), year, month));
+
+            return response;
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            return new RestResponse(getError(ex));
+        }
     }
 
 }

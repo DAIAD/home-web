@@ -31,7 +31,7 @@ public interface IProfileRepository {
 
     void setProfileModes(ProfileModesSubmitChangesRequest modeChanges);
 
-    void deactivateProfile(ProfileDeactivateRequest userDeactId);
+    void deactivateProfile(ProfileDeactivateRequest request);
 
     void saveHousehold(UpdateHouseholdRequest updates);
 

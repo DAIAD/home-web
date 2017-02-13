@@ -26,13 +26,13 @@ public class WeatherServiceUtilityEntity {
     @GeneratedValue(generator = "weather_service_utility_id_seq", strategy = GenerationType.SEQUENCE)
     private int id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "utility_id", nullable = false)
-    private UtilityEntity utility;
-
     @ManyToOne()
     @JoinColumn(name = "service_id", nullable = false)
     private WeatherServiceEntity service;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "utility_id", nullable = false)
+    private UtilityEntity utility;
 
     @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
     @JoinColumn(name = "service_utility_id")

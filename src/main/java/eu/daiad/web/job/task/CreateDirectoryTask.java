@@ -64,7 +64,7 @@ public class CreateDirectoryTask extends BaseTask implements StoppableTasklet {
             if (!StringUtils.isBlank(parameters.get(EnumInParameter.HDFS_PATH.getValue()))) {
                 key = chunkContext.getStepContext().getStepName() +
                       Constants.PARAMETER_NAME_DELIMITER +
-                      EnumInParameter.HDFS_PATH.getValue();
+                      EnumOutParameter.HDFS_PATH.getValue();
 
                 chunkContext.getStepContext()
                             .getStepExecution()

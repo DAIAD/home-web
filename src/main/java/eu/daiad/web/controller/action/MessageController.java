@@ -20,6 +20,7 @@ import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.message.AlertReceiversResponse;
 import eu.daiad.web.model.message.AlertStatisticsRequest;
+import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.model.message.AnnouncementDetailsResponse;
 import eu.daiad.web.model.message.AnnouncementRequest;
 import eu.daiad.web.model.message.EnumAlertType;
@@ -36,12 +37,12 @@ import eu.daiad.web.model.message.ReceiverAccount;
 import eu.daiad.web.model.message.RecommendationReceiversResponse;
 import eu.daiad.web.model.message.RecommendationStatisticsRequest;
 import eu.daiad.web.model.message.SingleTypeMessageResponse;
-import eu.daiad.web.model.message.StaticRecommendation;
+import eu.daiad.web.model.message.Tip;
 import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.RoleConstant;
-import eu.daiad.web.repository.application.IMessageRepository;
 import eu.daiad.web.repository.application.IProfileRepository;
+import eu.daiad.web.service.message.IMessageService;
 
 /**
  * Provides actions for loading messages and saving acknowledgments.
@@ -66,10 +67,10 @@ public class MessageController extends BaseController {
     private IProfileRepository profileRepository;
 
     /**
-     * Repository for accessing messages.
+     * Service for accessing messages.
      */
     @Autowired
-    private IMessageRepository messageRepository;
+    private IMessageService service;
 
     /**
      * Loads messages i.e. alerts, recommendations and tips. Optionally filters messages.
@@ -87,7 +88,7 @@ public class MessageController extends BaseController {
             if(!profile.isSendMessageEnabled()) {
                 return new MultiTypeMessageResponse();
             } else {
-                MessageResult result = messageRepository.getMessages(user, request);
+                MessageResult result = service.getMessages(user, request);
                 return new MultiTypeMessageResponse(result);
             }
         } catch (Exception ex) {
@@ -109,7 +110,7 @@ public class MessageController extends BaseController {
     {
         RestResponse response = new RestResponse();
         try {
-            messageRepository.acknowledgeMessages(user, request.getMessages());
+            service.acknowledgeMessages(user, request.getMessages());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
             response.add(this.getError(ex));
@@ -118,7 +119,7 @@ public class MessageController extends BaseController {
     }
 
     /**
-     * Gets static localized recommendations (tips) based on locale.
+     * Gets localized tips
      *
      * @param user the user
      * @param locale the locale
@@ -131,8 +132,8 @@ public class MessageController extends BaseController {
     {
         try {
             SingleTypeMessageResponse messages = new SingleTypeMessageResponse();
-            messages.setType(EnumMessageType.RECOMMENDATION_STATIC);
-            messages.setMessages(messageRepository.getTips(locale));
+            messages.setType(EnumMessageType.TIP);
+            messages.setMessages(service.getTips(locale));
             return messages;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -141,19 +142,19 @@ public class MessageController extends BaseController {
     }
 
     /**
-     * Activate/Deactivate the received recommendations (tips).
+     * Activate/Deactivate tips
      *
      * @param request the messages to change activity status
      * @return the controller response.
      */
-    @RequestMapping(value = "/action/tip/status/save/", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = "/action/tip/status/save", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse setStaticTipsActivityStatusChange(@RequestBody List<StaticRecommendation> request)
+    public RestResponse setTipsActivityStatus(@RequestBody List<Tip> request)
     {
         RestResponse response = new RestResponse();
         try {
-            for (StaticRecommendation st : request){
-                messageRepository.persistTipActiveStatus(st.getId(), st.isActive());
+            for (Tip tip: request){
+                service.setTipActiveStatus(tip.getId(), tip.isActive());
             }
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -170,17 +171,13 @@ public class MessageController extends BaseController {
      */
     @RequestMapping(value = "/action/tip/save", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse insertStaticRecommendation(
-        @AuthenticationPrincipal AuthenticatedUser user, @RequestBody StaticRecommendation request)
+    public RestResponse saveTip(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody Tip request)
     {
         RestResponse response = new RestResponse();
         try {
-            if (request.getId() == 0 || request.getIndex() == 0) {
-                messageRepository.createTip(request, user.getLocale());
-            }
-            else {
-                messageRepository.updateTip(request);
-            }
+            if (request.getLocale() == null)
+                request.setLocale(user.getLocale());
+            service.saveTip(request);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
             response.add(this.getError(ex));
@@ -194,13 +191,14 @@ public class MessageController extends BaseController {
      * @param request the message to delete
      * @return the controller response.
      */
-    @RequestMapping(value = "/action/tip/delete", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = "/action/tip/delete/{id}", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse deleteStaticRecommendation(@RequestBody StaticRecommendation request)
+    public RestResponse deleteTip(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable String id)
     {
         RestResponse response = new RestResponse();
         try {
-            messageRepository.deleteTip(request);
+            int tipId = Integer.parseInt(id);
+            service.deleteTip(tipId);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
             response.add(this.getError(ex));
@@ -222,7 +220,10 @@ public class MessageController extends BaseController {
     {
         RestResponse response = new RestResponse();
         try {
-            messageRepository.broadcastAnnouncement(request, user.getLocale(), DEFAULT_CHANNEL);
+            Announcement a = request.getAnnouncement();
+            if (a.getLocale() == null)
+                a.setLocale(user.getLocale());
+            service.broadcastAnnouncement(request, DEFAULT_CHANNEL);
         } catch (Exception ex) {
                 logger.error(ex.getMessage(), ex);
                 response.add(this.getError(ex));
@@ -243,7 +244,7 @@ public class MessageController extends BaseController {
         try {
             SingleTypeMessageResponse messages = new SingleTypeMessageResponse();
             messages.setType(EnumMessageType.ANNOUNCEMENT);
-            messages.setMessages(messageRepository.getAnnouncements(user.getLocale()));
+            messages.setMessages(service.getAnnouncements(user.getLocale()));
             return messages;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -266,7 +267,7 @@ public class MessageController extends BaseController {
         RestResponse response = new RestResponse();
         try {
             int announcementId = Integer.parseInt(id);
-            messageRepository.deleteAnnouncement(announcementId);
+            service.deleteAnnouncement(announcementId);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
             response.add(this.getError(ex));
@@ -290,9 +291,9 @@ public class MessageController extends BaseController {
             AnnouncementDetailsResponse response = new AnnouncementDetailsResponse();
             int announcementId = Integer.parseInt(id);
             response.setAnnouncement(
-                messageRepository.getAnnouncement(announcementId, user.getLocale()));
+                service.getAnnouncement(announcementId, user.getLocale()));
             response.setReceivers(
-                messageRepository.getAnnouncementReceivers(announcementId));
+                service.getAnnouncementReceivers(announcementId));
 
             return response;
         } catch (Exception ex) {
@@ -326,10 +327,10 @@ public class MessageController extends BaseController {
             MessageStatisticsResponse response = new MessageStatisticsResponse();
 
             response.setAlertStatistics(
-                messageRepository.getAlertStatistics(utilityKey, query));
+                service.getAlertStatistics(utilityKey, query));
 
             response.setRecommendationStats(
-                messageRepository.getRecommendationStatistics(utilityKey, query));
+                service.getRecommendationStatistics(utilityKey, query));
 
             return response;
         } catch (Exception ex) {
@@ -361,7 +362,7 @@ public class MessageController extends BaseController {
             }
 
             List<ReceiverAccount> receivers =
-                messageRepository.getAlertReceivers(alertType, utilityKey, query);
+                service.getAlertReceivers(alertType, utilityKey, query);
             return new AlertReceiversResponse(alertType, receivers);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -392,7 +393,7 @@ public class MessageController extends BaseController {
             }
 
             List<ReceiverAccount> receivers =
-                messageRepository.getRecommendationReceivers(recommendationType, utilityKey, query);
+                service.getRecommendationReceivers(recommendationType, utilityKey, query);
             return new RecommendationReceiversResponse(recommendationType, receivers);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);

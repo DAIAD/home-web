@@ -1,7 +1,6 @@
 package eu.daiad.web.model.device;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,7 +10,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
 public enum EnumDeviceType {
-	UNDEFINED(0),	
+	UNDEFINED(0),
 	METER(1),
 	AMPHIRO(2);
 
@@ -22,9 +21,9 @@ public enum EnumDeviceType {
 	}
 
 	public int getValue() {
-		return this.value;
+		return value;
 	}
-	
+
 	private static final Map<Integer, EnumDeviceType> intToTypeMap = new HashMap<Integer, EnumDeviceType>();
 	static {
 		for (EnumDeviceType type : EnumDeviceType.values()) {

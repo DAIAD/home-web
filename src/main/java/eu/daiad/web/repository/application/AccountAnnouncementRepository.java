@@ -11,6 +11,7 @@ import javax.persistence.TypedQuery;
 
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -18,7 +19,6 @@ import org.springframework.util.Assert;
 import eu.daiad.web.domain.application.AccountAnnouncementEntity;
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AnnouncementEntity;
-import eu.daiad.web.domain.application.AnnouncementTranslationEntity;
 import eu.daiad.web.model.PagingOptions;
 import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.repository.BaseRepository;
@@ -32,6 +32,9 @@ public class AccountAnnouncementRepository extends BaseRepository
 
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
+
+    @Autowired
+    IAnnouncementRepository announcementRepository;
 
     @Override
     public AccountAnnouncementEntity findOne(int id)
@@ -110,7 +113,7 @@ public class AccountAnnouncementRepository extends BaseRepository
         int offset = pagination.getOffset();
         if (offset > 0)
             query.setFirstResult(offset);
-        query.setMaxResults(pagination.getLimit());
+        query.setMaxResults(pagination.getSize());
 
         return query.getResultList();
     }
@@ -303,20 +306,11 @@ public class AccountAnnouncementRepository extends BaseRepository
     @Override
     public Announcement newMessage(AccountAnnouncementEntity r, Locale locale)
     {
-        AnnouncementEntity announcement = r.getAnnouncement();
-
-        AnnouncementTranslationEntity translation = null;
-        translation = announcement.getTranslation(locale);
-        if (translation == null)
-            translation = announcement.getTranslation(Locale.getDefault());
-        if (translation == null)
+        AnnouncementEntity a = r.getAnnouncement();
+        Announcement message = announcementRepository.newMessage(a, locale);
+        if (message == null)
             return null;
 
-        Announcement message = new Announcement(r.getId());
-        message.setPriority(announcement.getPriority());
-        message.setTitle(translation.getTitle());
-        message.setContent(translation.getContent());
-        message.setCreatedOn(r.getCreatedOn());
         if (r.getAcknowledgedOn() != null)
             message.setAcknowledgedOn(r.getAcknowledgedOn());
 
