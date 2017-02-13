@@ -518,10 +518,13 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             query.setParameter("id", id);
             query.setParameter("accountId", account.getId());
 
-            DataQueryEntity dataQueryEntity = query.getSingleResult();
-            dataQueryEntity.setPinned(false);
+            List<DataQueryEntity> dataQueryEntities = query.getResultList();
             
-            entityManager.persist(dataQueryEntity);
+            if(!dataQueryEntities.isEmpty()){
+                DataQueryEntity dataQueryEntity = dataQueryEntities.get(0);
+                dataQueryEntity.setPinned(false);
+                entityManager.persist(dataQueryEntity);
+            }
 
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
