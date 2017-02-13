@@ -35,7 +35,7 @@ import eu.daiad.web.service.message.AbstractAlertResolver;
 @MessageGenerator()
 @Component
 @Scope("prototype")
-public class CheckShowerOn extends AbstractAlertResolver
+public class AlertShowerOn extends AbstractAlertResolver
 { 
     public static final int DURATION_THRESHOLD_IN_MINUTES = 30;
  
@@ -72,8 +72,7 @@ public class CheckShowerOn extends AbstractAlertResolver
             refDate, EnumDeviceType.AMPHIRO, EnumAlertTemplate.SHOWER_ON);
         
         MessageResolutionStatus<ParameterizedTemplate> result = 
-            new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
-        
+            new SimpleMessageResolutionStatus<>(true, parameterizedTemplate); 
         return Collections.singletonList(result);
     }
 

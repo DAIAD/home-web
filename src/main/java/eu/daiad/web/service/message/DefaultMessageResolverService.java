@@ -214,7 +214,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
             initialStaticTipsForAccount(account));
 
         status.setStaticTip(
-            produceStaticTipForAccount(account, config.getTipInterval()));
+            produceStaticTipForAccount(account, config.getTipPeriod()));
 
         // Insight A.1
 
@@ -277,10 +277,10 @@ public class DefaultMessageResolverService implements IMessageResolverService
     }
 
     // Static tip
-    private boolean produceStaticTipForAccount(AccountEntity account, int staticTipInterval)
+    private boolean produceStaticTipForAccount(AccountEntity account, Period period)
     {
         DateTime lastCreatedOn = getDateOfLastTip(account.getKey());
-        return (lastCreatedOn == null || lastCreatedOn.isBefore(DateTime.now().minusDays(staticTipInterval)));
+        return (lastCreatedOn == null || lastCreatedOn.isBefore(DateTime.now().minus(period)));
     }
 
     // Alert #1 - Check for water leaks!
@@ -411,8 +411,7 @@ public class DefaultMessageResolverService implements IMessageResolverService
 
     // Alert #7, #9 - Reached 80% of your daily water budget {integer1} {integer2}
     public MessageResolutionStatus<Alert.ParameterizedTemplate> alertNearDailyBudget(
-        Configuration config,
-        AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
+        Configuration config, AccountEntity account, DateTime refDate, EnumDeviceType deviceType)
     {
         final int BUDGET_NEAR_PERCENTAGE_THRESHOLD = 80;
 

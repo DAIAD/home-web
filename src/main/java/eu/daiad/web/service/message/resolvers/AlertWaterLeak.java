@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import eu.daiad.web.annotate.message.MessageGenerator;
+import eu.daiad.web.model.EnumDayOfWeek;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -32,10 +33,10 @@ import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractAlertResolver;
 
-@MessageGenerator()
+@MessageGenerator(period = "P1W", dayOfWeek = EnumDayOfWeek.MONDAY, maxPerMonth = 2)
 @Component
 @Scope("prototype")
-public class CheckWaterLeak extends AbstractAlertResolver
+public class AlertWaterLeak extends AbstractAlertResolver
 {
     public static final double VOLUME_THRESHOLD_PER_HOUR = 2.0; // lt
     
@@ -73,7 +74,6 @@ public class CheckWaterLeak extends AbstractAlertResolver
         
         MessageResolutionStatus<ParameterizedTemplate> result = 
             new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
-        
         return Collections.singletonList(result);
     }
 

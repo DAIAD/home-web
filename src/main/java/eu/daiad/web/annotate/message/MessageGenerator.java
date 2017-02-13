@@ -14,8 +14,10 @@ public @interface MessageGenerator
 {
     /**
      * A period at which this generator should normally run.
+     * 
+     * This value must be an ISO-formatted string (e.g. "P1W")
      */
-    String period() default "P1D";
+    String period() default "PT1H";
     
     /**
      * Specify the day(s) of week on which we should run.

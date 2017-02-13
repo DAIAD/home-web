@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -31,22 +32,27 @@ import org.springframework.stereotype.Service;
 
 import eu.daiad.web.annotate.message.MessageGenerator;
 import eu.daiad.web.domain.application.AccountEntity;
+import eu.daiad.web.domain.application.AccountTipEntity;
 import eu.daiad.web.domain.application.AlertResolverExecutionEntity;
+import eu.daiad.web.domain.application.RecommendationResolverExecutionEntity;
+import eu.daiad.web.domain.application.TipEntity;
 import eu.daiad.web.domain.application.UtilityEntity;
 import eu.daiad.web.model.ConsumptionStats;
 import eu.daiad.web.model.EnumDayOfWeek;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.Alert;
-import eu.daiad.web.model.message.MessageResolutionPerAccountStatus;
 import eu.daiad.web.model.message.MessageResolutionStatus;
+import eu.daiad.web.model.message.Recommendation;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IAccountAlertRepository;
 import eu.daiad.web.repository.application.IAccountRecommendationRepository;
+import eu.daiad.web.repository.application.IAccountTipRepository;
 import eu.daiad.web.repository.application.IAlertResolverExecutionRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IRecommendationResolverExecutionRepository;
+import eu.daiad.web.repository.application.ITipRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IUtilityRepository;
 import eu.daiad.web.service.IConsumptionStatsService;
@@ -58,39 +64,45 @@ public class DefaultMessageGeneratorService
     private static final Log logger = LogFactory.getLog(DefaultMessageGeneratorService.class);
 
 	@Autowired
-	ApplicationContext context;
+	private  ApplicationContext context;
     
 	@Autowired 
     @Qualifier("defaultBeanValidator") 
     private Validator validator;
 	
     @Autowired
-	IUtilityRepository utilityRepository;
+	private IUtilityRepository utilityRepository;
 
     @Autowired
-    IDeviceRepository deviceRepository;
+    private IDeviceRepository deviceRepository;
     
 	@Autowired
-	IUserRepository userRepository;
+	private IUserRepository userRepository;
 
 	@Autowired
-	IGroupRepository groupRepository;
+	private IGroupRepository groupRepository;
 
 	@Autowired
 	@Qualifier("cachingConsumptionStatsService")
-	IConsumptionStatsService statsService;
+	private IConsumptionStatsService statsService;
 
 	@Autowired
-    IAccountAlertRepository accountAlertRepository;
+	private ITipRepository tipRepository;
 	
 	@Autowired
-	IAlertResolverExecutionRepository alertResolverExecutionRepository;
+    private IAccountTipRepository accountTipRepository;
 	
 	@Autowired
-    IAccountRecommendationRepository accountRecommendationRepository;
+	private IAccountAlertRepository accountAlertRepository;
 	
 	@Autowired
-    IRecommendationResolverExecutionRepository recommendationResolverExecutionRepository;
+	private IAlertResolverExecutionRepository alertResolverExecutionRepository;
+	
+	@Autowired
+	private IAccountRecommendationRepository accountRecommendationRepository;
+	
+	@Autowired
+	private IRecommendationResolverExecutionRepository recommendationResolverExecutionRepository;
 	
 	/**
 	 * Represent a specific target for message generation inside a utility.
@@ -130,6 +142,14 @@ public class DefaultMessageGeneratorService
         {
             return accountKeys; 
         }
+	    
+	    public List<AccountEntity> getAccountEntities()
+	    {
+	        List<AccountEntity> accounts = new ArrayList<>(accountKeys.size());
+	        for (UUID key: accountKeys)
+	            accounts.add(userRepository.getAccountByKey(key));
+	        return accounts;
+	    }
 	    
 	    /**
 	     * The number of accounts referenced by this target
@@ -219,6 +239,209 @@ public class DefaultMessageGeneratorService
         public abstract void generate(Target target);
 	}
 	
+	private class TipGenerator extends Generator
+	{
+        private static final int NUM_INITIAL_TIPS = 3;
+	    
+	    public TipGenerator(UtilityInfo utility)
+        {
+            // Note: For tips, refDate is always now! 
+            super(LocalDateTime.now(), utility);
+        }
+
+        @Override
+        public void generate(Target target)
+        {            
+            info("About to generate tips for %d accounts in utility %s", 
+                target.size(), utility.getKey());
+            
+            DateTime t0 = refDate.minus(config.getTipPeriod());
+            
+            for (AccountEntity account: target.getAccountEntities()) {
+                Locale locale = Locale.forLanguageTag(account.getLocale());
+                // Select tips for this account
+                List<TipEntity> tips = null;
+                AccountTipEntity a = accountTipRepository.findLastForAccount(account.getKey());
+                if (a == null) {
+                    // No tips have ever been created for this account
+                    tips = tipRepository.random(locale, NUM_INITIAL_TIPS);
+                } else {
+                    // This account has received tips before: add if enough time has passed
+                    tips = (a.getCreatedOn().isBefore(t0))? 
+                        Collections.singletonList(tipRepository.randomOne(locale)):
+                        Collections.<TipEntity>emptyList();    
+                }
+                // Push to account-tip repository
+                for (TipEntity tip: tips)
+                    accountTipRepository.createWith(account, tip);
+            }
+
+            return;
+        }   
+	}
+	
+	private class RecommendationGenerator extends Generator
+	{
+	    private IRecommendationResolverExecutionRepository resolverExecutionRepository;
+        
+        public RecommendationGenerator(LocalDateTime refDate, UtilityInfo utility)
+        {
+            super(refDate, utility);
+            resolverExecutionRepository = recommendationResolverExecutionRepository;
+        }
+        
+        public void generate(Target target)
+        {
+            info("About to generate recommendations for %d accounts in utility %s", 
+                target.size(), utility.getKey());
+            
+            Map<String, IRecommendationResolver> resolvers = context.getBeansOfType(IRecommendationResolver.class);        
+            for (String resolverName: resolvers.keySet()) {
+                IRecommendationResolver resolver = resolvers.get(resolverName);
+                resolve(resolverName, resolver, target);
+            }
+        }
+        
+        private void resolve(String resolverName, IRecommendationResolver resolver, Target target)
+        {
+            MessageGenerator annotation = resolver.getClass().getAnnotation(MessageGenerator.class);
+            if (annotation == null || !shouldExecute(resolverName, annotation))
+                return; // not enabled as a resolver, or should not execute yet
+            
+            resolver.setup(config, this);
+            info("About to resolve recommendations with %s (%s)", resolverName, resolver);
+            
+            DateTime started = DateTime.now();
+            RecommendationResolverExecutionEntity resolverExecutionEntity = 
+                resolverExecutionRepository.createWith(refDate, resolverName, target.asEntity(), started);
+            
+            FluentIterable<UUID> accountKeys = FluentIterable.of(target.getAccounts());
+            
+            for (EnumDeviceType deviceType: resolver.getSupportedDevices()) {
+                for (UUID accountKey: accountKeys.filter(isDevicePresent(deviceType))) {
+                    // Filter by checking per-account limits (throttle)
+                    if (hasExceededPerAccountLimits(resolverName, annotation, accountKey, deviceType)) {
+                        info("Skipping resolver %s for account %s as it exceeded limits", 
+                            resolverName, accountKey);
+                        continue;
+                    }
+                    
+                    // Proceed and resolve alerts
+                    List<MessageResolutionStatus<Recommendation.ParameterizedTemplate>> results = null;
+                    try {
+                        results = resolver.resolve(accountKey, deviceType);
+                    } catch (RuntimeException x) {
+                        error("Failed to resolve recommendations with %s for account %s: %s", 
+                            resolverName, accountKey, x);
+                        results = null;
+                    }
+                    if (results == null || results.isEmpty())
+                        continue;
+                    
+                    // Validate and push resolved messages to repository
+                    Set<ConstraintViolation<Recommendation.ParameterizedTemplate>> constraintViolations = null;
+                    for (MessageResolutionStatus<Recommendation.ParameterizedTemplate> r: results) {
+                        // Check if significant
+                        if (!r.isSignificant())
+                            continue; 
+                        // Validate
+                        Recommendation.ParameterizedTemplate parameterizedTemplate = r.getMessage();
+                        constraintViolations = validator.validate(parameterizedTemplate);
+                        if (!constraintViolations.isEmpty()) {
+                            for (ConstraintViolation<Recommendation.ParameterizedTemplate> c: constraintViolations) {
+                                info("Failed validation for parameterized template %s: at %s: %s",
+                                    parameterizedTemplate,
+                                    c.getPropertyPath(), c.getMessage());
+                            }
+                            continue;
+                        }
+                        // Passed validation: push to account-recommendation repository
+                        accountRecommendationRepository.createWith(
+                            accountKey, parameterizedTemplate, resolverExecutionEntity, deviceType);
+                    }
+                }
+            }
+            
+            resolver.teardown();
+            info("Finished with recommendations examined by %s", resolverName);
+            
+            DateTime finished = DateTime.now();
+            resolverExecutionRepository.updateFinished(resolverExecutionEntity, finished);
+            
+            return;
+        }
+        
+        /**
+         * Decide if a resolver should execute.
+         * 
+         * @param resolverName
+         * @param resolverAnnotation
+         * @return
+         */
+        private boolean shouldExecute(String resolverName, MessageGenerator resolverAnnotation)
+        {
+            // If a particular day-of-week is specified, check refDate is on that day.
+            List<EnumDayOfWeek> daysOfWeek = Arrays.asList(resolverAnnotation.dayOfWeek());
+            if (!daysOfWeek.isEmpty()) {
+                EnumDayOfWeek day = EnumDayOfWeek.valueOf(refDate.getDayOfWeek());
+                if (!daysOfWeek.contains(day)) 
+                    return false;
+            }
+            
+            // If a particular day-of-month is specified, check refDate is on that day.
+            List<Integer> daysOfMonth = 
+                Arrays.asList(ArrayUtils.toObject(resolverAnnotation.dayOfMonth()));
+            if (!daysOfMonth.isEmpty() && !daysOfMonth.contains(refDate.getDayOfMonth()))
+                return false;
+            
+            // Otherwise (no day specified or refDate is on a trigger day), check if a successful 
+            // execution exists for the interval (refDate - P, refDate]
+            
+            Period period = Period.parse(resolverAnnotation.period());
+            DateTime t0 = refDate.minus(period).plusMillis(1); // just after refDate - P
+            
+            List<RecommendationResolverExecutionEntity> executions = 
+                resolverExecutionRepository.findByName(resolverName, new Interval(t0, refDate));            
+            return executions.isEmpty();
+        }
+        
+        /**
+         * Decide if a resolver has exceeded per-account limits (maxPerWeek, maxPerMonth).
+         * 
+         * @param resolverName
+         * @param resolverAnnotation
+         * @param accountKey
+         * @return
+         */
+        private boolean hasExceededPerAccountLimits(
+            String resolverName, MessageGenerator resolverAnnotation, UUID accountKey, EnumDeviceType deviceType)
+        {
+            // Todo: Maybe should limit these counters to the specific deviceType
+            
+            List<Integer> xids;
+            
+            // Check for a sliding interval of 1 week
+            
+            xids = resolverExecutionRepository.findIdByName(resolverName, refPastWeek);
+            if (!xids.isEmpty()) {
+                int count = accountRecommendationRepository.countByAccountAndExecution(accountKey, xids);
+                if (count > resolverAnnotation.maxPerWeek())
+                    return true;
+            }
+            
+            // Check for a sliding interval of 1 month
+            
+            xids = resolverExecutionRepository.findIdByName(resolverName, refPastMonth);
+            if (!xids.isEmpty()) {
+                int count = accountRecommendationRepository.countByAccountAndExecution(accountKey, xids);
+                if (count > resolverAnnotation.maxPerMonth())
+                    return true;
+            }
+            
+            return false;
+        }
+	}
+	
 	private class AlertGenerator extends Generator
 	{
         private IAlertResolverExecutionRepository resolverExecutionRepository;
@@ -247,8 +470,6 @@ public class DefaultMessageGeneratorService
             if (annotation == null || !shouldExecute(resolverName, annotation))
                 return; // not enabled as a resolver, or should not execute yet
             
-            FluentIterable<UUID> accountKeys = FluentIterable.of(target.getAccounts());
-            
             resolver.setup(config, this);
             info("About to resolve alerts with %s (%s)", resolverName, resolver);
             
@@ -256,10 +477,12 @@ public class DefaultMessageGeneratorService
             AlertResolverExecutionEntity resolverExecutionEntity = 
                 resolverExecutionRepository.createWith(refDate, resolverName, target.asEntity(), started);
             
+            FluentIterable<UUID> accountKeys = FluentIterable.of(target.getAccounts());
+            
             for (EnumDeviceType deviceType: resolver.getSupportedDevices()) {
                 for (UUID accountKey: accountKeys.filter(isDevicePresent(deviceType))) {
                     // Filter by checking per-account limits (throttle)
-                    if (hasExceededPerAccountLimits(resolverName, annotation, accountKey)) {
+                    if (hasExceededPerAccountLimits(resolverName, annotation, accountKey, deviceType)) {
                         info("Skipping resolver %s for account %s as it exceeded limits",
                             resolverName, accountKey);
                         continue;
@@ -278,27 +501,26 @@ public class DefaultMessageGeneratorService
                         continue;
                     
                     // Validate and push resolved messages to repository
+                    Set<ConstraintViolation<Alert.ParameterizedTemplate>> constraintViolations = null;
                     for (MessageResolutionStatus<Alert.ParameterizedTemplate> r: results) {
                         // Check if significant
                         if (!r.isSignificant())
                             continue; 
                         // Validate
-                        Alert.ParameterizedTemplate parameterizedTemplate = r.getMessage(); 
-                        Set<ConstraintViolation<Alert.ParameterizedTemplate>> violations = 
-                            validator.validate(parameterizedTemplate);
-                        if (!violations.isEmpty()) {
-                            for (ConstraintViolation<Alert.ParameterizedTemplate> c: violations) {
+                        Alert.ParameterizedTemplate parameterizedTemplate = r.getMessage();
+                        constraintViolations = validator.validate(parameterizedTemplate);
+                        if (!constraintViolations.isEmpty()) {
+                            for (ConstraintViolation<Alert.ParameterizedTemplate> c: constraintViolations) {
                                 info("Failed validation for parameterized template %s: at %s: %s",
                                     parameterizedTemplate,
                                     c.getPropertyPath(), c.getMessage());
                             }
                             continue;
                         }
-                        // Passed validation: push to repository
+                        // Passed validation: push to account-alert repository
                         accountAlertRepository.createWith(
                             accountKey, parameterizedTemplate, resolverExecutionEntity, deviceType);
                     }
-                    
                 }
             }
             
@@ -320,11 +542,13 @@ public class DefaultMessageGeneratorService
          * @return
          */
         private boolean hasExceededPerAccountLimits(
-            String resolverName, MessageGenerator resolverAnnotation, UUID accountKey)
+            String resolverName, MessageGenerator resolverAnnotation, UUID accountKey, EnumDeviceType deviceType)
         {
+            // Todo: Maybe should limit these counters to the specific deviceType
+            
             List<Integer> xids;
             
-            // Check for a sliding window of 1 week
+            // Check for a sliding interval of 1 week
             
             xids = resolverExecutionRepository.findIdByName(resolverName, refPastWeek);
             if (!xids.isEmpty()) {
@@ -333,7 +557,7 @@ public class DefaultMessageGeneratorService
                     return true;
             }
             
-            // Check for a sliding window of 1 month
+            // Check for a sliding interval of 1 month
             
             xids = resolverExecutionRepository.findIdByName(resolverName, refPastMonth);
             if (!xids.isEmpty()) {
@@ -355,7 +579,6 @@ public class DefaultMessageGeneratorService
         private boolean shouldExecute(String resolverName, MessageGenerator resolverAnnotation)
         {
             // If a particular day-of-week is specified, check refDate is on that day.
-            
             List<EnumDayOfWeek> daysOfWeek = Arrays.asList(resolverAnnotation.dayOfWeek());
             if (!daysOfWeek.isEmpty()) {
                 EnumDayOfWeek day = EnumDayOfWeek.valueOf(refDate.getDayOfWeek());
@@ -364,14 +587,10 @@ public class DefaultMessageGeneratorService
             }
             
             // If a particular day-of-month is specified, check refDate is on that day.
-               
             List<Integer> daysOfMonth = 
                 Arrays.asList(ArrayUtils.toObject(resolverAnnotation.dayOfMonth()));
-            if (!daysOfMonth.isEmpty()) {
-                Integer day = refDate.getDayOfMonth();
-                if (!daysOfMonth.contains(day))
-                    return false;
-            }
+            if (!daysOfMonth.isEmpty() && !daysOfMonth.contains(refDate.getDayOfMonth()))
+                return false;
             
             // Otherwise (no day specified or refDate is on a trigger day), check if a successful 
             // execution exists for the interval (refDate - P, refDate]
@@ -380,8 +599,7 @@ public class DefaultMessageGeneratorService
             DateTime t0 = refDate.minus(period).plusMillis(1); // just after refDate - P
             
             List<AlertResolverExecutionEntity> executions = 
-                resolverExecutionRepository.findByName(resolverName, new Interval(t0, refDate));
-            
+                resolverExecutionRepository.findByName(resolverName, new Interval(t0, refDate));         
             return executions.isEmpty();
         }
 	    
@@ -426,7 +644,11 @@ public class DefaultMessageGeneratorService
 	{
 	    Generator generator = null;
 	    
-	    // Todo Generate tips
+	    // Generate tips
+	    
+	    generator = new TipGenerator(utility)
+	        .configure(config);
+	    generator.generate(target);
 	   
 	    // Generate alerts
 	    
@@ -434,7 +656,13 @@ public class DefaultMessageGeneratorService
 	        .configure(config);
 	    generator.generate(target);
 	   
-	    // Todo Generate recommendations
+	    // Generate recommendations
+	    
+	    generator = new RecommendationGenerator(refDate, utility)
+            .configure(config);
+        generator.generate(target);
+        
+        return;
 	}
 	
 	private static void error(String f, Object ...args)

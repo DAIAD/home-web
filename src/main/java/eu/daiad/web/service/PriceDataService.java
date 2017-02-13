@@ -6,24 +6,24 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class PriceDataService implements IPriceDataService
-{
-    private static final double ENERGY_EUROS_PER_KWH = 0.224;
-    private static final double ENERGY_GBP_PER_KWH = 0.15;
-    
-    private double VOLUME_EUROS_PER_LITRE = 0.0024;
-    
+{    
     @Override
     public double getPricePerKwh(Locale locale)
     {
         double price;
+        
+        // All prices are expressed in euros
+        
         switch (locale.getCountry()) {
         case "United Kingdom":
-            price = ENERGY_GBP_PER_KWH;
+            price = 0.177;
             break;
         case "Spain":
+            price = 0.224;
+            break;
         case "Greece":
         default:
-            price = ENERGY_EUROS_PER_KWH;
+            price = 0.224;
             break;
         }
         return price;

@@ -70,7 +70,7 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
 
             String tipInterval = parameters.get(EnumParameter.STATIC_TIP_INTERVAL);
             if (!StringUtils.isBlank(tipInterval))
-                config.setTipInterval(Integer.parseInt(tipInterval));
+                config.setTipPeriod(Integer.parseInt(tipInterval));
 
             String budget = null;
             

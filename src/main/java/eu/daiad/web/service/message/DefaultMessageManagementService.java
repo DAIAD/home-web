@@ -191,10 +191,8 @@ public class DefaultMessageManagementService implements IMessageManagementServic
         MessageResolutionStatus<Alert.ParameterizedTemplate> r = status.getAlertWaterLeakSWM();
         if (r == null || !r.isSignificant())
             return;
-
         if (countAlertsByType(account, EnumAlertType.WATER_LEAK) > 3)
             return;
-
         int day = DateTime.now().getDayOfWeek();
         if (config.isOnDemandExecution() || day == config.getComputeThisDayOfWeek()) {
             Assert.state(r.getMessage().getTemplate() == EnumAlertTemplate.WATER_LEAK);
@@ -218,7 +216,6 @@ public class DefaultMessageManagementService implements IMessageManagementServic
     // Alert #4 - unusual activity, no consumption patterns available yet: ignored
 
     // Alert #5 - water quality not assured!
-    // Todo : This alert is appears repeatedly if user has not used any water
     private void alertWaterQualitySWM(
         Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {
@@ -251,7 +248,7 @@ public class DefaultMessageManagementService implements IMessageManagementServic
         }
     }
 
-    // Alert #8 - reached 80% of your daily water budget {integer1} {integer2}
+    // Alert #8 - reached 80% of your weekly water budget {integer1} {integer2}
     private void alertNearWeeklyBudgetSWM(
         Configuration config, MessageResolutionPerAccountStatus status, AccountEntity account)
     {

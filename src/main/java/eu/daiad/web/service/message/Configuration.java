@@ -6,7 +6,9 @@ import java.util.Map;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.LocalDateTime;
+import org.joda.time.Period;
 
+import eu.daiad.web.model.EnumDayOfWeek;
 import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.EnumDeviceType;
 
@@ -43,8 +45,10 @@ public class Configuration
     public static final double VOLUME_AMPHIRO_MONTHLY_THRESHOLD =
         30.5 * VOLUME_AMPHIRO_DAILY_THRESHOLD;
     
-
-    private int tipInterval = DateTimeConstants.DAYS_PER_WEEK; // every week
+    
+    private EnumDayOfWeek tipDay = EnumDayOfWeek.MONDAY;
+    
+    private Period tipPeriod = Period.weeks(1);
 
     private Map<EnumDeviceType, Map<EnumTimeUnit, Integer>> budgetLimits = 
         new EnumMap<>(EnumDeviceType.class);
@@ -95,14 +99,36 @@ public class Configuration
         return DateTimeConstants.SUNDAY;
     }
 
-    public int getTipInterval() {
-        return tipInterval;
+    public Period getTipPeriod() 
+    {
+        return tipPeriod;
     }
 
-    public void setTipInterval(int days) {
-        this.tipInterval = days;
+    public void setTipPeriod(Period period) 
+    {
+        this.tipPeriod = period;
     }
     
+    public void setTipPeriod(int days) 
+    {
+        this.tipPeriod = Period.days(days);
+    }
+    
+    public EnumDayOfWeek getTipDay()
+    {
+        return tipDay;
+    }
+
+    public void setTipDay(EnumDayOfWeek tipDay)
+    {
+        this.tipDay = tipDay;
+    }
+    
+    public void setTipDay(int dayOfWeek)
+    {
+        this.tipDay = EnumDayOfWeek.valueOf(dayOfWeek);
+    }
+
     public boolean isOnDemandExecution() {
         return onDemandExecution;
     }

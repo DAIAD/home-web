@@ -1,5 +1,7 @@
 package eu.daiad.web.service.message.resolvers;
 
+import static eu.daiad.web.model.query.EnumDataField.TEMPERATURE;
+
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -32,16 +34,18 @@ import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractAlertResolver;
 
-//@MessageGenerator()
+@MessageGenerator()
 @Component
 @Scope("prototype")
-public class CheckWaterQuality extends AbstractAlertResolver
+public class AlertHighTemperature extends AbstractAlertResolver
 {
-    private static final Set<EnumDeviceType> supportedDevices = EnumSet.of(EnumDeviceType.METER);
+    public static final double TEMPERATURE_THRESHOLD = 45.0;
+    
+    private static final Set<EnumDeviceType> supportedDevices = EnumSet.of(EnumDeviceType.AMPHIRO);
     
     @Autowired
     IDataService dataService;
-     
+    
     @Override
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
@@ -50,34 +54,30 @@ public class CheckWaterQuality extends AbstractAlertResolver
             .timezone(refDate.getZone())
             .sliding(refDate, -24, EnumTimeUnit.HOUR, EnumTimeAggregation.HOUR)
             .user("user", accountKey)
-            .meter()
-            .sum();
-
-        // Todo: Fire only when outside temperature is above a threshold
+            .amphiro()
+            .max();
 
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
 
-        SeriesFacade series = queryResponse.getFacade(EnumDeviceType.METER);
+        SeriesFacade series = queryResponse.getFacade(EnumDeviceType.AMPHIRO);
+        if (series == null || series.isEmpty())
+            return Collections.emptyList();
 
-        boolean fire = (series == null || series.isEmpty());
-        if (!fire) {
-            FluentIterable<Point> points = FluentIterable
-                .of(series.iterPoints(EnumDataField.VOLUME, EnumMetric.SUM));
-            fire = !points.anyMatch(Point.notZero());
-        }
-        if (!fire)
+        FluentIterable<Point> points = FluentIterable
+            .of(series.iterPoints(TEMPERATURE, EnumMetric.MAX));
+
+        if (points.allMatch(Point.belowValue(TEMPERATURE_THRESHOLD)))
             return Collections.emptyList();
 
         ParameterizedTemplate parameterizedTemplate = new SimpleParameterizedTemplate(
-            refDate, EnumDeviceType.METER, EnumAlertTemplate.WATER_QUALITY);
+            refDate, EnumDeviceType.AMPHIRO, EnumAlertTemplate.HIGH_TEMPERATURE);
         
         MessageResolutionStatus<ParameterizedTemplate> result = 
             new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
-        
         return Collections.singletonList(result);
     }
-    
+
     @Override
     public Set<EnumDeviceType> getSupportedDevices()
     {
