@@ -34,6 +34,8 @@ import eu.daiad.web.model.error.ErrorCode;
 import eu.daiad.web.model.error.QueryErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
+import eu.daiad.web.model.group.EnumGroupType;
+import eu.daiad.web.model.group.Group;
 import eu.daiad.web.model.query.AreaSpatialFilter;
 import eu.daiad.web.model.query.ClusterPopulationFilter;
 import eu.daiad.web.model.query.ConstraintSpatialFilter;
@@ -60,6 +62,7 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.spatial.LabeledGeometry;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
+import eu.daiad.web.repository.application.ICommonsRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IFavouriteRepository;
 import eu.daiad.web.repository.application.IGroupRepository;
@@ -79,6 +82,9 @@ public class DataService extends BaseService implements IDataService {
 
     @Autowired
     private IGroupRepository groupRepository;
+
+    @Autowired
+    private ICommonsRepository commonsRepository;
 
     @Autowired
     private IDeviceRepository deviceRepository;
@@ -494,12 +500,29 @@ public class DataService extends BaseService implements IDataService {
                     PopulationFilter filter = query.getPopulation().get(p);
 
                     List<UUID> filterUsers = null;
+
+                    /*
+                     * Authorization rules are applied at the user level for:
+                     *
+                     * a) Individual users
+                     * b) Groups that are not of type COMMONS i.e. SET and SEGMENT groups
+                     * c) Utility users
+                     *
+                     * For COMMONS groups only the membership of the user is checked.
+                    */
+                    boolean skipAuthorization = false;
+
                     switch (filter.getType()) {
                         case USER:
                             filterUsers = ((UserPopulationFilter) filter).getUsers();
                             break;
                         case GROUP:
-                            filterUsers = groupRepository.getGroupMemberKeys(((GroupPopulationFilter) filter).getGroup());
+                            UUID groupKey = ((GroupPopulationFilter) filter).getGroup();
+
+                            // Skip authorization for COMMONS groups
+                            skipAuthorization = skipGroupMemberAuthorization(authenticatedUser, groupKey);
+
+                            filterUsers = groupRepository.getGroupMemberKeys(groupKey);
                             break;
                         case CLUSTER:
                             ClusterPopulationFilter clusterFilter = (ClusterPopulationFilter) filter;
@@ -540,7 +563,7 @@ public class DataService extends BaseService implements IDataService {
 
                     if (filterUsers.size() > 0) {
                         for (UUID userKey : filterUsers) {
-                            AuthenticatedUser user = authorizeUser(authenticatedUser, userKey);
+                            AuthenticatedUser user = authorizeUser(authenticatedUser, userKey, skipAuthorization);
 
                             // Decide if the user must be included in the group
                             boolean includeUser = true;
@@ -834,12 +857,29 @@ public class DataService extends BaseService implements IDataService {
                     PopulationFilter filter = query.getPopulation().get(p);
 
                     List<UUID> filterUsers = null;
+
+                    /*
+                     * Authorization rules are applied at the user level for:
+                     *
+                     * a) Individual users
+                     * b) Groups that are not of type COMMONS i.e. SET and SEGMENT groups
+                     * c) Utility users
+                     *
+                     * For COMMONS groups only the membership of the user is checked.
+                    */
+                    boolean skipAuthorization = false;
+
                     switch (filter.getType()) {
                         case USER:
                             filterUsers = ((UserPopulationFilter) filter).getUsers();
                             break;
                         case GROUP:
-                            filterUsers = groupRepository.getGroupMemberKeys(((GroupPopulationFilter) filter).getGroup());
+                            UUID groupKey = ((GroupPopulationFilter) filter).getGroup();
+
+                            // Skip authorization for COMMONS groups
+                            skipAuthorization = skipGroupMemberAuthorization(authenticatedUser, groupKey);
+
+                            filterUsers = groupRepository.getGroupMemberKeys(groupKey);
                             break;
                         case CLUSTER:
                             ClusterPopulationFilter clusterFilter = (ClusterPopulationFilter) filter;
@@ -883,7 +923,7 @@ public class DataService extends BaseService implements IDataService {
 
                     if (filterUsers.size() > 0) {
                         for (UUID userKey : filterUsers) {
-                            AuthenticatedUser user = authorizeUser(authenticatedUser, userKey);
+                            AuthenticatedUser user = authorizeUser(authenticatedUser, userKey, skipAuthorization);
 
                             // Decide if the user must be included in the group
                             boolean includeUser = true;
@@ -1113,7 +1153,21 @@ public class DataService extends BaseService implements IDataService {
         favouriteRepository.insertFavouriteQuery(query, account);
 
     }
+    
+    @Override
+    public void pinStoredQuery(long id, UUID key) {
+        AccountEntity account = userRepository.getAccountByKey(key);
+        favouriteRepository.pinFavouriteQuery(id, account);
 
+    }
+
+    @Override
+    public void unpinStoredQuery(long id, UUID key) {
+        AccountEntity account = userRepository.getAccountByKey(key);
+        favouriteRepository.unpinFavouriteQuery(id, account);
+
+    }
+    
     @Override
     public List<NamedDataQuery> getQueriesForOwner(int accountId)
             throws JsonMappingException, JsonParseException, IOException{
@@ -1132,10 +1186,15 @@ public class DataService extends BaseService implements IDataService {
      *
      * @param executor the user who executes the query.
      * @param key the user key to check.
+     * @param skipAuthorization if true, authorization checks are ignored and the user is returned.
      * @return user information for the given {@code key}.
      * @throws ApplicationException when a user does not exists or the executor has not the required permissions.
      */
-    private AuthenticatedUser authorizeUser(AuthenticatedUser executor, UUID key) throws ApplicationException {
+    private AuthenticatedUser authorizeUser(AuthenticatedUser executor, UUID key, boolean skipAuthorization) throws ApplicationException {
+        if ((executor == null) || (skipAuthorization)) {
+            return userRepository.getUserByKey(key);
+        }
+
         if ((executor != null) &&
             (!executor.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) &&
             (!executor.getKey().equals(key))) {
@@ -1155,4 +1214,31 @@ public class DataService extends BaseService implements IDataService {
 
         return user;
     }
+
+    /**
+     * Searches for a group and checks if the query executor has permissions to access the selected group.
+     *
+     * @param executor the user who executes the query.
+     * @param key the group key.
+     * @return false when either this is not a COMMONS group or the user does not belong to the given COMMONS group.
+     * @throws ApplicationException if the group is not found.
+     */
+    private boolean skipGroupMemberAuthorization(AuthenticatedUser executor, UUID key) throws ApplicationException {
+        if (executor == null) {
+            return true;
+        }
+
+        Group group = groupRepository.getByKey(key, false);
+
+        if(group.getType() != EnumGroupType.COMMONS) {
+            return false;
+        }
+
+        if(!commonsRepository.getAccountCommons(executor.getKey()).contains(key)) {
+            return false;
+        }
+
+        return true;
+    }
+
 }

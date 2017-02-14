@@ -201,7 +201,7 @@
  * }
  *
  */
-function loadProfile() { return; }
+function getProfile() { return; }
 
 /**
  * @api {post} /v1/profile/save Save profile
@@ -228,6 +228,7 @@ function loadProfile() { return; }
  * @apiParam (UpdateProfileRequest) {String}     [locale]                    Locale.
  * @apiParam (UpdateProfileRequest) {String}     [timezone]                  Preferred time zone.
  * @apiParam (UpdateProfileRequest) {String}     photo                       Base64 encoded user image.
+ * @apiParam (UpdateProfileRequest) {Boolean}    resetPhoto                  Used for deleting an existing image. If <code>true</code> and <code>photo</code> is null, the image is deleted.
  * @apiParam (UpdateProfileRequest) {String}     unit                        Measurement unit system. Valid values are:
  * <br/><br/><code>UNDEFINED</code>: Measurement unit system is not set.
  * <br/><code>METRIC</code>: Metric system
@@ -244,7 +245,8 @@ function loadProfile() { return; }
  *   "dailyMeterBudget": 300,
  *   "dailyAmphiroBudget": 80,
  *   "unit": "IMPERIAL",
- *   "garden": false
+ *   "garden": false,
+ *   "resetPhoto": false
  * }
  *
  * @apiSuccess {Boolean}  success             Returns <code>true</code> or <code>false</code> indicating success of the operation.
@@ -549,4 +551,4 @@ function saveHousehold() { return; }
  * }
  *
  */
-function getComparison() { return; }
+function getComparisonRanking() { return; }

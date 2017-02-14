@@ -43,11 +43,11 @@ public class AdminController extends BaseRestController {
     @RequestMapping(value = "/api/v1/admin/group/query", method = RequestMethod.POST, produces = "application/json")
     public RestResponse getGroups(@RequestBody GroupQueryRequest request) {
         try {
-            AuthenticatedUser user = this.authenticate(request.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
+            AuthenticatedUser user = authenticate(request.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
             GroupQueryResponse response = new GroupQueryResponse();
 
-            response.setGroups(this.groupRepository.getAll(user.getUtilityKey()));
+            response.setGroups(groupRepository.getAll(user.getUtilityKey()));
 
             return response;
         } catch (Exception ex) {

@@ -9,7 +9,25 @@
   },
   "order": [
     "Login",
-    "Logout"
+    "Logout",
+    "ProfileLoad",
+    "ProfileSave",
+    "HouseholdSave",
+    "GetComparison",
+    "Deactivate",
+    "DataQuery",
+    "ForecastQuery",
+    "MeterStatus",
+    "MeterMeasurements",
+    "Sessions",
+    "Session",
+    "CommonsCreate",
+    "CommonsUpdate",
+    "CommonsDelete",
+    "CommonsGet",
+    "CommonsJoin",
+    "CommonsLeave",
+    "CommonsSearch"
   ],
   "template": {
     "withCompare": false,

@@ -9,11 +9,10 @@ import org.springframework.stereotype.Component;
 import eu.daiad.web.job.task.ImportMeterDataTask;
 
 /**
- * Job for downloading smart water meter data from a remote SFTP server and
- * storing it to HBase.
+ * Job for loading smart water meter data from files and storing it to HBase.
  */
 @Component
-public class WaterMeterDataSecureFileTransferJobBuilder extends BaseJobBuilder implements IJobBuilder {
+public class WaterMeterDataFileLoadJobBuilder extends BaseJobBuilder implements IJobBuilder {
 
     /**
      * Data import step name.
@@ -26,6 +25,11 @@ public class WaterMeterDataSecureFileTransferJobBuilder extends BaseJobBuilder i
     @Autowired
     private ImportMeterDataTask importMeterDataTask;
 
+    /**
+     * Builds as step for importing data.
+     *
+     * @return
+     */
 	private Step importData() {
         return stepBuilderFactory.get(STEP_IMPORT_DATA)
                         .tasklet(importMeterDataTask)
@@ -36,6 +40,7 @@ public class WaterMeterDataSecureFileTransferJobBuilder extends BaseJobBuilder i
 	public Job build(String name, JobParametersIncrementer incrementer) throws Exception {
 		return jobBuilderFactory.get(name)
 		                        .incrementer(incrementer)
-		                        .start(importData()).build();
+		                        .start(importData())
+		                        .build();
 	}
 }

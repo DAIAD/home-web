@@ -32,6 +32,8 @@ public class NamedDataQuery {
     private String overlap;
     
     private List<DataQuery> queries;
+    
+    private boolean pinned;
 
     public EnumQueryFavouriteType getType() {
         return type;
@@ -103,6 +105,14 @@ public class NamedDataQuery {
 
     public void setOverlap(String overlap) {
         this.overlap = overlap;
+    }
+    
+    public boolean isPinned() {
+        return pinned;
+    }
+
+    public void setPinned(boolean pinned) {
+        this.pinned = pinned;
     }
     
     public List<DataQuery> getQueries() {

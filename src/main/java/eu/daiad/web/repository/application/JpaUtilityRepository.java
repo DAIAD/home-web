@@ -18,7 +18,7 @@ import eu.daiad.web.domain.admin.DailyCounterEntity;
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.UtilityEntity;
 import eu.daiad.web.model.admin.Counter;
-import eu.daiad.web.model.group.GroupMemberInfo;
+import eu.daiad.web.model.group.GroupMember;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.BaseRepository;
 
@@ -75,16 +75,16 @@ public class JpaUtilityRepository extends BaseRepository implements IUtilityRepo
     }
 
     @Override
-    public List<GroupMemberInfo> getUtilityMemberInfo(UUID key) {
+    public List<GroupMember> getUtilityMembers(UUID key) {
         String memberQueryString = "SELECT a FROM account a WHERE a.utility.key = :key";
 
         TypedQuery<AccountEntity> memberQuery = entityManager.createQuery(memberQueryString, AccountEntity.class)
                                                              .setFirstResult(0);
         memberQuery.setParameter("key", key);
 
-        List<GroupMemberInfo> members = new ArrayList<GroupMemberInfo>();
+        List<GroupMember> members = new ArrayList<GroupMember>();
         for (AccountEntity account : memberQuery.getResultList()) {
-            members.add(new GroupMemberInfo(account));
+            members.add(new GroupMember(account));
         }
 
         return members;

@@ -33,98 +33,111 @@ import eu.daiad.web.model.group.EnumGroupType;
 @Inheritance(strategy = InheritanceType.JOINED)
 public class GroupEntity {
 
-	@Id()
-	@Column(name = "id")
-	@SequenceGenerator(sequenceName = "group_id_seq", name = "group_id_seq", allocationSize = 1, initialValue = 1)
-	@GeneratedValue(generator = "group_id_seq", strategy = GenerationType.SEQUENCE)
-	private int id;
+    @Id()
+    @Column(name = "id")
+    @SequenceGenerator(sequenceName = "group_id_seq", name = "group_id_seq", allocationSize = 1, initialValue = 1)
+    @GeneratedValue(generator = "group_id_seq", strategy = GenerationType.SEQUENCE)
+    private int id;
 
-	@Column()
-	@Type(type = "pg-uuid")
-	private UUID key = UUID.randomUUID();
+    @Column()
+    @Type(type = "pg-uuid")
+    private UUID key = UUID.randomUUID();
 
-	@Version()
-	@Column(name = "row_version")
-	private long rowVersion;
+    @Version()
+    @Column(name = "row_version")
+    private long rowVersion;
 
-	@ManyToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
-	@JoinColumn(name = "utility_id", nullable = false)
-	private UtilityEntity utility;
+    @ManyToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
+    @JoinColumn(name = "utility_id", nullable = false)
+    private UtilityEntity utility;
 
-	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
-	@JoinColumn(name = "group_id")
-	private Set<GroupMemberEntity> members = new HashSet<GroupMemberEntity>();
+    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id")
+    private Set<GroupMemberEntity> members = new HashSet<GroupMemberEntity>();
 
-	@Basic()
-	private String name;
+    @Basic()
+    private String name;
 
-	@Basic()
-	private int size;
+    @Basic()
+    private int size;
 
-	@Column(name = "created_on")
-	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-	private DateTime createdOn = new DateTime();
+    @Column(name = "created_on")
+    @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+    private DateTime createdOn = new DateTime();
 
-	@Column(name = "spatial")
-	private Geometry geometry;
+    @Column(name = "updated_on")
+    @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+    private DateTime updatedOn = new DateTime();
 
-	public int getId() {
-		return id;
-	}
+    @Column(name = "spatial")
+    private Geometry geometry;
 
-	public UtilityEntity getUtility() {
-		return utility;
-	}
+    public int getId() {
+        return id;
+    }
 
-	public void setUtility(UtilityEntity utility) {
-		this.utility = utility;
-	}
+    public UtilityEntity getUtility() {
+        return utility;
+    }
 
-	public Set<GroupMemberEntity> getMembers() {
-		return members;
-	}
+    public void setUtility(UtilityEntity utility) {
+        this.utility = utility;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public Set<GroupMemberEntity> getMembers() {
+        return members;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public DateTime getCreatedOn() {
-		return createdOn;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public void setCreatedOn(DateTime createdOn) {
-		this.createdOn = createdOn;
-	}
+    public DateTime getCreatedOn() {
+        return createdOn;
+    }
 
-	public int getSize() {
-		return size;
-	}
+    public void setCreatedOn(DateTime createdOn) {
+        this.createdOn = createdOn;
+    }
 
-	public void setSize(int size) {
-		this.size = size;
-	}
+    public int getSize() {
+        return size;
+    }
 
-	public long getRowVersion() {
-		return rowVersion;
-	}
+    public void setSize(int size) {
+        this.size = size;
+    }
 
-	public UUID getKey() {
-		return key;
-	}
+    public long getRowVersion() {
+        return rowVersion;
+    }
 
-	public EnumGroupType getType() {
-		return EnumGroupType.UNDEFINED;
-	}
+    public UUID getKey() {
+        return key;
+    }
 
-	public Geometry getGeometry() {
-		return geometry;
-	}
+    public EnumGroupType getType() {
+        return EnumGroupType.UNDEFINED;
+    }
 
-	public void setGeometry(Geometry geometry) {
-		this.geometry = geometry;
-	}
+    public Geometry getGeometry() {
+        return geometry;
+    }
+
+    public void setGeometry(Geometry geometry) {
+        this.geometry = geometry;
+    }
+
+    public DateTime getUpdatedOn() {
+        return updatedOn;
+    }
+
+    public void setUpdatedOn(DateTime updatedOn) {
+        this.updatedOn = updatedOn;
+    }
+
 }
