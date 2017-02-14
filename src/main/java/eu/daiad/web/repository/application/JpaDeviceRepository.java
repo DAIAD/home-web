@@ -933,4 +933,14 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
         return configurations;
     }
 
+    @Override
+    public List<Device> getUserDevices(UUID userKey, EnumDeviceType deviceType)
+        throws ApplicationException
+    {
+        DeviceRegistrationQuery q = new DeviceRegistrationQuery();
+        q.setType(deviceType);
+        return getUserDevices(userKey, q);
+        
+    }
+
 }

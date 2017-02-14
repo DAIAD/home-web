@@ -33,15 +33,15 @@ public class ConsumptionStats implements Iterable<ConsumptionStats.Key> {
         private static Map<EnumStatistic, String> titles;      
         static {         
             titles = ImmutableMap.<EnumStatistic, String>builder()
-                    .put(AVERAGE_MONTHLY, "Average monthly")
-                    .put(AVERAGE_WEEKLY, "Average weekly")
-                    .put(AVERAGE_MONTHLY_PER_SESSION, "Average monthly per-session")
-                    .put(AVERAGE_WEEKLY_PER_SESSION, "Average weekly per-session")
-                    .put(THRESHOLD_BOTTOM_10P_MONTHLY, "Bottom 10% monthly threshold")
-                    .put(THRESHOLD_BOTTOM_10P_WEEKLY, "Bottom 10% weekly threshold")
-                    .put(THRESHOLD_BOTTOM_25P_MONTHLY, "Bottom 25% monthly threshold")
-                    .put(THRESHOLD_BOTTOM_25P_WEEKLY, "Bottom 25% weekly threshold")
-                    .build();
+                .put(AVERAGE_MONTHLY, "Average monthly")
+                .put(AVERAGE_WEEKLY, "Average weekly")
+                .put(AVERAGE_MONTHLY_PER_SESSION, "Average monthly per-session")
+                .put(AVERAGE_WEEKLY_PER_SESSION, "Average weekly per-session")
+                .put(THRESHOLD_BOTTOM_10P_MONTHLY, "Bottom 10% monthly threshold")
+                .put(THRESHOLD_BOTTOM_10P_WEEKLY, "Bottom 10% weekly threshold")
+                .put(THRESHOLD_BOTTOM_25P_MONTHLY, "Bottom 25% monthly threshold")
+                .put(THRESHOLD_BOTTOM_25P_WEEKLY, "Bottom 25% weekly threshold")
+                .build();
         }
         
         public String getTitle() {
@@ -135,6 +135,15 @@ public class ConsumptionStats implements Iterable<ConsumptionStats.Key> {
 	public ComputedNumber get(EnumStatistic statistic, EnumDeviceType device) {
 	    return stats.get(new Key(statistic, device));
 	}
+	
+	public Double getValue(EnumStatistic statistic, EnumDeviceType device, EnumDataField field) {
+        ComputedNumber c = stats.get(new Key(statistic, device, field));
+        return (c == null)? null : c.getValue();
+    }
+
+    public Double getValue(EnumStatistic statistic, EnumDeviceType device) {
+        return getValue(statistic, device, EnumDataField.VOLUME);
+    }
 	
 	public void resetValues() {
 	    for (ComputedNumber n: stats.values())

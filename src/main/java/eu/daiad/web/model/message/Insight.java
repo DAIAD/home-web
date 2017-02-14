@@ -591,6 +591,9 @@ public class Insight extends Recommendation {
             parameters.put("average_value", averageValue);
             parameters.put("average_consumption", averageValue);
             
+            Double percentChange = 100.0 * Math.abs(((currentValue - averageValue) / averageValue));
+            parameters.put("percent_change", Integer.valueOf(percentChange.intValue()));
+            
             parameters.put("time_unit", timeUnit.name());
             
             return parameters;
@@ -936,9 +939,7 @@ public class Insight extends Recommendation {
         private Double previousValue;
         
         public B5Parameters()
-        {
-            super();
-        }
+        {}
         
         public B5Parameters(
             DateTime refDate, EnumDeviceType deviceType, double currentValue, double previousValue)

@@ -19,15 +19,18 @@ import org.joda.time.Interval;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import com.ibm.icu.text.MessageFormat;
 
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AccountRecommendationEntity;
 import eu.daiad.web.domain.application.RecommendationByTypeRecord;
+import eu.daiad.web.domain.application.RecommendationResolverExecutionEntity;
 import eu.daiad.web.domain.application.RecommendationTemplateEntity;
 import eu.daiad.web.domain.application.RecommendationTemplateTranslationEntity;
 import eu.daiad.web.model.PagingOptions;
+import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.EnumRecommendationTemplate;
 import eu.daiad.web.model.message.EnumRecommendationType;
 import eu.daiad.web.model.message.Recommendation;
@@ -49,9 +52,15 @@ public class AccountRecommendationRepository extends BaseRepository
 
     @Autowired
     IRecommendationTemplateTranslationRepository translationRepository;
-
+    
     @Autowired
     ICurrencyRateService currencyRateService;
+    
+    @Override
+    public AccountRecommendationEntity findOne(int id)
+    {
+        return entityManager.find(AccountRecommendationEntity.class, id);
+    }
     
     @Override
     public int countAll()
@@ -294,9 +303,104 @@ public class AccountRecommendationRepository extends BaseRepository
     }
 
     @Override
-    public AccountRecommendationEntity findOne(int id)
+    public Recommendation formatMessage(int id, Locale locale)
     {
-        return entityManager.find(AccountRecommendationEntity.class, id);
+        AccountRecommendationEntity r = findOne(id);
+        if (r != null)
+            return formatMessage(r, locale);
+        return null;
+    }
+
+    @Override
+    public List<AccountRecommendationEntity> findByExecution(int xid)
+    {        
+        TypedQuery<AccountRecommendationEntity> query = entityManager.createQuery(
+            "SELECT a FROM account_recommendation a WHERE a.resolverExecution.id = :xid",
+            AccountRecommendationEntity.class);
+        query.setParameter("xid", xid);
+        return query.getResultList();
+    }
+
+    @Override
+    public List<AccountRecommendationEntity> findByExecution(List<Integer> xids)
+    {
+        Assert.state(xids != null && !xids.isEmpty(), "Expected a non-empty list");
+        TypedQuery<AccountRecommendationEntity> query = entityManager.createQuery(
+            "SELECT a FROM account_recommendation a WHERE a.resolverExecution.id IN (:xids)",
+            AccountRecommendationEntity.class);
+        query.setParameter("xids", xids);
+        return query.getResultList();
+    }
+
+    @Override
+    public List<AccountRecommendationEntity> findByAccountAndExecution(UUID accountKey, int xid)
+    {        
+        TypedQuery<AccountRecommendationEntity> query = entityManager.createQuery(
+            "SELECT a FROM account_recommendation a " +
+                "WHERE a.resolverExecution.id = :xid AND a.account.key = :accountKey",
+            AccountRecommendationEntity.class);
+        query.setParameter("xid", xid);
+        query.setParameter("accountKey", accountKey);
+        return query.getResultList();
+    }
+
+    @Override
+    public List<AccountRecommendationEntity> findByAccountAndExecution(UUID accountKey, List<Integer> xids)
+    {
+        Assert.state(xids != null && !xids.isEmpty(), "Expected a non-empty list");
+        TypedQuery<AccountRecommendationEntity> query = entityManager.createQuery(
+            "SELECT a FROM account_recommendation a " +
+                "WHERE a.resolverExecution.id IN (:xids) AND a.account.key = :accountKey",
+            AccountRecommendationEntity.class);
+        query.setParameter("xids", xids);
+        query.setParameter("accountKey", accountKey);
+        return query.getResultList();
+    }
+
+    @Override
+    public int countByExecution(int xid)
+    {        
+        TypedQuery<Long> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_recommendation a WHERE a.resolverExecution.id = :xid",
+            Long.class);
+        query.setParameter("xid", xid);
+        return query.getSingleResult().intValue();
+    }
+
+    @Override
+    public int countByExecution(List<Integer> xids)
+    {
+        Assert.state(xids != null && !xids.isEmpty(), "Expected a non-empty list");
+        TypedQuery<Long> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_recommendation a WHERE a.resolverExecution.id IN (:xids)",
+            Long.class);
+        query.setParameter("xids", xids);
+        return query.getSingleResult().intValue();
+    }
+
+    @Override
+    public int countByAccountAndExecution(UUID accountKey, int xid)
+    {
+        TypedQuery<Long> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_recommendation a " +
+                "WHERE a.resolverExecution.id = :xid AND a.account.key = :accountKey",
+             Long.class);
+        query.setParameter("xid", xid);
+        query.setParameter("accountKey", accountKey);
+        return query.getSingleResult().intValue();
+    }
+
+    @Override
+    public int countByAccountAndExecution(UUID accountKey, List<Integer> xids)
+    {
+        Assert.state(xids != null && !xids.isEmpty(), "Expected a non-empty list");
+        TypedQuery<Long> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_recommendation a " +
+                "WHERE a.resolverExecution.id IN (:xids) AND a.account.key = :accountKey",
+            Long.class);
+        query.setParameter("xids", xids);
+        query.setParameter("accountKey", accountKey);
+        return query.getSingleResult().intValue();
     }
 
     @Override
@@ -308,7 +412,11 @@ public class AccountRecommendationRepository extends BaseRepository
     }
 
     @Override
-    public AccountRecommendationEntity createWith(UUID accountKey, ParameterizedTemplate parameters)
+    public AccountRecommendationEntity createWith(
+        UUID accountKey,
+        ParameterizedTemplate parameterizedTemplate,
+        RecommendationResolverExecutionEntity resolverExecution,
+        EnumDeviceType deviceType)
     {
         TypedQuery<AccountEntity> query = entityManager.createQuery(
             "SELECT a FROM account a WHERE a.key = :accountKey", AccountEntity.class);
@@ -323,13 +431,16 @@ public class AccountRecommendationRepository extends BaseRepository
 
         if (account == null)
             return null;
-        else
-            return createWith(account, parameters);
+        
+        return createWith(account, parameterizedTemplate, resolverExecution, deviceType);
     }
 
     @Override
     public AccountRecommendationEntity createWith(
-        AccountEntity account, ParameterizedTemplate parameterizedTemplate)
+        AccountEntity account,
+        ParameterizedTemplate parameterizedTemplate,
+        RecommendationResolverExecutionEntity resolverExecution,
+        EnumDeviceType deviceType)
     {
         // Ensure we have a persistent AccountEntity instance
         if (!entityManager.contains(account))
@@ -343,8 +454,13 @@ public class AccountRecommendationRepository extends BaseRepository
         
         // Create
         
-        AccountRecommendationEntity r = 
-            new AccountRecommendationEntity(account, templateEntity, parameterizedTemplate);
+        AccountRecommendationEntity r = new AccountRecommendationEntity();
+        r.setAccount(account);
+        r.setTemplate(templateEntity);
+        r.setParameters(parameterizedTemplate);
+        r.setDeviceType(deviceType);
+        r.setResolverExecution(resolverExecution);
+        
         return create(r);
     }
 
@@ -421,30 +537,27 @@ public class AccountRecommendationRepository extends BaseRepository
 
         ParameterizedTemplate parameterizedTemplate = null; 
         try {
-            parameterizedTemplate = r.getParameters().toParameterizedTemplate();
+            parameterizedTemplate = r.getParameterizedTemplate();
         } catch (ClassCastException | ClassNotFoundException | IOException ex) {
             logger.error(String.format(
                 "Failed to retrieve parameterized template for recommendation#%d: %s",
                 r.getId(), ex.getMessage()));
             parameterizedTemplate = null;
         }
-        if (parameterizedTemplate == null)
-            return null;
         
-        // Make underlying parameters aware of target locale
-        
-        parameterizedTemplate = parameterizedTemplate.withLocale(locale, currencyRateService);
-
         // Format
         
-        Map<String, Object> parameters = parameterizedTemplate.getParameters();
+        String title = translation.getTitle(); 
+        String description = translation.getDescription();
+        if (parameterizedTemplate != null) {
+            // Make underlying parameters aware of target locale    
+            parameterizedTemplate = parameterizedTemplate.withLocale(locale, currencyRateService);
+            // Format messages (interpolate parameters)
+            Map<String, Object> parameters = parameterizedTemplate.getParameters();
+            title = (new MessageFormat(title, locale)).format(parameters);
+            description = (new MessageFormat(description, locale)).format(parameters);
+        }
         
-        String title = (new MessageFormat(translation.getTitle(), locale))
-            .format(parameters);
-
-        String description = (new MessageFormat(translation.getDescription(), locale))
-            .format(parameters);
-
         // Build a DTO object with formatted messages
         
         Recommendation message = new Recommendation(r.getId(), template);
@@ -457,14 +570,5 @@ public class AccountRecommendationRepository extends BaseRepository
             message.setAcknowledgedOn(r.getAcknowledgedOn());
 
         return message;
-    }
-
-    @Override
-    public Recommendation formatMessage(int id, Locale locale)
-    {
-        AccountRecommendationEntity r = findOne(id);
-        if (r != null)
-            return formatMessage(r, locale);
-        return null;
     }
 }

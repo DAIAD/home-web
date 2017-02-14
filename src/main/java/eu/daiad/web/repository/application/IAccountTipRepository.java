@@ -8,6 +8,7 @@ import org.joda.time.Interval;
 
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AccountTipEntity;
+import eu.daiad.web.domain.application.TipEntity;
 import eu.daiad.web.model.PagingOptions;
 import eu.daiad.web.model.message.Tip;
 
@@ -55,6 +56,8 @@ public interface IAccountTipRepository
 
     AccountTipEntity createWith(AccountEntity account, int tipId);
 
+    AccountTipEntity createWith(AccountEntity account, TipEntity tip);
+    
     boolean acknowledge(int id, DateTime acknowledged);
 
     boolean acknowledge(AccountTipEntity r, DateTime acknowledged);
