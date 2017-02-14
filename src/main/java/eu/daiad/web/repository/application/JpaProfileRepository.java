@@ -77,7 +77,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
     @Autowired
     Environment environment;
-
+    
     @Override
     public Profile getProfileByUsername(EnumApplication application) throws ApplicationException
     {

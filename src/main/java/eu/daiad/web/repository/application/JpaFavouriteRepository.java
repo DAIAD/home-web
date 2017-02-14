@@ -379,8 +379,6 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
     @Override
     public void insertFavouriteQuery(NamedDataQuery namedDataQuery, AccountEntity account) {
 
-
-
         try {
 
             ObjectMapper objectMapper = jackson2ObjectMapperBuilder.build();
@@ -489,6 +487,51 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
     }
 
     @Override
+    public void pinFavouriteQuery(long id, AccountEntity account) {
+
+        try {
+            TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> query = entityManager.createQuery(
+                            "SELECT d FROM data_query d WHERE d.owner.id = :accountId and d.id = :id",
+                            eu.daiad.web.domain.application.DataQueryEntity.class).setFirstResult(0).setMaxResults(1);
+
+            query.setParameter("id", id);
+            query.setParameter("accountId", account.getId());
+
+            DataQueryEntity dataQueryEntity = query.getSingleResult();
+            dataQueryEntity.setPinned(true);
+            
+            entityManager.persist(dataQueryEntity);
+
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        }
+    }
+
+    @Override
+    public void unpinFavouriteQuery(long id, AccountEntity account) {
+
+        try {
+            TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> query = entityManager.createQuery(
+                            "SELECT d FROM data_query d WHERE d.owner.id = :accountId and d.id = :id",
+                            eu.daiad.web.domain.application.DataQueryEntity.class).setFirstResult(0).setMaxResults(1);
+
+            query.setParameter("id", id);
+            query.setParameter("accountId", account.getId());
+
+            List<DataQueryEntity> dataQueryEntities = query.getResultList();
+            
+            if(!dataQueryEntities.isEmpty()){
+                DataQueryEntity dataQueryEntity = dataQueryEntities.get(0);
+                dataQueryEntity.setPinned(false);
+                entityManager.persist(dataQueryEntity);
+            }
+
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        }
+    }
+    
+    @Override
     public List<NamedDataQuery> getFavouriteQueriesForOwner(int accountId)
             throws JsonMappingException, JsonParseException, IOException{
 
@@ -511,6 +554,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             namedDataQuery.setLevel(queryEntity.getLevel());
             namedDataQuery.setField(queryEntity.getField());
             namedDataQuery.setOverlap(queryEntity.getOverlap());
+            namedDataQuery.setPinned(queryEntity.isPinned());
             namedDataQuery.setQueries(queryEntity.toDataQuery());
             namedDataQuery.setCreatedOn(queryEntity.getUpdatedOn());
 
