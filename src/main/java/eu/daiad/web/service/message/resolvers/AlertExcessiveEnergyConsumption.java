@@ -100,9 +100,8 @@ public class AlertExcessiveEnergyConsumption extends AbstractAlertResolver
         // Consumes excessive energy, estimate annual savings if changes behavior
 
         AccountEntity account = userRepository.getAccountByKey(accountKey);
-        Locale locale = Locale.forLanguageTag(account.getLocale());
         Double annualSavings = 
-            priceData.getPricePerKwh(locale) *
+            priceData.getPricePerKwh(account.getCountry()) *
             energyCalculator.computeEnergyToRiseTemperature(2, 12 * monthlyConsumption);
         
         ParameterizedTemplate parameterizedTemplate = 

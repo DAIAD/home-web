@@ -59,14 +59,14 @@ public class AlertWaterTopSaver extends AbstractAlertResolver
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
-        ComputedNumber weekly25pThreshold = stats.get(
+        Double weekly25pThreshold = stats.getValue(
             EnumStatistic.THRESHOLD_BOTTOM_25P_WEEKLY, EnumDeviceType.METER, EnumDataField.VOLUME);
-        if (weekly25pThreshold == null || weekly25pThreshold.getValue() == null)
+        if (weekly25pThreshold == null)
             return Collections.emptyList();
         
-        ComputedNumber weekly10pThreshold = stats.get(
+        Double weekly10pThreshold = stats.getValue(
             EnumStatistic.THRESHOLD_BOTTOM_10P_WEEKLY, EnumDeviceType.METER, EnumDataField.VOLUME);
-        if (weekly10pThreshold == null || weekly10pThreshold.getValue() == null)
+        if (weekly10pThreshold == null)
             return Collections.emptyList();
         
         double weeklyThreshold = config.getVolumeThreshold(EnumDeviceType.METER, EnumTimeUnit.WEEK);
@@ -91,10 +91,10 @@ public class AlertWaterTopSaver extends AbstractAlertResolver
             return Collections.emptyList();
         
         ParameterizedTemplate parameterizedTemplate = null;
-        if (consumption < weekly10pThreshold.getValue()) {
+        if (consumption < weekly10pThreshold) {
             parameterizedTemplate = new SimpleParameterizedTemplate(
                 refDate, EnumDeviceType.METER, EnumAlertTemplate.TOP_10_PERCENT_OF_SAVERS);
-        } else if (consumption < weekly25pThreshold.getValue()) {
+        } else if (consumption < weekly25pThreshold) {
             parameterizedTemplate = new SimpleParameterizedTemplate(
                 refDate, EnumDeviceType.METER, EnumAlertTemplate.TOP_25_PERCENT_OF_SAVERS);
         }

@@ -145,14 +145,14 @@ public class AlertWaterEfficiencyLeader extends AbstractAlertResolver
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
-        ComputedNumber monthlyAverage = stats.get(
+        Double monthlyAverage = stats.getValue(
             EnumStatistic.AVERAGE_MONTHLY, EnumDeviceType.METER, EnumDataField.VOLUME);
-        if (monthlyAverage == null || monthlyAverage.getValue() == null)
+        if (monthlyAverage == null)
             return Collections.emptyList();
 
-        ComputedNumber monthly10pThreshold = stats.get(
+        Double monthly10pThreshold = stats.getValue(
             EnumStatistic.THRESHOLD_BOTTOM_10P_MONTHLY, EnumDeviceType.METER, EnumDataField.VOLUME);
-        if (monthly10pThreshold == null || monthly10pThreshold.getValue() == null)
+        if (monthly10pThreshold == null)
             return Collections.emptyList();
 
         double monthlyThreshold = config.getVolumeThreshold(EnumDeviceType.METER, EnumTimeUnit.MONTH);
@@ -171,14 +171,15 @@ public class AlertWaterEfficiencyLeader extends AbstractAlertResolver
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
         SeriesFacade series = queryResponse.getFacade(EnumDeviceType.METER);
+        
         Double consumption = (series != null)? 
             series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
         if (consumption == null || consumption < monthlyThreshold)
             return Collections.emptyList();
 
-        if (consumption < Math.min(monthly10pThreshold.getValue(), monthlyAverage.getValue())) {
+        if (consumption < Math.min(monthly10pThreshold, monthlyAverage)) {
             ParameterizedTemplate parameterizedTemplate = 
-                new Parameters(refDate, deviceType, consumption, monthlyAverage.getValue()); 
+                new Parameters(refDate, deviceType, consumption, monthlyAverage); 
             MessageResolutionStatus<ParameterizedTemplate> result = 
                 new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
             return Collections.singletonList(result);

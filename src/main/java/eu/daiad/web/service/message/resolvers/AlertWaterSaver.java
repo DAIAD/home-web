@@ -169,9 +169,9 @@ public class AlertWaterSaver extends AbstractAlertResolver
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
-        ComputedNumber monthlyAverage = stats.get(
+        Double monthlyAverage = stats.getValue(
             EnumStatistic.AVERAGE_MONTHLY, EnumDeviceType.METER, EnumDataField.VOLUME);
-        if (monthlyAverage == null || monthlyAverage.getValue() == null)
+        if (monthlyAverage == null)
             return Collections.emptyList();
           
         DataQuery query = null;
@@ -211,10 +211,10 @@ public class AlertWaterSaver extends AbstractAlertResolver
         Double percentChange = 100 * ((c1 - c0) / c1);
         boolean fire = (
             (percentChange > CHANGE_PERCENTAGE_HIGH) ||
-            (percentChange > CHANGE_PERCENTAGE_THRESHOLD && c0 < monthlyAverage.getValue()));
+            (percentChange > CHANGE_PERCENTAGE_THRESHOLD && c0 < monthlyAverage));
         if (fire) {
             ParameterizedTemplate parameterizedTemplate = 
-                new Parameters(refDate, EnumDeviceType.METER, c0, c1, monthlyAverage.getValue()); 
+                new Parameters(refDate, EnumDeviceType.METER, c0, c1, monthlyAverage); 
             MessageResolutionStatus<ParameterizedTemplate> result = 
                 new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
             return Collections.singletonList(result);

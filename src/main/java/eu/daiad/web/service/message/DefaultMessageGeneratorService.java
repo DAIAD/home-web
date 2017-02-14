@@ -27,6 +27,7 @@ import org.joda.time.LocalDateTime;
 import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
@@ -63,6 +64,15 @@ public class DefaultMessageGeneratorService
 {
     private static final Log logger = LogFactory.getLog(DefaultMessageGeneratorService.class);
 
+    @Value("${daiad.message-generator.tips.enabled:true}")
+    private Boolean tipsEnabled;
+    
+    @Value("${daiad.message-generator.alerts.enabled:true}")
+    private Boolean alertsEnabled;
+    
+    @Value("${daiad.message-generator.recommendations.enabled:true}")
+    private Boolean recommendationsEnabled;
+    
 	@Autowired
 	private  ApplicationContext context;
     
@@ -380,6 +390,9 @@ public class DefaultMessageGeneratorService
          */
         private boolean shouldExecute(String resolverName, MessageGenerator resolverAnnotation)
         {
+            if (config.isOnDemandExecution())
+                return true;
+            
             // If a particular day-of-week is specified, check refDate is on that day.
             List<EnumDayOfWeek> daysOfWeek = Arrays.asList(resolverAnnotation.dayOfWeek());
             if (!daysOfWeek.isEmpty()) {
@@ -578,6 +591,9 @@ public class DefaultMessageGeneratorService
          */
         private boolean shouldExecute(String resolverName, MessageGenerator resolverAnnotation)
         {
+            if (config.isOnDemandExecution())
+                return true;
+            
             // If a particular day-of-week is specified, check refDate is on that day.
             List<EnumDayOfWeek> daysOfWeek = Arrays.asList(resolverAnnotation.dayOfWeek());
             if (!daysOfWeek.isEmpty()) {
@@ -646,22 +662,28 @@ public class DefaultMessageGeneratorService
 	    
 	    // Generate tips
 	    
-	    generator = new TipGenerator(utility)
-	        .configure(config);
-	    generator.generate(target);
-	   
+	    if (tipsEnabled) {
+	        generator = new TipGenerator(utility)
+	            .configure(config);
+	        generator.generate(target);
+	    }
+	    
 	    // Generate alerts
 	    
-	    generator = new AlertGenerator(refDate, utility)
-	        .configure(config);
-	    generator.generate(target);
-	   
+	    if (alertsEnabled) {
+	        generator = new AlertGenerator(refDate, utility)
+	            .configure(config);
+	        generator.generate(target);
+	    }
+	    
 	    // Generate recommendations
 	    
-	    generator = new RecommendationGenerator(refDate, utility)
-            .configure(config);
-        generator.generate(target);
-        
+	    if (recommendationsEnabled) {
+	        generator = new RecommendationGenerator(refDate, utility)
+	            .configure(config);
+	        generator.generate(target);
+	    }
+	    
         return;
 	}
 	
@@ -677,6 +699,13 @@ public class DefaultMessageGeneratorService
 	
 	private static void info(String f, Object ...args)
     {
-        logger.info(String.format(f, args));
+        if (logger.isInfoEnabled())
+            logger.info(String.format(f, args));
+    }
+	
+	private static void debug(String f, Object ...args)
+    {
+        if (logger.isDebugEnabled()) 
+            logger.debug(String.format(f, args));
     }
 }

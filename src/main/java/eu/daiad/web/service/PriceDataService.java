@@ -8,13 +8,13 @@ import org.springframework.stereotype.Service;
 public class PriceDataService implements IPriceDataService
 {    
     @Override
-    public double getPricePerKwh(Locale locale)
+    public double getPricePerKwh(String countryName)
     {
         double price;
         
-        // All prices are expressed in euros
+        // All prices are expressed in euro
         
-        switch (locale.getCountry()) {
+        switch (countryName) {
         case "United Kingdom":
             price = 0.177;
             break;
@@ -27,6 +27,12 @@ public class PriceDataService implements IPriceDataService
             break;
         }
         return price;
+    }
+
+    @Override
+    public double getPricePerKwh(Locale locale)
+    {
+        return getPricePerKwh(locale.getCountry());
     }
 
 }

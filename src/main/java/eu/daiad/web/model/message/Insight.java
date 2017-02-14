@@ -939,9 +939,7 @@ public class Insight extends Recommendation {
         private Double previousValue;
         
         public B5Parameters()
-        {
-            super();
-        }
+        {}
         
         public B5Parameters(
             DateTime refDate, EnumDeviceType deviceType, double currentValue, double previousValue)

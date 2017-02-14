@@ -19,6 +19,8 @@ public interface IGeneratorContext
     
     /**
      * Get consumption statistics for target utility
+     * 
+     * Todo: Change to getUtilityStats(DateTime)
      */
     ConsumptionStats getStats();
 }

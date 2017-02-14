@@ -172,9 +172,9 @@ public class AlertExcessiveWaterConsumption extends AbstractAlertResolver
     {
         final int numWeeksPerYear = 52; // not exactly, it's 52 or 53
 
-        ComputedNumber weeklyAverage = stats.get(
+        Double averageConsumption = stats.getValue(
             EnumStatistic.AVERAGE_WEEKLY, deviceType, EnumDataField.VOLUME);
-        if (weeklyAverage == null || weeklyAverage.getValue() == null)
+        if (averageConsumption == null)
             return Collections.emptyList();
 
         DateTime start = refDate.minusWeeks(1)
@@ -192,15 +192,15 @@ public class AlertExcessiveWaterConsumption extends AbstractAlertResolver
         DataQueryResponse queryResponse = dataService.execute(query);
         SeriesFacade series = queryResponse.getFacade(deviceType);
 
-        Double consumption = (series != null)?
+        Double userConsumption = (series != null)?
             series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
 
-        if (consumption != null && consumption > HIGH_CONSUMPTION_RATIO * weeklyAverage.getValue()) {
+        if (userConsumption != null && userConsumption > HIGH_CONSUMPTION_RATIO * averageConsumption) {
             // Get a rough estimate for annual savings if average behavior is adopted
-            Double annualSavings = (consumption - weeklyAverage.getValue()) * numWeeksPerYear;
-            ParameterizedTemplate parameterizedTemplate = 
-                new Parameters(refDate, deviceType, consumption, weeklyAverage.getValue())
-                    .withAnnualSavings(annualSavings);
+            Double annualSavings = (userConsumption - averageConsumption) * numWeeksPerYear;
+            ParameterizedTemplate parameterizedTemplate = new Parameters(
+                    refDate, deviceType, userConsumption, averageConsumption)
+                .withAnnualSavings(annualSavings);
             MessageResolutionStatus<ParameterizedTemplate> result = 
                 new SimpleMessageResolutionStatus<>(true, parameterizedTemplate); 
             return Collections.singletonList(result);
