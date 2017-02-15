@@ -520,7 +520,7 @@ public class DataService extends BaseService implements IDataService {
                             UUID groupKey = ((GroupPopulationFilter) filter).getGroup();
 
                             // Skip authorization for COMMONS groups
-                            skipAuthorization = skipGroupMemberAuthorization(authenticatedUser, groupKey);
+                            skipAuthorization = skipCommonsMemberAuthorization(authenticatedUser, groupKey);
 
                             filterUsers = groupRepository.getGroupMemberKeys(groupKey);
                             break;
@@ -546,7 +546,12 @@ public class DataService extends BaseService implements IDataService {
                             }
                             continue;
                         case UTILITY:
-                            filterUsers = groupRepository.getUtilityByKeyMemberKeys(((UtilityPopulationFilter) filter).getUtility());
+                            UUID utilityKey = ((UtilityPopulationFilter) filter).getUtility();
+
+                            // Skip authorization for utility member
+                            skipAuthorization = skipCommonsUtilityAuthorization(authenticatedUser, utilityKey);
+
+                            filterUsers = groupRepository.getUtilityByKeyMemberKeys(utilityKey);
                             break;
                         default:
                             // Ignore
@@ -877,7 +882,7 @@ public class DataService extends BaseService implements IDataService {
                             UUID groupKey = ((GroupPopulationFilter) filter).getGroup();
 
                             // Skip authorization for COMMONS groups
-                            skipAuthorization = skipGroupMemberAuthorization(authenticatedUser, groupKey);
+                            skipAuthorization = skipCommonsMemberAuthorization(authenticatedUser, groupKey);
 
                             filterUsers = groupRepository.getGroupMemberKeys(groupKey);
                             break;
@@ -906,7 +911,12 @@ public class DataService extends BaseService implements IDataService {
                             }
                             continue;
                         case UTILITY:
-                            filterUsers = groupRepository.getUtilityByKeyMemberKeys(((UtilityPopulationFilter) filter).getUtility());
+                            UUID utilityKey = ((UtilityPopulationFilter) filter).getUtility();
+
+                            // Skip authorization for utility member
+                            skipAuthorization = skipCommonsUtilityAuthorization(authenticatedUser, utilityKey);
+
+                            filterUsers = groupRepository.getUtilityByKeyMemberKeys(utilityKey);
                             break;
                         default:
                             // Ignore
@@ -1153,7 +1163,7 @@ public class DataService extends BaseService implements IDataService {
         favouriteRepository.insertFavouriteQuery(query, account);
 
     }
-    
+
     @Override
     public void pinStoredQuery(long id, UUID key) {
         AccountEntity account = userRepository.getAccountByKey(key);
@@ -1167,7 +1177,7 @@ public class DataService extends BaseService implements IDataService {
         favouriteRepository.unpinFavouriteQuery(id, account);
 
     }
-    
+
     @Override
     public List<NamedDataQuery> getQueriesForOwner(int accountId)
             throws JsonMappingException, JsonParseException, IOException{
@@ -1195,9 +1205,15 @@ public class DataService extends BaseService implements IDataService {
             return userRepository.getUserByKey(key);
         }
 
-        if ((executor != null) &&
-            (!executor.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) &&
-            (!executor.getKey().equals(key))) {
+        if (!executor.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
+            if (executor.getKey().equals(key)) {
+                return executor;
+            }
+            // Check commons membership
+            if (commonsRepository.shareCommonsMembership(executor.getKey(), key)) {
+                return userRepository.getUserByKey(key);
+            }
+
             throw createApplicationException(SharedErrorCode.AUTHORIZATION);
         }
 
@@ -1208,7 +1224,7 @@ public class DataService extends BaseService implements IDataService {
         }
 
         // Filter users based on the utility only when an authenticated user exists
-        if ((executor != null) && (!executor.getUtilities().contains(user.getUtilityId()))) {
+        if (!executor.getUtilities().contains(user.getUtilityId())) {
             throw createApplicationException(SharedErrorCode.AUTHORIZATION);
         }
 
@@ -1223,7 +1239,7 @@ public class DataService extends BaseService implements IDataService {
      * @return false when either this is not a COMMONS group or the user does not belong to the given COMMONS group.
      * @throws ApplicationException if the group is not found.
      */
-    private boolean skipGroupMemberAuthorization(AuthenticatedUser executor, UUID key) throws ApplicationException {
+    private boolean skipCommonsMemberAuthorization(AuthenticatedUser executor, UUID key) throws ApplicationException {
         if (executor == null) {
             return true;
         }
@@ -1239,6 +1255,21 @@ public class DataService extends BaseService implements IDataService {
         }
 
         return true;
+    }
+
+    /**
+     * Checks if the query executor has permissions to access the data of the utility with the given key.
+     *
+     * @param executor the user who executes the query.
+     * @param key the utility key.
+     * @return true if the user belongs to the utility.
+     */
+    private boolean skipCommonsUtilityAuthorization(AuthenticatedUser executor, UUID key) {
+        if (executor == null) {
+            return true;
+        }
+
+        return executor.getUtilityKey().equals(key);
     }
 
 }

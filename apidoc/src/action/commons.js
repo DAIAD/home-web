@@ -270,7 +270,6 @@ function leaveCommons() { return; }
  *
  * @apiDescription Loads data for a single commons group.
  *
- *
  * @apiParam  (Query String Parameters)     {String}     commonsKey   The commons unique key (UUID).
  *
  * @apiParamExample {json} Request Example
@@ -382,7 +381,7 @@ function getCommons() { return; }
  * @apiSuccess {Object[]} errors            Empty array of error messages.
  * @apiSuccess {Number}   pageIndex         The result page index.
  * @apiSuccess {Number}   pageSize          The result page size.
- * @apiSuccess {Number}   count             The total number of records found..
+ * @apiSuccess {Number}   count             The total number of records found.
  * @apiSuccess {Object[]} groups            An array of <code>CommonsInfo</code> objects.
  *
  * @apiSuccess (CommonsInfo)  {Object}  group     An <code>Commons</code> object.
@@ -445,3 +444,84 @@ function getCommons() { return; }
  *     }
  */
 function searchCommons() { return; }
+
+/**
+ * @api {post} action/commons/{commonsKey}/members Members
+ * @apiVersion 0.0.1
+ * @apiName CommonsMembers
+ * @apiGroup Commons
+ * @apiPermission ROLE_USER
+ *
+ * @apiDescription Enumerates the members of a commons group.
+ *
+ * @apiParam  (Query String Parameters)     {String}     commonsKey   The commons unique key (UUID).
+ *
+ * @apiParam {Object}     query               Members query.
+ * @apiParam {Number}     query.pageIndex     Current page index. Invalid page indexes i.e. negative numbers are set to <code>0</code>.
+ * @apiParam {Number}     query.pageSize      Current page size. Invalid page size i.e. negative or zero values are set to <code>10</code>.
+ * @apiParam {String}     query.sortBy        Sorting property. Valid values are:
+ * <br/><code>FIRSTNAME</code>
+ * <br/><code>LASTNAME</code>
+ * <br/><code>DATE_JOINED</code>
+ * @apiParam {Boolean}    query.sortAscending Sorts results in ascending or descending order.
+ * @apiParam {String}     [query.name]        Selects members whose firstname or lastname starts with the given string.
+ * @apiParam {Number}     [query.joinedOn]    Selects members who joined the group after the given timestamp.
+ *
+ * @apiParamExample {json} Request Example
+ *  {
+ *    "query": {
+ *      "pageIndex": 0,
+ *      "pageSize": 10,
+ *      "sortBy": "LASTNAME",
+ *      "sortAscending": true,
+ *      "name": "Alex"
+ *    }
+ *  }
+ *
+ * @apiSuccess {Boolean}  success           <code>true</code> or <code>false</code> indicating success of the operation.
+ * @apiSuccess {Object[]} errors            Empty array of error messages.
+ * @apiSuccess {Number}   pageIndex         The result page index.
+ * @apiSuccess {Number}   pageSize          The result page size.
+ * @apiSuccess {Number}   count             The total number of records found.
+ * @apiSuccess {Object[]} members           An array of <code>CommonsMemberInfo</code> objects.
+ *
+ * @apiSuccess (CommonsMemberInfo)      {String}  key         User unique key (UUID).
+ * @apiSuccess (CommonsMemberInfo)      {String}  firstname   Firstname.
+ * @apiSuccess (CommonsMemberInfo)      {String}  lastname    Lastname.
+ * @apiSuccess (CommonsMemberInfo)      {Number}  joinedOn    Date joined the commons group.
+ * @apiSuccess (CommonsMemberInfo)      {String}  ranking     User ranking computed using the last month's data.
+ *
+ * @apiSuccessExample {json} Response Example
+ * HTTP/1.1 200 OK
+ * {
+ *   "errors": [],
+ *   "success": true
+ *   "members": [ {
+ *     "key": "bfcb4b45-fcdb-4485-be1f-6c4c1327dfcc",
+ *     "firstname": "User",
+ *     "lastname": null,
+ *     "joinedOn": 1486641866807,
+ *     "ranking": "B"
+ *   }],
+ *   "pageIndex": 0,
+ *   "pageSize": 10,
+ *   "count": 1,
+ * }
+ *
+ * @apiError {Boolean}    success           Always <code>false</code>.
+ * @apiError {Object[]}   errors            Array of <code>Error</code> objects.
+ *
+ * @apiError (Error) {String} code          Unique error code.
+ * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
+ *
+ * @apiErrorExample Error Response Example
+ *     HTTP/1.1 200 OK
+ *     {
+ *       errors: [{
+ *         code: "SharedErrorCode.UNKNOWN",
+ *         description: "Internal server error has occurred."
+ *       }],
+ *       success: false
+ *     }
+ */
+function getMembers() { return; }

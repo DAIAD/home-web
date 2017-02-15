@@ -21,6 +21,9 @@ import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.group.CommonsCollectionResponse;
 import eu.daiad.web.model.group.CommonsCreateRequest;
 import eu.daiad.web.model.group.CommonsCreateRestResponse;
+import eu.daiad.web.model.group.CommonsMemberCollectionResponse;
+import eu.daiad.web.model.group.CommonsMemberQueryRequest;
+import eu.daiad.web.model.group.CommonsMemberQueryResult;
 import eu.daiad.web.model.group.CommonsQueryRequest;
 import eu.daiad.web.model.group.CommonsQueryResult;
 import eu.daiad.web.model.security.AuthenticatedUser;
@@ -187,6 +190,9 @@ public class CommonsController extends BaseController {
     @Secured({ RoleConstant.ROLE_USER })
     public @ResponseBody RestResponse search(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody CommonsQueryRequest request) {
         try {
+            if (request.getQuery() == null) {
+                return new CommonsCollectionResponse();
+            }
             if ((request.getQuery().getPageIndex() == null) || (request.getQuery().getPageIndex() < 0)) {
                 request.getQuery().setPageIndex(0);
             }
@@ -202,7 +208,7 @@ public class CommonsController extends BaseController {
     }
 
     /**
-     * Gets authenticated user all commons.
+     * Gets authenticated user's all commons.
      *
      * @param user the user who submits the query.
      * @return a {@link CommonsCollectionResponse} collection.
@@ -212,6 +218,41 @@ public class CommonsController extends BaseController {
     public @ResponseBody RestResponse getCommonsMembership(@AuthenticationPrincipal AuthenticatedUser user) {
         try {
             return new CommonsCollectionResponse(commonsRepository.getCommonsByUserKey(user.getKey()));
+        } catch (Exception ex) {
+            return handleException(ex);
+        }
+    }
+
+    /**
+     * Enumerates the members of a commons group.
+     *
+     * @param user the authenticated user.
+     * @param commonsKey the key of the commons.
+     * @param request the query.
+     * @return an instance of {@link CommonsMemberCollectionResponse}.
+     */
+    @RequestMapping(value = "/action/commons/{commonsKey}/members", method = RequestMethod.POST, produces = "application/json")
+    @Secured({ RoleConstant.ROLE_USER })
+    public RestResponse getMembers(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID commonsKey, CommonsMemberQueryRequest request) {
+        try {
+            if (request.getQuery() == null) {
+                return new CommonsMemberCollectionResponse();
+            }
+            if ((request.getQuery().getPageIndex() == null) || (request.getQuery().getPageIndex() < 0)) {
+                request.getQuery().setPageIndex(0);
+            }
+            if ((request.getQuery().getPageSize() == null) || (request.getQuery().getPageSize() < 1)) {
+                request.getQuery().setPageSize(10);
+            }
+            request.getQuery().setGroupKey(commonsKey);
+
+            if (!commonsRepository.getAccountCommons(user.getKey()).contains(commonsKey)) {
+                throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+            }
+
+            CommonsMemberQueryResult result = commonsRepository.getMembers(user.getKey(), request.getQuery());
+
+            return new CommonsMemberCollectionResponse(result.getMembers(), result.getPageIndex(), result.getPageSize(), result.getCount());
         } catch (Exception ex) {
             return handleException(ex);
         }
