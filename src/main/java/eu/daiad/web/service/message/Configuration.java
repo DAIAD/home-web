@@ -89,16 +89,6 @@ public class Configuration
         volumeThresholds.put(AMPHIRO, threshold);
     }
     
-    // Fixme: Not part of global configuration
-    public int getComputeThisDayOfMonth() {
-        return new DateTime().dayOfMonth().getMaximumValue();
-    }
-    
-    // Fixme: Not part of global configuration
-    public int getComputeThisDayOfWeek() {
-        return DateTimeConstants.SUNDAY;
-    }
-
     public Period getTipPeriod() 
     {
         return tipPeriod;
