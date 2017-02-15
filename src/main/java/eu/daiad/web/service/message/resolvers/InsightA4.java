@@ -269,7 +269,7 @@ public class InsightA4 extends AbstractRecommendationResolver
         // We have sufficient data for all parts of target day
 
         debug(
-            "Insight A4 for account %s/%s: Consumption for %s is %.2flt:%n  " +
+            "%s/%s: Consumption for %s is %.2flt: " +
                 "morning=%.2f%% afternoon=%.2f%% night=%.2f%%",
              accountKey, deviceType, refDate.toString("dd/MM/YYYY"), sumOfParts,
              100 * parts.get(EnumPartOfDay.MORNING) / sumOfParts,

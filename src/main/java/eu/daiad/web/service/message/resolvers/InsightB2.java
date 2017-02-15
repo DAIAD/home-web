@@ -239,8 +239,8 @@ public class InsightB2 extends AbstractRecommendationResolver
             double score = Math.abs(percentChange) / (2 * CHANGE_PERCENTAGE_THRESHOLD);
 
             debug(
-                "Insight B2 for account %s/%s: Consumption for previous period %s of %s:%n  " +
-                    "value=%.2f previous=%.2f change=%.2f%% score=%.2f",
+                "%s/%s: Computed consumption for previous period %s of %s: " +
+                    "=%.2f previous=%.2f change=%.2f%% score=%.2f",
                  accountKey, deviceType, period, targetDate.toString("dd/MM/YYYY"),
                  targetValue, previousValue, percentChange, score);
 

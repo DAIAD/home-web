@@ -95,7 +95,7 @@ INSERT INTO public.alert_template_translation
         alert_template_from_name('WATER_QUALITY'),
         'en',
         'Water quality not assured!',
-        'Remember to leave the water running for a few minutes when you return home after a long period of absence. Temperatures have been over 28 since you last used water. Better be safe from Legionella.'
+        'Remember to leave the water running for a few minutes when you return home after a long period of absence. Temperatures have been over 28ºC since you last used water. Better be safe from Legionella.'
     ); 
 
 INSERT INTO public.alert_template_translation 
@@ -410,7 +410,7 @@ INSERT INTO public.alert_template_translation
         alert_template_from_name('WATER_EFFICIENCY_LEADER'),
         'en',
         'Congratulations! You are a water efficiency leader',
-        'You are a true leader for water efficiency! If everyone adopted your behavior your city could save <h1>{annual_savings}</h1> litres of water'
+        'You are a true leader for water efficiency! If everyone adopted your behavior your city could save <h1>{annual_savings,number,integer}</h1> litres of water'
     ); 
 
 INSERT INTO public.alert_template_translation 
@@ -420,7 +420,7 @@ INSERT INTO public.alert_template_translation
         alert_template_from_name('WATER_EFFICIENCY_LEADER'),
         'es',
         '¡Enhorabuena! ¡Eres un máquina ahorrando agua!',
-        '¡Eres realmente un máquina ahorrando agua! Si todos se comportaran como tú la ciudad ahorraría <h1>{annual_savings}</h1> litros de agua.'
+        '¡Eres realmente un máquina ahorrando agua! Si todos se comportaran como tú la ciudad ahorraría <h1>{annual_savings,number,integer}</h1> litros de agua.'
     ); 
 
 

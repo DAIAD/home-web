@@ -51,7 +51,7 @@ public class AlertWaterEfficiencyLeader extends AbstractAlertResolver
 {
     private static final Set<EnumDeviceType> supportedDevices = EnumSet.of(EnumDeviceType.METER);
     
-    private static class Parameters extends Message.AbstractParameters
+    public static class Parameters extends Message.AbstractParameters
     implements ParameterizedTemplate
     {
         @NotNull
@@ -61,6 +61,10 @@ public class AlertWaterEfficiencyLeader extends AbstractAlertResolver
         @NotNull
         @DecimalMin("1E+1")
         private Double averageValue;
+        
+        @NotNull
+        @DecimalMin("1E+2")
+        private Double annualSavings;
         
         public Parameters()
         {}
@@ -97,14 +101,22 @@ public class AlertWaterEfficiencyLeader extends AbstractAlertResolver
             this.averageValue = averageValue;
         }
 
-        @NotNull
-        @DecimalMin("1E+0")
-        @JsonIgnore
+        @JsonProperty("annualSavings")
         public Double getAnnualSavings()
         {
-            final int monthsPerYear = 12;
-            return (value != null && averageValue != null)? 
-                (monthsPerYear * (averageValue - value)) : null;
+            return annualSavings;
+        }
+
+        public Parameters withAnnualSavings(double annualSavings)
+        {
+            this.annualSavings = annualSavings;
+            return this;
+        }
+        
+        @JsonProperty("annualSavings")
+        public void setAnnualSavings(double annualSavings)
+        {
+            this.annualSavings = annualSavings;
         }
         
         @Override
@@ -125,7 +137,7 @@ public class AlertWaterEfficiencyLeader extends AbstractAlertResolver
             parameters.put("average_value", averageValue);
             parameters.put("average_consumption", averageValue);
             
-            parameters.put("annual_savings", Integer.valueOf(getAnnualSavings().intValue()));
+            parameters.put("annual_savings", Integer.valueOf(annualSavings.intValue()));
             
             return parameters;
         }
@@ -178,8 +190,10 @@ public class AlertWaterEfficiencyLeader extends AbstractAlertResolver
             return Collections.emptyList();
 
         if (consumption < Math.min(monthly10pThreshold, monthlyAverage)) {
-            ParameterizedTemplate parameterizedTemplate = 
-                new Parameters(refDate, deviceType, consumption, monthlyAverage); 
+            final int monthsPerYear = 12;
+            ParameterizedTemplate parameterizedTemplate = new Parameters(
+                    refDate, deviceType, consumption, monthlyAverage)
+                .withAnnualSavings(monthsPerYear * (monthlyAverage - consumption));
             MessageResolutionStatus<ParameterizedTemplate> result = 
                 new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
             return Collections.singletonList(result);

@@ -208,10 +208,9 @@ public class InsightA1 extends AbstractRecommendationResolver
         double score = (sd > 0)? (Math.abs(normValue) / (2 * K)) : Double.POSITIVE_INFINITY;
 
         debug(
-            "Insight A1 for account %s/%s: Consumption for %s of last %d weeks to %s:%n  " +
-                "value=%.2f μ=%.2f σ=%.2f x*=%.2f score=%.2f",
-             accountKey, deviceType, 
-             refDate.toString("EEEE"), N, refDate.toString("dd/MM/YYYY"),
+            "%s/%s: Computed consumption for %s of last %d weeks to %s:" +
+                "%.2f μ=%.2f σ=%.2f x*=%.2f score=%.2f",
+             accountKey, deviceType, refDate.toString("EEEE"), N, refDate.toString("dd/MM/YYYY"),
              targetValue, averageValue, sd, normValue, score);
         
         ParameterizedTemplate parameterizedTemplate = 

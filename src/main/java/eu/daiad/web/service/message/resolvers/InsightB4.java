@@ -209,7 +209,7 @@ public class InsightB4 extends AbstractRecommendationResolver
             return Collections.emptyList(); // not reliable; both parts have too low consumption
 
         debug(
-            "Insight B4 for account %s/%s: Consumption for %d weeks to %s:%n  " +
+            "%s/%s: Computed consumption for %d weeks to %s: " +
                 "weekday-average=%.2f weekend-average=%.2f",
              accountKey, deviceType, N, targetDate.plusWeeks(1).toString("dd/MM/YYYY"),
              weekdayAverage, weekendAverage);
@@ -217,7 +217,7 @@ public class InsightB4 extends AbstractRecommendationResolver
         ParameterizedTemplate parameterizedTemplate =
             new Parameters(refDate, deviceType, weekdayAverage, weekendAverage);
         MessageResolutionStatus<ParameterizedTemplate> result =
-            new SimpleMessageResolutionStatus<ParameterizedTemplate>(true, parameterizedTemplate);
+            new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
         
         return Collections.singletonList(result);
     }

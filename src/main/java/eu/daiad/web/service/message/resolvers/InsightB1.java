@@ -256,8 +256,8 @@ public class InsightB1 extends AbstractRecommendationResolver
             double score = (sd > 0)? (Math.abs(normValue) / (2 * K)) : Double.POSITIVE_INFINITY;
 
             debug(
-                "Insight B1 for account %s/%s: Consumption for period %s to %s:%n  " +
-                    "value=%.2f μ=%.2f σ=%.2f x*=%.2f score=%.2f",
+                "%s/%s: Computed consumption for period %s to %s: " +
+                    "%.2f μ=%.2f σ=%.2f x*=%.2f score=%.2f",
                  accountKey, deviceType, period.multipliedBy(N), targetDate.toString("dd/MM/YYYY"),
                  targetValue, averageValue, sd, normValue, score);
             

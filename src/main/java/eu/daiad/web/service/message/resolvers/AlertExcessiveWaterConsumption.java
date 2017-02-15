@@ -52,7 +52,7 @@ public class AlertExcessiveWaterConsumption extends AbstractAlertResolver
 {
     public static final double HIGH_CONSUMPTION_RATIO = 2.0; // in terms of average consumption
     
-    private static class Parameters extends Message.AbstractParameters
+    public static class Parameters extends Message.AbstractParameters
         implements ParameterizedTemplate
     {
         @NotNull
@@ -64,6 +64,7 @@ public class AlertExcessiveWaterConsumption extends AbstractAlertResolver
         private Double averageValue;
         
         @NotNull
+        @DecimalMin("1E+2")
         private Double annualSavings;
                 
         public Parameters()
@@ -121,6 +122,7 @@ public class AlertExcessiveWaterConsumption extends AbstractAlertResolver
 
         @NotNull
         @DecimalMin("1")
+        @JsonIgnore
         public Double getPercentAbove()
         {
             if (value == null || averageValue == null)

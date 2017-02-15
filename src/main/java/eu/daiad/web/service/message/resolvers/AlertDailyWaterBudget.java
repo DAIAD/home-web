@@ -54,7 +54,7 @@ public class AlertDailyWaterBudget extends AbstractAlertResolver
     @Autowired
     IDataService dataService;
         
-    private static abstract class BasicParameters extends Message.AbstractParameters
+    public static abstract class BasicParameters extends Message.AbstractParameters
         implements ParameterizedTemplate
     {        
         @NotNull

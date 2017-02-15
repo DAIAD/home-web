@@ -56,7 +56,7 @@ public class AlertWeeklyWaterBudget extends AbstractAlertResolver
     @Autowired
     IDataService dataService;
         
-    private static abstract class BasicParameters extends Message.AbstractParameters
+    public static abstract class BasicParameters extends Message.AbstractParameters
         implements ParameterizedTemplate
     {        
         @NotNull
@@ -147,7 +147,7 @@ public class AlertWeeklyWaterBudget extends AbstractAlertResolver
         }
     }
     
-    private static class NearBudgetParameters extends BasicParameters
+    public static class NearBudgetParameters extends BasicParameters
     {  
         public NearBudgetParameters()
         {
@@ -169,7 +169,7 @@ public class AlertWeeklyWaterBudget extends AbstractAlertResolver
         }
     }
     
-    private static class ExceededBudgetParameters extends BasicParameters
+    public static class ExceededBudgetParameters extends BasicParameters
     {
         public ExceededBudgetParameters()
         {

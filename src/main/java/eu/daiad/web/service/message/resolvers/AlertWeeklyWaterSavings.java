@@ -49,7 +49,7 @@ public class AlertWeeklyWaterSavings extends AbstractAlertResolver
     
     private static final Set<EnumDeviceType> supportedDevices = EnumSet.of(EnumDeviceType.METER);
 
-    private static class Parameters extends Message.AbstractParameters
+    public static class Parameters extends Message.AbstractParameters
         implements ParameterizedTemplate
     {
         @NotNull

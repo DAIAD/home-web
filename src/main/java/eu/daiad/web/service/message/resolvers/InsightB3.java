@@ -264,7 +264,7 @@ public class InsightB3 extends AbstractRecommendationResolver
         // Produce 2 insights, one for each peak (min, max)
 
         debug(
-            "Insight B3 for account %s/%s: Consumption for %d weeks to %s:%n  " +
+            "%s/%s: Computed consumption for %d weeks to %s: " +
                 "min=%.2f dayMin=%s - max=%.2f dayMax=%s - average=%.2f",
              accountKey, deviceType, N, targetDate.plusWeeks(1).toString("dd/MM/YYYY"),
              minOfDay, dayMin, maxOfDay, dayMax, avg);

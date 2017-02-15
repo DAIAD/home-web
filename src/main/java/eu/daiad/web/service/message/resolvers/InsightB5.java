@@ -185,8 +185,7 @@ public class InsightB5 extends AbstractRecommendationResolver
             return Collections.emptyList(); // nothing to compare to
         
         debug(
-            "Insight B5 for account %s/%s: Consumption for month %s compared to %s (a year ago):%n  " +
-                "value=%.2f previous=%.2f",
+            "%s/%s: Computed consumption for %s compared to %s (a year ago): %.2f previous=%.2f",
              accountKey, deviceType,
              targetDate.toString("MM/YYYY"), targetDate.minusYears(1).toString("MM/YYYY"),
              targetValue, previousValue);

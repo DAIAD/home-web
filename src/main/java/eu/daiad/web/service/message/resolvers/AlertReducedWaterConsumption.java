@@ -65,7 +65,7 @@ public class AlertReducedWaterConsumption extends AbstractAlertResolver
     @Autowired
     IUserRepository userRepository;
     
-    private static class Parameters extends Message.AbstractParameters
+    public static class Parameters extends Message.AbstractParameters
         implements ParameterizedTemplate
     {
         @NotNull

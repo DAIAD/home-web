@@ -55,7 +55,7 @@ public class AlertWaterSaver extends AbstractAlertResolver
     
     private static final double CHANGE_PERCENTAGE_THRESHOLD = 10.0; // < CHANGE_PERCENTAGE_HIGH
     
-    private static class Parameters extends Message.AbstractParameters
+    public static class Parameters extends Message.AbstractParameters
     implements ParameterizedTemplate
     {
         @NotNull

@@ -65,25 +65,25 @@ public abstract class AbstractMessageResolver <P extends Message.Parameters>
     // Helpers for logging
     //
     
-    protected static void error(String f, Object ...args)
+    protected void error(String f, Object ...args)
     {
-        logger.error(String.format(f, args));
+        logger.error(getClass().getName() + ": " + String.format(f, args));
     }
     
-    protected static void warn(String f, Object ...args)
+    protected void warn(String f, Object ...args)
     {
-        logger.warn(String.format(f, args));
+        logger.warn(getClass().getName() + ": " + String.format(f, args));
     }
     
-    protected static void info(String f, Object ...args)
+    protected void info(String f, Object ...args)
     {
         if (logger.isInfoEnabled())
-            logger.info(String.format(f, args));
+            logger.info(getClass().getName() + ": " + String.format(f, args));
     }
     
-    protected static void debug(String f, Object ...args)
+    protected void debug(String f, Object ...args)
     {
         if (logger.isDebugEnabled()) 
-            logger.debug(String.format(f, args));
+            logger.debug(getClass().getName() + ": " + String.format(f, args));
     }
 }

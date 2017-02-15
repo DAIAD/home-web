@@ -246,8 +246,7 @@ public class InsightA3 extends AbstractRecommendationResolver
             double score = Math.abs(percentChange) / (2 * CHANGE_PERCENTAGE_THRESHOLD);
 
             debug(
-                "Insight A3 for account %s/%s: Consumption at %s of last %d days to %s:%n  " +
-                    "value=%.2f μ=%.2f score=%.2f",
+                "%s/%s: Computed consumption at %s of last %d days to %s: %.2f μ=%.2f score=%.2f",
                  accountKey, deviceType, partOfDay, N, refDate.toString("dd/MM/YYYY"),
                  targetValue, averageValue, score);
             
