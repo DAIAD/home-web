@@ -15,6 +15,10 @@ public class CommonsCollectionResponse extends RestResponse {
 
     private int count = 0;
 
+    public CommonsCollectionResponse() {
+        groups = new ArrayList<CommonsInfo>();
+    }
+
     public CommonsCollectionResponse(CommonsInfo group) {
         groups = new ArrayList<CommonsInfo>();
         groups.add(group);

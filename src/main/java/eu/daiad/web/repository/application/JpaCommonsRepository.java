@@ -20,10 +20,14 @@ import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.GroupCommonsEntity;
 import eu.daiad.web.domain.application.GroupEntity;
 import eu.daiad.web.domain.application.GroupMemberEntity;
+import eu.daiad.web.domain.application.mappings.GroupMemberWaterIq;
 import eu.daiad.web.model.error.CommonsErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.group.CommonsCreateRequest;
 import eu.daiad.web.model.group.CommonsInfo;
+import eu.daiad.web.model.group.CommonsMemberInfo;
+import eu.daiad.web.model.group.CommonsMemberQuery;
+import eu.daiad.web.model.group.CommonsMemberQueryResult;
 import eu.daiad.web.model.group.CommonsQuery;
 import eu.daiad.web.model.group.CommonsQueryResult;
 import eu.daiad.web.model.group.EnumGroupType;
@@ -506,6 +510,174 @@ public class JpaCommonsRepository extends BaseRepository implements ICommonsRepo
         }
 
         return result;
+    }
+
+
+    /**
+     * Selects, filters and sorts members of a commons group.
+     *
+     * @param userKey the key of the user who executes the search operation.
+     * @param query the query.
+     * @return a list of {@link CommonsMemberInfo} objects.
+     */
+    @Override
+    public CommonsMemberQueryResult getMembers(UUID userKey, CommonsMemberQuery query) {
+        if(query == null) {
+            return new CommonsMemberQueryResult();
+        }
+
+        // Load data
+        String command = "";
+
+        // Resolve filters
+        List<String> filters = new ArrayList<>();
+
+        filters.add("(m.group.key = :groupKey)");
+
+        if (!StringUtils.isBlank(query.getName())) {
+            filters.add("(m.account.firstname like :name or m.account.firstname like :name)");
+        }
+        if (query.getJoinedOn() != null) {
+            filters.add("(m.createtOn >= :joinedOn)");
+        }
+
+        // Count total number of records
+        command = "select count(m.id) from group_member m ";
+
+        Integer totalMembers;
+
+        if (!filters.isEmpty()) {
+            command += " where " + StringUtils.join(filters, " and ");
+        }
+
+        TypedQuery<Number> countQuery = entityManager.createQuery(command, Number.class);
+
+        if (!StringUtils.isBlank(query.getName())) {
+            countQuery.setParameter("name", query.getName() + "%");
+        }
+        if (query.getJoinedOn() != null) {
+            countQuery.setParameter("joinedOn", query.getJoinedOn());
+        }
+        countQuery.setParameter("groupKey", query.getGroupKey());
+
+        totalMembers = countQuery.getSingleResult().intValue();
+
+        CommonsMemberQueryResult result = new CommonsMemberQueryResult(query.getPageIndex(), query.getPageSize(), totalMembers);
+
+        // Load data
+        command = "select m from group_member m ";
+
+        if (!filters.isEmpty()) {
+            command += " where " + StringUtils.join(filters, " and ");
+        }
+
+        switch(query.getSortBy()) {
+            case FIRSTNAME:
+                command += " order by m.account.firtname ";
+                break;
+            case LASTNAME:
+                command += " order by m.account.lastname ";
+                break;
+            case DATE_JOINED:
+                command += " order by m.createtOn ";
+                break;
+        }
+        if(query.isSortAscending()) {
+            command += " asc";
+        } else {
+            command += " desc";
+        }
+
+        TypedQuery<GroupMemberEntity> selectQuery = entityManager.createQuery(command, GroupMemberEntity.class);
+
+        if (!StringUtils.isBlank(query.getName())) {
+            selectQuery.setParameter("name", query.getName() + "%");
+        }
+        if (query.getJoinedOn() != null) {
+            selectQuery.setParameter("joinedOn", query.getJoinedOn());
+        }
+        selectQuery.setParameter("groupKey", query.getGroupKey());
+
+        selectQuery.setFirstResult(query.getPageIndex() * query.getPageSize());
+        selectQuery.setMaxResults(query.getPageSize());
+
+        List<GroupMemberEntity> members = selectQuery.getResultList();
+
+        // Get water IQ data
+        DateTime now = DateTime.now();
+        int year = 0, month = 0;
+
+        if(now.getDayOfMonth() > 2) {
+            year = now.minusMonths(1).getYear();
+            month = now.minusMonths(1).getMonthOfYear();
+        } else {
+            year = now.minusMonths(2).getYear();
+            month = now.minusMonths(2).getMonthOfYear();
+        }
+
+        List<GroupMemberWaterIq> waterIq = getWaterIQ(query.getGroupKey(), year, month);
+
+        // Merge member data with water IQ data
+        for (GroupMemberEntity member : members) {
+            String ranking = "";
+            for (GroupMemberWaterIq iq : waterIq) {
+                if (iq.id == member.getAccount().getId()) {
+                    ranking = iq.value;
+                    break;
+                }
+            }
+            result.getMembers().add(new CommonsMemberInfo(member, ranking));
+        }
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<GroupMemberWaterIq> getWaterIQ(UUID groupKey, int year, int month) {
+        String queryString = "select    iq.account_id as id, iq.user_volume as volume, iq.user_value as value " +
+                             "from      water_iq_history iq " +
+                             "              inner join group_member m " +
+                             "                  on iq.account_id = m.account_id " +
+                             "              inner join \"group\" g " +
+                             "                  on m.group_id = g.id " +
+                             "where     g.key = cast(?1 as uuid) and iq.interval_year = ?2 and iq.interval_month = ?3";
+
+        Query query = entityManager.createNativeQuery(queryString, "WaterIqResult")
+                                   .setParameter(1, groupKey)
+                                   .setParameter(2, year)
+                                   .setParameter(3, month);
+
+        return (List<GroupMemberWaterIq>) query.getResultList();
+    }
+
+
+    /**
+     * Checks if two users are members of at least on shared commons group.
+     *
+     * @param user1Key the key of the first user.
+     * @param user2Key the key of the second user.
+     * @return true if there is at least one commons group for which both users are members.
+     */
+    @Override
+    public boolean shareCommonsMembership(UUID user1Key, UUID user2Key) {
+        String queryString = "select    c1.id " +
+                             "from      group_member m1 " +
+                             "              inner join group_member m2 " +
+                             "                  on m1.group_id = m2.group_id " +
+                             "              inner join account a1 " +
+                             "                  on m1.account_id = a1.id" +
+                             "              inner join account a2 " +
+                             "                  on m2.account_id = a2.id " +
+                             "              inner join group_commons c1 " +
+                             "                  on c1.id = m1.group_id " +
+                             "where     a1.key = cast(? as uuid) and a2.key = cast(? as uuid) limit 1";
+
+        Query query = entityManager.createNativeQuery(queryString)
+                                   .setParameter(1, user1Key)
+                                   .setParameter(2, user2Key);
+
+        List<?> keys = query.getResultList();
+
+        return (!keys.isEmpty());
     }
 
 }

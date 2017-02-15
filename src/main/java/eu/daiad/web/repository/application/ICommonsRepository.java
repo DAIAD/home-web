@@ -6,6 +6,9 @@ import java.util.UUID;
 import eu.daiad.web.domain.application.GroupCommonsEntity;
 import eu.daiad.web.model.group.CommonsCreateRequest;
 import eu.daiad.web.model.group.CommonsInfo;
+import eu.daiad.web.model.group.CommonsMemberInfo;
+import eu.daiad.web.model.group.CommonsMemberQuery;
+import eu.daiad.web.model.group.CommonsMemberQueryResult;
 import eu.daiad.web.model.group.CommonsQuery;
 import eu.daiad.web.model.group.CommonsQueryResult;
 
@@ -96,5 +99,23 @@ public interface ICommonsRepository {
      * @return a list of {@link CommonsInfo} objects.
      */
     List<CommonsInfo> getCommonsByUserKey(UUID userKey);
+
+    /**
+     * Selects, filters and sorts members of a commons group.
+     *
+     * @param userKey the key of the user who executes the search operation.
+     * @param query the query.
+     * @return a list of {@link CommonsMemberInfo} objects.
+     */
+    CommonsMemberQueryResult getMembers(UUID userKey, CommonsMemberQuery query);
+
+    /**
+     * Checks if two users are members of at least on shared commons group.
+     *
+     * @param user1Key the key of the first user.
+     * @param user2Key the key of the second user.
+     * @return true if there is at least one commons group for which both users are members.
+     */
+    boolean shareCommonsMembership(UUID user1Key, UUID user2Key);
 
 }
