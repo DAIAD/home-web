@@ -221,7 +221,7 @@ INSERT INTO public.alert_template_translation
         alert_template_from_name('REACHED_DAILY_WATER_BUDGET'),
         'en',
         'Reached daily Water Budget',
-        'You have used all <h1>{budget,number,.}</h1> litres of your water budget. Let’s stick to our budget tomorrow! Want some tips to save water?'
+        'You have used all <h1>{budget,number,integer}</h1> litres of your water budget. Let’s stick to our budget tomorrow! Want some tips to save water?'
     ); 
 
 INSERT INTO public.alert_template_translation 
@@ -231,7 +231,7 @@ INSERT INTO public.alert_template_translation
         alert_template_from_name('REACHED_DAILY_WATER_BUDGET'),
         'es',
         'Alcanzado el consumo medio diario de agua',
-        'Has consumo los <h1>{budget,number,.}</h1> litros que consumes normalmente. ¡Intentemos mejorarlo mañana! ¿Quieres algunas recomendaciones para ahorrar agua?'
+        'Has consumo los <h1>{budget,number,integer}</h1> litros que consumes normalmente. ¡Intentemos mejorarlo mañana! ¿Quieres algunas recomendaciones para ahorrar agua?'
     ); 
 
 
@@ -242,7 +242,7 @@ INSERT INTO public.alert_template_translation
         alert_template_from_name('REACHED_DAILY_SHOWER_BUDGET'),
         'en',
         'Reached daily Shower Budget',
-        'You have used all <h1>{budget,number,.}</h1> litres of your shower budget. Let’s stick to our budget tomorrow! Want some tips to save water?'
+        'You have used all <h1>{budget,number,integer}</h1> litres of your shower budget. Let’s stick to our budget tomorrow! Want some tips to save water?'
     ); 
 
 INSERT INTO public.alert_template_translation 
@@ -252,7 +252,7 @@ INSERT INTO public.alert_template_translation
         alert_template_from_name('REACHED_DAILY_SHOWER_BUDGET'),
         'es',
         'Alcanzado el consumo medio diario de agua en la ducha',
-        'Has consumo los <h1>{budget,number,.}</h1> litros que consumes normalmente en la ducha. ¡Intentemos mejorarlo mañana! ¿Quieres algunas recomendaciones para ahorrar agua?'
+        'Has consumo los <h1>{budget,number,integer}</h1> litros que consumes normalmente en la ducha. ¡Intentemos mejorarlo mañana! ¿Quieres algunas recomendaciones para ahorrar agua?'
     ); 
 
 
@@ -305,7 +305,7 @@ INSERT INTO public.alert_template_translation
         alert_template_from_name('TOO_MUCH_WATER_METER'),
         'en',
         'You are using too much water',
-        'You are using twice the amount of water compared to city average. You could save up to <h1>{annual_savings,number,.}</h1> liters. Want to learn how?'
+        'You are using twice the amount of water compared to city average. You could save up to <h1>{annual_savings,number,integer}</h1> liters. Want to learn how?'
     ); 
 
 INSERT INTO public.alert_template_translation 
@@ -315,7 +315,7 @@ INSERT INTO public.alert_template_translation
         alert_template_from_name('TOO_MUCH_WATER_METER'),
         'es',
         '¡Estás gastando mucha agua!',
-        'Estás gastando el doble que la media ciudadana. Puedes ahorrar sobre <h1>{annual_savings,number,.}</h1> litros. ¿Quiéres aprender cómo?'
+        'Estás gastando el doble que la media ciudadana. Puedes ahorrar sobre <h1>{annual_savings,number,integer}</h1> litros. ¿Quiéres aprender cómo?'
     ); 
 
 
@@ -326,7 +326,7 @@ INSERT INTO public.alert_template_translation
         alert_template_from_name('TOO_MUCH_WATER_SHOWER'),
         'en',
         'You are using too much water in the shower',
-        'You are using twice the amount of water compared to other consumers. You could save up to <h1>{annual_savings,number,.}</h1> liters. Want to learn how?'
+        'You are using twice the amount of water compared to other consumers. You could save up to <h1>{annual_savings,number,integer}</h1> liters. Want to learn how?'
     ); 
 
 INSERT INTO public.alert_template_translation 
@@ -336,7 +336,7 @@ INSERT INTO public.alert_template_translation
         alert_template_from_name('TOO_MUCH_WATER_SHOWER'),
         'es',
         '¡Estás gastando mucha agua en la ducha!',
-        'Estás consumiendo el doble que otros. Puedes ahorrar sobre <h1>{annual_savings,number,.}</h1> litros. ¿Quiéres aprender cómo?'
+        'Estás consumiendo el doble que otros. Puedes ahorrar sobre <h1>{annual_savings,number,integer}</h1> litros. ¿Quiéres aprender cómo?'
     ); 
 
 

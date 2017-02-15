@@ -96,7 +96,7 @@ INSERT INTO public.recommendation_template_translation
         recommendation_template_from_name('CHANGE_SHAMPOO'),
         'en',
         'Have you considered changing your shampoo?',
-        'You are using <h1>{percent_above_consumption,number,.}</h1>% more water than others. You may be using a shampoo or wash that foams excessively and is difficult to rinse. This does not mean it works better than others, but just that it leads to more water use. Perhaps try and use another product, easier to rinse, and more water friendly.'
+        'You are using <h1>{percent_above_consumption,number,integer}</h1>% more water than others. You may be using a shampoo or wash that foams excessively and is difficult to rinse. This does not mean it works better than others, but just that it leads to more water use. Perhaps try and use another product, easier to rinse, and more water friendly.'
     ); 
 
 INSERT INTO public.recommendation_template_translation 
@@ -106,7 +106,7 @@ INSERT INTO public.recommendation_template_translation
         recommendation_template_from_name('CHANGE_SHAMPOO'),
         'es',
         '¿Has considerado cambiar de champú?',
-        'Estás consumiendo un <h1>{percent_above_consumption,number,.}</h1>% más de agua que. Puede que estés utilizando demasiado champú o gel alargando así tu ducha. Puedes probar a usar otro que sea más sencillo de aclarar.'
+        'Estás consumiendo un <h1>{percent_above_consumption,number,integer}</h1>% más de agua que. Puede que estés utilizando demasiado champú o gel alargando así tu ducha. Puedes probar a usar otro que sea más sencillo de aclarar.'
     );
 
     
