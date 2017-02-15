@@ -10,9 +10,12 @@ public class PriceDataService implements IPriceDataService
     @Override
     public double getPricePerKwh(String countryName)
     {
-        double price;
+        double price = 0.0;
         
-        // All prices are expressed in euro
+        if (countryName == null)
+            return price;
+        
+        // Express prices in a common application-wide currency (euro)
         
         switch (countryName) {
         case "United Kingdom":

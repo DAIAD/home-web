@@ -49,9 +49,9 @@ import eu.daiad.web.service.message.AbstractAlertResolver;
 @Scope("prototype")
 public class AlertExcessiveEnergyConsumption extends AbstractAlertResolver
 {
-    public static final double HIGH_TEMPERATURE_THRESHOLD = 45.0;
+    public static final double HIGH_TEMPERATURE_THRESHOLD = 40.0;
     
-    public static final double HIGH_TEMPERATURE_RATIO_OF_POINTS = 0.8;
+    public static final double HIGH_TEMPERATURE_RATIO_OF_POINTS = 0.75; 
     
     private static final Set<EnumDeviceType> supportedDevices = EnumSet.of(EnumDeviceType.AMPHIRO);
     
@@ -71,11 +71,11 @@ public class AlertExcessiveEnergyConsumption extends AbstractAlertResolver
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
-        DateTime start = refDate;
+        DateTime start = refDate.withTimeAtStartOfDay();
         
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
-            .sliding(refDate, -30, EnumTimeUnit.DAY, EnumTimeAggregation.DAY)
+            .sliding(start, -30, EnumTimeUnit.DAY, EnumTimeAggregation.DAY)
             .user("user", accountKey)
             .amphiro()
             .sum()
@@ -83,7 +83,6 @@ public class AlertExcessiveEnergyConsumption extends AbstractAlertResolver
 
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
-
         SeriesFacade series = queryResponse.getFacade(EnumDeviceType.AMPHIRO);
         if (series == null || series.isEmpty())
             return Collections.emptyList();
@@ -98,11 +97,11 @@ public class AlertExcessiveEnergyConsumption extends AbstractAlertResolver
             return Collections.emptyList();
         
         // Consumes excessive energy, estimate annual savings if changes behavior
-
-        AccountEntity account = userRepository.getAccountByKey(accountKey);
-        Double annualSavings = 
-            priceData.getPricePerKwh(account.getCountry()) *
-            energyCalculator.computeEnergyToRiseTemperature(2, 12 * monthlyConsumption);
+        
+        final int numMonthsPerYear = 12;
+        final double pricePerKwh = priceData.getPricePerKwh(utility.getCountry());
+        double annualSavings = numMonthsPerYear * pricePerKwh *
+            energyCalculator.computeEnergyToRiseTemperature(2.0, monthlyConsumption);
         
         ParameterizedTemplate parameterizedTemplate = 
             new SimpleParameterizedTemplate(

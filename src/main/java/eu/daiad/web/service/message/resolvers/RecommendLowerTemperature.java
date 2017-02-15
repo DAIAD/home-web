@@ -51,7 +51,7 @@ import eu.daiad.web.service.message.AbstractRecommendationResolver;
 public class RecommendLowerTemperature extends AbstractRecommendationResolver
 {
     public static final double TEMPERATURE_HIGH_RATIO = 1.1; 
-    
+        
     private static final Set<EnumDeviceType> supportedDevices = EnumSet.of(EnumDeviceType.AMPHIRO);
     
     public static class Parameters extends Message.AbstractParameters
@@ -221,9 +221,8 @@ public class RecommendLowerTemperature extends AbstractRecommendationResolver
         if (userAverageTemperature > averageTemperature * TEMPERATURE_HIGH_RATIO) {
             // Get a rough estimate for annual money savings if temperature is 1 degree lower
             final int numMonthsPerYear = 12;
-            AccountEntity account = userRepository.getAccountByKey(accountKey);
-            double annualSavings = numMonthsPerYear *
-                priceData.getPricePerKwh(account.getCountry()) *
+            final double pricePerKwh = priceData.getPricePerKwh(utility.getCountry());
+            double annualSavings = numMonthsPerYear * pricePerKwh *
                 energyCalculator.computeEnergyToRiseTemperature(1.0, userAverageConsumption);
             
             ParameterizedTemplate parameterizedTemplate = new Parameters(refDate, deviceType)

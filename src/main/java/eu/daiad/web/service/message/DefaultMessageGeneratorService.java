@@ -13,6 +13,7 @@ import java.util.UUID;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.FluentIterable;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.Predicate;
@@ -73,8 +74,26 @@ public class DefaultMessageGeneratorService
     @Value("${daiad.message-generator.recommendations.enabled:true}")
     private Boolean recommendationsEnabled;
     
+    private List<String> alertsExcludedResolvers = Collections.emptyList();
+    
+    private List<String> recommendationsExcludedResolvers = Collections.emptyList();
+    
+    @Value("${daiad.message-generator.alerts.exclude-resolvers:}")
+    private void excludeAlertResolvers(String value)
+    {
+        if (!value.isEmpty())
+            alertsExcludedResolvers = Arrays.asList(value.split(",[ ]*"));
+    }
+    
+    @Value("${daiad.message-generator.recommendations.exclude-resolvers:}")
+    private void excludeRecommendationResolvers(String value)
+    {
+        if (!value.isEmpty())
+            recommendationsExcludedResolvers = Arrays.asList(value.split(",[ ]*"));
+    }
+    
 	@Autowired
-	private  ApplicationContext context;
+	private ApplicationContext context;
     
 	@Autowired 
     @Qualifier("defaultBeanValidator") 
@@ -119,6 +138,16 @@ public class DefaultMessageGeneratorService
 	 */
 	private class Target
 	{
+	    private class AccountEntityFinder
+	        implements Transformer<UUID, AccountEntity>
+	    {
+            @Override
+            public AccountEntity transform(UUID key)
+            {
+                return userRepository.getAccountByKey(key);
+            }   
+	    }
+	    
 	    private final UtilityInfo utility;
 	    
 	    private final List<UUID> accountKeys;
@@ -153,12 +182,9 @@ public class DefaultMessageGeneratorService
             return accountKeys; 
         }
 	    
-	    public List<AccountEntity> getAccountEntities()
+	    public Iterable<AccountEntity> getAccountEntities()
 	    {
-	        List<AccountEntity> accounts = new ArrayList<>(accountKeys.size());
-	        for (UUID key: accountKeys)
-	            accounts.add(userRepository.getAccountByKey(key));
-	        return accounts;
+	        return FluentIterable.of(accountKeys).transform(new AccountEntityFinder());
 	    }
 	    
 	    /**
@@ -270,16 +296,16 @@ public class DefaultMessageGeneratorService
             for (AccountEntity account: target.getAccountEntities()) {
                 Locale locale = Locale.forLanguageTag(account.getLocale());
                 // Select tips for this account
-                List<TipEntity> tips = null;
+                List<TipEntity> tips = Collections.<TipEntity>emptyList();
                 AccountTipEntity a = accountTipRepository.findLastForAccount(account.getKey());
                 if (a == null) {
                     // No tips have ever been created for this account
                     tips = tipRepository.random(locale, NUM_INITIAL_TIPS);
-                } else {
-                    // This account has received tips before: add if enough time has passed
-                    tips = (a.getCreatedOn().isBefore(t0))? 
-                        Collections.singletonList(tipRepository.randomOne(locale)):
-                        Collections.<TipEntity>emptyList();    
+                } else if (a.getCreatedOn().isBefore(t0)) {
+                    // This account has received tips before a long time
+                    TipEntity tip = tipRepository.randomOne(locale);
+                    if (tip != null) 
+                        tips = Collections.singletonList(tip);
                 }
                 // Push to account-tip repository
                 for (TipEntity tip: tips)
@@ -307,6 +333,8 @@ public class DefaultMessageGeneratorService
             
             Map<String, IRecommendationResolver> resolvers = context.getBeansOfType(IRecommendationResolver.class);        
             for (String resolverName: resolvers.keySet()) {
+                if (recommendationsExcludedResolvers.contains(resolverName))
+                    continue; // resolver is excluded by configuration
                 IRecommendationResolver resolver = resolvers.get(resolverName);
                 resolve(resolverName, resolver, target);
             }
@@ -343,6 +371,7 @@ public class DefaultMessageGeneratorService
                     } catch (RuntimeException x) {
                         error("Failed to resolve recommendations with %s for account %s: %s", 
                             resolverName, accountKey, x);
+                        x.printStackTrace();
                         results = null;
                     }
                     if (results == null || results.isEmpty())
@@ -470,8 +499,10 @@ public class DefaultMessageGeneratorService
             info("About to generate alerts for %d accounts in utility %s", 
                 target.size(), utility.getKey());
             
-            Map<String, IAlertResolver> resolvers = context.getBeansOfType(IAlertResolver.class);        
+            Map<String, IAlertResolver> resolvers = context.getBeansOfType(IAlertResolver.class);
             for (String resolverName: resolvers.keySet()) {
+                if (alertsExcludedResolvers.contains(resolverName))
+                    continue; // resolver is excluded by configuration
                 IAlertResolver resolver = resolvers.get(resolverName);
                 resolve(resolverName, resolver, target);
             }
@@ -508,6 +539,7 @@ public class DefaultMessageGeneratorService
                     } catch (RuntimeException x) {
                         error("Failed to resolve alerts with %s for account %s: %s", 
                             resolverName, accountKey, x);
+                        x.printStackTrace();
                         results = null;
                     }
                     if (results == null || results.isEmpty())

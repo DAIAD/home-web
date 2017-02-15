@@ -45,6 +45,7 @@ public abstract class AbstractMessageResolver <P extends Message.Parameters>
         this.config = config;
    
         this.refDate = generatorContext.getRefDate();
+        this.utility = generatorContext.getUtilityInfo();
         this.stats = generatorContext.getStats();
     }
     

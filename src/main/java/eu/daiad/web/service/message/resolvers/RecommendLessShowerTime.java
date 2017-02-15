@@ -217,9 +217,7 @@ public class RecommendLessShowerTime extends AbstractRecommendationResolver
     @Override
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
-    {
-        info("Hello %s!!!", "World"); // Fixme: remove
-        
+    {        
         final int N = 3; // number of months to examine
         
         Double averageDuration = stats.getValue(

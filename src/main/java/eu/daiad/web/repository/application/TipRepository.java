@@ -84,10 +84,12 @@ public class TipRepository
         Collections.shuffle(rids);
 
         size = Math.min(size, rids.size());
+        if (size == 0)
+            return Collections.emptyList();
+                
         List<TipEntity> results = new ArrayList<>(size);
-        for (Integer rid: rids.subList(0, size)) {
+        for (Integer rid: rids.subList(0, size))
             results.add(findOne(rid));
-        }
         return results;
     }
 
