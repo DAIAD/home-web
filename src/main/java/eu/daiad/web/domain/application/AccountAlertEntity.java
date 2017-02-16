@@ -1,5 +1,6 @@
 package eu.daiad.web.domain.application;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -8,6 +9,8 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -26,6 +29,8 @@ import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import eu.daiad.web.model.device.EnumDeviceType;
+import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.Alert.ParameterizedTemplate;
 
 @Entity(name = "account_alert")
@@ -72,29 +77,18 @@ public class AccountAlertEntity
 	@Column(name = "receive_acknowledged_on")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime receiveAcknowledgedOn;
-
+	
+	@Column(name = "device_type", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @NotNull
+    private EnumDeviceType deviceType;
+	
+	@ManyToOne()
+    @JoinColumn(name = "resolver_execution", nullable = false)
+    @NotNull
+	private AlertResolverExecutionEntity resolverExecution;
+	
 	public AccountAlertEntity() {}
-
-	public AccountAlertEntity(
-        AccountEntity account, AlertTemplateEntity templateEntity, ParameterizedTemplate parameterizedTemplate)
-        throws IllegalArgumentException
-    {
-        this.account = account;
-        this.alertTemplate = templateEntity;
-        
-        if (parameterizedTemplate != null) {
-            try {
-                parameters = new AccountAlertParametersEntity(this, parameterizedTemplate);
-            } catch (JsonProcessingException ex) {
-                throw new IllegalArgumentException("Failed to create parameters entity", ex);
-            }
-        }
-    }
-    
-    public AccountAlertEntity(AccountEntity account, AlertTemplateEntity template)
-    {
-        this(account, template, (ParameterizedTemplate) null);
-    }
 	
 	public AccountEntity getAccount()
 	{
@@ -107,11 +101,16 @@ public class AccountAlertEntity
 	}
 
 	public AlertTemplateEntity getTemplate()
-	{
-		return alertTemplate;
-	}
+    {
+        return alertTemplate;
+    }
+	
+	public void setTemplate(AlertTemplateEntity alertTemplate)
+    {
+        this.alertTemplate = alertTemplate;
+    }
 
-	public DateTime getCreatedOn()
+    public DateTime getCreatedOn()
 	{
 		return createdOn;
 	}
@@ -134,11 +133,6 @@ public class AccountAlertEntity
 		return id;
 	}
 
-	public AccountAlertParametersEntity getParameters()
-	{
-	    return parameters;
-	}
-
 	public DateTime getReceiveAcknowledgedOn()
 	{
 		return receiveAcknowledgedOn;
@@ -149,4 +143,59 @@ public class AccountAlertEntity
 		this.receiveAcknowledgedOn = receiveAcknowledgedOn;
 	}
 
+    public EnumDeviceType getDeviceType()
+    {
+        return deviceType;
+    }
+
+    public void setDeviceType(EnumDeviceType deviceType)
+    {
+        this.deviceType = deviceType;
+    }
+
+    public AlertResolverExecutionEntity getResolverExecution()
+    {
+        return resolverExecution;
+    }
+    
+    public DateTime getRefDate()
+    {
+        return resolverExecution.getRefDate();
+    }
+    
+    public String getResolverName()
+    {
+        return resolverExecution.getResolverName();
+    }
+    
+    public void setResolverExecution(AlertResolverExecutionEntity resolverExecution)
+    {
+        this.resolverExecution = resolverExecution;
+    }
+    
+    public AccountAlertParametersEntity getParameters()
+    {
+        return parameters;
+    }
+
+    public ParameterizedTemplate getParameterizedTemplate() 
+        throws ClassNotFoundException, ClassCastException, IOException
+    {
+        return (parameters == null)? null : parameters.toParameterizedTemplate();
+    }
+    
+    public void setParameters(ParameterizedTemplate parameterizedTemplate)
+    {
+        if (parameterizedTemplate == null) {
+            parameters = null;
+        } else {
+            try {
+                parameters = new AccountAlertParametersEntity(this, parameterizedTemplate);
+            } catch (IOException ex) {
+                throw new IllegalArgumentException("Failed to create parameters entity", ex);
+            }
+        }
+    }
+    
+    
 }

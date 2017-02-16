@@ -64,7 +64,8 @@ public class CachingConsumptionStatsService implements IConsumptionStatsService
     
     public ConsumptionStats getStats(UtilityInfo utility, LocalDateTime refDate, boolean refresh)
     {
-        logger.info("Getting stats for utility " + utility.getName() + " at " + refDate.toDate());
+        logger.info(String.format("Getting stats for utility %s (%s) at %s", 
+            utility.getKey(), utility.getName(), refDate.toLocalDate()));
         
         String key = getComputationKey(utility.getKey(), refDate);
         ConsumptionStats result;
@@ -85,7 +86,8 @@ public class CachingConsumptionStatsService implements IConsumptionStatsService
         // The result could be found: 
         // We must compute it here and then persist it to stats repository.
         
-        logger.info("Computing stats for utility " + utility.getName() + " at " + refDate.toDate());
+        logger.info(String.format("Computing stats for utility %s (%s) at %s", 
+            utility.getKey(), utility.getName(), refDate.toLocalDate()));
         
         Lock l = getLock(key);
         boolean computed = false;

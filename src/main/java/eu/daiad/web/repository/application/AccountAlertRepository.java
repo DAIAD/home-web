@@ -20,15 +20,18 @@ import org.joda.time.Interval;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import com.ibm.icu.text.MessageFormat;
 
 import eu.daiad.web.domain.application.AccountAlertEntity;
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AlertByTypeRecord;
+import eu.daiad.web.domain.application.AlertResolverExecutionEntity;
 import eu.daiad.web.domain.application.AlertTemplateEntity;
 import eu.daiad.web.domain.application.AlertTemplateTranslationEntity;
 import eu.daiad.web.model.PagingOptions;
+import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.Alert.ParameterizedTemplate;
 import eu.daiad.web.model.message.EnumAlertTemplate;
@@ -50,7 +53,7 @@ public class AccountAlertRepository extends BaseRepository
 
     @Autowired
     IAlertTemplateTranslationRepository translationRepository;
-
+    
     @Autowired
     ICurrencyRateService currencyRateService;
     
@@ -301,6 +304,98 @@ public class AccountAlertRepository extends BaseRepository
     }
 
     @Override
+    public List<AccountAlertEntity> findByExecution(int xid)
+    {
+        TypedQuery<AccountAlertEntity> query = entityManager.createQuery(
+            "SELECT a FROM account_alert a WHERE a.resolverExecution.id = :xid",
+            AccountAlertEntity.class);
+        query.setParameter("xid", xid);
+        return query.getResultList();
+    }
+
+    @Override
+    public List<AccountAlertEntity> findByExecution(List<Integer> xids)
+    {
+        Assert.state(xids != null && !xids.isEmpty(), "Expected a non-empty list");
+        TypedQuery<AccountAlertEntity> query = entityManager.createQuery(
+            "SELECT a FROM account_alert a WHERE a.resolverExecution.id IN (:xids)",
+            AccountAlertEntity.class);
+        query.setParameter("xids", xids);
+        return query.getResultList();
+    }
+
+    @Override
+    public List<AccountAlertEntity> findByAccountAndExecution(UUID accountKey, int xid)
+    { 
+        TypedQuery<AccountAlertEntity> query = entityManager.createQuery(
+            "SELECT a FROM account_alert a " +
+                "WHERE a.resolverExecution.id = :xid AND a.account.key = :accountKey",
+            AccountAlertEntity.class);
+        query.setParameter("xid", xid);
+        query.setParameter("accountKey", accountKey);
+        return query.getResultList();
+    }
+
+    @Override
+    public List<AccountAlertEntity> findByAccountAndExecution(UUID accountKey, List<Integer> xids)
+    {
+        Assert.state(xids != null && !xids.isEmpty(), "Expected a non-empty list");
+        TypedQuery<AccountAlertEntity> query = entityManager.createQuery(
+            "SELECT a FROM account_alert a " +
+                "WHERE a.resolverExecution.id IN (:xids) AND a.account.key = :accountKey",
+            AccountAlertEntity.class);
+        query.setParameter("xids", xids);
+        query.setParameter("accountKey", accountKey);
+        return query.getResultList();
+    }
+
+    @Override
+    public int countByExecution(int xid)
+    {
+        TypedQuery<Long> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_alert a WHERE a.resolverExecution.id = :xid",
+            Long.class);
+        query.setParameter("xid", xid);
+        return query.getSingleResult().intValue();
+    }
+
+    @Override
+    public int countByExecution(List<Integer> xids)
+    {
+        Assert.state(xids != null && !xids.isEmpty(), "Expected a non-empty list");
+        TypedQuery<Long> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_alert a WHERE a.resolverExecution.id IN (:xids)",
+            Long.class);
+        query.setParameter("xids", xids);
+        return query.getSingleResult().intValue();
+    }
+
+    @Override
+    public int countByAccountAndExecution(UUID accountKey, int xid)
+    {
+        TypedQuery<Long> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_alert a " +
+                "WHERE a.resolverExecution.id = :xid AND a.account.key = :accountKey",
+             Long.class);
+        query.setParameter("xid", xid);
+        query.setParameter("accountKey", accountKey);
+        return query.getSingleResult().intValue();
+    }
+
+    @Override
+    public int countByAccountAndExecution(UUID accountKey, List<Integer> xids)
+    {
+        Assert.state(xids != null && !xids.isEmpty(), "Expected a non-empty list");
+        TypedQuery<Long> query = entityManager.createQuery(
+            "SELECT count(a.id) FROM account_alert a " +
+                "WHERE a.resolverExecution.id IN (:xids) AND a.account.key = :accountKey",
+             Long.class);
+        query.setParameter("xids", xids);
+        query.setParameter("accountKey", accountKey);
+        return query.getSingleResult().intValue();
+    }
+    
+    @Override
     public AccountAlertEntity create(AccountAlertEntity e)
     {
         e.setCreatedOn(DateTime.now());
@@ -309,7 +404,11 @@ public class AccountAlertRepository extends BaseRepository
     }
 
     @Override
-    public AccountAlertEntity createWith(UUID accountKey, Alert.ParameterizedTemplate parameters)
+    public AccountAlertEntity createWith(
+        UUID accountKey,
+        ParameterizedTemplate parameterizedTemplate,
+        AlertResolverExecutionEntity resolverExecution,
+        EnumDeviceType deviceType)
     {
         TypedQuery<AccountEntity> query = entityManager.createQuery(
             "SELECT a FROM account a WHERE a.key = :accountKey", AccountEntity.class);
@@ -324,13 +423,16 @@ public class AccountAlertRepository extends BaseRepository
 
         if (account == null)
             return null;
-        else
-            return createWith(account, parameters);
+
+        return createWith(account, parameterizedTemplate, resolverExecution, deviceType);
     }
 
     @Override
     public AccountAlertEntity createWith(
-        AccountEntity account, Alert.ParameterizedTemplate parameterizedTemplate)
+        AccountEntity account, 
+        ParameterizedTemplate parameterizedTemplate,
+        AlertResolverExecutionEntity resolverExecution,
+        EnumDeviceType deviceType)
     {
         // Ensure we have a persistent AccountEntity instance
         if (!entityManager.contains(account))
@@ -344,8 +446,13 @@ public class AccountAlertRepository extends BaseRepository
         
         // Create
         
-        AccountAlertEntity r = 
-            new AccountAlertEntity(account, templateEntity, parameterizedTemplate);
+        AccountAlertEntity r = new AccountAlertEntity();
+        r.setAccount(account);
+        r.setTemplate(templateEntity);
+        r.setParameters(parameterizedTemplate);
+        r.setDeviceType(deviceType);
+        r.setResolverExecution(resolverExecution);
+        
         return create(r);
     }
 
@@ -405,29 +512,26 @@ public class AccountAlertRepository extends BaseRepository
 
         ParameterizedTemplate parameterizedTemplate = null; 
         try {
-            parameterizedTemplate = r.getParameters().toParameterizedTemplate();
+            parameterizedTemplate = r.getParameterizedTemplate();
         } catch (ClassCastException | ClassNotFoundException | IOException ex) {
             logger.error(String.format(
                 "Failed to retrieve parameterized template for alert#%d: %s",
                 r.getId(), ex.getMessage()));
             parameterizedTemplate = null;
         }
-        if (parameterizedTemplate == null)
-            return null;
-        
-        // Make underlying parameters aware of target locale
-        
-        parameterizedTemplate = parameterizedTemplate.withLocale(locale, currencyRateService);
         
         // Format
         
-        Map<String, Object> parameters = parameterizedTemplate.getParameters();
-        
-        String title = (new MessageFormat(translation.getTitle(), locale))
-            .format(parameters);
-
-        String description = (new MessageFormat(translation.getDescription(), locale))
-            .format(parameters);
+        String title = translation.getTitle(); 
+        String description = translation.getDescription();
+        if (parameterizedTemplate != null) {
+            // Make underlying parameters aware of target locale    
+            parameterizedTemplate = parameterizedTemplate.withLocale(locale, currencyRateService);
+            // Format messages (interpolate parameters)
+            Map<String, Object> parameters = parameterizedTemplate.getParameters();
+            title = (new MessageFormat(title, locale)).format(parameters);
+            description = (new MessageFormat(description, locale)).format(parameters);
+        }
         
         // Build a DTO object with formatted messages
         

@@ -161,6 +161,10 @@ public class AccountEntity {
         return utility;
     }
 
+    public UUID getUtilityKey() {
+        return utility.getKey();
+    }
+    
     public void setUtility(UtilityEntity utility) {
         this.utility = utility;
     }
