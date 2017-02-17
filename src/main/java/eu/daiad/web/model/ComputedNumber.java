@@ -47,14 +47,20 @@ public class ComputedNumber
         this.value = null;
         this.timestamp = null;
     }
+
+    public static ComputedNumber of(double value, DateTime t)
+    {
+        return new ComputedNumber(value, t);
+    }
+    
+    public static ComputedNumber of(double value)
+    {
+        return new ComputedNumber(value, DateTime.now());
+    }
     
     @Override
     public String toString()
     {
-        if (value != null)
-            return String.format("<ComputedNumber value=%.3f at=\"%s\">", 
-                    value, timestamp);
-        else
-            return "<ComputedNumber value=NULL>";
+        return "ComputedNumber [value=" + value + ", timestamp=" + timestamp + "]";
     }
 }
