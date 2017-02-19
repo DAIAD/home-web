@@ -21,7 +21,8 @@ import org.joda.time.LocalDateTime;
 import org.joda.time.Period;
 import org.springframework.data.util.Pair;
 
-import eu.daiad.web.model.ConsumptionStats.EnumStatistic;
+import eu.daiad.web.model.ComputedNumber;
+import eu.daiad.web.model.EnumStatistic;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.query.EnumDataField;
 
@@ -167,6 +168,11 @@ public class UtilityStatisticsEntity
         this.computedAt = computedAt;
     }
 
+    public ComputedNumber getComputedNumber()
+    {
+        return ComputedNumber.valueOf(value, computedAt);
+    }
+    
     public void setRefDate(DateTime refDate)
     {
         this.refDate = refDate;

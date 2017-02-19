@@ -20,7 +20,7 @@ import org.joda.time.LocalDateTime;
 import org.springframework.data.util.Pair;
 
 import eu.daiad.web.model.ComputedNumber;
-import eu.daiad.web.model.ConsumptionStats.EnumStatistic;
+import eu.daiad.web.model.EnumStatistic;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.query.EnumDataField;
 
@@ -132,7 +132,7 @@ public class ConsumptionStatsEntity
 
     public ComputedNumber getValue()
     {
-        return new ComputedNumber(value, computedAt);
+        return ComputedNumber.valueOf(value, computedAt);
     }
 
     public void setValue(ComputedNumber n)

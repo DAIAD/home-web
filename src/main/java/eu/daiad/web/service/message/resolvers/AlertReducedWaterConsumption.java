@@ -26,7 +26,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.daiad.web.annotate.message.MessageGenerator;
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.model.ComputedNumber;
-import eu.daiad.web.model.ConsumptionStats.EnumStatistic;
 import eu.daiad.web.model.EnumDayOfWeek;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;

@@ -22,7 +22,7 @@ import eu.daiad.web.domain.application.GroupEntity;
 import eu.daiad.web.domain.application.UtilityEntity;
 import eu.daiad.web.domain.application.UtilityStatisticsEntity;
 import eu.daiad.web.model.ComputedNumber;
-import eu.daiad.web.model.ConsumptionStats.EnumStatistic;
+import eu.daiad.web.model.EnumStatistic;
 import eu.daiad.web.model.group.Group;
 import eu.daiad.web.model.query.EnumMeasurementField;
 
