@@ -30,6 +30,8 @@ public class CachingConsumptionStatisticsService
 {
     private static final Log logger = LogFactory.getLog(CachingConsumptionStatisticsService.class); 
     
+    private static boolean debug = false;
+    
     @Autowired
     IConsumptionAggregationService aggregationService;
     
@@ -79,6 +81,9 @@ public class CachingConsumptionStatisticsService
     private ComputedNumber computeNumberIfNeeded(
         UUID utilityKey, DateTime refDate, Period period, EnumMeasurementField field, EnumStatistic statistic)
     {
+        debug("Looking-up statistic %s/%s for period %s ending on %s",
+            field, statistic, period, refDate.toLocalDate());
+        
         String resultkey = getComputationKey(utilityKey, refDate, period, field, statistic);
         ComputedNumber result = null;
         
@@ -101,6 +106,9 @@ public class CachingConsumptionStatisticsService
         
         // The result could not be found (either in cache or in repository):
         // we must compute it here and then persist it to repository.
+        
+        debug("Need to compute statistic %s/%s for period %s ending on %s",
+            field, statistic, period, refDate.toLocalDate());
         
         Lock l = getLock(resultkey);
         boolean computed = false;
@@ -128,6 +136,10 @@ public class CachingConsumptionStatisticsService
         
     }
     
+    //
+    // Interface IConsumptionStatisticsService
+    //
+    
     @Override
     public ComputedNumber getNumber(
         UUID utilityKey, LocalDateTime refDate, Period period, EnumMeasurementField field, EnumStatistic statistic)
@@ -145,5 +157,30 @@ public class CachingConsumptionStatisticsService
     {
         return computeNumberIfNeeded(utilityKey, refDate, period, field, statistic);
     }
+    
+    //
+    // Helpers
+    //
 
+    private static void error(String f, Object ...args)
+    {
+        logger.error(String.format(f, args));
+    }
+    
+    private static void warn(String f, Object ...args)
+    {
+        logger.warn(String.format(f, args));
+    }
+    
+    private static void info(String f, Object ...args)
+    {
+        if (logger.isInfoEnabled())
+            logger.info(String.format(f, args));
+    }
+    
+    private static void debug(String f, Object ...args)
+    {
+        if (debug && logger.isDebugEnabled()) 
+            logger.debug(String.format(f, args));
+    }
 }

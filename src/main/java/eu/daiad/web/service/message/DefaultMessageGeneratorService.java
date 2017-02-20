@@ -46,6 +46,7 @@ import eu.daiad.web.model.EnumStatistic;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.Alert;
+import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageResolutionStatus;
 import eu.daiad.web.model.message.Recommendation;
 import eu.daiad.web.model.query.EnumMeasurementField;
@@ -213,7 +214,7 @@ public class DefaultMessageGeneratorService
 	/**
 	 * Provide an interface to utility-wide statistics.
 	 * 
-	 * This is actually a decorator to top-level statistics service.
+	 * This is actually a decorator to the top-level statistics service.
 	 */
 	private class StatisticsService
 	    implements IUtilityConsumptionStatisticsService
@@ -251,6 +252,9 @@ public class DefaultMessageGeneratorService
 	    /** A reference date for resolvers */
 	    protected final DateTime refDate;
 	    
+	    /** A sliding interval of 1 day ending to refDate */
+        protected final Interval refPastDay;
+	    
 	    /** A sliding interval of 1 week ending to refDate */
 	    protected final Interval refPastWeek;
 	    
@@ -274,15 +278,15 @@ public class DefaultMessageGeneratorService
 	        // Determine reference date as a (zoned) DateTime
 	        
 	        DateTimeZone tz = DateTimeZone.forID(utility.getTimezone()); 
-	        this.refDate = refDate.toDateTime(tz);
+	        DateTime end = this.refDate = refDate.toDateTime(tz);
 	        
-	        // Compute sliding intervals ending to (not including) reference date
+	        // Compute sliding intervals ending on (not including) reference date
 	        
-	        this.refPastWeek = new Interval(
-	            this.refDate.minusWeeks(1).plusMillis(1), this.refDate.minusMillis(1));
+	        this.refPastDay = new Interval(end.minusDays(1).plusMillis(1), end);
 	        
-	        this.refPastMonth = new Interval(
-	            this.refDate.minusMonths(1).plusMillis(1), this.refDate.minusMillis(1));
+	        this.refPastWeek = new Interval(end.minusWeeks(1).plusMillis(1), end);
+	        
+	        this.refPastMonth = new Interval(end.minusMonths(1).plusMillis(1), end);
         }
 
 	    public Generator configure(Configuration config)
@@ -312,6 +316,19 @@ public class DefaultMessageGeneratorService
         protected DeviceExistsPredicate isDevicePresent(EnumDeviceType deviceType)
         {
             return new DeviceExistsPredicate(deviceType, deviceRepository);
+        }
+        
+        protected <P extends Message.Parameters> boolean checkParameterizedTemplate(P p)
+        {
+            Set<ConstraintViolation<P>> constraintViolations = validator.validate(p);
+            boolean valid = constraintViolations.isEmpty();
+            if (!valid) {
+                for (ConstraintViolation<P> c: constraintViolations) {
+                    info("Failed validation for parameterized template %s: at %s: %s",
+                        p, c.getPropertyPath(), c.getMessage());
+                }
+            }
+            return valid;
         }
         
         public abstract void generate(Target target);
@@ -397,6 +414,7 @@ public class DefaultMessageGeneratorService
             
             FluentIterable<UUID> accountKeys = FluentIterable.of(target.getAccounts());
             
+            int cnt = 0;      
             for (EnumDeviceType deviceType: resolver.getSupportedDevices()) {
                 for (UUID accountKey: accountKeys.filter(isDevicePresent(deviceType))) {
                     // Filter by checking per-account limits (throttle)
@@ -420,23 +438,13 @@ public class DefaultMessageGeneratorService
                         continue;
                     
                     // Validate and push resolved messages to repository
-                    Set<ConstraintViolation<Recommendation.ParameterizedTemplate>> constraintViolations = null;
                     for (MessageResolutionStatus<Recommendation.ParameterizedTemplate> r: results) {
-                        // Check if significant
                         if (!r.isSignificant())
                             continue; 
-                        // Validate
                         Recommendation.ParameterizedTemplate parameterizedTemplate = r.getMessage();
-                        constraintViolations = validator.validate(parameterizedTemplate);
-                        if (!constraintViolations.isEmpty()) {
-                            for (ConstraintViolation<Recommendation.ParameterizedTemplate> c: constraintViolations) {
-                                info("Failed validation for parameterized template %s: at %s: %s",
-                                    parameterizedTemplate,
-                                    c.getPropertyPath(), c.getMessage());
-                            }
+                        if (!checkParameterizedTemplate(parameterizedTemplate))
                             continue;
-                        }
-                        // Passed validation: push to account-recommendation repository
+                        cnt++;
                         accountRecommendationRepository.createWith(
                             accountKey, parameterizedTemplate, resolverExecutionEntity, deviceType);
                     }
@@ -444,7 +452,8 @@ public class DefaultMessageGeneratorService
             }
             
             resolver.teardown();
-            info("Finished with recommendations examined by %s", resolverName);
+            info("Finished with recommendations examined by %s (%d new message(s))",
+                resolverName, cnt);
             
             DateTime finished = DateTime.now();
             resolverExecutionRepository.updateFinished(resolverExecutionEntity, finished);
@@ -504,12 +513,21 @@ public class DefaultMessageGeneratorService
             
             List<Integer> xids;
             
+            // Check for a sliding interval of 1 day
+            
+            xids = resolverExecutionRepository.findIdByName(resolverName, refPastDay);
+            if (!xids.isEmpty()) {
+                int cnt = accountRecommendationRepository.countByAccountAndExecution(accountKey, xids);
+                if (cnt >= resolverAnnotation.maxPerDay())
+                    return true;
+            }
+            
             // Check for a sliding interval of 1 week
             
             xids = resolverExecutionRepository.findIdByName(resolverName, refPastWeek);
             if (!xids.isEmpty()) {
-                int count = accountRecommendationRepository.countByAccountAndExecution(accountKey, xids);
-                if (count > resolverAnnotation.maxPerWeek())
+                int cnt = accountRecommendationRepository.countByAccountAndExecution(accountKey, xids);
+                if (cnt >= resolverAnnotation.maxPerWeek())
                     return true;
             }
             
@@ -517,8 +535,8 @@ public class DefaultMessageGeneratorService
             
             xids = resolverExecutionRepository.findIdByName(resolverName, refPastMonth);
             if (!xids.isEmpty()) {
-                int count = accountRecommendationRepository.countByAccountAndExecution(accountKey, xids);
-                if (count > resolverAnnotation.maxPerMonth())
+                int cnt = accountRecommendationRepository.countByAccountAndExecution(accountKey, xids);
+                if (cnt >= resolverAnnotation.maxPerMonth())
                     return true;
             }
             
@@ -565,6 +583,7 @@ public class DefaultMessageGeneratorService
             
             FluentIterable<UUID> accountKeys = FluentIterable.of(target.getAccounts());
             
+            int cnt = 0;
             for (EnumDeviceType deviceType: resolver.getSupportedDevices()) {
                 for (UUID accountKey: accountKeys.filter(isDevicePresent(deviceType))) {
                     // Filter by checking per-account limits (throttle)
@@ -588,23 +607,13 @@ public class DefaultMessageGeneratorService
                         continue;
                     
                     // Validate and push resolved messages to repository
-                    Set<ConstraintViolation<Alert.ParameterizedTemplate>> constraintViolations = null;
                     for (MessageResolutionStatus<Alert.ParameterizedTemplate> r: results) {
-                        // Check if significant
                         if (!r.isSignificant())
                             continue; 
-                        // Validate
                         Alert.ParameterizedTemplate parameterizedTemplate = r.getMessage();
-                        constraintViolations = validator.validate(parameterizedTemplate);
-                        if (!constraintViolations.isEmpty()) {
-                            for (ConstraintViolation<Alert.ParameterizedTemplate> c: constraintViolations) {
-                                info("Failed validation for parameterized template %s: at %s: %s",
-                                    parameterizedTemplate,
-                                    c.getPropertyPath(), c.getMessage());
-                            }
+                        if (!checkParameterizedTemplate(parameterizedTemplate))
                             continue;
-                        }
-                        // Passed validation: push to account-alert repository
+                        cnt++;
                         accountAlertRepository.createWith(
                             accountKey, parameterizedTemplate, resolverExecutionEntity, deviceType);
                     }
@@ -612,7 +621,8 @@ public class DefaultMessageGeneratorService
             }
             
             resolver.teardown();
-            info("Finished with alerts examined by %s", resolverName);
+            info("Finished with alerts examined by %s (%d new message(s))",
+                resolverName, cnt);
             
             DateTime finished = DateTime.now();
             resolverExecutionRepository.updateFinished(resolverExecutionEntity, finished);
@@ -635,12 +645,21 @@ public class DefaultMessageGeneratorService
             
             List<Integer> xids;
             
+            // Check for a sliding interval of 1 day
+            
+            xids = resolverExecutionRepository.findIdByName(resolverName, refPastDay);
+            if (!xids.isEmpty()) {
+                int cnt = accountAlertRepository.countByAccountAndExecution(accountKey, xids);
+                if (cnt >= resolverAnnotation.maxPerDay())
+                    return true;
+            }
+            
             // Check for a sliding interval of 1 week
             
             xids = resolverExecutionRepository.findIdByName(resolverName, refPastWeek);
             if (!xids.isEmpty()) {
-                int count = accountAlertRepository.countByAccountAndExecution(accountKey, xids);
-                if (count > resolverAnnotation.maxPerWeek())
+                int cnt = accountAlertRepository.countByAccountAndExecution(accountKey, xids);
+                if (cnt >= resolverAnnotation.maxPerWeek())
                     return true;
             }
             
@@ -648,8 +667,8 @@ public class DefaultMessageGeneratorService
             
             xids = resolverExecutionRepository.findIdByName(resolverName, refPastMonth);
             if (!xids.isEmpty()) {
-                int count = accountAlertRepository.countByAccountAndExecution(accountKey, xids);
-                if (count > resolverAnnotation.maxPerMonth())
+                int cnt = accountAlertRepository.countByAccountAndExecution(accountKey, xids);
+                if (cnt >= resolverAnnotation.maxPerMonth())
                     return true;
             }
             
@@ -682,8 +701,8 @@ public class DefaultMessageGeneratorService
             if (!daysOfMonth.isEmpty() && !daysOfMonth.contains(refDate.getDayOfMonth()))
                 return false;
             
-            // Otherwise (no day specified or refDate is on a trigger day), check if a successful 
-            // execution exists for the interval (refDate - P, refDate]
+            // Otherwise (no day-of-X specified or refDate is on a trigger day), check
+            // if a successful execution exists for the interval (refDate - P, refDate]
             
             Period period = Period.parse(resolverAnnotation.period());
             DateTime t0 = refDate.minus(period).plusMillis(1); // just after refDate - P
