@@ -92,9 +92,10 @@ public class CachingConsumptionStatisticsService
         UtilityStatisticsEntity e = 
             statisticsRepository.findOne(utilityKey, refDate, period, field, statistic);
         if (e != null) {
-            // The result is already computed, just return it.
-            // Note: No need to put it in cache here; computing thread will eventually do it 
+            // The result is already computed probably in a previous application run
             result = e.getComputedNumber();
+            // Also, put in cache here to avoid future database lookups
+            results.putIfAbsent(resultkey, result);
             return result;
         } 
         
