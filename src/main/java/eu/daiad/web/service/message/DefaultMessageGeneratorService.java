@@ -31,6 +31,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 import eu.daiad.web.annotate.message.MessageGenerator;
 import eu.daiad.web.domain.application.AccountEntity;
@@ -39,13 +40,15 @@ import eu.daiad.web.domain.application.AlertResolverExecutionEntity;
 import eu.daiad.web.domain.application.RecommendationResolverExecutionEntity;
 import eu.daiad.web.domain.application.TipEntity;
 import eu.daiad.web.domain.application.UtilityEntity;
-import eu.daiad.web.model.ConsumptionStats;
+import eu.daiad.web.model.ComputedNumber;
 import eu.daiad.web.model.EnumDayOfWeek;
+import eu.daiad.web.model.EnumStatistic;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.MessageResolutionStatus;
 import eu.daiad.web.model.message.Recommendation;
+import eu.daiad.web.model.query.EnumMeasurementField;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IAccountAlertRepository;
 import eu.daiad.web.repository.application.IAccountRecommendationRepository;
@@ -57,7 +60,8 @@ import eu.daiad.web.repository.application.IRecommendationResolverExecutionRepos
 import eu.daiad.web.repository.application.ITipRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IUtilityRepository;
-import eu.daiad.web.service.IConsumptionStatsService;
+import eu.daiad.web.service.IConsumptionStatisticsService;
+import eu.daiad.web.service.IUtilityConsumptionStatisticsService;
 
 @Service
 public class DefaultMessageGeneratorService
@@ -112,8 +116,8 @@ public class DefaultMessageGeneratorService
 	private IGroupRepository groupRepository;
 
 	@Autowired
-	@Qualifier("cachingConsumptionStatsService")
-	private IConsumptionStatsService statsService;
+	@Qualifier("cachingConsumptionStatisticsService")
+	private IConsumptionStatisticsService statisticsService;
 
 	@Autowired
 	private ITipRepository tipRepository;
@@ -205,7 +209,37 @@ public class DefaultMessageGeneratorService
 	        return targetUtility? utilityRepository.findOne(utility.getId()) : null;
 	    }
 	}
-		
+	
+	/**
+	 * Provide an interface to utility-wide statistics.
+	 * 
+	 * This is actually a decorator to top-level statistics service.
+	 */
+	private class StatisticsService
+	    implements IUtilityConsumptionStatisticsService
+	{
+	    private final UtilityInfo utility;
+
+        public StatisticsService(UtilityInfo utility)
+        {
+            this.utility = utility;
+        }
+
+        @Override
+        public ComputedNumber getNumber(
+            LocalDateTime refDate, Period period, EnumMeasurementField field, EnumStatistic statistic)
+        {
+            return statisticsService.getNumber(utility.getKey(), refDate, period, field, statistic);
+        }
+
+        @Override
+        public ComputedNumber getNumber(
+            DateTime refDate, Period period, EnumMeasurementField field, EnumStatistic statistic)
+        {
+            return statisticsService.getNumber(utility.getKey(), refDate, period, field, statistic);
+        }
+	}
+	
 	/**
 	 * A utility-wide message generator
 	 */
@@ -222,12 +256,20 @@ public class DefaultMessageGeneratorService
 	    
 	    /** A sliding interval of ~ 1 month ending to refDate */
 	    protected final Interval refPastMonth;
+
+	    /** Provide statistics bound to this utility */
+	    private final IUtilityConsumptionStatisticsService utilityStatisticsService;
 	    
 	    protected Configuration config = new Configuration();
 	    
 	    protected Generator(LocalDateTime refDate, UtilityInfo utility)
         {
 	        this.utility = utility;
+	        
+	        // Provide statistics bound to this utility
+	        
+	        utilityStatisticsService = 
+	            DefaultMessageGeneratorService.this.new StatisticsService(utility);
 	        
 	        // Determine reference date as a (zoned) DateTime
 	        
@@ -260,12 +302,12 @@ public class DefaultMessageGeneratorService
         {
             return utility;
         }
-
+        
         @Override
-        public ConsumptionStats getStats()
+        public IUtilityConsumptionStatisticsService getStatsService()
         {
-            return statsService.getStats(utility, refDate.toLocalDateTime());
-        }  
+            return utilityStatisticsService;
+        }
         
         protected DeviceExistsPredicate isDevicePresent(EnumDeviceType deviceType)
         {

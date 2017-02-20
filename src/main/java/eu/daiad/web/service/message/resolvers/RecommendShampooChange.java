@@ -12,9 +12,11 @@ import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 
 import org.joda.time.DateTime;
+import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -33,6 +35,7 @@ import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumDataField;
+import eu.daiad.web.model.query.EnumMeasurementField;
 import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.ICurrencyRateService;
@@ -140,21 +143,24 @@ public class RecommendShampooChange extends AbstractRecommendationResolver
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
-        final int N = 3; // number of months to examine
+        Assert.state(deviceType == EnumDeviceType.AMPHIRO);
         
-        Double averageConsumption = stats.getValue(
-            EnumStatistic.AVERAGE_MONTHLY, EnumDeviceType.AMPHIRO, EnumDataField.VOLUME);
+        final int N = 3; // number of months to examine
+        final Period period = Period.months(N); 
+        
+        DateTime end = refDate.withDayOfMonth(1)
+            .withTimeAtStartOfDay();
+        
+        Double averageConsumption = statisticsService.getNumber(
+                end, period, EnumMeasurementField.AMPHIRO_VOLUME, EnumStatistic.AVERAGE_PER_USER)
+            .getValue();
         if (averageConsumption == null)
             return Collections.emptyList();
-
-        DateTime start = refDate.minusMonths(N)
-            .withDayOfMonth(1)
-            .withTimeAtStartOfDay();
         
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
-            .sliding(start, N, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+            .absolute(end.minus(period), end, EnumTimeAggregation.ALL)
             .amphiro()
             .sum()
             .average();
@@ -165,11 +171,11 @@ public class RecommendShampooChange extends AbstractRecommendationResolver
         if (series == null || series.isEmpty())
             return Collections.emptyList();
 
-        double userAverageConsumption = series.get(EnumDataField.VOLUME, EnumMetric.SUM) / N;
-        if (userAverageConsumption > averageConsumption * VOLUME_HIGH_RATIO) {
+        double userConsumption = series.get(EnumDataField.VOLUME, EnumMetric.SUM);
+        if (userConsumption > averageConsumption * VOLUME_HIGH_RATIO) {
             ParameterizedTemplate parameterizedTemplate = new Parameters(refDate, deviceType)
                 .withAverageConsumption(averageConsumption)
-                .withUserAverageConsumption(userAverageConsumption);   
+                .withUserAverageConsumption(userConsumption);   
             MessageResolutionStatus<ParameterizedTemplate> result = 
                 new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
             return Collections.singletonList(result);

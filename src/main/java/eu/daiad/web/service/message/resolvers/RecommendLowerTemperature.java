@@ -14,9 +14,11 @@ import javax.validation.constraints.NotNull;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -36,6 +38,7 @@ import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumDataField;
+import eu.daiad.web.model.query.EnumMeasurementField;
 import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.repository.application.IUserRepository;
@@ -191,21 +194,25 @@ public class RecommendLowerTemperature extends AbstractRecommendationResolver
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
-        final int N = 3; // number of months to examine
+        Assert.state(deviceType == EnumDeviceType.AMPHIRO);
         
-        Double averageTemperature = stats.getValue(
-            EnumStatistic.AVERAGE_MONTHLY, EnumDeviceType.AMPHIRO, EnumDataField.TEMPERATURE);
+        final int N = 3; // number of months to examine
+        final Period period = Period.months(N); 
+        
+        DateTime end = refDate.withDayOfMonth(1)
+            .withTimeAtStartOfDay();
+        
+        Double averageTemperature = statisticsService.getNumber(
+                end, period, EnumMeasurementField.AMPHIRO_TEMPERATURE, EnumStatistic.AVERAGE_PER_SESSION)
+            .getValue();
+            
         if (averageTemperature == null)
             return Collections.emptyList();
-        
-        DateTime start = refDate.minusMonths(N)
-            .withDayOfMonth(1)
-            .withTimeAtStartOfDay();
         
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
-            .sliding(start, N, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+            .absolute(end.minus(period), end, EnumTimeAggregation.ALL)
             .amphiro()
             .sum()
             .average();
@@ -216,14 +223,15 @@ public class RecommendLowerTemperature extends AbstractRecommendationResolver
         if (series == null || series.isEmpty())
             return Collections.emptyList();
         
-        double userAverageConsumption = series.get(EnumDataField.VOLUME, EnumMetric.SUM) / N;
+        double userConsumption = series.get(EnumDataField.VOLUME, EnumMetric.SUM);
         double userAverageTemperature = series.get(EnumDataField.TEMPERATURE, EnumMetric.AVERAGE);
         if (userAverageTemperature > averageTemperature * TEMPERATURE_HIGH_RATIO) {
             // Get a rough estimate for annual money savings if temperature is 1 degree lower
             final int numMonthsPerYear = 12;
+            final double numPeriodsPerYear = Double.valueOf(numMonthsPerYear) / period.getMonths();
             final double pricePerKwh = priceData.getPricePerKwh(utility.getCountry());
-            double annualSavings = numMonthsPerYear * pricePerKwh *
-                energyCalculator.computeEnergyToRiseTemperature(1.0, userAverageConsumption);
+            double annualSavings = numPeriodsPerYear * pricePerKwh *
+                energyCalculator.computeEnergyToRiseTemperature(1.0, userConsumption);
             
             ParameterizedTemplate parameterizedTemplate = new Parameters(refDate, deviceType)
                 .withUserAverageTemperature(userAverageTemperature)

@@ -11,6 +11,9 @@ import eu.daiad.web.model.ComputedNumber;
 import eu.daiad.web.model.EnumStatistic;
 import eu.daiad.web.model.query.EnumMeasurementField;
 
+/**
+ * A simple interface for querying utility-wide consumption-related statistics
+ */
 public interface IConsumptionStatisticsService
 {    
     ComputedNumber getNumber(

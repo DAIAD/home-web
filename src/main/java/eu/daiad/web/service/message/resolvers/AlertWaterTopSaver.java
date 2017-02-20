@@ -13,9 +13,11 @@ import javax.validation.constraints.NotNull;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -38,6 +40,7 @@ import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumDataField;
+import eu.daiad.web.model.query.EnumMeasurementField;
 import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.Point;
 import eu.daiad.web.model.query.SeriesFacade;
@@ -59,14 +62,23 @@ public class AlertWaterTopSaver extends AbstractAlertResolver
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
-        Double weekly25pThreshold = stats.getValue(
-            EnumStatistic.THRESHOLD_BOTTOM_25P_WEEKLY, EnumDeviceType.METER, EnumDataField.VOLUME);
-        if (weekly25pThreshold == null)
-            return Collections.emptyList();
+        Assert.state(deviceType == EnumDeviceType.METER);
         
-        Double weekly10pThreshold = stats.getValue(
-            EnumStatistic.THRESHOLD_BOTTOM_10P_WEEKLY, EnumDeviceType.METER, EnumDataField.VOLUME);
-        if (weekly10pThreshold == null)
+        final Period period = Period.weeks(1); 
+        final EnumMeasurementField measurementField = EnumMeasurementField.METER_VOLUME;
+        
+        DateTime end = refDate.withDayOfWeek(DateTimeConstants.MONDAY)
+            .withTimeAtStartOfDay();
+        
+        Double weekly25pThreshold = statisticsService.getNumber(
+                end, period, measurementField, EnumStatistic.PERCENTILE_25P_OF_USERS)
+            .getValue();
+        
+        Double weekly10pThreshold = statisticsService.getNumber(
+                end, period, measurementField, EnumStatistic.PERCENTILE_10P_OF_USERS)
+            .getValue();
+                
+        if (weekly25pThreshold == null || weekly10pThreshold == null)
             return Collections.emptyList();
         
         double weeklyThreshold = config.getVolumeThreshold(EnumDeviceType.METER, EnumTimeUnit.WEEK);
@@ -78,7 +90,7 @@ public class AlertWaterTopSaver extends AbstractAlertResolver
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
-            .sliding(start, +1, EnumTimeUnit.WEEK, EnumTimeAggregation.ALL)
+            .absolute(end.minus(period), end, EnumTimeAggregation.ALL)
             .meter()
             .sum();
 

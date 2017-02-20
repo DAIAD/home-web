@@ -14,6 +14,7 @@ import javax.validation.constraints.NotNull;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -38,6 +39,7 @@ import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumMeasurementDataSource;
+import eu.daiad.web.model.query.EnumMeasurementField;
 import eu.daiad.web.model.query.EnumDataField;
 import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.SeriesFacade;
@@ -172,20 +174,22 @@ public class AlertExcessiveWaterConsumption extends AbstractAlertResolver
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
-        final int numWeeksPerYear = 52; // not exactly, it's 52 or 53
-
-        Double averageConsumption = stats.getValue(
-            EnumStatistic.AVERAGE_WEEKLY, deviceType, EnumDataField.VOLUME);
+        final Period period = Period.weeks(1); 
+        final EnumMeasurementField measurementField = 
+            EnumMeasurementField.valueOf(deviceType, EnumDataField.VOLUME);
+        
+        DateTime end = refDate.withDayOfWeek(DateTimeConstants.MONDAY)
+            .withTimeAtStartOfDay();
+        
+        Double averageConsumption = statisticsService.getNumber(
+                end, period, measurementField, EnumStatistic.AVERAGE_PER_USER)
+            .getValue();
         if (averageConsumption == null)
             return Collections.emptyList();
 
-        DateTime start = refDate.minusWeeks(1)
-            .withDayOfWeek(DateTimeConstants.MONDAY)
-            .withTimeAtStartOfDay();
-        
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
-            .sliding(start, +1, EnumTimeUnit.WEEK, EnumTimeAggregation.ALL)
+            .absolute(end.minus(period), end, EnumTimeAggregation.ALL)
             .user("user", accountKey)
             .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
             .sum();
@@ -199,6 +203,7 @@ public class AlertExcessiveWaterConsumption extends AbstractAlertResolver
 
         if (userConsumption != null && userConsumption > HIGH_CONSUMPTION_RATIO * averageConsumption) {
             // Get a rough estimate for annual savings if average behavior is adopted
+            final int numWeeksPerYear = 52; // not exactly, it's 52 or 53
             Double annualSavings = (userConsumption - averageConsumption) * numWeeksPerYear;
             ParameterizedTemplate parameterizedTemplate = new Parameters(
                     refDate, deviceType, userConsumption, averageConsumption)

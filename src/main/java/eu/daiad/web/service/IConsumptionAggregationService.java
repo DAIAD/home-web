@@ -14,9 +14,6 @@ import eu.daiad.web.model.utility.UtilityInfo;
 
 public interface IConsumptionAggregationService 
 {
-	@Deprecated
-    public ConsumptionStats compute(UtilityInfo utility, LocalDateTime refDate);
-		
 	public ComputedNumber compute(
 	    UUID utilityKey, LocalDateTime refDate, Period period, EnumMeasurementField field, EnumStatistic statistic);
 	

@@ -12,9 +12,11 @@ import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 
 import org.joda.time.DateTime;
+import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -33,6 +35,7 @@ import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumDataField;
+import eu.daiad.web.model.query.EnumMeasurementField;
 import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.ICurrencyRateService;
@@ -160,21 +163,25 @@ public class RecommendReduceFlowWhenNotNeeded extends AbstractRecommendationReso
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
-        final int N = 3; // number of months to examine
+        Assert.state(deviceType == EnumDeviceType.AMPHIRO);
         
-        Double averageConsumptionPerSession = stats.getValue(
-            EnumStatistic.AVERAGE_MONTHLY_PER_SESSION, EnumDeviceType.AMPHIRO, EnumDataField.VOLUME);
-        if (averageConsumptionPerSession == null)
-            return Collections.emptyList();
-
-        DateTime start = refDate.minusMonths(N)
-            .withDayOfMonth(1)
+        final int N = 3; // number of months to examine
+        final Period period = Period.months(N); 
+        
+        DateTime end = refDate.withDayOfMonth(1)
             .withTimeAtStartOfDay();
+        
+        Double averagePerSessionConsumption = statisticsService.getNumber(
+                end, period, EnumMeasurementField.AMPHIRO_VOLUME, EnumStatistic.AVERAGE_PER_SESSION)
+            .getValue();
+        
+        if (averagePerSessionConsumption == null)
+            return Collections.emptyList();
         
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
-            .sliding(start, N, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+            .absolute(end.minus(period), end, EnumTimeAggregation.ALL)
             .amphiro()
             .average();
 
@@ -184,16 +191,16 @@ public class RecommendReduceFlowWhenNotNeeded extends AbstractRecommendationReso
         if (series == null || series.isEmpty())
             return Collections.emptyList();
 
-        double userAverageConsumptionPerSession = series.get(EnumDataField.VOLUME, EnumMetric.AVERAGE);  
-        if (userAverageConsumptionPerSession > averageConsumptionPerSession) {
+        double userAveragePerSessionConsumption = series.get(EnumDataField.VOLUME, EnumMetric.AVERAGE);  
+        if (userAveragePerSessionConsumption > averagePerSessionConsumption) {
             // Todo - Calculate the number of sessions per year when available
             int numberOfSessionsPerYear = 100;
             // Estimate annual savings
             Double annualSavings = numberOfSessionsPerYear *
-                (userAverageConsumptionPerSession - averageConsumptionPerSession);
+                (userAveragePerSessionConsumption - averagePerSessionConsumption);
             ParameterizedTemplate parameterizedTemplate = new Parameters(refDate, deviceType)
-                .withAverageConsumptionPerSession(averageConsumptionPerSession)
-                .withUserAverageConsumptionPerSession(userAverageConsumptionPerSession)
+                .withAverageConsumptionPerSession(averagePerSessionConsumption)
+                .withUserAverageConsumptionPerSession(userAveragePerSessionConsumption)
                 .withAnnualSavings(annualSavings.intValue());
             MessageResolutionStatus<ParameterizedTemplate> result = 
                 new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);

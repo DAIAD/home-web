@@ -13,9 +13,11 @@ import javax.validation.constraints.NotNull;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -37,6 +39,7 @@ import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumDataField;
+import eu.daiad.web.model.query.EnumMeasurementField;
 import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.Point;
 import eu.daiad.web.model.query.SeriesFacade;
@@ -169,8 +172,17 @@ public class AlertWaterSaver extends AbstractAlertResolver
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
-        Double monthlyAverage = stats.getValue(
-            EnumStatistic.AVERAGE_MONTHLY, EnumDeviceType.METER, EnumDataField.VOLUME);
+        Assert.state(deviceType == EnumDeviceType.METER);
+        
+        final Period period = Period.months(1); 
+        final EnumMeasurementField measurementField = EnumMeasurementField.METER_VOLUME;
+        
+        DateTime end = refDate.withDayOfMonth(1)
+            .withTimeAtStartOfDay();
+        
+        Double monthlyAverage = statisticsService.getNumber(
+                end, period, measurementField, EnumStatistic.AVERAGE_PER_USER)
+            .getValue();
         if (monthlyAverage == null)
             return Collections.emptyList();
           
@@ -184,12 +196,10 @@ public class AlertWaterSaver extends AbstractAlertResolver
             .meter()
             .sum();
 
-        DateTime start = refDate.minusMonths(1)
-            .withDayOfMonth(1)
-            .withTimeAtStartOfDay();
-        
+        DateTime t1 = end.minus(period);
+  
         query = queryBuilder
-            .sliding(start, +1,  EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+            .absolute(t1, end, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(EnumDeviceType.METER);
@@ -197,9 +207,9 @@ public class AlertWaterSaver extends AbstractAlertResolver
             series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
         if (c0 == null)
             return Collections.emptyList();
-
+        
         query = queryBuilder
-            .sliding(start.minusMonths(1), +1,  EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+            .absolute(t1.minus(period), t1, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(EnumDeviceType.METER);

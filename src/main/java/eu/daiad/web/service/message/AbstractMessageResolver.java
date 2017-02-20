@@ -16,6 +16,7 @@ import eu.daiad.web.model.ConsumptionStats;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.utility.UtilityInfo;
+import eu.daiad.web.service.IUtilityConsumptionStatisticsService;
 
 public abstract class AbstractMessageResolver <P extends Message.Parameters>
     implements IMessageResolver<P>
@@ -32,7 +33,7 @@ public abstract class AbstractMessageResolver <P extends Message.Parameters>
     
     protected UtilityInfo utility;
     
-    protected ConsumptionStats stats;
+    protected IUtilityConsumptionStatisticsService statisticsService;
     
     //
     // Basic parts of interface IMessageResolver<P>
@@ -46,7 +47,7 @@ public abstract class AbstractMessageResolver <P extends Message.Parameters>
    
         this.refDate = generatorContext.getRefDate();
         this.utility = generatorContext.getUtilityInfo();
-        this.stats = generatorContext.getStats();
+        this.statisticsService = generatorContext.getStatsService();
     }
     
     @Override
