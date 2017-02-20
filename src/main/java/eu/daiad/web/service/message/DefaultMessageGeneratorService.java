@@ -22,6 +22,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.joda.time.LocalDateTime;
@@ -252,14 +253,14 @@ public class DefaultMessageGeneratorService
 	    /** A reference date for resolvers */
 	    protected final DateTime refDate;
 	    
-	    /** A sliding interval of 1 day ending to refDate */
-        protected final Interval refPastDay;
+	    /** The current day ending on refDate */
+        protected final Interval refCurrentDay;
 	    
-	    /** A sliding interval of 1 week ending to refDate */
-	    protected final Interval refPastWeek;
+	    /** The current week ending on refDate */
+	    protected final Interval refCurrentWeek;
 	    
-	    /** A sliding interval of ~ 1 month ending to refDate */
-	    protected final Interval refPastMonth;
+	    /** The current month ending on refDate */
+	    protected final Interval refCurrentMonth;
 
 	    /** Provide statistics bound to this utility */
 	    private final IUtilityConsumptionStatisticsService utilityStatisticsService;
@@ -282,11 +283,14 @@ public class DefaultMessageGeneratorService
 	        
 	        // Compute sliding intervals ending on (not including) reference date
 	        
-	        this.refPastDay = new Interval(end.minusDays(1).plusMillis(1), end);
+	        this.refCurrentDay = new Interval(
+	            end.withTimeAtStartOfDay(), end);
 	        
-	        this.refPastWeek = new Interval(end.minusWeeks(1).plusMillis(1), end);
+	        this.refCurrentWeek = new Interval(
+	            end.withDayOfWeek(DateTimeConstants.MONDAY).withTimeAtStartOfDay(), end);
 	        
-	        this.refPastMonth = new Interval(end.minusMonths(1).plusMillis(1), end);
+	        this.refCurrentMonth = new Interval(
+	            end.withDayOfMonth(1).withTimeAtStartOfDay(), end);
         }
 
 	    public Generator configure(Configuration config)
@@ -513,27 +517,27 @@ public class DefaultMessageGeneratorService
             
             List<Integer> xids;
             
-            // Check for a sliding interval of 1 day
+            // Check for current day
             
-            xids = resolverExecutionRepository.findIdByName(resolverName, refPastDay);
+            xids = resolverExecutionRepository.findIdByName(resolverName, refCurrentDay);
             if (!xids.isEmpty()) {
                 int cnt = accountRecommendationRepository.countByAccountAndExecution(accountKey, xids);
                 if (cnt >= resolverAnnotation.maxPerDay())
                     return true;
             }
             
-            // Check for a sliding interval of 1 week
+            // Check for current week
             
-            xids = resolverExecutionRepository.findIdByName(resolverName, refPastWeek);
+            xids = resolverExecutionRepository.findIdByName(resolverName, refCurrentWeek);
             if (!xids.isEmpty()) {
                 int cnt = accountRecommendationRepository.countByAccountAndExecution(accountKey, xids);
                 if (cnt >= resolverAnnotation.maxPerWeek())
                     return true;
             }
             
-            // Check for a sliding interval of 1 month
+            // Check for current month
             
-            xids = resolverExecutionRepository.findIdByName(resolverName, refPastMonth);
+            xids = resolverExecutionRepository.findIdByName(resolverName, refCurrentMonth);
             if (!xids.isEmpty()) {
                 int cnt = accountRecommendationRepository.countByAccountAndExecution(accountKey, xids);
                 if (cnt >= resolverAnnotation.maxPerMonth())
@@ -645,27 +649,27 @@ public class DefaultMessageGeneratorService
             
             List<Integer> xids;
             
-            // Check for a sliding interval of 1 day
+            // Check for current day
             
-            xids = resolverExecutionRepository.findIdByName(resolverName, refPastDay);
+            xids = resolverExecutionRepository.findIdByName(resolverName, refCurrentDay);
             if (!xids.isEmpty()) {
                 int cnt = accountAlertRepository.countByAccountAndExecution(accountKey, xids);
                 if (cnt >= resolverAnnotation.maxPerDay())
                     return true;
             }
             
-            // Check for a sliding interval of 1 week
+            // Check for current week
             
-            xids = resolverExecutionRepository.findIdByName(resolverName, refPastWeek);
+            xids = resolverExecutionRepository.findIdByName(resolverName, refCurrentWeek);
             if (!xids.isEmpty()) {
                 int cnt = accountAlertRepository.countByAccountAndExecution(accountKey, xids);
                 if (cnt >= resolverAnnotation.maxPerWeek())
                     return true;
             }
             
-            // Check for a sliding interval of 1 month
+            // Check for current month
             
-            xids = resolverExecutionRepository.findIdByName(resolverName, refPastMonth);
+            xids = resolverExecutionRepository.findIdByName(resolverName, refCurrentMonth);
             if (!xids.isEmpty()) {
                 int cnt = accountAlertRepository.countByAccountAndExecution(accountKey, xids);
                 if (cnt >= resolverAnnotation.maxPerMonth())
