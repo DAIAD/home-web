@@ -676,7 +676,7 @@ div[class^="section."]{
 }
 
 .notification-list ul li a {
-	padding: 15px;
+	padding: 15px 10px;
 	color: #424242; 
 	border-bottom: 1px #9fa1a2 solid;
 	font-weight: normal;
@@ -1401,6 +1401,17 @@ div[class^="section.notifications"] .notification-list ul li a {
 	font-size: 1.1em;
   flex-grow: 0;
 }
+
+.acknowledged {
+  width: 100%;
+  text-align: right;
+  font-size: 0.8em;
+}
+
+.acknowledged > i {
+  margin-right: 5px;
+}
+
 .notification-pagination {
   flex-grow: 0;
 }
