@@ -47,7 +47,8 @@
     "redux-logger": "^2.5.2",
     "sprintf": "^0.1.5",
     "font-awesome": "~4.6.3",
-    "react-dropzone": "^3.3.4"
+    "react-dropzone": "^3.3.4",
+    "react-infinite-scroller": "1.0.4"
   },
   "scripts": {
     "build": "NODE_ENV=production grunt build",
