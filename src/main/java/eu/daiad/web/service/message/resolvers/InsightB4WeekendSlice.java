@@ -1,6 +1,5 @@
 package eu.daiad.web.service.message.resolvers;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
@@ -9,15 +8,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.FluentIterable;
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.commons.math3.stat.descriptive.summary.Sum;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.joda.time.Period;
@@ -53,27 +49,21 @@ import eu.daiad.web.service.message.AbstractRecommendationResolver;
 @MessageGenerator(period = "P1W", dayOfWeek = EnumDayOfWeek.MONDAY, maxPerWeek = 1)
 @Component
 @Scope("prototype")
-public class InsightB3 extends AbstractRecommendationResolver
+public class InsightB4WeekendSlice extends AbstractRecommendationResolver
 {
     public static class Parameters extends Message.AbstractParameters
         implements ParameterizedTemplate
-    {        
+    {
         /** A minimum value for daily volume consumption */
         private static final String MIN_VALUE = "1E-1"; 
 
-        /** The average daily consumption for the particular day-of-week */
         @NotNull
         @DecimalMin(MIN_VALUE)
-        private Double currentValue;
+        private Double weekdayValue;        
 
-        /** The average daily consumption for all week days */
         @NotNull
         @DecimalMin(MIN_VALUE)
-        private Double averageValue;
-
-        /** The day of week for this consumption peak (high or low) */
-        @NotNull
-        private EnumDayOfWeek dayOfWeek; 
+        private Double weekendValue;
 
         public Parameters()
         {
@@ -81,58 +71,44 @@ public class InsightB3 extends AbstractRecommendationResolver
         }
 
         public Parameters(
-            DateTime refDate, EnumDeviceType deviceType, 
-            double currentValue, double averageValue, EnumDayOfWeek dayOfWeek)
+            DateTime refDate, EnumDeviceType deviceType, double weekdayValue, double weekendValue)
         {
             super(refDate, deviceType);
-            this.averageValue = averageValue;
-            this.currentValue = currentValue;
-            this.dayOfWeek = dayOfWeek;
+            this.weekdayValue = weekdayValue;
+            this.weekendValue = weekendValue;
         }
 
-        @JsonProperty("currentValue")
-        public void setCurrentValue(double y)
+        @JsonProperty("weekdayValue")
+        public void setWeekdayValue(double y)
         {
-            this.currentValue = y;
+            this.weekdayValue = y;
         }
 
-        @JsonProperty("currentValue")
-        public Double getCurrentValue()
+        @JsonProperty("weekdayValue")
+        public Double getWeekdayValue()
         {
-            return currentValue;
+            return weekdayValue;
         }
 
-        @JsonProperty("averageValue")
-        public void setAverageValue(double y)
+        @JsonProperty("weekendValue")
+        public void setWeekendValue(double y)
         {
-            this.averageValue = y;
+            this.weekendValue = y;
         }
 
-        @JsonProperty("averageValue")
-        public Double getAverageValue()
+        @JsonProperty("weekendValue")
+        public Double getWeekendValue()
         {
-            return averageValue;
-        }
-
-        @JsonProperty("dayOfWeek")
-        public EnumDayOfWeek getDayOfWeek()
-        {
-            return dayOfWeek;
-        }
-
-        @JsonProperty("dayOfWeek")
-        public void setDayOfWeek(EnumDayOfWeek day)
-        {
-            this.dayOfWeek = day;
+            return weekendValue;
         }
 
         @JsonIgnore
         @Override
         public EnumRecommendationTemplate getTemplate()
         {
-            return (currentValue < averageValue)?
-                EnumRecommendationTemplate.INSIGHT_B3_DAYOFWEEK_CONSUMPTION_LOW:
-                EnumRecommendationTemplate.INSIGHT_B3_DAYOFWEEK_CONSUMPTION_PEAK;
+            return (weekdayValue < weekendValue)?
+                EnumRecommendationTemplate.INSIGHT_B4_MORE_ON_WEEKEND:
+                EnumRecommendationTemplate.INSIGHT_B4_LESS_ON_WEEKEND;    
         }
 
         @JsonIgnore
@@ -141,18 +117,12 @@ public class InsightB3 extends AbstractRecommendationResolver
         {
             Map<String, Object> parameters = super.getParameters();
 
-            parameters.put("value", currentValue);
-            parameters.put("consumption", currentValue);     
+            parameters.put("weekday_consumption", weekdayValue);
 
-            parameters.put("average_value", averageValue);
-            parameters.put("average_consumption", averageValue);
+            parameters.put("weekend_consumption", weekendValue);
 
-            Double percentChange = 100.0 * Math.abs(((currentValue - averageValue) / averageValue));
+            Double percentChange = 100.0 * Math.abs((weekendValue - weekdayValue) / weekdayValue);
             parameters.put("percent_change", Integer.valueOf(percentChange.intValue()));
-
-            int dow = dayOfWeek.toInteger();
-            parameters.put("day", refDate.withDayOfWeek(dow).toDate());
-            parameters.put("day_of_week", dayOfWeek);
 
             return parameters;
         }
@@ -174,7 +144,7 @@ public class InsightB3 extends AbstractRecommendationResolver
         final double F = 0.6; // a threshold ratio of non-nulls for collected values
         final DateTime targetDate = EnumTimeUnit.WEEK.startOf(refDate.minusWeeks(1));
         final DateTimeZone tz = refDate.getZone();
-        final int N = 9; // number of weeks to examine
+        final int N = 8; // number of weeks to examine
         final double dailyThreshold = config.getVolumeThreshold(deviceType, EnumTimeUnit.DAY);
         
         // Build a common part of a data-service query
@@ -189,12 +159,11 @@ public class InsightB3 extends AbstractRecommendationResolver
             .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
             .sum();
         
-        // Initialize sums for each day of week, and sum for all days
+        // Initialize sums for working/weekend days
 
-        Map<EnumDayOfWeek, Sum> sumPerDay = new EnumMap<>(EnumDayOfWeek.class);
-        for (EnumDayOfWeek day: EnumDayOfWeek.values())
-            sumPerDay.put(day, new Sum());
-        Sum sum = new Sum();
+        Map<EnumDayOfWeek.Type, Sum> sumPerType = new EnumMap<>(EnumDayOfWeek.Type.class);
+        sumPerType.put(EnumDayOfWeek.Type.WEEKDAY, new Sum());
+        sumPerType.put(EnumDayOfWeek.Type.WEEKEND, new Sum());
         
         // Fetch data for N past weeks
 
@@ -213,67 +182,43 @@ public class InsightB3 extends AbstractRecommendationResolver
             FluentIterable<Point> points = FluentIterable
                 .of(series.iterPoints(EnumDataField.VOLUME, EnumMetric.SUM))
                 .filter(Point.betweenTime(start, end));
-            // Update partial sums for each day of week
+            // Update partial sums for each type (working/weekend day)
             for (Point p: points) {
                 DateTime t = p.getTimestamp().toDateTime(tz);
                 double value = p.getValue();
                 EnumDayOfWeek day = EnumDayOfWeek.valueOf(t.getDayOfWeek());
-                sumPerDay.get(day).increment(value);
-                sum.increment(value);
+                sumPerType.get(day.getType()).increment(value);
             }
         }
         
-        // Do we have sufficient data for each day?
+        // Do we have sufficient data?
 
-        boolean sufficient = true;
-        for (EnumDayOfWeek day: EnumDayOfWeek.values())
-            if (sumPerDay.get(day).getN() < N * F) {
-                sufficient = false;
-                break;
-            }
-        if (!sufficient)
+        Sum weekdaySum = sumPerType.get(EnumDayOfWeek.Type.WEEKDAY);
+        Sum weekendSum = sumPerType.get(EnumDayOfWeek.Type.WEEKEND);
+
+        final int N1 = (int) (N * F);
+        if (weekdaySum.getN() < 5 * N1 || weekendSum.getN() < 2 * N1)
             return Collections.emptyList();
         
-        // Compute average daily consumption for each day-of-week; Find peak days
+        // Compute average for each type (working/weekend) day
 
-        double minOfDay = Double.POSITIVE_INFINITY, maxOfDay = Double.NEGATIVE_INFINITY;
-        EnumDayOfWeek dayMin = null, dayMax = null;
-        for (EnumDayOfWeek day: EnumDayOfWeek.values()) {
-            Sum sy = sumPerDay.get(day);
-            double y = sy.getResult() / sy.getN();
-            if (y < minOfDay) {
-                minOfDay = y;
-                dayMin = day;
-            }
-            if (y > maxOfDay) {
-                maxOfDay = y;
-                dayMax = day;
-            }
-        }
-
-        if (maxOfDay < dailyThreshold)
-            return Collections.emptyList(); // not reliable; overall consumption is too low
-     
-        // Compute average daily consumption for all days
-
-        double avg = sum.getResult() / sum.getN();
-
-        // Produce 2 insights, one for each peak (min, max)
+        double weekdayAverage = weekdaySum.getResult() / weekdaySum.getN();
+        double weekendAverage = weekendSum.getResult() / weekendSum.getN();
+        if (weekdayAverage < dailyThreshold && weekendAverage < dailyThreshold)
+            return Collections.emptyList(); // not reliable; both parts have too low consumption
 
         debug(
             "%s/%s: Computed consumption for %d weeks to %s: " +
-                "min=%.2f dayMin=%s - max=%.2f dayMax=%s - average=%.2f",
+                "weekday-average=%.2f weekend-average=%.2f",
              accountKey, deviceType, N, targetDate.plusWeeks(1).toString("dd/MM/YYYY"),
-             minOfDay, dayMin, maxOfDay, dayMax, avg);
-
-        ParameterizedTemplate p1 = 
-            new Parameters(refDate, deviceType, minOfDay, avg, dayMin);
-        ParameterizedTemplate p2 =
-            new Parameters(refDate, deviceType, maxOfDay, avg, dayMax);
+             weekdayAverage, weekendAverage);
         
-        return Arrays.<MessageResolutionStatus<ParameterizedTemplate>>asList(
-            new SimpleMessageResolutionStatus<>(true, p1),
-            new SimpleMessageResolutionStatus<>(true, p2)
-        );
+        ParameterizedTemplate parameterizedTemplate =
+            new Parameters(refDate, deviceType, weekdayAverage, weekendAverage);
+        MessageResolutionStatus<ParameterizedTemplate> result =
+            new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
+        
+        return Collections.singletonList(result);
     }
+
 }

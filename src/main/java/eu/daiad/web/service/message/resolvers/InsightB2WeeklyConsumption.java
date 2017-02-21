@@ -1,19 +1,20 @@
 package eu.daiad.web.service.message.resolvers;
 
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import eu.daiad.web.annotate.message.MessageGenerator;
+import eu.daiad.web.model.EnumDayOfWeek;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -41,16 +43,18 @@ import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractRecommendationResolver;
 
-@MessageGenerator(period = "P1D")
+@MessageGenerator(period = "P1W", dayOfWeek = EnumDayOfWeek.MONDAY, maxPerWeek = 1) 
 @Component
 @Scope("prototype")
-public class InsightA2 extends AbstractRecommendationResolver
+public class InsightB2WeeklyConsumption extends AbstractRecommendationResolver
 {
+    public static final double CHANGE_PERCENTAGE_THRESHOLD = 60.0;
+    
     public static class Parameters extends Message.AbstractParameters
         implements ParameterizedTemplate
     {
-        /** A minimum value for daily volume consumption */
-        private static final String MIN_VALUE = "1E-1"; 
+        /** A minimum value for weekly volume consumption */
+        private static final String MIN_VALUE = "1E+1"; 
 
         @NotNull
         @DecimalMin(MIN_VALUE)
@@ -58,7 +62,7 @@ public class InsightA2 extends AbstractRecommendationResolver
 
         @NotNull
         @DecimalMin(MIN_VALUE)
-        private Double averageValue;
+        private Double previousValue;
 
         public Parameters()
         {
@@ -66,11 +70,11 @@ public class InsightA2 extends AbstractRecommendationResolver
         }
 
         public Parameters(
-            DateTime refDate, EnumDeviceType deviceType, double currentValue, double averageValue)
+            DateTime refDate, EnumDeviceType deviceType, double currentValue, double previousValue)
         {
             super(refDate, deviceType);
-            this.averageValue = averageValue;
             this.currentValue = currentValue;
+            this.previousValue = previousValue;
         }
 
         @JsonProperty("currentValue")
@@ -85,16 +89,25 @@ public class InsightA2 extends AbstractRecommendationResolver
             return currentValue;
         }
 
-        @JsonProperty("averageValue")
-        public void setAverageValue(double y)
+        @JsonProperty("previousValue")
+        public void setPreviousValue(double y)
         {
-            this.averageValue = y;
+            this.previousValue = y;
         }
 
-        @JsonProperty("averageValue")
-        public Double getAverageValue()
+        @JsonProperty("previousValue")
+        public Double getPreviousValue()
         {
-            return averageValue;
+            return previousValue;
+        }
+
+        @JsonIgnore
+        @Override
+        public EnumRecommendationTemplate getTemplate()
+        {
+            return (previousValue < currentValue)?
+                EnumRecommendationTemplate.INSIGHT_B2_WEEKLY_PREV_CONSUMPTION_INCR:
+                EnumRecommendationTemplate.INSIGHT_B2_WEEKLY_PREV_CONSUMPTION_DECR;            
         }
 
         @JsonIgnore
@@ -106,23 +119,13 @@ public class InsightA2 extends AbstractRecommendationResolver
             parameters.put("value", currentValue);
             parameters.put("consumption", currentValue);     
 
-            parameters.put("average_value", averageValue);
-            parameters.put("average_consumption", averageValue);
+            parameters.put("previous_value", previousValue);
+            parameters.put("previous_consumption", previousValue);
 
-            Double percentChange = 100.0 * Math.abs(((currentValue - averageValue) / averageValue));
+            Double percentChange = 100.0 * Math.abs(((currentValue - previousValue) / previousValue));
             parameters.put("percent_change", Integer.valueOf(percentChange.intValue()));
 
             return parameters;
-        }
-
-        @JsonIgnore
-        @Override
-        public EnumRecommendationTemplate getTemplate()
-        {
-            if (averageValue <= currentValue)
-                return EnumRecommendationTemplate.INSIGHT_A2_DAILY_CONSUMPTION_INCR;
-            else 
-                return EnumRecommendationTemplate.INSIGHT_A2_DAILY_CONSUMPTION_DECR;
         }
 
         @Override
@@ -139,10 +142,11 @@ public class InsightA2 extends AbstractRecommendationResolver
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
-        final double K = 1.70;  // a threshold (z-score) of significant change
-        final int N = 40;       // number of past days to examine
-        final double F = 0.6;   // a threshold ratio of non-nulls for collected values
-        final double dailyThreshold = config.getVolumeThreshold(deviceType, EnumTimeUnit.DAY);
+        final DateTime targetDate = refDate.minusWeeks(1) // target previous week 
+            .withDayOfWeek(DateTimeConstants.MONDAY)
+            .withTimeAtStartOfDay();
+        
+        final double threshold = config.getVolumeThreshold(deviceType, EnumTimeUnit.WEEK);
         
         // Build a common part of a data-service query
 
@@ -155,57 +159,44 @@ public class InsightA2 extends AbstractRecommendationResolver
             .user("user", accountKey)
             .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
             .sum();
+            
+        // Compute for target period
 
-        // Compute for target day
-        
-        DateTime start = refDate.withTimeAtStartOfDay();
-        
         query = queryBuilder
-            .sliding(start, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+            .sliding(targetDate, +1, EnumTimeUnit.WEEK, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
-        Double targetValue = (series != null)? 
+        Double targetValue = (series != null)?
             series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
-        if (targetValue == null || targetValue < dailyThreshold)
+        if (targetValue == null || targetValue < threshold)
             return Collections.emptyList(); // nothing to compare to
-        
-        // Compute for past N days
 
-        SummaryStatistics summary = new SummaryStatistics();
-        for (int i = 0; i < N; i++) {
-            start = start.minusDays(1);
-            query = queryBuilder
-                .sliding(start, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
-                .build();
-            queryResponse = dataService.execute(query);
-            series = queryResponse.getFacade(deviceType);
-            Double val = (series != null)? 
-                series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
-            if (val != null)
-                summary.addValue(val);
-        }
-        if (summary.getN() < N * F)
-            return Collections.emptyList(); // too few values
-        
-        // Seems we have sufficient data for the past days
+        // Compute for previous period
 
-        double averageValue = summary.getMean();
-        if (averageValue < dailyThreshold)
-            return Collections.emptyList(); // not reliable; consumption is too low
+        query = queryBuilder
+            .sliding(targetDate.minusWeeks(1), +1, EnumTimeUnit.WEEK, EnumTimeAggregation.ALL)
+            .build();
+        queryResponse = dataService.execute(query);
+        series = queryResponse.getFacade(deviceType);
+        Double previousValue = (series != null)? 
+            series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+        if (previousValue == null || previousValue < threshold)
+            return Collections.emptyList(); // nothing to compare to
+            
+        // Seems we have sufficient data
 
-        double sd = Math.sqrt(summary.getPopulationVariance());
-        double normValue = (sd > 0)? ((targetValue - averageValue) / sd) : Double.POSITIVE_INFINITY;
-        double score = (sd > 0)? (Math.abs(normValue) / (2 * K)) : Double.POSITIVE_INFINITY;
+        double percentChange = 100.0 * (targetValue - previousValue) / previousValue;
+        double score = Math.abs(percentChange) / (2 * CHANGE_PERCENTAGE_THRESHOLD);
 
         debug(
-            "%s/%s: Computed consumption for period P%dD to %s: " +
-                "%.2f μ=%.2f σ=%.2f x*=%.2f score=%.2f",
-             accountKey, deviceType, N, refDate.toString("dd/MM/YYYY"),
-             targetValue, averageValue, sd, normValue, score);
-        
+            "%s/%s: Computed consumption for previous P1W of %s: " +
+                "%.2f previous=%.2f change=%.2f%% score=%.2f",
+            accountKey, deviceType, targetDate.toString("dd/MM/YYYY"),
+            targetValue, previousValue, percentChange, score);
+
         ParameterizedTemplate parameterizedTemplate = 
-            new Parameters(refDate, deviceType, targetValue, averageValue);
+            new Parameters(refDate, deviceType, targetValue, previousValue);
         MessageResolutionStatus<ParameterizedTemplate> result = 
             new SimpleMessageResolutionStatus<>(score, parameterizedTemplate);
         return Collections.singletonList(result);

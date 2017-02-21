@@ -163,7 +163,8 @@ public class AlertDailyWaterBudget extends AbstractAlertResolver
         public EnumAlertTemplate getTemplate()
         {
             return (deviceType == EnumDeviceType.AMPHIRO)?
-                EnumAlertTemplate.NEAR_DAILY_SHOWER_BUDGET: EnumAlertTemplate.NEAR_DAILY_WATER_BUDGET;
+                EnumAlertTemplate.NEAR_DAILY_SHOWER_BUDGET:
+                EnumAlertTemplate.NEAR_DAILY_WATER_BUDGET;
         }
     }
     
@@ -185,7 +186,8 @@ public class AlertDailyWaterBudget extends AbstractAlertResolver
         public EnumAlertTemplate getTemplate()
         {
             return (deviceType == EnumDeviceType.AMPHIRO)?
-                EnumAlertTemplate.REACHED_DAILY_SHOWER_BUDGET: EnumAlertTemplate.REACHED_DAILY_WATER_BUDGET;
+                EnumAlertTemplate.REACHED_DAILY_SHOWER_BUDGET:
+                EnumAlertTemplate.REACHED_DAILY_WATER_BUDGET;
         }
     }
     

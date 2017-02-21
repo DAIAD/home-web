@@ -58,7 +58,7 @@ import eu.daiad.web.service.message.AbstractRecommendationResolver;
 @MessageGenerator(period = "P1D")
 @Component
 @Scope("prototype")
-public class InsightA4 extends AbstractRecommendationResolver
+public class InsightA4PartOfDaySlice extends AbstractRecommendationResolver
 {  
     public static class Parameters extends Message.AbstractParameters
         implements ParameterizedTemplate
