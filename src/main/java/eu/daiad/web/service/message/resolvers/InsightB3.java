@@ -1,10 +1,8 @@
 package eu.daiad.web.service.message.resolvers;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -61,7 +59,7 @@ public class InsightB3 extends AbstractRecommendationResolver
         implements ParameterizedTemplate
     {        
         /** A minimum value for daily volume consumption */
-        private static final String MIN_VALUE = "1E-3"; 
+        private static final String MIN_VALUE = "1E-1"; 
 
         /** The average daily consumption for the particular day-of-week */
         @NotNull
@@ -176,7 +174,7 @@ public class InsightB3 extends AbstractRecommendationResolver
         final double F = 0.6; // a threshold ratio of non-nulls for collected values
         final DateTime targetDate = EnumTimeUnit.WEEK.startOf(refDate.minusWeeks(1));
         final DateTimeZone tz = refDate.getZone();
-        final int N = 8; // number of weeks to examine
+        final int N = 9; // number of weeks to examine
         final double dailyThreshold = config.getVolumeThreshold(deviceType, EnumTimeUnit.DAY);
         
         // Build a common part of a data-service query

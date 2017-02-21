@@ -51,7 +51,7 @@ import eu.daiad.web.service.message.AbstractRecommendationResolver;
 @Scope("prototype")
 public class InsightB2 extends AbstractRecommendationResolver
 {
-    public static final double CHANGE_PERCENTAGE_THRESHOLD = 40.0;
+    public static final double CHANGE_PERCENTAGE_THRESHOLD = 50.0;
     
     public static class Parameters extends Message.AbstractParameters
         implements ParameterizedTemplate
@@ -239,7 +239,7 @@ public class InsightB2 extends AbstractRecommendationResolver
 
             debug(
                 "%s/%s: Computed consumption for previous period %s of %s: " +
-                    "=%.2f previous=%.2f change=%.2f%% score=%.2f",
+                    "%.2f previous=%.2f change=%.2f%% score=%.2f",
                  accountKey, deviceType, period, targetDate.toString("dd/MM/YYYY"),
                  targetValue, previousValue, percentChange, score);
 

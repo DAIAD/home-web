@@ -50,13 +50,13 @@ import eu.daiad.web.service.message.AbstractRecommendationResolver;
 @Scope("prototype")
 public class InsightA3 extends AbstractRecommendationResolver
 {
-    public static final double CHANGE_PERCENTAGE_THRESHOLD = 40.0;
+    public static final double CHANGE_PERCENTAGE_THRESHOLD = 50.0;
     
     public static class Parameters extends Message.AbstractParameters
         implements ParameterizedTemplate
     {
         /** A minimum value for daily volume consumption */
-        private static final String MIN_VALUE = "1E-3"; 
+        private static final String MIN_VALUE = "1E-1"; 
 
         @NotNull
         @DecimalMin(MIN_VALUE)
@@ -245,7 +245,7 @@ public class InsightA3 extends AbstractRecommendationResolver
             double score = Math.abs(percentChange) / (2 * CHANGE_PERCENTAGE_THRESHOLD);
 
             debug(
-                "%s/%s: Computed consumption at %s of last %d days to %s: %.2f μ=%.2f score=%.2f",
+                "%s/%s: Computed consumption at %s of period P%dD to %s: %.2f μ=%.2f score=%.2f",
                  accountKey, deviceType, partOfDay, N, refDate.toString("dd/MM/YYYY"),
                  targetValue, averageValue, score);
             

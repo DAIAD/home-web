@@ -311,6 +311,9 @@ public class AccountAnnouncementRepository extends BaseRepository
         if (message == null)
             return null;
 
+        if (r.getCreatedOn() != null)
+            message.setCreatedOn(r.getCreatedOn());
+        
         if (r.getAcknowledgedOn() != null)
             message.setAcknowledgedOn(r.getAcknowledgedOn());
 

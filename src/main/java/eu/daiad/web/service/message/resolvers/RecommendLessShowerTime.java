@@ -48,9 +48,9 @@ import eu.daiad.web.service.message.AbstractRecommendationResolver;
 @Scope("prototype")
 public class RecommendLessShowerTime extends AbstractRecommendationResolver
 {
-    public static final double DURATION_HIGH_RATIO = 1.5; 
+    public static final double DURATION_HIGH_RATIO = 1.50; 
     
-    public static final double VOLUME_HIGH_RATIO = 1.1; 
+    public static final double VOLUME_HIGH_RATIO = 1.15; 
     
     private static final Set<EnumDeviceType> supportedDevices = EnumSet.of(EnumDeviceType.AMPHIRO);
 

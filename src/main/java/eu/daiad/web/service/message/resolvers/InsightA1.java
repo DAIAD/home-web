@@ -51,7 +51,7 @@ public class InsightA1 extends AbstractRecommendationResolver
         implements ParameterizedTemplate
     {
         /** A minimum value for daily volume consumption */
-        private static final String MIN_VALUE = "1E-3"; 
+        private static final String MIN_VALUE = "1E-1"; 
         
         @NotNull
         @DecimalMin(MIN_VALUE)
@@ -147,8 +147,8 @@ public class InsightA1 extends AbstractRecommendationResolver
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
-        final double K = 1.28;  // a threshold (in units of standard deviation) of significant change
-        final int N = 12;       // number of past weeks to examine
+        final double K = 1.70;  // a threshold (z-score) of significant change
+        final int N = 15;       // number of past weeks to examine
         final double F = 0.5;   // a threshold ratio of non-nulls for collected values
         final double dailyThreshold = config.getVolumeThreshold(deviceType, EnumTimeUnit.DAY);
         
@@ -207,7 +207,7 @@ public class InsightA1 extends AbstractRecommendationResolver
         double score = (sd > 0)? (Math.abs(normValue) / (2 * K)) : Double.POSITIVE_INFINITY;
 
         debug(
-            "%s/%s: Computed consumption for %s of last %d weeks to %s:" +
+            "%s/%s: Computed consumption for %s of period P%dW to %s: " +
                 "%.2f μ=%.2f σ=%.2f x*=%.2f score=%.2f",
              accountKey, deviceType, refDate.toString("EEEE"), N, refDate.toString("dd/MM/YYYY"),
              targetValue, averageValue, sd, normValue, score);

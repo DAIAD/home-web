@@ -328,8 +328,9 @@ public class DefaultMessageGeneratorService
             boolean valid = constraintViolations.isEmpty();
             if (!valid) {
                 for (ConstraintViolation<P> c: constraintViolations) {
-                    info("Failed validation for parameterized template %s: at %s: %s",
-                        p, c.getPropertyPath(), c.getMessage());
+                    warn("Failed validation for parameterized template %s: at %s: %s",
+                        p.getClass().getName(),
+                        c.getPropertyPath(), c.getMessage());
                 }
             }
             return valid;
@@ -410,7 +411,8 @@ public class DefaultMessageGeneratorService
                 return; // not enabled as a resolver, or should not execute yet
             
             resolver.setup(config, this);
-            info("About to resolve recommendations with %s (%s)", resolverName, resolver);
+            info("About to resolve recommendations with %s (%s)", 
+                resolverName, resolver.getClass().getName());
             
             DateTime started = DateTime.now();
             RecommendationResolverExecutionEntity resolverExecutionEntity = 
@@ -423,7 +425,7 @@ public class DefaultMessageGeneratorService
                 for (UUID accountKey: accountKeys.filter(isDevicePresent(deviceType))) {
                     // Filter by checking per-account limits (throttle)
                     if (hasExceededPerAccountLimits(resolverName, annotation, accountKey, deviceType)) {
-                        info("Skipping resolver %s for account %s as it exceeded limits", 
+                        info("Skipping resolver %s for account %s: Too many messages", 
                             resolverName, accountKey);
                         continue;
                     }
@@ -497,13 +499,13 @@ public class DefaultMessageGeneratorService
             Period period = Period.parse(resolverAnnotation.period());
             DateTime t0 = refDate.minus(period).plusMillis(1); // just after refDate - P
             
-            List<RecommendationResolverExecutionEntity> executions = 
-                resolverExecutionRepository.findByName(resolverName, new Interval(t0, refDate));            
-            return executions.isEmpty();
+            List<Integer> xids = 
+                resolverExecutionRepository.findIdByName(resolverName, new Interval(t0, refDate));            
+            return xids.isEmpty();
         }
         
         /**
-         * Decide if a resolver has exceeded per-account limits (maxPerWeek, maxPerMonth).
+         * Decide if a resolver has exceeded per-account limits (maxPerDay, maxPerWeek, maxPerMonth).
          * 
          * @param resolverName
          * @param resolverAnnotation
@@ -579,7 +581,8 @@ public class DefaultMessageGeneratorService
                 return; // not enabled as a resolver, or should not execute yet
             
             resolver.setup(config, this);
-            info("About to resolve alerts with %s (%s)", resolverName, resolver);
+            info("About to resolve alerts with %s (%s)", 
+                resolverName, resolver.getClass().getName());
             
             DateTime started = DateTime.now();
             AlertResolverExecutionEntity resolverExecutionEntity = 
@@ -592,7 +595,7 @@ public class DefaultMessageGeneratorService
                 for (UUID accountKey: accountKeys.filter(isDevicePresent(deviceType))) {
                     // Filter by checking per-account limits (throttle)
                     if (hasExceededPerAccountLimits(resolverName, annotation, accountKey, deviceType)) {
-                        info("Skipping resolver %s for account %s as it exceeded limits",
+                        info("Skipping resolver %s for account %s: Too many messages",
                             resolverName, accountKey);
                         continue;
                     }
@@ -635,7 +638,7 @@ public class DefaultMessageGeneratorService
         }
         
         /**
-         * Decide if a resolver has exceeded per-account limits (maxPerWeek, maxPerMonth).
+         * Decide if a resolver has exceeded per-account limits (maxPerDay, maxPerWeek, maxPerMonth).
          * 
          * @param resolverName
          * @param resolverAnnotation
@@ -711,9 +714,9 @@ public class DefaultMessageGeneratorService
             Period period = Period.parse(resolverAnnotation.period());
             DateTime t0 = refDate.minus(period).plusMillis(1); // just after refDate - P
             
-            List<AlertResolverExecutionEntity> executions = 
-                resolverExecutionRepository.findByName(resolverName, new Interval(t0, refDate));         
-            return executions.isEmpty();
+            List<Integer> xids = 
+                resolverExecutionRepository.findIdByName(resolverName, new Interval(t0, refDate));         
+            return xids.isEmpty();
         }
 	    
 	}

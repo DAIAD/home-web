@@ -124,11 +124,11 @@ public class AlertWaterSaver extends AbstractAlertResolver
 
         @JsonIgnore
         @NotNull
-        @DecimalMin("3.0")
+        @DecimalMin("5.0")
         public Double getPercentChange()
         {
             return (value != null && previousValue != null)?
-                ( 100.0 * (value - previousValue) / previousValue) : null;
+                ( 100.0 * (previousValue - value) / previousValue) : null;
         }
         
         @Override

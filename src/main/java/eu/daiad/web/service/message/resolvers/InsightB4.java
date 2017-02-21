@@ -55,7 +55,7 @@ public class InsightB4 extends AbstractRecommendationResolver
         implements ParameterizedTemplate
     {
         /** A minimum value for daily volume consumption */
-        private static final String MIN_VALUE = "1E-3"; 
+        private static final String MIN_VALUE = "1E-1"; 
 
         @NotNull
         @DecimalMin(MIN_VALUE)

@@ -58,6 +58,10 @@ import eu.daiad.web.service.message.AbstractAlertResolver;
 @Scope("prototype")
 public class AlertReducedWaterConsumption extends AbstractAlertResolver
 {
+    public static final double CHANGE_PERCENTAGE_THRESHOLD = 20.0;
+    
+    public static final double CHANGE_PERCENTAGE_FLOOR = 60.0;
+    
     @Autowired
     IDataService dataService;
     
@@ -115,7 +119,7 @@ public class AlertReducedWaterConsumption extends AbstractAlertResolver
         public Double getPercentChange()
         {
             return (value == null || initialValue == null)? 
-                null : (100.0 * ((value - initialValue) / initialValue));
+                null : (100.0 * ((initialValue - value) / initialValue));
         }
         
         @Override
@@ -136,8 +140,7 @@ public class AlertReducedWaterConsumption extends AbstractAlertResolver
             parameters.put("initial_value", initialValue);
             parameters.put("initial_consumption", initialValue);
             
-            Double percentChange = Math.abs(getPercentChange());
-            parameters.put("percent_change", Integer.valueOf(percentChange.intValue()));
+            parameters.put("percent_change", Integer.valueOf(getPercentChange().intValue()));
             
             return parameters;
         }
@@ -155,6 +158,8 @@ public class AlertReducedWaterConsumption extends AbstractAlertResolver
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {  
+        final int N = 14; // number of days to examine
+        
         DataQuery query = null;
         DataQueryResponse queryResponse = null;
         SeriesFacade series = null;
@@ -170,27 +175,25 @@ public class AlertReducedWaterConsumption extends AbstractAlertResolver
 
         DateTime registerDate = account.getCreatedOn().withTimeAtStartOfDay();
         query = queryBuilder
-            .sliding(registerDate, +7,  EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+            .sliding(registerDate, +N,  EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
-        Double c0 = (series != null)? 
-            series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+        Double c0 = (series != null)? series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
         if (c0 == null)
             return Collections.emptyList();
 
         query = queryBuilder
-            .sliding(refDate.withTimeAtStartOfDay(), -7,  EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+            .sliding(refDate.withTimeAtStartOfDay(), -N,  EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
             .build();
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
-        Double c1 = (series != null)? 
-            series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+        Double c1 = (series != null)? series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
         if (c1 == null)
             return Collections.emptyList();
 
         Double percentChange = 100 * ((c0 - c1) / c0);
-        if (percentChange > 10 && percentChange < 60) {
+        if (percentChange > CHANGE_PERCENTAGE_THRESHOLD && percentChange < CHANGE_PERCENTAGE_FLOOR) {
             ParameterizedTemplate parameterizedTemplate = new Parameters(refDate, deviceType, c1, c0); 
             MessageResolutionStatus<ParameterizedTemplate> result = 
                 new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);

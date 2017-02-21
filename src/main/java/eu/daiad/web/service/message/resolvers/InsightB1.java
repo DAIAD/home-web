@@ -3,7 +3,6 @@ package eu.daiad.web.service.message.resolvers;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -185,8 +184,10 @@ public class InsightB1 extends AbstractRecommendationResolver
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
-        final double K = 1.28;  // a threshold (in units of standard deviation) of significant change
-        final double F = 0.6;   // a threshold ratio of non-nulls for collected values
+        final double K = 1.40;  // a threshold (z-score) of significant change
+        final double F = 0.60;  // a threshold ratio of non-nulls for collected values
+        
+        final Period P = Period.months(2); // the whole period under examination
         
         // Build a common part of a data-service query
 
@@ -207,8 +208,7 @@ public class InsightB1 extends AbstractRecommendationResolver
         for (EnumTimeUnit timeUnit: Arrays.asList(EnumTimeUnit.WEEK, EnumTimeUnit.MONTH)) {
             final Period period = timeUnit.toPeriod();
             final DateTime targetDate = // start at most recent period-sized past interval 
-                timeUnit.startOf(refDate.minus(period));
-            final Period P = Period.months(+2); // the whole period under examination
+                timeUnit.startOf(refDate.minus(period)); 
             final int N = // number of unit-sized periods
                 timeUnit.numParts(new Interval(targetDate.minus(P), targetDate));
             final double threshold = config.getVolumeThreshold(deviceType, timeUnit);

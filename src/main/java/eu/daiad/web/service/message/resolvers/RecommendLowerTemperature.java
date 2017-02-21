@@ -53,7 +53,9 @@ import eu.daiad.web.service.message.AbstractRecommendationResolver;
 @Scope("prototype")
 public class RecommendLowerTemperature extends AbstractRecommendationResolver
 {
-    public static final double TEMPERATURE_HIGH_RATIO = 1.1; 
+    public static final double TEMPERATURE_HIGH_RATIO = 1.12;
+    
+    public static final double VOLUME_THRESHOLD_RATIO = 2.50;
         
     private static final Set<EnumDeviceType> supportedDevices = EnumSet.of(EnumDeviceType.AMPHIRO);
     
@@ -143,6 +145,13 @@ public class RecommendLowerTemperature extends AbstractRecommendationResolver
                 BigDecimal.valueOf(Math.round(annualSavings * 1E+2), +2));
         }
         
+        @JsonIgnore
+        @DecimalMin("5.0")
+        public Double getPercentAboveTemperature()
+        {
+            return 100.0 * (userAverageTemperature - averageTemperature) / averageTemperature;
+        }
+        
         @Override
         public Parameters withLocale(Locale target, ICurrencyRateService currencyRate)
         {
@@ -164,8 +173,7 @@ public class RecommendLowerTemperature extends AbstractRecommendationResolver
             parameters.put("annual_savings_1", annualSavings);
             parameters.put("annual_savings_2", annualSavings.multiply(BigDecimal.valueOf(2L)));
             
-            parameters.put("percent_above_temperature", Double.valueOf(
-                100.0 * (userAverageTemperature - averageTemperature) / averageTemperature));
+            parameters.put("percent_above_temperature", getPercentAboveTemperature());
             
             return parameters;
         }
@@ -223,9 +231,16 @@ public class RecommendLowerTemperature extends AbstractRecommendationResolver
         if (series == null || series.isEmpty())
             return Collections.emptyList();
         
+        double thresholdConsumption = period.getMonths() *
+            config.getVolumeThreshold(EnumDeviceType.AMPHIRO, EnumTimeUnit.MONTH);
+        
         double userConsumption = series.get(EnumDataField.VOLUME, EnumMetric.SUM);
         double userAverageTemperature = series.get(EnumDataField.TEMPERATURE, EnumMetric.AVERAGE);
-        if (userAverageTemperature > averageTemperature * TEMPERATURE_HIGH_RATIO) {
+        
+        boolean fire = 
+            (userAverageTemperature > TEMPERATURE_HIGH_RATIO * averageTemperature) &&
+            (userConsumption > VOLUME_THRESHOLD_RATIO * thresholdConsumption);
+        if (fire) {
             // Get a rough estimate for annual money savings if temperature is 1 degree lower
             final int numMonthsPerYear = 12;
             final double numPeriodsPerYear = Double.valueOf(numMonthsPerYear) / period.getMonths();
