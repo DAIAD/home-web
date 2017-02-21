@@ -5,7 +5,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import javax.persistence.Basic;
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -47,11 +46,11 @@ public class GroupEntity {
     @Column(name = "row_version")
     private long rowVersion;
 
-    @ManyToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "utility_id", nullable = false)
     private UtilityEntity utility;
 
-    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id")
     private Set<GroupMemberEntity> members = new HashSet<GroupMemberEntity>();
 

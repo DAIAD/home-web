@@ -18,7 +18,7 @@ public class Tip extends Message
     private String categoryName;
 
     @JsonIgnore
-    private String imageEncoded;
+    private byte[] image;
 
     private String imageMimeType;
 
@@ -75,21 +75,15 @@ public class Tip extends Message
     }
     
     @JsonProperty("imageEncoded")
-    public String getImageEncoded() 
+    public byte[] getImage() 
     {
-        return imageEncoded;
+        return image;
     }
 
     @JsonProperty("imageEncoded")
-    public void setImageEncoded(String imageEncoded) 
+    public void setImage(byte[] image) 
     {
-        this.imageEncoded = imageEncoded;
-    }
-    
-    @JsonIgnore
-    public void setImageEncoded(byte[] imageData) 
-    {
-        this.imageEncoded = new String(Base64.encode(imageData), Charset.forName("ISO-8859-1"));
+        this.image = image;
     }
 
     public String getImageLink() {

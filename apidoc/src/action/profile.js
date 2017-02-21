@@ -1,7 +1,7 @@
 /**
  * @api {post} action/profile/deactivate Deactivate account
  * @apiVersion 0.0.1
- * @apiName Deactivate 
+ * @apiName Deactivate
  * @apiGroup Profile
  * @apiPermission ROLE_UTILITY_ADMIN, ROLE_SYSTEM_ADMIN
  *
@@ -392,7 +392,6 @@ function saveHousehold() { return; }
  * @apiSuccess (Comparison) {Object[]}   monthlyConsumtpion     Array of <code>MonthlyConsumption</code> objects with monthly consumption data for the last 6 months.
  * @apiSuccess (Comparison) {Object[]}   dailyConsumtpion       Array of <code>DailyConsumption</code> objects with daily consumption data for the last month.
  *
- * @apiSuccess (WaterIQ)    {Object[]}   user                   Array of <code>WaterIQRanking</code> objects.
  * @apiSuccess (WaterIQ)    {Object}     user                   User ranking data.
  * @apiSuccess (WaterIQ)    {Number}     user.volume            User water consumption per household member.
  * @apiSuccess (WaterIQ)    {String}     user.value             User ranking.

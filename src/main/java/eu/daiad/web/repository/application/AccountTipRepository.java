@@ -252,16 +252,31 @@ public class AccountTipRepository extends BaseRepository
     }
 
     @Override
+    public AccountTipEntity createWith(AccountEntity account, TipEntity tip)
+    {
+        // Ensure we have persistent entities
+        
+        if (!entityManager.contains(account))
+            account = entityManager.find(AccountEntity.class, account.getId());
+        
+        if (!entityManager.contains(tip))
+            tip = entityManager.find(TipEntity.class, tip.getId());
+        
+        // Create
+        
+        AccountTipEntity e = new AccountTipEntity(account, tip);
+        return create(e);
+    }
+    
+    @Override
     public AccountTipEntity createWith(AccountEntity account, int tipId)
     {
         // Ensure we have a persistent AccountEntity instance
         if (!entityManager.contains(account))
             account = entityManager.find(AccountEntity.class, account.getId());
 
-        TipEntity recommendation =
-            entityManager.find(TipEntity.class, tipId);
-        AccountTipEntity e =
-            new AccountTipEntity(account, recommendation);
+        TipEntity tip = entityManager.find(TipEntity.class, tipId);
+        AccountTipEntity e = new AccountTipEntity(account, tip);
         return create(e);
     }
 
@@ -352,7 +367,7 @@ public class AccountTipRepository extends BaseRepository
         message.setLocale(tipEntity.getLocale());
         message.setTitle(tipEntity.getTitle());
         message.setDescription(tipEntity.getDescription());
-        message.setImageEncoded(tipEntity.getImage());
+        message.setImage(tipEntity.getImage());
         message.setImageMimeType(tipEntity.getImageMimeType());
         message.setImageLink(tipEntity.getImageLink());
         message.setPrompt(tipEntity.getPrompt());

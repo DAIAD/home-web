@@ -1,4 +1,4 @@
-package eu.daiad.web.model;
+package eu.daiad.web.util;
 
 import org.apache.commons.collections4.Transformer;
 

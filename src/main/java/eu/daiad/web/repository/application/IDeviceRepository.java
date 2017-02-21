@@ -14,6 +14,7 @@ import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceConfigurationCollection;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.DeviceUpdateRequest;
+import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
 import eu.daiad.web.model.error.ApplicationException;
 
@@ -43,6 +44,8 @@ public interface IDeviceRepository {
 
     List<Device> getUserDevices(UUID userKey, DeviceRegistrationQuery query) throws ApplicationException;
 
+    List<Device> getUserDevices(UUID userKey, EnumDeviceType deviceType) throws ApplicationException;
+    
     void shareDevice(UUID ownerID, String assigneeUsername, UUID deviceKey, boolean shared) throws ApplicationException;
 
     List<DeviceConfigurationCollection> getConfiguration(UUID userKey, UUID deviceKeys[]) throws ApplicationException;

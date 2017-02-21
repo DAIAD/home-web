@@ -23,6 +23,7 @@ import eu.daiad.web.model.group.EnumGroupType;
 import eu.daiad.web.model.group.Group;
 import eu.daiad.web.model.group.GroupInfoCollectionResponse;
 import eu.daiad.web.model.group.GroupInfoResponse;
+import eu.daiad.web.model.group.GroupMember;
 import eu.daiad.web.model.group.GroupMemberCollectionResponse;
 import eu.daiad.web.model.group.GroupQueryRequest;
 import eu.daiad.web.model.group.GroupQueryResponse;
@@ -178,7 +179,7 @@ public class GroupController extends BaseController {
      * Gets the members of a group.
      *
      * @param key the group key.
-     * @return a collection of {@link GroupMemberInfo}.
+     * @return a collection of {@link GroupMember}.
      */
     @RequestMapping(value = "/action/group/members/{key}", method = RequestMethod.GET, produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
