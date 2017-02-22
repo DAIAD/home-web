@@ -16,13 +16,15 @@
  * @apiParam                            {Object}   credentials            User credentials used for authentication.
  * @apiParam                            {String}   credentials.username   User name
  * @apiParam                            {String}   credentials.password   User password
- * @apiParam                            {Object[]} pagination             Array of <code>DataPagingOptions</code> objects. Each data paging options object contains information about fetching data for a specific type of messages. If more than one option objects are found for a single message type, the first overrides the others.
+ * @apiParam                            {Object[]} messages               Array of <code>Options</code> objects. Each object represents a request for a specific type of messages. If more than one option objects are found for a single message type, the first overrides the others.
  *
- * @apiParam (DataPagingOptions)   {Number}   type                   Message type. Valid values are <code>ALERT</code>, <code>RECOMMENDATION_STATIC</code>, <code>RECOMMENDATION</code> and <code>ANNOUNCEMENT</code>. This parameter is not case sensitive.
- * @apiParam (DataPagingOptions)   {Number}   [index]                Data paging starts from this index. If not set, data paging starts from the first record.
- * @apiParam (DataPagingOptions)   {Number}   [size]                 Number of records to return. If not set, all records are returned.
- * @apiParam (DataPagingOptions)   {Boolean}  [ascending]            <code>true</code> for ascending sorting; Otherwise <code>false</code>. Sorting is performed on the message id field. Sorting on message id field is similar to sorting over creation date. Default value is <code>true</code>.
- * @apiParam (DataPagingOptions)   {Number}   [minMessageId]         Filter data by minimum message id. This option is most useful to the <code>MOBILE</code> client if only the messages after a specific message are required.
+ *
+ * @apiParam (Options)   {String}   type                   Message type. Valid values are <code>ALERT</code>, <code>RECOMMENDATION</code>, <code>TIP</code> and <code>ANNOUNCEMENT</code>. This parameter is not case sensitive.
+ * @apiParam (Options)   {Number}   [minMessageId]         Filter messages by a minimum message id. This option is most useful to the <code>MOBILE</code> client if only the messages after a specific message are required.
+ * @apiParam (Options)   {Object}   [pagination]             Provide data pagination options. 
+ * @apiParam (Options)   {Number}   [pagination.offset]      Start fetching from this index. If not set, data paging starts from the first record.
+ * @apiParam (Options)   {Number}   [pagination.size]        The number of records to return. If not set, all records are returned.
+ * @apiParam (Options)   {Boolean}  [pagination.ascending]   Control ordering of returned records: <code>true</code> for ordering ascending on message id, otherwise <code>false</code>. Sorting is performed on the message id field. Sorting on message id field is equivalent to sorting over creation date. Default value is <code>true</code>.
  *
  *
  * @apiParamExample {json} Request Example
@@ -31,20 +33,30 @@
  *     username: "user@daiad.eu",
  *     password: "****"
  *   },
- *   "pagination": [{
- *     "type": "ALERT",
- *     "index": 1,
- *     "size": 3,
- *     "ascending": true,
- *     "minMessageId": 1453
- *   }]
+ *   "messages": [
+ *      {
+ *         "type": "ALERT",
+ *         "minMessageId": 11233,
+ *         "pagination": {
+ *             "offset": 10,
+ *             "size": 5,
+ *             "ascending": false
+ *         }
+ *      },
+ *      {
+ *         "type": "RECOMMENDATION",
+ *         "minMessageId": 932,
+ *      }
+ *   ]
  * }
+ *
+ *
  *
  * @apiSuccess {Boolean}  success                  <code>true</code> or <code>false</code> indicating success of the operation.
  * @apiSuccess {Object[]} errors                   Empty array of error messages.
  * @apiSuccess {Object[]} alerts                   Array of <code>Alert</code> objects.
- * @apiSuccess {Object[]} recommendations          Array of <code>DynamicRecommendation</code> objects.
- * @apiSuccess {Object[]} tips                     Array of <code>StaticRecommendation</code> objects.
+ * @apiSuccess {Object[]} recommendations          Array of <code>Recommendation</code> objects.
+ * @apiSuccess {Object[]} tips                     Array of <code>Tip</code> objects.
  * @apiSuccess {Object[]} announcements            Array of <code>Announcement</code> objects.
  * @apiSuccess {Number}   totalAlerts              Total number of alerts.
  * @apiSuccess {Number}   totalRecommendations     Total number of recommendations.
@@ -52,116 +64,148 @@
  * @apiSuccess {Number}   totalAnnouncements       Total number of announcements.
  *
  *
- * @apiSuccess (Message) {String} type             Message type. Valid values are <code>ALERT</code>, <code>RECOMMENDATION_STATIC</code>, <code>RECOMMENDATION</code> and <code>ANNOUNCEMENT</code>.
+ * @apiSuccess (Message) {String}  type      Message type. One of <code>ALERT</code>, <code>TIP</code>, <code>RECOMMENDATION</code> and <code>ANNOUNCEMENT</code>.
+ * @apiSuccess (Message) {Number}  id        Message id.
+ * @apiSuccess (Message) {String}  title        Title
+ * @apiSuccess (Message) {Number}  createdOn         Date created timestamp.
+ * @apiSuccess (Message) {Number}  acknowledgedOn    Date acknowledged timestamp. This is the date the user has marked the message as read from the client application.
  *
- * @apiSuccess (Alert extends Message) {Number} id        Message unique id.
- * @apiSuccess (Alert extends Message) {String} alert     Alert type. Valid values are:
- * <br/><code>WATER_LEAK</code>
- * <br/><code>SHOWER_ON</code>
- * <br/><code>WATER_FIXTURES</code>
- * <br/><code>UNUSUAL_ACTIVITY</code>
- * <br/><code>WATER_QUALITY</code>
- * <br/><code>HOT_TEMPERATURE</code>
- * <br/><code>NEAR_DAILY_WATER_BUDGET</code>
- * <br/><code>NEAR_WEEKLY_WATER_BUDGET</code>
- * <br/><code>NEAR_DAILY_SHOWER_BUDGET</code>
- * <br/><code>NEAR_WEEKLY_SHOWER_BUDGET</code>
- * <br/><code>REACHED_DAILY_WATER_BUDGET</code>
- * <br/><code>REACHED_DAILY_SHOWER_BUDGET</code>
- * <br/><code>WATER_CHAMPION</code>
- * <br/><code>SHOWER_CHAMPION</code>
- * <br/><code>TOO_MUCH_WATER_SWM</code>
- * <br/><code>TOO_MUCH_WATER_AMPHIRO</code>
- * <br/><code>TOO_MUCH_ENERGY</code>
- * <br/><code>REDUCED_WATER_USE</code>
- * <br/><code>IMPROVED_SHOWER_EFFICIENCY</code>
- * <br/><code>WATER_EFFICIENCY_LEADER</code>
- * <br/><code>KEEP_UP_SAVING_WATER</code>
- * <br/><code>GOOD_JOB_MONTHLY</code>
- * <br/><code>LITERS_ALREADY_SAVED</code>
- * <br/><code>TOP_25_PERCENT_OF_SAVERS</code>
- * <br/><code>TOP_10_PERCENT_OF_SAVERS</code>
- * <br/><code>DID_YOU_KNOW2</code>
- * <br/><code>DID_YOU_KNOW3</code>
+ * @apiSuccess (Alert extends Message) {String} alertType     Alert type. One of:
+ *   <br/><code>WATER_LEAK</code> 
+ *   <br/><code>SHOWER_ON</code> 
+ *   <br/><code>WATER_FIXTURES</code> 
+ *   <br/><code>UNUSUAL_ACTIVITY</code> 
+ *   <br/><code>WATER_QUALITY</code> 
+ *   <br/><code>HIGH_TEMPERATURE</code> 
+ *   <br/><code>NEAR_DAILY_BUDGET</code> 
+ *   <br/><code>NEAR_WEEKLY_BUDGET</code> 
+ *   <br/><code>REACHED_DAILY_BUDGET</code> 
+ *   <br/><code>REACHED_WEEKLY_BUDGET</code> 
+ *   <br/><code>CHAMPION</code> 
+ *   <br/><code>TOO_MUCH_WATER</code> 
+ *   <br/><code>TOO_MUCH_ENERGY</code> 
+ *   <br/><code>REDUCED_WATER_USE</code> 
+ *   <br/><code>WATER_EFFICIENCY_LEADER</code> 
+ *   <br/><code>KEEP_UP_SAVING_WATER</code> 
+ *   <br/><code>GOOD_JOB_MONTHLY</code> 
+ *   <br/><code>LITERS_ALREADY_SAVED</code> 
+ *   <br/><code>TOP_25_PERCENT_OF_SAVERS</code> 
+ *   <br/><code>TOP_10_PERCENT_OF_SAVERS</code> 
  * @apiSuccess (Alert extends Message) {Number} priority       Message priority.
- * @apiSuccess (Alert extends Message) {String} title          Short description.
  * @apiSuccess (Alert extends Message) {String} description    Long description.
- * @apiSuccess (Alert extends Message) {String} imageLink      Image resource link.
- * @apiSuccess (Alert extends Message) {Number} createdOn      Date created time stamp.
- * @apiSuccess (Alert extends Message) {Number} acknowledgedOn Date acknoledged time stamp. This is the date the user has marked the message as read from the mobile/web application.
+ * @apiSuccess (Alert extends Message) {String} link      A resource (e.g. image) link.
  *
- * @apiSuccess (StaticRecommendation extends Message) {Number}  id                 Message unique id.
- * @apiSuccess (StaticRecommendation extends Message) {Number}  index              Message index.
- * @apiSuccess (StaticRecommendation extends Message) {String}  title              Short description.
- * @apiSuccess (StaticRecommendation extends Message) {String}  description        Long description.
- * @apiSuccess (StaticRecommendation extends Message) {String}  imageEncoded       Base64 encoded image.
- * @apiSuccess (StaticRecommendation extends Message) {String}  imageLink          Image resource link.
- * @apiSuccess (StaticRecommendation extends Message) {String}  prompt             Prompt message.
- * @apiSuccess (StaticRecommendation extends Message) {String}  externalLink       External link.
- * @apiSuccess (StaticRecommendation extends Message) {String}  source             Message source.
- * @apiSuccess (StaticRecommendation extends Message) {Number}  createdOn          Date created time stamp.
- * @apiSuccess (StaticRecommendation extends Message) {Number}  modifiedOn         Date modified time stamp.
- * @apiSuccess (StaticRecommendation extends Message) {Boolean} active             <code>true</code> if message is acrive; Otherwise <code>false</code>.
- * @apiSuccess (StaticRecommendation extends Message) {Number}  acknowledgedOn     Date acknoledged time stamp. This is the date the user has marked the message as read from the mobile/web application.
  *
- * @apiSuccess (DynamicRecommendation extends Message) {Number} id                Message unique id.
- * @apiSuccess (DynamicRecommendation extends Message) {String} recommendation    Recommendation type. Valid values are:
- * <br/><code>LESS_SHOWER_TIME</code>
- * <br/><code>LOWER_TEMPERATURE</code>
- * <br/><code>LOWER_FLOW</code>
- * <br/><code>CHANGE_SHOWERHEAD</code>
- * <br/><code>SHAMPOO_CHANGE</code>
- * <br/><code>REDUCE_FLOW_WHEN_NOT_NEEDED</code>
- * @apiSuccess (DynamicRecommendation extends Message) {Number} priority          Message priority.
- * @apiSuccess (DynamicRecommendation extends Message) {String} title             Short description.
- * @apiSuccess (DynamicRecommendation extends Message) {String} description       Long description.
- * @apiSuccess (DynamicRecommendation extends Message) {String} imageLink         Image resource link.
- * @apiSuccess (DynamicRecommendation extends Message) {Number} createdOn         Date created time stamp.
- * @apiSuccess (DynamicRecommendation extends Message) {Number} acknowledgedOn    Date acknoledged time stamp. This is the date the user has marked the message as read from the mobile/web application.
+ * @apiSuccess (Tip extends Message) {Number}  index              Message index.
+ * @apiSuccess (Tip extends Message) {String}  description        Long description.
+ * @apiSuccess (Tip extends Message) {String}  categoryName       Category.
+ * @apiSuccess (Tip extends Message) {String}  imageEncoded       Image encoded to base64.
+ * @apiSuccess (Tip extends Message) {String}  imageLink          Image resource link.
+ * @apiSuccess (Tip extends Message) {String}  imageMimeType      Image MIME type.
+ * @apiSuccess (Tip extends Message) {String}  prompt             Prompt message.
+ * @apiSuccess (Tip extends Message) {String}  externalLink       External link.
+ * @apiSuccess (Tip extends Message) {String}  source             Message source.
+ * @apiSuccess (Tip extends Message) {Number}  modifiedOn         Date modified timestamp.
+ * @apiSuccess (Tip extends Message) {Boolean} active             <code>true</code> if message is acrive; Otherwise <code>false</code>.
  *
- * @apiSuccess (Announcement extends Message) {Number} id               Message unique id.
+ * @apiSuccess (Recommendation extends Message) {String} recommendationType  Recommendation type. One of:
+ *   <br/><code>LESS_SHOWER_TIME</code> 
+ *   <br/><code>LOWER_TEMPERATURE</code> 
+ *   <br/><code>LOWER_FLOW</code> 
+ *   <br/><code>CHANGE_SHOWERHEAD</code> 
+ *   <br/><code>CHANGE_SHAMPOO</code> 
+ *   <br/><code>REDUCE_FLOW_WHEN_NOT_NEEDED</code> 
+ *   <br/><code>INSIGHT_A1</code> 
+ *   <br/><code>INSIGHT_A2</code> 
+ *   <br/><code>INSIGHT_A3</code> 
+ *   <br/><code>INSIGHT_A4</code> 
+ *   <br/><code>INSIGHT_B1</code> 
+ *   <br/><code>INSIGHT_B2</code> 
+ *   <br/><code>INSIGHT_B3</code> 
+ *   <br/><code>INSIGHT_B4</code> 
+ *   <br/><code>INSIGHT_B5</code> 
+ * @apiSuccess (Recommendation extends Message) {Number} priority          Message priority.
+ * @apiSuccess (Recommendation extends Message) {String} description       Long description.
+ * @apiSuccess (Recommendation extends Message) {String} imageLink         A resource link.
+ *
+ *
  * @apiSuccess (Announcement extends Message) {Number} priority         Message priority.
- * @apiSuccess (Announcement extends Message) {String} title            Short description.
  * @apiSuccess (Announcement extends Message) {String} content          Announcement details.
  * @apiSuccess (Announcement extends Message) {String} link             Image resource link.
- * @apiSuccess (Announcement extends Message) {Number} createdOn        Date created time stamp.
- * @apiSuccess (Announcement extends Message) {Number} acknowledgedOn   Date acknoledged time stamp. This is the date the user has marked the message as read from the mobile/web application.
+ *
  *
  * @apiSuccessExample {json} Response Example
  * HTTP/1.1 200 OK
- * {
- *   "errors": [],
- *   "alerts": [{
- *     "id": 3439,
- *     "alert": "NEAR_WEEKLY_WATER_BUDGET",
- *     "priority": 2,
- *     "title": "Ya has consumido el 80% de lo que sueles consumir normalmente a la semana",
- *     "description": "Ya has consumo 297 litros, y normalmente gastas 350 a la semana. ¿Quieres algunas recomendaciones para ahorrar agua?",
- *     "imageLink": null,
- *     "createdOn": 1463086877922,
- *     "acknowledgedOn": null,
- *     "type": "ALERT"
- *   }],
- *   "recommendations": [],
- *   "tips": [{
- *     "id": 120,
- *     "index": 60,
- *     "title": "Refréscate de forma inteligente durante el verano",
- *     "description": "Cuando usas juguetes acuáticos como piscinas, toboganes acuáticos… piensa que éstos no consumen tanta agua como parece.",
- *     "imageEncoded": null,
- *     "imageLink": null,
- *     "prompt": null,
- *     "externalLink": null,
- *     "source": "http://www.50plus-treff.de/magazin/leben/wasser-sparen-im-haushalt-10-tipps-63.html ",
- *     "createdOn": null,
- *     "modifiedOn": null,
- *     "acknowledgedOn": null,
- *     "active": true,
- *     "type": "RECOMMENDATION_STATIC"
- *   }],
- *   "announcements": [],
- *   "success": true
- * }
+ *  {
+ *    "errors": [],
+ *    "alerts": [
+ *      {
+ *        "priority": 5,
+ *        "alertType": "TOO_MUCH_WATER",
+ *        "alertTemplate": "TOO_MUCH_WATER_METER",
+ *        "description": "You are using twice the amount of water compared to city average. You could save up to 57,949 liters. Want to learn how?",
+ *        "link": null,
+ *        "body": "You are using too much water",
+ *        "type": "ALERT",
+ *        "id": 842,
+ *        "locale": "en",
+ *        "title": "You are using too much water",
+ *        "acknowledgedOn": 1487756290000,
+ *        "createdOn": 1487756280417
+ *      }
+ *    ],
+ *    "totalAlerts": 1,
+ *    "recommendations": [
+ *      {
+ *        "priority": 5,
+ *        "recommendationType": "INSIGHT_A3",
+ *        "recommendationTemplate": "INSIGHT_A3_MORNING_CONSUMPTION_DECR",
+ *        "description": "8.0lt vs. the average 22.2lt",
+ *        "link": null,
+ *        "body": "63% decrease in morning consumption",
+ *        "id": 5018,
+ *        "locale": "en",
+ *        "title": "63% decrease in morning consumption",
+ *        "acknowledgedOn": 1487756290000,
+ *        "createdOn": 1487756527611,
+ *        "type": "RECOMMENDATION"
+ *      },
+ *      {
+ *        "priority": 5,
+ *        "recommendationType": "INSIGHT_B1",
+ *        "recommendationTemplate": "INSIGHT_B1_MONTHLY_CONSUMPTION_INCR",
+ *        "description": "6598.0lt vs. the average 2652.5lt",
+ *        "link": null,
+ *        "body": "148% more than your monthly average",
+ *        "id": 5029,
+ *        "locale": "en",
+ *        "title": "148% more than your monthly average",
+ *        "acknowledgedOn": null,
+ *        "createdOn": 1487756580059,
+ *        "type": "RECOMMENDATION"
+ *      },
+ *      {
+ *        "priority": 5,
+ *        "recommendationType": "INSIGHT_B2",
+ *        "recommendationTemplate": "INSIGHT_B2_MONTHLY_PREV_CONSUMPTION_INCR",
+ *        "description": "6598.0lt vs. 2535.0lt",
+ *        "link": null,
+ *        "body": "160% more than previous month",
+ *        "id": 5034,
+ *        "locale": "en",
+ *        "title": "160% more than previous month",
+ *        "acknowledgedOn": null,
+ *        "createdOn": 1487756630246,
+ *        "type": "RECOMMENDATION"
+ *      },
+ *    ],
+ *    "totalRecommendations": 8,
+ *    "tips": [],
+ *    "totalTips": 0,
+ *    "announcements": [],
+ *    "totalAnnouncements": 0,
+ *    "success": true
+ *  }
  *
  * @apiError {Boolean} success Always <code>false</code>.
  * @apiError {Object[]} errors Array of <code>Error</code> objects.
@@ -179,7 +223,9 @@
  *   success: false
  * }
  */
-function message() { return; }
+function getMessages() { return; }
+
+
 
 /**
  * @api {post} /v1/message/acknowledge Acknowledge messages
@@ -195,9 +241,9 @@ function message() { return; }
  * @apiParam                            {String}   credentials.password   User password
  * @apiParam                            {Object[]} messages               Array of <code>MessageAcknowledgement</code>.
  *
- * @apiParam (MessageAcknowledgement)   {Number}   type                   Message type. Valid values are <code>ALERT</code>, <code>RECOMMENDATION_STATIC</code>, <code>RECOMMENDATION</code> and <code>ANNOUNCEMENT</code>. This parameter is not case sensitive.
- * @apiParam (MessageAcknowledgement)   {Number}   id                     Unique message id. This id is unique per message type.
- * @apiParam (MessageAcknowledgement)   {Number}   timestamp              Time stamp the message was read by the user i.e. the time stamp at the mobile device.
+ * @apiParam (MessageAcknowledgement)   {String}   type                   Message type. Valid values are <code>ALERT</code>, <code>TIP</code>, <code>RECOMMENDATION</code> and <code>ANNOUNCEMENT</code>. This parameter is not case sensitive.
+ * @apiParam (MessageAcknowledgement)   {Number}   id                     Message id. This id is unique per message type.
+ * @apiParam (MessageAcknowledgement)   {Number}   timestamp              A timestamp the message was read by the user i.e. the timestamp at the mobile device.
  *
  * @apiParamExample {json} Request Example
  * {
@@ -242,4 +288,4 @@ function message() { return; }
  *   success: false
  * }
  */
-function acknowledge() { return; }
+function acknowledgeMessages() { return; }
