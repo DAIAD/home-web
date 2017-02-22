@@ -90,55 +90,61 @@ public abstract class Message
         }
     }
 
-	public abstract EnumMessageType getType();
+    public abstract EnumMessageType getType();
 
-	public static final int INVALID_ID = -1;
+    public static final int INVALID_ID = -1;
 
-	private final int id;
+    private int id;
 
-	protected String locale;
+    protected String locale;
 
-	protected String title;
+    protected String title;
 
-	protected Long acknowledgedOn;
+    protected Long acknowledgedOn;
 
-	protected Long createdOn;
+    protected Long createdOn;
 
-	protected Message()
-	{
-	    this.id = INVALID_ID;
-	}
+    protected Message()
+    {
+        this.id = INVALID_ID;
+    }
 
-	protected Message(int id)
-	{
-	    this.id = id;
-	}
-	
-	@JsonProperty("id")
-	public int getId()
-	{
-	    return id;
-	}
-	
-	@JsonProperty("locale")
-	public String getLocale()
+    protected Message(int id)
+    {
+        this.id = id;
+    }
+    
+    @JsonProperty("id")
+    public int getId()
+    {
+        return id;
+    }
+    
+    @JsonProperty("id")
+    public void setId(int id)
+    {
+        this.id = id;
+    }
+    
+    @JsonProperty("locale")
+    public String getLocale()
     {
         return locale;
     }
-	
-	@JsonProperty("locale")
+    
+    @JsonProperty("locale")
     public void setLocale(String locale)
     {
         this.locale = locale;
     }
 
     @JsonProperty("title")
-	public String getTitle()
-	{
+    public String getTitle()
+    {
         return title;
     }
-	
-	@JsonProperty("title")
+    
+    @JsonProperty("title")
     public void setTitle(String title)
     {
         this.title = title;
