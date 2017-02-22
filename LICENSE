@@ -240,7 +240,7 @@ The DAIAD project bundles the following files under the MIT License:
 - Redux v3.3.1                  https://github.com/reactjs/redux                        Copyright (c) 2015-present Dan Abramov
 - Redux Thunk v1.0.3            https://github.com/gaearon/redux-thunk                  Copyright (c) 2015 Dan Abramov
 - react-dropzone v3.3.4         https://github.com/okonet/react-dropzone                Copyright (c) 2014 Param Aggarwal
-
+- react-infinite-scroller v1.0.4 https://github.com/CassetteRocks/react-infinite-scroller Copyright (c) 2016 CASSETTE Copyright (c) 2013 guillaumervls
 
 All rights reserved.
 
