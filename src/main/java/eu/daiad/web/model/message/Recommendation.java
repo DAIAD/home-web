@@ -220,7 +220,7 @@ public class Recommendation extends Message
 
 	private String description;
 
-	private String imageLink;
+	private String link;
 
 	public Recommendation(int id, EnumRecommendationTemplate template)
 	{
@@ -270,12 +270,12 @@ public class Recommendation extends Message
 		this.description = description;
 	}
 
-	public String getImageLink() {
-		return imageLink;
+	public String getLink() {
+		return link;
 	}
 
-	public void setImageLink(String imageLink) {
-		this.imageLink = imageLink;
+	public void setImageLink(String link) {
+		this.link = link;
 	}
 
 	public EnumRecommendationTemplate getRecommendationTemplate() {
