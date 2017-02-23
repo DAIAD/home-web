@@ -13,15 +13,17 @@ import javax.validation.constraints.NotNull;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import eu.daiad.web.annotate.message.MessageGenerator;
-import eu.daiad.web.model.ConsumptionStats.EnumStatistic;
+import eu.daiad.web.model.EnumStatistic;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -34,6 +36,7 @@ import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumDataField;
+import eu.daiad.web.model.query.EnumMeasurementField;
 import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.ICurrencyRateService;
@@ -219,23 +222,29 @@ public class RecommendLowerFlow extends AbstractRecommendationResolver
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
-        final int N = 3; // number of months to examine
+        Assert.state(deviceType == EnumDeviceType.AMPHIRO);
         
-        Double averageFlow = stats.getValue(
-            EnumStatistic.AVERAGE_MONTHLY, EnumDeviceType.AMPHIRO, EnumDataField.FLOW);
-        Double averageConsumption = stats.getValue(
-            EnumStatistic.AVERAGE_MONTHLY, EnumDeviceType.AMPHIRO, EnumDataField.VOLUME);
+        final int N = 3; // number of months to examine
+        final Period period = Period.months(N); 
+        
+        DateTime end = refDate.withDayOfMonth(1)
+            .withTimeAtStartOfDay();
+      
+        Double averageFlow = statisticsService.getNumber(
+                end, period, EnumMeasurementField.AMPHIRO_FLOW, EnumStatistic.AVERAGE_PER_SESSION) 
+            .getValue();
+
+        Double averageConsumption = statisticsService.getNumber(
+                end, period, EnumMeasurementField.AMPHIRO_VOLUME, EnumStatistic.AVERAGE_PER_USER) 
+            .getValue();
+        
         if (averageFlow == null || averageConsumption == null)
             return Collections.emptyList();
-
-        DateTime start = refDate.minusMonths(N)
-            .withDayOfMonth(1)
-            .withTimeAtStartOfDay();
         
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
-            .sliding(start, N, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+            .absolute(end.minus(period), end, EnumTimeAggregation.ALL)
             .amphiro()
             .sum()
             .average();
@@ -247,20 +256,21 @@ public class RecommendLowerFlow extends AbstractRecommendationResolver
             return null;
         
         double userAverageFlow = series.get(EnumDataField.FLOW, EnumMetric.AVERAGE);
-        double userAverageConsumption = series.get(EnumDataField.VOLUME, EnumMetric.SUM) / N;
+        double userConsumption = series.get(EnumDataField.VOLUME, EnumMetric.SUM);
         boolean fire = 
             userAverageFlow > averageFlow * FLOW_HIGH_RATIO &&
-            userAverageConsumption > averageConsumption * VOLUME_HIGH_RATIO;
+            userConsumption > averageConsumption * VOLUME_HIGH_RATIO;
         if (fire) {
             // Get a rough estimate for annual water savings if adopts average behavior
             final int numMonthsPerYear = 12;
-            Double annualSavings = numMonthsPerYear * (userAverageConsumption - averageConsumption);
+            final double numPeriodsPerYear = Double.valueOf(numMonthsPerYear) / period.getMonths();
+            Double annualSavings = numPeriodsPerYear * (userConsumption - averageConsumption);
             
             ParameterizedTemplate parameterizedTemplate = new Parameters(refDate, deviceType)
                 .withAverageConsumption(averageConsumption)
                 .withAverageFlow(averageFlow)
                 .withUserAverageFlow(userAverageFlow)
-                .withUserAverageConsumption(userAverageConsumption)
+                .withUserAverageConsumption(userConsumption)
                 .withAnnualSavings(annualSavings.intValue());
             
             MessageResolutionStatus<ParameterizedTemplate> result = 

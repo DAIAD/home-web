@@ -24,7 +24,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import eu.daiad.web.annotate.message.MessageGenerator;
-import eu.daiad.web.model.ConsumptionStats.EnumStatistic;
 import eu.daiad.web.model.EnumDayOfWeek;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
@@ -49,15 +48,15 @@ import eu.daiad.web.service.message.AbstractRecommendationResolver;
 @MessageGenerator(period = "P1D")
 @Component
 @Scope("prototype")
-public class InsightA3 extends AbstractRecommendationResolver
+public class InsightA3PartOfDayConsumption extends AbstractRecommendationResolver
 {
-    public static final double CHANGE_PERCENTAGE_THRESHOLD = 40.0;
+    public static final double CHANGE_PERCENTAGE_THRESHOLD = 50.0;
     
     public static class Parameters extends Message.AbstractParameters
         implements ParameterizedTemplate
     {
         /** A minimum value for daily volume consumption */
-        private static final String MIN_VALUE = "1E-3"; 
+        private static final String MIN_VALUE = "1E-1"; 
 
         @NotNull
         @DecimalMin(MIN_VALUE)
@@ -128,17 +127,17 @@ public class InsightA3 extends AbstractRecommendationResolver
             case MORNING:
                 t = (averageValue <= currentValue)?
                     EnumRecommendationTemplate.INSIGHT_A3_MORNING_CONSUMPTION_INCR:
-                        EnumRecommendationTemplate.INSIGHT_A3_MORNING_CONSUMPTION_DECR;
+                    EnumRecommendationTemplate.INSIGHT_A3_MORNING_CONSUMPTION_DECR;
                 break;
             case AFTERNOON:
                 t = (averageValue <= currentValue)?
                     EnumRecommendationTemplate.INSIGHT_A3_AFTERNOON_CONSUMPTION_INCR:
-                        EnumRecommendationTemplate.INSIGHT_A3_AFTERNOON_CONSUMPTION_DECR;
+                    EnumRecommendationTemplate.INSIGHT_A3_AFTERNOON_CONSUMPTION_DECR;
                 break;
             case NIGHT:
                 t = (averageValue <= currentValue)?
                     EnumRecommendationTemplate.INSIGHT_A3_NIGHT_CONSUMPTION_INCR:
-                        EnumRecommendationTemplate.INSIGHT_A3_NIGHT_CONSUMPTION_DECR;
+                    EnumRecommendationTemplate.INSIGHT_A3_NIGHT_CONSUMPTION_DECR;
                 break;
             }  
             return t;
@@ -246,7 +245,7 @@ public class InsightA3 extends AbstractRecommendationResolver
             double score = Math.abs(percentChange) / (2 * CHANGE_PERCENTAGE_THRESHOLD);
 
             debug(
-                "%s/%s: Computed consumption at %s of last %d days to %s: %.2f μ=%.2f score=%.2f",
+                "%s/%s: Computed consumption at %s of period P%dD to %s: %.2f μ=%.2f score=%.2f",
                  accountKey, deviceType, partOfDay, N, refDate.toString("dd/MM/YYYY"),
                  targetValue, averageValue, score);
             

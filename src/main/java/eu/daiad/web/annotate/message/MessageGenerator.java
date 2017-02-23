@@ -36,6 +36,11 @@ public @interface MessageGenerator
     int[] dayOfMonth() default {};
     
     /**
+     * Specify a per-account daily (rough) limit for the number of generated messages.
+     */
+    int maxPerDay() default 1;
+    
+    /**
      * Specify a per-account weekly (rough) limit for the number of generated messages.
      */
     int maxPerWeek() default 5;

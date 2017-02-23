@@ -13,16 +13,18 @@ import javax.validation.constraints.NotNull;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import eu.daiad.web.annotate.message.MessageGenerator;
 import eu.daiad.web.model.ComputedNumber;
-import eu.daiad.web.model.ConsumptionStats.EnumStatistic;
+import eu.daiad.web.model.EnumStatistic;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -37,6 +39,7 @@ import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumDataField;
+import eu.daiad.web.model.query.EnumMeasurementField;
 import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.Point;
 import eu.daiad.web.model.query.SeriesFacade;
@@ -157,25 +160,29 @@ public class AlertWaterEfficiencyLeader extends AbstractAlertResolver
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
-        Double monthlyAverage = stats.getValue(
-            EnumStatistic.AVERAGE_MONTHLY, EnumDeviceType.METER, EnumDataField.VOLUME);
-        if (monthlyAverage == null)
-            return Collections.emptyList();
-
-        Double monthly10pThreshold = stats.getValue(
-            EnumStatistic.THRESHOLD_BOTTOM_10P_MONTHLY, EnumDeviceType.METER, EnumDataField.VOLUME);
-        if (monthly10pThreshold == null)
+        Assert.state(deviceType == EnumDeviceType.METER);
+        
+        final Period period = Period.months(1); 
+        final EnumMeasurementField measurementField = EnumMeasurementField.METER_VOLUME;
+            
+        DateTime end = refDate.withDayOfMonth(1)
+            .withTimeAtStartOfDay();
+        
+        Double monthlyAverage = statisticsService.getNumber(
+                end, period, measurementField, EnumStatistic.AVERAGE_PER_USER)
+            .getValue();
+        Double monthly10pThreshold = statisticsService.getNumber(
+                end, period, measurementField, EnumStatistic.PERCENTILE_10P_OF_USERS)
+            .getValue();
+        
+        if (monthlyAverage == null || monthly10pThreshold == null)
             return Collections.emptyList();
 
         double monthlyThreshold = config.getVolumeThreshold(EnumDeviceType.METER, EnumTimeUnit.MONTH);
         
-        DateTime start = refDate.minusMonths(1)
-            .withDayOfMonth(1)
-            .withTimeAtStartOfDay();
-        
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
-            .sliding(start, +1, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+            .absolute(end.minus(period), end, EnumTimeAggregation.ALL)
             .user("user", accountKey)
             .meter()
             .sum();

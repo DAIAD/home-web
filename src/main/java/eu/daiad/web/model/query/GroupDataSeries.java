@@ -470,7 +470,7 @@ public class GroupDataSeries
         @Override
         public Iterable<Point> iterPoints(EnumDataField field, EnumMetric metric)
         {
-            return GroupDataSeries.this.new PointIterator(field, metric);
+            return GroupDataSeries.this.new PointIterable(field, metric);
         }
 
         @Override
@@ -484,19 +484,31 @@ public class GroupDataSeries
         {
             return points.isEmpty();
         }
+
+        @Override
+        public int getPopulationCount()
+        {
+            return population;
+        }
+
+        @Override
+        public String getLabel()
+        {
+            return label;
+        }
     }
 
     /**
      * An iterable on points of (timestamp, value) for a given (field, metric).
      */
-    private class PointIterator implements Iterable<Point>
+    private class PointIterable implements Iterable<Point>
     {
         private final EnumDataField field;
         private final EnumMetric metric;
 
         private final int endIndex;
 
-        public PointIterator(EnumDataField field, EnumMetric metric)
+        public PointIterable(EnumDataField field, EnumMetric metric)
         {
             this.field = field;
             this.metric = metric;
