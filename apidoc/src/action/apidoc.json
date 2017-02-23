@@ -28,7 +28,8 @@
     "CommonsJoin",
     "CommonsLeave",
     "CommonsSearch",
-    "CommonsMembers"
+    "CommonsMembers",
+    "CommonsMembership"
   ],
   "template": {
     "withCompare": false,

@@ -525,3 +525,83 @@ function searchCommons() { return; }
  *     }
  */
 function getMembers() { return; }
+
+/**
+ * @api {get} action/commons/membership Membership
+ * @apiVersion 0.0.1
+ * @apiName CommonsMembership
+ * @apiGroup Commons
+ * @apiPermission ROLE_USER
+ *
+ * @apiDescription Gets authenticated user's all commons groups.
+ *
+ * @apiParamExample {json} Request Example
+ * GET /action/commons/membership
+ *
+ * @apiSuccess {Boolean}  success           <code>true</code> or <code>false</code> indicating success of the operation.
+ * @apiSuccess {Object[]} errors            Empty array of error messages.
+ * @apiSuccess {Number}   pageIndex         The result page index. Always <code>0</code>.
+ * @apiSuccess {Number}   pageSize          The result page size. Always equal to <code>count</code>.
+ * @apiSuccess {Number}   count             The total number of records found.
+ * @apiSuccess {Object[]} groups            An array of <code>CommonsInfo</code> objects.
+ *
+ * @apiSuccess (CommonsInfo)  {Object}  group     An <code>Commons</code> object.
+ * @apiSuccess (CommonsInfo)  {Boolean} owner     If the current user is the owner of the group.
+ * @apiSuccess (CommonsInfo)  {Boolean} member    Always <code>true</code>.
+ *
+ * @apiSuccess (Commons)      {String}  key         Group unique key (UUID).
+ * @apiSuccess (Commons)      {String}  utilityKey  Utility unique key (UUID).
+ * @apiSuccess (Commons)      {Number}  createdOn   Creation timestamp.
+ * @apiSuccess (Commons)      {Number}  updatedOn   Most recent update timestamp.
+ * @apiSuccess (Commons)      {String}  name        Name.
+ * @apiSuccess (Commons)      {String}  description Description.
+ * @apiSuccess (Commons)      {Number}  size        Number of members.
+ * @apiSuccess (Commons)      {Object}  geometry    Spatial representation of the commons group in GeoJSON format.
+ * @apiSuccess (Commons)      {String}  image       A base64 encoded image for the group.
+ * @apiSuccess (Commons)      {Boolean} favorite    Always <code>false</code>.
+ * @apiSuccess (Commons)      {String}  type        Always <code>COMMONS</code>.
+ *
+ * @apiSuccessExample {json} Response Example
+ * HTTP/1.1 200 OK
+ * {
+ *   "errors": [],
+ *   "success": true
+ *   "groups": [ {
+ *     "group": {
+ *       "key": "bfcb2b45-fcdb-4485-be4f-6c4c1327dfcc",
+ *       "utilityKey": "80de55eb-9bde-4477-a97a-b6048a1fcc9a",
+ *       "name": "Alicante #1",
+ *       "createdOn": 1486641821596,
+ *       "updatedOn": 1486641866807,
+ *       "geometry": null,
+ *       "size": 12,
+ *       "favorite": false,
+ *       "description": "Alicante Commons Group #1",
+ *       "image": null,
+ *       "type": "COMMONS"
+ *     },
+ *     "owner": true,
+ *     "member": true
+ *   }],
+ *   "pageIndex": 0,
+ *   "pageSize": 1,
+ *   "count": 1,
+ * }
+ *
+ * @apiError {Boolean}    success           Always <code>false</code>.
+ * @apiError {Object[]}   errors            Array of <code>Error</code> objects.
+ *
+ * @apiError (Error) {String} code          Unique error code.
+ * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
+ *
+ * @apiErrorExample Error Response Example
+ *     HTTP/1.1 200 OK
+ *     {
+ *       errors: [{
+ *         code: "SharedErrorCode.UNKNOWN",
+ *         description: "Internal server error has occurred."
+ *       }],
+ *       success: false
+ *     }
+ */
+function getMembership() { return; }
