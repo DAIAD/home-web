@@ -479,15 +479,20 @@ public class JpaCommonsRepository extends BaseRepository implements ICommonsRepo
         return result;
     }
 
+    /**
+     * Gets authenticated user's all commons.
+     *
+     * @param userKey the user key.
+     * @return a {@link CommonsInfo} collection.
+     */
     @Override
     public List<CommonsInfo> getCommonsByUserKey(UUID userKey) {
         List<CommonsInfo> result = new ArrayList<CommonsInfo>();
-        List<UUID> accountCommons = getAccountCommons(userKey);
 
         String groupQueryString = "select m.group from group_member m where m.account.key = :userKey";
 
         TypedQuery<GroupEntity> query = entityManager.createQuery(groupQueryString, GroupEntity.class)
-                                                                   .setParameter("userKey", userKey);
+                                                     .setParameter("userKey", userKey);
 
         for(GroupEntity group : query.getResultList()) {
             if(group.getType() != EnumGroupType.COMMONS) {
@@ -498,20 +503,14 @@ public class JpaCommonsRepository extends BaseRepository implements ICommonsRepo
 
             // Check owner and membership
             boolean isOwner = false;
-            boolean isMember = false;
             if(commons.getOwner().getKey().equals(userKey)) {
                 isOwner = true;
             }
-            if(accountCommons.contains(commons.getKey())) {
-                isMember = true;
-            }
-
-            result.add(new CommonsInfo(commons, isOwner, isMember));
+            result.add(new CommonsInfo(commons, isOwner, true));
         }
 
         return result;
     }
-
 
     /**
      * Selects, filters and sorts members of a commons group.

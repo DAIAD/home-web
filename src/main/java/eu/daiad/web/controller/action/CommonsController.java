@@ -21,6 +21,7 @@ import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.group.CommonsCollectionResponse;
 import eu.daiad.web.model.group.CommonsCreateRequest;
 import eu.daiad.web.model.group.CommonsCreateRestResponse;
+import eu.daiad.web.model.group.CommonsInfo;
 import eu.daiad.web.model.group.CommonsMemberCollectionResponse;
 import eu.daiad.web.model.group.CommonsMemberQueryRequest;
 import eu.daiad.web.model.group.CommonsMemberQueryResult;
@@ -211,7 +212,7 @@ public class CommonsController extends BaseController {
      * Gets authenticated user's all commons.
      *
      * @param user the user who submits the query.
-     * @return a {@link CommonsCollectionResponse} collection.
+     * @return a {@link CommonsInfo} collection.
      */
     @RequestMapping(value = "/action/commons/membership", method = RequestMethod.GET, produces = "application/json")
     @Secured({ RoleConstant.ROLE_USER })
