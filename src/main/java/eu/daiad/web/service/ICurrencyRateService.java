@@ -10,7 +10,7 @@ public interface ICurrencyRateService
      *
      * @param source The source locale
      * @param target The target locale
-     * @return
+     * @return the currency rate.
      */
     BigDecimal getRate(Locale source, Locale target);
 }

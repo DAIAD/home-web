@@ -158,7 +158,7 @@ public class JpaCommonsRepository extends BaseRepository implements ICommonsRepo
      * Creates a new commons.
      *
      * @param userKey the key of the user who creates the new commons.
-     * @param commons the new commons properties.
+     * @param request the new commons properties.
      * @return the key of the new commons.
      */
     @Override

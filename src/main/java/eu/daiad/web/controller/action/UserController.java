@@ -416,7 +416,6 @@ public class UserController extends BaseController {
     /**
      * Requests a token for resetting a user's password.
      *
-     * @param user the currently authenticated user.
      * @param request the name of the user.
      * @return the controller's response.
      */

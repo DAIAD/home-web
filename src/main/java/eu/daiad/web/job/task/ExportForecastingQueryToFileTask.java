@@ -180,11 +180,11 @@ public class ExportForecastingQueryToFileTask extends BaseTask implements Stoppa
          */
         OUTPUT_FILENAME("output.filename"),
         /**
-         * Interval start date formatted using the pattern {@link EnumParameter#DATE_FORMAT_INPUT}
+         * Interval start date formatted using the pattern {@link EnumInParameter#DATE_FORMAT_INPUT}
          */
         INTERVAL_FROM("interval.from"),
         /**
-         * Interval end date formatted using the pattern {@link EnumParameter#DATE_FORMAT_INPUT}
+         * Interval end date formatted using the pattern {@link EnumInParameter#DATE_FORMAT_INPUT}
          */
         INTERVAL_TO("interval.to");
 

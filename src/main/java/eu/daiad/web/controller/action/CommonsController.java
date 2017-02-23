@@ -127,7 +127,6 @@ public class CommonsController extends BaseController {
      *
      * @param user the authenticated user.
      * @param commonsKey the key of the commons to update.
-     * @param request the commons updated properties.
      * @return an instance of {@link RestResponse}.
      */
     @RequestMapping(value = "/action/commons/{commonsKey}", method = RequestMethod.DELETE, produces = "application/json")
