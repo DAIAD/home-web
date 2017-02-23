@@ -43,7 +43,7 @@ public class UpdateProfileRequest extends AuthenticatedRequest {
 
     private byte[] photo;
 
-    private boolean resetPhoto = true;
+    private boolean resetPhoto = false;
 
     private Boolean garden;
 
