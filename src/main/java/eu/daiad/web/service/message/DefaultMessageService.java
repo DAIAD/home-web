@@ -118,9 +118,11 @@ public class DefaultMessageService
     public MessageResult getMessages(AuthenticatedUser user, MessageRequest request)
     {
         MessageResult result = new MessageResult();
-
-        String lang = user.getLocale();
-        Locale locale = Locale.forLanguageTag(lang);
+        
+        Locale locale = request.getLocale();
+        if (locale == null)
+            locale = Locale.forLanguageTag(user.getLocale());
+        
         UUID userKey = user.getKey();
 
         List<Message> messages = new ArrayList<>();
