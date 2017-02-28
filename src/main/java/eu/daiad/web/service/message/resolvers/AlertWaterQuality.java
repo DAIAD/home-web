@@ -32,7 +32,7 @@ import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractAlertResolver;
 
-@MessageGenerator()
+@MessageGenerator(period = "P2D")
 @Component
 @Scope("prototype")
 public class AlertWaterQuality extends AbstractAlertResolver
@@ -59,7 +59,6 @@ public class AlertWaterQuality extends AbstractAlertResolver
 
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
-
         SeriesFacade series = queryResponse.getFacade(EnumDeviceType.METER);
 
         boolean fire = (series == null || series.isEmpty());

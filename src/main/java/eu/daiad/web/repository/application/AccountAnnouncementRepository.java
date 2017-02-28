@@ -310,7 +310,13 @@ public class AccountAnnouncementRepository extends BaseRepository
         Announcement message = announcementRepository.newMessage(a, locale);
         if (message == null)
             return null;
-
+        
+        // Overwrite announcement ID  with account-announcement ID
+        message.setId(r.getId());
+        
+        if (r.getCreatedOn() != null)
+            message.setCreatedOn(r.getCreatedOn());
+        
         if (r.getAcknowledgedOn() != null)
             message.setAcknowledgedOn(r.getAcknowledgedOn());
 

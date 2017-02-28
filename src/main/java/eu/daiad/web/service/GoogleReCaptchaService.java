@@ -29,7 +29,7 @@ public class GoogleReCaptchaService implements IGoogleReCaptchaService {
     /**
      * Verify a user's response to a reCAPTCHA challenge.
      *
-     * @param remoteAddressthe user's IP address.
+     * @param remoteAddress the user's IP address.
      * @param response the user response token provided by reCAPTCHA, verifying the user on your site.
      * @return true if the response is valid.
      * @throws ApplicationException if CAPTCHA verification failed.

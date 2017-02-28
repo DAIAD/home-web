@@ -2,11 +2,8 @@ package eu.daiad.web.model;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 import org.springframework.util.StringUtils;
-
-import com.google.common.collect.ImmutableMap;
 
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.query.EnumDataField;
@@ -14,40 +11,9 @@ import eu.daiad.web.model.query.EnumDataField;
 /**
  * A container for common statistics for a group (or an entire utility) of users
  */
-public class ConsumptionStats implements Iterable<ConsumptionStats.Key> {
-    
-    /**
-     * Represents available statistics
-     */
-    public static enum EnumStatistic {
-        
-        AVERAGE_MONTHLY,
-        AVERAGE_WEEKLY,
-        AVERAGE_MONTHLY_PER_SESSION, // Meaningful only for volume/duration
-        AVERAGE_WEEKLY_PER_SESSION,  // Meaningful only for volume/duration
-        THRESHOLD_BOTTOM_10P_MONTHLY,
-        THRESHOLD_BOTTOM_10P_WEEKLY,
-        THRESHOLD_BOTTOM_25P_MONTHLY,
-        THRESHOLD_BOTTOM_25P_WEEKLY;
-        
-        private static Map<EnumStatistic, String> titles;      
-        static {         
-            titles = ImmutableMap.<EnumStatistic, String>builder()
-                .put(AVERAGE_MONTHLY, "Average monthly")
-                .put(AVERAGE_WEEKLY, "Average weekly")
-                .put(AVERAGE_MONTHLY_PER_SESSION, "Average monthly per-session")
-                .put(AVERAGE_WEEKLY_PER_SESSION, "Average weekly per-session")
-                .put(THRESHOLD_BOTTOM_10P_MONTHLY, "Bottom 10% monthly threshold")
-                .put(THRESHOLD_BOTTOM_10P_WEEKLY, "Bottom 10% weekly threshold")
-                .put(THRESHOLD_BOTTOM_25P_MONTHLY, "Bottom 25% monthly threshold")
-                .put(THRESHOLD_BOTTOM_25P_WEEKLY, "Bottom 25% weekly threshold")
-                .build();
-        }
-        
-        public String getTitle() {
-            return titles.get(this);
-        }
-    }
+public class ConsumptionStats 
+    implements Iterable<ConsumptionStats.Key> 
+{
     
     /**
      * Represents a key for a statistic to be computed
@@ -145,11 +111,6 @@ public class ConsumptionStats implements Iterable<ConsumptionStats.Key> {
         return getValue(statistic, device, EnumDataField.VOLUME);
     }
 	
-	public void resetValues() {
-	    for (ComputedNumber n: stats.values())
-	        n.reset();
-	}
-	
 	public boolean isEmpty()
 	{
 	    return stats.isEmpty();
@@ -165,7 +126,7 @@ public class ConsumptionStats implements Iterable<ConsumptionStats.Key> {
                     " * %-10.10s - %-12.12s - %-35.35s = %s\n",
                     StringUtils.capitalize(k.device.name().toLowerCase()),
                     StringUtils.capitalize(k.field.name().toLowerCase()),
-                    k.statistic.getTitle(),
+                    k.statistic,
                     (n == null || n.getValue() == null)? "NULL" : String.format("%.2f", n.getValue()) 
             ));
         }   

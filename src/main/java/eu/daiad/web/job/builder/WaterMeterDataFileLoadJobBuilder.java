@@ -28,7 +28,7 @@ public class WaterMeterDataFileLoadJobBuilder extends BaseJobBuilder implements 
     /**
      * Builds as step for importing data.
      *
-     * @return
+     * @return the configured step.
      */
 	private Step importData() {
         return stepBuilderFactory.get(STEP_IMPORT_DATA)

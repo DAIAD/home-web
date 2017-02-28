@@ -34,7 +34,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import eu.daiad.web.annotate.message.MessageGenerator;
-import eu.daiad.web.model.ConsumptionStats.EnumStatistic;
 import eu.daiad.web.model.EnumDayOfWeek;
 import eu.daiad.web.model.EnumPartOfDay;
 import eu.daiad.web.model.EnumTimeAggregation;
@@ -59,13 +58,13 @@ import eu.daiad.web.service.message.AbstractRecommendationResolver;
 @MessageGenerator(period = "P1D")
 @Component
 @Scope("prototype")
-public class InsightA4 extends AbstractRecommendationResolver
+public class InsightA4PartOfDaySlice extends AbstractRecommendationResolver
 {  
     public static class Parameters extends Message.AbstractParameters
         implements ParameterizedTemplate
     {
         /** A minimum value for daily volume consumption */
-        private static final String MIN_VALUE = "1E-3"; 
+        private static final String MIN_VALUE = "1E-1"; 
 
         @NotNull
         @DecimalMin(MIN_VALUE)

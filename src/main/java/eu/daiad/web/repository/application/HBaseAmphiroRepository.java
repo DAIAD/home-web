@@ -2336,8 +2336,8 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
      * Checks if the index of the given member belongs to the specified array.
      *
      * @param member member to search.
-     * @param indexes
-     * @return
+     * @param indexes an array of indexes.
+     * @return true if either the member index belongs to the given array or the array is null or empty.
      */
     private boolean filterMember(AmphiroSession.Member member, int[] indexes) {
         if ((indexes == null) || (indexes.length == 0)) {

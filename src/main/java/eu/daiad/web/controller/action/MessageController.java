@@ -188,8 +188,9 @@ public class MessageController extends BaseController {
     /**
      * Delete an existing recommendation (tip).
      *
-     * @param request the message to delete
-     * @return the controller response.
+     * @param user the authenticated user.
+     * @param id the tip id.
+     * @return an instance of {@link RestResponse}.
      */
     @RequestMapping(value = "/action/tip/delete/{id}", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
@@ -209,7 +210,7 @@ public class MessageController extends BaseController {
     /**
      * Send announcement to the provided accounts.
      *
-     * @param user the user.
+     * @param user the authenticated user.
      * @param request the request containing the announcement and the receivers.
      * @return the controller response.
      */
