@@ -192,7 +192,7 @@ public class InsightB5MonthOfYearConsumption extends AbstractRecommendationResol
         ParameterizedTemplate parameterizedTemplate =
             new Parameters(refDate, deviceType, targetValue, previousValue);
         MessageResolutionStatus<ParameterizedTemplate> result =
-            new SimpleMessageResolutionStatus<ParameterizedTemplate>(true, parameterizedTemplate);
+            new SimpleMessageResolutionStatus<>(parameterizedTemplate);
         
         return Collections.singletonList(result);
     }

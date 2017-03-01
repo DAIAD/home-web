@@ -106,7 +106,7 @@ public class AlertWaterChampion extends AbstractAlertResolver
             refDate, deviceType, (deviceType == EnumDeviceType.AMPHIRO)?
                 EnumAlertTemplate.SHOWER_CHAMPION : EnumAlertTemplate.WATER_CHAMPION);        
         MessageResolutionStatus<ParameterizedTemplate> result = 
-            new SimpleMessageResolutionStatus<>(true, parameterizedTemplate); 
+            new SimpleMessageResolutionStatus<>(parameterizedTemplate); 
         return Collections.singletonList(result);
     }
 

@@ -274,7 +274,7 @@ public class RecommendLowerFlow extends AbstractRecommendationResolver
                 .withAnnualSavings(annualSavings.intValue());
             
             MessageResolutionStatus<ParameterizedTemplate> result = 
-                new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
+                new SimpleMessageResolutionStatus<>(parameterizedTemplate);
             return Collections.singletonList(result);
         }
         return Collections.emptyList();

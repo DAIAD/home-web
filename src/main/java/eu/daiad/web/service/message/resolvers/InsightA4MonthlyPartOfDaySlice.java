@@ -22,7 +22,7 @@ import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import org.apache.commons.lang.mutable.MutableDouble;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.Interval;
@@ -39,6 +39,7 @@ import eu.daiad.web.model.EnumPartOfDay;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.EnumDeviceType;
+import eu.daiad.web.model.message.EnumMessageLevel;
 import eu.daiad.web.model.message.EnumRecommendationTemplate;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageResolutionStatus;
@@ -55,16 +56,16 @@ import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractRecommendationResolver;
 
-@MessageGenerator(period = "P1D")
+@MessageGenerator(period = "P1M", dayOfMonth = 2, maxPerMonth = 1)
 @Component
 @Scope("prototype")
-public class InsightA4PartOfDaySlice extends AbstractRecommendationResolver
+public class InsightA4MonthlyPartOfDaySlice extends AbstractRecommendationResolver
 {  
     public static class Parameters extends Message.AbstractParameters
         implements ParameterizedTemplate
     {
-        /** A minimum value for daily volume consumption */
-        private static final String MIN_VALUE = "1E-1"; 
+        /** A minimum value for monthly volume consumption */
+        private static final String MIN_VALUE = "5E+1"; 
 
         @NotNull
         @DecimalMin(MIN_VALUE)
@@ -100,9 +101,13 @@ public class InsightA4PartOfDaySlice extends AbstractRecommendationResolver
         @JsonProperty("parts")
         public void setParts(Map<EnumPartOfDay, Double> partialValues)
         {
-            for (Map.Entry<EnumPartOfDay, Double> e: partialValues.entrySet()) {
-                EnumPartOfDay p = e.getKey();
-                Double y = e.getValue();
+            setPartsFromNumbers(partialValues);
+        }
+        
+        private <N extends Number> void setPartsFromNumbers(Map<EnumPartOfDay, N> partialValues)
+        {
+            for (EnumPartOfDay p: partialValues.keySet()) {
+                Double y = partialValues.get(p).doubleValue();
                 if (y != null)
                     this.parts.put(p, y);
             }
@@ -122,15 +127,13 @@ public class InsightA4PartOfDaySlice extends AbstractRecommendationResolver
         }
         
         @NotNull
-        @DecimalMax("1E-3")
+        @DecimalMax("1E-2")
         @JsonIgnore
         public Double getError()
         {
             double s = 0.0;
             for (EnumPartOfDay p: EnumPartOfDay.values()) {
-                Double y = parts.get(p);
-                if (y == null)
-                    return null;
+                double y = parts.get(p).doubleValue();
                 s += y;
             }
             return Math.abs(s - totalValue);
@@ -138,7 +141,8 @@ public class InsightA4PartOfDaySlice extends AbstractRecommendationResolver
 
         public Double getPart(EnumPartOfDay partOfDay)
         {
-            return parts.get(partOfDay);
+            Number n = parts.get(partOfDay);
+            return (n == null)? null : n.doubleValue();    
         }
 
         public Parameters withPart(EnumPartOfDay partOfDay, double value)
@@ -147,9 +151,9 @@ public class InsightA4PartOfDaySlice extends AbstractRecommendationResolver
             return this;
         }
 
-        public Parameters withParts(Map<EnumPartOfDay, Double> vals)
+        public <N extends Number> Parameters withParts(Map<EnumPartOfDay, N> vals)
         {
-            setParts(vals);
+            setPartsFromNumbers(vals);
             return this;
         }
 
@@ -159,12 +163,9 @@ public class InsightA4PartOfDaySlice extends AbstractRecommendationResolver
         {
             EnumRecommendationTemplate t = null;
 
-            Double y1 = parts.get(EnumPartOfDay.MORNING); 
-            Double y2 = parts.get(EnumPartOfDay.AFTERNOON);
-            Double y3 = parts.get(EnumPartOfDay.NIGHT);
-
-            if (y1 == null || y2 == null || y3 == null)
-                return null;
+            double y1 = parts.get(EnumPartOfDay.MORNING).doubleValue(); 
+            double y2 = parts.get(EnumPartOfDay.AFTERNOON).doubleValue();
+            double y3 = parts.get(EnumPartOfDay.NIGHT).doubleValue();
 
             if (y1 < y2) {
                 t = (y2 < y3)? 
@@ -189,17 +190,14 @@ public class InsightA4PartOfDaySlice extends AbstractRecommendationResolver
             parameters.put("value", totalValue);
             parameters.put("consumption", totalValue); 
 
-            Double y1 = parts.get(EnumPartOfDay.MORNING); 
-            Double y2 = parts.get(EnumPartOfDay.AFTERNOON);
-            Double y3 = parts.get(EnumPartOfDay.NIGHT);
-
-            if (y1 == null || y2 == null || y3 == null)
-                return parameters;
-
+            double y1 = parts.get(EnumPartOfDay.MORNING).doubleValue(); 
+            double y2 = parts.get(EnumPartOfDay.AFTERNOON).doubleValue();
+            double y3 = parts.get(EnumPartOfDay.NIGHT).doubleValue();
+            
             Double p1 = 100.0 * (y1 / totalValue);
             Double p2 = 100.0 * (y2 / totalValue);
             Double p3 = 100.0 * (y3 / totalValue);
-
+            
             parameters.put("morning_consumption", y1);
             parameters.put("morning_percentage", Integer.valueOf(p1.intValue()));
 
@@ -226,7 +224,8 @@ public class InsightA4PartOfDaySlice extends AbstractRecommendationResolver
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
-        final double dailyThreshold = config.getVolumeThreshold(deviceType, EnumTimeUnit.DAY);
+        final double dailyThreshold = 0.8 * config.getVolumeThreshold(deviceType, EnumTimeUnit.DAY);
+        final int N  = 18; // a threshold for number of days used
         
         // Build a common part of a data-service query
 
@@ -240,48 +239,69 @@ public class InsightA4PartOfDaySlice extends AbstractRecommendationResolver
             .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
             .sum();
         
-        // Compute for every part-of-day for target day
-
-        EnumMap<EnumPartOfDay, Double> parts = new EnumMap<>(EnumPartOfDay.class);
-        double sumOfParts = 0;
-        boolean missingPart = false;
-        for (EnumPartOfDay partOfDay: EnumPartOfDay.values()) {
-            Interval r = partOfDay.toInterval(refDate);
-            query = queryBuilder
-                .absolute(r.getStart(), r.getEnd(), EnumTimeAggregation.ALL)
-                .build();
-            queryResponse = dataService.execute(query);
-            series = queryResponse.getFacade(deviceType);
-            Double y = (series != null)? 
-                series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
-            if (y == null) {
-                missingPart = true;
-                break;
+        DateTime end = refDate.withDayOfMonth(1).withTimeAtStartOfDay();
+        DateTime start = end.minusMonths(1);
+       
+        // Initialize partial sums for each part-of-day
+        
+        EnumMap<EnumPartOfDay, MutableDouble> sumPerPart = new EnumMap<>(EnumPartOfDay.class);
+        for (EnumPartOfDay partOfDay: EnumPartOfDay.values())
+            sumPerPart.put(partOfDay, new MutableDouble(.0));
+        
+        // Compute for each day
+        
+        double consumption = .0;
+        int n = 0;
+        for (DateTime target = start; target.isBefore(end); target = target.plusDays(1)) {
+            // Compute for every part-of-day of target day
+            double dailyConsumption = .0;
+            boolean missingPart = false;
+            EnumMap<EnumPartOfDay, Double> parts = new EnumMap<>(EnumPartOfDay.class);
+            for (EnumPartOfDay partOfDay: EnumPartOfDay.values()) {
+                Interval r = partOfDay.toInterval(target);
+                query = queryBuilder
+                    .absolute(r.getStart(), r.getEnd(), EnumTimeAggregation.ALL)
+                    .build();
+                queryResponse = dataService.execute(query);
+                series = queryResponse.getFacade(deviceType);
+                Double y = (series != null)? 
+                    series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+                if (y == null) {
+                    missingPart = true;
+                    break;
+                }
+                dailyConsumption += y;
+                parts.put(partOfDay, y);
             }
-            sumOfParts += y;
-            parts.put(partOfDay, y);
+            if (missingPart || dailyConsumption < dailyThreshold)
+                continue; // skip; not reliable or non-significant consumption
+            // We have sufficient data for target day: update partial sums
+            for (EnumPartOfDay partOfDay: EnumPartOfDay.values())
+                sumPerPart.get(partOfDay).add(parts.get(partOfDay));
+            n++;
+            consumption += dailyConsumption;
         }
-
-        if (missingPart || sumOfParts < dailyThreshold)
-            return Collections.emptyList(); // not reliable; overall consumption is too low
-
-        // We have sufficient data for all parts of target day
-
+        
+        if (n < N)
+            return Collections.emptyList(); // too few days with significant consumption
+        
+        // We have sufficient data
+        
         debug(
-            "%s/%s: Consumption for %s is %.2flt: " +
+            "%s/%s: Consumption for P1M to %s: %.2f: " +
                 "morning=%.2f%% afternoon=%.2f%% night=%.2f%%",
-             accountKey, deviceType, refDate.toString("dd/MM/YYYY"), sumOfParts,
-             100 * parts.get(EnumPartOfDay.MORNING) / sumOfParts,
-             100 * parts.get(EnumPartOfDay.AFTERNOON) / sumOfParts,
-             100 * parts.get(EnumPartOfDay.NIGHT) / sumOfParts);
+             accountKey, deviceType, end.toString("dd/MM/YYYY"), consumption,
+             100 * sumPerPart.get(EnumPartOfDay.MORNING).doubleValue() / consumption,
+             100 * sumPerPart.get(EnumPartOfDay.AFTERNOON).doubleValue() / consumption,
+             100 * sumPerPart.get(EnumPartOfDay.NIGHT).doubleValue() / consumption);
         
         ParameterizedTemplate parameterizedTemplate = new Parameters(
-                refDate, deviceType, sumOfParts)
-            .withParts(parts);
-        MessageResolutionStatus<ParameterizedTemplate> result = 
-            new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
-        return Collections.singletonList(result);
+                refDate, deviceType, consumption)
+            .withParts(sumPerPart);
         
+        MessageResolutionStatus<ParameterizedTemplate> result = 
+            new SimpleMessageResolutionStatus<>(parameterizedTemplate);
+        return Collections.singletonList(result);
     }
 
 }

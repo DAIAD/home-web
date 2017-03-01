@@ -181,7 +181,7 @@ public class AlertWeeklyWaterSavings extends AbstractAlertResolver
         if (change > CHANGE_THRESHOLD) {
             ParameterizedTemplate parameterizedTemplate = new Parameters(refDate, deviceType, c0, c1);
             MessageResolutionStatus<ParameterizedTemplate> result = 
-                new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
+                new SimpleMessageResolutionStatus<>(parameterizedTemplate);
             return Collections.singletonList(result);
         }
         return Collections.emptyList();

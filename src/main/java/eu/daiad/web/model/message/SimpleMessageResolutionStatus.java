@@ -2,29 +2,25 @@ package eu.daiad.web.model.message;
 
 public class SimpleMessageResolutionStatus <P extends Message.Parameters>
     implements MessageResolutionStatus<P>
-{
-    protected final double score; // in [0, 1]
-    
+{    
     protected final P parameterizedMessage;
     
-    public static final double THRESHOLD = 0.5;
+    protected final EnumMessageLevel level;
     
-    public SimpleMessageResolutionStatus(double score, P p)
+    public SimpleMessageResolutionStatus(EnumMessageLevel level, P p)
     {
         this.parameterizedMessage = p;
-        
-        score = Math.abs(score);
-        this.score = score > 1? 1.0 : score;
+        this.level = level;
     }
     
     public SimpleMessageResolutionStatus(P p)
     {
-        this(1.0, p);
+        this(true, p);
     }
     
     public SimpleMessageResolutionStatus(boolean flag, P p)
     {
-        this(flag? 1.0 : 0.0, p);
+        this(flag? EnumMessageLevel.NOTIFY : EnumMessageLevel.LOG, p);
     }
     
     public SimpleMessageResolutionStatus(boolean flag)
@@ -32,9 +28,10 @@ public class SimpleMessageResolutionStatus <P extends Message.Parameters>
         this(flag, null);
     }
 
-    public double getScore()
+    public Double getScore()
     {
-        return score;
+        return (EnumMessageLevel.compare(level, EnumMessageLevel.NOTIFY) < 0)?
+            SCORE_LOW_VALUE : SCORE_HIGH_VALUE;
     }
 
     public P getMessage()
@@ -44,7 +41,7 @@ public class SimpleMessageResolutionStatus <P extends Message.Parameters>
     
     public boolean isSignificant()
     {
-        return (score > THRESHOLD);
+        return EnumMessageLevel.compare(EnumMessageLevel.NOTIFY, level) <= 0;
     }
  
 }

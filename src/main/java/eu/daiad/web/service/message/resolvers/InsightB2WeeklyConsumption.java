@@ -31,6 +31,7 @@ import eu.daiad.web.model.message.EnumRecommendationTemplate;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageResolutionStatus;
 import eu.daiad.web.model.message.Recommendation.ParameterizedTemplate;
+import eu.daiad.web.model.message.ScoringMessageResolutionStatus;
 import eu.daiad.web.model.message.SimpleMessageResolutionStatus;
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
@@ -198,7 +199,7 @@ public class InsightB2WeeklyConsumption extends AbstractRecommendationResolver
         ParameterizedTemplate parameterizedTemplate = 
             new Parameters(refDate, deviceType, targetValue, previousValue);
         MessageResolutionStatus<ParameterizedTemplate> result = 
-            new SimpleMessageResolutionStatus<>(score, parameterizedTemplate);
+            new ScoringMessageResolutionStatus<>(score, parameterizedTemplate);
         return Collections.singletonList(result);
     }
 

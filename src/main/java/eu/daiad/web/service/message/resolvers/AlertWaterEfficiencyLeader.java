@@ -202,7 +202,7 @@ public class AlertWaterEfficiencyLeader extends AbstractAlertResolver
                     refDate, deviceType, consumption, monthlyAverage)
                 .withAnnualSavings(monthsPerYear * (monthlyAverage - consumption));
             MessageResolutionStatus<ParameterizedTemplate> result = 
-                new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
+                new SimpleMessageResolutionStatus<>(parameterizedTemplate);
             return Collections.singletonList(result);
         }
         return Collections.emptyList();

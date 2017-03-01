@@ -175,9 +175,9 @@ public class RecommendShampooChange extends AbstractRecommendationResolver
         if (userConsumption > averageConsumption * VOLUME_HIGH_RATIO) {
             ParameterizedTemplate parameterizedTemplate = new Parameters(refDate, deviceType)
                 .withAverageConsumption(averageConsumption)
-                .withUserAverageConsumption(userConsumption);   
+                .withUserAverageConsumption(userConsumption);          
             MessageResolutionStatus<ParameterizedTemplate> result = 
-                new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
+                new SimpleMessageResolutionStatus<>(parameterizedTemplate);
             return Collections.singletonList(result);
         }
         return Collections.emptyList();
