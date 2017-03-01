@@ -30,6 +30,7 @@ import eu.daiad.web.model.message.AlertStatistics;
 import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.model.message.AnnouncementRequest;
 import eu.daiad.web.model.message.EnumAlertType;
+import eu.daiad.web.model.message.EnumMessageLevel;
 import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.EnumRecommendationType;
 import eu.daiad.web.model.message.Message;
@@ -164,6 +165,8 @@ public class DefaultMessageService
             List<AccountRecommendationEntity> recommendations =
                 accountRecommendationRepository.findByAccount(userKey, minMessageId, pagination);
             for (AccountRecommendationEntity r: recommendations) {
+                if (EnumMessageLevel.compare(r.getSignificant(), EnumMessageLevel.NOTIFY) < 0)
+                    continue; // skip; not considered significant
                 Recommendation message = accountRecommendationRepository.formatMessage(r, locale);
                 if (message != null)
                     messages.add(message);
