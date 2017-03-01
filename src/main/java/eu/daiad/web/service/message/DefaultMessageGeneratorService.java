@@ -22,6 +22,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.joda.time.LocalDateTime;
@@ -31,6 +32,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 import eu.daiad.web.annotate.message.MessageGenerator;
 import eu.daiad.web.domain.application.AccountEntity;
@@ -39,13 +41,16 @@ import eu.daiad.web.domain.application.AlertResolverExecutionEntity;
 import eu.daiad.web.domain.application.RecommendationResolverExecutionEntity;
 import eu.daiad.web.domain.application.TipEntity;
 import eu.daiad.web.domain.application.UtilityEntity;
-import eu.daiad.web.model.ConsumptionStats;
+import eu.daiad.web.model.ComputedNumber;
 import eu.daiad.web.model.EnumDayOfWeek;
+import eu.daiad.web.model.EnumStatistic;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.Alert;
+import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageResolutionStatus;
 import eu.daiad.web.model.message.Recommendation;
+import eu.daiad.web.model.query.EnumMeasurementField;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IAccountAlertRepository;
 import eu.daiad.web.repository.application.IAccountRecommendationRepository;
@@ -57,7 +62,8 @@ import eu.daiad.web.repository.application.IRecommendationResolverExecutionRepos
 import eu.daiad.web.repository.application.ITipRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IUtilityRepository;
-import eu.daiad.web.service.IConsumptionStatsService;
+import eu.daiad.web.service.IConsumptionStatisticsService;
+import eu.daiad.web.service.IUtilityConsumptionStatisticsService;
 
 @Service
 public class DefaultMessageGeneratorService
@@ -112,8 +118,8 @@ public class DefaultMessageGeneratorService
 	private IGroupRepository groupRepository;
 
 	@Autowired
-	@Qualifier("cachingConsumptionStatsService")
-	private IConsumptionStatsService statsService;
+	@Qualifier("cachingConsumptionStatisticsService")
+	private IConsumptionStatisticsService statisticsService;
 
 	@Autowired
 	private ITipRepository tipRepository;
@@ -205,7 +211,37 @@ public class DefaultMessageGeneratorService
 	        return targetUtility? utilityRepository.findOne(utility.getId()) : null;
 	    }
 	}
-		
+	
+	/**
+	 * Provide an interface to utility-wide statistics.
+	 * 
+	 * This is actually a decorator to the top-level statistics service.
+	 */
+	private class StatisticsService
+	    implements IUtilityConsumptionStatisticsService
+	{
+	    private final UtilityInfo utility;
+
+        public StatisticsService(UtilityInfo utility)
+        {
+            this.utility = utility;
+        }
+
+        @Override
+        public ComputedNumber getNumber(
+            LocalDateTime refDate, Period period, EnumMeasurementField field, EnumStatistic statistic)
+        {
+            return statisticsService.getNumber(utility.getKey(), refDate, period, field, statistic);
+        }
+
+        @Override
+        public ComputedNumber getNumber(
+            DateTime refDate, Period period, EnumMeasurementField field, EnumStatistic statistic)
+        {
+            return statisticsService.getNumber(utility.getKey(), refDate, period, field, statistic);
+        }
+	}
+	
 	/**
 	 * A utility-wide message generator
 	 */
@@ -217,11 +253,17 @@ public class DefaultMessageGeneratorService
 	    /** A reference date for resolvers */
 	    protected final DateTime refDate;
 	    
-	    /** A sliding interval of 1 week ending to refDate */
-	    protected final Interval refPastWeek;
+	    /** The current day ending on refDate */
+        protected final Interval refCurrentDay;
 	    
-	    /** A sliding interval of ~ 1 month ending to refDate */
-	    protected final Interval refPastMonth;
+	    /** The current week ending on refDate */
+	    protected final Interval refCurrentWeek;
+	    
+	    /** The current month ending on refDate */
+	    protected final Interval refCurrentMonth;
+
+	    /** Provide statistics bound to this utility */
+	    private final IUtilityConsumptionStatisticsService utilityStatisticsService;
 	    
 	    protected Configuration config = new Configuration();
 	    
@@ -229,18 +271,26 @@ public class DefaultMessageGeneratorService
         {
 	        this.utility = utility;
 	        
+	        // Provide statistics bound to this utility
+	        
+	        utilityStatisticsService = 
+	            DefaultMessageGeneratorService.this.new StatisticsService(utility);
+	        
 	        // Determine reference date as a (zoned) DateTime
 	        
 	        DateTimeZone tz = DateTimeZone.forID(utility.getTimezone()); 
-	        this.refDate = refDate.toDateTime(tz);
+	        DateTime end = this.refDate = refDate.toDateTime(tz);
 	        
-	        // Compute sliding intervals ending to (not including) reference date
+	        // Compute sliding intervals ending on (not including) reference date
 	        
-	        this.refPastWeek = new Interval(
-	            this.refDate.minusWeeks(1).plusMillis(1), this.refDate.minusMillis(1));
+	        this.refCurrentDay = new Interval(
+	            end.withTimeAtStartOfDay(), end);
 	        
-	        this.refPastMonth = new Interval(
-	            this.refDate.minusMonths(1).plusMillis(1), this.refDate.minusMillis(1));
+	        this.refCurrentWeek = new Interval(
+	            end.withDayOfWeek(DateTimeConstants.MONDAY).withTimeAtStartOfDay(), end);
+	        
+	        this.refCurrentMonth = new Interval(
+	            end.withDayOfMonth(1).withTimeAtStartOfDay(), end);
         }
 
 	    public Generator configure(Configuration config)
@@ -260,16 +310,30 @@ public class DefaultMessageGeneratorService
         {
             return utility;
         }
-
+        
         @Override
-        public ConsumptionStats getStats()
+        public IUtilityConsumptionStatisticsService getStatsService()
         {
-            return statsService.getStats(utility, refDate.toLocalDateTime());
-        }  
+            return utilityStatisticsService;
+        }
         
         protected DeviceExistsPredicate isDevicePresent(EnumDeviceType deviceType)
         {
             return new DeviceExistsPredicate(deviceType, deviceRepository);
+        }
+        
+        protected <P extends Message.Parameters> boolean checkParameterizedTemplate(P p)
+        {
+            Set<ConstraintViolation<P>> constraintViolations = validator.validate(p);
+            boolean valid = constraintViolations.isEmpty();
+            if (!valid) {
+                for (ConstraintViolation<P> c: constraintViolations) {
+                    warn("Failed validation for parameterized template %s: at %s: %s",
+                        p.getClass().getName(),
+                        c.getPropertyPath(), c.getMessage());
+                }
+            }
+            return valid;
         }
         
         public abstract void generate(Target target);
@@ -347,7 +411,8 @@ public class DefaultMessageGeneratorService
                 return; // not enabled as a resolver, or should not execute yet
             
             resolver.setup(config, this);
-            info("About to resolve recommendations with %s (%s)", resolverName, resolver);
+            info("About to resolve recommendations with %s (%s)", 
+                resolverName, resolver.getClass().getName());
             
             DateTime started = DateTime.now();
             RecommendationResolverExecutionEntity resolverExecutionEntity = 
@@ -355,11 +420,12 @@ public class DefaultMessageGeneratorService
             
             FluentIterable<UUID> accountKeys = FluentIterable.of(target.getAccounts());
             
+            int cnt = 0;      
             for (EnumDeviceType deviceType: resolver.getSupportedDevices()) {
                 for (UUID accountKey: accountKeys.filter(isDevicePresent(deviceType))) {
                     // Filter by checking per-account limits (throttle)
                     if (hasExceededPerAccountLimits(resolverName, annotation, accountKey, deviceType)) {
-                        info("Skipping resolver %s for account %s as it exceeded limits", 
+                        info("Skipping resolver %s for account %s: Too many messages", 
                             resolverName, accountKey);
                         continue;
                     }
@@ -378,23 +444,13 @@ public class DefaultMessageGeneratorService
                         continue;
                     
                     // Validate and push resolved messages to repository
-                    Set<ConstraintViolation<Recommendation.ParameterizedTemplate>> constraintViolations = null;
                     for (MessageResolutionStatus<Recommendation.ParameterizedTemplate> r: results) {
-                        // Check if significant
                         if (!r.isSignificant())
                             continue; 
-                        // Validate
                         Recommendation.ParameterizedTemplate parameterizedTemplate = r.getMessage();
-                        constraintViolations = validator.validate(parameterizedTemplate);
-                        if (!constraintViolations.isEmpty()) {
-                            for (ConstraintViolation<Recommendation.ParameterizedTemplate> c: constraintViolations) {
-                                info("Failed validation for parameterized template %s: at %s: %s",
-                                    parameterizedTemplate,
-                                    c.getPropertyPath(), c.getMessage());
-                            }
+                        if (!checkParameterizedTemplate(parameterizedTemplate))
                             continue;
-                        }
-                        // Passed validation: push to account-recommendation repository
+                        cnt++;
                         accountRecommendationRepository.createWith(
                             accountKey, parameterizedTemplate, resolverExecutionEntity, deviceType);
                     }
@@ -402,7 +458,8 @@ public class DefaultMessageGeneratorService
             }
             
             resolver.teardown();
-            info("Finished with recommendations examined by %s", resolverName);
+            info("Finished with recommendations examined by %s (%d new message(s))",
+                resolverName, cnt);
             
             DateTime finished = DateTime.now();
             resolverExecutionRepository.updateFinished(resolverExecutionEntity, finished);
@@ -442,13 +499,13 @@ public class DefaultMessageGeneratorService
             Period period = Period.parse(resolverAnnotation.period());
             DateTime t0 = refDate.minus(period).plusMillis(1); // just after refDate - P
             
-            List<RecommendationResolverExecutionEntity> executions = 
-                resolverExecutionRepository.findByName(resolverName, new Interval(t0, refDate));            
-            return executions.isEmpty();
+            List<Integer> xids = 
+                resolverExecutionRepository.findIdByName(resolverName, new Interval(t0, refDate));            
+            return xids.isEmpty();
         }
         
         /**
-         * Decide if a resolver has exceeded per-account limits (maxPerWeek, maxPerMonth).
+         * Decide if a resolver has exceeded per-account limits (maxPerDay, maxPerWeek, maxPerMonth).
          * 
          * @param resolverName
          * @param resolverAnnotation
@@ -462,21 +519,30 @@ public class DefaultMessageGeneratorService
             
             List<Integer> xids;
             
-            // Check for a sliding interval of 1 week
+            // Check for current day
             
-            xids = resolverExecutionRepository.findIdByName(resolverName, refPastWeek);
+            xids = resolverExecutionRepository.findIdByName(resolverName, refCurrentDay);
             if (!xids.isEmpty()) {
-                int count = accountRecommendationRepository.countByAccountAndExecution(accountKey, xids);
-                if (count > resolverAnnotation.maxPerWeek())
+                int cnt = accountRecommendationRepository.countByAccountAndExecution(accountKey, xids);
+                if (cnt >= resolverAnnotation.maxPerDay())
                     return true;
             }
             
-            // Check for a sliding interval of 1 month
+            // Check for current week
             
-            xids = resolverExecutionRepository.findIdByName(resolverName, refPastMonth);
+            xids = resolverExecutionRepository.findIdByName(resolverName, refCurrentWeek);
             if (!xids.isEmpty()) {
-                int count = accountRecommendationRepository.countByAccountAndExecution(accountKey, xids);
-                if (count > resolverAnnotation.maxPerMonth())
+                int cnt = accountRecommendationRepository.countByAccountAndExecution(accountKey, xids);
+                if (cnt >= resolverAnnotation.maxPerWeek())
+                    return true;
+            }
+            
+            // Check for current month
+            
+            xids = resolverExecutionRepository.findIdByName(resolverName, refCurrentMonth);
+            if (!xids.isEmpty()) {
+                int cnt = accountRecommendationRepository.countByAccountAndExecution(accountKey, xids);
+                if (cnt >= resolverAnnotation.maxPerMonth())
                     return true;
             }
             
@@ -515,7 +581,8 @@ public class DefaultMessageGeneratorService
                 return; // not enabled as a resolver, or should not execute yet
             
             resolver.setup(config, this);
-            info("About to resolve alerts with %s (%s)", resolverName, resolver);
+            info("About to resolve alerts with %s (%s)", 
+                resolverName, resolver.getClass().getName());
             
             DateTime started = DateTime.now();
             AlertResolverExecutionEntity resolverExecutionEntity = 
@@ -523,11 +590,12 @@ public class DefaultMessageGeneratorService
             
             FluentIterable<UUID> accountKeys = FluentIterable.of(target.getAccounts());
             
+            int cnt = 0;
             for (EnumDeviceType deviceType: resolver.getSupportedDevices()) {
                 for (UUID accountKey: accountKeys.filter(isDevicePresent(deviceType))) {
                     // Filter by checking per-account limits (throttle)
                     if (hasExceededPerAccountLimits(resolverName, annotation, accountKey, deviceType)) {
-                        info("Skipping resolver %s for account %s as it exceeded limits",
+                        info("Skipping resolver %s for account %s: Too many messages",
                             resolverName, accountKey);
                         continue;
                     }
@@ -546,23 +614,13 @@ public class DefaultMessageGeneratorService
                         continue;
                     
                     // Validate and push resolved messages to repository
-                    Set<ConstraintViolation<Alert.ParameterizedTemplate>> constraintViolations = null;
                     for (MessageResolutionStatus<Alert.ParameterizedTemplate> r: results) {
-                        // Check if significant
                         if (!r.isSignificant())
                             continue; 
-                        // Validate
                         Alert.ParameterizedTemplate parameterizedTemplate = r.getMessage();
-                        constraintViolations = validator.validate(parameterizedTemplate);
-                        if (!constraintViolations.isEmpty()) {
-                            for (ConstraintViolation<Alert.ParameterizedTemplate> c: constraintViolations) {
-                                info("Failed validation for parameterized template %s: at %s: %s",
-                                    parameterizedTemplate,
-                                    c.getPropertyPath(), c.getMessage());
-                            }
+                        if (!checkParameterizedTemplate(parameterizedTemplate))
                             continue;
-                        }
-                        // Passed validation: push to account-alert repository
+                        cnt++;
                         accountAlertRepository.createWith(
                             accountKey, parameterizedTemplate, resolverExecutionEntity, deviceType);
                     }
@@ -570,7 +628,8 @@ public class DefaultMessageGeneratorService
             }
             
             resolver.teardown();
-            info("Finished with alerts examined by %s", resolverName);
+            info("Finished with alerts examined by %s (%d new message(s))",
+                resolverName, cnt);
             
             DateTime finished = DateTime.now();
             resolverExecutionRepository.updateFinished(resolverExecutionEntity, finished);
@@ -579,7 +638,7 @@ public class DefaultMessageGeneratorService
         }
         
         /**
-         * Decide if a resolver has exceeded per-account limits (maxPerWeek, maxPerMonth).
+         * Decide if a resolver has exceeded per-account limits (maxPerDay, maxPerWeek, maxPerMonth).
          * 
          * @param resolverName
          * @param resolverAnnotation
@@ -593,21 +652,30 @@ public class DefaultMessageGeneratorService
             
             List<Integer> xids;
             
-            // Check for a sliding interval of 1 week
+            // Check for current day
             
-            xids = resolverExecutionRepository.findIdByName(resolverName, refPastWeek);
+            xids = resolverExecutionRepository.findIdByName(resolverName, refCurrentDay);
             if (!xids.isEmpty()) {
-                int count = accountAlertRepository.countByAccountAndExecution(accountKey, xids);
-                if (count > resolverAnnotation.maxPerWeek())
+                int cnt = accountAlertRepository.countByAccountAndExecution(accountKey, xids);
+                if (cnt >= resolverAnnotation.maxPerDay())
                     return true;
             }
             
-            // Check for a sliding interval of 1 month
+            // Check for current week
             
-            xids = resolverExecutionRepository.findIdByName(resolverName, refPastMonth);
+            xids = resolverExecutionRepository.findIdByName(resolverName, refCurrentWeek);
             if (!xids.isEmpty()) {
-                int count = accountAlertRepository.countByAccountAndExecution(accountKey, xids);
-                if (count > resolverAnnotation.maxPerMonth())
+                int cnt = accountAlertRepository.countByAccountAndExecution(accountKey, xids);
+                if (cnt >= resolverAnnotation.maxPerWeek())
+                    return true;
+            }
+            
+            // Check for current month
+            
+            xids = resolverExecutionRepository.findIdByName(resolverName, refCurrentMonth);
+            if (!xids.isEmpty()) {
+                int cnt = accountAlertRepository.countByAccountAndExecution(accountKey, xids);
+                if (cnt >= resolverAnnotation.maxPerMonth())
                     return true;
             }
             
@@ -640,15 +708,15 @@ public class DefaultMessageGeneratorService
             if (!daysOfMonth.isEmpty() && !daysOfMonth.contains(refDate.getDayOfMonth()))
                 return false;
             
-            // Otherwise (no day specified or refDate is on a trigger day), check if a successful 
-            // execution exists for the interval (refDate - P, refDate]
+            // Otherwise (no day-of-X specified or refDate is on a trigger day), check
+            // if a successful execution exists for the interval (refDate - P, refDate]
             
             Period period = Period.parse(resolverAnnotation.period());
             DateTime t0 = refDate.minus(period).plusMillis(1); // just after refDate - P
             
-            List<AlertResolverExecutionEntity> executions = 
-                resolverExecutionRepository.findByName(resolverName, new Interval(t0, refDate));         
-            return executions.isEmpty();
+            List<Integer> xids = 
+                resolverExecutionRepository.findIdByName(resolverName, new Interval(t0, refDate));         
+            return xids.isEmpty();
         }
 	    
 	}

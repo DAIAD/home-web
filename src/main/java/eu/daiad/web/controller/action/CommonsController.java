@@ -21,6 +21,7 @@ import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.group.CommonsCollectionResponse;
 import eu.daiad.web.model.group.CommonsCreateRequest;
 import eu.daiad.web.model.group.CommonsCreateRestResponse;
+import eu.daiad.web.model.group.CommonsInfo;
 import eu.daiad.web.model.group.CommonsMemberCollectionResponse;
 import eu.daiad.web.model.group.CommonsMemberQueryRequest;
 import eu.daiad.web.model.group.CommonsMemberQueryResult;
@@ -126,7 +127,6 @@ public class CommonsController extends BaseController {
      *
      * @param user the authenticated user.
      * @param commonsKey the key of the commons to update.
-     * @param request the commons updated properties.
      * @return an instance of {@link RestResponse}.
      */
     @RequestMapping(value = "/action/commons/{commonsKey}", method = RequestMethod.DELETE, produces = "application/json")
@@ -211,7 +211,7 @@ public class CommonsController extends BaseController {
      * Gets authenticated user's all commons.
      *
      * @param user the user who submits the query.
-     * @return a {@link CommonsCollectionResponse} collection.
+     * @return a {@link CommonsInfo} collection.
      */
     @RequestMapping(value = "/action/commons/membership", method = RequestMethod.GET, produces = "application/json")
     @Secured({ RoleConstant.ROLE_USER })
@@ -233,7 +233,7 @@ public class CommonsController extends BaseController {
      */
     @RequestMapping(value = "/action/commons/{commonsKey}/members", method = RequestMethod.POST, produces = "application/json")
     @Secured({ RoleConstant.ROLE_USER })
-    public RestResponse getMembers(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID commonsKey, CommonsMemberQueryRequest request) {
+    public RestResponse getMembers(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID commonsKey, @RequestBody CommonsMemberQueryRequest request) {
         try {
             if (request.getQuery() == null) {
                 return new CommonsMemberCollectionResponse();

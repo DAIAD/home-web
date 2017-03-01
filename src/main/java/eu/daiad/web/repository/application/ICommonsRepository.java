@@ -91,7 +91,6 @@ public interface ICommonsRepository {
      */
     CommonsQueryResult search(UUID userKey, CommonsQuery query);
 
-
     /**
      * Gets all commons for the user with the given key.
      *

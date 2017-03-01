@@ -102,11 +102,11 @@ public class AlertWeeklyWaterSavings extends AbstractAlertResolver
         }
         
         @NotNull
-        @DecimalMin("1E+0")
+        @DecimalMin("5E+0")
         @JsonIgnore
         public Double getWeeklySavings()
         {
-            return (value != null && previousValue != null)? (value - previousValue) : null;
+            return (value != null && previousValue != null)? (previousValue - value) : null;
         }
         
         @Override
@@ -151,6 +151,8 @@ public class AlertWeeklyWaterSavings extends AbstractAlertResolver
             .meter()
             .sum();
 
+        double weeklyThreshold = config.getVolumeThreshold(EnumDeviceType.METER, EnumTimeUnit.WEEK);
+        
         DateTime start = refDate.minusWeeks(1)
             .withDayOfWeek(DateTimeConstants.MONDAY)
             .withTimeAtStartOfDay();
@@ -162,7 +164,7 @@ public class AlertWeeklyWaterSavings extends AbstractAlertResolver
         series = queryResponse.getFacade(EnumDeviceType.METER);
         Double c0 = (series != null)? 
             series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
-        if (c0 == null)
+        if (c0 == null || c0 < weeklyThreshold)
             return Collections.emptyList();
 
         query = queryBuilder
@@ -172,7 +174,7 @@ public class AlertWeeklyWaterSavings extends AbstractAlertResolver
         series = queryResponse.getFacade(EnumDeviceType.METER);
         Double c1 = (series != null)? 
             series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
-        if (c1 == null)
+        if (c1 == null || c1 < weeklyThreshold)
             return Collections.emptyList();
 
         Double change = c1 - c0;

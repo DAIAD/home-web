@@ -13,15 +13,17 @@ import javax.validation.constraints.NotNull;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import eu.daiad.web.annotate.message.MessageGenerator;
-import eu.daiad.web.model.ConsumptionStats.EnumStatistic;
+import eu.daiad.web.model.EnumStatistic;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -34,6 +36,7 @@ import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumDataField;
+import eu.daiad.web.model.query.EnumMeasurementField;
 import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.ICurrencyRateService;
@@ -45,7 +48,9 @@ import eu.daiad.web.service.message.AbstractRecommendationResolver;
 @Scope("prototype")
 public class RecommendLessShowerTime extends AbstractRecommendationResolver
 {
-    public static final double DURATION_HIGH_RATIO = 1.5; 
+    public static final double DURATION_HIGH_RATIO = 1.50; 
+    
+    public static final double VOLUME_HIGH_RATIO = 1.15; 
     
     private static final Set<EnumDeviceType> supportedDevices = EnumSet.of(EnumDeviceType.AMPHIRO);
 
@@ -218,23 +223,29 @@ public class RecommendLessShowerTime extends AbstractRecommendationResolver
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {        
-        final int N = 3; // number of months to examine
+        Assert.state(deviceType == EnumDeviceType.AMPHIRO);
         
-        Double averageDuration = stats.getValue(
-            EnumStatistic.AVERAGE_MONTHLY, EnumDeviceType.AMPHIRO, EnumDataField.DURATION);
-        Double averageConsumption = stats.getValue(
-            EnumStatistic.AVERAGE_MONTHLY, EnumDeviceType.AMPHIRO, EnumDataField.VOLUME);
+        final int N = 3; // number of months to examine
+        final Period period = Period.months(N); 
+        
+        DateTime end = refDate.withDayOfMonth(1)
+            .withTimeAtStartOfDay();
+        
+        Double averageDuration = statisticsService.getNumber(
+                end, period, EnumMeasurementField.AMPHIRO_DURATION, EnumStatistic.AVERAGE_PER_SESSION) 
+            .getValue();
+            
+        Double averageConsumption = statisticsService.getNumber(
+                end, period, EnumMeasurementField.AMPHIRO_VOLUME, EnumStatistic.AVERAGE_PER_USER) 
+            .getValue();
+        
         if (averageDuration == null || averageDuration == null)
             return Collections.emptyList();
-        
-        DateTime start = refDate.minusMonths(N)
-            .withDayOfMonth(1)
-            .withTimeAtStartOfDay();
         
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
-            .sliding(start, N, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+            .absolute(end.minus(period), end, EnumTimeAggregation.ALL)
             .amphiro()
             .sum()
             .average();
@@ -245,20 +256,22 @@ public class RecommendLessShowerTime extends AbstractRecommendationResolver
         if (series == null || series.isEmpty())
             return Collections.emptyList();
         
-        double userAverageConsumption = series.get(EnumDataField.VOLUME, EnumMetric.SUM) / N;
+        double userConsumption = series.get(EnumDataField.VOLUME, EnumMetric.SUM);
         double userAverageDuration = series.get(EnumDataField.DURATION, EnumMetric.AVERAGE);
         boolean fire =
             userAverageDuration > averageDuration * DURATION_HIGH_RATIO &&
-            userAverageConsumption > averageConsumption;     
+            userConsumption > averageConsumption * VOLUME_HIGH_RATIO;     
         if (fire) {
             // Get a rough estimate for annual water savings if we spend 1 minute less
             final int numMonthsPerYear = 12;
-            Double annualSavings = numMonthsPerYear *
-                userAverageConsumption * (DateTimeConstants.SECONDS_PER_MINUTE / userAverageDuration);
+            final double numPeriodsPerYear = Double.valueOf(numMonthsPerYear) / period.getMonths();
+            Double annualSavings = 
+                numPeriodsPerYear * userConsumption *
+                (DateTimeConstants.SECONDS_PER_MINUTE / userAverageDuration);
             ParameterizedTemplate parameterizedTemplate = new Parameters(refDate, EnumDeviceType.AMPHIRO)
                 .withAverageConsumption(averageConsumption)
                 .withAverageDuration(averageDuration)
-                .withUserAverageConsumption(userAverageConsumption)
+                .withUserAverageConsumption(userConsumption)
                 .withUserAverageDuration(userAverageDuration)
                 .withAnnualSavings(annualSavings.intValue());
             MessageResolutionStatus<ParameterizedTemplate> result = 

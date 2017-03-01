@@ -37,6 +37,8 @@ src/main/resources/log4j2.xml
 src/main/resources/log4j2-test.xml
 src/main/resources/config
 
+src/main/java/eu/daiad/web/controller/api/ScratchController.java
+
 generated-sql/
 
 apidoc/docs

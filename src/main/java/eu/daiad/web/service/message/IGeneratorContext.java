@@ -4,6 +4,7 @@ import org.joda.time.DateTime;
 
 import eu.daiad.web.model.ConsumptionStats;
 import eu.daiad.web.model.utility.UtilityInfo;
+import eu.daiad.web.service.IUtilityConsumptionStatisticsService;
 
 public interface IGeneratorContext
 {
@@ -18,9 +19,7 @@ public interface IGeneratorContext
     UtilityInfo getUtilityInfo();
     
     /**
-     * Get consumption statistics for target utility
-     * 
-     * Todo: Change to getUtilityStats(DateTime)
+     * Provide access to utility-wide statistics
      */
-    ConsumptionStats getStats();
+    IUtilityConsumptionStatisticsService getStatsService();
 }
