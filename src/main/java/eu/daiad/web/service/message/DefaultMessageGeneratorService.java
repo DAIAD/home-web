@@ -3,6 +3,7 @@ package eu.daiad.web.service.message;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
@@ -18,7 +19,9 @@ import org.apache.commons.collections4.FluentIterable;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.Predicate;
 import org.apache.commons.collections4.Transformer;
+import org.apache.commons.collections4.map.Flat3Map;
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.mutable.MutableInt;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
@@ -34,6 +37,10 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import static org.apache.commons.collections4.MapUtils.lazyMap;
+import static org.apache.commons.collections4.FactoryUtils.instantiateFactory;
+import static org.apache.commons.collections4.FactoryUtils.prototypeFactory;
+
 import eu.daiad.web.annotate.message.MessageGenerator;
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AccountTipEntity;
@@ -47,6 +54,7 @@ import eu.daiad.web.model.EnumStatistic;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.Alert;
+import eu.daiad.web.model.message.EnumMessageLevel;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageResolutionStatus;
 import eu.daiad.web.model.message.Recommendation;
@@ -64,6 +72,7 @@ import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IUtilityRepository;
 import eu.daiad.web.service.IConsumptionStatisticsService;
 import eu.daiad.web.service.IUtilityConsumptionStatisticsService;
+import eu.daiad.web.util.Counters;
 
 @Service
 public class DefaultMessageGeneratorService
@@ -420,7 +429,8 @@ public class DefaultMessageGeneratorService
             
             FluentIterable<UUID> accountKeys = FluentIterable.of(target.getAccounts());
             
-            int cnt = 0;      
+            Counters<EnumMessageLevel> counters = new Counters<>(EnumMessageLevel.class);
+            
             for (EnumDeviceType deviceType: resolver.getSupportedDevices()) {
                 for (UUID accountKey: accountKeys.filter(isDevicePresent(deviceType))) {
                     // Filter by checking per-account limits (throttle)
@@ -445,21 +455,25 @@ public class DefaultMessageGeneratorService
                     
                     // Validate and push resolved messages to repository
                     for (MessageResolutionStatus<Recommendation.ParameterizedTemplate> r: results) {
-                        if (!r.isSignificant())
-                            continue; 
                         Recommendation.ParameterizedTemplate parameterizedTemplate = r.getMessage();
                         if (!checkParameterizedTemplate(parameterizedTemplate))
                             continue;
-                        cnt++;
+                        EnumMessageLevel level = r.isSignificant()?
+                            EnumMessageLevel.NOTIFY : EnumMessageLevel.LOG;
+                        counters.incr(level);
                         accountRecommendationRepository.createWith(
-                            accountKey, parameterizedTemplate, resolverExecutionEntity, deviceType);
+                            accountKey, 
+                            parameterizedTemplate, 
+                            resolverExecutionEntity, 
+                            deviceType,
+                            level);
                     }
                 }
             }
             
             resolver.teardown();
             info("Finished with recommendations examined by %s (%d new message(s))",
-                resolverName, cnt);
+                resolverName, counters.get(EnumMessageLevel.NOTIFY));
             
             DateTime finished = DateTime.now();
             resolverExecutionRepository.updateFinished(resolverExecutionEntity, finished);
@@ -615,8 +629,6 @@ public class DefaultMessageGeneratorService
                     
                     // Validate and push resolved messages to repository
                     for (MessageResolutionStatus<Alert.ParameterizedTemplate> r: results) {
-                        if (!r.isSignificant())
-                            continue; 
                         Alert.ParameterizedTemplate parameterizedTemplate = r.getMessage();
                         if (!checkParameterizedTemplate(parameterizedTemplate))
                             continue;

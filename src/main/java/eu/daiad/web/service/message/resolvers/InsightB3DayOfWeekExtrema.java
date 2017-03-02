@@ -33,6 +33,7 @@ import eu.daiad.web.model.EnumDayOfWeek;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.EnumDeviceType;
+import eu.daiad.web.model.message.EnumMessageLevel;
 import eu.daiad.web.model.message.EnumRecommendationTemplate;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageResolutionStatus;
@@ -50,7 +51,7 @@ import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractRecommendationResolver;
 
-@MessageGenerator(period = "P1W", dayOfWeek = EnumDayOfWeek.MONDAY, maxPerWeek = 1)
+@MessageGenerator(period = "P2W", dayOfWeek = EnumDayOfWeek.MONDAY, maxPerWeek = 1)
 @Component
 @Scope("prototype")
 public class InsightB3DayOfWeekExtrema extends AbstractRecommendationResolver
@@ -59,7 +60,7 @@ public class InsightB3DayOfWeekExtrema extends AbstractRecommendationResolver
         implements ParameterizedTemplate
     {        
         /** A minimum value for daily volume consumption */
-        private static final String MIN_VALUE = "1E-1"; 
+        private static final String MIN_VALUE = "1E+0"; 
 
         /** The average daily consumption for the particular day-of-week */
         @NotNull
@@ -272,8 +273,8 @@ public class InsightB3DayOfWeekExtrema extends AbstractRecommendationResolver
             new Parameters(refDate, deviceType, maxOfDay, avg, dayMax);
         
         return Arrays.<MessageResolutionStatus<ParameterizedTemplate>>asList(
-            new SimpleMessageResolutionStatus<>(true, p1),
-            new SimpleMessageResolutionStatus<>(true, p2)
+            new SimpleMessageResolutionStatus<>(p1),
+            new SimpleMessageResolutionStatus<>(p2)
         );
     }
 }

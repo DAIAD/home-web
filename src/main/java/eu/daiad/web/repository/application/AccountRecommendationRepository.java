@@ -31,6 +31,7 @@ import eu.daiad.web.domain.application.RecommendationTemplateEntity;
 import eu.daiad.web.domain.application.RecommendationTemplateTranslationEntity;
 import eu.daiad.web.model.PagingOptions;
 import eu.daiad.web.model.device.EnumDeviceType;
+import eu.daiad.web.model.message.EnumMessageLevel;
 import eu.daiad.web.model.message.EnumRecommendationTemplate;
 import eu.daiad.web.model.message.EnumRecommendationType;
 import eu.daiad.web.model.message.Recommendation;
@@ -303,15 +304,6 @@ public class AccountRecommendationRepository extends BaseRepository
     }
 
     @Override
-    public Recommendation formatMessage(int id, Locale locale)
-    {
-        AccountRecommendationEntity r = findOne(id);
-        if (r != null)
-            return formatMessage(r, locale);
-        return null;
-    }
-
-    @Override
     public List<AccountRecommendationEntity> findByExecution(int xid)
     {        
         TypedQuery<AccountRecommendationEntity> query = entityManager.createQuery(
@@ -416,7 +408,8 @@ public class AccountRecommendationRepository extends BaseRepository
         UUID accountKey,
         ParameterizedTemplate parameterizedTemplate,
         RecommendationResolverExecutionEntity resolverExecution,
-        EnumDeviceType deviceType)
+        EnumDeviceType deviceType,
+        EnumMessageLevel level)
     {
         TypedQuery<AccountEntity> query = entityManager.createQuery(
             "SELECT a FROM account a WHERE a.key = :accountKey", AccountEntity.class);
@@ -432,7 +425,7 @@ public class AccountRecommendationRepository extends BaseRepository
         if (account == null)
             return null;
         
-        return createWith(account, parameterizedTemplate, resolverExecution, deviceType);
+        return createWith(account, parameterizedTemplate, resolverExecution, deviceType, level);
     }
 
     @Override
@@ -440,7 +433,8 @@ public class AccountRecommendationRepository extends BaseRepository
         AccountEntity account,
         ParameterizedTemplate parameterizedTemplate,
         RecommendationResolverExecutionEntity resolverExecution,
-        EnumDeviceType deviceType)
+        EnumDeviceType deviceType,
+        EnumMessageLevel level)
     {
         // Ensure we have a persistent AccountEntity instance
         if (!entityManager.contains(account))
@@ -460,6 +454,7 @@ public class AccountRecommendationRepository extends BaseRepository
         r.setParameters(parameterizedTemplate);
         r.setDeviceType(deviceType);
         r.setResolverExecution(resolverExecution);
+        r.setSignificant(level);
         
         return create(r);
     }
@@ -566,9 +561,19 @@ public class AccountRecommendationRepository extends BaseRepository
         message.setDescription(description);
         message.setImageLink(translation.getImageLink());
         message.setCreatedOn(r.getCreatedOn());
+        message.setRefDate(r.getRefDate());
         if (r.getAcknowledgedOn() != null)
             message.setAcknowledgedOn(r.getAcknowledgedOn());
 
         return message;
+    }
+    
+    @Override
+    public Recommendation formatMessage(int id, Locale locale)
+    {
+        AccountRecommendationEntity r = findOne(id);
+        if (r != null)
+            return formatMessage(r, locale);
+        return null;
     }
 }

@@ -13,6 +13,7 @@ import eu.daiad.web.domain.application.AccountRecommendationEntity;
 import eu.daiad.web.domain.application.RecommendationResolverExecutionEntity;
 import eu.daiad.web.model.PagingOptions;
 import eu.daiad.web.model.device.EnumDeviceType;
+import eu.daiad.web.model.message.EnumMessageLevel;
 import eu.daiad.web.model.message.EnumRecommendationType;
 import eu.daiad.web.model.message.Recommendation;
 import eu.daiad.web.model.message.Recommendation.ParameterizedTemplate;
@@ -84,13 +85,15 @@ public interface IAccountRecommendationRepository
         UUID accountKey,
         ParameterizedTemplate parameterizedTemplate,
         RecommendationResolverExecutionEntity resolverExecution,
-        EnumDeviceType deviceType);
+        EnumDeviceType deviceType,
+        EnumMessageLevel level);
 
     AccountRecommendationEntity createWith(
         AccountEntity account,
         ParameterizedTemplate parameterizedTemplate,
         RecommendationResolverExecutionEntity resolverExecution,
-        EnumDeviceType deviceType);
+        EnumDeviceType deviceType,
+        EnumMessageLevel level);
 
     
     boolean acknowledge(int id, DateTime acknowledged);

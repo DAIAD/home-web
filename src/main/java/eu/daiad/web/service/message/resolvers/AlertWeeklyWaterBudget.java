@@ -232,7 +232,7 @@ public class AlertWeeklyWaterBudget extends AbstractAlertResolver
             return Collections.emptyList();
         
         MessageResolutionStatus<ParameterizedTemplate> result = 
-            new SimpleMessageResolutionStatus<>(true, parameterizedTemplate); 
+            new SimpleMessageResolutionStatus<>(parameterizedTemplate); 
         return Collections.singletonList(result);
     }
 

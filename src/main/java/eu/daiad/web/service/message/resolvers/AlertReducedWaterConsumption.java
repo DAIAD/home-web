@@ -196,7 +196,7 @@ public class AlertReducedWaterConsumption extends AbstractAlertResolver
         if (percentChange > CHANGE_PERCENTAGE_THRESHOLD && percentChange < CHANGE_PERCENTAGE_FLOOR) {
             ParameterizedTemplate parameterizedTemplate = new Parameters(refDate, deviceType, c1, c0); 
             MessageResolutionStatus<ParameterizedTemplate> result = 
-                new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
+                new SimpleMessageResolutionStatus<>(parameterizedTemplate);
             return Collections.singletonList(result);
         }
         return Collections.emptyList();

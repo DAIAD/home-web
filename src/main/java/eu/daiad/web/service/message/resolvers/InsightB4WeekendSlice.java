@@ -14,6 +14,7 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.collections4.FluentIterable;
 import org.apache.commons.math3.stat.descriptive.summary.Sum;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.joda.time.Period;
@@ -46,7 +47,7 @@ import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractRecommendationResolver;
 
-@MessageGenerator(period = "P1W", dayOfWeek = EnumDayOfWeek.MONDAY, maxPerWeek = 1)
+@MessageGenerator(period = "P4W", dayOfWeek = EnumDayOfWeek.MONDAY, maxPerMonth = 2, maxPerWeek = 1)
 @Component
 @Scope("prototype")
 public class InsightB4WeekendSlice extends AbstractRecommendationResolver
@@ -118,7 +119,6 @@ public class InsightB4WeekendSlice extends AbstractRecommendationResolver
             Map<String, Object> parameters = super.getParameters();
 
             parameters.put("weekday_consumption", weekdayValue);
-
             parameters.put("weekend_consumption", weekendValue);
 
             Double percentChange = 100.0 * Math.abs((weekendValue - weekdayValue) / weekdayValue);
@@ -142,7 +142,9 @@ public class InsightB4WeekendSlice extends AbstractRecommendationResolver
         UUID accountKey, EnumDeviceType deviceType)
     {
         final double F = 0.6; // a threshold ratio of non-nulls for collected values
-        final DateTime targetDate = EnumTimeUnit.WEEK.startOf(refDate.minusWeeks(1));
+        final DateTime targetDate = refDate.minusWeeks(1) // previous week
+            .withDayOfWeek(DateTimeConstants.MONDAY)
+            .withTimeAtStartOfDay();
         final DateTimeZone tz = refDate.getZone();
         final int N = 8; // number of weeks to examine
         final double dailyThreshold = config.getVolumeThreshold(deviceType, EnumTimeUnit.DAY);

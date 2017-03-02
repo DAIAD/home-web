@@ -108,7 +108,7 @@ public class AlertExcessiveEnergyConsumption extends AbstractAlertResolver
             .withMoney1(annualSavings);
         
         MessageResolutionStatus<ParameterizedTemplate> result = 
-            new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
+            new SimpleMessageResolutionStatus<>(parameterizedTemplate);
         return Collections.singletonList(result);
     }
 

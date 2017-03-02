@@ -239,7 +239,7 @@ public class RecommendLessShowerTime extends AbstractRecommendationResolver
                 end, period, EnumMeasurementField.AMPHIRO_VOLUME, EnumStatistic.AVERAGE_PER_USER) 
             .getValue();
         
-        if (averageDuration == null || averageDuration == null)
+        if (averageDuration == null || averageConsumption == null)
             return Collections.emptyList();
         
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
@@ -275,7 +275,7 @@ public class RecommendLessShowerTime extends AbstractRecommendationResolver
                 .withUserAverageDuration(userAverageDuration)
                 .withAnnualSavings(annualSavings.intValue());
             MessageResolutionStatus<ParameterizedTemplate> result = 
-                new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
+                new SimpleMessageResolutionStatus<>(parameterizedTemplate);
             return Collections.singletonList(result);
         }
         return Collections.emptyList();

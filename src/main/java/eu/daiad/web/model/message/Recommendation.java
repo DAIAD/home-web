@@ -218,6 +218,8 @@ public class Recommendation extends Message
 
 	private final EnumRecommendationTemplate recommendationTemplate;
 
+	private Long refDate;
+	
 	private String description;
 
 	private String link;
@@ -290,5 +292,23 @@ public class Recommendation extends Message
     public String getBody()
     {
         return title;
+    }
+	
+	@JsonProperty("refDate")
+    public Long getRefDate()
+    {
+        return refDate;
+    }
+
+    @JsonProperty("refDate")
+    public void setRefDate(Long refDate)
+    {
+        this.refDate = refDate;
+    }
+    
+    @JsonIgnore
+    public void setRefDate(DateTime refDate)
+    {
+        this.refDate = refDate.getMillis();
     }
 }
