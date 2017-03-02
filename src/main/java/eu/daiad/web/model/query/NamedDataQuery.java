@@ -6,7 +6,7 @@ import org.joda.time.DateTime;
 public class NamedDataQuery {
 
 	public enum EnumFavouriteType {
-		UNDEFINED, MAP, CHART;
+		UNDEFINED, MAP, CHART, FORECAST;
 	}  
 
 	public NamedDataQuery() {
