@@ -304,15 +304,6 @@ public class AccountRecommendationRepository extends BaseRepository
     }
 
     @Override
-    public Recommendation formatMessage(int id, Locale locale)
-    {
-        AccountRecommendationEntity r = findOne(id);
-        if (r != null)
-            return formatMessage(r, locale);
-        return null;
-    }
-
-    @Override
     public List<AccountRecommendationEntity> findByExecution(int xid)
     {        
         TypedQuery<AccountRecommendationEntity> query = entityManager.createQuery(
@@ -570,9 +561,19 @@ public class AccountRecommendationRepository extends BaseRepository
         message.setDescription(description);
         message.setImageLink(translation.getImageLink());
         message.setCreatedOn(r.getCreatedOn());
+        message.setRefDate(r.getRefDate());
         if (r.getAcknowledgedOn() != null)
             message.setAcknowledgedOn(r.getAcknowledgedOn());
 
         return message;
+    }
+    
+    @Override
+    public Recommendation formatMessage(int id, Locale locale)
+    {
+        AccountRecommendationEntity r = findOne(id);
+        if (r != null)
+            return formatMessage(r, locale);
+        return null;
     }
 }
