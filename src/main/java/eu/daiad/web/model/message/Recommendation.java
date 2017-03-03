@@ -229,7 +229,7 @@ public class Recommendation extends Message
 		super(id);
 	    this.recommendationTemplate = template;
 		this.recommendationType = template.getType();
-		this.priority = recommendationType.getPriority();
+		this.priority = recommendationType.getPriority().intValue();
 	}
 
 	public Recommendation(int id, EnumRecommendationType type)
@@ -237,7 +237,7 @@ public class Recommendation extends Message
 	    super(id);
 	    this.recommendationTemplate = null;
 	    this.recommendationType = type;
-	    this.priority = recommendationType.getPriority();
+	    this.priority = recommendationType.getPriority().intValue();
 	}
 
 	@JsonIgnore

@@ -2,7 +2,6 @@ package eu.daiad.web.service.message;
 
 import org.joda.time.DateTime;
 
-import eu.daiad.web.model.ConsumptionStats;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.service.IUtilityConsumptionStatisticsService;
 

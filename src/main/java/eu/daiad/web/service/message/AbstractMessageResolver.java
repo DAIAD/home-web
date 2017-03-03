@@ -12,7 +12,6 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 import org.springframework.util.Assert;
 
-import eu.daiad.web.model.ConsumptionStats;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.utility.UtilityInfo;

@@ -230,7 +230,7 @@ public class Alert extends Message
         super(id);
         this.alertTemplate = template;
         this.alertType = template.getType();
-        this.priority = alertType.getPriority();
+        this.priority = alertType.getPriority().intValue();
     }
 
     public Alert(int id, EnumAlertType type)
@@ -238,7 +238,7 @@ public class Alert extends Message
         super(id);
         this.alertTemplate = null;
         this.alertType = type;
-        this.priority = alertType.getPriority();
+        this.priority = alertType.getPriority().intValue();
     }
 
 	@Override
