@@ -7,7 +7,6 @@ import org.joda.time.LocalDateTime;
 import org.joda.time.Period;
 
 import eu.daiad.web.model.ComputedNumber;
-import eu.daiad.web.model.ConsumptionStats;
 import eu.daiad.web.model.EnumStatistic;
 import eu.daiad.web.model.query.EnumMeasurementField;
 import eu.daiad.web.model.utility.UtilityInfo;
