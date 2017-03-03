@@ -534,7 +534,7 @@ public class JpaCommonsRepository extends BaseRepository implements ICommonsRepo
         filters.add("(m.group.key = :groupKey)");
 
         if (!StringUtils.isBlank(query.getName())) {
-            filters.add("(m.account.firstname like :name or m.account.firstname like :name)");
+            filters.add("(m.account.firstname like :name or m.account.lastname like :name)");
         }
         if (query.getJoinedOn() != null) {
             filters.add("(m.createtOn >= :joinedOn)");
@@ -572,7 +572,7 @@ public class JpaCommonsRepository extends BaseRepository implements ICommonsRepo
 
         switch(query.getSortBy()) {
             case FIRSTNAME:
-                command += " order by m.account.firtname ";
+                command += " order by m.account.firstname ";
                 break;
             case LASTNAME:
                 command += " order by m.account.lastname ";

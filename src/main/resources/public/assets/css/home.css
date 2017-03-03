@@ -676,7 +676,7 @@ div[class^="section."]{
 }
 
 .notification-list ul li a {
-	padding: 15px;
+	padding: 15px 10px;
 	color: #424242; 
 	border-bottom: 1px #9fa1a2 solid;
 	font-weight: normal;
@@ -706,17 +706,29 @@ div[class^="section."]{
 	margin-left: 15px;
 }
 
-.read a:before, .unread a:before {
+.read a > i, .unread a > i {
+  display: inline-block;
+  vertical-align: middle;
+  color: #2D3580;
+  margin-right: 10px;
+}
+
+.read a > span, .unread a > span {
+  display: inline-block;
+  vertical-align: middle;
+  width: 89%;
+}
+
+.read a > i:before, .unread a > i:before {
   float: left;
-  width: 20px;
 	font-size: 1.5em;
   line-height: 1.1em;
 }
 
-.unread a:before{
+.unread a > i:before{
 	content: '\2022';
 }
-.read a:before{
+.read a > i:before{
 	content: '\00A0';
 }
 
@@ -880,7 +892,6 @@ div[class^="section."]{
 .modal-body {
   text-align: center;
   padding-bottom: 0;
-  min-height: 80vh;
 }
 
 .modal-footer {
@@ -1293,7 +1304,11 @@ input[name="amphiro-devices"] {
 }
 /* Session Details */
 
-.modal-body .session-item{
+.session-modal .modal-body {
+  min-height: 80vh;
+}
+
+.session-modal .modal-body .session-item{
   padding: 10px 0;
 }
 
@@ -1366,12 +1381,13 @@ input[name="amphiro-devices"] {
   flex-shrink: 1;
   flex-basis: 600px;
   display: flex;
-  padding: 20px;
+  padding: 30px 20px;
 }
 .notification {
   display: flex;
   flex-grow: 1;
   flex-direction: column;
+  justify-content: space-between;
 }
 
 div[class^="section.notifications"] .notifications .scrollable {
@@ -1401,6 +1417,17 @@ div[class^="section.notifications"] .notification-list ul li a {
 	font-size: 1.1em;
   flex-grow: 0;
 }
+
+.acknowledged {
+  width: 100%;
+  text-align: right;
+  font-size: 0.8em;
+}
+
+.acknowledged > i {
+  margin-right: 5px;
+}
+
 .notification-pagination {
   flex-grow: 0;
 }

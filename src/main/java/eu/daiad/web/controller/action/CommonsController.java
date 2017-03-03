@@ -233,7 +233,7 @@ public class CommonsController extends BaseController {
      */
     @RequestMapping(value = "/action/commons/{commonsKey}/members", method = RequestMethod.POST, produces = "application/json")
     @Secured({ RoleConstant.ROLE_USER })
-    public RestResponse getMembers(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID commonsKey, CommonsMemberQueryRequest request) {
+    public RestResponse getMembers(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID commonsKey, @RequestBody CommonsMemberQueryRequest request) {
         try {
             if (request.getQuery() == null) {
                 return new CommonsMemberCollectionResponse();
