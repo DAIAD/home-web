@@ -53,6 +53,6 @@ public class PagingOptions
     @Override
     public String toString()
     {
-        return String.format("PagingOptions(size=%d, offset=%d, ascending=%s)", offset, size, ascending? "T" : "F");
+        return String.format("PagingOptions(size=%d, offset=%d, ascending=%s)", size, offset, ascending? "T" : "F");
     }
 }

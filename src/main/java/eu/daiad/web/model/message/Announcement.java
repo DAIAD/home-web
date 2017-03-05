@@ -54,4 +54,30 @@ public class Announcement extends Message
     {
         return content;
     }
+    @Override
+    public Object[] toRowData()
+    {
+        return new Object[] {
+           Integer.valueOf(getId()),
+           getType(),
+           title,
+           content,
+           createdOn,
+           acknowledgedOn
+        };
+    }
+
+    @Override
+    public String[] toRowHeaders()
+    {
+        return new String[] {
+            "Id",
+            "Type",
+            "Title",
+            "Content",
+            "Created",
+            "Acknowledged"
+        };
+    }
+    
 }

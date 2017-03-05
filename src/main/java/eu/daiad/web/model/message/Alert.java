@@ -1,11 +1,13 @@
 package eu.daiad.web.model.message;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -302,5 +304,45 @@ public class Alert extends Message
     public void setRefDate(DateTime refDate)
     {
         this.refDate = refDate.getMillis();
+    }
+    
+    @JsonProperty("alertCode")
+    public List<AlertCode> getAlertCodes()
+    {
+        return alertType == null? null : alertType.getCodes();
+    }
+    
+    @Override
+    public Object[] toRowData()
+    {
+        return new Object[] {
+           Integer.valueOf(getId()),
+           getType(),
+           alertType,
+           "{" + StringUtils.join(alertType.getCodes(), ",") + "}",
+           alertTemplate,
+           title.replace(';', ':'),
+           description.replace(';', ':'),
+           refDate,
+           createdOn,
+           acknowledgedOn
+        };
+    }
+
+    @Override
+    public String[] toRowHeaders()
+    {
+        return new String[] {
+            "Id",
+            "Type",
+            "Alert-Type",
+            "Alert-Code",
+            "Alert-Template",
+            "Title",
+            "Description",
+            "Reference-Date",
+            "Created",
+            "Acknowledged"
+        };
     }
 }

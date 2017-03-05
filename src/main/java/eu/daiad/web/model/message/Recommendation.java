@@ -1,11 +1,13 @@
 package eu.daiad.web.model.message;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -311,4 +313,46 @@ public class Recommendation extends Message
     {
         this.refDate = refDate.getMillis();
     }
+    
+    @JsonProperty("recommendationCode")
+    public List<RecommendationCode> getRecommendationCodes()
+    {
+        return recommendationType == null? null : recommendationType.getCodes();
+    }
+    
+    @Override
+    public Object[] toRowData()
+    {
+        return new Object[] {
+           Integer.valueOf(getId()),
+           getType(),
+           recommendationType,
+           "{" + StringUtils.join(recommendationType.getCodes(), ",") + "}",
+           recommendationTemplate,
+           title.replace(';', ':'),
+           description.replace(';', ':'),
+           refDate,
+           createdOn,
+           acknowledgedOn
+        };
+    }
+
+    @Override
+    public String[] toRowHeaders()
+    {
+        return new String[] {
+            "Id",
+            "Type",
+            "Recommendation-Type",
+            "Recommendation-Code",
+            "Recommendation-Template",
+            "Title",
+            "Description",
+            "Reference-Date",
+            "Created",
+            "Acknowledged"
+        };
+    }
+    
+    
 }
