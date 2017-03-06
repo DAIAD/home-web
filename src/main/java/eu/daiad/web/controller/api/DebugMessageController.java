@@ -42,6 +42,7 @@ import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.ErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.model.message.AccountMessage;
 import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.AlertCode;
 import eu.daiad.web.model.message.Announcement;
@@ -49,6 +50,7 @@ import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageRequest;
 import eu.daiad.web.model.message.MessageResult;
+import eu.daiad.web.model.message.PerAccountMessages;
 import eu.daiad.web.model.message.ReceiverAccount;
 import eu.daiad.web.model.message.Recommendation;
 import eu.daiad.web.model.message.Tip;
@@ -115,89 +117,17 @@ public class DebugMessageController extends BaseRestController
             return locale == null? "en" : locale; 
         }
     }
-    
-    public static class PerAccountMessages 
-    {
-        @JsonProperty
-        private ReceiverAccount receiver;
         
-        @JsonProperty
-        private List<Message> messages;
-
-        public PerAccountMessages(ReceiverAccount receiver, List<Message> messages)
-        {
-            this.receiver = receiver;
-            this.messages = messages;
-        }
-
-        public ReceiverAccount getReceiver()
-        {
-            return receiver;
-        }
-
-        public void setReceiver(ReceiverAccount receiver)
-        {
-            this.receiver = receiver;
-        }
-
-        public List<Message> getMessages()
-        {
-            return messages;
-        }
-
-        public void setMessages(List<Message> messages)
-        {
-            this.messages = messages;
-        }
-    }
-    
-    public static abstract class AccountMessage <M extends Message>
-    {
-        @JsonProperty
-        private ReceiverAccount receiver;
-        
-        public ReceiverAccount getReceiver()
-        {
-            return receiver;
-        }
-
-        public void setReceiver(ReceiverAccount receiver)
-        {
-            this.receiver = receiver;
-        }
-        
-        public abstract M getMessage();
-        
-        public abstract void setMessage(M message);
-    }
-    
     public static abstract class AccountMessagePrinter
     {
         public abstract String toLine(ReceiverAccount receiver, Message message) throws Exception;
         
         public abstract String toHeaderLine();
     }
-      
-    public static class AccountTip extends AccountMessage<Tip> 
-    {
-        private Tip message;
-        
-        @Override
-        public Tip getMessage()
-        {
-            return message;
-        }
-
-        @Override
-        public void setMessage(Tip message)
-        {
-            this.message = message;
-        }
-    }
     
     public static class AccountTipPrinter extends AccountMessagePrinter
     {
-        private static final RecordMapper<AccountTip> recordMapper;
+        private static final RecordMapper<AccountMessage<Tip>> recordMapper;
         
         private static final OrderedMap<String, String> fieldNames;
         
@@ -213,16 +143,13 @@ public class DebugMessageController extends BaseRestController
                 put("message.createdOn","Created");
                 put("message.acknowledgedOn","Acknowledged");
             }};
-            recordMapper = new SimpleRecordMapper<>(AccountTip.class, fieldNames);
+            recordMapper = new SimpleRecordMapper<>(AccountMessage.class, fieldNames);
         }
         
         @Override
         public String toLine(ReceiverAccount receiver, Message message) throws Exception
         {
-            AccountTip r = new AccountTip();
-            r.setReceiver(receiver);
-            r.setMessage((Tip) message);
-            return recordMapper.toLine(r);
+            return recordMapper.toLine(new AccountMessage<Tip>(receiver, (Tip) message));
         }
 
         @Override
@@ -232,26 +159,9 @@ public class DebugMessageController extends BaseRestController
         } 
     }
     
-    public static class AccountAlert extends AccountMessage<Alert> 
-    {
-        private Alert message;
-        
-        @Override
-        public Alert getMessage()
-        {
-            return message;
-        }
-
-        @Override
-        public void setMessage(Alert message)
-        {
-            this.message = message;
-        }
-    }
-    
     public static class AccountAlertPrinter extends AccountMessagePrinter
     {
-        private static final RecordMapper<AccountAlert> recordMapper;
+        private static final RecordMapper<AccountMessage<Alert>> recordMapper;
         
         private static final OrderedMap<String, String> fieldNames;
         
@@ -270,16 +180,13 @@ public class DebugMessageController extends BaseRestController
                 put("message.createdOn","Created");
                 put("message.acknowledgedOn","Acknowledged");
             }};
-            recordMapper = new SimpleRecordMapper<>(AccountAlert.class, fieldNames);
+            recordMapper = new SimpleRecordMapper<>(AccountMessage.class, fieldNames);
         }
         
         @Override
         public String toLine(ReceiverAccount receiver, Message message) throws Exception
         {
-            AccountAlert r = new AccountAlert();
-            r.setReceiver(receiver);
-            r.setMessage((Alert) message);
-            return recordMapper.toLine(r);
+            return recordMapper.toLine(new AccountMessage<Alert>(receiver, (Alert) message));
         }
 
         @Override
@@ -289,26 +196,9 @@ public class DebugMessageController extends BaseRestController
         } 
     }
     
-    public static class AccountAnnouncement extends AccountMessage<Announcement> 
-    {
-        private Announcement message;
-        
-        @Override
-        public Announcement getMessage()
-        {
-            return message;
-        }
-
-        @Override
-        public void setMessage(Announcement message)
-        {
-            this.message = message;
-        }
-    }
-    
     public static class AccountAnnouncementPrinter extends AccountMessagePrinter
     {
-        private static final RecordMapper<AccountAnnouncement> recordMapper;
+        private static final RecordMapper<AccountMessage<Announcement>> recordMapper;
         
         private static final OrderedMap<String, String> fieldNames;
         
@@ -323,16 +213,14 @@ public class DebugMessageController extends BaseRestController
                 put("message.createdOn","Created");
                 put("message.acknowledgedOn","Acknowledged");
             }};
-            recordMapper = new SimpleRecordMapper<>(AccountAnnouncement.class, fieldNames);
+            recordMapper = new SimpleRecordMapper<>(AccountMessage.class, fieldNames);
         }
         
         @Override
         public String toLine(ReceiverAccount receiver, Message message) throws Exception
         {
-            AccountAnnouncement r = new AccountAnnouncement();
-            r.setReceiver(receiver);
-            r.setMessage((Announcement) message);
-            return recordMapper.toLine(r);
+            return recordMapper.toLine(
+                new AccountMessage<Announcement>(receiver, (Announcement) message));
         }
 
         @Override
@@ -342,26 +230,9 @@ public class DebugMessageController extends BaseRestController
         } 
     }
     
-    public static class AccountRecommendation extends AccountMessage<Recommendation> 
-    {
-        private Recommendation message;
-        
-        @Override
-        public Recommendation getMessage()
-        {
-            return message;
-        }
-
-        @Override
-        public void setMessage(Recommendation message)
-        {
-            this.message = message;
-        }
-    }
-    
     public static class AccountRecommendationPrinter extends AccountMessagePrinter
     {
-        private static final RecordMapper<AccountRecommendation> recordMapper;
+        private static final RecordMapper<AccountMessage<Recommendation>> recordMapper;
         
         private static final OrderedMap<String, String> fieldNames;
         
@@ -380,16 +251,14 @@ public class DebugMessageController extends BaseRestController
                 put("message.createdOn","Created");
                 put("message.acknowledgedOn","Acknowledged");
             }};
-            recordMapper = new SimpleRecordMapper<>(AccountRecommendation.class, fieldNames);
+            recordMapper = new SimpleRecordMapper<>(AccountMessage.class, fieldNames);
         }
         
         @Override
         public String toLine(ReceiverAccount receiver, Message message) throws Exception
         {
-            AccountRecommendation r = new AccountRecommendation();
-            r.setReceiver(receiver);
-            r.setMessage((Recommendation) message);
-            return recordMapper.toLine(r);
+            return recordMapper.toLine(
+                new AccountMessage<Recommendation>(receiver, (Recommendation) message));
         }
 
         @Override
