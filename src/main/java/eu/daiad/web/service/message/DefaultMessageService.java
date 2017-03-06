@@ -30,6 +30,7 @@ import eu.daiad.web.model.message.AlertStatistics;
 import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.model.message.AnnouncementRequest;
 import eu.daiad.web.model.message.EnumAlertType;
+import eu.daiad.web.model.message.EnumMessageLevel;
 import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.EnumRecommendationType;
 import eu.daiad.web.model.message.Message;
@@ -118,9 +119,11 @@ public class DefaultMessageService
     public MessageResult getMessages(AuthenticatedUser user, MessageRequest request)
     {
         MessageResult result = new MessageResult();
-
-        String lang = user.getLocale();
-        Locale locale = Locale.forLanguageTag(lang);
+        
+        Locale locale = request.getLocale();
+        if (locale == null)
+            locale = Locale.forLanguageTag(user.getLocale());
+        
         UUID userKey = user.getKey();
 
         List<Message> messages = new ArrayList<>();
@@ -162,6 +165,8 @@ public class DefaultMessageService
             List<AccountRecommendationEntity> recommendations =
                 accountRecommendationRepository.findByAccount(userKey, minMessageId, pagination);
             for (AccountRecommendationEntity r: recommendations) {
+                if (EnumMessageLevel.compare(r.getSignificant(), EnumMessageLevel.NOTIFY) < 0)
+                    continue; // skip; not considered significant
                 Recommendation message = accountRecommendationRepository.formatMessage(r, locale);
                 if (message != null)
                     messages.add(message);

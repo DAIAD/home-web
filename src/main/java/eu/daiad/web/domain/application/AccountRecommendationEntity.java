@@ -8,6 +8,7 @@ import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -28,7 +29,9 @@ import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import eu.daiad.web.domain.attributeconverter.MessageLevelConverter;
 import eu.daiad.web.model.device.EnumDeviceType;
+import eu.daiad.web.model.message.EnumMessageLevel;
 import eu.daiad.web.model.message.Recommendation;
 import eu.daiad.web.model.message.Recommendation.ParameterizedTemplate;
 
@@ -86,6 +89,10 @@ public class AccountRecommendationEntity
     @JoinColumn(name = "resolver_execution", nullable = false)
     @NotNull
     private RecommendationResolverExecutionEntity resolverExecution;
+	
+	@Column(name = "significant")
+	@Convert(converter = MessageLevelConverter.class)
+	private EnumMessageLevel significant = EnumMessageLevel.NOTIFY;
 	
 	public AccountRecommendationEntity() {}
 
@@ -196,5 +203,15 @@ public class AccountRecommendationEntity
                 throw new IllegalArgumentException("Failed to create parameters entity", ex);
             }
         }
+    }
+
+    public EnumMessageLevel getSignificant()
+    {
+        return significant;
+    }
+
+    public void setSignificant(EnumMessageLevel significant)
+    {
+        this.significant = significant;
     }
 }

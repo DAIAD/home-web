@@ -20,9 +20,9 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 
 public interface IMessageService
 {
-	public abstract MessageResult getMessages(AuthenticatedUser user, MessageRequest request);
-
-	public abstract void acknowledgeMessages(AuthenticatedUser user, List<MessageAcknowledgement> messages);
+	public MessageResult getMessages(AuthenticatedUser user, MessageRequest request);
+	
+	public void acknowledgeMessages(AuthenticatedUser user, List<MessageAcknowledgement> messages);
 
 	public List<Message> getTips(String lang);
 

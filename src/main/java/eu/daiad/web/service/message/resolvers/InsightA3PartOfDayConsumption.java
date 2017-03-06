@@ -33,6 +33,7 @@ import eu.daiad.web.model.message.EnumRecommendationTemplate;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageResolutionStatus;
 import eu.daiad.web.model.message.Recommendation.ParameterizedTemplate;
+import eu.daiad.web.model.message.ScoringMessageResolutionStatus;
 import eu.daiad.web.model.message.SimpleMessageResolutionStatus;
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
@@ -216,7 +217,7 @@ public class InsightA3PartOfDayConsumption extends AbstractRecommendationResolve
             // Compute for part-of-day for past N days
 
             // Note: not so efficient to query for each partOfDay; 
-            // query for the whole day and keep separate sums
+            // query at HOUR granularity for the whole day and keep separate sums
             DateTime start = refDate;
             SummaryStatistics summary = new SummaryStatistics();
             for (int i = 0; i < N; i++) {
@@ -252,7 +253,7 @@ public class InsightA3PartOfDayConsumption extends AbstractRecommendationResolve
             ParameterizedTemplate parameterizedTemplate = 
                 new Parameters(refDate, deviceType, partOfDay, targetValue, averageValue);
             results.add(
-                new SimpleMessageResolutionStatus<>(score, parameterizedTemplate));
+                new ScoringMessageResolutionStatus<>(score, parameterizedTemplate));
         }
         
         return results;

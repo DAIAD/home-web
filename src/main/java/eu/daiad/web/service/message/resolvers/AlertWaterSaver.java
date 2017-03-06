@@ -226,7 +226,7 @@ public class AlertWaterSaver extends AbstractAlertResolver
             ParameterizedTemplate parameterizedTemplate = 
                 new Parameters(refDate, EnumDeviceType.METER, c0, c1, monthlyAverage); 
             MessageResolutionStatus<ParameterizedTemplate> result = 
-                new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
+                new SimpleMessageResolutionStatus<>(parameterizedTemplate);
             return Collections.singletonList(result);
         }
         return Collections.emptyList();

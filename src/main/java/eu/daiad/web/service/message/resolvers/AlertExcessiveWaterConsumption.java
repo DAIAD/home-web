@@ -209,7 +209,7 @@ public class AlertExcessiveWaterConsumption extends AbstractAlertResolver
                     refDate, deviceType, userConsumption, averageConsumption)
                 .withAnnualSavings(annualSavings);
             MessageResolutionStatus<ParameterizedTemplate> result = 
-                new SimpleMessageResolutionStatus<>(true, parameterizedTemplate); 
+                new SimpleMessageResolutionStatus<>(parameterizedTemplate); 
             return Collections.singletonList(result);
         }
         

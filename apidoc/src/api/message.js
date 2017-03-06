@@ -16,6 +16,7 @@
  * @apiParam                            {Object}   credentials            User credentials used for authentication.
  * @apiParam                            {String}   credentials.username   User name
  * @apiParam                            {String}   credentials.password   User password
+ * @apiParam                            {String}   [locale]            The target locale as a ISO-639 language code (e.g. <code>el</code>). If not supplied, the locale of current authenticated user will be used.
  * @apiParam                            {Object[]} messages               Array of <code>Options</code> objects. Each object represents a request for a specific type of messages. If more than one option objects are found for a single message type, the first overrides the others.
  *
  *

@@ -202,8 +202,9 @@ public class RecommendReduceFlowWhenNotNeeded extends AbstractRecommendationReso
                 .withAverageConsumptionPerSession(averagePerSessionConsumption)
                 .withUserAverageConsumptionPerSession(userAveragePerSessionConsumption)
                 .withAnnualSavings(annualSavings.intValue());
+            
             MessageResolutionStatus<ParameterizedTemplate> result = 
-                new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
+                new SimpleMessageResolutionStatus<>(parameterizedTemplate);
             return Collections.singletonList(result);
         } 
         return Collections.emptyList();

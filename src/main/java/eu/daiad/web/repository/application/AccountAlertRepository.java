@@ -541,6 +541,7 @@ public class AccountAlertRepository extends BaseRepository
         message.setDescription(description);
         message.setLink(translation.getLink());
         message.setCreatedOn(r.getCreatedOn());
+        message.setRefDate(r.getRefDate());
         if (r.getAcknowledgedOn() != null)
             message.setAcknowledgedOn(r.getAcknowledgedOn());
 

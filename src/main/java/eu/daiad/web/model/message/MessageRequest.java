@@ -1,5 +1,7 @@
 package eu.daiad.web.model.message;
 
+import java.util.Locale;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -52,6 +54,9 @@ public class MessageRequest extends AuthenticatedRequest
     }
 
     @JsonIgnore
+    private Locale locale;
+    
+    @JsonIgnore
     private Options[] messages;
 
     @JsonProperty("messages")
@@ -65,6 +70,24 @@ public class MessageRequest extends AuthenticatedRequest
         this.messages = (messages == null)? (new Options[0]) : messages;
     }
 
+    @JsonProperty("locale")
+    public String getLanguage()
+    {
+        return locale == null? null : locale.getLanguage();
+    }
+    
+    @JsonIgnore
+    public Locale getLocale()
+    {
+        return locale;
+    }
+    
+    @JsonProperty("locale")
+    public void setLocale(String language)
+    {
+        locale = Locale.forLanguageTag(language);
+    }
+    
     // Note: Support for API backwards compatibility
     @JsonProperty("pagination")
     public void setPagination(Options[] messages)

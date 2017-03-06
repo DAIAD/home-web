@@ -73,7 +73,7 @@ public class AlertWaterLeak extends AbstractAlertResolver
             refDate, EnumDeviceType.METER, EnumAlertTemplate.WATER_LEAK);
         
         MessageResolutionStatus<ParameterizedTemplate> result = 
-            new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
+            new SimpleMessageResolutionStatus<>(parameterizedTemplate);
         return Collections.singletonList(result);
     }
 

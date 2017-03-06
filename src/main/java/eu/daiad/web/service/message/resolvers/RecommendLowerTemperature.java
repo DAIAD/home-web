@@ -254,7 +254,7 @@ public class RecommendLowerTemperature extends AbstractRecommendationResolver
                 .withAnnualSavings(annualSavings);
             
             MessageResolutionStatus<ParameterizedTemplate> result = 
-                new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
+                new SimpleMessageResolutionStatus<>(parameterizedTemplate);
             return Collections.singletonList(result);
         }
         

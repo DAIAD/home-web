@@ -219,6 +219,8 @@ public class Alert extends Message
 
     private final EnumAlertTemplate alertTemplate;
 
+    private Long refDate;
+    
 	private String description;
 
 	private String link;
@@ -228,7 +230,7 @@ public class Alert extends Message
         super(id);
         this.alertTemplate = template;
         this.alertType = template.getType();
-        this.priority = alertType.getPriority();
+        this.priority = alertType.getPriority().intValue();
     }
 
     public Alert(int id, EnumAlertType type)
@@ -236,7 +238,7 @@ public class Alert extends Message
         super(id);
         this.alertTemplate = null;
         this.alertType = type;
-        this.priority = alertType.getPriority();
+        this.priority = alertType.getPriority().intValue();
     }
 
 	@Override
@@ -282,5 +284,23 @@ public class Alert extends Message
     public String getBody()
     {
         return title;
+    }
+
+    @JsonProperty("refDate")
+    public Long getRefDate()
+    {
+        return refDate;
+    }
+
+    @JsonProperty("refDate")
+    public void setRefDate(Long refDate)
+    {
+        this.refDate = refDate;
+    }
+    
+    @JsonIgnore
+    public void setRefDate(DateTime refDate)
+    {
+        this.refDate = refDate.getMillis();
     }
 }
