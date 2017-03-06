@@ -315,44 +315,10 @@ public class Recommendation extends Message
     }
     
     @JsonProperty("recommendationCode")
-    public List<RecommendationCode> getRecommendationCodes()
+    public String getRecommendationCode()
     {
-        return recommendationType == null? null : recommendationType.getCodes();
+        if (recommendationType == null)
+            return null;
+        return StringUtils.join(recommendationType.getCodes(), "|");
     }
-    
-    @Override
-    public Object[] toRowData()
-    {
-        return new Object[] {
-           Integer.valueOf(getId()),
-           getType(),
-           recommendationType,
-           "{" + StringUtils.join(recommendationType.getCodes(), ",") + "}",
-           recommendationTemplate,
-           title.replace(';', ':'),
-           description.replace(';', ':'),
-           refDate,
-           createdOn,
-           acknowledgedOn
-        };
-    }
-
-    @Override
-    public String[] toRowHeaders()
-    {
-        return new String[] {
-            "Id",
-            "Type",
-            "Recommendation-Type",
-            "Recommendation-Code",
-            "Recommendation-Template",
-            "Title",
-            "Description",
-            "Reference-Date",
-            "Created",
-            "Acknowledged"
-        };
-    }
-    
-    
 }

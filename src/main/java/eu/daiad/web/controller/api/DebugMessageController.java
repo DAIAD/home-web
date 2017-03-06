@@ -1,7 +1,5 @@
 package eu.daiad.web.controller.api;
 
-import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +15,8 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.collections4.map.LinkedMap;
+import org.apache.commons.collections4.OrderedMap;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,11 +42,16 @@ import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.ErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.AlertCode;
+import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageRequest;
 import eu.daiad.web.model.message.MessageResult;
+import eu.daiad.web.model.message.ReceiverAccount;
+import eu.daiad.web.model.message.Recommendation;
+import eu.daiad.web.model.message.Tip;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.Credentials;
 import eu.daiad.web.model.security.EnumRole;
@@ -55,6 +60,8 @@ import eu.daiad.web.model.user.UserInfo;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IUtilityRepository;
 import eu.daiad.web.service.message.IMessageService;
+import eu.daiad.web.util.csv.RecordMapper;
+import eu.daiad.web.util.csv.SimpleRecordMapper;
 
 @RestController
 public class DebugMessageController extends BaseRestController
@@ -70,7 +77,7 @@ public class DebugMessageController extends BaseRestController
     @Autowired
     private IMessageService service;
     
-    private static class ExportRequest extends AuthenticatedRequest
+    public static class ExportRequest extends AuthenticatedRequest
     {
         @JsonProperty
         @NotNull
@@ -109,26 +116,290 @@ public class DebugMessageController extends BaseRestController
         }
     }
     
-    private static class MessagesPerAccount 
+    public static class PerAccountMessages 
     {
         @JsonProperty
-        private final UUID key;
-        
-        @JsonProperty
-        private final String username;
+        private ReceiverAccount receiver;
         
         @JsonProperty
         private List<Message> messages;
 
-        public MessagesPerAccount(UUID key, String username, List<Message> messages)
+        public PerAccountMessages(ReceiverAccount receiver, List<Message> messages)
         {
-            this.key = key;
-            this.username = username;
+            this.receiver = receiver;
+            this.messages = messages;
+        }
+
+        public ReceiverAccount getReceiver()
+        {
+            return receiver;
+        }
+
+        public void setReceiver(ReceiverAccount receiver)
+        {
+            this.receiver = receiver;
+        }
+
+        public List<Message> getMessages()
+        {
+            return messages;
+        }
+
+        public void setMessages(List<Message> messages)
+        {
             this.messages = messages;
         }
     }
     
-    private static class ExportResponse extends RestResponse
+    public static abstract class AccountMessage <M extends Message>
+    {
+        @JsonProperty
+        private ReceiverAccount receiver;
+        
+        public ReceiverAccount getReceiver()
+        {
+            return receiver;
+        }
+
+        public void setReceiver(ReceiverAccount receiver)
+        {
+            this.receiver = receiver;
+        }
+        
+        public abstract M getMessage();
+        
+        public abstract void setMessage(M message);
+    }
+    
+    public static abstract class AccountMessagePrinter
+    {
+        public abstract String toLine(ReceiverAccount receiver, Message message) throws Exception;
+        
+        public abstract String toHeaderLine();
+    }
+      
+    public static class AccountTip extends AccountMessage<Tip> 
+    {
+        private Tip message;
+        
+        @Override
+        public Tip getMessage()
+        {
+            return message;
+        }
+
+        @Override
+        public void setMessage(Tip message)
+        {
+            this.message = message;
+        }
+    }
+    
+    public static class AccountTipPrinter extends AccountMessagePrinter
+    {
+        private static final RecordMapper<AccountTip> recordMapper;
+        
+        private static final OrderedMap<String, String> fieldNames;
+        
+        static {
+            fieldNames = new LinkedMap<String, String>() {{
+                put("receiver.username", "User-Name");
+                put("receiver.key", "User-Key");
+                put("message.id", "Id");
+                put("message.type", "Type");
+                put("message.categoryName","Category-Name");
+                put("message.title","Title");
+                put("message.description","Description");
+                put("message.createdOn","Created");
+                put("message.acknowledgedOn","Acknowledged");
+            }};
+            recordMapper = new SimpleRecordMapper<>(AccountTip.class, fieldNames);
+        }
+        
+        @Override
+        public String toLine(ReceiverAccount receiver, Message message) throws Exception
+        {
+            AccountTip r = new AccountTip();
+            r.setReceiver(receiver);
+            r.setMessage((Tip) message);
+            return recordMapper.toLine(r);
+        }
+
+        @Override
+        public String toHeaderLine()
+        {
+            return recordMapper.toHeaderLine();
+        } 
+    }
+    
+    public static class AccountAlert extends AccountMessage<Alert> 
+    {
+        private Alert message;
+        
+        @Override
+        public Alert getMessage()
+        {
+            return message;
+        }
+
+        @Override
+        public void setMessage(Alert message)
+        {
+            this.message = message;
+        }
+    }
+    
+    public static class AccountAlertPrinter extends AccountMessagePrinter
+    {
+        private static final RecordMapper<AccountAlert> recordMapper;
+        
+        private static final OrderedMap<String, String> fieldNames;
+        
+        static {
+            fieldNames = new LinkedMap<String, String>() {{
+                put("receiver.username", "User-Name");
+                put("receiver.key", "User-Key");
+                put("message.id", "Id");
+                put("message.type", "Type");
+                put("message.alertType", "Alert-Type");
+                put("message.alertCode", "Alert-Code");
+                put("message.alertTemplate", "Alert-Template");
+                put("message.title","Title");
+                put("message.description","Description");
+                put("message.refDate","Reference-Date");
+                put("message.createdOn","Created");
+                put("message.acknowledgedOn","Acknowledged");
+            }};
+            recordMapper = new SimpleRecordMapper<>(AccountAlert.class, fieldNames);
+        }
+        
+        @Override
+        public String toLine(ReceiverAccount receiver, Message message) throws Exception
+        {
+            AccountAlert r = new AccountAlert();
+            r.setReceiver(receiver);
+            r.setMessage((Alert) message);
+            return recordMapper.toLine(r);
+        }
+
+        @Override
+        public String toHeaderLine()
+        {
+            return recordMapper.toHeaderLine();
+        } 
+    }
+    
+    public static class AccountAnnouncement extends AccountMessage<Announcement> 
+    {
+        private Announcement message;
+        
+        @Override
+        public Announcement getMessage()
+        {
+            return message;
+        }
+
+        @Override
+        public void setMessage(Announcement message)
+        {
+            this.message = message;
+        }
+    }
+    
+    public static class AccountAnnouncementPrinter extends AccountMessagePrinter
+    {
+        private static final RecordMapper<AccountAnnouncement> recordMapper;
+        
+        private static final OrderedMap<String, String> fieldNames;
+        
+        static {
+            fieldNames = new LinkedMap<String, String>() {{
+                put("receiver.username", "User-Name");
+                put("receiver.key", "User-Key");
+                put("message.id", "Id");
+                put("message.type", "Type");
+                put("message.title","Title");
+                put("message.content","Content");
+                put("message.createdOn","Created");
+                put("message.acknowledgedOn","Acknowledged");
+            }};
+            recordMapper = new SimpleRecordMapper<>(AccountAnnouncement.class, fieldNames);
+        }
+        
+        @Override
+        public String toLine(ReceiverAccount receiver, Message message) throws Exception
+        {
+            AccountAnnouncement r = new AccountAnnouncement();
+            r.setReceiver(receiver);
+            r.setMessage((Announcement) message);
+            return recordMapper.toLine(r);
+        }
+
+        @Override
+        public String toHeaderLine()
+        {
+            return recordMapper.toHeaderLine();
+        } 
+    }
+    
+    public static class AccountRecommendation extends AccountMessage<Recommendation> 
+    {
+        private Recommendation message;
+        
+        @Override
+        public Recommendation getMessage()
+        {
+            return message;
+        }
+
+        @Override
+        public void setMessage(Recommendation message)
+        {
+            this.message = message;
+        }
+    }
+    
+    public static class AccountRecommendationPrinter extends AccountMessagePrinter
+    {
+        private static final RecordMapper<AccountRecommendation> recordMapper;
+        
+        private static final OrderedMap<String, String> fieldNames;
+        
+        static {
+            fieldNames = new LinkedMap<String, String>() {{
+                put("receiver.username", "User-Name");
+                put("receiver.key", "User-Key");
+                put("message.id", "Id");
+                put("message.type", "Type");
+                put("message.recommendationType", "Recommendation-Type");
+                put("message.recommendationCode", "Recommendation-Code");
+                put("message.recommendationTemplate", "Recommendation-Template");
+                put("message.title","Title");
+                put("message.description","Description");
+                put("message.refDate","Reference-Date");
+                put("message.createdOn","Created");
+                put("message.acknowledgedOn","Acknowledged");
+            }};
+            recordMapper = new SimpleRecordMapper<>(AccountRecommendation.class, fieldNames);
+        }
+        
+        @Override
+        public String toLine(ReceiverAccount receiver, Message message) throws Exception
+        {
+            AccountRecommendation r = new AccountRecommendation();
+            r.setReceiver(receiver);
+            r.setMessage((Recommendation) message);
+            return recordMapper.toLine(r);
+        }
+
+        @Override
+        public String toHeaderLine()
+        {
+            return recordMapper.toHeaderLine();
+        } 
+    }
+    
+    public static class ExportResponse extends RestResponse
     {
         public ExportResponse() {}
         
@@ -138,7 +409,7 @@ public class DebugMessageController extends BaseRestController
         }
         
         @JsonProperty
-        private List<MessagesPerAccount> accounts = new ArrayList<>();
+        private List<PerAccountMessages> accounts = new ArrayList<>();
     }
     
     @RequestMapping(
@@ -169,8 +440,8 @@ public class DebugMessageController extends BaseRestController
                 AuthenticatedUser user = userRepository.getUserByKey(accountKey);
                 MessageResult q = service.getMessages(user, r);
                 if (!q.getMessages().isEmpty()) {
-                    response.accounts.add(
-                        new MessagesPerAccount(accountKey, user.getUsername(), q.getMessages()));
+                    ReceiverAccount receiver = ReceiverAccount.of(accountKey, user.getUsername());
+                    response.accounts.add(new PerAccountMessages(receiver, q.getMessages()));
                 }
             }
         } catch (ApplicationException ex) {
@@ -187,7 +458,7 @@ public class DebugMessageController extends BaseRestController
         consumes = "application/json", 
         produces = "text/csv"
     )
-    public String exportMessagesToSpreadsheet(@RequestBody ExportRequest request)
+    public String exportMessagesToSpreadsheet(@RequestBody ExportRequest request) 
         throws IllegalAccessException
     {
         try {
@@ -200,29 +471,50 @@ public class DebugMessageController extends BaseRestController
         if (!errors.isEmpty())
             throw new ValidationException("The request is invalid");
        
+        EnumMessageType messageType = request.getType();
         MessageRequest r = new MessageRequest(request.getLocale())
-            .withOptions(new MessageRequest.Options(request.getType(), request.getLimit()));
+            .withOptions(new MessageRequest.Options(messageType, request.getLimit()));
         
-        final String[] userRowHeaders = new String[] {"User-Name", "User-Key"};
-        final String separator = ";";
+        AccountMessagePrinter recordPrinter = null;
+        switch (messageType) {
+        case ALERT:
+            recordPrinter = new AccountAlertPrinter();
+            break;
+        case RECOMMENDATION: 
+            recordPrinter = new AccountRecommendationPrinter();
+            break;
+        case ANNOUNCEMENT:
+            recordPrinter = new AccountAnnouncementPrinter();
+            break;
+        case TIP:
+            recordPrinter = new AccountTipPrinter();
+            break;
+        default:
+            Assert.state(false, "Unknown message-type");
+        }
         
         StringBuilder outs = new StringBuilder();
-        boolean writeHeaderRow = true;
+        outs.append(recordPrinter.toHeaderLine() + "\n");
+        
         for (UUID accountKey: utilityRepository.getMembers(request.getUtility())) {
             AuthenticatedUser user = userRepository.getUserByKey(accountKey);
             MessageResult q = service.getMessages(user, r);
             List<Message> messages = q.getMessages();
             if (messages.isEmpty())
                 continue; // skip; no messages for this user
-            Object[] userRowData = new Object[] { user.getUsername(), user.getKey() };
+            ReceiverAccount receiver = ReceiverAccount.of(accountKey, user.getUsername());
             for (Message message: messages) {
-                if (writeHeaderRow) {
-                    Object[] headerRow = ArrayUtils.addAll(userRowHeaders, message.toRowHeaders());
-                    outs.append(StringUtils.join(headerRow, separator) + "\n\n");
-                    writeHeaderRow = false;
+                String line; 
+                try {
+                    line = recordPrinter.toLine(receiver, message);
+                } catch (Exception ex) {
+                    line = null;
+                    logger.info(
+                        "Failed to export message #" + message.getId() + ": " +
+                        ex.getMessage());
                 }
-                Object[] dataRow = ArrayUtils.addAll(userRowData, message.toRowData());
-                outs.append(StringUtils.join(dataRow, separator) + "\n");
+                if (line != null)
+                    outs.append(line + "\n");
             }
             outs.append("\n");
         }

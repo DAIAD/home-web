@@ -272,7 +272,6 @@ public class DefaultMessageService
             AccountEntity accountEntity = aa.getAccount();
             ReceiverAccount receiver =
                 new ReceiverAccount(accountEntity.getId(), accountEntity.getUsername());
-            receiver.setAcknowledgedOn(aa.getAcknowledgedOn());
             receivers.add(receiver);
         }
         return receivers;
@@ -317,7 +316,6 @@ public class DefaultMessageService
             AccountEntity accountEntity = alert.getAccount();
             ReceiverAccount account =
                 new ReceiverAccount(accountEntity.getId(), accountEntity.getUsername());
-            account.setAcknowledgedOn(alert.getAcknowledgedOn());
             receivers.add(account);
         }
         return receivers;
@@ -336,7 +334,6 @@ public class DefaultMessageService
             AccountEntity accountEntity = recommendation.getAccount();
             ReceiverAccount account =
                 new ReceiverAccount(accountEntity.getId(), accountEntity.getUsername());
-            account.setAcknowledgedOn(recommendation.getAcknowledgedOn());
             receivers.add(account);
         }
         return receivers;
@@ -365,7 +362,7 @@ public class DefaultMessageService
 
         for (ReceiverAccount receiver: request.getReceivers()) {
             AccountEntity accountEntity =
-                userRepository.findOne(receiver.getAccountId());
+                userRepository.findOne(receiver.getId());
             if (accountEntity == null)
                 accountEntity = userRepository.getAccountByUsername(receiver.getUsername());
             if (accountEntity != null)

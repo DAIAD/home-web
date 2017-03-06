@@ -190,15 +190,4 @@ public abstract class Message
      * A message type returns whatever it considers to be the body of a message.
      */
     public abstract String getBody();
-    
-    /**
-     * Export this object to an array of fields.
-     */
-    public abstract Object[] toRowData();
-    
-    /**
-     * Provide an array of field headers corresponding to data exported by {@link Message#toRowData()}.
-     * @return
-     */
-    public abstract String[] toRowHeaders();
 }

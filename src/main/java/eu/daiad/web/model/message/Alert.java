@@ -307,42 +307,10 @@ public class Alert extends Message
     }
     
     @JsonProperty("alertCode")
-    public List<AlertCode> getAlertCodes()
+    public String getAlertCode()
     {
-        return alertType == null? null : alertType.getCodes();
-    }
-    
-    @Override
-    public Object[] toRowData()
-    {
-        return new Object[] {
-           Integer.valueOf(getId()),
-           getType(),
-           alertType,
-           "{" + StringUtils.join(alertType.getCodes(), ",") + "}",
-           alertTemplate,
-           title.replace(';', ':'),
-           description.replace(';', ':'),
-           refDate,
-           createdOn,
-           acknowledgedOn
-        };
-    }
-
-    @Override
-    public String[] toRowHeaders()
-    {
-        return new String[] {
-            "Id",
-            "Type",
-            "Alert-Type",
-            "Alert-Code",
-            "Alert-Template",
-            "Title",
-            "Description",
-            "Reference-Date",
-            "Created",
-            "Acknowledged"
-        };
+        if (alertType == null)
+            return null;
+        return StringUtils.join(alertType.getCodes(), "|");
     }
 }
