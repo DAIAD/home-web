@@ -29,7 +29,7 @@
     "react-bootstrap-daterangepicker": "~1.0.6",
     "react-checkbox-group": "~1.0.4",
     "react-controls": "git+https://github.com/DAIAD/react-controls.git#master",
-    "react-datetime": "git+https://github.com/layneanderson/react-datetime.git#master",
+    "react-datetime": "git+https://github.com/YouCanBookMe/react-datetime.git#master",
     "react-dom": "~0.14.6",
     "react-echarts": "git+https://github.com/DAIAD/react-echarts.git#master",
     "react-wiz": "git+https://github.com/DAIAD/react-wizard.git#master",
