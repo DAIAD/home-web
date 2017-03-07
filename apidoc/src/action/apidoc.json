@@ -8,19 +8,42 @@
     "filename": "./header.md"
   },
   "order": [
+    "Authentication",
     "Login",
     "Logout",
+    
+    "Profile",
     "ProfileLoad",
     "ProfileSave",
     "HouseholdSave",
     "GetComparison",
     "Deactivate",
+    
+    "Data",
     "DataQuery",
     "ForecastQuery",
+    
+    "Search",
     "MeterStatus",
     "MeterMeasurements",
     "Sessions",
     "Session",
+    
+    "Message",
+    "MessageList",
+    "MessageAcknowledge",
+    "TipList",
+    "TipEnable",
+    "TipSave",
+    "TipDelete",
+    "AnnouncementBroadcast",
+    "AnnouncementDelete",
+    "AnnouncementHistory",
+    "AnnouncementDetails",
+    "AlertReceivers",
+    "RecommendationReceivers",
+    
+    "Commons",
     "CommonsCreate",
     "CommonsUpdate",
     "CommonsDelete",

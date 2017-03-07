@@ -341,11 +341,7 @@ public class MessageController extends BaseController {
     }
 
     /**
-     * Get alert details receivers.
-     *
-     * @param user the user
-     * @param request the request
-     * @return the alert details, including receivers.
+     * Get receivers for alerts of a given type
      */
     @RequestMapping(value = "/action/alert/receivers", method = RequestMethod.POST, produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
@@ -372,11 +368,7 @@ public class MessageController extends BaseController {
     }
 
     /**
-     * Get recommendation details and receivers.
-     *
-     * @param user the user
-     * @param request the request
-     * @return the announcement details.
+     * Get receivers for recommendations of a given type.
      */
     @RequestMapping(value = "/action/recommendation/receivers", method = RequestMethod.POST, produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })

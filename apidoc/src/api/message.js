@@ -11,7 +11,7 @@
  * @apiGroup Message
  * @apiPermission ROLE_USER
  *
- * @apiDescription Loads all available messages. All messages returned derive from  <code>Message</code>.
+ * @apiDescription Loads all available messages. All messages returned derive from <code>Message</code>.
  *
  * @apiParam                            {Object}   credentials            User credentials used for authentication.
  * @apiParam                            {String}   credentials.username   User name
@@ -50,7 +50,6 @@
  *      }
  *   ]
  * }
- *
  *
  *
  * @apiSuccess {Boolean}  success                  <code>true</code> or <code>false</code> indicating success of the operation.
@@ -232,7 +231,7 @@
  * HTTP/1.1 200 OK
  * {
  *   errors: [{
- *     code: "UserErrorCode.USERNANE_NOT_FOUND",
+ *     code: "UserErrorCode.USERNAME_NOT_FOUND",
  *     description: "Account a9509da9-edf5-4838-acf4-8f1b73485d7a was not found."
  *   }],
  *   success: false
