@@ -11,7 +11,7 @@
  * @apiGroup Message
  * @apiPermission ROLE_USER
  *
- * @apiDescription Loads all available messages. All messages returned derive from  <code>Message</code>.
+ * @apiDescription Loads all available messages. All messages returned derive from <code>Message</code>.
  *
  * @apiParam                            {Object}   credentials            User credentials used for authentication.
  * @apiParam                            {String}   credentials.username   User name
@@ -50,7 +50,6 @@
  *      }
  *   ]
  * }
- *
  *
  *
  * @apiSuccess {Boolean}  success                  <code>true</code> or <code>false</code> indicating success of the operation.
@@ -92,9 +91,11 @@
  *   <br/><code>LITERS_ALREADY_SAVED</code> 
  *   <br/><code>TOP_25_PERCENT_OF_SAVERS</code> 
  *   <br/><code>TOP_10_PERCENT_OF_SAVERS</code> 
+ * @apiSuccess (Alert extends Message) {String} alertCode      The code(s) for this message as defined in DAIAD deliverable 3.2.2. If this <code>alertType</code> maps to more than one codes, they are separated by <code>|</code>.
  * @apiSuccess (Alert extends Message) {Number} priority       Message priority.
  * @apiSuccess (Alert extends Message) {String} description    Long description.
  * @apiSuccess (Alert extends Message) {String} link      A resource (e.g. image) link.
+ * @apiSuccess (Alert extends Message) {Number} refDate   The reference date for this message. 
  *
  *
  * @apiSuccess (Tip extends Message) {Number}  index              Message index.
@@ -125,9 +126,11 @@
  *   <br/><code>INSIGHT_B3</code> 
  *   <br/><code>INSIGHT_B4</code> 
  *   <br/><code>INSIGHT_B5</code> 
- * @apiSuccess (Recommendation extends Message) {Number} priority          Message priority.
- * @apiSuccess (Recommendation extends Message) {String} description       Long description.
- * @apiSuccess (Recommendation extends Message) {String} imageLink         A resource link.
+ * @apiSuccess (Recommendation extends Message) {String} recommendationCode      The code(s) for this message as defined in DAIAD deliverable 3.2.2. If this <code>recommendationType</code> maps to more than one codes, they are separated by <code>|</code>. 
+ * @apiSuccess (Recommendation extends Message) {Number} priority        Message priority.
+ * @apiSuccess (Recommendation extends Message) {String} description     Long description.
+ * @apiSuccess (Recommendation extends Message) {String} imageLink       A resource link.
+ * @apiSuccess (Recommendation extends Message) {Number} refDate         The reference date for this message. 
  *
  *
  * @apiSuccess (Announcement extends Message) {Number} priority         Message priority.
@@ -144,6 +147,7 @@
  *        "priority": 5,
  *        "alertType": "TOO_MUCH_WATER",
  *        "alertTemplate": "TOO_MUCH_WATER_METER",
+ *        "alertCode": "A17|A18",
  *        "description": "You are using twice the amount of water compared to city average. You could save up to 57,949 liters. Want to learn how?",
  *        "link": null,
  *        "body": "You are using too much water",
@@ -151,6 +155,7 @@
  *        "id": 842,
  *        "locale": "en",
  *        "title": "You are using too much water",
+ *        "refDate": 1479160800000,
  *        "acknowledgedOn": 1487756290000,
  *        "createdOn": 1487756280417
  *      }
@@ -161,12 +166,14 @@
  *        "priority": 5,
  *        "recommendationType": "INSIGHT_A3",
  *        "recommendationTemplate": "INSIGHT_A3_MORNING_CONSUMPTION_DECR",
+ *        "recommendationCode": "IA3",
  *        "description": "8.0lt vs. the average 22.2lt",
  *        "link": null,
  *        "body": "63% decrease in morning consumption",
  *        "id": 5018,
  *        "locale": "en",
  *        "title": "63% decrease in morning consumption",
+ *        "refDate": 1479160800000,
  *        "acknowledgedOn": 1487756290000,
  *        "createdOn": 1487756527611,
  *        "type": "RECOMMENDATION"
@@ -175,12 +182,15 @@
  *        "priority": 5,
  *        "recommendationType": "INSIGHT_B1",
  *        "recommendationTemplate": "INSIGHT_B1_MONTHLY_CONSUMPTION_INCR",
+ *        "recommendationCode": "IB1",
+ *        "description": "8.0lt vs. the average 22.2lt",
  *        "description": "6598.0lt vs. the average 2652.5lt",
  *        "link": null,
  *        "body": "148% more than your monthly average",
  *        "id": 5029,
  *        "locale": "en",
  *        "title": "148% more than your monthly average",
+ *        "refDate": 1479160800000,
  *        "acknowledgedOn": null,
  *        "createdOn": 1487756580059,
  *        "type": "RECOMMENDATION"
@@ -189,12 +199,15 @@
  *        "priority": 5,
  *        "recommendationType": "INSIGHT_B2",
  *        "recommendationTemplate": "INSIGHT_B2_MONTHLY_PREV_CONSUMPTION_INCR",
+ *        "recommendationCode": "IB2",
+ *        "description": "8.0lt vs. the average 22.2lt",
  *        "description": "6598.0lt vs. 2535.0lt",
  *        "link": null,
  *        "body": "160% more than previous month",
  *        "id": 5034,
  *        "locale": "en",
  *        "title": "160% more than previous month",
+ *        "refDate": 1479160800000,
  *        "acknowledgedOn": null,
  *        "createdOn": 1487756630246,
  *        "type": "RECOMMENDATION"
@@ -218,7 +231,7 @@
  * HTTP/1.1 200 OK
  * {
  *   errors: [{
- *     code: "UserErrorCode.USERNANE_NOT_FOUND",
+ *     code: "UserErrorCode.USERNAME_NOT_FOUND",
  *     description: "Account a9509da9-edf5-4838-acf4-8f1b73485d7a was not found."
  *   }],
  *   success: false

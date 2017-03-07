@@ -1,11 +1,13 @@
 package eu.daiad.web.model.message;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -310,5 +312,13 @@ public class Recommendation extends Message
     public void setRefDate(DateTime refDate)
     {
         this.refDate = refDate.getMillis();
+    }
+    
+    @JsonProperty("recommendationCode")
+    public String getRecommendationCode()
+    {
+        if (recommendationType == null)
+            return null;
+        return StringUtils.join(recommendationType.getCodes(), "|");
     }
 }

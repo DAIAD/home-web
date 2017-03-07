@@ -166,4 +166,32 @@ public class Tip extends Message
     {
         return description;
     }
+
+//    @Override
+//    public Object[] toRowData()
+//    {
+//        return new Object[] {
+//           Integer.valueOf(getId()),
+//           getType(),
+//           categoryName,
+//           title,
+//           description,
+//           createdOn,
+//           acknowledgedOn
+//        };
+//    }
+//
+//    @Override
+//    public String[] toRowHeaders()
+//    {
+//        return new String[] {
+//            "Id",
+//            "Type",
+//            "Category-Name",
+//            "Title",
+//            "Description",
+//            "Created",
+//            "Acknowledged"
+//        };
+//    }
 }

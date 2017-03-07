@@ -5,6 +5,8 @@ import java.util.regex.Pattern;
 
 import org.springframework.util.Assert;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 import eu.daiad.web.model.StringCode;
 
 /**
@@ -21,6 +23,7 @@ public class AlertCode extends StringCode
         super(code);
     }
 
+    @JsonCreator
     public static AlertCode valueOf(String code)
     {
         Matcher m = pattern.matcher(code);

@@ -22,6 +22,14 @@ public class MessageRequest extends AuthenticatedRequest
 
         private PagingOptions pagination = new PagingOptions(DEFAULT_PAGE_SIZE);
 
+        public Options() {}
+        
+        public Options(EnumMessageType type, int pageSize) 
+        {
+            this.type = type;
+            this.pagination = new PagingOptions(pageSize);
+        }
+        
         public EnumMessageType getType() {
             return type;
         }
@@ -57,19 +65,55 @@ public class MessageRequest extends AuthenticatedRequest
     private Locale locale;
     
     @JsonIgnore
-    private Options[] messages;
+    private Options[] options = new Options[0];
 
-    @JsonProperty("messages")
-    public Options[] getMessages() {
-        return messages;
-    }
-
-    @JsonProperty("messages")
-    public void setMessages(Options[] messages)
+    public MessageRequest()
+    {}
+    
+    public MessageRequest(String language)
     {
-        this.messages = (messages == null)? (new Options[0]) : messages;
+        setLocale(language);
+    }
+    
+    @JsonProperty("messages")
+    public Options[] getOptions() {
+        return options;
+    }
+    
+    public Options getOptionsForType(EnumMessageType type)
+    {
+        for (Options o: options)
+            if (o.type == type)
+                return o;
+        return null;
     }
 
+    @JsonProperty("messages")
+    public void setOptions(Options[] options)
+    {
+        if (options != null && options.length > 0)
+            this.options = options;
+    }
+
+    @JsonIgnore
+    public void setOptions(Options o1)
+    {
+        if (o1 != null)
+            options = new Options[] { o1 };
+    }
+    
+    public MessageRequest withOptions(Options[] options)
+    {
+        setOptions(options);
+        return this;
+    }
+    
+    public MessageRequest withOptions(Options options)
+    {
+        setOptions(options);
+        return this;
+    }
+    
     @JsonProperty("locale")
     public String getLanguage()
     {
@@ -90,8 +134,8 @@ public class MessageRequest extends AuthenticatedRequest
     
     // Note: Support for API backwards compatibility
     @JsonProperty("pagination")
-    public void setPagination(Options[] messages)
+    public void setPagination(Options[] options)
     {
-        this.messages = (messages == null)? (new Options[0]) : messages;
+        this.options = (options == null)? (new Options[0]) : options;
     }
 }
