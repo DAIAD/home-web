@@ -44,7 +44,7 @@ import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractAlertResolver;
 
-@MessageGenerator(period = "P1M", dayOfMonth = 1)
+@MessageGenerator(period = "P1M", dayOfMonth = 1, maxPerWeek = 1)
 @Component
 @Scope("prototype")
 public class AlertWaterChampion extends AbstractAlertResolver

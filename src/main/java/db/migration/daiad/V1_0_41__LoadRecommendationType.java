@@ -13,19 +13,4 @@ import eu.daiad.web.model.message.EnumRecommendationType;
 import eu.daiad.web.util.EnumToNameTransformer;
 
 public class V1_0_41__LoadRecommendationType extends LoadRecommendationType
-    implements MigrationChecksumProvider
-{
-    private static final Transformer<EnumRecommendationType, String> TRANSFORM_TO_NAME =
-        new EnumToNameTransformer<>();
-
-    @Override
-    public Integer getChecksum()
-    { 
-        String[] names = FluentIterable.of(EnumRecommendationType.values())
-            .transform(TRANSFORM_TO_NAME)
-            .toArray(String.class);
-        
-        Arrays.sort(names);
-        return StringUtils.join(names, "$").hashCode();
-    }
-}
+{}
