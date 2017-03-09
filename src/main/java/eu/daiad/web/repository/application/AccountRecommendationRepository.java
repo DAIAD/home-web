@@ -562,6 +562,7 @@ public class AccountRecommendationRepository extends BaseRepository
         message.setImageLink(translation.getImageLink());
         message.setCreatedOn(r.getCreatedOn());
         message.setRefDate(r.getRefDate());
+        message.setDeviceType(r.getDeviceType());
         if (r.getAcknowledgedOn() != null)
             message.setAcknowledgedOn(r.getAcknowledgedOn());
 

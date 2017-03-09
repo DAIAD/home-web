@@ -83,10 +83,6 @@ public class AlertWaterTopSaver extends AbstractAlertResolver
         
         double weeklyThreshold = config.getVolumeThreshold(EnumDeviceType.METER, EnumTimeUnit.WEEK);
         
-        DateTime start = refDate.minusWeeks(1)
-            .withDayOfWeek(DateTimeConstants.MONDAY)
-            .withTimeAtStartOfDay();
-        
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)

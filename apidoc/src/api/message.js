@@ -63,7 +63,6 @@
  * @apiSuccess {Number}   totalTips                Total number of tips.
  * @apiSuccess {Number}   totalAnnouncements       Total number of announcements.
  *
- *
  * @apiSuccess (Message) {String}  type      Message type. One of <code>ALERT</code>, <code>TIP</code>, <code>RECOMMENDATION</code> and <code>ANNOUNCEMENT</code>.
  * @apiSuccess (Message) {Number}  id        Message id.
  * @apiSuccess (Message) {String}  title        Title
@@ -96,7 +95,7 @@
  * @apiSuccess (Alert extends Message) {String} description    Long description.
  * @apiSuccess (Alert extends Message) {String} link      A resource (e.g. image) link.
  * @apiSuccess (Alert extends Message) {Number} refDate   The reference date for this message. 
- *
+ * @apiSuccess (Alert extends Message) {String} deviceType   The type of device. One of: <code>METER</code>, <code>AMPHIRO</code>  
  *
  * @apiSuccess (Tip extends Message) {Number}  index              Message index.
  * @apiSuccess (Tip extends Message) {String}  description        Long description.
@@ -131,7 +130,7 @@
  * @apiSuccess (Recommendation extends Message) {String} description     Long description.
  * @apiSuccess (Recommendation extends Message) {String} imageLink       A resource link.
  * @apiSuccess (Recommendation extends Message) {Number} refDate         The reference date for this message. 
- *
+ * @apiSuccess (Recommendation extends Message) {String} deviceType   The type of device. One of: <code>METER</code>, <code>AMPHIRO</code>  
  *
  * @apiSuccess (Announcement extends Message) {Number} priority         Message priority.
  * @apiSuccess (Announcement extends Message) {String} content          Announcement details.
@@ -303,3 +302,31 @@ function getMessages() { return; }
  * }
  */
 function acknowledgeMessages() { return; }
+
+/**
+ * @api {post} /v1/message/export.csv Export messages
+ * @apiVersion 0.0.1
+ * @apiName MessageExport
+ * @apiGroup Message
+ * @apiPermission ROLE_ADMIN
+ *
+ * @apiDescription Export generated messages of a given type to a CSV file (for further examination).
+ *
+ * @apiParam     {Object}   credentials            User credentials used for authentication.
+ * @apiParam     {String}   credentials.username   User name
+ * @apiParam     {String}   credentials.password   User password
+ * @apiParam     {String}   [locale]  The target locale as a ISO-639 language code (e.g. <code>el</code>). If not supplied, the default application locale will be used.
+ * @apiParam     {String}   type The type of messages. One of: <code>ALERT</code>, <code>RECOMMENDATION</code>, <code>TIP</code> and <code>ANNOUNCEMENT</code>.
+ * @apiParam     {String}   utility. The UUID key of a utility.
+ *
+ * @apiParamExample {json} Request Example
+ * {
+ *   "credentials": {
+ *     username: "user@daiad.eu",
+ *     password: "****"
+ *   },
+ *   "type": "ALERT",
+ *   "utility": "80de55eb-9bde-4477-a97a-b6048a1fcc9a"
+ * }
+ */
+function exportMessages() { return; }

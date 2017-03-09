@@ -42,6 +42,7 @@
  * @apiSuccess (Alert extends Message) {String} description  Long description.
  * @apiSuccess (Alert extends Message) {String} link  A resource (e.g. image) link.
  * @apiSuccess (Alert extends Message) {Number} refDate  The reference date for this message. 
+ * @apiSuccess (Alert extends Message) {String} deviceType   The type of device. One of: <code>METER</code>, <code>AMPHIRO</code>  
  */
 
 /**
@@ -67,6 +68,7 @@
  * @apiSuccess (Recommendation extends Message) {String} description     Long description.
  * @apiSuccess (Recommendation extends Message) {String} imageLink       A resource link.
  * @apiSuccess (Recommendation extends Message) {Number} refDate         The reference date for this message. 
+ * @apiSuccess (Recommendation extends Message) {String} deviceType   The type of device. One of: <code>METER</code>, <code>AMPHIRO</code>  
  */
 
 /**

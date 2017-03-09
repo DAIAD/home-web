@@ -223,6 +223,8 @@ public class Alert extends Message
 
     private Long refDate;
     
+    private EnumDeviceType deviceType;
+    
 	private String description;
 
 	private String link;
@@ -312,5 +314,17 @@ public class Alert extends Message
         if (alertType == null)
             return null;
         return StringUtils.join(alertType.getCodes(), "|");
+    }
+
+    @JsonProperty("deviceType")
+    public EnumDeviceType getDeviceType()
+    {
+        return deviceType;
+    }
+
+    @JsonProperty("deviceType")
+    public void setDeviceType(EnumDeviceType deviceType)
+    {
+        this.deviceType = deviceType;
     }
 }
