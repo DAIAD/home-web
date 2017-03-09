@@ -1,7 +1,6 @@
 package eu.daiad.web.service.message.resolvers;
 
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -52,7 +51,7 @@ public class InsightA1DayOfWeekConsumption extends AbstractRecommendationResolve
         implements ParameterizedTemplate
     {
         /** A minimum value for daily volume consumption */
-        private static final String MIN_VALUE = "1E-1"; 
+        private static final String MIN_VALUE = "1E+0"; 
         
         @NotNull
         @DecimalMin(MIN_VALUE)
@@ -148,7 +147,7 @@ public class InsightA1DayOfWeekConsumption extends AbstractRecommendationResolve
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
-        final double K = 1.70;  // a threshold (z-score) of significant change
+        final double K = 1.50;  // a threshold (z-score) of significant change
         final int N = 15;       // number of past weeks to examine
         final double F = 0.5;   // a threshold ratio of non-nulls for collected values
         final double dailyThreshold = config.getVolumeThreshold(deviceType, EnumTimeUnit.DAY);

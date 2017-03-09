@@ -51,7 +51,7 @@ import eu.daiad.web.service.message.AbstractRecommendationResolver;
 @Scope("prototype")
 public class InsightA3PartOfDayConsumption extends AbstractRecommendationResolver
 {
-    public static final double CHANGE_PERCENTAGE_THRESHOLD = 50.0;
+    public static final double CHANGE_PERCENTAGE_THRESHOLD = 45.0;
     
     public static class Parameters extends Message.AbstractParameters
         implements ParameterizedTemplate
