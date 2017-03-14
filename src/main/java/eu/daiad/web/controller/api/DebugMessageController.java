@@ -174,6 +174,7 @@ public class DebugMessageController extends BaseRestController
                 put("message.alertType", "Alert-Type");
                 put("message.alertCode", "Alert-Code");
                 put("message.alertTemplate", "Alert-Template");
+                put("message.deviceType", "Device");
                 put("message.title","Title");
                 put("message.description","Description");
                 put("message.refDate","Reference-Date");
@@ -245,6 +246,7 @@ public class DebugMessageController extends BaseRestController
                 put("message.recommendationType", "Recommendation-Type");
                 put("message.recommendationCode", "Recommendation-Code");
                 put("message.recommendationTemplate", "Recommendation-Template");
+                put("message.deviceType", "Device");
                 put("message.title","Title");
                 put("message.description","Description");
                 put("message.refDate","Reference-Date");

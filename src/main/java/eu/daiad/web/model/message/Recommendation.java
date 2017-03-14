@@ -222,6 +222,8 @@ public class Recommendation extends Message
 
 	private Long refDate;
 	
+	private EnumDeviceType deviceType;
+	
 	private String description;
 
 	private String link;
@@ -320,5 +322,17 @@ public class Recommendation extends Message
         if (recommendationType == null)
             return null;
         return StringUtils.join(recommendationType.getCodes(), "|");
+    }
+    
+    @JsonProperty("deviceType")
+    public EnumDeviceType getDeviceType()
+    {
+        return deviceType;
+    }
+
+    @JsonProperty("deviceType")
+    public void setDeviceType(EnumDeviceType deviceType)
+    {
+        this.deviceType = deviceType;
     }
 }

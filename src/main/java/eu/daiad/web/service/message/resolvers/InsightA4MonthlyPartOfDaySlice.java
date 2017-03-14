@@ -167,17 +167,29 @@ public class InsightA4MonthlyPartOfDaySlice extends AbstractRecommendationResolv
             double y2 = parts.get(EnumPartOfDay.AFTERNOON).doubleValue();
             double y3 = parts.get(EnumPartOfDay.NIGHT).doubleValue();
 
-            if (y1 < y2) {
-                t = (y2 < y3)? 
-                    EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_MAINLY_IN_NIGHT:
-                    EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_MAINLY_IN_AFTERNOON;
+            if (deviceType == EnumDeviceType.AMPHIRO) {
+                if (y1 < y2) {
+                    t = (y2 < y3) ?
+                        EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_SHOWER_MAINLY_IN_NIGHT :
+                        EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_SHOWER_MAINLY_IN_AFTERNOON;
+                } else {
+                    // y2 <= y1
+                    t = (y1 < y3) ?
+                        EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_SHOWER_MAINLY_IN_NIGHT :
+                        EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_SHOWER_MAINLY_IN_MORNING;
+                }
             } else {
-                // y2 <= y1
-                t = (y1 < y3)?
-                    EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_MAINLY_IN_NIGHT:
-                    EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_MAINLY_IN_MORNING;
+                if (y1 < y2) {
+                    t = (y2 < y3) ?
+                        EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_METER_MAINLY_IN_NIGHT :
+                        EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_METER_MAINLY_IN_AFTERNOON;
+                } else {
+                    // y2 <= y1
+                    t = (y1 < y3) ?
+                        EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_METER_MAINLY_IN_NIGHT :
+                        EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_METER_MAINLY_IN_MORNING;
+                }
             }
-
             return t;
         }
 
