@@ -38,7 +38,7 @@ import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 import eu.daiad.web.repository.application.IAmphiroTimeOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
-import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
+import eu.daiad.web.repository.application.IMeterDataRepository;
 import eu.daiad.web.service.IDataService;
 
 /**
@@ -75,7 +75,7 @@ public class DataController extends BaseRestController {
      * Repository for accessing smart water meter data.
      */
     @Autowired
-    private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
+    private IMeterDataRepository waterMeterMeasurementRepository;
 
     /**
      * Repository for accessing device data.
@@ -100,8 +100,7 @@ public class DataController extends BaseRestController {
     @RequestMapping(value = "/api/v1/data/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse query(@RequestBody DataQueryRequest data) {
         try {
-            AuthenticatedUser user = authenticate(data.getCredentials(),
-                                                  EnumRole.ROLE_USER, EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
+            AuthenticatedUser user = authenticate(data.getCredentials(), EnumRole.ROLE_USER, EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
             DataQuery query = data.getQuery();
             if (query == null) {
@@ -395,11 +394,10 @@ public class DataController extends BaseRestController {
         }
     }
 
-
     /**
-     * Assigns household members to amphiro b1 sessions.
+     * Marks an amphiro b1 message as not being a shower.
      *
-     * @param request member assignment data
+     * @param request shower data.
      * @return the controller's response.
      */
     @RequestMapping(value = "/api/v2/data/session/ignore", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")

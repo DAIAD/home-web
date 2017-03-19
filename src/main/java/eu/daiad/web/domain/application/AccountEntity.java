@@ -49,11 +49,11 @@ public class AccountEntity {
     @JoinColumn(name = "utility_id", nullable = false)
     private UtilityEntity utility;
 
-    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
+    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id")
     private Set<AccountRoleEntity> roles = new HashSet<>();
 
-    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
+    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id")
     private Set<AccountUtilityEntity> utilities = new HashSet<>();
 
@@ -71,7 +71,7 @@ public class AccountEntity {
     @OneToOne(mappedBy = "account")
     private HouseholdEntity household;
 
-    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    @OneToMany(cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id")
     private Set<WaterIqHistoryEntity> waterIqHistory = new HashSet<>();
 
@@ -164,7 +164,7 @@ public class AccountEntity {
     public UUID getUtilityKey() {
         return utility.getKey();
     }
-    
+
     public void setUtility(UtilityEntity utility) {
         this.utility = utility;
     }

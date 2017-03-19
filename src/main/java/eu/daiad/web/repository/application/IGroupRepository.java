@@ -31,11 +31,11 @@ public interface IGroupRepository {
 
     List<Group> getClusters(UUID utilityKey);
 
-    List<Group> getClusterByKeySegments(UUID clusterKey);
+    List<Group> getClusterSegmentsByKey(UUID clusterKey);
 
-    List<Group> getClusterByNameSegments(String name);
+    List<Group> getClusterSegmentsByName(String clusterName);
 
-    List<Group> getClusterByTypeSegments(EnumClusterType type);
+    List<Group> getClusterSegmentsByType(EnumClusterType custerType);
 
     List<Group> getSets();
 

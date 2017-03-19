@@ -1,6 +1,5 @@
 package eu.daiad.web.domain.application;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
@@ -13,7 +12,7 @@ import eu.daiad.web.model.group.EnumGroupType;
 @Table(schema = "public", name = "group_segment")
 public class GroupSegmentEntity extends GroupEntity {
 
-	@ManyToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
+	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "cluster_id", nullable = false)
 	private ClusterEntity cluster;
 

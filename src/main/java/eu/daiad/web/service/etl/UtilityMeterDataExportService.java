@@ -34,6 +34,7 @@ import org.joda.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import eu.daiad.web.hbase.EnumHBaseTable;
 import eu.daiad.web.hbase.HBaseConnectionManager;
 import eu.daiad.web.model.TemporalConstants;
 import eu.daiad.web.model.device.Device;
@@ -47,7 +48,7 @@ import eu.daiad.web.model.meter.WaterMeterDataSeries;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQuery;
 import eu.daiad.web.model.meter.WaterMeterMeasurementQueryResult;
 import eu.daiad.web.model.security.AuthenticatedUser;
-import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
+import eu.daiad.web.repository.application.IMeterDataRepository;
 import eu.daiad.web.service.etl.UtilityDataExportQuery.EnumExportMode;
 
 /**
@@ -61,11 +62,6 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
      * Logger instance for writing events using the configured logging API.
      */
     private static final Log logger = LogFactory.getLog(UtilityMeterDataExportService.class);
-
-    /**
-     * HBASE table that indexes meters by serial number and time stamp.
-     */
-    private final String meterTableMeasurementByMeter = "daiad:meter-measurements-by-user";
 
     /**
      * Default column family name used by all HBASE tables.
@@ -82,7 +78,7 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
      * Repository for accessing smart water meter readings.
      */
     @Autowired
-    private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
+    private IMeterDataRepository waterMeterMeasurementRepository;
 
     /**
      * Exports data for a single utility to a file. Any exported data file is replaced.
@@ -316,7 +312,7 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
         }
 
         try {
-            table = connection.getTable(meterTableMeasurementByMeter);
+            table = connection.getTable(EnumHBaseTable.SWM_USER.getValue());
             byte[] columnFamily = Bytes.toBytes(columnFamilyName);
 
             Scan scan = new Scan();
@@ -431,7 +427,7 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
         }
 
         try {
-            table = connection.getTable(meterTableMeasurementByMeter);
+            table = connection.getTable(EnumHBaseTable.SWM_USER.getValue());
             byte[] columnFamily = Bytes.toBytes(columnFamilyName);
 
             Scan scan = new Scan();

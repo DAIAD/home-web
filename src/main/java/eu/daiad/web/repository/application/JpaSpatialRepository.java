@@ -98,6 +98,21 @@ public class JpaSpatialRepository extends BaseRepository implements ISpatialRepo
     }
 
     /**
+     * Returns all areas for a utility given its key.
+     *
+     * @param utilityKey the utility key.
+     * @return a list of {@link AreaGroupEntity} entities.
+     */
+    @Override
+    public List<AreaGroupMemberEntity> getAreasByUtilityId(UUID utilityKey) {
+        String areaQueryString = "select a from area_group_item a where a.utility.key = :utilityKey";
+
+        TypedQuery<AreaGroupMemberEntity> areaQuery = entityManager.createQuery(areaQueryString, AreaGroupMemberEntity.class)
+                                                                   .setParameter("utilityKey", utilityKey);
+        return areaQuery.getResultList();
+    }
+
+    /**
      * Returns all the areas for the given area group key.
      *
      * @param groupKey the area group key.

@@ -235,7 +235,7 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
     }
 
     @Override
-    public List<Group> getClusterByKeySegments(UUID clusterKey) {
+    public List<Group> getClusterSegmentsByKey(UUID clusterKey) {
         TypedQuery<GroupSegmentEntity> query = entityManager.createQuery("select g from group_segment g  "
                         + "where g.utility.id = :utility_id and g.cluster.key = :key", GroupSegmentEntity.class);
 
@@ -395,8 +395,7 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
 
     @Override
     public void deleteAllClusterByName(String name) {
-        TypedQuery<ClusterEntity> query = entityManager.createQuery(
-                        "select c from cluster c where c.name = :name", ClusterEntity.class);
+        TypedQuery<ClusterEntity> query = entityManager.createQuery("select c from cluster c where c.name = :name", ClusterEntity.class);
 
         query.setParameter("name", name);
 
@@ -409,7 +408,7 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
     }
 
     @Override
-    public List<Group> getClusterByNameSegments(String name) {
+    public List<Group> getClusterSegmentsByName(String name) {
         TypedQuery<GroupSegmentEntity> query = entityManager.createQuery("select g from group_segment g "
                         + "where g.utility.id = :utility_id and g.cluster.name = :name", GroupSegmentEntity.class);
 
@@ -420,7 +419,7 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
     }
 
     @Override
-    public List<Group> getClusterByTypeSegments(EnumClusterType type) {
+    public List<Group> getClusterSegmentsByType(EnumClusterType type) {
         TypedQuery<GroupSegmentEntity> query = entityManager.createQuery("select g from group_segment g "
                         + "where g.utility.id = :utility_id and g.cluster.name = :name", GroupSegmentEntity.class);
 
@@ -614,7 +613,7 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
 
                 return segment;
             case SET:
-                Set set = new Set();
+                Set set = new Set(((GroupSetEntity) entity).getOwner().getKey());
 
                 set.setCreatedOn(entity.getCreatedOn());
                 set.setUpdatedOn(entity.getUpdatedOn());

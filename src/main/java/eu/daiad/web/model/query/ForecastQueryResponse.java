@@ -1,12 +1,12 @@
 package eu.daiad.web.model.query;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import org.joda.time.DateTimeZone;
 
 public class ForecastQueryResponse extends QueryResponse {
 
-    private ArrayList<GroupDataSeries> meters;
+    private List<GroupDataSeries> meters;
 
     public ForecastQueryResponse() {
         super();
@@ -20,11 +20,11 @@ public class ForecastQueryResponse extends QueryResponse {
         super(timezone.toString());
     }
 
-    public ArrayList<GroupDataSeries> getMeters() {
+    public List<GroupDataSeries> getMeters() {
         return meters;
     }
 
-    public void setMeters(ArrayList<GroupDataSeries> meters) {
+    public void setMeters(List<GroupDataSeries> meters) {
         this.meters = meters;
     }
 

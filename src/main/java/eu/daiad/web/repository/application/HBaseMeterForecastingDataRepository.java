@@ -22,6 +22,8 @@ import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.springframework.stereotype.Repository;
 
+import eu.daiad.web.hbase.EnumHBaseColumnFamily;
+import eu.daiad.web.hbase.EnumHBaseTable;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DataErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
@@ -36,17 +38,25 @@ import eu.daiad.web.model.query.MeterDataPoint;
 import eu.daiad.web.model.query.MeterUserDataPoint;
 import eu.daiad.web.model.query.RankingDataPoint;
 import eu.daiad.web.model.query.UserDataPoint;
-import eu.daiad.web.repository.AbstractHBaseRepository;
 
-@Repository
-public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository implements IWaterMeterForecastRepository {
+@Repository()
+public class HBaseMeterForecastingDataRepository extends AbstractHBaseMeterDataRepository implements IMeterForecastingDataRepository {
 
-    private static final Log logger = LogFactory.getLog(HBaseWaterMeterForecastRepository.class);
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
+    private static final Log logger = LogFactory.getLog(HBaseMeterForecastingDataRepository.class);
 
-    private final String meterTableForecastByUser = "daiad:meter-forecast-by-user";
+    public HBaseMeterForecastingDataRepository() {
+        interval = EnumTimeInterval.DAY;
+    }
 
-    private final String meterTableForecastByTime = "daiad:meter-forecast-by-time";
-
+    /**
+     * Stores smart water meter forecasting data.
+     *
+     * @param serial the smart water meter unique serial number.
+     * @param data a collection of {@link WaterMeterForecastCollection}.
+     */
     @Override
     public void store(String serial, WaterMeterForecastCollection data) {
         try {
@@ -73,15 +83,20 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
         }
     }
 
-    @SuppressWarnings("resource")
+    /**
+     * Stores smart water meter forecasting data indexed by serial number.
+     *
+     * @param serial the smart water meter data unique serial number.
+     * @param data a collection of {@link WaterMeterForecast}.
+     */
     private void storeDataByMeter(String serial, WaterMeterForecastCollection data) {
         Table table = null;
         try {
-            table = connection.getTable(meterTableForecastByUser);
+            table = connection.getTable(EnumHBaseTable.SWM_FORECAST_USER.getValue());
 
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             byte[] meterSerial = serial.getBytes("UTF-8");
             byte[] meterSerialHash = md.digest(meterSerial);
@@ -93,31 +108,14 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
                     continue;
                 }
 
-                long timestamp = (Long.MAX_VALUE / 1000) - (m.getTimestamp() / 1000);
+                RowKeyQualifierPrefix key = createMeterRowKeyQualifierPrefix(meterSerialHash, m.getTimestamp());
 
-                long timeSlice = timestamp % EnumTimeInterval.DAY.getValue();
-                byte[] timeSliceBytes = Bytes.toBytes((int) timeSlice);
-                if (timeSliceBytes.length != 4) {
-                    throw new RuntimeException("Invalid byte array length!");
-                }
+                Put p = new Put(key.rowKey);
 
-                long timeBucket = timestamp - timeSlice;
-
-                byte[] timeBucketBytes = Bytes.toBytes(timeBucket);
-                if (timeBucketBytes.length != 8) {
-                    throw new RuntimeException("Invalid byte array length!");
-                }
-
-                byte[] rowKey = new byte[meterSerialHash.length + timeBucketBytes.length];
-                System.arraycopy(meterSerialHash, 0, rowKey, 0, meterSerialHash.length);
-                System.arraycopy(timeBucketBytes, 0, rowKey, meterSerialHash.length, timeBucketBytes.length);
-
-                Put p = new Put(rowKey);
-
-                byte[] column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("d")));
+                byte[] column = concatenate(key.qualifierPrefix, appendLength(Bytes.toBytes("d")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.getDifference()));
 
-                column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("s")));
+                column = concatenate(key.qualifierPrefix, appendLength(Bytes.toBytes("s")));
                 p.addColumn(columnFamily, column, serial.getBytes(StandardCharsets.UTF_8));
 
                 table.put(p);
@@ -136,16 +134,21 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
         }
     }
 
-    @SuppressWarnings("resource")
+    /**
+     * Stores smart water meter forecasting data partitioned by time.
+     *
+     * @param serial the smart water meter data unique serial number.
+     * @param data a collection of {@link WaterMeterForecast}.
+     */
     private void storeDataByTime(String serial, WaterMeterForecastCollection data) {
         Table table = null;
 
         try {
-            table = connection.getTable(meterTableForecastByTime);
+            table = connection.getTable(EnumHBaseTable.SWM_FORECAST_TIME.getValue());
 
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             byte[] meterSerial = serial.getBytes("UTF-8");
             byte[] meterSerialHash = md.digest(meterSerial);
@@ -157,37 +160,14 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
                     continue;
                 }
 
-                short partition = (short) (m.getTimestamp() % timePartitions);
-                byte[] partitionBytes = Bytes.toBytes(partition);
+                RowKeyQualifierPrefix key = createPartitionedRowKeyQualifierPrefix(meterSerialHash, m.getTimestamp());
 
-                long timestamp = (Long.MAX_VALUE / 1000) - (m.getTimestamp() / 1000);
+                Put p = new Put(key.rowKey);
 
-                long timeSlice = timestamp % EnumTimeInterval.DAY.getValue();
-                byte[] timeSliceBytes = Bytes.toBytes((int) timeSlice);
-                if (timeSliceBytes.length != 4) {
-                    throw new RuntimeException("Invalid byte array length!");
-                }
-
-                long timeBucket = timestamp - timeSlice;
-
-                byte[] timeBucketBytes = Bytes.toBytes(timeBucket);
-                if (timeBucketBytes.length != 8) {
-                    throw new RuntimeException("Invalid byte array length!");
-                }
-
-                byte[] rowKey = new byte[partitionBytes.length + timeBucketBytes.length + meterSerialHash.length];
-
-                System.arraycopy(partitionBytes, 0, rowKey, 0, partitionBytes.length);
-                System.arraycopy(timeBucketBytes, 0, rowKey, partitionBytes.length, timeBucketBytes.length);
-                System.arraycopy(meterSerialHash, 0, rowKey, (partitionBytes.length + timeBucketBytes.length),
-                                meterSerialHash.length);
-
-                Put p = new Put(rowKey);
-
-                byte[] column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("d")));
+                byte[] column = concatenate(key.qualifierPrefix, appendLength(Bytes.toBytes("d")));
                 p.addColumn(columnFamily, column, Bytes.toBytes(m.getDifference()));
 
-                column = concatenate(timeSliceBytes, appendLength(Bytes.toBytes("s")));
+                column = concatenate(key.qualifierPrefix, appendLength(Bytes.toBytes("s")));
                 p.addColumn(columnFamily, column, serial.getBytes(StandardCharsets.UTF_8));
 
                 table.put(p);
@@ -206,6 +186,13 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
         }
     }
 
+    /**
+     * Executes a query for smart water meter forecasting data.
+     *
+     * @param query the query for filtering data.
+     * @return a collection of {@link GroupDataSeries}.
+     * @throws ApplicationException if an error occurs or query validation fails.
+     */
     @Override
     public ArrayList<GroupDataSeries> forecast(ExpandedDataQuery query) throws ApplicationException {
         Table table = null;
@@ -213,11 +200,11 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
 
         ArrayList<GroupDataSeries> result = new ArrayList<GroupDataSeries>();
         for (ExpandedPopulationFilter filter : query.getGroups()) {
-            result.add(new GroupDataSeries(filter.getLabel(), filter.getUsers().size(), filter.getAreaId()));
+            result.add(new GroupDataSeries(filter.getLabel(), filter.getSize(), filter.getAreaId()));
         }
         try {
-            table = connection.getTable(meterTableForecastByTime);
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            table = connection.getTable(EnumHBaseTable.SWM_FORECAST_TIME.getValue());
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             DateTime startDate = new DateTime(query.getStartDateTime(), DateTimeZone.UTC);
             DateTime endDate = new DateTime(query.getEndDateTime(), DateTimeZone.UTC);
@@ -266,30 +253,10 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
                 scan.setCaching(scanCacheSize);
                 scan.addFamily(columnFamily);
 
-                byte[] partitionBytes = Bytes.toBytes(p);
-
-                long from = (Long.MAX_VALUE / 1000) - (endDate.getMillis() / 1000);
-                from = from - (from % EnumTimeInterval.DAY.getValue());
-                byte[] fromBytes = Bytes.toBytes(from);
-
-                long to = (Long.MAX_VALUE / 1000) - (startDate.getMillis() / 1000);
-                to = to - (to % EnumTimeInterval.DAY.getValue());
-                byte[] toBytes = Bytes.toBytes(to);
-
-                // Scanner row key prefix start
-                byte[] rowKey = new byte[partitionBytes.length + fromBytes.length];
-
-                System.arraycopy(partitionBytes, 0, rowKey, 0, partitionBytes.length);
-                System.arraycopy(fromBytes, 0, rowKey, partitionBytes.length, fromBytes.length);
-
+                byte[] rowKey = createPartitionedRowKey(p, endDate.getMillis());
                 scan.setStartRow(rowKey);
 
-                // Scanner row key prefix end
-                rowKey = new byte[partitionBytes.length + toBytes.length];
-
-                System.arraycopy(partitionBytes, 0, rowKey, 0, partitionBytes.length);
-                System.arraycopy(toBytes, 0, rowKey, partitionBytes.length, toBytes.length);
-
+                rowKey = createPartitionedRowKey(p, startDate.getMillis());
                 scan.setStopRow(calculateTheClosestNextRowKeyForPrefix(rowKey));
 
                 scanner = table.getScanner(scan);
@@ -316,11 +283,11 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
                                 for (ExpandedPopulationFilter filter : query.getGroups()) {
                                     GroupDataSeries series = result.get(filterIndex);
 
-                                    int index = inArray(filter.getSerials(), serialHash);
+                                    int index = inArray(filter.getSerialHashes(), serialHash);
                                     if (index >= 0) {
                                         series.addMeterRankingDataPoint(
                                             query.getGranularity(),
-                                            filter.getUsers().get(index),
+                                            filter.getUserKeys().get(index),
                                             filter.getLabels().get(index),
                                             timestamp,
                                             difference,
@@ -416,6 +383,12 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
         return result;
     }
 
+    /**
+     * Removes any unsupported metrics from a query's result.
+     *
+     * @param query the query.
+     * @param result the query result.
+     */
     private void cleanSeries(ExpandedDataQuery query, ArrayList<GroupDataSeries> result) {
         int filterIndex = 0;
         for (final ExpandedPopulationFilter filter : query.getGroups()) {
@@ -446,4 +419,5 @@ public class HBaseWaterMeterForecastRepository extends AbstractHBaseRepository i
             filterIndex++;
         }
     }
+
 }

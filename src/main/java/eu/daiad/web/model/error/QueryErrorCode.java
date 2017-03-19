@@ -2,6 +2,7 @@ package eu.daiad.web.model.error;
 
 public enum QueryErrorCode implements ErrorCode {
     EMPTY_QUERY,
+    GRANULARITY_NOT_SUPPORTED,
     TIME_FILTER_NOT_SET,
     TIME_FILTER_INVALID,
     TIME_FILTER_ABSOLUTE_END_NOT_SET,
@@ -21,6 +22,6 @@ public enum QueryErrorCode implements ErrorCode {
 
 	@Override
 	public String getMessageKey() {
-		return (this.getClass().getSimpleName() + '.' + this.name());
+		return (this.getClass().getSimpleName() + '.' + name());
 	}
 }

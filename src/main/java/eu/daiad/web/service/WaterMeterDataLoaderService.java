@@ -39,8 +39,8 @@ import eu.daiad.web.model.meter.WaterMeterForecast;
 import eu.daiad.web.model.meter.WaterMeterForecastCollection;
 import eu.daiad.web.model.meter.WaterMeterMeasurementCollection;
 import eu.daiad.web.model.meter.WaterMeterStatusQueryResult;
-import eu.daiad.web.repository.application.IWaterMeterForecastRepository;
-import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
+import eu.daiad.web.repository.application.IMeterDataRepository;
+import eu.daiad.web.repository.application.IMeterForecastingDataRepository;
 
 /**
  * Service that provides methods for importing smart water meter readings to HBASE.
@@ -74,13 +74,13 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
      * Repository for storing smart water meter readings to HBASE.
      */
     @Autowired
-    IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
+    IMeterDataRepository waterMeterMeasurementRepository;
 
     /**
      * Repository for storing forecasting data for water consumption.
      */
     @Autowired
-    IWaterMeterForecastRepository waterMeterForecastRepository;
+    IMeterForecastingDataRepository waterMeterForecastRepository;
 
     /**
      * Loads smart water meter readings data from a file into HBASE.
@@ -363,10 +363,10 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
         for (int i = 0, count = rows.size(); i < count; i++) {
             // Set difference for the first row for every unique serial number
             if ((i == 0) || (!rows.get(i).serial.equals(rows.get(i - 1).serial))) {
-                WaterMeterStatusQueryResult meterStatus = waterMeterMeasurementRepository.getStatus(new String[] { rows.get(i).serial },
-                                                                                                    rows.get(i).timestamp - 1);
+                WaterMeterStatusQueryResult meterStatus = waterMeterMeasurementRepository.getStatusBefore(new String[] { rows.get(i).serial },
+                                                                                                          rows.get(i).timestamp - 1);
 
-                if ((meterStatus == null) || (meterStatus.getDevices().size() == 0)) {
+                if ((meterStatus == null) || (meterStatus.getDevices().isEmpty())) {
                     rows.get(i).difference = 0f;
                 } else {
                     rows.get(i).difference = rows.get(i).volume - meterStatus.getDevices().get(0).getVolume();
@@ -385,14 +385,9 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
 
             // Validate difference
             if ((i != 0) && (rows.get(i).difference != null) && (rows.get(i).serial.equals(rows.get(i - 1).serial))) {
-                float diff = rows.get(i).volume - rows.get(i - 1).volume;
-
-                if (diff != rows.get(i).difference) {
-                    rows.get(i).difference = diff;
-
-                    if (diff < 0) {
-                        status.increaseNegativeDifference();
-                    }
+                rows.get(i).difference = rows.get(i).volume - rows.get(i - 1).volume;
+                if (rows.get(i).difference < 0) {
+                    status.increaseNegativeDifference();
                 }
             }
         }

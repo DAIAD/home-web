@@ -35,6 +35,7 @@ import org.springframework.stereotype.Repository;
 
 import com.google.common.collect.ImmutableMap;
 
+import eu.daiad.web.hbase.EnumHBaseColumnFamily;
 import eu.daiad.web.model.amphiro.AmphiroAbstractDataPoint;
 import eu.daiad.web.model.amphiro.AmphiroAbstractSession;
 import eu.daiad.web.model.amphiro.AmphiroDataSeries;
@@ -251,8 +252,7 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
      * @throws ApplicationException if saving data has failed.
      */
     @Override
-    public AmphiroSessionUpdateCollection store(AuthenticatedUser user, AmphiroDevice device,
-                    AmphiroMeasurementCollection data) throws ApplicationException {
+    public AmphiroSessionUpdateCollection store(AuthenticatedUser user, AmphiroDevice device, AmphiroMeasurementCollection data) throws ApplicationException {
         AmphiroSessionUpdateCollection updates = new AmphiroSessionUpdateCollection();
 
         if ((data == null) || (data.getSessions() == null) || (data.getSessions().isEmpty())) {
@@ -714,7 +714,7 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
         try {
             table = connection.getTable(amphiroTableSessionByUser);
 
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             Get get = new Get(rowKey);
             Result result = table.get(get);
@@ -880,7 +880,7 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
             if (sessionResult.getRow() != null) {
                 long sessionId = Long.MAX_VALUE - Bytes.toLong(Arrays.copyOfRange(rowKey, 32, 40));
 
-                byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+                byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
                 NavigableMap<byte[], byte[]> map = sessionResult.getFamilyMap(columnFamily);
 
                 for (Entry<byte[], byte[]> entry : map.entrySet()) {
@@ -956,7 +956,7 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
         try {
             table = connection.getTable(amphiroTableMeasurements);
 
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             // Compute the next valid index value and remove existing
             // measurements from the message.
@@ -1077,8 +1077,7 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
 
             SessionVersions sessions = getSessionVersions(query);
             if (sessions.isEmpty()) {
-                throw createApplicationException(DataErrorCode.SESSION_NOT_FOUND)
-                    .set("session", assignment.getSessionId());
+                throw createApplicationException(DataErrorCode.SESSION_NOT_FOUND).set("session", assignment.getSessionId());
             }
 
             assignMemberToSessionInUserTable(user.getKey(), assignment, sessions);
@@ -1103,7 +1102,7 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
             table = connection.getTable(amphiroTableSessionByUser);
 
             byte[] rowKey = getSessionKey(userKey, assignment.getDeviceKey(), sessions.getSessionId());
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             Put put = new Put(rowKey);
             byte[] column;
@@ -1155,7 +1154,7 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
             } else {
                 rowKey = getSessionTimePartitionedKey(userKey, assignment.getDeviceKey(), assignment.getSessionId(), sessions.realtime.getTimestamp());
             }
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             Put put = new Put(rowKey);
             byte[] column;
@@ -1259,7 +1258,7 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
             table = connection.getTable(amphiroTableSessionByUser);
 
             byte[] rowKey = getSessionKey(userKey, ignore.getDeviceKey(), sessions.getSessionId());
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             Put put = new Put(rowKey);
             byte[] column;
@@ -1305,7 +1304,7 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
             } else {
                 rowKey = getSessionTimePartitionedKey(userKey, ignore.getDeviceKey(), ignore.getSessionId(), sessions.realtime.getTimestamp());
             }
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
             byte[] column;
 
             Put put = new Put(rowKey);
@@ -1344,7 +1343,7 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
 
         try {
             table = connection.getTable(amphiroTableSessionByUser);
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             for (int i = data.getSessions().size() - 1; i >= 0; i--) {
                 AmphiroSession s = data.getSessions().get(i);
@@ -1617,7 +1616,7 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
          */
         try {
             table = connection.getTable(amphiroTableSessionByTime);
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             for (int i = 0; i < data.getSessions().size(); i++) {
                 AmphiroSession s = data.getSessions().get(i);
@@ -1945,7 +1944,7 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
 
         try {
             table = connection.getTable(amphiroTableMeasurements);
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             UUID deviceKeys[] = query.getDeviceKey();
 
@@ -2146,7 +2145,7 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
 
         try {
             table = connection.getTable(amphiroTableSessionByUser);
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             UUID deviceKeys[] = query.getDeviceKey();
 
@@ -2229,8 +2228,7 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
                                 member.setIndex(Bytes.toInt(entry.getValue()));
                                 break;
                             case COLUMN_SHARED_MEMBER_MODE:
-                                member.setMode(EnumMemberSelectionMode.fromString(new String(entry.getValue(),
-                                                StandardCharsets.UTF_8)));
+                                member.setMode(EnumMemberSelectionMode.fromString(new String(entry.getValue(), StandardCharsets.UTF_8)));
                                 break;
                             case COLUMN_SHARED_MEMBER_TIMESTAMP:
                                 member.setTimestamp(Bytes.toLong(entry.getValue()));
@@ -2365,11 +2363,11 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
 
         ArrayList<GroupDataSeries> result = new ArrayList<GroupDataSeries>();
         for (ExpandedPopulationFilter filter : query.getGroups()) {
-            result.add(new GroupDataSeries(filter.getLabel(), filter.getUsers().size(), filter.getAreaId()));
+            result.add(new GroupDataSeries(filter.getLabel(), filter.getSize(), filter.getAreaId()));
         }
         try {
             table = connection.getTable(amphiroTableSessionByTime);
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             DateTime startDate = new DateTime(query.getStartDateTime(), DateTimeZone.UTC);
             DateTime endDate = new DateTime(query.getEndDateTime(), DateTimeZone.UTC);
@@ -2522,17 +2520,30 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
                         for (ExpandedPopulationFilter filter : query.getGroups()) {
                             GroupDataSeries series = result.get(filterIndex);
 
-                            int index = inArray(filter.getHashes(), userHash);
-                            if (index >= 0) {
+                            int index = inArray(filter.getUserKeyHashes(), userHash);
+                            if ((timestamp != null) && (index >= 0)) {
                                 if (filter.getRanking() == null) {
-                                    series.addAmhiroDataPoint(query.getGranularity(), timestamp, volume, energy,
-                                                    duration, temperature, flow, query.getMetrics(), query
-                                                                    .getTimezone());
+                                    series.addAmhiroDataPoint(query.getGranularity(),
+                                                              timestamp,
+                                                              volume,
+                                                              energy,
+                                                              duration,
+                                                              temperature,
+                                                              flow,
+                                                              query.getMetrics(),
+                                                              query.getTimezone());
                                 } else {
-                                    series.addAmphiroRankingDataPoint(query.getGranularity(), filter.getUsers().get(
-                                                    index), filter.getLabels().get(index), timestamp, volume, energy,
-                                                    duration, temperature, flow, query.getMetrics(), query
-                                                                    .getTimezone());
+                                    series.addAmphiroRankingDataPoint(query.getGranularity(),
+                                                                      filter.getUserKeys().get(index),
+                                                                      filter.getLabels().get(index),
+                                                                      timestamp,
+                                                                      volume,
+                                                                      energy,
+                                                                      duration,
+                                                                      temperature,
+                                                                      flow,
+                                                                      query.getMetrics(),
+                                                                      query.getTimezone());
                                 }
                             }
 
@@ -2579,56 +2590,46 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
 
                             switch (field) {
                                 case VOLUME:
-                                    if (m1.getVolume().get(filter.getRanking().getMetric()) < m2.getVolume().get(
-                                                    filter.getRanking().getMetric())) {
+                                    if (m1.getVolume().get(filter.getRanking().getMetric()) < m2.getVolume().get(filter.getRanking().getMetric())) {
                                         return -1;
                                     }
-                                    if (m1.getVolume().get(filter.getRanking().getMetric()) > m2.getVolume().get(
-                                                    filter.getRanking().getMetric())) {
+                                    if (m1.getVolume().get(filter.getRanking().getMetric()) > m2.getVolume().get(filter.getRanking().getMetric())) {
                                         return 1;
                                     }
 
                                     break;
                                 case ENERGY:
-                                    if (m1.getEnergy().get(filter.getRanking().getMetric()) < m2.getEnergy().get(
-                                                    filter.getRanking().getMetric())) {
+                                    if (m1.getEnergy().get(filter.getRanking().getMetric()) < m2.getEnergy().get(filter.getRanking().getMetric())) {
                                         return -1;
                                     }
-                                    if (m1.getEnergy().get(filter.getRanking().getMetric()) > m2.getEnergy().get(
-                                                    filter.getRanking().getMetric())) {
+                                    if (m1.getEnergy().get(filter.getRanking().getMetric()) > m2.getEnergy().get(filter.getRanking().getMetric())) {
                                         return 1;
                                     }
 
                                     break;
                                 case DURATION:
-                                    if (m1.getDuration().get(filter.getRanking().getMetric()) < m2.getDuration().get(
-                                                    filter.getRanking().getMetric())) {
+                                    if (m1.getDuration().get(filter.getRanking().getMetric()) < m2.getDuration().get(filter.getRanking().getMetric())) {
                                         return -1;
                                     }
-                                    if (m1.getDuration().get(filter.getRanking().getMetric()) > m2.getDuration().get(
-                                                    filter.getRanking().getMetric())) {
+                                    if (m1.getDuration().get(filter.getRanking().getMetric()) > m2.getDuration().get(filter.getRanking().getMetric())) {
                                         return 1;
                                     }
 
                                     break;
                                 case TEMPERATURE:
-                                    if (m1.getTemperature().get(filter.getRanking().getMetric()) < m2.getTemperature()
-                                                    .get(filter.getRanking().getMetric())) {
+                                    if (m1.getTemperature().get(filter.getRanking().getMetric()) < m2.getTemperature().get(filter.getRanking().getMetric())) {
                                         return -1;
                                     }
-                                    if (m1.getTemperature().get(filter.getRanking().getMetric()) > m2.getTemperature()
-                                                    .get(filter.getRanking().getMetric())) {
+                                    if (m1.getTemperature().get(filter.getRanking().getMetric()) > m2.getTemperature().get(filter.getRanking().getMetric())) {
                                         return 1;
                                     }
 
                                     break;
                                 case FLOW:
-                                    if (m1.getFlow().get(filter.getRanking().getMetric()) < m2.getFlow().get(
-                                                    filter.getRanking().getMetric())) {
+                                    if (m1.getFlow().get(filter.getRanking().getMetric()) < m2.getFlow().get(filter.getRanking().getMetric())) {
                                         return -1;
                                     }
-                                    if (m1.getFlow().get(filter.getRanking().getMetric()) > m2.getFlow().get(
-                                                    filter.getRanking().getMetric())) {
+                                    if (m1.getFlow().get(filter.getRanking().getMetric()) > m2.getFlow().get(filter.getRanking().getMetric())) {
                                         return 1;
                                     }
 

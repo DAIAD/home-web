@@ -186,9 +186,9 @@ public class ReportCreationTask extends BaseTask implements StoppableTasklet {
      */
     public static enum EnumParameter {
         /**
-         * Empty parameter.
+         * Not supported parameter.
          */
-        EMPTY(null),
+        NOT_SUPPORTED(""),
         /**
          * Array of utility identifiers for which the reports are created.
          */
@@ -243,11 +243,11 @@ public class ReportCreationTask extends BaseTask implements StoppableTasklet {
 
         public static EnumParameter fromString(String value) {
             for (EnumParameter item : EnumParameter.values()) {
-                if (item.name().equalsIgnoreCase(value)) {
+                if (item.getValue().equalsIgnoreCase(value)) {
                     return item;
                 }
             }
-            return EMPTY;
+            return NOT_SUPPORTED;
         }
     }
 

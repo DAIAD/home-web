@@ -87,12 +87,12 @@ public class ForecastingJobBuilder extends BaseJobBuilder implements IJobBuilder
     private static final String STEP_IMPORT_RESULT = "import-result";
 
     /**
-     * Name of the step that creates the local working directory.
+     * Name of the step that deletes the local working directory.
      */
     private static final String STEP_DELETE_LOCAL_WORK_DIR = "delete-local-work-dir";
 
     /**
-     * Name of the step that creates the HDFS working directory.
+     * Name of the step that deletes the HDFS working directory.
      */
     private static final String STEP_DELETE_HDFS_WORK_DIR = "delete-hdfs-work-dir";
 

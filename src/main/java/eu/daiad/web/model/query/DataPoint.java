@@ -4,37 +4,32 @@ import java.util.Map;
 
 public class DataPoint {
 
-	public enum EnumDataPointType {
-		UNDEFINED, METER, AMPHIRO, RANKING;
-	}
+    public enum EnumDataPointType {
+        UNDEFINED, METER, AMPHIRO, RANKING;
+    }
 
-	protected EnumDataPointType type;
+    protected EnumDataPointType type;
 
-	private Long timestamp = null;
+    private Long timestamp = null;
 
-	public DataPoint() {
-		this.type = EnumDataPointType.UNDEFINED;
-	}
+    public DataPoint(EnumDataPointType type) {
+        this.type = type;
+    }
 
-	public DataPoint(long timestamp) {
-		this.timestamp = timestamp;
-		this.type = EnumDataPointType.UNDEFINED;
-	}
+    public DataPoint(EnumDataPointType type, long timestamp) {
+        this.type = type;
+        this.timestamp = timestamp;
+    }
 
-	public Long getTimestamp() {
-		return timestamp;
-	}
+    public EnumDataPointType getType() {
+        return type;
+    }
 
-	public void setTimestamp(Long timestamp) {
-		this.timestamp = timestamp;
-	}
+    public Long getTimestamp() {
+        return timestamp;
+    }
 
-	public EnumDataPointType getType() {
-		return this.type;
-	}
-	
-	public Map<EnumMetric, Double> field(EnumDataField field)
-	{
-	    return null;
-	}
+    public Map<EnumMetric, Double> field(EnumDataField field) {
+        return null;
+    }
 }

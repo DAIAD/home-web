@@ -8,7 +8,7 @@ import org.springframework.batch.core.step.tasklet.StoppableTasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.stereotype.Component;
 
-import eu.daiad.web.mapreduce.EnumMapReduceParameter;
+import eu.daiad.web.mapreduce.EnumJobMapReduceParameter;
 import eu.daiad.web.mapreduce.RunJar;
 import eu.daiad.web.model.error.SchedulerErrorCode;
 
@@ -25,7 +25,7 @@ public class YarnMapReduceJobTask extends BaseTask implements StoppableTasklet {
         try {
             Map<String, String> parameters = getStepParameters(chunkContext.getStepContext());
 
-            jobName = parameters.get(EnumMapReduceParameter.JOB_NAME.getValue());
+            jobName = parameters.get(EnumJobMapReduceParameter.JOB_NAME.getValue());
 
             RunJar runJar = new RunJar();
 

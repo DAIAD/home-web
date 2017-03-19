@@ -58,7 +58,7 @@ import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IFavouriteRepository;
 import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IUserRepository;
-import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
+import eu.daiad.web.repository.application.IMeterDataRepository;
 import eu.daiad.web.service.IUserService;
 
 /**
@@ -112,7 +112,7 @@ public class UserController extends BaseController {
      * Repository for accessing smart water meter data.
      */
     @Autowired
-    private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
+    private IMeterDataRepository waterMeterMeasurementRepository;
 
     /**
      * Repository for accessing favourite data.

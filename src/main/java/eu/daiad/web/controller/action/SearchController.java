@@ -36,7 +36,7 @@ import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IUserRepository;
-import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
+import eu.daiad.web.repository.application.IMeterDataRepository;
 
 @RestController
 public class SearchController extends BaseController {
@@ -68,7 +68,7 @@ public class SearchController extends BaseController {
      * Repository for accessing smart water meter data.
      */
     @Autowired
-    private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
+    private IMeterDataRepository waterMeterMeasurementRepository;
 
     /**
      * Returns the status of one or more smart water meters.

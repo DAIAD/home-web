@@ -11,6 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
+import eu.daiad.web.hbase.EnumHBaseColumnFamily;
+import eu.daiad.web.hbase.EnumHBaseNamespace;
+import eu.daiad.web.hbase.EnumHBaseTable;
 import eu.daiad.web.hbase.HBaseConnectionManager;
 
 /**
@@ -31,43 +34,9 @@ public class HBaseInitializer implements CommandLineRunner {
     private HBaseConnectionManager connection;
 
     /**
-     * Default namespace for all DAIAD HBase tables.
-     */
-    private static final String namespace = "daiad";
-
-    /**
-     * HBase tables required by DAIAD. If a table does not exist, it is created
-     * when the application starts.
-     */
-    private static final String tables[] = { "counters",
-                                             "amphiro-sessions-index",
-                                             "amphiro-sessions-index-v2",
-                                             "amphiro-sessions-index-v3",
-                                             "amphiro-sessions-by-time",
-                                             "amphiro-sessions-by-time-v2",
-                                             "amphiro-sessions-by-time-v3",
-                                             "amphiro-sessions-by-user",
-                                             "amphiro-sessions-by-user-v2",
-                                             "amphiro-sessions-by-user-v3",
-                                             "amphiro-measurements",
-                                             "amphiro-measurements-v2",
-                                             "amphiro-measurements-v3",
-                                             "meter-forecast-by-user",
-                                             "meter-forecast-by-time",
-                                             "meter-measurements-by-time",
-                                             "meter-measurements-by-user",
-                                             "meter-measurements-aggregate-by-time",
-                                             "arduino-measurements",
-                                             "comparison-ranking-daily"};
-
-    /**
-     * Default column family for all DAIAD HBase tables.
-     */
-    private static final String columnFamily = "cf";
-
-    /**
-     * On application start and after the Spring Application context is configured, this method creates
-     * all missing HBase tables required by the application.
+     * On application start and after the Spring Application context is
+     * configured, this method creates all missing HBase tables required by the
+     * application.
      */
     @Override
     public void run(String... args) throws Exception {
@@ -83,31 +52,32 @@ public class HBaseInitializer implements CommandLineRunner {
 
             admin = connection.getAdmin();
 
-            boolean createNamespace = true;
+            NamespaceDescriptor[] namespaceDescriptor = admin.listNamespaceDescriptors();
+            for (EnumHBaseNamespace namespace : EnumHBaseNamespace.values()) {
+                boolean createNamespace = true;
 
-            for (NamespaceDescriptor ns : admin.listNamespaceDescriptors()) {
-                if (ns.getName().equals(namespace)) {
-                    createNamespace = false;
-                    break;
+                for (NamespaceDescriptor ns : namespaceDescriptor) {
+                    if (ns.getName().equalsIgnoreCase(namespace.getValue())) {
+                        createNamespace = false;
+                        break;
+                    }
+                }
+
+                if (createNamespace) {
+                    admin.createNamespace(NamespaceDescriptor.create(namespace.getValue()).build());
                 }
             }
 
-            if (createNamespace) {
-                admin.createNamespace(NamespaceDescriptor.create(namespace).build());
-            }
-
-            for (String qualifier : tables) {
-                String fullname = String.format("%s:%s", namespace, qualifier);
-
-                TableName tableName = TableName.valueOf(fullname);
+            for (EnumHBaseTable table : EnumHBaseTable.values()) {
+                TableName tableName = TableName.valueOf(table.getValue());
 
                 if (!admin.tableExists(tableName)) {
                     HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
 
-                    tableDescriptor.addFamily(new HColumnDescriptor(columnFamily));
+                    tableDescriptor.addFamily(new HColumnDescriptor(EnumHBaseColumnFamily.DEFAULT.getValue()));
 
                     admin.createTable(tableDescriptor);
-                    logger.info(String.format("HBase: Table [%s] has been created.", fullname));
+                    logger.info(String.format("HBase: Table [%s] has been created.", table.getValue()));
                 }
             }
         } catch (Exception ex) {

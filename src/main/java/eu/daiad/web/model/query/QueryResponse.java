@@ -10,12 +10,14 @@ import eu.daiad.web.model.spatial.LabeledGeometry;
 
 public abstract class QueryResponse extends RestResponse {
 
+    private ExecutionInfo execution = new ExecutionInfo();
+
     private String timezone;
 
     private Map<Long, LabeledGeometry> areas = new HashMap<Long, LabeledGeometry>();
 
     public QueryResponse() {
-        this.timezone = DateTimeZone.UTC.toString();
+        timezone = DateTimeZone.UTC.toString();
     }
 
     public QueryResponse(String timezone) {
@@ -32,5 +34,23 @@ public abstract class QueryResponse extends RestResponse {
 
     public Map<Long, LabeledGeometry> getAreas() {
         return areas;
+    }
+
+    public ExecutionInfo getExecution() {
+        return execution;
+    }
+
+    public static class ExecutionInfo {
+
+        private long duration;
+
+        public long getDuration() {
+            return duration;
+        }
+
+        public void setDuration(long duration) {
+            this.duration = duration;
+        }
+
     }
 }

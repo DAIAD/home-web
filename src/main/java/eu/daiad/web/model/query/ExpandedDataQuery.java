@@ -9,60 +9,79 @@ import eu.daiad.web.model.EnumTimeAggregation;
 
 public class ExpandedDataQuery {
 
-	private DateTimeZone timezone;
+    private boolean usingPreAggregation;
 
-	private long startDateTime;
+    private DateTimeZone timezone;
 
-	private long endDateTime;
+    private long startDateTime;
 
-	private EnumTimeAggregation granularity = EnumTimeAggregation.ALL;
+    private long endDateTime;
 
-	private ArrayList<ExpandedPopulationFilter> groups = new ArrayList<ExpandedPopulationFilter>();
+    private EnumTimeAggregation granularity = EnumTimeAggregation.ALL;
 
-	private List<EnumMetric> metrics;
+    private ArrayList<ExpandedPopulationFilter> groups = new ArrayList<ExpandedPopulationFilter>();
 
-	public ExpandedDataQuery(DateTimeZone timezone) {
-		this.timezone = timezone;
-	}
+    private List<EnumMetric> metrics;
 
-	public long getStartDateTime() {
-		return startDateTime;
-	}
+    private ExpandedDataQuery() {
+        metrics = new ArrayList<EnumMetric>();
+        for (EnumMetric m : EnumMetric.values()) {
+            if (m != EnumMetric.UNDEFINED) {
+                metrics.add(m);
+            }
+        }
+    }
 
-	public void setStartDateTime(long startDateTime) {
-		this.startDateTime = startDateTime;
-	}
+    public ExpandedDataQuery(String timezone) {
+        this(DateTimeZone.forID(timezone));
+    }
 
-	public long getEndDateTime() {
-		return endDateTime;
-	}
+    public ExpandedDataQuery(DateTimeZone timezone) {
+        this();
+        this.timezone = timezone;
+    }
 
-	public void setEndDateTime(long endDateTime) {
-		this.endDateTime = endDateTime;
-	}
+    public long getStartDateTime() {
+        return startDateTime;
+    }
 
-	public EnumTimeAggregation getGranularity() {
-		return granularity;
-	}
+    public void setStartDateTime(long startDateTime) {
+        this.startDateTime = startDateTime;
+    }
 
-	public void setGranularity(EnumTimeAggregation granularity) {
-		this.granularity = granularity;
-	}
+    public long getEndDateTime() {
+        return endDateTime;
+    }
 
-	public List<EnumMetric> getMetrics() {
-		return metrics;
-	}
+    public void setEndDateTime(long endDateTime) {
+        this.endDateTime = endDateTime;
+    }
 
-	public void setMetrics(List<EnumMetric> metrics) {
-		this.metrics = metrics;
-	}
+    public EnumTimeAggregation getGranularity() {
+        return granularity;
+    }
 
-	public ArrayList<ExpandedPopulationFilter> getGroups() {
-		return groups;
-	}
+    public void setGranularity(EnumTimeAggregation granularity) {
+        this.granularity = granularity;
+    }
 
-	public DateTimeZone getTimezone() {
-		return timezone;
-	}
+    public List<EnumMetric> getMetrics() {
+        return metrics;
+    }
 
+    public ArrayList<ExpandedPopulationFilter> getGroups() {
+        return groups;
+    }
+
+    public DateTimeZone getTimezone() {
+        return timezone;
+    }
+
+    public boolean isUsingPreAggregation() {
+        return usingPreAggregation;
+    }
+
+    public void setUsingPreAggregation(boolean usingPreAggregation) {
+        this.usingPreAggregation = usingPreAggregation;
+    }
 }

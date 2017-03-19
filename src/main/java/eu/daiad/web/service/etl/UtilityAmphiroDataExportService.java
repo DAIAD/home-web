@@ -1021,11 +1021,13 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
         Collections.sort(sessions, new Comparator<AmphiroAbstractSession>() {
             @Override
             public int compare(AmphiroAbstractSession s1, AmphiroAbstractSession s2) {
-                if (s1.getVolume() <= s2.getVolume()) {
+                if (s1.getVolume() < s2.getVolume()) {
                     return -1;
-                } else {
+                }
+                if (s1.getVolume() > s2.getVolume()) {
                     return 1;
                 }
+                return 0;
             }
         });
 

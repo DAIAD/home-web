@@ -30,6 +30,14 @@ public interface ISpatialRepository {
     List<AreaGroupEntity> getAreasGroupsByUtilityId(UUID utilityKey);
 
     /**
+     * Returns all areas for a utility given its key.
+     *
+     * @param utilityKey the utility key.
+     * @return a list of {@link AreaGroupEntity} entities.
+     */
+    List<AreaGroupMemberEntity> getAreasByUtilityId(UUID utilityKey);
+
+    /**
      * Returns all the areas for the given area group key.
      *
      * @param groupKey the area group key.
