@@ -148,8 +148,7 @@ public abstract class BaseController {
 
             return new Error(applicationException.getCode().getMessageKey(), getMessage(applicationException));
         }
-        return new Error(SharedErrorCode.UNKNOWN.getMessageKey(),
-                        getMessage(SharedErrorCode.UNKNOWN.getMessageKey()));
+        return new Error(SharedErrorCode.UNKNOWN.getMessageKey(), getMessage(SharedErrorCode.UNKNOWN.getMessageKey()));
     }
 
     /**

@@ -64,11 +64,9 @@ public class HomeController extends BaseController{
      */
     @RequestMapping("/home/**")
     public String home(Model model, @AuthenticationPrincipal AuthenticatedUser user) {
-        if (user == null) {
-            model.addAttribute("reload", false);
-        } else {
-            model.addAttribute("reload", true);
-        }
+        boolean reload = (user != null);
+
+        setModelAttributes(model, reload);
 
         return "home/default";
     }
@@ -82,14 +80,13 @@ public class HomeController extends BaseController{
      */
     @RequestMapping("/utility/**")
     public String utility(Model model, @AuthenticationPrincipal AuthenticatedUser user) {
-        if (user == null) {
-            model.addAttribute("reload", false);
-        } else {
-            if (!user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
-                return "redirect:/error/403";
-            }
-            model.addAttribute("reload", true);
+        boolean reload = (user != null);
+
+        if ((reload) && (!user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN))) {
+            return "redirect:/error/403";
         }
+
+        setModelAttributes(model, reload);
 
         return "utility/default";
     }
@@ -117,11 +114,16 @@ public class HomeController extends BaseController{
             return "redirect:/error/403";
         }
 
-        model.addAttribute("reload", false);
-        model.addAttribute("googleReCAPTCHASiteKey", googleReCAPTCHASiteKey);
+        setModelAttributes(model, false);
         model.addAttribute("locale", token.getLocale());
 
+
         return "home/default";
+    }
+
+    private void setModelAttributes(Model model, boolean reload) {
+        model.addAttribute("reload", reload);
+        model.addAttribute("googleReCAPTCHASiteKey", googleReCAPTCHASiteKey);
     }
 
 }

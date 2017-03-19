@@ -32,6 +32,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.amphiro.IgnoreShowerRequest;
+import eu.daiad.web.model.amphiro.MemberAssignmentRequest;
 import eu.daiad.web.model.error.ActionErrorCode;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.QueryErrorCode;
@@ -57,6 +59,7 @@ import eu.daiad.web.model.query.StoreDataQueryRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.model.spatial.ReferenceSystem;
+import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 import eu.daiad.web.repository.application.IExportRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IDataImportService;
@@ -110,6 +113,12 @@ public class DataController extends BaseController {
      */
     @Autowired
     private IWaterMeterDataLoaderService waterMeterDataLoaderService;
+
+    /**
+     * Repository for accessing amphiro b1 data indexed by shower id.
+     */
+    @Autowired
+    private IAmphiroIndexOrderedRepository amphiroIndexOrderedRepository;
 
     /**
      * Service for querying smart water and amphiro b1 data in HBASE.
@@ -304,7 +313,7 @@ public class DataController extends BaseController {
         try {
 
             dataService.deleteStoredQuery(request.getNamedQuery(), user.getKey());
-            
+
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -327,9 +336,9 @@ public class DataController extends BaseController {
         RestResponse response = new RestResponse();
 
         try {
-            
+
             dataService.pinStoredQuery(request.getNamedQuery().getId(), user.getKey());
-            
+
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -349,13 +358,13 @@ public class DataController extends BaseController {
     @RequestMapping(value = "/action/data/query/unpin", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse unpinQuery(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody StoreDataQueryRequest request) {
-        
+
         RestResponse response = new RestResponse();
 
         try {
-            
+
             dataService.unpinStoredQuery(request.getNamedQuery().getId(), user.getKey());
-            
+
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -364,7 +373,7 @@ public class DataController extends BaseController {
 
         return response;
     }
-    
+
     /**
      * Loads all saved data queries.
      *
@@ -624,4 +633,51 @@ public class DataController extends BaseController {
 
         throw new ResourceNotFoundException();
     }
+
+    /**
+     * Assigns household members to amphiro b1 sessions.
+     *
+     * @param user the currently authenticated user.
+     * @param request member assignment data
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/action/data/session/member", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @Secured({ RoleConstant.ROLE_USER })
+    public RestResponse assignMemberToSession(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody MemberAssignmentRequest request) {
+        RestResponse response = new RestResponse();
+
+        try {
+            amphiroIndexOrderedRepository.assignMember(user, request.getAssignments());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
+
+    /**
+     * Marks an amphiro b1 message as not being a shower.
+     *
+     * @param user the currently authenticated user.
+     * @param request shower data.
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/action/data/session/ignore", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @Secured({ RoleConstant.ROLE_USER })
+    public RestResponse invalidateSession(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody IgnoreShowerRequest request) {
+        RestResponse response = new RestResponse();
+
+        try {
+            amphiroIndexOrderedRepository.ignore(user, request.getSessions());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
+
 }
