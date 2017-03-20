@@ -790,3 +790,51 @@ function assignMemberToSession() { return; }
  * }
  */
 function ignoreSession() { return; }
+
+/**
+ * @api {post} action/data/session/date Set real-time timestamp
+ * @apiVersion 0.0.2
+ * @apiName HistoricalToRealTime
+ * @apiGroup Data
+ * @apiPermission ROLE_USER
+ *
+ * @apiDescription Updates the date time of a historical shower and converts it to a real-time one.
+ *
+ * @apiParam {String}   deviceKey    Device unique key (UUID).
+ * @apiParam {Number}   sessionId    Session id.
+ * @apiParam {Number}   timestamp    Real-time time stamp.
+ *
+ * @apiParamExample {json} Request Example
+ * {
+ *   "deviceKey": "4b6bb490-1c03-4c9d-b5d0-1dbb758bf71a",
+ *   "sessionId":2,
+ *   "timestamp" : 1461060000000
+ * }
+ *
+ * @apiSuccess {Boolean}  success                 Returns <code>true</code> or <code>false</code> indicating success of the operation.
+ * @apiSuccess {Object[]} errors                  Array of <code>Error</code> objects.
+ *
+ * @apiSuccessExample {json} Response Example
+ * HTTP/1.1 200 OK
+ * {
+ *   "errors": [],
+ *   "success": true
+ * }
+ *
+ * @apiError {Boolean} success Always <code>false</code>.
+ * @apiError {Object[]} errors Array of <code>Error</code> objects.
+ *
+ * @apiError (Error) {String} code          Unique error code.
+ * @apiError (Error) {String} description   Error message. Application should not present error messages to the users. Instead the error <code>code</code> must be used for deciding the client message.
+ *
+ * @apiErrorExample Error Response Example
+ * HTTP/1.1 200 OK
+ * {
+ *   errors: [{
+ *     code: "DataErrorCode.REALTIME_ALREADY_EXISTS",
+ *     description: "A real-time shower already exists for shower id 2."
+ *   }],
+ *   success: false
+ * }
+ */
+function toRealTime() { return; }
