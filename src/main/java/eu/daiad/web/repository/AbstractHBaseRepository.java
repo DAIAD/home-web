@@ -53,6 +53,11 @@ public abstract class AbstractHBaseRepository extends BaseRepository {
     protected static final String LOGGER_IGNORE = "AmphiroSessionIgnoreLogger";
 
     /**
+     * Logger for amphiro b1 for writing historical showers that are converted to real-time.
+     */
+    protected static final String LOGGER_REAL_TIME = "AmphiroSessionRealTimeLogger";
+
+    /**
      * HBase connection.
      */
     @Autowired

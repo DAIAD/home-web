@@ -8,7 +8,8 @@ public enum DataErrorCode implements ErrorCode {
 	MEASUREMENT_NO_UNIQUE_INDEX,
 	SESSION_NOT_FOUND,
 	DUPLICATE_SESSION_ID,
-	HBASE_INVALID_COLUMN;
+	HBASE_INVALID_COLUMN,
+	REALTIME_ALREADY_EXISTS;
 
 	@Override
 	public String getMessageKey() {

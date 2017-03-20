@@ -496,6 +496,39 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
     }
 
     @Override
+    public AmphiroDevice getUserAmphiroByKey(UUID userKey, UUID deviceKey) {
+        TypedQuery<DeviceAmphiroEntity> query = entityManager.createQuery(
+                        "select d from device_amphiro d where d.key = :deviceKey and d.account.key = :userKey",
+                        DeviceAmphiroEntity.class).setFirstResult(0).setMaxResults(1);
+        query.setParameter("userKey", userKey);
+        query.setParameter("deviceKey", deviceKey);
+
+        List<DeviceAmphiroEntity> result = query.getResultList();
+
+        if (result.size() == 1) {
+            DeviceAmphiroEntity entity = result.get(0);
+
+            AmphiroDevice amphiro = new AmphiroDevice(entity.getId(), entity.getKey(), entity.getName(),
+                            entity.getMacAddress(), entity.getAesKey(), entity.getRegisteredOn().getMillis());
+
+            for (DevicePropertyEntity p : entity.getProperties()) {
+                amphiro.getProperties().add(new KeyValuePair(p.getKey(), p.getValue()));
+            }
+
+            // Add default properties
+            for(String key : defaultAmphiroProperties.getProperties().keySet()){
+                if(amphiro.getProperty(key) == null) {
+                    amphiro.getProperties().add(new KeyValuePair(key, defaultAmphiroProperties.getProperties().get(key)));
+                }
+            }
+
+            return amphiro;
+        }
+
+        return null;
+    }
+
+    @Override
     public Device getUserAmphiroDeviceByMacAddress(UUID userKey, String macAddress) throws ApplicationException {
         try {
             TypedQuery<DeviceAmphiroEntity> query = entityManager.createQuery(
@@ -940,7 +973,7 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
         DeviceRegistrationQuery q = new DeviceRegistrationQuery();
         q.setType(deviceType);
         return getUserDevices(userKey, q);
-        
+
     }
 
 }

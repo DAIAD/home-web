@@ -36,6 +36,8 @@ public interface IDeviceRepository {
 
     Device getDeviceByKey(UUID deviceKey) throws ApplicationException;
 
+    AmphiroDevice getUserAmphiroByKey(UUID userKey, UUID deviceKey);
+
     Device getUserAmphiroDeviceByMacAddress(UUID userKey, String macAddress) throws ApplicationException;
 
     Device getUserWaterMeterDeviceBySerial(UUID userKey, String serial) throws ApplicationException;
@@ -45,7 +47,7 @@ public interface IDeviceRepository {
     List<Device> getUserDevices(UUID userKey, DeviceRegistrationQuery query) throws ApplicationException;
 
     List<Device> getUserDevices(UUID userKey, EnumDeviceType deviceType) throws ApplicationException;
-    
+
     void shareDevice(UUID ownerID, String assigneeUsername, UUID deviceKey, boolean shared) throws ApplicationException;
 
     List<DeviceConfigurationCollection> getConfiguration(UUID userKey, UUID deviceKeys[]) throws ApplicationException;

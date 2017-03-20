@@ -18,6 +18,7 @@ import eu.daiad.web.model.AuthenticatedRequest;
 import eu.daiad.web.model.DeviceMeasurementCollection;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.amphiro.AmphiroMeasurementCollection;
+import eu.daiad.web.model.amphiro.HistoricalToRealTimeRequest;
 import eu.daiad.web.model.amphiro.IgnoreShowerRequest;
 import eu.daiad.web.model.amphiro.MemberAssignmentRequest;
 import eu.daiad.web.model.device.AmphiroDevice;
@@ -238,8 +239,7 @@ public class DataController extends BaseRestController {
                                             data.getType().toString());
                         }
 
-                        amphiroTimeOrderedRepository.storeData(authenticatedUser, (AmphiroDevice) device,
-                                        (AmphiroMeasurementCollection) data);
+                        amphiroTimeOrderedRepository.storeData(authenticatedUser, (AmphiroDevice) device, (AmphiroMeasurementCollection) data);
                     }
                     break;
                 case METER:
@@ -258,8 +258,7 @@ public class DataController extends BaseRestController {
                                             data.getType().toString());
                         }
 
-                        waterMeterMeasurementRepository.store(((WaterMeterDevice) device).getSerial(),
-                                        (WaterMeterMeasurementCollection) data);
+                        waterMeterMeasurementRepository.store(((WaterMeterDevice) device).getSerial(), (WaterMeterMeasurementCollection) data);
                     }
                     break;
                 default:
@@ -311,8 +310,7 @@ public class DataController extends BaseRestController {
                             throw createApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type",
                                             data.getType().toString());
                         }
-                        response = amphiroIndexOrderedRepository.store(authenticatedUser, (AmphiroDevice) device,
-                                        (AmphiroMeasurementCollection) data);
+                        response = amphiroIndexOrderedRepository.store(authenticatedUser, (AmphiroDevice) device, (AmphiroMeasurementCollection) data);
                     }
                     break;
                 case METER:
@@ -331,8 +329,7 @@ public class DataController extends BaseRestController {
                                             data.getType().toString());
                         }
 
-                        waterMeterMeasurementRepository.store(((WaterMeterDevice) device).getSerial(),
-                                        (WaterMeterMeasurementCollection) data);
+                        waterMeterMeasurementRepository.store(((WaterMeterDevice) device).getSerial(), (WaterMeterMeasurementCollection) data);
                     }
                     break;
                 default:
@@ -418,4 +415,34 @@ public class DataController extends BaseRestController {
 
         return response;
     }
+
+    /**
+     * Updates the date time of a historical shower and converts it to a real-time one.
+     *
+     * @param data the shower data including its unique id and timestamp.
+     * @return an instance of {@link RestResponse}.
+     */
+    @RequestMapping(value = "/api/v2/data/session/date", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    public RestResponse convertHistoricalToRealTimeShower(@RequestBody HistoricalToRealTimeRequest request) {
+        RestResponse response = new RestResponse();
+
+        AuthenticatedUser authenticatedUser = null;
+
+        try {
+            authenticatedUser = authenticate(request.getCredentials(), EnumRole.ROLE_USER);
+
+            AmphiroDevice device = deviceRepository.getUserAmphiroByKey(authenticatedUser.getKey(), request.getDeviceKey());
+            if(device == null) {
+                throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", request.getDeviceKey());
+            }
+            amphiroIndexOrderedRepository.toRealTime(authenticatedUser, device, request.getSessionId(), request.getTimestamp());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
+
 }

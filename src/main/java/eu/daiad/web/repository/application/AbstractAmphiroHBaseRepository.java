@@ -38,6 +38,12 @@ public abstract class AbstractAmphiroHBaseRepository extends AbstractHBaseReposi
     protected static final Log sessionIgnoreLogger = LogFactory.getLog(LOGGER_IGNORE);
 
     /**
+     * Logger for logging historical showers that have been converted to
+     * real-time ones manually by the user.
+     */
+    protected static final Log sessionRealTimeLogger = LogFactory.getLog(LOGGER_REAL_TIME);
+
+    /**
      * Returns the current API version.
      *
      * @return the API version.

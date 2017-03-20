@@ -32,10 +32,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.amphiro.HistoricalToRealTimeRequest;
 import eu.daiad.web.model.amphiro.IgnoreShowerRequest;
 import eu.daiad.web.model.amphiro.MemberAssignmentRequest;
+import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.error.ActionErrorCode;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.error.QueryErrorCode;
 import eu.daiad.web.model.error.ResourceNotFoundException;
 import eu.daiad.web.model.error.SharedErrorCode;
@@ -60,6 +63,7 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.model.spatial.ReferenceSystem;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
+import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IExportRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IDataImportService;
@@ -101,6 +105,12 @@ public class DataController extends BaseController {
      */
     @Autowired
     private IUserRepository userRepository;
+
+    /**
+     * Repository for accessing device data.
+     */
+    @Autowired
+    private IDeviceRepository deviceRepository;
 
     /**
      * Service for importing data.
@@ -666,7 +676,7 @@ public class DataController extends BaseController {
      */
     @RequestMapping(value = "/action/data/session/ignore", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ RoleConstant.ROLE_USER })
-    public RestResponse invalidateSession(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody IgnoreShowerRequest request) {
+    public RestResponse invalidateShower(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody IgnoreShowerRequest request) {
         RestResponse response = new RestResponse();
 
         try {
@@ -680,4 +690,31 @@ public class DataController extends BaseController {
         return response;
     }
 
+    /**
+     * Updates the date time of a historical shower and converts it to a real-time one.
+     *
+     * @param user the currently authenticated user.
+     * @param data the shower data including its unique id and timestamp.
+     * @return an instance of {@link RestResponse}.
+     */
+    @RequestMapping(value = "/action/data/session/date", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @Secured({ RoleConstant.ROLE_USER })
+    public RestResponse convertHistoricalToRealTimeShower(@AuthenticationPrincipal AuthenticatedUser user,
+                                                          @RequestBody HistoricalToRealTimeRequest request) {
+        RestResponse response = new RestResponse();
+
+        try {
+            AmphiroDevice device = deviceRepository.getUserAmphiroByKey(user.getKey(), request.getDeviceKey());
+            if(device == null) {
+                throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", request.getDeviceKey());
+            }
+            amphiroIndexOrderedRepository.toRealTime(user, device, request.getSessionId(), request.getTimestamp());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
 }

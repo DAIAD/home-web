@@ -1990,4 +1990,17 @@ public class HBaseAmphiroRepositoryV2 extends AbstractAmphiroHBaseRepository imp
         }
     }
 
+    /**
+     * Updates the date time of a historical shower and converts it to a real-time one.
+     *
+     * @param user the device owner.
+     * @param device the amphiro b1 device
+     * @param sessionId the per device unique shower Id.
+     * @param timestamp the real-time timestamp.
+     */
+    @Override
+    public void toRealTime(AuthenticatedUser user, AmphiroDevice device, long sessionId, long timestamp) {
+        throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
+    }
+
 }

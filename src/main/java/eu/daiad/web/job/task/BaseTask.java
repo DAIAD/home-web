@@ -223,7 +223,6 @@ public abstract class BaseTask {
      *
      * @param parameters a map with all job parameters.
      * @param key the key of the parameter to check.
-     * @param throwException if true and the value is not a valid integer expression, an exception is thrown.
      * @return the value of the parameter as integer.
      *
      * @throws ApplicationException if either the parameter does not exist or the parameter value is not an integer.

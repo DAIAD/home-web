@@ -36,6 +36,7 @@ import org.springframework.stereotype.Repository;
 import com.google.common.collect.ImmutableMap;
 
 import eu.daiad.web.hbase.EnumHBaseColumnFamily;
+import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.amphiro.AmphiroAbstractDataPoint;
 import eu.daiad.web.model.amphiro.AmphiroAbstractSession;
 import eu.daiad.web.model.amphiro.AmphiroDataSeries;
@@ -60,6 +61,7 @@ import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.DataErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.profile.EnumMemberSelectionMode;
+import eu.daiad.web.model.profile.EnumRealTimeMode;
 import eu.daiad.web.model.query.AmphiroDataPoint;
 import eu.daiad.web.model.query.AmphiroUserDataPoint;
 import eu.daiad.web.model.query.DataPoint;
@@ -111,6 +113,7 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
         COLUMN_RT_SESSION_ENERGY("r:s:energy"),
         COLUMN_RT_SESSION_TEMPERATURE("r:s:temperature"),
         COLUMN_RT_SESSION_FLOW("r:s:flow"),
+        COLUMN_RT_MODE("r:mode"),
 
         COLUMN_HIST_SESSION_TIMESTAMP("h:s:timestamp"),
         COLUMN_HIST_SESSION_DURATION("h:s:duration"),
@@ -789,7 +792,11 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
                             historical.setIgnored(Bytes.toBoolean(entry.getValue()));
                             break;
                         case COLUMN_SHARED_IGNORE_TIMESTAMP:
-                            // Ignore
+                            realtime.setIgnoredTimestamp(Bytes.toLong(entry.getValue()));
+                            historical.setIgnoredTimestamp(Bytes.toLong(entry.getValue()));
+                            break;
+                        case COLUMN_RT_MODE:
+                            realtime.setRealTimeMode(EnumRealTimeMode.fromString(new String(entry.getValue(), StandardCharsets.UTF_8)));
                             break;
                         default:
                             if (qualifier.startsWith(COLUMN_HIST_PROPERTY_PREFIX)) {
@@ -1401,6 +1408,9 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
 
                         column = Bytes.toBytes(EnumSessionColumn.COLUMN_RT_SESSION_FLOW.getValue());
                         put.addColumn(columnFamily, column, Bytes.toBytes(s.getFlow()));
+
+                        column = Bytes.toBytes(EnumSessionColumn.COLUMN_RT_MODE.getValue());
+                        put.addColumn(columnFamily, column, s.getRealTimeMode().toString().getBytes(StandardCharsets.UTF_8));
                     }
                 } else if (s.isHistory()) {
                     /*
@@ -1511,6 +1521,9 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
 
                         column = Bytes.toBytes(EnumSessionColumn.COLUMN_RT_SESSION_FLOW.getValue());
                         put.addColumn(columnFamily, column, Bytes.toBytes(s.getFlow()));
+
+                        column = Bytes.toBytes(EnumSessionColumn.COLUMN_RT_MODE.getValue());
+                        put.addColumn(columnFamily, column, s.getRealTimeMode().toString().getBytes(StandardCharsets.UTF_8));
                     } else if ((s.getVersions().historical == null) && (s.getVersions().realtime != null)) {
                         // A real-time session already exists
                         updates.getUpdates().add(new AmphiroSessionUpdate(data.getDeviceKey(), s.getId(), s.getVersions().realtime.getTimestamp().longValue()));
@@ -1666,6 +1679,9 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
 
                         column = Bytes.toBytes(EnumSessionColumn.COLUMN_RT_SESSION_FLOW.getValue());
                         put.addColumn(columnFamily, column, Bytes.toBytes(s.getFlow()));
+
+                        column = Bytes.toBytes(EnumSessionColumn.COLUMN_RT_MODE.getValue());
+                        put.addColumn(columnFamily, column, s.getRealTimeMode().toString().getBytes(StandardCharsets.UTF_8));
                     }
                 } else if (s.isHistory()) {
                     /*
@@ -1859,6 +1875,9 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
 
                         column = Bytes.toBytes(EnumSessionColumn.COLUMN_RT_SESSION_FLOW.getValue());
                         put.addColumn(columnFamily, column, Bytes.toBytes(s.getFlow()));
+
+                        column = Bytes.toBytes(EnumSessionColumn.COLUMN_RT_MODE.getValue());
+                        put.addColumn(columnFamily, column, s.getRealTimeMode().toString().getBytes(StandardCharsets.UTF_8));
                     }
                 }
 
@@ -2238,7 +2257,11 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
                                 historical.setIgnored(Bytes.toBoolean(entry.getValue()));
                                 break;
                             case COLUMN_SHARED_IGNORE_TIMESTAMP:
-                                // Ignore
+                                realtime.setIgnoredTimestamp(Bytes.toLong(entry.getValue()));
+                                historical.setIgnoredTimestamp(Bytes.toLong(entry.getValue()));
+                                break;
+                            case COLUMN_RT_MODE:
+                                realtime.setRealTimeMode(EnumRealTimeMode.fromString(new String(entry.getValue(), StandardCharsets.UTF_8)));
                                 break;
                             default:
                                 if (qualifier.startsWith(COLUMN_HIST_PROPERTY_PREFIX)) {
@@ -2699,6 +2722,93 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
             }
             filterIndex++;
         }
+    }
+
+
+    /**
+     * Updates the date time of a historical shower and converts it to a real-time one.
+     *
+     * @param user the device owner.
+     * @param device the amphiro b1 device
+     * @param sessionId the per device unique shower Id.
+     * @param timestamp the real-time timestamp.
+     */
+    @Override
+    public void toRealTime(AuthenticatedUser user, AmphiroDevice device, long sessionId, long timestamp) {
+        AmphiroSessionIndexIntervalQuery query = new AmphiroSessionIndexIntervalQuery();
+
+        query.setDeviceKey(device.getKey());
+        query.setSessionId(sessionId);
+        query.setUserKey(user.getKey());
+        query.setExcludeMeasurements(true);
+
+        SessionVersions versions = getSessionVersions(query);
+        if (versions.isEmpty()) {
+            throw createApplicationException(DataErrorCode.SESSION_NOT_FOUND).set("session", sessionId);
+        }
+
+        if (versions.realtime != null) {
+            throw createApplicationException(DataErrorCode.REALTIME_ALREADY_EXISTS).set("id", sessionId);
+        }
+
+        logRealTimeConversionOperation(user, device.getKey(), sessionId, timestamp);
+
+        AmphiroMeasurementCollection data = new AmphiroMeasurementCollection();
+        data.setDeviceKey(device.getKey());
+
+        List<AmphiroSession> values = new ArrayList<AmphiroSession>();
+        AmphiroSession session = new AmphiroSession();
+
+        session.setId(sessionId);
+        session.setTimestamp(timestamp);
+        session.setRealTimeManually();
+        session.setVolume(versions.historical.getVolume());
+        session.setDuration(versions.historical.getDuration());
+        session.setEnergy(versions.historical.getEnergy());
+        session.setFlow(versions.historical.getFlow());
+        session.setTemperature(versions.historical.getTemperature());
+
+        if (versions.historical.getMember() != null) {
+            session.setMember(versions.historical.getMember());
+        }
+
+        session.setIgnored(versions.historical.isIgnored());
+        session.setIgnoredTimestamp(versions.historical.getIgnoredTimestamp());
+
+        for (KeyValuePair kvp : versions.historical.getProperties()) {
+            session.addProperty(kvp.getKey(), kvp.getValue());
+        }
+
+        values.add(session);
+        data.setSessions(values);
+
+        store(user, device, data);
+    }
+
+    /**
+     * Logs amphiro b1 historical shower converted to real-time manually by the user.
+     *
+     * @param user the owner of the device.
+     * @param deviceKey the amphiro b1 device key.
+     * @param sessionId the per device unique shower Id.
+     * @param timestamp the real-time timestamp.
+     */
+    private void logRealTimeConversionOperation(AuthenticatedUser user, UUID deviceKey, long sessionId, long timestamp) {
+        List<String> tokens = new ArrayList<String>();
+
+        tokens.add(getVersion());
+
+        tokens.add(Integer.toString(user.getId()));
+        tokens.add(user.getKey().toString());
+        tokens.add(user.getUsername());
+
+        tokens.add(deviceKey.toString());
+
+        tokens.add("MANUAL");
+        tokens.add(Long.toString(sessionId));
+        tokens.add(Long.toString(timestamp));
+
+        sessionRealTimeLogger.info(StringUtils.join(tokens, ";"));
     }
 
 }
