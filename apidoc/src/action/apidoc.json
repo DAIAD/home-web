@@ -65,7 +65,11 @@
 
     "WaterCalculator",
 
-    "Weather"
+    "Weather",
+
+    "Reporting",
+    "CurrentUserReport",
+    "UserReport"
   ],
   "template": {
     "withCompare": false,
