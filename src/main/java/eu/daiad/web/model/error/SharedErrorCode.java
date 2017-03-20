@@ -24,7 +24,8 @@ public enum SharedErrorCode implements ErrorCode {
 	LOCALE_NOT_SUPPORTED,
 	DIR_CREATION_FAILED,
 	INVALID_SRID,
-	FILESYSTEM_NOT_SUPPORTED;
+	FILESYSTEM_NOT_SUPPORTED,
+	INVALID_DATE_FORMAT;
 
 	@Override
 	public String getMessageKey() {

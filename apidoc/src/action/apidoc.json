@@ -23,17 +23,17 @@
     "HouseholdSave",
     "GetComparison",
     "Deactivate",
-    
+
     "Data",
     "DataQuery",
     "ForecastQuery",
-    
+
     "Search",
     "MeterStatus",
     "MeterMeasurements",
     "Sessions",
     "Session",
-    
+
     "Message",
     "MessageList",
     "MessageAcknowledge",
@@ -47,7 +47,7 @@
     "AnnouncementDetails",
     "AlertReceivers",
     "RecommendationReceivers",
-    
+
     "Commons",
     "CommonsCreate",
     "CommonsUpdate",
@@ -58,6 +58,10 @@
     "CommonsSearch",
     "CommonsMembers",
     "CommonsMembership",
+
+    "Billing",
+    "PriceBracketCurrent",
+    "PriceBracketHistory",
 
     "Weather"
   ],
