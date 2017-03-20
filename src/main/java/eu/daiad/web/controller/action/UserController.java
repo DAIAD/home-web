@@ -57,8 +57,8 @@ import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IFavouriteRepository;
 import eu.daiad.web.repository.application.IGroupRepository;
-import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IMeterDataRepository;
+import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IUserService;
 
 /**
@@ -386,18 +386,21 @@ public class UserController extends BaseController {
      */
     @RequestMapping(value = "/action/user/password/change", method = RequestMethod.POST, produces = "application/json")
     @Secured({ RoleConstant.ROLE_USER, RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse changePassword(@AuthenticationPrincipal AuthenticatedUser user,
-                                       @RequestBody PasswordChangeRequest data) {
+    public RestResponse changePassword(HttpServletRequest httpRequest,
+                                       @AuthenticationPrincipal AuthenticatedUser user,
+                                       @RequestBody PasswordChangeRequest request) {
         try {
+            String remoteAddress = getRemoteAddress(httpRequest);
+
             if (user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
-                if(StringUtils.isBlank(data.getUsername())) {
-                    userService.changePassword(user.getUsername(), data.getPassword());
+                if(StringUtils.isBlank(request.getUsername())) {
+                    userService.changePassword(remoteAddress, request.getCaptcha(), user.getUsername(), request.getPassword());
                 } else {
-                    userService.changePassword(data.getUsername(), data.getPassword());
+                    userService.changePassword(remoteAddress, request.getCaptcha(), request.getUsername(), request.getPassword());
                 }
             } else if(user.hasRole(EnumRole.ROLE_USER)){
-                if(StringUtils.isBlank(data.getUsername())) {
-                    userService.changePassword(user.getUsername(), data.getPassword());
+                if(StringUtils.isBlank(request.getUsername())) {
+                    userService.changePassword(remoteAddress, request.getCaptcha(), user.getUsername(), request.getPassword());
                 } else {
                     throw createApplicationException(SharedErrorCode.AUTHORIZATION);
                 }
@@ -442,10 +445,7 @@ public class UserController extends BaseController {
     @RequestMapping(value = "/action/user/password/reset/token/redeem", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse resetPasswordRedeemToken(HttpServletRequest httpRequest, @RequestBody PasswordResetTokenRedeemRequest request) {
         try {
-            String remoteAddress = httpRequest.getHeader("X-FORWARDED-FOR");
-            if (StringUtils.isBlank(remoteAddress)) {
-                remoteAddress = httpRequest.getRemoteAddr();
-            }
+            String remoteAddress = getRemoteAddress(httpRequest);
 
             userService.resetPasswordRedeemToken(remoteAddress, request.getCaptcha(), request.getToken(), request.getPin(), request.getPassword());
         } catch (Exception ex) {
@@ -455,6 +455,20 @@ public class UserController extends BaseController {
         }
 
         return new RestResponse();
+    }
+
+    /**
+     * Returns the remote address for the given {@link HttpServletRequest} request.
+     * @param httpRequest the request.
+     * @return the remote address.
+     */
+    private String getRemoteAddress(HttpServletRequest httpRequest) {
+        String remoteAddress = httpRequest.getHeader("X-FORWARDED-FOR");
+        if (StringUtils.isBlank(remoteAddress)) {
+            remoteAddress = httpRequest.getRemoteAddr();
+        }
+
+        return remoteAddress;
     }
 
 }

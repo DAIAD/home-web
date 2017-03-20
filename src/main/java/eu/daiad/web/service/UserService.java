@@ -143,6 +143,24 @@ public class UserService extends BaseService implements IUserService {
         }
     }
 
+    /**
+     * Changes a user password.
+     *
+     * @param remoteAddress the client remote IP address.
+     * @param captchaResponse the Google ReCAPTCAH response.
+     * @param username the user name .
+     * @param password the new password.
+     * @throws ApplicationException if the user does not exist.
+     */
+    @Override
+    public void changePassword(String remoteAddress, String captchaResponse, String username, String password) throws ApplicationException {
+        if (!googleReCaptchaService.validate(remoteAddress, captchaResponse)) {
+            throw createApplicationException(CaptchaErrorCode.CAPTCHA_VERIFICATION_ERROR);
+        }
+
+        this.changePassword(username, password);
+    }
+
     @Override
     @Transactional("applicationTransactionManager")
     public void changePassword(String username, String password) throws ApplicationException {

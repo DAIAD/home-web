@@ -27,6 +27,17 @@ public interface IUserService {
 	 */
 	void changePassword(String username, String password) throws ApplicationException;
 
+    /**
+     * Changes a user password.
+     *
+     * @param remoteAddress the client remote IP address.
+     * @param captchaResponse the Google ReCAPTCAH response.
+     * @param username the user name .
+     * @param password the new password.
+     * @throws ApplicationException if the user does not exist.
+     */
+    void changePassword(String remoteAddress, String captchaResponse, String username, String password) throws ApplicationException;
+
 	/**
      * Grants a role to a user
      *
