@@ -63,6 +63,8 @@
     "PriceBracketCurrent",
     "PriceBracketHistory",
 
+    "WaterCalculator",
+
     "Weather"
   ],
   "template": {
