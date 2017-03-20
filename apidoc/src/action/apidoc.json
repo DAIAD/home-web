@@ -11,7 +11,12 @@
     "Authentication",
     "Login",
     "Logout",
-    
+
+    "User",
+    "PasswordChange",
+    "ResetPasswordTokenRequest",
+    "ResetPasswordTokenRedeem",
+
     "Profile",
     "ProfileLoad",
     "ProfileSave",
@@ -52,7 +57,9 @@
     "CommonsLeave",
     "CommonsSearch",
     "CommonsMembers",
-    "CommonsMembership"
+    "CommonsMembership",
+
+    "Weather"
   ],
   "template": {
     "withCompare": false,
