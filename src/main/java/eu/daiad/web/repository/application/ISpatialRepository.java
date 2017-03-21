@@ -22,12 +22,21 @@ public interface ISpatialRepository {
     Geometry getUserLocationByUserKey(UUID userKey);
 
     /**
+     * Gets the default area for the user with the given key.
+     *
+     * @param utilityKey the utility key.
+     * @param userKey the user key.
+     * @return the user's default area.
+     */
+    AreaGroupMemberEntity getUserDefaultAreaByUserKey(UUID utilityKey, UUID userKey);
+
+    /**
      * Returns all area groups for a utility given its key.
      *
      * @param utilityKey the utility key.
      * @return a list of {@link AreaGroupEntity} entities.
      */
-    List<AreaGroupEntity> getAreasGroupsByUtilityId(UUID utilityKey);
+    List<AreaGroupEntity> getAreaGroupsByUtilityId(UUID utilityKey);
 
     /**
      * Returns all areas for a utility given its key.
@@ -44,6 +53,15 @@ public interface ISpatialRepository {
      * @return a list of {@link AreaGroupMemberEntity} entities.
      */
     List<AreaGroupMemberEntity> getAreasByAreaGroupKey(UUID groupKey);
+
+    /**
+     * Returns all the areas for the given area group key and level.
+     *
+     * @param groupKey the area group key.
+     * @param level the level index.
+     * @return a list of {@link AreaGroupMemberEntity} entities.
+     */
+    List<AreaGroupMemberEntity> getAreasByAreaGroupKeyAndLevel(UUID groupKey, int level);
 
     /**
      * Returns an area given its key.

@@ -9,7 +9,7 @@
  *
  * @apiParamExample {json} Request Example
  * GET /action/weather/service
- * 
+ *
  * @apiSuccess {Boolean}      success             <code>true</code> or <code>false</code> indicating success of the operation.
  * @apiSuccess {Object[]}     errors              Empty array of error messages.
  * @apiSuccess {Object[]}     services            Array of <code>Service</code> objects.
@@ -72,13 +72,13 @@ function getWeatherService() { return; }
  * @apiPermission ROLE_USER, ROLE_ADMIN
  *
  * @apiDescription Returns weather data from a specific weather service and for the specified utility and time interval.
- * 
+ *
  * @apiParam (QueryString)  {String}      service   Service identifier as a number or unique service name.
  * @apiParam (QueryString)  {String}      utility   Utility identifier as a number or unique utility name.
  * @apiParam (QueryString)  {String}      interval  Interval type. Valid values are <code>hour</code> and <code>day</code>.
  * @apiParam (QueryString)  {String}      from      Start date formatted as <code>yyyyMMdd</code>.
  * @apiParam (QueryString)  {String}      to        End date formatted as <code>yyyyMMdd</code>.
- * 
+ *
  * @apiParamExample {json} Request Example
  * GET action/weather/aemet/alicante/hour/20160829/20160905
  *
@@ -98,8 +98,8 @@ function getWeatherService() { return; }
  * @apiSuccess (DailyWeatherData) {Number}  windSpeed           Wind speed.
  * @apiSuccess (DailyWeatherData) {String}  windDirection       Wind direction.
  * @apiSuccess (DailyWeatherData) {String}  conditions          Generic description of the weather conditions. Text localization depends if the weather service supports localization.
- * 
- * @apiSuccess (HourlyWeatherData) {String}   datetime          Date and time formated as <code>yyyyMMddHH</code>. 
+ *
+ * @apiSuccess (HourlyWeatherData) {String}   datetime          Date and time formated as <code>yyyyMMddHH</code>.
  * @apiSuccess (HourlyWeatherData) {Number}   temperature       Temperature
  * @apiSuccess (HourlyWeatherData) {Number}   temperatureFeel   Feel like temperature.
  * @apiSuccess (HourlyWeatherData) {Number}   precipitation     Precipitation.
@@ -144,7 +144,7 @@ function getWeatherService() { return; }
  *     "conditions": null
  *   }]
  *  }
- * 
+ *
  * @apiError {Boolean} success Always <code>false</code>.
  * @apiError {Object[]} errors Array of <code>Error</code> objects.
  *

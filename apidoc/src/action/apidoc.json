@@ -69,7 +69,12 @@
 
     "Reporting",
     "CurrentUserReport",
-    "UserReport"
+    "UserReport",
+
+    "Spatial",
+    "Groups",
+    "Areas",
+    "UserArea"
   ],
   "template": {
     "withCompare": false,

@@ -380,8 +380,9 @@ public class UserController extends BaseController {
     /**
      * Changes a user's password.
      *
+     * @param httpRequest the HTTP request.
      * @param user the currently authenticated user.
-     * @param data the new password and optionally a user name for changing the password of a different user.
+     * @param request the new password and optionally a user name for changing the password of a different user.
      * @return the controller's response.
      */
     @RequestMapping(value = "/action/user/password/change", method = RequestMethod.POST, produces = "application/json")
@@ -439,6 +440,7 @@ public class UserController extends BaseController {
     /**
      * Resets a user's password given a valid token and password.
      *
+     * @param httpRequest the HTTP request.
      * @param request the token and new password values.
      * @return the controller's response.
      */

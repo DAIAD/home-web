@@ -39,7 +39,7 @@ public class WaterCalculatorController extends BaseController {
         return result;
     }
 
-    private static final class WaterUse {
+    public static final class WaterUse {
 
         private String label;
 

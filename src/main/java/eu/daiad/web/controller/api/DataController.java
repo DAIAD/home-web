@@ -419,7 +419,7 @@ public class DataController extends BaseRestController {
     /**
      * Updates the date time of a historical shower and converts it to a real-time one.
      *
-     * @param data the shower data including its unique id and timestamp.
+     * @param request the shower data including its unique id and timestamp.
      * @return an instance of {@link RestResponse}.
      */
     @RequestMapping(value = "/api/v2/data/session/date", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
