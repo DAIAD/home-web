@@ -28,6 +28,7 @@ import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
+import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.Error;
 import eu.daiad.web.model.error.ErrorCode;
 import eu.daiad.web.model.error.QueryErrorCode;
@@ -1631,8 +1632,10 @@ public class DataService extends BaseService implements IDataService {
      * @param executor the user who executes the query.
      * @param type the type of population filter.
      * @param key the key of the filter.
+     * @throws IllegalArgumentException if type is not supported.
+     * @throws ApplicationException if authorization check fails.
      */
-    private void authorize(AuthenticatedUser executor, EnumPopulationFilterType type, UUID key) {
+    private void authorize(AuthenticatedUser executor, EnumPopulationFilterType type, UUID key) throws IllegalArgumentException, ApplicationException {
         if (executor == null) {
             return;
         }
@@ -1704,7 +1707,7 @@ public class DataService extends BaseService implements IDataService {
                                 return;
                             }
                         }
-                        // Check if the executor is a member of the DAIAD@commons group[
+                        // Check if the executor is a member of the DAIAD@commons group
                         if(commonsRepository.getAccountCommons(executor.getKey()).contains(key)) {
                             return;
                         }
@@ -1724,6 +1727,10 @@ public class DataService extends BaseService implements IDataService {
                     if (executor.getUtilities().contains(utilityRepository.getUtilityByKey(key).getId())) {
                         return;
                     }
+                }
+                // Allow user to access utility data
+                if(executor.getUtilityKey().equals(key)) {
+                    return;
                 }
                 break;
             default:
