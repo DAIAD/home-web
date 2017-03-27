@@ -781,8 +781,7 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
                             member.setIndex(Bytes.toInt(entry.getValue()));
                             break;
                         case COLUMN_SHARED_MEMBER_MODE:
-                            member.setMode(EnumMemberSelectionMode.fromString(new String(entry.getValue(),
-                                            StandardCharsets.UTF_8)));
+                            member.setMode(EnumMemberSelectionMode.fromString(new String(entry.getValue(), StandardCharsets.UTF_8)));
                             break;
                         case COLUMN_SHARED_MEMBER_TIMESTAMP:
                             member.setTimestamp(Bytes.toLong(entry.getValue()));
@@ -2365,7 +2364,7 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
             return true;
         }
         if (member == null) {
-            return false;
+            return ArrayUtils.contains(indexes, 0);
         }
 
         return ArrayUtils.contains(indexes, member.getIndex());
