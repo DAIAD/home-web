@@ -77,7 +77,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
 
     @Autowired
     Environment environment;
-    
+
     @Override
     public Profile getProfileByUsername(EnumApplication application) throws ApplicationException
     {
@@ -901,7 +901,9 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             }
             */
 
-            householdMemberEntity.setActive(member.isActive());
+            if (member.getIndex() != 0) {
+                householdMemberEntity.setActive(member.isActive());
+            }
             householdMemberEntity.setName(member.getName());
             householdMemberEntity.setGender(member.getGender());
             householdMemberEntity.setAge(member.getAge());
@@ -909,8 +911,10 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
         }
 
         for (HouseholdMemberEntity householdMemberEntity : account.getHousehold().getMembers()) {
-            if(updates.getMember(householdMemberEntity.getIndex()) == null) {
-                householdMemberEntity.setActive(false);
+            if (updates.getMember(householdMemberEntity.getIndex()) == null) {
+                if (householdMemberEntity.getIndex() != 0) {
+                    householdMemberEntity.setActive(false);
+                }
             }
         }
     }
