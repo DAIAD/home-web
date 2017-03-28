@@ -107,9 +107,14 @@ public class InsightB4WeekendSlice extends AbstractRecommendationResolver
         @Override
         public EnumRecommendationTemplate getTemplate()
         {
-            return (weekdayValue < weekendValue)?
-                EnumRecommendationTemplate.INSIGHT_B4_MORE_ON_WEEKEND:
-                EnumRecommendationTemplate.INSIGHT_B4_LESS_ON_WEEKEND;    
+            boolean more = (weekdayValue < weekendValue);
+            return (deviceType == EnumDeviceType.AMPHIRO)?
+                (more?
+                    EnumRecommendationTemplate.INSIGHT_B4_SHOWER_MORE_ON_WEEKEND:
+                    EnumRecommendationTemplate.INSIGHT_B4_SHOWER_LESS_ON_WEEKEND):
+                (more?
+                    EnumRecommendationTemplate.INSIGHT_B4_METER_MORE_ON_WEEKEND:
+                    EnumRecommendationTemplate.INSIGHT_B4_METER_LESS_ON_WEEKEND);    
         }
 
         @JsonIgnore

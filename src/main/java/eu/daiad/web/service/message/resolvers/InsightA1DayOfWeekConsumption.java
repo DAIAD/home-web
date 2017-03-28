@@ -106,10 +106,15 @@ public class InsightA1DayOfWeekConsumption extends AbstractRecommendationResolve
         @Override
         public EnumRecommendationTemplate getTemplate()
         {
-            if (averageValue <= currentValue)
-                return EnumRecommendationTemplate.INSIGHT_A1_DAYOFWEEK_CONSUMPTION_INCR;
-            else 
-                return EnumRecommendationTemplate.INSIGHT_A1_DAYOFWEEK_CONSUMPTION_DECR;
+            boolean incr = (averageValue <= currentValue);
+            if (deviceType == EnumDeviceType.AMPHIRO)
+                return incr? 
+                    EnumRecommendationTemplate.INSIGHT_A1_SHOWER_DAYOFWEEK_CONSUMPTION_INCR:
+                    EnumRecommendationTemplate.INSIGHT_A1_SHOWER_DAYOFWEEK_CONSUMPTION_DECR;
+            else
+                return incr? 
+                    EnumRecommendationTemplate.INSIGHT_A1_METER_DAYOFWEEK_CONSUMPTION_INCR:
+                    EnumRecommendationTemplate.INSIGHT_A1_METER_DAYOFWEEK_CONSUMPTION_DECR;
         }
         
         @JsonIgnore

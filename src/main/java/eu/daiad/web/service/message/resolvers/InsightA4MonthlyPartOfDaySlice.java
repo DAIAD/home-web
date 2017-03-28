@@ -170,24 +170,24 @@ public class InsightA4MonthlyPartOfDaySlice extends AbstractRecommendationResolv
             if (deviceType == EnumDeviceType.AMPHIRO) {
                 if (y1 < y2) {
                     t = (y2 < y3) ?
-                        EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_SHOWER_MAINLY_IN_NIGHT :
-                        EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_SHOWER_MAINLY_IN_AFTERNOON;
+                        EnumRecommendationTemplate.INSIGHT_A4_SHOWER_CONSUMPTION_MAINLY_IN_NIGHT :
+                        EnumRecommendationTemplate.INSIGHT_A4_SHOWER_CONSUMPTION_MAINLY_IN_AFTERNOON;
                 } else {
                     // y2 <= y1
                     t = (y1 < y3) ?
-                        EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_SHOWER_MAINLY_IN_NIGHT :
-                        EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_SHOWER_MAINLY_IN_MORNING;
+                        EnumRecommendationTemplate.INSIGHT_A4_SHOWER_CONSUMPTION_MAINLY_IN_NIGHT :
+                        EnumRecommendationTemplate.INSIGHT_A4_SHOWER_CONSUMPTION_MAINLY_IN_MORNING;
                 }
             } else {
                 if (y1 < y2) {
                     t = (y2 < y3) ?
-                        EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_METER_MAINLY_IN_NIGHT :
-                        EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_METER_MAINLY_IN_AFTERNOON;
+                        EnumRecommendationTemplate.INSIGHT_A4_METER_CONSUMPTION_MAINLY_IN_NIGHT :
+                        EnumRecommendationTemplate.INSIGHT_A4_METER_CONSUMPTION_MAINLY_IN_AFTERNOON;
                 } else {
                     // y2 <= y1
                     t = (y1 < y3) ?
-                        EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_METER_MAINLY_IN_NIGHT :
-                        EnumRecommendationTemplate.INSIGHT_A4_CONSUMPTION_METER_MAINLY_IN_MORNING;
+                        EnumRecommendationTemplate.INSIGHT_A4_METER_CONSUMPTION_MAINLY_IN_NIGHT :
+                        EnumRecommendationTemplate.INSIGHT_A4_METER_CONSUMPTION_MAINLY_IN_MORNING;
                 }
             }
             return t;
