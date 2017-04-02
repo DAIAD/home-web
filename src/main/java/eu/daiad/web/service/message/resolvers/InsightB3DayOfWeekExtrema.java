@@ -131,9 +131,14 @@ public class InsightB3DayOfWeekExtrema extends AbstractRecommendationResolver
         @Override
         public EnumRecommendationTemplate getTemplate()
         {
-            return (currentValue < averageValue)?
-                EnumRecommendationTemplate.INSIGHT_B3_DAYOFWEEK_CONSUMPTION_LOW:
-                EnumRecommendationTemplate.INSIGHT_B3_DAYOFWEEK_CONSUMPTION_PEAK;
+            boolean isMin = (currentValue < averageValue);
+            return (deviceType == EnumDeviceType.AMPHIRO)?
+                (isMin?
+                    EnumRecommendationTemplate.INSIGHT_B3_SHOWER_DAYOFWEEK_CONSUMPTION_LOW:
+                    EnumRecommendationTemplate.INSIGHT_B3_SHOWER_DAYOFWEEK_CONSUMPTION_PEAK):
+                (isMin?
+                    EnumRecommendationTemplate.INSIGHT_B3_METER_DAYOFWEEK_CONSUMPTION_LOW:
+                    EnumRecommendationTemplate.INSIGHT_B3_METER_DAYOFWEEK_CONSUMPTION_PEAK);
         }
 
         @JsonIgnore

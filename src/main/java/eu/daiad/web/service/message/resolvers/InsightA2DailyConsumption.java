@@ -119,10 +119,15 @@ public class InsightA2DailyConsumption extends AbstractRecommendationResolver
         @Override
         public EnumRecommendationTemplate getTemplate()
         {
-            if (averageValue <= currentValue)
-                return EnumRecommendationTemplate.INSIGHT_A2_DAILY_CONSUMPTION_INCR;
-            else 
-                return EnumRecommendationTemplate.INSIGHT_A2_DAILY_CONSUMPTION_DECR;
+            boolean incr = (averageValue <= currentValue);
+            if (deviceType == EnumDeviceType.AMPHIRO)
+                return incr?
+                    EnumRecommendationTemplate.INSIGHT_A2_SHOWER_DAILY_CONSUMPTION_INCR:
+                    EnumRecommendationTemplate.INSIGHT_A2_SHOWER_DAILY_CONSUMPTION_DECR;
+            else
+                return incr?
+                    EnumRecommendationTemplate.INSIGHT_A2_METER_DAILY_CONSUMPTION_INCR:
+                    EnumRecommendationTemplate.INSIGHT_A2_METER_DAILY_CONSUMPTION_DECR;
         }
 
         @Override

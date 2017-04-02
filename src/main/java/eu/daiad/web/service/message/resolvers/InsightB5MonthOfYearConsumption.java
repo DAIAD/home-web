@@ -106,9 +106,14 @@ public class InsightB5MonthOfYearConsumption extends AbstractRecommendationResol
         @Override
         public EnumRecommendationTemplate getTemplate()
         {
-            return (previousValue < currentValue)?
-                EnumRecommendationTemplate.INSIGHT_B5_MONTHLY_CONSUMPTION_INCR:
-                EnumRecommendationTemplate.INSIGHT_B5_MONTHLY_CONSUMPTION_DECR;    
+            boolean incr = (previousValue < currentValue);
+            return (deviceType == EnumDeviceType.AMPHIRO)?
+                (incr?
+                    EnumRecommendationTemplate.INSIGHT_B5_SHOWER_MONTHLY_CONSUMPTION_INCR:
+                    EnumRecommendationTemplate.INSIGHT_B5_SHOWER_MONTHLY_CONSUMPTION_DECR):
+                (incr?
+                    EnumRecommendationTemplate.INSIGHT_B5_METER_MONTHLY_CONSUMPTION_INCR:
+                    EnumRecommendationTemplate.INSIGHT_B5_METER_MONTHLY_CONSUMPTION_DECR);    
         }
 
         @JsonIgnore

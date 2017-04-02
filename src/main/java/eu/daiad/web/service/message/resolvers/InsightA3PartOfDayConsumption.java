@@ -124,21 +124,37 @@ public class InsightA3PartOfDayConsumption extends AbstractRecommendationResolve
         public EnumRecommendationTemplate getTemplate()
         {
             EnumRecommendationTemplate t = null;
+            
+            boolean incr = (averageValue <= currentValue);
+            boolean amphiro = (deviceType == EnumDeviceType.AMPHIRO);
+            
             switch (partOfDay) {
             case MORNING:
-                t = (averageValue <= currentValue)?
-                    EnumRecommendationTemplate.INSIGHT_A3_MORNING_CONSUMPTION_INCR:
-                    EnumRecommendationTemplate.INSIGHT_A3_MORNING_CONSUMPTION_DECR;
+                t = amphiro?
+                    (incr? 
+                        EnumRecommendationTemplate.INSIGHT_A3_SHOWER_MORNING_CONSUMPTION_INCR: 
+                        EnumRecommendationTemplate.INSIGHT_A3_SHOWER_MORNING_CONSUMPTION_DECR):
+                    (incr? 
+                        EnumRecommendationTemplate.INSIGHT_A3_METER_MORNING_CONSUMPTION_INCR:
+                        EnumRecommendationTemplate.INSIGHT_A3_METER_MORNING_CONSUMPTION_DECR);
                 break;
             case AFTERNOON:
-                t = (averageValue <= currentValue)?
-                    EnumRecommendationTemplate.INSIGHT_A3_AFTERNOON_CONSUMPTION_INCR:
-                    EnumRecommendationTemplate.INSIGHT_A3_AFTERNOON_CONSUMPTION_DECR;
+                t = amphiro?
+                    (incr?
+                        EnumRecommendationTemplate.INSIGHT_A3_SHOWER_AFTERNOON_CONSUMPTION_INCR:
+                        EnumRecommendationTemplate.INSIGHT_A3_SHOWER_AFTERNOON_CONSUMPTION_DECR):
+                    (incr?
+                        EnumRecommendationTemplate.INSIGHT_A3_METER_AFTERNOON_CONSUMPTION_INCR:
+                        EnumRecommendationTemplate.INSIGHT_A3_METER_AFTERNOON_CONSUMPTION_DECR);
                 break;
             case NIGHT:
-                t = (averageValue <= currentValue)?
-                    EnumRecommendationTemplate.INSIGHT_A3_NIGHT_CONSUMPTION_INCR:
-                    EnumRecommendationTemplate.INSIGHT_A3_NIGHT_CONSUMPTION_DECR;
+                t = amphiro?
+                    (incr?
+                        EnumRecommendationTemplate.INSIGHT_A3_SHOWER_NIGHT_CONSUMPTION_INCR:
+                        EnumRecommendationTemplate.INSIGHT_A3_SHOWER_NIGHT_CONSUMPTION_DECR):
+                    (incr?
+                        EnumRecommendationTemplate.INSIGHT_A3_METER_NIGHT_CONSUMPTION_INCR:
+                        EnumRecommendationTemplate.INSIGHT_A3_METER_NIGHT_CONSUMPTION_DECR);
                 break;
             }  
             return t;
