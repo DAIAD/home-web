@@ -463,11 +463,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
                     while (scan.hasNextLine()) {
                         line = scan.nextLine();
 
-                        if(StringUtils.isBlank(line)) {
-                            continue;
-                        }
                         index++;
-
                         parseForecastingDataLine(index, line, formatter, filename, status);
                     }
 
@@ -481,14 +477,10 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
                                                 new InputStreamReader(hdfsFileSystem.open(new org.apache.hadoop.fs.Path(filename))))) {
                     line = reader.readLine();
                     while (line != null) {
-                        line = reader.readLine();
-
-                        if(StringUtils.isBlank(line)) {
-                            continue;
-                        }
                         index++;
-
                         parseForecastingDataLine(index, line, formatter, filename, status);
+
+                        line = reader.readLine();
                     }
                 }
             }
@@ -513,6 +505,9 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
      * @param status the process status.
      */
     private void parseForecastingDataLine(int index, String line, DateTimeFormatter formatter, String filename, FileProcessingStatus status) {
+        if(StringUtils.isBlank(line)) {
+            return;
+        }
         float difference;
 
         String[] tokens = StringUtils.split(line, ";");
