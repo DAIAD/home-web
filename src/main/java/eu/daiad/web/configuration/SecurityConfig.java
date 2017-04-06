@@ -4,6 +4,7 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
@@ -11,6 +12,7 @@ import org.springframework.boot.autoconfigure.web.ErrorProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -35,6 +37,12 @@ import eu.daiad.web.security.RESTLogoutSuccessHandler;
 @Order(SecurityProperties.ACCESS_OVERRIDE_ORDER)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+    /**
+     * Interface representing the environment in which the current application is running.
+     */
+    @Autowired
+    private Environment environment;
+
     private static final String[] AUTHORIZED_PATHS = {
         "/",
         "/login",
@@ -58,8 +66,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Value("${server.login.force-https:true}")
     private boolean forceHttps;
 
-    @Value("${daiad.docs.require-authentication}")
+    @Value("${daiad.docs.require-authentication:true}")
     private boolean documentationRequiresAuthentication;
+
+    @Value("${daiad.cors.action.enable:false}")
+    private boolean enableActionApiCors;
 
     @Autowired
     private RESTAuthenticationSuccessHandler authenticationSuccessHandler;
@@ -104,6 +115,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         // Disable CSRF for API requests
         http.csrf().requireCsrfProtectionMatcher(new RequestMatcher() {
 
+            private String [] profiles = environment.getActiveProfiles();
+
             private Pattern allowedMethods = Pattern.compile("^(GET|HEAD|TRACE|OPTIONS)$");
 
             private RegexRequestMatcher apiMatcher = new RegexRequestMatcher("/api/v\\d+/.*", null);
@@ -117,6 +130,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
                 // No CSRF due to API call
                 if (apiMatcher.matches(request)) {
+                    return false;
+                } else if ((enableActionApiCors) && (ArrayUtils.contains(profiles, "development"))) {
                     return false;
                 }
 
