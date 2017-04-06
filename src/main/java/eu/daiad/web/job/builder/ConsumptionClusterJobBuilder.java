@@ -18,7 +18,7 @@ public class ConsumptionClusterJobBuilder extends BaseJobBuilder implements IJob
     /**
      * Name of the step that computes the clusters
      */
-    private final String TASK_CLUSTER_CREATION = "create-cluster";
+    public static final String TASK_CLUSTER_CREATION = "create-cluster";
 
     /**
      * Task that clusters users based on their consumption and computes water IQ status.

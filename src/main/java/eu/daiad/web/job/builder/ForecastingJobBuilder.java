@@ -23,6 +23,7 @@ import eu.daiad.web.job.task.ImportForecastingDataToHBaseTask;
 import eu.daiad.web.job.task.YarnFlinkJobTask;
 import eu.daiad.web.model.error.SchedulerErrorCode;
 import eu.daiad.web.service.scheduling.Constants;
+import eu.daiad.web.service.scheduling.ISchedulerService;
 
 /**
  * Initializes and submits an Apache Flink job to a YARN cluster for computing
@@ -30,6 +31,12 @@ import eu.daiad.web.service.scheduling.Constants;
  */
 @Component
 public class ForecastingJobBuilder extends BaseJobBuilder implements IJobBuilder {
+
+    /**
+     * Service for querying, scheduling and launching jobs.
+     */
+    @Autowired
+    private ISchedulerService schedulerService;
 
     /**
      * Prefix for storing builder specific parameters in the job execution context.
@@ -480,6 +487,17 @@ public class ForecastingJobBuilder extends BaseJobBuilder implements IJobBuilder
     private Step importForecastingDataToHBase() {
         return stepBuilderFactory.get(STEP_IMPORT_RESULT)
                                  .tasklet(importForecastingDataToHBaseTask)
+                                 .listener(new ExecutionContextPromotionListener() {
+
+                                     @Override
+                                     public ExitStatus afterStep(StepExecution stepExecution) {
+                                         // If data import is successful, compute consumption clusters
+                                         if(stepExecution.getExitStatus().getExitCode().equals(ExitStatus.COMPLETED.getExitCode())) {
+                                             schedulerService.launch("MAPREDUCE-METER-FORECAST-AGGREGATE");
+                                         }
+                                         return null;
+                                     }
+                                 })
                                  .build();
     }
 
@@ -523,7 +541,6 @@ public class ForecastingJobBuilder extends BaseJobBuilder implements IJobBuilder
                                 .next(deleteHdfsWorkingDir())
                                 .build();
     }
-
 
     /**
      * Enumeration for builder specific parameters.
