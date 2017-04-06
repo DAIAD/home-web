@@ -74,7 +74,15 @@
     "Spatial",
     "Groups",
     "Areas",
-    "UserArea"
+    "UserArea",
+
+    "Savings",
+    "SavingsCreate",
+    "SavingsRefresh",
+    "SavingsFind",
+    "SavingsQuery",
+    "SavingsExplore",
+    "SavingsDelete"
   ],
   "template": {
     "withCompare": false,
