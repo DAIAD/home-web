@@ -235,6 +235,16 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
     }
 
     @Override
+    public ClusterEntity getClusterByKey(UUID key) {
+        TypedQuery<ClusterEntity> query = entityManager.createQuery("select c from cluster c where c.key = :key",
+                                                                    ClusterEntity.class);
+
+        query.setParameter("key", key);
+
+        return query.getSingleResult();
+    }
+
+    @Override
     public List<Group> getClusterSegmentsByKey(UUID clusterKey) {
         TypedQuery<GroupSegmentEntity> query = entityManager.createQuery("select g from group_segment g  "
                         + "where g.utility.id = :utility_id and g.cluster.key = :key", GroupSegmentEntity.class);

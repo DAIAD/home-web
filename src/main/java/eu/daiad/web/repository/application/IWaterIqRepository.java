@@ -58,4 +58,13 @@ public interface IWaterIqRepository {
      */
     List<ComparisonRanking.DailyConsumption> getComparisonDailyConsumption(UUID userKey, int year, int month);
 
+    /**
+     * Returns the Water IQ as computed by the savings potential algorithm.
+     *
+     * @param month the month.
+     * @param serial the meter serial number.
+     * @return a value from A to F or null if not savings potential data exist.
+     */
+    String getWaterIqFromSavingsPotential(int month, String serial);
+
 }
