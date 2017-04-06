@@ -1,9 +1,17 @@
 package eu.daiad.web.job.task;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.StoppableTasklet;
@@ -115,6 +123,35 @@ public class ExportMeterDataToFileTask extends BaseTask implements StoppableTask
             query.setDescription(String.format("Meter data for all users in [%s].", utility.getName()));
             query.setSource(EnumDataSource.METER);
 
+            query.setSerials(getFilteredMeterSerials(workingDirectory, parameters.get(EnumInParameter.METER_FILTER_FILENAME.getValue())));
+
+            // Optionally export data only for the last year
+            if (parameters.containsKey(EnumInParameter.EXPORT_YEARS.getValue())) {
+                int years = Integer.parseInt(parameters.get(EnumInParameter.EXPORT_YEARS.getValue()));
+
+                if (years > 0) {
+                    DateTimeZone timezone = DateTimeZone.forID(utility.getTimezone());
+                    DateTime now = new DateTime(timezone);
+
+                    DateTime end = now.withDayOfMonth(1).minusMonths(1).dayOfMonth().withMaximumValue();
+                    DateTime start = end.minusYears(years).dayOfMonth().withMaximumValue().plusDays(1);
+
+                    // Adjust start/end dates
+                    start = new DateTime(start.getYear(),
+                                         start.getMonthOfYear(),
+                                         start.getDayOfMonth(),
+                                         0, 0, 0, timezone);
+
+                    end = new DateTime(end.getYear(),
+                                       end.getMonthOfYear(),
+                                       end.getDayOfMonth(),
+                                       23, 59, 59, timezone);
+
+                    query.setStartTimstamp(start.getMillis());
+                    query.setEndTimestamp(end.getMillis());
+                }
+            }
+
             dataExportService.export(query);
 
             // Export parameters
@@ -125,6 +162,34 @@ public class ExportMeterDataToFileTask extends BaseTask implements StoppableTask
         }
 
         return RepeatStatus.FINISHED;
+    }
+
+    private List<String> getFilteredMeterSerials(String workingDirectory, String filename) throws FileNotFoundException {
+        if(StringUtils.isBlank(filename)) {
+            return null;
+        }
+        String path = Paths.get(workingDirectory, filename).toString();
+
+        File file = new File(path);
+
+        if (!file.exists()) {
+            return null;
+        }
+
+        List<String> serials = new ArrayList<String>();
+
+        String line;
+        try (Scanner scan = new Scanner(file)) {
+            while (scan.hasNextLine()) {
+                line = scan.nextLine();
+
+                if (!StringUtils.isBlank(line)) {
+                    serials.add(line.trim());
+                }
+            }
+        }
+
+        return serials;
     }
 
     @Override
@@ -145,9 +210,21 @@ public class ExportMeterDataToFileTask extends BaseTask implements StoppableTask
          */
         DATE_FORMAT("format.date"),
         /**
+         * A file with a single meter serial number per line. If this file
+         * exists, only data for the meters in the file are exported.
+         */
+        METER_FILTER_FILENAME("meter.filter.filename"),
+        /**
          * Export file name
          */
         OUTPUT_FILENAME("output.filename"),
+        /**
+         * If not set, all data is exported. Otherwise, the data for the
+         * selected number of years is exported. In the latter case, the export
+         * time interval ends at the last day of the previous month since the
+         * execution date.
+         */
+        EXPORT_YEARS("export.years"),
         /**
          * Working directory
          */

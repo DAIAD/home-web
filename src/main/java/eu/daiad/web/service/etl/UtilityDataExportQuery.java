@@ -1,5 +1,8 @@
 package eu.daiad.web.service.etl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import eu.daiad.web.model.utility.UtilityInfo;
 
 /**
@@ -33,7 +36,8 @@ public class UtilityDataExportQuery extends DataExportQuery {
     private String filename;
 
     /**
-     * Selects exported data. When exporting amphiro data, this parameter is ignored.
+     * Selects exported data. When exporting amphiro data, this parameter is
+     * ignored.
      */
     private EnumExportMode mode;
 
@@ -41,6 +45,11 @@ public class UtilityDataExportQuery extends DataExportQuery {
      * Date format.
      */
     private String dateFormat;
+
+    /**
+     * Filtered serial numbers.
+     */
+    private List<String> serials = new ArrayList<String>();
 
     /**
      * True if the output file must be compressed. If more than one files are
@@ -125,10 +134,20 @@ public class UtilityDataExportQuery extends DataExportQuery {
         this.comporessed = comporessed;
     }
 
+    public List<String> getSerials() {
+        return serials;
+    }
+
+    public void setSerials(List<String> serials) {
+        if (serials == null) {
+            this.serials = new ArrayList<String>();
+        } else {
+            this.serials = serials;
+        }
+    }
+
     public enum EnumExportMode {
-        METER_UTILITY,
-        METER_TRIAL,
-        ALL_TRIAL;
+        METER_UTILITY, METER_TRIAL, ALL_TRIAL;
     }
 
 }
