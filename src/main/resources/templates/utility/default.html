@@ -41,16 +41,16 @@
 <script th:if="${@environment.getActiveProfiles()[0] == 'production'}" src="/assets/js/build/vendor/react.min.js"></script>
 
 <script th:inline="javascript">
-    var properties = {
-        reload: [[${reload}]],
-       	locale: 'en',
-       	captchaKey: [[${googleReCAPTCHASiteKey}]]
-    };
+	var properties = {
+	  reload: [[${reload}]],
+	  locale: 'en',
+	  captchaKey: [[${googleReCAPTCHASiteKey}]],
+	  dataApiUseAggregatedData:  [[${dataApiUseAggregatedData}]]
+	};
 
-
-    var recaptchaOptions = {
-      lang: [[${locale}]]
-    };
+	var recaptchaOptions = {
+	  lang: [[${locale}]]
+	};
 </script>
 </head>
 
