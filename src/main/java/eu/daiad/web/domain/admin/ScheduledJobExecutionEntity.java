@@ -23,6 +23,9 @@ public class ScheduledJobExecutionEntity {
     @Column(name = "job_id")
     private Long jobId;
 
+    @Column(name = "job_key")
+    private String jobKey;
+
     @Column(name = "job_execution_id")
     private long jobExecutionId;
 
@@ -117,6 +120,14 @@ public class ScheduledJobExecutionEntity {
 
     public void setJobId(Long jobId) {
         this.jobId = jobId;
+    }
+
+    public String getJobKey() {
+        return jobKey;
+    }
+
+    public void setJobKey(String jobKey) {
+        this.jobKey = jobKey;
     }
 
 }
