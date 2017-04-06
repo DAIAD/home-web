@@ -20,7 +20,7 @@ public class GroupDataSeries
 
     private int population;
 
-    ArrayList<DataPoint> points = new ArrayList<DataPoint>();
+    List<DataPoint> points = new ArrayList<DataPoint>();
 
     public GroupDataSeries(String label, int population, Long areaId) {
         this.label = label;
@@ -32,7 +32,7 @@ public class GroupDataSeries
         return label;
     }
 
-    public ArrayList<DataPoint> getPoints() {
+    public List<DataPoint> getPoints() {
         return points;
     }
 
