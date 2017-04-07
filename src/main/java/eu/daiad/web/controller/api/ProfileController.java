@@ -2,6 +2,7 @@ package eu.daiad.web.controller.api;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -21,6 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.error.ProfileErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.profile.ComparisonRankingResponse;
 import eu.daiad.web.model.profile.NotifyProfileRequest;
@@ -32,6 +34,7 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.Credentials;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.application.IProfileRepository;
+import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IWaterIqRepository;
 import eu.daiad.web.util.ValidationUtils;
 
@@ -45,6 +48,12 @@ public class ProfileController extends BaseRestController {
      * Logger instance for writing events using the configured logging API.
      */
     private static final Log logger = LogFactory.getLog(ProfileController.class);
+
+    /**
+     * Repository for accessing user data.
+     */
+    @Autowired
+    private IUserRepository userRepository;
 
     /**
      * Repository for accessing user profile data.
@@ -62,28 +71,71 @@ public class ProfileController extends BaseRestController {
     /**
      * Loads user profile data.
      *
-     * @param data user credentials.
+     * @param request user credentials.
      * @return the user profile.
      */
     @RequestMapping(value = "/api/v1/profile/load", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-    public RestResponse getProfile(@RequestBody Credentials data) {
+    public RestResponse getProfile(@RequestBody Credentials request) {
         try {
-            AuthenticatedUser user = authenticate(data);
+            AuthenticatedUser user = authenticate(request);
 
             if (user.hasRole(EnumRole.ROLE_USER)) {
-                Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE);
-
-                profileRepository.updateMobileVersion(user.getKey(), data.getVersion());
+                profileRepository.updateMobileVersion(user.getKey(), request.getVersion());
 
                 return new ProfileResponse(getRuntime(),
-                                           profile,
+                                           profileRepository.getProfileByUserKey(user.getKey(), EnumApplication.MOBILE),
                                            user.roleToStringArray());
             } else if (user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
                 return new ProfileResponse(getRuntime(),
-                                           profileRepository.getProfileByUsername(EnumApplication.UTILITY),
+                                           profileRepository.getProfileByUserKey(user.getKey(), EnumApplication.UTILITY),
                                            user.roleToStringArray());
             } else {
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+            }
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            return new RestResponse(getError(ex));
+        }
+    }
+
+    /**
+     * Loads user profile data for a specific user.
+     *
+     * @param application the request's application.
+     * @param userKey the user key.
+     * @param request user credentials.
+     * @return the user profile.
+     */
+    @RequestMapping(value = "/api/v1/profile/load/{application}/{userKey}", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    public RestResponse getProfileByUserKey(@PathVariable EnumApplication application,
+                                            @PathVariable UUID userKey,
+                                            @RequestBody Credentials request) {
+        try {
+            AuthenticatedUser user = authenticate(request,
+                                                  EnumRole.ROLE_USER, EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
+
+            // If user has not administrative permissions and requests data for another user, throw an exception
+            if ((!user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) && (!user.getKey().equals(userKey))) {
+                throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+            }
+
+            // Check utility access
+            if (!user.getKey().equals(userKey)) {
+                AuthenticatedUser dataOwner = userRepository.getUserByKey(userKey);
+
+                if (!user.getUtilities().contains(dataOwner.getUtilityId())) {
+                    throw createApplicationException(SharedErrorCode.AUTHORIZATION_UTILITY_ACCESS_DENIED);
+                }
+            }
+
+            switch(application) {
+                case HOME: case MOBILE: case UTILITY:
+                    Profile profile = profileRepository.getProfileByUserKey(userKey, application);
+
+                    return new ProfileResponse(getRuntime(), profile, user.roleToStringArray());
+                default:
+                    throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application", application.toString());
             }
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -115,6 +167,47 @@ public class ProfileController extends BaseRestController {
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION);
             }
 
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            return new RestResponse(getError(ex));
+        }
+    }
+
+    /**
+     * Loads comparison and ranking data for a user.
+     *
+     * @param data user credentials.
+     * @param year reference year.
+     * @param month reference month.
+     * @return the user profile.
+     */
+    @RequestMapping(value = "/api/v1/comparison/{year}/{month}/{userKey}", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    public RestResponse getComparisonRanking(@RequestBody Credentials data,
+                                             @PathVariable int year, @PathVariable int month,
+                                             @PathVariable UUID userKey) {
+        try {
+            AuthenticatedUser user = authenticate(data);
+
+            // If user has not administrative permissions and requests data for another user, throw an exception
+            if ((!user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) && (!user.getKey().equals(userKey))) {
+                throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+            }
+
+            // Check utility access
+            if (!user.getKey().equals(userKey)) {
+                AuthenticatedUser dataOwner = userRepository.getUserByKey(userKey);
+
+                if (!user.getUtilities().contains(dataOwner.getUtilityId())) {
+                    throw createApplicationException(SharedErrorCode.AUTHORIZATION_UTILITY_ACCESS_DENIED);
+                }
+            }
+
+            ComparisonRankingResponse response = new ComparisonRankingResponse();
+
+            response.setComparison(waterIqRepository.getWaterIqByUserKey(userKey, year, month));
+
+            return response;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 

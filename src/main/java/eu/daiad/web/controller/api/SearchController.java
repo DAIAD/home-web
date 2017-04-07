@@ -43,6 +43,7 @@ import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 import eu.daiad.web.repository.application.IAmphiroTimeOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IMeterDataRepository;
+import eu.daiad.web.repository.application.IUserRepository;
 
 /**
  * Provides actions for searching Amphiro B1 sessions and smart water meter readings.
@@ -54,6 +55,12 @@ public class SearchController extends BaseRestController {
      * Logger instance for writing events using the configured logging API.
      */
     private static final Log logger = LogFactory.getLog(SearchController.class);
+
+    /**
+     * Repository for accessing user data.
+     */
+    @Autowired
+    private IUserRepository userRepository;
 
     /**
      * Repository for accessing device data.
@@ -241,19 +248,31 @@ public class SearchController extends BaseRestController {
     @RequestMapping(value = "/api/v2/device/session/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse searchAmphiroSessionsWithIndexOrdering(@RequestBody AmphiroSessionCollectionIndexIntervalQuery query) {
         try {
-            AuthenticatedUser user = authenticate(query.getCredentials(), EnumRole.ROLE_USER);
+            AuthenticatedUser user = authenticate(query.getCredentials(), EnumRole.ROLE_USER, EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN);
 
-            query.setUserKey(user.getKey());
+            // If user has not administrative permissions or user key is null,
+            // use the key of the authenticated user
+            if ((query.getUserKey() == null) || (!user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN))) {
+                query.setUserKey(user.getKey());
+            }
+
+            // Check utility access
+            if (!user.getKey().equals(query.getUserKey())) {
+                AuthenticatedUser deviceOwner = userRepository.getUserByKey(query.getUserKey());
+
+                if (!user.getUtilities().contains(deviceOwner.getUtilityId())) {
+                    throw createApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey() + " - " + user.getUsername())
+                                                                                          .set("owner", query.getUserKey() + " - " + deviceOwner.getUsername());
+                }
+            }
 
             if ((query.getDeviceKey() == null) || (query.getDeviceKey().length == 0)) {
                 return new AmphiroSessionCollectionIndexIntervalQueryResult();
             }
 
-            String[] names = this.checkAmphiroOwnership(user.getKey(), query.getDeviceKey());
+            String[] names = this.checkAmphiroOwnership(query.getUserKey(), query.getDeviceKey());
 
-            AmphiroSessionCollectionIndexIntervalQueryResult data = amphiroIndexOrderedRepository.getSessions(names, DateTimeZone.forID(user.getTimezone()), query);
-
-            return data;
+            return amphiroIndexOrderedRepository.getSessions(names, DateTimeZone.forID(user.getTimezone()), query);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 

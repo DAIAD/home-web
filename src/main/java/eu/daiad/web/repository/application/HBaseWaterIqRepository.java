@@ -306,4 +306,17 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
 
     }
 
+
+    /**
+     * Returns the Water IQ as computed by the savings potential algorithm.
+     *
+     * @param month the month.
+     * @param serial the meter serial number.
+     * @return a value from A to F or null if not savings potential data exist.
+     */
+    @Override
+    public String getWaterIqFromSavingsPotential(int month, String serial) {
+        throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
+    }
+
 }

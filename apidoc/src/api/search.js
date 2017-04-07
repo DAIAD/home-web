@@ -490,7 +490,7 @@ function amphiroSessionsByTime() { return; }
  * @apiVersion 0.0.2
  * @apiName AmphiroSessionByIndex
  * @apiGroup Search
- * @apiPermission ROLE_USER
+ * @apiPermission ROLE_USER, ROLE_UTILITY_ADMIN, ROLE_SYSTEM_ADMIN
  *
  * @apiDescription Loads sessions for one or more Amphiro devices. <b><span class="note">Amphiro session ordering is index based.</span></b>
  *
@@ -498,6 +498,7 @@ function amphiroSessionsByTime() { return; }
  * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {String}     credentials.username        User name.
  * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {String}     credentials.password        Password.
  * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {String}     type                        Query type. Valid values are <code>ABSOLUTE</code> and <code>SLIDING</code>.<br/><code>ABSOLUTE</code> queries return specific intervals of sessions.<br/><code>SLIDING</code> queries return the <code>length</code> most recent sessions.
+ * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {String}     [userKey]                   User unique key (UUID). If the user key is not set, the key of the authenticated user is used. If the user is not an adiministrator, the user key is automatically overriden by the authenticated user's key.
  * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {String[]}   deviceKey                   Array of unique identifiers (UUID) for authenticated user Amphiro devices.
  * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {Number}     startIndex                  Session start index for <code>ABSOLUTE</code> queries or offset index for <code>SLIDING</code> ones. For <code>SLIDING</code> queries, if <code>startIndex</code> is not set, the most recent <code>length</code> sessions are returned.
  * @apiParam (AmphiroSessionCollectionIndexIntervalQuery) {Number}     endIndex                    Session end index for <code>ABSOLUTE</code> queries.

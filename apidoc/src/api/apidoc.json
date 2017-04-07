@@ -44,7 +44,13 @@
     "AmphiroSingleSessionByIndex",
     "Message",
     "Weather",
-    "Admin"
+    "Admin",
+
+    "Billing",
+    "PriceBracketCurrent",
+    "PriceBracketHistory",
+
+    "WaterCalculator"
   ],
   "template": {
     "withCompare": true,

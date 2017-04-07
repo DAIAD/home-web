@@ -62,9 +62,9 @@ public class RESTAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuc
 
 				Profile profile;
                 if (user.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
-					profile = profileRepository.getProfileByUsername(EnumApplication.UTILITY);
+					profile = profileRepository.getProfileByUserKey(user.getKey(), EnumApplication.UTILITY);
 				} else {
-					profile = profileRepository.getProfileByUsername(EnumApplication.HOME);
+					profile = profileRepository.getProfileByUserKey(user.getKey(), EnumApplication.HOME);
 				}
 
 				AuthenticationResponse authenticationResponse = new AuthenticationResponse(

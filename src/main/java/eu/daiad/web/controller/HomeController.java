@@ -22,6 +22,12 @@ import eu.daiad.web.repository.application.IUserRepository;
 public class HomeController extends BaseController{
 
     /**
+     * True if Data API should use aggregated data.
+     */
+    @Value("${daiad.data.api.pre-aggregation:false}")
+    private boolean dataApiUseAggregatedData;
+
+    /**
      * Google ReCAPTCHA site key.
      */
     @Value("${daiad.captcha.google.site-key}")
@@ -124,6 +130,7 @@ public class HomeController extends BaseController{
     private void setModelAttributes(Model model, boolean reload) {
         model.addAttribute("reload", reload);
         model.addAttribute("googleReCAPTCHASiteKey", googleReCAPTCHASiteKey);
+        model.addAttribute("dataApiUseAggregatedData", dataApiUseAggregatedData);
     }
 
 }

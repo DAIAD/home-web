@@ -24,8 +24,8 @@ public class DataQueryBuilder {
     }
 
     public DataQueryBuilder() {
-        this.query = new DataQuery();
-        this.query.setTime(new TimeFilter());
+        query = new DataQuery();
+        query.setTime(new TimeFilter());
     }
 
     public DataQueryBuilder(DataQuery query) {
@@ -38,235 +38,241 @@ public class DataQueryBuilder {
     }
 
     public DataQueryBuilder reset() {
-        this.query = new DataQuery();
-        this.query.setTime(new TimeFilter());
-        this.metrics = new ArrayList<EnumMetric>();
+        query = new DataQuery();
+        query.setTime(new TimeFilter());
+        metrics = new ArrayList<EnumMetric>();
         return this;
     }
 
     public DataQueryBuilder removePopulationFilter() {
-        this.query.getPopulation().clear();
+        query.getPopulation().clear();
         return this;
     }
 
     public DataQueryBuilder user(String label, UUID user) {
-        this.query.getPopulation().add(new UserPopulationFilter(label, user));
+        query.getPopulation().add(new UserPopulationFilter(label, user));
         return this;
     }
 
     public DataQueryBuilder users(String label, UUID[] users) {
-        this.query.getPopulation().add(new UserPopulationFilter(label, users));
+        query.getPopulation().add(new UserPopulationFilter(label, users));
         return this;
     }
 
     public DataQueryBuilder usersBottom(String label, UUID[] users, EnumMetric metric, int limit) {
-        this.query.getPopulation().add(new UserPopulationFilter(label, users, EnumRankingType.BOTTOM, metric, limit));
+        query.getPopulation().add(new UserPopulationFilter(label, users, EnumRankingType.BOTTOM, metric, limit));
         return this;
     }
 
     public DataQueryBuilder usersTop(String label, UUID[] users, EnumMetric metric, int limit) {
-        this.query.getPopulation().add(new UserPopulationFilter(label, users, EnumRankingType.TOP, metric, limit));
+        query.getPopulation().add(new UserPopulationFilter(label, users, EnumRankingType.TOP, metric, limit));
         return this;
     }
 
     public DataQueryBuilder group(String label, UUID group) {
-        this.query.getPopulation().add(new GroupPopulationFilter(label, group));
+        query.getPopulation().add(new GroupPopulationFilter(label, group));
         return this;
     }
 
     public DataQueryBuilder groupBottom(String label, UUID group, EnumMetric metric, int limit) {
-        this.query.getPopulation().add(new GroupPopulationFilter(label, group, EnumRankingType.BOTTOM, metric, limit));
+        query.getPopulation().add(new GroupPopulationFilter(label, group, EnumRankingType.BOTTOM, metric, limit));
         return this;
     }
 
     public DataQueryBuilder groupTop(String label, UUID group, EnumMetric metric, int limit) {
-        this.query.getPopulation().add(new GroupPopulationFilter(label, group, EnumRankingType.TOP, metric, limit));
+        query.getPopulation().add(new GroupPopulationFilter(label, group, EnumRankingType.TOP, metric, limit));
         return this;
     }
 
     public DataQueryBuilder utility(String label, UUID utility) {
-        this.query.getPopulation().add(new UtilityPopulationFilter(label, utility));
+        query.getPopulation().add(new UtilityPopulationFilter(label, utility));
         return this;
     }
 
     public DataQueryBuilder utilityBottom(String label, UUID utility, EnumMetric metric, int limit) {
-        this.query.getPopulation().add(
+        query.getPopulation().add(
                         new UtilityPopulationFilter(label, utility, EnumRankingType.BOTTOM, metric, limit));
         return this;
     }
 
     public DataQueryBuilder utilityTop(String label, UUID utility, EnumMetric metric, int limit) {
-        this.query.getPopulation().add(new UtilityPopulationFilter(label, utility, EnumRankingType.TOP, metric, limit));
+        query.getPopulation().add(new UtilityPopulationFilter(label, utility, EnumRankingType.TOP, metric, limit));
         return this;
     }
 
     public DataQueryBuilder absolute(long start, long end) {
-        this.query.setTime(new TimeFilter(start, end));
+        query.setTime(new TimeFilter(start, end));
 
         return this;
     }
 
     public DataQueryBuilder absolute(long start, long end, EnumTimeAggregation granularity) {
-        this.query.setTime(new TimeFilter(start, end, granularity));
+        query.setTime(new TimeFilter(start, end, granularity));
 
         return this;
     }
 
     public DataQueryBuilder absolute(DateTime start, DateTime end) {
-        this.query.setTime(new TimeFilter(start, end));
+        query.setTime(new TimeFilter(start, end));
 
         return this;
     }
 
     public DataQueryBuilder absolute(DateTime start, DateTime end, EnumTimeAggregation granularity) {
-        this.query.setTime(new TimeFilter(start, end, granularity));
+        query.setTime(new TimeFilter(start, end, granularity));
 
         return this;
     }
 
     public DataQueryBuilder sliding(long start, int duration) {
-        this.query.setTime(new TimeFilter(start, duration));
+        query.setTime(new TimeFilter(start, duration));
 
         return this;
     }
 
     public DataQueryBuilder sliding(long start, int duration, EnumTimeUnit durationTimeUnit) {
-        this.query.setTime(new TimeFilter(start, duration, durationTimeUnit));
+        query.setTime(new TimeFilter(start, duration, durationTimeUnit));
 
         return this;
     }
 
     public DataQueryBuilder sliding(long start, int duration, EnumTimeUnit durationTimeUnit,
                     EnumTimeAggregation granularity) {
-        this.query.setTime(new TimeFilter(start, duration, durationTimeUnit, granularity));
+        query.setTime(new TimeFilter(start, duration, durationTimeUnit, granularity));
         return this;
     }
 
     public DataQueryBuilder sliding(DateTime start, int duration) {
-        this.query.setTime(new TimeFilter(start, duration));
+        query.setTime(new TimeFilter(start, duration));
 
         return this;
     }
 
     public DataQueryBuilder sliding(int duration) {
-        this.query.setTime(new TimeFilter(new DateTime().getMillis(), duration));
+        query.setTime(new TimeFilter(new DateTime().getMillis(), duration));
 
         return this;
     }
 
     public DataQueryBuilder sliding(DateTime start, int duration, EnumTimeUnit durationTimeUnit) {
-        this.query.setTime(new TimeFilter(start, duration, durationTimeUnit));
+        query.setTime(new TimeFilter(start, duration, durationTimeUnit));
 
         return this;
     }
 
     public DataQueryBuilder sliding(int duration, EnumTimeUnit durationTimeUnit) {
-        this.query.setTime(new TimeFilter(new DateTime().getMillis(), duration, durationTimeUnit));
+        query.setTime(new TimeFilter(new DateTime().getMillis(), duration, durationTimeUnit));
 
         return this;
     }
 
     public DataQueryBuilder sliding(DateTime start, int duration, EnumTimeUnit durationTimeUnit,
                     EnumTimeAggregation granularity) {
-        this.query.setTime(new TimeFilter(start, duration, durationTimeUnit, granularity));
+        query.setTime(new TimeFilter(start, duration, durationTimeUnit, granularity));
 
         return this;
     }
 
     public DataQueryBuilder sliding(int duration, EnumTimeUnit durationTimeUnit, EnumTimeAggregation granularity) {
-        this.query.setTime(new TimeFilter(new DateTime().getMillis(), duration, durationTimeUnit, granularity));
+        query.setTime(new TimeFilter(new DateTime().getMillis(), duration, durationTimeUnit, granularity));
 
         return this;
     }
 
     public DataQueryBuilder all() {
-        this.query.setSource(EnumMeasurementDataSource.BOTH);
+        query.setSource(EnumMeasurementDataSource.BOTH);
         return this;
     }
 
     public DataQueryBuilder amphiro() {
-        this.query.setSource(EnumMeasurementDataSource.AMPHIRO);
+        query.setSource(EnumMeasurementDataSource.AMPHIRO);
         return this;
     }
 
     public DataQueryBuilder meter() {
-        this.query.setSource(EnumMeasurementDataSource.METER);
+        query.setSource(EnumMeasurementDataSource.METER);
         return this;
     }
-    
+
     public DataQueryBuilder source(EnumMeasurementDataSource s) {
-        this.query.setSource(s);
+        query.setSource(s);
         return this;
     }
-    
+
     public DataQueryBuilder sum() {
-        if (!this.metrics.contains(EnumMetric.SUM)) {
-            this.metrics.add(EnumMetric.SUM);
+        if (!metrics.contains(EnumMetric.SUM)) {
+            metrics.add(EnumMetric.SUM);
         }
         return this;
     }
 
     public DataQueryBuilder min() {
-        if (!this.metrics.contains(EnumMetric.MIN)) {
-            this.metrics.add(EnumMetric.MIN);
+        if (!metrics.contains(EnumMetric.MIN)) {
+            metrics.add(EnumMetric.MIN);
         }
         return this;
     }
 
     public DataQueryBuilder max() {
-        if (!this.metrics.contains(EnumMetric.MAX)) {
-            this.metrics.add(EnumMetric.MAX);
+        if (!metrics.contains(EnumMetric.MAX)) {
+            metrics.add(EnumMetric.MAX);
         }
         return this;
     }
 
     public DataQueryBuilder count() {
-        if (!this.metrics.contains(EnumMetric.COUNT)) {
-            this.metrics.add(EnumMetric.COUNT);
+        if (!metrics.contains(EnumMetric.COUNT)) {
+            metrics.add(EnumMetric.COUNT);
         }
         return this;
     }
 
     public DataQueryBuilder average() {
-        if (!this.metrics.contains(EnumMetric.AVERAGE)) {
-            this.metrics.add(EnumMetric.AVERAGE);
+        if (!metrics.contains(EnumMetric.AVERAGE)) {
+            metrics.add(EnumMetric.AVERAGE);
         }
         return this;
     }
 
     public DataQueryBuilder timezone(String timezone) {
-        this.query.setTimezone(timezone);
+        query.setTimezone(timezone);
 
         return this;
     }
 
     public DataQueryBuilder timezone(DateTimeZone timezone) {
-        this.query.setTimezone(timezone.toString());
+        query.setTimezone(timezone.toString());
+
+        return this;
+    }
+
+    public DataQueryBuilder userAggregates() {
+        query.setUsingPreAggregation(true);
 
         return this;
     }
 
     public DataQuery build() {
-        if (this.metrics.contains(EnumMetric.AVERAGE)) {
-            this.count().sum();
+        if (metrics.contains(EnumMetric.AVERAGE)) {
+            count().sum();
         }
-        if (this.metrics.contains(EnumMetric.MIN)) {
-            this.max();
+        if (metrics.contains(EnumMetric.MIN)) {
+            max();
         }
-        if (this.metrics.contains(EnumMetric.MAX)) {
-            this.min();
+        if (metrics.contains(EnumMetric.MAX)) {
+            min();
         }
 
-        for (PopulationFilter filter : this.query.getPopulation()) {
-            if ((filter.getRanking() != null) && (!this.metrics.contains(filter.getRanking().getMetric()))) {
-                this.metrics.add(filter.getRanking().getMetric());
+        for (PopulationFilter filter : query.getPopulation()) {
+            if ((filter.getRanking() != null) && (!metrics.contains(filter.getRanking().getMetric()))) {
+                metrics.add(filter.getRanking().getMetric());
             }
         }
 
-        EnumMetric[] metricArray = new EnumMetric[this.metrics.size()];
+        EnumMetric[] metricArray = new EnumMetric[metrics.size()];
 
-        this.query.setMetrics(this.metrics.toArray(metricArray));
+        query.setMetrics(metrics.toArray(metricArray));
 
-        return this.query;
+        return query;
     }
 }

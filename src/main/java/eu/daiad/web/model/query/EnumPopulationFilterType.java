@@ -19,7 +19,7 @@ public enum EnumPopulationFilterType {
 	}
 
 	public int getValue() {
-		return this.value;
+		return value;
 	}
 
 	private static final Map<Integer, EnumPopulationFilterType> intToTypeMap = new HashMap<Integer, EnumPopulationFilterType>();

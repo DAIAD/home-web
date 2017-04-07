@@ -157,10 +157,18 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
                             // Get data
                             WaterMeterDevice meterDevice = (WaterMeterDevice) device;
 
+                            if ((!query.getSerials().isEmpty()) && (!query.getSerials().contains(meterDevice.getSerial()))) {
+                                continue;
+                            }
+
                             WaterMeterMeasurementQuery meterQuery = new WaterMeterMeasurementQuery();
                             meterQuery.setDeviceKey(new UUID[] { meterDevice.getKey() });
                             meterQuery.setUserKey(userKey);
                             meterQuery.setGranularity(TemporalConstants.NONE);
+                            if ((query.getStartTimstamp() != null) && (query.getEndTimestamp() != null)) {
+                                meterQuery.setStartDate(query.getStartTimstamp());
+                                meterQuery.setEndDate(query.getEndTimestamp());
+                            }
 
                             WaterMeterMeasurementQueryResult result = waterMeterMeasurementRepository.searchMeasurements(
                                 new String[] { meterDevice.getSerial() },

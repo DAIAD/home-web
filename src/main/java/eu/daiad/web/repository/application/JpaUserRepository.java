@@ -1384,4 +1384,26 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
     {
         return entityManager.find(AccountEntity.class, id);
     }
+
+
+    /**
+     * Find account using the assigned smart water meter serial number.
+     *
+     * @param serial smart water meter serial number.
+     * @return the user.
+     */
+    @Override
+    public AccountEntity getUserByMeterSerial(String serial) {
+        String queryString = "select m.account from device_meter m where m.serial = :serial";
+
+        TypedQuery<AccountEntity> query = entityManager.createQuery(queryString, AccountEntity.class)
+                                                       .setParameter("serial", serial)
+                                                       .setMaxResults(1);
+
+        List<AccountEntity> accounts = query.getResultList();
+        if(accounts.isEmpty()) {
+            return null;
+        }
+        return accounts.get(0);
+    }
 }

@@ -14,7 +14,7 @@ public abstract class AbstractAmphiroHBaseRepository extends AbstractHBaseReposi
     /**
      * Enforces more strict validation rules for amphiro b1 data.
      */
-    @Value("${daiad.amphiro.validation-string:true}")
+    @Value("${daiad.amphiro.validation-strict:true}")
     protected boolean strictAmphiroValidation;
 
     /**

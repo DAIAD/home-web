@@ -74,4 +74,6 @@ public interface IUserRepository {
 
     SurveyEntity getSurveyByKey(UUID userKey);
 
+    AccountEntity getUserByMeterSerial(String serial);
+
 }

@@ -21,11 +21,16 @@
     <link href="/assets/css/home.css" rel="stylesheet" />
 
 	<script th:inline="javascript">
-        var properties = {
-       	    reload: [[${reload}]],
-       	    locale: 'en',
-           	captchaKey: [[${googleReCAPTCHASiteKey}]]
-        };
+		var properties = {
+		  reload: [[${reload}]],
+		  locale: 'en',
+		  captchaKey: [[${googleReCAPTCHASiteKey}]],
+		  dataApiUseAggregatedData:  [[${dataApiUseAggregatedData}]]
+		};
+
+		var recaptchaOptions = {
+		  lang: [[${locale}]]
+		};
     </script>
 
 </head>

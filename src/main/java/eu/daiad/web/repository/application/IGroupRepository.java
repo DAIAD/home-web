@@ -3,6 +3,7 @@ package eu.daiad.web.repository.application;
 import java.util.List;
 import java.util.UUID;
 
+import eu.daiad.web.domain.application.ClusterEntity;
 import eu.daiad.web.model.group.Cluster;
 import eu.daiad.web.model.group.Group;
 import eu.daiad.web.model.group.GroupInfo;
@@ -30,6 +31,8 @@ public interface IGroupRepository {
     List<Group> getUtilities(UUID utilityKey);
 
     List<Group> getClusters(UUID utilityKey);
+
+    ClusterEntity getClusterByKey(UUID key);
 
     List<Group> getClusterSegmentsByKey(UUID clusterKey);
 
