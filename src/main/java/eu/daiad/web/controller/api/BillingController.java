@@ -12,13 +12,16 @@ import org.springframework.web.bind.annotation.RestController;
 import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.AuthenticatedRequest;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.billing.PriceBracketQuery;
 import eu.daiad.web.model.billing.PriceBracket;
 import eu.daiad.web.model.billing.PriceBracketCollectionResult;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.application.IBillingRepository;
+import eu.daiad.web.repository.application.IUserRepository;
 
 /**
  * Provides actions for providing billing data.
@@ -36,6 +39,12 @@ public class BillingController extends BaseRestController {
      */
     @Autowired
     private IBillingRepository billingRepository;
+
+    /**
+     * Repository for accessing user data.
+     */
+    @Autowired
+    private IUserRepository userRepository;
 
     /**
      * Logs an exception and creates a response.
@@ -56,16 +65,28 @@ public class BillingController extends BaseRestController {
     /**
      * Returns the currently applicable price brackets.
      *
-     * @param request instance of {@link AuthenticatedRequest}.
+     * @param query the query.
      * @return a collection {@link PriceBracket} objects.
      */
     @RequestMapping(value = "/api/v1/billing/price-bracket", method = RequestMethod.POST, produces = "application/json")
-    public RestResponse getPriceBrackets(@RequestBody AuthenticatedRequest request) {
+    public RestResponse getPriceBrackets(@RequestBody PriceBracketQuery query) {
         try {
-            AuthenticatedUser user = authenticate(request.getCredentials(),
+            AuthenticatedUser user = authenticate(query.getCredentials(),
                                                   EnumRole.ROLE_USER, EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
+            // Check utility access
+            if (user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN) && query.getUserKey() != null && !user.getKey().equals(query.getUserKey())) {
+                AuthenticatedUser deviceOwner = userRepository.getUserByKey(query.getUserKey());
+
+                if (!user.getUtilities().contains(deviceOwner.getUtilityId())) {
+                    throw createApplicationException(DeviceErrorCode.DEVICE_ACCESS_DENIED).set("user", user.getKey() + " - " + user.getUsername())
+                                                                                          .set("owner", query.getUserKey() + " - " + deviceOwner.getUsername());
+                }
+                return new PriceBracketCollectionResult(billingRepository.getPriceBracketByUtilityId(deviceOwner.getUtilityId()));
+            }
+
             return new PriceBracketCollectionResult(billingRepository.getPriceBracketByUtilityId(user.getUtilityId()));
+
         } catch (Exception ex) {
             return handleException(ex);
         }
