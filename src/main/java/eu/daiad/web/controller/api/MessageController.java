@@ -55,7 +55,7 @@ public class MessageController extends BaseRestController {
     {
         try {
             AuthenticatedUser user = authenticate(request.getCredentials(), EnumRole.ROLE_USER);
-            Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE);
+            Profile profile = profileRepository.getProfileByUserKey(user.getKey(), EnumApplication.MOBILE);
             if(!profile.isSendMessageEnabled()) {
                 return new MultiTypeMessageResponse();
             } else {

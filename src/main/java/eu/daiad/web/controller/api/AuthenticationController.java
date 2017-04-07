@@ -15,7 +15,9 @@ import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.AuthenticationResponse;
 import eu.daiad.web.model.security.Credentials;
+import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.application.IProfileRepository;
+
 
 /**
  * Provides actions for authenticating a user.
@@ -43,9 +45,9 @@ public class AuthenticationController extends BaseRestController {
     @RequestMapping(value = "/api/v1/auth/login", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse login(@RequestBody Credentials credentials) {
         try {
-            AuthenticatedUser user = authenticate(credentials);
+            AuthenticatedUser user = authenticate(credentials, EnumRole.ROLE_USER);
 
-            Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE);
+            Profile profile = profileRepository.getProfileByUserKey(user.getKey(), EnumApplication.MOBILE);
 
             profileRepository.updateMobileVersion(user.getKey(), credentials.getVersion());
 

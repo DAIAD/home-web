@@ -79,43 +79,14 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
     Environment environment;
 
     @Override
-    public Profile getProfileByUsername(EnumApplication application) throws ApplicationException
+    public Profile getProfileByUserKey(UUID userKey, EnumApplication application) throws ApplicationException
     {
-        // Fixme not a proper place to query security context (should be at controller).
-        // Also, related to this, the name of this method disagrees with signature.
-
         try {
-            // Check user permissions
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            AuthenticatedUser user = null;
-
-            if (auth.getPrincipal() instanceof AuthenticatedUser) {
-                user = (AuthenticatedUser) auth.getPrincipal();
-            } else {
-                throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
-            }
-
-            switch (application) {
-                case HOME:
-                case MOBILE:
-                    if (!user.hasRole(EnumRole.ROLE_USER)) {
-                        throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application", application);
-                    }
-                    break;
-                case UTILITY:
-                    if (!user.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
-                        throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application", application);
-                    }
-                    break;
-                default:
-                    throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application", application);
-            }
-
             // Load account data
             TypedQuery<eu.daiad.web.domain.application.AccountEntity> userQuery = entityManager.createQuery(
-                            "select a from account a where a.username = :username",
+                            "select a from account a where a.key = :userKey",
                             eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0).setMaxResults(1);
-            userQuery.setParameter("username", user.getUsername());
+            userQuery.setParameter("userKey", userKey);
 
             // Load registered device data
             AccountEntity account = userQuery.getSingleResult();

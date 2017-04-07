@@ -19,7 +19,7 @@ import eu.daiad.web.model.profile.UpdateProfileRequest;
 
 public interface IProfileRepository {
 
-    Profile getProfileByUsername(EnumApplication application) throws ApplicationException;
+    Profile getProfileByUserKey(UUID userKey, EnumApplication application) throws ApplicationException;
 
     List<ProfileModes> getProfileModes(ProfileModesRequest filters) throws ApplicationException;
 
