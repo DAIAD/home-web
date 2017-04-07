@@ -13,6 +13,7 @@ import javax.validation.constraints.NotNull;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.Interval;
 import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -64,7 +65,8 @@ public class AlertWaterTopSaver extends AbstractAlertResolver
     {
         Assert.state(deviceType == EnumDeviceType.METER);
         
-        final Period period = Period.weeks(1); 
+        final Period period = Period.weeks(1);
+        final EnumTimeAggregation granularity = EnumTimeAggregation.WEEK;
         final EnumMeasurementField measurementField = EnumMeasurementField.METER_VOLUME;
         
         DateTime end = refDate.withDayOfWeek(DateTimeConstants.MONDAY)
@@ -86,15 +88,17 @@ public class AlertWaterTopSaver extends AbstractAlertResolver
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
-            .absolute(end.minus(period), end, EnumTimeAggregation.ALL)
+            .absolute(end.minus(period), end, granularity)
             .meter()
             .sum();
 
         DataQuery query = queryBuilder.build();
         DataQueryResponse queryResponse = dataService.execute(query);
         SeriesFacade series = queryResponse.getFacade(EnumDeviceType.METER);
+        Interval interval = query.getTime().asInterval();
         Double consumption = (series != null)? 
-            series.get(EnumDataField.VOLUME, EnumMetric.SUM): null;
+            series.get(EnumDataField.VOLUME, EnumMetric.SUM, Point.betweenTime(interval)):
+            null;
         if (consumption == null || consumption < weeklyThreshold)
             return Collections.emptyList();
         

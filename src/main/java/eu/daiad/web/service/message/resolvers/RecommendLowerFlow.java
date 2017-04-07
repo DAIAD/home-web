@@ -11,8 +11,11 @@ import java.util.UUID;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.math3.stat.descriptive.moment.Mean;
+import org.apache.commons.math3.stat.descriptive.summary.Sum;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.Interval;
 import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -38,6 +41,7 @@ import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumDataField;
 import eu.daiad.web.model.query.EnumMeasurementField;
 import eu.daiad.web.model.query.EnumMetric;
+import eu.daiad.web.model.query.Point;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
@@ -225,7 +229,8 @@ public class RecommendLowerFlow extends AbstractRecommendationResolver
         Assert.state(deviceType == EnumDeviceType.AMPHIRO);
         
         final int N = 3; // number of months to examine
-        final Period period = Period.months(N); 
+        final Period period = Period.months(N);
+        final EnumTimeAggregation granularity = EnumTimeAggregation.MONTH;
         
         DateTime end = refDate.withDayOfMonth(1)
             .withTimeAtStartOfDay();
@@ -244,7 +249,7 @@ public class RecommendLowerFlow extends AbstractRecommendationResolver
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
-            .absolute(end.minus(period), end, EnumTimeAggregation.ALL)
+            .absolute(end.minus(period), end, granularity)
             .amphiro()
             .sum()
             .average();
@@ -255,9 +260,14 @@ public class RecommendLowerFlow extends AbstractRecommendationResolver
         if (series == null || series.isEmpty())
             return null;
         
-        double userAverageFlow = series.get(EnumDataField.FLOW, EnumMetric.AVERAGE);
-        double userConsumption = series.get(EnumDataField.VOLUME, EnumMetric.SUM);
+        Interval interval = query.getTime().asInterval();
+        Double userConsumption = series.aggregate(
+            EnumDataField.VOLUME, EnumMetric.SUM, Point.betweenTime(interval), new Sum());
+        Double userAverageFlow = series.aggregate(
+            EnumDataField.FLOW, EnumMetric.AVERAGE, Point.betweenTime(interval), new Mean());
         boolean fire = 
+            userConsumption != null &&
+            userAverageFlow != null &&
             userAverageFlow > averageFlow * FLOW_HIGH_RATIO &&
             userConsumption > averageConsumption * VOLUME_HIGH_RATIO;
         if (fire) {

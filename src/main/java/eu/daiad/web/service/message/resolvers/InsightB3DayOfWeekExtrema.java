@@ -51,6 +51,9 @@ import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractRecommendationResolver;
 
+import static eu.daiad.web.model.query.Point.betweenTime;
+
+
 @MessageGenerator(period = "P2W", dayOfWeek = EnumDayOfWeek.MONDAY, maxPerWeek = 1)
 @Component
 @Scope("prototype")
@@ -218,7 +221,7 @@ public class InsightB3DayOfWeekExtrema extends AbstractRecommendationResolver
                 continue;
             FluentIterable<Point> points = FluentIterable
                 .of(series.iterPoints(EnumDataField.VOLUME, EnumMetric.SUM))
-                .filter(Point.betweenTime(start, end));
+                .filter(betweenTime(start, end));
             // Update partial sums for each day of week
             for (Point p: points) {
                 DateTime t = p.getTimestamp().toDateTime(tz);

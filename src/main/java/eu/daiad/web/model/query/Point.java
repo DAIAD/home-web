@@ -2,6 +2,7 @@ package eu.daiad.web.model.query;
 
 import org.joda.time.DateTime;
 import org.joda.time.Instant;
+import org.joda.time.Interval;
 import org.springframework.util.Assert;
 
 import org.apache.commons.collections4.Predicate;
@@ -46,10 +47,16 @@ public class Point
         return new Point(instant, value);
     }
     
+    @Override
+    public String toString()
+    {
+        return "Point [instant=" + instant + ", value=" + value + "]";
+    }
+    
     //
     // ~ Predicates
     //
-    
+
     private static class BetweenTimePredicate implements Predicate<Point>
     {
         private final DateTime start, end;
@@ -186,6 +193,11 @@ public class Point
     public static Predicate<Point> betweenTime(DateTime start, DateTime end)
     {
         return new BetweenTimePredicate(start, end);
+    }
+    
+    public static Predicate<Point> betweenTime(Interval interval)
+    {
+        return new BetweenTimePredicate(interval.getStart(), interval.getEnd());
     }
     
     public static Predicate<Point> aboveValue(double refValue)

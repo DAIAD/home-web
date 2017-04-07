@@ -11,7 +11,9 @@ import java.util.UUID;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.math3.stat.descriptive.summary.Sum;
 import org.joda.time.DateTime;
+import org.joda.time.Interval;
 import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -37,6 +39,7 @@ import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumDataField;
 import eu.daiad.web.model.query.EnumMeasurementField;
 import eu.daiad.web.model.query.EnumMetric;
+import eu.daiad.web.model.query.Point;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
@@ -166,10 +169,9 @@ public class RecommendReduceFlowWhenNotNeeded extends AbstractRecommendationReso
         Assert.state(deviceType == EnumDeviceType.AMPHIRO);
         
         final int N = 3; // number of months to examine
-        final Period period = Period.months(N); 
-        
-        DateTime end = refDate.withDayOfMonth(1)
-            .withTimeAtStartOfDay();
+        final Period period = Period.months(N);
+        final EnumTimeAggregation granularity = EnumTimeAggregation.MONTH;
+        final DateTime end = refDate.withDayOfMonth(1).withTimeAtStartOfDay();
         
         Double averagePerSessionConsumption = statisticsService.getNumber(
                 end, period, EnumMeasurementField.AMPHIRO_VOLUME, EnumStatistic.AVERAGE_PER_SESSION)
@@ -181,8 +183,9 @@ public class RecommendReduceFlowWhenNotNeeded extends AbstractRecommendationReso
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
-            .absolute(end.minus(period), end, EnumTimeAggregation.ALL)
+            .absolute(end.minus(period), end, granularity)
             .amphiro()
+            .sum()
             .average();
 
         DataQuery query = queryBuilder.build();
@@ -191,7 +194,15 @@ public class RecommendReduceFlowWhenNotNeeded extends AbstractRecommendationReso
         if (series == null || series.isEmpty())
             return Collections.emptyList();
 
-        double userAveragePerSessionConsumption = series.get(EnumDataField.VOLUME, EnumMetric.AVERAGE);  
+        Interval interval = query.getTime().asInterval();
+        Double userConsumption = series.aggregate(
+            EnumDataField.VOLUME, EnumMetric.SUM, Point.betweenTime(interval), new Sum());
+        Double userNumberOfSessions = series.aggregate(
+            EnumDataField.VOLUME, EnumMetric.COUNT, Point.betweenTime(interval), new Sum());
+        if (userConsumption == null || userNumberOfSessions == null)
+            return Collections.emptyList();
+        
+        double userAveragePerSessionConsumption = userConsumption / userNumberOfSessions;
         if (userAveragePerSessionConsumption > averagePerSessionConsumption) {
             // Todo - Calculate the number of sessions per year when available
             int numberOfSessionsPerYear = 100;

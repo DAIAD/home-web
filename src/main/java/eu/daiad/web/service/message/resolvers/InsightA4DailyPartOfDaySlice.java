@@ -22,6 +22,7 @@ import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import org.apache.commons.math3.stat.descriptive.summary.Sum;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.Interval;
@@ -54,6 +55,9 @@ import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractRecommendationResolver;
+
+import static eu.daiad.web.model.query.Point.betweenTime;
+
 
 @MessageGenerator(period = "P1D")
 @Component
@@ -257,12 +261,14 @@ public class InsightA4DailyPartOfDaySlice extends AbstractRecommendationResolver
         for (EnumPartOfDay partOfDay: EnumPartOfDay.values()) {
             Interval r = partOfDay.toInterval(refDate);
             query = queryBuilder
-                .absolute(r.getStart(), r.getEnd(), EnumTimeAggregation.ALL)
+                .absolute(r.getStart(), r.getEnd(), EnumTimeAggregation.HOUR)
                 .build();
             queryResponse = dataService.execute(query);
             series = queryResponse.getFacade(deviceType);
             Double y = (series != null)? 
-                series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+                series.aggregate(
+                    EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(r), new Sum()):
+                null;
             if (y == null) {
                 missingPart = true;
                 break;
