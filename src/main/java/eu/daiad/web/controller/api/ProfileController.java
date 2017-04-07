@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import eu.daiad.web.controller.BaseRestController;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.error.ProfileErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.profile.ComparisonRankingResponse;
 import eu.daiad.web.model.profile.NotifyProfileRequest;
@@ -70,28 +71,71 @@ public class ProfileController extends BaseRestController {
     /**
      * Loads user profile data.
      *
-     * @param data user credentials.
+     * @param request user credentials.
      * @return the user profile.
      */
     @RequestMapping(value = "/api/v1/profile/load", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-    public RestResponse getProfile(@RequestBody Credentials data) {
+    public RestResponse getProfile(@RequestBody Credentials request) {
         try {
-            AuthenticatedUser user = authenticate(data);
+            AuthenticatedUser user = authenticate(request);
 
             if (user.hasRole(EnumRole.ROLE_USER)) {
-                Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE);
-
-                profileRepository.updateMobileVersion(user.getKey(), data.getVersion());
+                profileRepository.updateMobileVersion(user.getKey(), request.getVersion());
 
                 return new ProfileResponse(getRuntime(),
-                                           profile,
+                                           profileRepository.getProfileByUserKey(user.getKey(), EnumApplication.MOBILE),
                                            user.roleToStringArray());
             } else if (user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
                 return new ProfileResponse(getRuntime(),
-                                           profileRepository.getProfileByUsername(EnumApplication.UTILITY),
+                                           profileRepository.getProfileByUserKey(user.getKey(), EnumApplication.UTILITY),
                                            user.roleToStringArray());
             } else {
                 throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+            }
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            return new RestResponse(getError(ex));
+        }
+    }
+
+    /**
+     * Loads user profile data for a specific user.
+     *
+     * @param application the request's application.
+     * @param userKey the user key.
+     * @param request user credentials.
+     * @return the user profile.
+     */
+    @RequestMapping(value = "/api/v1/profile/load/{application}/{userKey}", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    public RestResponse getProfileByUserKey(@PathVariable EnumApplication application,
+                                            @PathVariable UUID userKey,
+                                            @RequestBody Credentials request) {
+        try {
+            AuthenticatedUser user = authenticate(request,
+                                                  EnumRole.ROLE_USER, EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
+
+            // If user has not administrative permissions and requests data for another user, throw an exception
+            if ((!user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) && (!user.getKey().equals(userKey))) {
+                throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+            }
+
+            // Check utility access
+            if (!user.getKey().equals(userKey)) {
+                AuthenticatedUser dataOwner = userRepository.getUserByKey(userKey);
+
+                if (!user.getUtilities().contains(dataOwner.getUtilityId())) {
+                    throw createApplicationException(SharedErrorCode.AUTHORIZATION_UTILITY_ACCESS_DENIED);
+                }
+            }
+
+            switch(application) {
+                case HOME: case MOBILE: case UTILITY:
+                    Profile profile = profileRepository.getProfileByUserKey(userKey, application);
+
+                    return new ProfileResponse(getRuntime(), profile, user.roleToStringArray());
+                default:
+                    throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application", application.toString());
             }
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);

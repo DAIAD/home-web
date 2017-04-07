@@ -84,7 +84,7 @@ public class MessageController extends BaseController {
         @AuthenticationPrincipal AuthenticatedUser user, @RequestBody MessageRequest request)
     {
         try {
-            Profile profile = profileRepository.getProfileByUsername(EnumApplication.HOME);
+            Profile profile = profileRepository.getProfileByUserKey(user.getKey(), EnumApplication.HOME);
             if(!profile.isSendMessageEnabled()) {
                 return new MultiTypeMessageResponse();
             } else {

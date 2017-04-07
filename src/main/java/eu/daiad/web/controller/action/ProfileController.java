@@ -84,12 +84,12 @@ public class ProfileController extends BaseController {
         try {
             if (user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
                 return new ProfileResponse(getRuntime(),
-                                           profileRepository.getProfileByUsername(EnumApplication.UTILITY),
+                                           profileRepository.getProfileByUserKey(user.getKey(), EnumApplication.UTILITY),
                                            user.roleToStringArray());
             }
 
             return new ProfileResponse(getRuntime(),
-                                       profileRepository.getProfileByUsername(EnumApplication.HOME),
+                                       profileRepository.getProfileByUserKey(user.getKey(), EnumApplication.HOME),
                                        user.roleToStringArray());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
